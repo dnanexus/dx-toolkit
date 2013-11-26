@@ -23,7 +23,8 @@ import os, sys
 
 import dxpy
 import dxpy.utils.printing as printing
-from .parsers import (process_dataobject_args, process_single_dataobject_output_args)
+from .parsers import (process_dataobject_args, process_single_dataobject_output_args,
+                      process_instance_type_arg)
 from ..utils.describe import io_val_to_str
 from ..utils.resolver import (resolve_existing_path, resolve_path)
 from ..exceptions import (err_exit, DXCLIError)
@@ -108,9 +109,15 @@ def add_stage(args):
     elif args.relative_output_folder is not None:
         folderpath = args.relative_output_folder
 
+    # process instance type
+    try_call(process_instance_type_arg, args)
+
     dxworkflow = dxpy.DXWorkflow(workflow_id, project=project)
-    stage_id = dxworkflow.add_stage(exec_handler, name=args.name, folder=folderpath,
-                                    stage_input=exec_inputs.inputs)
+    stage_id = dxworkflow.add_stage(exec_handler,
+                                    name=args.name,
+                                    folder=folderpath,
+                                    stage_input=exec_inputs.inputs,
+                                    instance_type=args.instance_type)
     if args.brief:
         print stage_id
     else:
@@ -194,6 +201,9 @@ def update_stage(args):
     workflow_id, project = get_workflow_id_and_project(args.workflow)
     dxworkflow = dxpy.DXWorkflow(workflow_id, project=project)
 
+    # process instance type
+    try_call(process_instance_type_arg, args)
+
     initial_edit_version = dxworkflow.editVersion
 
     try:
@@ -202,7 +212,8 @@ def update_stage(args):
         pass
 
     if not any([args.executable, args.name, args.no_name, args.output_folder,
-                args.relative_output_folder, args.input, args.input_json, args.filename]):
+                args.relative_output_folder, args.input, args.input_json, args.filename,
+                args.instance_type]):
         print 'No updates requested; none made'
         return
 
@@ -232,11 +243,13 @@ def update_stage(args):
     elif args.relative_output_folder is not None:
         folderpath = args.relative_output_folder
 
-    try_call(dxworkflow.update_stage, args.stage,
+    try_call(dxworkflow.update_stage,
+             args.stage,
              executable=new_exec_handler,
              force=args.force,
              name=args.name,
              unset_name=args.no_name,
              folder=folderpath,
              stage_input=stage_input,
+             instance_type=args.instance_type,
              edit_version=initial_edit_version)

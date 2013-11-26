@@ -21,8 +21,10 @@ those parsers.
 '''
 
 import argparse, json, os
-from ..utils.printing import fill
+from ..utils.printing import (fill, BOLD, ENDC)
+from ..utils.pretty_print import format_table
 from ..utils.resolver import split_unescaped
+from ..utils.completer import InstanceTypesCompleter
 from ..exceptions import DXError
 
 class DXParserError(DXError):
@@ -229,3 +231,33 @@ exec_input_args = argparse.ArgumentParser(add_help=False)
 exec_input_args.add_argument('-i', '--input', help=fill('An input to be added using "<input name>[:<class>]=<input value>" (provide "class" if there is no input spec; it can be any job IO class, e.g. "string", "array:string", or "array"; if "class" is "array" or not specified, the value will be attempted to be parsed as JSON and is otherwise treated as a string)', width_adjustment=-24), action='append')
 exec_input_args.add_argument('-j', '--input-json', help=fill('The full input JSON (keys=input field names, values=input field values)', width_adjustment=-24))
 exec_input_args.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from FILENAME ("-" to use stdin)'))
+
+class PrintInstanceTypeHelp(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        print "Help: Specifying instance types for " + parser.prog
+        print
+        print fill('You can either provide a single instance type to be used by all entry points, or a JSON string mapping from function names to instance types, e.g.')
+        print
+        print '    {"main": "dx_m1.large", "other_function": "dx_m1.medium"}'
+        print
+        print 'Available instance types:'
+        print
+        print format_table(InstanceTypesCompleter.instance_types.values(),
+                           column_names=InstanceTypesCompleter.instance_types.values()[0]._fields)
+        parser.exit(0)
+
+instance_type_arg = argparse.ArgumentParser(add_help=False)
+instance_type_arg.add_argument('--instance-type',
+                               metavar='INSTANCE_TYPE_OR_MAPPING',
+                               help=fill('Specify instance type(s) for jobs this executable will run; see --instance-type-help for more details', width_adjustment=-24)).completer = InstanceTypesCompleter()
+instance_type_arg.add_argument('--instance-type-help',
+                               nargs=0,
+                               help=fill('Print help for specifying instance types'),
+                               action=PrintInstanceTypeHelp)
+
+def process_instance_type_arg(args):
+    if args.instance_type and args.instance_type.strip().startswith('{'):
+        try:
+            args.instance_type = json.loads(args.instance_type)
+        except ValueError:
+            raise DXError("Error while parsing JSON value for --instance-type")

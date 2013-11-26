@@ -877,12 +877,12 @@ class TestDXClientWorkflow(DXTestCase):
         stage_ids = []
         stage_ids.append(run("dx add stage " + workflow_id + " --name first " + applet_id + " --brief").strip())
         # not-yet-existing folder path should work
-        # also, set input
-        stage_ids.append(run("dx add stage myworkflow --relative-output-folder output myapplet --brief -inumber=32").strip())
+        # also, set input and instance type
+        stage_ids.append(run("dx add stage myworkflow --relative-output-folder output myapplet --brief -inumber=32 --instance-type dx_m1.large").strip())
         # test relative folder path
         run("dx mkdir -p a/b/c")
         run("dx cd a/b/c")
-        stage_ids.append(run("dx add stage " + workflow_id + " --output-folder . " + applet_id + " --brief").strip())
+        stage_ids.append(run("dx add stage " + workflow_id + " --output-folder . " + applet_id + " --brief --instance-type '{\"main\": \"dx_m1.large\"}'").strip())
         with self.assertSubprocessFailure(stderr_regexp='not found in the input spec', exit_code=3):
             # input spec should be checked
             run("dx add stage " + workflow_id + " " + applet_id + " -inonexistent=42")
@@ -893,11 +893,18 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertEqual(desc['stages'][0]['folder'], None)
         self.assertEqual(desc['stages'][1]['folder'], 'output')
         self.assertEqual(desc['stages'][1]['input']['number'], 32)
+        self.assertEqual(desc['stages'][1]['systemRequirements'], {"*": {"instanceType": "dx_m1.large"}})
         self.assertEqual(desc['stages'][2]['folder'], '/a/b/c')
+        self.assertEqual(desc['stages'][2]['systemRequirements'],
+                         {"main": {"instanceType": "dx_m1.large"}})
 
-        # error when adding a stage with both absolute and relative output folders
+        # errors
+        # when adding a stage with both absolute and relative output folders
         with self.assertSubprocessFailure(stderr_regexp="output-folder", exit_code=2):
             run("dx add stage " + workflow_id + " " + applet_id + " --output-folder /foo --relative-output-folder foo")
+        # bad instance type arg
+        with self.assertSubprocessFailure(stderr_regexp="instance-type", exit_code=3):
+            run("dx add stage " + workflow_id + " " + applet_id + " --instance-type {]")
 
         # list stages
         list_output = run("dx list stages " + workflow_id)
@@ -989,6 +996,7 @@ class TestDXClientWorkflow(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp="no-title", exit_code=2):
             run("dx update workflow myworkflow --output-folder /foo --no-output-folder")
 
+    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"), "Temporarily skipping test that requires unreleased features")
     def test_dx_update_stage(self):
         workflow_id = run(u"dx new workflow myworkflow --brief").strip()
         run("dx describe " + workflow_id)
@@ -1014,21 +1022,24 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertIsNone(desc["stages"][0]["name"])
         self.assertEqual(desc["stages"][0]["folder"], None)
         self.assertEqual(desc["stages"][0]["input"], {})
+        self.assertEqual(desc["stages"][0]["systemRequirements"], {})
 
-        # set the name, folder, and some input
-        run(u"dx update stage myworkflow 0 --name тitle -inumber=32 --relative-output-folder=foo")
+        # set the name, folder, some input, and the instance type
+        run(u"dx update stage myworkflow 0 --name тitle -inumber=32 --relative-output-folder=foo --instance-type dx_m1.large")
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(desc["editVersion"], 2)
         self.assertEqual(desc["stages"][0]["name"], u"тitle")
         self.assertEqual(desc["stages"][0]["folder"], "foo")
-        print desc
         self.assertEqual(desc["stages"][0]["input"]["number"], 32)
+        self.assertEqual(desc["stages"][0]["systemRequirements"], {"*": {"instanceType": "dx_m1.large"}})
 
-        # use a relative folder path
-        run(u"dx update stage myworkflow 0 --name тitle -inumber=32 --output-folder=.")
+        # use a relative folder path and also set instance type using JSON
+        run(u"dx update stage myworkflow 0 --name тitle -inumber=32 --output-folder=. --instance-type '{\"main\": \"dx_m1.large\"}'")
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(desc["editVersion"], 3)
         self.assertEqual(desc["stages"][0]["folder"], u"/")
+        self.assertEqual(desc["stages"][0]["systemRequirements"],
+                         {"main": {"instanceType": "dx_m1.large"}})
 
         # unset name
         run("dx update stage myworkflow " + stage_id + " --no-name")
@@ -1043,6 +1054,8 @@ class TestDXClientWorkflow(DXTestCase):
             run("dx update stage myworkflow 0 --name foo --no-name")
         with self.assertSubprocessFailure(stderr_regexp="output-folder", exit_code=2):
             run("dx update stage myworkflow 0 --output-folder /foo --relative-output-folder foo")
+        with self.assertSubprocessFailure(stderr_regexp="instance-type", exit_code=3):
+            run("dx update stage myworkflow 0 --instance-type {]")
 
         # no-op
         output = run(u"dx update stage myworkflow 0 --alias default --force")

@@ -157,7 +157,7 @@ from dxpy.cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, al
                               process_dataobject_args, process_single_dataobject_output_args, find_executions_args, add_find_executions_search_gp,
                               set_env_from_args,
                               extra_args, process_extra_args, DXParserError,
-                              exec_input_args)
+                              exec_input_args, instance_type_arg, process_instance_type_arg)
 from dxpy.cli.exec_io import (ExecutableInputs, stage_to_job_refs, format_choices_or_suggestions)
 
 # Loading other variables used for pretty-printing
@@ -2933,12 +2933,7 @@ def run(args):
                                               args.folder,
                                               expected='folder')
 
-    if args.instance_type and args.instance_type.strip().startswith('{'):
-        try:
-            args.instance_type = json.loads(args.instance_type)
-        except ValueError:
-            err_exit("Error while parsing JSON value for --instance-type",
-                     expected_exceptions=default_expected_exceptions + (ValueError,))
+    process_instance_type_arg(args)
 
     if not isinstance(handler, dxpy.DXApplet) and \
             not isinstance(handler, dxpy.DXApp) : # Identified as a workflow in get_exec_handler()
@@ -3627,7 +3622,8 @@ register_subparser(parser_add_developers, subparsers_action=subparsers_add, cate
 
 parser_add_stage = subparsers_add.add_parser('stage', help='Add a stage to a workflow',
                                              description='Add a stage to a workflow.  Default inputs for the stage can also be set at the same time.',
-                                             parents=[exec_input_args, stdout_args, env_args],
+                                             parents=[exec_input_args, stdout_args, env_args,
+                                                      instance_type_arg],
                                              prog='dx add stage')
 parser_add_stage.add_argument('workflow', help='Name or ID of a workflow').completer = DXPathCompleter(classes=['workflow'])
 parser_add_stage.add_argument('executable', help='Name or ID of an executable to add as a stage in the workflow').completer = MultiCompleter([DXAppCompleter(),
@@ -3733,7 +3729,8 @@ register_subparser(parser_update_workflow, subparsers_action=subparsers_update, 
 
 parser_update_stage = subparsers_update.add_parser('stage', help='Update the metadata for a stage in a workflow',
                                                    description='Update the metadata for a stage in a workflow',
-                                                   parents=[exec_input_args, stdout_args, env_args],
+                                                   parents=[exec_input_args, stdout_args, env_args,
+                                                            instance_type_arg],
                                                    prog='dx update stage')
 parser_update_stage.add_argument('workflow', help='Name or ID of a workflow').completer = DXPathCompleter(classes=['workflow'])
 parser_update_stage.add_argument('stage', help='Stage (index or ID) of the workflow to update')
@@ -3773,7 +3770,8 @@ parser_run = subparsers.add_parser('run', help='Run an applet, app, or workflow'
                                    description=(fill('Run an applet, app, or workflow.  To see a list of executables you can run, hit <TAB> twice after "dx run" or run "' + BOLD() + 'dx find apps' + ENDC() + '" to see a list of available apps.') + '\n\n' + fill('If any inputs are required but not specified, an interactive mode for selecting inputs will be launched.  Inputs can be set in multiple ways.  Run "dx run --input-help" for more details.')),
                                    prog='dx run',
                                    formatter_class=argparse.RawTextHelpFormatter,
-                                   parents=[exec_input_args, stdout_args, env_args, extra_args])
+                                   parents=[exec_input_args, stdout_args, env_args, extra_args,
+                                            instance_type_arg])
 run_executable_action = parser_run.add_argument('executable',
                                                 help=fill('Name or ID of an applet, app, or workflow to run; must be provided if --clone is not set', width_adjustment=-24),
                                                 nargs="?", default="")
@@ -3798,11 +3796,6 @@ parser_run.add_argument('--watch', help="Watch the job after launching it", acti
 parser_run.add_argument('--input-help',
                         help=fill('Print help and examples for how to specify inputs', width_adjustment=-24),
                         action=runInputHelp, nargs=0)
-instance_type_action = parser_run.add_argument('--instance-type',
-                                               help=fill('Specify instance type for all jobs this executable will run, or a JSON string mapping function names to instance types, e.g. \'{"main": "dx_m1.large", ...}\'. Available instance types:', width_adjustment=-24)
-                                                    + '\n' + format_table(InstanceTypesCompleter.instance_types.values(),
-                                                                          column_names=InstanceTypesCompleter.instance_types.values()[0]._fields))
-instance_type_action.completer = InstanceTypesCompleter()
 parser_run.set_defaults(func=run, verbose=False, help=False, details=None)
 register_subparser(parser_run, categories='exec')
 
