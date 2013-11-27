@@ -905,6 +905,9 @@ class TestDXClientWorkflow(DXTestCase):
         # bad instance type arg
         with self.assertSubprocessFailure(stderr_regexp="instance-type", exit_code=3):
             run("dx add stage " + workflow_id + " " + applet_id + " --instance-type {]")
+        # unrecognized instance typ
+        with self.assertSubprocessFailure(stderr_regexp="InvalidInput", exit_code=3):
+            run("dx add stage " + workflow_id + " " + applet_id + " --instance-type foo")
 
         # list stages
         list_output = run("dx list stages " + workflow_id)

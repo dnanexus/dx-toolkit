@@ -113,11 +113,12 @@ def add_stage(args):
     try_call(process_instance_type_arg, args)
 
     dxworkflow = dxpy.DXWorkflow(workflow_id, project=project)
-    stage_id = dxworkflow.add_stage(exec_handler,
-                                    name=args.name,
-                                    folder=folderpath,
-                                    stage_input=exec_inputs.inputs,
-                                    instance_type=args.instance_type)
+    stage_id = try_call(dxworkflow.add_stage,
+                        exec_handler,
+                        name=args.name,
+                        folder=folderpath,
+                        stage_input=exec_inputs.inputs,
+                        instance_type=args.instance_type)
     if args.brief:
         print stage_id
     else:
