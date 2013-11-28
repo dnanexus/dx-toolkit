@@ -144,15 +144,24 @@ public class DXSearchTest {
 
         // {created,modified}{Before,After}
 
-        // We rely on the fact that moo.created < foo.created < food.created
+        // We rely on the fact that
+        //   moo.created <= foo.created <= food.created <= open.created
+        // with equality possible since the creation timestamp is encoded at
+        // 1-sec resolution
 
-        assertEqualsAnyOrder(
+        List<DXDataObject> createdBeforeResults =
                 DXSearch.findDataObjects().inProject(testProject)
-                        .createdBefore(moo.describe().getCreationDate()).execute().asList(), moo);
-        assertEqualsAnyOrder(
+                        .createdBefore(moo.describe().getCreationDate()).execute().asList();
+        Assert.assertTrue(1 <= createdBeforeResults.size() && createdBeforeResults.size() <= 4);
+        Assert.assertTrue(createdBeforeResults.contains(moo));
+
+        List<DXDataObject> createdAfterResults =
                 DXSearch.findDataObjects().inProject(testProject)
-                        .createdAfter(foo.describe().getCreationDate()).execute().asList(), foo,
-                food, open);
+                        .createdAfter(food.describe().getCreationDate()).execute().asList();
+        Assert.assertTrue(2 <= createdAfterResults.size() && createdAfterResults.size() <= 4);
+        Assert.assertTrue(createdAfterResults.contains(food));
+        Assert.assertTrue(createdAfterResults.contains(open));
+
         assertEqualsAnyOrder(
                 DXSearch.findDataObjects().inProject(testProject)
                         .modifiedBefore(foo.describe().getModificationDate()).execute().asList(),
