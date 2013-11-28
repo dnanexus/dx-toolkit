@@ -265,14 +265,21 @@ def render_execdepends(thing):
         rendered.append("{package_manager}: {name}{version}".format(**dep))
     return rendered
 
-def render_stage(title, stage):
+def render_stage(title, stage, as_stage_of=None):
+    is_cached_result = as_stage_of is not None and stage['execution']['parentAnalysis'] != as_stage_of
     lines_to_print = [(title, "{name} ({id})".format(name=stage['name'], id=stage['id']) if stage['name'] is not None else stage['id']),
                       ('  Executable', stage['executable'])]
+    execution_id_str = stage['execution']['id']
+    if is_cached_result:
+        execution_id_str = "[" + execution_id_str + "]"
     if 'execution' in stage:
         if 'state' in stage['execution']:
-            lines_to_print.append(('  Execution', stage['execution']['id'] + ' (' + JOB_STATES(stage['execution']['state']) + ')'))
+            lines_to_print.append(('  Execution', execution_id_str + ' (' + JOB_STATES(stage['execution']['state']) + ')'))
         else:
-            lines_to_print.append(('  Execution', stage['execution']['id']))
+            lines_to_print.append(('  Execution', execution_id_str))
+
+    if is_cached_result:
+        lines_to_print.append(('  Cached from', stage['execution']['parentAnalysis']))
 
     for line in lines_to_print:
         print_field(line[0], line[1])
@@ -540,7 +547,7 @@ def print_execution_desc(desc):
                          'dependsOn', 'resources', 'projectCache', 'details', 'tags', 'properties',
                          'name', 'instanceType', 'systemRequirements', 'executableName', 'failureFrom', 'billTo',
                          'startedRunning', 'stoppedRunning', 'stateTransitions',
-                         'delayWorkspaceDestruction', 'stages']
+                         'delayWorkspaceDestruction', 'stages', 'totalPrice', 'isFree', 'invoiceMetadata']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -582,7 +589,7 @@ def print_execution_desc(desc):
     if "stages" in desc:
         for i, (stage, analysis_stage) in enumerate(zip(desc["workflow"]["stages"], desc["stages"])):
             stage['execution'] = analysis_stage['execution']
-            render_stage("Stage " + str(i), stage)
+            render_stage("Stage " + str(i), stage, as_stage_of=desc["id"])
     if "function" in desc:
         print_field("Function", desc["function"])
     if 'runInput' in desc:
@@ -659,6 +666,11 @@ def print_execution_desc(desc):
                     print_nofill_field(" sys reqs", json.dumps(cloned_sys_reqs) + ' (same)')
                 else:
                     print_nofill_field(" sys reqs", YELLOW() + json.dumps(cloned_sys_reqs) + ENDC())
+    if not desc.get('isFree') and desc.get('totalPrice') is not None:
+        print_field('Total Price', "%.2f" % desc['totalPrice'])
+    if desc.get('invoiceMetadata'):
+        print_json_field("Invoice Metadata", desc['invoiceMetadata'])
+
     for field in desc:
         if field not in recognized_fields:
             print_json_field(field, desc[field])
@@ -738,38 +750,62 @@ def get_ls_l_desc(desc, include_folder=False, include_project=False):
 def print_ls_l_desc(desc, **kwargs):
     print get_ls_l_desc(desc, **kwargs)
 
-def get_find_executions_string(desc, has_children, single_result=False, show_outputs=True):
+def get_find_executions_string(desc, has_children, single_result=False, show_outputs=True,
+                               is_cached_result=False):
     '''
-    :param desc: hash of job describe output
-    :param has_children: whether the job has subjobs to be printed
-    :param single_result: whether the job is displayed as a single result or as part of a job tree
+    :param desc: hash of execution's describe output
+    :param has_children: whether the execution has children to be printed
+    :param single_result: whether the execution is displayed as a single result or as part of an execution tree
+    :param is_cached_result: whether the execution should be formatted as a cached result
     '''
-    is_origin_job = desc['parentJob'] is None or single_result
-    result = ("* " if is_origin_job and get_delimiter() is None else "")
+    is_not_subjob = desc['parentJob'] is None or desc['class'] == 'analysis' or single_result
+    result = ("* " if is_not_subjob and get_delimiter() is None else "")
     canonical_execution_name = desc['executableName']
     if desc['class'] == 'job':
         canonical_execution_name += ":" + desc['function']
-    job_name = desc.get('name', '<no name>')
-    if desc['class'] == 'job':
-        result += BOLD() + BLUE() + job_name + ENDC()
-    else:
-        result += BOLD() + BLUE() + UNDERLINE() + job_name + ENDC()
-    if job_name != canonical_execution_name and job_name+":main" != canonical_execution_name:
+    execution_name = desc.get('name', '<no name>')
+
+    # Format the name of the execution
+    if is_cached_result:
+        result += BOLD() + "[" + ENDC()
+    result += BOLD() + BLUE()
+    if desc['class'] == 'analysis':
+        result += UNDERLINE()
+    result += execution_name + ENDC()
+
+    if execution_name != canonical_execution_name and execution_name+":main" != canonical_execution_name:
         result += ' (' + canonical_execution_name + ')'
+
+    if is_cached_result:
+        result += BOLD() + "]" + ENDC()
+
+    # Format state
     result += DELIMITER(' (') + JOB_STATES(desc['state']) + DELIMITER(') ') + desc['id']
-    result += DELIMITER('\n' + (u'│ ' if is_origin_job and has_children else ("  " if is_origin_job else "")))
+
+    # Add unicode pipe to child if necessary
+    result += DELIMITER('\n' + (u'│ ' if is_not_subjob and has_children else ("  " if is_not_subjob else "")))
     result += desc['launchedBy'][5:] + DELIMITER(' ')
     result += render_short_timestamp(desc['created'])
-    if desc['state'] in ['done', 'failed', 'terminated', 'waiting_on_output']:
-        # TODO: Remove this check once all jobs are migrated to have these values
-        if 'stoppedRunning' in desc and 'startedRunning' in desc:
-            runtime = datetime.timedelta(seconds=int(desc['stoppedRunning']-desc['startedRunning'])/1000)
-            result += " (runtime " + str(runtime) + ")"
-    elif desc['state'] == 'running':
-        result += " (running for {rt})".format(rt=datetime.timedelta(seconds=int(time.time()-desc['startedRunning']/1000)))
+
+    cached_and_runtime_strs = []
+
+    if is_cached_result:
+        cached_and_runtime_strs.append(YELLOW() + "cached" + ENDC())
+
+    if desc['class'] == 'job':
+        # Only print runtime if it ever started running
+        if desc.get('startedRunning'):
+            if desc['state'] in ['done', 'failed', 'terminated', 'waiting_on_output']:
+                runtime = datetime.timedelta(seconds=int(desc['stoppedRunning']-desc['startedRunning'])/1000)
+                cached_and_runtime_strs.append("runtime " + str(runtime))
+            elif desc['state'] == 'running':
+                cached_and_runtime_strs.append("running for {rt}".format(rt=datetime.timedelta(seconds=int(time.time()-desc['startedRunning']/1000))))
+
+    if cached_and_runtime_strs:
+        result += " (" + ", ".join(cached_and_runtime_strs) + ")"
 
     if show_outputs:
-        prefix = DELIMITER('\n' + (u'│ ' if is_origin_job and has_children else ("  " if is_origin_job else "")))
+        prefix = DELIMITER('\n' + (u'│ ' if is_not_subjob and has_children else ("  " if is_not_subjob else "")))
         if desc.get("output") != None:
             result += job_output_to_str(desc['output'], prefix=prefix)
         elif desc['state'] == 'failed' and 'failureReason' in desc:

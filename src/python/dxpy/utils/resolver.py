@@ -151,6 +151,9 @@ def is_data_obj_id(string):
 def is_container_id(string):
     return is_hashid(string) and (string.startswith('project-') or string.startswith('container-'))
 
+def is_analysis_id(string):
+    return is_hashid(string) and string.startswith('analysis-')
+
 def is_job_id(string):
     return is_hashid(string) and string.startswith('job-')
 

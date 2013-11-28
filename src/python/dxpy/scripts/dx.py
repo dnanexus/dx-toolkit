@@ -141,7 +141,7 @@ from dxpy.utils.printing import (CYAN, BLUE, YELLOW, GREEN, RED, WHITE, UNDERLIN
                                  DNANEXUS_X, set_colors, set_delimiter, get_delimiter, DELIMITER, fill,
                                  tty_rows, tty_cols)
 from dxpy.utils.pretty_print import format_tree, format_table
-from dxpy.utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id,
+from dxpy.utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id, is_analysis_id,
                                  get_last_pos_of_char, resolve_container_id_or_name, resolve_path,
                                  resolve_existing_path, get_app_from_path, resolve_app, get_exec_handler,
                                  cached_project_names, split_unescaped,
@@ -2179,37 +2179,44 @@ def find_executions(args):
              'limit': None if args.trees else args.num_results + 1}
     json_output = []                        # for args.json
 
-    def build_tree(root, jobs_by_parent, job_descriptions):
+    def build_tree(root, executions_by_parent, execution_descriptions, is_cached_result=False):
         tree, root_string = {}, ''
         if args.json:
-            json_output.append(job_descriptions[root])
+            json_output.append(execution_descriptions[root])
         elif args.brief:
             print root
         else:
-            root_string = get_find_executions_string(job_descriptions[root],
-                                                     has_children=root in jobs_by_parent,
-                                                     show_outputs=args.show_outputs)
+            root_string = get_find_executions_string(execution_descriptions[root],
+                                                     has_children=root in executions_by_parent,
+                                                     show_outputs=args.show_outputs,
+                                                     is_cached_result=is_cached_result)
             tree[root_string] = collections.OrderedDict()
-        for child_job in jobs_by_parent.get(root, {}):
-            subtree, subtree_root = build_tree(child_job, jobs_by_parent, job_descriptions)
+        for child_execution in executions_by_parent.get(root, {}):
+            child_is_cached_result = is_cached_result or \
+                                     (root.startswith('analysis-') and \
+                                      execution_descriptions[child_execution].get('parentAnalysis') != root)
+            subtree, subtree_root = build_tree(child_execution,
+                                               executions_by_parent,
+                                               execution_descriptions,
+                                               is_cached_result=child_is_cached_result)
             if tree:
                 tree[root_string].update(subtree)
         return tree, root_string
 
-    def process_tree(result, jobs_by_parent, job_descriptions):
-        tree, root = build_tree(result['id'], jobs_by_parent, job_descriptions)
+    def process_tree(result, executions_by_parent, execution_descriptions):
+        tree, root = build_tree(result['id'], executions_by_parent, execution_descriptions)
         if tree:
             print format_tree(tree[root], root)
 
     try:
         num_processed_results = 0
         roots = collections.OrderedDict()
-        for job_result in dxpy.find_executions(**query):
+        for execution_result in dxpy.find_executions(**query):
             if args.trees:
                 if args.classname == 'job':
-                    root = job_result['describe']['originJob']
+                    root = execution_result['describe']['originJob']
                 else:
-                    root = job_result['describe']['rootExecution']
+                    root = execution_result['describe']['rootExecution']
                 if root not in roots:
                     num_processed_results += 1
             else:
@@ -2220,40 +2227,54 @@ def find_executions(args):
                 break
 
             if args.json:
-                json_output.append(job_result['describe'])
+                json_output.append(execution_result['describe'])
             elif args.trees:
                 roots[root] = root
                 if args.classname == 'analysis' and root.startswith('job-'):
                     # Analyses in trees with jobs at their root found in "dx find analyses" are displayed unrooted,
                     # and only the last analysis found is displayed.
-                    roots[root] = job_result['describe']['id']
+                    roots[root] = execution_result['describe']['id']
             elif args.brief:
-                print job_result['id']
+                print execution_result['id']
             elif not args.trees:
-                print format_tree({}, get_find_executions_string(job_result['describe'],
+                print format_tree({}, get_find_executions_string(execution_result['describe'],
                                                                  has_children=False,
                                                                  single_result=True,
                                                                  show_outputs=args.show_outputs))
         if args.trees:
-            jobs_by_parent, descriptions = collections.defaultdict(list), {}
+            executions_by_parent, descriptions = collections.defaultdict(list), {}
             root_field = 'origin_job' if args.classname == 'job' else 'root_execution'
             parent_field = 'masterJob' if args.no_subjobs else 'parentJob'
             query = {'classname': args.classname,
                      'describe': {"io": include_io},
                      'include_subjobs': False if args.no_subjobs else True,
                      root_field: roots.keys()}
-            def process_job_result(job_result):
-                job_desc = job_result['describe']
-                parent = job_desc.get(parent_field) or job_desc.get('parentAnalysis')
-                descriptions[job_result['id']] = job_desc
+            def process_execution_result(execution_result):
+                execution_desc = execution_result['describe']
+                parent = execution_desc.get(parent_field) or execution_desc.get('parentAnalysis')
+                descriptions[execution_result['id']] = execution_desc
                 if parent:
-                    jobs_by_parent[parent].append(job_result['id'])
+                    executions_by_parent[parent].append(execution_result['id'])
 
-            for job_result in dxpy.find_executions(**query):
-                process_job_result(job_result)
+                # If an analysis with cached children, also insert those
+                if execution_desc['class'] == 'analysis':
+                    for stage_desc in execution_desc['stages']:
+                        if stage_desc['execution']['parentAnalysis'] != execution_result['id'] and \
+                           (args.classname != 'analysis' or stage_desc['execution']['class'] == 'analysis'):
+                            # this is a cached stage (with a different parent)
+                            executions_by_parent[execution_result['id']].append(stage_desc['execution']['id'])
+                            if stage_desc['execution']['id'] not in descriptions:
+                                descriptions[stage_desc['execution']['id']] = stage_desc['execution']
 
-            for root in roots:
-                process_tree(descriptions[roots[root]], jobs_by_parent, descriptions)
+            for execution_result in dxpy.find_executions(**query):
+                process_execution_result(execution_result)
+
+            # ensure roots are sorted by their creation time
+            sorted_roots = sorted(roots.values(), cmp=lambda x, y: cmp(descriptions[y]['created'],
+                                                                       descriptions[x]['created']))
+
+            for root in sorted_roots:
+                process_tree(descriptions[roots[root]], executions_by_parent, descriptions)
         if args.json:
             print json.dumps(json_output, indent=4)
 
@@ -2420,10 +2441,10 @@ def close(args):
 def wait(args):
     had_error = False
     for path in args.path:
-        if is_job_id(path):
-            dxjob = dxpy.DXJob(path)
+        if is_job_id(path) or is_analysis_id(path):
+            dxexecution = dxpy.get_handler(path)
             print "Waiting for " + path + " to finish running..."
-            try_call(dxjob.wait_on_done)
+            try_call(dxexecution.wait_on_done)
             print "Done"
         else:
             # Attempt to resolve name
