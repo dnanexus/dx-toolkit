@@ -266,20 +266,21 @@ def render_execdepends(thing):
     return rendered
 
 def render_stage(title, stage, as_stage_of=None):
-    is_cached_result = as_stage_of is not None and stage['execution']['parentAnalysis'] != as_stage_of
     lines_to_print = [(title, "{name} ({id})".format(name=stage['name'], id=stage['id']) if stage['name'] is not None else stage['id']),
                       ('  Executable', stage['executable'])]
-    execution_id_str = stage['execution']['id']
-    if is_cached_result:
-        execution_id_str = "[" + execution_id_str + "]"
     if 'execution' in stage:
+        is_cached_result = as_stage_of is not None and stage['execution']['parentAnalysis'] != as_stage_of
+        execution_id_str = stage['execution']['id']
+        if is_cached_result:
+            execution_id_str = "[" + execution_id_str + "]"
+
         if 'state' in stage['execution']:
             lines_to_print.append(('  Execution', execution_id_str + ' (' + JOB_STATES(stage['execution']['state']) + ')'))
         else:
             lines_to_print.append(('  Execution', execution_id_str))
 
-    if is_cached_result:
-        lines_to_print.append(('  Cached from', stage['execution']['parentAnalysis']))
+        if is_cached_result:
+            lines_to_print.append(('  Cached from', stage['execution']['parentAnalysis']))
 
     for line in lines_to_print:
         print_field(line[0], line[1])
