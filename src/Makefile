@@ -286,7 +286,7 @@ doc_ruby: ruby
 
 # Upload Agent dependencies
 # =========================
-ua_deps: openssl boost curl libmagic
+ua_deps: openssl boost curl file/stage/lib/libmagic.la
 
 UBUNTU_MIRROR=http://archive.ubuntu.com/ubuntu
 
@@ -323,9 +323,9 @@ openssl/libssl.a:
 ifeq ($(UNAME), Darwin)
 	cd openssl; ./Configure darwin64-x86_64-cc -shared
 else
-	cd openssl; ./config
+	cd openssl; ./config shared --openssldir="$$(pwd)/stage"
 endif
-	$(MAKE) -C openssl -j1
+	$(MAKE) -C openssl -j1 install
 
 BOOST_PV=1.53
 BOOST_SHA=e6dd1b62ceed0a51add3dda6f3fc3ce0f636a7f3
@@ -350,14 +350,16 @@ else
 	cd boost; ./b2 --layout=tagged -j8 stage
 endif
 
-curl: c-ares curl/stage/lib/libcurl.la
+curl: c-ares/stage/lib/libcares.la curl/stage/lib/libcurl.la
 
 CURL_PV=7.32.0
 CURL_SHA=cadc5648e4cd4ea750a8c580311722ed1fb1573a
 ifeq ($(OS), Windows_NT)
-	CURL_WITH_WINSSL=--with-winssl
+	CURL_WITH_SSL=--with-winssl
+else
+	CURL_WITH_SSL=--with-ssl=../openssl/stage
 endif
-curl/stage/lib/libcurl.la: shasum
+curl/stage/lib/libcurl.la: shasum openssl
 	mkdir -p curl
 	curl ${UBUNTU_MIRROR}/pool/main/c/curl/curl_${CURL_PV}.orig.tar.gz > curl-${CURL_PV}.tar.gz
 	[[ $$(shasum curl-${CURL_PV}.tar.gz|cut -f 1 -d ' ') == $(CURL_SHA) ]]
@@ -368,10 +370,8 @@ curl/stage/lib/libcurl.la: shasum
 	    --disable-tls-srp --without-gnutls --without-polarssl --without-cyassl \
 	    --without-nss --without-libmetalink --without-libssh2 --without-librtmp \
 	    --without-winidn --without-libidn --enable-ares="$(DNANEXUS_HOME)/src/c-ares/stage" \
-	    --enable-static=yes $(CURL_WITH_WINSSL) --prefix=/
+	    --enable-static=yes $(CURL_WITH_SSL) --prefix=/
 	$(MAKE) -C curl install DESTDIR="$(DNANEXUS_HOME)/src/curl/stage"
-
-c-ares: c-ares/stage/lib/libcares.la
 
 CARES_PV=1.10.0
 CARES_SHA=e44e6575d5af99cb3a38461486e1ee8b49810eb5
@@ -382,8 +382,6 @@ c-ares/stage/lib/libcares.la: shasum
 	tar -xzf c-ares-${CARES_PV}.tar.gz -C c-ares --strip-components=1
 	cd c-ares; ./configure --prefix=/
 	$(MAKE) -C c-ares install DESTDIR="$(DNANEXUS_HOME)/src/c-ares/stage"
-
-libmagic: file/stage/lib/libmagic.la
 
 FILE_PV=5.09
 FILE_SHA=9d905f9e50033c3f5be3728473cbb709a41550fb
