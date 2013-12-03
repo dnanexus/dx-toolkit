@@ -1,3 +1,17 @@
+dx-toolkit (0.78.0) precise; urgency=low
+
+  * Upload agent build fixes.
+
+  * New Java bindings for findDataObjects.
+
+  * Improved handling of workflows in dx and dxpy.
+
+  * Support for tags and properties on jobs and analyses.
+
+  * Various bug fixes.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 03 Dec 2013 20:24:20 +0000
+
 dx-toolkit (0.77.0) precise; urgency=low
 
   * Support for job tags and properties.
