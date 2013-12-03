@@ -1,3 +1,7 @@
+DNAnexus Upload Agent 1.4.9 <support@dnanexus.com>, 2013-Dec-01
+---------------------------------------------------------------
+  * Fix Mac build issues with 1.4.7 and .8.
+
 DNAnexus Upload Agent 1.4.8 <support@dnanexus.com>, 2013-Dec-01
 ---------------------------------------------------------------
   * Fix broken 1.4.7 release.

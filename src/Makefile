@@ -324,7 +324,7 @@ openssl/libssl.a:
 	[[ $$(shasum openssl-${OPENSSL_PV}.tar.gz|cut -f 1 -d ' ') == $(OPENSSL_SHA) ]]
 	tar -xzf openssl-${OPENSSL_PV}.tar.gz -C openssl --strip-components=1
 ifeq ($(UNAME), Darwin)
-	cd openssl; ./Configure darwin64-x86_64-cc -shared
+	cd openssl; ./Configure darwin64-x86_64-cc -shared --openssldir="$$(pwd)/stage"
 else
 	cd openssl; ./config shared --openssldir="$$(pwd)/stage"
 endif
@@ -362,12 +362,16 @@ CURL_PV=7.32.0
 CURL_SHA=cadc5648e4cd4ea750a8c580311722ed1fb1573a
 ifeq ($(OS), Windows_NT)
 	CURL_WITH_SSL=--with-winssl
+	CURL_SHARED_LIBS=--enable-shared=no
 else ifeq ($(UNAME), Darwin)
-	CURL_WITH_SSL=--with-ssl=../openssl/stage
+	CURL_WITH_SSL=--with-ssl=$$(pwd)/../openssl/stage
+	CURL_SHARED_LIBS=--enable-shared=yes
 else ifeq ($(CENTOS_MAJOR_VERSION), 5)
-	CURL_WITH_SSL=--with-ssl=../openssl/stage
+	CURL_WITH_SSL=--with-ssl=$$(pwd)/../openssl/stage
+	CURL_SHARED_LIBS=--enable-shared=no
 else
 	CURL_WITH_SSL=--with-ssl
+	CURL_SHARED_LIBS=--enable-shared=no
 endif
 curl/stage/lib/libcurl.la: shasum openssl
 	mkdir -p curl
@@ -380,7 +384,7 @@ curl/stage/lib/libcurl.la: shasum openssl
 	    --disable-tls-srp --without-gnutls --without-polarssl --without-cyassl \
 	    --without-nss --without-libmetalink --without-libssh2 --without-librtmp \
 	    --without-winidn --without-libidn --enable-ares="$(DNANEXUS_HOME)/src/c-ares/stage" \
-	    --enable-static=yes --enable-shared=no $(CURL_WITH_SSL) --prefix=/
+	    --enable-static=yes $(CURL_SHARED_LIBS) $(CURL_WITH_SSL) --prefix=/
 	$(MAKE) -C curl install DESTDIR="$(DNANEXUS_HOME)/src/curl/stage"
 
 CARES_PV=1.10.0
