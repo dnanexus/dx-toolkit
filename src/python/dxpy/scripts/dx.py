@@ -211,7 +211,8 @@ class DXCLICompleter():
         else:
             if words[0] == 'run':
                 path_matches = path_completer(words[-1],
-                                              classes=['applet'])
+                                              classes=['applet', 'workflow'],
+                                              visibility="visible")
             elif words[0] in ['cd', 'rmdir', 'mkdir', 'tree']:
                 path_matches = path_completer(words[-1],
                                               expected='folder')
@@ -3797,7 +3798,7 @@ run_executable_action = parser_run.add_argument('executable',
                                                 help=fill('Name or ID of an applet, app, or workflow to run; must be provided if --clone is not set', width_adjustment=-24),
                                                 nargs="?", default="")
 run_executable_action.completer = MultiCompleter([DXAppCompleter(),
-                                                  DXPathCompleter(classes=['applet', 'workflow']),
+                                                  DXPathCompleter(classes=['applet', 'workflow'], visibility="visible"),
                                                   DXPathCompleter(classes=['record'], typespec='pipeline')])
 parser_run.add_argument('-h', '--help', help='show this help message and exit', nargs=0, action=runHelp)
 parser_run.add_argument('--clone', help=fill('Job ID or name from which to use as default options (will use the exact same executable ID, destination project and folder, job input, instance type requests, and a similar name unless explicitly overridden by command-line arguments)', width_adjustment=-24))

@@ -601,6 +601,30 @@ class TestDXClientRun(DXTestCase):
         dxpy.api.project_destroy(self.other_proj_id, {'terminateJobs': True})
         super(TestDXClientRun, self).tearDown()
 
+    def test_dx_run_no_hidden_executables(self):
+        # hidden applet
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "inputSpec": [],
+                                         "outputSpec": [],
+                                         "runSpec": {"interpreter": "bash",
+                                                     "code": "echo 'hello'"},
+                                         "hidden": True,
+                                         "name": "hidden_applet"})['id']
+        run("dx describe hidden_applet")
+        with self.assertSubprocessFailure(stderr_regexp='No matches found', exit_code=3):
+            run("dx run hidden_applet")
+        # by ID will still work
+        run("dx run " + applet_id + " -y")
+
+        # hidden workflow
+        dxworkflow = dxpy.new_dxworkflow(name="hidden_workflow", hidden=True)
+        dxworkflow.add_stage(applet_id)
+        with self.assertSubprocessFailure(stderr_regexp='No matches found', exit_code=3):
+            run("dx run hidden_workflow")
+        # by ID will still work
+        run("dx run " + dxworkflow.get_id() + " -y")
+
     @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"), "Temporarily skipping test that requires unreleased features")
     def test_dx_run_tags_and_properties(self):
         # success

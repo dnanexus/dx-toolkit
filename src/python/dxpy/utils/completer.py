@@ -111,7 +111,7 @@ def get_folder_matches(text, delim_pos, dxproj, folderpath):
         return []
 
 def get_data_matches(text, delim_pos, dxproj, folderpath, classname=None,
-                     typespec=None):
+                     typespec=None, visibility=None):
     '''
     :param text: String to be tab-completed; still in escaped form
     :type text: string
@@ -123,6 +123,8 @@ def get_data_matches(text, delim_pos, dxproj, folderpath, classname=None,
     :type folderpath: string
     :param classname: Data object class by which to restrict the search (None for no restriction on class)
     :type classname: string
+    :param visibility: Visibility to constrain the results to; default is "visible" for empty strings, "either" for nonempty
+    :type visibility: string
     :returns: List of matches
     :rtype: list of strings
 
@@ -133,13 +135,19 @@ def get_data_matches(text, delim_pos, dxproj, folderpath, classname=None,
     #unescaped_text = unescape_completion_name_str(text[delim_pos + 1:])
     unescaped_text = text[delim_pos + 1:]
 
+    if visibility is None:
+        if text != '' and delim_pos != len(text) - 1:
+            visibility = "either"
+        else:
+            visibility = "visible"
+
     try:
         results = list(dxpy.find_data_objects(project=dxproj.get_id(),
                                               folder=folderpath,
                                               name=unescaped_text + "*",
                                               name_mode="glob",
                                               recurse=False,
-                                              visibility='either' if text != '' and delim_pos != len(text) - 1 else 'visible',
+                                              visibility=visibility,
                                               classname=classname,
                                               limit=100,
                                               describe=True,
@@ -150,7 +158,7 @@ def get_data_matches(text, delim_pos, dxproj, folderpath, classname=None,
         return []
 
 def path_completer(text, expected=None, classes=None, perm_level=None,
-                   include_current_proj=False, typespec=None):
+                   include_current_proj=False, typespec=None, visibility=None):
     '''
     :param text: String to tab-complete to a path matching the syntax project-name:folder/entity_or_folder_name
     :type text: string
@@ -162,6 +170,7 @@ def path_completer(text, expected=None, classes=None, perm_level=None,
     :type perm_level: string
     :param include_current_proj: Indicate whether the current project's name should be a potential result
     :type include_current_proj: boolean
+    :param visibility: Visibility with which to restrict the completion (one of "either", "visible", or "hidden") (default behavior is dependent on *text*)
 
     Returns a list of matches to the text and restricted by the
     requested parameters.
@@ -205,11 +214,13 @@ def path_completer(text, expected=None, classes=None, perm_level=None,
                     if classes is not None:
                         for classname in classes:
                             matches += get_data_matches(text, slash_pos, dxproj,
-                                                        folderpath, classname,
-                                                        typespec)
+                                                        folderpath, classname=classname,
+                                                        typespec=typespec,
+                                                        visibility=visibility)
                     else:
                         matches += get_data_matches(text, slash_pos, dxproj,
-                                                    folderpath, typespec=typespec)
+                                                    folderpath, typespec=typespec,
+                                                    visibility=visibility)
             except:
                 pass
     else:
@@ -229,11 +240,12 @@ def path_completer(text, expected=None, classes=None, perm_level=None,
                     if classes is not None:
                         for classname in classes:
                             matches += get_data_matches(text, delim_pos, dxproj,
-                                                        folderpath, classname,
-                                                        typespec)
+                                                        folderpath, classname=classname,
+                                                        typespec=typespec, visibility=visibility)
                     else:
                         matches += get_data_matches(text, delim_pos, dxproj,
-                                                    folderpath, typespec=typespec)
+                                                    folderpath, typespec=typespec,
+                                                    visibility=visibility)
             except:
                 pass
     return matches
@@ -245,17 +257,20 @@ class DXPathCompleter():
     names with spaces, the delimiters set for the completer must not
     include spaces.
     '''
-    def __init__(self, expected=None, classes=None, typespec=None, include_current_proj=False):
+    def __init__(self, expected=None, classes=None, typespec=None, include_current_proj=False,
+                 visibility=None):
         self.matches = []
         self.expected = expected
         self.classes = classes
         self.typespec = typespec
         self.include_current_proj = include_current_proj
+        self.visibility = visibility
 
     def _populate_matches(self, prefix):
         self.matches = path_completer(prefix, self.expected, self.classes,
                                       typespec=self.typespec,
-                                      include_current_proj=self.include_current_proj)
+                                      include_current_proj=self.include_current_proj,
+                                      visibility=self.visibility)
 
     def get_matches(self, line, point, prefix, suffix):
         self._populate_matches(prefix)

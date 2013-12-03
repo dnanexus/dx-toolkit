@@ -507,7 +507,8 @@ def resolve_job_ref(job_id, name, describe={}):
 
     return results
 
-def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_classes=None, allow_mult=False, describe={}, all_mult=False, allow_empty_string=True):
+def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_classes=None, allow_mult=False, describe={}, all_mult=False, allow_empty_string=True,
+                          visibility="either"):
     '''
     :param ask_to_resolve: Whether picking may be necessary (if true, a list is returned; if false, only one result is returned)
     :type ask_to_resolve: boolean
@@ -521,6 +522,8 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
     :raises: :exc:`ResolutionError` if the request path was invalid, or a single result was requested and input is not a TTY
     :param allow_empty_string: If false, a ResolutionError will be raised if *path* is an empty string. Use this when resolving the empty string could result in unexpected behavior.
     :type allow_empty_string: boolean
+    :param visibility: The visibility expected ("either", "hidden", or "visible")
+    :type visibility: string
 
     Returns either a list of results or a single result (depending on
     how many is expected; if only one, then an interactive picking of
@@ -591,7 +594,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
                                                       name_mode='glob',
                                                       recurse=False,
                                                       describe=describe,
-                                                      visibility='either'))
+                                                      visibility=visibility))
             except BaseException as details:
                 raise ResolutionError(str(details))
         if len(results) == 0:
@@ -694,7 +697,8 @@ def get_exec_handler(path, alias=None):
             project, folderpath, entity_results = resolve_existing_path(path,
                                                                         expected='entity',
                                                                         ask_to_resolve=False,
-                                                                        expected_classes=['applet', 'record', 'workflow'])
+                                                                        expected_classes=['applet', 'record', 'workflow'],
+                                                                        visibility="visible")
             def is_applet_or_workflow(i):
                 return (i['describe']['class'] in ['applet', 'workflow'])
             def is_record_workflow(i):
