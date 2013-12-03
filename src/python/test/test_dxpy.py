@@ -940,7 +940,6 @@ class TestDXAppletJob(unittest.TestCase):
     def tearDown(self):
         tearDownTempProjects(self)
 
-    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"), "Temporarily skipping test that requires unreleased features")
     def test_run_dxapplet_and_job_metadata(self):
         dxapplet = dxpy.DXApplet()
         dxapplet.new(name="test_applet",
@@ -1016,8 +1015,8 @@ class TestDXAnalysisWorkflow(unittest.TestCase):
     def tearDown(self):
         tearDownTempProjects(self)
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS and os.environ.get("DX_RUN_NEXT_TESTS"),
-                         'skipping test that would run a job and temporarily skipping test that requires unreleased features')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping test that would run a job')
     def test_run_workflow_and_analysis_metadata(self):
         dxworkflow = dxpy.DXWorkflow(dxpy.api.workflow_new({"project": self.proj_id})['id'])
         dxapplet = dxpy.DXApplet()
@@ -1054,7 +1053,6 @@ def main(number):
         self.assertEqual(analysis_desc["tags"], ["foo"])
         self.assertEqual(analysis_desc["properties"], {"foo": "bar"})
 
-    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"), "Temporarily skipping test that requires unreleased features")
     def test_new_dxworkflow(self):
         blankworkflow = dxpy.new_dxworkflow()
         self.assertIsInstance(blankworkflow, dxpy.DXAnalysisWorkflow)
@@ -1081,7 +1079,6 @@ def main(number):
         self.assertEqual(desc['description'], 'mydescription')
         self.assertEqual(desc['outputFolder'], '/foo')
 
-    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"), "Temporarily skipping test that requires unreleased features")
     def test_add_move_remove_stages(self):
         dxworkflow = dxpy.new_dxworkflow()
         dxapplet = dxpy.DXApplet()
@@ -1171,7 +1168,6 @@ def main(number):
         with self.assertRaises(DXError):
             dxworkflow.get_stage('stage-123456789012345678901234')
 
-    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"), "Temporarily skipping test that requires unreleased features")
     def test_update(self):
         dxworkflow = dxpy.new_dxworkflow(title='title', summary='summary', description='description', output_folder='/foo')
         self.assertEqual(dxworkflow.editVersion, 0)
@@ -1224,7 +1220,6 @@ def main(number):
         dxworkflow.update()
         self.assertEqual(dxworkflow.editVersion, 5)
 
-    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"), "Temporarily skipping test that requires unreleased features")
     def test_update_stage(self):
         dxworkflow = dxpy.new_dxworkflow()
         dxapplet = dxpy.DXApplet()
