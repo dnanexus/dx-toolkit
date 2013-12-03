@@ -1,3 +1,9 @@
+dx-toolkit (0.77.1) precise; urgency=low
+
+  * Java API backports.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 03 Dec 2013 20:28:35 +0000
+
 dx-toolkit (0.77.0) precise; urgency=low
 
   * Support for job tags and properties.
