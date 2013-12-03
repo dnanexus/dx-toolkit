@@ -23,7 +23,7 @@ Functions and classes used when launching platform executables from the CLI.
 import os, sys, json, collections, pipes, shlex
 
 import dxpy
-from dxpy.exceptions import DXError, DXCLIError
+from dxpy.exceptions import DXCLIError
 from dxpy.utils.printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC, DELIMITER, UNDERLINE, get_delimiter, fill)
 from dxpy.utils.describe import (get_find_executions_string, get_ls_l_desc, parse_typespec)
 from dxpy.utils.resolver import (get_first_pos_of_char, is_hashid, is_job_id, is_localjob_id, paginate_and_pick, pick,
@@ -57,16 +57,16 @@ def parse_bool(string):
             return True
         elif 'false'.startswith(string.lower()) or string == '0':
             return False
-    raise DXError('Could not resolve \"' + string +  '\" to a boolean')
+    raise DXCLIError('Could not resolve \"' + string +  '\" to a boolean')
 
 def parse_obj(string, klass):
     if string == '':
-        raise DXError('Error: Nonempty string cannot be resolved')
+        raise DXCLIError('Error: Nonempty string cannot be resolved')
     project, path, entity_result = resolve_existing_path(string)
     if entity_result is None:
-        raise DXError('Could not resolve \"' + string + '\" to a name or ID')
+        raise DXCLIError('Could not resolve \"' + string + '\" to a name or ID')
     if not entity_result['describe']['class'] == klass:
-        raise DXError('Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class ' + klass + ' was expected.')
+        raise DXCLIError('Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class ' + klass + ' was expected.')
     if is_hashid(string):
         return {'$dnanexus_link': entity_result['id']}
     else:
@@ -449,7 +449,7 @@ class ExecutableInputs(object):
 
         if self.input_spec is not None:
             if input_name not in self.input_spec and self._desc.get('class') != 'workflow':
-                raise DXError('Input field called "' + input_name + '" was not found in the input spec')
+                raise DXCLIError('Input field called "' + input_name + '" was not found in the input spec')
             elif input_name in self.input_spec:
                 input_class = self.input_spec[input_name]['class']
 
@@ -492,7 +492,10 @@ class ExecutableInputs(object):
         else:
             # Input class is known.  Respect the "array" class.
 
-            input_value = parse_input_or_jbor(input_class, input_value)
+            try:
+                input_value = parse_input_or_jbor(input_class, input_value)
+            except BaseException as details:
+                raise DXCLIError('Value provided for input field "' + input_name + '" could not be parsed as ' + input_class + ': ' + unicode(details))
 
             if input_class.startswith('array:'):
                 self.inputs[input_name].append(input_value)
