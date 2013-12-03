@@ -749,7 +749,7 @@ public final class DXSearch {
     }
 
     /**
-     * The set of jobs that matched a {@code findDataObjects} query.
+     * The set of data objects that matched a {@code findDataObjects} query.
      *
      * <p>
      * This class paginates through the results as necessary to return the full result set.
