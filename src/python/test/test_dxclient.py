@@ -926,6 +926,9 @@ class TestDXClientWorkflow(DXTestCase):
         # when adding a stage with both absolute and relative output folders
         with self.assertSubprocessFailure(stderr_regexp="output-folder", exit_code=2):
             run("dx add stage " + workflow_id + " " + applet_id + " --output-folder /foo --relative-output-folder foo")
+        # bad executable that can't be found
+        with self.assertSubprocessFailure(stderr_regexp="ResolutionError", exit_code=3):
+            run("dx add stage " + workflow_id + " foo")
         # bad input
         with self.assertSubprocessFailure(stderr_regexp="parsed", exit_code=3):
             run("dx add stage " + workflow_id + " -inumber=foo " + applet_id)
@@ -1077,6 +1080,12 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertEqual(desc["editVersion"], 4)
         self.assertIsNone(desc["stages"][0]["name"])
 
+        # set incompatible executable
+        with self.assertSubprocessFailure(exit_code=3):
+            run("dx update stage myworkflow 0 --executable " + empty_applet_id)
+        run("dx update stage myworkflow 0 --force --executable " + empty_applet_id)
+        run("dx update stage myworkflow 0 --force --executable " + applet_id)
+
         # some errors
         with self.assertSubprocessFailure(stderr_regexp="no-name", exit_code=2):
             run("dx update stage myworkflow 0 --name foo --no-name")
@@ -1084,6 +1093,8 @@ class TestDXClientWorkflow(DXTestCase):
             run("dx update stage myworkflow 0 --output-folder /foo --relative-output-folder foo")
         with self.assertSubprocessFailure(stderr_regexp="parsed", exit_code=3):
             run("dx update stage myworkflow 0 -inumber=foo")
+        with self.assertSubprocessFailure(stderr_regexp="ResolutionError", exit_code=3):
+            run("dx update stage myworkflow 0 --executable foo")
         with self.assertSubprocessFailure(stderr_regexp="instance-type", exit_code=3):
             run("dx update stage myworkflow 0 --instance-type {]")
 

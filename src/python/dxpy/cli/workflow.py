@@ -95,7 +95,9 @@ def add_stage(args):
     workflow_id, project = get_workflow_id_and_project(args.workflow)
 
     # get executable
-    exec_handler = dxpy.utils.resolver.get_exec_handler(args.executable, args.alias)
+    exec_handler = try_call(dxpy.utils.resolver.get_exec_handler,
+                            args.executable,
+                            args.alias)
     exec_inputs = dxpy.cli.exec_io.ExecutableInputs(exec_handler)
     try_call(exec_inputs.update_from_args, args, require_all_inputs=False)
 
@@ -221,7 +223,9 @@ def update_stage(args):
     new_exec_handler = None
     if args.executable is not None:
         # get executable
-        new_exec_handler = dxpy.utils.resolver.get_exec_handler(args.executable, args.alias)
+        new_exec_handler = try_call(dxpy.utils.resolver.get_exec_handler,
+                                    args.executable,
+                                    args.alias)
         exec_inputs = dxpy.cli.exec_io.ExecutableInputs(new_exec_handler)
         try_call(exec_inputs.update_from_args, args, require_all_inputs=False)
         stage_input = exec_inputs.inputs
