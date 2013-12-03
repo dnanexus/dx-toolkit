@@ -926,6 +926,9 @@ class TestDXClientWorkflow(DXTestCase):
         # when adding a stage with both absolute and relative output folders
         with self.assertSubprocessFailure(stderr_regexp="output-folder", exit_code=2):
             run("dx add stage " + workflow_id + " " + applet_id + " --output-folder /foo --relative-output-folder foo")
+        # bad input
+        with self.assertSubprocessFailure(stderr_regexp="parsed", exit_code=3):
+            run("dx add stage " + workflow_id + " -inumber=foo " + applet_id)
         # bad instance type arg
         with self.assertSubprocessFailure(stderr_regexp="instance-type", exit_code=3):
             run("dx add stage " + workflow_id + " " + applet_id + " --instance-type {]")
@@ -1075,12 +1078,12 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertIsNone(desc["stages"][0]["name"])
 
         # some errors
-        with self.assertSubprocessFailure(exit_code=1):
-            run("dx update stage myworkflow 0 -inumber=foo")
         with self.assertSubprocessFailure(stderr_regexp="no-name", exit_code=2):
             run("dx update stage myworkflow 0 --name foo --no-name")
         with self.assertSubprocessFailure(stderr_regexp="output-folder", exit_code=2):
             run("dx update stage myworkflow 0 --output-folder /foo --relative-output-folder foo")
+        with self.assertSubprocessFailure(stderr_regexp="parsed", exit_code=3):
+            run("dx update stage myworkflow 0 -inumber=foo")
         with self.assertSubprocessFailure(stderr_regexp="instance-type", exit_code=3):
             run("dx update stage myworkflow 0 --instance-type {]")
 
