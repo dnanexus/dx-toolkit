@@ -25,8 +25,8 @@ MAKE:=$(MAKE) $(MAKEOPTS)
 
 UNAME := $(shell uname)
 
-CENTOS_MAJOR_VERSION := $(shell grep -o "CentOS release [0-9]\+" /etc/issue | sed -e "s/CentOS release //")
-UBUNTU_VERSION := $(shell grep -o "Ubuntu [0-9]\+\.[0-9]\+" /etc/issue | sed -e "s/Ubuntu //")
+CENTOS_MAJOR_VERSION := $(shell test -e /etc/issue && (grep -o "CentOS release [0-9]\+" /etc/issue | sed -e "s/CentOS release //"))
+UBUNTU_VERSION := $(shell test -e /etc/issue && (grep -o "Ubuntu [0-9]\+\.[0-9]\+" /etc/issue | sed -e "s/Ubuntu //"))
 
 ifndef CCACHE_DISABLE
 	export PATH := /usr/lib/ccache:$(PATH)
