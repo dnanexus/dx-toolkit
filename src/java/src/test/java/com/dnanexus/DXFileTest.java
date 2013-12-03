@@ -1,0 +1,127 @@
+// Copyright (C) 2013 DNAnexus, Inc.
+//
+// This file is part of dx-toolkit (DNAnexus platform client libraries).
+//
+//   Licensed under the Apache License, Version 2.0 (the "License"); you may
+//   not use this file except in compliance with the License. You may obtain a
+//   copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+//   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+//   License for the specific language governing permissions and limitations
+//   under the License.
+
+package com.dnanexus;
+
+import java.io.IOException;
+
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.dnanexus.DXFile.Describe;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+public class DXFileTest {
+
+    private static final ObjectMapper mapper = new ObjectMapper();
+
+    private DXProject testProject;
+
+    @Before
+    public void setUp() {
+        testProject = DXProject.newProject().setName("DXFileTest").build();
+    }
+
+    @After
+    public void tearDown() {
+        if (testProject != null) {
+            testProject.destroy();
+        }
+    }
+
+    // External tests
+
+    @Test
+    public void testCreateFileSimple() {
+        DXFile f = DXFile.newFile().setProject(testProject).setName("foo").build();
+        Describe describe = f.describe();
+        Assert.assertEquals("foo", describe.getName());
+    }
+
+    @Test
+    public void testGetInstance() {
+        DXFile file = DXFile.getInstance("file-0000");
+        Assert.assertEquals("file-0000", file.getId());
+        Assert.assertEquals(null, file.getProject());
+
+        DXFile file2 =
+                DXFile.getInstance("file-0001",
+                        DXProject.getInstance("project-123412341234123412341234"));
+        Assert.assertEquals("file-0001", file2.getId());
+        Assert.assertEquals("project-123412341234123412341234", file2.getProject().getId());
+
+        try {
+            DXFile.getInstance(null);
+            Assert.fail("Expected creation without setting ID to fail");
+        } catch (NullPointerException e) {
+            // Expected
+        }
+        try {
+            DXFile.getInstance("file-1234", (DXContainer) null);
+            Assert.fail("Expected creation without setting project to fail");
+        } catch (NullPointerException e) {
+            // Expected
+        }
+        try {
+            DXFile.getInstance(null, DXProject.getInstance("project-123412341234123412341234"));
+            Assert.fail("Expected creation without setting ID to fail");
+        } catch (NullPointerException e) {
+            // Expected
+        }
+    }
+
+    @Test
+    public void testDataObjectMethods() {
+        DXDataObjectTest.BuilderFactory<DXFile.Builder, DXFile> builderFactory =
+                new DXDataObjectTest.BuilderFactory<DXFile.Builder, DXFile>() {
+                    @Override
+                    public DXFile.Builder getBuilder() {
+                        return DXFile.newFile();
+                    }
+                };
+        DXDataObjectTest.testOpenDataObjectMethods(testProject, builderFactory);
+        // TODO: test out closed data object methods too
+    }
+
+    @Test
+    public void testBuilder() {
+        DXDataObjectTest.testBuilder(testProject,
+                new DXDataObjectTest.BuilderFactory<DXFile.Builder, DXFile>() {
+                    @Override
+                    public DXFile.Builder getBuilder() {
+                        return DXFile.newFile();
+                    }
+                });
+
+        DXFile file =
+                DXFile.newFile().setProject(testProject).setMediaType("application/json").build();
+        Assert.assertEquals("application/json", file.describe().getMediaType());
+    }
+
+    // Internal tests
+
+    @Test
+    public void testCreateFileSerialization() throws IOException {
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"project\":\"project-000011112222333344445555\", \"name\": \"foo\", \"media\": \"application/json\"}"),
+                mapper.valueToTree(DXFile.newFile()
+                        .setProject(DXProject.getInstance("project-000011112222333344445555"))
+                        .setName("foo").setMediaType("application/json").buildRequestHash()));
+    }
+
+}

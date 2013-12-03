@@ -22,10 +22,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -293,8 +295,6 @@ public abstract class DXDataObject extends DXObject {
             this.hidden = !visible;
             return getThisInstance();
         }
-
-        // TODO: initializeFrom
 
     }
 
@@ -644,6 +644,33 @@ public abstract class DXDataObject extends DXObject {
                 // Empty body for Jackson's TypeReference
             });
 
+    /**
+     * Verifies that the specified map has the format of a DNAnexus link.
+     *
+     * @param value putative DNAnexus link
+     */
+    protected static void checkDXLinkFormat(Map<String, Object> value) {
+        if (!value.containsKey("$dnanexus_link")) {
+            throw new IllegalArgumentException(
+                    "Object must contain a field $dnanexus_link to be deserialized");
+        }
+    }
+
+    /**
+     * Deserializes a DXDataObject from JSON containing a DNAnexus link.
+     *
+     * @param value JSON object map
+     *
+     * @return data object
+     */
+    @SuppressWarnings("unused")
+    @JsonCreator
+    private static DXDataObject create(Map<String, Object> value) {
+        checkDXLinkFormat(value);
+        // TODO: how to set the environment?
+        return DXDataObject.getInstance((String) value.get("$dnanexus_link"));
+    }
+
     @VisibleForTesting
     static Map<String, AccessLevel> deserializeListProjectsMap(JsonNode result) {
         try {
@@ -693,8 +720,15 @@ public abstract class DXDataObject extends DXObject {
             DXEnvironment env) {
         if (objectId.startsWith("record-")) {
             return DXRecord.getInstanceWithEnvironment(objectId, project, env);
+        } else if (objectId.startsWith("file-")) {
+            return DXFile.getInstanceWithEnvironment(objectId, project, env);
+        } else if (objectId.startsWith("gtable-")) {
+            return DXGTable.getInstanceWithEnvironment(objectId, project, env);
+        } else if (objectId.startsWith("applet-")) {
+            return DXApplet.getInstanceWithEnvironment(objectId, project, env);
+        } else if (objectId.startsWith("workflow-")) {
+            return DXWorkflow.getInstanceWithEnvironment(objectId, project, env);
         }
-        // TODO: implement the remaining classes.
         throw new IllegalArgumentException("The object ID " + objectId
                 + " was of an unrecognized or unsupported class.");
     }
@@ -711,8 +745,15 @@ public abstract class DXDataObject extends DXObject {
     public static DXDataObject getInstanceWithEnvironment(String objectId, DXEnvironment env) {
         if (objectId.startsWith("record-")) {
             return DXRecord.getInstanceWithEnvironment(objectId, env);
+        } else if (objectId.startsWith("file-")) {
+            return DXFile.getInstanceWithEnvironment(objectId, env);
+        } else if (objectId.startsWith("gtable-")) {
+            return DXGTable.getInstanceWithEnvironment(objectId, env);
+        } else if (objectId.startsWith("applet-")) {
+            return DXApplet.getInstanceWithEnvironment(objectId, env);
+        } else if (objectId.startsWith("workflow-")) {
+            return DXWorkflow.getInstanceWithEnvironment(objectId, env);
         }
-        // TODO: implement the remaining classes.
         throw new IllegalArgumentException("The object ID " + objectId
                 + " was of an unrecognized or unsupported class.");
     }
@@ -779,11 +820,11 @@ public abstract class DXDataObject extends DXObject {
     }
 
     /**
-     * Closes the data object. Returns the same object so you can chain calls:
+     * Closes the data object.
      *
-     * <pre>
-     * DXRecord r = DXRecord.create().close();
-     * </pre>
+     * <p>
+     * Returns the same object so you can chain calls.
+     * </p>
      *
      * @return the same {@code DXDataObject}
      */
@@ -793,8 +834,11 @@ public abstract class DXDataObject extends DXObject {
     }
 
     /**
-     * Closes the data object and waits until the close operation is complete. Returns the same
-     * object so you can chain calls.
+     * Closes the data object and waits until the close operation is complete.
+     *
+     * <p>
+     * Returns the same object so you can chain calls.
+     * </p>
      *
      * @return the same {@code DXDataObject}
      */
@@ -868,6 +912,19 @@ public abstract class DXDataObject extends DXObject {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Returns a DNAnexus link for this object. This is the JSON serializer so it makes it suitable
+     * to provide an object with references to DXDataObjects as the input when running a
+     * {@link DXApplet}, etc.
+     *
+     * @return a DNAnexus link
+     */
+    @SuppressWarnings("unused")
+    @JsonValue
+    private JsonNode getDXLink() {
+        return DXJSON.getObjectBuilder().put("$dnanexus_link", this.getId()).build();
     }
 
     /**

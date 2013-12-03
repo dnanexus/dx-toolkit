@@ -30,6 +30,7 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
@@ -145,7 +146,7 @@ public class DXSearchTest {
         // {created,modified}{Before,After}
 
         // We rely on the fact that
-        //   moo.created <= foo.created <= food.created <= open.created
+        // moo.created <= foo.created <= food.created <= open.created
         // with equality possible since the creation timestamp is encoded at
         // 1-sec resolution
 
@@ -223,6 +224,52 @@ public class DXSearchTest {
 
         // TODO: withLinkTo, withMinimumAccessLevel
 
+    }
+
+    /**
+     * Tests filtering by class.
+     */
+    @Test
+    public void testFindDataObjectsByClass() {
+        DXRecord record = DXRecord.newRecord().setProject(testProject).setName("arecord").build();
+        DXFile file = DXFile.newFile().setProject(testProject).setName("afile").build();
+        DXGTable gtable =
+                DXGTable.newGTable(
+                        ImmutableList.of(ColumnSpecification.getInstance("num_goats",
+                                ColumnType.INT16))).setProject(testProject).setName("agtable")
+                        .build();
+        DXApplet applet =
+                DXApplet.newApplet().setProject(testProject).setName("anapplet")
+                        .setRunSpecification(RunSpecification.newRunSpec("bash", "").build())
+                        .build();
+        DXWorkflow workflow =
+                DXWorkflow.newWorkflow().setProject(testProject).setName("aworkflow").build();
+
+        DXRecord recordResult =
+                Iterables.getOnlyElement(DXSearch.findDataObjects().inProject(testProject)
+                        .withClassRecord().execute().asList());
+        Assert.assertEquals(record, recordResult);
+        Assert.assertEquals("arecord", recordResult.describe().getName());
+        DXFile fileResult =
+                Iterables.getOnlyElement(DXSearch.findDataObjects().inProject(testProject)
+                        .withClassFile().execute().asList());
+        Assert.assertEquals(file, fileResult);
+        Assert.assertEquals("afile", fileResult.describe().getName());
+        DXGTable gtableResult =
+                Iterables.getOnlyElement(DXSearch.findDataObjects().inProject(testProject)
+                        .withClassGTable().execute().asList());
+        Assert.assertEquals(gtable, gtableResult);
+        Assert.assertEquals("agtable", gtableResult.describe().getName());
+        DXApplet appletResult =
+                Iterables.getOnlyElement(DXSearch.findDataObjects().inProject(testProject)
+                        .withClassApplet().execute().asList());
+        Assert.assertEquals(applet, appletResult);
+        Assert.assertEquals("anapplet", appletResult.describe().getName());
+        DXWorkflow workflowResult =
+                Iterables.getOnlyElement(DXSearch.findDataObjects().inProject(testProject)
+                        .withClassWorkflow().execute().asList());
+        Assert.assertEquals(workflow, workflowResult);
+        Assert.assertEquals("aworkflow", workflowResult.describe().getName());
     }
 
     @Test
@@ -308,6 +355,13 @@ public class DXSearchTest {
             DXSearch.findDataObjects().withMinimumAccessLevel(AccessLevel.NONE);
             Assert.fail("Expected minimumAccessLevel=NONE to fail");
         } catch (IllegalArgumentException e) {
+            // Expected
+        }
+
+        try {
+            DXSearch.findDataObjects().withClassApplet().withClassFile();
+            Assert.fail("Expected setting multiple class constraints to fail");
+        } catch (IllegalStateException e) {
             // Expected
         }
     }

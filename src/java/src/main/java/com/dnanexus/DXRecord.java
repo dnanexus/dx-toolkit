@@ -16,6 +16,9 @@
 
 package com.dnanexus;
 
+import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -73,6 +76,8 @@ public class DXRecord extends DXDataObject {
             return this;
         }
 
+        // TODO: initializeFrom
+
     }
 
     /**
@@ -81,7 +86,9 @@ public class DXRecord extends DXDataObject {
     public static class Describe extends DXDataObject.Describe {
         // Record implements no fields that are not available on all
         // DXDataObjects, but other classes do.
-        private Describe() {}
+        private Describe() {
+            super();
+        }
     }
 
     @JsonInclude(Include.NON_NULL)
@@ -94,6 +101,21 @@ public class DXRecord extends DXDataObject {
     }
 
     private static final ObjectMapper mapper = new ObjectMapper();
+
+    /**
+     * Deserializes a DXRecord from JSON containing a DNAnexus link.
+     *
+     * @param value JSON object map
+     *
+     * @return data object
+     */
+    @SuppressWarnings("unused")
+    @JsonCreator
+    private static DXRecord create(Map<String, Object> value) {
+        checkDXLinkFormat(value);
+        // TODO: how to set the environment?
+        return DXRecord.getInstance((String) value.get("$dnanexus_link"));
+    }
 
     /**
      * Returns a {@code DXRecord} associated with an existing record.

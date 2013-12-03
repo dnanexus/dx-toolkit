@@ -589,10 +589,72 @@ public final class DXSearch {
         }
 
         /**
+         * Only returns applets (filters out data objects of all other classes).
+         *
+         * <p>
+         * This method may only be called once during the construction of a query, and is mutually
+         * exclusive with {@link #withClassFile()}, {@link #withClassGTable()},
+         * {@link #withClassRecord()}, and {@link #withClassWorkflow()}.
+         * </p>
+         *
+         * @return the same builder object
+         */
+        @SuppressWarnings("unchecked")
+        public FindDataObjectsRequestBuilder<DXApplet> withClassApplet() {
+            Preconditions.checkState(this.classConstraint == null,
+                    "Cannot specify class constraints more than once");
+            this.classConstraint = "applet";
+            // This cast should be safe, since we hold no references of type T
+            return (FindDataObjectsRequestBuilder<DXApplet>) this;
+        }
+
+        /**
+         * Only returns files (filters out data objects of all other classes).
+         *
+         * <p>
+         * This method may only be called once during the construction of a query, and is mutually
+         * exclusive with {@link #withClassApplet()}, {@link #withClassGTable()},
+         * {@link #withClassRecord()}, and {@link #withClassWorkflow()}.
+         * </p>
+         *
+         * @return the same builder object
+         */
+        @SuppressWarnings("unchecked")
+        public FindDataObjectsRequestBuilder<DXFile> withClassFile() {
+            Preconditions.checkState(this.classConstraint == null,
+                    "Cannot specify class constraints more than once");
+            this.classConstraint = "file";
+            // This cast should be safe, since we hold no references of type T
+            return (FindDataObjectsRequestBuilder<DXFile>) this;
+        }
+
+        /**
+         * Only returns GTables (filters out data objects of all other classes).
+         *
+         * <p>
+         * This method may only be called once during the construction of a query, and is mutually
+         * exclusive with {@link #withClassApplet()}, {@link #withClassFile()},
+         * {@link #withClassRecord()}, and {@link #withClassWorkflow()}.
+         * </p>
+         *
+         * @return the same builder object
+         */
+        @SuppressWarnings("unchecked")
+        public FindDataObjectsRequestBuilder<DXGTable> withClassGTable() {
+            Preconditions.checkState(this.classConstraint == null,
+                    "Cannot specify class constraints more than once");
+            this.classConstraint = "gtable";
+            // This cast should be safe, since we hold no references of type T
+            return (FindDataObjectsRequestBuilder<DXGTable>) this;
+        }
+
+        /**
          * Only returns records (filters out data objects of all other classes).
          *
          * <p>
-         * This method may only be called once during the construction of a query.
+         * This method may only be called once during the construction of a query, and is mutually
+         * exclusive with {@link #withClassApplet()}, {@link #withClassFile()},
+         * {@link #withClassGTable()}, and {@link #withClassWorkflow()}.
          * </p>
          *
          * @return the same builder object
@@ -604,6 +666,26 @@ public final class DXSearch {
             this.classConstraint = "record";
             // This cast should be safe, since we hold no references of type T
             return (FindDataObjectsRequestBuilder<DXRecord>) this;
+        }
+
+        /**
+         * Only returns workflows (filters out data objects of all other classes).
+         *
+         * <p>
+         * This method may only be called once during the construction of a query, and is mutually
+         * exclusive with {@link #withClassApplet()}, {@link #withClassFile()},
+         * {@link #withClassGTable()}, and {@link #withClassRecord()}.
+         * </p>
+         *
+         * @return the same builder object
+         */
+        @SuppressWarnings("unchecked")
+        public FindDataObjectsRequestBuilder<DXWorkflow> withClassWorkflow() {
+            Preconditions.checkState(this.classConstraint == null,
+                    "Cannot specify class constraints more than once");
+            this.classConstraint = "workflow";
+            // This cast should be safe, since we hold no references of type T
+            return (FindDataObjectsRequestBuilder<DXWorkflow>) this;
         }
 
         /**

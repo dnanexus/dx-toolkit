@@ -17,45 +17,20 @@
 package com.dnanexus;
 
 import java.io.IOException;
-import java.util.Map;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.dnanexus.exceptions.InvalidStateException;
-import com.dnanexus.exceptions.ResourceNotFoundException;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.dnanexus.DXDataObjectTest.SampleMetadata;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 
 public class DXRecordTest {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
     private DXProject testProject;
-
-    @JsonInclude(Include.NON_NULL)
-    private static class SampleMetadata {
-        @JsonProperty
-        private String sampleId;
-
-        @SuppressWarnings("unused")
-        private SampleMetadata() {}
-
-        public SampleMetadata(String sampleId) {
-            this.sampleId = sampleId;
-        }
-
-        public String getSampleId() {
-            return this.sampleId;
-        }
-    }
 
     @Before
     public void setUp() {
@@ -135,139 +110,26 @@ public class DXRecordTest {
 
     @Test
     public void testDataObjectMethods() {
-        DXRecord record = DXRecord.newRecord().setProject(testProject).setName("foo").build();
-
-        // Adding and removing tags
-        record.addTags(ImmutableList.of("a", "b"));
-        Assert.assertEquals(ImmutableSet.of("a", "b"),
-                ImmutableSet.copyOf(record.describe().getTags()));
-        record.removeTags(ImmutableList.of("b", "c"));
-        Assert.assertEquals(ImmutableList.of("a"), record.describe().getTags());
-        // TODO: test fallback to default workspace for retrieval of project-specific metadata
-
-        // Adding and removing types
-        record.addTypes(ImmutableList.of("Loud", "Noisy"));
-        Assert.assertEquals(ImmutableSet.of("Loud", "Noisy"),
-                ImmutableSet.copyOf(record.describe().getTypes()));
-        record.removeTypes(ImmutableList.of("Noisy", "Fast"));
-        Assert.assertEquals(ImmutableList.of("Loud"), record.describe().getTypes());
-
-        // Setting visibility
-        Assert.assertTrue(record.describe().isVisible());
-        record.setVisibility(false);
-        Assert.assertFalse(record.describe().isVisible());
-        record.setVisibility(true);
-        Assert.assertTrue(record.describe().isVisible());
-
-        // Setting properties
-        record.putAllProperties(ImmutableMap.of("city", "Mountain View", "species", "human"));
-        Assert.assertEquals(ImmutableMap.of("city", "Mountain View", "species", "human"), record
-                .describe(DXDataObject.DescribeOptions.get().withProperties()).getProperties());
-        record.removeProperty("city");
-        Assert.assertEquals(ImmutableMap.of("species", "human"),
-                record.describe(DXDataObject.DescribeOptions.get().withProperties())
-                        .getProperties());
-
-        // Setting details
-        SampleMetadata sampleMetadata = new SampleMetadata("foo");
-        record.setDetails(sampleMetadata);
-        Assert.assertEquals(
-                "foo",
-                record.describe(DXDataObject.DescribeOptions.get().withDetails())
-                        .getDetails(SampleMetadata.class).getSampleId());
-
-        // Listing projects with this object
-        Map<DXContainer, AccessLevel> projectList = record.listProjects();
-        Assert.assertTrue(projectList.containsKey(testProject));
-        Assert.assertEquals(1, projectList.size());
-        Assert.assertEquals(AccessLevel.ADMINISTER, projectList.get(testProject));
-
-        DXRecord closedRecord = DXRecord.newRecord().setProject(testProject).build().close();
-
-        try {
-            closedRecord.addTypes(ImmutableList.<String>of());
-            Assert.fail("Expected setting types on a closed object to fail");
-        } catch (InvalidStateException e) {
-            // Expected
-        }
-        try {
-            closedRecord.setVisibility(false);
-            Assert.fail("Expected setting visibility on a closed object to fail");
-        } catch (InvalidStateException e) {
-            // Expected
-        }
-        try {
-            closedRecord.setDetails(sampleMetadata);
-            Assert.fail("Expected setting details on a closed object to fail");
-        } catch (InvalidStateException e) {
-            // Expected
-        }
-
-        // The following operations should still work when the object has been closed
-        closedRecord.addTags(ImmutableList.of("a", "b"));
-        closedRecord.putProperty("species", "human");
-
+        DXDataObjectTest.BuilderFactory<DXRecord.Builder, DXRecord> builderFactory =
+                new DXDataObjectTest.BuilderFactory<DXRecord.Builder, DXRecord>() {
+                    @Override
+                    public DXRecord.Builder getBuilder() {
+                        return DXRecord.newRecord();
+                    }
+                };
+        DXDataObjectTest.testOpenDataObjectMethods(testProject, builderFactory);
+        DXDataObjectTest.testClosedDataObjectMethods(testProject, builderFactory);
     }
 
     @Test
     public void testBuilder() {
-        // TODO: builder should fall back to creating the record in the default workspace
-
-        // Setting name
-        DXRecord namedRecord =
-                DXRecord.newRecord().setProject(testProject).setName("myrecord").build();
-        Assert.assertEquals("myrecord", namedRecord.describe().getName());
-
-        // Setting tags
-        DXRecord recordWithTags =
-                DXRecord.newRecord().setProject(testProject).addTags(ImmutableList.of("a", "b"))
-                        .build();
-        Assert.assertEquals(ImmutableSet.of("a", "b"),
-                ImmutableSet.copyOf(recordWithTags.describe().getTags()));
-
-        DXRecord recordWithProperties =
-                DXRecord.newRecord().setProject(testProject).putProperty("sampleId", "123-456")
-                        .putProperty("species", "human").build();
-        Map<String, String> properties =
-                recordWithProperties.describe(DXDataObject.DescribeOptions.get().withProperties())
-                        .getProperties();
-        Assert.assertEquals(ImmutableMap.of("sampleId", "123-456", "species", "human"), properties);
-
-        // Setting types
-        DXRecord recordWithTypes =
-                DXRecord.newRecord().setProject(testProject)
-                        .addTypes(ImmutableList.of("Loud", "Noisy")).build();
-        Assert.assertEquals(ImmutableSet.of("Loud", "Noisy"),
-                ImmutableSet.copyOf(recordWithTypes.describe().getTypes()));
-
-        // Setting visibility
-        DXRecord hiddenRecord =
-                DXRecord.newRecord().setProject(testProject).setVisibility(false).build();
-        DXRecord visibleRecord =
-                DXRecord.newRecord().setProject(testProject).setVisibility(true).build();
-        DXRecord recordWithoutSetVisibilityCall =
-                DXRecord.newRecord().setProject(testProject).build();
-        Assert.assertFalse(hiddenRecord.describe().isVisible());
-        Assert.assertTrue(visibleRecord.describe().isVisible());
-        Assert.assertTrue(recordWithoutSetVisibilityCall.describe().isVisible());
-
-        // Setting details
-        SampleMetadata sampleMetadata = new SampleMetadata("bar");
-        DXRecord recordWithDetails =
-                DXRecord.newRecord().setProject(testProject).setDetails(sampleMetadata).build();
-        Assert.assertEquals("bar",
-                recordWithDetails.describe(DXDataObject.DescribeOptions.get().withDetails())
-                        .getDetails(SampleMetadata.class).getSampleId());
-
-        // "parents" flag on creation
-        try {
-            DXRecord.newRecord().setProject(testProject).setFolder("/does/not/exist").build();
-            Assert.fail("Expected creating record in a nonexistent folder to fail");
-        } catch (ResourceNotFoundException e) {
-            // Expected
-        }
-        // Same call with parents=true should succeed
-        DXRecord.newRecord().setProject(testProject).setFolder("/does/not/exist", true).build();
+        DXDataObjectTest.testBuilder(testProject,
+                new DXDataObjectTest.BuilderFactory<DXRecord.Builder, DXRecord>() {
+                    @Override
+                    public DXRecord.Builder getBuilder() {
+                        return DXRecord.newRecord();
+                    }
+                });
     }
 
     // Internal tests
