@@ -25,6 +25,9 @@ MAKE:=$(MAKE) $(MAKEOPTS)
 
 UNAME := $(shell uname)
 
+CENTOS_MAJOR_VERSION := $(shell grep -o "CentOS release [0-9]\+" /etc/issue | sed -e "s/CentOS release //")
+UBUNTU_VERSION := $(shell grep -o "Ubuntu [0-9]\+\.[0-9]\+" /etc/issue | sed -e "s/Ubuntu //")
+
 ifndef CCACHE_DISABLE
 	export PATH := /usr/lib/ccache:$(PATH)
 endif
@@ -309,7 +312,7 @@ build_git:
 OPENSSL_PV=1.0.1e
 OPENSSL_SHA=3f1b1223c9e8189bfe4e186d86449775bd903460
 openssl: shasum
-	if [[ "$(OS)" == Windows_NT || "$(UNAME)" == Darwin ]] || grep -q 'CentOS release 5' /etc/issue; then \
+	if [[ "$(OS)" == Windows_NT || "$(UNAME)" == Darwin || "$(CENTOS_MAJOR_VERSION)" == "5" ]]; then \
 	    $(MAKE) build_openssl; \
 	fi
 
@@ -342,13 +345,16 @@ ifeq ($(OS), Windows_NT)
 	cd boost; ./bootstrap.sh --with-toolset=mingw --with-libraries=${BOOST_LIBS}
 	sed -i -e s/mingw/gcc/ boost/project-config.jam
 	cd boost; ./b2 --build-type=complete --layout=tagged -j8 stage
+else ifeq ($(CENTOS_MAJOR_VERSION), 5)
+	echo 'using gcc : 4.4 : g++44 ;' >> boost/tools/build/v2/user-config.jam
+	$(MAKE) boost_build
 else
-	if grep -q 'CentOS release 5' /etc/issue; then \
-	    echo 'using gcc : 4.4 : g++44 ;' >> boost/tools/build/v2/user-config.jam; \
-	fi
+	$(MAKE) boost_build
+endif
+
+boost_build:
 	cd boost; ./bootstrap.sh --with-libraries=${BOOST_LIBS}
 	cd boost; ./b2 --layout=tagged -j8 stage
-endif
 
 curl: c-ares/stage/lib/libcares.la curl/stage/lib/libcurl.la
 
@@ -356,8 +362,12 @@ CURL_PV=7.32.0
 CURL_SHA=cadc5648e4cd4ea750a8c580311722ed1fb1573a
 ifeq ($(OS), Windows_NT)
 	CURL_WITH_SSL=--with-winssl
-else
+else ifeq ($(UNAME), Darwin)
 	CURL_WITH_SSL=--with-ssl=../openssl/stage
+else ifeq ($(CENTOS_MAJOR_VERSION), 5)
+	CURL_WITH_SSL=--with-ssl=../openssl/stage
+else
+	CURL_WITH_SSL=--with-ssl
 endif
 curl/stage/lib/libcurl.la: shasum openssl
 	mkdir -p curl
@@ -370,7 +380,7 @@ curl/stage/lib/libcurl.la: shasum openssl
 	    --disable-tls-srp --without-gnutls --without-polarssl --without-cyassl \
 	    --without-nss --without-libmetalink --without-libssh2 --without-librtmp \
 	    --without-winidn --without-libidn --enable-ares="$(DNANEXUS_HOME)/src/c-ares/stage" \
-	    --enable-static=yes $(CURL_WITH_SSL) --prefix=/
+	    --enable-static=yes --enable-shared=no $(CURL_WITH_SSL) --prefix=/
 	$(MAKE) -C curl install DESTDIR="$(DNANEXUS_HOME)/src/curl/stage"
 
 CARES_PV=1.10.0
@@ -408,13 +418,13 @@ jq: git_submodules ../bin/jq
 # ===================
 
 install_sysdeps:
-	if grep -q "CentOS release 5" /etc/issue; then \
-	    ${MAYBE_SUDO} yum groupinstall -y "Development tools"; \
-	    ${MAYBE_SUDO} yum install -y cmake gcc44-c++ zlib-devel bzip2-devel curl-devel; \
-	elif grep -q "Ubuntu 12.04" /etc/issue; then \
-	    ${MAYBE_SUDO} apt-get install make python-setuptools python-pip python-virtualenv python-dev \
-	        g++ cmake libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison autoconf; \
-	fi
+ifeq ($(CENTOS_MAJOR_VERSION), 5)
+	${MAYBE_SUDO} yum groupinstall -y "Development tools"
+	${MAYBE_SUDO} yum install -y cmake gcc44-c++ zlib-devel bzip2-devel curl-devel
+else ifeq ($(UBUNTU_VERSION), 12.04)
+	${MAYBE_SUDO} apt-get install make python-setuptools python-pip python-virtualenv python-dev \
+		g++ cmake libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison autoconf
+endif
 
 # Clean
 # =====
@@ -436,4 +446,4 @@ clean:
 	-rm -rf "$(DNANEXUS_PY27_ENV)"
 	-rm -rf boost c-ares curl file openssl
 
-.PHONY: all toolkit_version api_wrappers src_libs python_deps python perl java ruby dx-contigset-to-fasta ua test test_ruby test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R doc_ruby boost
+.PHONY: all toolkit_version api_wrappers src_libs python_deps python perl java ruby dx-contigset-to-fasta ua test test_ruby test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R doc_ruby boost boost_build install_sysdeps

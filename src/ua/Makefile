@@ -14,11 +14,13 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-VERSION = 1.4.7
+VERSION = 1.4.8
 
 SHELL=/bin/bash -e
 
 DXTOOLKIT_GITVERSION := $(shell git describe|sed 's/-/+/')
+
+CENTOS_MAJOR_VERSION := $(shell grep -o "CentOS release [0-9]\+" /etc/issue | sed -e "s/CentOS release //")
 
 DNANEXUS_HOME = $(CURDIR)/../..
 
@@ -36,12 +38,15 @@ ua_dir = $(DNANEXUS_HOME)/src/ua
 
 VPATH = $(dxjson_dir):$(dxhttp_dir):$(dxcpp_dir):$(ua_dir)
 
-# TODO: -DBOOST_THREAD_USE_LIB -DOLD_KERNEL_SUPPORT=1
+# TODO: -DBOOST_THREAD_USE_LIB
 
 CFLAGS = -O3 -Wall -Wextra -Werror=return-type -Wno-switch -pedantic
 CXXFLAGS = $(CFLAGS)
 CXXFLAGS += -D_FILE_OFFSET_BITS=64 -DUAVERSION=\"$(VERSION)\" -DDXTOOLKIT_GITVERSION=\"$(DXTOOLKIT_GITVERSION)\"
 CXXFLAGS += -I$(libmagic_dir)/include -I$(openssl_dir)/include -I$(curl_dir)/include -I$(cares_dir)/include -I$(boost_dir) -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir) -I$(ua_dir)
+ifeq ($(CENTOS_MAJOR_VERSION), 5)
+	CXXFLAGS += -DOLD_KERNEL_SUPPORT=1
+endif
 
 LDFLAGS = -L$(boost_dir)/stage/lib -L$(curl_dir)/lib -L$(cares_dir)/lib -L$(libmagic_dir)/lib -L$(openssl_dir)
 
