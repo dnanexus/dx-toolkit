@@ -910,6 +910,7 @@ class TestDXClientWorkflow(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp='Could not resolve', exit_code=3):
             run("dx update workflow " + record_id)
 
+    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"), "Temporarily skipping test that requires unreleased features")
     def test_dx_describe_workflow(self):
         workflow_id = run(u"dx new workflow myworkflow --title title --brief").strip()
         desc = run("dx describe " + workflow_id)
