@@ -1243,6 +1243,13 @@ def describe(args):
             if len(entity_results) > 0:
                 found_match = True
             for result in entity_results:
+                if result['describe']['class'] == 'workflow':
+                    # Workflows have more information if described
+                    # directly and not via findDataObjects; redo the
+                    # query to get it before proceeding
+                    json_input['project'] = result['describe']['project']
+                    result['describe'] = dxpy.DXHTTPRequest('/' + result['id'] + '/describe',
+                                                            json_input)
                 if args.json:
                     json_output.append(result['describe'])
                 elif args.name:
@@ -2553,7 +2560,9 @@ def uninstall(args):
 
 def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None,
             is_the_only_job=True):
-    exec_inputs = ExecutableInputs(executable, input_name_prefix=input_name_prefix)
+    # following may throw if the executable is a workflow with no
+    # input spec available (because a stage is inaccessible)
+    exec_inputs = try_call(ExecutableInputs, executable, input_name_prefix=input_name_prefix)
 
     if args.input_json is None and args.filename is None:
         # --input-json and --input-json-file completely override input

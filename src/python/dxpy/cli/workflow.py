@@ -145,7 +145,9 @@ def list_stages(args):
         if stage['name'] is None:
             stage['name'] = '<no name>'
         print (printing.UNDERLINE() + 'Stage {i}' + printing.ENDC() + ': {name} ({id})').format(**stage)
-        print 'Executable      {executable}'.format(**stage)
+        print 'Executable      {executable}'.format(**stage) + \
+            (" (" + printing.RED() + "inaccessible" + printing.ENDC() + ")" \
+             if stage.get('accessible') is False else "")
         if stage['folder'] is not None and stage['folder'].startswith('/'):
             stage_output_folder = stage['folder']
         else:
