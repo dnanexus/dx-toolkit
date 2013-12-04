@@ -864,6 +864,32 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertIn("Tags bar\n", analysis_desc)
         self.assertIn("Properties foo=bar\n", analysis_desc)
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would attempt to run a job')
+    def test_inaccessible_stage(self):
+        applet_id = dxpy.api.applet_new({"name": "myapplet",
+                                         "project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "inputSpec": [{"name": "number", "class": "int"}],
+                                         "outputSpec": [{"name": "number", "class": "int"}],
+                                         "runSpec": {"interpreter": "bash",
+                                                     "code": "exit 1"}
+                                         })['id']
+        workflow_id = run("dx new workflow myworkflow --brief").strip()
+        run("dx add stage myworkflow myapplet")
+        run("dx rm myapplet")
+
+        # describe shows it
+        desc = run("dx describe myworkflow")
+        self.assertIn("inaccessible", desc)
+
+        # list stages shows it
+        list_output = run("dx list stages myworkflow")
+        self.assertIn("inaccessible", list_output)
+
+        # run refuses to run it
+        with self.assertSubprocessFailure(stderr_regexp='inaccessible', exit_code=3):
+            run("dx run myworkflow")
+
     @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"), "Temporarily skipping test that requires unreleased features")
     def test_dx_new_workflow(self):
         workflow_id = run(u"dx new workflow --title=тitle --summary=SΨmmary --description=DΣsc wØrkflØwname --output-folder /wØrkflØwØutput --brief").strip()
@@ -885,6 +911,25 @@ class TestDXClientWorkflow(DXTestCase):
         run("dx describe " + record_id)
         with self.assertSubprocessFailure(stderr_regexp='Could not resolve', exit_code=3):
             run("dx update workflow " + record_id)
+
+    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"), "Temporarily skipping test that requires unreleased features")
+    def test_dx_describe_workflow(self):
+        workflow_id = run(u"dx new workflow myworkflow --title title --brief").strip()
+        desc = run("dx describe " + workflow_id)
+        self.assertIn("Input Spec", desc)
+        self.assertIn("Output Spec", desc)
+        applet_id = dxpy.api.applet_new({"name": "myapplet",
+                                         "project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "inputSpec": [{"name": "number", "class": "int"}],
+                                         "outputSpec": [{"name": "number", "class": "int"}],
+                                         "runSpec": {"interpreter": "bash",
+                                                     "code": "exit 0"}
+                                         })['id']
+        first_stage = run("dx add stage " + workflow_id + " -inumber=10 " + applet_id + " --brief").strip()
+        desc = run("dx describe myworkflow")
+        self.assertIn("Input Spec", desc)
+        self.assertIn("default=10", desc)
 
     @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"), "Temporarily skipping test that requires unreleased features")
     def test_dx_add_remove_list_stages(self):
@@ -1084,6 +1129,8 @@ class TestDXClientWorkflow(DXTestCase):
         with self.assertSubprocessFailure(exit_code=3):
             run("dx update stage myworkflow 0 --executable " + empty_applet_id)
         run("dx update stage myworkflow 0 --force --executable " + empty_applet_id)
+        run("dx rm " + empty_applet_id)
+        desc_string = run("dx describe myworkflow")
         run("dx update stage myworkflow 0 --force --executable " + applet_id)
 
         # some errors
@@ -1097,6 +1144,8 @@ class TestDXClientWorkflow(DXTestCase):
             run("dx update stage myworkflow 0 --executable foo")
         with self.assertSubprocessFailure(stderr_regexp="instance-type", exit_code=3):
             run("dx update stage myworkflow 0 --instance-type {]")
+
+        # TODO: what happens when the stored executable has since been deleted?
 
         # no-op
         output = run(u"dx update stage myworkflow 0 --alias default --force")

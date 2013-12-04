@@ -415,6 +415,12 @@ class ExecutableInputs(object):
         if input_spec is None:
             input_spec = self._desc.get('inputSpec', [])
 
+        if input_spec is None and self._desc['class'] == 'workflow':
+            # this is only the case if it's a workflow with an
+            # inaccessible stage
+            inaccessible_stages = [stage['id'] for stage in self._desc['stages'] if stage['accessible'] is False]
+            raise DXCLIError('The workflow ' + self._desc['id'] + ' has the following inaccessible stage(s): ' + ', '.join(inaccessible_stages))
+
         for spec_atom in input_spec:
             if spec_atom['class'].startswith('array:'):
                 self.array_inputs.add(spec_atom['name'])

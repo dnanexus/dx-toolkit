@@ -266,10 +266,20 @@ def render_execdepends(thing):
     return rendered
 
 def render_stage(title, stage, as_stage_of=None):
-    lines_to_print = [(title, "{name} ({id})".format(name=stage['name'], id=stage['id']) if stage['name'] is not None else stage['id']),
-                      ('  Executable', stage['executable'])]
+    lines_to_print = []
+
+    if stage['name'] is not None:
+        lines_to_print.append((title, "{name} ({id})".format(name=stage['name'], id=stage['id'])))
+    else:
+        lines_to_print.append((title, stage['id']))
+
+    lines_to_print.append(('  Executable', stage['executable'] + \
+                           (" (" + RED() + "inaccessible" + ENDC() + ")" \
+                            if stage.get('accessible') is False else "")))
+
     if 'execution' in stage:
-        is_cached_result = as_stage_of is not None and stage['execution']['parentAnalysis'] != as_stage_of
+        is_cached_result = as_stage_of is not None and 'parentAnalysis' in stage['execution'] and \
+                           stage['execution']['parentAnalysis'] != as_stage_of
         execution_id_str = stage['execution']['id']
         if is_cached_result:
             execution_id_str = "[" + execution_id_str + "]"
@@ -486,9 +496,9 @@ def print_data_obj_desc(desc, verbose=False):
         print_json_field("Access", desc["access"])
     if 'dxapi' in desc:
         print_field("API version", desc["dxapi"])
-    if "inputSpec" in desc:
+    if "inputSpec" in desc and desc['inputSpec'] is not None:
         print_nofill_field("Input Spec", get_io_spec(desc['inputSpec'], skip_fields=get_advanced_inputs()))
-    if "outputSpec" in desc:
+    if "outputSpec" in desc and desc['outputSpec'] is not None:
         print_nofill_field("Output Spec", get_io_spec(desc['outputSpec']))
     if 'runSpec' in desc:
         print_field("Interpreter", desc["runSpec"]["interpreter"])
