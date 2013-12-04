@@ -125,6 +125,17 @@ public class DXProject extends DXContainer {
         private String id;
     }
 
+    @JsonInclude(Include.NON_NULL)
+    private static class ProjectTerminateRequest {
+        @SuppressWarnings("unused")
+        @JsonProperty
+        private boolean terminateJobs;
+
+        private ProjectTerminateRequest(boolean terminateJobs) {
+            this.terminateJobs = terminateJobs;
+        }
+    }
+
     private DXProject(String projectId) {
         super(projectId, null);
         checkProjectId(projectId);
@@ -185,8 +196,17 @@ public class DXProject extends DXContainer {
      * Destroys the project and all its contents.
      */
     public void destroy() {
-        // TODO: supply terminateJobs option
         this.apiCallOnObject("destroy");
+    }
+
+    /**
+     * Destroys the project and all its contents, optionally terminating all running jobs.
+     *
+     * @param terminateJobs if true, terminates any running jobs in the project
+     */
+    public void destroy(boolean terminateJobs) {
+        this.apiCallOnObject("destroy",
+                MAPPER.valueToTree(new ProjectTerminateRequest(terminateJobs)));
     }
 
     // The following unimplemented methods are sorted in approximately
