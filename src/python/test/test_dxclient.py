@@ -1145,8 +1145,6 @@ class TestDXClientWorkflow(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp="instance-type", exit_code=3):
             run("dx update stage myworkflow 0 --instance-type {]")
 
-        # TODO: what happens when the stored executable has since been deleted?
-
         # no-op
         output = run(u"dx update stage myworkflow 0 --alias default --force")
         self.assertIn("No updates requested", output)
