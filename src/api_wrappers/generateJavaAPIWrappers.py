@@ -48,7 +48,9 @@ postscript = '''}
 
 class_method_template = '''
     /**
-     * Invokes the {method_name} method.{wiki_link}
+     * Invokes the {method_name} method with an empty input, deserializing to an object of the specified class.{wiki_link}
+     *
+     * @param outputClass class to deserialize the server reponse to
      *
      * @return Server response parsed from JSON
      *
@@ -59,6 +61,84 @@ class_method_template = '''
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      */
+    public static <T> T {method_name}(Class<T> outputClass) {{
+        return {method_name}(mapper.createObjectNode(), outputClass);
+    }}
+    /**
+     * Invokes the {method_name} method with an empty input using the specified environment, deserializing to an object of the specified class.{wiki_link}
+     *
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T {method_name}(Class<T> outputClass, DXEnvironment env) {{
+        return {method_name}(mapper.createObjectNode(), outputClass, env);
+    }}
+    /**
+     * Invokes the {method_name} method with the specified input, deserializing to an object of the specified class.{wiki_link}
+     *
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T {method_name}(Object inputObject, Class<T> outputClass) {{
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("{route}", mapper.valueToTree(inputObject)),
+                outputClass);
+    }}
+    /**
+     * Invokes the {method_name} method with the specified input using the specified environment, deserializing to an object of the specified class.{wiki_link}
+     *
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T {method_name}(Object inputObject, Class<T> outputClass, DXEnvironment env) {{
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest(env).request("{route}", mapper.valueToTree(inputObject)),
+                outputClass);
+    }}
+
+    /**
+     * Invokes the {method_name} method.{wiki_link}
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {{@link #{method_name}(Class)}} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
     public static JsonNode {method_name}() {{
         return {method_name}(mapper.createObjectNode());
     }}
@@ -75,7 +155,10 @@ class_method_template = '''
      * @throws DXHTTPException
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {{@link #{method_name}(Object, Class)}} instead and supply your own class to deserialize to.
      */
+    @Deprecated
     public static JsonNode {method_name}(JsonNode inputParams) {{
         return new DXHTTPRequest().request("{route}", inputParams);
     }}
@@ -92,7 +175,10 @@ class_method_template = '''
      * @throws DXHTTPException
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {{@link #{method_name}(Class, DXEnvironment)}} instead and supply your own class to deserialize to.
      */
+    @Deprecated
     public static JsonNode {method_name}(DXEnvironment env) {{
         return {method_name}(mapper.createObjectNode(), env);
     }}
@@ -110,12 +196,96 @@ class_method_template = '''
      * @throws DXHTTPException
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {{@link #{method_name}(Object, Class, DXEnvironment)}} instead and supply your own class to deserialize to.
      */
+    @Deprecated
     public static JsonNode {method_name}(JsonNode inputParams, DXEnvironment env) {{
         return new DXHTTPRequest(env).request("{route}", inputParams);
     }}'''
 
 object_method_template = '''
+    /**
+     * Invokes the {method_name} method with an empty input, deserializing to an object of the specified class.{wiki_link}
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T {method_name}(String objectId, Class<T> outputClass) {{
+        return {method_name}(objectId, mapper.createObjectNode(), outputClass);
+    }}
+    /**
+     * Invokes the {method_name} method with the given input, deserializing to an object of the specified class.{wiki_link}
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T {method_name}(String objectId, Object inputObject, Class<T> outputClass) {{
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/" + objectId + "/" + "{method_route}",
+                        mapper.valueToTree(inputObject)), outputClass);
+    }}
+    /**
+     * Invokes the {method_name} method with an empty input using the given environment, deserializing to an object of the specified class.{wiki_link}
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T {method_name}(String objectId, Class<T> outputClass, DXEnvironment env) {{
+        return {method_name}(objectId, mapper.createObjectNode(), outputClass, env);
+    }}
+    /**
+     * Invokes the {method_name} method with the given input using the given environment, deserializing to an object of the specified class.{wiki_link}
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T {method_name}(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {{
+        return DXJSON.safeTreeToValue(
+            new DXHTTPRequest(env).request("/" + objectId + "/" + "{method_route}",
+                    mapper.valueToTree(inputObject)), outputClass);
+    }}
+
     /**
      * Invokes the {method_name} method.{wiki_link}
      *
@@ -129,7 +299,10 @@ object_method_template = '''
      * @throws DXHTTPException
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {{@link #{method_name}(String, Class)}} instead and supply your own class to deserialize to.
      */
+    @Deprecated
     public static JsonNode {method_name}(String objectId) {{
         return {method_name}(objectId, mapper.createObjectNode());
     }}
@@ -147,7 +320,10 @@ object_method_template = '''
      * @throws DXHTTPException
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {{@link #{method_name}(String, Object, Class)}} instead and supply your own class to deserialize to.
      */
+    @Deprecated
     public static JsonNode {method_name}(String objectId, JsonNode inputParams) {{
         return new DXHTTPRequest().request("/" + objectId + "/" + "{method_route}", inputParams);
     }}
@@ -165,7 +341,10 @@ object_method_template = '''
      * @throws DXHTTPException
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {{@link #{method_name}(String, Class, DXEnvironment)}} instead and supply your own class to deserialize to.
      */
+    @Deprecated
     public static JsonNode {method_name}(String objectId, DXEnvironment env) {{
         return {method_name}(objectId, mapper.createObjectNode(), env);
     }}
@@ -184,7 +363,10 @@ object_method_template = '''
      * @throws DXHTTPException
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {{@link #{method_name}(String, Object, Class, DXEnvironment)}} instead and supply your own class to deserialize to.
      */
+    @Deprecated
     public static JsonNode {method_name}(String objectId, JsonNode inputParams, DXEnvironment env) {{
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "{method_route}", inputParams);
     }}'''
