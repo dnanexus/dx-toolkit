@@ -61,8 +61,8 @@ public class DXFile extends DXDataObject {
          */
         @Override
         public DXFile build() {
-            JsonNode fileNewResponseJson = DXAPI.fileNew(this.buildRequestHash(), this.env);
-            return new DXFile(getNewObjectId(fileNewResponseJson), this.project, this.env);
+            return new DXFile(DXAPI.fileNew(this.buildRequestHash(), ObjectNewResponse.class,
+                    this.env).getId(), this.project, this.env);
         }
 
         /**

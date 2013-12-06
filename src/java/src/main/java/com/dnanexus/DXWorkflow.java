@@ -56,8 +56,8 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
          */
         @Override
         public DXWorkflow build() {
-            JsonNode workflowNewResponseJson = DXAPI.workflowNew(this.buildRequestHash(), this.env);
-            return new DXWorkflow(getNewObjectId(workflowNewResponseJson), this.project, this.env);
+            return new DXWorkflow(DXAPI.workflowNew(this.buildRequestHash(),
+                    ObjectNewResponse.class, this.env).getId(), this.project, this.env);
         }
 
         /**

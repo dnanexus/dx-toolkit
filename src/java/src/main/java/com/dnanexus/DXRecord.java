@@ -52,8 +52,8 @@ public class DXRecord extends DXDataObject {
          */
         @Override
         public DXRecord build() {
-            JsonNode recordNewResponseJson = DXAPI.recordNew(this.buildRequestHash(), this.env);
-            return new DXRecord(getNewObjectId(recordNewResponseJson), this.project, this.env);
+            return new DXRecord(DXAPI.recordNew(this.buildRequestHash(), ObjectNewResponse.class,
+                    this.env).getId(), this.project, this.env);
         }
 
         /**
@@ -68,7 +68,9 @@ public class DXRecord extends DXDataObject {
             return mapper.valueToTree(new RecordNewRequest(this));
         }
 
-        /* (non-Javadoc)
+        /*
+         * (non-Javadoc)
+         *
          * @see com.dnanexus.DXDataObject.Builder#getThisInstance()
          */
         @Override

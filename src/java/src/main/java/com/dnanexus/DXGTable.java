@@ -67,8 +67,8 @@ public class DXGTable extends DXDataObject {
          */
         @Override
         public DXGTable build() {
-            JsonNode gtableNewResponseJson = DXAPI.gtableNew(this.buildRequestHash(), this.env);
-            return new DXGTable(getNewObjectId(gtableNewResponseJson), this.project, this.env);
+            return new DXGTable(DXAPI.gtableNew(this.buildRequestHash(), ObjectNewResponse.class,
+                    this.env).getId(), this.project, this.env);
         }
 
         /**

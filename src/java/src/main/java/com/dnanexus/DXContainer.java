@@ -107,6 +107,12 @@ public class DXContainer extends DXObject {
     }
 
     /**
+     * A response from the /container-xxxx/move route.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class ContainerMoveResponse {}
+
+    /**
      * Moves the specified data objects and folders to a destination folder in the same container.
      *
      * @param objects data objects to be moved
@@ -120,8 +126,8 @@ public class DXContainer extends DXObject {
         for (DXDataObject dataObj : objects) {
             objectIds.add(dataObj.getId());
         }
-        DXAPI.containerMove(this.getId(), MAPPER.valueToTree(new ContainerMoveRequest(objectIds
-                .build(), folders, destinationFolder)));
+        DXAPI.containerMove(this.getId(), new ContainerMoveRequest(objectIds.build(), folders,
+                destinationFolder), ContainerMoveResponse.class);
     }
 
     /**
@@ -170,13 +176,19 @@ public class DXContainer extends DXObject {
     }
 
     /**
+     * A response from the /container-xxxx/newFolder route.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class ContainerNewFolderResponse {}
+
+    /**
      * Creates the specified folder.
      *
      * @param folderPath full path to the folder to be created (a String starting with {@code "/"})
      */
     public void newFolder(String folderPath) {
-        DXAPI.containerNewFolder(this.getId(),
-                MAPPER.valueToTree(new ContainerNewFolderRequest(folderPath)));
+        DXAPI.containerNewFolder(this.getId(), new ContainerNewFolderRequest(folderPath),
+                ContainerNewFolderResponse.class);
     }
 
     /**
@@ -186,8 +198,8 @@ public class DXContainer extends DXObject {
      * @param parents if true, create all parent folders of the requested path
      */
     public void newFolder(String folderPath, boolean parents) {
-        DXAPI.containerNewFolder(this.getId(),
-                MAPPER.valueToTree(new ContainerNewFolderRequest(folderPath, parents)));
+        DXAPI.containerNewFolder(this.getId(), new ContainerNewFolderRequest(folderPath, parents),
+                ContainerNewFolderResponse.class);
     }
 
     /**
@@ -209,6 +221,12 @@ public class DXContainer extends DXObject {
     }
 
     /**
+     * A response from the /container-xxxx/renameFolder route.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class ContainerRenameFolderResponse {}
+
+    /**
      * Renames the specified folder.
      *
      * <p>
@@ -222,7 +240,8 @@ public class DXContainer extends DXObject {
         // TODO: document "move" method for moving to other folders, when it's
         // available
         DXAPI.containerRenameFolder(this.getId(),
-                MAPPER.valueToTree(new ContainerRenameFolderRequest(folderPath, name)));
+                new ContainerRenameFolderRequest(folderPath, name),
+                ContainerRenameFolderResponse.class);
     }
 
     /**
@@ -249,6 +268,33 @@ public class DXContainer extends DXObject {
     }
 
     /**
+     * A response from the /container-xxxx/removeFolder route.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class ContainerRemoveFolderResponse {}
+
+    /**
+     * Removes the specified folder.
+     *
+     * @param folderPath path to the folder to be removed (String starting with {@code "/"})
+     */
+    public void removeFolder(String folderPath) {
+        DXAPI.containerRemoveFolder(this.getId(), new ContainerRemoveFolderRequest(folderPath),
+                ContainerRemoveFolderResponse.class);
+    }
+
+    /**
+     * Removes the specified folder, optionally removing all subfolders as well.
+     *
+     * @param folderPath full path to the folder to be removed (a String starting with {@code "/"})
+     * @param recurse if true, deletes all objects and subfolders in the folder as well
+     */
+    public void removeFolder(String folderPath, boolean recurse) {
+        DXAPI.containerRemoveFolder(this.getId(), new ContainerRemoveFolderRequest(folderPath,
+                recurse), ContainerRemoveFolderResponse.class);
+    }
+
+    /**
      * A request to the /container-xxxx/removeObjects route.
      */
     @JsonInclude(Include.NON_NULL)
@@ -267,25 +313,10 @@ public class DXContainer extends DXObject {
     }
 
     /**
-     * Removes the specified folder.
-     *
-     * @param folderPath path to the folder to be removed (String starting with {@code "/"})
+     * A response from the /container-xxxx/removeObjects route.
      */
-    public void removeFolder(String folderPath) {
-        DXAPI.containerRemoveFolder(this.getId(),
-                MAPPER.valueToTree(new ContainerRemoveFolderRequest(folderPath)));
-    }
-
-    /**
-     * Removes the specified folder, optionally removing all subfolders as well.
-     *
-     * @param folderPath full path to the folder to be removed (a String starting with {@code "/"})
-     * @param recurse if true, deletes all objects and subfolders in the folder as well
-     */
-    public void removeFolder(String folderPath, boolean recurse) {
-        DXAPI.containerRemoveFolder(this.getId(),
-                MAPPER.valueToTree(new ContainerRemoveFolderRequest(folderPath, recurse)));
-    }
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class ContainerRemoveObjectsResponse {}
 
     /**
      * Removes the specified objects from the container.
@@ -298,8 +329,8 @@ public class DXContainer extends DXObject {
      * @param objects List of objects to be removed
      */
     public void removeObjects(List<? extends DXDataObject> objects) {
-        DXAPI.containerRemoveObjects(this.getId(),
-                MAPPER.valueToTree(new ContainerRemoveObjectsRequest(objects)));
+        DXAPI.containerRemoveObjects(this.getId(), new ContainerRemoveObjectsRequest(objects),
+                ContainerRemoveObjectsResponse.class);
     }
 
     @JsonInclude(Include.NON_NULL)
@@ -383,9 +414,7 @@ public class DXContainer extends DXObject {
 
         // TODO: parameters describe and includeHidden
         ContainerListFolderResponse r =
-                DXJSON.safeTreeToValue(
-                        DXAPI.containerListFolder(this.getId(),
-                                MAPPER.valueToTree(new ContainerListFolderRequest(folderPath))),
+                DXAPI.containerListFolder(this.getId(), new ContainerListFolderRequest(folderPath),
                         ContainerListFolderResponse.class);
         return new FolderContents(r.objects, r.folders, this, this.env);
     }

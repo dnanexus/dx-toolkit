@@ -186,9 +186,9 @@ public final class DXJob extends DXExecution {
         super(jobId, env);
     }
 
-    private Describe describeImplRaw(JsonNode describeInput) {
-        return new Describe(DXJSON.safeTreeToValue(DXAPI.jobDescribe(this.getId(), describeInput),
-                DescribeResponseHash.class), env);
+    private Describe describeImpl(JsonNode describeInput) {
+        return new Describe(DXAPI.jobDescribe(this.getId(), describeInput,
+                DescribeResponseHash.class), this.env);
     }
 
     /**
@@ -197,15 +197,14 @@ public final class DXJob extends DXExecution {
      * @return a {@code Describe} containing job metadata
      */
     public Describe describe() {
-        return new Describe(DXJSON.safeTreeToValue(DXAPI.jobDescribe(this.getId()),
-                DescribeResponseHash.class), this.env);
+        return describeImpl(MAPPER.createObjectNode());
     }
 
     @Override
     public <T> T getOutput(Class<T> outputClass) throws IllegalStateException {
         // {fields: {output: true, state: true}}
         Describe d =
-                describeImplRaw(DXJSON
+                describeImpl(DXJSON
                         .getObjectBuilder()
                         .put("fields",
                                 DXJSON.getObjectBuilder().put("output", true).put("state", true)

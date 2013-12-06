@@ -113,8 +113,8 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
          */
         @Override
         public DXApplet build() {
-            JsonNode appletNewResponseJson = DXAPI.appletNew(this.buildRequestHash(), this.env);
-            return new DXApplet(getNewObjectId(appletNewResponseJson), this.project, this.env);
+            return new DXApplet(DXAPI.appletNew(this.buildRequestHash(), ObjectNewResponse.class,
+                    this.env).getId(), this.project, this.env);
         }
 
         /**

@@ -18,32 +18,76 @@ package com.dnanexus;
 
 import java.io.IOException;
 
-import org.junit.*;
-import com.fasterxml.jackson.databind.*;
-import com.dnanexus.DXAPI;
-import com.dnanexus.DXEnvironment;
+import org.junit.Assert;
+import org.junit.Test;
+
+import com.dnanexus.exceptions.InvalidAuthenticationException;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class DXAPITest {
 
-    @Test public void testDXAPI() throws IOException {
-        JsonNode input = (JsonNode)(new MappingJsonFactory().createJsonParser("{}").readValueAsTree());
-        JsonNode responseJson = DXAPI.systemFindDataObjects(input);
-        org.junit.Assert.assertEquals(responseJson.isObject(), true);
-        // System.out.println(responseJson);
+    @JsonInclude(Include.NON_NULL)
+    private static class EmptyFindDataObjectsRequest {}
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class FindDataObjectsResponse {}
+
+    protected static final ObjectMapper mapper = new ObjectMapper();
+
+    /**
+     * Smoke test for calling an API route.
+     */
+    @Test
+    public void testDXAPI() throws IOException {
+        DXAPI.systemFindDataObjects(new EmptyFindDataObjectsRequest(),
+                FindDataObjectsResponse.class);
     }
 
-    @Test public void testDXAPICustomEnvironment() throws IOException {
-        DXEnvironment env = new DXEnvironment.Builder().build();
-        JsonNode input = (JsonNode)(new MappingJsonFactory().createJsonParser("{}").readValueAsTree());
-        JsonNode responseJson = DXAPI.systemFindDataObjects(input, env);
-        org.junit.Assert.assertEquals(responseJson.isObject(), true);
+    /**
+     * Tests using the new routes with JsonNode objects as input and output.
+     *
+     * <p>
+     * This is the most direct migration path for users of the old-style bindings.
+     * </p>
+     */
+    @Test
+    public void testDXAPILegacyCompatibility() throws IOException {
+        JsonNode input = DXJSON.getObjectBuilder().put("name", "DXAPI test project").build();
+        JsonNode output = DXAPI.projectNew(input, JsonNode.class);
+        String projectId = output.get("id").asText();
+        DXAPI.projectDestroy(projectId, JsonNode.class);
+    }
 
-        JsonNode bogusSecCtx = (new MappingJsonFactory().createJsonParser("{\"auth_token_type\":\"Bearer\",\"auth_token\":\"BOGUS\"}").readValueAsTree());
+    @Test
+    public void testDXAPICustomEnvironment() throws IOException {
+        DXEnvironment env = new DXEnvironment.Builder().build();
+        JsonNode input =
+                (JsonNode) (new MappingJsonFactory().createJsonParser("{}").readValueAsTree());
+        JsonNode responseJson = DXAPI.systemFindDataObjects(input, JsonNode.class, env);
+        Assert.assertEquals(responseJson.isObject(), true);
+
+        JsonNode bogusSecCtx =
+                DXJSON.getObjectBuilder().put("auth_token_type", "Bearer")
+                        .put("auth_token", "BOGUS").build();
         env = new DXEnvironment.Builder().setSecurityContext(bogusSecCtx).build();
         try {
-            DXAPI.systemFindDataObjects(input, env);
-        } catch (Exception exn) {
-            org.junit.Assert.assertTrue(exn.toString().contains("InvalidAuthentication"));
+            DXAPI.systemFindDataObjects(input, JsonNode.class, env);
+            Assert.fail("Expected request with bogus token to throw InvalidAuthentication");
+        } catch (InvalidAuthenticationException e) {
+            // Expected
         }
+    }
+
+    @SuppressWarnings("deprecation")
+    @Test
+    public void testDXAPIOldStyle() throws IOException {
+        JsonNode input = mapper.createObjectNode();
+        JsonNode responseJson = DXAPI.systemFindDataObjects(input);
+        Assert.assertEquals(responseJson.isObject(), true);
     }
 }

@@ -889,9 +889,7 @@ public final class DXSearch {
 
             do {
                 findDataObjectsResponse =
-                        DXJSON.safeTreeToValue(
-                                DXAPI.systemFindDataObjects(MAPPER.valueToTree(query), env),
-                                FindDataObjectsResponse.class);
+                        DXAPI.systemFindDataObjects(query, FindDataObjectsResponse.class, env);
 
                 for (FindDataObjectsResponse.Entry e : findDataObjectsResponse.results) {
                     DXDataObject dataObject =
@@ -1183,9 +1181,7 @@ public final class DXSearch {
 
             do {
                 findJobsResponse =
-                        DXJSON.safeTreeToValue(
-                                DXAPI.systemFindJobs(MAPPER.valueToTree(query), env),
-                                FindJobsResponse.class);
+                        DXAPI.systemFindJobs(MAPPER.valueToTree(query), FindJobsResponse.class, env);
 
                 for (FindJobsResponse.Entry e : findJobsResponse.results) {
                     output.add(DXJob.getInstance(e.id));

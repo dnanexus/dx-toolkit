@@ -103,8 +103,8 @@ public class DXProject extends DXContainer {
          * @return a {@code DXProject} corresponding to the newly created project
          */
         public DXProject build() {
-            return new DXProject(DXJSON.safeTreeToValue(
-                    (DXAPI.projectNew(this.buildRequestHash())), ProjectNewResponse.class).id);
+            return new DXProject(DXAPI.projectNew(this.buildRequestHash(), ObjectNewResponse.class)
+                    .getId());
         }
     }
 
@@ -117,12 +117,6 @@ public class DXProject extends DXContainer {
         private ProjectNewRequest(Builder builder) {
             this.name = builder.name;
         }
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    private static class ProjectNewResponse {
-        @JsonProperty
-        private String id;
     }
 
     @JsonInclude(Include.NON_NULL)
