@@ -23,8 +23,42 @@ import java.util.Map;
  */
 public class TestEnvironment {
 
+    /**
+     * A special feature, not present in all nucleus test or production environments, that is
+     * required by a test.
+     */
     public enum ConfigOption {
-        RUN_JOBS("DXTEST_RUN_JOBS");
+
+        // TODO: support the DXTEST_FULL environment variable, which behaves as if all the
+        // individual environment variables below were set.
+
+        /**
+         * Run tests that can create apps. The tests are liable to expect the apps to be
+         * initializable in an environment where no app of that name currently exists, so it must be
+         * possible to clean the environment before the tests start.
+         */
+        CREATE_APPS("DXTEST_CREATE_APPS"),
+
+        /**
+         * Run tests that use a FUSE filesystem.
+         */
+        FUSE("DXTEST_FUSE"),
+
+        /**
+         * Run tests that can spawn jobs. The tests are liable to wait for the jobs to complete, so
+         * at least one worker must be present to chew on incoming jobs.
+         */
+        RUN_JOBS("DXTEST_RUN_JOBS"),
+
+        /**
+         * Run tests that use squid3 to launch an HTTP proxy.
+         */
+        HTTP_PROXY("DXTEST_HTTP_PROXY"),
+
+        /**
+         * Run tests that are liable to clobber your local environment.
+         */
+        ENV("DXTEST_ENV");
 
         private String envVarName;
 

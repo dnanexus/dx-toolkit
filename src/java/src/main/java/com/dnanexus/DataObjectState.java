@@ -24,8 +24,14 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
 /**
- * The state of a data object. Typically "open" objects are write-only and
- * "closed" objects are read-only.
+ * The state of a data object. Typically "open" objects are write-only and "closed" objects are
+ * read-only.
+ *
+ * <p>
+ * For more information, see the API documentation for the <a
+ * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Data-Object-Lifecycle">data object
+ * lifecycle</a>.
+ * </p>
  */
 public enum DataObjectState {
     OPEN("open"),

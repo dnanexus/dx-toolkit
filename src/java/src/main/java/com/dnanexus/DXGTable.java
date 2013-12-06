@@ -114,6 +114,8 @@ public class DXGTable extends DXDataObject {
 
         /**
          * Returns the number of bytes of storage consumed by the GTable.
+         *
+         * @return byte size of GTable
          */
         public long getByteSize() {
             return this.size;
