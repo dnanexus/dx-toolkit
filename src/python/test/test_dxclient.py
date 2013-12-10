@@ -1386,6 +1386,10 @@ class TestDXClientFind(DXTestCase):
         self.assertEqual(len(run("dx find executions "+options2).splitlines()), 8)
         self.assertEqual(len(run("dx find jobs "+options2).splitlines()), 6)
         self.assertEqual(len(run("dx find analyses "+options2).splitlines()), 2)
+        options2 = options + " --origin-jobs -n 9000"
+        self.assertEqual(len(run("dx find executions "+options2).splitlines()), 8)
+        self.assertEqual(len(run("dx find jobs "+options2).splitlines()), 6)
+        self.assertEqual(len(run("dx find analyses "+options2).splitlines()), 2)
         options2 = options + " --all-jobs"
         self.assertEqual(len(run("dx find executions "+options2).splitlines()), 8)
         self.assertEqual(len(run("dx find jobs "+options2).splitlines()), 6)
