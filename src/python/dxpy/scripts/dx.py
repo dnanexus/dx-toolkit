@@ -2183,8 +2183,10 @@ def find_executions(args):
              'tags': args.tag,
              'properties': args.properties,
              'include_subjobs': False if args.no_subjobs else True,
-             'root_execution': args.root_execution,
-             'limit': None if args.trees else args.num_results + 1}
+             'root_execution': args.root_execution}
+    if args.num_results < 1000 and not args.trees:
+        query['limit'] = args.num_results + 1
+
     json_output = []                        # for args.json
 
     def build_tree(root, executions_by_parent, execution_descriptions, is_cached_result=False):
