@@ -1,3 +1,11 @@
+dx-toolkit (0.79.0) precise; urgency=low
+
+  * Improvements to Java low- and high-level bindings.
+
+  * Improvements to workflow handling.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 10 Dec 2013 23:22:56 +0000
+
 dx-toolkit (0.78.0) precise; urgency=low
 
   * Upload agent build fixes.
