@@ -1,3 +1,9 @@
+dx-toolkit (0.78.1) precise; urgency=low
+
+  * Bug fixes.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 10 Dec 2013 23:24:15 +0000
+
 dx-toolkit (0.78.0) precise; urgency=low
 
   * Upload agent build fixes.
