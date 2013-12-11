@@ -2014,12 +2014,12 @@ def get(args):
         if args.output is None and not args.no_ext:
             if entity_result['describe']['class'] == 'record':
                 filename += '.json'
-            if not args.overwrite and os.path.exists(filename):
-                parser.exit(1, fill('Error: path "' + filename + '" already exists but -f/--overwrite was not set') + '\n')
-            try:
-                fd = open(filename, 'w')
-            except:
-                err_exit('Error opening destination file ' + filename)
+        if not args.overwrite and os.path.exists(filename):
+            parser.exit(1, fill('Error: path "' + filename + '" already exists but -f/--overwrite was not set') + '\n')
+        try:
+            fd = open(filename, 'w')
+        except:
+            err_exit('Error opening destination file ' + filename)
 
     if entity_result['describe']['class'] == 'record':
         try:
