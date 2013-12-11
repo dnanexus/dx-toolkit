@@ -17,7 +17,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, errno, httplib
+import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, errno, httplib, subprocess
 import shlex # respects quoted substrings when splitting
 
 from ..cli import try_call
@@ -1868,22 +1868,144 @@ def download(args):
     download_folders(folders_to_get, destdir)
     download_files(files_to_get, destdir, dest_filename=dest_filename)
 
+def dump_applet(applet, destination_directory):
+    """
+    Reconstitutes applet into a directory that would create a
+    functionally identical app if "dx build" were run on it.
+    destination_directory will be the root source directory for the
+    applet.
+
+    applet: DXApplet object to be dumped
+    destination_directory: an existing, empty, and writable directory
+    """
+    def recursive_cleanup(foo):
+        """
+        Aggressively cleans up things that look empty.
+        """
+        if isinstance(foo, dict):
+            for (key, val) in foo.items():
+                if isinstance(val, dict):
+                    recursive_cleanup(val)
+                if val == "" or val == [] or val == {}:
+                    del foo[key]
+
+    old_cwd = os.getcwd()
+    os.chdir(destination_directory)
+    try:
+        info = applet.get()
+
+        if info["runSpec"]["interpreter"] == "bash":
+            suffix = "sh"
+        elif info["runSpec"]["interpreter"] == "python2.7":
+            suffix = "py"
+        else:
+            parser.exit(1, fill('Sorry, I don\'t know how to get applets with interpreter ' + info["runSpec"]["interpreter"]) + '\n')
+
+        # Entry point script
+        script = "src/code.%s" % (suffix,)
+        os.mkdir("src")
+        with open(script, "w") as f:
+            f.write(info["runSpec"]["code"])
+
+        # resources/ directory
+        deps_to_remove = []
+        created_resources_directory = False
+        for dep in info["runSpec"]["bundledDepends"]:
+            handler = dxpy.get_handler(dep["id"])
+            if handler.__class__.__name__ == "DXFile":
+                if not created_resources_directory:
+                    os.mkdir("resources")
+                    created_resources_directory = True
+                fname = "resources/%s.tar.gz" % (handler.get_id())
+                dxpy.download_dxfile(handler.get_id(), fname)
+                subprocess.check_call(["tar", "-C", "resources", "-zxvf", fname], shell=False)
+                os.unlink(fname)
+                deps_to_remove.append(dep)
+
+        # TODO: if output directory is not the same as applet name we
+        # should print a warning and/or offer to rewrite the "name"
+        # field in the dxapp.json.
+        dxapp_json = collections.OrderedDict()
+        for key in ["name", "title", "summary", "types", "tags", "properties", "dxapi", "inputSpec", "outputSpec", "runSpec", "access"]:
+            if key in info:
+                dxapp_json[key] = info[key]
+        if info.get("hidden", False):
+            dxapp_json["hidden"] = True
+        # TODO: inputSpec and outputSpec elements should have their keys
+        # printed in a sensible (or at least consistent) order too
+
+        # Un-inline code
+        del dxapp_json["runSpec"]["code"]
+        dxapp_json["runSpec"]["file"] = script
+
+        # Remove resources from bundledDepends
+        for dep in deps_to_remove:
+            dxapp_json["runSpec"]["bundledDepends"].remove(dep)
+
+        # Remove dx-toolkit from execDepends
+        dx_toolkit = {"name": "dx-toolkit", "package_manager": "apt"}
+        if dx_toolkit in dxapp_json["runSpec"]["execDepends"]:
+            dxapp_json["runSpec"]["execDepends"].remove(dx_toolkit)
+
+        recursive_cleanup(dxapp_json)
+
+        readme = info.get("description", "")
+        devnotes = info.get("developerNotes", "")
+
+        # Write dxapp.json, Readme.md, and Readme.developer.md
+        with open("dxapp.json", "w") as f:
+            f.write(json.dumps(dxapp_json, sort_keys=False, indent=2, separators=(',', ': ')))
+            f.write('\n')
+        if readme:
+            with open("Readme.md", "w") as f:
+                f.write(readme)
+        if devnotes:
+            with open("Readme.developer.md", "w") as f:
+                f.write(devnotes)
+    finally:
+        os.chdir(old_cwd)
+
 def get(args):
     # Attempt to resolve name
-    project, folderpath, entity_result = try_call(resolve_existing_path,
-                                                  args.path, expected='entity')
+    project, _folderpath, entity_result = try_call(resolve_existing_path,
+                                                   args.path, expected='entity')
 
     if entity_result is None:
-        parser.exit(1, fill('Could not resolve ' + args.path + ' to a data object') + '\n')
+        parser.exit(3, fill('Could not resolve ' + args.path + ' to a data object') + '\n')
 
     if entity_result['describe']['class'] == 'file':
         download_one_file(project, entity_result['describe'], entity_result['describe']['name'], args)
         return
 
     if entity_result['describe']['class'] not in ['record', 'applet']:
-        parser.exit(1, 'Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class record or applet was expected\n')
+        parser.exit(3, 'Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class file, record, or applet was expected\n')
 
-    if args.output == '-':
+    fd = None
+
+    if entity_result['describe']['class'] == 'applet':
+        if args.output == '-':
+            parser.exit(3, 'Error: An applet cannot be dumped to stdout, please specify a directory\n')
+        output_base = args.output or '.'
+        applet_name = entity_result['describe']['name'].replace('/', '%2F')
+        if os.path.isdir(output_base):
+            output_path = os.path.join(output_base, applet_name)
+        else:
+            output_path = output_base
+        if os.path.isfile(output_path):
+            if not args.overwrite:
+                parser.exit(3, fill('Error: path "' + output_path + '" already exists but -f/--overwrite was not set') + '\n')
+            os.unlink(output_path)
+        # Here, output_path either points to a directory or a nonexistent path
+        if not os.path.exists(output_path):
+            os.mkdir(output_path)
+        # Here, output_path points to a directory
+        if len(os.listdir(output_path)):
+            # For safety, refuse to remove an existing non-empty
+            # directory automatically.
+            parser.exit(3, fill('Error: path "' + output_path + '" is an existing directory. Please remove it and try again.') + '\n')
+        # Now output_path points to a empty directory, so we're ready to
+        # go.
+    elif args.output == '-':
         fd = sys.stdout
     else:
         filename = args.output
@@ -1892,13 +2014,6 @@ def get(args):
         if args.output is None and not args.no_ext:
             if entity_result['describe']['class'] == 'record':
                 filename += '.json'
-            elif entity_result['describe']['class'] == 'applet':
-                if entity_result['describe']['runSpec']['interpreter'] == 'python2.7':
-                    filename += '.py'
-                elif entity_result['describe']['runSpec']['interpreter'] == 'v8cgi':
-                    filename += '.js'
-                elif entity_result['describe']['runSpec']['interpreter'] == 'bash':
-                    filename += '.sh'
             if not args.overwrite and os.path.exists(filename):
                 parser.exit(1, fill('Error: path "' + filename + '" already exists but -f/--overwrite was not set') + '\n')
             try:
@@ -1914,14 +2029,8 @@ def get(args):
             err_exit()
         fd.write(json.dumps(details, indent=4))
     elif entity_result['describe']['class'] == 'applet':
-        dxapplet = dxpy.DXApplet(entity_result['id'], project=project)
-        try:
-            resp = dxapplet.get()
-            run_spec = resp['runSpec']
-        except:
-            err_exit()
-        fd.write(run_spec['code'])
-    if args.output != '-':
+        dump_applet(dxpy.DXApplet(entity_result['id'], project=project), output_path)
+    if fd is not None and args.output != '-':
         fd.close()
 
 def cat(args):
@@ -4044,12 +4153,12 @@ path_action.completer = DXPathCompleter()
 parser_wait.set_defaults(func=wait)
 register_subparser(parser_wait, categories=('data', 'metadata', 'exec'))
 
-parser_get = subparsers.add_parser('get', help='Download records, applets, and apps',
-                                   description='Download the contents of some types of data (records, applets, and files).  For gtables, see "dx export".  Downloading an applet will only download the source.  (Any bundled dependencies must be downloaded separately.)  Use "-o -" to direct the output to stdout.',
+parser_get = subparsers.add_parser('get', help='Download records, applets, and files',
+                                   description='Download the contents of some types of data (records, applets, and files).  For gtables, see "dx export".  Downloading an applet will attempt to reconstruct a source directory that can be used to rebuild the app with "dx build".  Use "-o -" to direct the output to stdout.',
                                    prog='dx get',
                                    parents=[env_args])
 parser_get.add_argument('path', help='Data object ID or name to access').completer = DXPathCompleter(classes=['file', 'record', 'applet'])
-parser_get.add_argument('-o', '--output', help='local filename to be saved ("-" indicates stdout output); if not supplied, the object\'s name on the platform will be used, along with any applicable extensions')
+parser_get.add_argument('-o', '--output', help='local file path where the data is to be saved ("-" indicates stdout output for objects of class file and record). If not supplied, the object\'s name on the platform will be used, along with any applicable extensions. For applets, if OUTPUT does not exist, an applet source directory will be created there; if OUTPUT is an existing directory, a new directory with the applet\'s name will be created inside it.')
 parser_get.add_argument('--no-ext', help='If -o is not provided, do not add an extension to the filename', action='store_true')
 parser_get.add_argument('-f', '--overwrite', help='Overwrite the local file if necessary', action='store_true')
 parser_get.set_defaults(func=get)

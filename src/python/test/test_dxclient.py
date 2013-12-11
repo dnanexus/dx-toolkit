@@ -401,6 +401,10 @@ class TestDXClient(DXTestCase):
         self.assertEqual(run(u"dx export tsv {gt} --gri chr1 1 10 -o -".format(gt=gri_gtable_id)),
                          '\r\n'.join(['mychr:string\tmylo:int32\tmyhi:int32', 'chr1\t3\t10', 'chr1\t5\t12', '']))
 
+        # "get" is not supported on gtables
+        with self.assertSubprocessFailure(stderr_regexp='given object is of class gtable', exit_code=3):
+            run(u"dx get {gt}".format(gt=gri_gtable_id))
+
         # Download and re-import with gri
         with tempfile.NamedTemporaryFile(suffix='.csv') as fd:
             run(u"dx export tsv {gt} -o {fd} -f".format(gt=gri_gtable_id, fd=fd.name))
@@ -1530,6 +1534,99 @@ class TestDXBuildApp(DXTestCase):
         self.assertEqual(applet_describe["class"], "applet")
         self.assertEqual(applet_describe["id"], applet_describe["id"])
         self.assertEqual(applet_describe["name"], "minimal_applet")
+
+    def test_get_applet(self):
+        # TODO: not sure why self.assertEqual doesn't consider
+        # assertEqual to pass unless the strings here are unicode strings
+        app_spec = {
+            u"name": u"get_applet",
+            u"dxapi": u"1.0.0",
+            u"runSpec": {u"file": u"code.py", u"interpreter": u"python2.7"},
+            u"inputSpec": [{u"name": u"in1", u"class": u"file"}],
+            u"outputSpec": [{u"name": u"out1", u"class": u"file"}],
+            u"description": u"Description\n",
+            u"developerNotes": u"Developer notes\n",
+            }
+        # description and developerNotes should be un-inlined back to files
+        output_app_spec = dict((k, v) for (k, v) in app_spec.iteritems() if k not in ('description', 'developerNotes'))
+        output_app_spec[u"runSpec"] = {u"file": u"src/code.py", u"interpreter": u"python2.7"}
+
+        app_dir = self.write_app_directory("get_applet", json.dumps(app_spec), "code.py", code_content="import os\n")
+        os.mkdir(os.path.join(app_dir, "resources"))
+        with open(os.path.join(app_dir, "resources", "resources_file"), 'w') as f:
+            f.write('content\n')
+        new_applet_id = json.loads(run("dx build --json " + app_dir))["id"]
+        tempdir = tempfile.mkdtemp()
+        old_cwd = os.getcwd()
+        os.chdir(tempdir)
+        try:
+            run("dx get " + new_applet_id)
+            self.assertTrue(os.path.exists("get_applet"))
+            self.assertTrue(os.path.exists(os.path.join("get_applet", "dxapp.json")))
+
+            output_json = json.load(open(os.path.join("get_applet", "dxapp.json")))
+            self.assertEqual(output_app_spec["name"], output_json["name"])
+            self.assertEqual(output_app_spec, output_json)
+
+            self.assertEqual("Description\n", open(os.path.join("get_applet", "Readme.md")).read())
+            self.assertEqual("Developer notes\n", open(os.path.join("get_applet", "Readme.developer.md")).read())
+            self.assertEqual("import os\n", open(os.path.join("get_applet", "src", "code.py")).read())
+
+            self.assertEqual("content\n", open(os.path.join("get_applet", "resources", "resources_file")).read())
+
+            # Target applet does not exist
+            with self.assertSubprocessFailure(stderr_regexp='Could not resolve', exit_code=3):
+                run("dx get path_does_not_exist")
+
+            # -o dest (dest does not exist yet)
+            run("dx get -o dest get_applet")
+            self.assertTrue(os.path.exists("dest"))
+            self.assertTrue(os.path.exists(os.path.join("dest", "dxapp.json")))
+
+            # -o -
+            with self.assertSubprocessFailure(stderr_regexp='cannot be dumped to stdout', exit_code=3):
+                run("dx get -o - " + new_applet_id)
+
+            # -o dir (such that dir/applet_name is empty)
+            os.mkdir('destdir')
+            os.mkdir(os.path.join('destdir', 'get_applet'))
+            run("dx get -o destdir get_applet") # Also tests getting by name
+            self.assertTrue(os.path.exists(os.path.join("destdir", "get_applet", "dxapp.json")))
+
+            # -o dir (such that dir/applet_name is not empty)
+            os.mkdir('destdir_nonempty')
+            os.mkdir(os.path.join('destdir_nonempty', 'get_applet'))
+            with open(os.path.join('destdir_nonempty', 'get_applet', 'myfile'), 'w') as f:
+                f.write('content')
+            with self.assertSubprocessFailure(stderr_regexp='is an existing directory', exit_code=3):
+                run("dx get -o destdir_nonempty get_applet")
+
+            # -o dir (such that dir/applet_name is a file)
+            os.mkdir('destdir_withfile')
+            with open(os.path.join('destdir_withfile', 'get_applet'), 'w') as f:
+                f.write('content')
+            with self.assertSubprocessFailure(stderr_regexp='already exists', exit_code=3):
+                run("dx get -o destdir_withfile get_applet")
+
+            # -o dir --overwrite (such that dir/applet_name is a file)
+            os.mkdir('destdir_withfile_force')
+            with open(os.path.join('destdir_withfile_force', 'get_applet'), 'w') as f:
+                f.write('content')
+            run("dx get --overwrite -o destdir_withfile_force get_applet")
+            self.assertTrue(os.path.exists(os.path.join("destdir_withfile_force", "get_applet", "dxapp.json")))
+
+            # -o file
+            with open('destfile', 'w') as f:
+                f.write('content')
+            with self.assertSubprocessFailure(stderr_regexp='already exists', exit_code=3):
+                run("dx get -o destfile get_applet")
+
+            # -o file --overwrite
+            run("dx get --overwrite -o destfile get_applet")
+            self.assertTrue(os.path.exists("destfile"))
+            self.assertTrue(os.path.exists(os.path.join("destfile", "dxapp.json")))
+        finally:
+            os.chdir(old_cwd)
 
     def test_build_applet_with_no_dxapp_json(self):
         app_dir = self.write_app_directory("applet_with_no_dxapp_json", None, "code.py")
