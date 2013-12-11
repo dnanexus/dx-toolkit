@@ -1899,12 +1899,12 @@ def get(args):
                     filename += '.js'
                 elif entity_result['describe']['runSpec']['interpreter'] == 'bash':
                     filename += '.sh'
-            if not args.overwrite and os.path.exists(filename):
-                parser.exit(1, fill('Error: path "' + filename + '" already exists but -f/--overwrite was not set') + '\n')
-            try:
-                fd = open(filename, 'w')
-            except:
-                err_exit('Error opening destination file ' + filename)
+        if not args.overwrite and os.path.exists(filename):
+            parser.exit(1, fill('Error: path "' + filename + '" already exists but -f/--overwrite was not set') + '\n')
+        try:
+            fd = open(filename, 'w')
+        except:
+            err_exit('Error opening destination file ' + filename)
 
     if entity_result['describe']['class'] == 'record':
         try:

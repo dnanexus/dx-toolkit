@@ -192,6 +192,11 @@ class TestDXClient(DXTestCase):
         run(u"dx find analyses --project :")
         run(u"dx find data --project :")
 
+    def test_dx_get_record(self):
+        run(u"dx new record -o :foo --verbose")
+        run(u"dx get :foo")
+        run(u"dx get --no-ext :foo")
+
     def test_dx_object_tagging(self):
         the_tags = [u"Σ1=n", u"helloo0", u"ωω"]
         # tag
