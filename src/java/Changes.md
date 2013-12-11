@@ -1,5 +1,18 @@
 # Java API Bindings Changelog
 
+## 0.79.0
+
+* New classes: DXFile, DXGTable, DXApplet, DXWorkflow (remaining data object
+  classes)
+* New classes: DXApplet, DXJob, DXAnalysis (executables and executions)
+* New low-level bindings with automatic (de)serialization to user-provided
+  classes
+
+## 0.78.0
+
+* DXSearch.FindDataObjectsRequestBuilder (frontend to findDataObjects) supports
+  many more query parameters.
+
 ## 0.77.0
 
 * New classes: DXJob, DXDataObject, DXRecord, DXSearch
