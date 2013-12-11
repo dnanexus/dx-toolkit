@@ -1,3 +1,9 @@
+dx-toolkit (0.79.1) precise; urgency=low
+
+  * R build fix.
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 11 Dec 2013 00:53:53 +0000
+
 dx-toolkit (0.79.0) precise; urgency=low
 
   * Improvements to Java low- and high-level bindings.
