@@ -353,6 +353,8 @@ if answer and answer.lower()[0] == 'y':
                'other projects, edit the ' + UNDERLINE('access.project') + ' and ' + UNDERLINE('access.allProjects') +
                ' fields of dxapp.json once we generate the app.')
 
+# Default of no other authorizedUsers
+app_json['authorizedUsers'] = []
 
 #################
 # WRITING FILES #

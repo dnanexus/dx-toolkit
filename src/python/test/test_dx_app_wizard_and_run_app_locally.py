@@ -132,7 +132,9 @@ def create_app_dir_with_dxapp_json(dxapp_json, language):
 
 class TestDXAppWizardAndRunAppLocally(DXTestCase):
     def test_dx_app_wizard(self):
-        run_dx_app_wizard()
+        appdir = run_dx_app_wizard()
+        dxapp_json = json.load(open(os.path.join(appdir, 'dxapp.json')))
+        self.assertEqual(dxapp_json.get('authorizedUsers'), [])
 
     def test_dx_run_app_locally(self):
         appdir = create_app_dir()
