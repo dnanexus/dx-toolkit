@@ -1,12 +1,19 @@
-\name{jobStreamLog}
-\alias{jobStreamLog}
-\title{jobStreamLog API wrapper}
+\name{appRemoveAuthorizedUsers}
+\alias{appRemoveAuthorizedUsers}
+\title{appRemoveAuthorizedUsers API wrapper}
 \usage{
-  jobStreamLog(objectID, inputParams = emptyNamedList,
-    jsonifyData = TRUE, alwaysRetry = FALSE)
+  appRemoveAuthorizedUsers(appNameOrID, alias = NULL,
+    inputParams = emptyNamedList, jsonifyData = TRUE,
+    alwaysRetry = TRUE)
 }
 \arguments{
-  \item{objectID}{DNAnexus object ID}
+  \item{appNameOrID}{An app identifier using either the
+  name of an app ("app-name") or its full ID ("app-xxxx")}
+
+  \item{alias}{If an app name is given for
+  \code{appNameOrID}, this can be provided to specify a
+  version or tag (if not provided, the "default" tag is
+  used).}
 
   \item{inputParams}{Either an R object that will be
   converted into JSON using \code{RJSONIO::toJSON} to be
@@ -29,13 +36,14 @@
 }
 \description{
   This function makes an API call to the
-  \code{/job-xxxx/streamLog} API method; it is a simple
-  wrapper around the \code{\link{dxHTTPRequest}} function
-  which makes POST HTTP requests to the API server.
+  \code{/app-xxxx/removeAuthorizedUsers} API method; it is
+  a simple wrapper around the \code{\link{dxHTTPRequest}}
+  function which makes POST HTTP requests to the API
+  server.
 }
 \references{
   API spec documentation:
-  \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets\%20and\%20Entry\%20Points#API-method\%3A-\%2Fjob-xxxx\%2FstreamLog}
+  \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/removeAuthorizedUsers}
 }
 \seealso{
   \code{\link{dxHTTPRequest}}
