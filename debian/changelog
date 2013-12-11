@@ -1,3 +1,9 @@
+dx-toolkit (0.78.2) precise; urgency=low
+
+  * R build fix.
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 11 Dec 2013 00:55:36 +0000
+
 dx-toolkit (0.78.1) precise; urgency=low
 
   * Bug fixes.
