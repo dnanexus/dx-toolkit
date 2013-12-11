@@ -1,3 +1,9 @@
+dx-toolkit (0.79.2) precise; urgency=low
+
+  * Fix behavior of dx get record --no-ext.
+
+ -- Andrey Kislyuk <akislyuk@ec2-54-208-148-42.compute-1.amazonaws.com>  Wed, 11 Dec 2013 23:39:18 +0000
+
 dx-toolkit (0.79.1) precise; urgency=low
 
   * R build fix.
