@@ -1710,8 +1710,8 @@ class TestDXBuildApp(DXTestCase):
         run("dx build --create-app --json " + app_dir)
         self.assertEquals(json.loads(run("dx api " + app_id + " listCategories"))["categories"], ['B'])
 
-    @unittest.skipUnless(testutil.TEST_CREATE_APPS,
-                         'skipping test that would create apps')
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS and os.environ.get("DX_RUN_NEXT_TESTS"),
+                         'skipping test that would create apps and that requires next server-side update')
     def test_update_app_authorized_users(self):
         app0_spec = {
             "name": "update_app_authorized_users",
@@ -1741,7 +1741,7 @@ class TestDXBuildApp(DXTestCase):
             }
         app_dir = self.write_app_directory("update_app_authorized_users", json.dumps(app0_spec), "code.py")
         app_id = json.loads(run("dx build --create-app --json " + app_dir))['id']
-        self.assertEquals(json.loads(run("dx api " + app_id + " listAuthorizedUsers"))["authorizedUsers"], ["PUBLIC"])
+        self.assertEquals(json.loads(run("dx api " + app_id + " listAuthorizedUsers"))["authorizedUsers"], [])
         shutil.rmtree(app_dir)
         self.write_app_directory("update_app_authorized_users", json.dumps(app1_spec), "code.py")
         run("dx build --create-app --json " + app_dir)
@@ -1763,9 +1763,8 @@ class TestDXBuildApp(DXTestCase):
         try:
             app_desc = dxpy.api.app_describe("app-test_dx_users", {})
             app_id = app_desc["id"]
-            # reset users to default list
+            # reset users to empty list
             run("dx remove users app-test_dx_users " + " ".join(app_desc["authorizedUsers"]))
-            run("dx add users app-test_dx_users PUBLIC")
         except:
             app_id = None
         if app_id is None:
@@ -1779,6 +1778,8 @@ class TestDXBuildApp(DXTestCase):
                 }
             app_dir = self.write_app_directory("test_dx_users", json.dumps(app_spec), "code.py")
             app_id = json.loads(run("dx build --create-app --json " + app_dir))['id']
+        # initialize as PUBLIC app
+        run("dx add users test_dx_users PUBLIC")
         users = run("dx list users app-test_dx_users").strip()
         self.assertEqual(users, "PUBLIC")
         # use hash ID
