@@ -195,7 +195,10 @@ class TestDXClient(DXTestCase):
     def test_dx_get_record(self):
         run(u"dx new record -o :foo --verbose")
         run(u"dx get :foo")
+        self.assertTrue(os.path.exists('foo.json'))
         run(u"dx get --no-ext :foo")
+        self.assertTrue(os.path.exists('foo'))
+        run("diff -q foo foo.json")
 
     def test_dx_object_tagging(self):
         the_tags = [u"Σ1=n", u"helloo0", u"ωω"]
