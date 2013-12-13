@@ -91,7 +91,7 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False,
             if choice not in range(len(choices)):
                 raise IndexError()
             return choice
-        except BaseException:
+        except Exception:
             print 'Not a valid selection'
 
 def paginate_and_pick(generator, render_fn=unicode, filter_fn=None, page_len=10, **pick_opts):
@@ -340,7 +340,7 @@ def resolve_container_id_or_name(raw_string, is_error=False, unescape=True, mult
 
     try:
         results = list(dxpy.find_projects(name=string, describe=True, level='VIEW'))
-    except BaseException as details:
+    except Exception as details:
         raise ResolutionError(str(details))
 
     if len(results) == 1:
@@ -472,7 +472,7 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
 def resolve_job_ref(job_id, name, describe={}):
     try:
         job_desc = dxpy.DXHTTPRequest('/' + job_id + '/describe', {})
-    except BaseException as details:
+    except Exception as details:
         raise ResolutionError(str(details))
     project = job_desc['project']
     describe['project'] = project
@@ -490,7 +490,7 @@ def resolve_job_ref(job_id, name, describe={}):
                 try:
                     results = [{"id": out_id,
                                 "describe": dxpy.DXHTTPRequest('/' + out_id + '/describe', describe)} for out_id in ids]
-                except BaseException as details:
+                except Exception as details:
                     raise ResolutionError(str(details))
             else:
                 raise ResolutionError('Found "' + name + '" as an output field name of ' + job_id + ', but it is an empty array')
@@ -498,7 +498,7 @@ def resolve_job_ref(job_id, name, describe={}):
             obj_id = output_field['$dnanexus_link']
             try:
                 results = [{"id": obj_id, "describe": dxpy.DXHTTPRequest('/' + obj_id + '/describe', describe)}]
-            except BaseException as details:
+            except Exception as details:
                 raise ResolutionError(str(details))
         else:
             raise ResolutionError('Found "' + name + '" as an output field name of ' + job_id + ', but it is not of a data object class')
@@ -595,7 +595,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
                                                       recurse=False,
                                                       describe=describe,
                                                       visibility=visibility))
-            except BaseException as details:
+            except Exception as details:
                 raise ResolutionError(str(details))
         if len(results) == 0:
             # Could not find it as a data object.  If anything, it's a

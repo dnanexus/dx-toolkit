@@ -500,7 +500,7 @@ class ExecutableInputs(object):
 
             try:
                 input_value = parse_input_or_jbor(input_class, input_value)
-            except BaseException as details:
+            except Exception as details:
                 raise DXCLIError('Value provided for input field "' + input_name + '" could not be parsed as ' + input_class + ': ' + unicode(details))
 
             if input_class.startswith('array:'):

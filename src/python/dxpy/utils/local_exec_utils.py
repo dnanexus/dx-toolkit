@@ -197,7 +197,7 @@ def wait_for_depends_on(depends_on, all_job_outputs):
                     handler = dxpy.get_handler(an_id)
                     desc = handler.describe()
                     handler._wait_on_close()
-            except BaseException as e:
+            except Exception as e:
                 raise Exception('Could not wait for ' + an_id + ': ' + str(e))
 
 def ensure_env_vars():
@@ -292,7 +292,7 @@ def run_one_entry_point(job_id, function, input_hash, run_spec, depends_on, name
     # Resolve local job-based object references
     try:
         resolve_job_references(input_hash, all_job_outputs)
-    except BaseException as e:
+    except Exception as e:
         exit_with_error(job_name + ' ' + JOB_STATES('failed') + ' when resolving input:\n' + fill(str(e)))
 
     # Get list of non-closed data objects in the input that appear as
@@ -303,7 +303,7 @@ def run_one_entry_point(job_id, function, input_hash, run_spec, depends_on, name
 
     try:
         wait_for_depends_on(depends_on, all_job_outputs)
-    except BaseException as e:
+    except Exception as e:
         exit_with_error(job_name + ' ' + JOB_STATES('failed') + ' when processing depends_on:\n' + fill(str(e)))
 
     # Save job input to job_input.json
@@ -367,7 +367,7 @@ if dxpy.utils.exec_utils.RUN_COUNT == 0:
         try:
             with open(job_output_path, 'r') as fd:
                 job_output = json.load(fd, object_pairs_hook=collections.OrderedDict)
-        except BaseException as e:
+        except Exception as e:
             exit_with_error('Error: Could not load output of ' + job_name + ':\n' + fill(str(e.__class__) + ': ' + str(e)))
     else:
         job_output = {}

@@ -783,7 +783,7 @@ def mkdir(args):
             print fill('Could not resolve the project of "' + path + '"')
         try:
             dxpy.DXHTTPRequest('/' + project + '/newFolder', {"folder": folderpath, "parents": args.parents})
-        except BaseException as details:
+        except Exception as details:
             print "Error while creating " + folderpath + " in " + project
             print "  " + unicode(details)
             had_error = True
@@ -803,7 +803,7 @@ def rmdir(args):
             print fill('Could not resolve the project of "' + path + '"')
         try:
             dxpy.DXHTTPRequest('/' + project + '/removeFolder', {"folder": folderpath})
-        except BaseException as details:
+        except Exception as details:
             print "Error while removing " + folderpath + " in " + project
             print "  " + unicode(details)
             had_error = True
@@ -817,7 +817,7 @@ def rm(args):
         # Resolve the path and add it to the list
         try:
             project, folderpath, entity_results = resolve_existing_path(path, allow_mult=True, all_mult=args.all)
-        except BaseException as details:
+        except Exception as details:
             print fill('Could not resolve "' + path + '": ' + unicode(details))
             had_error = True
             continue
@@ -849,14 +849,14 @@ def rm(args):
                 dxpy.DXHTTPRequest('/' + project + '/removeFolder',
                                    {"folder": folder,
                                     "recurse": True})
-            except BaseException as details:
+            except Exception as details:
                 print "Error while removing " + folder + " from " + project
                 print "  " + unicode(details)
                 had_error = True
         try:
             dxpy.DXHTTPRequest('/' + project + '/removeObjects',
                                {"objects": projects[project]['objects']})
-        except BaseException as details:
+        except Exception as details:
             print "Error while removing " + json.dumps(projects[project]['objects']) + " from " + project
             print "  " + unicode(details)
             had_error = True
@@ -910,7 +910,7 @@ def rmproject(args):
         except KeyboardInterrupt:
             print ''
             parser.exit(1)
-        except BaseException as details:
+        except Exception as details:
             print fill('Was unable to remove ' + project + ', ' + unicode(details))
             had_error = True
     if had_error:
@@ -2547,7 +2547,7 @@ def close(args):
                     else:
                         obj.close()
                     handlers.append(obj)
-                except BaseException as details:
+                except Exception as details:
                     print fill(unicode(details))
 
     if args.wait:
@@ -3222,7 +3222,7 @@ def shell(orig_args):
             args.func(args)
         except StopIteration:
             exit(0)
-        except BaseException as details:
+        except Exception as details:
             if unicode(details) != '1' and unicode(details) != '0':
                 print unicode(details) + '\n'
 

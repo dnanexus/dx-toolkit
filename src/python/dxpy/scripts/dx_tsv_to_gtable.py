@@ -54,12 +54,12 @@ def main(**kwargs):
 
     try:
         process_dataobject_args(args)
-    except BaseException as details:
+    except Exception as details:
         parser.exit(1, unicode(details) + '\n')
 
     try:
         process_single_dataobject_output_args(args)
-    except BaseException as details:
+    except Exception as details:
         parser.exit(1, unicode(details) + '\n')
 
     if args.output is None:
@@ -148,7 +148,7 @@ def main(**kwargs):
             print dxgtable.get_id()
         else:
             print_desc(dxgtable.describe(incl_properties=True, incl_details=True))
-    except BaseException as details:
+    except Exception as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
 if __name__ == '__main__':
