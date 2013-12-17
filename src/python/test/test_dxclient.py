@@ -1667,8 +1667,8 @@ class TestDXBuildApp(DXTestCase):
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
 
-    @unittest.skipUnless(testutil.TEST_CREATE_APPS,
-                         'skipping test that would create apps')
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS and os.environ.get("DX_RUN_NEXT_TESTS"),
+                         'skipping test that would create apps and that requires next server-side update')
     def test_build_app_and_make_it_public(self):
         app_spec = {
             "name": "test_build_app_and_make_it_public",
@@ -1869,7 +1869,7 @@ class TestDXBuildApp(DXTestCase):
         self.assertEquals(json.loads(run("dx api " + app_id + " listAuthorizedUsers"))["authorizedUsers"], [])
         shutil.rmtree(app_dir)
         self.write_app_directory("update_app_authorized_users", json.dumps(app2_spec), "code.py")
-        run("dx build --create-app --json " + app_dir)
+        run("dx build --create-app --yes --json " + app_dir)
         self.assertEquals(json.loads(run("dx api " + app_id + " listAuthorizedUsers"))["authorizedUsers"], ["PUBLIC"])
 
     @unittest.skipUnless(testutil.TEST_CREATE_APPS,
