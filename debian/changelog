@@ -1,3 +1,11 @@
+dx-toolkit (0.80.0) precise; urgency=low
+
+  * "dx get applet-XXXX" reconstructs the applet source directory
+
+  * Be consistent with new server behavior: app ACL is empty by default
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 17 Dec 2013 23:34:25 +0000
+
 dx-toolkit (0.79.1) precise; urgency=low
 
   * R build fix.
