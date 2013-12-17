@@ -1,84 +1,139 @@
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.io.IOUtils;
-import com.fasterxml.jackson.core.*;
-import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.node.*;
-import com.dnanexus.*;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
+import com.dnanexus.ColumnSpecification;
+import com.dnanexus.DXAPI;
+import com.dnanexus.DXEnvironment;
+import com.dnanexus.DXGTable;
+import com.dnanexus.DXJSON;
+import com.dnanexus.DXUtil;
 
 public class DXTrimReads {
+
+    private static class GTableAddRowsRequest {
+        @JsonProperty
+        private int part;
+        @JsonProperty
+        private List<ArrayNode> data;
+
+        public GTableAddRowsRequest(int part, List<ArrayNode> data) {
+            this.part = part;
+            this.data = data;
+        }
+    }
+
+    private static class GTableGetRequest {
+        @JsonProperty
+        private int starting;
+        @JsonProperty
+        private int limit;
+
+        public GTableGetRequest(int starting, int limit) {
+            this.starting = starting;
+            this.limit = limit;
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class GTableGetResponse {
+        @JsonProperty
+        private List<ArrayNode> data;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class GTableNewResponse {
+        @JsonProperty
+        public String id;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class ReadTrimmerInput {
+        @JsonProperty
+        private DXGTable reads;
+        @JsonProperty
+        private int trimLength;
+    }
+
+    private static class ReadTrimmerOutput {
+        @JsonProperty
+        private DXGTable trimmedReads;
+
+        public ReadTrimmerOutput(DXGTable trimmedReads) {
+            this.trimmedReads = trimmedReads;
+        }
+    }
+
+
     public static void main(String[] args) throws IOException {
         System.out.println("This is the DNAnexus Java Read Trimmer Example App");
-        ObjectMapper mapper = new ObjectMapper();
 
-        String JobInput = IOUtils.toString(new FileInputStream("job_input.json"));
-        JsonNode JobInputJson = (JsonNode)(new MappingJsonFactory().createJsonParser(JobInput).readValueAsTree());
+        ReadTrimmerInput input = DXUtil.getJobInput(ReadTrimmerInput.class);
+        DXGTable readsTable = input.reads;
+        int trimLength = input.trimLength;
 
-        // TODO: check for presence of params instead of NullPointerException
-        String gtableId = JobInputJson.get("reads").get("$dnanexus_link").textValue();
-        int trimLength = JobInputJson.get("trimLength").intValue();
+        System.out.println("Trimming reads in " + readsTable.getId());
 
-        System.out.println("Trimming reads in "+gtableId);
-
-        JsonNode tableDesc = DXAPI.gtableDescribe(gtableId);
-
+        // Raw API call here because DXGTable.Builder doesn't support
+        // initializeFrom
         ObjectNode gtableNewInput = DXJSON.getObjectBuilder()
             .put("initializeFrom",
                  DXJSON.getObjectBuilder()
-                 .put("project", System.getenv("DX_WORKSPACE_ID"))
-                 .put("id", tableDesc.get("id"))
+                 .put("project", DXEnvironment.create().getWorkspace().getId())
+                 .put("id", readsTable.getId())
                  .build())
             .build();
+        DXGTable trimmedReads = DXGTable.getInstance(DXAPI.gtableNew(gtableNewInput, GTableNewResponse.class).id);
 
-        String outputGTableId = DXAPI.gtableNew(gtableNewInput).get("id").textValue();
+        DXGTable.Describe gtableDesc = readsTable.describe();
 
         int sequenceColumnIndex = -1, qualColumnIndex = -1;
-        for (int i=0; i<tableDesc.get("columns").size(); i++) {
-            if (tableDesc.get("columns").get(i).get("name").asText().equals("sequence")) {
+        List<ColumnSpecification> columns = gtableDesc.getColumns();
+        for (int i = 0; i < columns.size(); i++) {
+            ColumnSpecification cs = columns.get(i);
+            if (cs.getName().equals("sequence")) {
                 sequenceColumnIndex = i;
-            } else if (tableDesc.get("columns").get(i).get("name").asText().equals("quality")) {
+            } else if (cs.getName().equals("quality")) {
                 qualColumnIndex = i;
             }
         }
 
+        // Raw API calls here because there are no high-level bindings to "get"
+        // and "addRows" methods in DXGTable
         int step = 10000, nextPartIndex = 1;
-        for (int i=0; i<tableDesc.get("length").intValue(); i += step) {
-            ObjectNode gtableGetInput = DXJSON.getObjectBuilder()
-                .put("starting", i)
-                .put("limit", step)
-                .build();
-            ArrayNode outputRows = mapper.createArrayNode();
-            for (JsonNode row : DXAPI.gtableGet(gtableId, gtableGetInput).get("data")) {
-                ArrayNode arrayRow = (ArrayNode)row;
+        for (int i = 0; i < gtableDesc.getNumRows(); i += step) {
+            GTableGetRequest gtableGetInput = new GTableGetRequest(i, step);
+            List<ArrayNode> inputRows = DXAPI.gtableGet(readsTable.getId(), gtableGetInput, GTableGetResponse.class).data;
+            List<ArrayNode> outputRows = new ArrayList<ArrayNode>();
+            for (ArrayNode row : inputRows) {
                 // First row is the index - don't send it back. After removing
                 // it, the remaining columns should correspond to the GTable
                 // schema.
-                arrayRow.remove(0);
-                String sequence = arrayRow.get(sequenceColumnIndex).textValue();
-                String quality = arrayRow.get(qualColumnIndex).textValue();
+                row.remove(0);
+                String sequence = row.get(sequenceColumnIndex).textValue();
+                String quality = row.get(qualColumnIndex).textValue();
                 String sequenceSubstr = sequence.substring(0, Math.max(sequence.length()-trimLength, 0));
                 String qualitySubstr = quality.substring(0, Math.max(quality.length()-trimLength, 0));
-                arrayRow.set(sequenceColumnIndex, TextNode.valueOf(sequenceSubstr));
-                arrayRow.set(qualColumnIndex, TextNode.valueOf(qualitySubstr));
+                row.set(sequenceColumnIndex, TextNode.valueOf(sequenceSubstr));
+                row.set(qualColumnIndex, TextNode.valueOf(qualitySubstr));
                 outputRows.add(row);
             }
-            ObjectNode gtableAddRowsInput = mapper.createObjectNode();
-            gtableAddRowsInput.put("part", nextPartIndex++);
-            gtableAddRowsInput.put("data", outputRows);
-            DXAPI.gtableAddRows(outputGTableId, gtableAddRowsInput);
+            DXAPI.gtableAddRows(trimmedReads.getId(), new GTableAddRowsRequest(nextPartIndex++, outputRows), JsonNode.class);
         }
-        DXAPI.gtableClose(outputGTableId);
 
-        ObjectNode jobOutput = DXJSON.getObjectBuilder()
-            .put("trimmedReads", makeDXLink(outputGTableId))
-            .build();
-        mapper.writeValue(new File("job_output.json"), jobOutput);
+        trimmedReads.close();
+
+        DXUtil.writeJobOutput(new ReadTrimmerOutput(trimmedReads));
 
         System.out.println("Trimming complete!");
-    }
-
-    private static ObjectNode makeDXLink(String objectId) {
-        return DXJSON.getObjectBuilder().put("$dnanexus_link", objectId).build();
     }
 
 }

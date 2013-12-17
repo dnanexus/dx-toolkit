@@ -1,6 +1,8 @@
 import java.io.*;
 import java.util.*;
 import org.apache.commons.io.IOUtils;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.node.*;
@@ -12,6 +14,12 @@ import com.dnanexus.*;
  * what this app does and how all the pieces fit together.
  */
 public class DXParallelismExample {
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class JobNewResponse {
+        @JsonProperty
+        public String id;
+    }
 
     private static ObjectNode makeDXLink(String objectId) {
         return DXJSON.getObjectBuilder().put("$dnanexus_link", objectId).build();
@@ -56,7 +64,7 @@ public class DXParallelismExample {
                                     .put("input_file", makeDXLink(inputFile))
                                     .build())
                 .build();
-            String processJobId = DXAPI.jobNew(processJobInputHash).get("id").textValue();
+            String processJobId = DXAPI.jobNew(processJobInputHash, JobNewResponse.class).id;
             processJobIds.add(processJobId);
         }
 
@@ -84,7 +92,7 @@ public class DXParallelismExample {
                  .put("process_outputs", processOutputObjects)
                  .build())
             .build();
-        String postprocessJobId = DXAPI.jobNew(postprocessJobInputHash).get("id").textValue();
+        String postprocessJobId = DXAPI.jobNew(postprocessJobInputHash, JobNewResponse.class).id;
 
         // Wire the output of the postprocess job up to the output of the app.
         ObjectNode jobOutput = DXJSON.getObjectBuilder()
