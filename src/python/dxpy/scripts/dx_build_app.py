@@ -17,7 +17,7 @@
 #   under the License.
 
 import logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARNING)
 logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
 
 import os, sys, json, subprocess, argparse
@@ -682,7 +682,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     elif mode == "app" and use_temp_build_project and not dry_run:
         # Create a temp project
         working_project = dxpy.api.project_new({"name": "Temporary build project for dx-build-app"})["id"]
-        print >> sys.stderr, "Created temporary project %s to build in" % (working_project,)
+        logger.debug("Created temporary project %s to build in" % (working_project,))
         using_temp_project = True
 
     try:
@@ -736,7 +736,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
 
         applet_name = applet_spec['name']
 
-        print >> sys.stderr, "Created applet " + applet_id + " successfully"
+        logger.debug("Created applet " + applet_id + " successfully")
 
         if mode == "app":
             if 'version' not in app_json:

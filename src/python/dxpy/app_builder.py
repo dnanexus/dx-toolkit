@@ -369,7 +369,7 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
     Creates a new app object from the specified applet.
     """
     app_spec = _get_app_spec(src_dir)
-    print >> sys.stderr, "Will create app with spec: ", app_spec
+    logger.info("Will create app with spec: %s" % (app_spec,))
 
     app_spec["applet"] = applet_id
     app_spec["name"] = applet_name
@@ -383,7 +383,7 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
         try_versions = [app_spec["version"]]
 
     for version in try_versions:
-        print >> sys.stderr, "Attempting to create version %s..." % (version,)
+        logger.debug("Attempting to create version %s..." % (version,))
         app_spec['version'] = version
         app_describe = None
         try:
@@ -408,23 +408,23 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
         # unnecessary API calls, but we always have to be prepared to recover
         # from API errors.
         if app_describe is None:
-            print >> sys.stderr, 'App %s/%s does not yet exist' % (app_spec["name"], version)
+            logger.debug('App %s/%s does not yet exist' % (app_spec["name"], version))
             app_id = _create_or_update_version(app_spec['name'], app_spec['version'], app_spec, try_update=try_update)
             if app_id is None:
                 continue
-            print >> sys.stderr, "Created app " + app_id
+            logger.info("Created app " + app_id)
             # Success!
             break
         elif app_describe.get("published", 0) == 0:
-            print >> sys.stderr, 'App %s/%s already exists and has not been published' % (app_spec["name"], version)
+            logger.debug('App %s/%s already exists and has not been published' % (app_spec["name"], version))
             app_id = _update_version(app_spec['name'], app_spec['version'], app_spec, try_update=try_update)
             if app_id is None:
                 continue
-            print >> sys.stderr, "Updated existing app " + app_id
+            logger.info("Updated existing app " + app_id)
             # Success!
             break
         else:
-            print >> sys.stderr, 'App %s/%s already exists and has been published' % (app_spec["name"], version)
+            logger.debug('App %s/%s already exists and has been published' % (app_spec["name"], version))
             # App has already been published. Give up on this version.
             continue
     else:
