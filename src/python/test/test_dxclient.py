@@ -1669,6 +1669,28 @@ class TestDXBuildApp(DXTestCase):
 
     @unittest.skipUnless(testutil.TEST_CREATE_APPS,
                          'skipping test that would create apps')
+    def test_build_app_and_make_it_public(self):
+        app_spec = {
+            "name": "test_build_app_and_make_it_public",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0",
+            "authorizedUsers": ['PUBLIC']
+            }
+        app_dir = self.write_app_directory("test_build_app_and_make_it_public", json.dumps(app_spec), "code.py")
+
+        run("dx build --create-app --json " + app_dir)
+        app_authorized_users = run("dx list users app-test_build_app_and_make_it_public")
+        self.assertEqual(app_authorized_users, '')
+
+        run("dx build --create-app --yes --version=1.0.1 --json " + app_dir)
+        app_authorized_users = run("dx list users app-test_build_app_and_make_it_public")
+        self.assertEqual(app_authorized_users.strip().split('\n'), ['PUBLIC'])
+
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS,
+                         'skipping test that would create apps')
     def test_invalid_project_context(self):
         app_spec = {
             "name": "invalid_project_context",

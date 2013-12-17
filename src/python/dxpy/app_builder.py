@@ -39,6 +39,7 @@ import datetime
 import dxpy
 from dxpy import logger
 from dxpy.utils import merge
+from dxpy.utils.printing import fill
 
 NUM_CORES = multiprocessing.cpu_count()
 
@@ -363,7 +364,7 @@ def _update_version(app_name, version, app_spec, try_update=True):
             return None
         raise e
 
-def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False, billTo=None, try_versions=None, try_update=True):
+def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False, billTo=None, try_versions=None, try_update=True, confirm=True):
     """
     Creates a new app object from the specified applet.
     """
@@ -446,14 +447,47 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
 
     # Set authorizedUsers list appropriately, but only if provided.
     authorized_users_to_set = app_spec.get("authorizedUsers")
+    existing_authorized_users = dxpy.api.app_list_authorized_users(app_id)['authorizedUsers']
     if authorized_users_to_set is not None:
-        existing_authorized_users = dxpy.api.app_list_authorized_users(app_id)['authorizedUsers']
         authorized_users_to_add = set(authorized_users_to_set) - set(existing_authorized_users)
         authorized_users_to_remove = set(existing_authorized_users) - set(authorized_users_to_set)
+
+        skip_adding_public = False
+        if 'PUBLIC' in authorized_users_to_add:
+            acl_change_message = 'app-%s will be made public. Anyone will be able to view and run all published versions of this app.' % (app_spec['name'],)
+            if confirm:
+                if sys.stdout.isatty():
+                    try:
+                        print '***'
+                        print fill('WARNING: ' + acl_change_message)
+                        print '***'
+                        value = raw_input('Confirm making this app public [y/N]: ')
+                    except KeyboardInterrupt:
+                        value = 'n'
+                    if not value.lower().startswith('y'):
+                        skip_adding_public = True
+                else:
+                    # Default to NOT adding PUBLIC if operating
+                    # without a TTY.
+                    skip_adding_public = True
+            else:
+                logger.warn(acl_change_message)
+
+        if skip_adding_public:
+            authorized_users_to_add -= set(['PUBLIC'])
         if authorized_users_to_add:
             dxpy.api.app_add_authorized_users(app_id, input_params={'authorizedUsers': list(authorized_users_to_add)})
+        if skip_adding_public:
+            logger.warn('the app was NOT made public as requested in the dxapp.json. To make it so, run "dx add users app-%s PUBLIC".' % (app_spec["name"],))
+
         if authorized_users_to_remove:
             dxpy.api.app_remove_authorized_users(app_id, input_params={'authorizedUsers': list(authorized_users_to_remove)})
+
+    elif not len(existing_authorized_users):
+        # Apps created before the default ACL transition (and have
+        # 'PUBLIC' in their ACL), or apps that had authorized users
+        # added by any other means, will not have this message printed.
+        logger.warn('authorizedUsers is missing from the dxapp.json. No one will be able to view or run the app except the app\'s developers.')
 
     if publish:
         dxpy.api.app_publish(app_id, input_params={'makeDefault': set_default})

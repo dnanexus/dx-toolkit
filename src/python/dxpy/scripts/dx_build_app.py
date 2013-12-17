@@ -118,6 +118,9 @@ parser.add_argument("--no-parallel-build", help="Build with make instead of make
 app_options.set_defaults(use_temp_build_project=True)
 app_options.add_argument("--no-temp-build-project", help="When building an app, build its applet in the current project instead of a temporary project", action="store_false", dest="use_temp_build_project")
 
+# --yes
+app_options.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation for potentially dangerous operations', action='store_false')
+
 # TODO: remove this flag (once all calls to build_and_upload_locally are
 # in process
 #
@@ -661,7 +664,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                              version_override=None, bill_to_override=None, use_temp_build_project=True,
                              do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
                              dx_toolkit_autodep="stable", do_build_step=True, do_upload_step=True, do_check_syntax=True,
-                             dry_run=False, return_object_dump=False,
+                             dry_run=False, return_object_dump=False, confirm=True,
                              **kwargs):
     app_json = _parse_app_spec(src_dir)
 
@@ -750,7 +753,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                                                  set_default=publish,
                                                  billTo=bill_to_override,
                                                  try_versions=try_versions,
-                                                 try_update=do_try_update)
+                                                 try_update=do_try_update,
+                                                 confirm=confirm)
 
             app_describe = dxpy.api.app_describe(app_id)
 
@@ -835,6 +839,7 @@ def main(**kwargs):
                 do_upload_step=args.upload_step,
                 do_check_syntax=args.check_syntax,
                 dry_run=args.dry_run,
+                confirm=args.confirm,
                 return_object_dump=args.json,
                 **extra_args
                 )
