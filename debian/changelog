@@ -1,3 +1,11 @@
+dx-toolkit (0.79.3) precise; urgency=low
+
+  * Bug fix for workflow handling.
+
+  * Fixes for default app ACL behavior.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 17 Dec 2013 23:40:14 +0000
+
 dx-toolkit (0.79.2) precise; urgency=low
 
   * Fix behavior of dx get record --no-ext.
