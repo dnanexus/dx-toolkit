@@ -110,6 +110,10 @@ def makeGenomeObject():
     return genome_record.get_id()
 
 class TestDXClient(DXTestCase):
+    def test_dx_version(self):
+        version = run("dx --version")
+        self.assertIn("dx", version)
+
     def test_dx_actions(self):
         with self.assertRaises(subprocess.CalledProcessError):
             run("dx")

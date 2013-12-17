@@ -3360,6 +3360,13 @@ class SetStagingEnv(argparse.Action):
         set_api(protocol='https', host='stagingapi.dnanexus.com', port='443',
                 write=(not state['interactive'] or namespace.save))
 
+class PrintDXVersion(argparse.Action):
+    # Prints to stdout instead of the default stderr that argparse
+    # uses (note: default changes to stdout in 3.4)
+    def __call__(self, parser, namespace, values, option_string=None):
+        print 'dx %s' % (dxpy.TOOLKIT_VERSION,)
+        parser.exit(0)
+
 class DXArgumentParser(argparse.ArgumentParser):
     def error(self, message):
         self.print_help(sys.stderr)
@@ -3385,7 +3392,7 @@ parser = DXArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, A
                           formatter_class=argparse.RawTextHelpFormatter,
                           parents=[env_args],
                           usage='%(prog)s [-h] [--version] command ...')
-parser.add_argument('--version', action='version', version='dx %s' % (dxpy.TOOLKIT_VERSION,))
+parser.add_argument('--version', action=PrintDXVersion, nargs=0, help="show program's version number and exit")
 
 subparsers = parser.add_subparsers(help=argparse.SUPPRESS, dest='command')
 subparsers.metavar = 'command'
