@@ -1173,6 +1173,16 @@ class TestDXClientWorkflow(DXTestCase):
 
 class TestDXClientFind(DXTestCase):
 
+    def test_dx_find_data_by_class(self):
+        ids = {"record": run("dx new record --brief").strip(),
+               "workflow": run("dx new workflow --brief").strip(),
+               "file": run("echo foo | dx upload - --brief").strip(),
+               "gtable": run("dx new gtable --columns col1:int --brief").strip()}
+
+        for classname in ids:
+            self.assertEqual(run("dx find data --brief --class " + classname).strip(),
+                             self.project + ':' + ids[classname])
+
     def test_dx_find_data_by_tag(self):
         record_ids = [run("dx new record --brief --tag Ψ --tag foo --tag baz").strip(),
                       run("dx new record --brief --tag Ψ --tag foo --tag bar").strip()]
