@@ -3491,7 +3491,7 @@ parser_uninvite = subparsers.add_parser('uninvite',
                                         prog='dx uninvite',
                                         parents=[env_args])
 parser_uninvite.add_argument('entity', help='Entity to uninvite')
-parser_uninvite.add_argument('project', help='Project to revoke permissions from')
+parser_uninvite.add_argument('project', help='Project to revoke permissions from', default=':', nargs='?')
 parser_uninvite.set_defaults(func=uninvite)
 register_subparser(parser_uninvite, categories='other')
 
