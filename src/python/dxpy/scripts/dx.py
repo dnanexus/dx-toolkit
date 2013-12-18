@@ -2368,6 +2368,17 @@ def find_executions(args):
                      'describe': {"io": include_io},
                      'include_subjobs': False if args.no_subjobs else True,
                      root_field: roots.keys()}
+            if not args.all_projects:
+                # If the query doesn't specify a project, the server finds all projects to which the user has explicit
+                # permissions, but doesn't search through public projects.
+                # In "all projects" mode, we don't specify a project in the initial query, and so don't need to specify
+                # one in the follow-up query here (because the initial query can't return any jobs in projects to which
+                # the user doesn't have explicit permissions).
+                # When searching in a specific project, we set a project in the query here, in case this is a public
+                # project and the user doesn't have explicit permissions (otherwise, the follow-up query would return
+                # empty results).
+                query['project'] = project
+
             def process_execution_result(execution_result):
                 execution_desc = execution_result['describe']
                 parent = execution_desc.get(parent_field) or execution_desc.get('parentAnalysis')
