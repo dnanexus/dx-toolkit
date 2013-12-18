@@ -40,6 +40,9 @@ public class DXAppletTest {
     @JsonInclude(Include.NON_NULL)
     private static class EmptyAppDetails {}
 
+    @JsonInclude(Include.NON_NULL)
+    private static class EmptyAppInput {}
+
     /**
      * This class doesn't serialize to an object or array!
      */
@@ -251,6 +254,48 @@ public class DXAppletTest {
     @Test
     public void testRunAppletErrors() {
         DXApplet applet = DXApplet.getInstance("applet-000000000000000000000000");
+
+        try {
+            applet.newRun().withInput(null);
+            Assert.fail("Expected setting null input to fail");
+        } catch (NullPointerException e) {
+            // Expected
+        }
+
+        try {
+            applet.newRun().withInput(new EmptyAppInput()).withInput(new EmptyAppInput());
+            Assert.fail("Expected setting input twice to fail");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+
+        try {
+            applet.newRun().withName(null);
+            Assert.fail("Expected setting null name to fail");
+        } catch (NullPointerException e) {
+            // Expected
+        }
+
+        try {
+            applet.newRun().withName("a").withName("b");
+            Assert.fail("Expected setting name twice to fail");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+
+        try {
+            applet.newRun().inFolder(null);
+            Assert.fail("Expected setting null folder to fail");
+        } catch (NullPointerException e) {
+            // Expected
+        }
+
+        try {
+            applet.newRun().inFolder("/a").inFolder("/b");
+            Assert.fail("Expected setting folder twice to fail");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
 
         try {
             applet.newRun().withDetails(new EmptyAppDetails()).withDetails(new EmptyAppDetails());

@@ -264,7 +264,7 @@ public abstract class ExecutableRunner<T extends DXExecution> {
      */
     public ExecutableRunner<T> inFolder(String folder) {
         Preconditions.checkState(this.folder == null, "inFolder cannot be called more than once");
-        Preconditions.checkArgument(folder != null, "folder may not be null");
+        Preconditions.checkNotNull(folder, "folder may not be null");
         this.folder = folder;
         return this;
     }
@@ -330,7 +330,7 @@ public abstract class ExecutableRunner<T extends DXExecution> {
      */
     public ExecutableRunner<T> withName(String name) {
         Preconditions.checkState(this.name == null, "withName cannot be called more than once");
-        Preconditions.checkArgument(name != null, "name may not be null");
+        Preconditions.checkNotNull(name, "name may not be null");
         this.name = name;
         return this;
     }
@@ -345,7 +345,7 @@ public abstract class ExecutableRunner<T extends DXExecution> {
     public ExecutableRunner<T> withRawInput(JsonNode inputHash) {
         Preconditions.checkState(this.input == null,
                 "withInput or withRawInput cannot be called more than once");
-        Preconditions.checkArgument(inputHash != null, "input hash may not be null");
+        Preconditions.checkNotNull(inputHash, "input hash may not be null");
         this.input = inputHash;
         return this;
     }

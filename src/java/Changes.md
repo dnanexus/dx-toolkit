@@ -4,6 +4,7 @@
 
 * ExecutableRunner supports withDetails (for setting details on the resulting
   job) and DXJob.Describe supports getDetails.
+* Fix exception classes for some methods of ExecutableRunner.
 
 ## 0.79.0
 
