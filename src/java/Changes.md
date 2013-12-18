@@ -1,5 +1,10 @@
 # Java API Bindings Changelog
 
+## 0.81.0
+
+* ExecutableRunner supports withDetails (for setting details on the resulting
+  job) and DXJob.Describe supports getDetails.
+
 ## 0.79.0
 
 * New classes: DXFile, DXGTable, DXApplet, DXWorkflow (remaining data object

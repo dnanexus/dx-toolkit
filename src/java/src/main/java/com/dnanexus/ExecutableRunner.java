@@ -81,8 +81,10 @@ public abstract class ExecutableRunner<T extends DXExecution> {
         @SuppressWarnings("unused")
         @JsonProperty
         private final Boolean delayWorkspaceDestruction;
+        @SuppressWarnings("unused")
+        @JsonProperty
+        private final JsonNode details;
 
-        // TODO: details
         // TODO: systemRequirements
 
         // TODO: tags
@@ -96,6 +98,7 @@ public abstract class ExecutableRunner<T extends DXExecution> {
             this.project = runner.project;
             this.folder = runner.folder;
             this.delayWorkspaceDestruction = runner.delayWorkspaceDestruction;
+            this.details = runner.details;
         }
 
     }
@@ -165,6 +168,7 @@ public abstract class ExecutableRunner<T extends DXExecution> {
     private String project;
     private String folder;
     private Boolean delayWorkspaceDestruction;
+    private JsonNode details;
 
     private List<DXJob> jobDependencies = Lists.newArrayList();
 
@@ -287,6 +291,24 @@ public abstract class ExecutableRunner<T extends DXExecution> {
      * @return the resulting execution object
      */
     public abstract T run();
+
+    /**
+     * Sets the job details to the JSON serialized value of the specified object.
+     *
+     * @param details user-supplied metadata
+     *
+     * @return the same runner object
+     */
+    public ExecutableRunner<T> withDetails(Object details) {
+        Preconditions.checkState(this.details == null,
+                "withDetails cannot be called more than once");
+        JsonNode serializedDetails = MAPPER.valueToTree(details);
+        Preconditions.checkNotNull(serializedDetails, "details may not serialize to null");
+        Preconditions.checkArgument(serializedDetails.isArray() || serializedDetails.isObject(),
+                "details must serialize to an object or array");
+        this.details = serializedDetails;
+        return this;
+    }
 
     /**
      * Sets the input hash to the JSON serialized value of the specified object.

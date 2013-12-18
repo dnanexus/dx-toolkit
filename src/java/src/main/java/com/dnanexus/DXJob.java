@@ -57,6 +57,17 @@ public final class DXJob extends DXExecution {
         }
 
         /**
+         * Returns the details (user-suppled metadata) of the job.
+         *
+         * @param valueType class to deserialize to
+         *
+         * @return the job's details
+         */
+        public <T> T getDetails(Class<T> valueType) {
+            return DXJSON.safeTreeToValue(describeOutput.details, valueType);
+        }
+
+        /**
          * Returns the ID of the job.
          *
          * @return the job ID
@@ -142,6 +153,8 @@ public final class DXJob extends DXExecution {
         private String parentJob;
         @JsonProperty
         private JobState state;
+        @JsonProperty
+        private JsonNode details;
 
         @JsonProperty
         private JsonNode output;

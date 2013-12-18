@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 
@@ -35,6 +36,20 @@ import com.google.common.collect.ImmutableList;
  * Tests for creating and running applets.
  */
 public class DXAppletTest {
+
+    @JsonInclude(Include.NON_NULL)
+    private static class EmptyAppDetails {}
+
+    /**
+     * This class doesn't serialize to an object or array!
+     */
+    private static class InvalidAppDetails {
+        @SuppressWarnings("unused")
+        @JsonValue
+        public Object getValue() {
+            return 3;
+        }
+    }
 
     @JsonInclude(Include.NON_NULL)
     private static class SampleAppInput {
@@ -57,6 +72,20 @@ public class DXAppletTest {
         public DXRecord outputRecord;
 
         private SampleAppOutput() {}
+    }
+
+    private static class SampleAppDetails {
+        @JsonProperty
+        public String sampleId;
+
+        // No-arg constructor for JSON deserialization
+        @SuppressWarnings("unused")
+        private SampleAppDetails() {
+        }
+
+        public SampleAppDetails(String sampleId) {
+            this.sampleId = sampleId;
+        }
     }
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -203,14 +232,39 @@ public class DXAppletTest {
         SampleAppInput appInput = new SampleAppInput("java", record);
 
         // Run the applet!
-        DXJob job = applet.newRun().withInput(appInput).inProject(testProject).run();
+        DXJob job =
+                applet.newRun().withInput(appInput).inProject(testProject)
+                        .withDetails(new SampleAppDetails("sample-1234")).run();
         job.waitUntilDone();
+
+        // Verify the job metadata
+        SampleAppDetails jobDetails = job.describe().getDetails(SampleAppDetails.class);
+        Assert.assertEquals("sample-1234", jobDetails.sampleId);
 
         // Examine and verify the job's output
         SampleAppOutput output = job.getOutput(SampleAppOutput.class);
         // The output object reference will have dropped the project field, so we can't directly
         // compare record to outputRecord
         Assert.assertEquals(DXRecord.getInstance(record.getId()), output.outputRecord);
+    }
+
+    @Test
+    public void testRunAppletErrors() {
+        DXApplet applet = DXApplet.getInstance("applet-000000000000000000000000");
+
+        try {
+            applet.newRun().withDetails(new EmptyAppDetails()).withDetails(new EmptyAppDetails());
+            Assert.fail("Expected setting details twice to fail");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+
+        try {
+            applet.newRun().withDetails(new InvalidAppDetails());
+            Assert.fail("Expected setting bogus details to fail");
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
     }
 
     @Test
