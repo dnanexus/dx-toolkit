@@ -2329,7 +2329,7 @@ def find_executions(args):
 
     try:
         num_processed_results = 0
-        roots = collections.OrderedDict()
+        roots, roots_by_project = collections.OrderedDict(), collections.defaultdict(list)
         for execution_result in dxpy.find_executions(**query):
             if args.trees:
                 if args.classname == 'job':
@@ -2349,6 +2349,7 @@ def find_executions(args):
                 json_output.append(execution_result['describe'])
             elif args.trees:
                 roots[root] = root
+                roots_by_project[execution_result['describe']['project']].append(root)
                 if args.classname == 'analysis' and root.startswith('job-'):
                     # Analyses in trees with jobs at their root found in "dx find analyses" are displayed unrooted,
                     # and only the last analysis found is displayed.
@@ -2364,10 +2365,6 @@ def find_executions(args):
             executions_by_parent, descriptions = collections.defaultdict(list), {}
             root_field = 'origin_job' if args.classname == 'job' else 'root_execution'
             parent_field = 'masterJob' if args.no_subjobs else 'parentJob'
-            query = {'classname': args.classname,
-                     'describe': {"io": include_io},
-                     'include_subjobs': False if args.no_subjobs else True,
-                     root_field: roots.keys()}
             def process_execution_result(execution_result):
                 execution_desc = execution_result['describe']
                 parent = execution_desc.get(parent_field) or execution_desc.get('parentAnalysis')
@@ -2385,8 +2382,18 @@ def find_executions(args):
                             if stage_desc['execution']['id'] not in descriptions:
                                 descriptions[stage_desc['execution']['id']] = stage_desc['execution']
 
-            for execution_result in dxpy.find_executions(**query):
-                process_execution_result(execution_result)
+            # Retrieve subjobs by their root (rootExecution or originJob), querying one project at a time.
+            # We could just query by all the roots together, but because the server doesn't search through public
+            # projects when the query doesn't specify a project, this would return incomplete results when we're in a
+            # public project.
+            for project in roots_by_project:
+                query = {'classname': args.classname,
+                         'describe': {"io": include_io},
+                         'include_subjobs': False if args.no_subjobs else True,
+                         root_field: roots_by_project[project],
+                         'project': project}
+                for execution_result in dxpy.find_executions(**query):
+                    process_execution_result(execution_result)
 
             # ensure roots are sorted by their creation time
             sorted_roots = sorted(roots.values(), cmp=lambda x, y: cmp(descriptions[y]['created'],
