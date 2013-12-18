@@ -22,7 +22,7 @@ The following helper functions are useful shortcuts for interacting with File ob
 
 '''
 
-import os, math, mmap
+import os, math, mmap, stat
 from dxpy.bindings import *
 
 def open_dxfile(dxid, project=None, read_buffer_size=DEFAULT_BUFFER_SIZE):
@@ -203,16 +203,21 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     num_ticks = 60
     offset = 0
 
+    def can_be_mmapd(fd):
+        if not hasattr(fd, "fileno"):
+            return False
+        mode = os.fstat(fd.fileno()).st_mode
+        return not (stat.S_ISCHR(mode) or stat.S_ISFIFO(mode))
+
     def read(num_bytes):
         """
         Returns a string or mmap'd data containing the next num_bytes of
         the file, or up to the end if there are fewer than num_bytes
         left.
         """
-        # In order to do the mmap, fd has to point to a real file that
-        # has a fileno and a known size. If this is not the case, fall
-        # back to doing an actual read from the file.
-        if file_size == 0 or not hasattr(fd, "fileno"):
+        # If file cannot be mmap'd (e.g. is stdin, or a fifo), fall back
+        # to doing an actual read from the file.
+        if not can_be_mmapd(fd):
             return fd.read(dxfile._write_bufsize)
 
         bytes_available = max(file_size - offset, 0)
