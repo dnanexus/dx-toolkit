@@ -142,7 +142,7 @@ from .packages.requests.auth import AuthBase
 logger = logging.getLogger(__name__)
 logging.getLogger('dxpy.packages.requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
 
-from .exceptions import DXError, DXAPIError
+from . import exceptions
 from .toolkit_version import version as TOOLKIT_VERSION
 
 snappy_available = True
@@ -220,7 +220,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
 
     :type always_retry: boolean
     :returns: Response from API server in the format indicated by *want_full_response*. Note: if *want_full_response* is set to False and the header "content-type" is found in the response with value "application/json", the body of the response will **always** be converted from JSON to a Python list or dict before it is returned.
-    :raises: :exc:`DXAPIError` if the server returned a non-200 status code; :exc:`requests.exceptions.HTTPError` if an invalid response was received from the server; or :exc:`requests.exceptions.ConnectionError` if a connection cannot be established.
+    :raises: :exc:`exceptions.DXAPIError` or a subclass if the server returned a non-200 status code; :exc:`requests.exceptions.HTTPError` if an invalid response was received from the server; or :exc:`requests.exceptions.ConnectionError` if a connection cannot be established.
 
     Wrapper around :meth:`requests.request()` that makes an HTTP
     request, inserting authentication headers and (by default)
@@ -273,7 +273,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
 
     if use_compression == 'snappy':
         if not snappy_available:
-            raise DXError("Snappy compression requested, but the snappy module is unavailable")
+            raise exceptions.DXError("Snappy compression requested, but the snappy module is unavailable")
         headers['accept-encoding'] = 'snappy'
 
     if 'verify' not in kwargs and 'DX_CA_CERT' in os.environ:
@@ -304,8 +304,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                 # response.headers key lookup is case-insensitive
                 if response.headers.get('content-type', '').startswith('application/json'):
                     content = json.loads(response.content)
-                    raise DXAPIError(content,
-                                     response.status_code)
+                    error_class = getattr(exceptions, content["error"]["type"], default=exceptions.DXAPIError)
+                    raise error_class(content, response.status_code)
                 response.raise_for_status()
 
             if want_full_response:
@@ -346,7 +346,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                         streaming_response_truncated = 'content-length' not in response.headers
                         raise HTTPError("Invalid JSON received from server")
                 return decoded_content
-        except (DXAPIError, ConnectionError, HTTPError, Timeout, httplib.HTTPException) as e:
+        except (exceptions.DXAPIError, ConnectionError, HTTPError, Timeout, httplib.HTTPException) as e:
             last_error = e
 
             # TODO: support HTTP/1.1 503 Retry-After
@@ -369,7 +369,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                     continue
             break
         if last_error is None:
-            last_error = DXError("Internal error in DXHTTPRequest")
+            last_error = exceptions.DXError("Internal error in DXHTTPRequest")
     raise last_error
 
 class DXHTTPOAuth2(AuthBase):
@@ -482,7 +482,7 @@ def get_auth_server_name(host_override=None, port_override=None):
     """
     if host_override is not None or port_override is not None:
         if host_override is None or port_override is None:
-            raise DXError("Both host and port must be specified if either is specified")
+            raise exceptions.DXError("Both host and port must be specified if either is specified")
         return 'http://' + host_override + ':' + str(port_override)
     elif dxpy.APISERVER_HOST == 'stagingapi.dnanexus.com':
         return 'https://stagingauth.dnanexus.com'
@@ -490,7 +490,7 @@ def get_auth_server_name(host_override=None, port_override=None):
         return 'https://auth.dnanexus.com'
     else:
         err_msg = "Could not determine which auth server is associated with {apiserver}."
-        raise DXError(err_msg.format(apiserver=dxpy.APISERVER_HOST))
+        raise exceptions.DXError(err_msg.format(apiserver=dxpy.APISERVER_HOST))
 
 def _initialize(suppress_warning=False):
     '''
@@ -539,7 +539,7 @@ if JOB_ID is not None:
     current_job = DXJob(JOB_ID)
     try:
         job_desc = current_job.describe()
-    except DXAPIError as e:
+    except exceptions.DXAPIError as e:
         if e.name == 'ResourceNotFound':
             err_msg = "Job ID %r was not found. Unset the DX_JOB_ID environment variable OR set it to be the ID of a valid job."
             print >>sys.stderr, err_msg % (JOB_ID,)

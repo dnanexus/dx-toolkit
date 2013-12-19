@@ -27,9 +27,9 @@ class DXError(Exception):
 
 class DXAPIError(DXError):
     '''
-    Exception for when the API server responds with a code that is
-    not 200 (OK).
-
+    Exception for when the API server responds with a code that is not 200 (OK). See
+    https://wiki-next.dnanexus.com/API-Specification-v1.0.0/Protocols#Errors for complete documentation of API errors,
+    including those reflected by subclasses of this class.
     '''
     def __init__(self, content, code):
         self.name = content["error"]["type"]
@@ -45,6 +45,51 @@ class DXAPIError(DXError):
         if self.details is not None:
             output += "\nDetails: " + json.dumps(self.details)
         return output
+
+class MalformedJSON(DXAPIError):
+    ''' Raised when the input could not be parsed as JSON. '''
+    pass
+
+class InvalidAuthentication(DXAPIError):
+    ''' Raised when the provided OAuth2 token is invalid. '''
+    pass
+
+class PermissionDenied(DXAPIError):
+    ''' Raised when the supplied credentials have insufficient permissions to perform this action. '''
+    pass
+
+class SpendingLimitExceeded(DXAPIError):
+    ''' Raised when the spending limit has been reached for the account that would be billed for this action. '''
+    pass
+
+class ResourceNotFound(DXAPIError):
+    ''' Raised when a specified entity or resource could not be found. '''
+    pass
+
+class InvalidInput(DXAPIError):
+    ''' Raised when the input is syntactically correct (JSON), but semantically incorrect (for example, a JSON array
+    is provided where a hash was required; or a required parameter was missing, etc.). '''
+    pass
+
+class InvalidState(DXAPIError):
+    ''' Raised when the operation is not allowed at this object state. '''
+    pass
+
+class InvalidType(DXAPIError):
+    ''' Raised when an object specified in the request is of invalid type. '''
+    pass
+
+class RateLimitConditional(DXAPIError):
+    ''' Raised when the rate of invalid requests is too high. '''
+    pass
+
+class InternalError(DXAPIError):
+    ''' Raised when the server encountered an internal error. '''
+    pass
+
+class ServiceUnavailable(DXAPIError):
+    ''' Raised when an API service was temporarily unavailable. '''
+    pass
 
 class DXFileError(DXError):
     '''Exception for :class:`dxpy.bindings.dxfile.DXFile`.'''
