@@ -26,20 +26,34 @@ parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
                                  description=fill('Reads and modifies job_output.json in your home directory to be a JSON hash with key *name* and value  *value*.') + '\n\n' + fill('If --class is not provided or is set to "auto", auto-detection of the output format will occur.  In particular, it will treat it as a number, hash, or boolean if it can be successfully parsed as such.  If it is a string which matches the pattern for a data object ID, it will encapsulate it in a DNAnexus link hash; otherwise it is treated as a simple string.') + '\n\n' + fill('Use --array to append to an array of values or prepend "array:" to the --class argument.') + '\n\n' + fill('To use the output of another job as part of your output, use --class=jobref (which will throw an error if it is not formatted correctly), or use the automatic parsing which will recognize anything starting with a job ID as a job-based object reference.  You should format the value as follows:') + '''
 
   Format: <job ID>:<output field name>
-  Example: dx-jobutil-add-output myoutput job-B2JKYqK4Zg2K915yQxPQ0024:other_output --class=jobref
+  Example: dx-jobutil-add-output myoutput --class=jobref \\
+             job-B2JKYqK4Zg2K915yQxPQ0024:other_output
+
+'''
+                                 + fill('Analysis references can be specified similarly with --class=analysisref and formatted as:') + '''
+
+  Format: <analysis ID>:<stage ID>.<output field name>
+          <analysis ID>:<exported output field name>
+  Example: dx-jobutil-add-output myoutput --class=analysisref \\
+             analysis-B2JKYqK4Zg2K915yQxPQ0024:some_output
 ''')
 parser.add_argument('name', help='Name of the output field name')
 parser.add_argument('value', help='Value of the output field')
-parser.add_argument('--class', dest='classname',
+parser.add_argument('--class', dest='classname', metavar='CLASSNAME',
                     choices=['int', 'float', 'string', 'boolean', 'hash',
                              'array:int', 'array:float', 'array:string', 'array:boolean',
-                             'file', 'gtable', 'record', 'applet',
+                             'file', 'gtable', 'record', 'applet', 'workflow',
                              'array:file', 'array:gtable', 'array:record', 'array:applet',
-                             'jobref', 'array:jobref', 'auto', 'array:auto'],
-                    help=fill('Class of output for formatting purposes, default "auto"', width_adjustment=-24),
+                             'array:workflow', 'jobref', 'array:jobref', 'analysisref',
+                             'array:analysisref', 'auto', 'array:auto'],
+                    help=fill('Class of output for formatting purposes, e.g. "int"; default "auto"',
+                              width_adjustment=-24),
                     nargs='?',
                     default='auto')
 parser.add_argument('--array', help='Output field is an array', action='store_true')
+# replacement output filename to use instead of "~/job_output.json" (primarily for testing)
+parser.add_argument('-o', '--output', help=argparse.SUPPRESS,
+                    default=os.path.expanduser(os.path.join('~', 'job_output.json')))
 args = parser.parse_args()
 
 value = None
@@ -48,7 +62,7 @@ if args.classname.startswith('array:'):
     args.array = True
     args.classname = args.classname[6:]
 
-if args.classname in ['file', 'gtable', 'record', 'applet']:
+if args.classname in ['file', 'gtable', 'record', 'applet', 'workflow']:
     args.classname = 'dxobject'
 
 if args.classname == 'auto':
@@ -57,9 +71,14 @@ if args.classname == 'auto':
     else:
         colon_substrings = split_unescaped(':', args.value)
         if len(colon_substrings) == 2 and (is_job_id(colon_substrings[0]) or \
-                                               is_localjob_id(colon_substrings[0])):
-            value = {"job": colon_substrings[0],
-                     "field": unescape_name_str(colon_substrings[1])}
+                                           is_localjob_id(colon_substrings[0]) or \
+                                           is_analysis_id(colon_substrings[0])):
+            if is_analysis_id(colon_substrings[0]):
+                value = {"$dnanexus_link": {"analysis": colon_substrings[0],
+                                            "field": colon_substrings[1]}}
+            else:
+                value = {"job": colon_substrings[0],
+                         "field": unescape_name_str(colon_substrings[1])}
         else:
             try:
                 # works for int, float, boolean, hash, dxobject (when already in the hash)
@@ -71,12 +90,12 @@ elif args.classname == 'int':
     try:
         value = int(args.value)
     except:
-        parser.exit(1, 'Value could not be parsed as an int\n')
+        parser.exit(3, 'Value could not be parsed as an int\n')
 elif args.classname == 'float':
     try:
         value = float(args.value)
     except:
-        parser.exit(1, 'Value could not be parsed as a float\n')
+        parser.exit(3, 'Value could not be parsed as a float\n')
 elif args.classname == 'string':
     value = args.value
 elif args.classname == 'boolean':
@@ -85,12 +104,12 @@ elif args.classname == 'boolean':
     elif args.value.lower().startswith('f') or args.value == '0':
         value = False
     else:
-        parser.exit(1, 'Value could not be parsed as a boolean\n')
+        parser.exit(3, 'Value could not be parsed as a boolean\n')
 elif args.classname == 'hash':
     try:
         value = json.loads(args.value)
     except:
-        parser.exit(1, 'Value could not be parsed as a hash\n')
+        parser.exit(3, 'Value could not be parsed as a hash\n')
 elif args.classname == 'dxobject':
     if is_data_obj_id(args.value):
         value = {'$dnanexus_link': args.value}
@@ -98,22 +117,28 @@ elif args.classname == 'dxobject':
         try:
             value = json.loads(args.value)
         except:
-            parser.exit(1, 'Value could not be parsed as a data object ID or hash with key "$dnanexus_link"\n')
+            parser.exit(3, 'Value could not be parsed as a data object ID or hash with key "$dnanexus_link"\n')
         if not isinstance(value, dict) or value.get('$dnanexus_link', None) is None:
-            parser.exit(1, 'Value could not be parsed as a data object ID or hash with key "$dnanexus_link"\n')
+            parser.exit(3, 'Value could not be parsed as a data object ID or hash with key "$dnanexus_link"\n')
 elif args.classname == 'jobref':
     colon_substrings = split_unescaped(':', args.value)
     if len(colon_substrings) == 2 and (is_job_id(colon_substrings[0]) or \
-                                           is_localjob_id(colon_substrings[0])):
+                                       is_localjob_id(colon_substrings[0])):
         value = {"job": colon_substrings[0],
                  "field": unescape_name_str(colon_substrings[1])}
     else:
-        parser.exit(1, fill('Value could not be recognized as a job-based object reference with format <job ID>:<job output field name>') + '\n')
+        parser.exit(3, fill('Value could not be parsed as a job-based object reference with format <job ID>:<job output field name>') + '\n')
+elif args.classname == 'analysisref':
+    colon_substrings = split_unescaped(':', args.value)
+    if len(colon_substrings) == 2 and is_analysis_id(colon_substrings[0]):
+        value = {"$dnanexus_link": {"analysis": colon_substrings[0],
+                                    "field": colon_substrings[1]}}
+    else:
+        parser.exit(3, fill('Value could not be parsed as an analysis reference with format <analysis ID>:<analysis output field name>') + '\n')
 
 output_json = {}
-output_filename = os.path.expanduser(os.path.join('~', 'job_output.json'))
-if os.path.exists(output_filename):
-    with open(output_filename, 'r') as output_json_file:
+if os.path.exists(args.output):
+    with open(args.output, 'r') as output_json_file:
         output_json = json.loads(output_json_file.read())
 
 if args.array:
@@ -121,11 +146,11 @@ if args.array:
         if isinstance(output_json[args.name], list):
             output_json[args.name].append(value)
         else:
-            parser.exit(1, 'Key ' + args.name + ' was found in existing output but was not an array\n')
+            parser.exit(3, 'Key ' + args.name + ' was found in existing output but was not an array\n')
     else:
         output_json[args.name] = [value]
 else:
     output_json[args.name] = value
 
-with open(output_filename, 'w') as output_json_file:
+with open(args.output, 'w') as output_json_file:
     output_json_file.write(json.dumps(output_json, indent=4) + '\n')
