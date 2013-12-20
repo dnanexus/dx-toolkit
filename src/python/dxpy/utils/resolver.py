@@ -701,10 +701,8 @@ def get_exec_handler(path, alias=None):
                                                                         visibility="visible")
             def is_applet_or_workflow(i):
                 return (i['describe']['class'] in ['applet', 'workflow'])
-            def is_record_workflow(i):
-                return ('pipeline' in i['describe']['types'])
             if entity_results is not None:
-                entity_results = [i for i in entity_results if is_applet_or_workflow(i) or is_record_workflow(i)]
+                entity_results = [i for i in entity_results if is_applet_or_workflow(i)]
                 if len(entity_results) == 0:
                     entity_results = None
         except ResolutionError:

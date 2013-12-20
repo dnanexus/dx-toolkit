@@ -721,7 +721,7 @@ def print_desc(desc, verbose=False):
 
 def get_ls_desc(desc, print_id=False):
     addendum = ' : ' + desc['id'] if print_id is True else ''
-    if desc['class'] in ['applet', 'workflow'] or (desc['class'] == 'record' and 'pipeline' in desc['types']):
+    if desc['class'] in ['applet', 'workflow']:
         return BOLD() + GREEN() + desc['name'] + ENDC() + addendum
     else:
         return desc['name'] + addendum
@@ -746,7 +746,7 @@ def get_ls_l_desc(desc, include_folder=False, include_project=False):
 
     name_str += desc['name']
 
-    if desc['class'] in ['applet', 'workflow'] or (desc['class'] == 'record' and 'pipeline' in desc['types']):
+    if desc['class'] in ['applet', 'workflow']:
         name_str = BOLD() + GREEN() + name_str + ENDC()
 
     size_str = ''

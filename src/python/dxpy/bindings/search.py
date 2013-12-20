@@ -278,7 +278,7 @@ def find_executions(classname=None, launched_by=None, executable=None, project=N
     if launched_by is not None:
         query["launchedBy"] = launched_by
     if executable is not None:
-        if isinstance(executable, (DXApplet, DXApp, DXAnalysisWorkflow)):
+        if isinstance(executable, (DXApplet, DXApp, DXWorkflow)):
             query["executable"] = executable.get_id()
         else:
             query["executable"] = executable

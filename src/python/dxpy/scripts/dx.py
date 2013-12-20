@@ -22,7 +22,7 @@ import shlex # respects quoted substrings when splitting
 
 from ..cli import try_call
 from ..cli import workflow as workflow_cli
-from ..exceptions import err_exit, default_expected_exceptions, DXError, DXCLIError
+from ..exceptions import err_exit, DXError, DXCLIError
 from ..packages import requests
 
 # Try to reset encoding to utf-8
@@ -146,8 +146,8 @@ from dxpy.utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj
                                  resolve_existing_path, get_app_from_path, resolve_app, get_exec_handler,
                                  cached_project_names, split_unescaped,
                                  ResolutionError, get_first_pos_of_char, resolve_to_objects_or_project)
-from dxpy.utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, LocalCompleter, NoneCompleter,
-                                  InstanceTypesCompleter, ListCompleter, MultiCompleter)
+from dxpy.utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, LocalCompleter,
+                                  MultiCompleter)
 from dxpy.utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_desc,
                                  get_io_desc, get_find_executions_string)
 from dxpy.cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg,
@@ -158,7 +158,7 @@ from dxpy.cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, al
                               set_env_from_args,
                               extra_args, process_extra_args, DXParserError,
                               exec_input_args, instance_type_arg, process_instance_type_arg)
-from dxpy.cli.exec_io import (ExecutableInputs, stage_to_job_refs, format_choices_or_suggestions)
+from dxpy.cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
 
 # Loading other variables used for pretty-printing
 if "LESS" in os.environ:
@@ -1150,7 +1150,7 @@ def tree(args):
                 item_desc = get_ls_l_desc(item['describe'])
             else:
                 item_desc = item['describe']['name']
-                if item['describe']['class'] in ['applet', 'workflow'] or (item['describe']['class'] == 'record' and 'pipeline' in item['describe']['types']):
+                if item['describe']['class'] in ['applet', 'workflow']:
                     item_desc = BOLD() + GREEN() + item_desc + ENDC()
             subtree[item_desc] = None
 
@@ -2758,188 +2758,80 @@ def print_run_help(executable="", alias=None):
         except:
             err_exit()
 
-        if isinstance(handler, dxpy.bindings.DXRecord):
-            exec_help += ' [-iSTAGE_NUM.INPUT_NAME=VALUE ...]\n\n'
-            exec_help += "Workflow: " + exec_desc['name'] + "\n\n"
+        exec_help += ' [-iINPUT_NAME=VALUE ...]\n\n'
 
-            workflow = handler.get_details()
-            workflow_details = copy.deepcopy(workflow)
-            if workflow.get('version') not in range(2, 6):
-                parser.exit(1, "Unrecognized workflow version {v} in {w}\n".format(v=workflow.get('version', '<none>'),
-                                                                                   w=handler))
-
-            exec_help += fill("To run this workflow, specify values for all required inputs to each stage which are not yet bound (shown without square brackets and the value \"<unbound>\").  To specify an input, use the stage's number and input name, e.g.") + '\n\n'
-            exec_help += '  -i0.input_name=3\n\n'
-            exec_help += fill('gives the value 3 to stage 0 for an input called "input_name".') + '\n\n'
-
-            exec_help += fill("Not all inputs and outputs are shown for each stage.  For a list of all inputs and outputs for each stage and additional help, run") + '\n\n'
-            exec_help += '  dx run EXECUTABLE -h\n\n'
-            exec_help += fill("where EXECUTABLE is the stage's app(let) name or ID, along with any --version flags given.") + '\n'
-
-            for k in range(len(workflow['stages'])):
-                workflow['stages'][k].setdefault('key', str(k))
-                for i in workflow['stages'][k].get('inputs', {}).keys():
-                    if workflow['stages'][k]['inputs'][i] == "":
-                        del workflow['stages'][k]['inputs'][i]
-
-            for k, stage in enumerate(workflow['stages']):
-                exec_id = stage['app']['id'] if 'id' in stage['app'] else stage['app']
-                if workflow.get('version') < 3:
-                    exec_desc = stage['app']
-                else:
-                    if dxpy.is_dxlink(exec_id):
-                        exec_id = exec_id['$dnanexus_link']
-                    if exec_id.startswith('app-'):
-                        exec_desc = get_app_from_path(exec_id)
-                    else:
-                        exec_desc = dxpy.get_handler(exec_id).describe()
-
-                if exec_id.startswith('app-'):
-                    workflow_details['stages'][k]['app'] = {
-                        "$dnanexus_link": 'app-' + exec_desc['name'] + '/' + exec_desc['version']
-                    }
-
-                input_spec = exec_desc.get('inputSpec')
-                output_spec = exec_desc.get('outputSpec')
-
-                exec_help += '\nStage ' + unicode(stage['key']) + ': '
-                if exec_desc['class'] == 'app':
-                    exec_help += exec_desc['name'] + ' --version ' + exec_desc['version']
-                elif exec_desc['class'] == 'applet':
-                    exec_help += exec_desc['name'] + ' (' + exec_id + ')'
-
-                def render_workflow_val(val):
-                    if isinstance(val, dict) and 'connectedTo' in val:
-                        for stage in workflow['stages']:
-                            if stage['id'] == val['connectedTo']['stage']:
-                                key = stage['key']
-                                break
-                        return '<Stage ' + unicode(key) + ' output:' + val['connectedTo']['output'] + '>'
-                    else:
-                        return json.dumps(val)
-
-                # Go over required inputs
-                if input_spec is not None:
-                    exec_help += '\n  Inputs: '
-                    if len(input_spec) == 0:
-                        exec_help += '<none>'
-                    else:
-                        classes_to_ignore_by_default = [
-                            'int', 'array:int',
-                            'double', 'array:double',
-                            'boolean', 'array:boolean',
-                            'string', 'array:string',
-                            'float', 'array:float',
-                            'hash']
-
-                        # ALWAYS show bound and required inputs
-                        # IGNORE those that are in the things to ignore and are optional and unbound
-                        for param in input_spec:
-                            if (stage['inputs'].get(param['name']) is None or stage['inputs'][param['name']] == param.get('default', None)) and \
-                                    param['class'] in classes_to_ignore_by_default and \
-                                    (param.get('optional', False) or 'default' in param):
-                                continue
-                            exec_help += '\n    ' + ('[' if param.get('optional', False) or 'default' in param else '') + param['name'] + (']' if param.get('optional', False) or 'default' in param else '') + '='
-                            if stage['inputs'].get(param['name']) is None:
-                                if 'default' in param:
-                                    exec_help += '<' + json.dumps(param['default']) + ' by default>'
-                                exec_help += '<unbound>'
-                            else:
-                                if param['class'].startswith('array'):
-                                    # array input
-                                    rendered_vals = [render_workflow_val(val) for val in stage['inputs'][param['name']]]
-                                    exec_help += '[' + ", ".join(rendered_vals) + ']'
-                                else:
-                                    # non-array input
-                                    exec_help += render_workflow_val(stage['inputs'][param['name']])
-
-                # Also list outputs
-                if output_spec is not None:
-                    exec_help += '\n  Outputs: '
-                    if len(output_spec) == 0:
-                        exec_help += "<none>"
-                    else:
-                        for param in output_spec:
-                            exec_help += '\n    ' + param['name']
-
-                exec_help += "\n"
-
-            handler.set_details(workflow_details)
+        if isinstance(handler, dxpy.bindings.DXApp):
+            exec_help += BOLD("App: ")
+            exec_details = exec_desc['details']
         else:
-            exec_help += ' [-iINPUT_NAME=VALUE ...]\n\n'
+            exec_help += BOLD(exec_desc['class'].capitalize() + ": ")
+            exec_details = handler.get_details()
+        advanced_inputs = exec_details.get("advancedInputs", []) if isinstance(exec_details, dict) else []
+        exec_help += exec_desc.get('title', exec_desc['name']) + '\n\n'
+        summary = exec_desc.get('summary', '')
+        if summary != '':
+            exec_help += fill(summary) + "\n\n"
 
-            if isinstance(handler, dxpy.bindings.DXApp):
-                exec_help += BOLD("App: ")
-                exec_details = exec_desc['details']
+        # Contact URL here
+        if isinstance(handler, dxpy.bindings.DXApp):
+            exec_help += "See the app page for more information:\n  https://platform.dnanexus.com/app/" + exec_desc['name'] +"\n\n"
+
+        exec_help += BOLD("Inputs:")
+        advanced_inputs_help = "Advanced Inputs:"
+        if 'inputSpec' in exec_desc:
+            if len(exec_desc['inputSpec']) == 0:
+                exec_help += " <none>\n"
             else:
-                exec_help += BOLD(exec_desc['class'].capitalize() + ": ")
-                exec_details = handler.get_details()
-            advanced_inputs = exec_details.get("advancedInputs", []) if isinstance(exec_details, dict) else []
-            exec_help += exec_desc.get('title', exec_desc['name']) + '\n\n'
-            summary = exec_desc.get('summary', '')
-            if summary != '':
-                exec_help += fill(summary) + "\n\n"
-
-            # Contact URL here
-            if isinstance(handler, dxpy.bindings.DXApp):
-                exec_help += "See the app page for more information:\n  https://platform.dnanexus.com/app/" + exec_desc['name'] +"\n\n"
-
-            exec_help += BOLD("Inputs:")
-            advanced_inputs_help = "Advanced Inputs:"
-            if 'inputSpec' in exec_desc:
-                if len(exec_desc['inputSpec']) == 0:
-                    exec_help += " <none>\n"
-                else:
-                    for group, params in group_array_by_field(exec_desc['inputSpec']).iteritems():
-                        if group is not None:
-                            exec_help += "\n " + BOLD(group)
-                        for param in params:
-                            param_string = "\n  "
-                            param_string += UNDERLINE(param.get('label', param['name'])) + ": "
-                            param_string += get_io_desc(param, app_help_version=True) + "\n"
-                            helpstring = param.get('help', '')
-
-                            stanzas = []
-
-                            if 'choices' in param:
-                                stanzas.append(format_choices_or_suggestions('Choices:',
-                                                                             param['choices'],
-                                                                             param['class']))
-                            if helpstring != '':
-                                stanzas.append(fill(helpstring, initial_indent='        ', subsequent_indent='        '))
-
-                            if param.get('suggestions'):
-                                stanzas.append(format_choices_or_suggestions('Suggestions:',
-                                                                             param['suggestions'],
-                                                                             param['class']))
-                            param_string += "\n\n".join(stanzas) + ("\n" if stanzas else "")
-
-                            if param['name'] in advanced_inputs:
-                                advanced_inputs_help += param_string
-                            else:
-                                exec_help += param_string
-                    if len(advanced_inputs) > 0:
-                        exec_help += "\n" + advanced_inputs_help
-            else:
-                exec_help += " no specification provided"
-            exec_help += "\n"
-
-            exec_help += BOLD("Outputs:")
-            if 'outputSpec' in exec_desc:
-                if len(exec_desc['outputSpec']) == 0:
-                    exec_help += " <none>\n"
-                else:
-                    for param in exec_desc['outputSpec']:
-                        exec_help += "\n  "
-                        exec_help += UNDERLINE(param.get('label', param['name'])) + ": "
-                        exec_help += get_io_desc(param) + "\n"
+                for group, params in group_array_by_field(exec_desc['inputSpec']).iteritems():
+                    if group is not None:
+                        exec_help += "\n " + BOLD(group)
+                    for param in params:
+                        param_string = "\n  "
+                        param_string += UNDERLINE(param.get('label', param['name'])) + ": "
+                        param_string += get_io_desc(param, app_help_version=True) + "\n"
                         helpstring = param.get('help', '')
+
+                        stanzas = []
+
+                        if 'choices' in param:
+                            stanzas.append(format_choices_or_suggestions('Choices:',
+                                                                         param['choices'],
+                                                                         param['class']))
                         if helpstring != '':
-                            exec_help += fill(helpstring,
-                                              initial_indent='        ',
-                                              subsequent_indent='        ') + "\n"
+                            stanzas.append(fill(helpstring, initial_indent='        ', subsequent_indent='        '))
+
+                        if param.get('suggestions'):
+                            stanzas.append(format_choices_or_suggestions('Suggestions:',
+                                                                         param['suggestions'],
+                                                                         param['class']))
+                        param_string += "\n\n".join(stanzas) + ("\n" if stanzas else "")
+
+                        if param['name'] in advanced_inputs:
+                            advanced_inputs_help += param_string
+                        else:
+                            exec_help += param_string
+                if len(advanced_inputs) > 0:
+                    exec_help += "\n" + advanced_inputs_help
+        else:
+            exec_help += " no specification provided"
+        exec_help += "\n"
+
+        exec_help += BOLD("Outputs:")
+        if 'outputSpec' in exec_desc:
+            if len(exec_desc['outputSpec']) == 0:
+                exec_help += " <none>\n"
             else:
-                exec_help += " no specification provided"
+                for param in exec_desc['outputSpec']:
+                    exec_help += "\n  "
+                    exec_help += UNDERLINE(param.get('label', param['name'])) + ": "
+                    exec_help += get_io_desc(param) + "\n"
+                    helpstring = param.get('help', '')
+                    if helpstring != '':
+                        exec_help += fill(helpstring,
+                                          initial_indent='        ',
+                                          subsequent_indent='        ') + "\n"
+        else:
+            exec_help += " no specification provided"
 
         if sys.stdout.isatty():
             if tty_rows <= exec_help.count("\n"):
@@ -3095,70 +2987,7 @@ def run(args):
         if not args.brief:
             print "Executing workflow", handler
 
-    if isinstance(handler, dxpy.DXRecordWorkflow):
-        # Record-based workflow requires each job to be run individually
-        workflow = handler.get_details()
-        workflow_details = copy.deepcopy(workflow)
-        if workflow.get('version') not in range(2, 6):
-            parser.exit(1, "Unrecognized workflow version {v} in {w}\n".format(v=workflow['version'], w=handler))
-        launched_jobs = {stage['id']: None for stage in workflow['stages']}
-        requested_job_name = args.name
-
-        for k in range(len(workflow['stages'])):
-            workflow['stages'][k].setdefault('key', str(k))
-            for i in workflow['stages'][k].get('inputs', {}).keys():
-                if workflow['stages'][k]['inputs'][i] == "":
-                    del workflow['stages'][k]['inputs'][i]
-
-        for k, stage in enumerate(workflow['stages']):
-            if not args.brief:
-                print "Processing stage", stage['key'], "(id", stage['id'] + ")"
-            inputs_from_stage = {k: stage_to_job_refs(v, launched_jobs)
-                                 for k, v in stage['inputs'].iteritems() if v is not None}
-
-            exec_id = stage['app']['id'] if 'id' in stage['app'] else stage['app']
-            if dxpy.is_dxlink(exec_id):
-                exec_id = exec_id['$dnanexus_link']
-            if exec_id.startswith('app-'):
-                exec_id = get_app_from_path(exec_id)['id']
-
-            executable = dxpy.get_handler(exec_id)
-
-            if exec_id.startswith('app-'):
-                executable_desc = executable.describe()
-                workflow_details['stages'][k]['app'] = {
-                    "$dnanexus_link": 'app-' + executable_desc['name'] + '/' + executable_desc['version']
-                }
-
-            if requested_job_name is None:
-                # TODO: name and describe caching in dxobject
-                # TODO: does apiserver append entry point name to parent/subjobs if job name is given? (or should we use :main here?)
-                #args.name = "{wf}.{key}:{exec}".format(wf=workflow['name'], key=stage['key'], exec=executable.name)
-                pass
-            launched_jobs[stage['id']] = run_one(args, executable, dest_proj, dest_path,
-                                                 preset_inputs=inputs_from_stage,
-                                                 input_name_prefix=str(stage['key'])+".",
-                                                 is_the_only_job=False)
-
-        handler.set_details(workflow_details)
-
-        if args.wait:
-            for stage in workflow['stages']:
-                launched_jobs[stage['id']].wait_on_done()
-        elif args.confirm and sys.stdin.isatty() and not args.watch:
-            answer = raw_input("Watch launched jobs now? [Y/n] ")
-            if len(answer) == 0 or answer.lower()[0] == 'y':
-                args.watch = True
-
-        if args.watch:
-            for stage in workflow['stages']:
-                watch_args = parser.parse_args(['watch', launched_jobs[stage['id']].get_id()])
-                print ''
-                print 'Job Log'
-                print '-------'
-                watch(watch_args)
-    else:
-        run_one(args, handler, dest_proj, dest_path)
+    run_one(args, handler, dest_proj, dest_path)
 
 def terminate(args):
     for jobid in args.jobid:
@@ -3936,8 +3765,7 @@ run_executable_action = parser_run.add_argument('executable',
                                                 help=fill('Name or ID of an applet, app, or workflow to run; must be provided if --clone is not set', width_adjustment=-24),
                                                 nargs="?", default="")
 run_executable_action.completer = MultiCompleter([DXAppCompleter(),
-                                                  DXPathCompleter(classes=['applet', 'workflow'], visibility="visible"),
-                                                  DXPathCompleter(classes=['record'], typespec='pipeline')])
+                                                  DXPathCompleter(classes=['applet', 'workflow'], visibility="visible")])
 parser_run.add_argument('-h', '--help', help='show this help message and exit', nargs=0, action=runHelp)
 parser_run.add_argument('--clone', help=fill('Job ID or name from which to use as default options (will use the exact same executable ID, destination project and folder, job input, instance type requests, and a similar name unless explicitly overridden by command-line arguments)', width_adjustment=-24))
 parser_run.add_argument('--alias', '--version', dest='alias',
@@ -4338,8 +4166,7 @@ parser_help.add_argument('subcommand', help=fill('Display the help message for t
 parser_help.set_defaults(func=print_help)
 # TODO: make this completer conditional on whether "help run" is in args
 # parser_help.completer = MultiCompleter([DXAppCompleter(),
-#                                         DXPathCompleter(classes=['applet']),
-#                                         DXPathCompleter(classes=['record'], typespec='pipeline')])
+#                                         DXPathCompleter(classes=['applet'])])
 parser_map['help'] = parser_help # TODO: a special help completer
 parser_map['help run'] = parser_help
 for category in parser_categories:

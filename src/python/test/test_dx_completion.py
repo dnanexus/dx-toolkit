@@ -150,10 +150,6 @@ class TestDXTabCompletion(unittest.TestCase):
         self.assert_completion("dx ls hid", "hidden ")
         self.assert_no_completions("dx run hid")
 
-    def test_pipeline_completion(self):
-        dxpipeline = dxpy.new_dxrecord(name="my workflow", types=["pipeline"])
-        self.assert_completion("dx run my", "my workflow ")
-
     def test_workflow_completion(self):
         dxworkflow = dxpy.new_dxworkflow(name="my workflow")
         self.assert_completion("dx run my", "my workflow ")

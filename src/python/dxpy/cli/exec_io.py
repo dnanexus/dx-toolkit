@@ -30,23 +30,6 @@ from dxpy.utils.resolver import (get_first_pos_of_char, is_hashid, is_job_id, is
                                  resolve_existing_path, split_unescaped)
 from dxpy.utils import OrderedDefaultdict
 
-def stage_to_job_refs(x, launched_jobs):
-    ''' Used by run() to parse stage inputs bound to other stages when executing a workflow '''
-    if isinstance(x, collections.Mapping):
-        if "connectedTo" in x:
-            if x['connectedTo']['stage'] in launched_jobs and launched_jobs[x['connectedTo']['stage']] is not None:
-                return {'job': launched_jobs[x['connectedTo']['stage']].get_id(), "field": x['connectedTo']['output']}
-            else:
-                # TODO: Make this better
-                sys.stderr.write(fill("Error: An input is connected to a stage that has not yet been launched.  You will need to reorder the stages before they can be run.") + "\n")
-                exit(1)
-        for key, value in x.iteritems():
-            x[key] = stage_to_job_refs(value, launched_jobs)
-    elif isinstance(x, list):
-        for i in range(len(x)):
-            x[i] = stage_to_job_refs(x[i], launched_jobs)
-    return x
-
 ####################
 # -i Input Parsing #
 ####################

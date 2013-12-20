@@ -876,60 +876,10 @@ class TestDXRecord(unittest.TestCase):
         desc = dxrecord.describe()
         self.assertEqual(desc["folder"], "/a/b/c")
 
-    def test_passhtrough_args(self):
+    def test_passthrough_args(self):
         dxrecord = dxpy.new_dxrecord(auth=dxpy.AUTH_HELPER)
         with self.assertRaises(TypeError):
             dxrecord = dxpy.new_dxrecord(foo=1)
-
-class TestDXWorkflow(unittest.TestCase):
-    def setUp(self):
-        setUpTempProjects(self)
-        self.dxapplet = dxpy.DXApplet()
-        self.dxapplet.new(name="identity-record",
-                          dxapi="1.04",
-                          inputSpec=[{"name": "record", "class": "record"}
-                                     ],
-                          outputSpec=[{"name": "record", "class": "record"}],
-                          runSpec={"code": '''
-@dxpy.entry_point('main')
-def main(record):
-    return {'record': record}''',
-                                   "interpreter": "python2.7"})
-        dxrecord = dxpy.new_dxrecord(name='workflowname',
-                                     details={"stages": [{"job": None,
-                                                          "inputs": {},
-                                                          "app": dxpy.dxlink(self.dxapplet),
-                                                          "id": "stage0-id"
-                                                          },
-                                                         {"job": None,
-                                                          "inputs": {"record": {"connectedTo": {"output": "record",
-                                                                                                "stage": "stage0-id"}
-                                                                                }
-                                                                     },
-                                                          "app": dxpy.dxlink(self.dxapplet),
-                                                          "id": "stage1-id"
-                                                          }],
-                                              "version": 5},
-                                     types=['pipeline'])
-        self.workflow = dxpy.DXWorkflow(dxrecord.get_id())
-        self.closedrecord = dxpy.new_dxrecord(name='a record')
-        self.closedrecord.close()
-
-    def tearDown(self):
-        tearDownTempProjects(self)
-
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
-                         'skipping test that would run a job')
-    def test_run_workflow(self):
-        launched_jobs = self.workflow.run({"0.record": dxpy.dxlink(self.closedrecord)})
-        self.assertEqual(len(launched_jobs), 2)
-        job_descs = [dxjob.describe() for dxjob in launched_jobs]
-        self.assertEqual(job_descs[0]['name'], 'identity-record - workflowname')
-        self.assertEqual(get_dxlink_ids(job_descs[0]['input']['record'])[0], self.closedrecord.get_id())
-        self.assertTrue(is_job_ref(job_descs[1]['runInput']['record']))
-        self.assertEqual(get_job_from_jbor(job_descs[1]['runInput']['record']), job_descs[0]['id'])
-        self.assertEqual(get_field_from_jbor(job_descs[1]['runInput']['record']), 'record')
-        launched_jobs[1].wait_on_done()
 
 @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                      'skipping test that would run a job')
@@ -1008,7 +958,7 @@ def main():
 
         dxjob.terminate()
 
-class TestDXAnalysisWorkflow(unittest.TestCase):
+class TestDXWorkflow(unittest.TestCase):
     def setUp(self):
         setUpTempProjects(self)
 
@@ -1055,7 +1005,7 @@ def main(number):
 
     def test_new_dxworkflow(self):
         blankworkflow = dxpy.new_dxworkflow()
-        self.assertIsInstance(blankworkflow, dxpy.DXAnalysisWorkflow)
+        self.assertIsInstance(blankworkflow, dxpy.DXWorkflow)
         desc = blankworkflow.describe()
         self.assertEqual(desc['title'], blankworkflow.get_id())
         self.assertEqual(desc['summary'], '')
@@ -1063,7 +1013,7 @@ def main(number):
         self.assertEqual(desc['outputFolder'], None)
 
         dxworkflow = dxpy.new_dxworkflow(title='mytitle', summary='mysummary', description='mydescription', output_folder="/foo")
-        self.assertIsInstance(dxworkflow, dxpy.DXAnalysisWorkflow)
+        self.assertIsInstance(dxworkflow, dxpy.DXWorkflow)
         desc = dxworkflow.describe()
         self.assertEqual(desc['title'], 'mytitle')
         self.assertEqual(desc['summary'], 'mysummary')
@@ -1071,7 +1021,7 @@ def main(number):
         self.assertEqual(desc['outputFolder'], '/foo')
 
         secondworkflow = dxpy.new_dxworkflow(init_from=dxworkflow)
-        self.assertIsInstance(secondworkflow, dxpy.DXAnalysisWorkflow)
+        self.assertIsInstance(secondworkflow, dxpy.DXWorkflow)
         self.assertNotEqual(dxworkflow.get_id(), secondworkflow.get_id())
         desc = secondworkflow.describe()
         self.assertEqual(desc['title'], 'mytitle')

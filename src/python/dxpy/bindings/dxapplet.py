@@ -32,7 +32,7 @@ class DXExecutable:
     '''Methods in :class:`!DXExecutable` are used by
     :class:`~dxpy.bindings.dxapp.DXApp`
     :class:`~dxpy.bindings.dxapplet.DXApplet`, and
-    :class:`~dxpy.bindings.dxworkflow.DXAnalysisWorkflow`
+    :class:`~dxpy.bindings.dxworkflow.DXWorkflow`
     '''
     def __init__(self, *args, **kwargs):
         raise NotImplementedError("This class is a mix-in. Use DXApp or DXApplet instead.")
@@ -122,7 +122,7 @@ class DXExecutable:
 
         if isinstance(self, DXApplet):
             return DXJob(dxpy.api.applet_run(self._dxid, run_input, **kwargs)["id"])
-        elif isinstance(self, dxpy.bindings.DXAnalysisWorkflow):
+        elif isinstance(self, dxpy.bindings.DXWorkflow):
             return DXAnalysis(dxpy.api.workflow_run(self._dxid, run_input, **kwargs)["id"])
         elif self._dxid is not None:
             return DXJob(dxpy.api.app_run(self._dxid, input_params=run_input, **kwargs)["id"])
