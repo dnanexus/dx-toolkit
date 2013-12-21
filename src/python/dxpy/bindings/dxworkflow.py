@@ -413,10 +413,12 @@ class DXWorkflow(DXDataObject, DXExecutable):
             effective_input[self._get_input_name(key)] = workflow_input[key]
         return effective_input
 
-    def run(self, workflow_input, *args, **kwargs):
+    def run(self, workflow_input, instance_type=None, extra_args=None, *args, **kwargs):
         '''
         :param workflow_input: Hash of the workflow's input arguments; see below for more details
         :type workflow_input: dict
+        :param instance_type: Instance type on which all stages' jobs will be run, or a dict mapping either stage IDs or indices to instance type requests (which can then be either a string instance type or a dict mapping function names to instance types)
+        :type instance_type: string or dict
         :returns: Object handler of the newly created analysis
         :rtype: :class:`~dxpy.bindings.dxanalysis.DXAnalysis`
 
@@ -440,4 +442,20 @@ class DXWorkflow(DXDataObject, DXExecutable):
         '''
 
         effective_input = self._get_effective_input(workflow_input)
-        return super(DXWorkflow, self).run(effective_input, *args, **kwargs)
+        # inject instance type requests into extra_args since the
+        # syntax isn't supported by the superclass
+        if instance_type is not None:
+            if extra_args is None:
+                extra_args = {}
+            else:
+                extra_args = extra_args.copy()
+            if isinstance(instance_type, basestring):
+                extra_args['systemRequirements'] = {'*': self._inst_type_to_sys_reqs(instance_type)}
+            elif isinstance(instance_type, dict):
+                extra_args['systemRequirements'] = {}
+                for stage, value in instance_type.iteritems():
+                    if stage != '*':
+                        stage = self._get_stage_id(stage)
+                    extra_args['systemRequirements'] = {stage: self._inst_type_to_sys_reqs(value)}
+        return super(DXWorkflow, self).run(effective_input, extra_args=extra_args, *args,
+                                           **kwargs)

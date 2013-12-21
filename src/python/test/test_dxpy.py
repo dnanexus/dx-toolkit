@@ -1003,6 +1003,39 @@ def main(number):
         self.assertEqual(analysis_desc["tags"], ["foo"])
         self.assertEqual(analysis_desc["properties"], {"foo": "bar"})
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS and os.environ.get("DX_RUN_NEXT_TESTS"),
+                         'skipping test that would run a job and requires unreleased features')
+    def test_run_workflow_with_instance_type(self):
+        dxworkflow = dxpy.DXWorkflow(dxpy.api.workflow_new({"project": self.proj_id})['id'])
+        dxapplet = dxpy.DXApplet()
+        dxapplet.new(name="test_applet",
+                     dxapi="1.04",
+                     inputSpec=[],
+                     outputSpec=[],
+                     runSpec={"code": '',
+                              "interpreter": "bash"})
+        stage_id = dxpy.api.workflow_add_stage(dxworkflow.get_id(),
+                                               {"editVersion": 0,
+                                                "name": "stagename",
+                                                "executable": dxapplet.get_id()})['stage']
+        # control (no request)
+        dxanalysis = dxworkflow.run({})
+        time.sleep(2)
+        dxjob = dxpy.DXJob(dxanalysis.describe()['stages'][0]['execution']['id'])
+        self.assertIsNone(dxjob.describe()['instanceType'])
+
+        # request for all stages
+        dxanalysis = dxworkflow.run({}, instance_type="dx_m1.medium")
+        time.sleep(2)
+        dxjob = dxpy.DXJob(dxanalysis.describe()['stages'][0]['execution']['id'])
+        self.assertEqual(dxjob.describe()['instanceType'], 'dx_m1.medium')
+
+        # request for the stage specifically
+        dxanalysis = dxworkflow.run({}, instance_type={stage_id: "dx_m1.large"})
+        time.sleep(2)
+        dxjob = dxpy.DXJob(dxanalysis.describe()['stages'][0]['execution']['id'])
+        self.assertEqual(dxjob.describe()['instanceType'], 'dx_m1.large')
+
     def test_new_dxworkflow(self):
         blankworkflow = dxpy.new_dxworkflow()
         self.assertIsInstance(blankworkflow, dxpy.DXWorkflow)
