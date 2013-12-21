@@ -972,7 +972,8 @@ class TestDXWorkflow(unittest.TestCase):
         dxapplet = dxpy.DXApplet()
         dxapplet.new(name="test_applet",
                      dxapi="1.04",
-                     inputSpec=[{"name": "number", "class": "int"}],
+                     inputSpec=[{"name": "number", "class": "int"},
+                                {"name": "othernumber", "class": "int"}],
                      outputSpec=[{"name": "number", "class": "int"}],
                      runSpec={"code": '''
 @dxpy.entry_point('main')
@@ -981,13 +982,17 @@ def main(number):
 ''',
                                "interpreter": "python2.7"})
         stage_id = dxpy.api.workflow_add_stage(dxworkflow.get_id(),
-                                               {"editVersion": 0, "executable": dxapplet.get_id()})['stage']
-        dxanalysis = dxworkflow.run({"0.number": 32})
+                                               {"editVersion": 0,
+                                                "name": "stagename",
+                                                "executable": dxapplet.get_id()})['stage']
+        dxanalysis = dxworkflow.run({"0.number": 32,
+                                     "stagename.othernumber": 42})
         dxanalysis.terminate()
         with self.assertRaises(DXJobFailureError):
             dxanalysis.wait_on_done(timeout=20)
         analysis_desc = dxanalysis.describe()
         self.assertEqual(analysis_desc['input'].get(stage_id + '.number'), 32)
+        self.assertEqual(analysis_desc['input'].get(stage_id + '.othernumber'), 42)
         dxjob = dxpy.DXJob(analysis_desc['stages'][0]['execution']['id'])
         self.assertEqual(dxjob.describe()['input'].get("number"), 32)
 
@@ -1036,6 +1041,30 @@ def main(number):
         dxjob = dxpy.DXJob(dxanalysis.describe()['stages'][0]['execution']['id'])
         self.assertEqual(dxjob.describe()['instanceType'], 'dx_m1.large')
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that may run a job')
+    def test_run_workflow_errors(self):
+        dxworkflow = dxpy.DXWorkflow(dxpy.api.workflow_new({"project": self.proj_id})['id'])
+        dxapplet = dxpy.DXApplet()
+        dxapplet.new(name="test_applet",
+                     dxapi="1.04",
+                     inputSpec=[{"name": "number", "class": "int"}],
+                     outputSpec=[{"name": "number", "class": "int"}],
+                     runSpec={"code": '''
+@dxpy.entry_point('main')
+def main(number):
+    raise # Ensure that the applet fails
+''',
+                               "interpreter": "python2.7"})
+        dxworkflow.add_stage(dxapplet, name='stagename')
+
+        # Can't specify the same input more than once (with a
+        # stage-specific syntax)
+        self.assertRaisesRegexp(DXError, 'more than once',
+                                dxworkflow.run, {"0.number": 32, "stagename.number": 42})
+        # Bad stage name
+        self.assertRaisesRegexp(DXError, 'nor found as a stage name',
+                                dxworkflow.run, {"nonexistentstage.number": 32})
+
     def test_new_dxworkflow(self):
         blankworkflow = dxpy.new_dxworkflow()
         self.assertIsInstance(blankworkflow, dxpy.DXWorkflow)
@@ -1079,7 +1108,9 @@ def main(number):
         self.assertEqual(dxworkflow.stages[0]["input"]["my_input"], "hello world")
         self.assertEqual(dxworkflow.stages[0]["systemRequirements"],
                          {"*": {"instanceType": "dx_m1.large"}})
-        second_stage = dxworkflow.add_stage(dxapplet, folder="relativefolder",
+        second_stage = dxworkflow.add_stage(dxapplet,
+                                            name="stagename",
+                                            folder="relativefolder",
                                             instance_type={"main": "dx_m1.large", "foo": "dx_m1.medium"},
                                             edit_version=1)
         self.assertEqual(dxworkflow.editVersion, 2)
@@ -1103,6 +1134,12 @@ def main(number):
         self.assertEqual(dxworkflow.stages[1]["id"], second_stage)
 
         # Remove stages
+
+        # Removing stage by name doesn't work when there's more than
+        # one of that name
+        self.assertRaisesRegexp(DXError, 'more than one workflow stage was found',
+                                dxworkflow.remove_stage, "stagename")
+
         removed_stage = dxworkflow.remove_stage(0)
         self.assertEqual(removed_stage, first_stage)
         self.assertEqual(dxworkflow.editVersion, 5)
@@ -1129,17 +1166,18 @@ def main(number):
         # Add stages
         first_stage = dxworkflow.add_stage(dxapplet, name='stagename', folder="/outputfolder",
                                            stage_input={"my_input": "hello world"})
-        second_stage = dxworkflow.add_stage(dxapplet, name='stagename', folder="/outputfolder",
+        second_stage = dxworkflow.add_stage(dxapplet, name='stagename2', folder="/outputfolder",
                                             stage_input={"my_input": "hello world"})
         # Get stages
-        stage_desc = dxworkflow.get_stage(0)
-        self.assertEqual(stage_desc['id'], first_stage)
-        stage_desc = dxworkflow.get_stage(first_stage)
-        self.assertEqual(stage_desc['id'], first_stage)
-        stage_desc = dxworkflow.get_stage(1)
-        self.assertEqual(stage_desc['id'], second_stage)
-        stage_desc = dxworkflow.get_stage(second_stage)
-        self.assertEqual(stage_desc['id'], second_stage)
+        test_cases = [[0, first_stage],
+                      [first_stage, first_stage],
+                      ['stagename', first_stage],
+                      [1, second_stage],
+                      [second_stage, second_stage],
+                      ['stagename2', second_stage]]
+        for tc in test_cases:
+            stage_desc = dxworkflow.get_stage(tc[0])
+            self.assertEqual(stage_desc['id'], tc[1])
 
         # Errors
         with self.assertRaises(DXError):

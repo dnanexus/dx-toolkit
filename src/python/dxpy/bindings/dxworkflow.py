@@ -20,18 +20,7 @@ DXWorkflow Handler
 
 Workflows are data objects which contain metadata for a set of jobs to
 be run together.  They can be run by calling the
-:func:`DXWorkflow.run` method.  Inputs that have not been bound yet in
-the workflow need to be provided using input field names of one of the following forms:
-
-* "name", where "name" is the name of an exported input field from one
-  of the workflow's stages (it will be listed in the input
-  specification of the workflow if available)
-
-* "N.name", where "name" is the name of an input to the Nth stage
-  (starting from 0).
-
-* "stageID.name", where "stageID" is the full ID of the stage whose
-  input is being set
+:func:`DXWorkflow.run` method.
 
 """
 
@@ -160,27 +149,43 @@ class DXWorkflow(DXDataObject, DXExecutable):
 
     def _get_stage_id(self, stage):
         '''
-        :param stage: Either a number (for the nth stage, starting from 0), or a stage ID
+        :param stage: A stage ID, name, or index (stage index is the number n for the nth stage, starting from 0; can be provided as an int or a string)
         :type stage: int or string
-        :returns: The stage ID (this is a no-op if it was already a string)
+        :returns: The stage ID (this is a no-op if it was already a stage ID)
         :raises: :class:`~dxpy.exceptions.DXError` if *stage* could not be parsed or resolved to a stage ID
         '''
-        stage_id = None
+        # first, if it is a string, see if it is an integer
         if isinstance(stage, basestring):
-            stage_id = stage
-        else:
+            try:
+                stage = int(stage)
+            except:
+                # we'll try parsing it as a string later
+                pass
+
+        if not isinstance(stage, basestring):
+            # Try to parse as stage index; ensure that if it's not a
+            # string that it is an integer at this point.
             try:
                 stage_index = int(stage)
             except:
-                raise DXError('DXWorkflow: "stage" was neither a string stage ID nor an integer index')
+                raise DXError('DXWorkflow: the given stage identifier was neither a string stage ID nor an integer index')
             if stage_index < 0 or stage_index >= len(self.stages):
-                raise DXError('DXWorkflow: the workflow contains ' + str(len(self.stages)) + ' stage(s), and the provided value for "stage" is out of range')
-            stage_id = self.stages[stage_index].get("id")
+                raise DXError('DXWorkflow: the workflow contains ' + str(len(self.stages)) + \
+                              ' stage(s), and the numerical value of the given stage identifier is out of range')
+            return self.stages[stage_index].get("id")
 
-        if re.compile('^stage-[0-9A-Za-z]{24}$').match(stage_id) is None:
-            raise DXError('DXWorkflow: "stage" did not resolve to a properly formed stage ID')
-
-        return stage_id
+        if re.compile('^stage-[0-9A-Za-z]{24}$').match(stage) is None:
+            # Doesn't look like a stage ID, so look for it as a name
+            matching_stage_ids = [stg['id'] for stg in self.stages if stg.get('name') == stage]
+            if len(matching_stage_ids) == 0:
+                raise DXError('DXWorkflow: the given stage identifier could not be parsed as a stage ID nor found as a stage name')
+            elif len(matching_stage_ids) > 1:
+                raise DXError('DXWorkflow: more than one workflow stage was found to have the name "' + stage + '"')
+            else:
+                return matching_stage_ids[0]
+        else:
+            # Already a stage ID
+            return stage
 
     def add_stage(self, executable, name=None, folder=None, stage_input=None, instance_type=None,
                   edit_version=None, **kwargs):
@@ -227,7 +232,7 @@ class DXWorkflow(DXDataObject, DXExecutable):
 
     def get_stage(self, stage, **kwargs):
         '''
-        :param stage: Either a number (for the nth stage, starting from 0), or a stage ID to describe
+        :param stage: A number for the stage index (for the nth stage, starting from 0), or a string of the stage index, name, or ID
         :type stage: int or string
         :returns: Hash of stage descriptor in workflow
         '''
@@ -239,7 +244,7 @@ class DXWorkflow(DXDataObject, DXExecutable):
 
     def remove_stage(self, stage, edit_version=None, **kwargs):
         '''
-        :param stage: Either a number (for the nth stage, starting from 0), or a stage ID to remove
+        :param stage: A number for the stage index (for the nth stage, starting from 0), or a string of the stage index, name, or ID
         :type stage: int or string
         :param edit_version: if provided, the edit version of the workflow that should be modified; if not provided, the current edit version will be used (optional)
         :type edit_version: int
@@ -259,7 +264,7 @@ class DXWorkflow(DXDataObject, DXExecutable):
 
     def move_stage(self, stage, new_index, edit_version=None, **kwargs):
         '''
-        :param stage: Either a number (for the nth stage, starting from 0), or a stage ID to remove
+        :param stage: A number for the stage index (for the nth stage, starting from 0), or a string of the stage index, name, or ID
         :type stage: int or string
         :param new_index: The new position in the order of stages that the specified stage should have (where 0 indicates the first stage)
         :type new_index: int
@@ -332,7 +337,7 @@ class DXWorkflow(DXDataObject, DXExecutable):
                      name=None, unset_name=False, folder=None, unset_folder=False, stage_input=None,
                      instance_type=None, edit_version=None, **kwargs):
         '''
-        :param stage: Either a number (for the nth stage, starting from 0), or a stage ID to remove
+        :param stage: A number for the stage index (for the nth stage, starting from 0), or a string stage index, name, or ID
         :type stage: int or string
         :param executable: string or a handler for an app or applet
         :type executable: string, DXApplet, or DXApp
@@ -401,21 +406,31 @@ class DXWorkflow(DXDataObject, DXExecutable):
                 self.describe() # update cached describe
 
     def _get_input_name(self, input_str):
-        if '.' in input_str and not input_str.startswith('stage-'):
-            stage_index = int(input_str[:input_str.find('.')])
-            return self.stages[stage_index]['id'] + input_str[input_str.find('.'):]
-        else:
-            return input_str
+        '''
+        :param input_str: A string of one of the forms: "<exported input field name>", "<stage ID>.<input field name>", "<stage index>.<input field name>", "<stage name>.<input field name>"
+        :type input_str: string
+        :returns: If the given form was one of those which uses the stage index or stage name, it is translated to the stage ID for use in the API call (stage name takes precedence)
+        '''
+        if '.' in input_str:
+            stage_identifier = input_str[:input_str.find('.')]
+            dot_input_name = input_str[input_str.find('.'):]
+            # Try to parse as a stage ID or name
+            return self._get_stage_id(stage_identifier) + dot_input_name
+
+        return input_str
 
     def _get_effective_input(self, workflow_input):
         effective_input = {}
         for key in workflow_input:
-            effective_input[self._get_input_name(key)] = workflow_input[key]
+            input_name = self._get_input_name(key)
+            if input_name in effective_input:
+                raise DXError('DXWorkflow: the input for ' + input_name + ' was provided more than once')
+            effective_input[input_name] = workflow_input[key]
         return effective_input
 
     def run(self, workflow_input, instance_type=None, extra_args=None, *args, **kwargs):
         '''
-        :param workflow_input: Hash of the workflow's input arguments; see below for more details
+        :param workflow_input: Dictionary of the workflow's input arguments; see below for more details
         :type workflow_input: dict
         :param instance_type: Instance type on which all stages' jobs will be run, or a dict mapping either stage IDs or indices to instance type requests (which can then be either a string instance type or a dict mapping function names to instance types)
         :type instance_type: string or dict
@@ -424,14 +439,17 @@ class DXWorkflow(DXDataObject, DXExecutable):
 
         Run the associated workflow.
 
-        When providing input for the workflow, keys should be of one of the following three forms:
+        When providing input for the workflow, keys should be of one of the following forms:
 
         * "N.name" where *N* is the stage number, and *name* is the
           name of the input, e.g. "0.reads" if the first stage takes
           in an input called "reads"
 
+        * "stagename.name" where *stagename* is the stage name, and
+          *name* is the name of the input within the stage
+
         * "stageID.name" where *stageID* is the stage ID, and *name*
-          is the name of the input
+          is the name of the input within the stage
 
         * "name" where *name* is the name of an input that has been
           exported for the workflow (this name will appear as a key in
