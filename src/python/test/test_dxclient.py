@@ -1029,7 +1029,7 @@ class TestDXClientWorkflow(DXTestCase):
             run("dx remove stage /myworkflow 5")
 
         # remove some bad stage ID
-        with self.assertSubprocessFailure(stderr_regexp="did not resolve to a properly formed stage ID", exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp="nor found as a stage name", exit_code=3):
             run("dx remove stage /myworkflow badstageID")
 
         # remove nonexistent stage
@@ -1164,7 +1164,7 @@ class TestDXClientWorkflow(DXTestCase):
             run("dx update stage /myworkflow 5 --name foo")
 
         # remove some bad stage ID
-        with self.assertSubprocessFailure(stderr_regexp="did not resolve to a properly formed stage ID", exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp="nor found as a stage name", exit_code=3):
             run("dx update stage /myworkflow badstageID --name foo")
 
         # remove nonexistent stage
