@@ -726,6 +726,7 @@ class TestDXClientRun(DXTestCase):
             '''
             # check clonedFrom hash in new job's details
             self.assertIn('clonedFrom', new_job_desc['details'])
+            self.assertEqual(new_job_desc['details']['clonedFrom']['id'], cloned_job_desc['id'])
             self.assertEqual(new_job_desc['details']['clonedFrom']['executable'],
                              cloned_job_desc.get('applet') or cloned_job_desc.get('app'))
             for metadata in ['project', 'folder', 'name', 'runInput', 'systemRequirements']:
@@ -963,7 +964,7 @@ class TestDXClientWorkflow(DXTestCase):
         # test relative folder path
         run("dx mkdir -p a/b/c")
         run("dx cd a/b/c")
-        stage_ids.append(run("dx add stage " + workflow_id + " --output-folder . " + applet_id + " --brief --instance-type '{\"main\": \"dx_m1.large\"}'").strip())
+        stage_ids.append(run("dx add stage " + workflow_id + " --name second --output-folder . " + applet_id + " --brief --instance-type '{\"main\": \"dx_m1.large\"}'").strip())
         with self.assertSubprocessFailure(stderr_regexp='not found in the input spec', exit_code=3):
             # input spec should be checked
             run("dx add stage " + workflow_id + " " + applet_id + " -inonexistent=42")
@@ -1022,7 +1023,13 @@ class TestDXClientWorkflow(DXTestCase):
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(len(desc['stages']), 1)
         self.assertEqual(desc['stages'][0]['id'], stage_ids[2])
+        self.assertEqual(desc['stages'][0]['name'], 'second')
         self.assertEqual(desc['stages'][0]['folder'], '/a/b/c')
+
+        # remove a stage by name
+        run("dx remove stage " + workflow_id + " second")
+        desc = dxpy.api.workflow_describe(workflow_id)
+        self.assertEqual(len(desc['stages']), 0)
 
         # remove something out of range
         with self.assertSubprocessFailure(stderr_regexp="out of range", exit_code=3):
