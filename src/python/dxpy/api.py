@@ -2390,6 +2390,24 @@ def workflow_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
+def workflowDryRun(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`workflow_dry_run()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.workflowDryRun is deprecated; please use workflow_dry_run instead."
+    return workflow_dry_run(*args, **kwargs)
+
+def workflow_dry_run(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /workflow-xxxx/dryRun API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FdryRun
+    """
+    return DXHTTPRequest('/%s/dryRun' % object_id, input_params, always_retry=always_retry, **kwargs)
+
 def workflowGetDetails(*args, **kwargs):
     """
 
@@ -2566,7 +2584,7 @@ def workflow_run(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /workflow-xxxx/run API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FremoveStage
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Frun
     """
     return DXHTTPRequest('/%s/run' % object_id, input_params, always_retry=always_retry, **kwargs)
 

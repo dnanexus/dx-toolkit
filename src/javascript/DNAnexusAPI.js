@@ -742,6 +742,11 @@ exports.workflowDescribe = function(object_id, input_params) {
 };
 
 
+exports.workflowDryRun = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/dryRun', input_params);
+};
+
+
 exports.workflowGetDetails = function(object_id, input_params) {
   return dx.DXHTTPRequest('/' + object_id + '/getDetails', input_params);
 };

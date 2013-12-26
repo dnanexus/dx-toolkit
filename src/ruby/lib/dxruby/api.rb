@@ -1070,6 +1070,14 @@ module DX
       return DX::http_request("/#{object_id}/describe", input_params, opts)
     end
 
+    # Invokes the /workflow-xxxx/dryRun API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FdryRun
+    def self.workflow_dry_run(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/dryRun", input_params, opts)
+    end
+
     # Invokes the /workflow-xxxx/getDetails API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails
@@ -1144,7 +1152,7 @@ module DX
 
     # Invokes the /workflow-xxxx/run API method.
     #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FremoveStage
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Frun
     def self.workflow_run(object_id, input_params={}, opts={})
       opts = { "always_retry" => false }.merge(opts)
       return DX::http_request("/#{object_id}/run", input_params, opts)

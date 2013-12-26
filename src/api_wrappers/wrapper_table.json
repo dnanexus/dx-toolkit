@@ -1188,6 +1188,15 @@
         }
     ],
     [
+        "/workflow-xxxx/dryRun",
+        "workflowDryRun(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FdryRun"
+        }
+    ],
+    [
         "/workflow-xxxx/getDetails",
         "workflowGetDetails(req, objectId)",
         {
@@ -1274,7 +1283,7 @@
         {
             "objectMethod": true,
             "retryable": false,
-            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FremoveStage"
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Frun"
         }
     ],
     [

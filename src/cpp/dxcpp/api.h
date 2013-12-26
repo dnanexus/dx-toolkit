@@ -457,6 +457,9 @@ namespace dx {
   JSON workflowDescribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
   JSON workflowDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
+  JSON workflowDryRun(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON workflowDryRun(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
   JSON workflowGetDetails(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
   JSON workflowGetDetails(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 

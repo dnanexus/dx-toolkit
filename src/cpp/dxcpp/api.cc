@@ -1214,6 +1214,14 @@ namespace dx {
     return workflowDescribe(object_id, input_params.toString(), retry);
   }
 
+  JSON workflowDryRun(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/dryRun"), input_params, retry);
+  }
+
+  JSON workflowDryRun(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return workflowDryRun(object_id, input_params.toString(), retry);
+  }
+
   JSON workflowGetDetails(const std::string &object_id, const std::string &input_params, const bool retry) {
     return DXHTTPRequest(std::string("/") + object_id + std::string("/getDetails"), input_params, retry);
   }
