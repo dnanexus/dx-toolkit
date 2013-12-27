@@ -484,9 +484,8 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
             dxpy.api.app_remove_authorized_users(app_id, input_params={'authorizedUsers': list(authorized_users_to_remove)})
 
     elif not len(existing_authorized_users):
-        # Apps created before the default ACL transition (and have
-        # 'PUBLIC' in their ACL), or apps that had authorized users
-        # added by any other means, will not have this message printed.
+        # Apps that had authorized users added by any other means will
+        # not have this message printed.
         logger.warn('authorizedUsers is missing from the dxapp.json. No one will be able to view or run the app except the app\'s developers.')
 
     if publish:
