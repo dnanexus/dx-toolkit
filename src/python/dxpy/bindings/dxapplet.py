@@ -51,7 +51,9 @@ class DXExecutable:
         '''
         Takes the same arguments as the run method. Creates an input
         hash for the /executable-xxxx/run method, translating ONLY the
-        fields common to all executables.
+        fields that can be handled uniformly across all executables:
+        project, folder, name, tags, properties, details, depends_on,
+        delay_workspace_destruction, and extra_args.
         '''
         project = kwargs.get('project', dxpy.WORKSPACE_ID)
 
@@ -87,12 +89,13 @@ class DXExecutable:
         return run_input
 
     @staticmethod
-    def _get_run_input_fields_for_app_or_applet(executable_input, **kwargs):
+    def _get_run_input_fields_for_applet(executable_input, **kwargs):
         '''
         Takes the same arguments as the run method. Creates an input
-        hash for the /executable-xxxx/run method, translating ONLY the
-        fields common to all apps and applets.
+        hash for the /applet-xxxx/run method.
         '''
+        # Although it says "for_applet", this is factored out of
+        # DXApplet because apps currently use the same mechanism
         run_input = DXExecutable._get_run_input_common_fields(executable_input, **kwargs)
         if kwargs.get('instance_type') is not None:
             run_input["systemRequirements"] = DXExecutable._inst_type_to_sys_reqs(kwargs['instance_type'])
@@ -297,7 +300,7 @@ class DXApplet(DXDataObject, DXExecutable):
         return DXJob(dxpy.api.applet_run(self._dxid, run_input, **kwargs)["id"])
 
     def _get_run_input(self, executable_input, **kwargs):
-        return DXExecutable._get_run_input_fields_for_app_or_applet(executable_input, **kwargs)
+        return DXExecutable._get_run_input_fields_for_applet(executable_input, **kwargs)
 
     def run(self, applet_input, *args, **kwargs):
         """

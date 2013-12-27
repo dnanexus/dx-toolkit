@@ -345,7 +345,8 @@ class DXApp(DXObject, DXExecutable):
                                           **kwargs)["id"])
 
     def _get_run_input(self, executable_input, **kwargs):
-        return DXExecutable._get_run_input_fields_for_app_or_applet(executable_input, **kwargs)
+        # May need to be changed when workflow apps are enabled
+        return DXExecutable._get_run_input_fields_for_applet(executable_input, **kwargs)
 
     def run(self, app_input, *args, **kwargs):
         """
