@@ -50,10 +50,7 @@ class DXExecutable:
         '''
         Expects the same arguments as the run method
         '''
-        if kwargs.get('project') is None:
-            project = dxpy.WORKSPACE_ID
-        else:
-            project = kwargs['project']
+        project = kwargs.get('project', dxpy.WORKSPACE_ID)
 
         run_input = {"input": executable_input}
         for arg in ['folder', 'name', 'tags', 'properties', 'details']:

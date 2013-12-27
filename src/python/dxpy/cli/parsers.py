@@ -293,7 +293,7 @@ def process_instance_type_arg(args, for_workflow=False):
                     final_val["*"] = _parse_inst_type(inst_type_req)
             args.instance_type = final_val
         elif not isinstance(args.instance_type, basestring):
-            args.instance_type = _parse_inst_type(args.instance_type[len(args.instance_type) - 1])
+            args.instance_type = _parse_inst_type(args.instance_type[-1])
         else:
             # is a string
             args.instance_type = _parse_inst_type(args.instance_type)
