@@ -428,40 +428,27 @@ class DXWorkflow(DXDataObject, DXExecutable):
             effective_input[input_name] = workflow_input[key]
         return effective_input
 
-    def _get_super_run_input(self, workflow_input, *args, **kwargs):
-        '''
-        Translates the input values to a tuple of (workflow_input, args, kwargs)
-        '''
+    def _get_run_input(self, workflow_input, **kwargs):
+        effective_workflow_input = self._get_effective_input(workflow_input)
 
-        effective_input = self._get_effective_input(workflow_input)
-        # inject instance type requests into extra_args since the
-        # syntax isn't supported by the superclass
+        run_input = DXExecutable._get_run_input_common_fields(effective_workflow_input, **kwargs)
+
         if kwargs.get('instance_type') is not None:
-            extra_args = kwargs.get('extra_args') or {}
-            extra_args = extra_args.copy()
             if isinstance(kwargs['instance_type'], basestring):
-                extra_args['systemRequirements'] = {
+                workflow_input['systemRequirements'] = {
                     '*': self._inst_type_to_sys_reqs(kwargs['instance_type'])
                 }
             elif isinstance(kwargs['instance_type'], dict):
-                extra_args['systemRequirements'] = {}
+                workflow_input['systemRequirements'] = {}
                 for stage, value in kwargs['instance_type'].iteritems():
                     if stage != '*':
                         stage = self._get_stage_id(stage)
-                    extra_args['systemRequirements'] = {stage: self._inst_type_to_sys_reqs(value)}
-            del kwargs['instance_type']
-            kwargs['extra_args'] = extra_args
-        return (effective_input, args, kwargs)
+                    workflow_input['systemRequirements'][stage] = self._inst_type_to_sys_reqs(value)
 
-    def _get_run_input(self, workflow_input, *args, **kwargs):
-        '''
-        Expects the same arguments as the run method
-        '''
+        return run_input
 
-        super_run_input = self._get_super_run_input(workflow_input, *args, **kwargs)
-        return super(DXWorkflow, self)._get_run_input(super_run_input[0],
-                                                      *super_run_input[1],
-                                                      **super_run_input[2])
+    def _run_impl(self, run_input, **kwargs):
+        return DXAnalysis(dxpy.api.workflow_run(self._dxid, run_input, **kwargs)["id"])
 
     def run(self, workflow_input, *args, **kwargs):
         '''
@@ -493,7 +480,4 @@ class DXWorkflow(DXDataObject, DXExecutable):
 
         See :meth:`dxpy.bindings.dxapplet.DXExecutable.run` for the available args.
         '''
-        super_run_input = self._get_super_run_input(workflow_input, *args, **kwargs)
-        return super(DXWorkflow, self).run(super_run_input[0],
-                                           *super_run_input[1],
-                                           **super_run_input[2])
+        super(DXWorkflow, self).run(workflow_input, *args, **kwargs)

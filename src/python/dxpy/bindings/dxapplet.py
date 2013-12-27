@@ -46,9 +46,12 @@ class DXExecutable:
         else:
             raise DXError('Expected instance_type field to be either a string or a dict')
 
-    def _get_run_input(self, executable_input, **kwargs):
+    @staticmethod
+    def _get_run_input_common_fields(executable_input, **kwargs):
         '''
-        Expects the same arguments as the run method
+        Takes the same arguments as the run method. Creates an input
+        hash for the /executable-xxxx/run method, translating ONLY the
+        fields common to all executables.
         '''
         project = kwargs.get('project', dxpy.WORKSPACE_ID)
 
@@ -56,9 +59,6 @@ class DXExecutable:
         for arg in ['folder', 'name', 'tags', 'properties', 'details']:
             if kwargs.get(arg) is not None:
                 run_input[arg] = kwargs[arg]
-
-        if kwargs.get('instance_type') is not None:
-            run_input["systemRequirements"] = DXExecutable._inst_type_to_sys_reqs(kwargs['instance_type'])
 
         if kwargs.get('depends_on') is not None:
             run_input["dependsOn"] = []
@@ -85,6 +85,36 @@ class DXExecutable:
             merge(run_input, kwargs['extra_args'])
 
         return run_input
+
+    @staticmethod
+    def _get_run_input_fields_for_app_or_applet(executable_input, **kwargs):
+        '''
+        Takes the same arguments as the run method. Creates an input
+        hash for the /executable-xxxx/run method, translating ONLY the
+        fields common to all apps and applets.
+        '''
+        run_input = DXExecutable._get_run_input_common_fields(executable_input, **kwargs)
+        if kwargs.get('instance_type') is not None:
+            run_input["systemRequirements"] = DXExecutable._inst_type_to_sys_reqs(kwargs['instance_type'])
+        return run_input
+
+    def _run_impl(self, run_input, **kwargs):
+        """
+        Runs the executable with the specified input and returns a
+        handler for the resulting execution object
+        (:class:`~dxpy.bindings.dxjob.DXJob` or
+        :class:`~dxpy.bindings.dxanalysis.DXAnalysis`).
+
+        Any kwargs are passed on to :func:`~dxpy.DXHTTPRequest`.
+        """
+        raise NotImplementedError('_run_impl is not implemented')
+
+    def _get_run_input(self, executable_input, **kwargs):
+        """
+        Takes the same arguments as the run method. Creates an input
+        hash for the /executable-xxxx/run method.
+        """
+        raise NotImplementedError('_get_run_input is not implemented')
 
     def run(self, executable_input, project=None, folder="/", name=None, tags=None, properties=None, details=None,
             instance_type=None, depends_on=None, delay_workspace_destruction=None,
@@ -131,16 +161,7 @@ class DXExecutable:
                                         delay_workspace_destruction=delay_workspace_destruction,
                                         extra_args=extra_args)
 
-        if isinstance(self, DXApplet):
-            return DXJob(dxpy.api.applet_run(self._dxid, run_input, **kwargs)["id"])
-        elif isinstance(self, dxpy.bindings.DXWorkflow):
-            return DXAnalysis(dxpy.api.workflow_run(self._dxid, run_input, **kwargs)["id"])
-        elif self._dxid is not None:
-            return DXJob(dxpy.api.app_run(self._dxid, input_params=run_input, **kwargs)["id"])
-        else:
-            return DXJob(dxpy.api.app_run('app-' + self._name, alias=self._alias,
-                                          input_params=run_input,
-                                          **kwargs)["id"])
+        return self._run_impl(run_input, **kwargs)
 
 
 ############
@@ -271,6 +292,12 @@ class DXApplet(DXDataObject, DXExecutable):
         method.
         """
         return dxpy.api.applet_get(self._dxid, **kwargs)
+
+    def _run_impl(self, run_input, **kwargs):
+        return DXJob(dxpy.api.applet_run(self._dxid, run_input, **kwargs)["id"])
+
+    def _get_run_input(self, executable_input, **kwargs):
+        return DXExecutable._get_run_input_fields_for_app_or_applet(executable_input, **kwargs)
 
     def run(self, applet_input, *args, **kwargs):
         """
