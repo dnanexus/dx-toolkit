@@ -880,6 +880,85 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertIn("Tags bar\n", analysis_desc)
         self.assertIn("Properties foo=bar\n", analysis_desc)
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS and os.environ.get("DX_RUN_NEXT_TESTS"),
+                         'skipping test that runs jobs and requires next server-side update')
+    def test_dx_run_workflow_prints_cached_executions(self):
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "name": "myapplet",
+                                         "dxapi": "1.0.0",
+                                         "inputSpec": [{"name": "number", "class": "int"}],
+                                         "outputSpec": [{"name": "number", "class": "int"}],
+                                         "runSpec": {"interpreter": "bash",
+                                                     "code": "dx-jobutil-add-output number 32"}
+                                         })['id']
+        workflow_id = run("dx new workflow myworkflow --brief").strip()
+        stage_id = run("dx add stage myworkflow myapplet --brief").strip()
+        run_resp = dxpy.api.workflow_run(workflow_id,
+                                         {"project": self.project,
+                                          "input": {(stage_id + ".number"): 32}})
+        first_analysis_id = run_resp['id']
+        self.assertTrue(first_analysis_id.startswith('analysis-'))
+        job_id = run_resp['stages'][0]
+        self.assertTrue(job_id.startswith('job-'))
+
+        # Running the workflow again with no changes should result in
+        # the job getting reused
+        run_output = run("dx run " + workflow_id + " -i0.number=32 -y").strip()
+        self.assertIn('will reuse results from a previous analysis', run_output)
+        self.assertIn(job_id, run_output)
+        second_analysis_id = run_output[run_output.rfind('analysis-'):]
+        self.assertNotEqual(first_analysis_id, second_analysis_id)
+
+        # Running the workflow again with changes to the input should
+        # NOT result in the job getting reused
+        run_output = run("dx run " + workflow_id + " -i0.number=52 -y").strip()
+        self.assertNotIn('will reuse results from a previous analysis', run_output)
+        self.assertNotIn(job_id, run_output)
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS and os.environ.get("DX_RUN_NEXT_TESTS"),
+                         'skipping test that runs jobs and requires next server-side update')
+    def test_dx_run_workflow_with_inst_type_requests(self):
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "name": "myapplet",
+                                         "dxapi": "1.0.0",
+                                         "inputSpec": [],
+                                         "outputSpec": [],
+                                         "runSpec": {"interpreter": "bash",
+                                                     "code": ""}
+                                         })['id']
+        workflow_id = run("dx new workflow myworkflow --brief").strip()
+        stage_id = run("dx add stage myworkflow myapplet --name 'an=awful=name' --brief").strip()
+
+        # control (no request)
+        no_req_id = run('dx run myworkflow -y --brief').strip()
+        print no_req_id
+        # request for all stages
+        all_stg_req_id = run('dx run myworkflow --instance-type dx_m1.medium -y --brief').strip()
+        print all_stg_req_id
+
+        # request for a stage specifically (by name)
+        stg_req_id = run('dx run myworkflow --instance-type an=awful=name=dx_m1.large -y --brief').strip()
+        print stg_req_id
+
+        time.sleep(2) # give time for all jobs to be populated
+
+        no_req_desc = dxpy.describe(no_req_id)
+        self.assertIsNone(no_req_desc['stages'][0]['execution']['instanceType'])
+        all_stg_req_desc = dxpy.describe(all_stg_req_id)
+        self.assertEqual(all_stg_req_desc['stages'][0]['execution']['instanceType'],
+                         'dx_m1.medium')
+        stg_req_desc = dxpy.describe(stg_req_id)
+        self.assertEqual(stg_req_desc['stages'][0]['execution']['instanceType'],
+                         'dx_m1.large')
+
+        # request for a stage specifically (by index); if same inst
+        # type as before, should reuse results
+        self.assertIn(stg_req_desc['stages'][0]['execution']['id'],
+                      run('dx run myworkflow --instance-type 0=dx_m1.large -y'))
+        # and by stage ID
+        self.assertIn(stg_req_desc['stages'][0]['execution']['id'],
+                      run('dx run myworkflow --instance-type ' + stage_id + '=dx_m1.large -y'))
+
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would attempt to run a job')
     def test_inaccessible_stage(self):
         applet_id = dxpy.api.applet_new({"name": "myapplet",

@@ -25,7 +25,7 @@ from ..utils.printing import (fill, BOLD, ENDC)
 from ..utils.pretty_print import format_table
 from ..utils.resolver import split_unescaped
 from ..utils.completer import InstanceTypesCompleter
-from ..exceptions import DXError
+from ..exceptions import (DXError, DXCLIError)
 
 class DXParserError(DXError):
     def __init__(self, msg):
@@ -236,9 +236,23 @@ class PrintInstanceTypeHelp(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         print "Help: Specifying instance types for " + parser.prog
         print
-        print fill('You can either provide a single instance type to be used by all entry points, or a JSON string mapping from function names to instance types, e.g.')
+        print fill('A single instance type can be requested to be used by all entry points by providing the instance type name.  Different instance types can also be requested for different entry points of an app or applet by providing a JSON string mapping from function names to instance types, e.g.')
         print
         print '    {"main": "dx_m1.large", "other_function": "dx_m1.medium"}'
+        if parser.prog == 'dx run':
+            print
+            print fill('If running a workflow, different stages can have different instance type ' +
+                       'requests by prepending the request with "<stage identifier>=" (where a ' +
+                       'stage identifier is an ID, a numeric index, or a unique stage name) and ' +
+                       'repeating the argument for as many stages as desired.  If no stage ' +
+                       'identifier is provided, the value is applied as a default for all stages.')
+            print
+            print fill('The following example runs all entry points of the first stage with ' +
+                       'dx_m1.large, the stage named "BWA" with dx_m1.medium, and all other ' +
+                       'stages with dx_m1.xlarge')
+            print
+            print '    Example: dx run workflow --instance-type 0=dx_m1.large \\'
+            print '               --instance-type BWA=dx_m1.medium --instance-type dx_m1.xlarge'
         print
         print 'Available instance types:'
         print
@@ -249,15 +263,37 @@ class PrintInstanceTypeHelp(argparse.Action):
 instance_type_arg = argparse.ArgumentParser(add_help=False)
 instance_type_arg.add_argument('--instance-type',
                                metavar='INSTANCE_TYPE_OR_MAPPING',
-                               help=fill('Specify instance type(s) for jobs this executable will run; see --instance-type-help for more details', width_adjustment=-24)).completer = InstanceTypesCompleter()
+                               help=fill('Specify instance type(s) for jobs this executable will run; see --instance-type-help for more details', width_adjustment=-24),
+                               action='append').completer = InstanceTypesCompleter()
 instance_type_arg.add_argument('--instance-type-help',
                                nargs=0,
                                help=fill('Print help for specifying instance types'),
                                action=PrintInstanceTypeHelp)
 
-def process_instance_type_arg(args):
-    if args.instance_type and args.instance_type.strip().startswith('{'):
+def _parse_inst_type(thing):
+    if thing.strip().startswith('{'):
         try:
-            args.instance_type = json.loads(args.instance_type)
+            return json.loads(thing)
         except ValueError:
-            raise DXError("Error while parsing JSON value for --instance-type")
+            raise DXCLIError("Error while parsing JSON value for --instance-type")
+    else:
+        return thing
+
+def process_instance_type_arg(args, for_workflow=False):
+    if args.instance_type:
+        if for_workflow:
+            final_val = {}
+            for inst_type_req in args.instance_type:
+                if '=' in inst_type_req:
+                    index_of_eql = inst_type_req.rfind('=')
+                    final_val[inst_type_req[:index_of_eql]] = _parse_inst_type(
+                        inst_type_req[index_of_eql + 1:]
+                    )
+                else:
+                    final_val["*"] = _parse_inst_type(inst_type_req)
+            args.instance_type = final_val
+        elif not isinstance(args.instance_type, basestring):
+            args.instance_type = _parse_inst_type(args.instance_type[len(args.instance_type) - 1])
+        else:
+            # is a string
+            args.instance_type = _parse_inst_type(args.instance_type)

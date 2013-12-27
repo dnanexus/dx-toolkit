@@ -46,6 +46,49 @@ class DXExecutable:
         else:
             raise DXError('Expected instance_type field to be either a string or a dict')
 
+    def _get_run_input(self, executable_input, **kwargs):
+        '''
+        Expects the same arguments as the run method
+        '''
+        if kwargs.get('project') is None:
+            project = dxpy.WORKSPACE_ID
+        else:
+            project = kwargs['project']
+
+        run_input = {"input": executable_input}
+        for arg in ['folder', 'name', 'tags', 'properties', 'details']:
+            if kwargs.get(arg) is not None:
+                run_input[arg] = kwargs[arg]
+
+        if kwargs.get('instance_type') is not None:
+            run_input["systemRequirements"] = DXExecutable._inst_type_to_sys_reqs(kwargs['instance_type'])
+
+        if kwargs.get('depends_on') is not None:
+            run_input["dependsOn"] = []
+            if isinstance(kwargs['depends_on'], list):
+                for item in kwargs['depends_on']:
+                    if isinstance(item, DXJob) or isinstance(item, DXDataObject):
+                        if item.get_id() is None:
+                            raise DXError('A dxpy handler given in depends_on does not have an ID set')
+                        run_input["dependsOn"].append(item.get_id())
+                    elif isinstance(item, basestring):
+                        run_input['dependsOn'].append(item)
+                    else:
+                        raise DXError('Expected elements of depends_on to only be either instances of DXJob or DXDataObject, or strings')
+            else:
+                raise DXError('Expected depends_on field to be a list')
+
+        if kwargs.get('delay_workspace_destruction') is not None:
+            run_input["delayWorkspaceDestruction"] = kwargs['delay_workspace_destruction']
+
+        if dxpy.JOB_ID is None:
+            run_input["project"] = project
+
+        if kwargs.get('extra_args') is not None:
+            merge(run_input, kwargs['extra_args'])
+
+        return run_input
+
     def run(self, executable_input, project=None, folder="/", name=None, tags=None, properties=None, details=None,
             instance_type=None, depends_on=None, delay_workspace_destruction=None,
             extra_args=None, **kwargs):
@@ -79,46 +122,17 @@ class DXExecutable:
         the given input *executable_input*.
 
         '''
-        if project is None:
-            project = dxpy.WORKSPACE_ID
-
-        run_input = {"input": executable_input,
-                     "folder": folder}
-        if name is not None:
-            run_input["name"] = name
-        if tags is not None:
-            run_input["tags"] = tags
-        if properties is not None:
-            run_input["properties"] = properties
-        if instance_type is not None:
-            run_input["systemRequirements"] = self._inst_type_to_sys_reqs(instance_type)
-
-        if depends_on is not None:
-            run_input["dependsOn"] = []
-            if isinstance(depends_on, list):
-                for item in depends_on:
-                    if isinstance(item, DXJob) or isinstance(item, DXDataObject):
-                        if item.get_id() is None:
-                            raise DXError('A dxpy handler given in depends_on does not have an ID set')
-                        run_input["dependsOn"].append(item.get_id())
-                    elif isinstance(item, basestring):
-                        run_input['dependsOn'].append(item)
-                    else:
-                        raise DXError('Expected elements of depends_on to only be either instances of DXJob or DXDataObject, or strings')
-            else:
-                raise DXError('Expected depends_on field to be a list')
-
-        if details is not None:
-            run_input["details"] = details
-
-        if delay_workspace_destruction is not None:
-            run_input["delayWorkspaceDestruction"] = delay_workspace_destruction
-
-        if dxpy.JOB_ID is None:
-            run_input["project"] = project
-
-        if extra_args is not None:
-            merge(run_input, extra_args)
+        run_input = self._get_run_input(executable_input,
+                                        project=project,
+                                        folder=folder,
+                                        name=name,
+                                        tags=tags,
+                                        properties=properties,
+                                        details=details,
+                                        instance_type=instance_type,
+                                        depends_on=depends_on,
+                                        delay_workspace_destruction=delay_workspace_destruction,
+                                        extra_args=extra_args)
 
         if isinstance(self, DXApplet):
             return DXJob(dxpy.api.applet_run(self._dxid, run_input, **kwargs)["id"])
