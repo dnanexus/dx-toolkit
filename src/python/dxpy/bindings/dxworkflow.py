@@ -435,15 +435,15 @@ class DXWorkflow(DXDataObject, DXExecutable):
 
         if kwargs.get('instance_type') is not None:
             if isinstance(kwargs['instance_type'], basestring):
-                workflow_input['systemRequirements'] = {
+                run_input['systemRequirements'] = {
                     '*': self._inst_type_to_sys_reqs(kwargs['instance_type'])
                 }
             elif isinstance(kwargs['instance_type'], dict):
-                workflow_input['systemRequirements'] = {}
+                run_input['systemRequirements'] = {}
                 for stage, value in kwargs['instance_type'].iteritems():
                     if stage != '*':
                         stage = self._get_stage_id(stage)
-                    workflow_input['systemRequirements'][stage] = self._inst_type_to_sys_reqs(value)
+                    run_input['systemRequirements'][stage] = self._inst_type_to_sys_reqs(value)
 
         return run_input
 
