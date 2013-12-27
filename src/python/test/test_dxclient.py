@@ -927,29 +927,32 @@ class TestDXClientWorkflow(DXTestCase):
                                                      "code": ""}
                                          })['id']
         workflow_id = run("dx new workflow myworkflow --brief").strip()
-        stage_id = run("dx add stage myworkflow myapplet --name 'an=awful=name' --brief").strip()
+        stage_ids = [run("dx add stage myworkflow myapplet --name 'an=awful=name' --brief").strip(),
+                     run("dx add stage myworkflow myapplet --name 'second' --brief").strip()]
 
         # control (no request)
         no_req_id = run('dx run myworkflow -y --brief').strip()
-        print no_req_id
         # request for all stages
         all_stg_req_id = run('dx run myworkflow --instance-type dx_m1.medium -y --brief').strip()
-        print all_stg_req_id
 
         # request for a stage specifically (by name)
-        stg_req_id = run('dx run myworkflow --instance-type an=awful=name=dx_m1.large -y --brief').strip()
-        print stg_req_id
+        stg_req_id = run('dx run myworkflow --instance-type an=awful=name=dx_m1.large --instance-type second=dx_m1.medium -y --brief').strip()
 
         time.sleep(2) # give time for all jobs to be populated
 
         no_req_desc = dxpy.describe(no_req_id)
         self.assertIsNone(no_req_desc['stages'][0]['execution']['instanceType'])
+        self.assertIsNone(no_req_desc['stages'][1]['execution']['instanceType'])
         all_stg_req_desc = dxpy.describe(all_stg_req_id)
         self.assertEqual(all_stg_req_desc['stages'][0]['execution']['instanceType'],
+                         'dx_m1.medium')
+        self.assertEqual(all_stg_req_desc['stages'][1]['execution']['instanceType'],
                          'dx_m1.medium')
         stg_req_desc = dxpy.describe(stg_req_id)
         self.assertEqual(stg_req_desc['stages'][0]['execution']['instanceType'],
                          'dx_m1.large')
+        self.assertEqual(stg_req_desc['stages'][1]['execution']['instanceType'],
+                         'dx_m1.medium')
 
         # request for a stage specifically (by index); if same inst
         # type as before, should reuse results
@@ -957,7 +960,7 @@ class TestDXClientWorkflow(DXTestCase):
                       run('dx run myworkflow --instance-type 0=dx_m1.large -y'))
         # and by stage ID
         self.assertIn(stg_req_desc['stages'][0]['execution']['id'],
-                      run('dx run myworkflow --instance-type ' + stage_id + '=dx_m1.large -y'))
+                      run('dx run myworkflow --instance-type ' + stage_ids[0] + '=dx_m1.large -y'))
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would attempt to run a job')
     def test_inaccessible_stage(self):
