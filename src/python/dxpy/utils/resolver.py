@@ -351,9 +351,12 @@ def resolve_container_id_or_name(raw_string, is_error=False, unescape=True, mult
             raise ResolutionError('Could not find a project named "' + string + '"')
         return ([] if multi else None)
     elif not multi:
-        print 'Found multiple projects with name "' + string + '"'
-        choice = pick(map(lambda result: result['id'] + ' (' + result['level'] + ')', results))
-        return results[choice]['id']
+        if sys.stdout.isatty():
+            print 'Found multiple projects with name "' + string + '"'
+            choice = pick(map(lambda result: result['id'] + ' (' + result['level'] + ')', results))
+            return results[choice]['id']
+        else:
+            raise ResolutionError('Found multiple projects with name "' + string + '"; please use a project ID to specify the desired project')
     else:
         # len(results) > 1 and multi
         return map(lambda result: result['id'], results)
