@@ -1,3 +1,8 @@
+DNAnexus Upload Agent 1.5.0 <support@dnanexus.com>, 2013-Dec-30
+---------------------------------------------------------------
+  * Make chunk size and throttle parameters understand unit suffixes.
+  * Warn or fail when throttle parameter is too low.
+
 DNAnexus Upload Agent 1.4.9 <support@dnanexus.com>, 2013-Dec-01
 ---------------------------------------------------------------
   * Fix Mac build issues with 1.4.7 and .8.

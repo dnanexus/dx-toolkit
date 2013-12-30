@@ -22,6 +22,7 @@
 #include <iostream>
 
 #include <boost/program_options.hpp>
+
 #include "SimpleHttp.h"
 
 namespace po = boost::program_options;
@@ -61,18 +62,23 @@ public:
   bool progress;
   bool verbose;
   bool waitOnClose;
-  
+
   // Import flags
   bool reads;
   bool pairedReads;
   bool mappings;
   bool variants;
   std::string refGenome;
-  
+
   bool noRoundRobinDNS;
 
   int64_t throttle;
+
 private:
+
+  std::string rawChunkSize;
+  std::string rawThrottle;
+
   // These params (if provided) are used for overriding the relevant dx::config::* values
   std::string apiserverProtocol;
   std::string apiserverHost;

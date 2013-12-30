@@ -313,7 +313,7 @@ void Chunk::upload(Options &opt) {
     if (opt.throttle > 0) {
       const int totalChunksRemaining = totalChunks - chunksFinished.size() + chunksFailed.size();
       assert(totalChunksRemaining > 0);
-      curl_off_t tval = static_cast<curl_off_t>(double(opt.throttle)/std::min(opt.uploadThreads, totalChunksRemaining)) + 1;
+      curl_off_t tval = static_cast<curl_off_t>(double(opt.throttle) / std::min(opt.uploadThreads, totalChunksRemaining)) + 1;
       log("Setting CURLOPT_MAX_SEND_SPEED_LARGE = " + boost::lexical_cast<string>(tval), dx::logINFO);
       checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_MAX_SEND_SPEED_LARGE, tval), errorBuffer);
     }
@@ -402,9 +402,9 @@ void Chunk::upload(Options &opt) {
     throw runtime_error(msg.str());
   }
 
-  /************************************************************************************************************************************/
-  /*********** Assertions for testing APIservers checksum logic (in case of succesful /UPLOAD/xxxx request) ***************************/
-  /*********** Can be removed later (when we are relatively confident of apisever's checksum logic) ***********************************/
+  /************************************************************************************************/
+  /* Assertions for testing APIservers checksum logic (in case of succesful /UPLOAD/xxxx request) */
+  /* Can be removed later (when we are relatively confident of apiserver's checksum logic) ********/
 
   // We check that /UPLOAD/xxxx returned back a hash of form {md5: xxxxx},
   // and that value is equal to md5 we computed (and sent as Content-MD5 header).
@@ -422,9 +422,7 @@ void Chunk::upload(Options &opt) {
   assert(apiserverResp.type() == dx::JSON_HASH);
   assert(apiserverResp.has("md5") && apiserverResp["md5"].type() == dx::JSON_STRING);
   assert(apiserverResp["md5"].get<string>() == expectedMD5);
-  /*************************************************************************************************************************************/
-  /*************************************************************************************************************************************/
-
+  /************************************************************************************************/
 }
 
 void Chunk::clear() {

@@ -61,8 +61,7 @@ int numberOfCompletedParts(const dx::JSON &parts) {
   return numParts;
 }
 
-/* Returns percentage of the file already uploaded 
- */
+/* Returns percentage of the file already uploaded. */
 double percentageComplete(const dx::JSON &parts, const int64_t size, const int64_t chunkSize) {
   if (size == 0) {
     return ((parts.has("1") && parts["1"]["state"].get<string>() == "complete") ? 100.0 : 0.0);
@@ -129,8 +128,8 @@ void File::init(const bool tryResuming) {
         isRemoteFileOpen = true;
       }
       DXLOG(logINFO) << "A resume target is found .. " << endl;
-      cerr << "Signature of file " << localFile << " matches remote file: " << findResult[0]["describe"]["name"].get<string>() 
-           << " (" << fileID << "), which is " << completePercentage << "% complete ... will resume uploading to it" << endl;
+      cerr << "Signature of file " << localFile << " matches remote file " << findResult[0]["describe"]["name"].get<string>() 
+           << " (" << fileID << "), which is " << completePercentage << "% complete. Will resume uploading to it." << endl;
       DXLOG(logINFO) << "Remote resume target is in state: \"" << state << "\"";
     }
     if (findResult.size() > 1) {
@@ -138,8 +137,8 @@ void File::init(const bool tryResuming) {
       for (unsigned i = 0; i < findResult.size(); ++i) {
         cerr << "\t" << (i + 1) << ". " << findResult[i]["describe"]["name"].get<string>() << " (" << findResult[i]["id"].get<string>() << ")" << endl;
       }
-      cerr << "Unable to upload: \"" << localFile << "\""
-           << "\nPlease either clean up the potential candidate files, or run upload agent with '--do-not-resume' option" << endl;
+      cerr << "Unable to upload: \"" << localFile << "\"" << endl
+           << "Please either clean up the potential candidate files, or run upload agent with '--do-not-resume' option" << endl;
       failed = true;
     }
   }

@@ -300,7 +300,7 @@ void waitOnClose(vector<File> &files) {
 }
 
 void uploadProgressHelper(vector<File> &files) {
-  cerr << ((opt.verbose) ? "\n" : "\r");
+  cerr << (opt.verbose ? "\n" : "\r");
 
   // Print individual file progress
   boost::mutex::scoped_lock boLock(bytesUploadedMutex);
@@ -345,6 +345,10 @@ void uploadProgressHelper(vector<File> &files) {
   }
   queueLock.unlock();
   cerr << " ... Instantaneous transfer speed = " << setw(6) << setprecision(2) << std::fixed << mbps2 << " MB/sec";
+
+  if (opt.throttle >= 0) {
+    cerr << " (throttled to " << opt.throttle << " bytes/sec)";
+  }
 }
 
 void uploadProgress(vector<File> &files) {
