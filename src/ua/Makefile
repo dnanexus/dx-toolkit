@@ -14,7 +14,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-VERSION = 1.4.9
+VERSION = 1.5.0
 
 SHELL=/bin/bash -e
 
