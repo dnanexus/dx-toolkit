@@ -84,11 +84,11 @@ void checkForUpdates() {
                           "\nTechnical details (for advanced users): \n'" + string(cerr.what()) + "'\nIf you still encounter the problem after installing the hotfix, please contact DNAnexus support.");
     }
     #endif
-    throw runtime_error("Unable to connect to API server. Please list your environment variables (--env flag) to see the current configuration.\n\n"
+    throw runtime_error("Unable to connect to API server. Run 'ua --env' to see the current configuration.\n\n"
                         "Detailed message (for advanced users only):\n" + string(cerr.what()));
   } catch (DXError &e) {
     DXLOG(logINFO) << " failure.";
-    throw runtime_error("Unable to connect to API server. Please list your environment variables (--env flag) to see the current configuration.\n\n"
+    throw runtime_error("Unable to connect to API server. Run 'ua --env' to see the current configuration.\n\n"
                         "Detailed message (for advanced users only):\n" + string(e.what()));
   } catch (exception &aerr) {
     // If an error is thrown while calling /system/greet, we don't treat it as fatal
@@ -241,6 +241,12 @@ string createFileObject(const string &project, const string &folder, const strin
   DXLOG(logINFO) << "Got result " << result.toString();
 
   return result["id"].get<string>();
+}
+
+string getProjectName(const string &projectID) {
+  JSON params(JSON_OBJECT);
+  JSON result = projectDescribe(projectID, params, false);  // no retry
+  return result["name"].get<string>();
 }
 
 /*

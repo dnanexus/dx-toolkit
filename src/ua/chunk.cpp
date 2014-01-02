@@ -298,7 +298,7 @@ void Chunk::upload(Options &opt) {
       log("Not adding any explicit IP address using CURLOPT_RESOLVE. resolvedIP = '" + resolvedIP + "', hostName = '" + hostName + "'", dx::logWARNING);
     }
 
-    // g_DX_CA_CERT is set by dxcppp (using env variable: DX_CA_CERT)
+    // g_DX_CA_CERT is set by dxcpp (from environment variable DX_CA_CERT)
     if (dx::config::CA_CERT() == "NOVERIFY") {
       checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0), errorBuffer);
     } else {

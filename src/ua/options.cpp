@@ -281,7 +281,7 @@ void setCertificateFile(const string &certificateFile) {
     return;
   } else {
     if (CA_CERT().empty()) {
-      DXLOG(logINFO) << "--certificate-file is not specified, and env var 'DX_CA_CERT' is not present either." << endl;
+      DXLOG(logINFO) << "--certificate-file is not specified, and environment variable DX_CA_CERT is not present." << endl;
       #if WINDOWS_BUILD
         DXLOG(logINFO) << " For Windows version, we don't look for CA certificate in standard location, but rather use the curl default.";
         return;

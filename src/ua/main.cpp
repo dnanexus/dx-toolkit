@@ -514,12 +514,19 @@ void printEnvironmentInfo() {
        << "  API server protocol: " << APISERVER_PROTOCOL() << endl
        << "  API server host: " << APISERVER_HOST() << endl
        << "  API server port: " << APISERVER_PORT() << endl;
+
   if (SECURITY_CONTEXT().size() != 0)
     cout << "  Auth token: " << SECURITY_CONTEXT()["auth_token"].get<string>() << endl;
   else
     cout << "  Auth token: " << endl;
 
-  cout << "  Project: " << CURRENT_PROJECT() << endl;
+  string projID = CURRENT_PROJECT();
+  try {
+    string projName = getProjectName(projID);
+    cout << "  Project: " << projName << " (" << projID << ")" << endl;
+  } catch (DXAPIError &e) {
+    cout << "  Project: " << projID << endl;
+  }
 }
 
 int main(int argc, char * argv[]) {
