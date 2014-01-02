@@ -362,7 +362,7 @@ CURL_PV=7.32.0
 CURL_SHA=cadc5648e4cd4ea750a8c580311722ed1fb1573a
 ifeq ($(OS), Windows_NT)
 	CURL_WITH_SSL=--with-winssl
-	CURL_SHARED_LIBS=--enable-shared=no
+	CURL_SHARED_LIBS=--enable-shared=yes
 else ifeq ($(UNAME), Darwin)
 	CURL_WITH_SSL=--with-ssl=$$(pwd)/../openssl/stage
 	CURL_SHARED_LIBS=--enable-shared=yes
