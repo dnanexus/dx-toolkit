@@ -1029,14 +1029,26 @@ def main(number):
         dxjob = dxpy.DXJob(dxanalysis.describe()['stages'][0]['execution']['id'])
         self.assertIsNone(dxjob.describe()['instanceType'])
 
-        # request for all stages
+        # request for all stages and all entry points
         dxanalysis = dxworkflow.run({}, instance_type="dx_m1.medium")
         time.sleep(2)
         dxjob = dxpy.DXJob(dxanalysis.describe()['stages'][0]['execution']['id'])
         self.assertEqual(dxjob.describe()['instanceType'], 'dx_m1.medium')
 
-        # request for the stage specifically
-        dxanalysis = dxworkflow.run({}, instance_type={stage_id: "dx_m1.large"})
+        # request for all stages, overriding some entry points
+        dxanalysis = dxworkflow.run({}, instance_type={"*": "dx_m1.medium", "foo": "dx_m1.large"})
+        time.sleep(2)
+        dxjob = dxpy.DXJob(dxanalysis.describe()['stages'][0]['execution']['id'])
+        self.assertEqual(dxjob.describe()['instanceType'], 'dx_m1.medium')
+
+        # request for the stage specifically, for all entry points
+        dxanalysis = dxworkflow.run({}, stage_instance_types={stage_id: "dx_m1.large"})
+        time.sleep(2)
+        dxjob = dxpy.DXJob(dxanalysis.describe()['stages'][0]['execution']['id'])
+        self.assertEqual(dxjob.describe()['instanceType'], 'dx_m1.large')
+
+        # request for the stage specifically, overriding some entry points
+        dxanalysis = dxworkflow.run({}, stage_instance_types={stage_id: {"*": "dx_m1.large", "foo": "dx_m1.medium"}})
         time.sleep(2)
         dxjob = dxpy.DXJob(dxanalysis.describe()['stages'][0]['execution']['id'])
         self.assertEqual(dxjob.describe()['instanceType'], 'dx_m1.large')
@@ -1507,6 +1519,14 @@ class TestDXSearch(unittest.TestCase):
         dxanalysis = dxworkflow.run({stage+".rowFetchChunk": 200},
                                     tags=["foo"],
                                     properties={"foo": "bar"})
+
+        try:
+            dxapplet.run(applet_input=prog_input, stage_instance_types={0: "dx_m1.large"})
+            self.fail('Expected passing stage_instance_types to an applet to fail')
+        except DXError:
+            # Expected
+            pass
+
         dxapplet.run(applet_input=prog_input)
         dxjob = dxapplet.run(applet_input=prog_input, tags=["foo", "bar"], properties={"foo": "baz"})
 

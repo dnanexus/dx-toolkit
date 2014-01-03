@@ -433,17 +433,12 @@ class DXWorkflow(DXDataObject, DXExecutable):
 
         run_input = DXExecutable._get_run_input_common_fields(effective_workflow_input, **kwargs)
 
-        if kwargs.get('instance_type') is not None:
-            if isinstance(kwargs['instance_type'], basestring):
-                run_input['systemRequirements'] = {
-                    '*': self._inst_type_to_sys_reqs(kwargs['instance_type'])
-                }
-            elif isinstance(kwargs['instance_type'], dict):
-                run_input['systemRequirements'] = {}
-                for stage, value in kwargs['instance_type'].iteritems():
-                    if stage != '*':
-                        stage = self._get_stage_id(stage)
-                    run_input['systemRequirements'][stage] = self._inst_type_to_sys_reqs(value)
+        if kwargs.get('stage_instance_types') is not None:
+            run_input['stageSystemRequirements'] = {}
+            for stage, value in kwargs['stage_instance_types'].iteritems():
+                if stage != '*':
+                    stage = self._get_stage_id(stage)
+                run_input['stageSystemRequirements'][stage] = DXExecutable._inst_type_to_sys_reqs(value)
 
         return run_input
 
@@ -454,8 +449,10 @@ class DXWorkflow(DXDataObject, DXExecutable):
         '''
         :param workflow_input: Dictionary of the workflow's input arguments; see below for more details
         :type workflow_input: dict
-        :param instance_type: Instance type on which all stages' jobs will be run, or a dict mapping either stage IDs, indices, and/or names to instance type requests (which can then be either a string instance type or a dict mapping function names to instance types)
+        :param instance_type: Instance type on which all stages' jobs will be run, or a dict mapping function names to instance types. These may be overridden on a per-stage basis if stage_instance_types is specified.
         :type instance_type: string or dict
+        :param stage_instance_types: A dict mapping stage IDs, names, or indices to either a string (representing an instance type to be used for all functions in that stage), or a dict mapping function names to instance types.
+        :type stage_instance_types: dict
         :returns: Object handler of the newly created analysis
         :rtype: :class:`~dxpy.bindings.dxanalysis.DXAnalysis`
 
@@ -480,4 +477,4 @@ class DXWorkflow(DXDataObject, DXExecutable):
 
         See :meth:`dxpy.bindings.dxapplet.DXExecutable.run` for the available args.
         '''
-        super(DXWorkflow, self).run(workflow_input, *args, **kwargs)
+        return super(DXWorkflow, self).run(workflow_input, *args, **kwargs)

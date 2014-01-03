@@ -40,9 +40,11 @@ class DXExecutable:
     @staticmethod
     def _inst_type_to_sys_reqs(instance_type):
         if isinstance(instance_type, basestring):
+            # All entry points should use this instance type
             return {"*": {"instanceType": instance_type}}
         elif isinstance(instance_type, dict):
-            return {stage: {"instanceType": stage_inst} for stage, stage_inst in instance_type.iteritems()}
+            # Map of entry point to instance type
+            return {fn: {"instanceType": fn_inst} for fn, fn_inst in instance_type.iteritems()}
         else:
             raise DXError('Expected instance_type field to be either a string or a dict')
 
@@ -55,12 +57,15 @@ class DXExecutable:
         project, folder, name, tags, properties, details, depends_on,
         delay_workspace_destruction, and extra_args.
         '''
-        project = kwargs.get('project', dxpy.WORKSPACE_ID)
+        project = kwargs.get('project') or dxpy.WORKSPACE_ID
 
         run_input = {"input": executable_input}
         for arg in ['folder', 'name', 'tags', 'properties', 'details']:
             if kwargs.get(arg) is not None:
                 run_input[arg] = kwargs[arg]
+
+        if kwargs.get('instance_type') is not None:
+            run_input["systemRequirements"] = DXExecutable._inst_type_to_sys_reqs(kwargs['instance_type'])
 
         if kwargs.get('depends_on') is not None:
             run_input["dependsOn"] = []
@@ -96,10 +101,9 @@ class DXExecutable:
         '''
         # Although it says "for_applet", this is factored out of
         # DXApplet because apps currently use the same mechanism
-        run_input = DXExecutable._get_run_input_common_fields(executable_input, **kwargs)
-        if kwargs.get('instance_type') is not None:
-            run_input["systemRequirements"] = DXExecutable._inst_type_to_sys_reqs(kwargs['instance_type'])
-        return run_input
+        if kwargs.get('stage_instance_types'):
+            raise DXError('stage_instance_types is not supported for applets (only workflows)')
+        return DXExecutable._get_run_input_common_fields(executable_input, **kwargs)
 
     def _run_impl(self, run_input, **kwargs):
         """
@@ -120,7 +124,7 @@ class DXExecutable:
         raise NotImplementedError('_get_run_input is not implemented')
 
     def run(self, executable_input, project=None, folder="/", name=None, tags=None, properties=None, details=None,
-            instance_type=None, depends_on=None, delay_workspace_destruction=None,
+            instance_type=None, stage_instance_types=None, depends_on=None, delay_workspace_destruction=None,
             extra_args=None, **kwargs):
         '''
         :param executable_input: Hash of the executable's input arguments
@@ -152,6 +156,10 @@ class DXExecutable:
         the given input *executable_input*.
 
         '''
+        # stage_instance_types is only supported for workflows, but we
+        # include it here. Applet-based executabels should detect when
+        # they receive a truthy stage_instance_types value and raise an
+        # error.
         run_input = self._get_run_input(executable_input,
                                         project=project,
                                         folder=folder,
@@ -160,6 +168,7 @@ class DXExecutable:
                                         properties=properties,
                                         details=details,
                                         instance_type=instance_type,
+                                        stage_instance_types=stage_instance_types,
                                         depends_on=depends_on,
                                         delay_workspace_destruction=delay_workspace_destruction,
                                         extra_args=extra_args)
