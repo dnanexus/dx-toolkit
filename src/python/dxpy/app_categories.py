@@ -10,5 +10,6 @@ APP_CATEGORIES = frozenset([
     'Reports',
     'RNA-Seq',
     'Statistics',
+    'Structural Variation',
     'Variation Calling'
 ])
