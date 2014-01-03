@@ -449,7 +449,7 @@ def _verify_app_source_dir(src_dir, enforce=True):
 def _verify_app_writable(app_name):
     app_name_already_exists = True
     try:
-        current_developers = dxpy.api.app_list_developers('app-' + app_name)['developers']
+        is_developer = dxpy.api.app_describe('app-' + app_name)['isDeveloperFor']
     except dxpy.exceptions.DXAPIError as e:
         if e.name == 'ResourceNotFound':
             app_name_already_exists = False
@@ -461,17 +461,8 @@ def _verify_app_writable(app_name):
         # (or at least, not fail on the basis of the ACL).
         return
 
-    try:
-        me = dxpy.user_info()['userId']
-    except DXError:
-        # Not being able to contact the auth server to do this check
-        # is a non fatal error, since this scenario is common in
-        # testing and the API call to build the app will eventually
-        # fail anyway.
-        print >> sys.stderr, "Warning: could not contact auth server to determine current username."
-        return
-    if me not in current_developers:
-        raise dxpy.app_builder.AppBuilderException('User {user} is not a listed developer for app {app}'.format(user=me, app=app_name))
+    if not is_developer:
+        raise dxpy.app_builder.AppBuilderException('You are not a developer for app {app}'.format(app=app_name))
 
 def _parse_app_spec(src_dir):
     """Returns the parsed contents of dxapp.json.
