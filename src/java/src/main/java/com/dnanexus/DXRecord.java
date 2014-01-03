@@ -146,8 +146,8 @@ public class DXRecord extends DXDataObject {
      */
     public static DXRecord getInstanceWithEnvironment(String recordId, DXContainer project,
             DXEnvironment env) {
-        Preconditions.checkNotNull(env);
-        return new DXRecord(recordId, project, env);
+        return new DXRecord(recordId, project, Preconditions.checkNotNull(env,
+                "env may not be null"));
     }
 
     /**
@@ -157,8 +157,7 @@ public class DXRecord extends DXDataObject {
      * @throws NullPointerException If {@code recordId} is null
      */
     public static DXRecord getInstanceWithEnvironment(String recordId, DXEnvironment env) {
-        Preconditions.checkNotNull(env);
-        return new DXRecord(recordId, env);
+        return new DXRecord(recordId, Preconditions.checkNotNull(env, "env may not be null"));
     }
 
     /**

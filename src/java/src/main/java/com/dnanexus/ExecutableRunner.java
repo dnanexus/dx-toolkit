@@ -183,10 +183,9 @@ public abstract class ExecutableRunner<T extends DXExecution> {
      * @param env environment to be used to make API requests
      */
     private ExecutableRunner(String executableId, DXEnvironment env) {
-        Preconditions.checkNotNull(executableId, "executable ID may not be null");
-        Preconditions.checkNotNull(env, "environment may not be null");
-        this.executableId = executableId;
-        this.env = env;
+        this.executableId =
+                Preconditions.checkNotNull(executableId, "executable ID may not be null");
+        this.env = Preconditions.checkNotNull(env, "environment may not be null");
     }
 
     /**
@@ -222,8 +221,8 @@ public abstract class ExecutableRunner<T extends DXExecution> {
      * @return the same runner object
      */
     public ExecutableRunner<T> dependsOn(DXDataObject dataObject) {
-        Preconditions.checkNotNull(dataObject, "data object may not be null");
-        this.objectDependencies.add(dataObject);
+        this.objectDependencies.add(Preconditions.checkNotNull(dataObject,
+                "data object may not be null"));
         return this;
     }
 
@@ -236,8 +235,7 @@ public abstract class ExecutableRunner<T extends DXExecution> {
      * @return the same runner object
      */
     public ExecutableRunner<T> dependsOn(DXJob job) {
-        Preconditions.checkNotNull(job, "job may not be null");
-        this.jobDependencies.add(job);
+        this.jobDependencies.add(Preconditions.checkNotNull(job, "job may not be null"));
         return this;
     }
 
@@ -264,8 +262,7 @@ public abstract class ExecutableRunner<T extends DXExecution> {
      */
     public ExecutableRunner<T> inFolder(String folder) {
         Preconditions.checkState(this.folder == null, "inFolder cannot be called more than once");
-        Preconditions.checkNotNull(folder, "folder may not be null");
-        this.folder = folder;
+        this.folder = Preconditions.checkNotNull(folder, "folder may not be null");
         return this;
     }
 
@@ -330,8 +327,7 @@ public abstract class ExecutableRunner<T extends DXExecution> {
      */
     public ExecutableRunner<T> withName(String name) {
         Preconditions.checkState(this.name == null, "withName cannot be called more than once");
-        Preconditions.checkNotNull(name, "name may not be null");
-        this.name = name;
+        this.name = Preconditions.checkNotNull(name, "name may not be null");
         return this;
     }
 
@@ -345,8 +341,7 @@ public abstract class ExecutableRunner<T extends DXExecution> {
     public ExecutableRunner<T> withRawInput(JsonNode inputHash) {
         Preconditions.checkState(this.input == null,
                 "withInput or withRawInput cannot be called more than once");
-        Preconditions.checkNotNull(inputHash, "input hash may not be null");
-        this.input = inputHash;
+        this.input = Preconditions.checkNotNull(inputHash, "input hash may not be null");
         return this;
     }
 }

@@ -119,8 +119,7 @@ public class DXAnalysis extends DXExecution {
      * @throws NullPointerException If {@code analysisId} or {@code env} is null
      */
     public static DXAnalysis getInstanceWithEnvironment(String analysisId, DXEnvironment env) {
-        Preconditions.checkNotNull(env);
-        return new DXAnalysis(analysisId, env);
+        return new DXAnalysis(analysisId, Preconditions.checkNotNull(env, "env may not be null"));
     }
 
     private DXAnalysis(String analysisId) {

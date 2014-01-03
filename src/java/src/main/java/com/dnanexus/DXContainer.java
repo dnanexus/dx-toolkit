@@ -77,7 +77,7 @@ public class DXContainer extends DXObject {
      */
     public static DXContainer getInstanceWithEnvironment(String projectOrContainerId,
             DXEnvironment env) {
-        Preconditions.checkNotNull(env);
+        Preconditions.checkNotNull(env, "env may not be null");
         if (projectOrContainerId.startsWith("project-")) {
             return DXProject.getInstanceWithEnvironment(projectOrContainerId, env);
         }

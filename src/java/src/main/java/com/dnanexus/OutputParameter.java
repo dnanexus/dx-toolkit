@@ -70,9 +70,8 @@ public class OutputParameter {
      * @return an output parameter builder
      */
     public static Builder newOutputParameter(String name, IOClass parameterClass) {
-        Preconditions.checkNotNull(name, "name may not be null");
-        Preconditions.checkNotNull(name, "class may not be null");
-        return new Builder(name, parameterClass);
+        return new Builder(Preconditions.checkNotNull(name, "name may not be null"),
+                Preconditions.checkNotNull(parameterClass, "parameterClass may not be null"));
     }
 
     @JsonProperty

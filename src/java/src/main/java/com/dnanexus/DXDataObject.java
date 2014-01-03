@@ -115,8 +115,8 @@ public abstract class DXDataObject extends DXObject {
             // TODO: support calling addTags more than once, this seems
             // reasonable from the name.
             Preconditions.checkState(this.tags == null, "Cannot call addTags more than once");
-            Preconditions.checkNotNull(tags);
-            this.tags = ImmutableList.copyOf(tags);
+            this.tags =
+                    ImmutableList.copyOf(Preconditions.checkNotNull(tags, "tags may not be null"));
             return getThisInstance();
         }
 
@@ -131,8 +131,9 @@ public abstract class DXDataObject extends DXObject {
             // TODO: support calling addTypes more than once, this seems
             // reasonable from the name.
             Preconditions.checkState(this.types == null, "Cannot call addTypes more than once");
-            Preconditions.checkNotNull(types);
-            this.types = ImmutableList.copyOf(types);
+            this.types =
+                    ImmutableList
+                            .copyOf(Preconditions.checkNotNull(types, "types may not be null"));
             return getThisInstance();
         }
 
@@ -202,10 +203,11 @@ public abstract class DXDataObject extends DXObject {
          * @return the same {@code Builder} object
          */
         public T putProperty(String key, String value) {
-            Preconditions.checkNotNull(key, "Property key may not be null");
-            Preconditions.checkNotNull(value, "Value for property " + key + " may not be null");
+            this.properties.put(
+                    Preconditions.checkNotNull(key, "Property key may not be null"),
+                    Preconditions.checkNotNull(value, "Value for property " + key
+                            + " may not be null"));
             this.hasProperties = true;
-            this.properties.put(key, value);
             return getThisInstance();
         }
 
@@ -218,8 +220,9 @@ public abstract class DXDataObject extends DXObject {
          */
         public T setDetails(Object details) {
             Preconditions.checkState(this.details == null, "Cannot call setDetails more than once");
-            Preconditions.checkNotNull(details);
-            this.details = MAPPER.valueToTree(details);
+            this.details =
+                    MAPPER.valueToTree(Preconditions.checkNotNull(details,
+                            "details may not be null"));
             return getThisInstance();
         }
 
@@ -232,8 +235,7 @@ public abstract class DXDataObject extends DXObject {
          */
         public T setFolder(String folder) {
             Preconditions.checkState(this.folder == null, "Cannot call setFolder more than once");
-            Preconditions.checkNotNull(folder);
-            this.folder = folder;
+            this.folder = Preconditions.checkNotNull(folder, "folder may not be null");
             return getThisInstance();
         }
 
@@ -248,8 +250,7 @@ public abstract class DXDataObject extends DXObject {
          */
         public T setFolder(String folder, boolean createParents) {
             Preconditions.checkState(this.folder == null, "Cannot call setFolder more than once");
-            Preconditions.checkNotNull(folder);
-            this.folder = folder;
+            this.folder = Preconditions.checkNotNull(folder, "folder may not be null");
             this.createParents = createParents;
             return getThisInstance();
         }
@@ -263,8 +264,7 @@ public abstract class DXDataObject extends DXObject {
          */
         public T setName(String name) {
             Preconditions.checkState(this.name == null, "Cannot call setName more than once");
-            Preconditions.checkNotNull(name);
-            this.name = name;
+            this.name = Preconditions.checkNotNull(name, "name may not be null");
             return getThisInstance();
         }
 
@@ -277,8 +277,7 @@ public abstract class DXDataObject extends DXObject {
          */
         public T setProject(DXContainer project) {
             Preconditions.checkState(this.project == null, "Cannot call setProject more than once");
-            Preconditions.checkNotNull(project);
-            this.project = project;
+            this.project = Preconditions.checkNotNull(project, "project may not be null");
             return getThisInstance();
         }
 
@@ -614,10 +613,10 @@ public abstract class DXDataObject extends DXObject {
             // We don't use ImmutableMap here because it doesn't support null values.
             Map<String, String> propertyMap = Maps.newHashMap();
             for (Map.Entry<String, String> e : propertiesToSet.entrySet()) {
-                Preconditions.checkNotNull(e.getKey(), "Property key may not be null");
-                Preconditions.checkNotNull(e.getValue(), "Property value for key " + e.getKey()
-                        + " may not be null");
-                propertyMap.put(e.getKey(), e.getValue());
+                propertyMap.put(
+                        Preconditions.checkNotNull(e.getKey(), "Property key may not be null"),
+                        Preconditions.checkNotNull(e.getValue(),
+                                "Property value for key " + e.getKey() + " may not be null"));
             }
             for (String propertyToUnset : propertiesToUnset) {
                 propertyMap.put(propertyToUnset, null);
@@ -770,8 +769,7 @@ public abstract class DXDataObject extends DXObject {
      */
     protected DXDataObject(String dxId, DXContainer project, DXEnvironment env) {
         super(dxId, env);
-        Preconditions.checkNotNull(project);
-        this.container = project;
+        this.container = Preconditions.checkNotNull(project, "project may not be null");
     }
 
     /**

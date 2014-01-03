@@ -57,8 +57,7 @@ public abstract class DXObject {
      *            environment.
      */
     protected DXObject(String dxId, DXEnvironment env) {
-        Preconditions.checkNotNull(dxId);
-        this.dxId = dxId;
+        this.dxId = Preconditions.checkNotNull(dxId, "Object ID may not be null");
         if (env == null) {
             this.env = DEFAULT_ENVIRONMENT;
         } else {

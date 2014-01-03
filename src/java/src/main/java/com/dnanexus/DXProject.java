@@ -156,8 +156,7 @@ public class DXProject extends DXContainer {
      * @throws NullPointerException if {@code projectId} or {@code env} is null
      */
     public static DXProject getInstanceWithEnvironment(String projectId, DXEnvironment env) {
-        Preconditions.checkNotNull(env);
-        return new DXProject(projectId, env);
+        return new DXProject(projectId, Preconditions.checkNotNull(env, "env may not be null"));
     }
 
     /**

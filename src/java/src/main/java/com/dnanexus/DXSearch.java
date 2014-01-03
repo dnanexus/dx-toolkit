@@ -358,8 +358,8 @@ public final class DXSearch {
         public FindDataObjectsRequestBuilder<T> createdAfter(Date createdAfter) {
             Preconditions.checkState(this.createdAfter == null,
                     "Cannot call createdAfter more than once");
-            Preconditions.checkNotNull(createdAfter);
-            this.createdAfter = createdAfter;
+            this.createdAfter =
+                    Preconditions.checkNotNull(createdAfter, "createdAfter may not be null");
             return this;
         }
 
@@ -373,8 +373,8 @@ public final class DXSearch {
         public FindDataObjectsRequestBuilder<T> createdBefore(Date createdBefore) {
             Preconditions.checkState(this.createdBefore == null,
                     "Cannot call createdBefore more than once");
-            Preconditions.checkNotNull(createdBefore);
-            this.createdBefore = createdBefore;
+            this.createdBefore =
+                    Preconditions.checkNotNull(createdBefore, "createdBefore may not be null");
             return this;
         }
 
@@ -417,10 +417,11 @@ public final class DXSearch {
          */
         public FindDataObjectsRequestBuilder<T> inFolder(DXContainer project, String folder) {
             Preconditions.checkState(this.scopeQuery == null,
-                    "Cannot specify inProject, inFolder, or inFolderOrSubfolders more than once");
-            Preconditions.checkNotNull(project);
-            Preconditions.checkNotNull(folder);
-            this.scopeQuery = new FindDataObjectsRequest.ScopeQuery(project.getId(), folder);
+                    "Cannot specify inProject, inFolder, or inFolderOrSubfolders more than once");;;
+            this.scopeQuery =
+                    new FindDataObjectsRequest.ScopeQuery(Preconditions.checkNotNull(project,
+                            "project may not be null").getId(), Preconditions.checkNotNull(folder,
+                            "folder may not be null"));
             return this;
         }
 
@@ -443,9 +444,10 @@ public final class DXSearch {
                 String folder) {
             Preconditions.checkState(this.scopeQuery == null,
                     "Cannot specify inProject, inFolder, or inFolderOrSubfolders more than once");
-            Preconditions.checkNotNull(project);
-            Preconditions.checkNotNull(folder);
-            this.scopeQuery = new FindDataObjectsRequest.ScopeQuery(project.getId(), folder, true);
+            this.scopeQuery =
+                    new FindDataObjectsRequest.ScopeQuery(Preconditions.checkNotNull(project,
+                            "project may not be null").getId(), Preconditions.checkNotNull(folder,
+                            "folder may not be null"), true);
             return this;
         }
 
@@ -465,8 +467,9 @@ public final class DXSearch {
         public FindDataObjectsRequestBuilder<T> inProject(DXContainer project) {
             Preconditions.checkState(this.scopeQuery == null,
                     "Cannot specify inProject, inFolder, or inFolderOrSubfolders more than once");
-            Preconditions.checkNotNull(project);
-            this.scopeQuery = new FindDataObjectsRequest.ScopeQuery(project.getId());
+            this.scopeQuery =
+                    new FindDataObjectsRequest.ScopeQuery(Preconditions.checkNotNull(project,
+                            "project may not be null").getId());
             return this;
         }
 
@@ -480,8 +483,8 @@ public final class DXSearch {
         public FindDataObjectsRequestBuilder<T> modifiedAfter(Date modifiedAfter) {
             Preconditions.checkState(this.modifiedAfter == null,
                     "Cannot call modifiedAfter more than once");
-            Preconditions.checkNotNull(modifiedAfter);
-            this.modifiedAfter = modifiedAfter;
+            this.modifiedAfter =
+                    Preconditions.checkNotNull(modifiedAfter, "modifiedAfter may not be null");
             return this;
         }
 
@@ -495,8 +498,8 @@ public final class DXSearch {
         public FindDataObjectsRequestBuilder<T> modifiedBefore(Date modifiedBefore) {
             Preconditions.checkState(this.modifiedBefore == null,
                     "Cannot call modifiedBefore more than once");
-            Preconditions.checkNotNull(modifiedBefore);
-            this.modifiedBefore = modifiedBefore;
+            this.modifiedBefore =
+                    Preconditions.checkNotNull(modifiedBefore, "modifiedBefore may not be null");
             return this;
         }
 
@@ -516,8 +519,9 @@ public final class DXSearch {
         public FindDataObjectsRequestBuilder<T> nameMatchesExactly(String name) {
             Preconditions.checkState(this.nameQuery == null,
                     "Cannot specify nameMatches* methods more than once");
-            Preconditions.checkNotNull(name);
-            this.nameQuery = new FindDataObjectsRequest.ExactNameQuery(name);
+            this.nameQuery =
+                    new FindDataObjectsRequest.ExactNameQuery(Preconditions.checkNotNull(name,
+                            "name may not be null"));
             return this;
         }
 
@@ -537,8 +541,9 @@ public final class DXSearch {
         public FindDataObjectsRequestBuilder<T> nameMatchesGlob(String glob) {
             Preconditions.checkState(this.nameQuery == null,
                     "Cannot specify nameMatches* methods more than once");
-            Preconditions.checkNotNull(glob);
-            this.nameQuery = new FindDataObjectsRequest.GlobNameQuery(glob);
+            this.nameQuery =
+                    new FindDataObjectsRequest.GlobNameQuery(Preconditions.checkNotNull(glob,
+                            "glob may not be null"));
             return this;
         }
 
@@ -558,8 +563,9 @@ public final class DXSearch {
         public FindDataObjectsRequestBuilder<T> nameMatchesRegexp(String regexp) {
             Preconditions.checkState(this.nameQuery == null,
                     "Cannot specify nameMatches* methods more than once");
-            Preconditions.checkNotNull(regexp);
-            this.nameQuery = new FindDataObjectsRequest.RegexpNameQuery(regexp);
+            this.nameQuery =
+                    new FindDataObjectsRequest.RegexpNameQuery(Preconditions.checkNotNull(regexp,
+                            "regexp may not be null"));
             return this;
         }
 
@@ -582,9 +588,9 @@ public final class DXSearch {
                 boolean caseInsensitive) {
             Preconditions.checkState(this.nameQuery == null,
                     "Cannot specify nameMatches* methods more than once");
-            Preconditions.checkNotNull(regexp);
             this.nameQuery =
-                    new FindDataObjectsRequest.RegexpNameQuery(regexp, caseInsensitive ? "i" : null);
+                    new FindDataObjectsRequest.RegexpNameQuery(Preconditions.checkNotNull(regexp,
+                            "regexp may not be null"), caseInsensitive ? "i" : null);
             return this;
         }
 
@@ -698,8 +704,8 @@ public final class DXSearch {
          */
         public FindDataObjectsRequestBuilder<T> withLinkTo(DXDataObject dataObject) {
             Preconditions.checkState(this.link == null, "Cannot call withLinkTo more than once");
-            Preconditions.checkNotNull(dataObject);
-            this.link = dataObject.getId();
+            this.link =
+                    Preconditions.checkNotNull(dataObject, "dataObject may not be null").getId();
             return this;
         }
 
@@ -714,7 +720,7 @@ public final class DXSearch {
         public FindDataObjectsRequestBuilder<T> withMinimumAccessLevel(AccessLevel level) {
             Preconditions.checkState(this.level == null,
                     "Cannot call withMinimumAccessLevel more than once");
-            Preconditions.checkNotNull(level);
+            Preconditions.checkNotNull(level, "level may not be null");
             Preconditions.checkArgument(!level.equals(AccessLevel.NONE),
                     "Minimum access level may not be NONE");
             this.level = level;
@@ -729,8 +735,8 @@ public final class DXSearch {
          * @return the same builder object
          */
         public FindDataObjectsRequestBuilder<T> withProperty(String propertyKey) {
-            Preconditions.checkNotNull(propertyKey);
-            propertiesThatMustBePresent.add(propertyKey);
+            propertiesThatMustBePresent.add(Preconditions.checkNotNull(propertyKey,
+                    "propertyKey may not be null"));
             return this;
         }
 
@@ -744,9 +750,9 @@ public final class DXSearch {
          */
         public FindDataObjectsRequestBuilder<T> withProperty(String propertyKey,
                 String propertyValue) {
-            Preconditions.checkNotNull(propertyKey);
-            Preconditions.checkNotNull(propertyValue);
-            propertyKeysAndValues.put(propertyKey, propertyValue);
+            propertyKeysAndValues.put(
+                    Preconditions.checkNotNull(propertyKey, "propertyKey may not be null"),
+                    Preconditions.checkNotNull(propertyValue, "propertyValue may not be null"));
             return this;
         }
 
@@ -759,8 +765,7 @@ public final class DXSearch {
          */
         public FindDataObjectsRequestBuilder<T> withState(DataObjectState state) {
             Preconditions.checkState(this.state == null, "Cannot call withState more than once");
-            Preconditions.checkNotNull(state);
-            this.state = state;
+            this.state = Preconditions.checkNotNull(state, "state may not be null");
             return this;
         }
 
@@ -773,8 +778,7 @@ public final class DXSearch {
          */
         public FindDataObjectsRequestBuilder<T> withTag(String tag) {
             Preconditions.checkState(this.tag == null, "Cannot call withTag more than once");
-            Preconditions.checkNotNull(tag);
-            this.tag = tag;
+            this.tag = Preconditions.checkNotNull(tag, "tag may not be null");
             return this;
         }
 
@@ -787,8 +791,7 @@ public final class DXSearch {
          */
         public FindDataObjectsRequestBuilder<T> withType(String type) {
             Preconditions.checkState(this.type == null, "Cannot call withType more than once");
-            Preconditions.checkNotNull(type);
-            this.type = type;
+            this.type = Preconditions.checkNotNull(type, "type may not be null");
             return this;
         }
 
@@ -803,7 +806,8 @@ public final class DXSearch {
         public FindDataObjectsRequestBuilder<T> withVisibility(VisibilityQuery visibilityQuery) {
             Preconditions.checkState(this.visibilityQuery == null,
                     "Cannot call withVisibility more than once");
-            this.visibilityQuery = visibilityQuery;
+            this.visibilityQuery =
+                    Preconditions.checkNotNull(visibilityQuery, "visibilityQuery may not be null");
             return this;
         }
     }
@@ -1039,8 +1043,7 @@ public final class DXSearch {
         public FindJobsRequestBuilder createdAfter(Date date) {
             Preconditions.checkState(this.createdAfter == null,
                     "Cannot specify createdAfter more than once");
-            Preconditions.checkNotNull(date);
-            this.createdAfter = date;
+            this.createdAfter = Preconditions.checkNotNull(date, "date may not be null");
             return this;
         }
 
@@ -1054,8 +1057,7 @@ public final class DXSearch {
         public FindJobsRequestBuilder createdBefore(Date date) {
             Preconditions.checkState(this.createdBefore == null,
                     "Cannot specify createdBefore more than once");
-            Preconditions.checkNotNull(date);
-            this.createdBefore = date;
+            this.createdBefore = Preconditions.checkNotNull(date, "date may not be null");
             return this;
         }
 
@@ -1089,8 +1091,7 @@ public final class DXSearch {
         public FindJobsRequestBuilder inProject(DXContainer project) {
             Preconditions.checkState(this.inProject == null,
                     "Cannot specify inProject more than once");
-            Preconditions.checkNotNull(project);
-            this.inProject = project.getId();
+            this.inProject = Preconditions.checkNotNull(project, "project may not be null").getId();
             return this;
         }
 
@@ -1108,8 +1109,7 @@ public final class DXSearch {
             // once.
             Preconditions.checkState(this.launchedBy == null,
                     "Cannot specify launchedBy more than once");
-            Preconditions.checkNotNull(user);
-            this.launchedBy = user;
+            this.launchedBy = Preconditions.checkNotNull(user, "user may not be null");
             return this;
         }
 

@@ -187,8 +187,7 @@ public final class DXJob extends DXExecution {
      * @throws NullPointerException If {@code jobId} or {@code env} is null
      */
     public static DXJob getInstanceWithEnvironment(String jobId, DXEnvironment env) {
-        Preconditions.checkNotNull(env);
-        return new DXJob(jobId, env);
+        return new DXJob(jobId, Preconditions.checkNotNull(env, "env may not be null"));
     }
 
     private DXJob(String jobId) {
