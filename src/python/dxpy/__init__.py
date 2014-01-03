@@ -297,10 +297,9 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                     pass
                 _UPGRADE_NOTIFY = False
 
-            # If HTTP code that is not 200 (OK) is received and the content is
-            # JSON, parse it and throw the appropriate error.  Otherwise,
-            # raise the usual exception.
-            if response.status_code != requests.codes.ok:
+            # If an HTTP code that is not in the 200 series is received and the content is JSON, parse it and throw the
+            # appropriate error.  Otherwise, raise the usual exception.
+            if response.status_code // 100 != 2:
                 # response.headers key lookup is case-insensitive
                 if response.headers.get('content-type', '').startswith('application/json'):
                     content = json.loads(response.content)
