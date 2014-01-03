@@ -135,6 +135,7 @@ if len(args_list) > 0 and args_list[0] == 'clearenv':
 
 # importing dxpy will now appropriately load env variables
 import dxpy
+from dxpy.app_categories import APP_CATEGORIES
 from dxpy.utils import group_array_by_field, normalize_timedelta, normalize_time_input
 from dxpy.utils.env import clearenv, write_env_var
 from dxpy.utils.printing import (CYAN, BLUE, YELLOW, GREEN, RED, WHITE, UNDERLINE, BOLD, ENDC, DNANEXUS_LOGO,
@@ -147,7 +148,7 @@ from dxpy.utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj
                                  cached_project_names, split_unescaped,
                                  ResolutionError, get_first_pos_of_char, resolve_to_objects_or_project)
 from dxpy.utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, LocalCompleter,
-                                  MultiCompleter)
+                                  ListCompleter, MultiCompleter)
 from dxpy.utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_desc,
                                  get_io_desc, get_find_executions_string)
 from dxpy.cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg,
@@ -3207,6 +3208,16 @@ class PrintDXVersion(argparse.Action):
         print 'dx %s' % (dxpy.TOOLKIT_VERSION,)
         parser.exit(0)
 
+class PrintCategoryHelp(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        print 'usage: ' + parser.prog + ' --category CATEGORY'
+        print
+        print fill('List only the apps that belong to a particular category by providing a category name.')
+        print
+        print 'Common category names include:'
+        print '  ' + '\n  '.join(sorted(APP_CATEGORIES))
+        parser.exit(0)
+
 class DXArgumentParser(argparse.ArgumentParser):
     def error(self, message):
         self.print_help(sys.stderr)
@@ -4018,11 +4029,15 @@ subparsers_find.metavar = 'category'
 register_subparser(parser_find, categories=())
 
 parser_find_apps = subparsers_find.add_parser('apps', help='List available apps',
-                                              description='Finds apps with the given search parameters.  Use --category to restrict by a category.  Common categories include: "Alignment", "Annotation", "Debugging", "Export", "Import", "RNA-Seq", "Reports", "Statistics", "Variation calling".',
+                                              description='Finds apps with the given search parameters.  Use --category to restrict by a category; common categories are available as tab completions and can be listed with --category-help.',
                                               parents=[stdout_args, json_arg, delim_arg, env_args],
                                               prog='dx find apps')
 parser_find_apps.add_argument('--name', help='Name of the app')
-parser_find_apps.add_argument('--category', help='Category of the app')
+parser_find_apps.add_argument('--category', help='Category of the app').completer = ListCompleter(APP_CATEGORIES)
+parser_find_apps.add_argument('--category-help',
+                              help='Print a list of common app categories',
+                              nargs=0,
+                              action=PrintCategoryHelp)
 parser_find_apps.add_argument('-a', '--all', help='Whether to return all versions of the app', action='store_true')
 parser_find_apps.add_argument('--unpublished', help='Whether to return unpublished apps as well', action='store_true')
 parser_find_apps.add_argument('--installed', help='Whether to restrict the list to installed apps only', action='store_true')

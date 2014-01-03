@@ -1180,6 +1180,15 @@ class TestDXClientWorkflow(DXTestCase):
 
 class TestDXClientFind(DXTestCase):
 
+    def test_dx_find_apps(self):
+        # simple test here does not assume anything about apps that do
+        # or do not exist
+        from dxpy.app_categories import APP_CATEGORIES
+        category_help = run("dx find apps --category-help")
+        for category in APP_CATEGORIES:
+            self.assertIn(category, category_help)
+        run("dx find apps --category foo") # any category can be searched
+
     def test_dx_find_data_by_class(self):
         ids = {"record": run("dx new record --brief").strip(),
                "workflow": run("dx new workflow --brief").strip(),
