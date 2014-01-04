@@ -448,16 +448,15 @@ void markFileAsFailed(vector<File> &files, const string &fileID) {
   }
 }
 
-/* This function throws a runtime_error if two or more file
- * have same "signature", and are being uploaded to same project.
- * Note: - Signature is: <project, size, last_write_time, filename> tuple
- *         Same as what we use for resuming.
+/*
+ * This function throws a runtime_error if two or more files have the same
+ * signature, and are being uploaded to the same project. The signature is
+ * a <project, size, last_write_time, filename> tuple, like we use to
+ * detect resumable uploads.
  */
 void disallowDuplicateFiles(const vector<string> &files, const vector<string> &prjs) {
-  map<string, int> hashTable; // a map for - hash string to index in files vector
+  map<string, int> hashTable; // a map for hash string to index in files vector
   for (unsigned i = 0; i < files.size(); ++i) {
-    //TODO: This results in calling "resolveProject" twice for each file -- not a big deal,
-    //      but ideally we should reuse the value retrieved in first call
     string hash = resolveProject(prjs[i]) + " ";
 
     boost::filesystem::path p(files[i]);

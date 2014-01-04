@@ -126,6 +126,7 @@ string urlEscape(const string &str) {
 
 
 boost::mutex resolveProjectMutex;
+
 /*
  * Given a project specifier (name or ID), resolves it to a project ID.
  * Important: Only projects with >=UPLOAD access are considered
@@ -150,8 +151,11 @@ boost::mutex resolveProjectMutex;
  * - If project list's size == 1, then we return the project ID.
  */
 string resolveProject(const string &projectSpec) {
-  static std::map<string, string> cache; // Projectspec => project id
-  boost::mutex::scoped_lock resolvePrjLock(resolveProjectMutex);
+  // Maps project specs (names or IDs) to resolved IDs
+  static std::map<string, string> cache;
+
+  boost::mutex::scoped_lock resolveProjectLock(resolveProjectMutex);
+
   DXLOG(logINFO) << "Resolving project specifier " << projectSpec << "...";
   if (cache.count(projectSpec) > 0) {
     DXLOG(logINFO) << "The project specifier was resolved previously, will just return value from cache('" << cache[projectSpec] << "')";
