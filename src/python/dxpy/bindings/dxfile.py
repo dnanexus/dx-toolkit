@@ -97,7 +97,6 @@ class DXFile(DXDataObject):
 
         self._read_buf = StringIO.StringIO()
         self._write_buf = StringIO.StringIO()
-        self._num_uploaded_parts = 0
 
         if write_buffer_size < 5*1024*1024:
             raise DXFileError("Write buffer size must be at least 5 MB")
@@ -363,8 +362,13 @@ class DXFile(DXDataObject):
         '''
         self.flush(**kwargs)
 
-        if self._num_uploaded_parts == 0: # File is empty, upload an empty part (files with 0 parts cannot be closed)
-            self.upload_part('', 1, **kwargs)
+        if self._num_uploaded_parts == 0:
+            # We haven't uploaded any parts in this session. In case no parts have been uploaded at all, try to upload
+            # an empty part (files with 0 parts cannot be closed).
+            try:
+                self.upload_part('', 1, **kwargs)
+            except dxpy.exceptions.InvalidState:
+                pass
 
         if 'report_progress_fn' in kwargs:
             del kwargs['report_progress_fn']
