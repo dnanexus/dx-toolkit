@@ -22,6 +22,8 @@ contents of describe hashes for various DNAnexus entities (projects,
 containers, dataobjects, apps, and jobs).
 '''
 
+from __future__ import print_function
+
 import datetime, time, json, math, sys, copy
 from collections import defaultdict
 
@@ -206,7 +208,7 @@ def io_val_to_str(val):
         else:
             return '[ ' + ', '.join([io_val_to_str(item) for item in val]) + ' ]'
     elif isinstance(val, dict):
-        return '{ ' + ', '.join([key + ': ' + io_val_to_str(value) for key, value in val.iteritems()]) + ' }'
+        return '{ ' + ', '.join([key + ': ' + io_val_to_str(value) for key, value in val.items()]) + ' }'
     else:
         return json.dumps(val)
 
@@ -542,7 +544,7 @@ def print_data_obj_desc(desc, verbose=False):
                     coldescs = "Columns" + DELIMITER(" " *(16-len("Columns"))) + get_col_str(desc["columns"][0])
                     for column in desc["columns"][1:]:
                         coldescs += '\n' + DELIMITER(" "*16) + get_col_str(column)
-                    print coldescs
+                    print(coldescs)
                 else:
                     print_list_field("Columns", desc['columns'])
             else: # Unhandled prettifying
@@ -604,7 +606,7 @@ def print_execution_desc(desc):
     if "function" in desc:
         print_field("Function", desc["function"])
     if 'runInput' in desc:
-        default_fields = {k: v for k, v in desc["originalInput"].iteritems() if k not in desc["runInput"]}
+        default_fields = {k: v for k, v in desc["originalInput"].items() if k not in desc["runInput"]}
         print_nofill_field("Input", get_io_field(desc["runInput"], defaults=default_fields))
     else:
         print_nofill_field("Input", get_io_field(desc["originalInput"]))
@@ -727,7 +729,7 @@ def get_ls_desc(desc, print_id=False):
         return desc['name'] + addendum
 
 def print_ls_desc(desc, **kwargs):
-    print get_ls_desc(desc, **kwargs)
+    print(get_ls_desc(desc, **kwargs))
 
 def get_ls_l_desc(desc, include_folder=False, include_project=False):
     if 'state' in desc:
@@ -759,7 +761,7 @@ def get_ls_l_desc(desc, include_folder=False, include_project=False):
     return state_str + DELIMITER(' '*(8 - state_len)) + render_short_timestamp(desc['modified']) + DELIMITER(' ') + size_str + DELIMITER(size_padding + ' ') + name_str + DELIMITER(' (') + ((desc['project'] + DELIMITER(':')) if include_project else '') + desc['id'] + DELIMITER(')')
 
 def print_ls_l_desc(desc, **kwargs):
-    print get_ls_l_desc(desc, **kwargs)
+    print(get_ls_l_desc(desc, **kwargs))
 
 def get_find_executions_string(desc, has_children, single_result=False, show_outputs=True,
                                is_cached_result=False):

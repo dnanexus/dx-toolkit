@@ -471,7 +471,7 @@ class DXWorkflow(DXDataObject, DXExecutable):
                 extra_args['systemRequirements'] = {'*': self._inst_type_to_sys_reqs(instance_type)}
             elif isinstance(instance_type, dict):
                 extra_args['systemRequirements'] = {}
-                for stage, value in instance_type.iteritems():
+                for stage, value in instance_type.items():
                     if stage != '*':
                         stage = self._get_stage_id(stage)
                     extra_args['systemRequirements'] = {stage: self._inst_type_to_sys_reqs(value)}

@@ -16,6 +16,8 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+from __future__ import print_function
+
 import os, sys, json, subprocess, pipes
 import collections, datetime
 
@@ -183,10 +185,10 @@ def get_implicit_depends_on(input_hash, depends_on):
 def wait_for_depends_on(depends_on, all_job_outputs):
     # Wait for depends_on and any data objects in the input to close
     if len(depends_on) > 0:
-        print fill('Processing dependsOn and any DNAnexus links to closing objects in the input')
+        print(fill('Processing dependsOn and any DNAnexus links to closing objects in the input'))
         for an_id in depends_on:
             try:
-                print '  Waiting for ' + an_id + '...'
+                print('  Waiting for ' + an_id + '...')
                 if an_id.startswith('localjob'):
                     if all_job_outputs.get(an_id) is None:
                         raise Exception('Job ' + an_id + ' could not be found in local finished jobs')
@@ -270,7 +272,7 @@ def run_one_entry_point(job_id, function, input_hash, run_spec, depends_on, name
     Runs the specified entry point and retrieves the job's output,
     updating job_outputs.json (in $DX_TEST_JOB_HOMEDIRS) appropriately.
     '''
-    print '======'
+    print('======')
 
     job_homedir = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], job_id)
 
@@ -287,7 +289,7 @@ def run_one_entry_point(job_id, function, input_hash, run_spec, depends_on, name
     else:
         name = job_id + ':' + function
     job_name = BLUE() + BOLD() + name + ENDC()
-    print job_name
+    print(job_name)
 
     # Resolve local job-based object references
     try:
@@ -311,17 +313,17 @@ def run_one_entry_point(job_id, function, input_hash, run_spec, depends_on, name
         json.dump(input_hash, fd, indent=4)
         fd.write('\n')
 
-    print job_output_to_str(input_hash, title=(BOLD() + 'Input: ' + ENDC()),
-                            title_len=len("Input: ")).lstrip()
+    print(job_output_to_str(input_hash, title=(BOLD() + 'Input: ' + ENDC()),
+                            title_len=len("Input: ")).lstrip())
 
     if run_spec['interpreter'] == 'bash':
         # Save job input to env vars
         env_path = os.path.join(job_homedir, 'environment')
         with open(env_path, 'w') as fd:
             # Following code is what is used to generate env vars on the remote worker
-            fd.write("\n".join(["export {k}=( {vlist} )".format(k=k, vlist=" ".join([pipes.quote(vitem if isinstance(vitem, basestring) else json.dumps(vitem)) for vitem in v])) if isinstance(v, list) else "export {k}={v}".format(k=k, v=pipes.quote(v if isinstance(v, basestring) else json.dumps(v))) for k, v in input_hash.iteritems()]))
+            fd.write("\n".join(["export {k}=( {vlist} )".format(k=k, vlist=" ".join([pipes.quote(vitem if isinstance(vitem, basestring) else json.dumps(vitem)) for vitem in v])) if isinstance(v, list) else "export {k}={v}".format(k=k, v=pipes.quote(v if isinstance(v, basestring) else json.dumps(v))) for k, v in input_hash.items()]))
 
-    print BOLD() + 'Logs:' + ENDC()
+    print(BOLD() + 'Logs:' + ENDC())
     start_time = datetime.datetime.now()
     if run_spec['interpreter'] == 'bash':
         script = '''
@@ -372,9 +374,9 @@ if dxpy.utils.exec_utils.RUN_COUNT == 0:
     else:
         job_output = {}
 
-    print job_name + ' -> ' + GREEN() + 'finished running' + ENDC() + ' after ' + str(end_time - start_time)
-    print job_output_to_str(job_output, title=(BOLD() + "Output: " + ENDC()),
-                            title_len=len("Output: ")).lstrip()
+    print(job_name + ' -> ' + GREEN() + 'finished running' + ENDC() + ' after ' + str(end_time - start_time))
+    print(job_output_to_str(job_output, title=(BOLD() + "Output: " + ENDC()),
+                            title_len=len("Output: ")).lstrip())
 
     with open(os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], 'job_outputs.json'), 'r') as fd:
         all_job_outputs = json.load(fd, object_pairs_hook=collections.OrderedDict)

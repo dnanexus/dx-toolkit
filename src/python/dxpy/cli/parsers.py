@@ -20,6 +20,8 @@ other parsers, as well as utility functions for parsing the input to
 those parsers.
 '''
 
+from __future__ import print_function
+
 import argparse, json, os
 from ..utils.printing import (fill, BOLD, ENDC)
 from ..utils.pretty_print import format_table
@@ -234,16 +236,16 @@ exec_input_args.add_argument('-f', '--input-json-file', dest='filename', help=fi
 
 class PrintInstanceTypeHelp(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
-        print "Help: Specifying instance types for " + parser.prog
-        print
-        print fill('You can either provide a single instance type to be used by all entry points, or a JSON string mapping from function names to instance types, e.g.')
-        print
-        print '    {"main": "dx_m1.large", "other_function": "dx_m1.medium"}'
-        print
-        print 'Available instance types:'
-        print
-        print format_table(InstanceTypesCompleter.instance_types.values(),
-                           column_names=InstanceTypesCompleter.instance_types.values()[0]._fields)
+        print("Help: Specifying instance types for " + parser.prog)
+        print()
+        print(fill('You can either provide a single instance type to be used by all entry points, or a JSON string mapping from function names to instance types, e.g.'))
+        print()
+        print('    {"main": "dx_m1.large", "other_function": "dx_m1.medium"}')
+        print()
+        print('Available instance types:')
+        print()
+        print(format_table(InstanceTypesCompleter.instance_types.values(),
+                           column_names=InstanceTypesCompleter.instance_types.values()[0]._fields))
         parser.exit(0)
 
 instance_type_arg = argparse.ArgumentParser(add_help=False)

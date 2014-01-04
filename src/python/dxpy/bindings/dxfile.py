@@ -22,10 +22,10 @@ This remote file handler is a Python file-like object.
 '''
 
 import os, logging, traceback, hashlib, copy
-import cStringIO as StringIO
 import concurrent.futures
-from dxpy.bindings import *
-import dxpy.utils
+from . import *
+from .. import utils
+from ..compat import BytesIO
 
 if dxpy.snappy_available:
     import snappy
@@ -95,8 +95,8 @@ class DXFile(DXDataObject):
                 raise ValueError("mode must be one of 'r', 'w', or 'a'")
             self._close_on_exit = (mode == 'w')
 
-        self._read_buf = StringIO.StringIO()
-        self._write_buf = StringIO.StringIO()
+        self._read_buf = BytesIO()
+        self._write_buf = BytesIO()
 
         if write_buffer_size < 5*1024*1024:
             raise DXFileError("Write buffer size must be at least 5 MB")
@@ -235,7 +235,7 @@ class DXFile(DXDataObject):
         if in_buf: # offset is within the buffer
             self._read_buf.seek(orig_buf_pos - orig_pos + offset)
         else: # offset is outside the buffer - reset buffer and queues. This is the failsafe behavior
-            self._read_buf = StringIO.StringIO()
+            self._read_buf = BytesIO()
             # TODO: if the offset is within the next response(s), don't throw out the queues
             self._request_iterator, self._response_iterator = None, None
 
@@ -254,7 +254,7 @@ class DXFile(DXDataObject):
         '''
         if self._write_buf.tell() > 0:
             data = self._write_buf.getvalue()
-            self._write_buf = StringIO.StringIO()
+            self._write_buf = BytesIO()
 
             if multithread:
                 self._async_upload_part_request(data, index=self._cur_part, **kwargs)
@@ -330,7 +330,7 @@ class DXFile(DXDataObject):
             self._write_buf.write(data[:remaining_space])
 
             temp_data = self._write_buf.getvalue()
-            self._write_buf = StringIO.StringIO()
+            self._write_buf = BytesIO()
             write_request(temp_data)
 
             # TODO: check if repeat string splitting is bad for
@@ -378,7 +378,7 @@ class DXFile(DXDataObject):
         if block:
             self._wait_on_close(**kwargs)
 
-    def wait_on_close(self, timeout=sys.maxint, **kwargs):
+    def wait_on_close(self, timeout=3600*24*7, **kwargs):
         '''
         :param timeout: Maximum amount of time to wait (in seconds) until the file is closed.
         :type timeout: integer
@@ -501,7 +501,8 @@ class DXFile(DXDataObject):
                                              'auth': None,
                                              'jsonify_data': False,
                                              'prepend_srv': False,
-                                             'always_retry': True}
+                                             'always_retry': True,
+                                             'decode_response_body': False}
 
     def _next_response_content(self):
         if self._http_threadpool is None:
@@ -511,7 +512,7 @@ class DXFile(DXDataObject):
             self._response_iterator = dxpy.utils.response_iterator(self._request_iterator, self._http_threadpool,
                                                                    max_active_tasks=self._http_threadpool_size,
                                                                    num_retries=1)
-        return self._response_iterator.next()
+        return next(self._response_iterator)
 
     def read(self, length=None, use_compression=None, **kwargs):
         '''
@@ -563,7 +564,7 @@ class DXFile(DXDataObject):
                 else: # response goes beyond requested length
                     buf.write(content[:remaining_len])
                     self._pos += remaining_len
-                    self._read_buf = StringIO.StringIO()
+                    self._read_buf = BytesIO()
                     self._read_buf.write(content[remaining_len:])
                     self._read_buf.seek(0)
             buf.seek(orig_buf_pos)

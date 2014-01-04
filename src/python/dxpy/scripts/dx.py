@@ -17,13 +17,16 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, errno, httplib, subprocess
+from __future__ import print_function
+
+import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, errno, subprocess
 import shlex # respects quoted substrings when splitting
 
 from ..cli import try_call
 from ..cli import workflow as workflow_cli
-from ..exceptions import err_exit, DXError, DXCLIError
+from ..exceptions import err_exit, DXError, DXCLIError, network_exceptions, default_expected_exceptions
 from ..packages import requests
+from ..compat import is_py2, basestring, str, input
 
 # Try to reset encoding to utf-8
 # Note: This is incompatible with pypy
@@ -42,7 +45,7 @@ try:
 except:
     pass
 
-if not os.environ.has_key('_ARGCOMPLETE'):
+if '_ARGCOMPLETE' not in os.environ:
     try:
         # Hack: on some operating systems, like Mac, readline spews
         # escape codes into the output at import time if TERM is set to
@@ -52,7 +55,7 @@ if not os.environ.has_key('_ARGCOMPLETE'):
         #
         # http://reinout.vanrees.org/weblog/2009/08/14/readline-invisible-character-hack.html
         old_term_setting = None
-        if os.environ.has_key('TERM') and os.environ['TERM'].startswith('xterm'):
+        if 'TERM' in os.environ and os.environ['TERM'].startswith('xterm'):
             old_term_setting = os.environ['TERM']
             os.environ['TERM'] = 'vt100'
         import readline
@@ -60,10 +63,10 @@ if not os.environ.has_key('_ARGCOMPLETE'):
             os.environ['TERM'] = old_term_setting
 
         if 'libedit' in readline.__doc__:
-            print >>sys.stderr, 'Warning: incompatible readline module detected (libedit), tab completion disabled'
+            print('Warning: incompatible readline module detected (libedit), tab completion disabled', file=sys.stderr)
     except ImportError:
         if os.name != 'nt':
-            print >>sys.stderr, 'Warning: readline module is not available, tab completion disabled'
+            print('Warning: readline module is not available, tab completion disabled', file=sys.stderr)
 
 state = {"interactive": False,
          "colors": "auto",
@@ -98,7 +101,7 @@ class ResultCounter():
             str(self.counter) + ':' + ENDC()
 
 def get_json_from_stdin():
-    user_json_str = raw_input('Type JSON here> ')
+    user_json_str = input('Type JSON here> ')
     user_json = None
     try:
         user_json = json.loads(user_json_str)
@@ -124,7 +127,10 @@ def set_delim(args=argparse.Namespace()):
 
 # Loading environment
 
-args_list = [unicode(arg, sys_encoding) for arg in sys.argv[1:]]
+if is_py2:
+    args_list = [arg.decode(sys_encoding) for arg in sys.argv[1:]]
+else:
+    args_list = sys.argv[1:]
 
 # Hard-coding a shortcut so that it won't print out the warning in
 # import dxpy when clearing it anyway.
@@ -180,8 +186,7 @@ class DXCLICompleter():
 
     def __init__(self):
         global subparsers
-        self.commands = map(lambda subcmd: subcmd + ' ',
-                            subparsers.choices.keys())
+        self.commands = [subcmd + ' ' for subcmd in subparsers.choices.keys()]
         self.matches = []
         self.text = None
 
@@ -191,9 +196,7 @@ class DXCLICompleter():
 
     def get_subcommand_matches(self, command, prefix):
         if command in self.subcommands:
-            self.matches = map(lambda sub: command + ' ' + sub,
-                               filter(lambda subcommand: subcommand.startswith(prefix),
-                                      self.subcommands[command]))
+            self.matches = [command + ' ' + sub for sub in self.subcommands[command] if sub.startswith(prefix)]
 
     def get_matches(self, text, want_prefix=False):
         self.text = text
@@ -238,7 +241,7 @@ class DXCLICompleter():
                 path_matches = []
 
             if want_prefix:
-                self.matches = map(lambda match: text[:space_pos + 1] + match, path_matches)
+                self.matches = [text[:space_pos + 1] + match for match in path_matches]
             else:
                 self.matches = path_matches
 
@@ -299,10 +302,10 @@ def login(args):
 
         using_default = authserver == default_authserver
 
-        print 'Acquiring credentials from ' + authserver
+        print('Acquiring credentials from ' + authserver)
 
         try:
-            username = raw_input('Username: ')
+            username = input('Username: ')
             write_env_var('DX_USERNAME', username)
             password = getpass.getpass()
         except (KeyboardInterrupt, EOFError):
@@ -315,7 +318,7 @@ def login(args):
                                   expires=normalize_time_input(args.timeout, future=True))
         except dxpy.DXAPIError as e:
             if e.name == 'OTPRequiredError':
-                otp = raw_input('Verification code: ')
+                otp = input('Verification code: ')
                 try:
                     token_res = get_token(username=username, password=password, otp=otp,
                                           expires=normalize_time_input(args.timeout, future=True))
@@ -353,21 +356,21 @@ def login(args):
             write_env_var('DX_USERNAME', dxpy.user_info(host, port)['username'])
         except DXError as details:
             # Consider failure to obtain username to be a non-fatal error.
-            print >> sys.stderr, "Could not obtain username from auth server. Consider setting both --host and --port."
-            print >> sys.stderr, fill(unicode(details))
+            print("Could not obtain username from auth server. Consider setting both --host and --port.", file=sys.stderr)
+            print(fill(str(details)), file=sys.stderr)
 
     if using_default or args.staging:
         greeting = dxpy.api.system_greet({'client': 'dxclient', 'version': dxpy.TOOLKIT_VERSION})
         if greeting.get('messages'):
-            print BOLD("New messages from ") + DNANEXUS_LOGO()
+            print(BOLD("New messages from ") + DNANEXUS_LOGO())
             for message in greeting['messages']:
-                print BOLD("Date:    ") + datetime.datetime.fromtimestamp(message['date']/1000).ctime()
-                print BOLD("Subject: ") + fill(message['title'], subsequent_indent=' '*9)
+                print(BOLD("Date:    ") + datetime.datetime.fromtimestamp(message['date']/1000).ctime())
+                print(BOLD("Subject: ") + fill(message['title'], subsequent_indent=' '*9))
                 body = message['body'].splitlines()
                 if len(body) > 0:
-                    print BOLD("Message: ") + body[0]
+                    print(BOLD("Message: ") + body[0])
                     for line in body[1:]:
-                        print ' '*9 + line
+                        print(' '*9 + line)
 
     args.current = False
     args.name = None
@@ -382,7 +385,7 @@ def login(args):
 def logout(args):
     if dxpy.AUTH_HELPER is not None:
         authserver = dxpy.get_auth_server_name(args.host, args.port)
-        print 'Deleting credentials from ' + authserver + '...'
+        print('Deleting credentials from ' + authserver + '...')
         session = requests.session()
         token = dxpy.AUTH_HELPER.security_context['auth_token']
         try:
@@ -391,7 +394,7 @@ def logout(args):
             if response.status_code not in (requests.codes.forbidden, requests.codes.not_found):
                 response.raise_for_status()
             if response.status_code == requests.codes.ok:
-                print 'Deleted token with signature', token_sig
+                print('Deleted token with signature', token_sig)
         except:
             err_exit()
         if not state['interactive']:
@@ -430,7 +433,7 @@ def set_project(project, write, name=None):
     dxpy.set_workspace_id(project)
 
 def set_wd(folder, write):
-    os.environ['DX_CLI_WD'] = folder.encode(sys_encoding)
+    os.environ['DX_CLI_WD'] = folder.encode(sys_encoding) if is_py2 else folder
     if write:
         write_env_var("DX_CLI_WD", folder)
 
@@ -444,7 +447,7 @@ def prompt_for_var(prompt_str, env_var_str):
     else:
         prompt += ': '
     while True:
-        value = raw_input(prompt)
+        value = input(prompt)
         if value != '':
             return value
         elif default is not None:
@@ -465,7 +468,7 @@ def pick_and_set_project(args):
         results = []
         for i in range(10):
             try:
-                results.append(result_generator.next())
+                results.append(next(result_generator))
                 any_results = True
             except StopIteration:
                 break
@@ -478,8 +481,8 @@ def pick_and_set_project(args):
 
         if first_pass:
             if not args.public and args.level == "CONTRIBUTE":
-                print ''
-                print fill('Note: Use "dx select --level VIEW" or "dx select --public" to select from projects for which you only have VIEW permissions.')
+                print('')
+                print(fill('Note: Use "dx select --level VIEW" or "dx select --public" to select from projects for which you only have VIEW permissions.'))
             first_pass = False
 
         project_ids = [result['id'] for result in results]
@@ -490,21 +493,19 @@ def pick_and_set_project(args):
         except:
             default = None
 
-        print ""
+        print("")
         if args.public:
-            print "Available public projects:"
+            print("Available public projects:")
         else:
-            print "Available projects ({level} or higher):".format(level=args.level)
+            print("Available projects ({level} or higher):".format(level=args.level))
         choice = try_call(pick,
-                          map(lambda result:
-                                  result['describe']['name'] + ' (' + result['level'] + ')',
-                              results),
+                          [result['describe']['name'] + ' (' + result['level'] + ')' for result in results],
                           default,
                           more_choices=(len(results) == 10))
         if choice == 'm':
             continue
         else:
-            print 'Setting current project to: ' + results[choice]['describe']['name']
+            print('Setting current project to: ' + results[choice]['describe']['name'])
             set_project(project_ids[choice], not state['interactive'] or args.save, name=results[choice]['describe']['name'])
             state['currentproj'] = results[choice]['describe']['name']
             set_wd('/', not state['interactive'] or args.save)
@@ -516,12 +517,12 @@ def whoami(args):
     try:
         user_info = dxpy.user_info(args.host, args.port)
     except DXError as details:
-        print >> sys.stderr, "Error obtaining user info; consider setting --host and --port."
-        parser.exit(3, fill(unicode(details)))
+        print("Error obtaining user info; consider setting --host and --port.", file=sys.stderr)
+        parser.exit(3, fill(str(details)))
     if args.user_id:
-        print user_info['userId']
+        print(user_info['userId'])
     else:
-        print user_info['username']
+        print(user_info['username'])
 
 def setenv(args):
     if not state['interactive']:
@@ -550,15 +551,15 @@ def setenv(args):
 def env(args):
     if args.bash:
         if dxpy.AUTH_HELPER is not None:
-            print "export DX_SECURITY_CONTEXT='" + json.dumps(dxpy.AUTH_HELPER.security_context) + "'"
+            print("export DX_SECURITY_CONTEXT='" + json.dumps(dxpy.AUTH_HELPER.security_context) + "'")
         if dxpy.APISERVER_PROTOCOL is not None:
-            print "export DX_APISERVER_PROTOCOL=" + dxpy.APISERVER_PROTOCOL
+            print("export DX_APISERVER_PROTOCOL=" + dxpy.APISERVER_PROTOCOL)
         if dxpy.APISERVER_HOST is not None:
-            print "export DX_APISERVER_HOST=" + dxpy.APISERVER_HOST
+            print("export DX_APISERVER_HOST=" + dxpy.APISERVER_HOST)
         if dxpy.APISERVER_PORT is not None:
-            print "export DX_APISERVER_PORT=" + dxpy.APISERVER_PORT
+            print("export DX_APISERVER_PORT=" + dxpy.APISERVER_PORT)
         if dxpy.WORKSPACE_ID is not None:
-            print "export DX_PROJECT_CONTEXT_ID=" + dxpy.WORKSPACE_ID
+            print("export DX_PROJECT_CONTEXT_ID=" + dxpy.WORKSPACE_ID)
     elif args.dx_flags:
         flags_str = ''
         if dxpy.AUTH_HELPER is not None:
@@ -573,18 +574,18 @@ def env(args):
             flags_str += ' --apiserver-port ' + dxpy.APISERVER_PORT
         if dxpy.WORKSPACE_ID is not None:
             flags_str += ' --project-context-id ' + dxpy.WORKSPACE_ID
-        print flags_str
+        print(flags_str)
     else:
         if dxpy.AUTH_HELPER is not None:
-            print "Auth token used\t\t" + dxpy.AUTH_HELPER.security_context.get("auth_token", "none")
-        print "API server protocol\t" + dxpy.APISERVER_PROTOCOL
-        print "API server host\t\t" + dxpy.APISERVER_HOST
-        print "API server port\t\t" + dxpy.APISERVER_PORT
-        print "Current workspace\t" + str(dxpy.WORKSPACE_ID)
+            print("Auth token used\t\t" + dxpy.AUTH_HELPER.security_context.get("auth_token", "none"))
+        print("API server protocol\t" + dxpy.APISERVER_PROTOCOL)
+        print("API server host\t\t" + dxpy.APISERVER_HOST)
+        print("API server port\t\t" + dxpy.APISERVER_PORT)
+        print("Current workspace\t" + str(dxpy.WORKSPACE_ID))
         if "DX_PROJECT_CONTEXT_NAME" in os.environ:
-            print 'Current workspace name\t"{n}"'.format(n=os.environ.get("DX_PROJECT_CONTEXT_NAME"))
-        print "Current folder\t\t" + str(os.environ.get("DX_CLI_WD"))
-        print "Current user\t\t" + str(os.environ.get("DX_USERNAME"))
+            print('Current workspace name\t"{n}"'.format(n=os.environ.get("DX_PROJECT_CONTEXT_NAME")))
+        print("Current folder\t\t" + str(os.environ.get("DX_CLI_WD")))
+        print("Current user\t\t" + str(os.environ.get("DX_USERNAME")))
 
 def get_pwd():
     pwd_str = None
@@ -602,7 +603,7 @@ def get_pwd():
 def pwd(args):
     pwd_str = get_pwd()
     if pwd_str is not None:
-        print pwd_str
+        print(pwd_str)
     else:
         parser.exit(1, 'Current project is not set\n')
 
@@ -622,7 +623,7 @@ def api(args):
     except:
         err_exit()
     try:
-        print json.dumps(resp, indent=4)
+        print(json.dumps(resp, indent=4))
     except ValueError:
         parser.exit(1, 'Error: server response could not be parsed as JSON\n')
 
@@ -640,7 +641,7 @@ def invite(args):
                                   {"invitee": args.invitee, "level": args.level})
     except:
         err_exit()
-    print 'Invited ' + args.invitee + ' to ' + project + ' (' + resp['state'] + ')'
+    print('Invited ' + args.invitee + ' to ' + project + ' (' + resp['state'] + ')')
 
 def uninvite(args):
     # If --project is a valid project (ID or name), then appending ":"
@@ -656,7 +657,7 @@ def uninvite(args):
                            {args.entity: None})
     except:
         err_exit()
-    print 'Uninvited ' + args.entity + ' from ' + project
+    print('Uninvited ' + args.entity + ' from ' + project)
 
 def select(args):
     if args.project is not None:
@@ -665,7 +666,7 @@ def select(args):
         else:
             args.path = args.project + ':'
         cd(args)
-        print "Selected project", split_unescaped(":", args.project)[0].replace("\\:", ":")
+        print("Selected project", split_unescaped(":", args.project)[0].replace("\\:", ":"))
     else:
         pick_and_set_project(args)
 
@@ -697,8 +698,8 @@ def cd(args):
 
     set_wd(folderpath, not state['interactive'])
 
-def cmp_names(x, y):
-    return cmp(x['describe']['name'].lower(), y['describe']['name'].lower())
+def cmp_names(x):
+    return x['describe']['name'].lower()
 
 def ls(args):
     project, folderpath, entity_results = try_call(resolve_existing_path, # TODO: this needs to honor "ls -a" (all) (args.obj/args.folders/args.full)
@@ -727,28 +728,28 @@ def ls(args):
             # Listing the folder was successful
 
             if args.verbose:
-                print UNDERLINE() + 'Project:' + ENDC() + ' ' + dxproj.describe()['name'] + ' (' + project + ')'
-                print UNDERLINE() + 'Folder :' + ENDC() + ' ' + folderpath
+                print(UNDERLINE() + 'Project:' + ENDC() + ' ' + dxproj.describe()['name'] + ' (' + project + ')')
+                print(UNDERLINE() + 'Folder :' + ENDC() + ' ' + folderpath)
 
             if not args.obj:
                 folders_to_print = ['/.', '/..'] if args.all else []
                 folders_to_print += resp['folders']
                 for folder in folders_to_print:
                     if args.full:
-                        print BOLD() + BLUE() + folder + ENDC()
+                        print(BOLD() + BLUE() + folder + ENDC())
                     else:
-                        print BOLD() + BLUE() + os.path.basename(folder) + '/' + ENDC()
+                        print(BOLD() + BLUE() + os.path.basename(folder) + '/' + ENDC())
             if not args.folders:
-                resp["objects"].sort(cmp=cmp_names)
+                resp["objects"] = sorted(resp["objects"], key=cmp_names)
                 if args.verbose:
                     if len(resp['objects']) > 0:
-                        print BOLD() + 'State' + DELIMITER('\t') + 'Last modified' + DELIMITER('       ') + 'Size' + DELIMITER('     ') + 'Name' + DELIMITER(' (') + 'ID' + DELIMITER(')') + ENDC()
+                        print(BOLD() + 'State' + DELIMITER('\t') + 'Last modified' + DELIMITER('       ') + 'Size' + DELIMITER('     ') + 'Name' + DELIMITER(' (') + 'ID' + DELIMITER(')') + ENDC())
                     else:
-                        print "No data objects found in the folder"
+                        print("No data objects found in the folder")
                 name_counts = collections.Counter(obj['describe']['name'] for obj in resp['objects'])
                 for obj in resp['objects']:
                     if args.brief:
-                        print obj['id']
+                        print(obj['id'])
                     elif args.verbose:
                         print_ls_l_desc(obj['describe'], include_project=False)
                     else:
@@ -764,7 +765,7 @@ def ls(args):
             #     continue
             if result['describe']['project'] == project:
                 if args.brief:
-                    print result['id']
+                    print(result['id'])
                 elif args.verbose:
                     print_ls_l_desc(result['describe'], include_project=False)
                 else:
@@ -777,16 +778,16 @@ def mkdir(args):
         try:
             project, folderpath, none = resolve_path(path, expected='folder')
         except ResolutionError as details:
-            print fill('Could not resolve "' + path + '": ' + unicode(details))
+            print(fill('Could not resolve "' + path + '": ' + str(details)))
             had_error = True
             continue
         if project is None:
-            print fill('Could not resolve the project of "' + path + '"')
+            print(fill('Could not resolve the project of "' + path + '"'))
         try:
             dxpy.DXHTTPRequest('/' + project + '/newFolder', {"folder": folderpath, "parents": args.parents})
         except Exception as details:
-            print "Error while creating " + folderpath + " in " + project
-            print "  " + unicode(details)
+            print("Error while creating " + folderpath + " in " + project)
+            print("  " + str(details))
             had_error = True
     if had_error:
         parser.exit(1)
@@ -797,16 +798,16 @@ def rmdir(args):
         try:
             project, folderpath, none = resolve_path(path, expected='folder')
         except ResolutionError as details:
-            print fill('Could not resolve "' + path + '": ' + unicode(details))
+            print(fill('Could not resolve "' + path + '": ' + str(details)))
             had_error = True
             continue
         if project is None:
-            print fill('Could not resolve the project of "' + path + '"')
+            print(fill('Could not resolve the project of "' + path + '"'))
         try:
             dxpy.DXHTTPRequest('/' + project + '/removeFolder', {"folder": folderpath})
         except Exception as details:
-            print "Error while removing " + folderpath + " in " + project
-            print "  " + unicode(details)
+            print("Error while removing " + folderpath + " in " + project)
+            print("  " + str(details))
             had_error = True
     if had_error:
         parser.exit(1)
@@ -819,30 +820,29 @@ def rm(args):
         try:
             project, folderpath, entity_results = resolve_existing_path(path, allow_mult=True, all_mult=args.all)
         except Exception as details:
-            print fill('Could not resolve "' + path + '": ' + unicode(details))
+            print(fill('Could not resolve "' + path + '": ' + str(details)))
             had_error = True
             continue
         if project is None:
             had_error = True
-            print fill('Could not resolve "' + path + '" to a project')
+            print(fill('Could not resolve "' + path + '" to a project'))
             continue
         if project not in projects:
             projects[project] = {"folders": [], "objects": []}
         if entity_results is None:
             if folderpath is not None:
                 if not args.recursive:
-                    print fill(u'Did not find "' + path + '" as a data object; if it is a folder, cannot remove it without setting the "-r" flag')
+                    print(fill(u'Did not find "' + path + '" as a data object; if it is a folder, cannot remove it without setting the "-r" flag'))
                     had_error = True
                     continue
                 else:
                     projects[project]['folders'].append(folderpath)
             else:
-                print fill('Path ' + path + ' resolved to a project; cannot remove a project using "rm"')
+                print(fill('Path ' + path + ' resolved to a project; cannot remove a project using "rm"'))
                 had_error = True
                 continue
         else:
-            projects[project]['objects'] += map(lambda result: result['id'],
-                                                entity_results)
+            projects[project]['objects'] += [result['id'] for result in entity_results]
 
     for project in projects:
         for folder in projects[project]['folders']:
@@ -851,15 +851,15 @@ def rm(args):
                                    {"folder": folder,
                                     "recurse": True})
             except Exception as details:
-                print "Error while removing " + folder + " from " + project
-                print "  " + unicode(details)
+                print("Error while removing " + folder + " from " + project)
+                print("  " + str(details))
                 had_error = True
         try:
             dxpy.DXHTTPRequest('/' + project + '/removeObjects',
                                {"objects": projects[project]['objects']})
         except Exception as details:
-            print "Error while removing " + json.dumps(projects[project]['objects']) + " from " + project
-            print "  " + unicode(details)
+            print("Error while removing " + json.dumps(projects[project]['objects']) + " from " + project)
+            print("  " + str(details))
             had_error = True
     if had_error:
         parser.exit(1)
@@ -870,49 +870,49 @@ def rmproject(args):
         # Be forgiving if they offer an extraneous colon
         substrings = split_unescaped(':', project)
         if len(substrings) > 1 or (len(substrings) == 1 and project[0] == ':'):
-            print fill('Unable to remove "' + project + '": a nonempty string was found to the right of an unescaped colon')
+            print(fill('Unable to remove "' + project + '": a nonempty string was found to the right of an unescaped colon'))
             had_error = True
             continue
         if len(substrings) == 0:
             if project[0] == ':':
-                print fill('Unable to remove ":": to remove the current project, use its name or ID')
+                print(fill('Unable to remove ":": to remove the current project, use its name or ID'))
                 had_error = True
                 continue
         proj_id = try_call(resolve_container_id_or_name, substrings[0])
         if proj_id is None:
-            print fill('Unable to remove "' + project + '": could not resolve to a project ID')
+            print(fill('Unable to remove "' + project + '": could not resolve to a project ID'))
             had_error = True
             continue
         try:
             proj_desc = dxpy.DXHTTPRequest('/' + proj_id + '/describe', {})
             if args.confirm:
-                value = raw_input(fill('About to delete project "' + proj_desc['name'] + '" (' + proj_id + ')') + '\nPlease confirm [y/n]: ')
+                value = input(fill('About to delete project "' + proj_desc['name'] + '" (' + proj_id + ')') + '\nPlease confirm [y/n]: ')
                 if len(value) == 0 or value.lower()[0] != 'y':
                     had_error = True
-                    print fill('Aborting deletion of project "' + proj_desc['name'] + '"')
+                    print(fill('Aborting deletion of project "' + proj_desc['name'] + '"'))
                     continue
             try:
                 dxpy.DXHTTPRequest('/' + proj_id + '/destroy', {"terminateJobs": not args.confirm})
             except dxpy.DXAPIError as apierror:
                 if apierror.name == 'InvalidState':
-                    value = raw_input(fill('WARNING: there are still unfinished jobs in the project.') + '\nTerminate all jobs and delete the project? [y/n]: ')
+                    value = input(fill('WARNING: there are still unfinished jobs in the project.') + '\nTerminate all jobs and delete the project? [y/n]: ')
                     if len(value) == 0 or value.lower()[0] != 'y':
                         had_error = True
-                        print fill('Aborting deletion of project "' + proj_desc['name'] + '"')
+                        print(fill('Aborting deletion of project "' + proj_desc['name'] + '"'))
                         continue
                     dxpy.DXHTTPRequest('/' + proj_id + '/destroy', {"terminateJobs": True})
                 else:
                     raise apierror
             if not args.quiet:
-                print fill('Successfully deleted project "' + proj_desc['name'] + '"')
+                print(fill('Successfully deleted project "' + proj_desc['name'] + '"'))
         except EOFError:
-            print ''
+            print('')
             parser.exit(1)
         except KeyboardInterrupt:
-            print ''
+            print('')
             parser.exit(1)
         except Exception as details:
-            print fill('Was unable to remove ' + project + ', ' + unicode(details))
+            print(fill('Was unable to remove ' + project + ', ' + str(details)))
             had_error = True
     if had_error:
         parser.exit(1)
@@ -992,7 +992,7 @@ def mv(args):
         if src_results is None:
             src_folders.append(src_folderpath)
         else:
-            src_objects += map(lambda result: result['id'], src_results)
+            src_objects += [result['id'] for result in src_results]
     try:
         dxpy.DXHTTPRequest('/' + src_proj + '/move',
                            {"objects": src_objects,
@@ -1060,7 +1060,7 @@ def cp(args):
                                            "project": dest_proj,
                                            "destination": dest_path})['exists']
                 if len(exists) > 0:
-                    print fill('The following objects already existed in the destination container and were not copied:') + '\n ' + '\n '.join(json.dumps(exists))
+                    print(fill('The following objects already existed in the destination container and were not copied:') + '\n ' + '\n '.join(json.dumps(exists)))
                 return
             except:
                 err_exit()
@@ -1072,7 +1072,7 @@ def cp(args):
                                              "project": dest_proj,
                                              "destination": dest_folder})['exists']
                 if len(exists) > 0:
-                    print fill('The following objects already existed in the destination container and were not copied:') + '\n ' + '\n '.join(json.dumps(exists))
+                    print(fill('The following objects already existed in the destination container and were not copied:') + '\n ' + '\n '.join(json.dumps(exists)))
                 for result in src_results:
                     if result['id'] not in exists:
                         dxpy.DXHTTPRequest('/' + result['id'] + '/rename',
@@ -1104,7 +1104,7 @@ def cp(args):
         if src_results is None:
             src_folders.append(src_folderpath)
         else:
-            src_objects += map(lambda result: result['id'], src_results)
+            src_objects += [result['id'] for result in src_results]
     try:
         exists = dxpy.DXHTTPRequest('/' + src_proj + '/clone',
                                     {"objects": src_objects,
@@ -1112,7 +1112,7 @@ def cp(args):
                                      "project": dest_proj,
                                      "destination": dest_path})['exists']
         if len(exists) > 0:
-            print fill('The following objects already existed in the destination container and were left alone:') + '\n ' + '\n '.join(exists)
+            print(fill('The following objects already existed in the destination container and were left alone:') + '\n ' + '\n '.join(exists))
     except:
         err_exit()
 
@@ -1140,7 +1140,7 @@ def tree(args):
 
         for item in sorted(dxpy.find_data_objects(project=project, folder=folderpath,
                                                   recurse=True, describe=True),
-                           cmp_names):
+                           key=cmp_names):
             subtree = tree
             for path_element in item['describe']['folder'][len(folderpath):].split("/"):
                 if path_element == "":
@@ -1155,7 +1155,7 @@ def tree(args):
                     item_desc = BOLD() + GREEN() + item_desc + ENDC()
             subtree[item_desc] = None
 
-        print format_tree(tree, root=(BOLD() + BLUE() + args.path + ENDC()))
+        print(format_tree(tree, root=(BOLD() + BLUE() + args.path + ENDC())))
     except:
         err_exit()
 
@@ -1216,9 +1216,9 @@ def describe(args):
                     if args.json:
                         json_output.append(desc)
                     elif args.name:
-                        print desc['name']
+                        print(desc['name'])
                     else:
-                        print get_result_str()
+                        print(get_result_str())
                         print_desc(desc, args.verbose)
                 except dxpy.DXAPIError as details:
                     if details.code != requests.codes.not_found:
@@ -1231,9 +1231,9 @@ def describe(args):
                     if args.json:
                         json_output.append(desc)
                     elif args.name:
-                        print desc['name']
+                        print(desc['name'])
                     else:
-                        print get_result_str()
+                        print(get_result_str())
                         print_desc(desc, args.verbose)
                 except dxpy.DXAPIError as details:
                     if details.code != requests.codes.not_found:
@@ -1254,9 +1254,9 @@ def describe(args):
                 if args.json:
                     json_output.append(result['describe'])
                 elif args.name:
-                    print result['describe']['name']
+                    print(result['describe']['name'])
                 else:
-                    print get_result_str()
+                    print(get_result_str())
                     print_desc(result['describe'], args.verbose or args.details)
 
         if not is_hashid(args.path) and ':' not in args.path:
@@ -1268,9 +1268,9 @@ def describe(args):
                     if args.json:
                         json_output.append(desc)
                     elif args.name:
-                        print desc['name']
+                        print(desc['name'])
                     else:
-                        print get_result_str()
+                        print(get_result_str())
                         print_desc(desc, args.verbose)
                     found_match = True
                 except dxpy.DXAPIError as details:
@@ -1281,9 +1281,9 @@ def describe(args):
                     if args.json:
                         json_output.append(result['describe'])
                     elif args.name:
-                        print result['describe']['name']
+                        print(result['describe']['name'])
                     else:
-                        print get_result_str()
+                        print(get_result_str())
                         print_desc(result['describe'], args.verbose)
                     found_match = True
 
@@ -1295,9 +1295,9 @@ def describe(args):
                     if args.json:
                         json_output.append(desc)
                     elif args.name:
-                        print unicode(desc['first']) + ' ' + unicode(desc['last'])
+                        print(str(desc['first']) + ' ' + str(desc['last']))
                     else:
-                        print get_result_str()
+                        print(get_result_str())
                         print_desc(desc, args.verbose)
                 except dxpy.DXAPIError as details:
                     if details.code != requests.codes.not_found:
@@ -1313,9 +1313,9 @@ def describe(args):
                     if args.json:
                         json_output.append(desc)
                     elif args.name:
-                        print unicode(desc['first']) + ' ' + unicode(desc['last'])
+                        print(str(desc['first']) + ' ' + str(desc['last']))
                     else:
-                        print get_result_str()
+                        print(get_result_str())
                         print_desc(desc, args.verbose)
                 except dxpy.DXAPIError as details:
                     if details.code != requests.codes.not_found:
@@ -1329,9 +1329,9 @@ def describe(args):
                     if args.json:
                         json_output.append(desc)
                     elif args.name:
-                        print desc['id']
+                        print(desc['id'])
                     else:
-                        print get_result_str()
+                        print(get_result_str())
                         print_desc(desc, args.verbose)
                 except dxpy.DXAPIError as details:
                     if details.code != requests.codes.not_found:
@@ -1339,13 +1339,13 @@ def describe(args):
 
         if args.json:
             if args.multi:
-                print json.dumps(json_output, indent=4)
+                print(json.dumps(json_output, indent=4))
             elif len(json_output) > 1:
                 raise DXCLIError('More than one match found for ' + args.path + '; to get all of them in JSON format, also provide the --multi flag.')
             elif len(json_output) == 0:
                 raise DXCLIError('No match found for ' + args.path)
             else:
-                print json.dumps(json_output[0], indent=4)
+                print(json.dumps(json_output[0], indent=4))
         elif not found_match:
             raise DXCLIError("No matches found for " + args.path)
     except:
@@ -1354,7 +1354,7 @@ def describe(args):
 def new_project(args):
     if args.name == None:
         if sys.stdin.isatty():
-            args.name = raw_input("Enter name for new project: ")
+            args.name = input("Enter name for new project: ")
         else:
             parser_new_project.print_help()
             parser.exit(1, fill("No project name supplied, and input is not interactive") + '\n')
@@ -1363,9 +1363,9 @@ def new_project(args):
         resp = dxpy.DXHTTPRequest('/project/new',
                                   {"name": args.name})
         if args.brief:
-            print resp['id']
+            print(resp['id'])
         else:
-            print fill('Created new project called "' + args.name + '" (' + resp['id'] + ')')
+            print(fill('Created new project called "' + args.name + '" (' + resp['id'] + ')'))
         if args.select:
             set_project(resp['id'], write=True, name=args.name)
             set_wd('/', write=True)
@@ -1397,7 +1397,7 @@ def new_record(args):
                                      folder=folder,
                                      parents=args.parents, init_from=init_from)
         if args.brief:
-            print dxrecord.get_id()
+            print(dxrecord.get_id())
         else:
             print_desc(dxrecord.describe(incl_properties=True, incl_details=True), args.verbose)
     except:
@@ -1442,7 +1442,7 @@ def new_gtable(args):
                                      columns=args.columns,
                                      indices=args.indices)
         if args.brief:
-            print dxgtable.get_id()
+            print(dxgtable.get_id())
         else:
             print_desc(dxgtable.describe(incl_properties=True, incl_details=True))
     except:
@@ -1464,10 +1464,10 @@ def set_visibility(args):
             dxpy.DXHTTPRequest('/' + result['id'] + '/setVisibility',
                                {"hidden": (args.visibility == 'hidden')})
         except dxpy.DXAPIError as details:
-            print fill(unicode(details))
+            print(fill(str(details)))
             had_error = True
-        except (requests.ConnectionError, requests.HTTPError, requests.Timeout, httplib.HTTPException) as details:
-            print fill(details.__class__.__name__ + ': ' + unicode(details))
+        except network_exceptions as details:
+            print(fill(details.__class__.__name__ + ': ' + str(details)))
             had_error = True
 
     if had_error:
@@ -1482,7 +1482,7 @@ def get_details(args):
         parser.exit(1, fill('Could not resolve "' + args.path + '" to a name or ID') + '\n')
 
     try:
-        print json.dumps(dxpy.DXHTTPRequest('/' + entity_result['id'] + '/getDetails', {}), indent=4)
+        print(json.dumps(dxpy.DXHTTPRequest('/' + entity_result['id'] + '/getDetails', {}), indent=4))
     except:
         err_exit()
 
@@ -1506,10 +1506,10 @@ def set_details(args):
             dxpy.DXHTTPRequest('/' + result['id'] + '/setDetails',
                                args.details)
         except dxpy.DXAPIError as details:
-            print fill(unicode(details))
+            print(fill(str(details)))
             had_error = True
-        except (requests.ConnectionError, requests.HTTPError, requests.Timeout, httplib.HTTPException) as details:
-            print fill(details.__class__.__name__ + ': ' + unicode(details))
+        except network_exceptions as details:
+            print(fill(details.__class__.__name__ + ': ' + str(details)))
             had_error = True
     if had_error:
         parser.exit(1)
@@ -1530,10 +1530,10 @@ def add_types(args):
             dxpy.DXHTTPRequest('/' + result['id'] + '/addTypes',
                                {"types": args.types})
         except dxpy.DXAPIError as details:
-            print fill(unicode(details))
+            print(fill(str(details)))
             had_error = True
-        except (requests.ConnectionError, requests.HTTPError, requests.Timeout, httplib.HTTPException) as details:
-            print fill(details.__class__.__name__ + ': ' + unicode(details))
+        except network_exceptions as details:
+            print(fill(details.__class__.__name__ + ': ' + str(details)))
             had_error = True
     if had_error:
         parser.exit(1)
@@ -1554,10 +1554,10 @@ def remove_types(args):
             dxpy.DXHTTPRequest('/' + result['id'] + '/removeTypes',
                                {"types": args.types})
         except dxpy.DXAPIError as details:
-            print fill(unicode(details))
+            print(fill(str(details)))
             had_error = True
-        except (requests.ConnectionError, requests.HTTPError, requests.Timeout, httplib.HTTPException) as details:
-            print fill(details.__class__.__name__ + ': ' + unicode(details))
+        except network_exceptions as details:
+            print(fill(details.__class__.__name__ + ': ' + str(details)))
             had_error = True
     if had_error:
         parser.exit(1)
@@ -1576,10 +1576,10 @@ def add_tags(args):
                                    {"project": project,
                                     "tags": args.tags})
             except dxpy.DXAPIError as details:
-                print fill(unicode(details))
+                print(fill(str(details)))
                 had_error = True
-            except (requests.ConnectionError, requests.HTTPError, requests.Timeout, httplib.HTTPException) as details:
-                print fill(details.__class__.__name__ + ': ' + unicode(details))
+            except network_exceptions as details:
+                print(fill(details.__class__.__name__ + ': ' + str(details)))
                 had_error = True
         if had_error:
             parser.exit(1)
@@ -1606,10 +1606,10 @@ def remove_tags(args):
                                    {"project": project,
                                     "tags": args.tags})
             except dxpy.DXAPIError as details:
-                print fill(unicode(details))
+                print(fill(str(details)))
                 had_error = True
-            except (requests.ConnectionError, requests.HTTPError, requests.Timeout, httplib.HTTPException) as details:
-                print fill(details.__class__.__name__ + ': ' + unicode(details))
+            except network_exceptions as details:
+                print(fill(details.__class__.__name__ + ': ' + str(details)))
                 had_error = True
         if had_error:
             parser.exit(1)
@@ -1636,10 +1636,10 @@ def rename(args):
                                    {"project": project,
                                     "name": args.name})
             except dxpy.DXAPIError as details:
-                print fill(unicode(details))
+                print(fill(str(details)))
                 had_error = True
-            except (requests.ConnectionError, requests.HTTPError, requests.Timeout, httplib.HTTPException) as details:
-                print fill(details.__class__.__name__ + ': ' + unicode(details))
+            except network_exceptions as details:
+                print(fill(details.__class__.__name__ + ': ' + str(details)))
                 had_error = True
         if had_error:
             parser.exit(1)
@@ -1667,10 +1667,10 @@ def set_properties(args):
                                    {"project": project,
                                     "properties": args.properties})
             except dxpy.DXAPIError as details:
-                print fill(unicode(details))
+                print(fill(str(details)))
                 had_error = True
-            except (requests.ConnectionError, requests.HTTPError, requests.Timeout, httplib.HTTPException) as details:
-                print fill(details.__class__.__name__ + ': ' + unicode(details))
+            except network_exceptions as details:
+                print(fill(details.__class__.__name__ + ': ' + str(details)))
                 had_error = True
         if had_error:
             parser.exit(1)
@@ -1699,10 +1699,10 @@ def unset_properties(args):
                                    {"project": project,
                                     "properties": properties})
             except dxpy.DXAPIError as details:
-                print fill(unicode(details))
+                print(fill(str(details)))
                 had_error = True
-            except (requests.ConnectionError, requests.HTTPError, requests.Timeout, httplib.HTTPException) as details:
-                print fill(details.__class__.__name__ + ': ' + unicode(details))
+            except network_exceptions as details:
+                print(fill(details.__class__.__name__ + ': ' + str(details)))
                 had_error = True
         if had_error:
             parser.exit(1)
@@ -1732,7 +1732,7 @@ def make_download_url(args):
                                                duration=normalize_timedelta(args.duration)/1000 if args.duration else 24*3600,
                                                filename=args.filename,
                                                project=project)
-        print url
+        print(url)
     except:
         err_exit()
 
@@ -1742,11 +1742,11 @@ def download_one_file(project, file_desc, dest_filename, args):
             err_exit(fill('Error: path "' + dest_filename + '" already exists but -f/--overwrite was not set'))
 
     if file_desc['class'] != 'file':
-        print >>sys.stderr, "Skipping non-file data object {name} ({id})".format(**file_desc)
+        print("Skipping non-file data object {name} ({id})".format(**file_desc), file=sys.stderr)
         return
 
     if file_desc['state'] != 'closed':
-        print >>sys.stderr, "Skipping file {name} ({id}) because it is not closed".format(**file_desc)
+        print("Skipping file {name} ({id}) because it is not closed".format(**file_desc), file=sys.stderr)
         return
 
     try:
@@ -2086,7 +2086,7 @@ def head(args):
             if handler._class == 'file':
                 handler._read_bufsize = 1024*32
                 for line in handler:
-                    print line
+                    print(line)
                     counter += 1
                     if counter == args.lines:
                         break
@@ -2161,7 +2161,7 @@ def upload_one(args):
             parser.exit("Error: {f} is a directory but the -r/--recursive option was not given".format(f=args.filename))
         norm_path = os.path.realpath(args.filename)
         if norm_path in upload_seen_paths:
-            print >>sys.stderr, "Skipping {f}: directory loop".format(f=args.filename)
+            print("Skipping {f}: directory loop".format(f=args.filename), file=sys.stderr)
             return
         else:
             upload_seen_paths.add(norm_path)
@@ -2195,7 +2195,7 @@ def upload_one(args):
             if args.wait:
                 dxfile._wait_on_close()
             if args.brief:
-                print dxfile.get_id()
+                print(dxfile.get_id())
             elif not args.mute:
                 print_desc(dxfile.describe(incl_properties=True, incl_details=True))
         except:
@@ -2319,7 +2319,7 @@ def find_executions(args):
         if args.json:
             json_output.append(execution_descriptions[root])
         elif args.brief:
-            print root
+            print(root)
         else:
             root_string = get_find_executions_string(execution_descriptions[root],
                                                      has_children=root in executions_by_parent,
@@ -2341,7 +2341,7 @@ def find_executions(args):
     def process_tree(result, executions_by_parent, execution_descriptions):
         tree, root = build_tree(result['id'], executions_by_parent, execution_descriptions)
         if tree:
-            print format_tree(tree[root], root)
+            print(format_tree(tree[root], root))
 
     try:
         num_processed_results = 0
@@ -2370,12 +2370,12 @@ def find_executions(args):
                     # and only the last analysis found is displayed.
                     roots[root] = execution_result['describe']['id']
             elif args.brief:
-                print execution_result['id']
+                print(execution_result['id'])
             elif not args.trees:
-                print format_tree({}, get_find_executions_string(execution_result['describe'],
+                print(format_tree({}, get_find_executions_string(execution_result['describe'],
                                                                  has_children=False,
                                                                  single_result=True,
-                                                                 show_outputs=args.show_outputs))
+                                                                 show_outputs=args.show_outputs)))
         if args.trees:
             executions_by_parent, descriptions = collections.defaultdict(list), {}
             root_field = 'origin_job' if args.classname == 'job' else 'root_execution'
@@ -2383,7 +2383,7 @@ def find_executions(args):
             query = {'classname': args.classname,
                      'describe': {"io": include_io},
                      'include_subjobs': False if args.no_subjobs else True,
-                     root_field: roots.keys()}
+                     root_field: list(roots.keys())}
             if not args.all_projects:
                 # If the query doesn't specify a project, the server finds all projects to which the user has explicit
                 # permissions, but doesn't search through public projects.
@@ -2416,16 +2416,15 @@ def find_executions(args):
                 process_execution_result(execution_result)
 
             # ensure roots are sorted by their creation time
-            sorted_roots = sorted(roots.values(), cmp=lambda x, y: cmp(descriptions[y]['created'],
-                                                                       descriptions[x]['created']))
+            sorted_roots = sorted(roots.values(), key=lambda x: -descriptions[x]['created'])
 
             for root in sorted_roots:
                 process_tree(descriptions[roots[root]], executions_by_parent, descriptions)
         if args.json:
-            print json.dumps(json_output, indent=4)
+            print(json.dumps(json_output, indent=4))
 
         if more_results and get_delimiter() is None and not (args.brief or args.json):
-            print fill("* More results not shown; use -n to increase number of results or --created-before to show older results", subsequent_indent='  ')
+            print(fill("* More results not shown; use -n to increase number of results or --created-before to show older results", subsequent_indent='  '))
     except:
         err_exit()
 
@@ -2460,15 +2459,15 @@ def find_data(args):
                                               created_before=args.created_before,
                                               describe=(not args.brief)))
         if args.json:
-            print json.dumps(results, indent=4)
+            print(json.dumps(results, indent=4))
             return
         if args.brief:
             for result in results:
-                print result['project'] + ':' + result['id']
+                print(result['project'] + ':' + result['id'])
         else:
             for result in results:
                 if args.verbose:
-                    print ""
+                    print("")
                     print_data_obj_desc(result["describe"])
                 else:
                     print_ls_l_desc(result["describe"], include_folder=True, include_project=args.all_projects)
@@ -2485,18 +2484,18 @@ def find_projects(args):
                                           explicit_perms=(not args.public if not args.public else None),
                                           public=(args.public if args.public else None)))
         if args.json:
-            print json.dumps(results, indent=4)
+            print(json.dumps(results, indent=4))
             return
         if args.brief:
             for result in results:
-                print result['id']
+                print(result['id'])
             return
         else:
             for result in results:
                 cached_project_names[result['describe']['name']] = result['id']
-                print result["id"] + DELIMITER(" : ") + result['describe']['name'] + DELIMITER(' (') + result["level"] + DELIMITER(')')
-        print ""
-        return map(lambda result: result["id"], results)
+                print(result["id"] + DELIMITER(" : ") + result['describe']['name'] + DELIMITER(' (') + result["level"] + DELIMITER(')'))
+        print("")
+        return [result["id"] for result in results]
     except:
         err_exit()
 
@@ -2531,17 +2530,17 @@ def find_apps(args):
             results.sort(key = lambda result: result['describe']['name'])
 
         if args.json:
-            print json.dumps(results, indent=4)
+            print(json.dumps(results, indent=4))
             return
         if args.brief:
             for result in results:
-                print result['id']
+                print(result['id'])
         elif not args.verbose:
             for result in results:
-                print maybe_x(result) + DELIMITER(" ") + result['describe'].get('title', result['describe']['name']) + DELIMITER(' (') + result["describe"]["name"] + DELIMITER("), v") + result["describe"]["version"]
+                print(maybe_x(result) + DELIMITER(" ") + result['describe'].get('title', result['describe']['name']) + DELIMITER(' (') + result["describe"]["name"] + DELIMITER("), v") + result["describe"]["version"])
         else:
             for result in results:
-                print maybe_x(result) + DELIMITER(" ") + result["id"] + DELIMITER(" ") + result['describe'].get('title', result['describe']['name']) + DELIMITER(' (') + result["describe"]["name"] + DELIMITER('), v') + result['describe']['version'] + DELIMITER(" (") + ("published" if result["describe"].get("published", 0) > 0 else "unpublished") + DELIMITER(")")
+                print(maybe_x(result) + DELIMITER(" ") + result["id"] + DELIMITER(" ") + result['describe'].get('title', result['describe']['name']) + DELIMITER(' (') + result["describe"]["name"] + DELIMITER('), v') + result['describe']['version'] + DELIMITER(" (") + ("published" if result["describe"].get("published", 0) > 0 else "unpublished") + DELIMITER(")"))
     except:
         err_exit()
 
@@ -2563,7 +2562,7 @@ def close(args):
             project, folderpath, entity_results = None, None, None
 
         if entity_results is None:
-            print fill('Could not resolve "' + path + '" to a name or ID')
+            print(fill('Could not resolve "' + path + '" to a name or ID'))
             had_error = True
         else:
             for result in entity_results:
@@ -2575,7 +2574,7 @@ def close(args):
                         obj.close()
                     handlers.append(obj)
                 except Exception as details:
-                    print fill(unicode(details))
+                    print(fill(str(details)))
 
     if args.wait:
         for handler in handlers:
@@ -2589,9 +2588,9 @@ def wait(args):
     for path in args.path:
         if is_job_id(path) or is_analysis_id(path):
             dxexecution = dxpy.get_handler(path)
-            print "Waiting for " + path + " to finish running..."
+            print("Waiting for " + path + " to finish running...")
             try_call(dxexecution.wait_on_done)
-            print "Done"
+            print("Done")
         else:
             # Attempt to resolve name
             try:
@@ -2600,13 +2599,13 @@ def wait(args):
                 project, folderpath, entity_result = None, None, None
 
             if entity_result is None:
-                print fill('Could not resolve ' + path + ' to a data object')
+                print(fill('Could not resolve ' + path + ' to a data object'))
                 had_error = True
             else:
                 handler = dxpy.get_handler(entity_result['id'], project=project)
-                print "Waiting for " + path + " to close..."
+                print("Waiting for " + path + " to close...")
                 try_call(handler._wait_on_close)
-                print "Done"
+                print("Done")
 
     if had_error:
         parser.exit(1)
@@ -2644,7 +2643,7 @@ def list_users(args):
     app_desc = try_call(resolve_app, args.app)
 
     for user in app_desc['authorizedUsers']:
-        print user
+        print(user)
 
 def add_developers(args):
     app_desc = try_call(resolve_app, args.app)
@@ -2661,7 +2660,7 @@ def list_developers(args):
 
     try:
         for user in dxpy.DXHTTPRequest('/' + app_desc['id'] + '/listDevelopers', {})['developers']:
-            print user
+            print(user)
     except:
         err_exit()
 
@@ -2679,7 +2678,7 @@ def install(args):
 
     try:
         dxpy.DXHTTPRequest('/' + app_desc['id'] + '/install', {})
-        print 'Installed the ' + app_desc['name'] + ' app'
+        print('Installed the ' + app_desc['name'] + ' app')
     except:
         err_exit()
 
@@ -2690,7 +2689,7 @@ def uninstall(args):
     else:
         try:
             dxpy.DXHTTPRequest('/' + app_desc['id'] + '/uninstall', {})
-            print 'Uninstalled the ' + app_desc['name'] + ' app'
+            print('Uninstalled the ' + app_desc['name'] + ' app')
         except:
             err_exit()
 
@@ -2706,7 +2705,7 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
         exec_inputs.update(args.input_from_clone, strip_prefix=False)
 
     if args.sys_reqs_from_clone and not isinstance(args.instance_type, basestring):
-        args.instance_type = dict({stage: reqs['instanceType'] for stage, reqs in args.sys_reqs_from_clone.iteritems()},
+        args.instance_type = dict({stage: reqs['instanceType'] for stage, reqs in args.sys_reqs_from_clone.items()},
                                   **(args.instance_type or {}))
 
     if preset_inputs is not None:
@@ -2717,46 +2716,46 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
     input_json = exec_inputs.inputs
 
     if not args.brief:
-        print ''
-        print 'Using input JSON:'
-        print json.dumps(input_json, indent=4)
-        print ''
+        print('')
+        print('Using input JSON:')
+        print(json.dumps(input_json, indent=4))
+        print('')
 
     # Ask for confirmation if a tty and if input was not given as a
     # single JSON.
     if args.confirm and sys.stdout.isatty():
         try:
-            value = raw_input('Confirm running the executable with this input [Y/n]: ')
+            value = input('Confirm running the executable with this input [Y/n]: ')
         except KeyboardInterrupt:
             value = 'n'
         if value != '' and not value.lower().startswith('y'):
             parser.exit(0)
 
     if not args.brief:
-        print fill("Calling " + executable.get_id() + " with output destination " + dest_proj + ":" + dest_path,
-                   subsequent_indent='  ') + '\n'
+        print(fill("Calling " + executable.get_id() + " with output destination " + dest_proj + ":" + dest_path,
+                   subsequent_indent='  ') + '\n')
     try:
         dxexecution = executable.run(input_json, project=dest_proj, folder=dest_path, name=args.name, tags=args.tags, properties=args.properties,
                                      details=args.details, delay_workspace_destruction=args.delay_workspace_destruction,
                                      instance_type=args.instance_type, extra_args=args.extra_args)
         if not args.brief:
-            print dxexecution._class.capitalize() + " ID: " + dxexecution.get_id()
+            print(dxexecution._class.capitalize() + " ID: " + dxexecution.get_id())
         else:
-            print dxexecution.get_id()
+            print(dxexecution.get_id())
         sys.stdout.flush()
 
         if args.wait and is_the_only_job:
             dxexecution.wait_on_done()
         elif args.confirm and sys.stdin.isatty() and not args.watch and isinstance(dxexecution, dxpy.DXJob):
-            answer = raw_input("Watch launched job now? [Y/n] ")
+            answer = input("Watch launched job now? [Y/n] ")
             if len(answer) == 0 or answer.lower()[0] == 'y':
                 args.watch = True
 
         if args.watch and is_the_only_job and isinstance(dxexecution, dxpy.DXJob):
             watch_args = parser.parse_args(['watch', dxexecution.get_id()])
-            print ''
-            print 'Job Log'
-            print '-------'
+            print('')
+            print('Job Log')
+            print('-------')
             watch(watch_args)
     except Exception:
         err_exit()
@@ -2798,7 +2797,7 @@ def print_run_help(executable="", alias=None):
             if len(exec_desc['inputSpec']) == 0:
                 exec_help += " <none>\n"
             else:
-                for group, params in group_array_by_field(exec_desc['inputSpec']).iteritems():
+                for group, params in group_array_by_field(exec_desc['inputSpec']).items():
                     if group is not None:
                         exec_help += "\n " + BOLD(group)
                     for param in params:
@@ -2863,9 +2862,9 @@ def print_run_help(executable="", alias=None):
     parser.exit(0)
 
 def print_run_input_help():
-    print 'Help: Specifying input for dx run\n'
-    print fill('There are several ways to specify inputs.  In decreasing order of precedence, they are:')
-    print '''
+    print('Help: Specifying input for dx run\n')
+    print(fill('There are several ways to specify inputs.  In decreasing order of precedence, they are:'))
+    print('''
   1) inputs given in the interactive mode
   2) inputs listed individually with the -i/--input command line argument
   3) JSON given in --input-json
@@ -2874,26 +2873,26 @@ def print_run_input_help():
      (this will get overridden completely if -j/--input-json or
       -f/--input-json-file are provided)
   6) default values set in a workflow or an executable's input spec
-'''
-    print 'SPECIFYING INPUTS BY NAME\n\n' + fill('Use the -i/--input flag to specify each input field by ' + BOLD() + 'name' + ENDC() + ' and ' + BOLD() + 'value' + ENDC() + '.', initial_indent='  ', subsequent_indent='  ')
-    print '''
+''')
+    print('SPECIFYING INPUTS BY NAME\n\n' + fill('Use the -i/--input flag to specify each input field by ' + BOLD() + 'name' + ENDC() + ' and ' + BOLD() + 'value' + ENDC() + '.', initial_indent='  ', subsequent_indent='  '))
+    print('''
     Syntax :  -i<input name>=<input value>
     Example:  dx run myApp -inum=34 -istr=ABC -igtables=reads1 -igtables=reads2
-'''
-    print fill('The example above runs an app called "myApp" with 3 inputs called num (class int), str (class string), and gtables (class array:gtable).  (For this method to work, the app must have an input spec so inputs can be interpreted correctly.)  The same input field can be used multiple times if the input class is an array.', initial_indent='  ', subsequent_indent='  ')
-    print '\n' + fill(BOLD() + 'Job-based object references' + ENDC() + ' can also be provided using the <job id>:<output name> syntax:', initial_indent='  ', subsequent_indent='  ')
-    print '''
+''')
+    print(fill('The example above runs an app called "myApp" with 3 inputs called num (class int), str (class string), and gtables (class array:gtable).  (For this method to work, the app must have an input spec so inputs can be interpreted correctly.)  The same input field can be used multiple times if the input class is an array.', initial_indent='  ', subsequent_indent='  '))
+    print('\n' + fill(BOLD() + 'Job-based object references' + ENDC() + ' can also be provided using the <job id>:<output name> syntax:', initial_indent='  ', subsequent_indent='  '))
+    print('''
     Syntax :  -i<input name>=<job id>:<output name>
     Example:  dx run mapper -ireads=job-B0fbxvGY00j9jqGQvj8Q0001:reads
-'''
-    print fill('When executing ' + BOLD() + 'workflows' + ENDC() + ', stage inputs can be specified using the <stage key>.<input name>=<value> syntax:', initial_indent='  ', subsequent_indent='  ')
-    print '''
+''')
+    print(fill('When executing ' + BOLD() + 'workflows' + ENDC() + ', stage inputs can be specified using the <stage key>.<input name>=<value> syntax:', initial_indent='  ', subsequent_indent='  '))
+    print('''
     Syntax :  -i<stage key>.<input name>=<input value>
     Example:  dx run my_workflow -i1.reads="My reads file"
 
 SPECIFYING JSON INPUT
-'''
-    print fill('JSON input can be used directly using the -j/--input-json or -f/--input-json-file flags.  When running an ' + BOLD() + 'app' + ENDC() + ' or ' + BOLD() + 'applet' + ENDC() + ', the keys should be the input field names for the app or applet.  When running a ' + BOLD() + 'workflow' + ENDC() + ', the keys should be the input field names for each stage, prefixed by the stage key and a period, e.g. "1.reads" for the "reads" input of stage "1".', initial_indent='  ', subsequent_indent='  ') + '\n'
+''')
+    print(fill('JSON input can be used directly using the -j/--input-json or -f/--input-json-file flags.  When running an ' + BOLD() + 'app' + ENDC() + ' or ' + BOLD() + 'applet' + ENDC() + ', the keys should be the input field names for the app or applet.  When running a ' + BOLD() + 'workflow' + ENDC() + ', the keys should be the input field names for each stage, prefixed by the stage key and a period, e.g. "1.reads" for the "reads" input of stage "1".', initial_indent='  ', subsequent_indent='  ') + '\n')
     parser.exit(0)
 
 def run(args):
@@ -3001,7 +3000,7 @@ def run(args):
         if clone_desc is not None:
             parser.exit(1, fill("Cannot run a workflow and clone a job; only apps or applets can be run with cloned options") + "\n")
         if not args.brief:
-            print "Executing workflow", handler
+            print("Executing workflow", handler)
 
     run_one(args, handler, dest_proj, dest_path)
 
@@ -3061,12 +3060,12 @@ def shell(orig_args):
             pwd_str = get_pwd()
             if pwd_str is not None:
                 prompt = pwd_str + prompt
-            cmd = raw_input(prompt)
+            cmd = input(prompt)
         except EOFError:
-            print ""
+            print("")
             exit(0)
         except KeyboardInterrupt:
-            print ""
+            print("")
             continue
         if cmd == '':
             continue
@@ -3079,8 +3078,8 @@ def shell(orig_args):
         except StopIteration:
             exit(0)
         except Exception as details:
-            if unicode(details) != '1' and unicode(details) != '0':
-                print unicode(details) + '\n'
+            if str(details) != '1' and str(details) != '0':
+                print(str(details) + '\n')
 
 def watch(args):
     level_colors = {level: RED() for level in ("EMERG", "ALERT", "CRITICAL", "ERROR")}
@@ -3112,7 +3111,7 @@ def watch(args):
             message['timestamp'] = str(datetime.datetime.fromtimestamp(message.get('timestamp', 0)/1000))
             message['level_color'] = level_colors.get(message.get('level', ''), '')
             message['job_name'] = log_client.seen_jobs[message['job']]['name'] if message['job'] in log_client.seen_jobs else message['job']
-            print args.format.format(**message)
+            print(args.format.format(**message))
 
     from dxpy.utils.job_log_client import DXJobLogStreamClient
 
@@ -3133,10 +3132,10 @@ def watch(args):
     # If this changes, some refactoring may be needed below
     try:
         if not args.quiet:
-            print >>sys.stderr, "Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, (" and sub-jobs" if args.tree else ""))
+            print("Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, (" and sub-jobs" if args.tree else "")), file=sys.stderr)
         log_client.connect()
     except Exception as details:
-        parser.exit(3, fill(unicode(details)) + '\n')
+        parser.exit(3, fill(str(details)) + '\n')
 
 def upgrade(args):
     if len(args.args) == 0:
@@ -3146,10 +3145,10 @@ def upgrade(args):
                 recommended_version = greeting['update']['version']
             else:
                 err_exit("Your SDK is up to date.", code=0)
-        except (dxpy.DXAPIError, requests.ConnectionError, requests.HTTPError, requests.Timeout, httplib.HTTPException) as e:
-            print e
+        except default_expected_exceptions as e:
+            print(e)
             recommended_version = "current"
-        print "Upgrading to", recommended_version
+        print("Upgrading to", recommended_version)
         args.args = [recommended_version]
 
     try:
@@ -3163,10 +3162,10 @@ def print_help(args):
     if args.command_or_category is None:
         parser_help.print_help()
     elif args.command_or_category in parser_categories:
-        print 'dx ' + args.command_or_category + ': ' + parser_categories[args.command_or_category]['desc'].lstrip()
-        print '\nCommands:\n'
+        print('dx ' + args.command_or_category + ': ' + parser_categories[args.command_or_category]['desc'].lstrip())
+        print('\nCommands:\n')
         for cmd in parser_categories[args.command_or_category]['cmds']:
-            print '  ' + cmd[0] + ' '*(18-len(cmd[0])) + fill(cmd[1], width_adjustment=-20, subsequent_indent=' '*20)
+            print('  ' + cmd[0] + ' '*(18-len(cmd[0])) + fill(cmd[1], width_adjustment=-20, subsequent_indent=' '*20))
     elif args.command_or_category not in parser_map:
         parser.exit(1, 'Unrecognized command: ' + args.command_or_category + '\n')
     elif args.command_or_category == 'export' and args.subcommand is not None:
@@ -3220,17 +3219,17 @@ class PrintDXVersion(argparse.Action):
     # Prints to stdout instead of the default stderr that argparse
     # uses (note: default changes to stdout in 3.4)
     def __call__(self, parser, namespace, values, option_string=None):
-        print 'dx %s' % (dxpy.TOOLKIT_VERSION,)
+        print('dx %s' % (dxpy.TOOLKIT_VERSION,))
         parser.exit(0)
 
 class PrintCategoryHelp(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
-        print 'usage: ' + parser.prog + ' --category CATEGORY'
-        print
-        print fill('List only the apps that belong to a particular category by providing a category name.')
-        print
-        print 'Common category names include:'
-        print '  ' + '\n  '.join(sorted(APP_CATEGORIES))
+        print('usage: ' + parser.prog + ' --category CATEGORY')
+        print()
+        print(fill('List only the apps that belong to a particular category by providing a category name.'))
+        print()
+        print('Common category names include:')
+        print('  ' + '\n  '.join(sorted(APP_CATEGORIES)))
         parser.exit(0)
 
 class DXArgumentParser(argparse.ArgumentParser):
@@ -4224,7 +4223,7 @@ def main():
         except IOError as e:
             if e.errno == errno.EPIPE:
                 if dxpy._DEBUG:
-                    print >>sys.stderr, "Broken pipe"
+                    print("Broken pipe", file=sys.stderr)
             else:
                 raise
     else:

@@ -20,9 +20,9 @@ DXGTable Handler
 """
 
 import os, sys, json, traceback
-import cStringIO as StringIO
 import concurrent.futures
-from dxpy.bindings import *
+from . import *
+from ..compat import StringIO
 
 DXGTABLE_HTTP_THREADS = 4
 
@@ -457,7 +457,7 @@ class DXGTable(DXDataObject):
 
     def _flush_row_buf_to_string_buf(self):
         if self._string_row_buf == None:
-            self._string_row_buf = StringIO.StringIO()
+            self._string_row_buf = StringIO()
             self._string_row_buf.write('{"data": [')
 
         if len(self._row_buf) > 0:
@@ -520,7 +520,7 @@ class DXGTable(DXDataObject):
         if block:
             self._wait_on_close(**kwargs)
 
-    def wait_on_close(self, timeout=sys.maxint, **kwargs):
+    def wait_on_close(self, timeout=3600*24*7, **kwargs):
         '''
         :param timeout: Maximum amount of time to wait until the GTable is closed
         :type timeout: integer
