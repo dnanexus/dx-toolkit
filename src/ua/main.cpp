@@ -59,8 +59,9 @@ int curlInit_call_count = 0;
 
 Options opt;
 
-/* Mutex for "bytesUploaded" member variable of "File" class
- * , as well as bytesUploadedSinceStart global variable.
+/*
+ * Mutex for bytesUploaded member of File class and bytesUploadedSinceStart
+ * global variable.
  */
 boost::mutex bytesUploadedMutex;
 
@@ -454,10 +455,10 @@ void markFileAsFailed(vector<File> &files, const string &fileID) {
  * a <project, size, last_write_time, filename> tuple, like we use to
  * detect resumable uploads.
  */
-void disallowDuplicateFiles(const vector<string> &files, const vector<string> &prjs) {
+void disallowDuplicateFiles(const vector<string> &files, const vector<string> &projects) {
   map<string, int> hashTable; // a map for hash string to index in files vector
   for (unsigned i = 0; i < files.size(); ++i) {
-    string hash = resolveProject(prjs[i]) + " ";
+    string hash = resolveProject(projects[i]) + " ";
 
     boost::filesystem::path p(files[i]);
 
@@ -626,6 +627,10 @@ int main(int argc, char * argv[]) {
         files[i].waitOnClose = true;
       }
     }
+
+    // Create folders all at once (instead of one by one, above, where we
+    // initialize the File objects).
+    createFolders(opt.projects, opt.folders);
 
     // Take this point as the starting time for program operation
     // (to calculate average transfer speed)

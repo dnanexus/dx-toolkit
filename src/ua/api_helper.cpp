@@ -226,6 +226,35 @@ void createFolder(const string &projectID, const string &folder) {
 }
 
 /*
+ * For each i, creates folder folders[i] in project projects[i]. Uniquifies
+ * the project/folder pairs before calling createFolder. This avoids
+ * redundant API calls when multiple files are being uploaded to the same
+ * folder in the same project.
+ */
+void createFolders(const vector<string> &projects, const vector<string> &folders) {
+  // Maps each project ID to the set of folders to be created in that
+  // project.
+  map<string, set<string> > uniqueFolders;
+
+  // This should probably be checked in Options
+  assert(projects.size() == folders.size());
+
+  for (unsigned int i = 0; i < projects.size(); ++i) {
+    string projectID = resolveProject(projects[i]);
+    uniqueFolders[projectID].insert(folders[i]);
+  }
+
+  for (map<string, set<string> >::iterator i = uniqueFolders.begin(); i != uniqueFolders.end(); ++i) {
+    string projectID = i->first;
+    set<string> folders = i->second;
+    for (set<string>::iterator j = folders.begin(); j != folders.end(); ++j) {
+      string folder = (*j);
+      createFolder(projectID, folder);
+    }
+  }
+}
+
+/*
  * Create the file object. The object is created in the given project and
  * folder, and with the specified name. The folder and any parent folders
  * are created if they do not exist.

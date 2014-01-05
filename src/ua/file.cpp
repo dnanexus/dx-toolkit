@@ -89,7 +89,6 @@ File::File(const string &localFile_, const string &projectSpec_, const string &f
 
 void File::init(const bool tryResuming) {
   projectID = resolveProject(projectSpec);
-  createFolder(projectID, folder);
 
   testLocalFileExists(localFile);
 
