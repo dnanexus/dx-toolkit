@@ -18,10 +18,13 @@
 Utilities shared by dxpy modules.
 '''
 
+from __future__ import print_function
+
 import os, sys, json, collections, concurrent.futures, signal, traceback, time, gc
 import dateutil.parser
-from exec_utils import *
+from .exec_utils import *
 from .. import logger
+from ..compat import basestring
 
 # Monkeypatch ThreadPoolExecutor with relevant logic from the patch for
 # Python issue 16284. See:
@@ -75,7 +78,7 @@ def wait_for_a_future(futures, print_traceback=False):
     '''
     while True:
         try:
-            future = concurrent.futures.as_completed(futures, timeout=10000000000).next()
+            future = next(concurrent.futures.as_completed(futures, timeout=10000000000))
             break
         except concurrent.futures.TimeoutError:
             pass
@@ -83,7 +86,7 @@ def wait_for_a_future(futures, print_traceback=False):
             if print_traceback:
                 traceback.print_stack()
             else:
-                print ''
+                print('')
             os._exit(os.EX_IOERR)
 
     return future
@@ -111,7 +114,7 @@ def wait_for_all_futures(futures, print_traceback=False):
         if print_traceback:
             traceback.print_stack()
         else:
-            print ''
+            print('')
         os._exit(os.EX_IOERR)
 
 def response_iterator(request_iterator, worker_pool, max_active_tasks=4, num_retries=0, retry_after=90):
@@ -153,7 +156,7 @@ def response_iterator(request_iterator, worker_pool, max_active_tasks=4, num_ret
     future_deque = collections.deque()
     for i in range(max_active_tasks):
         try:
-            _callable, args, kwargs = request_iterator.next()
+            _callable, args, kwargs = next(request_iterator)
             # print "Submitting (initial batch):", _callable, args, kwargs
             f = submit(worker_pool, _callable, args, kwargs)
             future_deque.append(f)
@@ -174,7 +177,7 @@ def response_iterator(request_iterator, worker_pool, max_active_tasks=4, num_ret
             future_deque.appendleft(f)
             continue
         except KeyboardInterrupt:
-            print ''
+            print('')
             os._exit(os.EX_IOERR)
 
         del f # Free the future we just consumed now, instead of next
@@ -182,7 +185,7 @@ def response_iterator(request_iterator, worker_pool, max_active_tasks=4, num_ret
         gc.collect()
 
         try:
-            _callable, args, kwargs = request_iterator.next()
+            _callable, args, kwargs = next(request_iterator)
             next_future = submit(worker_pool, _callable, args, kwargs)
             future_deque.append(next_future)
         except StopIteration:
@@ -267,7 +270,7 @@ def merge(d, u):
     ''' Recursively updates a dictionary.
     Example: merge({"a": {"b": 1, "c": 2}}, {"a": {"b": 3}}) = {"a": {"b": 3, "c": 2}}
     '''
-    for k, v in u.iteritems():
+    for k, v in u.items():
         if isinstance(v, collections.Mapping):
             r = merge(d.get(k, {}), v)
             d[k] = r

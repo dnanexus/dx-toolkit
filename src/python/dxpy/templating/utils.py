@@ -19,7 +19,8 @@
 
 import os, shutil, subprocess, re, json
 
-from dxpy.utils.printing import (BOLD, DNANEXUS_LOGO, ENDC, fill)
+from ..utils.printing import (BOLD, DNANEXUS_LOGO, ENDC, fill)
+from ..compat import input
 
 from . import python
 from . import cpp
@@ -76,7 +77,7 @@ def prompt_for_var(prompt_str, default=None, allow_empty=False, choices=None):
         prompt += ': '
     while True:
         try:
-            value = raw_input(prompt)
+            value = input(prompt)
         except KeyboardInterrupt:
             print ''
             exit(1)
@@ -103,7 +104,7 @@ def prompt_for_yn(prompt_str, default=None):
 
     while True:
         try:
-            value = raw_input(prompt)
+            value = input(prompt)
         except KeyboardInterrupt:
             print ''
             exit(1)

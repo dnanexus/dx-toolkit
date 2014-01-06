@@ -523,10 +523,10 @@ def _find_one(method, zero_ok=False, more_ok=True, **kwargs):
     kwargs["limit"] = 1 if more_ok else 2
     response = method(**kwargs)
     try:
-        result = response.next()
+        result = next(response)
         if not more_ok:
             try:
-                response.next()
+                next(response)
                 raise DXSearchError("Expected one result, but found more: "+str(kwargs))
             except StopIteration:
                 pass

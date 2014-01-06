@@ -21,9 +21,12 @@ https://wiki.dnanexus.com/Command-Line-Client/Environment%20Variables
 for more details.
 '''
 
+from __future__ import print_function
+
 import os, sys, shutil, textwrap, json, locale
 
 from .. import DEFAULT_APISERVER_PROTOCOL, DEFAULT_APISERVER_HOST, DEFAULT_APISERVER_PORT
+from ..compat import is_py2
 
 sys_encoding = locale.getdefaultlocale()[1] or 'UTF-8'
 
@@ -156,7 +159,7 @@ def write_env_var_to_conf_dir(var, value, conf_dir):
         except:
             pass
         with os.fdopen(os.open(os.path.join(conf_dir, var), os.O_CREAT | os.O_WRONLY, 0o600), 'w') as fd:
-            fd.write(value.encode(sys_encoding))
+            fd.write(value.encode(sys_encoding) if is_py2 else value)
 
     if not os.path.exists(os.path.expanduser('~/.dnanexus_config/') + 'unsetenv'):
         with open(os.path.expanduser('~/.dnanexus_config/') + 'unsetenv', 'w') as fd:
@@ -165,7 +168,7 @@ def write_env_var_to_conf_dir(var, value, conf_dir):
 
 def clearenv(args):
     if args.interactive:
-        print 'The clearenv command is not available in the interactive shell'
+        print('The clearenv command is not available in the interactive shell')
         return
     shutil.rmtree(get_session_conf_dir(), ignore_errors=True)
     try:

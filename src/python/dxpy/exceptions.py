@@ -18,7 +18,7 @@
 Exceptions for the :mod:`dxpy` package.
 '''
 
-import os, sys, json, traceback, errno, httplib
+import os, sys, json, traceback, errno
 from .packages import requests
 
 class DXError(Exception):
@@ -171,13 +171,14 @@ def exit_with_exc_info(code=1, message='', print_tb=False):
         sys.stderr.write('\n')
     sys.exit(code)
 
-default_expected_exceptions = (DXAPIError,
-                               requests.ConnectionError,
-                               requests.HTTPError,
-                               requests.Timeout,
-                               httplib.HTTPException,
-                               DXCLIError,
-                               KeyboardInterrupt)
+network_exceptions = (requests.ConnectionError,
+                      requests.HTTPError,
+                      requests.Timeout,
+                      requests.packages.urllib3.connectionpool.HTTPException)
+
+default_expected_exceptions = network_exceptions + (DXAPIError,
+                                                    DXCLIError,
+                                                    KeyboardInterrupt)
 
 def err_exit(message='', code=None, expected_exceptions=default_expected_exceptions, arg_parser=None,
              ignore_sigpipe=True):

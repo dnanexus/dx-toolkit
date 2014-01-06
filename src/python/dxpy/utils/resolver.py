@@ -23,11 +23,14 @@ names in the syntax of
 For more details, see external documentation [TODO: Put link here].
 '''
 
+from __future__ import print_function
+
 import os, sys, json, re
 
 import dxpy
 from .describe import get_ls_l_desc
 from ..exceptions import DXError
+from ..compat import str, input
 
 def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False, more_choices=False):
     '''
@@ -53,10 +56,10 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False,
         prefix = str(i) + ') '
         lines = choices[i].split("\n")
         joiner = "\n" + " " * len(prefix)
-        print prefix + joiner.join(lines)
+        print(prefix + joiner.join(lines))
     if more_choices:
-        print 'm) More options not shown...'
-    print ''
+        print('m) More options not shown...')
+    print('')
     if prompt is None:
         prompt = 'Pick a numbered choice'
         if allow_mult:
@@ -68,12 +71,12 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False,
         prompt += ': '
     while True:
         try:
-            value = raw_input(prompt)
+            value = input(prompt)
         except KeyboardInterrupt:
-            print ''
+            print('')
             raise
         except EOFError:
-            print ''
+            print('')
             raise
         if default is not None and value == '':
             return default
@@ -92,18 +95,18 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False,
                 raise IndexError()
             return choice
         except Exception:
-            print 'Not a valid selection'
+            print('Not a valid selection')
 
-def paginate_and_pick(generator, render_fn=unicode, filter_fn=None, page_len=10, **pick_opts):
+def paginate_and_pick(generator, render_fn=str, filter_fn=None, page_len=10, **pick_opts):
     any_results = False
     while True:
         results = []
         while len(results) < page_len:
             try:
                 if filter_fn is None:
-                    results.append(generator.next())
+                    results.append(next(generator))
                 else:
-                    possible_next = generator.next()
+                    possible_next = next(generator)
                     if filter_fn(possible_next):
                         results.append(possible_next)
                 any_results = True
@@ -352,7 +355,7 @@ def resolve_container_id_or_name(raw_string, is_error=False, unescape=True, mult
         return ([] if multi else None)
     elif not multi:
         if sys.stdout.isatty():
-            print 'Found multiple projects with name "' + string + '"'
+            print('Found multiple projects with name "' + string + '"')
             choice = pick(map(lambda result: result['id'] + ' (' + result['level'] + ')', results))
             return results[choice]['id']
         else:
@@ -584,7 +587,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
     elif project is None:
         raise ResolutionError('Could not resolve "' + path + '" to a project context.  Please either set a default project using dx select or cd, or add a colon (":") after your project ID or name')
     else:
-        msg = 'Object of name ' + unicode(entity_name) + ' could not be resolved in folder ' + unicode(folderpath) + ' of project ID ' + str(project)
+        msg = 'Object of name ' + str(entity_name) + ' could not be resolved in folder ' + str(folderpath) + ' of project ID ' + str(project)
         # Probably an object
         if is_job_id(project):
             # The following will raise if no results could be found
@@ -622,7 +625,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
             if allow_mult and (all_mult or is_glob_pattern(entity_name)):
                 return project, None, results
             if sys.stdout.isatty():
-                print 'The given path "' + path + '" resolves to the following data objects:'
+                print('The given path "' + path + '" resolves to the following data objects:')
                 choice = pick(map(lambda result:
                                       get_ls_l_desc(result['describe']),
                                   results),
@@ -721,7 +724,7 @@ def get_exec_handler(path, alias=None):
         elif entity_results is not None:
             if not sys.stdout.isatty():
                 raise ResolutionError('Found multiple executables with the path ' + path)
-            print 'Found multiple executables with the path ' + path
+            print('Found multiple executables with the path ' + path)
             choice_descriptions = [get_ls_l_desc(r['describe']) for r in entity_results]
             if app_desc is not None:
                 choice_descriptions.append('app-' + app_desc['name'] + ', version ' + app_desc['version'])

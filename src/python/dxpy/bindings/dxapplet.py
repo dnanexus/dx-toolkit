@@ -42,7 +42,7 @@ class DXExecutable:
         if isinstance(instance_type, basestring):
             return {"*": {"instanceType": instance_type}}
         elif isinstance(instance_type, dict):
-            return {stage: {"instanceType": stage_inst} for stage, stage_inst in instance_type.iteritems()}
+            return {stage: {"instanceType": stage_inst} for stage, stage_inst in instance_type.items()}
         else:
             raise DXError('Expected instance_type field to be either a string or a dict')
 

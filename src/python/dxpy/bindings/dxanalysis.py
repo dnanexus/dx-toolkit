@@ -121,7 +121,7 @@ class DXAnalysis(DXObject):
 
         dxpy.api.analysis_set_properties(self._dxid, {"properties": properties}, **kwargs)
 
-    def wait_on_done(self, interval=2, timeout=sys.maxint, **kwargs):
+    def wait_on_done(self, interval=2, timeout=3600*24*7, **kwargs):
         '''
         :param interval: Number of seconds between queries to the analysis's state
         :type interval: integer

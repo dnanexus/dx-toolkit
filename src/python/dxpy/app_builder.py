@@ -34,12 +34,15 @@ the effective destination project.
 
 '''
 
+from __future__ import print_function
+
 import os, sys, json, subprocess, tempfile, multiprocessing
 import datetime
 import dxpy
-from dxpy import logger
-from dxpy.utils import merge
-from dxpy.utils.printing import fill
+from . import logger
+from .utils import merge
+from .utils.printing import fill
+from .compat import input
 
 NUM_CORES = multiprocessing.cpu_count()
 
@@ -310,9 +313,9 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     # Now actually create the applet
 
     if dry_run:
-        print "Would create the following applet:"
-        print json.dumps(applet_spec, indent=2)
-        print "*** DRY-RUN-- no applet was created ***"
+        print("Would create the following applet:")
+        print(json.dumps(applet_spec, indent=2))
+        print("*** DRY-RUN-- no applet was created ***")
         return None, None
 
     applet_id = dxpy.api.applet_new(applet_spec)["id"]
@@ -338,7 +341,7 @@ def _create_or_update_version(app_name, version, app_spec, try_update=True):
     except dxpy.exceptions.DXAPIError as e:
         # TODO: detect this error more reliably
         if e.name == 'InvalidInput' and e.msg == 'Specified name and version conflict with an existing alias':
-            print >> sys.stderr, 'App %s/%s already exists' % (app_spec["name"], version)
+            print('App %s/%s already exists' % (app_spec["name"], version), file=sys.stderr)
             # The version number was already taken, so app/new doesn't work.
             # However, maybe it hasn't been published yet, so we might be able
             # to app-xxxx/update it.
@@ -360,7 +363,7 @@ def _update_version(app_name, version, app_spec, try_update=True):
         return app_id
     except dxpy.exceptions.DXAPIError as e:
         if e.name == 'InvalidState':
-            print >> sys.stderr, 'App %s/%s has already been published' % (app_spec["name"], version)
+            print('App %s/%s has already been published' % (app_spec["name"], version), file=sys.stderr)
             return None
         raise e
 
@@ -458,10 +461,10 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
             if confirm:
                 if sys.stdout.isatty():
                     try:
-                        print '***'
-                        print fill('WARNING: ' + acl_change_message)
-                        print '***'
-                        value = raw_input('Confirm making this app public [y/N]: ')
+                        print('***')
+                        print(fill('WARNING: ' + acl_change_message))
+                        print('***')
+                        value = input('Confirm making this app public [y/N]: ')
                     except KeyboardInterrupt:
                         value = 'n'
                     if not value.lower().startswith('y'):

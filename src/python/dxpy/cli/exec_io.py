@@ -20,15 +20,18 @@ Functions and classes used when launching platform executables from the CLI.
 
 # TODO: refactor all dx run helper functions here
 
+from __future__ import print_function
+
 import os, sys, json, collections, pipes, shlex
 
 import dxpy
-from dxpy.exceptions import DXCLIError
-from dxpy.utils.printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC, DELIMITER, UNDERLINE, get_delimiter, fill)
-from dxpy.utils.describe import (get_find_executions_string, get_ls_l_desc, parse_typespec)
-from dxpy.utils.resolver import (get_first_pos_of_char, is_hashid, is_job_id, is_localjob_id, paginate_and_pick, pick,
-                                 resolve_existing_path, split_unescaped)
-from dxpy.utils import OrderedDefaultdict
+from ..exceptions import DXCLIError
+from ..utils.printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC, DELIMITER, UNDERLINE, get_delimiter, fill)
+from ..utils.describe import (get_find_executions_string, get_ls_l_desc, parse_typespec)
+from ..utils.resolver import (get_first_pos_of_char, is_hashid, is_job_id, is_localjob_id, paginate_and_pick, pick,
+                              resolve_existing_path, split_unescaped)
+from ..utils import OrderedDefaultdict
+from ..compat import input, str
 
 ####################
 # -i Input Parsing #
@@ -85,7 +88,7 @@ def parse_input_or_jbor(in_class, value):
 #################################
 
 def print_param_help(param_desc):
-    print fill(UNDERLINE() + param_desc.get('label', param_desc['name']) + ':' + ENDC() + ' ' + (param_desc['help'] if 'help' in param_desc else '<no extra help available>'), initial_indent='  ', subsequent_indent='  ')
+    print(fill(UNDERLINE() + param_desc.get('label', param_desc['name']) + ':' + ENDC() + ' ' + (param_desc['help'] if 'help' in param_desc else '<no extra help available>'), initial_indent='  ', subsequent_indent='  '))
 
 def interactive_help(in_class, param_desc, prompt):
     is_array = param_desc['class'].startswith("array:")
@@ -101,9 +104,9 @@ def interactive_help(in_class, param_desc, prompt):
             except:
                 pass
             if proj_name is not None:
-                print 'Your current working directory is ' + proj_name + ':' + os.environ.get('DX_CLI_WD', '/')
+                print('Your current working directory is ' + proj_name + ':' + os.environ.get('DX_CLI_WD', '/'))
         while True:
-            print 'Pick an option to find input data:'
+            print('Pick an option to find input data:')
             try:
                 opt_num = pick(['List and choose from available data in the current project',
                                 'List and choose from available data in the DNAnexus Reference Genomes project',
@@ -118,18 +121,18 @@ def interactive_help(in_class, param_desc, prompt):
                 query_project = dxpy.find_one_project(name="Reference Genomes", public=True, level="VIEW")['id']
             elif opt_num == 2:
                 project_generator = dxpy.find_projects(level='VIEW', describe=True, explicit_perms=True)
-                print '\nProjects to choose from:'
+                print('\nProjects to choose from:')
                 query_project = paginate_and_pick(project_generator, (lambda result: result['describe']['name']))['id']
             if opt_num in range(3):
                 result_generator = dxpy.find_data_objects(classname=in_class,
                                                           typename=param_desc.get('type'),
                                                           describe=True,
                                                           project=query_project)
-                print '\nAvailable data:'
+                print('\nAvailable data:')
                 result_choice = paginate_and_pick(result_generator,
                                                   (lambda result: get_ls_l_desc(result['describe'])))
                 if result_choice == 'none found':
-                    print 'No compatible data found'
+                    print('No compatible data found')
                     continue
                 elif result_choice == 'none picked':
                     continue
@@ -141,14 +144,14 @@ def interactive_help(in_class, param_desc, prompt):
                                                   describe=True,
                                                   parent_job="none")
                 print
-                print 'Previously-run jobs to choose from:'
+                print('Previously-run jobs to choose from:')
                 result_choice = paginate_and_pick(result_generator,
                                                   (lambda result: get_find_executions_string(result['describe'],
                                                                                              has_children=False,
                                                                                              single_result=True)),
                                                   filter_fn=(lambda result: result['describe']['state'] not in ['unresponsive', 'terminating', 'terminated', 'failed']))
                 if result_choice == 'none found':
-                    print 'No jobs found'
+                    print('No jobs found')
                     continue
                 elif result_choice == 'none picked':
                     continue
@@ -160,9 +163,9 @@ def interactive_help(in_class, param_desc, prompt):
                         exec_desc = exec_handler.describe()
                         if 'outputSpec' not in exec_desc:
                             # This if block will either continue, return, or raise
-                            print 'No output spec found for the executable'
+                            print('No output spec found for the executable')
                             try:
-                                field = raw_input('Output field to use (^C or <ENTER> to cancel): ')
+                                field = input('Output field to use (^C or <ENTER> to cancel): ')
                                 if field == '':
                                     continue
                                 else:
@@ -172,30 +175,30 @@ def interactive_help(in_class, param_desc, prompt):
                         else:
                             keys = exec_desc['outputSpec'].keys()
                     if len(keys) > 1:
-                        print '\nOutput fields to choose from:'
+                        print('\nOutput fields to choose from:')
                         field_choice = pick(keys)
                         return [result_choice['id'] + ':' + keys[field_choice]]
                     elif len(keys) == 1:
-                        print 'Using the only output field: ' + keys[0]
+                        print('Using the only output field: ' + keys[0])
                         return [result_choice['id'] + ':' + keys[0]]
                     else:
-                        print 'No available output fields'
+                        print('No available output fields')
             else:
-                print fill('Enter an ID or path (<TAB> twice for compatible ' + in_class + 's in current directory)' + (array_help_str if is_array else ''))
-                return shlex.split(raw_input(prompt))
+                print(fill('Enter an ID or path (<TAB> twice for compatible ' + in_class + 's in current directory)' + (array_help_str if is_array else '')))
+                return shlex.split(input(prompt))
     else:
         if in_class == 'boolean':
             if is_array:
-                print fill('Enter "true", "false"' + array_help_str)
+                print(fill('Enter "true", "false"' + array_help_str))
             else:
-                print fill('Enter "true" or "false"')
+                print(fill('Enter "true" or "false"'))
         elif in_class == 'string' and is_array:
-                print fill('Enter a nonempty string' + array_help_str)
+                print(fill('Enter a nonempty string' + array_help_str))
         elif (in_class == 'float' or in_class == 'int') and is_array:
-            print fill('Enter a number' + array_help_str)
+            print(fill('Enter a number' + array_help_str))
         elif in_class == 'hash':
-            print fill('Enter a quoted JSON hash')
-        result = raw_input(prompt)
+            print(fill('Enter a quoted JSON hash'))
+        result = input(prompt)
         if in_class == 'string':
             return [result]
         else:
@@ -207,10 +210,10 @@ def get_input_array(param_desc):
         in_class = in_class[6:]
     typespec = param_desc.get('type', None)
     input_array = []
-    print '\nInput:   ' + fill(UNDERLINE() + param_desc.get('label', param_desc['name']) + ENDC() + ' (' + param_desc['name'] + ')')
-    print 'Class:   ' + param_desc['class']
+    print('\nInput:   ' + fill(UNDERLINE() + param_desc.get('label', param_desc['name']) + ENDC() + ' (' + param_desc['name'] + ')'))
+    print('Class:   ' + param_desc['class'])
     if 'type' in param_desc:
-        print 'Type(s): ' + parse_typespec(param_desc['type'])
+        print('Type(s): ' + parse_typespec(param_desc['type']))
     print
 
     prompt = "Enter {_class} values, one at a time (^D or <ENTER> to finish, {hint}'" + WHITE() + BOLD() + '?' + ENDC() + "' for more options)"
@@ -222,7 +225,7 @@ def get_input_array(param_desc):
     elif 'choices' in param_desc:
         hint = '<TAB> twice for choices, '
     prompt = prompt.format(_class=in_class, hint=hint)
-    print fill(prompt)
+    print(fill(prompt))
 
     try:
         import readline
@@ -247,7 +250,7 @@ def get_input_array(param_desc):
     try:
         while True:
             prompt = param_desc['name'] + '[' + str(len(input_array)) + "]: "
-            user_input = raw_input(prompt)
+            user_input = input(prompt)
             if in_class == 'string':
                 if user_input == '':
                     user_input = []
@@ -258,17 +261,17 @@ def get_input_array(param_desc):
             while user_input == ['?']:
                 user_input = interactive_help(in_class, param_desc, prompt)
             if len(user_input) > 1:
-                print fill('Error: more than one argument given.  Please quote your entire input or escape your whitespace with a backslash \'\\\'.')
+                print(fill('Error: more than one argument given.  Please quote your entire input or escape your whitespace with a backslash \'\\\'.'))
                 continue
             elif len(user_input) == 0:
                 return input_array
             try:
                 input_array.append(parse_input_or_jbor(in_class, user_input[0]))
             except ValueError as details:
-                print fill('Error occurred when parsing for class ' + in_class + ': ' + unicode(details))
+                print(fill('Error occurred when parsing for class ' + in_class + ': ' + str(details)))
                 continue
             except TypeError as details:
-                print fill('Error occurred when parsing for class ' + in_class + ': ' + unicode(details))
+                print(fill('Error occurred when parsing for class ' + in_class + ': ' + str(details)))
                 continue
     except EOFError:
         return input_array
@@ -299,21 +302,21 @@ def format_choices_or_suggestions(header, items, obj_class, initial_indent=' ' *
         # TODO: in interactive prompts the quotes here may be a bit
         # misleading. Perhaps it should be a separate mode to print
         # "interactive-ready" suggestions.
-        return fill(header + ' ' + ', '.join([pipes.quote(unicode(item)) for item in items]),
+        return fill(header + ' ' + ', '.join([pipes.quote(str(item)) for item in items]),
                     initial_indent=initial_indent,
                     subsequent_indent=subsequent_indent)
 
 def get_input_single(param_desc):
     in_class = param_desc['class']
     typespec = param_desc.get('type', None)
-    print '\nInput:   ' + fill(UNDERLINE() + param_desc.get('label', param_desc['name']) + ENDC() + ' (' + param_desc['name'] + ')')
-    print 'Class:   ' + param_desc['class']
+    print('\nInput:   ' + fill(UNDERLINE() + param_desc.get('label', param_desc['name']) + ENDC() + ' (' + param_desc['name'] + ')'))
+    print('Class:   ' + param_desc['class'])
     if 'type' in param_desc:
-        print 'Type(s): ' + parse_typespec(param_desc['type'])
+        print('Type(s): ' + parse_typespec(param_desc['type']))
     if 'suggestions' in param_desc:
-        print format_choices_or_suggestions('Suggestions:', param_desc['suggestions'], param_desc['class'], initial_indent='', subsequent_indent='  ')
+        print(format_choices_or_suggestions('Suggestions:', param_desc['suggestions'], param_desc['class'], initial_indent='', subsequent_indent='  '))
     if 'choices' in param_desc:
-        print format_choices_or_suggestions('Choices:', param_desc['choices'], param_desc['class'], initial_indent='', subsequent_indent='  ')
+        print(format_choices_or_suggestions('Choices:', param_desc['choices'], param_desc['class'], initial_indent='', subsequent_indent='  '))
     print
 
     prompt = "Enter {_class} {value} ({hint}'" + WHITE() + BOLD() + '?' + ENDC() + "' for more options)"
@@ -327,7 +330,7 @@ def get_input_single(param_desc):
     prompt = prompt.format(_class=in_class,
                            value='ID or path' if in_class in dx_data_classes else 'value',
                            hint=hint)
-    print fill(prompt)
+    print(fill(prompt))
 
     try:
         import readline
@@ -352,7 +355,7 @@ def get_input_single(param_desc):
     try:
         while True:
             prompt = param_desc['name'] + ': '
-            user_input = raw_input(prompt)
+            user_input = input(prompt)
             if in_class == 'string':
                 if user_input == '':
                     user_input = []
@@ -363,21 +366,21 @@ def get_input_single(param_desc):
             while user_input == ["?"]:
                 user_input = interactive_help(in_class, param_desc, prompt)
             if len(user_input) > 1:
-                print fill('Error: more than one argument given.  Please quote your entire input or escape your whitespace with a backslash \'\\\'.')
+                print(fill('Error: more than one argument given.  Please quote your entire input or escape your whitespace with a backslash \'\\\'.'))
                 continue
             elif len(user_input) == 0:
                 user_input = ['']
             try:
                 value = parse_input_or_jbor(in_class, user_input[0])
             except ValueError as details:
-                print fill('Error occurred when parsing for class ' + in_class + ': ' + unicode(details))
+                print(fill('Error occurred when parsing for class ' + in_class + ': ' + str(details)))
                 continue
             except TypeError as details:
-                print fill('Error occurred when parsing for class ' + in_class + ': ' + unicode(details))
+                print(fill('Error occurred when parsing for class ' + in_class + ': ' + str(details)))
                 continue
             if 'choices' in param_desc and value not in param_desc['choices']:
-                print fill(RED() + BOLD() + 'Warning:' + ENDC() + ' value "' + unicode(value) + '" for input ' + WHITE()
-                           + BOLD() + param_desc['name'] + ENDC() + ' is not in the list of choices for that input')
+                print(fill(RED() + BOLD() + 'Warning:' + ENDC() + ' value "' + str(value) + '" for input ' + WHITE()
+                           + BOLD() + param_desc['name'] + ENDC() + ' is not in the list of choices for that input'))
             return value
     except EOFError:
         raise Exception('')
@@ -484,7 +487,7 @@ class ExecutableInputs(object):
             try:
                 input_value = parse_input_or_jbor(input_class, input_value)
             except Exception as details:
-                raise DXCLIError('Value provided for input field "' + input_name + '" could not be parsed as ' + input_class + ': ' + unicode(details))
+                raise DXCLIError('Value provided for input field "' + input_name + '" could not be parsed as ' + input_class + ': ' + str(details))
 
             if input_class.startswith('array:'):
                 self.inputs[input_name].append(input_value)
@@ -525,7 +528,7 @@ class ExecutableInputs(object):
         for i in self.required_inputs:
             if i not in self.inputs:
                 if len(self.inputs) == 0:
-                    print 'Entering interactive mode for input selection.'
+                    print('Entering interactive mode for input selection.')
                 self.inputs[i] = self.prompt_for_input(i)
         if no_prior_inputs and len(self.optional_inputs) > 0:
             self.prompt_for_optional_inputs()
@@ -540,7 +543,7 @@ class ExecutableInputs(object):
 
     def prompt_for_optional_inputs(self):
         while True:
-            print '\n' + fill('Select an optional parameter to set by its # (^D or <ENTER> to finish):') + '\n'
+            print('\n' + fill('Select an optional parameter to set by its # (^D or <ENTER> to finish):') + '\n')
             for i in range(len(self.optional_inputs)):
                 opt_str = ' [' + str(i) + '] ' + \
                     get_optional_input_str(self.input_spec[self.optional_inputs[i]])
@@ -550,11 +553,11 @@ class ExecutableInputs(object):
                     opt_str += ENDC() + ']'
                 elif 'default' in self.input_spec[self.optional_inputs[i]]:
                     opt_str += ' [default=' + json.dumps(self.input_spec[self.optional_inputs[i]]['default']) + ']'
-                print opt_str
-            print ""
+                print(opt_str)
+            print("")
             try:
                 while True:
-                    selected = raw_input('Optional param #: ')
+                    selected = input('Optional param #: ')
                     if selected == '':
                         return
                     try:
@@ -563,7 +566,7 @@ class ExecutableInputs(object):
                             raise ValueError('Error: Selection is out of range')
                         break
                     except ValueError as details:
-                        print unicode(details)
+                        print(str(details))
                         continue
             except EOFError:
                 return
@@ -582,13 +585,13 @@ class ExecutableInputs(object):
                         data = fd.read()
                 self.update(json.loads(data, object_pairs_hook=collections.OrderedDict))
             except Exception as e:
-                raise DXCLIError('Error while parsing input JSON file: %s' % unicode(e))
+                raise DXCLIError('Error while parsing input JSON file: %s' % str(e))
 
         if args.input_json is not None:
             try:
                 self.update(json.loads(args.input_json, object_pairs_hook=collections.OrderedDict))
             except Exception as e:
-                raise DXCLIError('Error while parsing input JSON: %s' % unicode(e))
+                raise DXCLIError('Error while parsing input JSON: %s' % str(e))
 
         if args.input is not None:
             for keyeqval in args.input:
