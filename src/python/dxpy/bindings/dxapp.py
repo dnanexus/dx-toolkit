@@ -336,6 +336,18 @@ class DXApp(DXObject, DXExecutable):
         else:
             return dxpy.api.app_delete('app-' + self._name, alias=self._alias, **kwargs)
 
+    def _run_impl(self, run_input, **kwargs):
+        if self._dxid is not None:
+            return DXJob(dxpy.api.app_run(self._dxid, input_params=run_input, **kwargs)["id"])
+        else:
+            return DXJob(dxpy.api.app_run('app-' + self._name, alias=self._alias,
+                                          input_params=run_input,
+                                          **kwargs)["id"])
+
+    def _get_run_input(self, executable_input, **kwargs):
+        # May need to be changed when workflow apps are enabled
+        return DXExecutable._get_run_input_fields_for_applet(executable_input, **kwargs)
+
     def run(self, app_input, *args, **kwargs):
         """
         Creates a new job that executes the function "main" of this app with

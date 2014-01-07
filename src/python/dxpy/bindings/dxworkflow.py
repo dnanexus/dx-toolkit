@@ -428,12 +428,31 @@ class DXWorkflow(DXDataObject, DXExecutable):
             effective_input[input_name] = workflow_input[key]
         return effective_input
 
-    def run(self, workflow_input, instance_type=None, extra_args=None, *args, **kwargs):
+    def _get_run_input(self, workflow_input, **kwargs):
+        effective_workflow_input = self._get_effective_input(workflow_input)
+
+        run_input = DXExecutable._get_run_input_common_fields(effective_workflow_input, **kwargs)
+
+        if kwargs.get('stage_instance_types') is not None:
+            run_input['stageSystemRequirements'] = {}
+            for stage, value in kwargs['stage_instance_types'].items():
+                if stage != '*':
+                    stage = self._get_stage_id(stage)
+                run_input['stageSystemRequirements'][stage] = DXExecutable._inst_type_to_sys_reqs(value)
+
+        return run_input
+
+    def _run_impl(self, run_input, **kwargs):
+        return DXAnalysis(dxpy.api.workflow_run(self._dxid, run_input, **kwargs)["id"])
+
+    def run(self, workflow_input, *args, **kwargs):
         '''
         :param workflow_input: Dictionary of the workflow's input arguments; see below for more details
         :type workflow_input: dict
-        :param instance_type: Instance type on which all stages' jobs will be run, or a dict mapping either stage IDs or indices to instance type requests (which can then be either a string instance type or a dict mapping function names to instance types)
+        :param instance_type: Instance type on which all stages' jobs will be run, or a dict mapping function names to instance types. These may be overridden on a per-stage basis if stage_instance_types is specified.
         :type instance_type: string or dict
+        :param stage_instance_types: A dict mapping stage IDs, names, or indices to either a string (representing an instance type to be used for all functions in that stage), or a dict mapping function names to instance types.
+        :type stage_instance_types: dict
         :returns: Object handler of the newly created analysis
         :rtype: :class:`~dxpy.bindings.dxanalysis.DXAnalysis`
 
@@ -458,22 +477,4 @@ class DXWorkflow(DXDataObject, DXExecutable):
 
         See :meth:`dxpy.bindings.dxapplet.DXExecutable.run` for the available args.
         '''
-
-        effective_input = self._get_effective_input(workflow_input)
-        # inject instance type requests into extra_args since the
-        # syntax isn't supported by the superclass
-        if instance_type is not None:
-            if extra_args is None:
-                extra_args = {}
-            else:
-                extra_args = extra_args.copy()
-            if isinstance(instance_type, basestring):
-                extra_args['systemRequirements'] = {'*': self._inst_type_to_sys_reqs(instance_type)}
-            elif isinstance(instance_type, dict):
-                extra_args['systemRequirements'] = {}
-                for stage, value in instance_type.items():
-                    if stage != '*':
-                        stage = self._get_stage_id(stage)
-                    extra_args['systemRequirements'] = {stage: self._inst_type_to_sys_reqs(value)}
-        return super(DXWorkflow, self).run(effective_input, extra_args=extra_args, *args,
-                                           **kwargs)
+        return super(DXWorkflow, self).run(workflow_input, *args, **kwargs)

@@ -40,14 +40,91 @@ class DXExecutable:
     @staticmethod
     def _inst_type_to_sys_reqs(instance_type):
         if isinstance(instance_type, basestring):
+            # All entry points should use this instance type
             return {"*": {"instanceType": instance_type}}
         elif isinstance(instance_type, dict):
-            return {stage: {"instanceType": stage_inst} for stage, stage_inst in instance_type.items()}
+            # Map of entry point to instance type
+            return {fn: {"instanceType": fn_inst} for fn, fn_inst in instance_type.items()}
         else:
             raise DXError('Expected instance_type field to be either a string or a dict')
 
+    @staticmethod
+    def _get_run_input_common_fields(executable_input, **kwargs):
+        '''
+        Takes the same arguments as the run method. Creates an input
+        hash for the /executable-xxxx/run method, translating ONLY the
+        fields that can be handled uniformly across all executables:
+        project, folder, name, tags, properties, details, depends_on,
+        delay_workspace_destruction, and extra_args.
+        '''
+        project = kwargs.get('project') or dxpy.WORKSPACE_ID
+
+        run_input = {"input": executable_input}
+        for arg in ['folder', 'name', 'tags', 'properties', 'details']:
+            if kwargs.get(arg) is not None:
+                run_input[arg] = kwargs[arg]
+
+        if kwargs.get('instance_type') is not None:
+            run_input["systemRequirements"] = DXExecutable._inst_type_to_sys_reqs(kwargs['instance_type'])
+
+        if kwargs.get('depends_on') is not None:
+            run_input["dependsOn"] = []
+            if isinstance(kwargs['depends_on'], list):
+                for item in kwargs['depends_on']:
+                    if isinstance(item, DXJob) or isinstance(item, DXDataObject):
+                        if item.get_id() is None:
+                            raise DXError('A dxpy handler given in depends_on does not have an ID set')
+                        run_input["dependsOn"].append(item.get_id())
+                    elif isinstance(item, basestring):
+                        run_input['dependsOn'].append(item)
+                    else:
+                        raise DXError('Expected elements of depends_on to only be either instances of DXJob or DXDataObject, or strings')
+            else:
+                raise DXError('Expected depends_on field to be a list')
+
+        if kwargs.get('delay_workspace_destruction') is not None:
+            run_input["delayWorkspaceDestruction"] = kwargs['delay_workspace_destruction']
+
+        if dxpy.JOB_ID is None:
+            run_input["project"] = project
+
+        if kwargs.get('extra_args') is not None:
+            merge(run_input, kwargs['extra_args'])
+
+        return run_input
+
+    @staticmethod
+    def _get_run_input_fields_for_applet(executable_input, **kwargs):
+        '''
+        Takes the same arguments as the run method. Creates an input
+        hash for the /applet-xxxx/run method.
+        '''
+        # Although it says "for_applet", this is factored out of
+        # DXApplet because apps currently use the same mechanism
+        if kwargs.get('stage_instance_types'):
+            raise DXError('stage_instance_types is not supported for applets (only workflows)')
+        return DXExecutable._get_run_input_common_fields(executable_input, **kwargs)
+
+    def _run_impl(self, run_input, **kwargs):
+        """
+        Runs the executable with the specified input and returns a
+        handler for the resulting execution object
+        (:class:`~dxpy.bindings.dxjob.DXJob` or
+        :class:`~dxpy.bindings.dxanalysis.DXAnalysis`).
+
+        Any kwargs are passed on to :func:`~dxpy.DXHTTPRequest`.
+        """
+        raise NotImplementedError('_run_impl is not implemented')
+
+    def _get_run_input(self, executable_input, **kwargs):
+        """
+        Takes the same arguments as the run method. Creates an input
+        hash for the /executable-xxxx/run method.
+        """
+        raise NotImplementedError('_get_run_input is not implemented')
+
     def run(self, executable_input, project=None, folder="/", name=None, tags=None, properties=None, details=None,
-            instance_type=None, depends_on=None, delay_workspace_destruction=None,
+            instance_type=None, stage_instance_types=None, depends_on=None, delay_workspace_destruction=None,
             extra_args=None, **kwargs):
         '''
         :param executable_input: Hash of the executable's input arguments
@@ -79,57 +156,24 @@ class DXExecutable:
         the given input *executable_input*.
 
         '''
-        if project is None:
-            project = dxpy.WORKSPACE_ID
+        # stage_instance_types is only supported for workflows, but we
+        # include it here. Applet-based executables should detect when
+        # they receive a truthy stage_instance_types value and raise an
+        # error.
+        run_input = self._get_run_input(executable_input,
+                                        project=project,
+                                        folder=folder,
+                                        name=name,
+                                        tags=tags,
+                                        properties=properties,
+                                        details=details,
+                                        instance_type=instance_type,
+                                        stage_instance_types=stage_instance_types,
+                                        depends_on=depends_on,
+                                        delay_workspace_destruction=delay_workspace_destruction,
+                                        extra_args=extra_args)
 
-        run_input = {"input": executable_input,
-                     "folder": folder}
-        if name is not None:
-            run_input["name"] = name
-        if tags is not None:
-            run_input["tags"] = tags
-        if properties is not None:
-            run_input["properties"] = properties
-        if instance_type is not None:
-            run_input["systemRequirements"] = self._inst_type_to_sys_reqs(instance_type)
-
-        if depends_on is not None:
-            run_input["dependsOn"] = []
-            if isinstance(depends_on, list):
-                for item in depends_on:
-                    if isinstance(item, DXJob) or isinstance(item, DXDataObject):
-                        if item.get_id() is None:
-                            raise DXError('A dxpy handler given in depends_on does not have an ID set')
-                        run_input["dependsOn"].append(item.get_id())
-                    elif isinstance(item, basestring):
-                        run_input['dependsOn'].append(item)
-                    else:
-                        raise DXError('Expected elements of depends_on to only be either instances of DXJob or DXDataObject, or strings')
-            else:
-                raise DXError('Expected depends_on field to be a list')
-
-        if details is not None:
-            run_input["details"] = details
-
-        if delay_workspace_destruction is not None:
-            run_input["delayWorkspaceDestruction"] = delay_workspace_destruction
-
-        if dxpy.JOB_ID is None:
-            run_input["project"] = project
-
-        if extra_args is not None:
-            merge(run_input, extra_args)
-
-        if isinstance(self, DXApplet):
-            return DXJob(dxpy.api.applet_run(self._dxid, run_input, **kwargs)["id"])
-        elif isinstance(self, dxpy.bindings.DXWorkflow):
-            return DXAnalysis(dxpy.api.workflow_run(self._dxid, run_input, **kwargs)["id"])
-        elif self._dxid is not None:
-            return DXJob(dxpy.api.app_run(self._dxid, input_params=run_input, **kwargs)["id"])
-        else:
-            return DXJob(dxpy.api.app_run('app-' + self._name, alias=self._alias,
-                                          input_params=run_input,
-                                          **kwargs)["id"])
+        return self._run_impl(run_input, **kwargs)
 
 
 ############
@@ -260,6 +304,12 @@ class DXApplet(DXDataObject, DXExecutable):
         method.
         """
         return dxpy.api.applet_get(self._dxid, **kwargs)
+
+    def _run_impl(self, run_input, **kwargs):
+        return DXJob(dxpy.api.applet_run(self._dxid, run_input, **kwargs)["id"])
+
+    def _get_run_input(self, executable_input, **kwargs):
+        return DXExecutable._get_run_input_fields_for_applet(executable_input, **kwargs)
 
     def run(self, applet_input, *args, **kwargs):
         """

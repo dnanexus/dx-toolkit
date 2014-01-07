@@ -24,7 +24,7 @@ import shlex # respects quoted substrings when splitting
 
 from ..cli import try_call
 from ..cli import workflow as workflow_cli
-from ..exceptions import err_exit, DXError, DXCLIError, network_exceptions, default_expected_exceptions
+from ..exceptions import err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions
 from ..packages import requests
 from ..compat import is_py2, basestring, str, input
 
@@ -2715,11 +2715,51 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
 
     input_json = exec_inputs.inputs
 
+    run_kwargs = {
+        "project": dest_proj,
+        "folder": dest_path,
+        "name": args.name,
+        "tags": args.tags,
+        "properties": args.properties,
+        "details": args.details,
+        "delay_workspace_destruction": args.delay_workspace_destruction,
+        "instance_type": args.instance_type,
+        "stage_instance_types": args.stage_instance_types,
+        "extra_args": args.extra_args
+    }
+
     if not args.brief:
-        print('')
+        print()
         print('Using input JSON:')
         print(json.dumps(input_json, indent=4))
-        print('')
+        print()
+        if isinstance(executable, dxpy.DXWorkflow):
+            try:
+                print(executable._get_run_input(input_json, **run_kwargs))
+                dry_run = dxpy.api.workflow_dry_run(executable.get_id(),
+                                                    executable._get_run_input(input_json, **run_kwargs))
+                # print which stages are getting rerun
+                # Note: information may be out of date if the dryRun
+                # is performed too soon after the candidate execution
+                # has been constructed (and the jobs have not yet been
+                # created in the system); this errs on the side of
+                # assuming such stages will be re-run.
+                num_cached_stages = len([stage for stage in dry_run['stages'] if
+                                         'parentAnalysis' in stage['execution'] and
+                                         stage['execution']['parentAnalysis'] != dry_run['id']])
+                if num_cached_stages > 0:
+                    print(fill('The following ' + str(num_cached_stages) + ' stage(s) will reuse results from a previous analysis:'))
+                    for i, stage in enumerate(dry_run['stages']):
+                        if 'parentAnalysis' in stage['execution'] and \
+                           stage['execution']['parentAnalysis'] != dry_run['id']:
+                            stage_name = stage['execution']['name']
+                            print('  Stage ' + str(i) + ': ' + stage_name + \
+                                  ' (' + stage['execution']['id'] + ')')
+                    print
+            except DXAPIError:
+                # Just don't print anything for now if the dryRun
+                # method is not yet available
+                pass
 
     # Ask for confirmation if a tty and if input was not given as a
     # single JSON.
@@ -2735,9 +2775,7 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
         print(fill("Calling " + executable.get_id() + " with output destination " + dest_proj + ":" + dest_path,
                    subsequent_indent='  ') + '\n')
     try:
-        dxexecution = executable.run(input_json, project=dest_proj, folder=dest_path, name=args.name, tags=args.tags, properties=args.properties,
-                                     details=args.details, delay_workspace_destruction=args.delay_workspace_destruction,
-                                     instance_type=args.instance_type, extra_args=args.extra_args)
+        dxexecution = executable.run(input_json, **run_kwargs)
         if not args.brief:
             print(dxexecution._class.capitalize() + " ID: " + dxexecution.get_id())
         else:
@@ -2993,7 +3031,7 @@ def run(args):
                                               args.folder,
                                               expected='folder')
 
-    process_instance_type_arg(args)
+    process_instance_type_arg(args, isinstance(handler, dxpy.DXWorkflow))
 
     if not isinstance(handler, dxpy.DXApplet) and \
             not isinstance(handler, dxpy.DXApp) : # Identified as a workflow in get_exec_handler()
@@ -3809,7 +3847,7 @@ parser_run.add_argument('--watch', help="Watch the job after launching it", acti
 parser_run.add_argument('--input-help',
                         help=fill('Print help and examples for how to specify inputs', width_adjustment=-24),
                         action=runInputHelp, nargs=0)
-parser_run.set_defaults(func=run, verbose=False, help=False, details=None)
+parser_run.set_defaults(func=run, verbose=False, help=False, details=None, stage_instance_types=None)
 register_subparser(parser_run, categories='exec')
 
 parser_watch = subparsers.add_parser('watch', help='Watch logs of a job and its subjobs', prog='dx watch',
