@@ -1520,12 +1520,8 @@ class TestDXSearch(unittest.TestCase):
                                     tags=["foo"],
                                     properties={"foo": "bar"})
 
-        try:
+        with self.assertRaises(DXError):
             dxapplet.run(applet_input=prog_input, stage_instance_types={0: "dx_m1.large"})
-            self.fail('Expected passing stage_instance_types to an applet to fail')
-        except DXError:
-            # Expected
-            pass
 
         dxapplet.run(applet_input=prog_input)
         dxjob = dxapplet.run(applet_input=prog_input, tags=["foo", "bar"], properties={"foo": "baz"})
