@@ -157,7 +157,7 @@ class DXExecutable:
 
         '''
         # stage_instance_types is only supported for workflows, but we
-        # include it here. Applet-based executabels should detect when
+        # include it here. Applet-based executables should detect when
         # they receive a truthy stage_instance_types value and raise an
         # error.
         run_input = self._get_run_input(executable_input,
