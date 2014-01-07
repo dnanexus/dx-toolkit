@@ -159,8 +159,8 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
         public Builder setDescription(String description) {
             Preconditions.checkState(this.description == null,
                     "Cannot call setDescription more than once");
-            Preconditions.checkNotNull(description);
-            this.description = description;
+            this.description =
+                    Preconditions.checkNotNull(description, "description may not be null");
             return getThisInstance();
         }
 
@@ -174,8 +174,9 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
         public Builder setInputSpecification(List<? extends InputParameter> inputSpec) {
             Preconditions.checkState(this.inputSpec == null,
                     "Cannot call setInputSpecification more than once");
-            Preconditions.checkNotNull(inputSpec);
-            this.inputSpec = ImmutableList.copyOf(inputSpec);
+            this.inputSpec =
+                    ImmutableList.copyOf(Preconditions.checkNotNull(inputSpec,
+                            "inputSpec may not be null"));
             return getThisInstance();
         }
 
@@ -189,8 +190,9 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
         public Builder setOutputSpecification(List<? extends OutputParameter> outputSpec) {
             Preconditions.checkState(this.outputSpec == null,
                     "Cannot call setOutputSpecification more than once");
-            Preconditions.checkNotNull(outputSpec);
-            this.outputSpec = ImmutableList.copyOf(outputSpec);
+            this.outputSpec =
+                    ImmutableList.copyOf(Preconditions.checkNotNull(outputSpec,
+                            "outputSpec may not be null"));
             return getThisInstance();
         }
 
@@ -204,8 +206,7 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
         public Builder setRunSpecification(RunSpecification runSpec) {
             Preconditions.checkState(this.runSpec == null,
                     "Cannot call setRunSpecification more than once");
-            Preconditions.checkNotNull(runSpec);
-            this.runSpec = runSpec;
+            this.runSpec = Preconditions.checkNotNull(runSpec, "runSpec may not be null");
             return getThisInstance();
         }
 
@@ -218,8 +219,7 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
          */
         public Builder setSummary(String summary) {
             Preconditions.checkState(this.summary == null, "Cannot call setSummary more than once");
-            Preconditions.checkNotNull(summary);
-            this.summary = summary;
+            this.summary = Preconditions.checkNotNull(summary, "summary may not be null");
             return getThisInstance();
         }
 
@@ -232,8 +232,7 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
          */
         public Builder setTitle(String title) {
             Preconditions.checkState(this.title == null, "Cannot call setTitle more than once");
-            Preconditions.checkNotNull(title);
-            this.title = title;
+            this.title = Preconditions.checkNotNull(title, "title may not be null");
             return getThisInstance();
         }
 
@@ -370,8 +369,8 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
      */
     public static DXApplet getInstanceWithEnvironment(String appletId, DXContainer project,
             DXEnvironment env) {
-        Preconditions.checkNotNull(env);
-        return new DXApplet(appletId, project, env);
+        return new DXApplet(appletId, project, Preconditions.checkNotNull(env,
+                "env may not be null"));
     }
 
     /**
@@ -381,8 +380,7 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
      * @throws NullPointerException If {@code appletId} is null
      */
     public static DXApplet getInstanceWithEnvironment(String appletId, DXEnvironment env) {
-        Preconditions.checkNotNull(env);
-        return new DXApplet(appletId, env);
+        return new DXApplet(appletId, Preconditions.checkNotNull(env, "env may not be null"));
     }
 
     /**

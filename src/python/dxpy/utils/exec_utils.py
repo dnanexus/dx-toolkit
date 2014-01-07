@@ -18,6 +18,8 @@
 Utilities used in the DNAnexus execution environment and test harness.
 '''
 
+from __future__ import print_function
+
 import os, sys, json, collections, logging, argparse, string
 from functools import wraps
 import dxpy
@@ -102,7 +104,7 @@ def run(function_name=None, function_input=None):
         try:
             logging.getLogger().addHandler(dxpy.DXLogHandler())
         except dxpy.exceptions.DXError:
-            print "TODO: FIXME: the EE client should die if logging is not available"
+            print("TODO: FIXME: the EE client should die if logging is not available")
 
         job = dxpy.describe(dxpy.JOB_ID)
     else:
@@ -117,7 +119,7 @@ def run(function_name=None, function_input=None):
     with open("job_error_reserved_space", "w") as fh:
         fh.write("This file contains reserved space for writing job errors in case the filesystem becomes full.\n" + " "*1024*64)
 
-    print "Invoking", job.get('function'), "with", job.get('input')
+    print("Invoking", job.get('function'), "with", job.get('input'))
 
     try:
         result = ENTRY_POINT_TABLE[job['function']](**job['input'])
@@ -153,7 +155,7 @@ def convert_handlers_to_dxlinks(x):
     if isinstance(x, dxpy.DXObject):
         x = dxpy.dxlink(x)
     elif isinstance(x, collections.Mapping):
-        for key, value in x.iteritems():
+        for key, value in x.items():
             x[key] = convert_handlers_to_dxlinks(value)
     elif isinstance(x, list):
         for i in range(len(x)):
@@ -180,7 +182,7 @@ def parse_args_as_job_input(args, app_spec):
         parser.add_argument("--" + ispec["name"], **kwargs)
 
     inputs = {}
-    for i, value in vars(parser.parse_args(args)).iteritems():
+    for i, value in vars(parser.parse_args(args)).items():
         if value is None:
             continue
         if i in json_inputs:
@@ -189,7 +191,7 @@ def parse_args_as_job_input(args, app_spec):
             except ValueError:
                 from dxpy.utils.resolver import resolve_existing_path
                 project, path, results = resolve_existing_path(value, ask_to_resolve=False, describe={'id': True}, allow_mult=False)
-                print project, path, results
+                print(project, path, results)
                 if results is None or len(results) != 1:
                     raise ValueError("Value {v} could not be resolved".format(v=value))
                 inputs[i] = dxpy.dxlink(results[0]['id'], project_id=project)

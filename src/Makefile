@@ -188,10 +188,10 @@ coverage_python:
 	(cd python; export PYTHONPATH="$$PYTHONPATH:$$(echo $$(pwd)/coverage-*.egg)"; \
 	 test/coveragereport.py --strip-prefix="$$(readlink -f $$(pwd))/build/lib.linux-x86_64-2.7" --cover dxpy. --cover scripts --exclude dxpy.packages --exclude EGG-INFO.scripts --exclude test. --exclude setuptools --path-alias "$$(readlink -f $$(pwd)/../../share/dnanexus/lib/python2.7/site-packages/dxpy*.egg)"="$$(readlink -f $$(pwd))" --path-alias "$$(readlink -f $$(pwd)/build/lib.linux-x86_64-2.7)"="$$(readlink -f $$(pwd))")
 
-test_python:
+test_python: python
 	../build/run_python_integration_tests.py
 
-test_perl:
+test_perl: perl
 	(cd perl; prove)
 
 # mvn will compile the Java files, but it doesn't know how to generate the API
@@ -362,7 +362,7 @@ CURL_PV=7.32.0
 CURL_SHA=cadc5648e4cd4ea750a8c580311722ed1fb1573a
 ifeq ($(OS), Windows_NT)
 	CURL_WITH_SSL=--with-winssl
-	CURL_SHARED_LIBS=--enable-shared=no
+	CURL_SHARED_LIBS=--enable-shared=yes
 else ifeq ($(UNAME), Darwin)
 	CURL_WITH_SSL=--with-ssl=$$(pwd)/../openssl/stage
 	CURL_SHARED_LIBS=--enable-shared=yes

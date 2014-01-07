@@ -16,7 +16,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import os, sys, glob
+import os, sys, glob, platform
 from setuptools import setup, find_packages
 
 if sys.version_info < (2, 7):
@@ -43,21 +43,24 @@ test_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname
 dxfs_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_dxfs.txt"))]
 
 # If on Windows, also depend on colorama, which translates ANSI terminal color control sequences into whatever cmd.exe uses.
-if os.name == 'nt':
+if platform.system() == 'Windows':
     dependencies = [d for d in dependencies if not (d.startswith('distribute') or d.startswith('psutil'))]
     dependencies.append("colorama==0.2.4")
-else:
-    # dxfs is not compatible with Windows
-    dependencies.extend(dxfs_dependencies)
-    # If this is an OS X system where GNU readline is imitated by libedit, add the readline module from pypi to dependencies.
-    # See also http://stackoverflow.com/questions/7116038
-    # Warning: This may not work as intended in cross-compilation scenarios
+
+# If this is an OS X system where GNU readline is imitated by libedit, add the readline module from pypi to dependencies.
+# See also http://stackoverflow.com/questions/7116038
+# Warning: This may not work as intended in cross-compilation scenarios
+if platform.system() == 'Darwin':
     try:
         import readline
         if 'libedit' in readline.__doc__:
             dependencies.append("readline==6.2.4.1")
     except ImportError:
         dependencies.append("readline==6.2.4.1")
+
+# dxfs is not compatible with Windows, and is currently disabled on Python 3
+if platform.system() != 'Windows' and sys.version_info[0] < 3:
+    dependencies.extend(dxfs_dependencies)
 
 setup(
     name='dxpy',
@@ -78,7 +81,6 @@ setup(
     setup_requires = test_dependencies,
     tests_require = test_dependencies,
     test_suite = "test",
-    use_2to3 = True,
     classifiers=[
         'Environment :: Console',
         'Intended Audience :: Developers',

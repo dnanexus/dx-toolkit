@@ -44,7 +44,7 @@ class DXExecutable:
             return {"*": {"instanceType": instance_type}}
         elif isinstance(instance_type, dict):
             # Map of entry point to instance type
-            return {fn: {"instanceType": fn_inst} for fn, fn_inst in instance_type.iteritems()}
+            return {fn: {"instanceType": fn_inst} for fn, fn_inst in instance_type.items()}
         else:
             raise DXError('Expected instance_type field to be either a string or a dict')
 

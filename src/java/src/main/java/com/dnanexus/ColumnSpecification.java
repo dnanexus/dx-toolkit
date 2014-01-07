@@ -46,10 +46,8 @@ public class ColumnSpecification {
     }
 
     private ColumnSpecification(String name, ColumnType type) {
-        Preconditions.checkNotNull(name, "column name may not be null");
-        Preconditions.checkNotNull(type, "column type may not be null");
-        this.name = name;
-        this.type = type;
+        this.name = Preconditions.checkNotNull(name, "column name may not be null");
+        this.type = Preconditions.checkNotNull(type, "column type may not be null");
     }
 
     @Override

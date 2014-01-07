@@ -201,8 +201,8 @@ public class DXGTable extends DXDataObject {
      */
     public static DXGTable getInstanceWithEnvironment(String gtableId, DXContainer project,
             DXEnvironment env) {
-        Preconditions.checkNotNull(env);
-        return new DXGTable(gtableId, project, env);
+        return new DXGTable(gtableId, project, Preconditions.checkNotNull(env,
+                "env may not be null"));
     }
 
     /**
@@ -212,8 +212,7 @@ public class DXGTable extends DXDataObject {
      * @throws NullPointerException If {@code gtableId} is null
      */
     public static DXGTable getInstanceWithEnvironment(String gtableId, DXEnvironment env) {
-        Preconditions.checkNotNull(env);
-        return new DXGTable(gtableId, env);
+        return new DXGTable(gtableId, Preconditions.checkNotNull(env, "env may not be null"));
     }
 
     /**

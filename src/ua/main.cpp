@@ -59,8 +59,9 @@ int curlInit_call_count = 0;
 
 Options opt;
 
-/* Mutex for "bytesUploaded" member variable of "File" class
- * , as well as bytesUploadedSinceStart global variable.
+/*
+ * Mutex for bytesUploaded member of File class and bytesUploadedSinceStart
+ * global variable.
  */
 boost::mutex bytesUploadedMutex;
 
@@ -300,7 +301,7 @@ void waitOnClose(vector<File> &files) {
 }
 
 void uploadProgressHelper(vector<File> &files) {
-  cerr << ((opt.verbose) ? "\n" : "\r");
+  cerr << (opt.verbose ? "\n" : "\r");
 
   // Print individual file progress
   boost::mutex::scoped_lock boLock(bytesUploadedMutex);
@@ -345,6 +346,10 @@ void uploadProgressHelper(vector<File> &files) {
   }
   queueLock.unlock();
   cerr << " ... Instantaneous transfer speed = " << setw(6) << setprecision(2) << std::fixed << mbps2 << " MB/sec";
+
+  if (opt.throttle >= 0) {
+    cerr << " (throttled to " << opt.throttle << " bytes/sec)";
+  }
 }
 
 void uploadProgress(vector<File> &files) {
@@ -444,17 +449,16 @@ void markFileAsFailed(vector<File> &files, const string &fileID) {
   }
 }
 
-/* This function throws a runtime_error if two or more file
- * have same "signature", and are being uploaded to same project.
- * Note: - Signature is: <project, size, last_write_time, filename> tuple
- *         Same as what we use for resuming.
+/*
+ * This function throws a runtime_error if two or more files have the same
+ * signature, and are being uploaded to the same project. The signature is
+ * a <project, size, last_write_time, filename> tuple, like we use to
+ * detect resumable uploads.
  */
-void disallowDuplicateFiles(const vector<string> &files, const vector<string> &prjs) {
-  map<string, int> hashTable; // a map for - hash string to index in files vector
+void disallowDuplicateFiles(const vector<string> &files, const vector<string> &projects) {
+  map<string, int> hashTable; // a map for hash string to index in files vector
   for (unsigned i = 0; i < files.size(); ++i) {
-    //TODO: This results in calling "resolveProject" twice for each file -- not a big deal,
-    //      but ideally we should reuse the value retrieved in first call
-    string hash = resolveProject(prjs[i]) + " ";
+    string hash = resolveProject(projects[i]) + " ";
 
     boost::filesystem::path p(files[i]);
 
@@ -510,12 +514,19 @@ void printEnvironmentInfo() {
        << "  API server protocol: " << APISERVER_PROTOCOL() << endl
        << "  API server host: " << APISERVER_HOST() << endl
        << "  API server port: " << APISERVER_PORT() << endl;
+
   if (SECURITY_CONTEXT().size() != 0)
     cout << "  Auth token: " << SECURITY_CONTEXT()["auth_token"].get<string>() << endl;
   else
     cout << "  Auth token: " << endl;
 
-  cout << "  Project: " << CURRENT_PROJECT() << endl;
+  string projID = CURRENT_PROJECT();
+  try {
+    string projName = getProjectName(projID);
+    cout << "  Project: " << projName << " (" << projID << ")" << endl;
+  } catch (DXAPIError &e) {
+    cout << "  Project: " << projID << endl;
+  }
 }
 
 int main(int argc, char * argv[]) {
@@ -616,6 +627,10 @@ int main(int argc, char * argv[]) {
         files[i].waitOnClose = true;
       }
     }
+
+    // Create folders all at once (instead of one by one, above, where we
+    // initialize the File objects).
+    createFolders(opt.projects, opt.folders);
 
     // Take this point as the starting time for program operation
     // (to calculate average transfer speed)

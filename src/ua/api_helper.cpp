@@ -84,11 +84,11 @@ void checkForUpdates() {
                           "\nTechnical details (for advanced users): \n'" + string(cerr.what()) + "'\nIf you still encounter the problem after installing the hotfix, please contact DNAnexus support.");
     }
     #endif
-    throw runtime_error("Unable to connect to API server. Please list your environment variables (--env flag) to see the current configuration.\n\n"
+    throw runtime_error("Unable to connect to API server. Run 'ua --env' to see the current configuration.\n\n"
                         "Detailed message (for advanced users only):\n" + string(cerr.what()));
   } catch (DXError &e) {
     DXLOG(logINFO) << " failure.";
-    throw runtime_error("Unable to connect to API server. Please list your environment variables (--env flag) to see the current configuration.\n\n"
+    throw runtime_error("Unable to connect to API server. Run 'ua --env' to see the current configuration.\n\n"
                         "Detailed message (for advanced users only):\n" + string(e.what()));
   } catch (exception &aerr) {
     // If an error is thrown while calling /system/greet, we don't treat it as fatal
@@ -126,6 +126,7 @@ string urlEscape(const string &str) {
 
 
 boost::mutex resolveProjectMutex;
+
 /*
  * Given a project specifier (name or ID), resolves it to a project ID.
  * Important: Only projects with >=UPLOAD access are considered
@@ -150,8 +151,11 @@ boost::mutex resolveProjectMutex;
  * - If project list's size == 1, then we return the project ID.
  */
 string resolveProject(const string &projectSpec) {
-  static std::map<string, string> cache; // Projectspec => project id
-  boost::mutex::scoped_lock resolvePrjLock(resolveProjectMutex);
+  // Maps project specs (names or IDs) to resolved IDs
+  static std::map<string, string> cache;
+
+  boost::mutex::scoped_lock resolveProjectLock(resolveProjectMutex);
+
   DXLOG(logINFO) << "Resolving project specifier " << projectSpec << "...";
   if (cache.count(projectSpec) > 0) {
     DXLOG(logINFO) << "The project specifier was resolved previously, will just return value from cache('" << cache[projectSpec] << "')";
@@ -222,6 +226,35 @@ void createFolder(const string &projectID, const string &folder) {
 }
 
 /*
+ * For each i, creates folder folders[i] in project projects[i]. Uniquifies
+ * the project/folder pairs before calling createFolder. This avoids
+ * redundant API calls when multiple files are being uploaded to the same
+ * folder in the same project.
+ */
+void createFolders(const vector<string> &projects, const vector<string> &folders) {
+  // Maps each project ID to the set of folders to be created in that
+  // project.
+  map<string, set<string> > uniqueFolders;
+
+  // This should probably be checked in Options
+  assert(projects.size() == folders.size());
+
+  for (unsigned int i = 0; i < projects.size(); ++i) {
+    string projectID = resolveProject(projects[i]);
+    uniqueFolders[projectID].insert(folders[i]);
+  }
+
+  for (map<string, set<string> >::iterator i = uniqueFolders.begin(); i != uniqueFolders.end(); ++i) {
+    string projectID = i->first;
+    set<string> folders = i->second;
+    for (set<string>::iterator j = folders.begin(); j != folders.end(); ++j) {
+      string folder = (*j);
+      createFolder(projectID, folder);
+    }
+  }
+}
+
+/*
  * Create the file object. The object is created in the given project and
  * folder, and with the specified name. The folder and any parent folders
  * are created if they do not exist.
@@ -241,6 +274,12 @@ string createFileObject(const string &project, const string &folder, const strin
   DXLOG(logINFO) << "Got result " << result.toString();
 
   return result["id"].get<string>();
+}
+
+string getProjectName(const string &projectID) {
+  JSON params(JSON_OBJECT);
+  JSON result = projectDescribe(projectID, params, false);  // no retry
+  return result["name"].get<string>();
 }
 
 /*

@@ -144,8 +144,8 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
      */
     public static DXWorkflow getInstanceWithEnvironment(String workflowId, DXContainer project,
             DXEnvironment env) {
-        Preconditions.checkNotNull(env);
-        return new DXWorkflow(workflowId, project, env);
+        return new DXWorkflow(workflowId, project, Preconditions.checkNotNull(env,
+                "env may not be null"));
     }
 
     /**
@@ -155,8 +155,7 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
      * @throws NullPointerException If {@code workflowId} is null
      */
     public static DXWorkflow getInstanceWithEnvironment(String workflowId, DXEnvironment env) {
-        Preconditions.checkNotNull(env);
-        return new DXWorkflow(workflowId, env);
+        return new DXWorkflow(workflowId, Preconditions.checkNotNull(env, "env may not be null"));
     }
 
     /**

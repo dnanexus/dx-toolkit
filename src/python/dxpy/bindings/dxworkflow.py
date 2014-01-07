@@ -435,7 +435,7 @@ class DXWorkflow(DXDataObject, DXExecutable):
 
         if kwargs.get('stage_instance_types') is not None:
             run_input['stageSystemRequirements'] = {}
-            for stage, value in kwargs['stage_instance_types'].iteritems():
+            for stage, value in kwargs['stage_instance_types'].items():
                 if stage != '*':
                     stage = self._get_stage_id(stage)
                 run_input['stageSystemRequirements'][stage] = DXExecutable._inst_type_to_sys_reqs(value)

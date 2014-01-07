@@ -1262,6 +1262,15 @@ class TestDXClientWorkflow(DXTestCase):
 
 class TestDXClientFind(DXTestCase):
 
+    def test_dx_find_apps(self):
+        # simple test here does not assume anything about apps that do
+        # or do not exist
+        from dxpy.app_categories import APP_CATEGORIES
+        category_help = run("dx find apps --category-help")
+        for category in APP_CATEGORIES:
+            self.assertIn(category, category_help)
+        run("dx find apps --category foo") # any category can be searched
+
     def test_dx_find_data_by_class(self):
         ids = {"record": run("dx new record --brief").strip(),
                "workflow": run("dx new workflow --brief").strip(),
@@ -1656,6 +1665,10 @@ class TestDXBuildApp(DXTestCase):
             u"outputSpec": [{u"name": u"out1", u"class": u"file"}],
             u"description": u"Description\n",
             u"developerNotes": u"Developer notes\n",
+            u"types": [u"Foo"],
+            u"tags": [u"bar"],
+            u"properties": {u"sample_id": u"123456"},
+            u"details": {u"key1": u"value1"},
             }
         # description and developerNotes should be un-inlined back to files
         output_app_spec = dict((k, v) for (k, v) in app_spec.iteritems() if k not in ('description', 'developerNotes'))
@@ -1675,7 +1688,6 @@ class TestDXBuildApp(DXTestCase):
             self.assertTrue(os.path.exists(os.path.join("get_applet", "dxapp.json")))
 
             output_json = json.load(open(os.path.join("get_applet", "dxapp.json")))
-            self.assertEqual(output_app_spec["name"], output_json["name"])
             self.assertEqual(output_app_spec, output_json)
 
             self.assertEqual("Description\n", open(os.path.join("get_applet", "Readme.md")).read())
@@ -1735,6 +1747,42 @@ class TestDXBuildApp(DXTestCase):
             run("dx get --overwrite -o destfile get_applet")
             self.assertTrue(os.path.exists("destfile"))
             self.assertTrue(os.path.exists(os.path.join("destfile", "dxapp.json")))
+        finally:
+            os.chdir(old_cwd)
+
+    def test_get_applet_field_cleanup(self):
+        # TODO: not sure why self.assertEqual doesn't consider
+        # assertEqual to pass unless the strings here are unicode strings
+
+        # When retrieving the applet, we'll get back an empty list for
+        # types, tags, etc. Those should not be written back to the
+        # dxapp.json so as not to pollute it.
+        app_spec = {
+            u"name": u"get_applet_field_cleanup",
+            u"dxapi": u"1.0.0",
+            u"runSpec": {u"file": u"code.py", u"interpreter": u"python2.7"},
+            u"inputSpec": [],
+            u"outputSpec": []
+            }
+        output_app_spec = app_spec.copy()
+        output_app_spec[u"runSpec"] = {u"file": u"src/code.py", u"interpreter": u"python2.7"}
+
+        app_dir = self.write_app_directory("get_applet_field_cleanup", json.dumps(app_spec), "code.py", code_content="import os\n")
+        os.mkdir(os.path.join(app_dir, "resources"))
+        with open(os.path.join(app_dir, "resources", "resources_file"), 'w') as f:
+            f.write('content\n')
+        new_applet_id = json.loads(run("dx build --json " + app_dir))["id"]
+        tempdir = tempfile.mkdtemp()
+        old_cwd = os.getcwd()
+        os.chdir(tempdir)
+        try:
+            run("dx get " + new_applet_id)
+            self.assertTrue(os.path.exists("get_applet_field_cleanup"))
+            self.assertTrue(os.path.exists(os.path.join("get_applet_field_cleanup", "dxapp.json")))
+            output_json = json.load(open(os.path.join("get_applet_field_cleanup", "dxapp.json")))
+            self.assertEqual(output_app_spec, output_json)
+            self.assertFalse(os.path.exists(os.path.join("get_applet", "Readme.md")))
+            self.assertFalse(os.path.exists(os.path.join("get_applet", "Readme.developer.md")))
         finally:
             os.chdir(old_cwd)
 

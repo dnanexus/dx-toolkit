@@ -19,6 +19,8 @@ This submodule contains workflow-based commands for the dx
 command-line client.
 '''
 
+from __future__ import print_function
+
 import os, sys
 
 import dxpy
@@ -66,7 +68,7 @@ def new_workflow(args):
                                          folder=folder,
                                          parents=args.parents, init_from=init_from)
         if args.brief:
-            print dxworkflow.get_id()
+            print(dxworkflow.get_id())
         else:
             dxpy.utils.describe.print_desc(dxworkflow.describe(incl_properties=True, incl_details=True),
                                            args.verbose)
@@ -122,7 +124,7 @@ def add_stage(args):
                         stage_input=exec_inputs.inputs,
                         instance_type=args.instance_type)
     if args.brief:
-        print stage_id
+        print(stage_id)
     else:
         dxpy.utils.describe.print_desc(dxworkflow.describe())
 
@@ -132,33 +134,33 @@ def list_stages(args):
 
     dxworkflow = dxpy.DXWorkflow(workflow_id, project=project)
     desc = dxworkflow.describe()
-    print (printing.BOLD() + printing.GREEN() + '{name}' + printing.ENDC() + ' ({id})').format(**desc)
+    print((printing.BOLD() + printing.GREEN() + '{name}' + printing.ENDC() + ' ({id})').format(**desc))
     print
-    print 'Title: ' + desc['title']
-    print 'Output Folder: ' + (desc.get('outputFolder') if desc.get('outputFolder') is not None else '-')
+    print('Title: ' + desc['title'])
+    print('Output Folder: ' + (desc.get('outputFolder') if desc.get('outputFolder') is not None else '-'))
     if len(desc['stages']) == 0:
         print
-        print ' No stages; add stages with the command "dx add stage"'
+        print(' No stages; add stages with the command "dx add stage"')
     for i, stage in enumerate(desc['stages']):
         stage['i'] = i
         print
         if stage['name'] is None:
             stage['name'] = '<no name>'
-        print (printing.UNDERLINE() + 'Stage {i}' + printing.ENDC() + ': {name} ({id})').format(**stage)
-        print 'Executable      {executable}'.format(**stage) + \
+        print((printing.UNDERLINE() + 'Stage {i}' + printing.ENDC() + ': {name} ({id})').format(**stage))
+        print('Executable      {executable}'.format(**stage) + \
             (" (" + printing.RED() + "inaccessible" + printing.ENDC() + ")" \
-             if stage.get('accessible') is False else "")
+             if stage.get('accessible') is False else ""))
         if stage['folder'] is not None and stage['folder'].startswith('/'):
             stage_output_folder = stage['folder']
         else:
             stage_output_folder = '<workflow output folder>/' + (stage['folder'] if stage['folder'] is not None else "")
-        print 'Output Folder   {folder}'.format(folder=stage_output_folder)
+        print('Output Folder   {folder}'.format(folder=stage_output_folder))
         if "input" in stage and stage["input"]:
-            print 'Bound input     ' + \
+            print('Bound input     ' + \
                 ('\n' + ' '*16).join([
                     '{key}={value}'.format(key=key, value=io_val_to_str(stage["input"][key])) for
                     key in stage['input']
-                ])
+                ]))
 
 def remove_stage(args):
     # get workflow
@@ -171,9 +173,9 @@ def remove_stage(args):
     dxworkflow = dxpy.DXWorkflow(workflow_id, project=project)
     stage_id = try_call(dxworkflow.remove_stage, args.stage)
     if args.brief:
-        print stage_id
+        print(stage_id)
     else:
-        print "Removed stage " + stage_id
+        print("Removed stage " + stage_id)
 
 def update_workflow(args):
     # get workflow
@@ -181,7 +183,7 @@ def update_workflow(args):
 
     if not any([args.title, args.no_title, args.summary, args.description, args.output_folder,
                 args.no_output_folder]):
-        print 'No updates requested; none made'
+        print('No updates requested; none made')
         return
 
     if args.output_folder is not None:
@@ -219,7 +221,7 @@ def update_stage(args):
     if not any([args.executable, args.name, args.no_name, args.output_folder,
                 args.relative_output_folder, args.input, args.input_json, args.filename,
                 args.instance_type]):
-        print 'No updates requested; none made'
+        print('No updates requested; none made')
         return
 
     new_exec_handler = None

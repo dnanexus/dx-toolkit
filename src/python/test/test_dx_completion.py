@@ -131,6 +131,11 @@ class TestDXTabCompletion(unittest.TestCase):
         self.assert_completions("dx ls fo", ["foo/"])
         self.assert_completions("dx ls foo/", ["foo/bar/"])
 
+    def test_category_completion(self):
+        from dxpy.app_categories import APP_CATEGORIES
+        self.assertTrue(len(APP_CATEGORIES) > 0)
+        self.assert_completions("dx find apps --category ", APP_CATEGORIES)
+
     def test_applet_completion(self):
         dxapplet = dxpy.DXApplet()
         dxapplet.new(runSpec={"code": "placeholder", "interpreter": "bash"},

@@ -16,6 +16,8 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+from __future__ import print_function
+
 import logging
 logging.basicConfig(level=logging.WARNING)
 logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
@@ -340,14 +342,14 @@ def _check_file_syntax(filename, temp_dir, override_lang=None, enforce=True):
     try:
         checker_fn(filename)
     except subprocess.CalledProcessError as e:
-        print >> sys.stderr, filename + " has a syntax error! Interpreter output:"
+        print(filename + " has a syntax error! Interpreter output:", file=sys.stderr)
         for line in e.output.strip("\n").split("\n"):
-            print >> sys.stderr, "  " + line.rstrip("\n")
+            print("  " + line.rstrip("\n"), file=sys.stderr)
         if enforce:
             raise DXSyntaxError(filename + " has a syntax error")
     except py_compile.PyCompileError as e:
-        print >> sys.stderr, filename + " has a syntax error! Interpreter output:"
-        print >> sys.stderr, "  " + e.msg.strip()
+        print(filename + " has a syntax error! Interpreter output:", file=sys.stderr)
+        print("  " + e.msg.strip(), file=sys.stderr)
         if enforce:
             raise DXSyntaxError(e.msg.strip())
 
@@ -449,7 +451,7 @@ def _verify_app_source_dir(src_dir, enforce=True):
 def _verify_app_writable(app_name):
     app_name_already_exists = True
     try:
-        current_developers = dxpy.api.app_list_developers('app-' + app_name)['developers']
+        is_developer = dxpy.api.app_describe('app-' + app_name)['isDeveloperFor']
     except dxpy.exceptions.DXAPIError as e:
         if e.name == 'ResourceNotFound':
             app_name_already_exists = False
@@ -461,17 +463,8 @@ def _verify_app_writable(app_name):
         # (or at least, not fail on the basis of the ACL).
         return
 
-    try:
-        me = dxpy.user_info()['userId']
-    except DXError:
-        # Not being able to contact the auth server to do this check
-        # is a non fatal error, since this scenario is common in
-        # testing and the API call to build the app will eventually
-        # fail anyway.
-        print >> sys.stderr, "Warning: could not contact auth server to determine current username."
-        return
-    if me not in current_developers:
-        raise dxpy.app_builder.AppBuilderException('User {user} is not a listed developer for app {app}'.format(user=me, app=app_name))
+    if not is_developer:
+        raise dxpy.app_builder.AppBuilderException('You are not a developer for app {app}'.format(app=app_name))
 
 def _parse_app_spec(src_dir):
     """Returns the parsed contents of dxapp.json.
@@ -636,7 +629,7 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
                 api_options["folder"] = dest_folder
             app_run_result = dxpy.api.app_run(builder_app, input_params=api_options)
             job_id = app_run_result["id"]
-            print "Started builder job %s" % (job_id,)
+            print("Started builder job %s" % (job_id,))
             try:
                 subprocess.check_call(["dx", "watch", job_id])
             except subprocess.CalledProcessError as e:
@@ -759,11 +752,11 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             app_describe = dxpy.api.app_describe(app_id)
 
             if publish:
-                print >> sys.stderr, "Uploaded and published app %s/%s (%s) successfully" % (app_describe["name"], app_describe["version"], app_id)
+                print("Uploaded and published app %s/%s (%s) successfully" % (app_describe["name"], app_describe["version"], app_id), file=sys.stderr)
             else:
-                print >> sys.stderr, "Uploaded app %s/%s (%s) successfully" % (app_describe["name"], app_describe["version"], app_id)
-                print >> sys.stderr, "You can publish this app with:"
-                print >> sys.stderr, "  dx api app-%s/%s publish \"{\\\"makeDefault\\\": true}\"" % (app_describe["name"], app_describe["version"])
+                print("Uploaded app %s/%s (%s) successfully" % (app_describe["name"], app_describe["version"], app_id), file=sys.stderr)
+                print("You can publish this app with:", file=sys.stderr)
+                print("  dx api app-%s/%s publish \"{\\\"makeDefault\\\": true}\"" % (app_describe["name"], app_describe["version"]), file=sys.stderr)
 
             return app_describe if return_object_dump else {"id": app_id}
 
@@ -845,14 +838,14 @@ def main(**kwargs):
                 )
 
             if output is not None:
-                print json.dumps(output)
+                print(json.dumps(output))
         except dxpy.app_builder.AppBuilderException as e:
             # AppBuilderException represents errors during app or applet building
             # that could reasonably have been anticipated by the user.
-            print >> sys.stderr, "Error: %s" % (e.message,)
+            print("Error: %s" % (e.message,), file=sys.stderr)
             sys.exit(3)
         except dxpy.exceptions.DXAPIError as e:
-            print >> sys.stderr, "Error: %s" % (e,)
+            print("Error: %s" % (e,), file=sys.stderr)
             sys.exit(3)
 
         if args.run is not None:
@@ -872,7 +865,7 @@ def main(**kwargs):
             if args.mode == "app" and not args.dry_run:
                 _verify_app_writable(app_json['name'])
         except dxpy.app_builder.AppBuilderException as e:
-            print >> sys.stderr, "Error: %s" % (e.message,)
+            print("Error: %s" % (e.message,), file=sys.stderr)
             sys.exit(3)
 
         # The following flags might be useful in conjunction with

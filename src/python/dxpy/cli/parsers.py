@@ -20,6 +20,8 @@ other parsers, as well as utility functions for parsing the input to
 those parsers.
 '''
 
+from __future__ import print_function
+
 import argparse, json, os
 from ..utils.printing import (fill, BOLD, ENDC)
 from ..utils.pretty_print import format_table
@@ -234,30 +236,30 @@ exec_input_args.add_argument('-f', '--input-json-file', dest='filename', help=fi
 
 class PrintInstanceTypeHelp(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
-        print "Help: Specifying instance types for " + parser.prog
-        print
-        print fill('A single instance type can be requested to be used by all entry points by providing the instance type name.  Different instance types can also be requested for different entry points of an app or applet by providing a JSON string mapping from function names to instance types, e.g.')
-        print
-        print '    {"main": "dx_m1.large", "other_function": "dx_m1.medium"}'
+        print("Help: Specifying instance types for " + parser.prog)
+        print()
+        print(fill('A single instance type can be requested to be used by all entry points by providing the instance type name.  Different instance types can also be requested for different entry points of an app or applet by providing a JSON string mapping from function names to instance types, e.g.'))
+        print()
+        print('    {"main": "dx_m1.large", "other_function": "dx_m1.medium"}')
         if parser.prog == 'dx run':
-            print
-            print fill('If running a workflow, different stages can have different instance type ' +
+            print()
+            print(fill('If running a workflow, different stages can have different instance type ' +
                        'requests by prepending the request with "<stage identifier>=" (where a ' +
                        'stage identifier is an ID, a numeric index, or a unique stage name) and ' +
                        'repeating the argument for as many stages as desired.  If no stage ' +
-                       'identifier is provided, the value is applied as a default for all stages.')
-            print
-            print fill('The following example runs all entry points of the first stage with ' +
+                       'identifier is provided, the value is applied as a default for all stages.'))
+            print()
+            print(fill('The following example runs all entry points of the first stage with ' +
                        'dx_m1.large, the stage named "BWA" with dx_m1.medium, and all other ' +
-                       'stages with dx_m1.xlarge')
-            print
-            print '    Example: dx run workflow --instance-type 0=dx_m1.large \\'
-            print '               --instance-type BWA=dx_m1.medium --instance-type dx_m1.xlarge'
-        print
-        print 'Available instance types:'
-        print
-        print format_table(InstanceTypesCompleter.instance_types.values(),
-                           column_names=InstanceTypesCompleter.instance_types.values()[0]._fields)
+                       'stages with dx_m1.xlarge'))
+            print()
+            print('    Example: dx run workflow --instance-type 0=dx_m1.large \\')
+            print('               --instance-type BWA=dx_m1.medium --instance-type dx_m1.xlarge')
+        print()
+        print('Available instance types:')
+        print()
+        print(format_table(InstanceTypesCompleter.instance_types.values(),
+                           column_names=InstanceTypesCompleter.instance_types.values()[0]._fields))
         parser.exit(0)
 
 instance_type_arg = argparse.ArgumentParser(add_help=False)

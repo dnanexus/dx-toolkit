@@ -28,7 +28,7 @@ def run():
         site_customize_file.write("import coverage; coverage.process_startup()\n")
     try:
         subprocess.check_call("rm -vf .coverage .coverage.*", cwd=PYTHON_DIR, shell=True)
-        nose_cmd = ["./setup.py", "nosetests", "--cover-inclusive", "--ignore-files=(pyopenssl|ntlmpool)"]
+        nose_cmd = ["./setup.py", "nosetests", "--exe", "--cover-inclusive", "--ignore-files=(pyopenssl|ntlmpool)"]
         if args.tests:
             nose_cmd.append('--tests')
             nose_cmd.extend(args.tests)

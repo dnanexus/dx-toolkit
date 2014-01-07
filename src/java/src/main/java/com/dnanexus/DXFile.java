@@ -96,8 +96,7 @@ public class DXFile extends DXDataObject {
          */
         public Builder setMediaType(String mediaType) {
             Preconditions.checkState(this.media == null, "Cannot call setMediaType more than once");
-            Preconditions.checkNotNull(mediaType);
-            this.media = mediaType;
+            this.media = Preconditions.checkNotNull(mediaType, "mediaType may not be null");
             return getThisInstance();
         }
 
@@ -180,8 +179,7 @@ public class DXFile extends DXDataObject {
      */
     public static DXFile getInstanceWithEnvironment(String fileId, DXContainer project,
             DXEnvironment env) {
-        Preconditions.checkNotNull(env);
-        return new DXFile(fileId, project, env);
+        return new DXFile(fileId, project, Preconditions.checkNotNull(env, "env may not be null"));
     }
 
     /**
@@ -190,8 +188,7 @@ public class DXFile extends DXDataObject {
      * @throws NullPointerException If {@code fileId} is null
      */
     public static DXFile getInstanceWithEnvironment(String fileId, DXEnvironment env) {
-        Preconditions.checkNotNull(env);
-        return new DXFile(fileId, env);
+        return new DXFile(fileId, Preconditions.checkNotNull(env, "env may not be null"));
     }
 
     /**

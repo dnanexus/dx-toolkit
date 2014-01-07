@@ -18,11 +18,15 @@
 #define UA_API_HELPER_H
 
 #include <string>
+#include <vector>
+
 #include "dxjson/dxjson.h"
 
 std::string resolveProject(const std::string &projectSpec);
 
 void createFolder(const std::string &projectID, const std::string &folder);
+
+void createFolders(const std::vector<std::string> &projects, const std::vector<std::string> &folders);
 
 std::string createFileObject(const std::string &project, const std::string &folder, const std::string &name, const std::string &mimeType, const dx::JSON &properties);
 
@@ -35,6 +39,8 @@ dx::JSON findResumableFileObject(std::string project, std::string signature);
 void removeFromProject(const std::string &projID, const std::string &objID);
 
 void checkForUpdates();
+
+std::string getProjectName(const std::string &projectID);
 
 #define FILE_SIGNATURE_PROPERTY ".system-fileSignature"
 

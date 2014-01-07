@@ -134,10 +134,13 @@ environment variables:
 # except:
 #     pass
 
-import os, sys, json, time, logging, httplib, platform, collections
+from __future__ import print_function
+
+import os, sys, json, time, logging, platform, collections
 from .packages import requests
 from .packages.requests.exceptions import ConnectionError, HTTPError, Timeout
 from .packages.requests.auth import AuthBase
+from .compat import is_py2
 
 logger = logging.getLogger(__name__)
 logging.getLogger('dxpy.packages.requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
@@ -146,9 +149,12 @@ from . import exceptions
 from .toolkit_version import version as TOOLKIT_VERSION
 
 snappy_available = True
-try:
-    import snappy
-except ImportError:
+if sys.version_info < (3, 0):
+    try:
+        import snappy
+    except ImportError:
+        snappy_available = False
+else:
     snappy_available = False
 
 API_VERSION = '1.0.0'
@@ -183,7 +189,7 @@ class ContentLengthError(HTTPError):
 
 def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeout=600,
                   use_compression=None, jsonify_data=True, want_full_response=False,
-                  prepend_srv=True, session_handler=None,
+                  decode_response_body=True, prepend_srv=True, session_handler=None,
                   max_retries=DEFAULT_RETRIES, always_retry=False, **kwargs):
     '''
     :param resource: API server route, e.g. "/record/new"
@@ -204,6 +210,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
     :type jsonify_data: boolean
     :param want_full_response: If True, the full :class:`requests.Response` object is returned (otherwise, only the content of the response body is returned)
     :type want_full_response: boolean
+    :param decode_response_body: If True (and *want_full_response* is False), the response body is decoded and, if it is a JSON string, deserialized. Otherwise, the response body is uncompressed if transport compression is on, and returned raw.
+    :type want_full_response: boolean
     :param prepend_srv: If True, prepends the API server location to the URL
     :type prepend_srv: boolean
     :param max_retries: Maximum number of retries to perform for a request. A "failed" request is retried if any of the following is true:
@@ -219,7 +227,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                         - Note: It is not guaranteed that the request will *always* be retried on failure; rather, this is an indication to the function that it would be safe to do so.
 
     :type always_retry: boolean
-    :returns: Response from API server in the format indicated by *want_full_response*. Note: if *want_full_response* is set to False and the header "content-type" is found in the response with value "application/json", the body of the response will **always** be converted from JSON to a Python list or dict before it is returned.
+    :returns: Response from API server in the format indicated by *want_full_response* and *decode_response_body*.
     :raises: :exc:`exceptions.DXAPIError` or a subclass if the server returned a non-200 status code; :exc:`requests.exceptions.HTTPError` if an invalid response was received from the server; or :exc:`requests.exceptions.ConnectionError` if a connection cannot be established.
 
     Wrapper around :meth:`requests.request()` that makes an HTTP
@@ -242,10 +250,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
     url = APISERVER + resource if prepend_srv else resource
     method = method.upper() # Convert method name to uppercase, to ease string comparisons later
     if _DEBUG == '2':
-        print >>sys.stderr, method, url, "=>\n" + json.dumps(data, indent=2)
+        print(method, url, "=>\n" + json.dumps(data, indent=2), file=sys.stderr)
     elif _DEBUG:
         from repr import Repr
-        print >>sys.stderr, method, url, "=>", Repr().repr(data)
+        print(method, url, "=>", Repr().repr(data), file=sys.stderr)
 
     if auth is True:
         auth = AUTH_HELPER
@@ -253,7 +261,9 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
     # When *data* is bytes but *headers* contains Unicode strings, httplib tries to concatenate them and decode *data*,
     # which should not be done. Also, per HTTP/1.1 headers must be encoded with MIME, but we'll disregard that here, and
     # just encode them with the Python default (ascii) and fail for any non-ascii content.
-    headers = {k.encode(): v.encode() for k, v in headers.iteritems()}
+    # TODO: ascertain whether this is a problem in Python 3/make test
+    if is_py2:
+        headers = {k.encode(): v.encode() for k, v in headers.items()}
 
     if jsonify_data:
         data = json.dumps(data)
@@ -297,13 +307,12 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                     pass
                 _UPGRADE_NOTIFY = False
 
-            # If HTTP code that is not 200 (OK) is received and the content is
-            # JSON, parse it and throw the appropriate error.  Otherwise,
-            # raise the usual exception.
-            if response.status_code != requests.codes.ok:
+            # If an HTTP code that is not in the 200 series is received and the content is JSON, parse it and throw the
+            # appropriate error.  Otherwise, raise the usual exception.
+            if response.status_code // 100 != 2:
                 # response.headers key lookup is case-insensitive
                 if response.headers.get('content-type', '').startswith('application/json'):
-                    content = json.loads(response.content)
+                    content = json.loads(response.content.decode('utf-8'))
                     error_class = getattr(exceptions, content["error"]["type"], exceptions.DXAPIError)
                     raise error_class(content, response.status_code)
                 response.raise_for_status()
@@ -321,32 +330,34 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
 
                 if use_compression and response.headers.get('content-encoding', '') == 'snappy':
                     # TODO: check if snappy raises any exceptions on truncated response content
-                    decoded_content = snappy.uncompress(response.content)
+                    content = snappy.uncompress(response.content)
                 else:
-                    decoded_content = response.content
+                    content = response.content
 
-                if response.headers.get('content-type', '').startswith('application/json'):
-                    try:
-                        decoded_content = json.loads(decoded_content)
-                        if _DEBUG == '2':
-                            t = int(response.elapsed.total_seconds()*1000)
-                            print >>sys.stderr, method, url, "<=", response.status_code, "(%dms)"%t, "\n" + json.dumps(decoded_content, indent=2)
-                        elif _DEBUG:
-                            t = int(response.elapsed.total_seconds()*1000)
-                            print >>sys.stderr, method, url, "<=", response.status_code, "(%dms)"%t, Repr().repr(decoded_content)
+                if decode_response_body:
+                    content = content.decode('utf-8')
+                    if response.headers.get('content-type', '').startswith('application/json'):
+                        try:
+                            content = json.loads(content)
+                            if _DEBUG == '2':
+                                t = int(response.elapsed.total_seconds()*1000)
+                                print(method, url, "<=", response.status_code, "(%dms)"%t, "\n" + json.dumps(content, indent=2), file=sys.stderr)
+                            elif _DEBUG:
+                                t = int(response.elapsed.total_seconds()*1000)
+                                print(method, url, "<=", response.status_code, "(%dms)"%t, Repr().repr(content), file=sys.stderr)
 
-                        return decoded_content
-                    except ValueError:
-                        # If a streaming API call (no content-length
-                        # set) encounters an error it may just halt the
-                        # response because it has no other way to
-                        # indicate an error. Under these circumstances
-                        # the client sees unparseable JSON, and we
-                        # should be able to recover.
-                        streaming_response_truncated = 'content-length' not in response.headers
-                        raise HTTPError("Invalid JSON received from server")
-                return decoded_content
-        except (exceptions.DXAPIError, ConnectionError, HTTPError, Timeout, httplib.HTTPException) as e:
+                            return content
+                        except ValueError:
+                            # If a streaming API call (no content-length
+                            # set) encounters an error it may just halt the
+                            # response because it has no other way to
+                            # indicate an error. Under these circumstances
+                            # the client sees unparseable JSON, and we
+                            # should be able to recover.
+                            streaming_response_truncated = 'content-length' not in response.headers
+                            raise HTTPError("Invalid JSON received from server")
+                return content
+        except (exceptions.DXAPIError, ConnectionError, HTTPError, Timeout, requests.packages.urllib3.connectionpool.HTTPException) as e:
             last_error = e
 
             # TODO: support HTTP/1.1 503 Retry-After
@@ -542,7 +553,7 @@ if JOB_ID is not None:
     except exceptions.DXAPIError as e:
         if e.name == 'ResourceNotFound':
             err_msg = "Job ID %r was not found. Unset the DX_JOB_ID environment variable OR set it to be the ID of a valid job."
-            print >>sys.stderr, err_msg % (JOB_ID,)
+            print(err_msg % (JOB_ID,), file=sys.stderr)
             sys.exit(1)
         else:
             raise

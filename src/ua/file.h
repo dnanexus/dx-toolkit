@@ -26,7 +26,8 @@ class File {
 public:
 
   File(const std::string &localFile_,
-       const std::string &projectSpec_, const std::string &folder_, const std::string &name_, const bool toCompress_, const bool tryResuming, const std::string &mimeType_, 
+       const std::string &projectSpec_, const std::string &folder_, const std::string &name_,
+       const bool toCompress_, const bool tryResuming, const std::string &mimeType_, 
        const int64_t chunkSize, const unsigned int fileIndex_);
 
   void init(const bool tryResuming);
@@ -93,9 +94,13 @@ public:
   bool atleastOnePartDone;
   
   /*
-   * Job ID of the import app called for this file, OR:
-   * - the string "failed" if the import app could not be invoked for some reason (e.g., file upload couldn't finish, no ref genome found, etc)
-   * - the empty string if no import app was asked by user to be called
+   * Job ID of the import app called for this file, or:
+   *
+   * - the string "failed" if the import app could not be invoked for some
+   *   reason (e.g., file upload couldn't finish, no reference genome
+   *   found, etc.);
+   *
+   * - the empty string if no import app was asked by user to be called.
    */
   std::string jobID;
 
@@ -106,7 +111,8 @@ public:
    * (with space as delimiter). This string is used for identifying whether
    * an upload can be resumed or not.
    */
-  static std::string createResumeInfoString(const int64_t fileSize, const int64_t modifiedTimestamp, const bool toCompress, const int64_t chunkSize, const std::string &path);
+  static std::string createResumeInfoString(const int64_t fileSize, const int64_t modifiedTimestamp,
+                                            const bool toCompress, const int64_t chunkSize, const std::string &path);
 
 };
 

@@ -16,30 +16,35 @@
 
 #include "options.h"
 
-using namespace std;
+#include <cmath>
+#include <limits>
 
 #include <boost/filesystem.hpp>
 #include <boost/thread.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <cmath>
-#include <limits>
+#include <boost/regex.hpp>
+
 #include "dxcpp/dxlog.h"
 #include "dxjson/dxjson.h"
 #include "dxcpp/dxcpp.h"
 
 #if MAC_BUILD
-  #include <mach-o/dyld.h>
+#include <mach-o/dyld.h>
 #endif
+
 namespace fs = boost::filesystem;
 
+using namespace std;
 using namespace dx;
 
 #if WINDOWS_BUILD
-  const int64_t DEFAULT_CHUNK_SIZE = 30 * 1024 * 1024;
-  const int DEFAULT_UPLOAD_THREADS = 6;
+const int64_t DEFAULT_CHUNK_SIZE = 30 * 1024 * 1024;
+const char * DEFAULT_RAW_CHUNK_SIZE = "30M";
+const int DEFAULT_UPLOAD_THREADS = 6;
 #else
-  const int64_t DEFAULT_CHUNK_SIZE = 75 * 1024 * 1024;
-  const int DEFAULT_UPLOAD_THREADS = 8;
+const int64_t DEFAULT_CHUNK_SIZE = 75 * 1024 * 1024;
+const char * DEFAULT_RAW_CHUNK_SIZE = "75M";
+const int DEFAULT_UPLOAD_THREADS = 8;
 #endif
 
 const int DEFAULT_READ_THREADS = 2;
@@ -62,8 +67,8 @@ Options::Options() {
     ("read-threads", po::value<int>(&readThreads)->default_value(DEFAULT_READ_THREADS), "Number of parallel disk read threads")
     ("compress-threads,c", po::value<int>(&compressThreads)->default_value(defaultCompressThreads), "Number of parallel compression threads")
     ("upload-threads,u", po::value<int>(&uploadThreads)->default_value(DEFAULT_UPLOAD_THREADS), "Number of parallel upload threads")
-    ("chunk-size,s", po::value<int>(&chunkSize)->default_value(DEFAULT_CHUNK_SIZE), "Size (in bytes) of chunks in which the file should be uploaded")
-    ("throttle", po::value<int64_t>(&throttle)->default_value(-1), "If a positive value, then denotes maximum upload speed of UA (in bytes/second), else speed is not throttled")
+    ("chunk-size,s", po::value<string>(&rawChunkSize)->default_value(DEFAULT_RAW_CHUNK_SIZE), "Size of chunks in which the file should be uploaded. Specify an integer size in bytes or append optional units (B, K, M, G). E.g., '50M' sets chunk size to 50 megabytes.")
+    ("throttle", po::value<string>(&rawThrottle), "Limit maximum upload speed. Specify an integer to set speed in bytes/second or append optional units (B, K, M, G). E.g., '3M' limits upload speed to 3 megabytes/second. If not set, uploads are not throttled.")
     ("tries,r", po::value<int>(&tries)->default_value(3), "Number of tries to upload each chunk")
     ("do-not-compress", po::bool_switch(&doNotCompress), "Do not compress file(s) before upload")
     ("progress,g", po::bool_switch(&progress), "Report upload progress")
@@ -91,33 +96,92 @@ Options::Options() {
   command_line_opts = new po::options_description();
   command_line_opts->add(*visible_opts);
   command_line_opts->add(*hidden_opts);
-  
+
   pos_opts = new po::positional_options_description();
   pos_opts->add("file", -1);
+}
+
+size_t parseSize(const string &sizeStr) {
+  static const boost::regex sizeExpr("(\\d+)([BKMG]?)");
+  boost::smatch match;
+
+  if (regex_match(sizeStr, match, sizeExpr)) {
+    assert(match.size() == 3);
+
+    size_t size = boost::lexical_cast<size_t>(match[1]);
+    string units = match[2];
+    size_t sizeBytes;
+
+    if ((units == "B") || (units == "")) {
+      // bytes
+      sizeBytes = size;
+    } else if (units == "K") {
+      // kilobytes
+      sizeBytes = size * 1024;
+    } else if (units == "M") {
+      // megabytes
+      sizeBytes = size * 1024 * 1024;
+    } else if (units == "G") {
+      // gigabytes
+      sizeBytes = size * 1024 * 1024 * 1024;
+    } else {
+      // can't happen unless regex gets out of sync with this conditional
+      throw runtime_error("Unrecognized units: '" + units + "'");
+    }
+    return sizeBytes;
+  } else {
+    throw runtime_error("Invalid size argument: '" + sizeStr + "'; provide an integer optionally followed by units (B, K, M, or G)");
+  }
 }
 
 void Options::parse(int argc, char * argv[]) {
   po::store(po::command_line_parser(argc, argv).options(*command_line_opts).positional(*pos_opts).run(), vm);
   po::notify(vm);
   dx::Log::ReportingLevel() = (verbose) ? dx::logDEBUG4 : dx::DISABLE_LOGGING;
-  if (throttle > 0) {
-    uploadThreads = min(uploadThreads, static_cast<int>(ceil(throttle/(1024.0*1024.0) + numeric_limits<double>::epsilon())));
-    DXLOG(logINFO) << "Throttling is on ... setting number of upload threads = " << uploadThreads;
+
+  if (rawChunkSize.empty()) {
+    chunkSize = DEFAULT_CHUNK_SIZE;
+    DXLOG(logINFO) << "Using default chunk size." << endl;
+  } else {
+    chunkSize = parseSize(rawChunkSize);
+    DXLOG(logINFO) << "Setting chunk size to " << chunkSize << " bytes." << endl;
+  }
+
+  if (rawThrottle.empty()) {
+    throttle = -1;
+    DXLOG(logINFO) << "Throttling is disabled." << endl;
+  } else {
+    throttle = parseSize(rawThrottle);
+    DXLOG(logINFO) << "Throttling is enabled. Maximum upload speed is set to " << throttle << " bytes/second." << endl;
+
+    int oldUploadThreads = uploadThreads;
+    uploadThreads = min(uploadThreads, static_cast<int>(ceil(throttle / (1024.0 * 1024.0) + numeric_limits<double>::epsilon())));
+    if (uploadThreads != oldUploadThreads) {
+      DXLOG(logINFO) << "Adjusting number of upload threads from " << oldUploadThreads << " to " << uploadThreads << "." << endl;
+    } else {
+      DXLOG(logINFO) << "Number of upload threads is " << uploadThreads << "." << endl;
+    }
   }
 }
 
-// This function is responsible for:
-//  - If --auth-token, --apiserver-* params are not provided, then set it from
-//    values in dxcpp (dx::config::*)
-//  - If --auth-token, --apiserver-* params are provided, then set the values
-//    in dxcpp (dx::config::*), so that dxcpp uses correct host, token, etc
-//  - Throw error if a required parameter is not set anywhere (provided on command line, or in dx::config)
+/*
+ * This function does the following:
+ *
+ * - If the --auth-token and --apiserver-* params are not provided, set
+ *   them from values in dxcpp (dx::config::*).
+ *
+ * - If the --auth-token, --apiserver-* params are provided, set the values
+ *   in dxcpp (dx::config::*), so that dxcpp uses correct host, token, etc.
+ *
+ * - Throw an error if a required parameter is not set anywhere (provided
+ *   on command line, or in dx::config).
+ */
 void Options::setApiserverDxConfig() {
   using namespace dx::config; // for SECURITY_CONTEXT(), APISERVER_*(), etc
 
   if (authToken.empty()) {
     // If --auth-token flag is not used, check that dx::config::SECURITY_CONTEXT() has a auth token, else throw
-    if (SECURITY_CONTEXT().size() == 0) 
+    if (SECURITY_CONTEXT().size() == 0)
       throw runtime_error("No Authentication token found, please provide a correct auth token (you may use --auth-token option)");
   } else {
     DXLOG(logINFO) << "Setting dx::config::SECURITY_CONTEXT() from value provided at run time: '" << authToken << "'";
@@ -188,10 +252,12 @@ void Options::printHelp(char * programName) {
   }
 #endif
 
-// Looks at either the 'certificate-file' flag's value,
-// or tries to find the certificate file in a few known
-// standard locations. Throws an error if not found anywhere.
-// Note: Do not call when protocol being used != https
+/*
+ * Looks at the --certificate-file flag's value, or tries to find the
+ * certificate file in a few known standard locations. Throws an error if
+ * it is not found anywhere. Note: do not call when the protocol being used
+ * is not https.
+ */
 void setCertificateFile(const string &certificateFile) {
   using namespace dx::config;
   #if MAC_BUILD
@@ -215,7 +281,7 @@ void setCertificateFile(const string &certificateFile) {
     return;
   } else {
     if (CA_CERT().empty()) {
-      DXLOG(logINFO) << "--certificate-file is not specified, and env var 'DX_CA_CERT' is not present either.\n";
+      DXLOG(logINFO) << "--certificate-file is not specified, and environment variable DX_CA_CERT is not present." << endl;
       #if WINDOWS_BUILD
         DXLOG(logINFO) << " For Windows version, we don't look for CA certificate in standard location, but rather use the curl default.";
         return;
@@ -232,9 +298,9 @@ void setCertificateFile(const string &certificateFile) {
           }
           DXLOG(logINFO) << " ... not found.";
         }
-        // If we are here, we haven't found certificate file in any of the standard locations. Throw error
+
         throw runtime_error("Unable to find certificate file (for verifying authenticity of the peer over SSL connection) in any of the standard locations.\n"
-                            "Please use the undocumented option: '--certificate-file' to specify it's location, or set it to string 'NOVERIFY' for disabling "
+                            "Please use the option '--certificate-file' to specify its location, or set it to string 'NOVERIFY' to disable "
                             "authenticity check of the remote host (not recommended).");
       #endif
     } else {
@@ -245,7 +311,7 @@ void setCertificateFile(const string &certificateFile) {
   }
 }
 
-void Options::validate() { 
+void Options::validate() {
   if (!files.empty()) {
     // - Check that all file actually exist
     // - Resolve all symlinks
@@ -268,7 +334,7 @@ void Options::validate() {
   } else {
     throw runtime_error("Must specify at least one file to upload");
   }
-  
+
   if (names.size() == 0) {
     // Get each file object name from the local name of the corresponding
     // file.
@@ -283,7 +349,7 @@ void Options::validate() {
                         boost::lexical_cast<string>(files.size()) + " files, but only " +
                         boost::lexical_cast<string>(names.size()) + " names were provided.");
   }
-  
+
   if (projects.empty()) {
     if (!dx::config::CURRENT_PROJECT().empty()) {
       DXLOG(logINFO) << "No project was explicitly specified, will use from dx::config::CURRENT_PROJECT = '" << dx::config::CURRENT_PROJECT() << "'";
@@ -294,7 +360,7 @@ void Options::validate() {
   }
   // Now if only 1 project is specified, make them equal to number of files.
   if (projects.size() == 1) {
-    DXLOG(logINFO) << "Only one project was found (specified explicitly, or retrieved from environment variables). Will use it for all input file(s).";
+    DXLOG(logINFO) << "Only one project was found (specified explicitly, or retrieved from environment variables). Will use it for all input file(s)." << endl;
     // If one project was specified, use that for all files.
     while (projects.size() < files.size()) {
       projects.push_back(projects[0]);
@@ -309,6 +375,7 @@ void Options::validate() {
                           boost::lexical_cast<string>(projects.size()) + " projects were provided.");
     }
   }
+
   if (folders.empty()) {
     throw runtime_error("A folder must be specified");
   } else if (folders.size() == 1) {
@@ -325,7 +392,7 @@ void Options::validate() {
   }
 
   /*
-   * At this point, we should have the same name of names, folders,
+   * At this point, we should have the same number of names, folders,
    * projects, and (local) files. If this is not the case, this is an
    * internal error -- something that should "never happen", not something
    * that can be addressed by the user.
@@ -333,27 +400,10 @@ void Options::validate() {
   assert(names.size() == files.size());
   assert(folders.size() == files.size());
   assert(projects.size() == files.size());
-  
-  // Commented code below: setApiserverDxConfig() take care of these cases now
-/*
-  if (authToken.empty()) {
-    throw runtime_error("An authentication token must be provided");
-  }
-  if (apiserverProtocol.empty()) {
-    throw runtime_error("API server protocol must be specified (\"http\" or \"https\")");
-  }
-  if (apiserverHost.empty()) {
-    throw runtime_error("An API server must be specified");
-  }
-  if (apiserverPort < 1) {
-    ostringstream msg;
-    msg << "Invalid API server port: " << apiserverPort;
-    throw runtime_error(msg.str());
-  }
-  */
+
   string lowerCaseProt = dx::config::APISERVER_PROTOCOL();
   std::transform(lowerCaseProt.begin(), lowerCaseProt.end(), lowerCaseProt.begin(), ::tolower); // conver to lower case
-  
+
   if (lowerCaseProt == "https") {
     setCertificateFile(certificateFile);
   }
@@ -383,6 +433,16 @@ void Options::validate() {
     throw runtime_error(msg.str());
   }
 
+  if (throttle < 0) {
+    cerr << "Upload throttling is disabled." << endl;
+  } else if (throttle < 4 * 1024) {
+    throw runtime_error("Uploads are throttled to " + boost::lexical_cast<string>(throttle) + " bytes/sec, which is less than 4 Kbytes/sec. Choose a larger value.");
+  } else if (throttle < 256 * 1024) {
+    cerr << "WARNING: Uploads are throttled to " << throttle << " bytes/sec, which is less than 256 KBytes/sec. We recommend allowing higher speeds for better performance." << endl;
+  } else {
+    cerr << "Uploads are throttled to " << throttle << " bytes/sec." << endl;
+  }
+
   // Check that at most one import flag is present.
   int countImportFlags = 0;
   countImportFlags += (reads) ? 1 : 0;
@@ -392,18 +452,17 @@ void Options::validate() {
   if (countImportFlags > 1) {
     ostringstream msg;
     msg << "Only one of these flags can be used in a single call: --reads, --paired-reads, --mappings, and --variants.";
-    throw runtime_error(msg.str());  
+    throw runtime_error(msg.str());
   }
   if ((mappings || variants) && refGenome.empty()) {
     ostringstream msg;
     msg << "Reference Genome must be specified (using --ref-genome flag) if --mappings, or --variants is present.";
-    throw runtime_error(msg.str());  
+    throw runtime_error(msg.str());
   }
   if (!mappings && !variants && !refGenome.empty()) {
     ostringstream msg;
     msg << "Reference Genome (--ref-genome) can only be specified if --mappings, or --variants is present.";
-    throw runtime_error(msg.str());  
-    
+    throw runtime_error(msg.str());
   }
   if (pairedReads && (files.size() % 2)) {
     ostringstream msg;
