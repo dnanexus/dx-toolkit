@@ -1008,8 +1008,7 @@ def main(number):
         self.assertEqual(analysis_desc["tags"], ["foo"])
         self.assertEqual(analysis_desc["properties"], {"foo": "bar"})
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS and os.environ.get("DX_RUN_NEXT_TESTS"),
-                         'skipping test that would run a job and requires unreleased features')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
     def test_run_workflow_with_instance_type(self):
         dxworkflow = dxpy.DXWorkflow(dxpy.api.workflow_new({"project": self.proj_id})['id'])
         dxapplet = dxpy.DXApplet()

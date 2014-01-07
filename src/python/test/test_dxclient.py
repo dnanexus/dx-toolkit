@@ -880,8 +880,7 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertIn("Tags bar\n", analysis_desc)
         self.assertIn("Properties foo=bar\n", analysis_desc)
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS and os.environ.get("DX_RUN_NEXT_TESTS"),
-                         'skipping test that runs jobs and requires next server-side update')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
     def test_dx_run_workflow_prints_cached_executions(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "name": "myapplet",
@@ -918,8 +917,7 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertNotIn('will reuse results from a previous analysis', run_output)
         self.assertNotIn(job_id, run_output)
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS and os.environ.get("DX_RUN_NEXT_TESTS"),
-                         'skipping test that runs jobs and requires next server-side update')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
     def test_dx_run_workflow_with_inst_type_requests(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "name": "myapplet",
@@ -1821,8 +1819,7 @@ class TestDXBuildApp(DXTestCase):
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
 
-    @unittest.skipUnless(testutil.TEST_CREATE_APPS and os.environ.get("DX_RUN_NEXT_TESTS"),
-                         'skipping test that would create apps and that requires next server-side update')
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS, 'skipping test that would create apps')
     def test_build_app_and_make_it_public(self):
         app_spec = {
             "name": "test_build_app_and_make_it_public",
@@ -1985,8 +1982,7 @@ class TestDXBuildApp(DXTestCase):
         run("dx build --create-app --json " + app_dir)
         self.assertEquals(json.loads(run("dx api " + app_id + " listCategories"))["categories"], ['B'])
 
-    @unittest.skipUnless(testutil.TEST_CREATE_APPS and os.environ.get("DX_RUN_NEXT_TESTS"),
-                         'skipping test that would create apps and that requires next server-side update')
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS, 'skipping test that would create apps')
     def test_update_app_authorized_users(self):
         app0_spec = {
             "name": "update_app_authorized_users",
