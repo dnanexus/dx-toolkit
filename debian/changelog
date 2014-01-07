@@ -1,3 +1,9 @@
+dx-toolkit (0.80.1) precise; urgency=low
+
+  * Bug fixes.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 07 Jan 2014 22:47:59 +0000
+
 dx-toolkit (0.80.0) precise; urgency=low
 
   * "dx get applet-XXXX" reconstructs the applet source directory
