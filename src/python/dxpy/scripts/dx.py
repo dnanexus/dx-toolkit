@@ -2724,6 +2724,7 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
         "details": args.details,
         "delay_workspace_destruction": args.delay_workspace_destruction,
         "instance_type": args.instance_type,
+        "stage_instance_types": args.stage_instance_types,
         "extra_args": args.extra_args
     }
 
@@ -2738,12 +2739,19 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
                 dry_run = dxpy.api.workflow_dry_run(executable.get_id(),
                                                     executable._get_run_input(input_json, **run_kwargs))
                 # print which stages are getting rerun
+                # Note: information may be out of date if the dryRun
+                # is performed too soon after the candidate execution
+                # has been constructed (and the jobs have not yet been
+                # created in the system); this errs on the side of
+                # assuming such stages will be re-run.
                 num_cached_stages = len([stage for stage in dry_run['stages'] if
+                                         'parentAnalysis' in stage['execution'] and
                                          stage['execution']['parentAnalysis'] != dry_run['id']])
                 if num_cached_stages > 0:
                     print(fill('The following ' + str(num_cached_stages) + ' stage(s) will reuse results from a previous analysis:'))
                     for i, stage in enumerate(dry_run['stages']):
-                        if stage['execution']['parentAnalysis'] != dry_run['id']:
+                        if 'parentAnalysis' in stage['execution'] and \
+                           stage['execution']['parentAnalysis'] != dry_run['id']:
                             stage_name = stage['execution']['name']
                             print('  Stage ' + str(i) + ': ' + stage_name + \
                                   ' (' + stage['execution']['id'] + ')')
@@ -3839,7 +3847,7 @@ parser_run.add_argument('--watch', help="Watch the job after launching it", acti
 parser_run.add_argument('--input-help',
                         help=fill('Print help and examples for how to specify inputs', width_adjustment=-24),
                         action=runInputHelp, nargs=0)
-parser_run.set_defaults(func=run, verbose=False, help=False, details=None)
+parser_run.set_defaults(func=run, verbose=False, help=False, details=None, stage_instance_types=None)
 register_subparser(parser_run, categories='exec')
 
 parser_watch = subparsers.add_parser('watch', help='Watch logs of a job and its subjobs', prog='dx watch',

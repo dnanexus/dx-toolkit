@@ -284,16 +284,17 @@ def _parse_inst_type(thing):
 def process_instance_type_arg(args, for_workflow=False):
     if args.instance_type:
         if for_workflow:
-            final_val = {}
+            args.stage_instance_types = {}
+            new_inst_type_val = {}
             for inst_type_req in args.instance_type:
                 if '=' in inst_type_req:
                     index_of_eql = inst_type_req.rfind('=')
-                    final_val[inst_type_req[:index_of_eql]] = _parse_inst_type(
+                    args.stage_instance_types[inst_type_req[:index_of_eql]] = _parse_inst_type(
                         inst_type_req[index_of_eql + 1:]
                     )
                 else:
-                    final_val["*"] = _parse_inst_type(inst_type_req)
-            args.instance_type = final_val
+                    new_inst_type_val = _parse_inst_type(inst_type_req)
+            args.instance_type = new_inst_type_val
         elif not isinstance(args.instance_type, basestring):
             args.instance_type = _parse_inst_type(args.instance_type[-1])
         else:

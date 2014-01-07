@@ -901,6 +901,9 @@ class TestDXClientWorkflow(DXTestCase):
         job_id = run_resp['stages'][0]
         self.assertTrue(job_id.startswith('job-'))
 
+        # wait for events to propagate and for the job to be created
+        time.sleep(2)
+
         # Running the workflow again with no changes should result in
         # the job getting reused
         run_output = run("dx run " + workflow_id + " -i0.number=32 -y").strip()
