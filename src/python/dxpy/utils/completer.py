@@ -435,7 +435,11 @@ class InstanceTypesCompleter():
               InstanceTypeSpec('dx_m2.4xlarge', 68.4, 8, 1680),
               InstanceTypeSpec('dx_cc2.8xlarge', 60.5, 32, 3360),
               InstanceTypeSpec('dx_cg1.4xlarge', 22.5, 16, 1680),
-              InstanceTypeSpec('dx_cr1.8xlarge', 244, 32, 240)):
+              InstanceTypeSpec('dx_cr1.8xlarge', 244, 32, 240),
+              InstanceTypeSpec('dx_i2.xlarge', 30.5, 4, 800),
+              InstanceTypeSpec('dx_i2.2xlarge', 61, 8, 1600),
+              InstanceTypeSpec('dx_i2.4xlarge', 122, 16, 3200),
+              InstanceTypeSpec('dx_i2.8xlarge', 244, 32, 6400)):
         instance_types[i.Name] = i
     instance_type_names = instance_types.keys()
 
