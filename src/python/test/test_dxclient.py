@@ -452,6 +452,8 @@ class TestDXClient(DXTestCase):
         shell1 = pexpect.spawn("bash")
         shell2 = pexpect.spawn("bash")
         shell1.logfile = shell2.logfile = sys.stdout
+        shell1.setwinsize(20, 90)
+        shell2.setwinsize(20, 90)
 
         def expect_dx_env_cwd(shell, wd):
             shell.expect(self.project)

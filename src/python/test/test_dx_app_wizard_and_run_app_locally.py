@@ -35,6 +35,7 @@ def run_dx_app_wizard():
     try:
         wizard = pexpect.spawn("dx-app-wizard")
         wizard.logfile = sys.stdout
+        wizard.setwinsize(20, 90)
         wizard.expect("App Name:")
         wizard.sendline("MyTestApp")
         wizard.expect("Title")
