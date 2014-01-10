@@ -540,9 +540,11 @@ int main(int argc, char * argv[]) {
   }
 
   if (opt.env()) {
+    opt.setApiserverDxConfig();  // needed for 'ua --env' to report project name
     printEnvironmentInfo();
     return 0;
   }
+
   if (opt.version()) {
     cout << "Upload Agent Version: " << UAVERSION;
 #if OLD_KERNEL_SUPPORT

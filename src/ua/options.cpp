@@ -164,76 +164,6 @@ void Options::parse(int argc, char * argv[]) {
   }
 }
 
-/*
- * This function does the following:
- *
- * - If the --auth-token and --apiserver-* params are not provided, set
- *   them from values in dxcpp (dx::config::*).
- *
- * - If the --auth-token, --apiserver-* params are provided, set the values
- *   in dxcpp (dx::config::*), so that dxcpp uses correct host, token, etc.
- *
- * - Throw an error if a required parameter is not set anywhere (provided
- *   on command line, or in dx::config).
- */
-void Options::setApiserverDxConfig() {
-  using namespace dx::config; // for SECURITY_CONTEXT(), APISERVER_*(), etc
-
-  if (authToken.empty()) {
-    // If --auth-token flag is not used, check that dx::config::SECURITY_CONTEXT() has a auth token, else throw
-    if (SECURITY_CONTEXT().size() == 0)
-      throw runtime_error("No Authentication token found, please provide a correct auth token (you may use --auth-token option)");
-  } else {
-    DXLOG(logINFO) << "Setting dx::config::SECURITY_CONTEXT() from value provided at run time: '" << authToken << "'";
-    SECURITY_CONTEXT() = dx::JSON::parse("{\"auth_token_type\": \"Bearer\", \"auth_token\": \"" + authToken + "\"}");
-  }
-
-  if (!apiserverProtocol.empty()) {
-    DXLOG(logINFO) << "Setting dx::config::APISERVER_PROTOCOL from value provided at run time: '" << apiserverProtocol << "'";
-    APISERVER_PROTOCOL() = apiserverProtocol;
-  } else {
-    apiserverProtocol = APISERVER_PROTOCOL();
-    DXLOG(logINFO) << "Using apiserver protocol from dx::config::APISERVER_PROTOCOL: '" << apiserverProtocol << "'";
-  }
-  if (apiserverPort != -1) {
-    DXLOG(logINFO) << "Setting dx::config::APISERVER_PORT from value provided at run time: '" << apiserverPort << "'";
-    APISERVER_PORT() = boost::lexical_cast<string>(apiserverPort);
-  } else {
-    apiserverPort = boost::lexical_cast<int>(APISERVER_PORT());
-    DXLOG(logINFO) << "Using apiserver port from dx::config::APISERVER_PORT: '" << apiserverPort << "'";
-  }
-  if (!apiserverHost.empty()) {
-    DXLOG(logINFO) << "Setting dx::config::APISERVER_HOST from value provided at run time: '" << apiserverHost << "'";
-    APISERVER_HOST() = apiserverHost;
-  } else {
-    apiserverHost = APISERVER_HOST();
-    DXLOG(logINFO) << "Using apiserver host from dx::config::APISERVER_HOST: '" << apiserverHost << "'";
-  }
-  // Now check that dxcpp has all of the required apiserver params set
-  if (APISERVER().empty()) {
-    throw runtime_error("At least one of apiserver host/port/protocol is not specified, unable to continue without this information."
-                        "Please use --apiserver-host, --apiserver-port, --apiserver-protocol to provide this info on command line");
-  }
-}
-
-bool Options::help() {
-  return vm.count("help");
-}
-
-bool Options::version() {
-  return vm.count("version");
-}
-
-bool Options::env() {
-  return vm.count("env");
-}
-
-void Options::printHelp(char * programName) {
-  cerr << "Usage: " << programName << " [options] <file> [...]" << endl
-       << endl
-       << (*visible_opts) << endl;
-}
-
 #if MAC_BUILD
   // Returns path of executable on Mac (not portable)
   string getExecutablePathOnMac() {
@@ -309,6 +239,83 @@ void setCertificateFile(const string &certificateFile) {
       return;
     }
   }
+}
+
+/*
+ * This function does the following:
+ *
+ * - If the --auth-token and --apiserver-* params are not provided, set
+ *   them from values in dxcpp (dx::config::*).
+ *
+ * - If the --auth-token, --apiserver-* params are provided, set the values
+ *   in dxcpp (dx::config::*), so that dxcpp uses correct host, token, etc.
+ *
+ * - Throw an error if a required parameter is not set anywhere (provided
+ *   on command line, or in dx::config).
+ */
+void Options::setApiserverDxConfig() {
+  using namespace dx::config; // for SECURITY_CONTEXT(), APISERVER_*(), etc
+
+  if (authToken.empty()) {
+    // If --auth-token flag is not used, check that dx::config::SECURITY_CONTEXT() has a auth token, else throw
+    if (SECURITY_CONTEXT().size() == 0)
+      throw runtime_error("No Authentication token found, please provide a correct auth token (you may use --auth-token option)");
+  } else {
+    DXLOG(logINFO) << "Setting dx::config::SECURITY_CONTEXT() from value provided at run time: '" << authToken << "'";
+    SECURITY_CONTEXT() = dx::JSON::parse("{\"auth_token_type\": \"Bearer\", \"auth_token\": \"" + authToken + "\"}");
+  }
+
+  if (!apiserverProtocol.empty()) {
+    DXLOG(logINFO) << "Setting dx::config::APISERVER_PROTOCOL from value provided at run time: '" << apiserverProtocol << "'";
+    APISERVER_PROTOCOL() = apiserverProtocol;
+  } else {
+    apiserverProtocol = APISERVER_PROTOCOL();
+    DXLOG(logINFO) << "Using apiserver protocol from dx::config::APISERVER_PROTOCOL: '" << apiserverProtocol << "'";
+  }
+  if (apiserverPort != -1) {
+    DXLOG(logINFO) << "Setting dx::config::APISERVER_PORT from value provided at run time: '" << apiserverPort << "'";
+    APISERVER_PORT() = boost::lexical_cast<string>(apiserverPort);
+  } else {
+    apiserverPort = boost::lexical_cast<int>(APISERVER_PORT());
+    DXLOG(logINFO) << "Using apiserver port from dx::config::APISERVER_PORT: '" << apiserverPort << "'";
+  }
+  if (!apiserverHost.empty()) {
+    DXLOG(logINFO) << "Setting dx::config::APISERVER_HOST from value provided at run time: '" << apiserverHost << "'";
+    APISERVER_HOST() = apiserverHost;
+  } else {
+    apiserverHost = APISERVER_HOST();
+    DXLOG(logINFO) << "Using apiserver host from dx::config::APISERVER_HOST: '" << apiserverHost << "'";
+  }
+  // Now check that dxcpp has all of the required apiserver params set
+  if (APISERVER().empty()) {
+    throw runtime_error("At least one of apiserver host/port/protocol is not specified, unable to continue without this information."
+                        "Please use --apiserver-host, --apiserver-port, --apiserver-protocol to provide this info on command line");
+  }
+
+  string lowerCaseProt = APISERVER_PROTOCOL();
+  std::transform(lowerCaseProt.begin(), lowerCaseProt.end(), lowerCaseProt.begin(), ::tolower); // convert to lower case
+
+  if (lowerCaseProt == "https") {
+    setCertificateFile(certificateFile);
+  }
+}
+
+bool Options::help() {
+  return vm.count("help");
+}
+
+bool Options::version() {
+  return vm.count("version");
+}
+
+bool Options::env() {
+  return vm.count("env");
+}
+
+void Options::printHelp(char * programName) {
+  cerr << "Usage: " << programName << " [options] <file> [...]" << endl
+       << endl
+       << (*visible_opts) << endl;
 }
 
 void Options::validate() {
@@ -401,12 +408,6 @@ void Options::validate() {
   assert(folders.size() == files.size());
   assert(projects.size() == files.size());
 
-  string lowerCaseProt = dx::config::APISERVER_PROTOCOL();
-  std::transform(lowerCaseProt.begin(), lowerCaseProt.end(), lowerCaseProt.begin(), ::tolower); // conver to lower case
-
-  if (lowerCaseProt == "https") {
-    setCertificateFile(certificateFile);
-  }
   if (readThreads < 1) {
     ostringstream msg;
     msg << "Number of read threads must be positive: " << readThreads;

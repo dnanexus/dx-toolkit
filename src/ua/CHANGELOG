@@ -1,3 +1,7 @@
+DNAnexus Upload Agent 1.5.1 <support@dnanexus.com>, 2014-Jan-09
+---------------------------------------------------------------
+  * Fix error in 'ua --env' due to bad CA certificate initialization.
+
 DNAnexus Upload Agent 1.5.0 <support@dnanexus.com>, 2014-Jan-07
 ---------------------------------------------------------------
   * Make chunk size and throttle parameters understand unit suffixes.
