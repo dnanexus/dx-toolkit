@@ -19,10 +19,11 @@ This submodule gives basic utilities for printing to the terminal.
 '''
 
 import textwrap, subprocess, os, sys
+from .env import sys_encoding
 
 if sys.stdout.isatty():
     try:
-        tty_rows, tty_cols = map(int, subprocess.check_output(['stty', 'size'], stderr=os.devnull).split())
+        tty_rows, tty_cols = map(int, subprocess.check_output(['stty', 'size'], stderr=open(os.devnull, 'w')).split())
         std_width = min(tty_cols - 2, 100)
     except:
         tty_rows, tty_cols = 24, 80
@@ -114,3 +115,25 @@ def fill(string, width_adjustment=0, **kwargs):
     if "break_on_hyphens" not in kwargs:
         kwargs["break_on_hyphens"] = False
     return textwrap.fill(string, **kwargs)
+
+def pager(content, pager=None, stream=None):
+    if stream is None:
+        stream = sys.stdout
+
+    content_lines = content.splitlines()
+    content_rows = len(content_lines)
+    content_cols = max(len(i) for i in content_lines)
+    encoded_content = content.encode(sys_encoding)
+
+    if stream == sys.stdout and stream.isatty() and (tty_rows <= content_rows or tty_cols <= content_cols):
+        if pager is None:
+            pager = os.environ.get('PAGER', 'less -RS')
+        try:
+            p = subprocess.Popen(pager, shell=True, stdin=subprocess.PIPE, stdout=stream)
+            p.stdin.write(encoded_content)
+            p.stdin.close()
+            p.wait()
+        except:
+            stream.write(encoded_content)
+    else:
+        stream.write(encoded_content)

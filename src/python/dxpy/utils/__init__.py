@@ -20,7 +20,7 @@ Utilities shared by dxpy modules.
 
 from __future__ import print_function
 
-import os, sys, json, collections, concurrent.futures, signal, traceback, time, gc
+import os, sys, json, collections, concurrent.futures, signal, traceback, time, gc, locale
 import dateutil.parser
 from .exec_utils import *
 from .. import logger
@@ -293,7 +293,6 @@ def json_load_raise_on_duplicates(*args, **kwargs):
     '''
     kwargs['object_pairs_hook'] = _dict_raise_on_duplicates
     return json.load(*args, **kwargs)
-
 
 def json_loads_raise_on_duplicates(*args, **kwargs):
     ''' Like json.loads(), but raises an error on duplicate keys.

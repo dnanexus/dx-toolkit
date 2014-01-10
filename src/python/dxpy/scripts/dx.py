@@ -19,7 +19,7 @@
 
 from __future__ import print_function
 
-import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, errno, subprocess
+import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, errno, subprocess, platform
 import shlex # respects quoted substrings when splitting
 
 from ..cli import try_call
@@ -27,12 +27,11 @@ from ..cli import workflow as workflow_cli
 from ..exceptions import err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions
 from ..packages import requests
 from ..compat import is_py2, basestring, str, input
+from ..utils.env import sys_encoding
 
 # Try to reset encoding to utf-8
 # Note: This is incompatible with pypy
 # Note: In addition to PYTHONIOENCODING=UTF-8, this also enables command-line arguments to be decoded properly.
-import platform, locale
-sys_encoding = locale.getdefaultlocale()[1] or 'UTF-8'
 if platform.python_implementation() != "PyPy":
     try:
         reload(sys).setdefaultencoding(sys_encoding)
@@ -146,7 +145,7 @@ from dxpy.utils import group_array_by_field, normalize_timedelta, normalize_time
 from dxpy.utils.env import clearenv, write_env_var
 from dxpy.utils.printing import (CYAN, BLUE, YELLOW, GREEN, RED, WHITE, UNDERLINE, BOLD, ENDC, DNANEXUS_LOGO,
                                  DNANEXUS_X, set_colors, set_delimiter, get_delimiter, DELIMITER, fill,
-                                 tty_rows, tty_cols)
+                                 tty_rows, tty_cols, pager)
 from dxpy.utils.pretty_print import format_tree, format_table
 from dxpy.utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id, is_analysis_id,
                                  get_last_pos_of_char, resolve_container_id_or_name, resolve_path,
@@ -3271,6 +3270,10 @@ class PrintCategoryHelp(argparse.Action):
         parser.exit(0)
 
 class DXArgumentParser(argparse.ArgumentParser):
+    def _print_message(self, message, file=None):
+        if message:
+            pager(message)
+
     def error(self, message):
         self.print_help(sys.stderr)
         self.exit(2, '%s: error: %s\n' % (self.prog, message))
