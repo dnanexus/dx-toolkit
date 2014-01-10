@@ -1355,9 +1355,8 @@ def new_project(args):
         if sys.stdin.isatty():
             args.name = input("Enter name for new project: ")
         else:
-            parser_new_project.print_help()
-            parser.exit(1, fill("No project name supplied, and input is not interactive") + '\n')
-
+            parser.exit(1, parser_new_project.format_help() +
+                           fill("No project name supplied, and input is not interactive") + '\n')
     try:
         resp = dxpy.DXHTTPRequest('/project/new',
                                   {"name": args.name})
@@ -2940,8 +2939,8 @@ def run(args):
     try_call(process_properties_args, args)
 
     if args.clone is None and args.executable == "":
-        parser_map['run'].print_help()
-        parser.exit(2, fill("Error: Either the executable must be specified, or --clone must be used to indicate a job to clone") + "\n")
+        parser.exit(2, parser_map['run'].format_help() +
+                       fill("Error: Either the executable must be specified, or --clone must be used to indicate a job to clone") + "\n")
 
     args.input_from_clone, args.sys_reqs_from_clone = {}, {}
 
@@ -3272,11 +3271,20 @@ class PrintCategoryHelp(argparse.Action):
 class DXArgumentParser(argparse.ArgumentParser):
     def _print_message(self, message, file=None):
         if message:
-            pager(message)
+            pager(message, file=file)
+
+    def exit(self, status=0, message=None):
+        if isinstance(status, basestring):
+            message = message + status if message else status
+            status = 1
+        if message:
+            self._print_message(message, sys.stderr)
+        sys.exit(status)
 
     def error(self, message):
-        self.print_help(sys.stderr)
-        self.exit(2, '%s: error: %s\n' % (self.prog, message))
+        self.exit(2, '{help}\n{prog}: error: {msg}\n'.format(help=self.format_help(),
+                                                             prog=self.prog,
+                                                             msg=message))
 
 def register_subparser(subparser, subparsers_action=None, categories=('other', )):
     if subparsers_action is None:

@@ -116,24 +116,24 @@ def fill(string, width_adjustment=0, **kwargs):
         kwargs["break_on_hyphens"] = False
     return textwrap.fill(string, **kwargs)
 
-def pager(content, pager=None, stream=None):
-    if stream is None:
-        stream = sys.stdout
+def pager(content, pager=None, file=None):
+    if file is None:
+        file = sys.stdout
 
     content_lines = content.splitlines()
     content_rows = len(content_lines)
     content_cols = max(len(i) for i in content_lines)
     encoded_content = content.encode(sys_encoding)
 
-    if stream == sys.stdout and stream.isatty() and (tty_rows <= content_rows or tty_cols <= content_cols):
+    if file == sys.stdout and file.isatty() and (tty_rows <= content_rows or tty_cols <= content_cols):
         if pager is None:
             pager = os.environ.get('PAGER', 'less -RS')
         try:
-            p = subprocess.Popen(pager, shell=True, stdin=subprocess.PIPE, stdout=stream)
+            p = subprocess.Popen(pager, shell=True, stdin=subprocess.PIPE, stdout=file)
             p.stdin.write(encoded_content)
             p.stdin.close()
             p.wait()
         except:
-            stream.write(encoded_content)
+            file.write(encoded_content)
     else:
-        stream.write(encoded_content)
+        file.write(encoded_content)
