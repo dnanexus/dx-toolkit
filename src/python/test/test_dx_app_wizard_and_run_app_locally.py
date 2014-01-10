@@ -112,6 +112,7 @@ def create_app_dir_with_dxapp_json(dxapp_json, language):
             json.dump(dxapp_json, fd)
 
         wizard = pexpect.spawn("dx-app-wizard --json-file dxapp.json --language " + language)
+        wizard.setwinsize(20, 90)
         wizard.logfile = sys.stdout
         wizard.expect("App Name")
         wizard.sendline()
