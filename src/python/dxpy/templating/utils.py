@@ -17,6 +17,8 @@
 # Miscellaneous utility classes and functions for the dx-app-wizard
 # command-line tool
 
+from __future__ import print_function
+
 import os, shutil, subprocess, re, json
 
 from ..utils.printing import (BOLD, DNANEXUS_LOGO, ENDC, fill)
@@ -43,7 +45,7 @@ try:
     readline.set_completer_delims("")
     completer_state['available'] = True
 except ImportError:
-    print 'NOTE: readline module not available.  Install for tab-completion.'
+    print('NOTE: readline module not available.  Install for tab-completion.')
 
 class Completer():
     def __init__(self, choices):
@@ -79,14 +81,14 @@ def prompt_for_var(prompt_str, default=None, allow_empty=False, choices=None):
         try:
             value = input(prompt)
         except KeyboardInterrupt:
-            print ''
+            print('')
             exit(1)
         except EOFError:
-            print ''
+            print('')
             exit(1)
         if value != '':
             if choices is not None and value not in choices:
-                print 'Error: unrecognized response, expected one of ' + json.dumps(choices)
+                print('Error: unrecognized response, expected one of ' + json.dumps(choices))
             else:
                 return value
         elif default is not None:
@@ -106,10 +108,10 @@ def prompt_for_yn(prompt_str, default=None):
         try:
             value = input(prompt)
         except KeyboardInterrupt:
-            print ''
+            print('')
             exit(1)
         except EOFError:
-            print ''
+            print('')
             exit(1)
         if value != '':
             if value.lower()[0] == 'y':
@@ -117,56 +119,56 @@ def prompt_for_yn(prompt_str, default=None):
             elif value.lower()[0] == 'n':
                 return False
             else:
-                print 'Error: unrecognized response'
+                print('Error: unrecognized response')
         elif default is not None:
             return default
 
 def print_intro(api_version):
-    print DNANEXUS_LOGO() + ' App Wizard, API v' + api_version
-    print ''
+    print(DNANEXUS_LOGO() + ' App Wizard, API v' + api_version)
+    print('')
 
-    print BOLD() + 'Basic Metadata' + ENDC()
-    print ''
-    print fill('''Please enter basic metadata fields that will be used to
+    print(BOLD() + 'Basic Metadata' + ENDC())
+    print('')
+    print(fill('''Please enter basic metadata fields that will be used to
 describe your app.  Optional fields are denoted by options with square
 brackets.  At the end of this wizard, the files necessary for building your
-app will be generated from the answers you provide.''')
-    print ''
+app will be generated from the answers you provide.'''))
+    print('')
 
 def get_name(default=None):
-    print fill('The ' + BOLD() + 'name' + ENDC() + ' of your app must be unique on the DNAnexus platform.  After creating your app for the first time, you will be able to publish new versions using the same app name.  App names are restricted to alphanumeric characters (a-z, A-Z, 0-9), and the characters ".", "_", and "-".')
+    print(fill('The ' + BOLD() + 'name' + ENDC() + ' of your app must be unique on the DNAnexus platform.  After creating your app for the first time, you will be able to publish new versions using the same app name.  App names are restricted to alphanumeric characters (a-z, A-Z, 0-9), and the characters ".", "_", and "-".'))
     name_pattern = re.compile('^[a-zA-Z0-9._-]+$')
     while True:
         name = prompt_for_var('App Name', default)
         if name_pattern.match(name) is None:
-            print fill('The name of your app must match /^[a-zA-Z0-9._-]+$/')
+            print(fill('The name of your app must match /^[a-zA-Z0-9._-]+$/'))
         else:
             if os.path.exists(name):
                 if os.path.isdir(name):
                     remove_dir = prompt_for_yn('The directory %s already exists.  Would you like to remove all of its contents and create a new directory in its place?' % name)
                     if remove_dir:
                         shutil.rmtree(name)
-                        print fill('Replacing all contents of directory %s...' % name)
+                        print(fill('Replacing all contents of directory %s...' % name))
                     else:
-                        print ''
+                        print('')
                         continue
                 else:
-                    print fill('A file named %s already exists.  Please choose another name or rename your file')
+                    print(fill('A file named %s already exists.  Please choose another name or rename your file'))
                     continue
             break
     return name
 
 def get_metadata(api_version):
-    print ''
-    print fill('The ' + BOLD() + 'title' + ENDC() + ', if provided, is what is shown as the name of your app on the website.  It can be any valid UTF-8 string.')
+    print('')
+    print(fill('The ' + BOLD() + 'title' + ENDC() + ', if provided, is what is shown as the name of your app on the website.  It can be any valid UTF-8 string.'))
     title = prompt_for_var('Title', '')
 
-    print ''
-    print fill('The ' + BOLD() + 'summary' + ENDC() + ' of your app is a short phrase or one-line description of what your app does.  It can be any UTF-8 human-readable string.')
+    print('')
+    print(fill('The ' + BOLD() + 'summary' + ENDC() + ' of your app is a short phrase or one-line description of what your app does.  It can be any UTF-8 human-readable string.'))
     summary = prompt_for_var('Summary', '')
 
-    print ''
-    print fill('The ' + BOLD() + 'description' + ENDC() + ' of your app is a longer piece of text describing your app.  It can be any UTF-8 human-readable string, and it will be interpreted using Markdown (see http://daringfireball.net/projects/markdown/syntax/ for more details).')
+    print('')
+    print(fill('The ' + BOLD() + 'description' + ENDC() + ' of your app is a longer piece of text describing your app.  It can be any UTF-8 human-readable string, and it will be interpreted using Markdown (see http://daringfireball.net/projects/markdown/syntax/ for more details).'))
     description = prompt_for_var('Description', '')
 
     return title, summary, description
@@ -174,8 +176,8 @@ def get_metadata(api_version):
 def get_version(default=None):
     if default is None:
         default = '0.0.1'
-    print ''
-    print fill('You can publish multiple versions of your app, and the ' + BOLD() + 'version' + ENDC() + ' of your app is a string with which to tag a particular version.  We encourage the use of Semantic Versioning for labeling your apps (see http://semver.org/ for more details).')
+    print('')
+    print(fill('You can publish multiple versions of your app, and the ' + BOLD() + 'version' + ENDC() + ' of your app is a string with which to tag a particular version.  We encourage the use of Semantic Versioning for labeling your apps (see http://semver.org/ for more details).'))
     version = prompt_for_var('Version', default)
     return version
 
@@ -186,35 +188,35 @@ def get_language():
     #language_choices = language_options.keys()
     language_choices = ["Python", "C++", "bash"]
     use_completer(Completer(language_choices))
-    print ''
-    print fill('You can write your app in any ' + BOLD() + 'programming language' + ENDC() + ', but we provide templates for the following supported languages' + ENDC() + ": " + ', '.join(language_choices))
+    print('')
+    print(fill('You can write your app in any ' + BOLD() + 'programming language' + ENDC() + ', but we provide templates for the following supported languages' + ENDC() + ": " + ', '.join(language_choices)))
     language = prompt_for_var('Programming language', 'Python', choices=language_choices)
     use_completer()
     return language
 
 def get_pattern(template_dir):
     pattern_choices = []
-    print ''
-    print fill('The following common ' + BOLD() + 'execution patterns' + ENDC() + ' are currently available for your programming language:')
+    print('')
+    print(fill('The following common ' + BOLD() + 'execution patterns' + ENDC() + ' are currently available for your programming language:'))
 
     pattern_choices.append('basic')
-    print ' ' + BOLD() + 'basic' + ENDC()
-    print fill('Your app will run on a single machine from beginning to end.', initial_indent='   ', subsequent_indent='   ')
+    print(' ' + BOLD() + 'basic' + ENDC())
+    print(fill('Your app will run on a single machine from beginning to end.', initial_indent='   ', subsequent_indent='   '))
 
     if os.path.isdir(os.path.join(template_dir, 'parallelized')):
         pattern_choices.append('parallelized')
-        print ' ' + BOLD() + 'parallelized' + ENDC()
-        print fill('Your app will subdivide a large chunk of work into multiple pieces that can be processed in parallel and independently of each other, followed by a final stage that will merge and process the results as necessary.', initial_indent='   ', subsequent_indent='   ')
+        print(' ' + BOLD() + 'parallelized' + ENDC())
+        print(fill('Your app will subdivide a large chunk of work into multiple pieces that can be processed in parallel and independently of each other, followed by a final stage that will merge and process the results as necessary.', initial_indent='   ', subsequent_indent='   '))
 
     if os.path.isdir(os.path.join(template_dir, 'scatter-process-gather')):
         pattern_choices.append('scatter-process-gather')
-        print ' ' + BOLD() + 'scatter-process-gather' + ENDC()
-        print fill('Similar to ' + BOLD() + 'parallelized' + ENDC() + ' but with the addition of a "scatter" entry point.  This allows you to break out the execution for splitting up the input, or you can call a separate app/applet to perform the splitting.',
+        print(' ' + BOLD() + 'scatter-process-gather' + ENDC())
+        print(fill('Similar to ' + BOLD() + 'parallelized' + ENDC() + ' but with the addition of a "scatter" entry point.  This allows you to break out the execution for splitting up the input, or you can call a separate app/applet to perform the splitting.',
                    initial_indent='   ',
-                   subsequent_indent='   ')
+                   subsequent_indent='   '))
 
     if len(pattern_choices) == 1:
-        print 'Automatically using the execution pattern "basic"'
+        print('Automatically using the execution pattern "basic"')
         return 'basic'
 
     use_completer(Completer(pattern_choices))
@@ -227,17 +229,17 @@ def get_parallelized_io(required_file_input_names, gtable_input_names, gtable_ou
     output_field = ''
 
     if required_file_input_names or gtable_input_names:
-        print ''
-        print fill('Your app template can be initialized to split and process a ' + BOLD() + 'GTable' + ENDC() + ' input.  The following of your input fields are eligible for this template pattern:')
-        print '  ' + '\n  '.join(gtable_input_names)
+        print('')
+        print(fill('Your app template can be initialized to split and process a ' + BOLD() + 'GTable' + ENDC() + ' input.  The following of your input fields are eligible for this template pattern:'))
+        print('  ' + '\n  '.join(gtable_input_names))
         use_completer(Completer(gtable_input_names))
         input_field = prompt_for_var('Input field to process (press ENTER to skip)', '', choices=required_file_input_names + gtable_input_names)
         use_completer()
 
     if input_field != '' and len(gtable_output_names) > 0:
-        print ''
-        print fill('Your app template can be initialized to build a ' + BOLD() + 'GTable' + ENDC() + ' in parallel for your output.  The following of your output fields are eligible for this template pattern:')
-        print '  ' + '\n  '.join(gtable_output_names)
+        print('')
+        print(fill('Your app template can be initialized to build a ' + BOLD() + 'GTable' + ENDC() + ' in parallel for your output.  The following of your output fields are eligible for this template pattern:'))
+        print('  ' + '\n  '.join(gtable_output_names))
         use_completer(Completer(gtable_output_names))
         output_field = prompt_for_var('Output gtable to build in parallel (press ENTER to skip)', '', choices=gtable_output_names)
     return input_field, output_field

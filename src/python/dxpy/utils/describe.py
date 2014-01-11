@@ -27,8 +27,8 @@ from __future__ import print_function
 import datetime, time, json, math, sys, copy
 from collections import defaultdict
 
-from dxpy.utils.printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, UNDERLINE, ENDC, DELIMITER, get_delimiter,
-                                 fill)
+from .printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, UNDERLINE, ENDC, DELIMITER, get_delimiter, fill)
+from ..compat import basestring
 
 def JOB_STATES(state):
     if state == 'failed':
@@ -466,8 +466,7 @@ def print_data_obj_desc(desc, verbose=False):
     if 'types' in desc:
         print_list_field("Types", desc['types'])
     if 'properties' in desc:
-        print_list_field("Properties", map(lambda key: key + '=' + desc['properties'][key],
-                                           desc['properties'].keys()))
+        print_list_field("Properties", ['='.join(k, v) for k, v in desc['properties'].items()])
     if 'tags' in desc:
         print_list_field("Tags", desc['tags'])
     if verbose and 'details' in desc:

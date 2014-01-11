@@ -16,6 +16,8 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+from __future__ import print_function
+
 import sys, os
 import json
 import argparse
@@ -26,6 +28,7 @@ from dxpy.templating.utils import (print_intro, get_name, get_version, get_metad
                                    create_files_from_templates)
 from dxpy.utils.printing import *
 from dxpy.app_categories import APP_CATEGORIES
+from dxpy.compat import basestring, input
 from collections import OrderedDict
 
 IO_NAME_PATTERN = re.compile('^[a-zA-Z_][0-9a-zA-Z_]*$')
@@ -93,14 +96,14 @@ else:
     category_completer = Completer(sorted(APP_CATEGORIES))
     use_completer(category_completer)
     categories = []
-    print
-    print fill(BOLD() + 'App categories:' + ENDC() + ' provide categories to make your app easier to find in the App Library. (Visit https://platform.dnanexus.com/apps to see how your app might appear.) If you do not intend to publish your app, you can skip this step.')
+    print()
+    print(fill(BOLD() + 'App categories:' + ENDC() + ' provide categories to make your app easier to find in the App Library. (Visit https://platform.dnanexus.com/apps to see how your app might appear.) If you do not intend to publish your app, you can skip this step.'))
     while True:
         input_class = prompt_for_var('Choose a category (<TAB> twice for choices, <ENTER> to finish)', allow_empty=True)
         if input_class == '':
             break
         if input_class not in category_completer.choices:
-            answer = raw_input("This is not a recognized category name and users won't be able to browse this category to find your app. Use it anyway? [Y/n] ")
+            answer = input("This is not a recognized category name and users won't be able to browse this category to find your app. Use it anyway? [Y/n] ")
             if answer.lower().startswith('n'):
                 continue
         categories.append(input_class)
@@ -116,9 +119,9 @@ else:
                                  'array:record', 'array:file', 'array:gtable', 'array:applet'])
     bool_completer = Completer(['true', 'false'])
 
-    print ''
-    print BOLD() + 'Input Specification' + ENDC()
-    print ''
+    print('')
+    print(BOLD() + 'Input Specification' + ENDC())
+    print('')
 
     input_spec = True
     input_names = []
@@ -126,19 +129,19 @@ else:
 
     if input_spec:
         app_json['inputSpec'] = []
-        print fill('You will now be prompted for each input parameter to your app.  Each parameter should have a unique name that uses only the underscore "_" and alphanumeric characters, and does not start with a number.')
+        print(fill('You will now be prompted for each input parameter to your app.  Each parameter should have a unique name that uses only the underscore "_" and alphanumeric characters, and does not start with a number.'))
 
         while True:
-            print ''
+            print('')
             ordinal = get_ordinal_str(len(app_json['inputSpec']) + 1)
             input_name = prompt_for_var(ordinal + ' input name (<ENTER> to finish)', allow_empty=True)
             if input_name == '':
                 break
             if input_name in input_names:
-                print fill('Error: Cannot use the same input parameter name twice.  Please choose again.')
+                print(fill('Error: Cannot use the same input parameter name twice.  Please choose again.'))
                 continue
             if not IO_NAME_PATTERN.match(input_name):
-                print fill('Error: Parameter names may use only underscore "_", ASCII letters, and digits; and may not start with a digit.  Please choose again.')
+                print(fill('Error: Parameter names may use only underscore "_", ASCII letters, and digits; and may not start with a digit.  Please choose again.'))
                 continue
             input_names.append(input_name)
 
@@ -146,12 +149,12 @@ else:
 
             use_completer(class_completer)
             if not printed_classes:
-                print 'Your input parameter must be of one of the following classes:'
-                print '''applet         array:float    array:string   gtable         string
+                print('Your input parameter must be of one of the following classes:')
+                print('''applet         array:float    array:string   gtable         string
 array:applet   array:gtable   boolean        hash           
 array:boolean  array:int      file           int            
 array:file     array:record   float          record
-'''
+''')
                 printed_classes = True
 
             while True:
@@ -159,7 +162,7 @@ array:file     array:record   float          record
                 if input_class in class_completer.choices:
                     break
                 else:
-                    print fill('Not a recognized class; please choose again.')
+                    print(fill('Not a recognized class; please choose again.'))
 
             use_completer()
 
@@ -188,7 +191,7 @@ array:file     array:record   float          record
                                 default_val = float(default_val)
                             break
                         except:
-                            print 'Not a valid default value for the given class ' + input_class
+                            print('Not a valid default value for the given class ' + input_class)
                 else:
                     default_val = None
 
@@ -205,27 +208,27 @@ array:file     array:record   float          record
 
             app_json['inputSpec'].append(parameter_json)
 
-    print ''
-    print BOLD() + 'Output Specification' + ENDC()
-    print ''
+    print('')
+    print(BOLD() + 'Output Specification' + ENDC())
+    print('')
 
     output_spec = True
     output_names = []
     if output_spec:
         app_json['outputSpec'] = []
-        print fill('You will now be prompted for each output parameter of your app.  Each parameter should have a unique name that uses only the underscore "_" and alphanumeric characters, and does not start with a number.')
+        print(fill('You will now be prompted for each output parameter of your app.  Each parameter should have a unique name that uses only the underscore "_" and alphanumeric characters, and does not start with a number.'))
 
         while True:
-            print ''
+            print('')
             ordinal = get_ordinal_str(len(app_json['outputSpec']) + 1)
             output_name = prompt_for_var(ordinal + ' output name (<ENTER> to finish)', allow_empty=True)
             if output_name == '':
                 break
             if output_name in output_names:
-                print fill('Error: Cannot use the same output parameter name twice.  Please choose again.')
+                print(fill('Error: Cannot use the same output parameter name twice.  Please choose again.'))
                 continue
             if not IO_NAME_PATTERN.match(output_name):
-                print fill('Error: Parameter names may use only underscore "_", ASCII letters, and digits; and may not start with a digit.  Please choose again.')
+                print(fill('Error: Parameter names may use only underscore "_", ASCII letters, and digits; and may not start with a digit.  Please choose again.'))
                 continue
             output_names.append(output_name)
 
@@ -233,19 +236,19 @@ array:file     array:record   float          record
 
             use_completer(class_completer)
             if not printed_classes:
-                print 'Your output parameter must be of one of the following classes:'
-                print '''applet         array:float    array:string   gtable         string
+                print('Your output parameter must be of one of the following classes:')
+                print('''applet         array:float    array:string   gtable         string
 array:applet   array:gtable   boolean        hash           
 array:boolean  array:int      file           int            
 array:file     array:record   float          record
-'''
+''')
                 printed_classes = True
             while True:
                 output_class = prompt_for_var('Choose a class (<TAB> twice for choices)')
                 if output_class in class_completer.choices:
                     break
                 else:
-                    print fill('Not a recognized class; please choose again.')
+                    print(fill('Not a recognized class; please choose again.'))
 
             use_completer()
 
@@ -288,8 +291,8 @@ if 'outputSpec' in app_json:
 # LANGUAGE AND PATTERN #
 ########################
 
-print ''
-print BOLD() + 'Template Options' + ENDC()
+print('')
+print(BOLD() + 'Template Options' + ENDC())
 
 # Prompt for programming language if not specified
 
@@ -327,31 +330,31 @@ with open(os.path.join(template_dir, 'dxapp.json'), 'r') as template_app_json_fi
 # APP ACCESS PERMISSIONS #
 ##########################
 
-print ''
-print BOLD('Access Permissions')
-print fill('''If you request these extra permissions for your app, users will see this fact when launching your app,
+print('')
+print(BOLD('Access Permissions'))
+print(fill('''If you request these extra permissions for your app, users will see this fact when launching your app,
 and certain other restrictions will apply. For more information, see ''' + 
-BOLD('https://wiki.dnanexus.com/App-Permissions') + '.')
+BOLD('https://wiki.dnanexus.com/App-Permissions') + '.'))
 
-print ''
-print fill(UNDERLINE('Access to the Internet') + ' (other than accessing the DNAnexus API).')
-answer = raw_input("Will this app need access to the Internet? [y/N] ")
+print('')
+print(fill(UNDERLINE('Access to the Internet') + ' (other than accessing the DNAnexus API).'))
+answer = input("Will this app need access to the Internet? [y/N] ")
 if answer and answer.lower()[0] == 'y':
     app_json.setdefault('access', {})
     app_json['access']['network'] = ['*']
-    print fill('App has full access to the Internet. To narrow access to specific sites, edit the ' +
-               UNDERLINE('access.network') + ' field of dxapp.json once we generate the app.')
+    print(fill('App has full access to the Internet. To narrow access to specific sites, edit the ' +
+               UNDERLINE('access.network') + ' field of dxapp.json once we generate the app.'))
 
-print ''
-print fill(UNDERLINE('Direct access to the parent project') + '''. This is not needed if your app specifies outputs,
-which will be copied into the project after it's done running.''')
-answer = raw_input("Will this app need access to the parent project? [y/N] ")
+print('')
+print(fill(UNDERLINE('Direct access to the parent project') + '''. This is not needed if your app specifies outputs,
+which will be copied into the project after it's done running.'''))
+answer = input("Will this app need access to the parent project? [y/N] ")
 if answer and answer.lower()[0] == 'y':
     app_json.setdefault('access', {})
     app_json['access']['project'] = 'CONTRIBUTE'
-    print fill('App has CONTRIBUTE access to the parent project. To change the access level or request access to ' +
+    print(fill('App has CONTRIBUTE access to the parent project. To change the access level or request access to ' +
                'other projects, edit the ' + UNDERLINE('access.project') + ' and ' + UNDERLINE('access.allProjects') +
-               ' fields of dxapp.json once we generate the app.')
+               ' fields of dxapp.json once we generate the app.'))
 
 # Default of no other authorizedUsers
 app_json['authorizedUsers'] = []
@@ -360,22 +363,22 @@ app_json['authorizedUsers'] = []
 # WRITING FILES #
 #################
 
-print ''
-print BOLD() + '*** Generating ' + DNANEXUS_LOGO() + BOLD() + ' App Template... ***' + ENDC()
+print('')
+print(BOLD() + '*** Generating ' + DNANEXUS_LOGO() + BOLD() + ' App Template... ***' + ENDC())
 
 with open(os.path.join(name, 'dxapp.json'), 'w') as prog_file:
     prog_file.write(clean(json.dumps(app_json, indent=2)) + '\n')
 manifest.append(os.path.join(name, 'dxapp.json'))
 
-print ''
-print fill('''Your app specification has been written to the
+print('')
+print(fill('''Your app specification has been written to the
 dxapp.json file. You can specify more app options by editing this file
 directly (see https://wiki.dnanexus.com/Developer-Portal for complete
 documentation).''' + ('''  Note that without an input and output specification,
 your app can only be built as an APPLET on the system.  To publish it to
 the DNAnexus community, you must first specify your inputs and outputs.
-''' if not ('inputSpec' in app_json and 'outputSpec' in app_json) else ""))
-print ''
+''' if not ('inputSpec' in app_json and 'outputSpec' in app_json) else "")))
+print('')
 
 for subdir in 'src', 'test', 'resources':
     try:
@@ -400,14 +403,14 @@ manifest += create_files_from_templates(template_dir, app_json, language,
                                         parallelized_input_field, parallelized_output_field,
                                         entry_points=entry_points, description=description)
 
-print "Created files:"
+print("Created files:")
 for filename in sorted(manifest):
-    print "\t", filename
-print "\n" + fill('''App directory created!  See
+    print("\t", filename)
+print("\n" + fill('''App directory created!  See
 https://wiki.dnanexus.com/Developer-Portal for tutorials on how to modify these files,
-or run "dx build {n}" or "dx build --create-app {n}" while logged in with dx.'''.format(n=name)) + "\n"
-print fill('''Running the DNAnexus build utility will create an
+or run "dx build {n}" or "dx build --create-app {n}" while logged in with dx.'''.format(n=name)) + "\n")
+print(fill('''Running the DNAnexus build utility will create an
 executable on the DNAnexus platform.  Any files found in the ''' +
 BOLD() + 'resources' + ENDC() + ''' directory will be uploaded so that
 they will be present in the root directory when the executable is
-run.''')
+run.'''))

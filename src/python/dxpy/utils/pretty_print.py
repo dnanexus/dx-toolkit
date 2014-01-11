@@ -18,7 +18,8 @@
 #   under the License.
 
 import re, collections
-from dxpy.utils.printing import (GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC)
+from .printing import (GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC)
+from ..compat import str
 
 REPLACEMENT_TABLE = (
     u'\\x00',    #  0x00 -> NULL
@@ -81,7 +82,7 @@ def format_tree(tree, root=None):
     '''
     formatted_tree = [root] if root is not None else []
     def _format(tree, prefix=u'    '):
-        nodes = tree.keys()
+        nodes = list(tree.keys())
         for i in range(len(nodes)):
             node = nodes[i]
             if i == len(nodes)-1 and len(prefix) > 1:
@@ -129,7 +130,7 @@ def format_table(table, column_names=None, column_specs=None, max_col_width=32,
         column_specs = [{'name': 'Row', 'type': 'float'}] + column_specs
     if column_names is not None:
         for i in range(len(column_names)):
-            my_col = unicode(column_names[i])
+            my_col = str(column_names[i])
             if len(my_col) > max_col_width:
                 my_col = my_col[:max_col_width-1] + u'…'
             my_column_names.append(my_col)
@@ -138,13 +139,13 @@ def format_table(table, column_names=None, column_specs=None, max_col_width=32,
     for row in table:
         my_row = []
         for i in range(len(row)):
-            my_item = escape_unicode_string(unicode(row[i]))
+            my_item = escape_unicode_string(str(row[i]))
             if len(my_item) > max_col_width:
                 my_item = my_item[:max_col_width-1] + u'…'
             my_row.append(my_item)
             col_widths[i] = max(col_widths[i], len(my_item))
         my_table.append(my_row)
-    
+
     def border(i):
         return WHITE() + i + ENDC()
 

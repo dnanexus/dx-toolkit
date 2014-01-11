@@ -2117,7 +2117,7 @@ def head(args):
                     if tty_rows <= table_rows or tty_cols <= table_cols:
                         try:
                             pipe = os.popen('less -RS', 'w')
-                            pipe.write(table_text.encode(sys_encoding))
+                            pipe.write(table_text.encode(sys_encoding) if is_py2 else table_text)
                             pipe.close()
                             return
                         except:
@@ -2884,16 +2884,7 @@ def print_run_help(executable="", alias=None):
         else:
             exec_help += " no specification provided"
 
-        if sys.stdout.isatty():
-            if tty_rows <= exec_help.count("\n"):
-                try:
-                    pipe = os.popen('less -RS', 'w')
-                    pipe.write(exec_help.encode(sys_encoding))
-                    pipe.close()
-                    parser.exit(0)
-                except:
-                    pass
-        sys.stdout.write(exec_help + '\n')
+        pager(exec_help)
 
     parser.exit(0)
 

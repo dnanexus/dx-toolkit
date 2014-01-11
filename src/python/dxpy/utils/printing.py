@@ -20,6 +20,8 @@ This submodule gives basic utilities for printing to the terminal.
 
 import textwrap, subprocess, os, sys
 from .env import sys_encoding
+from ..compat import is_py2
+from ..exceptions import DXCLIError
 
 if sys.stdout.isatty():
     try:
@@ -120,20 +122,26 @@ def pager(content, pager=None, file=None):
     if file is None:
         file = sys.stdout
 
-    content_lines = content.splitlines()
-    content_rows = len(content_lines)
-    content_cols = max(len(i) for i in content_lines)
-    encoded_content = content.encode(sys_encoding)
+    pager_process = None
+    try:
+        if file != sys.stdout or not file.isatty():
+            raise DXCLIError() # Just print the content, don't use a pager
+        content_lines = content.splitlines()
+        content_rows = len(content_lines)
+        content_cols = max(len(i) for i in content_lines)
 
-    if file == sys.stdout and file.isatty() and (tty_rows <= content_rows or tty_cols <= content_cols):
-        if pager is None:
-            pager = os.environ.get('PAGER', 'less -RS')
+        if tty_rows > content_rows and tty_cols > content_cols:
+            raise DXCLIError() # Just print the content, don't use a pager
+
+        pager_process = subprocess.Popen(pager or os.environ.get('PAGER', 'less -RS'),
+                                         shell=True, stdin=subprocess.PIPE, stdout=file)
+        pager_process.stdin.write(content.encode(sys_encoding))
+        pager_process.stdin.close()
+        pager_process.wait()
+    except:
+        file.write(content.encode(sys_encoding) if is_py2 else content)
+    finally:
         try:
-            p = subprocess.Popen(pager, shell=True, stdin=subprocess.PIPE, stdout=file)
-            p.stdin.write(encoded_content)
-            p.stdin.close()
-            p.wait()
+            pager_process.terminate()
         except:
-            file.write(encoded_content)
-    else:
-        file.write(encoded_content)
+            pass
