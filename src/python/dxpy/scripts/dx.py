@@ -2733,7 +2733,6 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
         print()
         if isinstance(executable, dxpy.DXWorkflow):
             try:
-                print(executable._get_run_input(input_json, **run_kwargs))
                 dry_run = dxpy.api.workflow_dry_run(executable.get_id(),
                                                     executable._get_run_input(input_json, **run_kwargs))
                 # print which stages are getting rerun
@@ -2753,7 +2752,7 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
                             stage_name = stage['execution']['name']
                             print('  Stage ' + str(i) + ': ' + stage_name + \
                                   ' (' + stage['execution']['id'] + ')')
-                    print
+                    print()
             except DXAPIError:
                 # Just don't print anything for now if the dryRun
                 # method is not yet available
