@@ -2930,14 +2930,29 @@ def run(args):
 
     if args.clone is None and args.executable == "":
         parser.exit(2, parser_map['run'].format_help() +
-                       fill("Error: Either the executable must be specified, or --clone must be used to indicate a job to clone") + "\n")
+                       fill("Error: Either the executable must be specified, or --clone must be used to indicate a job or analysis to clone") + "\n")
 
     args.input_from_clone, args.sys_reqs_from_clone = {}, {}
+
+    if args.project is not None:
+        if args.folder is not None and not args.clone:
+            err_exit("Options --project and --folder/--destination cannot be specified together")
+        args.folder = args.project + ":/"
+
+    if args.folder is None:
+        dest_proj = dxpy.WORKSPACE_ID
+        if dest_proj is None:
+            parser.exit(1, 'Unable to find project to run the app in. Please run "dx select" to set the working project, or use --folder=project:path\n')
+        dest_path = os.environ.get('DX_CLI_WD', '/').decode(sys_encoding)
+    else:
+        dest_proj, dest_path, none = try_call(resolve_existing_path,
+                                              args.folder,
+                                              expected='folder')
 
     clone_desc = None
     if args.clone is not None:
         # Resolve job ID or name
-        if is_job_id(args.clone):
+        if is_job_id(args.clone) or is_analysis_id(args.clone):
             clone_desc = dxpy.api.job_describe(args.clone)
         else:
             iterators = []
@@ -2948,13 +2963,13 @@ def run(args):
                     # And find jobs in that with that name
                     proj_id = resolve_container_id_or_name(args.clone[:colon_pos])
                     if proj_id is not None:
-                        job_name_or_id = args.clone[colon_pos + 1:]
-                        if is_job_id(job_name_or_id):
-                            clone_desc = dxpy.api.job_describe(job_name_or_id)
+                        execution_name_or_id = args.clone[colon_pos + 1:]
+                        if is_job_id(execution_name_or_id) or is_analysis_id(execution_name_or_id):
+                            clone_desc = dxpy.api.job_describe(execution_name_or_id)
                         else:
-                            iterators.append(dxpy.find_jobs(name=job_name_or_id,
-                                                            describe={"io": False},
-                                                            project=proj_id))
+                            iterators.append(dxpy.find_executions(name=execution_name_or_id,
+                                                                  describe={"io": False},
+                                                                  project=proj_id))
                 except:
                     pass
 
@@ -2974,59 +2989,43 @@ def run(args):
                                                                                   has_children=False,
                                                                                   single_result=True)))
                 if result_choice == "none found":
-                    parser.exit(1, "dx run --clone: No matching job found. Please use a valid job name or ID.\n")
+                    parser.exit(1, "dx run --clone: No matching execution found. Please use a valid job or analysis name or ID.\n")
                 elif result_choice == "none picked":
                     parser.exit(1)
                 else:
                     clone_desc = dxpy.api.job_describe(result_choice["id"])
 
-        if args.executable == "":
-            args.executable = clone_desc.get("applet", clone_desc.get("app", ""))
-        if args.folder is None:
-            args.folder = clone_desc["project"] + ":" + clone_desc["folder"]
-        if args.name is None:
-            match_obj = re.search("\(re-run\)$", clone_desc["name"])
-            if match_obj is None:
-                args.name = clone_desc["name"] + " (re-run)"
-            else:
-                args.name = clone_desc["name"]
-        args.input_from_clone = clone_desc["runInput"]
-        args.sys_reqs_from_clone = clone_desc["systemRequirements"]
-        args.details = {"clonedFrom": {"id": clone_desc["id"],
-                                       "executable": clone_desc.get("applet", clone_desc.get("app", "")),
-                                       "project": clone_desc["project"],
-                                       "folder": clone_desc["folder"],
-                                       "name": clone_desc["name"],
-                                       "runInput": clone_desc["runInput"],
-                                       "systemRequirements": clone_desc["systemRequirements"]
-                                       }
-                        }
+        if clone_desc['class'] == 'job':
+            if args.executable == "":
+                args.executable = clone_desc.get("applet", clone_desc.get("app", ""))
+            if args.folder is None:
+                args.folder = clone_desc["project"] + ":" + clone_desc["folder"]
+            if args.name is None:
+                match_obj = re.search("\(re-run\)$", clone_desc["name"])
+                if match_obj is None:
+                    args.name = clone_desc["name"] + " (re-run)"
+                else:
+                    args.name = clone_desc["name"]
+            args.input_from_clone = clone_desc["runInput"]
+            args.sys_reqs_from_clone = clone_desc["systemRequirements"]
+            args.details = {"clonedFrom": {"id": clone_desc["id"],
+                                           "executable": clone_desc.get("applet", clone_desc.get("app", "")),
+                                           "project": clone_desc["project"],
+                                           "folder": clone_desc["folder"],
+                                           "name": clone_desc["name"],
+                                           "runInput": clone_desc["runInput"],
+                                           "systemRequirements": clone_desc["systemRequirements"]
+                                           }
+                            }
+        else:
+            # make a temporary workflow
+            args.executable = dxpy.api.workflow_new({"project": dest_proj,
+                                                     "initializeFrom": {"id": clone_desc["id"]},
+                                                     "temporary": True})["id"]
 
     handler = try_call(get_exec_handler, args.executable, args.alias)
 
-    if args.project is not None:
-        if args.folder is not None and not args.clone:
-            err_exit("Options --project and --folder/--destination cannot be specified together")
-        args.folder = args.project + ":/"
-
-    if args.folder is None:
-        dest_proj = dxpy.WORKSPACE_ID
-        if dest_proj is None:
-            parser.exit(1, 'Unable to find project to run the app in. Please run "dx select" to set the working project, or use --folder=project:path\n')
-        dest_path = os.environ.get('DX_CLI_WD', '/').decode(sys_encoding)
-    else:
-        dest_proj, dest_path, none = try_call(resolve_existing_path,
-                                              args.folder,
-                                              expected='folder')
-
     process_instance_type_arg(args, isinstance(handler, dxpy.DXWorkflow))
-
-    if not isinstance(handler, dxpy.DXApplet) and \
-            not isinstance(handler, dxpy.DXApp) : # Identified as a workflow in get_exec_handler()
-        if clone_desc is not None:
-            parser.exit(1, fill("Cannot run a workflow and clone a job; only apps or applets can be run with cloned options") + "\n")
-        if not args.brief:
-            print("Executing workflow", handler)
 
     run_one(args, handler, dest_proj, dest_path)
 

@@ -837,8 +837,7 @@ class TestDXClientRun(DXTestCase):
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
 
 class TestDXClientWorkflow(DXTestCase):
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
-                         'skipping test that would run jobs')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
     def test_dx_run_workflow(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
@@ -889,6 +888,39 @@ class TestDXClientWorkflow(DXTestCase):
         # Setting the input in the workflow allows it to be run
         run("dx update stage " + workflow_id + " 0 -inumber=42")
         run("dx run " + workflow_id + " -y")
+
+        # Test dx run --clone
+        new_analysis_id = run("dx run --clone " + analysis_id + " --brief -y").strip()
+        new_analysis_desc = dxpy.describe(new_analysis_id)
+        orig_analysis_desc = dxpy.describe(analysis_id)
+        # expect a reused job
+        self.assertEqual(new_analysis_desc['stages'][0]['execution']['id'],
+                         orig_analysis_desc['stages'][0]['execution']['id'])
+
+        # Override some options
+        new_analysis_id = run("dx run --clone " + analysis_id + " -i0.number=52 --brief -y").strip()
+        new_analysis_desc = dxpy.describe(new_analysis_id)
+        time.sleep(2) # May need to wait for job to be created in the system
+        new_job_desc = dxpy.describe(new_analysis_desc['stages'][0]['execution']['id'])
+        self.assertEqual(new_job_desc['input']['number'], 52)
+
+        # Run in a different project and add some metadata
+        try:
+            other_proj_id = run("dx new project 'cloned analysis project' --brief").strip()
+            new_analysis_id = run("dx run --clone " + analysis_id + " --destination " + other_proj_id +
+                                  ":foo --tag sometag --property propkey=propval " +
+                                  "--brief -y").strip()
+            new_analysis_desc = dxpy.describe(new_analysis_id)
+            self.assertEqual(new_analysis_desc['project'], other_proj_id)
+            self.assertEqual(new_analysis_desc['folder'], '/foo')
+            self.assertEqual(new_analysis_desc['tags'], ['sometag'])
+            self.assertEqual(new_analysis_desc['properties'], {'propkey': 'propval'})
+            time.sleep(2)
+            new_job_desc = dxpy.describe(new_analysis_desc['stages'][0]['execution']['id'])
+            self.assertEqual(new_job_desc['project'], other_proj_id)
+            self.assertEqual(new_job_desc['input']['number'], 32)
+        finally:
+            run("dx rmproject -y " + other_proj_id)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
     def test_dx_run_workflow_prints_cached_executions(self):
