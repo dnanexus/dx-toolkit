@@ -412,10 +412,9 @@ class DXWorkflow(DXDataObject, DXExecutable):
         :returns: If the given form was one of those which uses the stage index or stage name, it is translated to the stage ID for use in the API call (stage name takes precedence)
         '''
         if '.' in input_str:
-            stage_identifier = input_str[:input_str.find('.')]
-            dot_input_name = input_str[input_str.find('.'):]
+            stage_identifier, input_name = input_str.split('.', 1)
             # Try to parse as a stage ID or name
-            return self._get_stage_id(stage_identifier) + dot_input_name
+            return self._get_stage_id(stage_identifier) + '.' + input_name
 
         return input_str
 
