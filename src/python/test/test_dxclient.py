@@ -882,6 +882,14 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertIn("Tags bar\n", analysis_desc)
         self.assertIn("Properties foo=bar\n", analysis_desc)
 
+        # Missing input throws appropriate error
+        with self.assertSubprocessFailure(stderr_regexp='Some inputs.+are missing', exit_code=3):
+            run("dx run " + workflow_id + " -y")
+
+        # Setting the input in the workflow allows it to be run
+        run("dx update stage " + workflow_id + " 0 -inumber=42")
+        run("dx run " + workflow_id + " -y")
+
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
     def test_dx_run_workflow_prints_cached_executions(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
@@ -988,7 +996,8 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertIn("inaccessible", list_output)
 
         # run refuses to run it
-        with self.assertSubprocessFailure(stderr_regexp='inaccessible', exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp='following inaccessible stage\(s\)',
+                                          exit_code=3):
             run("dx run myworkflow")
 
     def test_dx_new_workflow(self):

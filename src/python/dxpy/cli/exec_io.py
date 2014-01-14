@@ -614,9 +614,9 @@ class ExecutableInputs(object):
         # For now, we do not handle prompting for workflow inputs nor
         # recognizing when not all inputs haven't been bound
         if require_all_inputs:
-            if sys.stdout.isatty() and self._desc.get('class') != 'workflow':
+            if sys.stdout.isatty():
                 self.prompt_for_missing()
-            elif self._desc.get('class') != 'workflow':
+            else:
                 missing_required_inputs = set(self.required_inputs) - set(self.inputs.keys())
                 if missing_required_inputs:
                     raise DXCLIError('Some inputs (%s) are missing, and interactive mode is not available' % (', '.join(missing_required_inputs)))
