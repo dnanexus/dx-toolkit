@@ -1,3 +1,11 @@
+dx-toolkit (0.82.0) precise; urgency=low
+
+  * Improvements to "dx run workflow"
+
+  * Bug fixes.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 14 Jan 2014 20:29:56 +0000
+
 dx-toolkit (0.81.0) precise; urgency=low
 
   * DXWorkflow supports stage_instance_types parameter; other workflow
