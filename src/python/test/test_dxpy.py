@@ -1054,6 +1054,75 @@ def main(number):
         dxjob = dxpy.DXJob(dxanalysis.describe()['stages'][0]['execution']['id'])
         self.assertEqual(dxjob.describe()['instanceType'], 'dx_m1.large')
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
+    def test_run_workflow_with_stage_folders(self):
+        dxworkflow = dxpy.new_dxworkflow(output_folder="/output")
+        dxapplet = dxpy.DXApplet()
+        dxapplet.new(name="test_applet",
+                     dxapi="1.04",
+                     inputSpec=[],
+                     outputSpec=[],
+                     runSpec={"code": '', "interpreter": "bash"})
+        dxworkflow.add_stage(dxapplet, name="stagename", folder="foo")
+        second_stage_id = dxworkflow.add_stage(dxapplet, name="otherstagename", folder="/myoutput")
+
+        # test cases; note that rerunning all stages is required since
+        # changing the output folder does not constitute a good enough
+        # reason to launch a new job
+
+        # control (no request)
+        control_dxanalysis = dxworkflow.run({})
+        # override both options
+        override_folders_dxanalysis = dxworkflow.run({},
+                                                     stage_folders={"stagename": "/foo",
+                                                                    1: "bar"},
+                                                     rerun_stages=['*'])
+
+        # use *
+        use_default_folder_dxanalysis = dxworkflow.run({},
+                                                       stage_folders={"*": "baz",
+                                                                      second_stage_id: "quux"},
+                                                       rerun_stages=['*'])
+
+        time.sleep(2) # allow time for jobs to be created so we can inspect their metadata
+
+        # make assertions
+        desc = control_dxanalysis.describe()
+        self.assertEqual(desc['stages'][0]['execution']['folder'], '/output/foo')
+        self.assertEqual(desc['stages'][1]['execution']['folder'], '/myoutput')
+        desc = override_folders_dxanalysis.describe()
+        self.assertEqual(desc['stages'][0]['execution']['folder'], '/foo')
+        self.assertEqual(desc['stages'][1]['execution']['folder'], '/output/bar')
+        desc = use_default_folder_dxanalysis.describe()
+        self.assertEqual(desc['stages'][0]['execution']['folder'], '/output/baz')
+        self.assertEqual(desc['stages'][1]['execution']['folder'], '/output/quux')
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
+    def test_run_workflow_with_rerun_stages(self):
+        dxworkflow = dxpy.new_dxworkflow()
+        dxapplet = dxpy.DXApplet()
+        dxapplet.new(name="test_applet",
+                     dxapi="1.04",
+                     inputSpec=[],
+                     outputSpec=[],
+                     runSpec={"code": '', "interpreter": "bash"})
+        stage_id = dxworkflow.add_stage(dxapplet, name="stagename", folder="foo")
+
+        # make initial analysis
+        dxanalysis = dxworkflow.run({})
+        job_ids = [dxanalysis.describe()['stages'][0]['execution']['id']]
+
+        # empty rerun_stages should reuse results
+        rerun_analysis = dxworkflow.run({}, rerun_stages=[])
+        self.assertEqual(rerun_analysis.describe()['stages'][0]['execution']['id'],
+                         job_ids[0])
+
+        # use various identifiers to rerun the job
+        for value in ['*', 0, stage_id, 'stagename']:
+            rerun_analysis = dxworkflow.run({}, rerun_stages=[value])
+            job_ids.append(rerun_analysis.describe()['stages'][0]['execution']['id'])
+            self.assertNotIn(job_ids[-1], job_ids[:-1])
+
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that may run a job')
     def test_run_workflow_errors(self):
         dxworkflow = dxpy.DXWorkflow(dxpy.api.workflow_new({"project": self.proj_id})['id'])
