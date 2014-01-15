@@ -123,7 +123,7 @@ class DXExecutable:
         """
         raise NotImplementedError('_get_run_input is not implemented')
 
-    def run(self, executable_input, project=None, folder="/", name=None, tags=None, properties=None, details=None,
+    def run(self, executable_input, project=None, folder=None, name=None, tags=None, properties=None, details=None,
             instance_type=None, stage_instance_types=None, depends_on=None, delay_workspace_destruction=None,
             extra_args=None, **kwargs):
         '''
