@@ -2999,7 +2999,8 @@ def run(args):
             if args.executable == "":
                 args.executable = clone_desc.get("applet", clone_desc.get("app", ""))
             if args.folder is None:
-                args.folder = clone_desc["project"] + ":" + clone_desc["folder"]
+                dest_proj = clone_desc["project"]
+                dest_path = clone_desc["folder"]
             if args.name is None:
                 match_obj = re.search("\(re-run\)$", clone_desc["name"])
                 if match_obj is None:

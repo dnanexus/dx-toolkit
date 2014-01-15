@@ -889,20 +889,60 @@ class TestDXClientWorkflow(DXTestCase):
         run("dx update stage " + workflow_id + " 0 -inumber=42")
         run("dx run " + workflow_id + " -y")
 
-        # Test dx run --clone
-        new_analysis_id = run("dx run --clone " + analysis_id + " --brief -y").strip()
-        new_analysis_desc = dxpy.describe(new_analysis_id)
-        orig_analysis_desc = dxpy.describe(analysis_id)
-        # expect a reused job
-        self.assertEqual(new_analysis_desc['stages'][0]['execution']['id'],
-                         orig_analysis_desc['stages'][0]['execution']['id'])
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
+    def test_dx_run_clone_analysis(self):
+        dxpy.api.applet_new({
+            "project": self.project,
+            "name": "myapplet",
+            "dxapi": "1.0.0",
+            "inputSpec": [{"name": "number", "class": "int"}],
+            "outputSpec": [{"name": "number", "class": "int"}],
+            "runSpec": {"interpreter": "bash",
+                        "code": "dx-jobutil-add-output number 32"}
+        })
 
-        # Override some options
-        new_analysis_id = run("dx run --clone " + analysis_id + " -i0.number=52 --brief -y").strip()
-        new_analysis_desc = dxpy.describe(new_analysis_id)
-        time.sleep(2) # May need to wait for job to be created in the system
-        new_job_desc = dxpy.describe(new_analysis_desc['stages'][0]['execution']['id'])
-        self.assertEqual(new_job_desc['input']['number'], 52)
+        # make a workflow with the stage twice
+        run("dx new workflow myworkflow")
+        run("dx add stage myworkflow myapplet -inumber=32 --instance-type dx_m1.large")
+        run("dx add stage myworkflow myapplet -inumber=52 --instance-type dx_m1.medium")
+
+        # run it
+        analysis_id = run("dx run myworkflow -y --brief").strip()
+
+        # test cases
+        no_change_analysis_id = run("dx run --clone " + analysis_id + " --brief -y").strip()
+        change_an_input_analysis_id = run("dx run --clone " + analysis_id + " -i0.number=52 --brief -y").strip()
+        change_inst_type_analysis_id = run("dx run --clone " + analysis_id + " --instance-type dx_m1.large --brief -y").strip()
+
+        time.sleep(2) # May need to wait for any new jobs to be created in the system
+
+        # make assertions for test cases
+        orig_analysis_desc = dxpy.describe(analysis_id)
+
+        # no change: expect both stages to have reused jobs
+        no_change_analysis_desc = dxpy.describe(no_change_analysis_id)
+        self.assertEqual(no_change_analysis_desc['stages'][0]['execution']['id'],
+                         orig_analysis_desc['stages'][0]['execution']['id'])
+        self.assertEqual(no_change_analysis_desc['stages'][1]['execution']['id'],
+                         orig_analysis_desc['stages'][1]['execution']['id'])
+
+        # change an input: new job for that stage
+        change_an_input_analysis_desc = dxpy.describe(change_an_input_analysis_id)
+        self.assertEqual(change_an_input_analysis_desc['stages'][0]['execution']['input'], {"number": 52})
+        # second stage still the same
+        self.assertEqual(change_an_input_analysis_desc['stages'][1]['execution']['id'],
+                         orig_analysis_desc['stages'][1]['execution']['id'])
+
+        # change inst type: only affects stage with different inst type
+        change_inst_type_analysis_desc = dxpy.describe(change_inst_type_analysis_id)
+        # first stage still the same
+        self.assertEqual(change_inst_type_analysis_desc['stages'][0]['execution']['id'],
+                         orig_analysis_desc['stages'][0]['execution']['id'])
+        # second stage different
+        self.assertNotEqual(change_inst_type_analysis_desc['stages'][1]['execution']['id'],
+                            orig_analysis_desc['stages'][1]['execution']['id'])
+        self.assertEqual(change_inst_type_analysis_desc['stages'][1]['execution']['instanceType'],
+                         'dx_m1.large')
 
         # Run in a different project and add some metadata
         try:
