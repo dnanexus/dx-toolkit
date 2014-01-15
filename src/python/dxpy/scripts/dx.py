@@ -1931,8 +1931,8 @@ def get(args):
             err_exit()
         fd.write(json.dumps(details, indent=4))
     elif entity_result['describe']['class'] == 'applet':
-        from dxpy import app_unbuilder
-        app_unbuilder.dump_applet(dxpy.DXApplet(entity_result['id'], project=project), output_path)
+        from dxpy.utils.app_unbuilder import dump_applet
+        dump_applet(dxpy.DXApplet(entity_result['id'], project=project), output_path)
     if fd is not None and args.output != '-':
         fd.close()
 

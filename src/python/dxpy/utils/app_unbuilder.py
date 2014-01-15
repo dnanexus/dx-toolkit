@@ -15,10 +15,10 @@
 #   under the License.
 
 '''
-App Unbuilder Library
-+++++++++++++++++++++
+App Unbuilder
++++++++++++++
 
-Contains utility methods useful for "decompiling" an applet from the platform
+Contains utility methods for "decompiling" an applet from the platform
 and generating an equivalent applet source directory.
 
 '''
