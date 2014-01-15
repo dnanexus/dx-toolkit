@@ -968,7 +968,8 @@ class TestDXWorkflow(unittest.TestCase):
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping test that would run a job')
     def test_run_workflow_and_analysis_metadata(self):
-        dxworkflow = dxpy.DXWorkflow(dxpy.api.workflow_new({"project": self.proj_id})['id'])
+        dxworkflow = dxpy.DXWorkflow(dxpy.api.workflow_new({"project": self.proj_id,
+                                                            "outputFolder": "/output"})['id'])
         dxapplet = dxpy.DXApplet()
         dxapplet.new(name="test_applet",
                      dxapi="1.04",
@@ -991,6 +992,7 @@ def main(number):
         with self.assertRaises(DXJobFailureError):
             dxanalysis.wait_on_done(timeout=20)
         analysis_desc = dxanalysis.describe()
+        self.assertEqual(analysis_desc['folder'], '/output')
         self.assertEqual(analysis_desc['input'].get(stage_id + '.number'), 32)
         self.assertEqual(analysis_desc['input'].get(stage_id + '.othernumber'), 42)
         dxjob = dxpy.DXJob(analysis_desc['stages'][0]['execution']['id'])
