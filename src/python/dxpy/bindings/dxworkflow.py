@@ -114,8 +114,9 @@ class DXWorkflow(DXDataObject, DXExecutable):
                 if isinstance(kwargs["init_from"], basestring):
                     dx_hash["initializeFrom"] = {"id": kwargs["init_from"]}
                 else:
-                    dx_hash["initializeFrom"] = {"id": kwargs["init_from"].get_id(),
-                                                 "project": kwargs["init_from"].get_proj_id()}
+                    dx_hash["initializeFrom"] = {"id": kwargs["init_from"].get_id()}
+                    if isinstance(kwargs["init_from"], DXWorkflow):
+                        dx_hash["initializeFrom"]["project"] = kwargs["init_from"].get_proj_id()
             del kwargs["init_from"]
 
         if "title" in kwargs:

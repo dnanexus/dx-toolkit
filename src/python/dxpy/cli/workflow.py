@@ -28,7 +28,7 @@ import dxpy.utils.printing as printing
 from .parsers import (process_dataobject_args, process_single_dataobject_output_args,
                       process_instance_type_arg)
 from ..utils.describe import io_val_to_str
-from ..utils.resolver import (resolve_existing_path, resolve_path)
+from ..utils.resolver import (resolve_existing_path, resolve_path, is_analysis_id)
 from ..exceptions import (err_exit, DXCLIError)
 from . import try_call
 
@@ -37,13 +37,13 @@ def new_workflow(args):
     try_call(process_single_dataobject_output_args, args)
     init_from = None
     if args.init is not None:
-        try:
+        if is_analysis_id(args.init):
+            init_from = args.init
+        else:
             init_project, init_folder, init_result = try_call(resolve_existing_path,
                                                               args.init,
                                                               expected='entity')
             init_from = dxpy.get_handler(init_result['id'], project=init_project)
-        except:
-            init_from = args.init
     if args.output is None:
         project = dxpy.WORKSPACE_ID
         folder = os.environ.get('DX_CLI_WD', '/')
@@ -135,15 +135,15 @@ def list_stages(args):
     dxworkflow = dxpy.DXWorkflow(workflow_id, project=project)
     desc = dxworkflow.describe()
     print((printing.BOLD() + printing.GREEN() + '{name}' + printing.ENDC() + ' ({id})').format(**desc))
-    print
+    print()
     print('Title: ' + desc['title'])
     print('Output Folder: ' + (desc.get('outputFolder') if desc.get('outputFolder') is not None else '-'))
     if len(desc['stages']) == 0:
-        print
+        print()
         print(' No stages; add stages with the command "dx add stage"')
     for i, stage in enumerate(desc['stages']):
         stage['i'] = i
-        print
+        print()
         if stage['name'] is None:
             stage['name'] = '<no name>'
         print((printing.UNDERLINE() + 'Stage {i}' + printing.ENDC() + ': {name} ({id})').format(**stage))

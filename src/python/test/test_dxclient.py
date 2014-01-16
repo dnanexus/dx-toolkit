@@ -847,7 +847,7 @@ class TestDXClientWorkflow(DXTestCase):
                                          "runSpec": {"interpreter": "bash",
                                                      "code": "exit 1"}
                                          })['id']
-        workflow_id = dxpy.api.workflow_new({"project": self.project})['id']
+        workflow_id = run("dx new workflow myworkflow --brief").strip()
         stage_id = dxpy.api.workflow_add_stage(workflow_id,
                                                {"editVersion": 0, "executable": applet_id})['stage']
         analysis_id = run("dx run " + workflow_id + " -i0.number=32 -y --brief").strip()
@@ -889,6 +889,12 @@ class TestDXClientWorkflow(DXTestCase):
         # Setting the input in the workflow allows it to be run
         run("dx update stage " + workflow_id + " 0 -inumber=42")
         run("dx run " + workflow_id + " -y")
+
+        # initialize a new workflow from an analysis
+        new_workflow_desc = run("dx new workflow --init " + analysis_id)
+        self.assertNotIn(workflow_id, new_workflow_desc)
+        self.assertIn(analysis_id, new_workflow_desc)
+        self.assertIn(stage_id, new_workflow_desc)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
     def test_dx_run_workflow_prints_cached_executions(self):
@@ -1012,6 +1018,41 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertEqual(desc["outputFolder"], u"/wØrkflØwØutput")
         self.assertEqual(desc["project"], self.project)
 
+        # add some stages and then create a new one initializing from
+        # the first
+        applet_id = dxpy.api.applet_new({"name": "myapplet",
+                                         "project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "inputSpec": [],
+                                         "outputSpec": [],
+                                         "runSpec": {"interpreter": "bash", "code": ""}
+                                         })['id']
+        run(u"dx add stage wØrkflØwname " + applet_id)
+
+        new_workflow_id = run(u"dx new workflow --init wØrkflØwname --title newtitle " +
+                              u"--summary newsummary --output-folder /output --brief").strip()
+        desc = dxpy.describe(new_workflow_id)
+        self.assertNotEqual(new_workflow_id, workflow_id)
+        self.assertEqual(desc["id"], new_workflow_id)
+        self.assertEqual(desc["editVersion"], 0)
+        self.assertEqual(desc["name"], u"wØrkflØwname")
+        self.assertEqual(desc["title"], "newtitle")
+        self.assertEqual(desc["summary"], "newsummary")
+        self.assertEqual(desc["description"], u"DΣsc")
+        self.assertEqual(desc["outputFolder"], "/output")
+        self.assertEqual(desc["project"], self.project)
+        self.assertEqual(len(desc["stages"]), 1)
+        self.assertEqual(desc["stages"][0]["executable"], applet_id)
+
+        # run without --brief; should see initializedFrom information
+        new_workflow_desc = run(u"dx new workflow --init " + workflow_id)
+        self.assertIn(workflow_id, new_workflow_desc)
+
+        # error when initializing from a nonexistent workflow
+        run("dx rm " + workflow_id)
+        with self.assertSubprocessFailure(stderr_regexp='ResourceNotFound', exit_code=3):
+            run("dx new workflow --init " + workflow_id)
+
     def test_dx_workflow_resolution(self):
         with self.assertSubprocessFailure(stderr_regexp='Could not resolve', exit_code=3):
             run("dx update workflow foo")
@@ -1051,6 +1092,11 @@ class TestDXClientWorkflow(DXTestCase):
                                                      "code": "exit 0"}
                                          })['id']
         stage_ids = []
+
+        # list stages when there are no stages yet
+        list_output = run("dx list stages myworkflow")
+        self.assertIn("No stages", list_output)
+
         stage_ids.append(run("dx add stage " + workflow_id + " --name first " + applet_id + " --brief").strip())
         # not-yet-existing folder path should work
         # also, set input and instance type
@@ -1104,7 +1150,8 @@ class TestDXClientWorkflow(DXTestCase):
 
         run("dx describe " + workflow_id)
         # remove a stage by index
-        run("dx remove stage /myworkflow 1")
+        remove_output = run("dx remove stage /myworkflow 1")
+        self.assertIn(stage_ids[1], remove_output)
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(len(desc['stages']), 2)
         self.assertEqual(desc['stages'][0]['id'], stage_ids[0])
@@ -1113,7 +1160,8 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertEqual(desc['stages'][1]['folder'], '/a/b/c')
 
         # remove a stage by ID
-        run("dx remove stage " + workflow_id + " " + stage_ids[0])
+        remove_output = run("dx remove stage " + workflow_id + " " + stage_ids[0] + ' --brief').strip()
+        self.assertEqual(remove_output, stage_ids[0])
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(len(desc['stages']), 1)
         self.assertEqual(desc['stages'][0]['id'], stage_ids[2])

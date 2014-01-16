@@ -444,7 +444,7 @@ def get_col_str(col_desc):
 
 def print_data_obj_desc(desc, verbose=False):
     recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputSpec', 'outputSpec', 'runSpec', 'summary', 'dxapi', 'access', 'createdBy', 'summary', 'sponsored', 'developerNotes',
-                         'stages', 'latestAnalysis', 'editVersion', 'outputFolder']
+                         'stages', 'latestAnalysis', 'editVersion', 'outputFolder', 'initializedFrom']
 
     def get_advanced_inputs():
         details = desc.get("details")
@@ -514,6 +514,8 @@ def print_data_obj_desc(desc, verbose=False):
     if 'stages' in desc:
         for i, stage in enumerate(desc["stages"]):
             render_stage("Stage " + str(i), stage)
+    if 'initializedFrom' in desc:
+        print_field("initializedFrom", desc["initializedFrom"]["id"])
     if 'latestAnalysis' in desc and desc['latestAnalysis'] is not None:
         print_field("Last execution", desc["latestAnalysis"]["id"])
         print_field("  run at", render_timestamp(desc["latestAnalysis"]["created"]))
