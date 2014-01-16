@@ -1,1 +1,1 @@
-setuptools==1.1.6
+setuptools==2.1
