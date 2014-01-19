@@ -21,11 +21,11 @@ from __future__ import print_function
 
 import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, errno, subprocess, platform
 import shlex # respects quoted substrings when splitting
+import requests
 
 from ..cli import try_call
 from ..cli import workflow as workflow_cli
 from ..exceptions import err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions
-from ..packages import requests
 from ..compat import is_py2, basestring, str, input
 from ..utils.env import sys_encoding
 

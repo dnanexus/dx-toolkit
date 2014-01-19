@@ -1,4 +1,3 @@
 include requirements.txt
 include requirements_test.txt
 include requirements_dxfs.txt
-recursive-include dxpy/packages/requests *.pem

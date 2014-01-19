@@ -21,13 +21,12 @@ from __future__ import print_function
 
 import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re, base64, random, time
 from contextlib import contextmanager
-import pexpect
+import pexpect, requests
 
 import dxpy
 from dxpy.scripts import dx_build_app
 from dxpy_testutil import DXTestCase
 import dxpy_testutil as testutil
-from dxpy.packages import requests
 from dxpy.exceptions import DXAPIError
 
 @contextmanager

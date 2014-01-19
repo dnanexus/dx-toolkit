@@ -137,15 +137,15 @@ environment variables:
 from __future__ import print_function
 
 import os, sys, json, time, logging, platform, collections
-from .packages import requests
-from .packages.requests.exceptions import ConnectionError, HTTPError, Timeout
-from .packages.requests.auth import AuthBase
-from .compat import is_py2
+import requests
+from requests.exceptions import ConnectionError, HTTPError, Timeout
+from requests.auth import AuthBase
 
 logger = logging.getLogger(__name__)
-logging.getLogger('dxpy.packages.requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
+logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
 
 from . import exceptions
+from .compat import is_py2
 from .toolkit_version import version as TOOLKIT_VERSION
 
 snappy_available = True

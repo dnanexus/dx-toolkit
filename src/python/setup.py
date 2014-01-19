@@ -72,7 +72,6 @@ setup(
     zip_safe=False,
     license='Apache Software License',
     packages = find_packages(),
-    package_data={'dxpy.packages.requests': ['*.pem']},
     scripts = glob.glob(os.path.join(os.path.dirname(__file__), 'scripts', 'dx*')),
     entry_points = {
         "console_scripts": scripts,
