@@ -23,6 +23,7 @@ from __future__ import print_function
 import os, sys, json, collections, logging, argparse, string
 from functools import wraps
 import dxpy
+from ..compat import is_py2
 
 ENTRY_POINT_TABLE = {}
 
@@ -37,17 +38,20 @@ def _safe_unicode(o):
     """
     def clean(s):
         return u''.join([c if c in ASCII_PRINTABLE else '?' for c in s])
-    try:
-        return unicode(o)
-    except:
+    if is_py2:
         try:
-            s = str(o)
-            try:
-                return s.decode("utf-8")
-            except:
-                return clean(s[:2048]) + u" [Raw error message: " + unicode(s.encode("hex"), 'utf-8') + u"]"
+            return unicode(o)
         except:
-            return u"(Unable to decode Python exception message)"
+            try:
+                s = str(o)
+                try:
+                    return s.decode("utf-8")
+                except:
+                    return clean(s[:2048]) + u" [Raw error message: " + unicode(s.encode("hex"), 'utf-8') + u"]"
+            except:
+                return u"(Unable to decode Python exception message)"
+    else:
+        return str(o)
 
 def _format_exception_message(e):
     """
@@ -57,7 +61,10 @@ def _format_exception_message(e):
     # and then this formatted string
     if isinstance(e, dxpy.AppError):
         return _safe_unicode(e)
-    return unicode(e.__class__.__name__, 'utf-8') + ": " + _safe_unicode(e)
+    if is_py2:
+        return unicode(e.__class__.__name__, 'utf-8') + ": " + _safe_unicode(e)
+    else:
+        return e.__class__.__name__ + ": " + _safe_unicode(e)
 
 def run(function_name=None, function_input=None):
     '''

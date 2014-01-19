@@ -1,12 +1,18 @@
 import re
-import string
+from ..compat import is_py2, str
 
-COMPLEMENT = string.maketrans("ATGCatgc", "TACGTACG")
+if is_py2:
+    import string
+    maketrans = string.maketrans
+else:
+    maketrans = bytes.maketrans
 
-SEQ_PATTERN = re.compile('[ACGTacgtNn]*$')
+COMPLEMENT = maketrans(b"ATGCatgc", b"TACGTACG")
+
+SEQ_PATTERN = re.compile(b'[ACGTacgtNn]*$')
 
 def reverse_complement(seq):
-    if isinstance(seq, unicode):
+    if isinstance(seq, str):
         bytes_seq = seq.encode('utf-8')
     else:
         bytes_seq = seq

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+
 import platform, locale, sys
 sys_encoding = locale.getdefaultlocale()[1] or 'UTF-8'
 if platform.python_implementation() != "PyPy":
@@ -35,7 +37,7 @@ class DXTestCase(unittest.TestCase):
         try:
             subprocess.check_call(u"dx rmproject --yes --quiet {p}".format(p=self.project), shell=True)
         except Exception as e:
-            print "Failed to remove test project:", str(e)
+            print("Failed to remove test project:", str(e))
         if 'DX_PROJECT_CONTEXT_ID' in os.environ:
             del os.environ['DX_PROJECT_CONTEXT_ID']
         if 'DX_CLI_WD' in os.environ:
@@ -51,14 +53,14 @@ class DXTestCase(unittest.TestCase):
         except subprocess.CalledProcessError as e:
             self.assertEqual(exit_code, e.returncode, "Expected command to return code %d but it returned code %d" % (exit_code, e.returncode))
             if output_regexp:
-                print "stdout:"
-                print e.output
+                print("stdout:")
+                print(e.output)
                 self.assertTrue(re.search(output_regexp, e.output), "Expected stdout to match '%s' but it didn't" % (output_regexp,))
             if stderr_regexp:
                 if not hasattr(e, 'stderr'):
                     raise Exception('A stderr_regexp was supplied but the CalledProcessError did not return the contents of stderr')
-                print "stderr:"
-                print e.stderr
+                print("stderr:")
+                print(e.stderr)
                 self.assertTrue(re.search(stderr_regexp, e.stderr), "Expected stderr to match '%s' but it didn't" % (stderr_regexp,))
             return
         self.assertFalse(True, "Expected command to fail with CalledProcessError but it succeeded")

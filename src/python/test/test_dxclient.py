@@ -17,6 +17,8 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+from __future__ import print_function
+
 import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re, base64, random, time
 from contextlib import contextmanager
 import pexpect
@@ -62,7 +64,7 @@ def check_output(*popenargs, **kwargs):
     output, err = process.communicate()
     retcode = process.poll()
     if retcode:
-        print err
+        print(err)
         cmd = kwargs.get("args")
         if cmd is None:
             cmd = popenargs[0]
@@ -71,9 +73,9 @@ def check_output(*popenargs, **kwargs):
     return output
 
 def run(command, **kwargs):
-    print "$ %s" % (command,)
+    print("$ %s" % (command,))
     output = check_output(command, shell=True, **kwargs)
-    print output
+    print(output)
     return output
 
 def overrideEnvironment(**kwargs):
@@ -481,12 +483,12 @@ class TestDXClient(DXTestCase):
             shell1.sendline("bash -c 'dx env'")
             expect_dx_env_cwd(shell1, "sessiontest1")
         except:
-            print "*** TODO: FIXME: Unable to verify that grandchild subprocess inherited session"
-            print "*** Begin test_dxpy_session_isolation debug data"
-            print str(shell1)
-            print "*** test_dxpy_session_isolation debug data, begin buffer:"
-            print str(shell1.buffer)
-            print "*** End test_dxpy_session_isolation debug data"
+            print("*** TODO: FIXME: Unable to verify that grandchild subprocess inherited session")
+            print("*** Begin test_dxpy_session_isolation debug data")
+            print(str(shell1))
+            print("*** test_dxpy_session_isolation debug data, begin buffer:")
+            print(str(shell1.buffer))
+            print("*** End test_dxpy_session_isolation debug data")
 
 class TestDXClientUploadDownload(DXTestCase):
     def test_dx_upload_download(self):
@@ -1617,7 +1619,7 @@ class TestHTTPProxySupport(DXTestCase):
         self.proxy_process = subprocess.Popen(['squid3', '-N', '-f', 'squid.conf'], cwd=squid_wd)
         time.sleep(1)
 
-        print "Waiting for squid to come up..."
+        print("Waiting for squid to come up...")
         t = 0
         while True:
             try:
@@ -1625,7 +1627,7 @@ class TestHTTPProxySupport(DXTestCase):
                     if self.proxy_process.poll() is not None:
                         # Got a response on port 3129, but our proxy quit with an error, so it must be another process.
                         raise Exception("Tried launching squid, but port 3129 is already bound")
-                    print "squid is up"
+                    print("squid is up")
                     break
             except requests.exceptions.RequestException:
                 pass
@@ -2229,7 +2231,7 @@ class TestDXBuildApp(DXTestCase):
         app_dir = self.write_app_directory("build_app_autonumbering", json.dumps(app_spec), "code.py")
         run("dx build --create-app --json --publish " + app_dir)
         with self.assertSubprocessFailure(stderr_regexp="Could not create"):
-            print run("dx build --create-app --json --no-version-autonumbering " + app_dir)
+            print(run("dx build --create-app --json --no-version-autonumbering " + app_dir))
         run("dx build --create-app --json " + app_dir) # Creates autonumbered version
 
     def test_build_failure(self):
