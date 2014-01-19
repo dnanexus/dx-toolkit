@@ -85,7 +85,7 @@ class DXJobLogStreamClient(WebSocketBaseClient):
             err_exit(code=3)
 
     def received_message(self, message):
-        message = json.loads(str(message))
+        message = json.loads(message.__unicode__())
 
         if self.print_job_info and 'job' in message and message['job'] not in self.seen_jobs:
             self.seen_jobs[message['job']] = dxpy.describe(message['job'])
