@@ -20,7 +20,7 @@
 Redirects stdin to a DNAnexus log socket in the execution environment.
 '''
 
-import os, sys, logging, argparse
+import sys, logging, argparse
 import dxpy
 
 logging.basicConfig(level=logging.DEBUG, format="%(message)s")
