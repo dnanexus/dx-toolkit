@@ -171,7 +171,7 @@ APISERVER_PORT = DEFAULT_APISERVER_PORT
 
 SESSION_HANDLERS = collections.defaultdict(requests.session)
 
-DEFAULT_RETRIES = 5
+DEFAULT_RETRIES = 6
 _DEBUG, _UPGRADE_NOTIFY = False, True
 
 USER_AGENT = "{name}/{version} ({platform})".format(name=__name__,
@@ -373,7 +373,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                 if ok_to_retry:
                     if rewind_input_buffer_offset is not None:
                         data.seek(rewind_input_buffer_offset)
-                    delay = 2 ** (retry+1)
+                    delay = 2 ** retry
                     logger.warn("%s %s: %s. Waiting %d seconds before retry %d of %d..." % (method, url, str(e), delay,
                                                                                             retry+1, max_retries))
                     time.sleep(delay)
