@@ -27,6 +27,8 @@ logging.basicConfig(level=logging.DEBUG, format="%(message)s")
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("-l", "--level", help="Logging level to use", default='info')
+parser.add_argument("-s", "--source", help="Source ID to use", default='DX_APP_STREAM',
+                    choices=['DX_APP', 'DX_APP_STREAM'])
 args = parser.parse_args()
 
 try:
@@ -35,7 +37,7 @@ except:
     log_function = logging.info
 
 try:
-    logging.getLogger().addHandler(dxpy.DXLogHandler(source='DX_APP_STREAM'))
+    logging.getLogger().addHandler(dxpy.DXLogHandler(source=args.source))
 except Exception as e:
     print >> sys.stderr, "dx_log_stream: Error while initializing logging:", str(e)
     sys.exit(1)
