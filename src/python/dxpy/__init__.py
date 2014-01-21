@@ -178,10 +178,10 @@ USER_AGENT = "{name}/{version} ({platform})".format(name=__name__,
                                                     version=TOOLKIT_VERSION,
                                                     platform=platform.platform())
 
-http_server_errors = set([requests.codes.server_error,
-                          requests.codes.bad_gateway,
-                          requests.codes.service_unavailable,
-                          requests.codes.gateway_timeout])
+http_server_errors = {requests.codes.server_error,
+                      requests.codes.bad_gateway,
+                      requests.codes.service_unavailable,
+                      requests.codes.gateway_timeout}
 
 class ContentLengthError(HTTPError):
     '''Will be raised when actual content length received from server does not match the "Content-Length" header'''

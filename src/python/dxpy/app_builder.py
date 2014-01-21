@@ -477,7 +477,7 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
                 logger.warn(acl_change_message)
 
         if skip_adding_public:
-            authorized_users_to_add -= set(['PUBLIC'])
+            authorized_users_to_add -= {'PUBLIC'}
         if authorized_users_to_add:
             dxpy.api.app_add_authorized_users(app_id, input_params={'authorizedUsers': list(authorized_users_to_add)})
         if skip_adding_public:

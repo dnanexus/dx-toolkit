@@ -151,7 +151,7 @@ class DXDataObject(DXObject):
 
     @staticmethod
     def _get_creation_params(kwargs):
-        common_creation_params = set(["project", "name", "tags", "types", "hidden", "properties", "details", "folder", "parents"])
+        common_creation_params = {"project", "name", "tags", "types", "hidden", "properties", "details", "folder", "parents"}
 
         dx_hash = {p: kwargs[p] for p in kwargs if p in common_creation_params and kwargs[p] is not None}
         remaining_kwargs = {p: kwargs[p] for p in kwargs if p not in common_creation_params}
