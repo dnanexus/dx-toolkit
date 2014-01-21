@@ -1,3 +1,9 @@
+dx-toolkit (0.83.0) precise; urgency=low
+
+  * dxpy workflow minor improvements.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 21 Jan 2014 20:24:25 +0000
+
 dx-toolkit (0.82.0) precise; urgency=low
 
   * Improvements to "dx run workflow"
