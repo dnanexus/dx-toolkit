@@ -16,18 +16,11 @@
 
 package com.dnanexus;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * An execution (job or analysis).
  */
 public abstract class DXExecution extends DXObject {
-
-    /**
-     * A response from the /job-xxxx/terminate route.
-     */
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    private static class JobTerminateResponse {}
 
     /**
      * Initializes a new execution with the specified execution ID and environment.
@@ -49,16 +42,14 @@ public abstract class DXExecution extends DXObject {
     /**
      * Terminates the execution.
      */
-    public void terminate() {
-        DXAPI.jobTerminate(this.dxId, JobTerminateResponse.class);
-    }
+    public abstract void terminate();
 
     /**
      * Waits until the execution has successfully completed and is in the DONE state.
      *
      * @return the same DXExecution object
      *
-     * @throws IllegalStateException if the job reaches the FAILED or TERMINATED state.
+     * @throws IllegalStateException if the execution reaches the FAILED or TERMINATED state.
      */
     public abstract DXExecution waitUntilDone() throws IllegalStateException;
 

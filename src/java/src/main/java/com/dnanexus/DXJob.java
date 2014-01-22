@@ -32,6 +32,12 @@ import com.google.common.collect.Sets;
 public final class DXJob extends DXExecution {
 
     /**
+     * A response from the /job-xxxx/terminate route.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class JobTerminateResponse {}
+
+    /**
      * Contains metadata about a job. All accessors reflect the state of the job at the time that
      * this object was created.
      */
@@ -226,6 +232,11 @@ public final class DXJob extends DXExecution {
                     + d.getState());
         }
         return d.getOutput(outputClass);
+    }
+
+    @Override
+    public void terminate() {
+        DXAPI.jobTerminate(this.getId(), JobTerminateResponse.class);
     }
 
     /**

@@ -12,7 +12,13 @@ import com.google.common.collect.Sets;
 /**
  * An analysis object (a specific instantiation of a workflow).
  */
-public class DXAnalysis extends DXExecution {
+public final class DXAnalysis extends DXExecution {
+
+    /**
+     * A response from the /analysis-xxxx/terminate route.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class AnalysisTerminateResponse {}
 
     /**
      * Contains metadata about an analysis. All accessors reflect the state of the analysis at the
@@ -158,6 +164,11 @@ public class DXAnalysis extends DXExecution {
                     "Expected analysis to be in state DONE, but it is in state " + d.getState());
         }
         return d.getOutput(outputClass);
+    }
+
+    @Override
+    public void terminate() {
+        DXAPI.analysisTerminate(this.getId(), AnalysisTerminateResponse.class);
     }
 
     /**

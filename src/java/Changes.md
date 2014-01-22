@@ -1,5 +1,9 @@
 # Java API Bindings Changelog
 
+## 0.84.0
+
+* DXAnalysis is now a final class.
+
 ## 0.81.0
 
 * ExecutableRunner supports withDetails (for setting details on the resulting
