@@ -112,6 +112,24 @@ The following additional dependencies are also needed:
     sudo apt-get install make g++ cmake libcurl4-openssl-dev zlib1g-dev \
       libbz2-dev flex bison autoconf
 
+### Fedora
+
+    yum install gcc gcc-c++ automake bison flex python python-pip \
+      python-virtualenv boost-devel boost-static cmake openssl-devel \
+      libcurl-devel bzip2-devel
+
+This package set was tested on **Fedora 20**, which has the following package
+versions (abbreviated list):
+
+* gcc 4.8.2
+* Python 2.7.5
+* python-pip 1.4.1
+* python-virtualenv 1.10.1
+* boost 1.54.0
+* cmake 2.8.12.1
+* openssl 1.0.1e
+* libcurl 7.32.0
+
 ### CentOS 5.x/6.x
 
 Install Python 2.7. Python 2.7 is not available natively on CentOS 5 or 6. You
