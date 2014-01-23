@@ -37,7 +37,9 @@ except:
     log_function = logging.info
 
 try:
-    logging.getLogger().addHandler(dxpy.DXLogHandler(source=args.source))
+    logger = logging.getLogger()
+    logger.handlers = []
+    logger.addHandler(dxpy.DXLogHandler(source=args.source))
 except Exception as e:
     print >> sys.stderr, "dx_log_stream: Error while initializing logging:", str(e)
     sys.exit(1)
