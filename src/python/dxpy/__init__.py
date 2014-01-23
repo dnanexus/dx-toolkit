@@ -211,7 +211,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
     :param want_full_response: If True, the full :class:`requests.Response` object is returned (otherwise, only the content of the response body is returned)
     :type want_full_response: boolean
     :param decode_response_body: If True (and *want_full_response* is False), the response body is decoded and, if it is a JSON string, deserialized. Otherwise, the response body is uncompressed if transport compression is on, and returned raw.
-    :type want_full_response: boolean
+    :type decode_response_body: boolean
     :param prepend_srv: If True, prepends the API server location to the URL
     :type prepend_srv: boolean
     :param max_retries: Maximum number of retries to perform for a request. A "failed" request is retried if any of the following is true:
