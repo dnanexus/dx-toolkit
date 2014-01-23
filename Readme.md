@@ -130,7 +130,7 @@ versions (abbreviated list):
 * openssl 1.0.1e
 * libcurl 7.32.0
 
-### CentOS 5.x/6.x
+### CentOS/RHEL 5.x/6.x
 
 Install Python 2.7. Python 2.7 is not available natively on CentOS 5 or 6. You
 can use the script ```build/centos_install_python27.sh```, which installs it
@@ -154,9 +154,6 @@ Notes:
     library versions are too old.
 
   - Tested on CentOS 5.4 and CentOS 6.2.
-
-  - TODO: Fedora/RHEL instructions; the CentOS instructions here may be a good
-    starting point.
 
 ### OS X
 
