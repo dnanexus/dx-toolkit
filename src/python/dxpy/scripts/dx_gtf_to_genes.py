@@ -16,9 +16,9 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+from __future__ import print_function
+
 import dxpy
-import string
-import random
 import sys
 
 import magic
@@ -214,7 +214,7 @@ def importGTF(**args):
     outputFile = open("result.txt", 'w')
     outputFile.write(spansTable.get_id())
     outputFile.close()
-    print spansTable.get_id()
+    print(spansTable.get_id())
     return spansTable.get_id()
 
 def writeEntry(spansTable, spanId, exonInfo, additionalColumns, chromosome, lo, hi, attributes, entry):

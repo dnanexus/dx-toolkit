@@ -16,9 +16,9 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+from __future__ import print_function
+
 import dxpy
-import string
-import random
 import sys
 import re
 import argparse
@@ -204,7 +204,7 @@ def importGFF(**args):
     spansTable.add_types(types)
     spansTable.flush()
     spansTable.close()
-    print spansTable.get_id()
+    print(spansTable.get_id())
     job_outputs = dxpy.dxlink(spansTable.get_id())
     return job_outputs
 

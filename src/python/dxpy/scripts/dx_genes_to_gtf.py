@@ -16,6 +16,8 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+from __future__ import print_function
+
 import dxpy
 import argparse
 import sys
@@ -106,16 +108,16 @@ def main(**kwargs):
                 
             except:
                 if not warnedTranscriptId:
-                    print "Warning, at least one position had a transcriptId that could not be determined. Future warnings of this type will not be printed"
-                    print "Offending position - Chr: " + row["chr"] + " lo: " + str(row["lo"]) + " hi: "
+                    print("Warning, at least one position had a transcriptId that could not be determined. Future warnings of this type will not be printed")
+                    print("Offending position - Chr: " + row["chr"] + " lo: " + str(row["lo"]) + " hi: ")
                     warnedTranscriptId = True
     
             try:
                 geneId = transcripts[row["parent_id"]]["gene"]
             except:
                 if not warnedGeneId:
-                    print "Warning, at least one position had a geneId that could not be determined. Future warnings of this type will not be printed"
-                    print "Offending position - Chr: " + row["chr"] + " lo: " + str(row["lo"]) + " hi: "
+                    print("Warning, at least one position had a geneId that could not be determined. Future warnings of this type will not be printed")
+                    print("Offending position - Chr: " + row["chr"] + " lo: " + str(row["lo"]) + " hi: ")
                     warnedGeneId = True
     
             attributes += "gene_id " + '"' + geneId + '"' + ";"

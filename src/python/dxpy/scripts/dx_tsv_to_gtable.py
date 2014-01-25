@@ -16,6 +16,8 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+from __future__ import print_function
+
 import os, sys, json, argparse, csv
 import dxpy
 from dxpy.cli.parsers import *
@@ -145,7 +147,7 @@ def main(**kwargs):
             dxgtable.add_row([ parse_item(row[i], types[i]) for i in range(len(types))])
         dxgtable.close(block=args.wait)
         if args.brief:
-            print dxgtable.get_id()
+            print(dxgtable.get_id())
         else:
             print_desc(dxgtable.describe(incl_properties=True, incl_details=True))
     except Exception as details:

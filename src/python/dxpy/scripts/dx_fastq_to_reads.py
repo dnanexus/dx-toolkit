@@ -16,11 +16,11 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import os
+from __future__ import print_function
+
 import sys
 import json
 import logging
-import math
 import subprocess
 import re
 import string
@@ -30,6 +30,7 @@ import ast
 sys.path.append('/usr/local/lib/')
 import magic
 import dxpy
+from dxpy.compat import is_py2
 
 parser = argparse.ArgumentParser(description='Import local FASTQ file(s) as a Reads object.')
 parser.add_argument('--name', help='ID of ContigSet object (reference) that this BED file annotates')
@@ -154,8 +155,11 @@ def remove_file_type( name ):
 def estimateQualEncoding(fastq_filename, basesToEstimate, readsToEstimate, threshold):
     i = 0
 
-    #long int to avoid overruns in big reads files
-    avgQual = 0L
+    # long int to avoid overruns in big reads files (NB: ints are longs in Python 3 but not 2)
+    if is_py2:
+        avgQual = long(0)
+    else:
+        avgQual = 0
     encoding = ""
     numLines = 0
 
@@ -175,7 +179,7 @@ def estimateQualEncoding(fastq_filename, basesToEstimate, readsToEstimate, thres
                             base_num = ord(line[base])
                             
                             if base_num < 64:
-                                print "found Qual less than 64 -> encoding phred33"
+                                print("found Qual less than 64 -> encoding phred33")
                                 encoding = "phred33"
                                 return encoding
                             avgQual += base_num
@@ -184,18 +188,18 @@ def estimateQualEncoding(fastq_filename, basesToEstimate, readsToEstimate, thres
                 i += 1
 
             except StopIteration:
-                #print "EOF!"
+                #print("EOF!")
                 break
 
     avgQual /= numLines * basesToEstimate
 
-    #print "average qual value = ", avgQual
+    #print("average qual value = ", avgQual)
 
     if avgQual > threshold:
-        print "estimating as phred64 and converting to phred33..."
+        print("estimating as phred64 and converting to phred33...")
         encoding = "phred64"
     else:
-        print "estimating as phred33"
+        print("estimating as phred33")
         encoding = "phred33"
 
     return encoding
@@ -443,7 +447,7 @@ def import_reads(job_input):
     else:
         args = job_input
 
-    print args
+    print(args)
     
     if 'file2' in args:
         paired = True
@@ -567,7 +571,7 @@ def import_reads(job_input):
         readsTable.add_row(row)
 
     # print out table ID
-    print json.dumps({'table_id': readsTable.get_id()})
+    print(json.dumps({'table_id': readsTable.get_id()}))
 
     if 'name' in args:
         tableName = args['name']

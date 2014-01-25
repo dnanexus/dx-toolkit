@@ -16,6 +16,8 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+from __future__ import print_function
+
 import logging
 logging.basicConfig(level=logging.WARN)
 
@@ -29,7 +31,7 @@ import imghdr
 import json
 import os
 import re
-import urllib2
+from dxpy.packages import requests
 
 parser = argparse.ArgumentParser(description="Constructs and saves/uploads an HTML report from HTML and/or linked images")
 parser.add_argument("src", help="Source image or HTML file(s)", nargs="+")
@@ -47,9 +49,9 @@ def _image_to_data(img):
     if not "src" in img.attrs or img["src"].startswith("data:"):
         return
     elif re.match("https?://", img["src"]):
-        img_data = _load_url(img["src"]).read()
+        img_data = _load_url(img["src"]).content
     else:
-        img_data = _load_file(img["src"]).read()
+        img_data = _load_file(img["src"]).content
     img_type = imghdr.what("", img_data)
     img_b64 = base64.b64encode(img_data)
     src_data = "data:image/none;base64,"
@@ -64,9 +66,9 @@ def _bake_css(link):
     """
     if "href" in link.attrs and (re.search("\.css$", link["href"])) or ("rel" in link.attrs and link["rel"] is "stylesheet") or ("type" in link.attrs and link["type"] is "text/css"):
         if re.match("https?://", link["href"]):
-            css_data = _load_url(link["href"]).read()
+            css_data = _load_url(link["href"]).content
         else:
-            css_data = _load_file(link["href"]).read()
+            css_data = _load_file(link["href"]).content
         link.clear()
         link.string = css_data
         link.name = "style"
@@ -80,9 +82,9 @@ def _bake_script(script):
     """
     if "src" in script.attrs:
         if re.match("https?://", script["src"]):
-            script_data = _load_url(script["src"]).read()
+            script_data = _load_url(script["src"]).content
         else:
-            script_data = _load_file(script["src"]).read()
+            script_data = _load_file(script["src"]).content
         script.clear()
         script.string = "\n" + script_data + "\n"
         del script["src"]
@@ -115,9 +117,8 @@ def _load_url(url):
     Loads a URL resource from a remote server
     """
     try:
-        response = urllib2.urlopen(url)
-        return response
-    except urllib2.URLError as ex:
+        return requests.get(url)
+    except IOError as ex:
         parser.error("{url} could not be loaded remotely! ({ex})".format(url=url, ex=ex))
 
 
@@ -142,7 +143,7 @@ def bake(src):
     src = os.path.realpath(src)
     path = os.path.dirname(src)
     filename = os.path.basename(src)
-    html = _load_file(src).read()
+    html = _load_file(src).content
     if imghdr.what("", html):
         html = "<html><body><img src='{}'/></body></html>".format(cgi.escape(filename))
 
@@ -242,7 +243,7 @@ def main(**kwargs):
     if len(remote_file_ids) > 0:
         json_out = {"fileIds": remote_file_ids}
         json_out["recordId"] = create_record(args.remote, remote_file_ids, args.width, args.height)
-        print json.dumps(json_out)
+        print(json.dumps(json_out))
 
 
 if __name__ == "__main__":
