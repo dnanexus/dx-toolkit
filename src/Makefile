@@ -70,14 +70,14 @@ git_submodules:
 
 toolkit_version:
 	(if [ ! -e "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py" ]; then \
-	    echo "version = \"UNKNOWN_VERSION\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; \
+	    echo "version = 'UNKNOWN_VERSION'" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; \
 	    echo -e "module DX\n  VERSION = \"0.0.0\"\nend\n" > "$(DNANEXUS_HOME)/src/ruby/lib/dxruby/version.rb"; \
 	    echo -e "package com.dnanexus;\nclass DXToolkitVersion {\n    public static final String TOOLKIT_VERSION = \"0.0.0\";\n}" > "$(DNANEXUS_HOME)/src/java/src/main/java/com/dnanexus/DXToolkitVersion.java"; \
 	    echo UNKNOWN_VERSION > "$(DNANEXUS_HOME)/build/info/version"; \
 	fi)
 	(if [ -d "$(DNANEXUS_HOME)/.git" ]; then \
 	    VERSION=$$(git describe --always|sed 's/-/+/'); \
-	    echo "version = \"$$VERSION\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; \
+	    echo "version = '$${VERSION/#v/}'" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; \
 	    echo $$VERSION | perl -ne '/^v(\d+.\d+.\d+)/ and print "module DX\n  VERSION = \"$$1\"\nend\n"' > "$(DNANEXUS_HOME)/src/ruby/lib/dxruby/version.rb"; \
 	    echo -e "package com.dnanexus;\nclass DXToolkitVersion {\n    public static final String TOOLKIT_VERSION = \"$$VERSION\";\n}" > "$(DNANEXUS_HOME)/src/java/src/main/java/com/dnanexus/DXToolkitVersion.java"; \
 	    echo $$VERSION > "$(DNANEXUS_HOME)/build/info/version"; \

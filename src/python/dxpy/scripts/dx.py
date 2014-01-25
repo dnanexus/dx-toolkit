@@ -359,7 +359,7 @@ def login(args):
             print(fill(str(details)), file=sys.stderr)
 
     if using_default or args.staging:
-        greeting = dxpy.api.system_greet({'client': 'dxclient', 'version': dxpy.TOOLKIT_VERSION})
+        greeting = dxpy.api.system_greet({'client': 'dxclient', 'version': 'v'+dxpy.TOOLKIT_VERSION})
         if greeting.get('messages'):
             print(BOLD("New messages from ") + DNANEXUS_LOGO())
             for message in greeting['messages']:
@@ -3055,7 +3055,7 @@ def watch(args):
 def upgrade(args):
     if len(args.args) == 0:
         try:
-            greeting = dxpy.api.system_greet({'client': 'dxclient', 'version': dxpy.TOOLKIT_VERSION}, auth=None)
+            greeting = dxpy.api.system_greet({'client': 'dxclient', 'version': 'v'+dxpy.TOOLKIT_VERSION}, auth=None)
             if greeting['update']['available']:
                 recommended_version = greeting['update']['version']
             else:
@@ -3134,7 +3134,7 @@ class PrintDXVersion(argparse.Action):
     # Prints to stdout instead of the default stderr that argparse
     # uses (note: default changes to stdout in 3.4)
     def __call__(self, parser, namespace, values, option_string=None):
-        print('dx %s' % (dxpy.TOOLKIT_VERSION,))
+        print('dx v%s' % (dxpy.TOOLKIT_VERSION,))
         parser.exit(0)
 
 class PrintCategoryHelp(argparse.Action):
@@ -3181,7 +3181,7 @@ def register_subparser(subparser, subparsers_action=None, categories=('other', )
         parser_categories[category]['cmds'].append((name, _help))
 
 
-parser = DXArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v%s, client %s' % (dxpy.API_VERSION, dxpy.TOOLKIT_VERSION) + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, navigate, upload, organize and share your data, launch analyses, and more.  For a quick tour of what the tool can do, see') + '\n\n  https://wiki.dnanexus.com/Command-Line-Client/Quickstart\n\n' + fill('For a breakdown of dx commands by category, run "dx help".'),
+parser = DXArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v%s, client v%s' % (dxpy.API_VERSION, dxpy.TOOLKIT_VERSION) + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, navigate, upload, organize and share your data, launch analyses, and more.  For a quick tour of what the tool can do, see') + '\n\n  https://wiki.dnanexus.com/Command-Line-Client/Quickstart\n\n' + fill('For a breakdown of dx commands by category, run "dx help".'),
                           formatter_class=argparse.RawTextHelpFormatter,
                           parents=[env_args],
                           usage='%(prog)s [-h] [--version] command ...')
