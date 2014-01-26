@@ -10,6 +10,7 @@ if is_py2:
     str = unicode
     basestring = basestring
     input = raw_input
+    builtin_int = int
     int = long
 else:
     from io import StringIO, BytesIO
@@ -18,4 +19,5 @@ else:
     bytes = bytes
     basestring = (str, bytes)
     input = input
+    builtin_int = int
     int = int
