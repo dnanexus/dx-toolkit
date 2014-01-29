@@ -1788,6 +1788,72 @@ class TestDXBuildApp(DXTestCase):
         self.assertEqual(applet_describe["id"], applet_describe["id"])
         self.assertEqual(applet_describe["name"], "minimal_applet")
 
+    def test_build_applet_warnings(self):
+        app_spec = {
+            "title": "title",
+            "summary": "a summary sentence.",
+            "description": "foo",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [{"name": "34", "class": "int"}],
+            "outputSpec": [{"name": "92", "class": "string"}],
+            "version": "1.0.0",
+            "categories": ["foo", "Import", "Export"]
+            }
+        app_dir = self.write_app_directory("first_applet", json.dumps(app_spec), "code.py")
+        with open(os.path.join(app_dir, 'Readme.md'), 'w') as readme:
+            readme.write('a readme file')
+        first_expected_warnings = ["missing a name",
+                                   "should be a short phrase not ending in a period",
+                                   '"description" field shadows file',
+                                   '"description" field should be written in complete sentences',
+                                   'unrecognized category',
+                                   'should end in "Importer"',
+                                   'should end in "Exporter"',
+                                   'input 0 has illegal name',
+                                   'output 0 has illegal name']
+        second_expected_warnings = ["should be all lowercase",
+                                    "does not match containing directory",
+                                    "missing a title",
+                                    "missing a summary",
+                                    "missing a description",
+                                    "should be semver compliant"]
+        try:
+            # exit with error code to grab stderr
+            run("dx build " + app_dir + "; exit 1")
+        except Exception as err:
+            for warning in first_expected_warnings:
+                self.assertIn(warning, err.stderr)
+            for warning in second_expected_warnings:
+                self.assertNotIn(warning, err.stderr)
+
+        app_spec = {
+            "name": "Foo",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "foo"
+            }
+        app_dir = self.write_app_directory("second_applet", json.dumps(app_spec), "code.py")
+        try:
+            # exit with error code to grab stderr
+            run("dx build " + app_dir + "; exit 1")
+        except Exception as err:
+            for warning in first_expected_warnings:
+                self.assertNotIn(warning, err.stderr)
+            for warning in second_expected_warnings:
+                self.assertIn(warning, err.stderr)
+
+        # some more errors
+        app_spec = {
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py"}
+            }
+        app_dir = self.write_app_directory("third_applet", json.dumps(app_spec), "code.py")
+        with self.assertSubprocessFailure(stderr_regexp='interpreter field was not present'):
+            run("dx build " + app_dir)
+
     def test_get_applet(self):
         # TODO: not sure why self.assertEqual doesn't consider
         # assertEqual to pass unless the strings here are unicode strings
