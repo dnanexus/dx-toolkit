@@ -633,6 +633,12 @@ def print_execution_desc(desc):
         print_field("Stopped running", "{t} (Runtime: {rt})".format(
             t=render_timestamp(desc['stoppedRunning']),
             rt=datetime.timedelta(seconds=(desc['stoppedRunning']-desc['startedRunning'])/1000)))
+    if desc.get('class') == 'analysis' and 'stateTransitions' in desc and desc['stateTransitions']:
+        # Display finishing time of the analysis if available
+        if desc['stateTransitions'][-1]['newState'] in ['done', 'failed', 'terminated']:
+            print_field("Finished", "{t} (Wall-clock time: {wt})".format(
+                t=render_timestamp(desc['stateTransitions'][-1]['setAt']),
+                wt=datetime.timedelta(seconds=(desc['stateTransitions'][-1]['setAt']-desc['created'])/1000)))
     print_field("Last modified", render_timestamp(desc['modified']))
     if 'waitingOnChildren' in desc:
         print_list_field('Pending subjobs', desc['waitingOnChildren'])
