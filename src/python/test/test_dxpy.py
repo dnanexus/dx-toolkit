@@ -881,8 +881,8 @@ class TestDXRecord(unittest.TestCase):
         with self.assertRaises(TypeError):
             dxrecord = dxpy.new_dxrecord(foo=1)
 
-@unittest.skipUnless(testutil.TEST_RUN_JOBS,
-                     'skipping test that would run a job')
+@unittest.skipUnless(testutil.TEST_RUN_JOBS and os.environ.get("DX_RUN_NEXT_TESTS"),
+                     'skipping test that would run a job and rely on new server updates')
 class TestDXAppletJob(unittest.TestCase):
     def setUp(self):
         setUpTempProjects(self)
@@ -903,14 +903,15 @@ class TestDXAppletJob(unittest.TestCase):
 def main():
     pass
 ''',
-                               "interpreter": "python2.7",
-                               "execDepends": [{"name": "python-numpy"}]})
+                              "interpreter": "python2.7",
+                              "execDepends": [{"name": "python-numpy"}]})
         dxrecord = dxpy.new_dxrecord()
         dxrecord.close()
         prog_input = {"chromosomes": {"$dnanexus_link": dxrecord.get_id()},
                       "rowFetchChunk": 100}
         dxjob = dxapplet.run(applet_input=prog_input, details={"$dnanexus_link": "hello world"},
-                             tags=['foo', '$foo.bar'], properties={'$dnanexus_link.foo': 'barbaz'})
+                             tags=['foo', '$foo.bar'], properties={'$dnanexus_link.foo': 'barbaz'},
+                             priority="normal")
         jobdesc = dxjob.describe()
         self.assertEqual(jobdesc["class"], "job")
         self.assertEqual(jobdesc["function"], "main")
@@ -929,6 +930,7 @@ def main():
         self.assertEqual(jobdesc["tags"].sort(), ['foo', '$foo.bar'].sort())
         self.assertEqual(len(jobdesc["properties"]), 1)
         self.assertEqual(jobdesc["properties"]["$dnanexus_link.foo"], "barbaz")
+        self.assertEqual(jobdesc["requestedPriority"], "normal")
 
         # Test setting tags and properties on job
         dxjob.add_tags(["foo", "bar", "foo"])

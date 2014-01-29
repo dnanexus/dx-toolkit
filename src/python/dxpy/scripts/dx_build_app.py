@@ -149,7 +149,7 @@ parser.add_argument("--json", help=argparse.SUPPRESS, action="store_true", dest=
 parser.add_argument("--no-json", help=argparse.SUPPRESS, action="store_false", dest="json")
 
 parser.add_argument("--extra-args", help="Arguments (in JSON format) to pass to the /applet/new API method, overriding all other settings")
-parser.add_argument("--run", help="Run the app or applet after building it (options following this are passed to "+BOLD("dx run")+")", nargs=argparse.REMAINDER)
+parser.add_argument("--run", help="Run the app or applet after building it (options following this are passed to "+BOLD("dx run")+"; run at high priority by default)", nargs=argparse.REMAINDER)
 
 class DXSyntaxError(Exception):
     def __init__(self, message):
@@ -852,7 +852,7 @@ def main(**kwargs):
             if output is None:
                 err_exit("The --run option was given, but no executable was created")
             cmd = os.path.join(os.environ['DNANEXUS_HOME'], 'bin', 'dx')
-            os.execv(cmd, ['dx', 'run', output['id']] + args.run)
+            os.execv(cmd, ['dx', 'run', output['id'], '--priority', 'high'] + args.run)
 
         return
 

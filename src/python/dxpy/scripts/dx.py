@@ -2610,6 +2610,7 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
         "properties": args.properties,
         "details": args.details,
         "delay_workspace_destruction": args.delay_workspace_destruction,
+        "priority": ("high" if args.watch else args.priority),
         "instance_type": args.instance_type,
         "stage_instance_types": args.stage_instance_types,
         "extra_args": args.extra_args
@@ -3731,9 +3732,12 @@ parser_run.add_argument('--tag', metavar='TAG', dest='tags', help=fill('Tag for 
 parser_run.add_argument('--delay-workspace-destruction',
                         help=fill('Whether to keep the job\'s temporary workspace around for debugging purposes for 3 days after it succeeds or fails', width_adjustment=-24),
                         action='store_true')
+parser_run.add_argument('--priority',
+                        choices=['normal', 'high'],
+                        help='Request a scheduling priority for all resulting jobs')
 parser_run.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
 parser_run.add_argument('--wait', help='Wait until the job is done before returning', action='store_true')
-parser_run.add_argument('--watch', help="Watch the job after launching it", action='store_true')
+parser_run.add_argument('--watch', help="Watch the job after launching it; sets --priority high", action='store_true')
 parser_run.add_argument('--input-help',
                         help=fill('Print help and examples for how to specify inputs', width_adjustment=-24),
                         action=runInputHelp, nargs=0)

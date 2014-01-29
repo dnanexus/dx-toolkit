@@ -645,6 +645,40 @@ class TestDXClientRun(DXTestCase):
         # by ID will still work
         run("dx run " + dxworkflow.get_id() + " -y")
 
+    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"),
+                         'skipping test that would rely on new server updates')
+    def test_dx_run_priority(self):
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "name": "myapplet",
+                                         "dxapi": "1.0.0.0",
+                                         "runSpec": {"interpreter": "bash",
+                                                     "code": ""}})["id"]
+        normal_job_id = run("dx run myapplet --priority normal --brief -y").strip()
+        normal_job_desc = dxpy.describe(normal_job_id)
+        self.assertEqual(normal_job_desc["requestedPriority"], "normal")
+
+        high_priority_job_id = run("dx run myapplet --priority high --brief -y").strip()
+        high_priority_job_desc = dxpy.describe(high_priority_job_id)
+        self.assertEqual(high_priority_job_desc["requestedPriority"], "high")
+
+        # --watch implies --priority high
+        try:
+            run("dx run myapplet -y --watch")
+        except:
+            # ignore any watching errors; just want to test requested
+            # priority
+            pass
+        watched_job_id = run("dx find jobs -n 1 --brief").strip()
+        self.assertNotIn(watched_job_id, [normal_job_id, high_priority_job_id])
+        watched_job_desc = dxpy.describe(watched_job_id)
+        self.assertEqual(watched_job_desc['applet'], applet_id)
+        self.assertEqual(watched_job_desc['requestedPriority'], 'high')
+
+        # errors
+        with self.assertSubprocessFailure(exit_code=2):
+            # expect argparse error code 2 for bad choice
+            run("dx run myapplet --priority standard")
+
     def test_dx_run_tags_and_properties(self):
         # success
         applet_id = dxpy.api.applet_new({"project": self.project,
@@ -1787,6 +1821,32 @@ class TestDXBuildApp(DXTestCase):
         self.assertEqual(applet_describe["class"], "applet")
         self.assertEqual(applet_describe["id"], applet_describe["id"])
         self.assertEqual(applet_describe["name"], "minimal_applet")
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS and os.environ.get("DX_RUN_NEXT_TESTS"),
+                         'skipping test that would run jobs and rely on new server updates')
+    def test_build_applet_and_run_immediately(self):
+        app_spec = {
+            "name": "minimal_applet_to_run",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("minimal_applet_to_run", json.dumps(app_spec), "code.py")
+        job_id = run("dx build " + app_dir + ' --run -y --brief').strip()
+        job_desc = json.loads(run('dx describe --json ' + job_id))
+        # default priority should be high for running after building
+        # an applet
+        self.assertEqual(job_desc['name'], 'minimal_applet_to_run')
+        self.assertEqual(job_desc['requestedPriority'], 'high')
+
+        # if priority is explicitly requested as normal, it should be
+        # honored
+        job_id = run("dx build -f " + app_dir + ' --run --priority normal -y --brief').strip()
+        job_desc = json.loads(run('dx describe --json ' + job_id))
+        self.assertEqual(job_desc['name'], 'minimal_applet_to_run')
+        self.assertEqual(job_desc['requestedPriority'], 'normal')
 
     def test_build_applet_warnings(self):
         app_spec = {
