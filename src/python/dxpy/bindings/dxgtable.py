@@ -95,6 +95,11 @@ class DXGTable(DXDataObject):
     def set_http_threadpool_size(cls, num_threads):
         cls._http_threadpool_size = num_threads
 
+    @classmethod
+    def _ensure_http_threadpool(cls):
+        if cls._http_threadpool is None:
+            cls._http_threadpool = dxpy.utils.get_futures_threadpool(max_workers=cls._http_threadpool_size)
+
     def __init__(self, dxid=None, project=None, mode=None, request_size=DEFAULT_TABLE_WRITE_REQUEST_SIZE):
         DXDataObject.__init__(self, dxid=dxid, project=project)
         if mode is None:
@@ -323,8 +328,8 @@ class DXGTable(DXDataObject):
                 col_names = ['__id__'] + self.get_col_names(**kwargs)
             else:
                 col_names = columns
-        if self._http_threadpool is None:
-            DXGTable._http_threadpool = dxpy.utils.get_futures_threadpool(max_workers=self._http_threadpool_size)
+
+        DXGTable._ensure_http_threadpool()
 
         request_iterator = self._generate_read_requests(start_row=start, end_row=end, columns=columns, **kwargs)
 
@@ -657,8 +662,8 @@ class DXGTable(DXDataObject):
 
     def _async_add_rows_request(self, *args, **kwargs):
         kwargs['always_retry'] = True
-        if self._http_threadpool is None:
-            DXGTable._http_threadpool = dxpy.utils.get_futures_threadpool(max_workers=self._http_threadpool_size)
+
+        DXGTable._ensure_http_threadpool()
 
         while len(self._http_threadpool_futures) >= self._http_threadpool_size:
             future = dxpy.utils.wait_for_a_future(self._http_threadpool_futures)
