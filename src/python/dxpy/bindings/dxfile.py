@@ -21,10 +21,12 @@ DXFile Handler
 This remote file handler is a Python file-like object.
 '''
 
-import os, logging, traceback, hashlib, copy
+import os, sys, logging, traceback, hashlib, copy, time
 import concurrent.futures
-from . import *
-from .. import utils
+
+import dxpy
+from . import DXDataObject
+from ..exceptions import DXFileError
 from ..compat import BytesIO
 
 if dxpy.snappy_available:
@@ -432,7 +434,7 @@ class DXFile(DXDataObject):
 
         headers['Content-MD5'] = md5.hexdigest()
 
-        DXHTTPRequest(url, data, headers=headers, jsonify_data=False, prepend_srv=False, always_retry=True, auth=None)
+        dxpy.DXHTTPRequest(url, data, headers=headers, jsonify_data=False, prepend_srv=False, always_retry=True, auth=None)
 
         self._num_uploaded_parts += 1
 
@@ -496,13 +498,13 @@ class DXFile(DXDataObject):
         for chunk_start_pos, chunk_end_pos in chunk_ranges(start_pos, end_pos):
             headers = copy.copy(headers)
             headers['Range'] = "bytes=" + str(chunk_start_pos) + "-" + str(chunk_end_pos)
-            yield DXHTTPRequest, [url, ''], {'method': 'GET',
-                                             'headers': headers,
-                                             'auth': None,
-                                             'jsonify_data': False,
-                                             'prepend_srv': False,
-                                             'always_retry': True,
-                                             'decode_response_body': False}
+            yield dxpy.DXHTTPRequest, [url, ''], {'method': 'GET',
+                                                  'headers': headers,
+                                                  'auth': None,
+                                                  'jsonify_data': False,
+                                                  'prepend_srv': False,
+                                                  'always_retry': True,
+                                                  'decode_response_body': False}
 
     def _next_response_content(self):
         if self._http_threadpool is None:

@@ -20,9 +20,8 @@ object handlers, and its subclass :class:`DXDataObject` is the abstract
 base class for all remote data object handlers.
 """
 
-import time, re, sys, json, copy
+import time, copy
 
-from dxpy import *
 import dxpy.api
 from ..exceptions import (DXError, DXAPIError, DXFileError, DXGTableError, DXSearchError, DXAppletError,
                           DXJobFailureError, AppError, AppInternalError, DXCLIError)
@@ -564,8 +563,6 @@ class DXDataObject(DXObject):
             time.sleep(2)
             elapsed += 2
 
-from .dxdataobject_functions import dxlink, is_dxlink, get_dxlink_ids, get_handler, describe, get_details, remove
-
 from .dxfile import DXFile, DXFILE_HTTP_THREADS, DEFAULT_BUFFER_SIZE
 from .dxfile_functions import open_dxfile, new_dxfile, download_dxfile, upload_local_file, upload_string
 from .dxgtable import DXGTable, NULL, DXGTABLE_HTTP_THREADS
@@ -578,5 +575,6 @@ from .dxapplet import DXExecutable, DXApplet
 from .dxapp import DXApp
 from .dxworkflow import DXWorkflow, new_dxworkflow
 from .auth import user_info
+from .dxdataobject_functions import dxlink, is_dxlink, get_dxlink_ids, get_handler, describe, get_details, remove
 from .search import (find_data_objects, find_executions, find_jobs, find_analyses, find_projects, find_apps,
                      find_one_data_object, find_one_project, find_one_app)

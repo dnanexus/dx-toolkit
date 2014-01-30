@@ -45,8 +45,11 @@ becomes the sole developer of the app.
 
 """
 
+import re
+
 import dxpy
-from dxpy.bindings import *
+from . import DXObject, DXExecutable, DXJob
+from ..exceptions import DXError
 
 #########
 # DXApp #

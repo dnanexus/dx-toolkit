@@ -23,9 +23,11 @@ To easily access these, the following utility functions are provided.
 These functions are meant to be called only by a job.
 '''
 
-import dxpy
-from dxpy.bindings import *
 import os
+
+import dxpy
+from ..exceptions import DXError
+from .search import find_one_data_object
 
 def load_app_resource(**kwargs):
     '''

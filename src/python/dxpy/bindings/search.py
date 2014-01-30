@@ -23,7 +23,8 @@ provides search functionality over all data objects in the system. The
 '''
 
 import dxpy
-from dxpy.bindings import *
+from . import DXApplet, DXApp, DXWorkflow, DXProject, DXJob, DXAnalysis
+from ..exceptions import DXError, DXSearchError
 
 def _find(api_method, query, limit, return_handler, first_page_size, **kwargs):
     ''' Takes an API method handler (dxpy.api.find...) and calls it with *query*, then wraps a generator around its

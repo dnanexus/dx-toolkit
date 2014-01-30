@@ -32,8 +32,11 @@ of :class:`~dxpy.bindings.dxproject.DXContainer`.
 
 """
 
+import re
+
 import dxpy
-from dxpy.bindings import *
+from . import DXObject
+from ..exceptions import DXError
 
 ###############
 # DXContainer #

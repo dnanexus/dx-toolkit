@@ -27,8 +27,12 @@ job creating a subjob.
 
 """
 
-from dxpy.bindings import *
-from dxpy.utils.local_exec_utils import queue_entry_point
+import os, time
+
+import dxpy
+from . import DXObject, DXDataObject, DXJobFailureError
+from ..exceptions import DXError
+from ..utils.local_exec_utils import queue_entry_point
 
 #########
 # DXJob #

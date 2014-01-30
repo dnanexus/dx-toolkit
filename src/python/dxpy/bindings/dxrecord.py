@@ -19,7 +19,9 @@ Records are the most basic data object and do not store additional data beyond t
 all data objects (details, properties, etc.).
 """
 
-from dxpy.bindings import *
+import dxpy
+from . import DXDataObject
+from ..exceptions import DXError
 
 ############
 # DXRecord #

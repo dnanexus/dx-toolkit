@@ -21,7 +21,10 @@ DXGTable Handler
 
 import os, sys, json, traceback
 import concurrent.futures
-from . import *
+
+import dxpy
+from . import DXDataObject
+from ..exceptions import DXError
 from ..compat import StringIO
 
 DXGTABLE_HTTP_THREADS = 4

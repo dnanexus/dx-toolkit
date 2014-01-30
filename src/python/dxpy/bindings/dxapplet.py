@@ -25,8 +25,9 @@ signatures. They can be run by calling the :func:`DXApplet.run` method.
 """
 
 import dxpy
-from dxpy.bindings import *
-from dxpy.utils import merge
+from . import DXDataObject, DXJob
+from ..utils import merge
+from ..exceptions import DXError
 
 class DXExecutable:
     '''Methods in :class:`!DXExecutable` are used by

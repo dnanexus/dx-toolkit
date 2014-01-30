@@ -22,10 +22,12 @@ The following helper functions are useful shortcuts for interacting with File ob
 
 '''
 
-import os, math, mmap, stat
-from dxpy.bindings import *
+import os, sys, math, mmap, stat
 
-def open_dxfile(dxid, project=None, read_buffer_size=DEFAULT_BUFFER_SIZE):
+import dxpy
+from . import dxfile, DXFile
+
+def open_dxfile(dxid, project=None, read_buffer_size=dxfile.DEFAULT_BUFFER_SIZE):
     '''
     :param dxid: file ID
     :type dxid: string
@@ -47,7 +49,7 @@ def open_dxfile(dxid, project=None, read_buffer_size=DEFAULT_BUFFER_SIZE):
     '''
     return DXFile(dxid, project=project, read_buffer_size=read_buffer_size)
 
-def new_dxfile(mode=None, write_buffer_size=DEFAULT_BUFFER_SIZE, **kwargs):
+def new_dxfile(mode=None, write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE, **kwargs):
     '''
     :param mode: One of "w" or "a" for write and append modes, respectively
     :type mode: string
@@ -75,7 +77,7 @@ def new_dxfile(mode=None, write_buffer_size=DEFAULT_BUFFER_SIZE, **kwargs):
     dx_file.new(**kwargs)
     return dx_file
 
-def download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
+def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
                     project=None, **kwargs):
     '''
     :param dxid: Remote file ID
@@ -189,14 +191,14 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
         # For mmap'd uploads the buffer size additionally must be a
         # multiple of the ALLOCATIONGRANULARITY.
         min_buffer_size = int(math.ceil(min_buffer_size / mmap.ALLOCATIONGRANULARITY)) * mmap.ALLOCATIONGRANULARITY
-    buffer_size = max(DEFAULT_BUFFER_SIZE, min_buffer_size)
+    buffer_size = max(dxfile.DEFAULT_BUFFER_SIZE, min_buffer_size)
 
     if use_existing_dxfile:
-        dxfile = use_existing_dxfile
+        handler = use_existing_dxfile
     else:
         # Use 'a' mode because we will be responsible for closing the file
         # ourselves later (if requested).
-        dxfile = new_dxfile(mode='a', media_type=media_type, write_buffer_size=buffer_size, **kwargs)
+        handler = new_dxfile(mode='a', media_type=media_type, write_buffer_size=buffer_size, **kwargs)
 
     creation_kwargs, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
 
@@ -218,26 +220,26 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
         # If file cannot be mmap'd (e.g. is stdin, or a fifo), fall back
         # to doing an actual read from the file.
         if not can_be_mmapd(fd):
-            return fd.read(dxfile._write_bufsize)
+            return fd.read(handler._write_bufsize)
 
         bytes_available = max(file_size - offset, 0)
         if bytes_available == 0:
             return ""
 
-        return mmap.mmap(fd.fileno(), min(dxfile._write_bufsize, bytes_available), offset=offset, access=mmap.ACCESS_READ)
+        return mmap.mmap(fd.fileno(), min(handler._write_bufsize, bytes_available), offset=offset, access=mmap.ACCESS_READ)
 
-    dxfile._num_bytes_transmitted = 0
+    handler._num_bytes_transmitted = 0
 
-    def report_progress(dxfile, num_bytes):
-        dxfile._num_bytes_transmitted += num_bytes
+    def report_progress(handler, num_bytes):
+        handler._num_bytes_transmitted += num_bytes
         if file_size > 0:
-            ticks = int(round((dxfile._num_bytes_transmitted / float(file_size)) * num_ticks))
-            percent = int(round((dxfile._num_bytes_transmitted / float(file_size)) * 100))
+            ticks = int(round((handler._num_bytes_transmitted / float(file_size)) * num_ticks))
+            percent = int(round((handler._num_bytes_transmitted / float(file_size)) * 100))
 
             fmt = "[{done}{pending}] Uploaded ({done_bytes} of {total} bytes) {percent}% {name}"
             sys.stderr.write(fmt.format(done='=' * (ticks - 1) + '>' if ticks > 0 else '',
                                         pending=' ' * (num_ticks - ticks),
-                                        done_bytes=dxfile._num_bytes_transmitted,
+                                        done_bytes=handler._num_bytes_transmitted,
                                         total=file_size,
                                         percent=percent,
                                         name=filename if filename is not None else ''))
@@ -246,22 +248,22 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
             sys.stderr.flush()
 
     if show_progress:
-        report_progress(dxfile, 0)
+        report_progress(handler, 0)
 
     while True:
-        buf = read(dxfile._write_bufsize)
+        buf = read(handler._write_bufsize)
         offset += len(buf)
 
         if len(buf) == 0:
             break
 
-        dxfile.write(buf, report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
+        handler.write(buf, report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
 
     if filename is not None:
         fd.close()
 
     if not keep_open:
-        dxfile.close(block=wait_on_close, report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
+        handler.close(block=wait_on_close, report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
 
     if show_progress:
         sys.stderr.write("\n")
@@ -270,15 +272,15 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     if 'name' in kwargs or use_existing_dxfile:
         pass # File has already been named
     elif filename is not None:
-        dxfile.rename(os.path.basename(filename), **remaining_kwargs)
+        handler.rename(os.path.basename(filename), **remaining_kwargs)
     else:
         # Try to get filename from file-like object
         try:
-            dxfile.rename(os.path.basename(file.name), **remaining_kwargs)
+            handler.rename(os.path.basename(file.name), **remaining_kwargs)
         except AttributeError:
             pass
 
-    return dxfile
+    return handler
 
 def upload_string(to_upload, media_type=None, keep_open=False, wait_on_close=False, **kwargs):
     """
@@ -304,13 +306,13 @@ def upload_string(to_upload, media_type=None, keep_open=False, wait_on_close=Fal
 
     # Use 'a' mode because we will be responsible for closing the file
     # ourselves later (if requested).
-    dxfile = new_dxfile(media_type=media_type, mode='a', **kwargs)
+    handler = new_dxfile(media_type=media_type, mode='a', **kwargs)
 
     creation_kwargs, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
 
-    dxfile.write(to_upload, **remaining_kwargs)
+    handler.write(to_upload, **remaining_kwargs)
 
     if not keep_open:
-        dxfile.close(block=wait_on_close, **remaining_kwargs)
+        handler.close(block=wait_on_close, **remaining_kwargs)
 
-    return dxfile
+    return handler
