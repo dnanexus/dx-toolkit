@@ -650,7 +650,7 @@ class TestDXClientRun(DXTestCase):
     def test_dx_run_priority(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "name": "myapplet",
-                                         "dxapi": "1.0.0.0",
+                                         "dxapi": "1.0.0",
                                          "runSpec": {"interpreter": "bash",
                                                      "code": ""}})["id"]
         normal_job_id = run("dx run myapplet --priority normal --brief -y").strip()
@@ -664,7 +664,7 @@ class TestDXClientRun(DXTestCase):
         # --watch implies --priority high
         try:
             run("dx run myapplet -y --watch")
-        except:
+        except subprocess.CalledProcessError:
             # ignore any watching errors; just want to test requested
             # priority
             pass
