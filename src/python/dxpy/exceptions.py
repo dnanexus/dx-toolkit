@@ -147,6 +147,10 @@ class DXCLIError(DXError):
     '''
     pass
 
+class ContentLengthError(requests.HTTPError):
+    '''Will be raised when actual content length received from server does not match the "Content-Length" header'''
+    pass
+
 def exit_with_exc_info(code=1, message='', print_tb=False):
     '''Exits the program, printing information about the last exception (if
     any) and an optional error message.
