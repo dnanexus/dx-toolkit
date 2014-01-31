@@ -123,27 +123,8 @@ app_options.add_argument("--no-temp-build-project", help="When building an app, 
 # --yes
 app_options.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation for potentially dangerous operations', action='store_false')
 
-# TODO: remove this flag (once all calls to build_and_upload_locally are
-# in process
-#
-# --[no-]build (undocumented): perform the ./configure && make step
-parser.set_defaults(build_step=True)
-parser.add_argument("--build-step", help=argparse.SUPPRESS, action="store_true", dest="build_step")
-parser.add_argument("--no-build-step", help=argparse.SUPPRESS, action="store_false", dest="build_step")
-
-# TODO: remove this flag (once all calls to build_and_upload_locally are
-# in process
-#
-# --[no-]upload (undocumented): perform the actual upload
-parser.set_defaults(upload_step=True)
-parser.add_argument("--upload-step", help=argparse.SUPPRESS, action="store_true", dest="upload_step")
-parser.add_argument("--no-upload-step", help=argparse.SUPPRESS, action="store_false", dest="upload_step")
-
-# TODO: remove this flag (once all calls to build_and_upload_locally are
-# in process
-#
 # --[no-]json (undocumented): dumps the JSON describe of the app or
-# applet that was created
+# applet that was created. Useful for tests.
 parser.set_defaults(json=False)
 parser.add_argument("--json", help=argparse.SUPPRESS, action="store_true", dest="json")
 parser.add_argument("--no-json", help=argparse.SUPPRESS, action="store_false", dest="json")
@@ -652,7 +633,8 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
 
     return
 
-
+# TODO: do_build_step and do_upload_step could probably be removed
+# following https://github.com/dnanexus/dx_app_builder/commit/4803fbba
 def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publish=False, destination_override=None,
                              version_override=None, bill_to_override=None, use_temp_build_project=True,
                              do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
@@ -828,8 +810,6 @@ def main(**kwargs):
                 do_version_autonumbering=args.version_autonumbering,
                 do_try_update=args.update,
                 dx_toolkit_autodep=args.dx_toolkit_autodep,
-                do_build_step=args.build_step,
-                do_upload_step=args.upload_step,
                 do_check_syntax=args.check_syntax,
                 dry_run=args.dry_run,
                 confirm=args.confirm,
@@ -880,10 +860,6 @@ def main(**kwargs):
 
         # The following flags are probably not useful in conjunction
         # with --remote.
-        if not args.build_step:
-            parser.error('--remote cannot be combined with --no-build-step')
-        if not args.upload_step:
-            parser.error('--remote cannot be combined with --no-upload-step')
         if args.json:
             parser.error('--remote cannot be combined with --json')
         if not args.use_temp_build_project:
