@@ -19,7 +19,7 @@ Exceptions for the :mod:`dxpy` package.
 '''
 
 import os, sys, json, traceback, errno
-import requests
+from .packages import requests
 
 class DXError(Exception):
     '''Base class for exceptions in this package.'''
