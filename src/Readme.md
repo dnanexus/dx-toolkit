@@ -10,7 +10,7 @@ tests, the following variables can be set:
 Environment Variable | Tests included
 ---------------------|---------------
 `DXTEST_FULL`        | Run tests in all categories below
-`DXTEST_CREATE_APPS` | Run tests that create apps
+`DXTEST_CREATE_APPS` | Run tests that may create apps and rely on the presence of some fake users and orgs
 `DXTEST_FUSE`        | Run tests against FUSE filesystems
 `DXTEST_RUN_JOBS`    | Run tests that run jobs
 `DXTEST_HTTP_PROXY`  | Run tests that use squid3 to launch an HTTP proxy

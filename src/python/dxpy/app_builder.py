@@ -448,6 +448,46 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
     if categories_to_remove:
         dxpy.api.app_remove_categories(app_id, input_params={'categories': list(categories_to_remove)})
 
+    # Set developers list appropriately, but only if provided.
+    developers_to_set = app_spec.get("developers")
+    existing_developers = dxpy.api.app_list_developers(app_id)['developers']
+    if developers_to_set is not None:
+        developers_to_add = set(developers_to_set) - set(existing_developers)
+        developers_to_remove = set(existing_developers) - set(developers_to_set)
+
+        skip_updating_developers = False
+        if developers_to_add or developers_to_remove:
+            parts = []
+            if developers_to_add:
+                parts.append('the following developers will be added: ' + ', '.join(sorted(developers_to_add)))
+            if developers_to_remove:
+                parts.append('the following developers will be removed: ' + ', '.join(sorted(developers_to_remove)))
+            developer_change_message = '; and '.join(parts)
+            if confirm:
+                if sys.stdout.isatty():
+                    try:
+                        print('***')
+                        print(fill('WARNING: ' + developer_change_message))
+                        print('***')
+                        value = input('Confirm updating developers list [y/N]: ')
+                    except KeyboardInterrupt:
+                        value = 'n'
+                    if not value.lower().startswith('y'):
+                        skip_updating_developers = True
+                else:
+                    # Default to NOT updating developers if operating
+                    # without a TTY.
+                    logger.warn('skipping requested change to the developer list. Rerun "dx build" interactively or pass --yes to confirm this change.')
+                    skip_updating_developers = True
+            else:
+                logger.warn(developer_change_message)
+
+        if not skip_updating_developers:
+            if developers_to_add:
+                dxpy.api.app_add_developers(app_id, input_params={'developers': list(developers_to_add)})
+            if developers_to_remove:
+                dxpy.api.app_remove_developers(app_id, input_params={'developers': list(developers_to_remove)})
+
     # Set authorizedUsers list appropriately, but only if provided.
     authorized_users_to_set = app_spec.get("authorizedUsers")
     existing_authorized_users = dxpy.api.app_list_authorized_users(app_id)['authorizedUsers']
@@ -472,6 +512,7 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
                 else:
                     # Default to NOT adding PUBLIC if operating
                     # without a TTY.
+                    logger.warn('skipping requested change to add PUBLIC to the authorized users list. Rerun "dx build" interactively or pass --yes to confirm this change.')
                     skip_adding_public = True
             else:
                 logger.warn(acl_change_message)

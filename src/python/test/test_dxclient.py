@@ -1735,8 +1735,19 @@ class TestDXBuildApp(DXTestCase):
         shutil.rmtree(self.temp_file_path)
         dxpy.api.project_destroy(self.proj_id, {'terminateJobs': True})
 
+    def run_and_assert_stderr_matches(self, cmd, stderr_regexp):
+        with self.assertSubprocessFailure(stderr_regexp=stderr_regexp, exit_code=28):
+            run(cmd + ' && exit 28')
+
     def write_app_directory(self, app_name, dxapp_str, code_filename=None, code_content="\n"):
-        os.mkdir(os.path.join(self.temp_file_path, app_name))
+        # Note: if called twice with the same app_name, will overwrite
+        # the dxapp.json and code file (if specified) but will not
+        # remove any other files that happened to be present
+        try:
+            os.mkdir(os.path.join(self.temp_file_path, app_name))
+        except OSError as e:
+            if e.errno != 17: # directory already exists
+                raise e
         if dxapp_str is not None:
             with open(os.path.join(self.temp_file_path, app_name, 'dxapp.json'), 'w') as manifest:
                 manifest.write(dxapp_str)
@@ -2038,6 +2049,70 @@ class TestDXBuildApp(DXTestCase):
         run("dx build --create-app --yes --version=1.0.1 --json " + app_dir)
         app_authorized_users = run("dx list users app-test_build_app_and_make_it_public")
         self.assertEqual(app_authorized_users.strip().split('\n'), ['PUBLIC'])
+
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS, 'skipping test that would create apps')
+    def test_build_app_and_pretend_to_update_devs(self):
+        app_spec = {
+            "name": "test_build_app_and_pretend_to_update_devs",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0",
+            "developers": ['user-dnanexus']
+            }
+        app_dir = self.write_app_directory("test_build_app_and_pretend_to_update_devs", json.dumps(app_spec), "code.py")
+
+        # Without --yes, the build will succeed except that it will skip
+        # the developer update
+        self.run_and_assert_stderr_matches('dx build --create-app --json ' + app_dir,
+                                           'skipping requested change to the developer list')
+        app_developers = dxpy.api.app_list_developers('app-test_build_app_and_pretend_to_update_devs')['developers']
+        self.assertEqual(len(app_developers), 1) # the id of the user we are calling as
+
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS, 'skipping test that would create apps')
+    def test_build_app_and_update_devs(self):
+        app_spec = {
+            "name": "test_build_app_and_update_devs",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("test_build_app_and_update_devs", json.dumps(app_spec), "code.py")
+
+        run('dx build --create-app --json ' + app_dir)
+        app_developers = dxpy.api.app_list_developers('app-test_build_app_and_update_devs')['developers']
+        self.assertEqual(app_developers, ['user-000000000000000000000000'])
+
+        # Add a developer
+        app_spec['developers'] = ['user-000000000000000000000000', 'user-eve']
+        self.write_app_directory("test_build_app_and_update_devs", json.dumps(app_spec), "code.py")
+        self.run_and_assert_stderr_matches('dx build --create-app --yes --json ' + app_dir,
+                                           'the following developers will be added: user-eve')
+        app_developers = dxpy.api.app_list_developers('app-test_build_app_and_update_devs')['developers']
+        self.assertEqual(sorted(app_developers), ['user-000000000000000000000000', 'user-eve'])
+
+        # Add and remove a developer
+        app_spec['developers'] = ['user-000000000000000000000000', 'user-000000000000000000000001']
+        self.write_app_directory("test_build_app_and_update_devs", json.dumps(app_spec), "code.py")
+        self.run_and_assert_stderr_matches(
+            'dx build --create-app --yes --json ' + app_dir,
+            'the following developers will be added: user-000000000000000000000001; and ' \
+            + 'the following developers will be removed: user-eve'
+        )
+        app_developers = dxpy.api.app_list_developers('app-test_build_app_and_update_devs')['developers']
+        self.assertEqual(sorted(app_developers), ['user-000000000000000000000000', 'user-000000000000000000000001'])
+
+        # Remove a developer
+        app_spec['developers'] = ['user-000000000000000000000000']
+        self.write_app_directory("test_build_app_and_update_devs", json.dumps(app_spec), "code.py")
+        self.run_and_assert_stderr_matches('dx build --create-app --yes --json ' + app_dir,
+                                           'the following developers will be removed: user-000000000000000000000001')
+        app_developers = dxpy.api.app_list_developers('app-test_build_app_and_update_devs')['developers']
+        self.assertEqual(app_developers, ['user-000000000000000000000000'])
+
 
     @unittest.skipUnless(testutil.TEST_CREATE_APPS,
                          'skipping test that would create apps')
