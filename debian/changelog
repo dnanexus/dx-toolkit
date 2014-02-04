@@ -1,3 +1,11 @@
+dx-toolkit (0.84.0) precise; urgency=low
+
+  * dx describe analysis displays when it entered a terminal state
+
+  * Various bug fixes.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 04 Feb 2014 21:33:46 +0000
+
 dx-toolkit (0.83.0) precise; urgency=low
 
   * dxpy workflow minor improvements.
