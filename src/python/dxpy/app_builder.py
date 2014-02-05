@@ -450,8 +450,8 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
 
     # Set developers list appropriately, but only if provided.
     developers_to_set = app_spec.get("developers")
-    existing_developers = dxpy.api.app_list_developers(app_id)['developers']
     if developers_to_set is not None:
+        existing_developers = dxpy.api.app_list_developers(app_id)['developers']
         developers_to_add = set(developers_to_set) - set(existing_developers)
         developers_to_remove = set(existing_developers) - set(developers_to_set)
 
@@ -490,8 +490,8 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
 
     # Set authorizedUsers list appropriately, but only if provided.
     authorized_users_to_set = app_spec.get("authorizedUsers")
+    existing_authorized_users = dxpy.api.app_list_authorized_users(app_id)['authorizedUsers']
     if authorized_users_to_set is not None:
-        existing_authorized_users = dxpy.api.app_list_authorized_users(app_id)['authorizedUsers']
         authorized_users_to_add = set(authorized_users_to_set) - set(existing_authorized_users)
         authorized_users_to_remove = set(existing_authorized_users) - set(authorized_users_to_set)
 
