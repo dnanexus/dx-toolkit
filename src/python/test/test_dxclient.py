@@ -1054,6 +1054,52 @@ class TestDXClientWorkflow(DXTestCase):
                       run('dx run myworkflow --instance-type ' + stage_ids[0] + '=dx_m1.large -y'))
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would attempt to run a job')
+    def test_dx_run_workflow_with_stage_folders(self):
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "name": "myapplet",
+                                         "dxapi": "1.0.0",
+                                         "inputSpec": [],
+                                         "outputSpec": [],
+                                         "runSpec": {"interpreter": "bash",
+                                                     "code": ""}
+                                         })['id']
+        workflow_id = run("dx new workflow myworkflow --brief").strip()
+        stage_ids = [run("dx add stage myworkflow myapplet --name 'a_simple_name' --output-folder /foo --brief").strip(),
+                     run("dx add stage myworkflow myapplet --name 'second' --relative-output-folder foo --brief").strip()]
+
+        cmd = 'dx run myworkflow --folder /output -y --brief --rerun-stage "*" '
+
+        # control (no runtime request for stage folders)
+        no_req_id = run(cmd).strip()
+        # request for all stages
+        all_stg_folder_id = run(cmd + '--stage-output-folder "*" bar').strip()
+        all_stg_rel_folder_id = run(cmd + '--stage-relative-output-folder "*" /bar').strip()
+        # request for stage specifically (by name)
+        per_stg_folders_id = run(cmd + '--stage-relative-output-folder a_simple_name /baz ' + # as "baz"
+                                 '--stage-output-folder second baz').strip() # resolves as ./baz
+        # request for stage specifically (by index)
+        per_stg_folders_id_2 = run(cmd + '--stage-output-folder 1 quux ' +
+                                   '--stage-relative-output-folder 0 /quux').strip()
+        # only modify one
+        per_stg_folders_id_3 = run(cmd + '--stage-output-folder ' + stage_ids[0] + ' /hello').strip()
+
+        time.sleep(2) # give time for all jobs to be generated
+
+        def expect_stage_folders(analysis_id, first_stage_folder, second_stage_folder):
+            analysis_desc = dxpy.describe(analysis_id)
+            self.assertEqual(analysis_desc['stages'][0]['execution']['folder'],
+                             first_stage_folder)
+            self.assertEqual(analysis_desc['stages'][1]['execution']['folder'],
+                             second_stage_folder)
+
+        expect_stage_folders(no_req_id, '/foo', '/output/foo')
+        expect_stage_folders(all_stg_folder_id, '/bar', '/bar')
+        expect_stage_folders(all_stg_rel_folder_id, '/output/bar', '/output/bar')
+        expect_stage_folders(per_stg_folders_id, '/output/baz', '/baz')
+        expect_stage_folders(per_stg_folders_id_2, '/output/quux', '/quux')
+        expect_stage_folders(per_stg_folders_id_3, '/hello', '/output/foo')
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would attempt to run a job')
     def test_inaccessible_stage(self):
         applet_id = dxpy.api.applet_new({"name": "myapplet",
                                          "project": self.project,

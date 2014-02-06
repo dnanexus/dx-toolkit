@@ -2612,6 +2612,8 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
         "delay_workspace_destruction": args.delay_workspace_destruction,
         "instance_type": args.instance_type,
         "stage_instance_types": args.stage_instance_types,
+        "stage_folders": args.stage_folders,
+        "rerun_stages": args.rerun_stages,
         "extra_args": args.extra_args
     }
 
@@ -2837,6 +2839,20 @@ def run(args):
         dest_proj, dest_path, none = try_call(resolve_existing_path,
                                               args.folder,
                                               expected='folder')
+
+    # Process the --stage-output-folder and
+    # --stage-relative-output-folder options if provided
+    if args.stage_output_folder or args.stage_relative_output_folder:
+        stage_folders = {}
+        for stage, stage_folder in args.stage_output_folder:
+            ignore_proj, stage_folder, none = try_call(resolve_existing_path,
+                                                       stage_folder,
+                                                       expected='folder')
+            stage_folders[stage] = stage_folder
+        for stage, stage_folder in args.stage_relative_output_folder:
+            stage_folders[stage] = stage_folder.lstrip('/')
+        if stage_folders:
+            args.stage_folders = stage_folders
 
     clone_desc = None
     if args.clone is not None:
@@ -3724,9 +3740,37 @@ parser_run.add_argument('--clone', help=fill('Job ID or name from which to use a
 parser_run.add_argument('--alias', '--version', dest='alias',
                         help=fill('Alias (tag) or version of the app to run (default: "default" if an app)', width_adjustment=-24))
 parser_run.add_argument('--destination', '--folder', metavar='PATH', dest='folder', help=fill('The full project:folder path in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
-parser_run.add_argument('--project', metavar='PROJECT', help=fill('Project name or ID in which to run the executable. This can also be specified together with the output folder in --destination.', width_adjustment=-24))
+parser_run.add_argument('--project', metavar='PROJECT',
+                        help=fill('Project name or ID in which to run the executable. This can also ' +
+                                  'be specified together with the output folder in --destination.',
+                                  width_adjustment=-24))
+parser_run.add_argument('--stage-output-folder', metavar='STAGE_ID FOLDER',
+                        help=fill('A stage identifier (ID, name, or index), and a folder path to ' +
+                                  'use as its output folder',
+                                  width_adjustment=-24),
+                        nargs=2,
+                        action='append',
+                        default=[])
+parser_run.add_argument('--stage-relative-output-folder', metavar='STAGE_ID FOLDER',
+                        help=fill('A stage identifier (ID, name, or index), and a relative folder ' +
+                                  'path to the workflow output folder to use as the output folder',
+                                  width_adjustment=-24),
+                        nargs=2,
+                        action='append',
+                        default=[])
+parser_run.add_argument('--rerun-stage', metavar='STAGE_ID', dest='rerun_stages',
+                        help=fill('A stage (using its ID, name, or index) to rerun, or "*" to ' +
+                                  'indicate all stages should be rerun; repeat as necessary',
+                                  width_adjustment=-24),
+                        action='append')
 parser_run.add_argument('--name', help=fill('Name for the job (default is the app or applet name)', width_adjustment=-24))
-parser_run.add_argument('--property', dest='properties', metavar='KEY=VALUE', help=fill('Key-value pair to add as a property; repeat as necessary,', width_adjustment=-24) + '\n' + fill('e.g. "--property key1=val1 --property key2=val2"', width_adjustment=-24, initial_indent=' ', subsequent_indent=' ', break_on_hyphens=False), action='append')
+parser_run.add_argument('--property', dest='properties', metavar='KEY=VALUE',
+                        help=(fill('Key-value pair to add as a property; repeat as necessary,',
+                                   width_adjustment=-24) + '\n' +
+                              fill('e.g. "--property key1=val1 --property key2=val2"',
+                                   width_adjustment=-24, initial_indent=' ', subsequent_indent=' ',
+                                   break_on_hyphens=False)),
+                        action='append')
 parser_run.add_argument('--tag', metavar='TAG', dest='tags', help=fill('Tag for the resulting execution; repeat as necessary,', width_adjustment=-24) + '\n' + fill('e.g. "--tag tag1 --tag tag2"', width_adjustment=-24, break_on_hyphens=False, initial_indent=' ', subsequent_indent=' '), action='append')
 parser_run.add_argument('--delay-workspace-destruction',
                         help=fill('Whether to keep the job\'s temporary workspace around for debugging purposes for 3 days after it succeeds or fails', width_adjustment=-24),
@@ -3735,9 +3779,11 @@ parser_run.add_argument('-y', '--yes', dest='confirm', help='Do not ask for conf
 parser_run.add_argument('--wait', help='Wait until the job is done before returning', action='store_true')
 parser_run.add_argument('--watch', help="Watch the job after launching it", action='store_true')
 parser_run.add_argument('--input-help',
-                        help=fill('Print help and examples for how to specify inputs', width_adjustment=-24),
+                        help=fill('Print help and examples for how to specify inputs',
+                                  width_adjustment=-24),
                         action=runInputHelp, nargs=0)
-parser_run.set_defaults(func=run, verbose=False, help=False, details=None, stage_instance_types=None)
+parser_run.set_defaults(func=run, verbose=False, help=False, details=None,
+                        stage_instance_types=None, stage_folders=None)
 register_subparser(parser_run, categories='exec')
 
 parser_watch = subparsers.add_parser('watch', help='Watch logs of a job and its subjobs', prog='dx watch',
