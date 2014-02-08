@@ -166,6 +166,7 @@ class TestDXClient(DXTestCase):
         run(u"dx set_properties '{n}' '{n}={n}' '{n}2={n}3'".format(n=table_name))
         run(u"dx unset_properties '{n}' '{n}' '{n}2'".format(n=table_name))
         run(u"dx tag '{n}' '{n}'2".format(n=table_name))
+        run(u"dx describe '{n}'".format(n=table_name))
 
         self.assertTrue(self.project in run(u"dx find projects --brief"))
 
@@ -178,6 +179,7 @@ class TestDXClient(DXTestCase):
         self.assertEqual(second_record_id, run(u"dx ls :somenewfolder/foo --brief").strip())
 
         # describe
+        run(u"dx describe {record}".format(record=record_id))
         desc = json.loads(run(u"dx describe {record} --details --json".format(record=record_id)))
         self.assertEqual(desc['tags'], ['onetag', 'twotag'])
         self.assertEqual(desc['types'], ['foo', 'bar'])
