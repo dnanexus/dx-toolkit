@@ -2845,9 +2845,9 @@ def run(args):
     if args.stage_output_folder or args.stage_relative_output_folder:
         stage_folders = {}
         for stage, stage_folder in args.stage_output_folder:
-            ignore_proj, stage_folder, none = try_call(resolve_existing_path,
-                                                       stage_folder,
-                                                       expected='folder')
+            _proj, stage_folder, _none = try_call(resolve_existing_path,
+                                                  stage_folder,
+                                                  expected='folder')
             stage_folders[stage] = stage_folder
         for stage, stage_folder in args.stage_relative_output_folder:
             stage_folders[stage] = stage_folder.lstrip('/')
@@ -3744,14 +3744,14 @@ parser_run.add_argument('--project', metavar='PROJECT',
                         help=fill('Project name or ID in which to run the executable. This can also ' +
                                   'be specified together with the output folder in --destination.',
                                   width_adjustment=-24))
-parser_run.add_argument('--stage-output-folder', metavar='STAGE_ID FOLDER',
+parser_run.add_argument('--stage-output-folder', metavar=('STAGE_ID', 'FOLDER'),
                         help=fill('A stage identifier (ID, name, or index), and a folder path to ' +
                                   'use as its output folder',
                                   width_adjustment=-24),
                         nargs=2,
                         action='append',
                         default=[])
-parser_run.add_argument('--stage-relative-output-folder', metavar='STAGE_ID FOLDER',
+parser_run.add_argument('--stage-relative-output-folder', metavar=('STAGE_ID', 'FOLDER'),
                         help=fill('A stage identifier (ID, name, or index), and a relative folder ' +
                                   'path to the workflow output folder to use as the output folder',
                                   width_adjustment=-24),

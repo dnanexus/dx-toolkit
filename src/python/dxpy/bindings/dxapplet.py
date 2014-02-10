@@ -159,7 +159,7 @@ class DXExecutable:
 
         '''
         # stage_instance_types, stage_folders, and rerun_stages are
-        # only supported for workflows, but we include it
+        # only supported for workflows, but we include them
         # here. Applet-based executables should detect when they
         # receive a truthy workflow-specific value and raise an error.
         run_input = self._get_run_input(executable_input,
