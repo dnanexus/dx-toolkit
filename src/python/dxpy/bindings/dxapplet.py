@@ -102,8 +102,9 @@ class DXExecutable:
         '''
         # Although it says "for_applet", this is factored out of
         # DXApplet because apps currently use the same mechanism
-        if kwargs.get('stage_instance_types'):
-            raise DXError('stage_instance_types is not supported for applets (only workflows)')
+        for unsupported_arg in ['stage_instance_types', 'stage_folders', 'rerun_stages']:
+            if kwargs.get(unsupported_arg):
+                raise DXError(unsupported_arg + ' is not supported for applets (only workflows)')
         return DXExecutable._get_run_input_common_fields(executable_input, **kwargs)
 
     def _run_impl(self, run_input, **kwargs):
@@ -125,8 +126,8 @@ class DXExecutable:
         raise NotImplementedError('_get_run_input is not implemented')
 
     def run(self, executable_input, project=None, folder=None, name=None, tags=None, properties=None, details=None,
-            instance_type=None, stage_instance_types=None, depends_on=None, delay_workspace_destruction=None,
-            extra_args=None, **kwargs):
+            instance_type=None, stage_instance_types=None, stage_folders=None, rerun_stages=None,
+            depends_on=None, delay_workspace_destruction=None, extra_args=None, **kwargs):
         '''
         :param executable_input: Hash of the executable's input arguments
         :type executable_input: dict
@@ -157,10 +158,10 @@ class DXExecutable:
         the given input *executable_input*.
 
         '''
-        # stage_instance_types is only supported for workflows, but we
-        # include it here. Applet-based executables should detect when
-        # they receive a truthy stage_instance_types value and raise an
-        # error.
+        # stage_instance_types, stage_folders, and rerun_stages are
+        # only supported for workflows, but we include them
+        # here. Applet-based executables should detect when they
+        # receive a truthy workflow-specific value and raise an error.
         run_input = self._get_run_input(executable_input,
                                         project=project,
                                         folder=folder,
@@ -170,6 +171,8 @@ class DXExecutable:
                                         details=details,
                                         instance_type=instance_type,
                                         stage_instance_types=stage_instance_types,
+                                        stage_folders=stage_folders,
+                                        rerun_stages=rerun_stages,
                                         depends_on=depends_on,
                                         delay_workspace_destruction=delay_workspace_destruction,
                                         extra_args=extra_args)

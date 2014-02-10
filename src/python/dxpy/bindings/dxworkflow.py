@@ -440,6 +440,19 @@ class DXWorkflow(DXDataObject, DXExecutable):
                     stage = self._get_stage_id(stage)
                 run_input['stageSystemRequirements'][stage] = DXExecutable._inst_type_to_sys_reqs(value)
 
+        if kwargs.get('stage_folders') is not None:
+            run_input['stageFolders'] = {}
+            for stage, value in kwargs['stage_folders'].items():
+                if stage != '*':
+                    stage = self._get_stage_id(stage)
+                run_input['stageFolders'][stage] = value
+
+        if kwargs.get('rerun_stages') is not None:
+            run_input['rerunStages'] = [
+                stage if stage == '*' else self._get_stage_id(stage)
+                for stage in kwargs['rerun_stages']
+            ]
+
         return run_input
 
     def _run_impl(self, run_input, **kwargs):
@@ -453,6 +466,10 @@ class DXWorkflow(DXDataObject, DXExecutable):
         :type instance_type: string or dict
         :param stage_instance_types: A dict mapping stage IDs, names, or indices to either a string (representing an instance type to be used for all functions in that stage), or a dict mapping function names to instance types.
         :type stage_instance_types: dict
+        :param stage_folders: A dict mapping stage IDs, names, indices, and/or the string "*" to folder values to be used for the stages' output folders (use "*" as the default for all unnamed stages)
+        :type stage_folders: dict
+        :param rerun_stages: A list of stage IDs, names, indices, and/or the string "*" to indicate which stages should be run even if there are cached executions available
+        :type rerun_stages: list of strings
         :returns: Object handler of the newly created analysis
         :rtype: :class:`~dxpy.bindings.dxanalysis.DXAnalysis`
 
