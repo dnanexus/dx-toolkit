@@ -1878,9 +1878,9 @@ class TestDXBuildApp(DXTestCase):
                                     "missing a description",
                                     "should be semver compliant"]
         try:
-            # exit with error code to grab stderr
-            run("dx build " + app_dir + "; exit 1")
-        except Exception as err:
+            run("dx build " + app_dir)
+            self.fail("dx build invocation should have failed because of bad IO spec")
+        except subprocess.CalledProcessError as err:
             for warning in first_expected_warnings:
                 self.assertIn(warning, err.stderr)
             for warning in second_expected_warnings:
@@ -1897,8 +1897,9 @@ class TestDXBuildApp(DXTestCase):
         app_dir = self.write_app_directory("second_applet", json.dumps(app_spec), "code.py")
         try:
             # exit with error code to grab stderr
-            run("dx build " + app_dir + "; exit 1")
-        except Exception as err:
+            run("dx build " + app_dir + " && exit 28")
+        except subprocess.CalledProcessError as err:
+            self.assertEqual(err.returncode, 28)
             for warning in first_expected_warnings:
                 self.assertNotIn(warning, err.stderr)
             for warning in second_expected_warnings:
