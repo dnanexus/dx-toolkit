@@ -652,14 +652,21 @@ class TestDXClientRun(DXTestCase):
                                          "name": "myapplet",
                                          "dxapi": "1.0.0",
                                          "runSpec": {"interpreter": "bash",
-                                                     "code": ""}})["id"]
+                                                     "code": ""},
+                                         "access": {"project": "VIEW",
+                                                    "allProjects": "VIEW",
+                                                    "network": []}})["id"]
         normal_job_id = run("dx run myapplet --priority normal --brief -y").strip()
         normal_job_desc = dxpy.describe(normal_job_id)
-        self.assertEqual(normal_job_desc["requestedPriority"], "normal")
+        self.assertEqual(normal_job_desc["priority"], "normal")
 
         high_priority_job_id = run("dx run myapplet --priority high --brief -y").strip()
         high_priority_job_desc = dxpy.describe(high_priority_job_id)
-        self.assertEqual(high_priority_job_desc["requestedPriority"], "high")
+        self.assertEqual(high_priority_job_desc["priority"], "high")
+
+        # don't actually need these to run
+        run("dx terminate " + normal_job_id)
+        run("dx terminate " + high_priority_job_id)
 
         # --watch implies --priority high
         try:
@@ -672,12 +679,69 @@ class TestDXClientRun(DXTestCase):
         self.assertNotIn(watched_job_id, [normal_job_id, high_priority_job_id])
         watched_job_desc = dxpy.describe(watched_job_id)
         self.assertEqual(watched_job_desc['applet'], applet_id)
-        self.assertEqual(watched_job_desc['requestedPriority'], 'high')
+        self.assertEqual(watched_job_desc['priority'], 'high')
 
         # errors
         with self.assertSubprocessFailure(exit_code=2):
             # expect argparse error code 2 for bad choice
             run("dx run myapplet --priority standard")
+
+        # no warning when no special access requested
+        dx_run_output = run("dx run myapplet --priority normal -y")
+        for string in ["WARNING", "developer", "Internet", "write access"]:
+            self.assertNotIn(string, dx_run_output)
+
+        # test for printing a warning when extra permissions are
+        # requested and run as normal priority
+        extra_perms_applet = dxpy.api.applet_new({"project": self.project,
+                                                  "dxapi": "1.0.0",
+                                                  "runSpec": {"interpreter": "bash",
+                                                              "code": ""},
+                                                  "access": {"developer": True,
+                                                             "project": "UPLOAD",
+                                                             "network": ["github.com"]}})["id"]
+        # no warning when running at high priority
+        dx_run_output = run("dx run " + extra_perms_applet + " --priority high -y")
+        for string in ["WARNING", "developer", "Internet", "write access"]:
+            self.assertNotIn(string, dx_run_output)
+
+        # warning when running at normal priority; mention special
+        # permissions present
+        dx_run_output = run("dx run " + extra_perms_applet + " --priority normal -y")
+        for string in ["WARNING", "developer", "Internet", "write access"]:
+            self.assertIn(string, dx_run_output)
+
+        # test with allProjects set but no explicit permissions to the
+        # project context
+        extra_perms_applet = dxpy.api.applet_new({"project": self.project,
+                                                  "dxapi": "1.0.0",
+                                                  "inputSpec": [],
+                                                  "outputSpec": [],
+                                                  "runSpec": {"interpreter": "bash",
+                                                              "code": ""},
+                                                  "access": {"allProjects": "CONTRIBUTE"}})["id"]
+        # no warning when running at high priority
+        dx_run_output = run("dx run " + extra_perms_applet + " --priority high -y")
+        for string in ["WARNING", "developer", "Internet", "write access"]:
+            self.assertNotIn(string, dx_run_output)
+
+        # warning when running at normal priority; mention special
+        # permissions present
+        dx_run_output = run("dx run " + extra_perms_applet + " --priority normal -y")
+        for string in ["WARNING", "write access"]:
+            self.assertIn(string, dx_run_output)
+        for string in ["developer", "Internet"]:
+            self.assertNotIn(string, dx_run_output)
+
+        # expect the same warnings if wrapped in a workflow
+        workflow_id = run("dx new workflow myworkflow --brief").strip()
+        run("dx add stage {workflow} {applet}".format(workflow=workflow_id,
+                                                      applet=extra_perms_applet))
+        dx_run_output = run("dx run myworkflow --priority normal -y")
+        for string in ["WARNING", "write access"]:
+            self.assertIn(string, dx_run_output)
+        for string in ["developer", "Internet"]:
+            self.assertNotIn(string, dx_run_output)
 
     def test_dx_run_tags_and_properties(self):
         # success

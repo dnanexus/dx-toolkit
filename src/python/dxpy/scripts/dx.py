@@ -2648,6 +2648,36 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
                 # method is not yet available
                 pass
 
+    if args.priority == "normal":
+        special_access = set()
+        executable_desc = executable.describe()
+        write_perms = ['UPLOAD', 'CONTRIBUTE', 'ADMINISTER']
+        def check_for_special_access(access_spec):
+            if not access_spec:
+                return
+            if access_spec.get('developer'):
+                special_access.add('access to apps as a developer')
+            if access_spec.get('network'):
+                special_access.add('Internet access')
+            if access_spec.get('project') in write_perms or \
+               access_spec.get('allProjects') in write_perms:
+                special_access.add('write access to one or more projects')
+        if isinstance(executable, dxpy.DXWorkflow):
+            for stage_desc in executable_desc['stages']:
+                stage_exec_desc = dxpy.describe(stage_desc['executable'])
+                check_for_special_access(stage_exec_desc.get('access'))
+        else:
+            check_for_special_access(executable_desc.get('access'))
+        if special_access:
+            print(fill(BOLD() + "WARNING" + ENDC() + ": You have requested that jobs be run under " +
+                       BOLD() + "normal" + ENDC() +
+                       " priority, which may cause them to be restarted at any point, but " +
+                       "the executable you are trying to run has " +
+                       "requested extra permissions (" + ", ".join(special_access) + ").  " +
+                       "Unexpected side effects or failures may occur if the executable has not " +
+                       "been written to behave well when restarted."))
+            print()
+
     # Ask for confirmation if a tty and if input was not given as a
     # single JSON.
     if args.confirm and sys.stdout.isatty():
