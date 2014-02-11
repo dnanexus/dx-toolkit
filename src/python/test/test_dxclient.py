@@ -166,6 +166,7 @@ class TestDXClient(DXTestCase):
         run(u"dx set_properties '{n}' '{n}={n}' '{n}2={n}3'".format(n=table_name))
         run(u"dx unset_properties '{n}' '{n}' '{n}2'".format(n=table_name))
         run(u"dx tag '{n}' '{n}'2".format(n=table_name))
+        run(u"dx describe '{n}'".format(n=table_name))
 
         self.assertTrue(self.project in run(u"dx find projects --brief"))
 
@@ -178,6 +179,7 @@ class TestDXClient(DXTestCase):
         self.assertEqual(second_record_id, run(u"dx ls :somenewfolder/foo --brief").strip())
 
         # describe
+        run(u"dx describe {record}".format(record=record_id))
         desc = json.loads(run(u"dx describe {record} --details --json".format(record=record_id)))
         self.assertEqual(desc['tags'], ['onetag', 'twotag'])
         self.assertEqual(desc['types'], ['foo', 'bar'])
@@ -1152,6 +1154,52 @@ class TestDXClientWorkflow(DXTestCase):
                       run('dx run myworkflow --instance-type ' + stage_ids[0] + '=dx_m1.large -y'))
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would attempt to run a job')
+    def test_dx_run_workflow_with_stage_folders(self):
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "name": "myapplet",
+                                         "dxapi": "1.0.0",
+                                         "inputSpec": [],
+                                         "outputSpec": [],
+                                         "runSpec": {"interpreter": "bash",
+                                                     "code": ""}
+                                         })['id']
+        workflow_id = run("dx new workflow myworkflow --brief").strip()
+        stage_ids = [run("dx add stage myworkflow myapplet --name 'a_simple_name' --output-folder /foo --brief").strip(),
+                     run("dx add stage myworkflow myapplet --name 'second' --relative-output-folder foo --brief").strip()]
+
+        cmd = 'dx run myworkflow --folder /output -y --brief --rerun-stage "*" '
+
+        # control (no runtime request for stage folders)
+        no_req_id = run(cmd).strip()
+        # request for all stages
+        all_stg_folder_id = run(cmd + '--stage-output-folder "*" bar').strip()
+        all_stg_rel_folder_id = run(cmd + '--stage-relative-output-folder "*" /bar').strip()
+        # request for stage specifically (by name)
+        per_stg_folders_id = run(cmd + '--stage-relative-output-folder a_simple_name /baz ' + # as "baz"
+                                 '--stage-output-folder second baz').strip() # resolves as ./baz
+        # request for stage specifically (by index)
+        per_stg_folders_id_2 = run(cmd + '--stage-output-folder 1 quux ' +
+                                   '--stage-relative-output-folder 0 /quux').strip()
+        # only modify one
+        per_stg_folders_id_3 = run(cmd + '--stage-output-folder ' + stage_ids[0] + ' /hello').strip()
+
+        time.sleep(2) # give time for all jobs to be generated
+
+        def expect_stage_folders(analysis_id, first_stage_folder, second_stage_folder):
+            analysis_desc = dxpy.describe(analysis_id)
+            self.assertEqual(analysis_desc['stages'][0]['execution']['folder'],
+                             first_stage_folder)
+            self.assertEqual(analysis_desc['stages'][1]['execution']['folder'],
+                             second_stage_folder)
+
+        expect_stage_folders(no_req_id, '/foo', '/output/foo')
+        expect_stage_folders(all_stg_folder_id, '/bar', '/bar')
+        expect_stage_folders(all_stg_rel_folder_id, '/output/bar', '/output/bar')
+        expect_stage_folders(per_stg_folders_id, '/output/baz', '/baz')
+        expect_stage_folders(per_stg_folders_id_2, '/output/quux', '/quux')
+        expect_stage_folders(per_stg_folders_id_3, '/hello', '/output/foo')
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would attempt to run a job')
     def test_inaccessible_stage(self):
         applet_id = dxpy.api.applet_new({"name": "myapplet",
                                          "project": self.project,
@@ -1833,8 +1881,19 @@ class TestDXBuildApp(DXTestCase):
         shutil.rmtree(self.temp_file_path)
         dxpy.api.project_destroy(self.proj_id, {'terminateJobs': True})
 
+    def run_and_assert_stderr_matches(self, cmd, stderr_regexp):
+        with self.assertSubprocessFailure(stderr_regexp=stderr_regexp, exit_code=28):
+            run(cmd + ' && exit 28')
+
     def write_app_directory(self, app_name, dxapp_str, code_filename=None, code_content="\n"):
-        os.mkdir(os.path.join(self.temp_file_path, app_name))
+        # Note: if called twice with the same app_name, will overwrite
+        # the dxapp.json and code file (if specified) but will not
+        # remove any other files that happened to be present
+        try:
+            os.mkdir(os.path.join(self.temp_file_path, app_name))
+        except OSError as e:
+            if e.errno != 17: # directory already exists
+                raise e
         if dxapp_str is not None:
             with open(os.path.join(self.temp_file_path, app_name, 'dxapp.json'), 'w') as manifest:
                 manifest.write(dxapp_str)
@@ -1943,9 +2002,9 @@ class TestDXBuildApp(DXTestCase):
                                     "missing a description",
                                     "should be semver compliant"]
         try:
-            # exit with error code to grab stderr
-            run("dx build " + app_dir + "; exit 1")
-        except Exception as err:
+            run("dx build " + app_dir)
+            self.fail("dx build invocation should have failed because of bad IO spec")
+        except subprocess.CalledProcessError as err:
             for warning in first_expected_warnings:
                 self.assertIn(warning, err.stderr)
             for warning in second_expected_warnings:
@@ -1962,8 +2021,9 @@ class TestDXBuildApp(DXTestCase):
         app_dir = self.write_app_directory("second_applet", json.dumps(app_spec), "code.py")
         try:
             # exit with error code to grab stderr
-            run("dx build " + app_dir + "; exit 1")
-        except Exception as err:
+            run("dx build " + app_dir + " && exit 28")
+        except subprocess.CalledProcessError as err:
+            self.assertEqual(err.returncode, 28)
             for warning in first_expected_warnings:
                 self.assertNotIn(warning, err.stderr)
             for warning in second_expected_warnings:
@@ -2162,6 +2222,70 @@ class TestDXBuildApp(DXTestCase):
         run("dx build --create-app --yes --version=1.0.1 --json " + app_dir)
         app_authorized_users = run("dx list users app-test_build_app_and_make_it_public")
         self.assertEqual(app_authorized_users.strip().split('\n'), ['PUBLIC'])
+
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS, 'skipping test that would create apps')
+    def test_build_app_and_pretend_to_update_devs(self):
+        app_spec = {
+            "name": "test_build_app_and_pretend_to_update_devs",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0",
+            "developers": ['user-dnanexus']
+            }
+        app_dir = self.write_app_directory("test_build_app_and_pretend_to_update_devs", json.dumps(app_spec), "code.py")
+
+        # Without --yes, the build will succeed except that it will skip
+        # the developer update
+        self.run_and_assert_stderr_matches('dx build --create-app --json ' + app_dir,
+                                           'skipping requested change to the developer list')
+        app_developers = dxpy.api.app_list_developers('app-test_build_app_and_pretend_to_update_devs')['developers']
+        self.assertEqual(len(app_developers), 1) # the id of the user we are calling as
+
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS, 'skipping test that would create apps')
+    def test_build_app_and_update_devs(self):
+        app_spec = {
+            "name": "test_build_app_and_update_devs",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("test_build_app_and_update_devs", json.dumps(app_spec), "code.py")
+
+        run('dx build --create-app --json ' + app_dir)
+        app_developers = dxpy.api.app_list_developers('app-test_build_app_and_update_devs')['developers']
+        self.assertEqual(app_developers, ['user-000000000000000000000000'])
+
+        # Add a developer
+        app_spec['developers'] = ['user-000000000000000000000000', 'user-eve']
+        self.write_app_directory("test_build_app_and_update_devs", json.dumps(app_spec), "code.py")
+        self.run_and_assert_stderr_matches('dx build --create-app --yes --json ' + app_dir,
+                                           'the following developers will be added: user-eve')
+        app_developers = dxpy.api.app_list_developers('app-test_build_app_and_update_devs')['developers']
+        self.assertEqual(sorted(app_developers), ['user-000000000000000000000000', 'user-eve'])
+
+        # Add and remove a developer
+        app_spec['developers'] = ['user-000000000000000000000000', 'user-000000000000000000000001']
+        self.write_app_directory("test_build_app_and_update_devs", json.dumps(app_spec), "code.py")
+        self.run_and_assert_stderr_matches(
+            'dx build --create-app --yes --json ' + app_dir,
+            'the following developers will be added: user-000000000000000000000001; and ' \
+            + 'the following developers will be removed: user-eve'
+        )
+        app_developers = dxpy.api.app_list_developers('app-test_build_app_and_update_devs')['developers']
+        self.assertEqual(sorted(app_developers), ['user-000000000000000000000000', 'user-000000000000000000000001'])
+
+        # Remove a developer
+        app_spec['developers'] = ['user-000000000000000000000000']
+        self.write_app_directory("test_build_app_and_update_devs", json.dumps(app_spec), "code.py")
+        self.run_and_assert_stderr_matches('dx build --create-app --yes --json ' + app_dir,
+                                           'the following developers will be removed: user-000000000000000000000001')
+        app_developers = dxpy.api.app_list_developers('app-test_build_app_and_update_devs')['developers']
+        self.assertEqual(app_developers, ['user-000000000000000000000000'])
+
 
     @unittest.skipUnless(testutil.TEST_CREATE_APPS,
                          'skipping test that would create apps')

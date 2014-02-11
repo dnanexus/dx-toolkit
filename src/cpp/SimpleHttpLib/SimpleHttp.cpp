@@ -231,6 +231,7 @@ namespace dx {
 
     if (curl != NULL) {
       if (config::CA_CERT() == "NOVERIFY") {
+        assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0));
         assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0));
       } else {
         if (!config::CA_CERT().empty()) {

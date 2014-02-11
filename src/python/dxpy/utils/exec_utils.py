@@ -20,7 +20,7 @@ Utilities used in the DNAnexus execution environment and test harness.
 
 from __future__ import print_function
 
-import os, sys, json, collections, logging, argparse, string
+import os, json, collections, logging, argparse, string
 from functools import wraps
 import dxpy
 from ..compat import is_py2

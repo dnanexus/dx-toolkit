@@ -178,14 +178,7 @@ USER_AGENT = "{name}/{version} ({platform})".format(name=__name__,
                                                     version=TOOLKIT_VERSION,
                                                     platform=platform.platform())
 
-http_server_errors = {requests.codes.server_error,
-                      requests.codes.bad_gateway,
-                      requests.codes.service_unavailable,
-                      requests.codes.gateway_timeout}
-
-class ContentLengthError(HTTPError):
-    '''Will be raised when actual content length received from server does not match the "Content-Length" header'''
-    pass
+_expected_exceptions = exceptions.network_exceptions + (exceptions.DXAPIError, )
 
 def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeout=600,
                   use_compression=None, jsonify_data=True, want_full_response=False,
@@ -323,7 +316,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                 if 'content-length' in response.headers:
                     if int(response.headers['content-length']) != len(response.content):
                         range_str = (' (%s)' % (headers['Range'],)) if 'Range' in headers else ''
-                        raise ContentLengthError(
+                        raise exceptions.ContentLengthError(
                             "Received response with content-length header set to %s but content length is %d%s" %
                             (response.headers['content-length'], len(response.content), range_str)
                         )
@@ -357,7 +350,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                             streaming_response_truncated = 'content-length' not in response.headers
                             raise HTTPError("Invalid JSON received from server")
                 return content
-        except (exceptions.DXAPIError, ConnectionError, HTTPError, Timeout, requests.packages.urllib3.connectionpool.HTTPException) as e:
+        except _expected_exceptions as e:
             last_error = e
 
             # TODO: support HTTP/1.1 503 Retry-After
@@ -365,7 +358,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
             # but non-idempotent requests can be unsafe to retry
             # Distinguish between connection initiation errors and dropped socket errors
             if retry < max_retries:
-                if (response is None) or isinstance(e, ContentLengthError):
+                if (response is None) or isinstance(e, exceptions.ContentLengthError):
                     ok_to_retry = always_retry or (method == 'GET')
                 else:
                     ok_to_retry = (response.status_code >= 500 and response.status_code < 600) or streaming_response_truncated
@@ -495,13 +488,13 @@ def get_auth_server_name(host_override=None, port_override=None):
         if host_override is None or port_override is None:
             raise exceptions.DXError("Both host and port must be specified if either is specified")
         return 'http://' + host_override + ':' + str(port_override)
-    elif dxpy.APISERVER_HOST == 'stagingapi.dnanexus.com':
+    elif APISERVER_HOST == 'stagingapi.dnanexus.com':
         return 'https://stagingauth.dnanexus.com'
-    elif dxpy.APISERVER_HOST == 'api.dnanexus.com':
+    elif APISERVER_HOST == 'api.dnanexus.com':
         return 'https://auth.dnanexus.com'
     else:
         err_msg = "Could not determine which auth server is associated with {apiserver}."
-        raise exceptions.DXError(err_msg.format(apiserver=dxpy.APISERVER_HOST))
+        raise exceptions.DXError(err_msg.format(apiserver=APISERVER_HOST))
 
 def _initialize(suppress_warning=False):
     '''

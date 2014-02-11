@@ -466,7 +466,7 @@ def print_data_obj_desc(desc, verbose=False):
     if 'types' in desc:
         print_list_field("Types", desc['types'])
     if 'properties' in desc:
-        print_list_field("Properties", ['='.join(k, v) for k, v in desc['properties'].items()])
+        print_list_field("Properties", ['='.join([k, v]) for k, v in desc['properties'].items()])
     if 'tags' in desc:
         print_list_field("Tags", desc['tags'])
     if verbose and 'details' in desc:

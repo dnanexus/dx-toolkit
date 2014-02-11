@@ -26,7 +26,10 @@ full object handler.
 
 '''
 
-from dxpy.bindings import *
+import dxpy
+from . import DXDataObject
+from . import __dict__ as all_bindings
+from ..exceptions import DXError
 
 def dxlink(object_id, project_id=None):
     '''
@@ -80,7 +83,7 @@ def _guess_link_target_type(link):
     class_name = 'DX'+class_name.capitalize()
     if class_name == 'DXGtable':
         class_name = 'DXGTable'
-    cls = dxpy.__dict__[class_name]
+    cls = all_bindings[class_name]
     return cls
 
 def get_handler(id_or_link, project=None):

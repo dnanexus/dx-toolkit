@@ -24,7 +24,7 @@ these methods return a remote table handler.
 
 """
 
-from dxpy.bindings import *
+from . import DXGTable
 
 def open_dxgtable(dxid, project=None, mode=None):
     '''
