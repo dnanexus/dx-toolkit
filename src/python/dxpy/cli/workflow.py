@@ -40,9 +40,9 @@ def new_workflow(args):
         if is_analysis_id(args.init):
             init_from = args.init
         else:
-            init_project, init_folder, init_result = try_call(resolve_existing_path,
-                                                              args.init,
-                                                              expected='entity')
+            init_project, _init_folder, init_result = try_call(resolve_existing_path,
+                                                               args.init,
+                                                               expected='entity')
             init_from = dxpy.get_handler(init_result['id'], project=init_project)
     if args.output is None:
         project = dxpy.WORKSPACE_ID
@@ -53,7 +53,7 @@ def new_workflow(args):
     if args.output_folder is not None:
         try:
             # Try to resolve to a path in the project
-            ignore, args.output_folder, ignore2 = resolve_path(args.output_folder, expected='folder')
+            _ignore, args.output_folder, _ignore = resolve_path(args.output_folder, expected='folder')
         except:
             # But if not, just use the value directly
             pass
@@ -84,7 +84,7 @@ def get_workflow_id_and_project(path):
     Returns the workflow and project IDs from the given path if
     available; otherwise, exits with an appropriate error message.
     '''
-    project, folderpath, entity_result = try_call(resolve_existing_path, path, expected='entity')
+    project, _folderpath, entity_result = try_call(resolve_existing_path, path, expected='entity')
     try:
         if entity_result is None or not entity_result['id'].startswith('workflow-'):
             raise DXCLIError('Could not resolve "' + path + '" to a workflow object')
@@ -107,7 +107,7 @@ def add_stage(args):
     folderpath = None
     if args.output_folder is not None:
         try:
-            ignore, folderpath, none = resolve_path(args.output_folder, expected='folder')
+            _ignore, folderpath, _none = resolve_path(args.output_folder, expected='folder')
         except:
             folderpath = args.output_folder
     elif args.relative_output_folder is not None:
@@ -189,7 +189,7 @@ def update_workflow(args):
     if args.output_folder is not None:
         try:
             # Try to resolve to an existing path in the project
-            ignore, args.output_folder, ignore2 = resolve_path(args.output_folder, expected='folder')
+            _ignore, args.output_folder, _ignore = resolve_path(args.output_folder, expected='folder')
         except:
             # But if not, just use the value directly
             pass
@@ -246,7 +246,7 @@ def update_stage(args):
     folderpath = None
     if args.output_folder is not None:
         try:
-            ignore, folderpath, none = resolve_path(args.output_folder, expected='folder')
+            _ignore, folderpath, _none = resolve_path(args.output_folder, expected='folder')
         except:
             folderpath = args.output_folder
     elif args.relative_output_folder is not None:

@@ -356,13 +356,14 @@ def resolve_container_id_or_name(raw_string, is_error=False, unescape=True, mult
     elif not multi:
         if sys.stdout.isatty():
             print('Found multiple projects with name "' + string + '"')
-            choice = pick(map(lambda result: result['id'] + ' (' + result['level'] + ')', results))
+            choice = pick(['{id} ({level})'.format(id=result['id'], level=result['level'])
+                           for result in results])
             return results[choice]['id']
         else:
             raise ResolutionError('Found multiple projects with name "' + string + '"; please use a project ID to specify the desired project')
     else:
         # len(results) > 1 and multi
-        return map(lambda result: result['id'], results)
+        return [result['id'] for result in results]
 
 def resolve_path(path, expected=None, expected_classes=None, multi_projects=False, allow_empty_string=True):
     '''
@@ -614,7 +615,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
             # This is the only possibility left.  Leave the
             # error-checking for later.  Note that folderpath does
             possible_folder = folderpath + '/' + entity_name
-            possible_folder, skip = clean_folder_path(possible_folder, 'folder')
+            possible_folder, _skip = clean_folder_path(possible_folder, 'folder')
             return project, possible_folder, None
 
         # Caller wants ALL results; just return the whole thing
@@ -626,9 +627,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
                 return project, None, results
             if sys.stdout.isatty():
                 print('The given path "' + path + '" resolves to the following data objects:')
-                choice = pick(map(lambda result:
-                                      get_ls_l_desc(result['describe']),
-                                  results),
+                choice = pick([get_ls_l_desc(result['describe']) for result in results],
                               allow_mult=allow_mult)
                 if allow_mult and choice == '*':
                     return project, None, results
@@ -700,11 +699,11 @@ def get_exec_handler(path, alias=None):
         app_desc = get_app_from_path(path)
         try:
             # Look for applets and workflows
-            project, folderpath, entity_results = resolve_existing_path(path,
-                                                                        expected='entity',
-                                                                        ask_to_resolve=False,
-                                                                        expected_classes=['applet', 'record', 'workflow'],
-                                                                        visibility="visible")
+            _project, _folderpath, entity_results = resolve_existing_path(path,
+                                                                          expected='entity',
+                                                                          ask_to_resolve=False,
+                                                                          expected_classes=['applet', 'record', 'workflow'],
+                                                                          visibility="visible")
             def is_applet_or_workflow(i):
                 return (i['describe']['class'] in ['applet', 'workflow'])
             if entity_results is not None:
@@ -715,7 +714,7 @@ def get_exec_handler(path, alias=None):
             if app_desc is None:
                 raise
             else:
-                project, folderpath, entity_results = None, None, None
+                entity_results = None
 
         if entity_results is not None and len(entity_results) == 1 and app_desc is None:
             handler = get_handler_from_desc(entity_results[0]['describe'])

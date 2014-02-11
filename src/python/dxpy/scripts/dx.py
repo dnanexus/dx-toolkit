@@ -190,8 +190,7 @@ class DXCLICompleter():
         self.text = None
 
     def get_command_matches(self, prefix):
-        self.matches = filter(lambda command: command.startswith(prefix),
-                              self.commands)
+        self.matches = [cmd for cmd in self.commands if cmd.startswith(prefix)]
 
     def get_subcommand_matches(self, command, prefix):
         if command in self.subcommands:
@@ -248,18 +247,18 @@ class DXCLICompleter():
             # self.matches, preferably a list of installed apps
             if words[0] in ['run', 'install', 'uninstall']:
                 try:
-                    app_names = map(lambda result:
-                                        result['describe']['name'],
-                                    filter(lambda result:
-                                               result['describe']['installed'] if words[0] in ['run', 'uninstall'] else not result['describe']['installed'],
-                                           list(dxpy.find_apps(describe={"fields": {"name": True, "installed": True}}))))
-                    app_matches = filter(lambda app_name:
-                                             app_name.startswith(words[-1]),
-                                         app_names)
+                    initial_results = list(dxpy.find_apps(describe={"fields": {"name": True,
+                                                                               "installed": True}}))
+                    if words[0] in ['run', 'uninstall']:
+                        filtered_results = [result for result in initial_results if
+                                            result['describe']['installed']]
+                    else:
+                        filtered_results = [result for result in initial_results if
+                                            not result['describe']['installed']]
+                    app_names = [result['describe']['name'] for result in filtered_results]
+                    app_matches = [name for name in app_names if name.startswith(words[-1])]
                     if want_prefix:
-                        self.matches += map(lambda match:
-                                                text[:space_pos + 1] + match,
-                                            app_matches)
+                        self.matches += [text[:space_pos + 1] + match for match in app_matches]
                     else:
                         self.matches += app_matches
                 except:
@@ -465,7 +464,7 @@ def pick_and_set_project(args):
     first_pass = True
     while True:
         results = []
-        for i in range(10):
+        for _ in range(10):
             try:
                 results.append(next(result_generator))
                 any_results = True
@@ -631,8 +630,8 @@ def invite(args):
     # should not hurt the path resolution.
     if ':' not in args.project:
         args.project += ':'
-    project, none, none = try_call(resolve_existing_path,
-                                   args.project, 'project')
+    project, _none, _none = try_call(resolve_existing_path,
+                                     args.project, 'project')
     if args.invitee != 'PUBLIC' and not '-' in args.invitee and not '@' in args.invitee:
         args.invitee = 'user-' + args.invitee.lower()
     try:
@@ -647,8 +646,8 @@ def uninvite(args):
     # should not hurt the path resolution.
     if ':' not in args.project:
         args.project += ':'
-    project, none, none = try_call(resolve_existing_path,
-                                   args.project, 'project')
+    project, _none, _none = try_call(resolve_existing_path,
+                                     args.project, 'project')
     if args.entity != 'PUBLIC' and not '-' in args.entity:
         args.entity = 'user-' + args.entity.lower()
     try:
@@ -775,7 +774,7 @@ def mkdir(args):
     for path in args.paths:
         # Resolve the path and add it to the list
         try:
-            project, folderpath, none = resolve_path(path, expected='folder')
+            project, folderpath, _none = resolve_path(path, expected='folder')
         except ResolutionError as details:
             print(fill('Could not resolve "' + path + '": ' + str(details)))
             had_error = True
@@ -795,7 +794,7 @@ def rmdir(args):
     had_error = False
     for path in args.paths:
         try:
-            project, folderpath, none = resolve_path(path, expected='folder')
+            project, folderpath, _none = resolve_path(path, expected='folder')
         except ResolutionError as details:
             print(fill('Could not resolve "' + path + '": ' + str(details)))
             had_error = True
@@ -918,7 +917,7 @@ def rmproject(args):
 
 # ONLY for within the SAME project.  Will exit fatally otherwise.
 def mv(args):
-    dest_proj, dest_path, none = try_call(resolve_path,
+    dest_proj, dest_path, _none = try_call(resolve_path,
                                           args.destination, 'folder')
     try:
         if dest_path is None:
@@ -965,9 +964,7 @@ def mv(args):
             try:
                 if src_results[0]['describe']['folder'] != dest_folder:
                     dxpy.DXHTTPRequest('/' + src_proj + '/move',
-                                       {"objects": map(lambda result:
-                                                           result['id'],
-                                                       src_results),
+                                       {"objects": [result['id'] for result in src_results],
                                         "destination": dest_folder})
                 for result in src_results:
                     dxpy.DXHTTPRequest('/' + result['id'] + '/rename',
@@ -1002,8 +999,8 @@ def mv(args):
 
 # ONLY for between DIFFERENT projects.  Will exit fatally otherwise.
 def cp(args):
-    dest_proj, dest_path, none = try_call(resolve_path,
-                                          args.destination, 'folder')
+    dest_proj, dest_path, _none = try_call(resolve_path,
+                                           args.destination, 'folder')
     try:
         if dest_path is None:
             raise ValueError()
@@ -1055,7 +1052,7 @@ def cp(args):
                                    {"folder": dest_path})
                 exists = dxpy.DXHTTPRequest('/' + src_proj + '/clone',
                                           {"folders": contents['folders'],
-                                           "objects": map(lambda result: result['id'], contents['objects']),
+                                           "objects": [result['id'] for result in contents['objects']],
                                            "project": dest_proj,
                                            "destination": dest_path})['exists']
                 if len(exists) > 0:
@@ -1066,8 +1063,7 @@ def cp(args):
         else:
             try:
                 exists = dxpy.DXHTTPRequest('/' + src_proj + '/clone',
-                                            {"objects": map(lambda result: result['id'],
-                                                            src_results),
+                                            {"objects": [result['id'] for result in src_results],
                                              "project": dest_proj,
                                              "destination": dest_folder})['exists']
                 if len(exists) > 0:
@@ -1116,8 +1112,8 @@ def cp(args):
         err_exit()
 
 def tree(args):
-    project, folderpath, none = try_call(resolve_existing_path, args.path,
-                                         expected='folder')
+    project, folderpath, _none = try_call(resolve_existing_path, args.path,
+                                          expected='folder')
 
     if project is None:
         parser.exit(1, fill('Current project must be set or specified before any data can be listed') + '\n')
@@ -1125,8 +1121,8 @@ def tree(args):
 
     tree = collections.OrderedDict()
     try:
-        folders = filter(lambda folder: folder.startswith((folderpath + '/') if folderpath != '/' else '/'),
-                           dxproj.describe(input_params={"folders": True})['folders'])
+        folders = [folder for folder in dxproj.describe(input_params={"folders": True})['folders']
+                   if folder.startswith((folderpath + '/') if folderpath != '/' else '/')]
         folders = [ folder[len(folderpath):] for folder in folders ]
         for folder in folders:
             subtree = tree
@@ -1185,12 +1181,12 @@ def describe(args):
 
         # Otherwise, attempt to look for it as a data object.
         try:
-            project, folderpath, entity_results = resolve_existing_path(args.path,
-                                                                        expected='entity',
-                                                                        ask_to_resolve=False,
-                                                                        describe=json_input)
+            project, _folderpath, entity_results = resolve_existing_path(args.path,
+                                                                         expected='entity',
+                                                                         ask_to_resolve=False,
+                                                                         describe=json_input)
         except ResolutionError:
-            project, folderpath, entity_results = None, None, None
+            project, entity_results = None, None
 
         found_match = False
 
@@ -1375,9 +1371,9 @@ def new_record(args):
     try_call(process_single_dataobject_output_args, args)
     init_from = None
     if args.init is not None:
-        init_project, init_folder, init_result = try_call(resolve_existing_path,
-                                                          args.init,
-                                                          expected='entity')
+        init_project, _init_folder, init_result = try_call(resolve_existing_path,
+                                                           args.init,
+                                                           expected='entity')
         init_from = dxpy.DXRecord(dxid=init_result['id'], project=init_project)
     if args.output is None:
         project = dxpy.WORKSPACE_ID
@@ -1449,10 +1445,10 @@ def new_gtable(args):
 def set_visibility(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_existing_path,
-                                                   args.path,
-                                                   expected='entity',
-                                                   allow_mult=True, all_mult=args.all)
+    _project, _folderpath, entity_results = try_call(resolve_existing_path,
+                                                     args.path,
+                                                     expected='entity',
+                                                     allow_mult=True, all_mult=args.all)
 
     if entity_results is None:
         parser.exit(1, fill('Could not resolve "' + args.path + '" to a name or ID') + '\n')
@@ -1473,8 +1469,8 @@ def set_visibility(args):
 
 def get_details(args):
     # Attempt to resolve name
-    project, folderpath, entity_result = try_call(resolve_existing_path,
-                                                  args.path, expected='entity')
+    _project, _folderpath, entity_result = try_call(resolve_existing_path,
+                                                    args.path, expected='entity')
 
     if entity_result is None:
         parser.exit(1, fill('Could not resolve "' + args.path + '" to a name or ID') + '\n')
@@ -1487,9 +1483,9 @@ def get_details(args):
 def set_details(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_existing_path,
-                                                   args.path, expected='entity',
-                                                   allow_mult=True, all_mult=args.all)
+    _project, _folderpath, entity_results = try_call(resolve_existing_path,
+                                                     args.path, expected='entity',
+                                                     allow_mult=True, all_mult=args.all)
 
     if entity_results is None:
         parser.exit(1, fill('Could not resolve "' + args.path + '" to a name or ID') + '\n')
@@ -1515,10 +1511,10 @@ def set_details(args):
 def add_types(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_existing_path,
-                                                   args.path,
-                                                   expected='entity',
-                                                   allow_mult=True, all_mult=args.all)
+    _project, _folderpath, entity_results = try_call(resolve_existing_path,
+                                                     args.path,
+                                                     expected='entity',
+                                                     allow_mult=True, all_mult=args.all)
 
     if entity_results is None:
         parser.exit(1, fill('Could not resolve "' + args.path + '" to a name or ID') + '\n')
@@ -1539,10 +1535,10 @@ def add_types(args):
 def remove_types(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_existing_path,
-                                                   args.path,
-                                                   expected='entity',
-                                                   allow_mult=True, all_mult=args.all)
+    _project, _folderpath, entity_results = try_call(resolve_existing_path,
+                                                     args.path,
+                                                     expected='entity',
+                                                     allow_mult=True, all_mult=args.all)
 
     if entity_results is None:
         parser.exit(1, fill('Could not resolve "' + args.path + '" to a name or ID') + '\n')
@@ -1563,9 +1559,9 @@ def remove_types(args):
 def add_tags(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_to_objects_or_project,
-                                                   args.path,
-                                                   args.all)
+    project, _folderpath, entity_results = try_call(resolve_to_objects_or_project,
+                                                    args.path,
+                                                    args.all)
 
     if entity_results is not None:
         for result in entity_results:
@@ -1593,9 +1589,9 @@ def add_tags(args):
 def remove_tags(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_to_objects_or_project,
-                                                   args.path,
-                                                   args.all)
+    project, _folderpath, entity_results = try_call(resolve_to_objects_or_project,
+                                                    args.path,
+                                                    args.all)
 
     if entity_results is not None:
         for result in entity_results:
@@ -1623,9 +1619,9 @@ def remove_tags(args):
 def rename(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_to_objects_or_project,
-                                                   args.path,
-                                                   args.all)
+    project, _folderpath, entity_results = try_call(resolve_to_objects_or_project,
+                                                    args.path,
+                                                    args.all)
 
     if entity_results is not None:
         for result in entity_results:
@@ -1653,9 +1649,9 @@ def rename(args):
 def set_properties(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_to_objects_or_project,
-                                                   args.path,
-                                                   args.all)
+    project, _folderpath, entity_results = try_call(resolve_to_objects_or_project,
+                                                    args.path,
+                                                    args.all)
 
     try_call(process_properties_args, args)
     if entity_results is not None:
@@ -1684,9 +1680,9 @@ def set_properties(args):
 def unset_properties(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_to_objects_or_project,
-                                                   args.path,
-                                                   args.all)
+    project, _folderpath, entity_results = try_call(resolve_to_objects_or_project,
+                                                    args.path,
+                                                    args.all)
     properties = {}
     for prop in args.properties:
         properties[prop] = None
@@ -1714,7 +1710,7 @@ def unset_properties(args):
             err_exit()
 
 def make_download_url(args):
-    project, folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
+    project, _folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
     if entity_result is None:
         parser.exit(1, fill('Could not resolve ' + args.path + ' to a data object') + '\n')
 
@@ -1726,10 +1722,10 @@ def make_download_url(args):
 
     try:
         dxfile = dxpy.DXFile(entity_result['id'], project=project)
-        url, headers = dxfile.get_download_url(preauthenticated=True,
-                                               duration=normalize_timedelta(args.duration)/1000 if args.duration else 24*3600,
-                                               filename=args.filename,
-                                               project=project)
+        url, _headers = dxfile.get_download_url(preauthenticated=True,
+                                                duration=normalize_timedelta(args.duration)/1000 if args.duration else 24*3600,
+                                                filename=args.filename,
+                                                project=project)
         print(url)
     except:
         err_exit()
@@ -1938,7 +1934,7 @@ def get(args):
 
 def cat(args):
     for path in args.path:
-        project, folderpath, entity_result = try_call(resolve_existing_path, path)
+        project, _folderpath, entity_result = try_call(resolve_existing_path, path)
 
         if entity_result is None:
             parser.exit(1, fill('Could not resolve ' + path + ' to a data object') + '\n')
@@ -1958,8 +1954,8 @@ def cat(args):
 
 def head(args):
     # Attempt to resolve name
-    project, folderpath, entity_result = try_call(resolve_existing_path,
-                                                  args.path, expected='entity')
+    project, _folderpath, entity_result = try_call(resolve_existing_path,
+                                                   args.path, expected='entity')
     if entity_result is None:
         parser.exit(1, fill('Could not resolve ' + args.path + ' to a data object') + '\n')
     if not entity_result['describe']['class'] in ['gtable', 'file']:
@@ -2173,13 +2169,12 @@ def find_executions(args):
         if args.project is not None:
             if get_last_pos_of_char(':', args.project) == -1:
                 args.project = args.project + ':'
-            project, none, none = try_call(resolve_existing_path,
-                                           args.project, 'project')
+            project, _none, _none = try_call(resolve_existing_path,
+                                             args.project, 'project')
         if args.user is not None and args.user != 'self' and not args.user.startswith('user-'):
             args.user = 'user-' + args.user.lower()
         if args.all_projects:
             project = None
-    print_launched_by = (args.user is None) or args.verbose
     query = {'classname': args.classname,
              'launched_by': args.user,
              'executable': args.executable,
@@ -2217,10 +2212,10 @@ def find_executions(args):
             child_is_cached_result = is_cached_result or \
                                      (root.startswith('analysis-') and \
                                       execution_descriptions[child_execution].get('parentAnalysis') != root)
-            subtree, subtree_root = build_tree(child_execution,
-                                               executions_by_parent,
-                                               execution_descriptions,
-                                               is_cached_result=child_is_cached_result)
+            subtree, _subtree_root = build_tree(child_execution,
+                                                executions_by_parent,
+                                                execution_descriptions,
+                                                is_cached_result=child_is_cached_result)
             if tree:
                 tree[root_string].update(subtree)
         return tree, root_string
@@ -2326,8 +2321,8 @@ def find_data(args):
     else:
         if get_last_pos_of_char(':', args.project) == -1:
             args.project = args.project + ':'
-        args.project, none, none = try_call(resolve_existing_path,
-                                            args.project, 'project')
+        args.project, _none, _none = try_call(resolve_existing_path,
+                                              args.project, 'project')
     try:
         results = list(dxpy.find_data_objects(classname=args.classname,
                                               state=args.state,
@@ -2441,12 +2436,12 @@ def close(args):
     for path in args.path:
         # Attempt to resolve name
         try:
-            project, folderpath, entity_results = resolve_existing_path(path,
-                                                                       expected='entity',
-                                                                       allow_mult=True,
-                                                                       all_mult=args.all)
+            project, _folderpath, entity_results = resolve_existing_path(path,
+                                                                         expected='entity',
+                                                                         allow_mult=True,
+                                                                         all_mult=args.all)
         except:
-            project, folderpath, entity_results = None, None, None
+            project, entity_results = None, None
 
         if entity_results is None:
             print(fill('Could not resolve "' + path + '" to a name or ID'))
@@ -2481,9 +2476,9 @@ def wait(args):
         else:
             # Attempt to resolve name
             try:
-                project, folderpath, entity_result = resolve_existing_path(path, expected='entity')
+                project, _folderpath, entity_result = resolve_existing_path(path, expected='entity')
             except:
-                project, folderpath, entity_result = None, None, None
+                project, entity_result = None, None
 
             if entity_result is None:
                 print(fill('Could not resolve ' + path + ' to a data object'))
@@ -2836,9 +2831,9 @@ def run(args):
             parser.exit(1, 'Unable to find project to run the app in. Please run "dx select" to set the working project, or use --folder=project:path\n')
         dest_path = os.environ.get('DX_CLI_WD', '/').decode(sys_encoding)
     else:
-        dest_proj, dest_path, none = try_call(resolve_existing_path,
-                                              args.folder,
-                                              expected='folder')
+        dest_proj, dest_path, _none = try_call(resolve_existing_path,
+                                               args.folder,
+                                               expected='folder')
 
     # Process the --stage-output-folder and
     # --stage-relative-output-folder options if provided
