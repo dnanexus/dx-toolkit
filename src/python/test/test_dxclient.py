@@ -1903,14 +1903,14 @@ class TestDXBuildApp(DXTestCase):
         # default priority should be high for running after building
         # an applet
         self.assertEqual(job_desc['name'], 'minimal_applet_to_run')
-        self.assertEqual(job_desc['requestedPriority'], 'high')
+        self.assertEqual(job_desc['priority'], 'high')
 
         # if priority is explicitly requested as normal, it should be
         # honored
         job_id = run("dx build -f " + app_dir + ' --run --priority normal -y --brief').strip()
         job_desc = json.loads(run('dx describe --json ' + job_id))
         self.assertEqual(job_desc['name'], 'minimal_applet_to_run')
-        self.assertEqual(job_desc['requestedPriority'], 'normal')
+        self.assertEqual(job_desc['priority'], 'normal')
 
     def test_build_applet_warnings(self):
         app_spec = {
