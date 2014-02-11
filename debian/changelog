@@ -1,3 +1,9 @@
+dx-toolkit (0.84.1) precise; urgency=low
+
+  * Bug fix.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 11 Feb 2014 21:28:49 +0000
+
 dx-toolkit (0.84.0) precise; urgency=low
 
   * dx describe analysis displays when it entered a terminal state
