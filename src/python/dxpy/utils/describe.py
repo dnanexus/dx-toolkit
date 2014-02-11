@@ -222,7 +222,7 @@ def job_output_to_str(job_output, prefix='\n', title="Output: ", title_len=None)
                                                                    subsequent_indent=' '*9,
                                                                    break_long_words=False) for key, value in job_output.items()])
 
-def get_io_field(io_hash, defaults=None, delim='=', highlight_fields=None):
+def get_io_field(io_hash, defaults=None, delim='=', highlight_fields=()):
     if defaults is None:
         defaults = {}
     if io_hash is None:
@@ -230,7 +230,7 @@ def get_io_field(io_hash, defaults=None, delim='=', highlight_fields=None):
     if len(io_hash) == 0 and len(defaults) == 0:
         return '-'
     def highlight_value(key, value):
-        if highlight_fields and key in highlight_fields:
+        if key in highlight_fields:
             return YELLOW() + value + ENDC()
         else:
             return value
