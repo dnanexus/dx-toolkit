@@ -190,7 +190,7 @@ def get_language():
     use_completer(Completer(language_choices))
     print('')
     print(fill('You can write your app in any ' + BOLD() + 'programming language' + ENDC() + ', but we provide templates for the following supported languages' + ENDC() + ": " + ', '.join(language_choices)))
-    language = prompt_for_var('Programming language', 'Python', choices=language_choices)
+    language = prompt_for_var('Programming language', choices=language_choices)
     use_completer()
     return language
 
