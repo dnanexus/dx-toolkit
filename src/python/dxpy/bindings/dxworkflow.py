@@ -473,7 +473,7 @@ class DXWorkflow(DXDataObject, DXExecutable):
         :returns: Object handler of the newly created analysis
         :rtype: :class:`~dxpy.bindings.dxanalysis.DXAnalysis`
 
-        Run the associated workflow.
+        Run the associated workflow. See :meth:`dxpy.bindings.dxapplet.DXExecutable.run` for additional args.
 
         When providing input for the workflow, keys should be of one of the following forms:
 
@@ -492,6 +492,5 @@ class DXWorkflow(DXDataObject, DXExecutable):
           the "inputSpec" of this workflow's description if it has
           been exported for this purpose)
 
-        See :meth:`dxpy.bindings.dxapplet.DXExecutable.run` for the available args.
         '''
         return super(DXWorkflow, self).run(workflow_input, *args, **kwargs)
