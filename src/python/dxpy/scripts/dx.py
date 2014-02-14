@@ -2675,7 +2675,7 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
                        BOLD() + "normal" + ENDC() +
                        " priority, which may cause them to be restarted at any point, but " +
                        "the executable you are trying to run has " +
-                       "requested extra permissions (" + ", ".join(special_access) + ").  " +
+                       "requested extra permissions (" + ", ".join(sorted(special_access)) + ").  " +
                        "Unexpected side effects or failures may occur if the executable has not " +
                        "been written to behave well when restarted."))
             print()

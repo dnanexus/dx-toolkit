@@ -735,15 +735,29 @@ class TestDXClientRun(DXTestCase):
         for string in ["developer", "Internet"]:
             self.assertNotIn(string, dx_run_output)
 
-        # expect the same warnings if wrapped in a workflow
+        # workflow tests
+
         workflow_id = run("dx new workflow myworkflow --brief").strip()
         run("dx add stage {workflow} {applet}".format(workflow=workflow_id,
                                                       applet=extra_perms_applet))
+        # no warning when run at high priority
+        dx_run_output = run("dx run myworkflow --priority high -y")
+        for string in ["WARNING", "developer", "Internet", "write access"]:
+            self.assertNotIn(string, dx_run_output)
+        # and check that priority was set properly
+        time.sleep(1)
+        analysis_id = run("dx find analyses -n 1 --brief").strip()
+        self.assertEqual(dxpy.describe(analysis_id)["priority"], "high")
+        # get warnings when run at normal priority
         dx_run_output = run("dx run myworkflow --priority normal -y")
         for string in ["WARNING", "write access"]:
             self.assertIn(string, dx_run_output)
         for string in ["developer", "Internet"]:
             self.assertNotIn(string, dx_run_output)
+        # and check that priority was set properly
+        time.sleep(1)
+        analysis_id = run("dx find analyses -n 1 --brief").strip()
+        self.assertEqual(dxpy.describe(analysis_id)["priority"], "normal")
 
     def test_dx_run_tags_and_properties(self):
         # success
