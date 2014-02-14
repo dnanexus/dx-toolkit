@@ -2605,6 +2605,7 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
         "properties": args.properties,
         "details": args.details,
         "delay_workspace_destruction": args.delay_workspace_destruction,
+        "priority": ("high" if args.watch else args.priority),
         "instance_type": args.instance_type,
         "stage_instance_types": args.stage_instance_types,
         "stage_folders": args.stage_folders,
@@ -2643,6 +2644,36 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
                 # Just don't print anything for now if the dryRun
                 # method is not yet available
                 pass
+
+    if args.priority == "normal":
+        special_access = set()
+        executable_desc = executable.describe()
+        write_perms = ['UPLOAD', 'CONTRIBUTE', 'ADMINISTER']
+        def check_for_special_access(access_spec):
+            if not access_spec:
+                return
+            if access_spec.get('developer'):
+                special_access.add('access to apps as a developer')
+            if access_spec.get('network'):
+                special_access.add('Internet access')
+            if access_spec.get('project') in write_perms or \
+               access_spec.get('allProjects') in write_perms:
+                special_access.add('write access to one or more projects')
+        if isinstance(executable, dxpy.DXWorkflow):
+            for stage_desc in executable_desc['stages']:
+                stage_exec_desc = dxpy.describe(stage_desc['executable'])
+                check_for_special_access(stage_exec_desc.get('access'))
+        else:
+            check_for_special_access(executable_desc.get('access'))
+        if special_access:
+            print(fill(BOLD() + "WARNING" + ENDC() + ": You have requested that jobs be run under " +
+                       BOLD() + "normal" + ENDC() +
+                       " priority, which may cause them to be restarted at any point, but " +
+                       "the executable you are trying to run has " +
+                       "requested extra permissions (" + ", ".join(sorted(special_access)) + ").  " +
+                       "Unexpected side effects or failures may occur if the executable has not " +
+                       "been written to behave well when restarted."))
+            print()
 
     # Ask for confirmation if a tty and if input was not given as a
     # single JSON.
@@ -3770,9 +3801,12 @@ parser_run.add_argument('--tag', metavar='TAG', dest='tags', help=fill('Tag for 
 parser_run.add_argument('--delay-workspace-destruction',
                         help=fill('Whether to keep the job\'s temporary workspace around for debugging purposes for 3 days after it succeeds or fails', width_adjustment=-24),
                         action='store_true')
+parser_run.add_argument('--priority',
+                        choices=['normal', 'high'],
+                        help='Request a scheduling priority for all resulting jobs')
 parser_run.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
 parser_run.add_argument('--wait', help='Wait until the job is done before returning', action='store_true')
-parser_run.add_argument('--watch', help="Watch the job after launching it", action='store_true')
+parser_run.add_argument('--watch', help="Watch the job after launching it; sets --priority high", action='store_true')
 parser_run.add_argument('--input-help',
                         help=fill('Print help and examples for how to specify inputs',
                                   width_adjustment=-24),

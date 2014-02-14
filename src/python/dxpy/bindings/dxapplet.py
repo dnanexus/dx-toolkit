@@ -86,6 +86,9 @@ class DXExecutable:
         if kwargs.get('delay_workspace_destruction') is not None:
             run_input["delayWorkspaceDestruction"] = kwargs['delay_workspace_destruction']
 
+        if kwargs.get('priority') is not None:
+            run_input["priority"] = kwargs['priority']
+
         if dxpy.JOB_ID is None:
             run_input["project"] = project
 
@@ -127,7 +130,8 @@ class DXExecutable:
 
     def run(self, executable_input, project=None, folder=None, name=None, tags=None, properties=None, details=None,
             instance_type=None, stage_instance_types=None, stage_folders=None, rerun_stages=None,
-            depends_on=None, delay_workspace_destruction=None, extra_args=None, **kwargs):
+            depends_on=None, delay_workspace_destruction=None, priority=None,
+            extra_args=None, **kwargs):
         '''
         :param executable_input: Hash of the executable's input arguments
         :type executable_input: dict
@@ -149,6 +153,8 @@ class DXExecutable:
         :type depends_on: list
         :param delay_workspace_destruction: Whether to keep the job's temporary workspace around for debugging purposes for 3 days after it succeeds or fails
         :type delay_workspace_destruction: boolean
+        :param priority: Priority level to request for all jobs created in the execution tree, either "normal" or "high"
+        :type priority: string
         :param extra_args: If provided, a hash of options that will be merged into the underlying JSON given for the API call
         :type extra_args: dict
         :returns: Object handler of the newly created job
@@ -175,6 +181,7 @@ class DXExecutable:
                                         rerun_stages=rerun_stages,
                                         depends_on=depends_on,
                                         delay_workspace_destruction=delay_workspace_destruction,
+                                        priority=priority,
                                         extra_args=extra_args)
 
         return self._run_impl(run_input, **kwargs)

@@ -563,7 +563,8 @@ def print_execution_desc(desc):
                          'dependsOn', 'resources', 'projectCache', 'details', 'tags', 'properties',
                          'name', 'instanceType', 'systemRequirements', 'executableName', 'failureFrom', 'billTo',
                          'startedRunning', 'stoppedRunning', 'stateTransitions',
-                         'delayWorkspaceDestruction', 'stages', 'totalPrice', 'isFree', 'invoiceMetadata']
+                         'delayWorkspaceDestruction', 'stages', 'totalPrice', 'isFree', 'invoiceMetadata',
+                         'priority']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -587,6 +588,8 @@ def print_execution_desc(desc):
         print_field("Workflow", desc["workflow"]["id"])
     if "instanceType" in desc and desc['instanceType'] is not None:
         print_field("Instance Type", desc["instanceType"])
+    if "priority" in desc:
+        print_field("Priority", desc["priority"])
     print_field("State", JOB_STATES(desc["state"]))
     if "rootExecution" in desc:
         print_field("Root execution", desc["rootExecution"])
