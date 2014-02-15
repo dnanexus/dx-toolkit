@@ -114,7 +114,7 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
         @Override
         public DXApplet build() {
             return new DXApplet(DXAPI.appletNew(this.buildRequestHash(), ObjectNewResponse.class,
-                    this.env).getId(), this.project, this.env);
+                    this.env).getId(), this.project, this.env, null);
         }
 
         /**
@@ -358,7 +358,25 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
      * @throws NullPointerException If {@code appletId} or {@code container} is null
      */
     public static DXApplet getInstance(String appletId, DXContainer project) {
-        return new DXApplet(appletId, project, null);
+        return new DXApplet(appletId, project, null, null);
+    }
+
+    /**
+     * Returns a {@code DXApplet} associated with an existing applet in a particular project using
+     * the specified environment, with the specified cached describe output.
+     *
+     * <p>
+     * This method is for use exclusively by bindings to the "find" routes when describe hashes are
+     * returned with the find output.
+     * </p>
+     *
+     * @throws NullPointerException If any argument is null
+     */
+    static DXApplet getInstanceWithCachedDescribe(String appletId, DXContainer project,
+            DXEnvironment env, JsonNode describe) {
+        return new DXApplet(appletId, project, Preconditions.checkNotNull(env,
+                "env may not be null"), Preconditions.checkNotNull(describe,
+                "describe may not be null"));
     }
 
     /**
@@ -370,7 +388,7 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
     public static DXApplet getInstanceWithEnvironment(String appletId, DXContainer project,
             DXEnvironment env) {
         return new DXApplet(appletId, project, Preconditions.checkNotNull(env,
-                "env may not be null"));
+                "env may not be null"), null);
     }
 
     /**
@@ -403,15 +421,15 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
         return new Builder(env);
     }
 
-    private DXApplet(String appletId, DXContainer project, DXEnvironment env) {
-        super(appletId, project, env);
+    private DXApplet(String appletId, DXContainer project, DXEnvironment env, JsonNode describe) {
+        super(appletId, project, env, describe);
         // TODO: also verify correct object ID format
         Preconditions.checkArgument(appletId.startsWith("applet-"),
                 "Applet ID must start with \"applet-\"");
     }
 
     private DXApplet(String appletId, DXEnvironment env) {
-        super(appletId, env);
+        super(appletId, env, null);
         Preconditions.checkArgument(appletId.startsWith("applet-"),
                 "Applet ID must start with \"applet-\"");
     }
@@ -421,6 +439,12 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
         // TODO: add a flag to get the full runSpec (this should call applet-xxxx/get instead of
         // applet-xxxx/describe).
         return DXJSON.safeTreeToValue(apiCallOnObject("describe"), Describe.class);
+    }
+
+    @Override
+    public Describe getCachedDescribe() {
+        this.checkCachedDescribeAvailable();
+        return DXJSON.safeTreeToValue(this.cachedDescribe, Describe.class);
     }
 
     @Override

@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -76,6 +77,28 @@ public final class DXSearch {
      */
     @JsonInclude(Include.NON_NULL)
     private static class FindDataObjectsRequest {
+
+        @JsonInclude(Include.NON_NULL)
+        private static class DescribeParameters {
+            private final DXDataObject.DescribeOptions describeOptions;
+
+            private DescribeParameters() {
+                this.describeOptions = null;
+            }
+
+            private DescribeParameters(DXDataObject.DescribeOptions describeOptions) {
+                this.describeOptions = describeOptions;
+            }
+
+            @SuppressWarnings("unused")
+            @JsonValue
+            private Object getValue() {
+                if (describeOptions == null) {
+                    return true;
+                }
+                return describeOptions;
+            }
+        }
 
         private static class ExactNameQuery implements NameQuery {
             private final String nameExact;
@@ -222,7 +245,8 @@ public final class DXSearch {
         @JsonProperty
         private final TimeIntervalQuery created;
 
-        // TODO: describe
+        @JsonProperty
+        private final DescribeParameters describe;
 
         @SuppressWarnings("unused")
         @JsonProperty
@@ -254,6 +278,7 @@ public final class DXSearch {
             this.level = previousQuery.level;
             this.modified = previousQuery.modified;
             this.created = previousQuery.created;
+            this.describe = previousQuery.describe;
 
             this.starting = next;
             this.limit = limit;
@@ -272,6 +297,7 @@ public final class DXSearch {
             this.name = builder.nameQuery;
             this.type = builder.type;
             this.tags = builder.tag;
+            this.describe = builder.describe;
 
             Map<String, Object> properties =
                     Maps.<String, Object>newHashMap(builder.propertyKeysAndValues);
@@ -330,6 +356,7 @@ public final class DXSearch {
         private Date modifiedAfter;
         private Date createdBefore;
         private Date createdAfter;
+        private FindDataObjectsRequest.DescribeParameters describe;
 
         private final DXEnvironment env;
 
@@ -398,6 +425,35 @@ public final class DXSearch {
         public FindDataObjectsResult<T> execute(int pageSize) {
             return new FindDataObjectsResult<T>(this.buildRequestHash(), this.classConstraint,
                     this.env, pageSize);
+        }
+
+        /**
+         * Requests the default describe data for each matching data object when the query is run.
+         * The {@link DXDataObject#getCachedDescribe()} method can be used if, and only if, this
+         * method is called at query time.
+         *
+         * @return the same builder object
+         */
+        public FindDataObjectsRequestBuilder<T> includeDescribeOutput() {
+            Preconditions.checkState(this.describe == null,
+                    "Cannot specify describe output more than once");
+            this.describe = new FindDataObjectsRequest.DescribeParameters();
+            return this;
+        }
+
+        /**
+         * Requests describe data (with the specified options) for each matching data object when
+         * the query is run. The {@link DXDataObject#getCachedDescribe()} method can be used if, and
+         * only if, this method is called at query time.
+         *
+         * @return the same builder object
+         */
+        public FindDataObjectsRequestBuilder<T> includeDescribeOutput(
+                DXDataObject.DescribeOptions describeOptions) {
+            Preconditions.checkState(this.describe == null,
+                    "Cannot specify describe output more than once");
+            this.describe = new FindDataObjectsRequest.DescribeParameters(describeOptions);
+            return this;
         }
 
         /**
@@ -824,6 +880,8 @@ public final class DXSearch {
             private String id;
             @JsonProperty
             private String project;
+            @JsonProperty
+            private JsonNode describe;
         }
 
         @JsonProperty
@@ -896,9 +954,17 @@ public final class DXSearch {
                         DXAPI.systemFindDataObjects(query, FindDataObjectsResponse.class, env);
 
                 for (FindDataObjectsResponse.Entry e : findDataObjectsResponse.results) {
-                    DXDataObject dataObject =
-                            DXDataObject.getInstanceWithEnvironment(e.id,
-                                    DXContainer.getInstance(e.project), this.env);
+                    DXDataObject dataObject = null;
+                    DXContainer container = DXContainer.getInstance(e.project);
+                    if (e.describe != null) {
+                        dataObject =
+                                DXDataObject.getInstanceWithCachedDescribe(e.id, container,
+                                        this.env, e.describe);
+                    } else {
+                        dataObject =
+                                DXDataObject.getInstanceWithEnvironment(e.id, container, this.env);
+                    }
+
                     if (classConstraint != null) {
                         if (!dataObject.getId().startsWith(classConstraint + "-")) {
                             throw new IllegalStateException("Expected all results to be of type "

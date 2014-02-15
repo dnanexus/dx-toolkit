@@ -1,5 +1,11 @@
 # Java API Bindings Changelog
 
+## 0.86.0
+
+* DXSearch.FindDataObjectsRequestBuilder supports requesting describe data with
+  the find call and DXDataObject.getCachedDescribe provides access to this
+  data.
+
 ## 0.84.0
 
 * DXAnalysis is now a final class.

@@ -57,7 +57,7 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
         @Override
         public DXWorkflow build() {
             return new DXWorkflow(DXAPI.workflowNew(this.buildRequestHash(),
-                    ObjectNewResponse.class, this.env).getId(), this.project, this.env);
+                    ObjectNewResponse.class, this.env).getId(), this.project, this.env, null);
         }
 
         /**
@@ -133,7 +133,25 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
      * @throws NullPointerException If {@code workflowId} or {@code container} is null
      */
     public static DXWorkflow getInstance(String workflowId, DXContainer project) {
-        return new DXWorkflow(workflowId, project, null);
+        return new DXWorkflow(workflowId, project, null, null);
+    }
+
+    /**
+     * Returns a {@code DXWorkflow} associated with an existing workflow in a particular project
+     * using the specified environment, with the specified cached describe output.
+     *
+     * <p>
+     * This method is for use exclusively by bindings to the "find" routes when describe hashes are
+     * returned with the find output.
+     * </p>
+     *
+     * @throws NullPointerException If any argument is null
+     */
+    static DXWorkflow getInstanceWithCachedDescribe(String workflowId, DXContainer project,
+            DXEnvironment env, JsonNode describe) {
+        return new DXWorkflow(workflowId, project, Preconditions.checkNotNull(env,
+                "env may not be null"), Preconditions.checkNotNull(describe,
+                "describe may not be null"));
     }
 
     /**
@@ -145,7 +163,7 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
     public static DXWorkflow getInstanceWithEnvironment(String workflowId, DXContainer project,
             DXEnvironment env) {
         return new DXWorkflow(workflowId, project, Preconditions.checkNotNull(env,
-                "env may not be null"));
+                "env may not be null"), null);
     }
 
     /**
@@ -179,15 +197,15 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
         return new Builder(env);
     }
 
-    private DXWorkflow(String workflowId, DXContainer project, DXEnvironment env) {
-        super(workflowId, project, env);
+    private DXWorkflow(String workflowId, DXContainer project, DXEnvironment env, JsonNode describe) {
+        super(workflowId, project, env, describe);
         // TODO: also verify correct object ID format
         Preconditions.checkArgument(workflowId.startsWith("workflow-"),
                 "Workflow ID must start with \"workflow-\"");
     }
 
     private DXWorkflow(String workflowId, DXEnvironment env) {
-        super(workflowId, env);
+        super(workflowId, env, null);
         Preconditions.checkArgument(workflowId.startsWith("workflow-"),
                 "Workflow ID must start with \"workflow-\"");
     }
@@ -207,6 +225,12 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
     @Override
     public Describe describe() {
         return DXJSON.safeTreeToValue(apiCallOnObject("describe"), Describe.class);
+    }
+
+    @Override
+    public Describe getCachedDescribe() {
+        this.checkCachedDescribeAvailable();
+        return DXJSON.safeTreeToValue(this.cachedDescribe, Describe.class);
     }
 
     @Override

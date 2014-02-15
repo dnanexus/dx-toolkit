@@ -407,8 +407,9 @@ public abstract class DXDataObject extends DXObject {
 
         /**
          * Returns the details of the object. This field may not be available unless
-         * {@link DXDataObject#describe(DescribeOptions)} was called with
-         * {@link DescribeOptions#withDetails()} set.
+         * {@link DXDataObject#describe(DescribeOptions)} (or
+         * {@link DXSearch.FindDataObjectsRequestBuilder#includeDescribeOutput(DescribeOptions)})
+         * was called with {@link DescribeOptions#withDetails()} set.
          *
          * @param valueType class to deserialize as
          *
@@ -456,8 +457,9 @@ public abstract class DXDataObject extends DXObject {
 
         /**
          * Returns the properties associated with the object. This field may not be available unless
-         * {@link DXDataObject#describe(DescribeOptions)} was called with
-         * {@link DescribeOptions#withProperties()} set.
+         * {@link DXDataObject#describe(DescribeOptions)} (or
+         * {@link DXSearch.FindDataObjectsRequestBuilder#includeDescribeOutput(DescribeOptions)})
+         * was called with {@link DescribeOptions#withProperties()} set.
          *
          * @return Map of property keys to property values
          */
@@ -707,6 +709,36 @@ public abstract class DXDataObject extends DXObject {
 
     /**
      * Returns a {@code DXDataObject} corresponding to an existing object with the specified ID in
+     * the specified project or container, using the specified environment, and with the specified
+     * cached Describe data.
+     *
+     * @param objectId DNAnexus object id
+     * @param project project or container in which the object resides
+     * @param env environment to use to make subsequent API requests
+     * @param describe cached Describe output
+     *
+     * @return a {@code DXDataObject} handle to the specified object
+     */
+    static DXDataObject getInstanceWithCachedDescribe(String objectId, DXContainer project,
+            DXEnvironment env, JsonNode describe) {
+        Preconditions.checkNotNull(describe);
+        if (objectId.startsWith("record-")) {
+            return DXRecord.getInstanceWithCachedDescribe(objectId, project, env, describe);
+        } else if (objectId.startsWith("file-")) {
+            return DXFile.getInstanceWithCachedDescribe(objectId, project, env, describe);
+        } else if (objectId.startsWith("gtable-")) {
+            return DXGTable.getInstanceWithCachedDescribe(objectId, project, env, describe);
+        } else if (objectId.startsWith("applet-")) {
+            return DXApplet.getInstanceWithCachedDescribe(objectId, project, env, describe);
+        } else if (objectId.startsWith("workflow-")) {
+            return DXWorkflow.getInstanceWithCachedDescribe(objectId, project, env, describe);
+        }
+        throw new IllegalArgumentException("The object ID " + objectId
+                + " was of an unrecognized or unsupported class.");
+    }
+
+    /**
+     * Returns a {@code DXDataObject} corresponding to an existing object with the specified ID in
      * the specified project or container, using the specified environment.
      *
      * @param objectId DNAnexus object id
@@ -758,6 +790,8 @@ public abstract class DXDataObject extends DXObject {
     }
 
     private final DXContainer container;
+    // TODO: this might be useful to have in the superclass DXObject for other find* routes
+    protected final JsonNode cachedDescribe;
 
     /**
      * Initializes the {@code DXDataObject} to point to the object with the specified ID in the
@@ -766,10 +800,15 @@ public abstract class DXDataObject extends DXObject {
      * @param dxId DNAnexus ID of the data object
      * @param env environment to use for subsequent API requests from this {@code DXDataObject}, or
      *        null to use the default environment
+     * @param cachedDescribe JSON hash of the describe output for this object if available, or null
+     *        otherwise
      */
-    protected DXDataObject(String dxId, DXContainer project, DXEnvironment env) {
+    protected DXDataObject(String dxId, DXContainer project, DXEnvironment env,
+            JsonNode cachedDescribe) {
         super(dxId, env);
         this.container = Preconditions.checkNotNull(project, "project may not be null");
+        // TODO: should we make a defensive copy?
+        this.cachedDescribe = cachedDescribe;
     }
 
     /**
@@ -785,10 +824,14 @@ public abstract class DXDataObject extends DXObject {
      * @param dxId DNAnexus ID of the data object
      * @param env environment to use for subsequent API requests from this {@code DXDataObject}, or
      *        null to use the default environment
+     * @param cachedDescribe JSON hash of the describe output for this object if available, or null
+     *        otherwise
      */
-    protected DXDataObject(String dxId, DXEnvironment env) {
+    protected DXDataObject(String dxId, DXEnvironment env, JsonNode cachedDescribe) {
         super(dxId, env);
         this.container = null;
+        // TODO: should we make a defensive copy?
+        this.cachedDescribe = cachedDescribe;
     }
 
     /**
@@ -815,6 +858,17 @@ public abstract class DXDataObject extends DXObject {
      */
     public void addTypes(List<String> types) {
         apiCallOnObject("addTypes", MAPPER.valueToTree(new AddOrRemoveTypesRequest(types)));
+    }
+
+    /**
+     * Verifies that this object carries cached describe data.
+     *
+     * @throws IllegalStateException if cachedDescribe is not set.
+     */
+    protected void checkCachedDescribeAvailable() throws IllegalStateException {
+        if (this.cachedDescribe == null) {
+            throw new IllegalStateException("This object contains no cached describe data.");
+        }
     }
 
     /**
@@ -910,6 +964,26 @@ public abstract class DXDataObject extends DXObject {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Returns metadata about the data object, like {@link DXDataObject#describe()}, but without
+     * making an API call.
+     *
+     * <p>
+     * This cached describe info is only available if this object appears in the result of a
+     * {@link DXSearch#findDataObjects()} call that specified
+     * {@link DXSearch.FindDataObjectsRequestBuilder#includeDescribeOutput()}, and the describe info
+     * that is returned reflects the state of the object at the time that the search was performed.
+     * </p>
+     *
+     * @return a {@code Describe} containing the data object's metadata
+     *
+     * @throws IllegalStateException if no cached describe info is available
+     */
+    public Describe getCachedDescribe() {
+        this.checkCachedDescribeAvailable();
+        return DXJSON.safeTreeToValue(this.cachedDescribe, Describe.class);
     }
 
     /**

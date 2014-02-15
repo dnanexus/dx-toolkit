@@ -62,7 +62,7 @@ public class DXFile extends DXDataObject {
         @Override
         public DXFile build() {
             return new DXFile(DXAPI.fileNew(this.buildRequestHash(), ObjectNewResponse.class,
-                    this.env).getId(), this.project, this.env);
+                    this.env).getId(), this.project, this.env, null);
         }
 
         /**
@@ -168,7 +168,24 @@ public class DXFile extends DXDataObject {
      * @throws NullPointerException If {@code fileId} or {@code container} is null
      */
     public static DXFile getInstance(String fileId, DXContainer project) {
-        return new DXFile(fileId, project, null);
+        return new DXFile(fileId, project, null, null);
+    }
+
+    /**
+     * Returns a {@code DXFile} associated with an existing file in a particular project using the
+     * specified environment, with the specified cached describe output.
+     *
+     * <p>
+     * This method is for use exclusively by bindings to the "find" routes when describe hashes are
+     * returned with the find output.
+     * </p>
+     *
+     * @throws NullPointerException If any argument is null
+     */
+    static DXFile getInstanceWithCachedDescribe(String fileId, DXContainer project,
+            DXEnvironment env, JsonNode describe) {
+        return new DXFile(fileId, project, Preconditions.checkNotNull(env, "env may not be null"),
+                Preconditions.checkNotNull(describe, "describe may not be null"));
     }
 
     /**
@@ -179,7 +196,8 @@ public class DXFile extends DXDataObject {
      */
     public static DXFile getInstanceWithEnvironment(String fileId, DXContainer project,
             DXEnvironment env) {
-        return new DXFile(fileId, project, Preconditions.checkNotNull(env, "env may not be null"));
+        return new DXFile(fileId, project, Preconditions.checkNotNull(env, "env may not be null"),
+                null);
     }
 
     /**
@@ -211,15 +229,15 @@ public class DXFile extends DXDataObject {
         return new Builder(env);
     }
 
-    private DXFile(String fileId, DXContainer project, DXEnvironment env) {
-        super(fileId, project, env);
+    private DXFile(String fileId, DXContainer project, DXEnvironment env, JsonNode describe) {
+        super(fileId, project, env, describe);
         // TODO: also verify correct object ID format
         Preconditions
                 .checkArgument(fileId.startsWith("file-"), "File ID must start with \"file-\"");
     }
 
     private DXFile(String fileId, DXEnvironment env) {
-        super(fileId, env);
+        super(fileId, env, null);
         Preconditions
                 .checkArgument(fileId.startsWith("file-"), "File ID must start with \"file-\"");
     }
@@ -239,6 +257,12 @@ public class DXFile extends DXDataObject {
     @Override
     public Describe describe() {
         return DXJSON.safeTreeToValue(apiCallOnObject("describe"), Describe.class);
+    }
+
+    @Override
+    public Describe getCachedDescribe() {
+        this.checkCachedDescribeAvailable();
+        return DXJSON.safeTreeToValue(this.cachedDescribe, Describe.class);
     }
 
 }

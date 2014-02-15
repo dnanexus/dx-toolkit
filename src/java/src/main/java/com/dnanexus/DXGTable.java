@@ -68,7 +68,7 @@ public class DXGTable extends DXDataObject {
         @Override
         public DXGTable build() {
             return new DXGTable(DXAPI.gtableNew(this.buildRequestHash(), ObjectNewResponse.class,
-                    this.env).getId(), this.project, this.env);
+                    this.env).getId(), this.project, this.env, null);
         }
 
         /**
@@ -190,7 +190,25 @@ public class DXGTable extends DXDataObject {
      * @throws NullPointerException If {@code gtableId} or {@code container} is null
      */
     public static DXGTable getInstance(String gtableId, DXContainer project) {
-        return new DXGTable(gtableId, project, null);
+        return new DXGTable(gtableId, project, null, null);
+    }
+
+    /**
+     * Returns a {@code DXGTable} associated with an existing GTable in a particular project using
+     * the specified environment, with the specified cached describe output.
+     *
+     * <p>
+     * This method is for use exclusively by bindings to the "find" routes when describe hashes are
+     * returned with the find output.
+     * </p>
+     *
+     * @throws NullPointerException If any argument is null
+     */
+    static DXGTable getInstanceWithCachedDescribe(String gtableId, DXContainer project,
+            DXEnvironment env, JsonNode describe) {
+        return new DXGTable(gtableId, project, Preconditions.checkNotNull(env,
+                "env may not be null"), Preconditions.checkNotNull(describe,
+                "describe may not be null"));
     }
 
     /**
@@ -202,7 +220,7 @@ public class DXGTable extends DXDataObject {
     public static DXGTable getInstanceWithEnvironment(String gtableId, DXContainer project,
             DXEnvironment env) {
         return new DXGTable(gtableId, project, Preconditions.checkNotNull(env,
-                "env may not be null"));
+                "env may not be null"), null);
     }
 
     /**
@@ -240,15 +258,15 @@ public class DXGTable extends DXDataObject {
         return new Builder(columns, env);
     }
 
-    private DXGTable(String gtableId, DXContainer project, DXEnvironment env) {
-        super(gtableId, project, env);
+    private DXGTable(String gtableId, DXContainer project, DXEnvironment env, JsonNode describe) {
+        super(gtableId, project, env, describe);
         // TODO: also verify correct object ID format
         Preconditions.checkArgument(gtableId.startsWith("gtable-"),
                 "GTable ID must start with \"gtable-\"");
     }
 
     private DXGTable(String gtableId, DXEnvironment env) {
-        super(gtableId, env);
+        super(gtableId, env, null);
         Preconditions.checkArgument(gtableId.startsWith("gtable-"),
                 "GTable ID must start with \"gtable-\"");
     }
@@ -268,6 +286,12 @@ public class DXGTable extends DXDataObject {
     @Override
     public Describe describe() {
         return DXJSON.safeTreeToValue(apiCallOnObject("describe"), Describe.class);
+    }
+
+    @Override
+    public Describe getCachedDescribe() {
+        this.checkCachedDescribeAvailable();
+        return DXJSON.safeTreeToValue(this.cachedDescribe, Describe.class);
     }
 
     // TODO: addRows and get

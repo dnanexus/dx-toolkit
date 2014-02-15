@@ -53,7 +53,7 @@ public class DXRecord extends DXDataObject {
         @Override
         public DXRecord build() {
             return new DXRecord(DXAPI.recordNew(this.buildRequestHash(), ObjectNewResponse.class,
-                    this.env).getId(), this.project, this.env);
+                    this.env).getId(), this.project, this.env, null);
         }
 
         /**
@@ -135,19 +135,35 @@ public class DXRecord extends DXDataObject {
      * @throws NullPointerException If {@code recordId} or {@code container} is null
      */
     public static DXRecord getInstance(String recordId, DXContainer project) {
-        return new DXRecord(recordId, project, null);
+        return new DXRecord(recordId, project, null, null);
+    }
+
+    /**
+     * Returns a {@code DXRecord} associated with an existing record in a particular project using
+     * the specified environment, with the specified cached describe output.
+     *
+     * <p>
+     * This method is for use exclusively by bindings to the "find" routes when describe hashes are
+     * returned with the find output.
+     * </p>
+     *
+     * @throws NullPointerException If any argument is null
+     */
+    static DXRecord getInstanceWithCachedDescribe(String recordId, DXContainer project,
+            DXEnvironment env, JsonNode describe) {
+        return new DXRecord(recordId, project, Preconditions.checkNotNull(env,
+                "env may not be null"), Preconditions.checkNotNull(describe,
+                "describe may not be null"));
     }
 
     /**
      * Returns a {@code DXRecord} associated with an existing record in a particular project using
      * the specified environment.
-     *
-     * @throws NullPointerException If {@code recordId} or {@code container} is null
      */
     public static DXRecord getInstanceWithEnvironment(String recordId, DXContainer project,
             DXEnvironment env) {
         return new DXRecord(recordId, project, Preconditions.checkNotNull(env,
-                "env may not be null"));
+                "env may not be null"), null);
     }
 
     /**
@@ -196,15 +212,15 @@ public class DXRecord extends DXDataObject {
         return new Builder(env);
     }
 
-    private DXRecord(String recordId, DXContainer project, DXEnvironment env) {
-        super(recordId, project, env);
+    private DXRecord(String recordId, DXContainer project, DXEnvironment env, JsonNode describe) {
+        super(recordId, project, env, describe);
         // TODO: also verify correct object ID format
         Preconditions.checkArgument(recordId.startsWith("record-"),
                 "Record ID must start with \"record-\"");
     }
 
     private DXRecord(String recordId, DXEnvironment env) {
-        super(recordId, env);
+        super(recordId, env, null);
         Preconditions.checkArgument(recordId.startsWith("record-"),
                 "Record ID must start with \"record-\"");
     }
@@ -224,6 +240,12 @@ public class DXRecord extends DXDataObject {
     @Override
     public Describe describe() {
         return DXJSON.safeTreeToValue(apiCallOnObject("describe"), Describe.class);
+    }
+
+    @Override
+    public Describe getCachedDescribe() {
+        this.checkCachedDescribeAvailable();
+        return DXJSON.safeTreeToValue(this.cachedDescribe, Describe.class);
     }
 
 }
