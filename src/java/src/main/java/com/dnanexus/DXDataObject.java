@@ -414,8 +414,14 @@ public abstract class DXDataObject extends DXObject {
          * @param valueType class to deserialize as
          *
          * @return the object's details
+         *
+         * @throws IllegalStateException if details were not retrieved with the describe call
          */
         public <T> T getDetails(Class<T> valueType) {
+            if (this.details == null) {
+                throw new IllegalStateException(
+                        "details are not accessible because they were not retrieved with the describe call");
+            }
             return DXJSON.safeTreeToValue(this.details, valueType);
         }
 
@@ -462,8 +468,14 @@ public abstract class DXDataObject extends DXObject {
          * was called with {@link DescribeOptions#withProperties()} set.
          *
          * @return Map of property keys to property values
+         *
+         * @throws IllegalStateException if properties were not retrieved with the describe call
          */
         public Map<String, String> getProperties() {
+            if (this.properties == null) {
+                throw new IllegalStateException(
+                        "properties are not accessible because they were not retrieved with the describe call");
+            }
             return ImmutableMap.copyOf(this.properties);
         }
 

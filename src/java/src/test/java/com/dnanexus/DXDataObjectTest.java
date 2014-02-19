@@ -113,6 +113,12 @@ public class DXDataObjectTest {
                 objectWithProperties.describe(DXDataObject.DescribeOptions.get().withProperties())
                         .getProperties();
         Assert.assertEquals(ImmutableMap.of("sampleId", "123-456", "species", "human"), properties);
+        try {
+            objectWithProperties.describe().getProperties();
+            Assert.fail("Expected getProperties to fail with IllegalStateException when properties were not retrieved");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
 
         // Setting types
         U objectWithTypes =
@@ -140,6 +146,12 @@ public class DXDataObjectTest {
         Assert.assertEquals("bar",
                 objectWithDetails.describe(DXDataObject.DescribeOptions.get().withDetails())
                         .getDetails(SampleMetadata.class).getSampleId());
+        try {
+            objectWithDetails.describe().getDetails(SampleMetadata.class);
+            Assert.fail("Expected getDetails to fail with IllegalStateException when details were not retrieved");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
 
         // "parents" flag on creation
         try {

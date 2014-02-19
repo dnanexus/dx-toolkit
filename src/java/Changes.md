@@ -5,6 +5,9 @@
 * DXSearch.FindDataObjectsRequestBuilder supports requesting describe data with
   the find call and DXDataObject.getCachedDescribe provides access to this
   data.
+* DXDataObject.getDetails and .getProperties now throw IllegalStateException if
+  the details and properties were not requested with the describe (or find)
+  call.
 
 ## 0.84.0
 

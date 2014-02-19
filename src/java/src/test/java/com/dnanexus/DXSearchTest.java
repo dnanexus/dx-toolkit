@@ -306,8 +306,8 @@ public class DXSearchTest {
         // Called includeDescribeOutput with default settings so properties should NOT be returned
         try {
             gtableResult.getCachedDescribe().getProperties();
-            Assert.fail("Expected NullPointerException to be thrown because properties should not have been returned");
-        } catch (NullPointerException e) {
+            Assert.fail("Expected IllegalStateException to be thrown because properties should not have been returned");
+        } catch (IllegalStateException e) {
             // Expected
         }
 
