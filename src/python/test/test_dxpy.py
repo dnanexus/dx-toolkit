@@ -881,8 +881,7 @@ class TestDXRecord(unittest.TestCase):
         with self.assertRaises(TypeError):
             dxrecord = dxpy.new_dxrecord(foo=1)
 
-@unittest.skipUnless(testutil.TEST_RUN_JOBS and os.environ.get("DX_RUN_NEXT_TESTS"),
-                     'skipping test that would run a job and rely on new server updates')
+@unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
 class TestDXAppletJob(unittest.TestCase):
     def setUp(self):
         setUpTempProjects(self)

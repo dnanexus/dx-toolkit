@@ -647,8 +647,6 @@ class TestDXClientRun(DXTestCase):
         # by ID will still work
         run("dx run " + dxworkflow.get_id() + " -y")
 
-    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"),
-                         'skipping test that would rely on new server updates')
     def test_dx_run_priority(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "name": "myapplet",
@@ -1959,8 +1957,7 @@ class TestDXBuildApp(DXTestCase):
         self.assertEqual(applet_describe["id"], applet_describe["id"])
         self.assertEqual(applet_describe["name"], "minimal_applet")
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS and os.environ.get("DX_RUN_NEXT_TESTS"),
-                         'skipping test that would run jobs and rely on new server updates')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
     def test_build_applet_and_run_immediately(self):
         app_spec = {
             "name": "minimal_applet_to_run",
