@@ -930,7 +930,7 @@ def main():
         self.assertEqual(jobdesc["tags"].sort(), ['foo', '$foo.bar'].sort())
         self.assertEqual(len(jobdesc["properties"]), 1)
         self.assertEqual(jobdesc["properties"]["$dnanexus_link.foo"], "barbaz")
-        self.assertEqual(jobdesc["requestedPriority"], "normal")
+        self.assertEqual(jobdesc["priority"], "normal")
 
         # Test setting tags and properties on job
         dxjob.add_tags(["foo", "bar", "foo"])
