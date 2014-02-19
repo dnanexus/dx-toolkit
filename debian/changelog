@@ -1,3 +1,13 @@
+dx-toolkit (0.86.0) precise; urgency=low
+
+  * Java bindings: findDataObjects supports retrieving describe
+
+  * dx and dxpy support for job priority
+
+  * Remove default language (previously Python) in dx-app-wizard.
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 19 Feb 2014 03:01:58 +0000
+
 dx-toolkit (0.85.0) precise; urgency=low
 
   * Add "developers" as a recognized field to dxapp.json.
