@@ -446,6 +446,8 @@ public final class DXSearch {
          * the query is run. The {@link DXDataObject#getCachedDescribe()} method can be used if, and
          * only if, this method is called at query time.
          *
+         * @param describeOptions options specifying which fields to be returned or a project hint
+         *
          * @return the same builder object
          */
         public FindDataObjectsRequestBuilder<T> includeDescribeOutput(
@@ -473,7 +475,7 @@ public final class DXSearch {
          */
         public FindDataObjectsRequestBuilder<T> inFolder(DXContainer project, String folder) {
             Preconditions.checkState(this.scopeQuery == null,
-                    "Cannot specify inProject, inFolder, or inFolderOrSubfolders more than once");;;
+                    "Cannot specify inProject, inFolder, or inFolderOrSubfolders more than once");
             this.scopeQuery =
                     new FindDataObjectsRequest.ScopeQuery(Preconditions.checkNotNull(project,
                             "project may not be null").getId(), Preconditions.checkNotNull(folder,

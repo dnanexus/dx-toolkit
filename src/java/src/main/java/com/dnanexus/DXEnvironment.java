@@ -40,7 +40,7 @@ public class DXEnvironment {
     private final String workspaceId;
     private final String projectContextId;
 
-    private static final JsonFactory jsonFactory = new MappingJsonFactory();;
+    private static final JsonFactory jsonFactory = new MappingJsonFactory();
 
     private DXEnvironment(String apiserverHost,
                           String apiserverPort,
