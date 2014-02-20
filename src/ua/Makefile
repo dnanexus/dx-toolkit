@@ -86,7 +86,7 @@ dist: all
 	rm -rf dist $(D)-*
 	mkdir -p dist
 ifeq ($(OS), Windows_NT)
-	mkdir -p dist/resources && install ../file/magic/magic.mgc dist/resources/
+	install ../file/magic/magic.mgc dist/
 	install {$(curl_dir),$(cares_dir),$(libmagic_dir),$(openssl_dir)/stage}/bin/*.dll $(boost_dir)/stage/lib/*-mt.dll dist/
 	for lib in zlib1 libgcc_s_dw2-1 libstdc++-6 libgnurx-0; do \
 	    install "$$(which $$lib.dll)" dist/; \
