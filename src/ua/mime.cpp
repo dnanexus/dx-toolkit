@@ -148,7 +148,7 @@ void setMagicDBPath() {
   string processPath = buffer;
   size_t found = processPath.find_last_of("\\");
   found = (found != string::npos) ? found : 0;
-  MAGIC_DATABASE_PATH = processPath.substr(0, found) + "\\resources\\magic";
+  MAGIC_DATABASE_PATH = processPath.substr(0, found) + "\\magic";
 }
 #endif
 
