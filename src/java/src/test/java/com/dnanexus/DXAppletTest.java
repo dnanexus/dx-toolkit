@@ -56,6 +56,20 @@ public class DXAppletTest {
         }
     }
 
+    private static class SampleAppDetails {
+        @JsonProperty
+        public String sampleId;
+
+        // No-arg constructor for JSON deserialization
+        @SuppressWarnings("unused")
+        private SampleAppDetails() {
+        }
+
+        public SampleAppDetails(String sampleId) {
+            this.sampleId = sampleId;
+        }
+    }
+
     @JsonInclude(Include.NON_NULL)
     private static class SampleAppInput {
         @SuppressWarnings("unused")
@@ -79,20 +93,6 @@ public class DXAppletTest {
         private SampleAppOutput() {}
     }
 
-    private static class SampleAppDetails {
-        @JsonProperty
-        public String sampleId;
-
-        // No-arg constructor for JSON deserialization
-        @SuppressWarnings("unused")
-        private SampleAppDetails() {
-        }
-
-        public SampleAppDetails(String sampleId) {
-            this.sampleId = sampleId;
-        }
-    }
-
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private DXProject testProject;
@@ -109,7 +109,30 @@ public class DXAppletTest {
         }
     }
 
-    // External tests
+    @Test
+    public void testBuilder() {
+        DXDataObjectTest.testBuilder(testProject,
+                new DXDataObjectTest.BuilderFactory<DXApplet.Builder, DXApplet>() {
+                    @Override
+                    public DXApplet.Builder getBuilder() {
+                        return DXApplet.newApplet().setRunSpecification(
+                                RunSpecification.newRunSpec("bash", "false;").build());
+                    }
+                });
+    }
+
+    /**
+     * Tests serialization of the input hash to applet/new
+     */
+    @Test
+    public void testCreateAppletSerialization() throws IOException {
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"project\":\"project-000011112222333344445555\", \"dxapi\": \"1.0.0\", \"name\": \"foo\", \"runSpec\": {\"interpreter\": \"bash\", \"code\": \"false;\"}}"),
+                MAPPER.valueToTree(DXApplet.newApplet()
+                        .setProject(DXProject.getInstance("project-000011112222333344445555"))
+                        .setRunSpecification(RunSpecification.newRunSpec("bash", "false;").build())
+                        .setName("foo").buildRequestHash()));
+    }
 
     @Test
     public void testCreateAppletSimple() {
@@ -120,38 +143,6 @@ public class DXAppletTest {
 
         DXApplet.Describe d = a.describe();
         Assert.assertEquals(testProject, d.getProject());
-    }
-
-    @Test
-    public void testGetInstance() {
-        DXApplet applet = DXApplet.getInstance("applet-0000");
-        Assert.assertEquals("applet-0000", applet.getId());
-        Assert.assertEquals(null, applet.getProject());
-
-        DXApplet applet2 =
-                DXApplet.getInstance("applet-0001",
-                        DXProject.getInstance("project-123412341234123412341234"));
-        Assert.assertEquals("applet-0001", applet2.getId());
-        Assert.assertEquals("project-123412341234123412341234", applet2.getProject().getId());
-
-        try {
-            DXApplet.getInstance(null);
-            Assert.fail("Expected creation without setting ID to fail");
-        } catch (NullPointerException e) {
-            // Expected
-        }
-        try {
-            DXApplet.getInstance("applet-1234", (DXContainer) null);
-            Assert.fail("Expected creation without setting project to fail");
-        } catch (NullPointerException e) {
-            // Expected
-        }
-        try {
-            DXApplet.getInstance(null, DXProject.getInstance("project-123412341234123412341234"));
-            Assert.fail("Expected creation without setting ID to fail");
-        } catch (NullPointerException e) {
-            // Expected
-        }
     }
 
     @Test
@@ -203,6 +194,38 @@ public class DXAppletTest {
         Assert.assertEquals("mytitle", d.getTitle());
         Assert.assertEquals("mysummary", d.getSummary());
         Assert.assertEquals("mydescription", d.getDescription());
+    }
+
+    @Test
+    public void testGetInstance() {
+        DXApplet applet = DXApplet.getInstance("applet-0000");
+        Assert.assertEquals("applet-0000", applet.getId());
+        Assert.assertEquals(null, applet.getProject());
+
+        DXApplet applet2 =
+                DXApplet.getInstance("applet-0001",
+                        DXProject.getInstance("project-123412341234123412341234"));
+        Assert.assertEquals("applet-0001", applet2.getId());
+        Assert.assertEquals("project-123412341234123412341234", applet2.getProject().getId());
+
+        try {
+            DXApplet.getInstance(null);
+            Assert.fail("Expected creation without setting ID to fail");
+        } catch (NullPointerException e) {
+            // Expected
+        }
+        try {
+            DXApplet.getInstance("applet-1234", (DXContainer) null);
+            Assert.fail("Expected creation without setting project to fail");
+        } catch (NullPointerException e) {
+            // Expected
+        }
+        try {
+            DXApplet.getInstance(null, DXProject.getInstance("project-123412341234123412341234"));
+            Assert.fail("Expected creation without setting ID to fail");
+        } catch (NullPointerException e) {
+            // Expected
+        }
     }
 
     /**
@@ -318,33 +341,6 @@ public class DXAppletTest {
         } catch (IllegalArgumentException e) {
             // Expected
         }
-    }
-
-    @Test
-    public void testBuilder() {
-        DXDataObjectTest.testBuilder(testProject,
-                new DXDataObjectTest.BuilderFactory<DXApplet.Builder, DXApplet>() {
-                    @Override
-                    public DXApplet.Builder getBuilder() {
-                        return DXApplet.newApplet().setRunSpecification(
-                                RunSpecification.newRunSpec("bash", "false;").build());
-                    }
-                });
-    }
-
-    // Internal tests
-
-    /**
-     * Tests serialization of the input hash to applet/new
-     */
-    @Test
-    public void testCreateAppletSerialization() throws IOException {
-        Assert.assertEquals(
-                DXJSON.parseJson("{\"project\":\"project-000011112222333344445555\", \"dxapi\": \"1.0.0\", \"name\": \"foo\", \"runSpec\": {\"interpreter\": \"bash\", \"code\": \"false;\"}}"),
-                MAPPER.valueToTree(DXApplet.newApplet()
-                        .setProject(DXProject.getInstance("project-000011112222333344445555"))
-                        .setRunSpecification(RunSpecification.newRunSpec("bash", "false;").build())
-                        .setName("foo").buildRequestHash()));
     }
 
     /**

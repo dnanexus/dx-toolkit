@@ -161,14 +161,14 @@ public final class DXAnalysis extends DXExecution {
         super(analysisId, env, cachedDescribe);
     }
 
-    private Describe describeImpl(JsonNode describeInput) {
-        return new Describe(DXAPI.analysisDescribe(this.getId(), describeInput,
-                DescribeResponseHash.class), this.env);
-    }
-
     @Override
     public Describe describe() {
         return describeImpl(MAPPER.createObjectNode());
+    }
+
+    private Describe describeImpl(JsonNode describeInput) {
+        return new Describe(DXAPI.analysisDescribe(this.getId(), describeInput,
+                DescribeResponseHash.class), this.env);
     }
 
     @Override

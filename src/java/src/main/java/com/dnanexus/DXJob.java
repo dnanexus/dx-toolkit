@@ -36,12 +36,6 @@ import com.google.common.collect.Sets;
 public final class DXJob extends DXExecution {
 
     /**
-     * A response from the /job-xxxx/terminate route.
-     */
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    private static class JobTerminateResponse {}
-
-    /**
      * Contains metadata about a job. All accessors reflect the state of the job at the time that
      * this object was created.
      */
@@ -180,6 +174,12 @@ public final class DXJob extends DXExecution {
         private JsonNode output;
     }
 
+    /**
+     * A response from the /job-xxxx/terminate route.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class JobTerminateResponse {}
+
     private static final Set<JobState> unsuccessfulJobStates = Sets.immutableEnumSet(
             JobState.FAILED, JobState.TERMINATED);
 
@@ -238,14 +238,14 @@ public final class DXJob extends DXExecution {
         super(jobId, env, cachedDescribe);
     }
 
-    private Describe describeImpl(JsonNode describeInput) {
-        return new Describe(DXAPI.jobDescribe(this.getId(), describeInput,
-                DescribeResponseHash.class), this.env);
-    }
-
     @Override
     public Describe describe() {
         return describeImpl(MAPPER.createObjectNode());
+    }
+
+    private Describe describeImpl(JsonNode describeInput) {
+        return new Describe(DXAPI.jobDescribe(this.getId(), describeInput,
+                DescribeResponseHash.class), this.env);
     }
 
     @Override

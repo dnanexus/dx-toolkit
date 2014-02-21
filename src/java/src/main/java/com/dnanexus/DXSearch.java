@@ -71,36 +71,6 @@ public final class DXSearch {
     }
 
     /**
-     * Specifies in a query whether to return visible items, hidden items, or both.
-     */
-    public enum VisibilityQuery {
-        /**
-         * Search for only visible items.
-         */
-        VISIBLE("visible"),
-        /**
-         * Search for only hidden items.
-         */
-        HIDDEN("hidden"),
-        /**
-         * Search for both hidden and visible items.
-         */
-        EITHER("either");
-
-        private String value;
-
-        private VisibilityQuery(String value) {
-            this.value = value;
-        }
-
-        @SuppressWarnings("unused")
-        @JsonValue
-        private String getValue() {
-            return this.value;
-        }
-    }
-
-    /**
      * A request to the /system/findDataObjects route.
      */
     @JsonInclude(Include.NON_NULL)
@@ -1734,10 +1704,6 @@ public final class DXSearch {
      */
     public static abstract class TagsQuery {
 
-        private TagsQuery() {
-            // Do not allow subclassing except by the implementations provided here
-        }
-
         private static class CompoundTagsQuery extends TagsQuery {
             private final String operator;
             private final List<TagsQuery> operands;
@@ -1860,6 +1826,10 @@ public final class DXSearch {
             return new SimpleTagsQuery(tag);
         }
 
+        private TagsQuery() {
+            // Do not allow subclassing except by the implementations provided here
+        }
+
     }
 
     /**
@@ -1892,6 +1862,36 @@ public final class DXSearch {
                 return null;
             }
             return before.getTime();
+        }
+    }
+
+    /**
+     * Specifies in a query whether to return visible items, hidden items, or both.
+     */
+    public enum VisibilityQuery {
+        /**
+         * Search for only visible items.
+         */
+        VISIBLE("visible"),
+        /**
+         * Search for only hidden items.
+         */
+        HIDDEN("hidden"),
+        /**
+         * Search for both hidden and visible items.
+         */
+        EITHER("either");
+
+        private String value;
+
+        private VisibilityQuery(String value) {
+            this.value = value;
+        }
+
+        @SuppressWarnings("unused")
+        @JsonValue
+        private String getValue() {
+            return this.value;
         }
     }
 

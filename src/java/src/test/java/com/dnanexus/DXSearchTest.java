@@ -43,22 +43,6 @@ import com.google.common.collect.Sets;
  */
 public class DXSearchTest {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
-
-    private DXProject testProject;
-
-    @Before
-    public void setUp() {
-        testProject = DXProject.newProject().setName("DXSearchTest").build();
-    }
-
-    @After
-    public void tearDown() {
-        if (testProject != null) {
-            testProject.destroy(true);
-        }
-    }
-
     @JsonInclude(Include.NON_NULL)
     private static class SampleAppInput {
         @SuppressWarnings("unused")
@@ -69,6 +53,8 @@ public class DXSearchTest {
             this.inputString = inputString;
         }
     }
+
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     /**
      * Asserts that the contents of the Iterable are the given values (in some order).
@@ -82,44 +68,18 @@ public class DXSearchTest {
         Assert.assertEquals(expectedSet, actualSet);
     }
 
-    /**
-     * findDataObjects smoke test.
-     */
-    @Test
-    public void testFindDataObjectsSimple() {
-        Assert.assertEquals(0, DXSearch.findDataObjects().inProject(testProject)
-                .nameMatchesExactly("foobarbaz").execute().asList().size());
+    private DXProject testProject;
+
+    @Before
+    public void setUp() {
+        testProject = DXProject.newProject().setName("DXSearchTest").build();
     }
 
-    /**
-     * Tests paging through results.
-     */
-    @Test
-    public void testFindDataObjectsWithPaging() {
-        List<DXRecord> records = Lists.newArrayList();
-        Set<String> recordIds = Sets.newHashSet();
-        for (int i = 0; i < 8; ++i) {
-            DXRecord record =
-                    DXRecord.newRecord().setProject(testProject)
-                            .setName("foo" + Integer.toString(i)).build();
-            records.add(record);
-            recordIds.add(record.getId());
+    @After
+    public void tearDown() {
+        if (testProject != null) {
+            testProject.destroy(true);
         }
-        List<DXRecord> outputRecords =
-                DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
-                        .withClassRecord().execute().asList();
-        Assert.assertEquals(8, outputRecords.size());
-
-        List<DXRecord> outputRecordsWithPaging =
-                DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
-                        .withClassRecord().execute(3).asList();
-        Assert.assertEquals(outputRecords, outputRecordsWithPaging);
-        Set<String> outputRecordIds = Sets.newHashSet();
-        for (DXRecord record : outputRecordsWithPaging) {
-            outputRecordIds.add(record.getId());
-        }
-
-        Assert.assertEquals(recordIds, outputRecordIds);
     }
 
     /**
@@ -290,77 +250,6 @@ public class DXSearchTest {
     }
 
     /**
-     * Tests retrieving Describe output with findDataObjects.
-     */
-    @Test
-    public void testFindDataObjectsWithDescribe() {
-        DXRecord.newRecord().setProject(testProject).setName("record1")
-                .putProperty("sampleId", "1234").build();
-        DXFile.newFile().setProject(testProject).setName("file1").putProperty("sampleId", "2345")
-                .build();
-        DXGTable.newGTable(
-                ImmutableList.of(ColumnSpecification.getInstance("num_goats", ColumnType.INT16)))
-                .setProject(testProject).setName("gtable1").build();
-        DXApplet.newApplet().setProject(testProject).setName("applet1")
-                .setRunSpecification(RunSpecification.newRunSpec("bash", "").build()).build();
-        DXWorkflow.newWorkflow().setProject(testProject).setName("workflow1").build();
-
-        DXRecord recordResult =
-                Iterables.getOnlyElement(DXSearch.findDataObjects().withClassRecord()
-                        .inProject(testProject).nameMatchesExactly("record1")
-                        .includeDescribeOutput(DXDataObject.DescribeOptions.get().withProperties())
-                        .execute().asList());
-        Assert.assertEquals(recordResult.getCachedDescribe().getName(), "record1");
-        // Called includeDescribeOutput with properties: true so properties should be returned
-        Assert.assertEquals(recordResult.getCachedDescribe().getProperties().get("sampleId"),
-                "1234");
-
-        DXGTable gtableResult =
-                Iterables.getOnlyElement(DXSearch.findDataObjects().withClassGTable()
-                        .inProject(testProject).nameMatchesExactly("gtable1")
-                        .includeDescribeOutput().execute().asList());
-        Assert.assertEquals(gtableResult.getCachedDescribe().getName(), "gtable1");
-        // Called includeDescribeOutput with default settings so properties should NOT be returned
-        try {
-            gtableResult.getCachedDescribe().getProperties();
-            Assert.fail("Expected IllegalStateException to be thrown because properties should not have been returned");
-        } catch (IllegalStateException e) {
-            // Expected
-        }
-
-        Assert.assertEquals(
-                Iterables
-                        .getOnlyElement(
-                                DXSearch.findDataObjects().inProject(testProject)
-                                        .nameMatchesExactly("file1").includeDescribeOutput()
-                                        .execute().asList()).getCachedDescribe().getName(), "file1");
-        Assert.assertEquals(
-                Iterables
-                        .getOnlyElement(
-                                DXSearch.findDataObjects().inProject(testProject)
-                                        .nameMatchesExactly("applet1").includeDescribeOutput()
-                                        .execute().asList()).getCachedDescribe().getName(),
-                "applet1");
-        Assert.assertEquals(
-                Iterables
-                        .getOnlyElement(
-                                DXSearch.findDataObjects().inProject(testProject)
-                                        .nameMatchesExactly("workflow1").includeDescribeOutput()
-                                        .execute().asList()).getCachedDescribe().getName(),
-                "workflow1");
-
-        DXRecord findWithoutDescribe =
-                Iterables.getOnlyElement(DXSearch.findDataObjects().inProject(testProject)
-                        .nameMatchesExactly("record1").withClassRecord().execute().asList());
-        try {
-            findWithoutDescribe.getCachedDescribe();
-            Assert.fail("Expected IllegalStateException to be thrown");
-        } catch (IllegalStateException e) {
-            // Expected
-        }
-    }
-
-    /**
      * Tests formulating findDataObjects queries without actually issuing them.
      */
     @Test
@@ -476,6 +365,117 @@ public class DXSearchTest {
         // forward compatibility)
         DXJSON.safeTreeToValue(DXJSON.parseJson("{\"notAField\": true, \"results\":[]}"),
                 DXSearch.FindDataObjectsResponse.class);
+    }
+
+    /**
+     * findDataObjects smoke test.
+     */
+    @Test
+    public void testFindDataObjectsSimple() {
+        Assert.assertEquals(0, DXSearch.findDataObjects().inProject(testProject)
+                .nameMatchesExactly("foobarbaz").execute().asList().size());
+    }
+
+    /**
+     * Tests retrieving Describe output with findDataObjects.
+     */
+    @Test
+    public void testFindDataObjectsWithDescribe() {
+        DXRecord.newRecord().setProject(testProject).setName("record1")
+                .putProperty("sampleId", "1234").build();
+        DXFile.newFile().setProject(testProject).setName("file1").putProperty("sampleId", "2345")
+                .build();
+        DXGTable.newGTable(
+                ImmutableList.of(ColumnSpecification.getInstance("num_goats", ColumnType.INT16)))
+                .setProject(testProject).setName("gtable1").build();
+        DXApplet.newApplet().setProject(testProject).setName("applet1")
+                .setRunSpecification(RunSpecification.newRunSpec("bash", "").build()).build();
+        DXWorkflow.newWorkflow().setProject(testProject).setName("workflow1").build();
+
+        DXRecord recordResult =
+                Iterables.getOnlyElement(DXSearch.findDataObjects().withClassRecord()
+                        .inProject(testProject).nameMatchesExactly("record1")
+                        .includeDescribeOutput(DXDataObject.DescribeOptions.get().withProperties())
+                        .execute().asList());
+        Assert.assertEquals(recordResult.getCachedDescribe().getName(), "record1");
+        // Called includeDescribeOutput with properties: true so properties should be returned
+        Assert.assertEquals(recordResult.getCachedDescribe().getProperties().get("sampleId"),
+                "1234");
+
+        DXGTable gtableResult =
+                Iterables.getOnlyElement(DXSearch.findDataObjects().withClassGTable()
+                        .inProject(testProject).nameMatchesExactly("gtable1")
+                        .includeDescribeOutput().execute().asList());
+        Assert.assertEquals(gtableResult.getCachedDescribe().getName(), "gtable1");
+        // Called includeDescribeOutput with default settings so properties should NOT be returned
+        try {
+            gtableResult.getCachedDescribe().getProperties();
+            Assert.fail("Expected IllegalStateException to be thrown because properties should not have been returned");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+
+        Assert.assertEquals(
+                Iterables
+                        .getOnlyElement(
+                                DXSearch.findDataObjects().inProject(testProject)
+                                        .nameMatchesExactly("file1").includeDescribeOutput()
+                                        .execute().asList()).getCachedDescribe().getName(), "file1");
+        Assert.assertEquals(
+                Iterables
+                        .getOnlyElement(
+                                DXSearch.findDataObjects().inProject(testProject)
+                                        .nameMatchesExactly("applet1").includeDescribeOutput()
+                                        .execute().asList()).getCachedDescribe().getName(),
+                "applet1");
+        Assert.assertEquals(
+                Iterables
+                        .getOnlyElement(
+                                DXSearch.findDataObjects().inProject(testProject)
+                                        .nameMatchesExactly("workflow1").includeDescribeOutput()
+                                        .execute().asList()).getCachedDescribe().getName(),
+                "workflow1");
+
+        DXRecord findWithoutDescribe =
+                Iterables.getOnlyElement(DXSearch.findDataObjects().inProject(testProject)
+                        .nameMatchesExactly("record1").withClassRecord().execute().asList());
+        try {
+            findWithoutDescribe.getCachedDescribe();
+            Assert.fail("Expected IllegalStateException to be thrown");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+    }
+
+    /**
+     * Tests paging through results.
+     */
+    @Test
+    public void testFindDataObjectsWithPaging() {
+        List<DXRecord> records = Lists.newArrayList();
+        Set<String> recordIds = Sets.newHashSet();
+        for (int i = 0; i < 8; ++i) {
+            DXRecord record =
+                    DXRecord.newRecord().setProject(testProject)
+                            .setName("foo" + Integer.toString(i)).build();
+            records.add(record);
+            recordIds.add(record.getId());
+        }
+        List<DXRecord> outputRecords =
+                DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
+                        .withClassRecord().execute().asList();
+        Assert.assertEquals(8, outputRecords.size());
+
+        List<DXRecord> outputRecordsWithPaging =
+                DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
+                        .withClassRecord().execute(3).asList();
+        Assert.assertEquals(outputRecords, outputRecordsWithPaging);
+        Set<String> outputRecordIds = Sets.newHashSet();
+        for (DXRecord record : outputRecordsWithPaging) {
+            outputRecordIds.add(record.getId());
+        }
+
+        Assert.assertEquals(recordIds, outputRecordIds);
     }
 
     /**
