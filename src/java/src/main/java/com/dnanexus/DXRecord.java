@@ -213,16 +213,11 @@ public class DXRecord extends DXDataObject {
     }
 
     private DXRecord(String recordId, DXContainer project, DXEnvironment env, JsonNode describe) {
-        super(recordId, project, env, describe);
-        // TODO: also verify correct object ID format
-        Preconditions.checkArgument(recordId.startsWith("record-"),
-                "Record ID must start with \"record-\"");
+        super(recordId, "record", project, env, describe);
     }
 
     private DXRecord(String recordId, DXEnvironment env) {
-        super(recordId, env, null);
-        Preconditions.checkArgument(recordId.startsWith("record-"),
-                "Record ID must start with \"record-\"");
+        super(recordId, "record", env, null);
     }
 
     @Override

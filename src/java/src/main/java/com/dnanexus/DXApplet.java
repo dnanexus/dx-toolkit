@@ -422,16 +422,11 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
     }
 
     private DXApplet(String appletId, DXContainer project, DXEnvironment env, JsonNode describe) {
-        super(appletId, project, env, describe);
-        // TODO: also verify correct object ID format
-        Preconditions.checkArgument(appletId.startsWith("applet-"),
-                "Applet ID must start with \"applet-\"");
+        super(appletId, "applet", project, env, describe);
     }
 
     private DXApplet(String appletId, DXEnvironment env) {
-        super(appletId, env, null);
-        Preconditions.checkArgument(appletId.startsWith("applet-"),
-                "Applet ID must start with \"applet-\"");
+        super(appletId, "applet", env, null);
     }
 
     @Override

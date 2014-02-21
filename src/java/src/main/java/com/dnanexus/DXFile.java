@@ -230,16 +230,11 @@ public class DXFile extends DXDataObject {
     }
 
     private DXFile(String fileId, DXContainer project, DXEnvironment env, JsonNode describe) {
-        super(fileId, project, env, describe);
-        // TODO: also verify correct object ID format
-        Preconditions
-                .checkArgument(fileId.startsWith("file-"), "File ID must start with \"file-\"");
+        super(fileId, "file", project, env, describe);
     }
 
     private DXFile(String fileId, DXEnvironment env) {
-        super(fileId, env, null);
-        Preconditions
-                .checkArgument(fileId.startsWith("file-"), "File ID must start with \"file-\"");
+        super(fileId, "file", env, null);
     }
 
     @Override

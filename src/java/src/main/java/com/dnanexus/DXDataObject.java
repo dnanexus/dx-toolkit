@@ -810,14 +810,15 @@ public abstract class DXDataObject extends DXObject {
      * specified project.
      *
      * @param dxId DNAnexus ID of the data object
+     * @param className class name that should prefix the ID
      * @param env environment to use for subsequent API requests from this {@code DXDataObject}, or
      *        null to use the default environment
      * @param cachedDescribe JSON hash of the describe output for this object if available, or null
      *        otherwise
      */
-    protected DXDataObject(String dxId, DXContainer project, DXEnvironment env,
+    protected DXDataObject(String dxId, String className, DXContainer project, DXEnvironment env,
             JsonNode cachedDescribe) {
-        super(dxId, env);
+        super(dxId, Preconditions.checkNotNull(className, "className may not be null"), env);
         this.container = Preconditions.checkNotNull(project, "project may not be null");
         // TODO: should we make a defensive copy?
         this.cachedDescribe = cachedDescribe;
@@ -830,17 +831,19 @@ public abstract class DXDataObject extends DXObject {
      * <p>
      * Operations that use or retrieve project-specific metadata will fail if the object does not
      * exist in the environment's workspace. When a project is available, you should prefer to set
-     * it explicitly via {@link #DXDataObject(String, DXContainer, DXEnvironment, JsonNode)}.
+     * it explicitly via {@link #DXDataObject(String, String, DXContainer, DXEnvironment, JsonNode)}
+     * .
      * </p>
      *
      * @param dxId DNAnexus ID of the data object
+     * @param className class name that should prefix the ID
      * @param env environment to use for subsequent API requests from this {@code DXDataObject}, or
      *        null to use the default environment
      * @param cachedDescribe JSON hash of the describe output for this object if available, or null
      *        otherwise
      */
-    protected DXDataObject(String dxId, DXEnvironment env, JsonNode cachedDescribe) {
-        super(dxId, env);
+    protected DXDataObject(String dxId, String className, DXEnvironment env, JsonNode cachedDescribe) {
+        super(dxId, Preconditions.checkNotNull(className, "className may not be null"), env);
         this.container = null;
         // TODO: should we make a defensive copy?
         this.cachedDescribe = cachedDescribe;

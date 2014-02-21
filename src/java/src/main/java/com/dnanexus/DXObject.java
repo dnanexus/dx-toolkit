@@ -16,6 +16,8 @@
 
 package com.dnanexus;
 
+import java.util.regex.Pattern;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Objects;
@@ -36,6 +38,8 @@ public abstract class DXObject {
 
     private static final DXEnvironment DEFAULT_ENVIRONMENT = DXEnvironment.create();
 
+    private static final Pattern CLASS_NAME_RE = Pattern.compile("^[a-z]+$");
+
     /**
      * The ID of this object (this is the base for URLs used in API calls,
      * {@code /object-id/verb}).
@@ -50,14 +54,20 @@ public abstract class DXObject {
     /**
      * Creates a new object with the specified ID and environment.
      *
-     * @param dxId
-     *            DNAnexus object ID, e.g. "file-xxxx"
-     * @param env
-     *            Environment to use for API queries, or null to use the default
-     *            environment.
+     * @param dxId DNAnexus object ID, e.g. "file-xxxx"
+     * @param className desired class name that should be a prefix of the object ID, or null to
+     *        perform no prefix check
+     * @param env Environment to use for API queries, or null to use the default environment.
      */
-    protected DXObject(String dxId, DXEnvironment env) {
+    protected DXObject(String dxId, String className, DXEnvironment env) {
         this.dxId = Preconditions.checkNotNull(dxId, "Object ID may not be null");
+        if (className != null) {
+            Preconditions.checkArgument(CLASS_NAME_RE.matcher(className).matches(),
+                    "className must match [a-z]+");
+            String regexp = className + "-" + "[A-Za-z0-9]{24}";
+            Preconditions.checkArgument(dxId.matches("^" + regexp + "$"), "dxId must match "
+                    + regexp);
+        }
         if (env == null) {
             this.env = DEFAULT_ENVIRONMENT;
         } else {

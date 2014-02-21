@@ -41,6 +41,9 @@
   inFolder -> setFolder, inProject -> setProject, withDetails -> setDetails,
   withInput -> setInput, withName -> setName, withRawInput -> setRawInput.
 
+* DNAnexus object classes now reject malformed object IDs at initialization
+  time.
+
 ## 0.86.0
 
 * DXSearch.FindDataObjectsRequestBuilder supports requesting describe data with

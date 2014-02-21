@@ -55,14 +55,14 @@ public class DXFileTest {
 
     @Test
     public void testGetInstance() {
-        DXFile file = DXFile.getInstance("file-0000");
-        Assert.assertEquals("file-0000", file.getId());
+        DXFile file = DXFile.getInstance("file-000000000000000000000000");
+        Assert.assertEquals("file-000000000000000000000000", file.getId());
         Assert.assertEquals(null, file.getProject());
 
         DXFile file2 =
-                DXFile.getInstance("file-0001",
+                DXFile.getInstance("file-000000000000000000000001",
                         DXProject.getInstance("project-123412341234123412341234"));
-        Assert.assertEquals("file-0001", file2.getId());
+        Assert.assertEquals("file-000000000000000000000001", file2.getId());
         Assert.assertEquals("project-123412341234123412341234", file2.getProject().getId());
 
         try {
@@ -72,7 +72,7 @@ public class DXFileTest {
             // Expected
         }
         try {
-            DXFile.getInstance("file-1234", (DXContainer) null);
+            DXFile.getInstance("file-123412341234123412341234", (DXContainer) null);
             Assert.fail("Expected creation without setting project to fail");
         } catch (NullPointerException e) {
             // Expected

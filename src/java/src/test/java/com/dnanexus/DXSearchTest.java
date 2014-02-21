@@ -319,15 +319,17 @@ public class DXSearchTest {
                                         DXSearch.TagsQuery.of("c"))).buildRequestHash()));
 
         try {
-            DXSearch.findDataObjects().inProject(DXProject.getInstance("project-0000"))
-                    .inProject(DXProject.getInstance("project-1111"));
+            DXSearch.findDataObjects()
+                    .inProject(DXProject.getInstance("project-000000000000000000000000"))
+                    .inProject(DXProject.getInstance("project-111100000000000000000000"));
             Assert.fail("Expected double setting of inProject to fail");
         } catch (IllegalStateException e) {
             // Expected
         }
         try {
-            DXSearch.findDataObjects().inFolder(DXProject.getInstance("project-0000"), "/1")
-                    .inFolder(DXProject.getInstance("project-0000"), "/2");
+            DXSearch.findDataObjects()
+                    .inFolder(DXProject.getInstance("project-000000000000000000000000"), "/1")
+                    .inFolder(DXProject.getInstance("project-000000000000000000000000"), "/2");
             Assert.fail("Expected double setting of inFolder to fail");
         } catch (IllegalStateException e) {
             // Expected

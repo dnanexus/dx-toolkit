@@ -38,12 +38,14 @@ public class DXContainer extends DXObject {
     }
 
     DXContainer(String containerId) {
-        super(containerId, null);
+        // Perform no prefix check in super constructor because we'll be doing our own here
+        super(containerId, null, null);
         checkContainerId(containerId);
     }
 
     DXContainer(String containerId, DXEnvironment env) {
-        super(containerId, env);
+        // Perform no prefix check in super constructor because we'll be doing our own here
+        super(containerId, null, env);
         checkContainerId(containerId);
     }
 

@@ -60,14 +60,14 @@ public class DXGTableTest {
 
     @Test
     public void testGetInstance() {
-        DXGTable gtable = DXGTable.getInstance("gtable-0000");
-        Assert.assertEquals("gtable-0000", gtable.getId());
+        DXGTable gtable = DXGTable.getInstance("gtable-000000000000000000000000");
+        Assert.assertEquals("gtable-000000000000000000000000", gtable.getId());
         Assert.assertEquals(null, gtable.getProject());
 
         DXGTable gtable2 =
-                DXGTable.getInstance("gtable-0001",
+                DXGTable.getInstance("gtable-000000000000000000000001",
                         DXProject.getInstance("project-123412341234123412341234"));
-        Assert.assertEquals("gtable-0001", gtable2.getId());
+        Assert.assertEquals("gtable-000000000000000000000001", gtable2.getId());
         Assert.assertEquals("project-123412341234123412341234", gtable2.getProject().getId());
 
         try {
@@ -77,7 +77,7 @@ public class DXGTableTest {
             // Expected
         }
         try {
-            DXGTable.getInstance("gtable-1234", (DXContainer) null);
+            DXGTable.getInstance("gtable-123412341234123412341234", (DXContainer) null);
             Assert.fail("Expected creation without setting project to fail");
         } catch (NullPointerException e) {
             // Expected

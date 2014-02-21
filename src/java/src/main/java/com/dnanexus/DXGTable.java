@@ -259,16 +259,11 @@ public class DXGTable extends DXDataObject {
     }
 
     private DXGTable(String gtableId, DXContainer project, DXEnvironment env, JsonNode describe) {
-        super(gtableId, project, env, describe);
-        // TODO: also verify correct object ID format
-        Preconditions.checkArgument(gtableId.startsWith("gtable-"),
-                "GTable ID must start with \"gtable-\"");
+        super(gtableId, "gtable", project, env, describe);
     }
 
     private DXGTable(String gtableId, DXEnvironment env) {
-        super(gtableId, env, null);
-        Preconditions.checkArgument(gtableId.startsWith("gtable-"),
-                "GTable ID must start with \"gtable-\"");
+        super(gtableId, "gtable", env, null);
     }
 
     @Override

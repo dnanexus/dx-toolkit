@@ -150,15 +150,15 @@ public final class DXAnalysis extends DXExecution {
     }
 
     private DXAnalysis(String analysisId) {
-        super(analysisId, null);
+        super(analysisId, "analysis", null);
     }
 
     private DXAnalysis(String analysisId, DXEnvironment env) {
-        super(analysisId, env);
+        super(analysisId, "analysis", env);
     }
 
     private DXAnalysis(String analysisId, DXEnvironment env, JsonNode cachedDescribe) {
-        super(analysisId, env, cachedDescribe);
+        super(analysisId, "analysis", env, cachedDescribe);
     }
 
     @Override

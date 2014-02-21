@@ -78,14 +78,14 @@ public class DXRecordTest {
 
     @Test
     public void testGetInstance() {
-        DXRecord record = DXRecord.getInstance("record-0000");
-        Assert.assertEquals("record-0000", record.getId());
+        DXRecord record = DXRecord.getInstance("record-000011112222333344445555");
+        Assert.assertEquals("record-000011112222333344445555", record.getId());
         Assert.assertEquals(null, record.getProject());
 
         DXRecord record2 =
-                DXRecord.getInstance("record-0001",
+                DXRecord.getInstance("record-000100020003000400050006",
                         DXProject.getInstance("project-123412341234123412341234"));
-        Assert.assertEquals("record-0001", record2.getId());
+        Assert.assertEquals("record-000100020003000400050006", record2.getId());
         Assert.assertEquals("project-123412341234123412341234", record2.getProject().getId());
 
         try {
@@ -95,7 +95,7 @@ public class DXRecordTest {
             // Expected
         }
         try {
-            DXRecord.getInstance("record-1234", (DXContainer) null);
+            DXRecord.getInstance("record-123412341234123412341234", (DXContainer) null);
             Assert.fail("Expected creation without setting project to fail");
         } catch (NullPointerException e) {
             // Expected

@@ -58,14 +58,14 @@ public class DXWorkflowTest {
 
     @Test
     public void testGetInstance() {
-        DXWorkflow workflow = DXWorkflow.getInstance("workflow-0000");
-        Assert.assertEquals("workflow-0000", workflow.getId());
+        DXWorkflow workflow = DXWorkflow.getInstance("workflow-000011112222333344445555");
+        Assert.assertEquals("workflow-000011112222333344445555", workflow.getId());
         Assert.assertEquals(null, workflow.getProject());
 
         DXWorkflow workflow2 =
-                DXWorkflow.getInstance("workflow-0001",
+                DXWorkflow.getInstance("workflow-000100020003000400050006",
                         DXProject.getInstance("project-123412341234123412341234"));
-        Assert.assertEquals("workflow-0001", workflow2.getId());
+        Assert.assertEquals("workflow-000100020003000400050006", workflow2.getId());
         Assert.assertEquals("project-123412341234123412341234", workflow2.getProject().getId());
 
         try {
@@ -75,7 +75,7 @@ public class DXWorkflowTest {
             // Expected
         }
         try {
-            DXWorkflow.getInstance("workflow-1234", (DXContainer) null);
+            DXWorkflow.getInstance("workflow-123412341234123412341234", (DXContainer) null);
             Assert.fail("Expected creation without setting project to fail");
         } catch (NullPointerException e) {
             // Expected

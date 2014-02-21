@@ -299,4 +299,23 @@ public class DXDataObjectTest {
                         AccessLevel.ADMINISTER);
         Assert.assertEquals(expected, listProjectsResponse);
     }
+
+    /**
+     * Tests that invalid IDs are rejected.
+     */
+    @Test
+    public void testIdChecking() {
+        try {
+            DXRecord.getInstance("record-00001111222233334444");
+            Assert.fail("Expected IllegalArgumentException to be thrown because ID was invalid");
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
+        try {
+            DXRecord.getInstance("file-000011112222333344445555");
+            Assert.fail("Expected IllegalArgumentException to be thrown because ID was invalid");
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
+    }
 }

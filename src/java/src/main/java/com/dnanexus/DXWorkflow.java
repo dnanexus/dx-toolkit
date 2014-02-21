@@ -198,16 +198,12 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
     }
 
     private DXWorkflow(String workflowId, DXContainer project, DXEnvironment env, JsonNode describe) {
-        super(workflowId, project, env, describe);
-        // TODO: also verify correct object ID format
-        Preconditions.checkArgument(workflowId.startsWith("workflow-"),
-                "Workflow ID must start with \"workflow-\"");
+        super(workflowId, "workflow", project, env, describe);
+
     }
 
     private DXWorkflow(String workflowId, DXEnvironment env) {
-        super(workflowId, env, null);
-        Preconditions.checkArgument(workflowId.startsWith("workflow-"),
-                "Workflow ID must start with \"workflow-\"");
+        super(workflowId, "workflow", env, null);
     }
 
     @Override

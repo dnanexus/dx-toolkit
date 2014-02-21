@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.base.Preconditions;
 
 /**
  * An execution (job or analysis).
@@ -162,17 +163,21 @@ public abstract class DXExecution extends DXObject {
 
     /**
      * Initializes a new execution with the specified execution ID and environment.
+     *
+     * @param className class name that should prefix the ID
      */
-    protected DXExecution(String dxId, DXEnvironment env) {
-        this(dxId, env, null);
+    protected DXExecution(String dxId, String className, DXEnvironment env) {
+        this(dxId, Preconditions.checkNotNull(className, "className may not be null"), env, null);
     }
 
     /**
      * Initializes a new execution with the specified execution ID, environment, and cached describe
      * data.
+     *
+     * @param className class name that should prefix the ID
      */
-    protected DXExecution(String dxId, DXEnvironment env, JsonNode cachedDescribe) {
-        super(dxId, env);
+    protected DXExecution(String dxId, String className, DXEnvironment env, JsonNode cachedDescribe) {
+        super(dxId, Preconditions.checkNotNull(className, "className may not be null"), env);
         this.cachedDescribe = cachedDescribe;
     }
 

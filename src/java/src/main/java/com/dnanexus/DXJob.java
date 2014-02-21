@@ -227,15 +227,15 @@ public final class DXJob extends DXExecution {
     }
 
     private DXJob(String jobId) {
-        super(jobId, null);
+        super(jobId, "job", null);
     }
 
     private DXJob(String jobId, DXEnvironment env) {
-        super(jobId, env);
+        super(jobId, "job", env);
     }
 
     private DXJob(String jobId, DXEnvironment env, JsonNode cachedDescribe) {
-        super(jobId, env, cachedDescribe);
+        super(jobId, "job", env, cachedDescribe);
     }
 
     @Override

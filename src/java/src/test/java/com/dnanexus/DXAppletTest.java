@@ -198,14 +198,14 @@ public class DXAppletTest {
 
     @Test
     public void testGetInstance() {
-        DXApplet applet = DXApplet.getInstance("applet-0000");
-        Assert.assertEquals("applet-0000", applet.getId());
+        DXApplet applet = DXApplet.getInstance("applet-000011112222333344445555");
+        Assert.assertEquals("applet-000011112222333344445555", applet.getId());
         Assert.assertEquals(null, applet.getProject());
 
         DXApplet applet2 =
-                DXApplet.getInstance("applet-0001",
+                DXApplet.getInstance("applet-000100020003000400050006",
                         DXProject.getInstance("project-123412341234123412341234"));
-        Assert.assertEquals("applet-0001", applet2.getId());
+        Assert.assertEquals("applet-000100020003000400050006", applet2.getId());
         Assert.assertEquals("project-123412341234123412341234", applet2.getProject().getId());
 
         try {
@@ -215,7 +215,7 @@ public class DXAppletTest {
             // Expected
         }
         try {
-            DXApplet.getInstance("applet-1234", (DXContainer) null);
+            DXApplet.getInstance("applet-123412341234123412341234", (DXContainer) null);
             Assert.fail("Expected creation without setting project to fail");
         } catch (NullPointerException e) {
             // Expected
