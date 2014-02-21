@@ -303,7 +303,10 @@ def login(args):
         print('Acquiring credentials from ' + authserver)
 
         try:
-            username = input('Username: ')
+            if 'DX_USERNAME' in os.environ:
+                username = input('Username [' + os.environ['DX_USERNAME'] + ']: ') or os.environ['DX_USERNAME']
+            else:
+                username = input('Username: ')
             write_env_var('DX_USERNAME', username)
             password = getpass.getpass()
         except (KeyboardInterrupt, EOFError):
