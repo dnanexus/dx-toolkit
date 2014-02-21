@@ -17,6 +17,8 @@
 package com.dnanexus;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -24,6 +26,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 
 /**
@@ -41,11 +45,28 @@ public final class DXJob extends DXExecution {
      * Contains metadata about a job. All accessors reflect the state of the job at the time that
      * this object was created.
      */
-    public final static class Describe {
+    public final static class Describe extends DXExecution.Describe {
         private final DescribeResponseHash describeOutput;
         private final DXEnvironment env;
 
-        // TODO: lots more fields from job-xxxx/describe
+        // TODO: startedRunning
+        // TODO: stoppedRunning
+        // TODO: originJob
+        // TODO: stateTransitions
+        // TODO: function
+        // TODO: tags
+        // TODO: properties
+        // TODO: systemRequirements
+        // TODO: executionPolicy
+        // TODO: instanceType
+        // TODO: dependsOn
+        // TODO: failure*
+        // TODO: isFree
+        // TODO: applet/app
+        // TODO: resources
+        // TODO: projectCache
+
+        // TODO: plus the common fields in DXExecution.Describe
 
         @VisibleForTesting
         Describe(DescribeResponseHash describeOutput, DXEnvironment env) {
@@ -73,11 +94,7 @@ public final class DXJob extends DXExecution {
             return DXJSON.safeTreeToValue(describeOutput.details, valueType);
         }
 
-        /**
-         * Returns the ID of the job.
-         *
-         * @return the job ID
-         */
+        @Override
         public String getId() {
             return describeOutput.id;
         }
@@ -91,29 +108,12 @@ public final class DXJob extends DXExecution {
             return new Date(describeOutput.modified);
         }
 
-        /**
-         * Returns the name of the job.
-         *
-         * @return the job name
-         */
+        @Override
         public String getName() {
             return describeOutput.name;
         }
 
-        /**
-         * Returns the output of the job, deserialized to the specified class.
-         *
-         * <p>
-         * Note that this field is not available until the job has reached state
-         * {@link JobState#WAITING_ON_OUTPUT}, and may contain job-based object references (which
-         * may require special deserialization code in your object) until the job has reached state
-         * {@link JobState#DONE}.
-         * </p>
-         *
-         * @param outputClass
-         *
-         * @return job output object
-         */
+        @Override
         public <T> T getOutput(Class<T> outputClass) {
             return DXJSON.safeTreeToValue(describeOutput.output, outputClass);
         }
@@ -130,6 +130,11 @@ public final class DXJob extends DXExecution {
             return new DXJob(describeOutput.parentJob, env);
         }
 
+        @Override
+        public Map<String, String> getProperties() {
+            return ImmutableMap.copyOf(describeOutput.properties);
+        }
+
         /**
          * Returns the state of the job.
          *
@@ -137,6 +142,11 @@ public final class DXJob extends DXExecution {
          */
         public JobState getState() {
             return describeOutput.state;
+        }
+
+        @Override
+        public List<String> getTags() {
+            return ImmutableList.copyOf(describeOutput.tags);
         }
     }
 
@@ -161,6 +171,10 @@ public final class DXJob extends DXExecution {
         private JobState state;
         @JsonProperty
         private JsonNode details;
+        @JsonProperty
+        private List<String> tags;
+        @JsonProperty
+        private Map<String, String> properties;
 
         @JsonProperty
         private JsonNode output;
@@ -180,6 +194,22 @@ public final class DXJob extends DXExecution {
      */
     public static DXJob getInstance(String jobId) {
         return new DXJob(jobId);
+    }
+
+    /**
+     * Returns a {@code DXJob} representing the specified job using the specified environment, with
+     * the specified cached describe output.
+     *
+     * <p>
+     * This method is for use exclusively by bindings to the "find" routes when describe hashes are
+     * returned with the find output.
+     * </p>
+     *
+     * @throws NullPointerException If any argument is null
+     */
+    static DXJob getInstanceWithCachedDescribe(String jobId, DXEnvironment env, JsonNode describe) {
+        return new DXJob(jobId, Preconditions.checkNotNull(env, "env may not be null"),
+                Preconditions.checkNotNull(describe, "describe may not be null"));
     }
 
     /**
@@ -204,18 +234,24 @@ public final class DXJob extends DXExecution {
         super(jobId, env);
     }
 
+    private DXJob(String jobId, DXEnvironment env, JsonNode cachedDescribe) {
+        super(jobId, env, cachedDescribe);
+    }
+
     private Describe describeImpl(JsonNode describeInput) {
         return new Describe(DXAPI.jobDescribe(this.getId(), describeInput,
                 DescribeResponseHash.class), this.env);
     }
 
-    /**
-     * Obtains information about the job.
-     *
-     * @return a {@code Describe} containing job metadata
-     */
+    @Override
     public Describe describe() {
         return describeImpl(MAPPER.createObjectNode());
+    }
+
+    @Override
+    public Describe getCachedDescribe() {
+        this.checkCachedDescribeAvailable();
+        return new Describe(DXJSON.safeTreeToValue(this.cachedDescribe, DescribeResponseHash.class), this.env);
     }
 
     @Override

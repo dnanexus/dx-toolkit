@@ -101,8 +101,8 @@ public class DXDataObjectTest {
 
         // Setting tags
         U objectWithTags =
-                builderFactory.getBuilder().setProject(testProject)
-                        .addTags(ImmutableList.of("a", "b")).build();
+                builderFactory.getBuilder().setProject(testProject).addTags(ImmutableList.of("a"))
+                        .addTags(ImmutableList.of("b")).build();
         Assert.assertEquals(ImmutableSet.of("a", "b"),
                 ImmutableSet.copyOf(objectWithTags.describe().getTags()));
 
@@ -123,7 +123,8 @@ public class DXDataObjectTest {
         // Setting types
         U objectWithTypes =
                 builderFactory.getBuilder().setProject(testProject)
-                        .addTypes(ImmutableList.of("Loud", "Noisy")).build();
+                        .addTypes(ImmutableList.of("Loud")).addTypes(ImmutableList.of("Noisy"))
+                        .build();
         Assert.assertEquals(ImmutableSet.of("Loud", "Noisy"),
                 ImmutableSet.copyOf(objectWithTypes.describe().getTypes()));
 

@@ -28,6 +28,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.dnanexus.TestEnvironment.ConfigOption;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -51,7 +55,18 @@ public class DXSearchTest {
     @After
     public void tearDown() {
         if (testProject != null) {
-            testProject.destroy();
+            testProject.destroy(true);
+        }
+    }
+
+    @JsonInclude(Include.NON_NULL)
+    private static class SampleAppInput {
+        @SuppressWarnings("unused")
+        @JsonProperty("input_string")
+        public final String inputString;
+
+        public SampleAppInput(String inputString) {
+            this.inputString = inputString;
         }
     }
 
@@ -66,8 +81,6 @@ public class DXSearchTest {
         Set<T> actualSet = Sets.newHashSet(actualIterable);
         Assert.assertEquals(expectedSet, actualSet);
     }
-
-    // External tests
 
     /**
      * findDataObjects smoke test.
@@ -201,6 +214,10 @@ public class DXSearchTest {
 
         assertEqualsAnyOrder(DXSearch.findDataObjects().inProject(testProject).withTag("mytag")
                 .execute().asList(), foo);
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects().inProject(testProject)
+                        .withTags(DXSearch.TagsQuery.anyOf("mytag", "zyzzx")).execute().asList(),
+                foo);
 
         // withTypes
 
@@ -343,14 +360,6 @@ public class DXSearchTest {
         }
     }
 
-    @Test
-    public void testFindJobs() {
-        @SuppressWarnings("unused")
-        List<DXJob> results = DXSearch.findJobs().launchedBy("user-dnanexus").execute().asList();
-    }
-
-    // Internal tests
-
     /**
      * Tests formulating findDataObjects queries without actually issuing them.
      */
@@ -410,6 +419,16 @@ public class DXSearchTest {
                         .includeDescribeOutput(DXDataObject.DescribeOptions.get().withProperties())
                         .buildRequestHash()));
 
+        Assert.assertEquals(DXJSON.parseJson("{\"tags\": \"a\"}"),
+                mapper.valueToTree(DXSearch.findDataObjects().withTag("a").buildRequestHash()));
+        Assert.assertEquals(DXJSON
+                .parseJson("{\"tags\": {\"$or\": [{\"$and\": [\"a\", \"b\"]}, \"c\"]}}"), mapper
+                .valueToTree(DXSearch
+                        .findDataObjects()
+                        .withTags(
+                                DXSearch.TagsQuery.anyOf(DXSearch.TagsQuery.allOf("a", "b"),
+                                        DXSearch.TagsQuery.of("c"))).buildRequestHash()));
+
         try {
             DXSearch.findDataObjects().inProject(DXProject.getInstance("project-0000"))
                     .inProject(DXProject.getInstance("project-1111"));
@@ -459,62 +478,250 @@ public class DXSearchTest {
                 DXSearch.FindDataObjectsResponse.class);
     }
 
+    /**
+     * Tests a variety of findExecutions features.
+     */
     @Test
-    public void testFindJobsRequestSerialization() throws IOException {
-        Assert.assertEquals(DXJSON.parseJson("{\"launchedBy\":\"user-user1\"}"),
-                mapper.valueToTree(DXSearch.findJobs().launchedBy("user-user1").buildRequestHash()));
-        Assert.assertEquals(
-                DXJSON.parseJson("{\"project\":\"project-000000000000000000000000\"}"),
-                mapper.valueToTree(DXSearch.findJobs()
-                        .inProject(DXProject.getInstance("project-000000000000000000000000"))
-                        .buildRequestHash()));
-
-        // Conversion of dates to milliseconds since epoch
-        GregorianCalendar january15 = new GregorianCalendar(2013, 0, 15);
-        january15.setTimeZone(TimeZone.getTimeZone("UTC"));
-        Assert.assertEquals(
-                DXJSON.parseJson("{\"createdBefore\":1358208000000}"),
-                mapper.valueToTree(DXSearch.findJobs().createdBefore(january15.getTime())
-                        .buildRequestHash()));
-        Assert.assertEquals(
-                DXJSON.parseJson("{\"createdAfter\":1358208000000}"),
-                mapper.valueToTree(DXSearch.findJobs().createdAfter(january15.getTime())
-                        .buildRequestHash()));
-
-        // Setting multiple fields
-        Assert.assertEquals(
-                DXJSON.parseJson("{\"launchedBy\":\"user-user1\", \"project\":\"project-000000000000000000000000\"}"),
-                mapper.valueToTree(DXSearch.findJobs().launchedBy("user-user1")
-                        .inProject(DXProject.getInstance("project-000000000000000000000000"))
-                        .buildRequestHash()));
-
-        // Setting the same field more than once is disallowed
-        try {
-            DXSearch.findJobs().launchedBy("user-user1").launchedBy("user-user2");
-            Assert.fail("Expected double setting of launchedBy to fail");
-        } catch (IllegalStateException e) {
-            // Expected
+    public void testFindExecutions() {
+        if (!TestEnvironment.canRunTest(ConfigOption.RUN_JOBS)) {
+            System.err.println("Skipping test that would run jobs");
+            return;
         }
+
+        final InputParameter input1 =
+                InputParameter.newInputParameter("input_string", IOClass.STRING).build();
+
+        // Minimal applet that outputs nothing
+        String code = "\n";
+        DXApplet applet =
+                DXApplet.newApplet().setProject(testProject).setName("simple_test_java_app")
+                        .setRunSpecification(RunSpecification.newRunSpec("bash", code).build())
+                        .setInputSpecification(ImmutableList.of(input1))
+                        .setOutputSpecification(ImmutableList.<OutputParameter>of()).build();
+
+        // A sample input: {input_string: "java"}
+        SampleAppInput appInput = new SampleAppInput("java");
+
+        // Run the applet!
+        DXJob job =
+                applet.newRun().setInput(appInput).setProject(testProject).setName("javatest")
+                        .addTags(ImmutableList.of("t1")).putProperty("k1", "v1").run();
+
+        // Some findJobs queries
+        assertEqualsAnyOrder(DXSearch.findExecutions().inProject(testProject)
+                .withExecutable(applet).execute().asList(), job);
+        assertEqualsAnyOrder(DXSearch.findExecutions().inProject(testProject).withTag("t1")
+                .execute().asList(), job);
+        assertEqualsAnyOrder(DXSearch.findExecutions().inProject(testProject).withTag("t2")
+                .execute().asList());
+        assertEqualsAnyOrder(
+                DXSearch.findExecutions().inProject(testProject).withProperty("k1", "v1").execute()
+                        .asList(), job);
+        assertEqualsAnyOrder(DXSearch.findExecutions().inProject(testProject).withProperty("k1")
+                .execute().asList(), job);
+        assertEqualsAnyOrder(DXSearch.findExecutions().inProject(testProject)
+                .withProperty("k1", "v2").execute().asList());
+        assertEqualsAnyOrder(DXSearch.findExecutions().inProject(testProject).withProperty("k2")
+                .execute().asList());
+
+        assertEqualsAnyOrder(
+                DXSearch.findExecutions().inProject(testProject).nameMatchesExactly("javatest")
+                        .execute().asList(), job);
+        assertEqualsAnyOrder(DXSearch.findExecutions().inProject(testProject)
+                .nameMatchesExactly("java").execute().asList());
+        assertEqualsAnyOrder(
+                DXSearch.findExecutions().inProject(testProject).nameMatchesGlob("*test").execute()
+                        .asList(), job);
+        assertEqualsAnyOrder(DXSearch.findExecutions().inProject(testProject)
+                .nameMatchesGlob("python*").execute().asList());
+        assertEqualsAnyOrder(DXSearch.findExecutions().inProject(testProject).withOriginJob(job)
+                .execute().asList(), job);
+
+        // With describe calls
+        DXJob resultJobWithDescribe =
+                Iterables.getOnlyElement(DXSearch.findExecutions().inProject(testProject)
+                        .withTag("t1").withClassJob().includeDescribeOutput().execute().asList());
+        Assert.assertEquals("javatest", resultJobWithDescribe.getCachedDescribe().getName());
+        DXJob resultJobWithoutDescribe =
+                Iterables.getOnlyElement(DXSearch.findExecutions().inProject(testProject)
+                        .withTag("t1").withClassJob().execute().asList());
         try {
-            DXSearch.findJobs().inProject(DXProject.getInstance("project-0"))
-                    .inProject(DXProject.getInstance("project-1"));
-            Assert.fail("Expected double setting of inProject to fail");
+            resultJobWithoutDescribe.getCachedDescribe();
+            Assert.fail("Expected IllegalStateException to be thrown because includeDescribeOutput was not specified");
         } catch (IllegalStateException e) {
             // Expected
         }
     }
 
+    /**
+     * Tests formulating findExecutions queries without actually issuing them.
+     */
     @Test
-    public void testFindJobsResponseSerialization() throws IOException {
-        // Test deserialization of the result without making a real API call
+    public void testFindExecutionsQuerySerialization() throws IOException {
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"launchedBy\":\"user-user1\"}"),
+                mapper.valueToTree(DXSearch.findExecutions().launchedBy("user-user1")
+                        .buildRequestHash()));
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"project\":\"project-000000000000000000000000\"}"),
+                mapper.valueToTree(DXSearch.findExecutions()
+                        .inProject(DXProject.getInstance("project-000000000000000000000000"))
+                        .buildRequestHash()));
+
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"includeSubjobs\": false}"),
+                mapper.valueToTree(DXSearch.findExecutions().includeSubjobs(false)
+                        .buildRequestHash()));
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"name\": \"dnanexus\"}"),
+                mapper.valueToTree(DXSearch.findExecutions().nameMatchesExactly("dnanexus")
+                        .buildRequestHash()));
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"name\": {\"regexp\": \"(DNA|dna)nexus\"}}"),
+                mapper.valueToTree(DXSearch.findExecutions().nameMatchesRegexp("(DNA|dna)nexus")
+                        .buildRequestHash()));
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"name\": {\"regexp\": \"[dr]nanexus\"}}"),
+                mapper.valueToTree(DXSearch.findExecutions()
+                        .nameMatchesRegexp("[dr]nanexus", false).buildRequestHash()));
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"name\": {\"regexp\": \"[dr]nanexus\", \"flags\": \"i\"}}"),
+                mapper.valueToTree(DXSearch.findExecutions().nameMatchesRegexp("[dr]nanexus", true)
+                        .buildRequestHash()));
+
+        Assert.assertEquals(DXJSON.parseJson("{\"class\": \"job\"}"),
+                mapper.valueToTree(DXSearch.findExecutions().withClassJob().buildRequestHash()));
+        Assert.assertEquals(DXJSON.parseJson("{\"class\": \"analysis\"}"), mapper
+                .valueToTree(DXSearch.findExecutions().withClassAnalysis().buildRequestHash()));
+
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"executable\": \"applet-000011112222333344445555\"}"),
+                mapper.valueToTree(DXSearch.findExecutions()
+                        .withExecutable(DXApplet.getInstance("applet-000011112222333344445555"))
+                        .buildRequestHash()));
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"originJob\": \"job-000011112222333344445555\"}"),
+                mapper.valueToTree(DXSearch.findExecutions()
+                        .withOriginJob(DXJob.getInstance("job-000011112222333344445555"))
+                        .buildRequestHash()));
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"parentAnalysis\": \"analysis-000011112222333344445555\"}"),
+                mapper.valueToTree(DXSearch
+                        .findExecutions()
+                        .withParentAnalysis(
+                                DXAnalysis.getInstance("analysis-000011112222333344445555"))
+                        .buildRequestHash()));
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"parentJob\": \"job-000011112222333344445555\"}"),
+                mapper.valueToTree(DXSearch.findExecutions()
+                        .withParentJob(DXJob.getInstance("job-000011112222333344445555"))
+                        .buildRequestHash()));
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"properties\": {\"a\": \"b\", \"c\": true}}"),
+                mapper.valueToTree(DXSearch.findExecutions().withProperty("a", "b")
+                        .withProperty("c").buildRequestHash()));
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"rootExecution\": \"analysis-000011112222333344445555\"}"),
+                mapper.valueToTree(DXSearch
+                        .findExecutions()
+                        .withRootExecution(
+                                DXAnalysis.getInstance("analysis-000011112222333344445555"))
+                        .buildRequestHash()));
+
+        Assert.assertEquals(DXJSON.parseJson("{\"tags\": \"a\"}"),
+                mapper.valueToTree(DXSearch.findExecutions().withTag("a").buildRequestHash()));
+        Assert.assertEquals(DXJSON
+                .parseJson("{\"tags\": {\"$or\": [{\"$and\": [\"a\", \"b\"]}, \"c\"]}}"), mapper
+                .valueToTree(DXSearch
+                        .findExecutions()
+                        .withTags(
+                                DXSearch.TagsQuery.anyOf(DXSearch.TagsQuery.allOf("a", "b"),
+                                        DXSearch.TagsQuery.of("c"))).buildRequestHash()));
+
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"state\": \"done\"}"),
+                mapper.valueToTree(DXSearch.findExecutions().withState(JobState.DONE)
+                        .buildRequestHash()));
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"state\": [\"in_progress\", \"done\"]}"),
+                mapper.valueToTree(DXSearch.findExecutions()
+                        .withState(AnalysisState.IN_PROGRESS, AnalysisState.DONE)
+                        .buildRequestHash()));
+
+        // Conversion of dates to milliseconds since epoch
+        GregorianCalendar january15 = new GregorianCalendar(2013, 0, 15);
+        january15.setTimeZone(TimeZone.getTimeZone("UTC"));
+        GregorianCalendar january16 = new GregorianCalendar(2013, 0, 16);
+        january16.setTimeZone(TimeZone.getTimeZone("UTC"));
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"created\": {\"before\": 1358208000000}}"),
+                mapper.valueToTree(DXSearch.findExecutions().createdBefore(january15.getTime())
+                        .buildRequestHash()));
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"created\": {\"after\": 1358208000000}}"),
+                mapper.valueToTree(DXSearch.findExecutions().createdAfter(january15.getTime())
+                        .buildRequestHash()));
+        Assert.assertEquals(DXJSON
+                .parseJson("{\"created\": {\"after\": 1358208000000, \"before\": 1358294400000}}"),
+                mapper.valueToTree(DXSearch.findExecutions().createdAfter(january15.getTime())
+                        .createdBefore(january16.getTime()).buildRequestHash()));
+
+        // Setting multiple fields
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"launchedBy\":\"user-user1\", \"project\":\"project-000000000000000000000000\"}"),
+                mapper.valueToTree(DXSearch.findExecutions().launchedBy("user-user1")
+                        .inProject(DXProject.getInstance("project-000000000000000000000000"))
+                        .buildRequestHash()));
+
+        // Setting the same field more than once is disallowed
+        try {
+            DXSearch.findExecutions().launchedBy("user-user1").launchedBy("user-user2");
+            Assert.fail("Expected double setting of launchedBy to fail");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+        try {
+            DXSearch.findExecutions().inProject(DXProject.getInstance("project-0"))
+                    .inProject(DXProject.getInstance("project-1"));
+            Assert.fail("Expected double setting of inProject to fail");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+        try {
+            DXSearch.findExecutions().includeSubjobs(true).includeSubjobs(false);
+            Assert.fail("Expected double setting of includeSubjobs to fail");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+        try {
+            DXSearch.findExecutions().nameMatchesExactly("foo").nameMatchesGlob("g*");
+            Assert.fail("Expected double setting of name queries to fail");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+        try {
+            DXSearch.findExecutions().withClassAnalysis().withClassJob();
+            Assert.fail("Expected double setting of class constraints to fail");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+
+        // TODO: includeDescribeOutput
+    }
+
+    /**
+     * Tests deserialization of findExecutions results without making real API calls.
+     */
+    @Test
+    public void testFindExecutionsResponseSerialization() throws IOException {
         DXJSON.safeTreeToValue(
                 DXJSON.parseJson("{\"results\":[{\"id\": \"job-000000000000000000000000\"}]}"),
-                DXSearch.FindJobsResponse.class);
+                DXSearch.FindExecutionsResponse.class);
 
         // Extra fields in the response should not cause us to choke (for API
         // forward compatibility)
         DXJSON.safeTreeToValue(DXJSON.parseJson("{\"notAField\": true, \"results\":[]}"),
-                DXSearch.FindJobsResponse.class);
+                DXSearch.FindExecutionsResponse.class);
     }
 
 }

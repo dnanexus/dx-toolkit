@@ -1,5 +1,46 @@
 # Java API Bindings Changelog
 
+## 0.88.0
+
+* BREAKING: DXSearch.findExecutions generalizes and replaces findJobs. The
+  following new fields are supported for finding executions: class,
+  includeSubjobs, name, executable, tags, properties, rootExecution, originJob,
+  parentJob, parentAnalysis, state. Obtaining describe output alongside the
+  results is possible as well with includeDescribeOutput. Although this change
+  is breaking-- classes previously named FindJobs* are renamed to
+  FindExecutions*-- if you didn't hold any references to FindJobsRequestBuilder
+  or FindJobsResult (i.e. you formulated and executed your query in one line)
+  no changes are likely needed to your code. If you did hold such references,
+  change instances of FindJobsRequestBuilder and FindJobsResult to
+  FindExecutionsRequestBuilder<DXJob> and FindExecutionsResult<DXJob>
+  respectively.
+
+* DXExecution now provides factory methods getInstance and
+  getInstanceWithEnvironment that return a DXJob or DXAnalysis, as appropriate,
+  given its ID.
+
+* DXSearch.findDataObjects now supports compound queries on tags for parity
+  with the new functionality in findExecutions. Use the class
+  DXSearch.TagsQuery to create such queries.
+
+* DXDataObject.Builder.addTags and addTypes now accept any Collection<String>
+  instead of just a List, and they may now be called more than once to append
+  to the tags/types to be set.
+
+* DXJob.Describe and DXAnalysis.Describe now support getProperties and getTags
+  for retrieving job metadata.
+
+* ExecutableRunner now supports addTags, putProperty, and putAllProperties for
+  setting executable metadata.
+
+* ExecutableRunner.dependsOn now accepts any DXExecution instead of only DXJob
+  objects.
+
+* The following methods in ExecutableRunner were renamed to be consistent with
+  those in DXDataObject.Builder (delegate methods are left for compatibility):
+  inFolder -> setFolder, inProject -> setProject, withDetails -> setDetails,
+  withInput -> setInput, withName -> setName, withRawInput -> setRawInput.
+
 ## 0.86.0
 
 * DXSearch.FindDataObjectsRequestBuilder supports requesting describe data with

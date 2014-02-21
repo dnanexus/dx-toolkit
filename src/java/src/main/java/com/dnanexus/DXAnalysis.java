@@ -1,5 +1,7 @@
 package com.dnanexus;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -7,6 +9,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 
 /**
@@ -24,49 +28,40 @@ public final class DXAnalysis extends DXExecution {
      * Contains metadata about an analysis. All accessors reflect the state of the analysis at the
      * time that this object was created.
      */
-    public final static class Describe {
+    public final static class Describe extends DXExecution.Describe {
         private final DescribeResponseHash describeOutput;
+        @SuppressWarnings("unused")
+        private final DXEnvironment env;
 
-        // TODO: lots more fields from /analysis-xxxx/describe
+        // TODO: executable
+        // TODO: workflow
+
+        // TODO: plus the common fields in DXExecution.Describe
 
         @VisibleForTesting
-        Describe(DescribeResponseHash describeOutput) {
+        Describe(DescribeResponseHash describeOutput, DXEnvironment env) {
             this.describeOutput = describeOutput;
+            this.env = env;
         }
 
-        /**
-         * Returns the ID of the analysis.
-         *
-         * @return the analysis ID
-         */
+        @Override
         public String getId() {
             return describeOutput.id;
         }
 
-        /**
-         * Returns the name of the analysis.
-         *
-         * @return the analysis name
-         */
+        @Override
         public String getName() {
             return describeOutput.name;
         }
 
-        /**
-         * Returns the output of the analysis, deserialized to the specified class.
-         *
-         * <p>
-         * Note that this field is not guaranteed to be complete until the analysis has reached
-         * state {@link AnalysisState#DONE}. However, partial outputs might be populated before that
-         * time.
-         * </p>
-         *
-         * @param outputClass
-         *
-         * @return analysis output object
-         */
+        @Override
         public <T> T getOutput(Class<T> outputClass) {
             return DXJSON.safeTreeToValue(describeOutput.output, outputClass);
+        }
+
+        @Override
+        public Map<String, String> getProperties() {
+            return ImmutableMap.copyOf(describeOutput.properties);
         }
 
         /**
@@ -76,6 +71,11 @@ public final class DXAnalysis extends DXExecution {
          */
         public AnalysisState getState() {
             return describeOutput.state;
+        }
+
+        @Override
+        public List<String> getTags() {
+            return ImmutableList.copyOf(describeOutput.tags);
         }
     }
 
@@ -92,6 +92,10 @@ public final class DXAnalysis extends DXExecution {
         private String name;
         @JsonProperty
         private AnalysisState state;
+        @JsonProperty
+        private List<String> tags;
+        @JsonProperty
+        private Map<String, String> properties;
 
         @JsonProperty
         private JsonNode output;
@@ -111,6 +115,23 @@ public final class DXAnalysis extends DXExecution {
      */
     public static DXAnalysis getInstance(String analysisId) {
         return new DXAnalysis(analysisId);
+    }
+
+    /**
+     * Returns a {@code DXAnalysis} representing the specified analysis using the specified
+     * environment, with the specified cached describe output.
+     *
+     * <p>
+     * This method is for use exclusively by bindings to the "find" routes when describe hashes are
+     * returned with the find output.
+     * </p>
+     *
+     * @throws NullPointerException If any argument is null
+     */
+    static DXAnalysis getInstanceWithCachedDescribe(String jobId, DXEnvironment env,
+            JsonNode describe) {
+        return new DXAnalysis(jobId, Preconditions.checkNotNull(env, "env may not be null"),
+                Preconditions.checkNotNull(describe, "describe may not be null"));
     }
 
     /**
@@ -136,18 +157,25 @@ public final class DXAnalysis extends DXExecution {
         super(analysisId, env);
     }
 
-    private Describe describeImpl(JsonNode describeInput) {
-        return new Describe(DXAPI.analysisDescribe(this.getId(), describeInput,
-                DescribeResponseHash.class));
+    private DXAnalysis(String analysisId, DXEnvironment env, JsonNode cachedDescribe) {
+        super(analysisId, env, cachedDescribe);
     }
 
-    /**
-     * Obtains information about the analysis.
-     *
-     * @return a {@code Describe} containing analysis metadata
-     */
+    private Describe describeImpl(JsonNode describeInput) {
+        return new Describe(DXAPI.analysisDescribe(this.getId(), describeInput,
+                DescribeResponseHash.class), this.env);
+    }
+
+    @Override
     public Describe describe() {
         return describeImpl(MAPPER.createObjectNode());
+    }
+
+    @Override
+    public Describe getCachedDescribe() {
+        this.checkCachedDescribeAvailable();
+        return new Describe(
+                DXJSON.safeTreeToValue(this.cachedDescribe, DescribeResponseHash.class), this.env);
     }
 
     @Override

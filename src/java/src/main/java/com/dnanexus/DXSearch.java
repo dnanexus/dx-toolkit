@@ -16,6 +16,7 @@
 
 package com.dnanexus;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -33,6 +34,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -41,6 +43,32 @@ import com.google.common.collect.Sets;
  * Utility class containing methods for searching for platform objects by various criteria.
  */
 public final class DXSearch {
+
+    /**
+     * Specifies whether describe output should be returned with the find* request (and if so, with
+     * what describe options).
+     */
+    @JsonInclude(Include.NON_NULL)
+    private static class DescribeParameters {
+        private final Object describeOptions;
+
+        private DescribeParameters() {
+            this.describeOptions = null;
+        }
+
+        private DescribeParameters(DXDataObject.DescribeOptions describeOptions) {
+            this.describeOptions = describeOptions;
+        }
+
+        @SuppressWarnings("unused")
+        @JsonValue
+        private Object getValue() {
+            if (describeOptions == null) {
+                return true;
+            }
+            return describeOptions;
+        }
+    }
 
     /**
      * Specifies in a query whether to return visible items, hidden items, or both.
@@ -79,90 +107,6 @@ public final class DXSearch {
     private static class FindDataObjectsRequest {
 
         @JsonInclude(Include.NON_NULL)
-        private static class DescribeParameters {
-            private final DXDataObject.DescribeOptions describeOptions;
-
-            private DescribeParameters() {
-                this.describeOptions = null;
-            }
-
-            private DescribeParameters(DXDataObject.DescribeOptions describeOptions) {
-                this.describeOptions = describeOptions;
-            }
-
-            @SuppressWarnings("unused")
-            @JsonValue
-            private Object getValue() {
-                if (describeOptions == null) {
-                    return true;
-                }
-                return describeOptions;
-            }
-        }
-
-        private static class ExactNameQuery implements NameQuery {
-            private final String nameExact;
-
-            private ExactNameQuery(String nameExact) {
-                this.nameExact = nameExact;
-            }
-
-            @SuppressWarnings("unused")
-            @JsonValue
-            private Object getValue() {
-                return this.nameExact;
-            }
-        }
-
-        private static class GlobNameQuery implements NameQuery {
-            private final String glob;
-
-            private GlobNameQuery(String glob) {
-                this.glob = glob;
-            }
-
-            @SuppressWarnings("unused")
-            @JsonValue
-            private Map<String, String> getValue() {
-                return ImmutableMap.of("glob", this.glob);
-            }
-        }
-
-        // This interface, and the classes that implement it, are for
-        // generating the values that can appear in the "name" field of the
-        // query.
-        @JsonInclude(Include.NON_NULL)
-        private static interface NameQuery {
-            // Subclasses choose what fields to put in their JSON representations.
-        }
-
-        private static class RegexpNameQuery implements NameQuery {
-            private final String regexp;
-            private final String flags;
-
-            private RegexpNameQuery(String regexp) {
-                this.regexp = regexp;
-                this.flags = null;
-            }
-
-            private RegexpNameQuery(String regexp, String flags) {
-                this.regexp = regexp;
-                this.flags = flags;
-            }
-
-            @SuppressWarnings("unused")
-            @JsonValue
-            private Map<String, String> getValue() {
-                ImmutableMap.Builder<String, String> mapBuilder = ImmutableMap.builder();
-                mapBuilder.put("regexp", this.regexp);
-                if (this.flags != null) {
-                    mapBuilder.put("flags", this.flags);
-                }
-                return mapBuilder.build();
-            }
-        }
-
-        @JsonInclude(Include.NON_NULL)
         private static class ScopeQuery {
             @SuppressWarnings("unused")
             @JsonProperty
@@ -189,35 +133,6 @@ public final class DXSearch {
             }
         }
 
-        @JsonInclude(Include.NON_NULL)
-        private static class TimeIntervalQuery {
-            private final Date before;
-            private final Date after;
-
-            private TimeIntervalQuery(Date before, Date after) {
-                this.before = before;
-                this.after = after;
-            }
-
-            @SuppressWarnings("unused")
-            @JsonProperty("after")
-            private Long getAfter() {
-                if (after == null) {
-                    return null;
-                }
-                return after.getTime();
-            }
-
-            @SuppressWarnings("unused")
-            @JsonProperty("before")
-            private Long getBefore() {
-                if (before == null) {
-                    return null;
-                }
-                return before.getTime();
-            }
-        }
-
         @JsonProperty("class")
         private final String classConstraint;
         @JsonProperty
@@ -229,9 +144,8 @@ public final class DXSearch {
         // TODO: support $and and $or queries on type, not just a single type
         @JsonProperty
         private final String type;
-        // TODO: support $and and $or queries on tags, not just a single tag
         @JsonProperty
-        private final String tags;
+        private final TagsQuery tags;
         @JsonProperty
         private final Map<String, Object> properties;
         @JsonProperty
@@ -296,23 +210,15 @@ public final class DXSearch {
             this.visibility = builder.visibilityQuery;
             this.name = builder.nameQuery;
             this.type = builder.type;
-            this.tags = builder.tag;
+            this.tags = builder.tags;
             this.describe = builder.describe;
-
-            Map<String, Object> properties =
-                    Maps.<String, Object>newHashMap(builder.propertyKeysAndValues);
-            for (String requiredKey : builder.propertiesThatMustBePresent) {
-                properties.put(requiredKey, true);
-            }
-            if (!properties.isEmpty()) {
-                this.properties = Collections.unmodifiableMap(properties);
-            } else {
-                this.properties = null;
-            }
-
+            this.properties =
+                    makePropertiesQuery(builder.propertyKeysAndValues,
+                            builder.propertiesThatMustBePresent);
             this.link = builder.link;
             this.scope = builder.scopeQuery;
             this.level = builder.level;
+
             if (builder.modifiedBefore != null || builder.modifiedAfter != null) {
                 this.modified =
                         new TimeIntervalQuery(builder.modifiedBefore, builder.modifiedAfter);
@@ -344,9 +250,9 @@ public final class DXSearch {
         private String classConstraint;
         private DataObjectState state;
         private VisibilityQuery visibilityQuery;
-        private FindDataObjectsRequest.NameQuery nameQuery;
+        private NameQuery nameQuery;
         private String type;
-        private String tag;
+        private TagsQuery tags;
         private Map<String, String> propertyKeysAndValues = Maps.newHashMap();
         private Set<String> propertiesThatMustBePresent = Sets.newHashSet();
         private String link;
@@ -356,7 +262,7 @@ public final class DXSearch {
         private Date modifiedAfter;
         private Date createdBefore;
         private Date createdAfter;
-        private FindDataObjectsRequest.DescribeParameters describe;
+        private DescribeParameters describe;
 
         private final DXEnvironment env;
 
@@ -437,7 +343,7 @@ public final class DXSearch {
         public FindDataObjectsRequestBuilder<T> includeDescribeOutput() {
             Preconditions.checkState(this.describe == null,
                     "Cannot specify describe output more than once");
-            this.describe = new FindDataObjectsRequest.DescribeParameters();
+            this.describe = new DescribeParameters();
             return this;
         }
 
@@ -454,7 +360,7 @@ public final class DXSearch {
                 DXDataObject.DescribeOptions describeOptions) {
             Preconditions.checkState(this.describe == null,
                     "Cannot specify describe output more than once");
-            this.describe = new FindDataObjectsRequest.DescribeParameters(describeOptions);
+            this.describe = new DescribeParameters(describeOptions);
             return this;
         }
 
@@ -578,7 +484,7 @@ public final class DXSearch {
             Preconditions.checkState(this.nameQuery == null,
                     "Cannot specify nameMatches* methods more than once");
             this.nameQuery =
-                    new FindDataObjectsRequest.ExactNameQuery(Preconditions.checkNotNull(name,
+                    new NameQuery.ExactNameQuery(Preconditions.checkNotNull(name,
                             "name may not be null"));
             return this;
         }
@@ -600,7 +506,7 @@ public final class DXSearch {
             Preconditions.checkState(this.nameQuery == null,
                     "Cannot specify nameMatches* methods more than once");
             this.nameQuery =
-                    new FindDataObjectsRequest.GlobNameQuery(Preconditions.checkNotNull(glob,
+                    new NameQuery.GlobNameQuery(Preconditions.checkNotNull(glob,
                             "glob may not be null"));
             return this;
         }
@@ -622,7 +528,7 @@ public final class DXSearch {
             Preconditions.checkState(this.nameQuery == null,
                     "Cannot specify nameMatches* methods more than once");
             this.nameQuery =
-                    new FindDataObjectsRequest.RegexpNameQuery(Preconditions.checkNotNull(regexp,
+                    new NameQuery.RegexpNameQuery(Preconditions.checkNotNull(regexp,
                             "regexp may not be null"));
             return this;
         }
@@ -647,7 +553,7 @@ public final class DXSearch {
             Preconditions.checkState(this.nameQuery == null,
                     "Cannot specify nameMatches* methods more than once");
             this.nameQuery =
-                    new FindDataObjectsRequest.RegexpNameQuery(Preconditions.checkNotNull(regexp,
+                    new NameQuery.RegexpNameQuery(Preconditions.checkNotNull(regexp,
                             "regexp may not be null"), caseInsensitive ? "i" : null);
             return this;
         }
@@ -830,13 +736,30 @@ public final class DXSearch {
         /**
          * Only returns data objects with the specified tag.
          *
+         * <p>
+         * To specify a complex query on the tags, use {@link #withTags(DXSearch.TagsQuery)}.
+         * </p>
+         *
          * @param tag String containing a tag
          *
          * @return the same builder object
          */
         public FindDataObjectsRequestBuilder<T> withTag(String tag) {
-            Preconditions.checkState(this.tag == null, "Cannot call withTag more than once");
-            this.tag = Preconditions.checkNotNull(tag, "tag may not be null");
+            Preconditions.checkState(this.tags == null, "Cannot specify withTag* more than once");
+            this.tags = TagsQuery.of(Preconditions.checkNotNull(tag, "tag may not be null"));
+            return this;
+        }
+
+        /**
+         * Only returns data objects with the specified tags query.
+         *
+         * @param tagsQuery tags query
+         *
+         * @return the same builder object
+         */
+        public FindDataObjectsRequestBuilder<T> withTags(TagsQuery tagsQuery) {
+            Preconditions.checkState(this.tags == null, "Cannot specify withTag* more than once");
+            this.tags = Preconditions.checkNotNull(tagsQuery, "tagsQuery may not be null");
             return this;
         }
 
@@ -943,7 +866,6 @@ public final class DXSearch {
         /**
          * Returns a {@code List} of the matching data objects.
          */
-        @SuppressWarnings("unchecked")
         @Override
         public List<T> asList() {
             FindDataObjectsRequest query = new FindDataObjectsRequest(baseQuery, null, pageSize);
@@ -956,30 +878,7 @@ public final class DXSearch {
                         DXAPI.systemFindDataObjects(query, FindDataObjectsResponse.class, env);
 
                 for (FindDataObjectsResponse.Entry e : findDataObjectsResponse.results) {
-                    DXDataObject dataObject = null;
-                    DXContainer container = DXContainer.getInstance(e.project);
-                    if (e.describe != null) {
-                        dataObject =
-                                DXDataObject.getInstanceWithCachedDescribe(e.id, container,
-                                        this.env, e.describe);
-                    } else {
-                        dataObject =
-                                DXDataObject.getInstanceWithEnvironment(e.id, container, this.env);
-                    }
-
-                    if (classConstraint != null) {
-                        if (!dataObject.getId().startsWith(classConstraint + "-")) {
-                            throw new IllegalStateException("Expected all results to be of type "
-                                    + classConstraint + " but received an object with ID "
-                                    + dataObject.getId());
-                        }
-                    }
-                    // This is an unchecked cast, but the callers of this class
-                    // should have set T appropriately so that it agrees with
-                    // the class constraint (if any). If something goes wrong
-                    // here, either that code is incorrect or the API server
-                    // has returned incorrect results.
-                    output.add((T) dataObject);
+                    output.add(getDataObjectInstanceFromResult(e));
                 }
 
                 if (findDataObjectsResponse.next != null) {
@@ -991,21 +890,76 @@ public final class DXSearch {
             } while (findDataObjectsResponse.next != null);
 
             return ImmutableList.copyOf(output);
+        }
 
+        @SuppressWarnings("unchecked")
+        private T getDataObjectInstanceFromResult(FindDataObjectsResponse.Entry e) {
+            DXDataObject dataObject = null;
+            DXContainer container = DXContainer.getInstance(e.project);
+            if (e.describe != null) {
+                dataObject =
+                        DXDataObject.getInstanceWithCachedDescribe(e.id, container, this.env,
+                                e.describe);
+            } else {
+                dataObject = DXDataObject.getInstanceWithEnvironment(e.id, container, this.env);
+            }
+
+            if (classConstraint != null) {
+                if (!dataObject.getId().startsWith(classConstraint + "-")) {
+                    throw new IllegalStateException("Expected all results to be of type "
+                            + classConstraint + " but received an object with ID "
+                            + dataObject.getId());
+                }
+            }
+            // This is an unchecked cast, but the callers of this class
+            // should have set T appropriately so that it agrees with
+            // the class constraint (if any). If something goes wrong
+            // here, either that code is incorrect or the API server
+            // has returned incorrect results.
+            return (T) dataObject;
         }
     }
 
     /**
-     * A request to the /system/findJobs route.
+     * A request to the /system/findExecutions route.
      */
     @JsonInclude(Include.NON_NULL)
-    private static class FindJobsRequest {
+    private static class FindExecutionsRequest {
+        @JsonProperty("class")
+        private final String classConstraint;
         @JsonProperty
         private final String launchedBy;
-        @JsonProperty("project")
-        private final String inProject;
-        private final Date createdBefore;
-        private final Date createdAfter;
+        @JsonProperty
+        private final String project;
+        @JsonProperty
+        private final TimeIntervalQuery created;
+        @JsonProperty
+        private final Boolean includeSubjobs;
+        @JsonProperty
+        private final NameQuery name;
+        @JsonProperty
+        private final String executable;
+        @JsonProperty
+        private final TagsQuery tags;
+        @JsonProperty
+        private final Map<String, Object> properties;
+        @JsonProperty
+        private final String rootExecution;
+        @JsonProperty
+        private final String originJob;
+        @JsonProperty
+        private final String parentJob;
+        @JsonProperty
+        private final String parentAnalysis;
+        /**
+         * Desired execution state(s). In general could be a list of Strings, but if it's a
+         * singleton array we just pass the String alone.
+         */
+        @JsonProperty
+        private final Object state;
+
+        @JsonProperty
+        private final DescribeParameters describe;
 
         @SuppressWarnings("unused")
         @JsonProperty
@@ -1015,100 +969,147 @@ public final class DXSearch {
         private final Integer limit;
 
         /**
-         * Creates a new {@code FindJobsRequest} that clones the specified request, but changes the
-         * starting value and limit.
+         * Creates a new request that clones the specified request, but changes the starting value
+         * and limit.
          *
          * @param previousQuery previous query to clone
          * @param next starting value for subsequent results
          * @param limit maximum number of results to return, or null to use the default
          *        (server-provided) limit
          */
-        private FindJobsRequest(FindJobsRequest previousQuery, String next, Integer limit) {
+        private FindExecutionsRequest(FindExecutionsRequest previousQuery, String next,
+                Integer limit) {
+            this.classConstraint = previousQuery.classConstraint;
             this.launchedBy = previousQuery.launchedBy;
-            this.inProject = previousQuery.inProject;
-            this.createdBefore = previousQuery.createdBefore;
-            this.createdAfter = previousQuery.createdAfter;
+            this.project = previousQuery.project;
+            this.created = previousQuery.created;
+            this.includeSubjobs = previousQuery.includeSubjobs;
+            this.name = previousQuery.name;
+            this.executable = previousQuery.executable;
+            this.tags = previousQuery.tags;
+            this.properties = previousQuery.properties;
+            this.rootExecution = previousQuery.rootExecution;
+            this.originJob = previousQuery.originJob;
+            this.parentJob = previousQuery.parentJob;
+            this.parentAnalysis = previousQuery.parentAnalysis;
+            this.state = previousQuery.state;
+
+            this.describe = previousQuery.describe;
 
             this.starting = next;
             this.limit = limit;
         }
 
         /**
-         * Creates a new {@code FindJobsRequest} from the query parameters set in the specified
-         * builder.
+         * Creates a new request from the query parameters set in the specified builder.
          *
          * @param builder builder object to initialize this query with
          */
-        private FindJobsRequest(FindJobsRequestBuilder builder) {
+        private FindExecutionsRequest(FindExecutionsRequestBuilder<?> builder) {
+            this.classConstraint = builder.classConstraint;
             this.launchedBy = builder.launchedBy;
-            this.inProject = builder.inProject;
-            this.createdBefore = builder.createdBefore;
-            this.createdAfter = builder.createdAfter;
+            this.project = builder.inProject;
+            this.includeSubjobs = builder.includeSubjobs;
+            this.name = builder.nameQuery;
+            this.executable = builder.executable;
+            this.tags = builder.tags;
+            this.properties =
+                    makePropertiesQuery(builder.propertyKeysAndValues,
+                            builder.propertiesThatMustBePresent);
+            this.rootExecution = builder.rootExecution;
+            this.originJob = builder.originJob;
+            this.parentJob = builder.parentJob;
+            this.parentAnalysis = builder.parentAnalysis;
+
+            if (builder.createdBefore != null || builder.createdAfter != null) {
+                this.created = new TimeIntervalQuery(builder.createdBefore, builder.createdAfter);
+            } else {
+                this.created = null;
+            }
+
+            int totalNumStates = builder.jobStates.size() + builder.analysisStates.size();
+            if (totalNumStates > 0) {
+                if (totalNumStates > 1) {
+                    // TODO: if jobStates and analysisStates are both non-empty we might want to
+                    // deduplicate state names that happen to be the same.
+                    this.state =
+                            ImmutableList.builder().addAll(builder.jobStates)
+                                    .addAll(builder.analysisStates).build();
+                } else {
+                    // Exactly one of jobStates or analysisStates has a single element, and the
+                    // other one is empty. In the case of only one element, we fill in just the
+                    // String instead of a singleton array.
+                    this.state =
+                            Iterables.getOnlyElement(builder.jobStates.size() == 1
+                                    ? builder.jobStates
+                                    : builder.analysisStates);
+                }
+            } else {
+                this.state = null;
+            }
+
+            this.describe = builder.describe;
 
             this.starting = null;
             this.limit = null;
         }
-
-        // Getter to support JSON serialization of createdAfter.
-        @SuppressWarnings("unused")
-        @JsonProperty("createdAfter")
-        private Long getCreatedAfter() {
-            if (createdAfter == null) {
-                return null;
-            }
-            return createdAfter.getTime();
-        }
-
-        // Getter to support JSON serialization of createdBefore.
-        @SuppressWarnings("unused")
-        @JsonProperty("createdBefore")
-        private Long getCreatedBefore() {
-            if (createdBefore == null) {
-                return null;
-            }
-            return createdBefore.getTime();
-        }
-
     }
 
     /**
-     * Builder class for formulating {@code findJobs} queries and executing them.
+     * Builder class for formulating {@code findExecutions} queries and executing them.
      *
      * <p>
-     * Obtain an instance of this class via {@link #findJobs()}.
+     * Obtain an instance of this class via {@link #findExecutions()}.
      * </p>
+     *
+     * @param <T> execution class that will be returned from the query
      */
-    public static class FindJobsRequestBuilder {
-        private String launchedBy = null;
-        private String inProject = null;
-        private Date createdBefore = null;
-        private Date createdAfter = null;
+    public static class FindExecutionsRequestBuilder<T extends DXExecution> {
+        private String classConstraint;
+        private String launchedBy;
+        private String inProject;
+        private Date createdBefore;
+        private Date createdAfter;
+        private Boolean includeSubjobs;
+        private NameQuery nameQuery;
+        private String executable;
+        private TagsQuery tags;
+        private Map<String, String> propertyKeysAndValues = Maps.newHashMap();
+        private Set<String> propertiesThatMustBePresent = Sets.newHashSet();
+        private String rootExecution;
+        private String originJob;
+        private String parentJob;
+        private String parentAnalysis;
+        private List<JobState> jobStates = Lists.newArrayList();
+        private List<AnalysisState> analysisStates = Lists.newArrayList();
+
+        private DescribeParameters describe;
 
         private final DXEnvironment env;
 
-        private FindJobsRequestBuilder() {
+        private FindExecutionsRequestBuilder() {
             this.env = DXEnvironment.create();
         }
 
-        private FindJobsRequestBuilder(DXEnvironment env) {
+        private FindExecutionsRequestBuilder(DXEnvironment env) {
             this.env = env;
         }
 
         @VisibleForTesting
-        FindJobsRequest buildRequestHash() {
+        FindExecutionsRequest buildRequestHash() {
             // Use this method to test the JSON hash created by a particular
             // builder call without actually executing the request.
-            return new FindJobsRequest(this);
+            return new FindExecutionsRequest(this);
         }
 
         /**
-         * Only return jobs created after the specified date.
+         * Only return executions created after the specified date.
          *
          * @param date earliest creation date
          *
          * @return the same builder object
          */
-        public FindJobsRequestBuilder createdAfter(Date date) {
+        public FindExecutionsRequestBuilder<T> createdAfter(Date date) {
             Preconditions.checkState(this.createdAfter == null,
                     "Cannot specify createdAfter more than once");
             this.createdAfter = Preconditions.checkNotNull(date, "date may not be null");
@@ -1116,13 +1117,13 @@ public final class DXSearch {
         }
 
         /**
-         * Only return jobs created before the specified date.
+         * Only return executions created before the specified date.
          *
          * @param date latest creation date
          *
          * @return the same builder object
          */
-        public FindJobsRequestBuilder createdBefore(Date date) {
+        public FindExecutionsRequestBuilder<T> createdBefore(Date date) {
             Preconditions.checkState(this.createdBefore == null,
                     "Cannot specify createdBefore more than once");
             this.createdBefore = Preconditions.checkNotNull(date, "date may not be null");
@@ -1134,8 +1135,9 @@ public final class DXSearch {
          *
          * @return object encapsulating the result set
          */
-        public FindJobsResult execute() {
-            return new FindJobsResult(this.buildRequestHash(), this.env);
+        public FindExecutionsResult<T> execute() {
+            return new FindExecutionsResult<T>(this.buildRequestHash(), this.classConstraint,
+                    this.env);
         }
 
         /**
@@ -1145,18 +1147,51 @@ public final class DXSearch {
          *
          * @return object encapsulating the result set
          */
-        public FindJobsResult execute(int pageSize) {
-            return new FindJobsResult(this.buildRequestHash(), this.env, pageSize);
+        public FindExecutionsResult<T> execute(int pageSize) {
+            return new FindExecutionsResult<T>(this.buildRequestHash(), this.classConstraint,
+                    this.env, pageSize);
         }
 
         /**
-         * Only return jobs in the specified project.
+         * Requests the default describe data for each matching execution when the query is run. The
+         * {@link DXExecution#getCachedDescribe()} method can be used if, and only if, this method
+         * is called at query time.
+         *
+         * @return the same builder object
+         */
+        public FindExecutionsRequestBuilder<T> includeDescribeOutput() {
+            // TODO: when DXJobs and DXAnalyses support DescribeOptions, this method should receive
+            // another overload that allows specifying options
+            Preconditions.checkState(this.describe == null,
+                    "Cannot specify describe output more than once");
+            this.describe = new DescribeParameters();
+            return this;
+        }
+
+        /**
+         * Specifies whether subjobs should be included among the results (default is true). If
+         * false, only non-subjob executions (i.e., master jobs, origin jobs, and analyses) will be
+         * returned.
+         *
+         * @param includeSubjobs whether to include subjobs in the results
+         *
+         * @return the same builder object
+         */
+        public FindExecutionsRequestBuilder<T> includeSubjobs(boolean includeSubjobs) {
+            Preconditions.checkState(this.includeSubjobs == null,
+                    "Cannot specify includeSubjobs more than once");
+            this.includeSubjobs = includeSubjobs;
+            return this;
+        }
+
+        /**
+         * Only returns executions in the specified project.
          *
          * @param project project or container to search in
          *
          * @return the same builder object
          */
-        public FindJobsRequestBuilder inProject(DXContainer project) {
+        public FindExecutionsRequestBuilder<T> inProject(DXContainer project) {
             Preconditions.checkState(this.inProject == null,
                     "Cannot specify inProject more than once");
             this.inProject = Preconditions.checkNotNull(project, "project may not be null").getId();
@@ -1164,35 +1199,343 @@ public final class DXSearch {
         }
 
         /**
-         * Only return jobs launched by the specified user.
+         * Only returns executions launched by the specified user.
          *
          * @param user user ID, e.g. {@code "user-flast"}
          *
          * @return the same builder object
          */
-        public FindJobsRequestBuilder launchedBy(String user) {
-            // TODO: consider changing the semantics of this and other
-            // setters so that later calls overwrite earlier calls. Then
-            // remove the restriction that the field may only be specified
-            // once.
+        public FindExecutionsRequestBuilder<T> launchedBy(String user) {
             Preconditions.checkState(this.launchedBy == null,
                     "Cannot specify launchedBy more than once");
             this.launchedBy = Preconditions.checkNotNull(user, "user may not be null");
             return this;
         }
 
+        /**
+         * Only returns executions whose names exactly equal the specified string.
+         *
+         * <p>
+         * This method may only be called once during the construction of a query, and is mutually
+         * exclusive with {@link #nameMatchesGlob(String)}, {@link #nameMatchesRegexp(String)}, and
+         * {@link #nameMatchesRegexp(String, boolean)}.
+         * </p>
+         *
+         * @param name name of execution
+         *
+         * @return the same builder object
+         */
+        public FindExecutionsRequestBuilder<T> nameMatchesExactly(String name) {
+            Preconditions.checkState(this.nameQuery == null,
+                    "Cannot specify nameMatches* methods more than once");
+            this.nameQuery =
+                    new NameQuery.ExactNameQuery(Preconditions.checkNotNull(name,
+                            "name may not be null"));
+            return this;
+        }
+
+        /**
+         * Only returns executions whose names match the specified glob.
+         *
+         * <p>
+         * This method may only be called once during the construction of a query, and is mutually
+         * exclusive with {@link #nameMatchesExactly(String)}, {@link #nameMatchesRegexp(String)},
+         * and {@link #nameMatchesRegexp(String, boolean)}.
+         * </p>
+         *
+         * @param glob shell-like pattern to be matched against execution name
+         *
+         * @return the same builder object
+         */
+        public FindExecutionsRequestBuilder<T> nameMatchesGlob(String glob) {
+            Preconditions.checkState(this.nameQuery == null,
+                    "Cannot specify nameMatches* methods more than once");
+            this.nameQuery =
+                    new NameQuery.GlobNameQuery(Preconditions.checkNotNull(glob,
+                            "glob may not be null"));
+            return this;
+        }
+
+        /**
+         * Only returns executions whose names match the specified regexp.
+         *
+         * <p>
+         * This method may only be called once during the construction of a query, and is mutually
+         * exclusive with {@link #nameMatchesExactly(String)}, {@link #nameMatchesGlob(String)}, and
+         * {@link #nameMatchesRegexp(String, boolean)}.
+         * </p>
+         *
+         * @param regexp regexp to be matched against execution name
+         *
+         * @return the same builder object
+         */
+        public FindExecutionsRequestBuilder<T> nameMatchesRegexp(String regexp) {
+            Preconditions.checkState(this.nameQuery == null,
+                    "Cannot specify nameMatches* methods more than once");
+            this.nameQuery =
+                    new NameQuery.RegexpNameQuery(Preconditions.checkNotNull(regexp,
+                            "regexp may not be null"));
+            return this;
+        }
+
+        /**
+         * Only returns executions whose names match the specified regexp (optionally allowing the
+         * match to be case insensitive).
+         *
+         * <p>
+         * This method may only be called once during the construction of a query, and is mutually
+         * exclusive with {@link #nameMatchesExactly(String)}, {@link #nameMatchesGlob(String)}, and
+         * {@link #nameMatchesRegexp(String)}.
+         * </p>
+         *
+         * @param regexp regexp to be matched against execution name
+         * @param caseInsensitive if true, the regexp is matched case-insensitively
+         *
+         * @return the same builder object
+         */
+        public FindExecutionsRequestBuilder<T> nameMatchesRegexp(String regexp,
+                boolean caseInsensitive) {
+            Preconditions.checkState(this.nameQuery == null,
+                    "Cannot specify nameMatches* methods more than once");
+            this.nameQuery =
+                    new NameQuery.RegexpNameQuery(Preconditions.checkNotNull(regexp,
+                            "regexp may not be null"), caseInsensitive ? "i" : null);
+            return this;
+        }
+
+        /**
+         * Only returns analyses (filters out jobs).
+         *
+         * <p>
+         * This method may only be called once during the construction of a query, and is mutually
+         * exclusive with {@link #withClassJob()}.
+         * </p>
+         *
+         * @return the same builder object
+         */
+        @SuppressWarnings("unchecked")
+        public FindExecutionsRequestBuilder<DXAnalysis> withClassAnalysis() {
+            Preconditions.checkState(this.classConstraint == null,
+                    "Cannot specify class constraints more than once");
+            this.classConstraint = "analysis";
+            // This cast should be safe, since we hold no references of type T
+            return (FindExecutionsRequestBuilder<DXAnalysis>) this;
+        }
+
+        /**
+         * Only returns jobs (filters out analyses).
+         *
+         * <p>
+         * This method may only be called once during the construction of a query, and is mutually
+         * exclusive with {@link #withClassAnalysis()}.
+         * </p>
+         *
+         * @return the same builder object
+         */
+        @SuppressWarnings("unchecked")
+        public FindExecutionsRequestBuilder<DXJob> withClassJob() {
+            Preconditions.checkState(this.classConstraint == null,
+                    "Cannot specify class constraints more than once");
+            this.classConstraint = "job";
+            // This cast should be safe, since we hold no references of type T
+            return (FindExecutionsRequestBuilder<DXJob>) this;
+        }
+
+        /**
+         * Only return executions with the specified executable.
+         *
+         * @param executable executable
+         *
+         * @return the same builder object
+         */
+        public FindExecutionsRequestBuilder<T> withExecutable(DXExecutable<?> executable) {
+            Preconditions.checkState(this.executable == null,
+                    "Cannot specify withExecutable more than once");
+            this.executable =
+                    Preconditions.checkNotNull(executable, "executable may not be null").getId();
+            return this;
+        }
+
+        /**
+         * Only return executions with the specified origin job.
+         *
+         * @param originJob origin job
+         *
+         * @return the same builder object
+         */
+        public FindExecutionsRequestBuilder<T> withOriginJob(DXJob originJob) {
+            // TODO: API allows specifying more than one origin job
+            Preconditions.checkState(this.originJob == null,
+                    "Cannot specify withOriginJob more than once");
+            this.originJob =
+                    Preconditions.checkNotNull(originJob, "originJob may not be null").getId();
+            return this;
+        }
+
+        /**
+         * Only return executions with the specified parent analysis.
+         *
+         * @param parentAnalysis parent analysis
+         *
+         * @return the same builder object
+         */
+        public FindExecutionsRequestBuilder<T> withParentAnalysis(DXAnalysis parentAnalysis) {
+            Preconditions.checkState(this.parentAnalysis == null,
+                    "Cannot specify withParentAnalysis more than once");
+            this.parentAnalysis =
+                    Preconditions.checkNotNull(parentAnalysis, "parentAnalysis may not be null")
+                            .getId();
+            return this;
+        }
+
+        /**
+         * Only return executions with the specified parent job.
+         *
+         * @param parentJob parent job
+         *
+         * @return the same builder object
+         */
+        public FindExecutionsRequestBuilder<T> withParentJob(DXJob parentJob) {
+            Preconditions.checkState(this.parentJob == null,
+                    "Cannot specify withParentJob more than once");
+            this.parentJob =
+                    Preconditions.checkNotNull(parentJob, "parentJob may not be null").getId();
+            return this;
+        }
+
+        /**
+         * Only returns executions where the specified property is present.
+         *
+         * @param propertyKey property key that must be present
+         *
+         * @return the same builder object
+         */
+        public FindExecutionsRequestBuilder<T> withProperty(String propertyKey) {
+            propertiesThatMustBePresent.add(Preconditions.checkNotNull(propertyKey,
+                    "propertyKey may not be null"));
+            return this;
+        }
+
+        /**
+         * Only returns executions where the specified property has the specified value.
+         *
+         * @param propertyKey property key
+         * @param propertyValue property value
+         *
+         * @return the same builder object
+         */
+        public FindExecutionsRequestBuilder<T> withProperty(String propertyKey, String propertyValue) {
+            propertyKeysAndValues.put(
+                    Preconditions.checkNotNull(propertyKey, "propertyKey may not be null"),
+                    Preconditions.checkNotNull(propertyValue, "propertyValue may not be null"));
+            return this;
+        }
+
+        /**
+         * Only return executions with the specified root execution.
+         *
+         * @param rootExecution root execution
+         *
+         * @return the same builder object
+         */
+        public FindExecutionsRequestBuilder<T> withRootExecution(DXExecution rootExecution) {
+            // TODO: API allows specifying more than one root execution
+            Preconditions.checkState(this.rootExecution == null,
+                    "Cannot specify withRootExecution more than once");
+            this.rootExecution =
+                    Preconditions.checkNotNull(rootExecution, "rootExecution may not be null")
+                            .getId();
+            return this;
+        }
+
+        /**
+         * Only returns executions in one of the specified analysis states. If used in combination
+         * with {@link #withState(JobState...)}, the union of the selected job and analysis states
+         * is allowed.
+         *
+         * <p>
+         * Note that it is possible for such a query to select jobs if the jobs are in a state that
+         * has the same name as an analysis state, e.g. DONE.
+         * </p>
+         *
+         * @param states analysis states
+         *
+         * @return the same builder object
+         */
+        public FindExecutionsRequestBuilder<T> withState(AnalysisState... states) {
+            Preconditions.checkState(this.analysisStates.size() == 0,
+                    "Cannot specify withState(JobState) more than once");
+            Preconditions.checkArgument(states.length > 0, "At least one state must be provided");
+            this.analysisStates.addAll(ImmutableList.copyOf(states));
+            return this;
+        }
+
+        /**
+         * Only returns executions in one of the specified job states. If used in combination with
+         * {@link #withState(AnalysisState...)}, the union of the selected job and analysis states
+         * is allowed.
+         *
+         * <p>
+         * Note that it is possible for such a query to select analyses if the analyses are in a
+         * state that has the same name as a job state, e.g. DONE.
+         * </p>
+         *
+         * @param states job states
+         *
+         * @return the same builder object
+         */
+        public FindExecutionsRequestBuilder<T> withState(JobState... states) {
+            Preconditions.checkState(this.jobStates.size() == 0,
+                    "Cannot specify withState(JobState) more than once");
+            Preconditions.checkArgument(states.length > 0, "At least one state must be provided");
+            this.jobStates.addAll(ImmutableList.copyOf(states));
+            return this;
+        }
+
+        /**
+         * Only returns executions with the specified tag.
+         *
+         * <p>
+         * To specify a complex query on the tags, use {@link #withTags(DXSearch.TagsQuery)}.
+         * </p>
+         *
+         * @param tag String containing a tag
+         *
+         * @return the same builder object
+         */
+        public FindExecutionsRequestBuilder<T> withTag(String tag) {
+            Preconditions.checkState(this.tags == null, "Cannot specify withTag* more than once");
+            this.tags = TagsQuery.of(Preconditions.checkNotNull(tag, "tag may not be null"));
+            return this;
+        }
+
+        /**
+         * Only returns executions matching the specified tags query.
+         *
+         * @param tagsQuery tags query
+         *
+         * @return the same builder object
+         */
+        public FindExecutionsRequestBuilder<T> withTags(TagsQuery tagsQuery) {
+            Preconditions.checkState(this.tags == null, "Cannot specify withTag* more than once");
+            this.tags = Preconditions.checkNotNull(tagsQuery, "tagsQuery may not be null");
+            return this;
+        }
+
     }
 
     /**
-     * Deserialized output from the /system/findJobs route.
+     * Deserialized output from the /system/findExecutions route.
      */
     @VisibleForTesting
     @JsonIgnoreProperties(ignoreUnknown = true)
-    static class FindJobsResponse {
+    static class FindExecutionsResponse {
 
         private static class Entry {
             @JsonProperty
             private String id;
+            @JsonProperty
+            private JsonNode describe;
         }
 
         @JsonProperty
@@ -1204,15 +1547,21 @@ public final class DXSearch {
     }
 
     /**
-     * The set of jobs that matched a {@code findJobs} query.
+     * The set of executions that matched a {@code findExecutions} query.
      *
      * <p>
      * This class paginates through the results as necessary to return the full result set.
      * </p>
+     *
+     * @param <T> execution class that will be returned from the query
      */
-    public static class FindJobsResult implements ObjectProducer<DXJob> {
+    public static class FindExecutionsResult<T extends DXExecution> implements ObjectProducer<T> {
 
-        private final FindJobsRequest baseQuery;
+        // TODO: lazily load results and provide an iterator in addition to
+        // buffered List access
+
+        private final FindExecutionsRequest baseQuery;
+        private final String classConstraint;
         private final DXEnvironment env;
 
         // Number of results to fetch with each API call, or null to use the default
@@ -1221,8 +1570,10 @@ public final class DXSearch {
         /**
          * Initializes this result set object with the default (API server-provided) page size.
          */
-        private FindJobsResult(FindJobsRequest requestHash, DXEnvironment env) {
+        private FindExecutionsResult(FindExecutionsRequest requestHash, String classConstraint,
+                DXEnvironment env) {
             this.baseQuery = requestHash;
+            this.classConstraint = classConstraint;
             this.env = env;
 
             this.pageSize = null;
@@ -1231,36 +1582,133 @@ public final class DXSearch {
         /**
          * Initializes this result set object with the specified page size.
          */
-        private FindJobsResult(FindJobsRequest requestHash, DXEnvironment env, int pageSize) {
+        private FindExecutionsResult(FindExecutionsRequest requestHash, String classConstraint,
+                DXEnvironment env, int pageSize) {
             this.baseQuery = requestHash;
+            this.classConstraint = classConstraint;
             this.env = env;
 
             this.pageSize = pageSize;
         }
 
         /**
-         * Returns a {@code List} of the matching jobs.
+         * Returns a {@code List} of the matching executions.
          */
         @Override
-        public List<DXJob> asList() {
-            FindJobsRequest query = new FindJobsRequest(baseQuery, null, pageSize);
-            List<DXJob> output = Lists.newArrayList();
-            FindJobsResponse findJobsResponse;
+        public List<T> asList() {
+            FindExecutionsRequest query = new FindExecutionsRequest(baseQuery, null, pageSize);
+            List<T> output = Lists.newArrayList();
+            FindExecutionsResponse findExecutionsResponse;
 
             do {
-                findJobsResponse =
-                        DXAPI.systemFindJobs(MAPPER.valueToTree(query), FindJobsResponse.class, env);
+                findExecutionsResponse =
+                        DXAPI.systemFindExecutions(MAPPER.valueToTree(query),
+                                FindExecutionsResponse.class, env);
 
-                for (FindJobsResponse.Entry e : findJobsResponse.results) {
-                    output.add(DXJob.getInstance(e.id));
+                for (FindExecutionsResponse.Entry e : findExecutionsResponse.results) {
+                    output.add(getExecutionInstanceFromResult(e));
                 }
-                if (findJobsResponse.next != null) {
-                    query = new FindJobsRequest(query, findJobsResponse.next, pageSize);
+                if (findExecutionsResponse.next != null) {
+                    query = new FindExecutionsRequest(query, findExecutionsResponse.next, pageSize);
                 }
-            } while (findJobsResponse.next != null);
+            } while (findExecutionsResponse.next != null);
             return ImmutableList.copyOf(output);
         }
 
+        @SuppressWarnings("unchecked")
+        private T getExecutionInstanceFromResult(FindExecutionsResponse.Entry e) {
+            DXExecution execution;
+            if (e.describe != null) {
+                execution = DXExecution.getInstanceWithCachedDescribe(e.id, env, e.describe);
+            } else {
+                execution = DXExecution.getInstanceWithEnvironment(e.id, env);
+            }
+
+            if (classConstraint != null) {
+                if (!execution.getId().startsWith(classConstraint + "-")) {
+                    throw new IllegalStateException("Expected all results to be of type "
+                            + classConstraint + " but received an object with ID "
+                            + execution.getId());
+                }
+            }
+
+            // This is an unchecked cast, but the callers of this class
+            // should have set T appropriately so that it agrees with
+            // the class constraint (if any). If something goes wrong
+            // here, either that code is incorrect or the API server
+            // has returned incorrect results.
+            return (T) execution;
+        }
+
+    }
+
+    /**
+     * Query on the name of an object (for finding data objects, executions, or apps).
+     */
+    private abstract static class NameQuery {
+
+        /**
+         * Query for objects where the name matches a particular string exactly.
+         */
+        private static class ExactNameQuery extends NameQuery {
+            private final String nameExact;
+
+            private ExactNameQuery(String nameExact) {
+                this.nameExact = nameExact;
+            }
+
+            @SuppressWarnings("unused")
+            @JsonValue
+            private Object getValue() {
+                return this.nameExact;
+            }
+        }
+
+        /**
+         * Query for objects where the name matches a particular glob.
+         */
+        private static class GlobNameQuery extends NameQuery {
+            private final String glob;
+
+            private GlobNameQuery(String glob) {
+                this.glob = glob;
+            }
+
+            @SuppressWarnings("unused")
+            @JsonValue
+            private Map<String, String> getValue() {
+                return ImmutableMap.of("glob", this.glob);
+            }
+        }
+
+        /**
+         * Query for objects where the name matches a particular regular expression.
+         */
+        private static class RegexpNameQuery extends NameQuery {
+            private final String regexp;
+            private final String flags;
+
+            private RegexpNameQuery(String regexp) {
+                this.regexp = regexp;
+                this.flags = null;
+            }
+
+            private RegexpNameQuery(String regexp, String flags) {
+                this.regexp = regexp;
+                this.flags = flags;
+            }
+
+            @SuppressWarnings("unused")
+            @JsonValue
+            private Map<String, String> getValue() {
+                ImmutableMap.Builder<String, String> mapBuilder = ImmutableMap.builder();
+                mapBuilder.put("regexp", this.regexp);
+                if (this.flags != null) {
+                    mapBuilder.put("flags", this.flags);
+                }
+                return mapBuilder.build();
+            }
+        }
     }
 
     /**
@@ -1279,6 +1727,172 @@ public final class DXSearch {
         // In the future we'd like to support streaming access to the results.
         // This can be done by adding a new method here, e.g.
         // public Iterable<T> asIterable();
+    }
+
+    /**
+     * Query for objects (data objects, executions, or projects) with the specified tags.
+     */
+    public static abstract class TagsQuery {
+
+        private TagsQuery() {
+            // Do not allow subclassing except by the implementations provided here
+        }
+
+        private static class CompoundTagsQuery extends TagsQuery {
+            private final String operator;
+            private final List<TagsQuery> operands;
+
+            public CompoundTagsQuery(String operator, List<TagsQuery> operands) {
+                this.operator = operator;
+                this.operands = ImmutableList.copyOf(operands);
+            }
+
+            @SuppressWarnings("unused")
+            @JsonValue
+            protected JsonNode getValue() {
+                List<JsonNode> transformedArgs = Lists.newArrayList();
+                for (TagsQuery tagsQuery : this.operands) {
+                    transformedArgs.add(MAPPER.valueToTree(tagsQuery));
+                }
+                return DXJSON
+                        .getObjectBuilder()
+                        .put(this.operator,
+                                DXJSON.getArrayBuilder().addAll(transformedArgs).build()).build();
+            }
+        }
+
+        private static class SimpleTagsQuery extends TagsQuery {
+            private final String tag;
+
+            public SimpleTagsQuery(String tag) {
+                this.tag = Preconditions.checkNotNull(tag);
+            }
+
+            @SuppressWarnings("unused")
+            @JsonValue
+            protected String getValue() {
+                return this.tag;
+            }
+        }
+
+        /**
+         * A query that must match all of the tag queries in the provided list.
+         *
+         * @param tagsQueries list of queries, all of which must be matched
+         *
+         * @return query
+         */
+        public static TagsQuery allOf(List<TagsQuery> tagsQueries) {
+            return new CompoundTagsQuery("$and", tagsQueries);
+        }
+
+        /**
+         * A query that must match all of the specified tags.
+         *
+         * @param tags Strings containing tags, all of which must be matched
+         *
+         * @return query
+         */
+        public static TagsQuery allOf(String... tags) {
+            List<TagsQuery> tagsQueries = Lists.newArrayList();
+            for (String tag : tags) {
+                tagsQueries.add(TagsQuery.of(tag));
+            }
+            return TagsQuery.allOf(tagsQueries);
+        }
+
+        /**
+         * A query that must match all of the specified tag queries recursively.
+         *
+         * @param tagsQueries queries, all of which must be matched
+         *
+         * @return query
+         */
+        public static TagsQuery allOf(TagsQuery... tagsQueries) {
+            return TagsQuery.allOf(ImmutableList.copyOf(tagsQueries));
+        }
+
+        /**
+         * A query that matches any of the tag queries in the provided list.
+         *
+         * @param tagsQueries list of queries, at least one of which must be matched
+         *
+         * @return query
+         */
+        public static TagsQuery anyOf(List<TagsQuery> tagsQueries) {
+            return new CompoundTagsQuery("$or", tagsQueries);
+        }
+
+        /**
+         * A query that matches any of the specified tags.
+         *
+         * @param tags Strings containing tags, at least one of which must be matched
+         *
+         * @return query
+         */
+        public static TagsQuery anyOf(String... tags) {
+            List<TagsQuery> tagsQueries = Lists.newArrayList();
+            for (String tag : tags) {
+                tagsQueries.add(TagsQuery.of(tag));
+            }
+            return TagsQuery.anyOf(tagsQueries);
+        }
+
+        /**
+         * A query that matches any of the specified tag queries recursively.
+         *
+         * @param tagsQueries queries, at least one of which must be matched
+         *
+         * @return query
+         */
+        public static TagsQuery anyOf(TagsQuery... tagsQueries) {
+            return TagsQuery.anyOf(ImmutableList.copyOf(tagsQueries));
+        }
+
+        /**
+         * A query that matches the specified tag.
+         *
+         * @param tag String containing tag to match
+         *
+         * @return query
+         */
+        public static TagsQuery of(String tag) {
+            return new SimpleTagsQuery(tag);
+        }
+
+    }
+
+    /**
+     * Query for a time (e.g. creation or modification time) falling in some interval (either
+     * bounded on both sides, or bounded on one side only).
+     */
+    @JsonInclude(Include.NON_NULL)
+    private static class TimeIntervalQuery {
+        private final Date before;
+        private final Date after;
+
+        private TimeIntervalQuery(Date before, Date after) {
+            this.before = before;
+            this.after = after;
+        }
+
+        @SuppressWarnings("unused")
+        @JsonProperty("after")
+        private Long getAfter() {
+            if (after == null) {
+                return null;
+            }
+            return after.getTime();
+        }
+
+        @SuppressWarnings("unused")
+        @JsonProperty("before")
+        private Long getBefore() {
+            if (before == null) {
+                return null;
+            }
+            return before.getTime();
+        }
     }
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -1333,25 +1947,44 @@ public final class DXSearch {
     }
 
     /**
-     * Returns a builder object for finding jobs that match certain criteria.
-     *
-     * <p>
-     * Example use:
-     * </p>
-     *
-     * <pre>
-     * FindJobsResponse fjr = DXSearch.findJobs().launchedBy(&quot;user-dnanexus&quot;).inProject(&quot;project-000000000000000000000000&quot;)
-     *         .createdBefore(new GregorianCalendar(2012, 11, 31).getTime()).execute();
-     *
-     * for (DXJob job : fjr.asList()) {
-     *     System.out.println(job.getId());
-     * }
-     * </pre>
+     * Returns a builder object for finding executions (jobs or analyses) that match certain
+     * criteria.
      *
      * @return a newly initialized builder object
      */
-    public static FindJobsRequestBuilder findJobs() {
-        return new FindJobsRequestBuilder();
+    public static FindExecutionsRequestBuilder<DXExecution> findExecutions() {
+        return new FindExecutionsRequestBuilder<DXExecution>();
+    }
+
+    /**
+     * Returns a builder object for finding executions that match certain criteria, using the
+     * specified environment.
+     *
+     * @param env environment specifying API server parameters for issuing the query; the
+     *        environment will be propagated into objects that are subsequently returned
+     *
+     * @return a newly initialized builder object
+     */
+    public static FindExecutionsRequestBuilder<DXExecution> findExecutionsWithEnvironment(
+            DXEnvironment env) {
+        return new FindExecutionsRequestBuilder<DXExecution>(env);
+    }
+
+    /**
+     * Returns a builder object for finding jobs that match certain criteria.
+     *
+     * <p>
+     * This is equivalent to <code>findExecutions().withClassJob()</code>.
+     * </p>
+     *
+     * @deprecated Use {@link DXSearch#findExecutions()} in conjunction with
+     *             {@link FindExecutionsRequestBuilder#withClassJob()} instead.
+     *
+     * @return a newly initialized builder object
+     */
+    @Deprecated
+    public static FindExecutionsRequestBuilder<DXJob> findJobs() {
+        return new FindExecutionsRequestBuilder<DXExecution>().withClassJob();
     }
 
     /**
@@ -1359,25 +1992,33 @@ public final class DXSearch {
      * environment.
      *
      * <p>
-     * Example use:
+     * This is equivalent to <code>findExecutionsWithEnvironment(env).withClassJob()</code>.
      * </p>
      *
-     * <pre>
-     * FindJobsResponse fjr = DXSearch.findJobs().launchedBy(&quot;user-dnanexus&quot;).inProject(&quot;project-000000000000000000000000&quot;)
-     *         .createdBefore(new GregorianCalendar(2012, 11, 31).getTime()).execute();
-     *
-     * for (DXJob job : fjr.asList()) {
-     *     System.out.println(job.getId());
-     * }
-     * </pre>
+     * @deprecated Use {@link DXSearch#findExecutionsWithEnvironment(DXEnvironment)} in conjunction
+     *             with {@link FindExecutionsRequestBuilder#withClassJob()} instead.
      *
      * @param env environment specifying API server parameters for issuing the query; the
      *        environment will be propagated into objects that are subsequently returned
      *
      * @return a newly initialized builder object
      */
-    public static FindJobsRequestBuilder findJobsWithEnvironment(DXEnvironment env) {
-        return new FindJobsRequestBuilder(env);
+    @Deprecated
+    public static FindExecutionsRequestBuilder<DXJob> findJobsWithEnvironment(DXEnvironment env) {
+        return new FindExecutionsRequestBuilder<DXExecution>(env).withClassJob();
+    }
+
+    private static Map<String, Object> makePropertiesQuery(
+            Map<String, String> propertyKeysAndValues,
+            Collection<String> propertiesThatMustBePresent) {
+        Map<String, Object> properties = Maps.<String, Object>newHashMap(propertyKeysAndValues);
+        for (String requiredKey : propertiesThatMustBePresent) {
+            properties.put(requiredKey, true);
+        }
+        if (!properties.isEmpty()) {
+            return Collections.unmodifiableMap(properties);
+        }
+        return null;
     }
 
     // Prevent this utility class from being instantiated.

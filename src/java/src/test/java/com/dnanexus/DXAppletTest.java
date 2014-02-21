@@ -23,6 +23,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.dnanexus.DXJob.Describe;
 import com.dnanexus.TestEnvironment.ConfigOption;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -31,6 +32,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 /**
  * Tests for creating and running applets.
@@ -236,18 +238,24 @@ public class DXAppletTest {
 
         // Run the applet!
         DXJob job =
-                applet.newRun().withInput(appInput).inProject(testProject)
-                        .withDetails(new SampleAppDetails("sample-1234")).run();
+                applet.newRun().setInput(appInput).setProject(testProject)
+                        .setDetails(new SampleAppDetails("sample-1234"))
+                        .addTags(ImmutableList.of("t1")).putProperty("k1", "v1").run();
         job.waitUntilDone();
 
         // Verify the job metadata
-        SampleAppDetails jobDetails = job.describe().getDetails(SampleAppDetails.class);
+        Describe jobDescribe = job.describe();
+        SampleAppDetails jobDetails = jobDescribe.getDetails(SampleAppDetails.class);
         Assert.assertEquals("sample-1234", jobDetails.sampleId);
+        Assert.assertEquals(ImmutableList.of("t1"), jobDescribe.getTags());
+        Assert.assertEquals(ImmutableMap.of("k1", "v1"), jobDescribe.getProperties());
 
         // Examine and verify the job's output
         SampleAppOutput output = job.getOutput(SampleAppOutput.class);
         // The output object reference will have dropped the project field, so we can't directly
         // compare record to outputRecord
+        //
+        // TODO: deserialize project too in DXDataObject.create if possible
         Assert.assertEquals(DXRecord.getInstance(record.getId()), output.outputRecord);
     }
 
@@ -256,56 +264,56 @@ public class DXAppletTest {
         DXApplet applet = DXApplet.getInstance("applet-000000000000000000000000");
 
         try {
-            applet.newRun().withInput(null);
+            applet.newRun().setInput(null);
             Assert.fail("Expected setting null input to fail");
         } catch (NullPointerException e) {
             // Expected
         }
 
         try {
-            applet.newRun().withInput(new EmptyAppInput()).withInput(new EmptyAppInput());
+            applet.newRun().setInput(new EmptyAppInput()).setInput(new EmptyAppInput());
             Assert.fail("Expected setting input twice to fail");
         } catch (IllegalStateException e) {
             // Expected
         }
 
         try {
-            applet.newRun().withName(null);
+            applet.newRun().setName(null);
             Assert.fail("Expected setting null name to fail");
         } catch (NullPointerException e) {
             // Expected
         }
 
         try {
-            applet.newRun().withName("a").withName("b");
+            applet.newRun().setName("a").setName("b");
             Assert.fail("Expected setting name twice to fail");
         } catch (IllegalStateException e) {
             // Expected
         }
 
         try {
-            applet.newRun().inFolder(null);
+            applet.newRun().setFolder(null);
             Assert.fail("Expected setting null folder to fail");
         } catch (NullPointerException e) {
             // Expected
         }
 
         try {
-            applet.newRun().inFolder("/a").inFolder("/b");
+            applet.newRun().setFolder("/a").setFolder("/b");
             Assert.fail("Expected setting folder twice to fail");
         } catch (IllegalStateException e) {
             // Expected
         }
 
         try {
-            applet.newRun().withDetails(new EmptyAppDetails()).withDetails(new EmptyAppDetails());
+            applet.newRun().setDetails(new EmptyAppDetails()).setDetails(new EmptyAppDetails());
             Assert.fail("Expected setting details twice to fail");
         } catch (IllegalStateException e) {
             // Expected
         }
 
         try {
-            applet.newRun().withDetails(new InvalidAppDetails());
+            applet.newRun().setDetails(new InvalidAppDetails());
             Assert.fail("Expected setting bogus details to fail");
         } catch (IllegalArgumentException e) {
             // Expected
@@ -348,7 +356,7 @@ public class DXAppletTest {
                 DXJSON.parseJson("{\"input\": {\"input_string\": \"foo\", \"input_record\": {\"$dnanexus_link\": \"record-000011112222333344445555\"}}}"),
                 ExecutableRunner
                         .getAppletRunnerWithEnvironment("applet-1234", DXEnvironment.create())
-                        .withInput(
+                        .setInput(
                                 new SampleAppInput("foo", DXRecord
                                         .getInstance("record-000011112222333344445555")))
                         .buildRequestHash());
@@ -357,8 +365,8 @@ public class DXAppletTest {
                 DXJSON.parseJson("{\"project\": \"project-000011112222333344445555\", \"folder\": \"/asdf\", \"name\": \"myjob\", \"delayWorkspaceDestruction\": true}"),
                 ExecutableRunner
                         .getAppletRunnerWithEnvironment("applet-1234", DXEnvironment.create())
-                        .inProject(DXProject.getInstance("project-000011112222333344445555"))
-                        .inFolder("/asdf").withName("myjob").delayWorkspaceDestruction()
+                        .setProject(DXProject.getInstance("project-000011112222333344445555"))
+                        .setFolder("/asdf").setName("myjob").delayWorkspaceDestruction()
                         .buildRequestHash());
 
         Assert.assertEquals(

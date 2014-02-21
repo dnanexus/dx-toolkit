@@ -17,6 +17,7 @@
 package com.dnanexus;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -36,6 +37,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 /**
@@ -91,8 +93,7 @@ public abstract class DXDataObject extends DXObject {
         protected List<String> types = null;
         protected JsonNode details = null;
         protected Boolean hidden = null;
-        protected boolean hasProperties = false;
-        protected ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
+        protected ImmutableMap.Builder<String, String> properties;
 
         protected final DXEnvironment env;
 
@@ -107,33 +108,30 @@ public abstract class DXDataObject extends DXObject {
         /**
          * Adds the specified tags to the newly created data object.
          *
-         * @param tags List of tags to add
+         * @param tags tags to add
          *
          * @return the same {@code Builder} object
          */
-        public T addTags(List<String> tags) {
-            // TODO: support calling addTags more than once, this seems
-            // reasonable from the name.
-            Preconditions.checkState(this.tags == null, "Cannot call addTags more than once");
-            this.tags =
-                    ImmutableList.copyOf(Preconditions.checkNotNull(tags, "tags may not be null"));
+        public T addTags(Collection<String> tags) {
+            if (this.tags == null) {
+                this.tags = Lists.newArrayList();
+            }
+            this.tags.addAll(Preconditions.checkNotNull(tags, "tags may not be null"));
             return getThisInstance();
         }
 
         /**
          * Adds the specified types to the newly created data object.
          *
-         * @param types List of types to add
+         * @param types types to add
          *
          * @return the same {@code Builder} object
          */
-        public T addTypes(List<String> types) {
-            // TODO: support calling addTypes more than once, this seems
-            // reasonable from the name.
-            Preconditions.checkState(this.types == null, "Cannot call addTypes more than once");
-            this.types =
-                    ImmutableList
-                            .copyOf(Preconditions.checkNotNull(types, "types may not be null"));
+        public T addTypes(Collection<String> types) {
+            if (this.types == null) {
+                this.types = Lists.newArrayList();
+            }
+            this.types.addAll(Preconditions.checkNotNull(types, "types may not be null"));
             return getThisInstance();
         }
 
@@ -203,11 +201,13 @@ public abstract class DXDataObject extends DXObject {
          * @return the same {@code Builder} object
          */
         public T putProperty(String key, String value) {
+            if (this.properties == null) {
+                this.properties = ImmutableMap.builder();
+            }
             this.properties.put(
                     Preconditions.checkNotNull(key, "Property key may not be null"),
                     Preconditions.checkNotNull(value, "Value for property " + key
                             + " may not be null"));
-            this.hasProperties = true;
             return getThisInstance();
         }
 
@@ -342,7 +342,7 @@ public abstract class DXDataObject extends DXObject {
             this.hidden = builder.hidden;
 
             // If no properties set, omit the field entirely rather than send an empty hash
-            if (builder.hasProperties) {
+            if (builder.properties != null) {
                 this.properties = builder.properties.build();
             }
         }
@@ -408,8 +408,8 @@ public abstract class DXDataObject extends DXObject {
         /**
          * Returns the details of the object. This field may not be available unless
          * {@link DXDataObject#describe(DescribeOptions)} (or
-         * {@link DXSearch.FindDataObjectsRequestBuilder#includeDescribeOutput(DescribeOptions)})
-         * was called with {@link DescribeOptions#withDetails()} set.
+         * {@link DXSearch.FindDataObjectsRequestBuilder#includeDescribeOutput(DXDataObject.DescribeOptions)}
+         * ) was called with {@link DescribeOptions#withDetails()} set.
          *
          * @param valueType class to deserialize as
          *
@@ -464,8 +464,8 @@ public abstract class DXDataObject extends DXObject {
         /**
          * Returns the properties associated with the object. This field may not be available unless
          * {@link DXDataObject#describe(DescribeOptions)} (or
-         * {@link DXSearch.FindDataObjectsRequestBuilder#includeDescribeOutput(DescribeOptions)})
-         * was called with {@link DescribeOptions#withProperties()} set.
+         * {@link DXSearch.FindDataObjectsRequestBuilder#includeDescribeOutput(DXDataObject.DescribeOptions)}
+         * ) was called with {@link DescribeOptions#withProperties()} set.
          *
          * @return Map of property keys to property values
          *
@@ -830,7 +830,7 @@ public abstract class DXDataObject extends DXObject {
      * <p>
      * Operations that use or retrieve project-specific metadata will fail if the object does not
      * exist in the environment's workspace. When a project is available, you should prefer to set
-     * it explicitly via {@link #DXDataObject(String, DXContainer, DXEnvironment)}.
+     * it explicitly via {@link #DXDataObject(String, DXContainer, DXEnvironment, JsonNode)}.
      * </p>
      *
      * @param dxId DNAnexus ID of the data object

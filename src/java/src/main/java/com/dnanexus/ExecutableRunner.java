@@ -16,7 +16,9 @@
 
 package com.dnanexus;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -26,6 +28,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
 /**
@@ -84,11 +87,14 @@ public abstract class ExecutableRunner<T extends DXExecution> {
         @SuppressWarnings("unused")
         @JsonProperty
         private final JsonNode details;
+        @SuppressWarnings("unused")
+        @JsonProperty
+        private final List<String> tags;
+        @SuppressWarnings("unused")
+        @JsonProperty
+        private Map<String, String> properties;
 
         // TODO: systemRequirements
-
-        // TODO: tags
-        // TODO: properties
         // TODO: executionPolicy
 
         public ExecutableRunRequest(ExecutableRunner<?> runner) {
@@ -99,6 +105,10 @@ public abstract class ExecutableRunner<T extends DXExecution> {
             this.folder = runner.folder;
             this.delayWorkspaceDestruction = runner.delayWorkspaceDestruction;
             this.details = runner.details;
+            this.tags = runner.tags;
+            if (runner.properties != null) {
+                this.properties = runner.properties.build();
+            }
         }
 
     }
@@ -169,8 +179,10 @@ public abstract class ExecutableRunner<T extends DXExecution> {
     private String folder;
     private Boolean delayWorkspaceDestruction;
     private JsonNode details;
+    private List<String> tags;
+    private ImmutableMap.Builder<String, String> properties;
 
-    private List<DXJob> jobDependencies = Lists.newArrayList();
+    private List<DXExecution> executionDependencies = Lists.newArrayList();
 
     private List<DXDataObject> objectDependencies = Lists.newArrayList();
 
@@ -186,6 +198,21 @@ public abstract class ExecutableRunner<T extends DXExecution> {
         this.executableId =
                 Preconditions.checkNotNull(executableId, "executable ID may not be null");
         this.env = Preconditions.checkNotNull(env, "environment may not be null");
+    }
+
+    /**
+     * Adds the specified tags to the resulting execution.
+     *
+     * @param tags tags to add
+     *
+     * @return the same runner object
+     */
+    public ExecutableRunner<T> addTags(Collection<String> tags) {
+        if (this.tags == null) {
+            this.tags = Lists.newArrayList();
+        }
+        this.tags.addAll(Preconditions.checkNotNull(tags, "tags may not be null"));
+        return this;
     }
 
     /**
@@ -213,8 +240,8 @@ public abstract class ExecutableRunner<T extends DXExecution> {
     }
 
     /**
-     * Makes the resulting job depend on the specified data object, so that the job will not begin
-     * until the data object is closed.
+     * Makes the resulting execution depend on the specified data object, so that the execution will
+     * not begin until the data object is closed.
      *
      * @param dataObject data object to depend on
      *
@@ -227,25 +254,26 @@ public abstract class ExecutableRunner<T extends DXExecution> {
     }
 
     /**
-     * Makes the resulting job depend on the specified job, so that the former will not begin until
-     * the latter has successfully completed.
+     * Makes the resulting execution depend on the specified execution, so that the former will not
+     * begin until the latter has successfully completed.
      *
-     * @param job job to depend on
+     * @param execution execution to depend on
      *
      * @return the same runner object
      */
-    public ExecutableRunner<T> dependsOn(DXJob job) {
-        this.jobDependencies.add(Preconditions.checkNotNull(job, "job may not be null"));
+    public ExecutableRunner<T> dependsOn(DXExecution execution) {
+        this.executionDependencies.add(Preconditions.checkNotNull(execution,
+                "execution may not be null"));
         return this;
     }
 
     private List<String> getDependencies() {
-        if (jobDependencies.size() == 0 && objectDependencies.size() == 0) {
+        if (executionDependencies.size() == 0 && objectDependencies.size() == 0) {
             return null;
         }
         List<String> result = Lists.newArrayList();
-        for (DXJob job : jobDependencies) {
-            result.add(job.getId());
+        for (DXExecution execution : executionDependencies) {
+            result.add(execution.getId());
         }
         for (DXDataObject object : objectDependencies) {
             result.add(object.getId());
@@ -254,31 +282,62 @@ public abstract class ExecutableRunner<T extends DXExecution> {
     }
 
     /**
-     * Sets the folder in which the job outputs will be deposited.
+     * Sets the folder in which the execution's outputs will be deposited.
      *
      * @param folder full path to folder (a String starting with "/")
      *
      * @return the same runner object
+     * @deprecated Use {@link #setFolder(String)} instead
      */
+    @Deprecated
     public ExecutableRunner<T> inFolder(String folder) {
-        Preconditions.checkState(this.folder == null, "inFolder cannot be called more than once");
-        this.folder = Preconditions.checkNotNull(folder, "folder may not be null");
-        return this;
+        return setFolder(folder);
     }
 
     /**
-     * Sets the project context of the resulting job.
+     * Sets the project context of the resulting execution.
      *
      * @param project project in which the executable will be run
      *
      * @return the same runner object
+     * @deprecated Use {@link #setProject(DXProject)} instead
      */
+    @Deprecated
     public ExecutableRunner<T> inProject(DXProject project) {
-        Preconditions.checkState(this.project == null, "inProject cannot be called more than once");
-        if (project == null) {
-            throw new NullPointerException("project may not be null");
+        return setProject(project);
+    }
+
+    /**
+     * Sets the specified properties on the execution to be created.
+     *
+     * @param properties Map containing non-null keys and values which will be set as property keys
+     *        and values respectively
+     *
+     * @return the same {@code Builder} object
+     */
+    public ExecutableRunner<T> putAllProperties(Map<String, String> properties) {
+        for (Map.Entry<String, String> e : properties.entrySet()) {
+            putProperty(e.getKey(), e.getValue());
         }
-        this.project = project.getId();
+        return this;
+    }
+
+    /**
+     * Sets the specified property on the execution to be created.
+     *
+     * @param key property key to set
+     * @param value property value to set
+     *
+     * @return the same {@code Builder} object
+     */
+    public ExecutableRunner<T> putProperty(String key, String value) {
+        if (this.properties == null) {
+            this.properties = ImmutableMap.builder();
+        }
+        this.properties
+                .put(Preconditions.checkNotNull(key, "Property key may not be null"),
+                        Preconditions.checkNotNull(value, "Value for property " + key
+                                + " may not be null"));
         return this;
     }
 
@@ -290,13 +349,13 @@ public abstract class ExecutableRunner<T extends DXExecution> {
     public abstract T run();
 
     /**
-     * Sets the job details to the JSON serialized value of the specified object.
+     * Sets the execution details to the JSON serialized value of the specified object.
      *
      * @param details user-supplied metadata
      *
      * @return the same runner object
      */
-    public ExecutableRunner<T> withDetails(Object details) {
+    public ExecutableRunner<T> setDetails(Object details) {
         Preconditions.checkState(this.details == null,
                 "withDetails cannot be called more than once");
         JsonNode serializedDetails = MAPPER.valueToTree(details);
@@ -308,26 +367,55 @@ public abstract class ExecutableRunner<T extends DXExecution> {
     }
 
     /**
+     * Sets the folder in which the execution's outputs will be deposited.
+     *
+     * @param folder full path to folder (a String starting with "/")
+     *
+     * @return the same runner object
+     */
+    public ExecutableRunner<T> setFolder(String folder) {
+        Preconditions.checkState(this.folder == null, "inFolder cannot be called more than once");
+        this.folder = Preconditions.checkNotNull(folder, "folder may not be null");
+        return this;
+    }
+
+    /**
      * Sets the input hash to the JSON serialized value of the specified object.
      *
      * @param inputObject object to be JSON serialized
      *
      * @return the same runner object
      */
-    public ExecutableRunner<T> withInput(Object inputObject) {
-        return withRawInput(MAPPER.valueToTree(inputObject));
+    public ExecutableRunner<T> setInput(Object inputObject) {
+        return setRawInput(MAPPER.valueToTree(inputObject));
     }
 
     /**
-     * Sets the name of the resulting job.
+     * Sets the name of the resulting execution.
      *
      * @param name job name
      *
      * @return the same runner object
      */
-    public ExecutableRunner<T> withName(String name) {
+    public ExecutableRunner<T> setName(String name) {
         Preconditions.checkState(this.name == null, "withName cannot be called more than once");
         this.name = Preconditions.checkNotNull(name, "name may not be null");
+        return this;
+    }
+
+    /**
+     * Sets the project context of the resulting execution.
+     *
+     * @param project project in which the executable will be run
+     *
+     * @return the same runner object
+     */
+    public ExecutableRunner<T> setProject(DXProject project) {
+        Preconditions.checkState(this.project == null, "inProject cannot be called more than once");
+        if (project == null) {
+            throw new NullPointerException("project may not be null");
+        }
+        this.project = project.getId();
         return this;
     }
 
@@ -338,10 +426,62 @@ public abstract class ExecutableRunner<T extends DXExecution> {
      *
      * @return the same runner object
      */
-    public ExecutableRunner<T> withRawInput(JsonNode inputHash) {
+    public ExecutableRunner<T> setRawInput(JsonNode inputHash) {
         Preconditions.checkState(this.input == null,
                 "withInput or withRawInput cannot be called more than once");
         this.input = Preconditions.checkNotNull(inputHash, "input hash may not be null");
         return this;
+    }
+
+    /**
+     * Sets the execution details to the JSON serialized value of the specified object.
+     *
+     * @param details user-supplied metadata
+     *
+     * @return the same runner object
+     * @deprecated Use {@link #setDetails(Object)} instead
+     */
+    @Deprecated
+    public ExecutableRunner<T> withDetails(Object details) {
+        return setDetails(details);
+    }
+
+    /**
+     * Sets the input hash to the JSON serialized value of the specified object.
+     *
+     * @param inputObject object to be JSON serialized
+     *
+     * @return the same runner object
+     * @deprecated Use {@link #setInput(Object)} instead
+     */
+    @Deprecated
+    public ExecutableRunner<T> withInput(Object inputObject) {
+        return setInput(inputObject);
+    }
+
+    /**
+     * Sets the name of the resulting execution.
+     *
+     * @param name job name
+     *
+     * @return the same runner object
+     * @deprecated Use {@link #setName(String)} instead
+     */
+    @Deprecated
+    public ExecutableRunner<T> withName(String name) {
+        return setName(name);
+    }
+
+    /**
+     * Sets the input hash to the specified JSON node.
+     *
+     * @param inputHash
+     *
+     * @return the same runner object
+     * @deprecated Use {@link #setRawInput(JsonNode)} instead
+     */
+    @Deprecated
+    public ExecutableRunner<T> withRawInput(JsonNode inputHash) {
+        return setRawInput(inputHash);
     }
 }

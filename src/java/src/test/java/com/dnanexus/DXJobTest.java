@@ -22,6 +22,9 @@ import java.util.Date;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+
 public class DXJobTest {
 
     @Test
@@ -31,7 +34,8 @@ public class DXJobTest {
                         DXJSON.safeTreeToValue(
                                 DXJSON.parseJson("{\"id\": \"job-000000000000000000000000\", "
                                         + "\"parentJob\": \"job-000000000000000000000001\", \"created\": 1234567890000, "
-                                        + "\"modified\": 1234567890123, \"name\": \"my job\", \"state\": \"done\"}"),
+                                        + "\"modified\": 1234567890123, \"name\": \"my job\", \"state\": \"done\", "
+                                        + "\"tags\": [\"t1\"], \"properties\": {\"k1\": \"v1\", \"k2\": \"v2\"}}"),
                                 DXJob.DescribeResponseHash.class), DXEnvironment.create());
         DXJob parentJob = DXJob.getInstance("job-000000000000000000000001");
         Assert.assertEquals("job-000000000000000000000000", describe.getId());
@@ -40,6 +44,8 @@ public class DXJobTest {
         Assert.assertEquals(new Date(1234567890123L), describe.getModifiedDate());
         Assert.assertEquals(parentJob, describe.getParentJob());
         Assert.assertEquals(JobState.DONE, describe.getState());
+        Assert.assertEquals(ImmutableList.of("t1"), describe.getTags());
+        Assert.assertEquals(ImmutableMap.of("k1", "v1", "k2", "v2"), describe.getProperties());
 
         // Extra fields in the response should not cause us to choke (for API
         // forward compatibility)

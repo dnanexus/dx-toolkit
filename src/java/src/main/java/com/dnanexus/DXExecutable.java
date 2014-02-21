@@ -24,6 +24,13 @@ package com.dnanexus;
  */
 public interface DXExecutable<T extends DXExecution> {
     /**
+     * Returns the ID of the object.
+     *
+     * @return the DNAnexus object ID
+     */
+    public String getId();
+
+    /**
      * Returns an object for creating a new run of this executable.
      *
      * @return executable runner
