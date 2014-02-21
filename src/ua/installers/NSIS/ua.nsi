@@ -15,9 +15,9 @@
 !define COMPANYNAME "DNAnexus"
 !define DESCRIPTION "Uploads files to the DNAnexus Platform"
 # These three must be integers
-!define VERSIONMAJOR 1
-!define VERSIONMINOR 4
-!define VERSIONBUILD 6
+!define VERSIONMAJOR $%VERSIONMAJOR%
+!define VERSIONMINOR $%VERSIONMINOR%
+!define VERSIONBUILD $%VERSIONBUILD%
 # These will be displayed by the "Click here for support information" link in "Add/Remove Programs"
 !define HELPURL "https://wiki.dnanexus.com/Upload-Agent" # "Support Information" link
 !define UPDATEURL "https://wiki.dnanexus.com/Downloads#Upload-Agent" # "Product Updates" link
