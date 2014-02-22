@@ -19,6 +19,7 @@ package com.dnanexus;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -799,8 +800,55 @@ public final class DXSearch {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class FindDataObjectsResult<T extends DXDataObject> implements ObjectProducer<T> {
 
-        // TODO: lazily load results and provide an iterator in addition to
-        // buffered List access
+        private class ResultIterator implements Iterator<T> {
+
+            private FindDataObjectsRequest query;
+            private FindDataObjectsResponse currentPage;
+            private int nextResultIndex = 0;
+
+            private ResultIterator() {
+                query = new FindDataObjectsRequest(baseQuery, null, pageSize);
+                currentPage =
+                        DXAPI.systemFindDataObjects(query, FindDataObjectsResponse.class, env);
+            }
+
+            /**
+             * Postcondition: either findDataObjectsResponse.results.get(nextResultIndex) points to
+             * the next valid result, or nextResultIndex is equal to
+             * findDataObjectsResponse.results.size() and there are no results left.
+             */
+            private void ensureNextElementAvailable() {
+                if (nextResultIndex < currentPage.results.size()) {
+                    return;
+                }
+                if (currentPage.next == null) {
+                    return;
+                }
+                // Reached the end of the previous page. Load a new page.
+                query = new FindDataObjectsRequest(query, currentPage.next, pageSize);
+                currentPage =
+                        DXAPI.systemFindDataObjects(query, FindDataObjectsResponse.class, env);
+                nextResultIndex = 0;
+            }
+
+            @Override
+            public boolean hasNext() {
+                ensureNextElementAvailable();
+                return nextResultIndex < currentPage.results.size();
+            }
+
+            @Override
+            public T next() {
+                ensureNextElementAvailable();
+                return getDataObjectInstanceFromResult(currentPage.results.get(nextResultIndex++));
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+
+        }
 
         private final FindDataObjectsRequest baseQuery;
         private final String classConstraint;
@@ -838,28 +886,7 @@ public final class DXSearch {
          */
         @Override
         public List<T> asList() {
-            FindDataObjectsRequest query = new FindDataObjectsRequest(baseQuery, null, pageSize);
-            List<T> output = Lists.newArrayList();
-
-            FindDataObjectsResponse findDataObjectsResponse;
-
-            do {
-                findDataObjectsResponse =
-                        DXAPI.systemFindDataObjects(query, FindDataObjectsResponse.class, env);
-
-                for (FindDataObjectsResponse.Entry e : findDataObjectsResponse.results) {
-                    output.add(getDataObjectInstanceFromResult(e));
-                }
-
-                if (findDataObjectsResponse.next != null) {
-                    query =
-                            new FindDataObjectsRequest(query, findDataObjectsResponse.next,
-                                    pageSize);
-                }
-
-            } while (findDataObjectsResponse.next != null);
-
-            return ImmutableList.copyOf(output);
+            return ImmutableList.copyOf(this);
         }
 
         @SuppressWarnings("unchecked")
@@ -887,6 +914,12 @@ public final class DXSearch {
             // here, either that code is incorrect or the API server
             // has returned incorrect results.
             return (T) dataObject;
+        }
+
+
+        @Override
+        public Iterator<T> iterator() {
+            return new ResultIterator();
         }
     }
 
@@ -1527,8 +1560,53 @@ public final class DXSearch {
      */
     public static class FindExecutionsResult<T extends DXExecution> implements ObjectProducer<T> {
 
-        // TODO: lazily load results and provide an iterator in addition to
-        // buffered List access
+        private class ResultIterator implements Iterator<T> {
+
+            private FindExecutionsRequest query;
+            private FindExecutionsResponse currentPage;
+            private int nextResultIndex = 0;
+
+            private ResultIterator() {
+                query = new FindExecutionsRequest(baseQuery, null, pageSize);
+                currentPage = DXAPI.systemFindExecutions(query, FindExecutionsResponse.class, env);
+            }
+
+            /**
+             * Postcondition: either findExecutionsResponse.results.get(nextResultIndex) points to
+             * the next valid result, or nextResultIndex is equal to
+             * findExecutionsResponse.results.size() and there are no results left.
+             */
+            private void ensureNextElementAvailable() {
+                if (nextResultIndex < currentPage.results.size()) {
+                    return;
+                }
+                if (currentPage.next == null) {
+                    return;
+                }
+                // Reached the end of the previous page. Load a new page.
+                query = new FindExecutionsRequest(query, currentPage.next, pageSize);
+                currentPage = DXAPI.systemFindExecutions(query, FindExecutionsResponse.class, env);
+                nextResultIndex = 0;
+            }
+
+            @Override
+            public boolean hasNext() {
+                ensureNextElementAvailable();
+                return nextResultIndex < currentPage.results.size();
+            }
+
+            @Override
+            public T next() {
+                ensureNextElementAvailable();
+                return getExecutionInstanceFromResult(currentPage.results.get(nextResultIndex++));
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+
+        }
 
         private final FindExecutionsRequest baseQuery;
         private final String classConstraint;
@@ -1566,23 +1644,7 @@ public final class DXSearch {
          */
         @Override
         public List<T> asList() {
-            FindExecutionsRequest query = new FindExecutionsRequest(baseQuery, null, pageSize);
-            List<T> output = Lists.newArrayList();
-            FindExecutionsResponse findExecutionsResponse;
-
-            do {
-                findExecutionsResponse =
-                        DXAPI.systemFindExecutions(MAPPER.valueToTree(query),
-                                FindExecutionsResponse.class, env);
-
-                for (FindExecutionsResponse.Entry e : findExecutionsResponse.results) {
-                    output.add(getExecutionInstanceFromResult(e));
-                }
-                if (findExecutionsResponse.next != null) {
-                    query = new FindExecutionsRequest(query, findExecutionsResponse.next, pageSize);
-                }
-            } while (findExecutionsResponse.next != null);
-            return ImmutableList.copyOf(output);
+            return ImmutableList.copyOf(this);
         }
 
         @SuppressWarnings("unchecked")
@@ -1608,6 +1670,11 @@ public final class DXSearch {
             // here, either that code is incorrect or the API server
             // has returned incorrect results.
             return (T) execution;
+        }
+
+        @Override
+        public Iterator<T> iterator() {
+            return new ResultIterator();
         }
 
     }
@@ -1682,11 +1749,11 @@ public final class DXSearch {
     }
 
     /**
-     * Interface that returns a sequence of {@code DXObjects}.
+     * Interface that provides streaming or buffered access to a sequence of {@code DXObjects}.
      *
      * @param <T> type of object to be returned
      */
-    public static interface ObjectProducer<T extends DXObject> {
+    public static interface ObjectProducer<T extends DXObject> extends Iterable<T> {
         /**
          * Returns a list of the matching items.
          *

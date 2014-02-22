@@ -44,6 +44,10 @@
 * DNAnexus object classes now reject malformed object IDs at initialization
   time.
 
+* DXSearch.ObjectProducer<T> now implements Iterable<T>, which lazily loads the
+  results when you iterate through them. As before, you can use asList if you
+  want to buffer all the results up before retrieving them.
+
 ## 0.86.0
 
 * DXSearch.FindDataObjectsRequestBuilder supports requesting describe data with

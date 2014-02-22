@@ -70,6 +70,25 @@ public class DXSearchTest {
 
     private DXProject testProject;
 
+    /**
+     * Creates and returns a minimal applet that takes a single string:input_string.
+     *
+     * @return created applet
+     */
+    private DXApplet createMinimalApplet() {
+        final InputParameter input1 =
+                InputParameter.newInputParameter("input_string", IOClass.STRING).build();
+
+        // Minimal applet that outputs nothing
+        String code = "\n";
+        DXApplet applet =
+                DXApplet.newApplet().setProject(testProject).setName("simple_test_java_app")
+                        .setRunSpecification(RunSpecification.newRunSpec("bash", code).build())
+                        .setInputSpecification(ImmutableList.of(input1))
+                        .setOutputSpecification(ImmutableList.<OutputParameter>of()).build();
+        return applet;
+    }
+
     @Before
     public void setUp() {
         testProject = DXProject.newProject().setName("DXSearchTest").build();
@@ -374,8 +393,12 @@ public class DXSearchTest {
      */
     @Test
     public void testFindDataObjectsSimple() {
-        Assert.assertEquals(0, DXSearch.findDataObjects().inProject(testProject)
-                .nameMatchesExactly("foobarbaz").execute().asList().size());
+        // List access
+        Assert.assertTrue(DXSearch.findDataObjects().inProject(testProject)
+                .nameMatchesExactly("foobarbaz").execute().asList().isEmpty());
+        // Iterable access
+        assertEqualsAnyOrder(DXSearch.findDataObjects().inProject(testProject)
+                .nameMatchesExactly("foobarbaz").execute());
     }
 
     /**
@@ -478,6 +501,11 @@ public class DXSearchTest {
         }
 
         Assert.assertEquals(recordIds, outputRecordIds);
+
+        List<DXRecord> outputRecordStreamWithPaging =
+                ImmutableList.copyOf(DXSearch.findDataObjects().inProject(testProject)
+                        .nameMatchesGlob("foo*").withClassRecord().execute(3));
+        Assert.assertEquals(outputRecords, outputRecordStreamWithPaging);
     }
 
     /**
@@ -490,16 +518,7 @@ public class DXSearchTest {
             return;
         }
 
-        final InputParameter input1 =
-                InputParameter.newInputParameter("input_string", IOClass.STRING).build();
-
-        // Minimal applet that outputs nothing
-        String code = "\n";
-        DXApplet applet =
-                DXApplet.newApplet().setProject(testProject).setName("simple_test_java_app")
-                        .setRunSpecification(RunSpecification.newRunSpec("bash", code).build())
-                        .setInputSpecification(ImmutableList.of(input1))
-                        .setOutputSpecification(ImmutableList.<OutputParameter>of()).build();
+        DXApplet applet = createMinimalApplet();
 
         // A sample input: {input_string: "java"}
         SampleAppInput appInput = new SampleAppInput("java");
@@ -726,4 +745,37 @@ public class DXSearchTest {
                 DXSearch.FindExecutionsResponse.class);
     }
 
+    /**
+     * Tests paging through results.
+     */
+    @Test
+    public void testFindExecutionsWithPaging() {
+        if (!TestEnvironment.canRunTest(ConfigOption.RUN_JOBS)) {
+            System.err.println("Skipping test that would run jobs");
+            return;
+        }
+
+        DXApplet applet = createMinimalApplet();
+
+        // A sample input: {input_string: "java"}
+        SampleAppInput appInput = new SampleAppInput("java");
+
+        // Save the
+        List<DXJob> jobs = Lists.newArrayList();
+        for (int i = 0; i < 8; ++i) {
+            jobs.add(applet.newRun().setInput(appInput).setProject(testProject)
+                    .setName("javaFindExecutionsPagingTest").run());
+        }
+
+        // Set a small page size
+        assertEqualsAnyOrder(
+                DXSearch.findExecutions().inProject(testProject)
+                        .nameMatchesExactly("javaFindExecutionsPagingTest").execute(3),
+                jobs.toArray(new DXJob[0]));
+        // Page size is a multiple of the number of results
+        assertEqualsAnyOrder(
+                DXSearch.findExecutions().inProject(testProject)
+                        .nameMatchesExactly("javaFindExecutionsPagingTest").execute(4),
+                jobs.toArray(new DXJob[0]));
+    }
 }
