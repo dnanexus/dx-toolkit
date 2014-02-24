@@ -48,6 +48,10 @@
   results when you iterate through them. As before, you can use asList if you
   want to buffer all the results up before retrieving them.
 
+* DXJob.Describe now allows access to most fields provided by the API.
+  DXAnalysis.Describe also gets the subset of those fields that applied to
+  analyses.
+
 ## 0.86.0
 
 * DXSearch.FindDataObjectsRequestBuilder supports requesting describe data with

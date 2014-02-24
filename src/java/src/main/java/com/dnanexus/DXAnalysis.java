@@ -1,7 +1,5 @@
 package com.dnanexus;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -9,8 +7,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 
 /**
@@ -29,39 +25,38 @@ public final class DXAnalysis extends DXExecution {
      * time that this object was created.
      */
     public final static class Describe extends DXExecution.Describe {
+
         private final DescribeResponseHash describeOutput;
-        @SuppressWarnings("unused")
-        private final DXEnvironment env;
 
         // TODO: executable
         // TODO: workflow
-
-        // TODO: plus the common fields in DXExecution.Describe
+        // TODO: stages
 
         @VisibleForTesting
         Describe(DescribeResponseHash describeOutput, DXEnvironment env) {
+            super(describeOutput, env);
             this.describeOutput = describeOutput;
-            this.env = env;
         }
 
-        @Override
-        public String getId() {
-            return describeOutput.id;
-        }
-
-        @Override
-        public String getName() {
-            return describeOutput.name;
-        }
-
+        /**
+         * Returns the output of the analysis, deserialized to the specified class, or null if no
+         * output hash is available. Note that this field is not guaranteed to be complete until the
+         * analysis has finished.
+         *
+         * <p>
+         * A partial output hash is available as soon as the first stage finishes. As each stage
+         * finishes, its corresponding outputs will become visible.
+         * </p>
+         *
+         * @param outputClass class to deserialize to
+         *
+         * @return output object or null
+         */
         @Override
         public <T> T getOutput(Class<T> outputClass) {
-            return DXJSON.safeTreeToValue(describeOutput.output, outputClass);
-        }
-
-        @Override
-        public Map<String, String> getProperties() {
-            return ImmutableMap.copyOf(describeOutput.properties);
+            // We don't do anything different here except for providing the analysis-specific
+            // caveats in the docstring above.
+            return super.getOutput(outputClass);
         }
 
         /**
@@ -72,11 +67,6 @@ public final class DXAnalysis extends DXExecution {
         public AnalysisState getState() {
             return describeOutput.state;
         }
-
-        @Override
-        public List<String> getTags() {
-            return ImmutableList.copyOf(describeOutput.tags);
-        }
     }
 
     /**
@@ -85,20 +75,9 @@ public final class DXAnalysis extends DXExecution {
      */
     @VisibleForTesting
     @JsonIgnoreProperties(ignoreUnknown = true)
-    final static class DescribeResponseHash {
-        @JsonProperty
-        private String id;
-        @JsonProperty
-        private String name;
+    final static class DescribeResponseHash extends DXExecution.DescribeResponseHash {
         @JsonProperty
         private AnalysisState state;
-        @JsonProperty
-        private List<String> tags;
-        @JsonProperty
-        private Map<String, String> properties;
-
-        @JsonProperty
-        private JsonNode output;
     }
 
     private static final Set<AnalysisState> unsuccessfulAnalysisStates = Sets.immutableEnumSet(
