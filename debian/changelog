@@ -1,3 +1,11 @@
+dx-toolkit (0.86.1) precise; urgency=low
+
+  * UA build fixes and improvements
+
+  * Minor test fix.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 25 Feb 2014 19:09:40 +0000
+
 dx-toolkit (0.86.0) precise; urgency=low
 
   * Java bindings: findDataObjects supports retrieving describe
