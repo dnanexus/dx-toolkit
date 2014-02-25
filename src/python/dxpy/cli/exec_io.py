@@ -93,7 +93,7 @@ def print_param_help(param_desc):
 def interactive_help(in_class, param_desc, prompt):
     is_array = param_desc['class'].startswith("array:")
     print_param_help(param_desc)
-    print
+    print()
     array_help_str = ', or <ENTER> to finish the list of inputs'
     if in_class in dx_data_classes:
         # Class is some sort of data object
@@ -143,7 +143,7 @@ def interactive_help(in_class, param_desc, prompt):
                 result_generator = dxpy.find_jobs(project=dxpy.WORKSPACE_ID,
                                                   describe=True,
                                                   parent_job="none")
-                print
+                print()
                 print('Previously-run jobs to choose from:')
                 result_choice = paginate_and_pick(result_generator,
                                                   (lambda result: get_find_executions_string(result['describe'],
@@ -214,7 +214,7 @@ def get_input_array(param_desc):
     print('Class:   ' + param_desc['class'])
     if 'type' in param_desc:
         print('Type(s): ' + parse_typespec(param_desc['type']))
-    print
+    print()
 
     prompt = "Enter {_class} values, one at a time (^D or <ENTER> to finish, {hint}'" + WHITE() + BOLD() + '?' + ENDC() + "' for more options)"
     hint = ''
@@ -317,7 +317,7 @@ def get_input_single(param_desc):
         print(format_choices_or_suggestions('Suggestions:', param_desc['suggestions'], param_desc['class'], initial_indent='', subsequent_indent='  '))
     if 'choices' in param_desc:
         print(format_choices_or_suggestions('Choices:', param_desc['choices'], param_desc['class'], initial_indent='', subsequent_indent='  '))
-    print
+    print()
 
     prompt = "Enter {_class} {value} ({hint}'" + WHITE() + BOLD() + '?' + ENDC() + "' for more options)"
     hint = ''
