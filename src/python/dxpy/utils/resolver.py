@@ -486,7 +486,24 @@ def resolve_job_ref(job_id, name, describe={}):
     if job_desc['state'] != 'done':
         raise ResolutionError('the job ' + job_id + ' is ' + job_desc['state'] + ', and it must be in the done state for its outputs to be accessed')
 
+    index = None
+    if '.' in name:
+        try:
+            actual_name, str_index = name.rsplit('.', 1)
+            index = int(str_index)
+            name = actual_name
+        except ValueError:
+            pass
+
     output_field = job_desc['output'].get(name, None)
+    if index is not None:
+        if not isinstance(output_field, list):
+            raise ResolutionError('Found "' + name + '" as an output field name of ' + job_id +
+                                  ', but it is not an array and cannot be indexed')
+        if index < 0 or index >= len(output_field):
+            raise ResolutionError('Found "' + name + '" as an output field name of ' + job_id +
+                                  ', but the specified index ' + str_index + ' is out of range')
+        output_field = output_field[index]
     results = []
     if output_field is not None:
         if isinstance(output_field, list):
