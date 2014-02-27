@@ -299,10 +299,14 @@ class DXJob(DXObject):
         '''
         dxpy.api.job_terminate(self._dxid, **kwargs)
 
-    def get_output_ref(self, field):
+    def get_output_ref(self, field, index=None, metadata=None):
         '''
         :param field: Output field name of this job
         :type field: string
+        :param index: If the referenced field is an array, optionally specify an index (starting from 0) to indicate a particular member of the array
+        :type index: int
+        :param metadata: If the referenced field is of a data object class, a string indicating the metadata that should be retried, e.g. "name", "properties.propkey", "details.refgenome"
+        :type metadata: string
 
         Returns a dict containing a valid job-based object reference
         to refer to an output of this job.  This can be used directly
@@ -312,10 +316,19 @@ class DXJob(DXObject):
         its own output::
 
             mysubjob = dxpy.new_dxjob({}, "my_function")
-            return {"myfileoutput": mysubjob.get_output_ref("output_field_name")}
+            return { "myfileoutput": mysubjob.get_output_ref("output_field_name"),
+                     "myotherfileoutput": mysubjob.get_output_ref("output_array",
+                                                                  index=1),
+                     "filename": mysubjob.get_output_ref("output_field_name",
+                                                         metadata="name") }
         '''
 
-        return {"$dnanexus_link": {"job": self._dxid, "field": field}}
+        link = {"$dnanexus_link": {"job": self._dxid, "field": field}}
+        if index is not None:
+            link["$dnanexus_link"]["index"] = index
+        if metadata is not None:
+            link["$dnanexus_link"]["metadata"] = metadata
+        return link
 
     def _get_state(self, **kwargs):
         '''
