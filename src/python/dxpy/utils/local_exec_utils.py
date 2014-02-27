@@ -22,7 +22,8 @@ import os, sys, json, subprocess, pipes
 import collections, datetime
 
 import dxpy
-from dxpy.utils.describe import get_field_from_jbor, get_job_from_jbor, is_job_ref, job_output_to_str, JOB_STATES
+from dxpy.utils.describe import (get_field_from_jbor, get_job_from_jbor, get_index_from_jbor,
+                                 is_job_ref, job_output_to_str, JOB_STATES)
 from dxpy.utils.printing import (GREEN, BLUE, BOLD, ENDC, fill)
 from dxpy.utils.resolver import is_localjob_id
 
@@ -84,6 +85,12 @@ def resolve_job_ref(jbor, job_outputs={}, should_resolve=True):
     '''
     ref_job_id = get_job_from_jbor(jbor)
     ref_job_field = get_field_from_jbor(jbor)
+    ref_job_index = get_index_from_jbor(jbor)
+    def resolve_from_hash(output_hash):
+        if ref_job_index is None:
+            return output_hash[ref_job_field]
+        else:
+            return output_hash[ref_job_field][ref_job_index]
     if is_localjob_id(ref_job_id):
         if job_outputs.get(ref_job_id) is None:
             if should_resolve:
@@ -92,7 +99,7 @@ def resolve_job_ref(jbor, job_outputs={}, should_resolve=True):
                 return jbor
         if ref_job_field not in job_outputs[ref_job_id]:
             raise Exception('Cannot resolve a JBOR with job ID ' + ref_job_id + ' because field "' + ref_job_field + '" was not found in its output')
-        return job_outputs[ref_job_id][ref_job_field]
+        return resolve_from_hash(job_outputs[ref_job_id])
     else:
         dxjob = dxpy.DXJob(ref_job_id)
         try:
@@ -102,7 +109,7 @@ def resolve_job_ref(jbor, job_outputs={}, should_resolve=True):
         job_desc = dxjob.describe()
         if ref_job_field not in job_desc['output']:
             raise Exception('Cannot resolve a JBOR with job ID ' + ref_job_id + ' because field "' + ref_job_field + '" was not found in its output')
-        return job_desc['output'][ref_job_field]
+        return resolve_from_hash(job_desc['output'])
 
 def resolve_job_references(io_hash, job_outputs, should_resolve=True):
     '''

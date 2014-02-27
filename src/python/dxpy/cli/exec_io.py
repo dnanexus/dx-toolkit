@@ -74,10 +74,27 @@ parse_input = {'boolean': parse_bool,
                'app': (lambda string: {'$dnanexus_link': string}),
                'table': (lambda string: parse_obj(string, 'table'))}
 
+def _construct_jbor(job_id, field_name_and_maybe_index):
+    '''
+    :param job_id: Job ID
+    :type job_id: string
+    :param field_name_and_maybe_index: Field name, plus possibly ".N" where N is an array index
+    :type field_name_and_maybe_index: string
+    :returns: dict of JBOR
+    '''
+    link = {"$dnanexus_link": {"job": job_id}}
+    if '.' in field_name_and_maybe_index:
+        split_by_dot = field_name_and_maybe_index.rsplit('.', 1)
+        link["$dnanexus_link"]["field"] = split_by_dot[0]
+        link["$dnanexus_link"]["index"] = int(split_by_dot[1])
+    else:
+        link["$dnanexus_link"]["field"] = field_name_and_maybe_index
+    return link
+
 def parse_input_or_jbor(in_class, value):
     val_substrings = split_unescaped(':', value)
     if len(val_substrings) == 2 and (is_job_id(val_substrings[0]) or is_localjob_id(val_substrings[0])):
-        return {"job": val_substrings[0], "field": val_substrings[1]}
+        return _construct_jbor(val_substrings[0], val_substrings[1])
     else:
         if in_class.startswith('array:'):
             in_class = in_class[6:]
@@ -451,7 +468,7 @@ class ExecutableInputs(object):
                 # Resolve "job-xxxx:output-name" syntax into a canonical job ref
                 job_id, field = split_unescaped(':', input_value)
                 if is_job_id(job_id) or is_localjob_id(job_id):
-                    input_value = {"job": job_id, "field": field}
+                    input_value = _construct_jbor(job_id, field)
                     done = True
             except:
                 pass

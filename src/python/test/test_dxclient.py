@@ -647,6 +647,71 @@ class TestDXClientRun(DXTestCase):
         # by ID will still work
         run("dx run " + dxworkflow.get_id() + " -y")
 
+    def test_dx_run_jbor_array_ref(self):
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "name": "myapplet",
+                                         "dxapi": "1.0.0",
+                                         "inputSpec": [{"name": "record",
+                                                        "class": "record",
+                                                        "optional": True}],
+                                         "outputSpec": [{"name": "record",
+                                                         "class": "record"},
+                                                        {"name": "record_array",
+                                                         "class": "array:record"}],
+                                         "runSpec": {"interpreter": "bash",
+                                                     "bundledDepends": [],
+                                                     "execDepends": [],
+                                                     "code": '''
+first_record=$(dx new record firstrecord --brief)
+dx close $first_record
+second_record=$(dx new record secondrecord --brief)
+dx close $second_record
+dx-jobutil-add-output record $first_record
+dx-jobutil-add-output record_array $first_record --array
+dx-jobutil-add-output record_array $second_record --array
+'''}})["id"]
+
+        remote_job = dxpy.DXApplet(applet_id).run({})
+        remote_job.wait_on_done()
+        remote_job_output = remote_job.describe()["output"]["record_array"]
+
+        # check other dx functionality here for convenience
+        # dx describe/path resolution
+        jbor_array_ref = '{job_id}:record_array.'.format(job_id=remote_job.get_id())
+        desc_output = run('dx describe ' + jbor_array_ref + '0')
+        self.assertIn("firstrecord", desc_output)
+        self.assertNotIn("secondrecord", desc_output)
+        with self.assertSubprocessFailure(exit_code=3):
+            run("dx get " + remote_job.get_id() + ":record.foo")
+        with self.assertSubprocessFailure(stderr_regexp='not an array', exit_code=3):
+            run("dx get " + remote_job.get_id() + ":record.0")
+        with self.assertSubprocessFailure(stderr_regexp='out of range', exit_code=3):
+            run("dx get " + jbor_array_ref + '2')
+
+        # dx run
+        second_remote_job = run('dx run myapplet -y --brief -irecord=' + jbor_array_ref + '1').strip()
+        second_remote_job_desc = run('dx describe ' + second_remote_job)
+        self.assertIn(jbor_array_ref + '1', second_remote_job_desc)
+        self.assertIn(remote_job_output[1]["$dnanexus_link"], second_remote_job_desc)
+        self.assertNotIn(remote_job_output[0]["$dnanexus_link"], second_remote_job_desc)
+
+        # use dx get to hydrate a directory and test dx-run-app-locally
+        def create_app_dir_from_applet(applet_id):
+            old_cwd = os.getcwd()
+            tempdir = tempfile.mkdtemp()
+            os.chdir(tempdir)
+            try:
+                run('dx get ' + applet_id)
+                return os.path.join(tempdir, dxpy.describe(applet_id)['name'])
+            finally:
+                os.chdir(old_cwd)
+        appdir = create_app_dir_from_applet(applet_id)
+        local_output = subprocess.check_output(['dx-run-app-locally',
+                                                appdir,
+                                                '-irecord=' + jbor_array_ref + '1'])
+        self.assertIn(remote_job_output[1]["$dnanexus_link"], local_output)
+        self.assertNotIn(remote_job_output[0]["$dnanexus_link"], local_output)
+
     def test_dx_run_priority(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "name": "myapplet",
