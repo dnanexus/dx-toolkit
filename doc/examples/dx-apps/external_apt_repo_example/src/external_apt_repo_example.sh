@@ -22,6 +22,7 @@ main() {
   #   sudo apt-key add /tmp/my-signing-key.gpg
 
   sudo apt-get update --yes
+  sudo apt-get remove --auto-remove --yes r-base
   sudo apt-get install --yes r-base
 
   # Verify that a new version of R was installed
