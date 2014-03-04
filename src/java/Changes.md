@@ -1,5 +1,15 @@
 # Java API Bindings Changelog
 
+## 0.89.0
+
+* DXEnvironment.Builder supports initializing a new builder from an arbitrary
+  JSON file or an existing environment.
+* DXEnvironment.Builder#setBearerToken lets you set the bearer token (as a
+  String) instead of having to build, and then set, the entire security context
+  JSON.
+* DXEnvironment.Builder supports setting, and DXEnvironment supports getting,
+  all the other fields that are stored, too.
+
 ## 0.88.0
 
 * BREAKING: DXSearch.findExecutions generalizes and replaces findJobs. The

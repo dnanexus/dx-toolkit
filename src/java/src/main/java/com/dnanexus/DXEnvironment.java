@@ -23,32 +23,95 @@ import java.util.Map;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.google.common.base.Preconditions;
 
 /**
  * Immutable class storing configuration for selecting, authenticating to, and communicating with a
  * DNAnexus API server.
  */
 public class DXEnvironment {
+    /**
+     * Builder class for creating DXEnvironment objects.
+     *
+     * <p>
+     * The resulting DXEnvironment has its fields set from the following sources, in order (with
+     * later items overriding earlier items):
+     * </p>
+     * <ol>
+     * <li>Hardcoded defaults</li>
+     * <li>JSON config in the file specified at the Builder object's creation time (you can specify
+     * the file using {@link DXEnvironment.Builder#fromFile(File)}).</li>
+     * <li>DX_* environment variables</li>
+     * <li>Fields set by calling methods on the Builder object</li>
+     * </ol>
+     */
     public static class Builder {
         private static final String DEFAULT_APISERVER_HOST = "api.dnanexus.com";
         private static final String DEFAULT_APISERVER_PORT = "443";
         private static final String DEFAULT_APISERVER_PROTOCOL = "https";
 
+        /**
+         * Creates a Builder object using the JSON config in the file
+         * <tt>~/.dnanexus_config/environment.json</tt>.
+         *
+         * @return new Builder object
+         */
+        public static Builder fromDefaults() {
+            return new Builder();
+        }
+
+        /**
+         * Creates a Builder object with initial settings copied from the specified environment.
+         *
+         * @param templateEnvironment environment to initialize this Builder from
+         *
+         * @return new Builder object
+         */
+        public static Builder fromEnvironment(DXEnvironment templateEnvironment) {
+            return new Builder(templateEnvironment);
+        }
+
+        /**
+         * Creates a Builder object using the JSON config in the specified file.
+         *
+         * @param environmentJsonFile JSON file from which to load configuration defaults
+         *
+         * @return new Builder object
+         */
+        public static Builder fromFile(File environmentJsonFile) {
+            return new Builder(environmentJsonFile);
+        }
+
         private String apiserverHost;
         private String apiserverPort;
         private String apiserverProtocol;
         private JsonNode securityContext;
-
         private String jobId;
         private String workspaceId;
         private String projectContextId;
 
         /**
-         * Upon construction, DXEnvironment.Builder loads configuration from (lowest to highest
-         * precedence) (1) hardcoded defaults (2) JSON config in the file
-         * ~/.dnanexus_config/environment.json and (3) the DX_* environment variables.
+         * Initializes a Builder object using JSON config in the file
+         * <tt>~/.dnanexus_config/environment.json</tt>.
+         *
+         * @deprecated Use {@link #fromDefaults()} instead
          */
+        @Deprecated
         public Builder() {
+            this(new File(System.getProperty("user.home") + "/.dnanexus_config/environment.json"));
+        }
+
+        private Builder(DXEnvironment templateEnvironment) {
+            apiserverHost = templateEnvironment.apiserverHost;
+            apiserverPort = templateEnvironment.apiserverPort;
+            apiserverProtocol = templateEnvironment.apiserverProtocol;
+            securityContext = templateEnvironment.securityContext;
+            jobId = templateEnvironment.jobId;
+            workspaceId = templateEnvironment.workspaceId;
+            projectContextId = templateEnvironment.projectContextId;
+        }
+
+        private Builder(File jsonConfigFile) {
             // (1) System defaults
             String securityContextTxt = null;
             apiserverHost = DEFAULT_APISERVER_HOST;
@@ -58,9 +121,7 @@ public class DXEnvironment {
             workspaceId = null;
             projectContextId = null;
 
-            // (2) JSON config file: ~/.dnanexus_config/environment.json
-            File jsonConfigFile =
-                    new File(System.getProperty("user.home") + "/.dnanexus_config/environment.json");
+            // (2) JSON file
             if (jsonConfigFile.exists()) {
                 try {
                     JsonNode jsonConfig =
@@ -130,38 +191,138 @@ public class DXEnvironment {
         }
 
         /**
-         * Build the DXEnvironment from the settings configured thusfar.
+         * Build the DXEnvironment from the settings configured so far.
+         *
+         * @return newly created DXEnvironment
          */
         public DXEnvironment build() {
             return new DXEnvironment(apiserverHost, apiserverPort, apiserverProtocol,
                     securityContext, jobId, workspaceId, projectContextId);
         }
 
-        // TODO: remaining setters
+        /**
+         * Sets the API server hostname.
+         *
+         * @param apiserverHost API server hostname
+         *
+         * @return the same Builder object
+         */
+        public Builder setApiserverHost(String apiserverHost) {
+            this.apiserverHost = apiserverHost;
+            return this;
+        }
 
+        /**
+         * Sets the API server port.
+         *
+         * @param apiserverPort API server port
+         *
+         * @return the same Builder object
+         */
+        public Builder setApiserverPort(int apiserverPort) {
+            this.apiserverPort = Integer.toString(apiserverPort);
+            return this;
+        }
+
+        /**
+         * Sets the API server protocol ("http" or "https").
+         *
+         * @param apiserverProtocol API server protocol
+         *
+         * @return the same Builder object
+         */
+        public Builder setApiserverProtocol(String apiserverProtocol) {
+            this.apiserverProtocol = apiserverProtocol;
+            return this;
+        }
+
+        /**
+         * Sets the token to use to authenticate to the Platform.
+         *
+         * @param token bearer token
+         *
+         * @return the same Builder object
+         */
+        public Builder setBearerToken(String token) {
+            securityContext =
+                    DXJSON.getObjectBuilder().put("auth_token_type", "Bearer")
+                            .put("auth_token", token).build();
+            return this;
+        }
+
+        /**
+         * Sets the current job to the specified job.
+         *
+         * @param job job object
+         *
+         * @return the same Builder object
+         */
+        public Builder setJob(DXJob job) {
+            jobId = Preconditions.checkNotNull(job).getId();
+            return this;
+        }
+
+        /**
+         * Sets the project context to the specified project.
+         *
+         * @param projectContext project context
+         *
+         * @return the same Builder object
+         */
+        public Builder setProjectContext(DXProject projectContext) {
+            projectContextId = Preconditions.checkNotNull(projectContext).getId();
+            return this;
+        }
+
+        /**
+         * Sets the security context to use to authenticate to the Platform.
+         *
+         * @param json security context JSON
+         *
+         * @return the same Builder object
+         *
+         * @deprecated Use {@link #setBearerToken(String)} instead.
+         */
+        @Deprecated
         public Builder setSecurityContext(JsonNode json) {
             securityContext = json.deepCopy();
             return this;
         }
+
+        /**
+         * Sets the workspace to the specified container.
+         *
+         * @param workspace workspace container
+         *
+         * @return the same Builder object
+         */
+        public Builder setWorkspace(DXContainer workspace) {
+            workspaceId = Preconditions.checkNotNull(workspace).getId();
+            return this;
+        }
+
     }
 
     private final String apiserverHost;
     private final String apiserverPort;
     private final String apiserverProtocol;
-
     private final JsonNode securityContext;
-    // TODO: provide accessors for these methods. Not exactly sure yet what the
-    // interface will look like, or if these variables even belong here.
     private final String jobId;
     private final String workspaceId;
-
     private final String projectContextId;
 
     private static final JsonFactory jsonFactory = new MappingJsonFactory();
-
-    /* backwards-compatible */
+    /**
+     * Creates a DXEnvironment from the default settings.
+     *
+     * <p>
+     * This is the same as <code>Builder.fromDefaults().build()</code>.
+     * </p>
+     *
+     * @return newly created DXEnvironment
+     */
     public static DXEnvironment create() {
-        return new Builder().build();
+        return Builder.fromDefaults().build();
     }
 
     private static String getTextValue(JsonNode jsonNode, String key) {
@@ -190,11 +351,57 @@ public class DXEnvironment {
         }
     }
 
+    /**
+     * Returns the fully qualified API server address (including protocol, host, and port).
+     *
+     * @return API server path
+     */
     public String getApiserverPath() {
         return this.apiserverProtocol + "://" + this.apiserverHost + ":" + this.apiserverPort;
     }
 
+    /**
+     * Returns a handler to the currently running job.
+     *
+     * @return job object, or {@code null} if the currently running job cannot be determined
+     */
+    public DXJob getJob() {
+        if (jobId == null) {
+            return null;
+        }
+        return DXJob.getInstanceWithEnvironment(jobId, this);
+    }
+
+    /**
+     * Returns the current project context.
+     *
+     * @return project, or {@code null} if the project context cannot be determined
+     */
+    public DXProject getProjectContext() {
+        if (projectContextId == null) {
+            return null;
+        }
+        return DXProject.getInstanceWithEnvironment(projectContextId, this);
+    }
+
+    /**
+     * Returns the security context JSON.
+     *
+     * @return security context
+     *
+     * @deprecated
+     */
+    @Deprecated
     public JsonNode getSecurityContext() {
+        return this.securityContext;
+    }
+
+    /**
+     * Returns the security context JSON (for use by {@link DXHTTPRequest}).
+     *
+     * @return security context
+     */
+    JsonNode getSecurityContextJson() {
         return this.securityContext;
     }
 
@@ -209,6 +416,6 @@ public class DXEnvironment {
         if (this.workspaceId == null) {
             return null;
         }
-        return DXContainer.getInstance(this.workspaceId);
+        return DXContainer.getInstanceWithEnvironment(this.workspaceId, this);
     }
 }

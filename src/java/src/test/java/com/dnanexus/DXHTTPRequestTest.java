@@ -20,14 +20,21 @@ import java.io.IOException;
 
 import org.junit.Assert;
 import org.junit.Test;
-import com.fasterxml.jackson.databind.*;
-import com.dnanexus.DXHTTPRequest;
-import com.dnanexus.DXEnvironment;
+
 import com.dnanexus.exceptions.InvalidAuthenticationException;
 import com.dnanexus.exceptions.InvalidInputException;
+import com.fasterxml.jackson.databind.JsonNode;
 
+/**
+ * Tests for DXHTTPRequest and DXEnvironment.
+ */
 public class DXHTTPRequestTest {
 
+    /**
+     * Tests basic use of the API.
+     *
+     * @throws IOException
+     */
     @Test
     public void testDXAPI() throws IOException {
         DXHTTPRequest c = new DXHTTPRequest();
@@ -42,7 +49,8 @@ public class DXHTTPRequestTest {
         // Tests deserialization of InvalidInput
         DXHTTPRequest c2 = new DXHTTPRequest();
         try {
-            c2.request("/system/findDataObjects", DXJSON.parseJson("{\"state\": {\"invalid\": \"oops\"}}"));
+            c2.request("/system/findDataObjects",
+                    DXJSON.parseJson("{\"state\": {\"invalid\": \"oops\"}}"));
             Assert.fail("Expected findDataObjects to fail with InvalidInput");
         } catch (InvalidInputException e) {
             // Error message should be something like
@@ -52,6 +60,11 @@ public class DXHTTPRequestTest {
         }
     }
 
+    /**
+     * Tests use of the API with a custom environment.
+     *
+     * @throws IOException
+     */
     @Test
     public void testDXAPICustomEnvironment() throws IOException {
         DXEnvironment env = DXEnvironment.create();
@@ -65,8 +78,7 @@ public class DXHTTPRequestTest {
         Assert.assertEquals(responseText.substring(0, 1), "{");
 
         // Tests deserialization of InvalidAuthentication
-        JsonNode bogusSecCtx = DXJSON.parseJson("{\"auth_token_type\":\"Bearer\",\"auth_token\":\"BOGUS\"}");
-        env = new DXEnvironment.Builder().setSecurityContext(bogusSecCtx).build();
+        env = DXEnvironment.Builder.fromDefaults().setBearerToken("BOGUS").build();
         DXHTTPRequest c2 = new DXHTTPRequest(env);
         try {
             c2.request("/system/findDataObjects", DXJSON.parseJson("{}"));
@@ -79,4 +91,30 @@ public class DXHTTPRequestTest {
         }
     }
 
+    /**
+     * Tests creating DXEnvironments.
+     */
+    @Test
+    public void testDXEnvironment() {
+        DXEnvironment env = DXEnvironment.create();
+
+        // Using fromEnvironment gives us complete control over the environment that will be
+        // created, regardless of any environment variable settings.
+        DXEnvironment env1 =
+                DXEnvironment.Builder.fromEnvironment(env).setApiserverHost("example.dnanexus.com")
+                        .setApiserverPort(31337).setApiserverProtocol("https").build();
+
+        DXEnvironment env2 = DXEnvironment.Builder.fromEnvironment(env1).build();
+
+        Assert.assertEquals("https://example.dnanexus.com:31337", env2.getApiserverPath());
+        Assert.assertEquals(env1.getApiserverPath(), env2.getApiserverPath());
+
+        DXEnvironment envWithDifferentToken =
+                DXEnvironment.Builder.fromEnvironment(env2).setBearerToken("abcdef").build();
+        Assert.assertEquals(
+                DXJSON.getObjectBuilder().put("auth_token_type", "Bearer")
+                        .put("auth_token", "abcdef").build(),
+                envWithDifferentToken.getSecurityContextJson());
+
+    }
 }
