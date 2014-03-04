@@ -1,3 +1,17 @@
+dx-toolkit (0.88.0) precise; urgency=low
+
+  * dxpy: Add index and metadata options to .get_output_ref
+
+  * dx support for JBOR array references
+
+  * Java bindings: DXSearch.findExecutions.
+
+  * Java bindings: allow streaming access to find results.
+
+  * Java bindings: fill out most fields of DXJob.Describe.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 04 Mar 2014 19:17:07 +0000
+
 dx-toolkit (0.87.0) precise; urgency=low
 
   * UA build fixes and improvements.
