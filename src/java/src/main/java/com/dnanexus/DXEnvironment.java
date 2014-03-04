@@ -25,77 +25,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 
 /**
- * Immutable class storing configuration for selecting, authenticating to, and
- * communicating with a DNAnexus API server.
+ * Immutable class storing configuration for selecting, authenticating to, and communicating with a
+ * DNAnexus API server.
  */
 public class DXEnvironment {
-    private final String apiserverHost;
-    private final String apiserverPort;
-    private final String apiserverProtocol;
-    private final JsonNode securityContext;
-
-    // TODO: provide accessors for these methods. Not exactly sure yet what the
-    // interface will look like, or if these variables even belong here.
-    private final String jobId;
-    private final String workspaceId;
-    private final String projectContextId;
-
-    private static final JsonFactory jsonFactory = new MappingJsonFactory();
-
-    private DXEnvironment(String apiserverHost,
-                          String apiserverPort,
-                          String apiserverProtocol,
-                          JsonNode securityContext,
-                          String jobId,
-                          String workspaceId,
-                          String projectContextId) {
-        this.apiserverHost = apiserverHost;
-        this.apiserverPort = apiserverPort;
-        this.apiserverProtocol = apiserverProtocol;
-        this.securityContext = securityContext;
-        this.jobId = jobId;
-        this.workspaceId = workspaceId;
-        this.projectContextId = projectContextId;
-
-        // TODO: additional validation on the project/workspace, and check that
-        // apiserverProtocol is either "http" or "https".
-
-        if (this.securityContext == null) {
-            System.err.println("Warning: no DNAnexus security context found.");
-        }
-    }
-
-    private static String getTextValue(JsonNode jsonNode, String key) {
-        JsonNode value = jsonNode.get(key);
-        if (value == null) {
-            return null;
-        }
-        return value.asText();
-    }
-
-    public String getApiserverPath() {
-        return this.apiserverProtocol + "://" + this.apiserverHost + ":" + this.apiserverPort;
-    }
-
-    public JsonNode getSecurityContext() {
-        return this.securityContext;
-    }
-
-    /**
-     * Returns the temporary workspace of the currently running job, or the
-     * current project if this method is called outside the Execution
-     * Environment.
-     *
-     * @return {@code DXContainer} for the container, or {@code null} if the
-     *         container cannot be determined
-     */
-    public DXContainer getWorkspace() {
-        if (this.workspaceId == null) {
-            return null;
-        }
-        return DXContainer.getInstance(this.workspaceId);
-    }
-
     public static class Builder {
         private static final String DEFAULT_APISERVER_HOST = "api.dnanexus.com";
         private static final String DEFAULT_APISERVER_PORT = "443";
@@ -111,8 +44,8 @@ public class DXEnvironment {
         private String projectContextId;
 
         /**
-         * Upon construction, DXEnvironment.Builder loads configuration from (lowest to
-         * highest precedence) (1) hardcoded defaults (2) JSON config in the file
+         * Upon construction, DXEnvironment.Builder loads configuration from (lowest to highest
+         * precedence) (1) hardcoded defaults (2) JSON config in the file
          * ~/.dnanexus_config/environment.json and (3) the DX_* environment variables.
          */
         public Builder() {
@@ -126,12 +59,12 @@ public class DXEnvironment {
             projectContextId = null;
 
             // (2) JSON config file: ~/.dnanexus_config/environment.json
-            File jsonConfigFile = new File(System.getProperty("user.home")
-                                           + "/.dnanexus_config/environment.json");
+            File jsonConfigFile =
+                    new File(System.getProperty("user.home") + "/.dnanexus_config/environment.json");
             if (jsonConfigFile.exists()) {
                 try {
-                    JsonNode jsonConfig
-                        = jsonFactory.createJsonParser(jsonConfigFile).readValueAsTree();
+                    JsonNode jsonConfig =
+                            jsonFactory.createJsonParser(jsonConfigFile).readValueAsTree();
                     if (getTextValue(jsonConfig, "DX_APISERVER_HOST") != null) {
                         apiserverHost = getTextValue(jsonConfig, "DX_APISERVER_HOST");
                     }
@@ -156,7 +89,7 @@ public class DXEnvironment {
                     }
                 } catch (IOException e) {
                     System.err.println("WARNING: JSON config file " + jsonConfigFile.getPath()
-                                       + " could not be parsed, skipping it");
+                            + " could not be parsed, skipping it");
                 }
             }
 
@@ -186,7 +119,8 @@ public class DXEnvironment {
 
             try {
                 if (securityContextTxt != null) {
-                    securityContext = jsonFactory.createJsonParser(securityContextTxt).readValueAsTree();
+                    securityContext =
+                            jsonFactory.createJsonParser(securityContextTxt).readValueAsTree();
                 } else {
                     securityContext = null;
                 }
@@ -195,24 +129,86 @@ public class DXEnvironment {
             }
         }
 
-        public Builder setSecurityContext(JsonNode json) {
-            securityContext = json.deepCopy();
-            return this;
+        /**
+         * Build the DXEnvironment from the settings configured thusfar.
+         */
+        public DXEnvironment build() {
+            return new DXEnvironment(apiserverHost, apiserverPort, apiserverProtocol,
+                    securityContext, jobId, workspaceId, projectContextId);
         }
 
         // TODO: remaining setters
 
-        /**
-        * Build the DXEnvironment from the settings configured thusfar.
-        */
-        public DXEnvironment build() {
-            return new DXEnvironment(apiserverHost, apiserverPort, apiserverProtocol,
-                                     securityContext, jobId, workspaceId, projectContextId);
+        public Builder setSecurityContext(JsonNode json) {
+            securityContext = json.deepCopy();
+            return this;
         }
     }
+
+    private final String apiserverHost;
+    private final String apiserverPort;
+    private final String apiserverProtocol;
+
+    private final JsonNode securityContext;
+    // TODO: provide accessors for these methods. Not exactly sure yet what the
+    // interface will look like, or if these variables even belong here.
+    private final String jobId;
+    private final String workspaceId;
+
+    private final String projectContextId;
+
+    private static final JsonFactory jsonFactory = new MappingJsonFactory();
 
     /* backwards-compatible */
     public static DXEnvironment create() {
         return new Builder().build();
+    }
+
+    private static String getTextValue(JsonNode jsonNode, String key) {
+        JsonNode value = jsonNode.get(key);
+        if (value == null) {
+            return null;
+        }
+        return value.asText();
+    }
+
+    private DXEnvironment(String apiserverHost, String apiserverPort, String apiserverProtocol,
+            JsonNode securityContext, String jobId, String workspaceId, String projectContextId) {
+        this.apiserverHost = apiserverHost;
+        this.apiserverPort = apiserverPort;
+        this.apiserverProtocol = apiserverProtocol;
+        this.securityContext = securityContext;
+        this.jobId = jobId;
+        this.workspaceId = workspaceId;
+        this.projectContextId = projectContextId;
+
+        // TODO: additional validation on the project/workspace, and check that
+        // apiserverProtocol is either "http" or "https".
+
+        if (this.securityContext == null) {
+            System.err.println("Warning: no DNAnexus security context found.");
+        }
+    }
+
+    public String getApiserverPath() {
+        return this.apiserverProtocol + "://" + this.apiserverHost + ":" + this.apiserverPort;
+    }
+
+    public JsonNode getSecurityContext() {
+        return this.securityContext;
+    }
+
+    /**
+     * Returns the temporary workspace of the currently running job, or the current project if this
+     * method is called outside the Execution Environment.
+     *
+     * @return {@code DXContainer} for the container, or {@code null} if the container cannot be
+     *         determined
+     */
+    public DXContainer getWorkspace() {
+        if (this.workspaceId == null) {
+            return null;
+        }
+        return DXContainer.getInstance(this.workspaceId);
     }
 }
