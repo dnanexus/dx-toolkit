@@ -16,13 +16,10 @@
 
 package com.dnanexus;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -37,8 +34,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
 /**
  * Utility class containing methods for searching for platform objects by various criteria.
@@ -118,7 +113,7 @@ public final class DXSearch {
         @JsonProperty
         private final TagsQuery tags;
         @JsonProperty
-        private final Map<String, Object> properties;
+        private final PropertiesQuery properties;
         @JsonProperty
         private final String link;
         @JsonProperty
@@ -183,9 +178,15 @@ public final class DXSearch {
             this.type = builder.type;
             this.tags = builder.tags;
             this.describe = builder.describe;
-            this.properties =
-                    makePropertiesQuery(builder.propertyKeysAndValues,
-                            builder.propertiesThatMustBePresent);
+            // For backwards compatibility we allow withProperty to be specified more than once,
+            // with the different conditions being implicitly $and'ed.
+            if (builder.properties.size() == 0) {
+                this.properties = null;
+            } else if (builder.properties.size() == 1) {
+                this.properties = builder.properties.get(0);
+            } else {
+                this.properties = PropertiesQuery.allOf(builder.properties);
+            }
             this.link = builder.link;
             this.scope = builder.scopeQuery;
             this.level = builder.level;
@@ -224,8 +225,7 @@ public final class DXSearch {
         private NameQuery nameQuery;
         private String type;
         private TagsQuery tags;
-        private Map<String, String> propertyKeysAndValues = Maps.newHashMap();
-        private Set<String> propertiesThatMustBePresent = Sets.newHashSet();
+        private List<PropertiesQuery> properties = Lists.newArrayList(); // Implicit $and
         private String link;
         private FindDataObjectsRequest.ScopeQuery scopeQuery;
         private AccessLevel level;
@@ -663,20 +663,44 @@ public final class DXSearch {
         }
 
         /**
+         * Only returns data objects matching the specified properties query.
+         *
+         * @param propertiesQuery properties query
+         *
+         * @return the same builder object
+         */
+        public FindDataObjectsRequestBuilder<T> withProperties(PropertiesQuery propertiesQuery) {
+            // Multiple calls to withProperty are allowed here for backwards compatiblity (this was
+            // how you could query on multiple properties before PropertiesQuery.allOf was
+            // introduced). However, other fields don't support analogous functionality and it could
+            // be removed some time in the future.
+            this.properties.add(Preconditions.checkNotNull(propertiesQuery));
+            return this;
+        }
+
+        /**
          * Only returns data objects where the specified property is present.
+         *
+         * <p>
+         * To specify a complex query on the properties, use
+         * {@link #withProperties(PropertiesQuery)}.
+         * </p>
          *
          * @param propertyKey property key that must be present
          *
          * @return the same builder object
          */
         public FindDataObjectsRequestBuilder<T> withProperty(String propertyKey) {
-            propertiesThatMustBePresent.add(Preconditions.checkNotNull(propertyKey,
-                    "propertyKey may not be null"));
-            return this;
+            return withProperties(PropertiesQuery.withKey(propertyKey));
         }
 
         /**
          * Only returns data objects where the specified property has the specified value.
+         *
+         * <p>
+         * To specify a complex query on the properties, use
+         * {@link #withProperties(PropertiesQuery)}.
+         * </p>
          *
          * @param propertyKey property key
          * @param propertyValue property value
@@ -685,10 +709,7 @@ public final class DXSearch {
          */
         public FindDataObjectsRequestBuilder<T> withProperty(String propertyKey,
                 String propertyValue) {
-            propertyKeysAndValues.put(
-                    Preconditions.checkNotNull(propertyKey, "propertyKey may not be null"),
-                    Preconditions.checkNotNull(propertyValue, "propertyValue may not be null"));
-            return this;
+            return withProperties(PropertiesQuery.withKeyAndValue(propertyKey, propertyValue));
         }
 
         /**
@@ -945,7 +966,7 @@ public final class DXSearch {
         @JsonProperty
         private final TagsQuery tags;
         @JsonProperty
-        private final Map<String, Object> properties;
+        private final PropertiesQuery properties;
         @JsonProperty
         private final String rootExecution;
         @JsonProperty
@@ -1016,9 +1037,15 @@ public final class DXSearch {
             this.name = builder.nameQuery;
             this.executable = builder.executable;
             this.tags = builder.tags;
-            this.properties =
-                    makePropertiesQuery(builder.propertyKeysAndValues,
-                            builder.propertiesThatMustBePresent);
+            // For backwards compatibility we allow withProperty to be specified more than once,
+            // with the different conditions being implicitly $and'ed.
+            if (builder.properties.size() == 0) {
+                this.properties = null;
+            } else if (builder.properties.size() == 1) {
+                this.properties = builder.properties.get(0);
+            } else {
+                this.properties = PropertiesQuery.allOf(builder.properties);
+            }
             this.rootExecution = builder.rootExecution;
             this.originJob = builder.originJob;
             this.parentJob = builder.parentJob;
@@ -1077,8 +1104,7 @@ public final class DXSearch {
         private NameQuery nameQuery;
         private String executable;
         private TagsQuery tags;
-        private Map<String, String> propertyKeysAndValues = Maps.newHashMap();
-        private Set<String> propertiesThatMustBePresent = Sets.newHashSet();
+        private List<PropertiesQuery> properties = Lists.newArrayList(); // Implicit $and
         private String rootExecution;
         private String originJob;
         private String parentJob;
@@ -1407,20 +1433,44 @@ public final class DXSearch {
         }
 
         /**
+         * Only returns executions matching the specified properties query.
+         *
+         * @param propertiesQuery properties query
+         *
+         * @return the same builder object
+         */
+        public FindExecutionsRequestBuilder<T> withProperties(PropertiesQuery propertiesQuery) {
+            // Multiple calls to withProperty are allowed here for backwards compatiblity (this was
+            // how you could query on multiple properties before PropertiesQuery.allOf was
+            // introduced). However, other fields don't support analogous functionality and it could
+            // be removed some time in the future.
+            this.properties.add(Preconditions.checkNotNull(propertiesQuery));
+            return this;
+        }
+
+        /**
          * Only returns executions where the specified property is present.
+         *
+         * <p>
+         * To specify a complex query on the properties, use
+         * {@link #withProperties(PropertiesQuery)}.
+         * </p>
          *
          * @param propertyKey property key that must be present
          *
          * @return the same builder object
          */
         public FindExecutionsRequestBuilder<T> withProperty(String propertyKey) {
-            propertiesThatMustBePresent.add(Preconditions.checkNotNull(propertyKey,
-                    "propertyKey may not be null"));
-            return this;
+            return withProperties(PropertiesQuery.withKey(propertyKey));
         }
 
         /**
          * Only returns executions where the specified property has the specified value.
+         *
+         * <p>
+         * To specify a complex query on the properties, use
+         * {@link #withProperties(PropertiesQuery)}.
+         * </p>
          *
          * @param propertyKey property key
          * @param propertyValue property value
@@ -1428,10 +1478,7 @@ public final class DXSearch {
          * @return the same builder object
          */
         public FindExecutionsRequestBuilder<T> withProperty(String propertyKey, String propertyValue) {
-            propertyKeysAndValues.put(
-                    Preconditions.checkNotNull(propertyKey, "propertyKey may not be null"),
-                    Preconditions.checkNotNull(propertyValue, "propertyValue may not be null"));
-            return this;
+            return withProperties(PropertiesQuery.withKeyAndValue(propertyKey, propertyValue));
         }
 
         /**
@@ -1767,6 +1814,140 @@ public final class DXSearch {
     }
 
     /**
+     * Query for objects (data objects, executions, or projects) with the specified properties.
+     */
+    public static abstract class PropertiesQuery {
+
+        private static class CompoundPropertiesQuery extends PropertiesQuery {
+            private final String operator;
+            private final List<PropertiesQuery> operands;
+
+            public CompoundPropertiesQuery(String operator, List<PropertiesQuery> operands) {
+                this.operator = operator;
+                this.operands = ImmutableList.copyOf(operands);
+            }
+
+            @SuppressWarnings("unused")
+            @JsonValue
+            protected JsonNode getValue() {
+                List<JsonNode> transformedArgs = Lists.newArrayList();
+                for (PropertiesQuery propertiesQuery : this.operands) {
+                    transformedArgs.add(MAPPER.valueToTree(propertiesQuery));
+                }
+                return DXJSON
+                        .getObjectBuilder()
+                        .put(this.operator,
+                                DXJSON.getArrayBuilder().addAll(transformedArgs).build()).build();
+            }
+        }
+
+        private static class SimplePropertiesQuery extends PropertiesQuery {
+            private final String propertyKey;
+            private final String propertyValue;
+
+            public SimplePropertiesQuery(String key, String value) {
+                this.propertyKey = Preconditions.checkNotNull(key);
+                this.propertyValue = Preconditions.checkNotNull(value);
+            }
+
+            public SimplePropertiesQuery(String key) {
+                this.propertyKey = Preconditions.checkNotNull(key);
+                this.propertyValue = null;
+            }
+
+            @SuppressWarnings("unused")
+            @JsonValue
+            protected Object getValue() {
+                if (propertyValue == null) {
+                    return DXJSON.getObjectBuilder().put(propertyKey, true).build();
+                } else {
+                    return DXJSON.getObjectBuilder().put(propertyKey, propertyValue).build();
+                }
+            }
+        }
+
+        /**
+         * A query that must match all of the property queries in the provided list.
+         *
+         * @param propertiesQueries list of queries, all of which must be matched
+         *
+         * @return query
+         */
+        public static PropertiesQuery allOf(List<PropertiesQuery> propertiesQueries) {
+            return new CompoundPropertiesQuery("$and", propertiesQueries);
+        }
+
+        /**
+         * A query that must match all of the specified property queries recursively.
+         *
+         * @param propertiesQueries queries, all of which must be matched
+         *
+         * @return query
+         */
+        public static PropertiesQuery allOf(PropertiesQuery... propertiesQueries) {
+            return PropertiesQuery.allOf(ImmutableList.copyOf(propertiesQueries));
+        }
+
+        /**
+         * A query that matches any of the property queries in the provided list.
+         *
+         * @param propertiesQueries list of queries, at least one of which must be matched
+         *
+         * @return query
+         */
+        public static PropertiesQuery anyOf(List<PropertiesQuery> propertiesQueries) {
+            return new CompoundPropertiesQuery("$or", propertiesQueries);
+        }
+
+        /**
+         * A query that matches any of the specified property queries recursively.
+         *
+         * @param propertiesQueries queries, at least one of which must be matched
+         *
+         * @return query
+         */
+        public static PropertiesQuery anyOf(PropertiesQuery... propertiesQueries) {
+            return PropertiesQuery.anyOf(ImmutableList.copyOf(propertiesQueries));
+        }
+
+        /**
+         * A query that the specified property key is present.
+         *
+         * @param propertyKey property key that must be present
+         *
+         * @return query
+         */
+        public static PropertiesQuery withKey(String propertyKey) {
+            // TODO: some more overloads might be nice here, so you could write something like
+            // PropertiesQuery.withKeys("a", "b") instead of
+            // PropertiesQuery.allOf(PropertiesQuery.withKey("a"), PropertiesQuery.withKey("b"))
+            return new SimplePropertiesQuery(propertyKey);
+        }
+
+        /**
+         * A query that the specified property key has the specified property value.
+         *
+         * @param propertyKey property key
+         * @param propertyValue property value
+         *
+         * @return query
+         */
+        public static PropertiesQuery withKeyAndValue(String propertyKey, String propertyValue) {
+            // TODO: some more overloads might be nice here, so you could write something like
+            // PropertiesQuery.withKeysAndValues("a", "a1", "b", "b1") instead of
+            // PropertiesQuery.allOf(PropertiesQuery.withKeyAndValue("a", "a1"),
+            // PropertiesQuery.withKey("b", "b1"))
+            return new SimplePropertiesQuery(propertyKey, propertyValue);
+        }
+
+        private PropertiesQuery() {
+            // Do not allow subclassing except by the implementations provided here
+        }
+
+    }
+
+
+    /**
      * Query for objects (data objects, executions, or projects) with the specified tags.
      */
     public static abstract class TagsQuery {
@@ -2073,19 +2254,6 @@ public final class DXSearch {
     @Deprecated
     public static FindExecutionsRequestBuilder<DXJob> findJobsWithEnvironment(DXEnvironment env) {
         return new FindExecutionsRequestBuilder<DXExecution>(env).withClassJob();
-    }
-
-    private static Map<String, Object> makePropertiesQuery(
-            Map<String, String> propertyKeysAndValues,
-            Collection<String> propertiesThatMustBePresent) {
-        Map<String, Object> properties = Maps.<String, Object>newHashMap(propertyKeysAndValues);
-        for (String requiredKey : propertiesThatMustBePresent) {
-            properties.put(requiredKey, true);
-        }
-        if (!properties.isEmpty()) {
-            return Collections.unmodifiableMap(properties);
-        }
-        return null;
     }
 
     // Prevent this utility class from being instantiated.

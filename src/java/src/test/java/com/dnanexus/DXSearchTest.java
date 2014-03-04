@@ -28,6 +28,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.dnanexus.DXSearch.PropertiesQuery;
 import com.dnanexus.TestEnvironment.ConfigOption;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -108,15 +109,15 @@ public class DXSearchTest {
     public void testFindDataObjects() {
         DXRecord moo =
                 DXRecord.newRecord().setProject(testProject).setName("Moo")
-                        .putProperty("sampleId", "1").addTypes(ImmutableList.of("genome")).build()
-                        .close();
+                        .putProperty("sampleId", "1").putProperty("process", "a")
+                        .addTypes(ImmutableList.of("genome")).build().close();
         DXRecord foo =
                 DXRecord.newRecord().setProject(testProject).setName("foo")
                         .putProperty("sampleId", "2").addTags(ImmutableList.of("mytag")).build()
                         .close();
         DXRecord food =
                 DXRecord.newRecord().setProject(testProject).setName("food")
-                        .setFolder("/subfolder", true).build().close();
+                        .putProperty("process", "a").setFolder("/subfolder", true).build().close();
         DXRecord open = DXRecord.newRecord().setProject(testProject).setName("open").build();
         DXRecord invisible =
                 DXRecord.newRecord().setProject(testProject).setName("invisible")
@@ -179,6 +180,20 @@ public class DXSearchTest {
         assertEqualsAnyOrder(
                 DXSearch.findDataObjects().inProject(testProject).withProperty("sampleId", "2")
                         .execute().asList(), foo);
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects()
+                        .inProject(testProject)
+                        .withProperties(
+                                PropertiesQuery.allOf(PropertiesQuery.withKey("sampleId"),
+                                        PropertiesQuery.withKeyAndValue("process", "a"))).execute()
+                        .asList(), moo);
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects()
+                        .inProject(testProject)
+                        .withProperties(
+                                PropertiesQuery.anyOf(PropertiesQuery.withKey("sampleId"),
+                                        PropertiesQuery.withKeyAndValue("process", "a"))).execute()
+                        .asList(), moo, foo, food);
 
         // withState
 
@@ -336,6 +351,21 @@ public class DXSearchTest {
                         .withTags(
                                 DXSearch.TagsQuery.anyOf(DXSearch.TagsQuery.allOf("a", "b"),
                                         DXSearch.TagsQuery.of("c"))).buildRequestHash()));
+
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"properties\": {\"foo\": true}}"),
+                mapper.valueToTree(DXSearch.findDataObjects().withProperty("foo")
+                        .buildRequestHash()));
+        Assert.assertEquals(DXJSON
+                .parseJson("{\"properties\": {\"$and\": [{\"foo\": true}, {\"bar\": \"a\"}]}}"),
+                mapper.valueToTree(DXSearch.findDataObjects().withProperty("foo")
+                        .withProperty("bar", "a").buildRequestHash()));
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"properties\": {\"$and\": [{\"foo\": true}, {\"bar\": \"a\"}, {\"baz\": \"b\"}]}}"),
+                mapper.valueToTree(DXSearch.findDataObjects().withProperty("foo")
+                        .withProperty("bar", "a")
+                        .withProperties(PropertiesQuery.withKeyAndValue("baz", "b"))
+                        .buildRequestHash()));
 
         try {
             DXSearch.findDataObjects()
@@ -544,6 +574,20 @@ public class DXSearchTest {
                 .withProperty("k1", "v2").execute().asList());
         assertEqualsAnyOrder(DXSearch.findExecutions().inProject(testProject).withProperty("k2")
                 .execute().asList());
+        assertEqualsAnyOrder(
+                DXSearch.findExecutions()
+                        .inProject(testProject)
+                        .withProperties(
+                                PropertiesQuery.anyOf(PropertiesQuery.withKey("k1"),
+                                        PropertiesQuery.withKeyAndValue("does", "not exist")))
+                        .execute().asList(), job);
+        assertEqualsAnyOrder(DXSearch
+                .findExecutions()
+                .inProject(testProject)
+                .withProperties(
+                        PropertiesQuery.allOf(PropertiesQuery.withKey("k1"),
+                                PropertiesQuery.withKeyAndValue("does", "not exist"))).execute()
+                .asList());
 
         assertEqualsAnyOrder(
                 DXSearch.findExecutions().inProject(testProject).nameMatchesExactly("javatest")
@@ -638,7 +682,7 @@ public class DXSearchTest {
                         .withParentJob(DXJob.getInstance("job-000011112222333344445555"))
                         .buildRequestHash()));
         Assert.assertEquals(
-                DXJSON.parseJson("{\"properties\": {\"a\": \"b\", \"c\": true}}"),
+                DXJSON.parseJson("{\"properties\": {\"$and\": [{\"a\": \"b\"}, {\"c\": true}]}}"),
                 mapper.valueToTree(DXSearch.findExecutions().withProperty("a", "b")
                         .withProperty("c").buildRequestHash()));
         Assert.assertEquals(
@@ -667,6 +711,19 @@ public class DXSearchTest {
                 DXJSON.parseJson("{\"state\": [\"in_progress\", \"done\"]}"),
                 mapper.valueToTree(DXSearch.findExecutions()
                         .withState(AnalysisState.IN_PROGRESS, AnalysisState.DONE)
+                        .buildRequestHash()));
+
+        Assert.assertEquals(DXJSON.parseJson("{\"properties\": {\"foo\": true}}"), mapper
+                .valueToTree(DXSearch.findExecutions().withProperty("foo").buildRequestHash()));
+        Assert.assertEquals(DXJSON
+                .parseJson("{\"properties\": {\"$and\": [{\"foo\": true}, {\"bar\": \"a\"}]}}"),
+                mapper.valueToTree(DXSearch.findExecutions().withProperty("foo")
+                        .withProperty("bar", "a").buildRequestHash()));
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"properties\": {\"$and\": [{\"foo\": true}, {\"bar\": \"a\"}, {\"baz\": \"b\"}]}}"),
+                mapper.valueToTree(DXSearch.findExecutions().withProperty("foo")
+                        .withProperty("bar", "a")
+                        .withProperties(PropertiesQuery.withKeyAndValue("baz", "b"))
                         .buildRequestHash()));
 
         // Conversion of dates to milliseconds since epoch

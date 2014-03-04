@@ -9,6 +9,8 @@
   JSON.
 * DXEnvironment.Builder supports setting, and DXEnvironment supports getting,
   all the other fields that are stored, too.
+* DxSearch.PropertiesQuery allows for complex queries on properties, analogous
+  to the functionality for tags.
 
 ## 0.88.0
 
