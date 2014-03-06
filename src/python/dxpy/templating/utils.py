@@ -414,7 +414,7 @@ entry point by providing the ``systemRequirements`` field to
 providing the ``systemRequirements`` field to ```/applet-XXXX/run``` or
 ```/app-XXXX/run```, as follows:'''
 
-    entry_points_hash = ",\n        ".join(['"{entry_point}": {{"instanceType": "dx_m1.large"}}'.format(entry_point=entry_point) for entry_point in entry_points])
+    entry_points_hash = ",\n        ".join(['"{entry_point}": {{"instanceType": "mem2_hdd2_x2"}}'.format(entry_point=entry_point) for entry_point in entry_points])
 
     with open(os.path.join(name, 'Readme.developer.md'), 'w') as developer_readme_file:
         developer_readme_file.write(developer_readme_template.format(

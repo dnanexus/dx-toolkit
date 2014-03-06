@@ -887,6 +887,8 @@ dx-jobutil-add-output record_array $second_record --array
         with self.assertSubprocessFailure(stderr_regexp='JSON', exit_code=3):
             run("dx run " + applet_id + " --extra-args not-a-JSON-string")
 
+    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"),
+                         'skipping test that would rely on new server updates')
     def test_dx_run_clone(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
@@ -925,14 +927,14 @@ dx-jobutil-add-output record_array $second_record --array
 
         # originally, set everything and have an instance type for all
         # entry points
-        orig_job_id = run("dx run " + applet_id + ' -inumber=32 --name jobname --folder /output --instance-type dx_m1.large --brief -y').strip()
+        orig_job_id = run("dx run " + applet_id + ' -inumber=32 --name jobname --folder /output --instance-type mem2_hdd2_x2 --brief -y').strip()
         orig_job_desc = dxpy.api.job_describe(orig_job_id)
         # control
         self.assertEqual(orig_job_desc['name'], 'jobname')
         self.assertEqual(orig_job_desc['project'], self.project)
         self.assertEqual(orig_job_desc['folder'], '/output')
         self.assertEqual(orig_job_desc['input'], {'number': 32})
-        self.assertEqual(orig_job_desc['systemRequirements'], {'*': {'instanceType': 'dx_m1.large'}})
+        self.assertEqual(orig_job_desc['systemRequirements'], {'*': {'instanceType': 'mem2_hdd2_x2'}})
 
         # clone the job
 
@@ -977,42 +979,42 @@ dx-jobutil-add-output record_array $second_record --array
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['input'])
 
         # override the blanket instance type
-        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --instance-type dx_m1.medium --brief -y").strip())
+        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --instance-type mem2_hdd2_x1 --brief -y").strip())
         self.assertEqual(new_job_desc['systemRequirements'],
-                         {'*': {'instanceType': 'dx_m1.medium'}})
+                         {'*': {'instanceType': 'mem2_hdd2_x1'}})
         check_new_job_metadata(new_job_desc, orig_job_desc,
                                overridden_fields=['systemRequirements'])
 
         # override instance type for specific entry point(s)
-        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --instance-type '{\"some_ep\": \"dx_m1.medium\", \"some_other_ep\": \"dx_m1.xlarge\"}' --brief -y").strip())
+        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --instance-type '{\"some_ep\": \"mem2_hdd2_x1\", \"some_other_ep\": \"mem2_hdd2_x4\"}' --brief -y").strip())
         self.assertEqual(new_job_desc['systemRequirements'],
-                         {'*': {'instanceType': 'dx_m1.large'},
-                          'some_ep': {'instanceType': 'dx_m1.medium'},
-                          'some_other_ep': {'instanceType': 'dx_m1.xlarge'}})
+                         {'*': {'instanceType': 'mem2_hdd2_x2'},
+                          'some_ep': {'instanceType': 'mem2_hdd2_x1'},
+                          'some_other_ep': {'instanceType': 'mem2_hdd2_x4'}})
         check_new_job_metadata(new_job_desc, orig_job_desc,
                                overridden_fields=['systemRequirements'])
 
         # new original job with entry point-specific systemRequirements
-        orig_job_id = run("dx run " + applet_id + " --instance-type '{\"some_ep\": \"dx_m1.medium\"}' --brief -y").strip()
+        orig_job_id = run("dx run " + applet_id + " --instance-type '{\"some_ep\": \"mem2_hdd2_x1\"}' --brief -y").strip()
         orig_job_desc = dxpy.api.job_describe(orig_job_id)
-        self.assertEqual(orig_job_desc['systemRequirements'], {'some_ep': {'instanceType': 'dx_m1.medium'}})
+        self.assertEqual(orig_job_desc['systemRequirements'], {'some_ep': {'instanceType': 'mem2_hdd2_x1'}})
 
         # override all entry points
-        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --instance-type dx_m1.large --brief -y").strip())
-        self.assertEqual(new_job_desc['systemRequirements'], {'*': {'instanceType': 'dx_m1.large'}})
+        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --instance-type mem2_hdd2_x2 --brief -y").strip())
+        self.assertEqual(new_job_desc['systemRequirements'], {'*': {'instanceType': 'mem2_hdd2_x2'}})
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
 
         # override a different entry point; original untouched
-        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --instance-type '{\"some_other_ep\": \"dx_m1.large\"}' --brief -y").strip())
+        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --instance-type '{\"some_other_ep\": \"mem2_hdd2_x2\"}' --brief -y").strip())
         self.assertEqual(new_job_desc['systemRequirements'],
-                         {'some_ep': {'instanceType': 'dx_m1.medium'},
-                          'some_other_ep': {'instanceType': 'dx_m1.large'}})
+                         {'some_ep': {'instanceType': 'mem2_hdd2_x1'},
+                          'some_other_ep': {'instanceType': 'mem2_hdd2_x2'}})
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
 
         # override the same entry point
-        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --instance-type '{\"some_ep\": \"dx_m1.large\"}' --brief -y").strip())
+        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --instance-type '{\"some_ep\": \"mem2_hdd2_x2\"}' --brief -y").strip())
         self.assertEqual(new_job_desc['systemRequirements'],
-                         {'some_ep': {'instanceType': 'dx_m1.large'}})
+                         {'some_ep': {'instanceType': 'mem2_hdd2_x2'}})
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
 
 class TestDXClientWorkflow(DXTestCase):
@@ -1074,7 +1076,8 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertIn(analysis_id, new_workflow_desc)
         self.assertIn(stage_id, new_workflow_desc)
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS and os.environ.get("DX_RUN_NEXT_TESTS"),
+                         'skipping test that runs jobs and rely on new server updates')
     def test_dx_run_clone_analysis(self):
         dxpy.api.applet_new({
             "project": self.project,
@@ -1088,8 +1091,8 @@ class TestDXClientWorkflow(DXTestCase):
 
         # make a workflow with the stage twice
         run("dx new workflow myworkflow")
-        run("dx add stage myworkflow myapplet -inumber=32 --instance-type dx_m1.large")
-        run("dx add stage myworkflow myapplet -inumber=52 --instance-type dx_m1.medium")
+        run("dx add stage myworkflow myapplet -inumber=32 --instance-type mem2_hdd2_x2")
+        run("dx add stage myworkflow myapplet -inumber=52 --instance-type mem2_hdd2_x1")
 
         # run it
         analysis_id = run("dx run myworkflow -y --brief").strip()
@@ -1097,7 +1100,7 @@ class TestDXClientWorkflow(DXTestCase):
         # test cases
         no_change_analysis_id = run("dx run --clone " + analysis_id + " --brief -y").strip()
         change_an_input_analysis_id = run("dx run --clone " + analysis_id + " -i0.number=52 --brief -y").strip()
-        change_inst_type_analysis_id = run("dx run --clone " + analysis_id + " --instance-type dx_m1.large --brief -y").strip()
+        change_inst_type_analysis_id = run("dx run --clone " + analysis_id + " --instance-type mem2_hdd2_x2 --brief -y").strip()
 
         time.sleep(2) # May need to wait for any new jobs to be created in the system
 
@@ -1127,7 +1130,7 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertNotEqual(change_inst_type_analysis_desc['stages'][1]['execution']['id'],
                             orig_analysis_desc['stages'][1]['execution']['id'])
         self.assertEqual(change_inst_type_analysis_desc['stages'][1]['execution']['instanceType'],
-                         'dx_m1.large')
+                         'mem2_hdd2_x2')
 
         # Run in a different project and add some metadata
         try:
@@ -1184,7 +1187,8 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertNotIn('will reuse results from a previous analysis', run_output)
         self.assertNotIn(job_id, run_output)
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS and os.environ.get("DX_RUN_NEXT_TESTS"),
+                         'skipping test that runs jobs and rely on new server updates')
     def test_dx_run_workflow_with_inst_type_requests(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "name": "myapplet",
@@ -1201,10 +1205,10 @@ class TestDXClientWorkflow(DXTestCase):
         # control (no request)
         no_req_id = run('dx run myworkflow -y --brief').strip()
         # request for all stages
-        all_stg_req_id = run('dx run myworkflow --instance-type dx_m1.medium -y --brief').strip()
+        all_stg_req_id = run('dx run myworkflow --instance-type mem2_hdd2_x1 -y --brief').strip()
 
         # request for a stage specifically (by name)
-        stg_req_id = run('dx run myworkflow --instance-type an=awful=name=dx_m1.large --instance-type second=dx_m1.medium -y --brief').strip()
+        stg_req_id = run('dx run myworkflow --instance-type an=awful=name=mem2_hdd2_x2 --instance-type second=mem2_hdd2_x1 -y --brief').strip()
 
         time.sleep(2) # give time for all jobs to be populated
 
@@ -1213,22 +1217,22 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertIsNone(no_req_desc['stages'][1]['execution']['instanceType'])
         all_stg_req_desc = dxpy.describe(all_stg_req_id)
         self.assertEqual(all_stg_req_desc['stages'][0]['execution']['instanceType'],
-                         'dx_m1.medium')
+                         'mem2_hdd2_x1')
         self.assertEqual(all_stg_req_desc['stages'][1]['execution']['instanceType'],
-                         'dx_m1.medium')
+                         'mem2_hdd2_x1')
         stg_req_desc = dxpy.describe(stg_req_id)
         self.assertEqual(stg_req_desc['stages'][0]['execution']['instanceType'],
-                         'dx_m1.large')
+                         'mem2_hdd2_x2')
         self.assertEqual(stg_req_desc['stages'][1]['execution']['instanceType'],
-                         'dx_m1.medium')
+                         'mem2_hdd2_x1')
 
         # request for a stage specifically (by index); if same inst
         # type as before, should reuse results
         self.assertIn(stg_req_desc['stages'][0]['execution']['id'],
-                      run('dx run myworkflow --instance-type 0=dx_m1.large -y'))
+                      run('dx run myworkflow --instance-type 0=mem2_hdd2_x2 -y'))
         # and by stage ID
         self.assertIn(stg_req_desc['stages'][0]['execution']['id'],
-                      run('dx run myworkflow --instance-type ' + stage_ids[0] + '=dx_m1.large -y'))
+                      run('dx run myworkflow --instance-type ' + stage_ids[0] + '=mem2_hdd2_x2 -y'))
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would attempt to run a job')
     def test_dx_run_workflow_with_stage_folders(self):
@@ -1377,6 +1381,8 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertIn("Input Spec", desc)
         self.assertIn("default=10", desc)
 
+    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"),
+                         'skipping test that would rely on new server updates')
     def test_dx_add_remove_list_stages(self):
         workflow_id = run(u"dx new workflow myworkflow --title title --brief").strip()
         run("dx describe " + workflow_id)
@@ -1397,11 +1403,11 @@ class TestDXClientWorkflow(DXTestCase):
         stage_ids.append(run("dx add stage " + workflow_id + " --name first " + applet_id + " --brief").strip())
         # not-yet-existing folder path should work
         # also, set input and instance type
-        stage_ids.append(run("dx add stage myworkflow --relative-output-folder output myapplet --brief -inumber=32 --instance-type dx_m1.large").strip())
+        stage_ids.append(run("dx add stage myworkflow --relative-output-folder output myapplet --brief -inumber=32 --instance-type mem2_hdd2_x2").strip())
         # test relative folder path
         run("dx mkdir -p a/b/c")
         run("dx cd a/b/c")
-        stage_ids.append(run("dx add stage " + workflow_id + " --name second --output-folder . " + applet_id + " --brief --instance-type '{\"main\": \"dx_m1.large\"}'").strip())
+        stage_ids.append(run("dx add stage " + workflow_id + " --name second --output-folder . " + applet_id + " --brief --instance-type '{\"main\": \"mem2_hdd2_x2\"}'").strip())
         with self.assertSubprocessFailure(stderr_regexp='not found in the input spec', exit_code=3):
             # input spec should be checked
             run("dx add stage " + workflow_id + " " + applet_id + " -inonexistent=42")
@@ -1412,10 +1418,10 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertEqual(desc['stages'][0]['folder'], None)
         self.assertEqual(desc['stages'][1]['folder'], 'output')
         self.assertEqual(desc['stages'][1]['input']['number'], 32)
-        self.assertEqual(desc['stages'][1]['systemRequirements'], {"*": {"instanceType": "dx_m1.large"}})
+        self.assertEqual(desc['stages'][1]['systemRequirements'], {"*": {"instanceType": "mem2_hdd2_x2"}})
         self.assertEqual(desc['stages'][2]['folder'], '/a/b/c')
         self.assertEqual(desc['stages'][2]['systemRequirements'],
-                         {"main": {"instanceType": "dx_m1.large"}})
+                         {"main": {"instanceType": "mem2_hdd2_x2"}})
 
         # errors
         # when adding a stage with both absolute and relative output folders
@@ -1531,6 +1537,8 @@ class TestDXClientWorkflow(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp="no-title", exit_code=2):
             run("dx update workflow myworkflow --output-folder /foo --no-output-folder")
 
+    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"),
+                         'skipping test that would rely on new server updates')
     def test_dx_update_stage(self):
         workflow_id = run(u"dx new workflow myworkflow --brief").strip()
         run("dx describe " + workflow_id)
@@ -1559,21 +1567,21 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertEqual(desc["stages"][0]["systemRequirements"], {})
 
         # set the name, folder, some input, and the instance type
-        run(u"dx update stage myworkflow 0 --name тitle -inumber=32 --relative-output-folder=foo --instance-type dx_m1.large")
+        run(u"dx update stage myworkflow 0 --name тitle -inumber=32 --relative-output-folder=foo --instance-type mem2_hdd2_x2")
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(desc["editVersion"], 2)
         self.assertEqual(desc["stages"][0]["name"], u"тitle")
         self.assertEqual(desc["stages"][0]["folder"], "foo")
         self.assertEqual(desc["stages"][0]["input"]["number"], 32)
-        self.assertEqual(desc["stages"][0]["systemRequirements"], {"*": {"instanceType": "dx_m1.large"}})
+        self.assertEqual(desc["stages"][0]["systemRequirements"], {"*": {"instanceType": "mem2_hdd2_x2"}})
 
         # use a relative folder path and also set instance type using JSON
-        run(u"dx update stage myworkflow 0 --name тitle -inumber=32 --output-folder=. --instance-type '{\"main\": \"dx_m1.large\"}'")
+        run(u"dx update stage myworkflow 0 --name тitle -inumber=32 --output-folder=. --instance-type '{\"main\": \"mem2_hdd2_x2\"}'")
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(desc["editVersion"], 3)
         self.assertEqual(desc["stages"][0]["folder"], u"/")
         self.assertEqual(desc["stages"][0]["systemRequirements"],
-                         {"main": {"instanceType": "dx_m1.large"}})
+                         {"main": {"instanceType": "mem2_hdd2_x2"}})
 
         # unset name
         run("dx update stage myworkflow " + stage_id + " --no-name")

@@ -240,7 +240,7 @@ class PrintInstanceTypeHelp(argparse.Action):
         print()
         print(fill('A single instance type can be requested to be used by all entry points by providing the instance type name.  Different instance types can also be requested for different entry points of an app or applet by providing a JSON string mapping from function names to instance types, e.g.'))
         print()
-        print('    {"main": "dx_m1.large", "other_function": "dx_m1.medium"}')
+        print('    {"main": "mem2_hdd2_x2", "other_function": "mem2_hdd2_x1"}')
         if parser.prog == 'dx run':
             print()
             print(fill('If running a workflow, different stages can have different instance type ' +
@@ -250,11 +250,11 @@ class PrintInstanceTypeHelp(argparse.Action):
                        'identifier is provided, the value is applied as a default for all stages.'))
             print()
             print(fill('The following example runs all entry points of the first stage with ' +
-                       'dx_m1.large, the stage named "BWA" with dx_m1.medium, and all other ' +
-                       'stages with dx_m1.xlarge'))
+                       'mem2_hdd2_x2, the stage named "BWA" with mem2_hdd2_x1, and all other ' +
+                       'stages with mem2_hdd2_x4'))
             print()
-            print('    Example: dx run workflow --instance-type 0=dx_m1.large \\')
-            print('               --instance-type BWA=dx_m1.medium --instance-type dx_m1.xlarge')
+            print('    Example: dx run workflow --instance-type 0=mem2_hdd2_x2 \\')
+            print('               --instance-type BWA=mem2_hdd2_x1 --instance-type mem2_hdd2_x4')
         print()
         print('Available instance types:')
         print()

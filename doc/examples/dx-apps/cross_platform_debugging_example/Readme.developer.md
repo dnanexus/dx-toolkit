@@ -12,7 +12,7 @@ providing the ``systemRequirements`` field to ```/applet-XXXX/run``` or
 
     {
       systemRequirements: {
-        "main": {"instanceType": "dx_m1.large"}
+        "main": {"instanceType": "mem2_hdd2_x2"}
       },
       [...]
     }

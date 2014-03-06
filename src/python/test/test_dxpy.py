@@ -1011,7 +1011,8 @@ def main(number):
         self.assertEqual(analysis_desc["tags"], ["foo"])
         self.assertEqual(analysis_desc["properties"], {"foo": "bar"})
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS and os.environ.get("DX_RUN_NEXT_TESTS"),
+                         'skipping test that would run a job and rely on new server updates')
     def test_run_workflow_with_instance_type(self):
         dxworkflow = dxpy.DXWorkflow(dxpy.api.workflow_new({"project": self.proj_id})['id'])
         dxapplet = dxpy.DXApplet()
@@ -1032,28 +1033,28 @@ def main(number):
         self.assertIsNone(dxjob.describe()['instanceType'])
 
         # request for all stages and all entry points
-        dxanalysis = dxworkflow.run({}, instance_type="dx_m1.medium")
+        dxanalysis = dxworkflow.run({}, instance_type="mem2_hdd2_x1")
         time.sleep(2)
         dxjob = dxpy.DXJob(dxanalysis.describe()['stages'][0]['execution']['id'])
-        self.assertEqual(dxjob.describe()['instanceType'], 'dx_m1.medium')
+        self.assertEqual(dxjob.describe()['instanceType'], 'mem2_hdd2_x1')
 
         # request for all stages, overriding some entry points
-        dxanalysis = dxworkflow.run({}, instance_type={"*": "dx_m1.medium", "foo": "dx_m1.large"})
+        dxanalysis = dxworkflow.run({}, instance_type={"*": "mem2_hdd2_x1", "foo": "mem2_hdd2_x2"})
         time.sleep(2)
         dxjob = dxpy.DXJob(dxanalysis.describe()['stages'][0]['execution']['id'])
-        self.assertEqual(dxjob.describe()['instanceType'], 'dx_m1.medium')
+        self.assertEqual(dxjob.describe()['instanceType'], 'mem2_hdd2_x1')
 
         # request for the stage specifically, for all entry points
-        dxanalysis = dxworkflow.run({}, stage_instance_types={stage_id: "dx_m1.large"})
+        dxanalysis = dxworkflow.run({}, stage_instance_types={stage_id: "mem2_hdd2_x2"})
         time.sleep(2)
         dxjob = dxpy.DXJob(dxanalysis.describe()['stages'][0]['execution']['id'])
-        self.assertEqual(dxjob.describe()['instanceType'], 'dx_m1.large')
+        self.assertEqual(dxjob.describe()['instanceType'], 'mem2_hdd2_x2')
 
         # request for the stage specifically, overriding some entry points
-        dxanalysis = dxworkflow.run({}, stage_instance_types={stage_id: {"*": "dx_m1.large", "foo": "dx_m1.medium"}})
+        dxanalysis = dxworkflow.run({}, stage_instance_types={stage_id: {"*": "mem2_hdd2_x2", "foo": "mem2_hdd2_x1"}})
         time.sleep(2)
         dxjob = dxpy.DXJob(dxanalysis.describe()['stages'][0]['execution']['id'])
-        self.assertEqual(dxjob.describe()['instanceType'], 'dx_m1.large')
+        self.assertEqual(dxjob.describe()['instanceType'], 'mem2_hdd2_x2')
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
     def test_run_workflow_with_stage_folders(self):
@@ -1174,6 +1175,8 @@ def main(number):
         self.assertEqual(desc['description'], 'mydescription')
         self.assertEqual(desc['outputFolder'], '/foo')
 
+    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"),
+                         'skipping test that would rely on new server updates')
     def test_add_move_remove_stages(self):
         dxworkflow = dxpy.new_dxworkflow()
         dxapplet = dxpy.DXApplet()
@@ -1184,25 +1187,25 @@ def main(number):
         # Add stages
         first_stage = dxworkflow.add_stage(dxapplet, name='stagename', folder="/outputfolder",
                                            stage_input={"my_input": "hello world"},
-                                           instance_type="dx_m1.large")
+                                           instance_type="mem2_hdd2_x2")
         self.assertEqual(dxworkflow.editVersion, 1)
         self.assertEqual(dxworkflow.stages[0]["name"], "stagename")
         self.assertEqual(dxworkflow.stages[0]["folder"], "/outputfolder")
         self.assertEqual(dxworkflow.stages[0]["input"]["my_input"], "hello world")
         self.assertEqual(dxworkflow.stages[0]["systemRequirements"],
-                         {"*": {"instanceType": "dx_m1.large"}})
+                         {"*": {"instanceType": "mem2_hdd2_x2"}})
         second_stage = dxworkflow.add_stage(dxapplet,
                                             name="stagename",
                                             folder="relativefolder",
-                                            instance_type={"main": "dx_m1.large", "foo": "dx_m1.medium"},
+                                            instance_type={"main": "mem2_hdd2_x2", "foo": "mem2_hdd2_x1"},
                                             edit_version=1)
         self.assertEqual(dxworkflow.editVersion, 2)
         self.assertEqual(len(dxworkflow.stages), 2)
         self.assertEqual(dxworkflow.stages[1]["executable"], dxapplet.get_id())
         self.assertEqual(dxworkflow.stages[1]["folder"], "relativefolder")
         self.assertEqual(dxworkflow.stages[1]["systemRequirements"],
-                         {"main": {"instanceType": "dx_m1.large"},
-                          "foo": {"instanceType": "dx_m1.medium"}})
+                         {"main": {"instanceType": "mem2_hdd2_x2"},
+                          "foo": {"instanceType": "mem2_hdd2_x1"}})
         with self.assertRaises(DXAPIError):
             dxworkflow.add_stage(dxapplet, edit_version=1)
 
@@ -1324,6 +1327,8 @@ def main(number):
         dxworkflow.update()
         self.assertEqual(dxworkflow.editVersion, 5)
 
+    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"),
+                         'skipping test that would rely on new server updates')
     def test_update_stage(self):
         dxworkflow = dxpy.new_dxworkflow()
         dxapplet = dxpy.DXApplet()
@@ -1334,25 +1339,25 @@ def main(number):
         # Add a stage
         stage = dxworkflow.add_stage(dxapplet, name='stagename', folder="/outputfolder",
                                      stage_input={"my_input": "hello world"},
-                                     instance_type={"main": "dx_m1.large"})
+                                     instance_type={"main": "mem2_hdd2_x2"})
         self.assertEqual(dxworkflow.editVersion, 1)
         self.assertEqual(dxworkflow.stages[0]["executable"], dxapplet.get_id())
         self.assertEqual(dxworkflow.stages[0]["name"], "stagename")
         self.assertEqual(dxworkflow.stages[0]["folder"], "/outputfolder")
         self.assertEqual(dxworkflow.stages[0]["input"]["my_input"], "hello world")
         self.assertEqual(dxworkflow.stages[0]["systemRequirements"],
-                         {"main": {"instanceType": "dx_m1.large"}})
+                         {"main": {"instanceType": "mem2_hdd2_x2"}})
 
         # Update just its metadata
         dxworkflow.update_stage(stage, unset_name=True, folder="/newoutputfolder",
                                 stage_input={"my_input": None},
-                                instance_type="dx_m1.medium")
+                                instance_type="mem2_hdd2_x1")
         self.assertEqual(dxworkflow.editVersion, 2)
         self.assertIsNone(dxworkflow.stages[0]["name"])
         self.assertEqual(dxworkflow.stages[0]["folder"], "/newoutputfolder")
         self.assertNotIn("my_input", dxworkflow.stages[0]["input"])
         self.assertEqual(dxworkflow.stages[0]["systemRequirements"],
-                         {"*": {"instanceType": "dx_m1.medium"}})
+                         {"*": {"instanceType": "mem2_hdd2_x1"}})
 
         # Update using stage index
         dxworkflow.update_stage(0, folder="/", stage_input={"my_input": "foo"}, edit_version=2)
@@ -1568,8 +1573,8 @@ class TestDXSearch(unittest.TestCase):
                 break
         self.assertTrue(found_proj)
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
-                         'skipping test that would run a job')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS and os.environ.get("DX_RUN_NEXT_TESTS"),
+                         'skipping test that would run a job and rely on new server updates')
     def test_find_executions(self):
         dxapplet = dxpy.DXApplet()
         dxapplet.new(name="test_applet",
@@ -1592,7 +1597,7 @@ class TestDXSearch(unittest.TestCase):
                                     properties={"foo": "bar"})
 
         with self.assertRaises(DXError):
-            dxapplet.run(applet_input=prog_input, stage_instance_types={0: "dx_m1.large"})
+            dxapplet.run(applet_input=prog_input, stage_instance_types={0: "mem2_hdd2_x2"})
 
         dxapplet.run(applet_input=prog_input)
         dxjob = dxapplet.run(applet_input=prog_input, tags=["foo", "bar"], properties={"foo": "baz"})
