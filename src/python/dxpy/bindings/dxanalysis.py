@@ -164,7 +164,7 @@ class DXAnalysis(DXObject):
         :type field: string
         :param index: If the referenced field is an array, optionally specify an index (starting from 0) to indicate a particular member of the array
         :type index: int
-        :param metadata: If the referenced field is of a data object class, a string indicating the metadata that should be retried, e.g. "name", "properties.propkey", "details.refgenome"
+        :param metadata: If the referenced field is of a data object class, a string indicating the metadata that should be read, e.g. "name", "properties.propkey", "details.refgenome"
         :type metadata: string
 
         Returns a dict containing a valid reference to an output of this analysis.
