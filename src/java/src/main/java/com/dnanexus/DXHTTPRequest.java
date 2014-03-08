@@ -58,7 +58,7 @@ public class DXHTTPRequest {
     * Construct the DXHTTPRequest using the given DXEnvironment.
     */
     public DXHTTPRequest(DXEnvironment env) {
-        this.securityContext = env.getSecurityContext();
+        this.securityContext = env.getSecurityContextJson();
         this.apiserver = env.getApiserverPath();
         this.httpclient = new DefaultHttpClient();
         httpclient.getParams().setParameter(CoreProtocolPNames.USER_AGENT, USER_AGENT);

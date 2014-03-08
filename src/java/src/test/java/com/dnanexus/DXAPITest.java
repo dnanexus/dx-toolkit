@@ -65,18 +65,16 @@ public class DXAPITest {
 
     @Test
     public void testDXAPICustomEnvironment() throws IOException {
-        DXEnvironment env = new DXEnvironment.Builder().build();
+        DXEnvironment env = DXEnvironment.Builder.fromDefaults().build();
         JsonNode input =
                 (JsonNode) (new MappingJsonFactory().createJsonParser("{}").readValueAsTree());
         JsonNode responseJson = DXAPI.systemFindDataObjects(input, JsonNode.class, env);
         Assert.assertEquals(responseJson.isObject(), true);
 
-        JsonNode bogusSecCtx =
-                DXJSON.getObjectBuilder().put("auth_token_type", "Bearer")
-                        .put("auth_token", "BOGUS").build();
-        env = new DXEnvironment.Builder().setSecurityContext(bogusSecCtx).build();
+        DXEnvironment bogusContextEnv =
+                DXEnvironment.Builder.fromDefaults().setBearerToken("BOGUS").build();
         try {
-            DXAPI.systemFindDataObjects(input, JsonNode.class, env);
+            DXAPI.systemFindDataObjects(input, JsonNode.class, bogusContextEnv);
             Assert.fail("Expected request with bogus token to throw InvalidAuthentication");
         } catch (InvalidAuthenticationException e) {
             // Expected
