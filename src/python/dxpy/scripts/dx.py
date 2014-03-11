@@ -3245,7 +3245,8 @@ parser_login.add_argument('--protocol', help='Use the given protocol to contact 
 parser_login.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
 parser_login.add_argument('--save', help='Save token and other environment variables for future sessions',
                           action='store_true')
-parser_login.add_argument('--timeout', help='Timeout for this login token', default='30d')
+parser_login.add_argument('--timeout', default='30d',
+                          help='Timeout for this login token (in seconds, or use suffix s, m, h, d, w, M, y)')
 parser_login.add_argument('--staging', nargs=0, help=argparse.SUPPRESS, action=SetStagingEnv)
 parser_login.set_defaults(staging=False, func=login)
 register_subparser(parser_login, categories='session')
