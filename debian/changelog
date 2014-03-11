@@ -1,3 +1,15 @@
+dx-toolkit (0.89.0) precise; urgency=low
+
+  * dxpy and dx: support new instance type names.
+
+  * Java bindings: support complex queries by properties.
+
+  * Java bindings: DXEnvironment improvements.
+
+  * Various documentation improvements.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 11 Mar 2014 19:05:49 +0000
+
 dx-toolkit (0.88.0) precise; urgency=low
 
   * dxpy: Add index and metadata options to .get_output_ref
