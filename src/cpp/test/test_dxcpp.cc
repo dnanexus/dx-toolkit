@@ -1421,7 +1421,7 @@ TEST(DXJobTest, AllJobTests_SLOW) {
 
   vector<string> depends;
   depends.push_back(job.getID());
-  DXJob job2 = apl.run(JSON::parse("{\"rowFetchChunk\": 100}"), "/", depends, "dx_m1.medium");
+  DXJob job2 = apl.run(JSON::parse("{\"rowFetchChunk\": 100}"), "/", depends, "mem2_hdd2_x1");
   job2.waitOnDone(180);
   string j2_state = job2.getState();
   ASSERT_NE(j2_state, "failed");
