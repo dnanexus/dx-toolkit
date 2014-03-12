@@ -1011,8 +1011,7 @@ def main(number):
         self.assertEqual(analysis_desc["tags"], ["foo"])
         self.assertEqual(analysis_desc["properties"], {"foo": "bar"})
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS and os.environ.get("DX_RUN_NEXT_TESTS"),
-                         'skipping test that would run a job and rely on new server updates')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
     def test_run_workflow_with_instance_type(self):
         dxworkflow = dxpy.DXWorkflow(dxpy.api.workflow_new({"project": self.proj_id})['id'])
         dxapplet = dxpy.DXApplet()
@@ -1175,8 +1174,6 @@ def main(number):
         self.assertEqual(desc['description'], 'mydescription')
         self.assertEqual(desc['outputFolder'], '/foo')
 
-    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"),
-                         'skipping test that would rely on new server updates')
     def test_add_move_remove_stages(self):
         dxworkflow = dxpy.new_dxworkflow()
         dxapplet = dxpy.DXApplet()
@@ -1327,8 +1324,6 @@ def main(number):
         dxworkflow.update()
         self.assertEqual(dxworkflow.editVersion, 5)
 
-    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"),
-                         'skipping test that would rely on new server updates')
     def test_update_stage(self):
         dxworkflow = dxpy.new_dxworkflow()
         dxapplet = dxpy.DXApplet()
@@ -1573,8 +1568,7 @@ class TestDXSearch(unittest.TestCase):
                 break
         self.assertTrue(found_proj)
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS and os.environ.get("DX_RUN_NEXT_TESTS"),
-                         'skipping test that would run a job and rely on new server updates')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
     def test_find_executions(self):
         dxapplet = dxpy.DXApplet()
         dxapplet.new(name="test_applet",

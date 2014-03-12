@@ -887,8 +887,6 @@ dx-jobutil-add-output record_array $second_record --array
         with self.assertSubprocessFailure(stderr_regexp='JSON', exit_code=3):
             run("dx run " + applet_id + " --extra-args not-a-JSON-string")
 
-    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"),
-                         'skipping test that would rely on new server updates')
     def test_dx_run_clone(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
@@ -1076,8 +1074,7 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertIn(analysis_id, new_workflow_desc)
         self.assertIn(stage_id, new_workflow_desc)
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS and os.environ.get("DX_RUN_NEXT_TESTS"),
-                         'skipping test that runs jobs and rely on new server updates')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
     def test_dx_run_clone_analysis(self):
         dxpy.api.applet_new({
             "project": self.project,
@@ -1187,8 +1184,7 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertNotIn('will reuse results from a previous analysis', run_output)
         self.assertNotIn(job_id, run_output)
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS and os.environ.get("DX_RUN_NEXT_TESTS"),
-                         'skipping test that runs jobs and rely on new server updates')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
     def test_dx_run_workflow_with_inst_type_requests(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "name": "myapplet",
@@ -1381,8 +1377,6 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertIn("Input Spec", desc)
         self.assertIn("default=10", desc)
 
-    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"),
-                         'skipping test that would rely on new server updates')
     def test_dx_add_remove_list_stages(self):
         workflow_id = run(u"dx new workflow myworkflow --title title --brief").strip()
         run("dx describe " + workflow_id)
@@ -1537,8 +1531,6 @@ class TestDXClientWorkflow(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp="no-title", exit_code=2):
             run("dx update workflow myworkflow --output-folder /foo --no-output-folder")
 
-    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"),
-                         'skipping test that would rely on new server updates')
     def test_dx_update_stage(self):
         workflow_id = run(u"dx new workflow myworkflow --brief").strip()
         run("dx describe " + workflow_id)
