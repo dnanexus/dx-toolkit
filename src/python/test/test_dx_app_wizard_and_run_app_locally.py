@@ -333,8 +333,9 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
 
             if testutil.TEST_RUN_JOBS:
                 # Now actually make it an applet and run it
-                subprocess.check_output(['dx-build-applet', appdir, '--destination', dxapp_json['name'] + '-' + lang])
-                subprocess.check_output(['dx', 'run', dxapp_json['name'] + '-' + lang, '-y', '--wait'] + cmdline_args)
+                applet_name = dxapp_json['name'] + '-' + lang
+                subprocess.check_output(['dx', 'build', appdir, '--destination', applet_name])
+                subprocess.check_output(['dx', 'run', applet_name, '-y', '--wait'] + cmdline_args)
 
 if __name__ == '__main__':
     unittest.main()
