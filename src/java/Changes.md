@@ -1,5 +1,12 @@
 # Java API Bindings Changelog
 
+## 0.90.0
+
+* DXSearch.findDataObjects and findExecutions support a withIdsIn method that
+  lets you provide a list of objects whose IDs will be matched. When used in
+  conjunction with includeDescribeOutput this can be used to describe a large
+  number of objects at once given their IDs.
+
 ## 0.89.0
 
 * DXEnvironment.Builder supports initializing a new builder from an arbitrary

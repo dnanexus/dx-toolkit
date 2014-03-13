@@ -33,6 +33,11 @@ public class TestEnvironment {
         // individual environment variables below were set.
 
         /**
+         * Run tests that require unreleased server features.
+         */
+        RUN_NEXT_TESTS("DX_RUN_NEXT_TESTS"),
+
+        /**
          * Run tests that can create apps. The tests are liable to expect the apps to be
          * initializable in an environment where no app of that name currently exists, so it must be
          * possible to clean the environment before the tests start.

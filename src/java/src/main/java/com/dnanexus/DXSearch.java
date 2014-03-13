@@ -16,6 +16,7 @@
 
 package com.dnanexus;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -99,6 +100,8 @@ public final class DXSearch {
             }
         }
 
+        @JsonProperty
+        private final List<String> id;
         @JsonProperty("class")
         private final String classConstraint;
         @JsonProperty
@@ -147,6 +150,7 @@ public final class DXSearch {
         private FindDataObjectsRequest(FindDataObjectsRequest previousQuery,
                 FindDataObjectsResponse.Entry next, Integer limit) {
             this.classConstraint = previousQuery.classConstraint;
+            this.id = previousQuery.id;
             this.state = previousQuery.state;
             this.visibility = previousQuery.visibility;
             this.name = previousQuery.name;
@@ -172,6 +176,7 @@ public final class DXSearch {
          */
         private FindDataObjectsRequest(FindDataObjectsRequestBuilder<?> builder) {
             this.classConstraint = builder.classConstraint;
+            this.id = builder.id;
             this.state = builder.state;
             this.visibility = builder.visibilityQuery;
             this.name = builder.nameQuery;
@@ -220,6 +225,7 @@ public final class DXSearch {
      */
     public static class FindDataObjectsRequestBuilder<T extends DXDataObject> {
         private String classConstraint;
+        private List<String> id;
         private DataObjectState state;
         private VisibilityQuery visibilityQuery;
         private NameQuery nameQuery;
@@ -630,6 +636,40 @@ public final class DXSearch {
         }
 
         /**
+         * Only returns data objects whose IDs match one of the specified data objects.
+         *
+         * <p>
+         * When used in combination with {@link #includeDescribeOutput()} or
+         * {@link #includeDescribeOutput(com.dnanexus.DXDataObject.DescribeOptions)} you can use
+         * this to "bulk describe" a large number of objects. Note that hidden objects among the
+         * requested list will not be returned unless you use
+         * {@link #withVisibility(VisibilityQuery)} to request all objects.
+         * </p>
+         *
+         * <p>
+         * The number of results may exceed the number of unique data objects supplied because each
+         * result appears once for each accessible project it can be found in (you can call
+         * {@link #inProject(DXContainer)} to avoid this multiplicity).
+         * </p>
+         *
+         * @param dataObjects collection of data objects
+         *
+         * @return the same builder object
+         */
+        public FindDataObjectsRequestBuilder<T> withIdsIn(
+                Collection<? extends DXDataObject> dataObjects) {
+            Preconditions.checkState(this.id == null, "Cannot call withIdsIn more than once");
+            ImmutableList.Builder<String> builder = ImmutableList.builder();
+            // We can't use the default serialization here because we don't want everything to get
+            // wrapped up in $dnanexus_link
+            for (DXDataObject d : dataObjects) {
+                builder.add(d.getId());
+            }
+            this.id = builder.build();
+            return this;
+        }
+
+        /**
          * Only returns data objects that link to the specified data object.
          *
          * @param dataObject data object that must be the target of a DNAnexus link on matching data
@@ -952,6 +992,8 @@ public final class DXSearch {
         @JsonProperty("class")
         private final String classConstraint;
         @JsonProperty
+        private final List<String> id;
+        @JsonProperty
         private final String launchedBy;
         @JsonProperty
         private final String project;
@@ -1004,6 +1046,7 @@ public final class DXSearch {
         private FindExecutionsRequest(FindExecutionsRequest previousQuery, String next,
                 Integer limit) {
             this.classConstraint = previousQuery.classConstraint;
+            this.id = previousQuery.id;
             this.launchedBy = previousQuery.launchedBy;
             this.project = previousQuery.project;
             this.created = previousQuery.created;
@@ -1031,6 +1074,7 @@ public final class DXSearch {
          */
         private FindExecutionsRequest(FindExecutionsRequestBuilder<?> builder) {
             this.classConstraint = builder.classConstraint;
+            this.id = builder.id;
             this.launchedBy = builder.launchedBy;
             this.project = builder.inProject;
             this.includeSubjobs = builder.includeSubjobs;
@@ -1096,6 +1140,7 @@ public final class DXSearch {
      */
     public static class FindExecutionsRequestBuilder<T extends DXExecution> {
         private String classConstraint;
+        private List<String> id;
         private String launchedBy;
         private String inProject;
         private Date createdBefore;
@@ -1382,6 +1427,29 @@ public final class DXSearch {
                     "Cannot specify withExecutable more than once");
             this.executable =
                     Preconditions.checkNotNull(executable, "executable may not be null").getId();
+            return this;
+        }
+
+        /**
+         * Only returns executions whose IDs match one of the specified executions.
+         *
+         * <p>
+         * When used in combination with {@link #includeDescribeOutput()} you can use this to
+         * "bulk describe" a large number of executions.
+         * </p>
+         *
+         * @param executions collection of executions
+         *
+         * @return the same builder object
+         */
+        public FindExecutionsRequestBuilder<T> withIdsIn(
+                Collection<? extends DXExecution> executions) {
+            Preconditions.checkState(this.id == null, "Cannot call withIdsIn more than once");
+            ImmutableList.Builder<String> builder = ImmutableList.builder();
+            for (DXExecution d : executions) {
+                builder.add(d.getId());
+            }
+            this.id = builder.build();
             return this;
         }
 

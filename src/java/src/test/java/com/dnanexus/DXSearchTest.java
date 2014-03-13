@@ -29,6 +29,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.dnanexus.DXSearch.PropertiesQuery;
+import com.dnanexus.DXSearch.VisibilityQuery;
 import com.dnanexus.TestEnvironment.ConfigOption;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -233,6 +234,21 @@ public class DXSearchTest {
                         .withVisibility(DXSearch.VisibilityQuery.EITHER).execute().asList(), moo,
                 foo, food, open, invisible);
 
+        if (!TestEnvironment.canRunTest(ConfigOption.RUN_NEXT_TESTS)) {
+            System.err.println("Skipping remainder of test as it requires unreleased features");
+            return;
+        }
+
+        // withIdsIn
+
+        assertEqualsAnyOrder(DXSearch.findDataObjects().withIdsIn(ImmutableList.of(moo, foo))
+                .execute().asList(), moo, foo);
+        // Hidden objects don't get returned unless specifically requested
+        assertEqualsAnyOrder(DXSearch.findDataObjects().withIdsIn(ImmutableList.of(moo, invisible))
+                .execute().asList(), moo);
+        assertEqualsAnyOrder(DXSearch.findDataObjects().withIdsIn(ImmutableList.of(moo, invisible))
+                .withVisibility(VisibilityQuery.EITHER).execute().asList(), moo, invisible);
+
         // TODO: withLinkTo, withMinimumAccessLevel
 
     }
@@ -367,6 +383,14 @@ public class DXSearchTest {
                         .withProperties(PropertiesQuery.withKeyAndValue("baz", "b"))
                         .buildRequestHash()));
 
+        Assert.assertEquals(DXJSON.parseJson("{\"id\": [\"record-111100000000000000000000\"]}"),
+                mapper.valueToTree(DXSearch
+                        .findDataObjects()
+                        .withIdsIn(
+                                ImmutableList.of(DXRecord
+                                        .getInstance("record-111100000000000000000000")))
+                        .buildRequestHash()));
+
         try {
             DXSearch.findDataObjects()
                     .inProject(DXProject.getInstance("project-000000000000000000000000"))
@@ -400,6 +424,13 @@ public class DXSearchTest {
         try {
             DXSearch.findDataObjects().withClassApplet().withClassFile();
             Assert.fail("Expected setting multiple class constraints to fail");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+        try {
+            DXSearch.findDataObjects().withIdsIn(ImmutableList.<DXDataObject>of())
+                    .withIdsIn(ImmutableList.<DXDataObject>of());
+            Assert.fail("Expected double setting of withIdsIn to fail");
         } catch (IllegalStateException e) {
             // Expected
         }
@@ -616,6 +647,16 @@ public class DXSearchTest {
         } catch (IllegalStateException e) {
             // Expected
         }
+
+        if (!TestEnvironment.canRunTest(ConfigOption.RUN_NEXT_TESTS)) {
+            System.err.println("Skipping remainder of test as it requires unreleased features");
+            return;
+        }
+
+        assertEqualsAnyOrder(DXSearch.findExecutions().withIdsIn(ImmutableList.of(job)).execute()
+                .asList(), job);
+        assertEqualsAnyOrder(DXSearch.findExecutions().withIdsIn(ImmutableList.<DXExecution>of())
+                .execute().asList());
     }
 
     /**
@@ -726,6 +767,14 @@ public class DXSearchTest {
                         .withProperties(PropertiesQuery.withKeyAndValue("baz", "b"))
                         .buildRequestHash()));
 
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"id\": [\"job-111100000000000000000000\"]}"),
+                mapper.valueToTree(DXSearch
+                        .findExecutions()
+                        .withIdsIn(
+                                ImmutableList.of(DXJob.getInstance("job-111100000000000000000000")))
+                        .buildRequestHash()));
+
         // Conversion of dates to milliseconds since epoch
         GregorianCalendar january15 = new GregorianCalendar(2013, 0, 15);
         january15.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -780,6 +829,13 @@ public class DXSearchTest {
         try {
             DXSearch.findExecutions().withClassAnalysis().withClassJob();
             Assert.fail("Expected double setting of class constraints to fail");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+        try {
+            DXSearch.findExecutions().withIdsIn(ImmutableList.<DXExecution>of())
+                    .withIdsIn(ImmutableList.<DXExecution>of());
+            Assert.fail("Expected double setting of withIdsIn to fail");
         } catch (IllegalStateException e) {
             // Expected
         }
