@@ -960,6 +960,8 @@ def main():
         dxjob.terminate()
 
 class TestDXWorkflow(unittest.TestCase):
+    default_inst_type = "mem2_hdd2_x2"
+
     def setUp(self):
         setUpTempProjects(self)
 
@@ -1030,7 +1032,7 @@ def main(number):
         dxanalysis = dxworkflow.run({})
         time.sleep(2)
         dxjob = dxpy.DXJob(dxanalysis.describe()['stages'][0]['execution']['id'])
-        self.assertIsNone(dxjob.describe()['instanceType'])
+        self.assertEqual(dxjob.describe()['instanceType'], self.default_inst_type)
 
         # request for all stages and all entry points
         dxanalysis = dxworkflow.run({}, instance_type="mem2_hdd2_x1")
