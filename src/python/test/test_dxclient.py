@@ -1016,6 +1016,8 @@ dx-jobutil-add-output record_array $second_record --array
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
 
 class TestDXClientWorkflow(DXTestCase):
+    default_inst_type = "mem2_hdd2_x2"
+
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
     def test_dx_run_workflow(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
@@ -1209,8 +1211,10 @@ class TestDXClientWorkflow(DXTestCase):
         time.sleep(2) # give time for all jobs to be populated
 
         no_req_desc = dxpy.describe(no_req_id)
-        self.assertIsNone(no_req_desc['stages'][0]['execution']['instanceType'])
-        self.assertIsNone(no_req_desc['stages'][1]['execution']['instanceType'])
+        self.assertEqual(no_req_desc['stages'][0]['execution']['instanceType'],
+                         self.default_inst_type)
+        self.assertEqual(no_req_desc['stages'][1]['execution']['instanceType'],
+                         self.default_inst_type)
         all_stg_req_desc = dxpy.describe(all_stg_req_id)
         self.assertEqual(all_stg_req_desc['stages'][0]['execution']['instanceType'],
                          'mem2_hdd2_x1')
