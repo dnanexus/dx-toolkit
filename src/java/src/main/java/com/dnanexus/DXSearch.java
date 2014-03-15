@@ -1913,14 +1913,14 @@ public final class DXSearch {
             private final String propertyKey;
             private final String propertyValue;
 
-            public SimplePropertiesQuery(String key, String value) {
-                this.propertyKey = Preconditions.checkNotNull(key);
-                this.propertyValue = Preconditions.checkNotNull(value);
-            }
-
             public SimplePropertiesQuery(String key) {
                 this.propertyKey = Preconditions.checkNotNull(key);
                 this.propertyValue = null;
+            }
+
+            public SimplePropertiesQuery(String key, String value) {
+                this.propertyKey = Preconditions.checkNotNull(key);
+                this.propertyValue = Preconditions.checkNotNull(value);
             }
 
             @SuppressWarnings("unused")
