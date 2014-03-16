@@ -861,54 +861,57 @@ public final class DXSearch {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class FindDataObjectsResult<T extends DXDataObject> implements ObjectProducer<T> {
 
-        private class ResultIterator implements Iterator<T> {
+        /**
+         * Wrapper from the findDataObjects result page class to the high-level interface
+         * FindResultPage.
+         */
+        private class FindDataObjectsResultPage implements FindResultPage<T> {
 
-            private FindDataObjectsRequest query;
-            private FindDataObjectsResponse currentPage;
-            private int nextResultIndex = 0;
+            private final FindDataObjectsResponse response;
 
-            private ResultIterator() {
-                query = new FindDataObjectsRequest(baseQuery, null, pageSize);
-                currentPage =
-                        DXAPI.systemFindDataObjects(query, FindDataObjectsResponse.class, env);
-            }
-
-            /**
-             * Postcondition: either findDataObjectsResponse.results.get(nextResultIndex) points to
-             * the next valid result, or nextResultIndex is equal to
-             * findDataObjectsResponse.results.size() and there are no results left.
-             */
-            private void ensureNextElementAvailable() {
-                if (nextResultIndex < currentPage.results.size()) {
-                    return;
-                }
-                if (currentPage.next == null) {
-                    return;
-                }
-                // Reached the end of the previous page. Load a new page.
-                query = new FindDataObjectsRequest(query, currentPage.next, pageSize);
-                currentPage =
-                        DXAPI.systemFindDataObjects(query, FindDataObjectsResponse.class, env);
-                nextResultIndex = 0;
+            public FindDataObjectsResultPage(FindDataObjectsResponse response) {
+                this.response = response;
             }
 
             @Override
-            public boolean hasNext() {
-                ensureNextElementAvailable();
-                return nextResultIndex < currentPage.results.size();
+            public T get(int index) {
+                return getDataObjectInstanceFromResult(response.results.get(index));
             }
 
             @Override
-            public T next() {
-                ensureNextElementAvailable();
-                return getDataObjectInstanceFromResult(currentPage.results.get(nextResultIndex++));
+            public boolean hasNextPage() {
+                return response.next != null;
             }
 
             @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
+            public int size() {
+                return response.results.size();
             }
 
+        }
+
+        /**
+         * Iterator implementation for findDataObjects results.
+         */
+        private class ResultIterator
+                extends
+                PaginatingFindResultIterator<T, FindDataObjectsRequest, FindDataObjectsResultPage> {
+
+            public ResultIterator() {
+                super(baseQuery);
+            }
+
+            @Override
+            public FindDataObjectsRequest getNextQuery(FindDataObjectsRequest query,
+                    FindDataObjectsResultPage currentResultPage) {
+                return new FindDataObjectsRequest(query, currentResultPage.response.next, pageSize);
+            }
+
+            @Override
+            public FindDataObjectsResultPage issueQuery(FindDataObjectsRequest query) {
+                return new FindDataObjectsResultPage(DXAPI.systemFindDataObjects(query,
+                        FindDataObjectsResponse.class, env));
+            }
         }
 
         private final FindDataObjectsRequest baseQuery;
@@ -1675,52 +1678,57 @@ public final class DXSearch {
      */
     public static class FindExecutionsResult<T extends DXExecution> implements ObjectProducer<T> {
 
-        private class ResultIterator implements Iterator<T> {
+        /**
+         * Wrapper from the findExecutions result page class to the high-level interface
+         * FindResultPage.
+         */
+        private class FindExecutionsResultPage implements FindResultPage<T> {
 
-            private FindExecutionsRequest query;
-            private FindExecutionsResponse currentPage;
-            private int nextResultIndex = 0;
+            private final FindExecutionsResponse response;
 
-            private ResultIterator() {
-                query = new FindExecutionsRequest(baseQuery, null, pageSize);
-                currentPage = DXAPI.systemFindExecutions(query, FindExecutionsResponse.class, env);
-            }
-
-            /**
-             * Postcondition: either findExecutionsResponse.results.get(nextResultIndex) points to
-             * the next valid result, or nextResultIndex is equal to
-             * findExecutionsResponse.results.size() and there are no results left.
-             */
-            private void ensureNextElementAvailable() {
-                if (nextResultIndex < currentPage.results.size()) {
-                    return;
-                }
-                if (currentPage.next == null) {
-                    return;
-                }
-                // Reached the end of the previous page. Load a new page.
-                query = new FindExecutionsRequest(query, currentPage.next, pageSize);
-                currentPage = DXAPI.systemFindExecutions(query, FindExecutionsResponse.class, env);
-                nextResultIndex = 0;
+            public FindExecutionsResultPage(FindExecutionsResponse response) {
+                this.response = response;
             }
 
             @Override
-            public boolean hasNext() {
-                ensureNextElementAvailable();
-                return nextResultIndex < currentPage.results.size();
+            public T get(int index) {
+                return getExecutionInstanceFromResult(response.results.get(index));
             }
 
             @Override
-            public T next() {
-                ensureNextElementAvailable();
-                return getExecutionInstanceFromResult(currentPage.results.get(nextResultIndex++));
+            public boolean hasNextPage() {
+                return response.next != null;
             }
 
             @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
+            public int size() {
+                return response.results.size();
             }
 
+        }
+
+        /**
+         * Iterator implementation for findExecutions results.
+         */
+        private class ResultIterator
+                extends
+                PaginatingFindResultIterator<T, FindExecutionsRequest, FindExecutionsResultPage> {
+
+            public ResultIterator() {
+                super(baseQuery);
+            }
+
+            @Override
+            public FindExecutionsRequest getNextQuery(FindExecutionsRequest query,
+                    FindExecutionsResultPage currentResultPage) {
+                return new FindExecutionsRequest(query, currentResultPage.response.next, pageSize);
+            }
+
+            @Override
+            public FindExecutionsResultPage issueQuery(FindExecutionsRequest query) {
+                return new FindExecutionsResultPage(DXAPI.systemFindExecutions(query,
+                        FindExecutionsResponse.class, env));
+            }
         }
 
         private final FindExecutionsRequest baseQuery;
@@ -1792,6 +1800,36 @@ public final class DXSearch {
             return new ResultIterator();
         }
 
+    }
+
+    /**
+     * Encapsulates a single result page (of generic type) for a find route.
+     *
+     * @param <T> Type of result to be returned e.g. DXDataObject for findDataObjects
+     */
+    private static interface FindResultPage<T> {
+        /**
+         * Returns the specified result from the current page.
+         *
+         * @param index index of result to obtain
+         *
+         * @return the requested result
+         */
+        public T get(int index);
+
+        /**
+         * Returns true if the next page exists.
+         *
+         * @return whether there are more results
+         */
+        public boolean hasNextPage();
+
+        /**
+         * Returns the number of results in the current page.
+         *
+         * @return size of the current page
+         */
+        public int size();
     }
 
     /**
@@ -1879,6 +1917,99 @@ public final class DXSearch {
         // In the future we'd like to support streaming access to the results.
         // This can be done by adding a new method here, e.g.
         // public Iterable<T> asIterable();
+    }
+
+    /**
+     * Encapsulates the strategy for paginating across find results.
+     *
+     * <p>
+     * Individual subclasses (associated with each distinct "find" route) should override the
+     * methods and provide an implementation of P, the result page class.
+     * </p>
+     *
+     * @param <T> Type of result to be returned e.g. DXDataObject for findDataObjects
+     * @param <Q> Type of query to be issued, e.g. FindDataObjectsRequest
+     * @param <P> Class encapsulating a single result page (the result of a query of type Q)
+     */
+    private static abstract class PaginatingFindResultIterator<T, Q, P extends FindResultPage<T>>
+            implements
+                Iterator<T> {
+        private Q query;
+        private P currentPage;
+        private int nextResultIndex = 0;
+
+        /**
+         * Initializes the iterator with the specified initial query.
+         *
+         * @param initialQuery the first query to execute (typically without the "starting"
+         *        parameter set)
+         */
+        private PaginatingFindResultIterator(Q initialQuery) {
+            this.query = initialQuery;
+            this.currentPage = issueQuery(initialQuery);
+        }
+
+        /**
+         * Ensures that the next element is loaded (if it exists).
+         *
+         * <p>
+         * Postcondition: either findProjectsResponse.results.get(nextResultIndex) points to the
+         * next valid result, or nextResultIndex is equal to findProjectsResponse.results.size() and
+         * there are no results left.
+         * </p>
+         */
+        private void ensureNextElementAvailable() {
+            // If two successive calls are made to this method with no intervening mutators, the
+            // second call should be very fast.
+            if (nextResultIndex < currentPage.size()) {
+                return;
+            }
+            if (!currentPage.hasNextPage()) {
+                return;
+            }
+            // Reached the end of the previous page. Load a new page.
+            query = getNextQuery(query, currentPage);
+            currentPage = issueQuery(query);
+            nextResultIndex = 0;
+        }
+
+        /**
+         * Returns a query that can be used to obtain the next page of results. In general this
+         * query can be obtained by taking the previous query and setting its "starting" field to
+         * the "next" value from the query results page.
+         *
+         * @param query current page's query
+         * @param currentResultPage the most recently returned page
+         *
+         * @return query for the next page
+         */
+        public abstract Q getNextQuery(Q query, P currentResultPage);
+
+        @Override
+        public boolean hasNext() {
+            ensureNextElementAvailable();
+            return nextResultIndex < currentPage.size();
+        }
+
+        /**
+         * Issues the specified query and returns the next page of results.
+         *
+         * @param query query to issue
+         *
+         * @return a page of results
+         */
+        public abstract P issueQuery(Q query);
+
+        @Override
+        public T next() {
+            ensureNextElementAvailable();
+            return currentPage.get(nextResultIndex++);
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 
     /**
