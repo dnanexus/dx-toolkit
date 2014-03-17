@@ -17,10 +17,9 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re, time
+import os, unittest, tempfile, subprocess, shutil, time
 
-from dxpy_testutil import DXTestCase
-import dxpy_testutil as testutil
+import test.dxpy_testutil as testutil
 
 import dxpy
 
@@ -64,10 +63,10 @@ class TestDXFS(unittest.TestCase):
         #subprocess.check_call(['dx', 'mkdir', '-p', '/bar/baz'])
 
         self.assertEqual(set(os.listdir(self.mountpoint)), set(['foo', 'bar', os.path.basename(__file__)]))
-        
+
         # Reading
         self.assertEqual(open(__file__).read(), open(os.path.join(self.mountpoint, __file__)).read())
-        
+
         # Moving
         shutil.move(os.path.join(self.mountpoint, __file__), os.path.join(self.mountpoint, __file__+"2"))
         self.assertEqual(set(os.listdir(self.mountpoint)), set(['foo', 'bar', os.path.basename(__file__+"2")]))
