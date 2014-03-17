@@ -860,7 +860,7 @@ public final class DXSearch {
      * @param <T> data object class to be returned
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class FindDataObjectsResult<T extends DXDataObject> implements ObjectProducer<T> {
+    public static class FindDataObjectsResult<T extends DXDataObject> extends ObjectProducerImpl<T> {
 
         /**
          * Wrapper from the findDataObjects result page class to the high-level interface
@@ -944,14 +944,6 @@ public final class DXSearch {
             this.env = env;
 
             this.pageSize = pageSize;
-        }
-
-        /**
-         * Returns a {@code List} of the matching data objects.
-         */
-        @Override
-        public List<T> asList() {
-            return ImmutableList.copyOf(this);
         }
 
         @SuppressWarnings("unchecked")
@@ -1678,7 +1670,7 @@ public final class DXSearch {
      *
      * @param <T> execution class that will be returned from the query
      */
-    public static class FindExecutionsResult<T extends DXExecution> implements ObjectProducer<T> {
+    public static class FindExecutionsResult<T extends DXExecution> extends ObjectProducerImpl<T> {
 
         /**
          * Wrapper from the findExecutions result page class to the high-level interface
@@ -1762,14 +1754,6 @@ public final class DXSearch {
             this.env = env;
 
             this.pageSize = pageSize;
-        }
-
-        /**
-         * Returns a {@code List} of the matching executions.
-         */
-        @Override
-        public List<T> asList() {
-            return ImmutableList.copyOf(this);
         }
 
         @SuppressWarnings("unchecked")
@@ -1915,6 +1899,21 @@ public final class DXSearch {
          * @return List of matching items
          */
         public List<T> asList();
+    }
+
+    /**
+     * Default implementation of {@link ObjectProducer} that provides the
+     * {@link ObjectProducer#asList()} method once you've implemented streaming iteration.
+     *
+     * @param <T> type of result to be returned
+     */
+    private static abstract class ObjectProducerImpl<T extends DXObject>
+            implements
+                ObjectProducer<T> {
+        @Override
+        public List<T> asList() {
+            return ImmutableList.copyOf(this);
+        }
     }
 
     /**
