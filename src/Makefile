@@ -81,7 +81,6 @@ toolkit_version:
 	    echo $$VERSION | perl -ne '/^v(\d+.\d+.\d+)/ and print "module DX\n  VERSION = \"$$1\"\nend\n"' > "$(DNANEXUS_HOME)/src/ruby/lib/dxruby/version.rb"; \
 	    echo -e "package com.dnanexus;\nclass DXToolkitVersion {\n    public static final String TOOLKIT_VERSION = \"$$VERSION\";\n}" > "$(DNANEXUS_HOME)/src/java/src/main/java/com/dnanexus/DXToolkitVersion.java"; \
 	    echo $$VERSION > "$(DNANEXUS_HOME)/build/info/version"; \
-	    echo $$VERSION | perl -ne '/^v(\d+).(\d+.\d+)/ and ($$MAJOR_V = $$1 + 1, print "$$MAJOR_V.$$2")' > "$(DNANEXUS_HOME)/build/info/ua_version"; \
 	fi)
 
 python/dxpy/api.py: api_wrappers/wrapper_table.json api_wrappers/generatePythonAPIWrappers.py
