@@ -40,6 +40,7 @@ class TestDXFS(unittest.TestCase):
         subprocess.check_call(['dx', 'mkdir', 'foo'])
         subprocess.check_call(['dx', 'mkdir', 'bar'])
         dxpy.upload_local_file(__file__, wait_on_close=True)
+        dxpy.new_dxrecord(name="A/B testing")
 
         cls.mountpoint = tempfile.mkdtemp()
         args = ['dx-mount', cls.mountpoint, '--foreground']
@@ -62,7 +63,7 @@ class TestDXFS(unittest.TestCase):
         #subprocess.check_call(['dx', 'mkdir', 'bar'])
         #subprocess.check_call(['dx', 'mkdir', '-p', '/bar/baz'])
 
-        self.assertEqual(set(os.listdir(self.mountpoint)), set(['foo', 'bar', os.path.basename(__file__)]))
+        self.assertEqual(set(os.listdir(self.mountpoint)), set(['foo', 'bar', 'AB testing', os.path.basename(__file__)]))
 
         # Reading
         self.assertEqual(open(__file__).read(), open(os.path.join(self.mountpoint, __file__)).read())

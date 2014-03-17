@@ -210,7 +210,7 @@ class DXFS(LoggingMixIn, Operations):
 
     def _new_dataobject(self, dataobject, add_missing_folders=False):
         dataobject["folder"] = str(dataobject["folder"])
-        dataobject["name"] = str(dataobject["name"])
+        dataobject["name"] = str(dataobject["name"]).replace("/", "").replace("\0", "")
 
         if add_missing_folders:
             folderpath = ''
