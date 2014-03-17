@@ -1915,10 +1915,6 @@ public final class DXSearch {
          * @return List of matching items
          */
         public List<T> asList();
-
-        // In the future we'd like to support streaming access to the results.
-        // This can be done by adding a new method here, e.g.
-        // public Iterable<T> asIterable();
     }
 
     /**
