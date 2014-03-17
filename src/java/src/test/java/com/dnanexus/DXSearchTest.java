@@ -445,7 +445,8 @@ public class DXSearchTest {
 
         // Extra fields in the response should not cause us to choke (for API
         // forward compatibility)
-        DXJSON.safeTreeToValue(DXJSON.parseJson("{\"notAField\": true, \"results\":[]}"),
+        DXJSON.safeTreeToValue(
+                DXJSON.parseJson("{\"notAField\": true, \"results\":[{\"id\": \"record-000000000000000000000000\", \"notAField\": true}]}"),
                 DXSearch.FindDataObjectsResponse.class);
     }
 
@@ -854,7 +855,8 @@ public class DXSearchTest {
 
         // Extra fields in the response should not cause us to choke (for API
         // forward compatibility)
-        DXJSON.safeTreeToValue(DXJSON.parseJson("{\"notAField\": true, \"results\":[]}"),
+        DXJSON.safeTreeToValue(
+                DXJSON.parseJson("{\"notAField\": true, \"results\":[{\"id\": \"job-000000000000000000000000\", \"notAField\": true}]}"),
                 DXSearch.FindExecutionsResponse.class);
     }
 
@@ -873,7 +875,7 @@ public class DXSearchTest {
         // A sample input: {input_string: "java"}
         SampleAppInput appInput = new SampleAppInput("java");
 
-        // Save the
+        // Instantiate to create a bunch of jobs, and save them
         List<DXJob> jobs = Lists.newArrayList();
         for (int i = 0; i < 8; ++i) {
             jobs.add(applet.newRun().setInput(appInput).setProject(testProject)

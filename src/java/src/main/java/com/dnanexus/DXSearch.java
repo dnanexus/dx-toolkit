@@ -826,12 +826,13 @@ public final class DXSearch {
     }
 
     /**
-     * Deserialized output from the system/findDataObjects route.
+     * Deserialized output from the /system/findDataObjects route.
      */
     @VisibleForTesting
     @JsonIgnoreProperties(ignoreUnknown = true)
     static class FindDataObjectsResponse {
 
+        @JsonIgnoreProperties(ignoreUnknown = true)
         private static class Entry {
             @JsonProperty
             private String id;
@@ -1652,6 +1653,7 @@ public final class DXSearch {
     @JsonIgnoreProperties(ignoreUnknown = true)
     static class FindExecutionsResponse {
 
+        @JsonIgnoreProperties(ignoreUnknown = true)
         private static class Entry {
             @JsonProperty
             private String id;
