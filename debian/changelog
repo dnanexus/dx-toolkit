@@ -1,3 +1,13 @@
+dx-toolkit (0.90.0) precise; urgency=low
+
+  * dxfs: fix handling of filenames containing "/"
+
+  * UA: restore old version numbering.
+
+  * Java bindings: find by ID (bulk describe) using withIdsIn
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 18 Mar 2014 17:54:26 +0000
+
 dx-toolkit (0.89.0) precise; urgency=low
 
   * dxpy and dx: support new instance type names.
