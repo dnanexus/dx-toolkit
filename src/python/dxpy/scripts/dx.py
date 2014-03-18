@@ -26,17 +26,10 @@ from ..cli import try_call
 from ..cli import workflow as workflow_cli
 from ..exceptions import err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions
 from ..packages import requests
-from ..compat import is_py2, basestring, str, input
+from ..compat import is_py2, basestring, str, input, set_stdio_encoding
 from ..utils.env import sys_encoding
 
-# Try to reset encoding to utf-8
-# Note: This is incompatible with pypy
-# Note: In addition to PYTHONIOENCODING=UTF-8, this also enables command-line arguments to be decoded properly.
-if platform.python_implementation() != "PyPy":
-    try:
-        reload(sys).setdefaultencoding(sys_encoding)
-    except:
-        pass
+set_stdio_encoding()
 
 try:
     import colorama

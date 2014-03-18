@@ -1,3 +1,4 @@
+import codecs
 import sys
 
 is_py2 = True if sys.version_info < (3, 0) else False
@@ -21,3 +22,9 @@ else:
     input = input
     builtin_int = int
     int = int
+
+def set_stdio_encoding(encoding='utf-8'):
+    if is_py2:
+        sys.stdin = codecs.getreader(encoding)(sys.stdin)
+        sys.stdout = codecs.getwriter(encoding)(sys.stdout)
+        sys.stderr = codecs.getwriter(encoding)(sys.stderr)
