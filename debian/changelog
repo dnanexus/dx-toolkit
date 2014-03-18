@@ -1,3 +1,9 @@
+dx-toolkit (0.89.1) precise; urgency=low
+
+  * Test fixes.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 18 Mar 2014 17:59:14 +0000
+
 dx-toolkit (0.89.0) precise; urgency=low
 
   * dxpy and dx: support new instance type names.
