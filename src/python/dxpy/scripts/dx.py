@@ -3054,11 +3054,11 @@ def watch(args):
         args.job_info = False
     elif args.format is None:
         if args.job_ids:
-            args.format = BLUE() + "{job_name} ({job})" + ENDC() + " {level_color}{level}" + ENDC() + " {msg}"
+            args.format = BLUE() + u"{job_name} ({job})" + ENDC() + " {level_color}{level}" + ENDC() + " {msg}"
         else:
-            args.format = BLUE() + "{job_name}" + ENDC() + " {level_color}{level}" + ENDC() + " {msg}"
+            args.format = BLUE() + u"{job_name}" + ENDC() + " {level_color}{level}" + ENDC() + " {msg}"
         if args.timestamps:
-            args.format = "{timestamp} " + args.format
+            args.format = u"{timestamp} " + args.format
 
         def msg_callback(message):
             message['timestamp'] = str(datetime.datetime.fromtimestamp(message.get('timestamp', 0)/1000))
