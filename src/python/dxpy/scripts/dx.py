@@ -410,7 +410,7 @@ def set_project(project, write, name=None):
     if dxpy.JOB_ID is None:
         os.environ['DX_PROJECT_CONTEXT_ID'] = project
         if name is not None:
-            os.environ["DX_PROJECT_CONTEXT_NAME"] = name
+            os.environ["DX_PROJECT_CONTEXT_NAME"] = name.encode('utf-8')
         if write:
             write_env_var("DX_PROJECT_CONTEXT_ID", project)
             if name is not None:
@@ -577,7 +577,7 @@ def env(args):
         print("API server port\t\t" + dxpy.APISERVER_PORT)
         print("Current workspace\t" + str(dxpy.WORKSPACE_ID))
         if "DX_PROJECT_CONTEXT_NAME" in os.environ:
-            print('Current workspace name\t"{n}"'.format(n=os.environ.get("DX_PROJECT_CONTEXT_NAME")))
+            print(u'Current workspace name\t"{n}"'.format(n=os.environ.get("DX_PROJECT_CONTEXT_NAME").decode('utf-8')))
         print("Current folder\t\t" + str(os.environ.get("DX_CLI_WD")))
         print("Current user\t\t" + str(os.environ.get("DX_USERNAME")))
 
@@ -2054,7 +2054,7 @@ def upload_one(args):
                 sub_args = copy.copy(args)
                 sub_args.mute = True
                 sub_args.filename = os.path.join(args.filename, f)
-                sub_args.path = "{p}:{f}/{sf}/".format(p=project, f=folder, sf=os.path.basename(args.filename))
+                sub_args.path = u"{p}:{f}/{sf}/".format(p=project, f=folder, sf=os.path.basename(args.filename))
                 sub_args.parents = True
                 upload_one(sub_args)
     else:
