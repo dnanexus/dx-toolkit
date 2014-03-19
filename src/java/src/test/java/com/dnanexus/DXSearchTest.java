@@ -234,11 +234,6 @@ public class DXSearchTest {
                         .withVisibility(DXSearch.VisibilityQuery.EITHER).execute().asList(), moo,
                 foo, food, open, invisible);
 
-        if (!TestEnvironment.canRunTest(ConfigOption.RUN_NEXT_TESTS)) {
-            System.err.println("Skipping remainder of test as it requires unreleased features");
-            return;
-        }
-
         // withIdsIn
 
         assertEqualsAnyOrder(DXSearch.findDataObjects().withIdsIn(ImmutableList.of(moo, foo))
@@ -647,11 +642,6 @@ public class DXSearchTest {
             Assert.fail("Expected IllegalStateException to be thrown because includeDescribeOutput was not specified");
         } catch (IllegalStateException e) {
             // Expected
-        }
-
-        if (!TestEnvironment.canRunTest(ConfigOption.RUN_NEXT_TESTS)) {
-            System.err.println("Skipping remainder of test as it requires unreleased features");
-            return;
         }
 
         assertEqualsAnyOrder(DXSearch.findExecutions().withIdsIn(ImmutableList.of(job)).execute()
