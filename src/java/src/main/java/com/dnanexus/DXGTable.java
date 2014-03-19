@@ -24,7 +24,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -156,8 +155,6 @@ public class DXGTable extends DXDataObject {
             // TODO: indices
         }
     }
-
-    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     /**
      * Deserializes a DXGTable from JSON containing a DNAnexus link.

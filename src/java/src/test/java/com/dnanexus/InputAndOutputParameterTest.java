@@ -16,14 +16,12 @@
 
 package com.dnanexus;
 
-import java.io.IOException;
-
 import org.junit.Assert;
 import org.junit.Test;
 
 public class InputAndOutputParameterTest {
     @Test
-    public void testFactoryMethods() throws IOException {
+    public void testFactoryMethods() {
         try {
             InputParameter.newInputParameter("foo", null);
             Assert.fail("Expected InputParameter with null class to fail");

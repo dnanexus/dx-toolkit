@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
@@ -99,8 +98,6 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
             super(builder);
         }
     }
-
-    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     /**
      * Deserializes a DXWorkflow from JSON containing a DNAnexus link.

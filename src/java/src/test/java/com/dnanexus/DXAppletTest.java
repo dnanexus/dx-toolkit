@@ -49,7 +49,7 @@ public class DXAppletTest {
      * This class doesn't serialize to an object or array!
      */
     private static class InvalidAppDetails {
-        @SuppressWarnings("unused")
+        @SuppressWarnings({"unused", "static-method"})
         @JsonValue
         public Object getValue() {
             return 3;

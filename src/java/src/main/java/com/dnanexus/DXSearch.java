@@ -2056,9 +2056,8 @@ public final class DXSearch {
             protected Object getValue() {
                 if (propertyValue == null) {
                     return DXJSON.getObjectBuilder().put(propertyKey, true).build();
-                } else {
-                    return DXJSON.getObjectBuilder().put(propertyKey, propertyValue).build();
                 }
+                return DXJSON.getObjectBuilder().put(propertyKey, propertyValue).build();
             }
         }
 

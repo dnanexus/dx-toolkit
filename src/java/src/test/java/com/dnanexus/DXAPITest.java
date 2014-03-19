@@ -43,7 +43,7 @@ public class DXAPITest {
      * Smoke test for calling an API route.
      */
     @Test
-    public void testDXAPI() throws IOException {
+    public void testDXAPI() {
         DXAPI.systemFindDataObjects(new EmptyFindDataObjectsRequest(),
                 FindDataObjectsResponse.class);
     }
@@ -56,7 +56,7 @@ public class DXAPITest {
      * </p>
      */
     @Test
-    public void testDXAPILegacyCompatibility() throws IOException {
+    public void testDXAPILegacyCompatibility() {
         JsonNode input = DXJSON.getObjectBuilder().put("name", "DXAPI test project").build();
         JsonNode output = DXAPI.projectNew(input, JsonNode.class);
         String projectId = output.get("id").asText();
@@ -83,7 +83,7 @@ public class DXAPITest {
 
     @SuppressWarnings("deprecation")
     @Test
-    public void testDXAPIOldStyle() throws IOException {
+    public void testDXAPIOldStyle() {
         JsonNode input = mapper.createObjectNode();
         JsonNode responseJson = DXAPI.systemFindDataObjects(input);
         Assert.assertEquals(responseJson.isObject(), true);

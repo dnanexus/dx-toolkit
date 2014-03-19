@@ -24,7 +24,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -324,8 +323,6 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
             return title;
         }
     }
-
-    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     /**
      * Deserializes a DXApplet from JSON containing a DNAnexus link.

@@ -28,7 +28,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.dnanexus.DXJSON;
 
 public class DXJSONTest {
 
@@ -48,7 +47,7 @@ public class DXJSONTest {
     }
 
     @Test
-    public void testJsonArrays() throws IOException {
+    public void testJsonArrays() {
         ArrayNode actual1 = DXJSON.getArrayBuilder().add("Foo").addAllStrings(ImmutableList.of("Bar", "Baz")).build();
         List<JsonNode> jsonNodeList1 = Lists.newArrayList(actual1);
         Assert.assertEquals(3, jsonNodeList1.size());

@@ -85,6 +85,16 @@ public abstract class DXDataObject extends DXObject {
      */
     protected static abstract class Builder<T extends Builder<T, U>, U extends DXDataObject> {
 
+        /**
+         * Deserializes the response to a {@code /class-xxxx/new} API call and returns the ID of the
+         * newly created object.
+         *
+         * @return DNAnexus object ID
+         */
+        protected static String getNewObjectId(JsonNode responseJson) {
+            return DXJSON.safeTreeToValue(responseJson, DataObjectNewResponse.class).id;
+        }
+
         protected DXContainer project = null;
         protected String name = null;
         protected String folder = null;
@@ -93,6 +103,7 @@ public abstract class DXDataObject extends DXObject {
         protected List<String> types = null;
         protected JsonNode details = null;
         protected Boolean hidden = null;
+
         protected ImmutableMap.Builder<String, String> properties;
 
         protected final DXEnvironment env;
@@ -153,16 +164,6 @@ public abstract class DXDataObject extends DXObject {
             Preconditions
                     .checkState(this.project != null,
                             "setProject must be specified if the environment does not have a workspace set");
-        }
-
-        /**
-         * Deserializes the response to a {@code /class-xxxx/new} API call and returns the ID of the
-         * newly created object.
-         *
-         * @return DNAnexus object ID
-         */
-        protected String getNewObjectId(JsonNode responseJson) {
-            return DXJSON.safeTreeToValue(responseJson, DataObjectNewResponse.class).id;
         }
 
         /**

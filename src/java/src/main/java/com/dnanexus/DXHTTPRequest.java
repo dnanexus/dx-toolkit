@@ -69,10 +69,9 @@ public class DXHTTPRequest {
         String baseError = method + " " + resource + ": " + errorString + ".";
         if (nextRetryNum <= maxRetries) {
             return baseError + "  Waiting " + retryWait + " seconds before retry " + nextRetryNum
-                + " of " + maxRetries;
-        } else {
-            return baseError;
+                    + " of " + maxRetries;
         }
+        return baseError;
     }
 
     /**
@@ -145,15 +144,15 @@ public class DXHTTPRequest {
                                 // maximum number of retries)
                                 throw new IOException(
                                         "Content-length was not provided and the response JSON could not be parsed.");
-                            } else {
-                                // This is probably a real problem (the request
-                                // is complete but doesn't parse), so avoid
-                                // masking it as an IOException (which is
-                                // rethrown as DXHTTPException below). If it
-                                // comes up frequently we can revisit how these
-                                // should be handled.
-                                throw new RuntimeException("Request is of the correct length but is unparseable", e);
                             }
+                            // This is probably a real problem (the request
+                            // is complete but doesn't parse), so avoid
+                            // masking it as an IOException (which is
+                            // rethrown as DXHTTPException below). If it
+                            // comes up frequently we can revisit how these
+                            // should be handled.
+                            throw new RuntimeException(
+                                    "Request is of the correct length but is unparseable", e);
                         } catch (IOException e) {
                             // TODO: characterize what kinds of errors
                             // DXJSON.parseJson can emit, determine how we can

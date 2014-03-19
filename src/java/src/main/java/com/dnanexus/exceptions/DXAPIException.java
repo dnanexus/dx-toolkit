@@ -105,15 +105,16 @@ public class DXAPIException extends RuntimeException {
      * @return Instance of {@code DXAPIException} or one of its subclasses.
      */
     public static DXAPIException getInstance(String errorType, String errorMessage, int statusCode) {
-        if (errorMessage == null) {
-            errorMessage = "(Unparseable error message)";
+        String errorMessageOrDefault = errorMessage;
+        if (errorMessageOrDefault == null) {
+            errorMessageOrDefault = "(Unparseable error message)";
         }
         if (errorType != null && valueMap.containsKey(errorType)) {
-            return valueMap.get(errorType).generateException(errorMessage, statusCode);
+            return valueMap.get(errorType).generateException(errorMessageOrDefault, statusCode);
         }
         System.err.println("Received an API error of unknown type " + errorType
                 + "; deserializing it as a generic DXAPIException.");
-        return new DXAPIException(errorMessage, statusCode);
+        return new DXAPIException(errorMessageOrDefault, statusCode);
     }
 
     /**
