@@ -201,12 +201,13 @@ class TestDXClient(DXTestCase):
         run(u"dx find data --project :")
 
     def test_dx_get_record(self):
-        run(u"dx new record -o :foo --verbose")
-        run(u"dx get :foo")
-        self.assertTrue(os.path.exists('foo.json'))
-        run(u"dx get --no-ext :foo")
-        self.assertTrue(os.path.exists('foo'))
-        run("diff -q foo foo.json")
+        with chdir(tempfile.mkdtemp()):
+            run(u"dx new record -o :foo --verbose")
+            run(u"dx get :foo")
+            self.assertTrue(os.path.exists('foo.json'))
+            run(u"dx get --no-ext :foo")
+            self.assertTrue(os.path.exists('foo'))
+            run("diff -q foo foo.json")
 
     def test_dx_object_tagging(self):
         the_tags = [u"Σ1=n", u"helloo0", u"ωω"]
@@ -697,14 +698,10 @@ dx-jobutil-add-output record_array $second_record --array
 
         # use dx get to hydrate a directory and test dx-run-app-locally
         def create_app_dir_from_applet(applet_id):
-            old_cwd = os.getcwd()
             tempdir = tempfile.mkdtemp()
-            os.chdir(tempdir)
-            try:
+            with chdir(tempdir):
                 run('dx get ' + applet_id)
                 return os.path.join(tempdir, dxpy.describe(applet_id)['name'])
-            finally:
-                os.chdir(old_cwd)
         appdir = create_app_dir_from_applet(applet_id)
         local_output = subprocess.check_output(['dx-run-app-locally',
                                                 appdir,
@@ -2143,10 +2140,7 @@ class TestDXBuildApp(DXTestCase):
         with open(os.path.join(app_dir, "resources", "resources_file"), 'w') as f:
             f.write('content\n')
         new_applet_id = json.loads(run("dx build --json " + app_dir))["id"]
-        tempdir = tempfile.mkdtemp()
-        old_cwd = os.getcwd()
-        os.chdir(tempdir)
-        try:
+        with chdir(tempfile.mkdtemp()):
             run("dx get " + new_applet_id)
             self.assertTrue(os.path.exists("get_applet"))
             self.assertTrue(os.path.exists(os.path.join("get_applet", "dxapp.json")))
@@ -2211,8 +2205,7 @@ class TestDXBuildApp(DXTestCase):
             run("dx get --overwrite -o destfile get_applet")
             self.assertTrue(os.path.exists("destfile"))
             self.assertTrue(os.path.exists(os.path.join("destfile", "dxapp.json")))
-        finally:
-            os.chdir(old_cwd)
+
 
     def test_get_applet_field_cleanup(self):
         # TODO: not sure why self.assertEqual doesn't consider
@@ -2236,10 +2229,7 @@ class TestDXBuildApp(DXTestCase):
         with open(os.path.join(app_dir, "resources", "resources_file"), 'w') as f:
             f.write('content\n')
         new_applet_id = json.loads(run("dx build --json " + app_dir))["id"]
-        tempdir = tempfile.mkdtemp()
-        old_cwd = os.getcwd()
-        os.chdir(tempdir)
-        try:
+        with chdir(tempfile.mkdtemp()):
             run("dx get " + new_applet_id)
             self.assertTrue(os.path.exists("get_applet_field_cleanup"))
             self.assertTrue(os.path.exists(os.path.join("get_applet_field_cleanup", "dxapp.json")))
@@ -2247,8 +2237,6 @@ class TestDXBuildApp(DXTestCase):
             self.assertEqual(output_app_spec, output_json)
             self.assertFalse(os.path.exists(os.path.join("get_applet", "Readme.md")))
             self.assertFalse(os.path.exists(os.path.join("get_applet", "Readme.developer.md")))
-        finally:
-            os.chdir(old_cwd)
 
     def test_build_applet_with_no_dxapp_json(self):
         app_dir = self.write_app_directory("applet_with_no_dxapp_json", None, "code.py")
