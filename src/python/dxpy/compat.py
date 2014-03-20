@@ -4,6 +4,11 @@ import sys
 
 is_py2 = True if sys.version_info < (3, 0) else False
 
+# This is defined in dxpy.utils.env as well but, unfortuntely, loading
+# it from there introduces a circular dependency.
+import locale
+_sys_encoding = locale.getdefaultlocale()[1] or 'utf-8'
+
 # The following adapters ensure consistent behavior of non-ASCII
 # environment variable values across Python 2 and 3. Note that when
 # setting variables in Python 2 you can pass in a bytes (str) object to
@@ -15,12 +20,12 @@ def _set_env_var_python2(var_name, value):
     if type(value) is bytes:
         os.environ[var_name] = value
     else:
-        os.environ[var_name] = value.encode('utf-8')
+        os.environ[var_name] = value.encode(_sys_encoding)
 
 def _get_env_var_python2(var_name, default=None):
     if var_name not in os.environ:
         return default
-    return os.environ[var_name].decode('utf-8')
+    return os.environ[var_name].decode(_sys_encoding)
 
 def _set_env_var_python3(var_name, value):
     # value must be unicode
