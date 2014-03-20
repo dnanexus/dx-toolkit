@@ -31,7 +31,7 @@ from ..utils.describe import (get_find_executions_string, get_ls_l_desc, parse_t
 from ..utils.resolver import (get_first_pos_of_char, is_hashid, is_job_id, is_localjob_id, paginate_and_pick, pick,
                               resolve_existing_path, split_unescaped)
 from ..utils import OrderedDefaultdict
-from ..compat import input, str
+from ..compat import input, str, get_env_var
 
 ####################
 # -i Input Parsing #
@@ -121,7 +121,7 @@ def interactive_help(in_class, param_desc, prompt):
             except:
                 pass
             if proj_name is not None:
-                print('Your current working directory is ' + proj_name + ':' + os.environ.get('DX_CLI_WD', '/'))
+                print('Your current working directory is ' + proj_name + ':' + get_env_var('DX_CLI_WD', u'/'))
         while True:
             print('Pick an option to find input data:')
             try:

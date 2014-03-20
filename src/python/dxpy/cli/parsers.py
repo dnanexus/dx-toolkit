@@ -23,11 +23,12 @@ those parsers.
 from __future__ import print_function
 
 import argparse, json, os
-from ..utils.printing import (fill, BOLD, ENDC)
+from ..utils.printing import fill
 from ..utils.pretty_print import format_table
 from ..utils.resolver import split_unescaped
 from ..utils.completer import InstanceTypesCompleter
 from ..exceptions import (DXError, DXCLIError)
+from ..compat import set_env_var
 
 class DXParserError(DXError):
     def __init__(self, msg):
@@ -205,7 +206,7 @@ def set_env_from_args(args):
         os.environ['DX_WORKSPACE_ID'] = args['workspace_id']
         require_initialize = True
     if args.get('cli_wd') is not None:
-        os.environ['DX_CLI_WD'] = args['cli_wd']
+        set_env_var('DX_CLI_WD', args['cli_wd'])
         require_initialize = True
     if args.get('security_context') is not None:
         os.environ['DX_SECURITY_CONTEXT'] = args['security_context']

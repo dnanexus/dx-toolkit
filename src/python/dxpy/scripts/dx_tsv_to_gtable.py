@@ -20,6 +20,7 @@ from __future__ import print_function
 
 import os, sys, json, argparse, csv
 import dxpy
+from dxpy.compat import get_env_var
 from dxpy.cli.parsers import *
 from dxpy.utils.resolver import *
 from dxpy.utils.describe import print_desc
@@ -66,7 +67,7 @@ def main(**kwargs):
 
     if args.output is None:
         project = dxpy.WORKSPACE_ID
-        folder = os.environ.get('DX_CLI_WD', '/')
+        folder = get_env_var('DX_CLI_WD', u'/')
         if args.filename != '-':
             name = os.path.basename(args.filename)
         else:

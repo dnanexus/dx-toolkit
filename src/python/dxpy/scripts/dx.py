@@ -19,14 +19,14 @@
 
 from __future__ import print_function
 
-import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, errno, subprocess, platform
+import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, errno
 import shlex # respects quoted substrings when splitting
 
 from ..cli import try_call
 from ..cli import workflow as workflow_cli
 from ..exceptions import err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions
 from ..packages import requests
-from ..compat import is_py2, basestring, str, input, set_stdio_encoding
+from ..compat import is_py2, basestring, str, input, set_stdio_encoding, set_env_var, get_env_var
 from ..utils.env import sys_encoding
 
 set_stdio_encoding()
@@ -410,7 +410,7 @@ def set_project(project, write, name=None):
     if dxpy.JOB_ID is None:
         os.environ['DX_PROJECT_CONTEXT_ID'] = project
         if name is not None:
-            os.environ["DX_PROJECT_CONTEXT_NAME"] = name.encode('utf-8')
+            set_env_var("DX_PROJECT_CONTEXT_NAME", name)
         if write:
             write_env_var("DX_PROJECT_CONTEXT_ID", project)
             if name is not None:
@@ -427,7 +427,7 @@ def set_project(project, write, name=None):
     dxpy.set_workspace_id(project)
 
 def set_wd(folder, write):
-    os.environ['DX_CLI_WD'] = folder.encode(sys_encoding) if is_py2 else folder
+    set_env_var('DX_CLI_WD', folder)
     if write:
         write_env_var("DX_CLI_WD", folder)
 
@@ -577,8 +577,8 @@ def env(args):
         print("API server port\t\t" + dxpy.APISERVER_PORT)
         print("Current workspace\t" + str(dxpy.WORKSPACE_ID))
         if "DX_PROJECT_CONTEXT_NAME" in os.environ:
-            print(u'Current workspace name\t"{n}"'.format(n=os.environ.get("DX_PROJECT_CONTEXT_NAME").decode('utf-8')))
-        print("Current folder\t\t" + str(os.environ.get("DX_CLI_WD")))
+            print(u'Current workspace name\t"{n}"'.format(n=get_env_var("DX_PROJECT_CONTEXT_NAME")))
+        print("Current folder\t\t" + get_env_var("DX_CLI_WD"))
         print("Current user\t\t" + str(os.environ.get("DX_USERNAME")))
 
 def get_pwd():
@@ -591,7 +591,7 @@ def get_pwd():
             except:
                 pass
     if state['currentproj'] is not None:
-        pwd_str = state['currentproj'] + ':' + os.environ.get('DX_CLI_WD', '/')
+        pwd_str = state['currentproj'] + ':' + get_env_var('DX_CLI_WD', u'/')
     return pwd_str
 
 def pwd(args):
@@ -1373,7 +1373,7 @@ def new_record(args):
         init_from = dxpy.DXRecord(dxid=init_result['id'], project=init_project)
     if args.output is None:
         project = dxpy.WORKSPACE_ID
-        folder = os.environ.get('DX_CLI_WD', '/')
+        folder = get_env_var('DX_CLI_WD', u'/')
         name = None
     else:
         project, folder, name = resolve_path(args.output)
@@ -1399,7 +1399,7 @@ def new_gtable(args):
 
     if args.output is None:
         project = dxpy.WORKSPACE_ID
-        folder = os.environ.get('DX_CLI_WD', '/')
+        folder = get_env_var('DX_CLI_WD', u'/')
         name = None
     else:
         project, folder, name = resolve_path(args.output)
@@ -1796,7 +1796,7 @@ def download(args):
         if path.startswith('/') or dxpy.WORKSPACE_ID != project:
             abs_path, strip_prefix = path, ''
         else:
-            wd = os.environ.get('DX_CLI_WD', '/')
+            wd = get_env_var('DX_CLI_WD', u'/')
             abs_path, strip_prefix = os.path.join(wd, path), wd
         if len(abs_path) > 1:
             abs_path = abs_path.rstrip('/')
@@ -2028,7 +2028,7 @@ def upload_one(args):
 
     if args.path is None:
         project = dxpy.WORKSPACE_ID
-        folder = os.environ.get('DX_CLI_WD', '/')
+        folder = get_env_var('DX_CLI_WD', u'/')
         name = None if args.filename == '-' else os.path.basename(args.filename)
     else:
         project, folder, name = resolve_path(args.path)
@@ -2856,7 +2856,7 @@ def run(args):
         dest_proj = dxpy.WORKSPACE_ID
         if dest_proj is None:
             parser.exit(1, 'Unable to find project to run the app in. Please run "dx select" to set the working project, or use --folder=project:path\n')
-        dest_path = os.environ.get('DX_CLI_WD', '/').decode(sys_encoding)
+        dest_path = get_env_var('DX_CLI_WD', u'/')
     else:
         dest_proj, dest_path, _none = try_call(resolve_existing_path,
                                                args.folder,

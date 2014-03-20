@@ -30,6 +30,7 @@ from .parsers import (process_dataobject_args, process_single_dataobject_output_
 from ..utils.describe import io_val_to_str
 from ..utils.resolver import (resolve_existing_path, resolve_path, is_analysis_id)
 from ..exceptions import (err_exit, DXCLIError)
+from ..compat import get_env_var
 from . import try_call
 
 def new_workflow(args):
@@ -46,7 +47,7 @@ def new_workflow(args):
             init_from = dxpy.get_handler(init_result['id'], project=init_project)
     if args.output is None:
         project = dxpy.WORKSPACE_ID
-        folder = os.environ.get('DX_CLI_WD', '/')
+        folder = get_env_var('DX_CLI_WD', u'/')
         name = None
     else:
         project, folder, name = dxpy.utils.resolver.resolve_path(args.output)
