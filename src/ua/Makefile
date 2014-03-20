@@ -14,15 +14,13 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-VERSION = 1.5.3
-
 SHELL=/bin/bash -e
 
-DXTOOLKIT_GITVERSION := $(shell git describe|sed 's/-/+/')
-
-CENTOS_MAJOR_VERSION := $(shell grep -o "CentOS release [0-9]\+" /etc/issue | sed -e "s/CentOS release //")
-
 DNANEXUS_HOME = $(CURDIR)/../..
+
+VERSION := $(shell cat $(DNANEXUS_HOME)/build/info/ua_version || echo 'UNKNOWN_VERSION')
+DXTOOLKIT_GITVERSION := $(shell cat $(DNANEXUS_HOME)/build/info/version || echo 'UNKNOWN_VERSION')
+CENTOS_MAJOR_VERSION := $(shell grep -o "CentOS release [0-9]\+" /etc/issue | sed -e "s/CentOS release //")
 
 curl_dir = $(DNANEXUS_HOME)/src/curl/stage
 cares_dir = $(DNANEXUS_HOME)/src/c-ares/stage
