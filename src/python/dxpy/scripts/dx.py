@@ -578,7 +578,7 @@ def env(args):
         print("Current workspace\t" + str(dxpy.WORKSPACE_ID))
         if "DX_PROJECT_CONTEXT_NAME" in os.environ:
             print(u'Current workspace name\t"{n}"'.format(n=get_env_var("DX_PROJECT_CONTEXT_NAME")))
-        print("Current folder\t\t" + get_env_var("DX_CLI_WD"))
+        print("Current folder\t\t" + get_env_var("DX_CLI_WD", "None"))
         print("Current user\t\t" + str(os.environ.get("DX_USERNAME")))
 
 def get_pwd():
