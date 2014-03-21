@@ -773,6 +773,10 @@ dx-jobutil-add-output record_array $second_record --array
         for string in ["WARNING", "developer", "Internet", "write access"]:
             self.assertIn(string, dx_run_output)
 
+        # no warning with --brief
+        dx_run_output = run("dx run " + extra_perms_applet + " --priority normal --brief -y")
+        self.assertRegexpMatches(dx_run_output.strip(), '^job-[0-9a-zA-Z]{24}$')
+
         # test with allProjects set but no explicit permissions to the
         # project context
         extra_perms_applet = dxpy.api.applet_new({"project": self.project,

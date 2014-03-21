@@ -2641,7 +2641,7 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
                 # method is not yet available
                 pass
 
-    if args.priority == "normal":
+    if args.priority == "normal" and not args.brief:
         special_access = set()
         executable_desc = executable.describe()
         write_perms = ['UPLOAD', 'CONTRIBUTE', 'ADMINISTER']
