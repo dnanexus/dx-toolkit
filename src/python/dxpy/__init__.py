@@ -288,6 +288,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
     for retry in range(max_retries + 1):
         streaming_response_truncated = False
         try:
+            response = None
             response = session_handler.request(method, url, data=data, headers=headers, timeout=timeout, auth=auth,
                                                **kwargs)
 
