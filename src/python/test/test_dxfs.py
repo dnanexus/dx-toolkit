@@ -19,7 +19,7 @@
 
 import os, unittest, tempfile, subprocess, shutil, time
 
-import test.dxpy_testutil as testutil
+from . import dxpy_testutil as testutil
 
 import dxpy
 
