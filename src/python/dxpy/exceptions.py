@@ -41,9 +41,11 @@ class DXAPIError(DXError):
         self.code = code
 
     def __str__(self):
-        output = self.name + ": " + self.msg + ", code " + str(self.code)
+        output = self.msg + ", code " + str(self.code)
+        if self.name != self.__class__.__name__:
+            output = self.name + ": " + output
         if self.details is not None:
-            output += "\nDetails: " + json.dumps(self.details)
+            output += "\nDetails: " + json.dumps(self.details, indent=4)
         return output
 
 class MalformedJSON(DXAPIError):
