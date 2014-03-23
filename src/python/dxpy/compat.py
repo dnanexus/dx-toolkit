@@ -1,6 +1,4 @@
-import codecs
-import os
-import sys
+import os, sys
 
 is_py2 = True if sys.version_info < (3, 0) else False
 
@@ -58,9 +56,3 @@ else:
     int = int
     get_env_var = _get_env_var_python3
     set_env_var = _set_env_var_python3
-
-def set_stdio_encoding(encoding='utf-8'):
-    if is_py2:
-        sys.stdin = codecs.getreader(encoding)(sys.stdin)
-        sys.stdout = codecs.getwriter(encoding)(sys.stdout)
-        sys.stderr = codecs.getwriter(encoding)(sys.stderr)
