@@ -17,6 +17,8 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+from __future__ import print_function
+
 import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re
 import pexpect
 
@@ -141,7 +143,7 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
     def test_dx_run_app_locally(self):
         appdir = create_app_dir()
         output = subprocess.check_output(['dx-run-app-locally', appdir, '-iin1=8'])
-        print output
+        print(output)
         self.assertIn("App finished successfully", output)
         self.assertIn("Final output: out1 = 140", output)
         return appdir
@@ -150,7 +152,7 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
                          'skipping test that would run jobs')
     def test_dx_run_app_locally_and_compare_results(self):
         appdir = create_app_dir()
-        print "Setting current project to", self.project
+        print("Setting current project to", self.project)
         dxpy.WORKSPACE_ID = self.project
         dxpy.PROJECT_CONTEXT_ID = self.project
         applet_id = dx_build_app.build_and_upload_locally(appdir,
@@ -159,7 +161,7 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
                                                           dx_toolkit_autodep=False,
                                                           return_object_dump=True)['id']
         remote_job = dxpy.DXApplet(applet_id).run({"in1": 8})
-        print "Waiting for", remote_job, "to complete"
+        print("Waiting for", remote_job, "to complete")
         remote_job.wait_on_done()
         result = remote_job.describe()
         self.assertEqual(result["output"]["out1"], 140)
@@ -170,7 +172,7 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
         templates created automatically download the files only if
         they are available and does something sensible otherwise.
         '''
-        print "Setting current project to", self.project
+        print("Setting current project to", self.project)
         dxpy.WORKSPACE_ID = self.project
         dxpy.PROJECT_CONTEXT_ID = self.project
         # Make a couple files for testing
@@ -219,7 +221,7 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
             # Test with bare-minimum of inputs
             output = subprocess.check_output(['dx-run-app-locally', appdir, '-irequired_file=afile',
                                               '-irequired_file_array=afile'])
-            print output
+            print(output)
             self.assertIn("App finished successfully", output)
             self.assertIn("Local job workspaces can be found in:", output)
             local_workdir = output.split("Local job workspaces can be found in:")[1].strip()
@@ -237,7 +239,7 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
                                               '-idefault_file=otherfile',
                                               '-irequired_file_array=afile',
                                               '-ioptional_file_array=afile'])
-            print output
+            print(output)
             self.assertIn("App finished successfully", output)
             self.assertIn("Local job workspaces can be found in:", output)
             local_workdir = output.split("Local job workspaces can be found in:")[1].strip()
@@ -261,7 +263,7 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
         code does not throw any errors.
         '''
 
-        print "Setting current project to", self.project
+        print("Setting current project to", self.project)
         dxpy.WORKSPACE_ID = self.project
         dxpy.PROJECT_CONTEXT_ID = self.project
 
@@ -328,7 +330,7 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
             appdir = create_app_dir_with_dxapp_json(dxapp_json, lang)
             # Test with bare-minimum of inputs
             output = subprocess.check_output(['dx-run-app-locally', appdir] + cmdline_args)
-            print output
+            print(output)
             self.assertIn("App finished successfully", output)
 
             if testutil.TEST_RUN_JOBS:
