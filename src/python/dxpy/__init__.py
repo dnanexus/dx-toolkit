@@ -284,7 +284,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
         if os.environ['DX_CA_CERT'] == 'NOVERIFY':
             kwargs['verify'] = False
 
-    response, last_error = None, None
+    last_error = None
     for retry in range(max_retries + 1):
         streaming_response_truncated = False
         try:
