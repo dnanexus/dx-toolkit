@@ -153,9 +153,9 @@ class ContentLengthError(requests.HTTPError):
     '''Will be raised when actual content length received from server does not match the "Content-Length" header'''
     pass
 
-def exit_with_exc_info(code=1, message='', print_tb=False):
+def exit_with_exc_info(code=1, message='', print_tb=False, exception=None):
     '''Exits the program, printing information about the last exception (if
-    any) and an optional error message.
+    any) and an optional error message.  Uses *exception* instead if provided.
 
     :param code: Exit code.
     :type code: integer (valid exit code, 0-255)
@@ -163,8 +163,10 @@ def exit_with_exc_info(code=1, message='', print_tb=False):
     :type message: string
     :param print_tb: If set to True, prints the exception traceback; otherwise, suppresses it.
     :type print_tb: boolean
+    :type exception: an exception to use in place of the last exception raised
     '''
-    exc_type, exc_value = sys.exc_info()[:2]
+    exc_type, exc_value = (exception.__class__.__name__, exception) \
+                          if exception is not None else sys.exc_info()[:2]
     if exc_type is not None:
         if print_tb:
             traceback.print_exc()
@@ -187,9 +189,9 @@ default_expected_exceptions = network_exceptions + (DXAPIError,
                                                     KeyboardInterrupt)
 
 def err_exit(message='', code=None, expected_exceptions=default_expected_exceptions, arg_parser=None,
-             ignore_sigpipe=True):
+             ignore_sigpipe=True, exception=None):
     '''Exits the program, printing information about the last exception (if
-    any) and an optional error message.
+    any) and an optional error message.  Uses *exception* instead if provided.
 
     Uses **expected_exceptions** to set the error code decide whether to
     suppress the error traceback.
@@ -203,15 +205,18 @@ def err_exit(message='', code=None, expected_exceptions=default_expected_excepti
     :param arg_parser: argparse.ArgumentParser object used in the program (optional)
     :param ignore_sigpipe: Whether to exit silently with code 3 when IOError with code EPIPE is raised. Default true.
     :type ignore_sigpipe: boolean
+    :param exception: an exception to use in place of the last exception raised
     '''
     if arg_parser is not None:
         message = arg_parser.prog + ": " + message
-    exc = sys.exc_info()[1]
+
+    exc = exception if exception is not None else sys.exc_info()[1]
     if isinstance(exc, expected_exceptions):
-        exit_with_exc_info(3, message, print_tb=True if '_DX_DEBUG' in os.environ else False)
+        exit_with_exc_info(3, message, print_tb=True if '_DX_DEBUG' in os.environ else False,
+                           exception=exception)
     elif ignore_sigpipe and isinstance(exc, IOError) and getattr(exc, 'errno', None) == errno.EPIPE:
         sys.exit(3)
     else:
         if code is None:
             code = 1
-        exit_with_exc_info(code, message, print_tb=True)
+        exit_with_exc_info(code, message, print_tb=True, exception=exception)

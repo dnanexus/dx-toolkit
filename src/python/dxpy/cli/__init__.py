@@ -21,8 +21,11 @@ almost exclusively by command-line tools such as dx.
 
 from ..exceptions import err_exit, default_expected_exceptions, DXError
 
+def try_call_err_exit():
+    err_exit(expected_exceptions=default_expected_exceptions + (DXError,))
+
 def try_call(func, *args, **kwargs):
     try:
         return func(*args, **kwargs)
     except:
-        err_exit(expected_exceptions=default_expected_exceptions + (DXError,))
+        try_call_err_exit()

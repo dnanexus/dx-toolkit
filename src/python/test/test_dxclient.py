@@ -1352,7 +1352,7 @@ class TestDXClientWorkflow(DXTestCase):
 
         # error when initializing from a nonexistent workflow
         run("dx rm " + workflow_id)
-        with self.assertSubprocessFailure(stderr_regexp='ResourceNotFound', exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp='could not be found', exit_code=3):
             run("dx new workflow --init " + workflow_id)
 
     def test_dx_workflow_resolution(self):
@@ -1586,8 +1586,9 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertEqual(desc["editVersion"], 4)
         self.assertIsNone(desc["stages"][0]["name"])
 
-        # set incompatible executable
-        with self.assertSubprocessFailure(exit_code=3):
+        # set incompatible executable; expect a helpful error msg
+        # telling us to use --force; then use it
+        with self.assertSubprocessFailure(stderr_regexp="--force", exit_code=3):
             run("dx update stage myworkflow 0 --executable " + empty_applet_id)
         run("dx update stage myworkflow 0 --force --executable " + empty_applet_id)
         run("dx rm " + empty_applet_id)

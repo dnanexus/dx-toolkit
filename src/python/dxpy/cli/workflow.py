@@ -29,9 +29,9 @@ from .parsers import (process_dataobject_args, process_single_dataobject_output_
                       process_instance_type_arg)
 from ..utils.describe import io_val_to_str
 from ..utils.resolver import (resolve_existing_path, resolve_path, is_analysis_id)
-from ..exceptions import (err_exit, DXCLIError)
+from ..exceptions import (err_exit, DXCLIError, InvalidState)
 from ..compat import get_env_var
-from . import try_call
+from . import (try_call, try_call_err_exit)
 
 def new_workflow(args):
     try_call(process_dataobject_args, args)
@@ -253,13 +253,30 @@ def update_stage(args):
     elif args.relative_output_folder is not None:
         folderpath = args.relative_output_folder
 
-    try_call(dxworkflow.update_stage,
-             args.stage,
-             executable=new_exec_handler,
-             force=args.force,
-             name=args.name,
-             unset_name=args.no_name,
-             folder=folderpath,
-             stage_input=stage_input,
-             instance_type=args.instance_type,
-             edit_version=initial_edit_version)
+    try:
+        dxworkflow.update_stage(args.stage,
+                                executable=new_exec_handler,
+                                force=args.force,
+                                name=args.name,
+                                unset_name=args.no_name,
+                                folder=folderpath,
+                                stage_input=stage_input,
+                                instance_type=args.instance_type,
+                                edit_version=initial_edit_version)
+    except InvalidState as e:
+        if "compatible" in str(e):
+            err_msg = 'The requested executable could not be verified as a compatible replacement'
+            if 'incompatibilities' in e.details and e.details['incompatibilities']:
+                err_msg += ' for the following reasons:\n'
+                err_msg += '\n'.join([printing.fill(incompat,
+                                                    initial_indent='- ',
+                                                    subsequent_indent='  ')
+                                      for incompat in e.details['incompatibilities']])
+            else:
+                err_msg += '.'
+            err_msg += '\nRerun with --force to replace the executable anyway'
+            err_exit(expected_exceptions=DXCLIError, exception=DXCLIError(err_msg))
+        else:
+            try_call_err_exit()
+    except:
+        try_call_err_exit()
