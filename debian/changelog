@@ -1,3 +1,11 @@
+dx-toolkit (0.91.0) precise; urgency=low
+
+  * Bug fix for dxpy retry logic
+
+  * Various minor bug fixes and improvements
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 25 Mar 2014 21:35:17 +0000
+
 dx-toolkit (0.90.0) precise; urgency=low
 
   * dxfs: fix handling of filenames containing "/"
