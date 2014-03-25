@@ -39,7 +39,7 @@ class DXInode(object):
     FILE = 'file'
     LINK = 'link'
 
-    def __init__(self, type, name, mode, uid, gid, ctime=None, mtime=None, size=0, dxid=None):
+    def __init__(self, type, name, mode, uid, gid, ctime=None, mtime=None, size=0, dxid=None, describe=None):
         debug("New inode", type, name, mode, uid, gid)
         self.type = type
         self.name = name     # file name
@@ -48,7 +48,9 @@ class DXInode(object):
         self.uid  = uid      # user ID of owner
         self.gid  = gid      # group ID of owner
         self.size = size
+
         self.dxid = dxid
+        self.describe = describe
 
         self.now()
 
@@ -226,11 +228,13 @@ class DXFS(LoggingMixIn, Operations):
             mode = 0644
 
         path = os.path.join(dataobject["folder"], dataobject["name"])
-        self.create(path, mode,
+        self.create(path,
+                    mode,
                     ctime=dataobject['created']/1000,
                     mtime=dataobject['modified']/1000,
                     size=_get_size(dataobject),
-                    dxid=dataobject['id'])
+                    dxid=dataobject['id'],
+                    describe=dataobject)
         self.last_created = max(self.last_created, dataobject['created'])
 
     def refresh(self):
@@ -259,7 +263,7 @@ class DXFS(LoggingMixIn, Operations):
         node.uid = uid
         node.gid = gid
 
-    def create(self, path, mode, ctime=None, mtime=None, size=0, dxid=None):
+    def create(self, path, mode, ctime=None, mtime=None, size=0, dxid=None, describe=None):
         debug('create path:%s mode:%s' % (path, mode))
         if ctime is None:
             ctime = time()
@@ -278,9 +282,10 @@ class DXFS(LoggingMixIn, Operations):
         if dxid is None:
             f = dxpy.new_dxfile(name=filename, folder=dirname)
             dxid = f.get_id()
+            describe = f.describe()
         node = DXInode(DXInode.FILE, filename, mode | stat.S_IFREG,
                        self.uid, self.gid,
-                       ctime=ctime, mtime=mtime, size=size, dxid=dxid)
+                       ctime=ctime, mtime=mtime, size=size, dxid=dxid, describe=describe)
 
         debug("Adding file", node.name, "to", parent.name)
         parent.data.add(node)
@@ -308,11 +313,21 @@ class DXFS(LoggingMixIn, Operations):
         node = self._node(path)
         if not node:
             raise FuseOSError(ENOENT)
-        elif node.handler == None:
+        elif node.describe is None or node.handler is None:
             raise FuseOSError(ENOENT)
 
+        # The following attributes are "mutable" and need to be fetched
+        # anew each time. This whitelist is most useful for allowing
+        # fast (no API call needed) access to random properties like
+        # "security.selinux" that clients will query for but will never
+        # exist in the describe output.
+        if name in ('state', 'name', 'folder', 'sponsored', 'tags', 'modified'):
+            describe = node.handler.describe()
+        else:
+            describe = node.describe
+
         # See also ENOATTR
-        value = str(node.handler.describe().get(name, ''))
+        value = str(describe.get(name, ''))
 
         return value
 
@@ -323,7 +338,7 @@ class DXFS(LoggingMixIn, Operations):
         if not node:
             raise FuseOSError(ENOENT)
 
-        attrs = [str(attr) for attr in node.handler.describe().keys()]
+        attrs = [str(attr) for attr in node.describe.keys()]
         debug(attrs)
         return attrs
 
