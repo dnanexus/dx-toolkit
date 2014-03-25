@@ -57,12 +57,13 @@ class DXInode(object):
         # Extended Attributes
         self.xattr = {}
 
-        # Data 
+        # Data
         if stat.S_ISDIR(mode):
-            self.data = set()
+            # {node name -> node}
+            self.child_nodes = {}
         else:
             self.data = ''
-        
+
         if ctime:
             self.ctime = ctime
         if mtime:
@@ -113,14 +114,13 @@ class DXInode(object):
         match = None
         if self.type == DXInode.DIR:
             nodes = path.split('/')
-            for child in self.data:
-                if child.name == nodes[0]:
-                    if len(nodes) > 1:
-                        match = child.child('/'.join(nodes[1:]))
-                    else:
-                        match = child
-        if match is not None:
-            debug("Found child", match.name)
+            if nodes[0] in self.child_nodes:
+                child = self.child_nodes[nodes[0]]
+                if len(nodes) > 1:
+                    match = child.child('/'.join(nodes[1:]))
+                else:
+                    match = child
+                    debug("Found child", match.name)
         return match
 
     def read(self, offset, length):
@@ -288,7 +288,7 @@ class DXFS(LoggingMixIn, Operations):
                        ctime=ctime, mtime=mtime, size=size, dxid=dxid, describe=describe)
 
         debug("Adding file", node.name, "to", parent.name)
-        parent.data.add(node)
+        parent.child_nodes[node.name] = node
         #debug("Parent contents:", parent.data)
 
         # self.files[path] = dict(st_mode=(S_IFREG | mode), st_nlink=1,
@@ -359,8 +359,8 @@ class DXFS(LoggingMixIn, Operations):
 
         node = DXInode(DXInode.DIR, filename, mode | stat.S_IFDIR, self.uid, self.gid)
         debug("Adding dir", node.name, "to", parent.name)
-        parent.data.add(node)
-        debug("Parent contents:", parent.data)
+        parent.child_nodes[node.name] = node
+        debug("Parent contents:", parent.child_nodes)
 
         # self.files[path] = dict(st_mode=(S_IFDIR | mode), st_nlink=2,
         #                         st_size=0, st_ctime=time(), st_mtime=time(),
@@ -385,15 +385,15 @@ class DXFS(LoggingMixIn, Operations):
         debug('readdir path:%s' % path)
 
         node = self._node(path)
-        debug("reading dir", node.name, len(node.data), "entries")
+        debug("reading dir", node.name, len(node.child_nodes), "entries")
 
         for meta in ['.', '..']:
             debug("yielding", meta)
             yield meta
             #yield fuse.Direntry(meta)
-        for child in node.data:
-            debug("yielding", child.name)
-            yield child.name
+        for child_name in node.child_nodes:
+            debug("yielding", child_name)
+            yield child_name
             #yield fuse.Direntry(child.name)
 
     def readlink(self, path):
@@ -439,8 +439,8 @@ class DXFS(LoggingMixIn, Operations):
                 self.project.move(new_dirname, [node.handler.get_id()])
             node.handler.rename(new_filename)
 
-        old_parent.data.remove(node)
-        new_parent.data.add(node)
+        del old_parent.child_nodes[old_filename]
+        new_parent.child_nodes[new_filename] = node
 
     def rmdir(self, path):
         debug('rmdir path:%s' % path)
@@ -455,7 +455,7 @@ class DXFS(LoggingMixIn, Operations):
             raise FuseOSError(ENOTDIR)
 
         self.project.remove_folder(path)
-        parent.data.remove(node)
+        del parent.child_nodes[node.name]
 
     def setxattr(self, path, name, value, flags, position=0):
         debug('setxattr path:%s name:%s value:%s flags:%s' % (path, name, value, flags))
@@ -496,7 +496,7 @@ class DXFS(LoggingMixIn, Operations):
         node = DXInode(DXInode.LINK, filename, 0644 | stat.S_IFLNK, self.uid, self.gid)
         node.data = target
 
-        parent.data.add(node)
+        parent.child_nodes[node.name] = node
 
     def truncate(self, path, length, fh=None):
         debug('truncate path:%s len:%s' % (path, length))
@@ -519,7 +519,7 @@ class DXFS(LoggingMixIn, Operations):
 
         debug("Removing", child.handler)
         child.handler.remove()
-        parent.data.remove(child)
+        del parent.child_nodes[child.name]
 
     def utimens(self, path, times=None):
         debug('utime path:%s times:%s' % (path, times))
