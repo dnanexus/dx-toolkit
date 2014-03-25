@@ -4,7 +4,7 @@ import os, sys, unittest, json, subprocess, re
 from tempfile import TemporaryFile, NamedTemporaryFile
 
 import dxpy
-from . import dxpy_testutil as testutil
+import dxpy_testutil as testutil
 from dxpy.utils.completer import *
 
 IFS = '\013'

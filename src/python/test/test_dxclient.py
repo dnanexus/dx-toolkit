@@ -25,8 +25,8 @@ import pexpect
 
 import dxpy
 from dxpy.scripts import dx_build_app
-from . import dxpy_testutil as testutil
-from .dxpy_testutil import DXTestCase
+from dxpy_testutil import DXTestCase
+import dxpy_testutil as testutil
 from dxpy.packages import requests
 from dxpy.exceptions import DXAPIError
 

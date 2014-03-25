@@ -22,8 +22,8 @@ from __future__ import print_function
 import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re
 import pexpect
 
-from .dxpy_testutil import DXTestCase
-from . import dxpy_testutil as testutil
+from dxpy_testutil import DXTestCase
+import dxpy_testutil as testutil
 
 import dxpy
 from dxpy.scripts import dx_build_app

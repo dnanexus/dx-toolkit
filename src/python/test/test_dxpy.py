@@ -20,7 +20,7 @@
 import os, unittest, tempfile, filecmp
 
 import dxpy
-from . import dxpy_testutil as testutil
+import dxpy_testutil as testutil
 from dxpy.utils.describe import get_field_from_jbor, get_job_from_jbor, is_job_ref
 from dxpy.exceptions import *
 from dxpy.bindings import *
