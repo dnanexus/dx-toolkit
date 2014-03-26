@@ -31,7 +31,8 @@ from ..utils.describe import (get_find_executions_string, get_ls_l_desc, parse_t
 from ..utils.resolver import (get_first_pos_of_char, is_hashid, is_job_id, is_localjob_id, paginate_and_pick, pick,
                               resolve_existing_path, split_unescaped)
 from ..utils import OrderedDefaultdict
-from ..compat import input, str, get_env_var
+from ..compat import input, str
+from ..utils.env import get_env_var
 
 ####################
 # -i Input Parsing #

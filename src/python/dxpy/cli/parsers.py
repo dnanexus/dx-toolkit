@@ -23,12 +23,12 @@ those parsers.
 from __future__ import print_function
 
 import argparse, json, os
+from ..utils.env import set_env_var
 from ..utils.printing import fill
 from ..utils.pretty_print import format_table
 from ..utils.resolver import split_unescaped
 from ..utils.completer import InstanceTypesCompleter
 from ..exceptions import (DXError, DXCLIError)
-from ..compat import set_env_var
 
 class DXParserError(DXError):
     def __init__(self, msg):

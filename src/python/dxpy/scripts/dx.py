@@ -26,8 +26,8 @@ from ..cli import try_call
 from ..cli import workflow as workflow_cli
 from ..exceptions import err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions
 from ..packages import requests
-from ..compat import is_py2, basestring, str, input, set_env_var, get_env_var
-from ..utils.env import sys_encoding
+from ..compat import is_py2, basestring, str, input
+from ..utils.env import sys_encoding, set_env_var, get_env_var
 
 # Try to reset encoding to utf-8
 # Note: This is incompatible with pypy

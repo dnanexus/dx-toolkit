@@ -28,9 +28,9 @@ import dxpy.utils.printing as printing
 from .parsers import (process_dataobject_args, process_single_dataobject_output_args,
                       process_instance_type_arg)
 from ..utils.describe import io_val_to_str
+from ..utils.env import get_env_var
 from ..utils.resolver import (resolve_existing_path, resolve_path, is_analysis_id)
 from ..exceptions import (err_exit, DXCLIError, InvalidState)
-from ..compat import get_env_var
 from . import (try_call, try_call_err_exit)
 
 def new_workflow(args):

@@ -20,8 +20,8 @@ from __future__ import print_function
 
 import os, sys, json, argparse, csv
 import dxpy
-from dxpy.compat import get_env_var
 from dxpy.cli.parsers import *
+from dxpy.utils.env import get_env_var
 from dxpy.utils.resolver import *
 from dxpy.utils.describe import print_desc
 

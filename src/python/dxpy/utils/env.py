@@ -196,3 +196,36 @@ def clearenv(args):
                 write_env_var(var, defaults[var])
             else:
                 write_env_var(var, '')
+
+# The following adapters ensure consistent behavior of non-ASCII
+# environment variable values across Python 2 and 3. Note that when
+# setting variables in Python 2 you can pass in a bytes (str) object to
+# set_env_var but in both Python 2 and 3 you will always receive a
+# unicode object.
+
+def _set_env_var_python2(var_name, value):
+    # value may be bytes or unicode
+    if type(value) is bytes:
+        os.environ[var_name] = value
+    else:
+        os.environ[var_name] = value.encode(sys_encoding)
+
+def _get_env_var_python2(var_name, default=None):
+    if var_name not in os.environ:
+        return default
+    return os.environ[var_name].decode(sys_encoding)
+
+def _set_env_var_python3(var_name, value):
+    # value must be unicode
+    assert type(value) is str
+    os.environ[var_name] = value
+
+def _get_env_var_python3(var_name, default=None):
+    return os.environ.get(var_name, default)
+
+if is_py2:
+    get_env_var = _get_env_var_python2
+    set_env_var = _set_env_var_python2
+else:
+    get_env_var = _get_env_var_python3
+    set_env_var = _set_env_var_python3
