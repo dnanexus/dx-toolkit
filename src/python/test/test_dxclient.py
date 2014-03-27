@@ -3204,6 +3204,28 @@ class TestDXJobutilAddOutput(DXTestCase):
                                                   exit_code=3):
                     run(cmd_prefix + " ".join([str(i), "--class " + tc[0], tc[1]]))
 
+
+@unittest.skipUnless(testutil.TEST_TCSH, 'skipping tests that require tcsh to be installed')
+class TestTcshEnvironment(unittest.TestCase):
+    def test_tcsh_dash_c(self):
+        # tcsh -c doesn't set $_, or provide any other way for us to determine the source directory, so
+        # "source environment" only works from DNANEXUS_HOME
+        run('cd $DNANEXUS_HOME && env - HOME=$HOME tcsh -c "source /etc/csh.cshrc && source /etc/csh.login && source $DNANEXUS_HOME/environment && dx --help"')
+        run('cd $DNANEXUS_HOME && env - HOME=$HOME tcsh -c "source /etc/csh.cshrc && source /etc/csh.login && source $DNANEXUS_HOME/environment.csh && dx --help"')
+
+    def test_tcsh_source_environment(self):
+        tcsh = pexpect.spawn("env - HOME=$HOME tcsh")
+        tcsh.logfile = sys.stdout
+        tcsh.setwinsize(20, 90)
+        tcsh.sendline("source /etc/csh.cshrc")
+        tcsh.sendline("source /etc/csh.login")
+        tcsh.sendline("dx")
+        tcsh.expect("Command not found")
+        tcsh.sendline("source ../../../environment")
+        tcsh.sendline("dx")
+        tcsh.expect("dx is a command-line client")
+
+
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
         sys.stderr.write('WARNING: env var DXTEST_FULL is not set; tests that create apps or run jobs will not be run\n')

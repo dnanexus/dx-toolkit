@@ -22,6 +22,7 @@ TEST_FUSE = _run_all_tests or 'DXTEST_FUSE' in os.environ
 TEST_RUN_JOBS = _run_all_tests or 'DXTEST_RUN_JOBS' in os.environ
 TEST_HTTP_PROXY = _run_all_tests or 'DXTEST_HTTP_PROXY' in os.environ
 TEST_ENV = _run_all_tests or 'DXTEST_ENV' in os.environ
+TEST_TCSH = _run_all_tests or 'DXTEST_TCSH' in os.environ
 
 class DXTestCase(unittest.TestCase):
     def setUp(self):

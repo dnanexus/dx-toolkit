@@ -22,7 +22,8 @@
 # $ source environment
 
 # This line is compatible with both bash and csh/tcsh. If running in csh, it sources the file "environment.csh" and quits.
-test ! -z "$version" && echo "$shell" | grep -q csh && source "`dirname $0`/environment.csh" && exit
+
+test ! -z "$version" && echo "$shell" | grep -q csh && set SOURCE=`echo $_ | cut -f 2 -d " "` && set SOURCE=`readlink -f "$SOURCE"` && set SOURCE=`dirname "$SOURCE"` && source "$SOURCE/environment.csh" && exit
 
 # Resolve the location of this file
 SOURCE="${BASH_SOURCE[0]}"
