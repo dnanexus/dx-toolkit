@@ -2854,20 +2854,22 @@ def run(args):
 
     args.input_from_clone, args.sys_reqs_from_clone = {}, {}
 
+    dest_proj, dest_path = None, None
+
     if args.project is not None:
         if args.folder is not None and not args.clone:
-            err_exit("Options --project and --folder/--destination cannot be specified together")
-        args.folder = args.project + ":/"
+            err_exit(exception=DXCLIError(
+                "Options --project and --folder/--destination cannot be specified together"
+            ))
+        dest_proj = args.project
 
-    if args.folder is None:
-        dest_proj = dxpy.WORKSPACE_ID
-        if dest_proj is None:
-            parser.exit(1, 'Unable to find project to run the app in. Please run "dx select" to set the working project, or use --folder=project:path\n')
-        dest_path = get_env_var('DX_CLI_WD', u'/')
-    else:
+    if args.folder is not None:
         dest_proj, dest_path, _none = try_call(resolve_existing_path,
                                                args.folder,
                                                expected='folder')
+
+    # at this point, allow the --clone options to set the destination
+    # project and path if available
 
     # Process the --stage-output-folder and
     # --stage-relative-output-folder options if provided
@@ -2960,7 +2962,28 @@ def run(args):
 
     handler = try_call(get_exec_handler, args.executable, args.alias)
 
-    process_instance_type_arg(args, isinstance(handler, dxpy.DXWorkflow))
+    # if the destination project has still not been set, use the
+    # current project
+    if dest_proj is None:
+        dest_proj = dxpy.WORKSPACE_ID
+        if dest_proj is None:
+            err_exit(exception=DXCLIError(
+                'Unable to find project to run the app in. ' +
+                'Please run "dx select" to set the working project, or use --folder=project:path'
+            ))
+
+    is_workflow = isinstance(handler, dxpy.DXWorkflow)
+
+    # if the destination path has still not been set, use the current
+    # directory as the default; but only do this if not running a
+    # workflow with outputFolder already set
+    if dest_path is None:
+        if is_workflow:
+            dest_path = handler.outputFolder # this could be None
+        if dest_path is None:
+            dest_path = get_env_var('DX_CLI_WD', u'/')
+
+    process_instance_type_arg(args, is_workflow)
 
     run_one(args, handler, dest_proj, dest_path)
 

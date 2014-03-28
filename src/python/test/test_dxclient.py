@@ -1028,13 +1028,14 @@ class TestDXClientWorkflow(DXTestCase):
                                          "runSpec": {"interpreter": "bash",
                                                      "code": "exit 1"}
                                          })['id']
-        workflow_id = run("dx new workflow myworkflow --brief").strip()
+        workflow_id = run("dx new workflow myworkflow --output-folder /foo --brief").strip()
         stage_id = dxpy.api.workflow_add_stage(workflow_id,
                                                {"editVersion": 0, "executable": applet_id})['stage']
         analysis_id = run("dx run " + workflow_id + " -i0.number=32 -y --brief").strip()
         self.assertTrue(analysis_id.startswith('analysis-'))
         analysis_desc = run("dx describe " + analysis_id)
         self.assertIn(stage_id + '.number = 32', analysis_desc)
+        self.assertIn('foo', analysis_desc)
         analysis_desc = json.loads(run("dx describe " + analysis_id + " --json"))
         time.sleep(2) # May need to wait for job to be created in the system
         job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
