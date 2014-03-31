@@ -2931,12 +2931,13 @@ def run(args):
                 else:
                     clone_desc = dxpy.api.job_describe(result_choice["id"])
 
+        if args.folder is None:
+            dest_proj = dest_proj or clone_desc["project"]
+            dest_path = clone_desc["folder"]
+
         if clone_desc['class'] == 'job':
             if args.executable == "":
                 args.executable = clone_desc.get("applet", clone_desc.get("app", ""))
-            if args.folder is None:
-                dest_proj = clone_desc["project"]
-                dest_path = clone_desc["folder"]
             if args.name is None:
                 match_obj = re.search("\(re-run\)$", clone_desc["name"])
                 if match_obj is None:

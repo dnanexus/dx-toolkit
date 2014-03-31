@@ -959,6 +959,12 @@ dx-jobutil-add-output record_array $second_record --array
         # override project
         new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --project " + self.other_proj_id + " --brief -y").strip())
         self.assertEqual(new_job_desc['project'], self.other_proj_id)
+        self.assertEqual(new_job_desc['folder'], '/output')
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['project', 'folder'])
+
+        # override project and folder
+        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --folder " + self.other_proj_id + ": --brief -y").strip())
+        self.assertEqual(new_job_desc['project'], self.other_proj_id)
         self.assertEqual(new_job_desc['folder'], '/')
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['project', 'folder'])
 
