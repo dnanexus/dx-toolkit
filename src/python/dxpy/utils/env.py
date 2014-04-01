@@ -21,7 +21,7 @@ https://wiki.dnanexus.com/Command-Line-Client/Environment%20Variables
 for more details.
 '''
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function
 
 import os, sys, shutil, textwrap, json, locale
 

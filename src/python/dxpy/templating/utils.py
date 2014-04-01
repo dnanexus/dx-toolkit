@@ -17,7 +17,7 @@
 # Miscellaneous utility classes and functions for the dx-app-wizard
 # command-line tool
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function
 
 import os, shutil, subprocess, re, json
 

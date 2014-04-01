@@ -190,8 +190,7 @@ class TestDXTabCompletion(unittest.TestCase):
     def test_noninterference_of_local_files(self):
         self.assert_no_completions("dx ls ")
         self.assert_no_completions("dx ls noninter")
-        # TODO: re-enable this after figuring out exception control and switching to argcomplete.warn().
-        # self.assert_no_completions("dx ls nonexistent-project:", stderr_contains="Could not find a project named")
+        self.assert_no_completions("dx ls nonexistent-project:", stderr_contains="Could not find a project named")
         self.assert_no_completions("dx ls :")
 
     def test_escaping(self):

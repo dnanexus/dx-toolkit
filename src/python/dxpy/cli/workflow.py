@@ -19,7 +19,7 @@ This submodule contains workflow-based commands for the dx
 command-line client.
 '''
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function
 
 import os, sys
 

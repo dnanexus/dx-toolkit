@@ -20,7 +20,7 @@ Functions and classes used when launching platform executables from the CLI.
 
 # TODO: refactor all dx run helper functions here
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function
 
 import os, sys, json, collections, pipes, shlex
 

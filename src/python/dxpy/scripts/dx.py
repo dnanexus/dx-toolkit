@@ -17,7 +17,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function
 
 import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, errno, platform
 import shlex # respects quoted substrings when splitting
@@ -26,10 +26,17 @@ from ..cli import try_call
 from ..cli import workflow as workflow_cli
 from ..exceptions import err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions
 from ..packages import requests
-from ..compat import is_py2, basestring, str, input, wrap_stdio_in_codecs
+from ..compat import is_py2, basestring, str, input
 from ..utils.env import sys_encoding, set_env_var, get_env_var
 
-wrap_stdio_in_codecs()
+# Try to reset encoding to utf-8
+# Note: This is incompatible with pypy
+# Note: In addition to PYTHONIOENCODING=UTF-8, this also enables command-line arguments to be decoded properly.
+if platform.python_implementation() != "PyPy":
+    try:
+        reload(sys).setdefaultencoding(sys_encoding)
+    except:
+        pass
 
 try:
     import colorama
@@ -1944,7 +1951,7 @@ def cat(args):
                 chunk = dxfile.read(1024*1024)
                 if len(chunk) == 0:
                     break
-                sys.stdout.buffer.write(chunk)
+                sys.stdout.write(chunk)
         except:
             err_exit()
 
@@ -2060,7 +2067,7 @@ def upload_one(args):
     else:
         try:
             dxfile = dxpy.upload_local_file(filename=(None if args.filename == '-' else args.filename),
-                                            file=(sys.stdin.buffer if args.filename == '-' else None),
+                                            file=(sys.stdin if args.filename == '-' else None),
                                             name=name,
                                             tags=args.tags,
                                             types=args.types,

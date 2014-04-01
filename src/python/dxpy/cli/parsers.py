@@ -20,7 +20,7 @@ other parsers, as well as utility functions for parsing the input to
 those parsers.
 '''
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function
 
 import argparse, json, os
 from ..utils.env import set_env_var
