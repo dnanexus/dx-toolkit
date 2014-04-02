@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
-import os, sys, unittest, json, subprocess, re
-from tempfile import TemporaryFile, NamedTemporaryFile
+import os, unittest, subprocess
+from tempfile import NamedTemporaryFile
 
 import dxpy
 import dxpy_testutil as testutil
-from dxpy.utils.completer import *
+
+# TODO: unit tests for dxpy.utils.completer
 
 IFS = '\013'
 

@@ -17,14 +17,11 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import os, unittest, tempfile, filecmp
+import os, unittest, tempfile, filecmp, time, json, sys
 
 import dxpy
 import dxpy_testutil as testutil
-from dxpy.utils.describe import get_field_from_jbor, get_job_from_jbor, is_job_ref
-from dxpy.exceptions import *
-from dxpy.bindings import *
-
+from dxpy.exceptions import DXAPIError, DXFileError, DXError, DXJobFailureError
 from dxpy.utils import pretty_print
 
 def get_objects_from_listf(listf):
@@ -1667,7 +1664,7 @@ class TestDXSearch(unittest.TestCase):
                 with self.assertRaises(DXError):
                     method(**query)
 
-class TestPrettyPrint(unittest.TestCase):
+class TestPrettyrint(unittest.TestCase):
     def test_string_escaping(self):
         self.assertEqual(pretty_print.escape_unicode_string("a"), u"a")
         self.assertEqual(pretty_print.escape_unicode_string("foo\nbar"), u"foo\\nbar")

@@ -19,7 +19,7 @@
 
 from __future__ import print_function
 
-import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re
+import os, sys, unittest, json, tempfile, subprocess
 import pexpect
 
 from dxpy_testutil import DXTestCase

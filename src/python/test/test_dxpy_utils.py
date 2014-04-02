@@ -19,10 +19,12 @@
 
 from __future__ import print_function
 
-import os, unittest, json, tempfile, subprocess, csv, shutil, re, time
+import unittest, time
 from dxpy import AppError
 from dxpy.utils import (describe, exec_utils, genomic_utils, response_iterator, get_futures_threadpool)
 from dxpy.compat import USING_PYTHON2
+
+# TODO: unit tests for dxpy.utils.get_field_from_jbor, get_job_from_jbor, is_job_ref
 
 class TestDescribe(unittest.TestCase):
     def test_is_job_ref(self):

@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 
-import platform, locale, sys
+import platform, locale
 sys_encoding = locale.getdefaultlocale()[1] or 'UTF-8'
 if platform.python_implementation() != "PyPy":
     try:
