@@ -1,7 +1,7 @@
 import re
-from ..compat import is_py2, str
+from ..compat import USING_PYTHON2, str
 
-if is_py2:
+if USING_PYTHON2:
     import string
     maketrans = string.maketrans
 else:

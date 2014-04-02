@@ -22,7 +22,7 @@ from __future__ import print_function
 import os, unittest, json, tempfile, subprocess, csv, shutil, re, time
 from dxpy import AppError
 from dxpy.utils import (describe, exec_utils, genomic_utils, response_iterator, get_futures_threadpool)
-from dxpy.compat import is_py2
+from dxpy.compat import USING_PYTHON2
 
 class TestDescribe(unittest.TestCase):
     def test_is_job_ref(self):
@@ -61,11 +61,11 @@ class TestErrorSanitizing(unittest.TestCase):
         self.assertEqual(exec_utils._safe_unicode(ValueError("foo")), "foo")
         # UTF-8 encoded str
         self.assertEqual(exec_utils._safe_unicode(ValueError(u"crème".encode("utf-8"))),
-                         u"cr\xe8me" if is_py2 else u"b'cr\\xc3\\xa8me'")
+                         u"cr\xe8me" if USING_PYTHON2 else u"b'cr\\xc3\\xa8me'")
         # Unicode obj
         self.assertEqual(exec_utils._safe_unicode(ValueError(u"brûlée")), u"br\xfbl\xe9e")
         # Not UTF-8
-        if is_py2:
+        if USING_PYTHON2:
             expected = "Invalid read name: D??n?x?s [Raw error message: 496e76616c69642072656164206e616d653a2044d1c16ee878fb73]"
         else:
             expected = "b'Invalid read name: D\\xd1\\xc1n\\xe8x\\xfbs'"

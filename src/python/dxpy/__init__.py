@@ -140,7 +140,7 @@ import os, sys, json, time, logging, platform, collections
 from .packages import requests
 from .packages.requests.exceptions import ConnectionError, HTTPError, Timeout
 from .packages.requests.auth import AuthBase
-from .compat import is_py2
+from .compat import USING_PYTHON2
 
 logger = logging.getLogger(__name__)
 logging.getLogger('dxpy.packages.requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
@@ -255,7 +255,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
     # which should not be done. Also, per HTTP/1.1 headers must be encoded with MIME, but we'll disregard that here, and
     # just encode them with the Python default (ascii) and fail for any non-ascii content.
     # TODO: ascertain whether this is a problem in Python 3/make test
-    if is_py2:
+    if USING_PYTHON2:
         headers = {k.encode(): v.encode() for k, v in headers.items()}
 
     if jsonify_data:

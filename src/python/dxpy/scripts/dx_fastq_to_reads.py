@@ -30,7 +30,7 @@ import ast
 sys.path.append('/usr/local/lib/')
 import magic
 import dxpy
-from dxpy.compat import is_py2
+from dxpy.compat import USING_PYTHON2
 
 parser = argparse.ArgumentParser(description='Import local FASTQ file(s) as a Reads object.')
 parser.add_argument('--name', help='ID of ContigSet object (reference) that this BED file annotates')
@@ -156,7 +156,7 @@ def estimateQualEncoding(fastq_filename, basesToEstimate, readsToEstimate, thres
     i = 0
 
     # long int to avoid overruns in big reads files (NB: ints are longs in Python 3 but not 2)
-    if is_py2:
+    if USING_PYTHON2:
         avgQual = long(0)
     else:
         avgQual = 0

@@ -21,12 +21,12 @@ https://wiki.dnanexus.com/Command-Line-Client/Environment%20Variables
 for more details.
 '''
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
 import os, sys, shutil, textwrap, json, locale
 
 from .. import DEFAULT_APISERVER_PROTOCOL, DEFAULT_APISERVER_HOST, DEFAULT_APISERVER_PORT
-from ..compat import is_py2
+from ..compat import USING_PYTHON2
 
 sys_encoding = locale.getdefaultlocale()[1] or 'UTF-8'
 
@@ -159,7 +159,7 @@ def write_env_var_to_conf_dir(var, value, conf_dir):
         except:
             pass
         with os.fdopen(os.open(os.path.join(conf_dir, var), os.O_CREAT | os.O_WRONLY, 0o600), 'w') as fd:
-            fd.write(value.encode(sys_encoding) if is_py2 else value)
+            fd.write(value.encode(sys_encoding) if USING_PYTHON2 else value)
 
     if not os.path.exists(os.path.expanduser('~/.dnanexus_config/') + 'unsetenv'):
         with open(os.path.expanduser('~/.dnanexus_config/') + 'unsetenv', 'w') as fd:
@@ -223,7 +223,7 @@ def _set_env_var_python3(var_name, value):
 def _get_env_var_python3(var_name, default=None):
     return os.environ.get(var_name, default)
 
-if is_py2:
+if USING_PYTHON2:
     get_env_var = _get_env_var_python2
     set_env_var = _set_env_var_python2
 else:

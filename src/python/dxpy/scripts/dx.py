@@ -17,7 +17,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
 import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, errno, platform
 import shlex # respects quoted substrings when splitting
@@ -26,17 +26,10 @@ from ..cli import try_call
 from ..cli import workflow as workflow_cli
 from ..exceptions import err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions
 from ..packages import requests
-from ..compat import is_py2, basestring, str, input
+from ..compat import USING_PYTHON2, basestring, str, input, wrap_stdio_in_codecs
 from ..utils.env import sys_encoding, set_env_var, get_env_var
 
-# Try to reset encoding to utf-8
-# Note: This is incompatible with pypy
-# Note: In addition to PYTHONIOENCODING=UTF-8, this also enables command-line arguments to be decoded properly.
-if platform.python_implementation() != "PyPy":
-    try:
-        reload(sys).setdefaultencoding(sys_encoding)
-    except:
-        pass
+wrap_stdio_in_codecs()
 
 try:
     import colorama
@@ -126,7 +119,7 @@ def set_delim(args=argparse.Namespace()):
 
 # Loading environment
 
-if is_py2:
+if USING_PYTHON2:
     args_list = [arg.decode(sys_encoding) for arg in sys.argv[1:]]
 else:
     args_list = sys.argv[1:]
@@ -1951,7 +1944,7 @@ def cat(args):
                 chunk = dxfile.read(1024*1024)
                 if len(chunk) == 0:
                     break
-                sys.stdout.write(chunk)
+                sys.stdout.buffer.write(chunk)
         except:
             err_exit()
 
@@ -2005,7 +1998,7 @@ def head(args):
                     if tty_rows <= table_rows or tty_cols <= table_cols:
                         try:
                             pipe = os.popen('less -RS', 'w')
-                            pipe.write(table_text.encode(sys_encoding) if is_py2 else table_text)
+                            pipe.write(table_text.encode(sys_encoding) if USING_PYTHON2 else table_text)
                             pipe.close()
                             return
                         except:
@@ -2067,7 +2060,7 @@ def upload_one(args):
     else:
         try:
             dxfile = dxpy.upload_local_file(filename=(None if args.filename == '-' else args.filename),
-                                            file=(sys.stdin if args.filename == '-' else None),
+                                            file=(sys.stdin.buffer if args.filename == '-' else None),
                                             name=name,
                                             tags=args.tags,
                                             types=args.types,

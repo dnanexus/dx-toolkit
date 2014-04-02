@@ -23,7 +23,7 @@ from __future__ import print_function
 import os, json, collections, logging, argparse, string
 from functools import wraps
 import dxpy
-from ..compat import is_py2
+from ..compat import USING_PYTHON2
 
 ENTRY_POINT_TABLE = {}
 
@@ -38,7 +38,7 @@ def _safe_unicode(o):
     """
     def clean(s):
         return u''.join([c if c in ASCII_PRINTABLE else '?' for c in s])
-    if is_py2:
+    if USING_PYTHON2:
         try:
             return unicode(o)
         except:
@@ -61,7 +61,7 @@ def _format_exception_message(e):
     # and then this formatted string
     if isinstance(e, dxpy.AppError):
         return _safe_unicode(e)
-    if is_py2:
+    if USING_PYTHON2:
         return unicode(e.__class__.__name__, 'utf-8') + ": " + _safe_unicode(e)
     else:
         return e.__class__.__name__ + ": " + _safe_unicode(e)

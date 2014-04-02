@@ -20,7 +20,7 @@ This submodule gives basic utilities for printing to the terminal.
 
 import textwrap, subprocess, os, sys
 from .env import sys_encoding
-from ..compat import is_py2
+from ..compat import USING_PYTHON2
 from ..exceptions import DXCLIError
 
 if sys.stdout.isatty():
@@ -139,7 +139,7 @@ def pager(content, pager=None, file=None):
         pager_process.stdin.close()
         pager_process.wait()
     except:
-        file.write(content.encode(sys_encoding) if is_py2 else content)
+        file.write(content.encode(sys_encoding) if USING_PYTHON2 else content)
     finally:
         try:
             pager_process.terminate()
