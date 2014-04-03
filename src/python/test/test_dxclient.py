@@ -3218,11 +3218,11 @@ class TestTcshEnvironment(unittest.TestCase):
     def test_tcsh_dash_c(self):
         # tcsh -c doesn't set $_, or provide any other way for us to determine the source directory, so
         # "source environment" only works from DNANEXUS_HOME
-        run('cd $DNANEXUS_HOME && env - HOME=$HOME tcsh -c "source /etc/csh.cshrc && source /etc/csh.login && source $DNANEXUS_HOME/environment && dx --help"')
-        run('cd $DNANEXUS_HOME && env - HOME=$HOME tcsh -c "source /etc/csh.cshrc && source /etc/csh.login && source $DNANEXUS_HOME/environment.csh && dx --help"')
+        run('cd $DNANEXUS_HOME && env - HOME=$HOME PATH=/usr/local/bin:/usr/bin:/bin tcsh -c "source /etc/csh.cshrc && source /etc/csh.login && source $DNANEXUS_HOME/environment && dx --help"')
+        run('cd $DNANEXUS_HOME && env - HOME=$HOME PATH=/usr/local/bin:/usr/bin:/bin tcsh -c "source /etc/csh.cshrc && source /etc/csh.login && source $DNANEXUS_HOME/environment.csh && dx --help"')
 
     def test_tcsh_source_environment(self):
-        tcsh = pexpect.spawn("env - HOME=$HOME tcsh")
+        tcsh = pexpect.spawn("env - HOME=$HOME PATH=/usr/local/bin:/usr/bin:/bin tcsh")
         tcsh.logfile = sys.stdout
         tcsh.setwinsize(20, 90)
         tcsh.sendline("source /etc/csh.cshrc")
