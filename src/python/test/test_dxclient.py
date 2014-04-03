@@ -74,7 +74,7 @@ def check_output(*popenargs, **kwargs):
 
 def run(command, **kwargs):
     print("$ %s" % (command,))
-    output = check_output(command, shell=True, **kwargs)
+    output = check_output(command, shell=True, **kwargs).decode(sys.stdin.encoding)
     print(output)
     return output
 
