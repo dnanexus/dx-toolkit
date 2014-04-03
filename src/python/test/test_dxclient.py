@@ -17,7 +17,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
 import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re, base64, random, time
 from contextlib import contextmanager
@@ -371,7 +371,8 @@ class TestDXClient(DXTestCase):
 
     def test_dx_describe_project(self):
         describe_output = run(u"dx describe :").strip()
-        self.assertTrue(re.search(r'ID\s+%s.*\n.*\nName\s+dxclient_test_pr\xc3\xb6ject' % (self.project,),
+        print(describe_output)
+        self.assertTrue(re.search(r'ID\s+%s.*\n.*\nName\s+dxclient_test_pröject' % (self.project,),
                                   describe_output))
         self.assertIn('Properties', describe_output)
 
