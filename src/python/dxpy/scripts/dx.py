@@ -1278,8 +1278,8 @@ def describe(args):
                         print_desc(result['describe'], args.verbose)
                     found_match = True
 
-            # Could be a user
             if args.path.startswith('user-'):
+                # User
                 try:
                     desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {"appsInstalled": True, "subscriptions": True})
                     found_match = True
@@ -1293,27 +1293,8 @@ def describe(args):
                 except dxpy.DXAPIError as details:
                     if details.code != requests.codes.not_found:
                         raise
-            elif re.match("^[A-Za-z][0-9A-Za-z_\.]{2,}$", args.path):
-                # Try describing as a user if it's a valid handle (no
-                # hyphens, etc.)
-                try:
-                    desc = dxpy.DXHTTPRequest('/user-' + args.path.lower() + '/describe',
-                                              {"appsInstalled": True,
-                                               "subscriptions": True})
-                    found_match = True
-                    if args.json:
-                        json_output.append(desc)
-                    elif args.name:
-                        print(str(desc['first']) + ' ' + str(desc['last']))
-                    else:
-                        print(get_result_str())
-                        print_desc(desc, args.verbose)
-                except dxpy.DXAPIError as details:
-                    if details.code != requests.codes.not_found:
-                        raise
-
-            # Could be an org or team
-            if args.path.startswith('org-') or args.path.startswith('team-'):
+            elif args.path.startswith('org-') or args.path.startswith('team-'):
+                # Org or team
                 try:
                     desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {})
                     found_match = True
