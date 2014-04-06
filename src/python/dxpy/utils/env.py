@@ -1,4 +1,4 @@
-# Copyright (C) 2013 DNAnexus, Inc.
+# Copyright (C) 2013-2014 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #
@@ -14,14 +14,14 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+from __future__ import (print_function, unicode_literals)
+
 '''
 Logic for determining environment variable values.  See external
 documentation
 https://wiki.dnanexus.com/Command-Line-Client/Environment%20Variables
 for more details.
 '''
-
-from __future__ import print_function, unicode_literals
 
 import os, sys, shutil, textwrap, json, locale
 

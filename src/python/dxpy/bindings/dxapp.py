@@ -1,4 +1,4 @@
-# Copyright (C) 2013 DNAnexus, Inc.
+# Copyright (C) 2013-2014 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #
@@ -13,6 +13,8 @@
 #   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #   License for the specific language governing permissions and limitations
 #   under the License.
+
+from __future__ import (print_function, unicode_literals)
 
 """
 DXApp Handler

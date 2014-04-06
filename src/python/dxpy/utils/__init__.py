@@ -1,4 +1,4 @@
-# Copyright (C) 2013 DNAnexus, Inc.
+# Copyright (C) 2013-2014 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #
@@ -14,11 +14,11 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+from __future__ import (print_function, unicode_literals)
+
 '''
 Utilities shared by dxpy modules.
 '''
-
-from __future__ import print_function, unicode_literals
 
 import os, json, collections, concurrent.futures, traceback, time, gc
 import dateutil.parser
@@ -299,3 +299,6 @@ def json_loads_raise_on_duplicates(*args, **kwargs):
     '''
     kwargs['object_pairs_hook'] = _dict_raise_on_duplicates
     return json.loads(*args, **kwargs)
+
+def warn(*args, **kwargs):
+    print(*args, stream=sys.stderr, **kwargs)

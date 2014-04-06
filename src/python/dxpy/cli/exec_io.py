@@ -1,4 +1,4 @@
-# Copyright (C) 2013 DNAnexus, Inc.
+# Copyright (C) 2013-2014 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #
@@ -14,13 +14,13 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+from __future__ import (print_function, unicode_literals)
+
 '''
 Functions and classes used when launching platform executables from the CLI.
 '''
 
 # TODO: refactor all dx run helper functions here
-
-from __future__ import print_function, unicode_literals
 
 import os, sys, json, collections, pipes, shlex
 

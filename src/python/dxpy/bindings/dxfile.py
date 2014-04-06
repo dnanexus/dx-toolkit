@@ -1,4 +1,4 @@
-# Copyright (C) 2013 DNAnexus, Inc.
+# Copyright (C) 2013-2014 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #
@@ -14,6 +14,8 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+from __future__ import (print_function, unicode_literals)
+
 '''
 DXFile Handler
 **************
@@ -23,11 +25,12 @@ This remote file handler is a Python file-like object.
 
 import os, sys, logging, traceback, hashlib, copy, time
 import concurrent.futures
+from io import BytesIO
 
 import dxpy
 from . import DXDataObject
 from ..exceptions import DXFileError
-from ..compat import BytesIO
+from ..utils import warn
 
 if dxpy.snappy_available:
     import snappy
@@ -158,15 +161,15 @@ class DXFile(DXDataObject):
         custom auth).
         '''
         if self._write_buf.tell() > 0 or len(self._http_threadpool_futures) > 0:
-            print >> sys.stderr, "=== WARNING! ==="
-            print >> sys.stderr, "There is still unflushed data in the destructor of a DXFile object!"
-            print >> sys.stderr, "We will attempt to flush it now, but if an error were to occur, we could not report it back to you."
-            print >> sys.stderr, "Your program could fail to flush the data but appear to succeed."
-            print >> sys.stderr, "Instead, please call flush() or close(), or use the context managed version (e.g., with open_dxfile(ID, mode='w') as f:)"
+            warn("=== WARNING! ===")
+            warn("There is still unflushed data in the destructor of a DXFile object!")
+            warn("We will attempt to flush it now, but if an error were to occur, we could not report it back to you.")
+            warn("Your program could fail to flush the data but appear to succeed.")
+            warn("Instead, please call flush() or close(), or use the context managed version (e.g., with open_dxfile(ID, mode='w') as f:)")
         try:
             self.flush(multithread=False)
         except Exception as e:
-            print >> sys.stderr, "=== Exception occurred while flushing accumulated file data for %r" % (self._dxid,)
+            warn("=== Exception occurred while flushing accumulated file data for %r" % (self._dxid,))
             traceback.print_exception(*sys.exc_info())
             raise
 
@@ -439,7 +442,7 @@ class DXFile(DXDataObject):
         self._num_uploaded_parts += 1
 
         if display_progress:
-            print >> sys.stderr, "."
+            warn(".")
 
         if report_progress_fn is not None:
             report_progress_fn(self, len(data))

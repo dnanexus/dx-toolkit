@@ -1,4 +1,4 @@
-# Copyright (C) 2013 DNAnexus, Inc.
+# Copyright (C) 2013-2014 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #
@@ -14,13 +14,13 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+from __future__ import (print_function, unicode_literals)
+
 '''
 This file contains parsers with no added help that can be inherited by
 other parsers, as well as utility functions for parsing the input to
 those parsers.
 '''
-
-from __future__ import print_function, unicode_literals
 
 import argparse, json, os
 from ..utils.env import set_env_var

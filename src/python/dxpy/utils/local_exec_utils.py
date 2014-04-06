@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-#
-# Copyright (C) 2013 DNAnexus, Inc.
+# Copyright (C) 2013-2014 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #
@@ -16,7 +14,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import print_function
+from __future__ import (print_function, unicode_literals)
 
 import os, sys, json, subprocess, pipes
 import collections, datetime

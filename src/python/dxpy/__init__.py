@@ -1,4 +1,4 @@
-# Copyright (C) 2013 DNAnexus, Inc.
+# Copyright (C) 2013-2014 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #
@@ -13,6 +13,8 @@
 #   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #   License for the specific language governing permissions and limitations
 #   under the License.
+
+from __future__ import (print_function, unicode_literals)
 
 '''
 When this package is imported, configuration values will be loaded from
@@ -122,19 +124,6 @@ environment variables:
    HTTPS proxy, in the form 'protocol://hostname:port'
 
 '''
-
-# Note: The default I/O stream encoding in Python 2.7 (as configured on ubuntu) is ascii, not UTF-8 or the system locale
-# encoding. The lines below attempt to reset it here to avoid having to set it for every I/O operation explicitly.
-# However, this method doesn't work with pypy, so instead we set the environment variable PYTHONIOENCODING=UTF-8 in
-# dx-toolkit environment initialization (dx-toolkit/environment).
-# One other alternative is to use codecs.wrap or sys.stdout = codecs.getwriter('utf8')(sys.stdout).
-# try:
-#     import sys, locale
-#     reload(sys).setdefaultencoding(locale.getdefaultlocale()[1])
-# except:
-#     pass
-
-from __future__ import print_function
 
 import os, sys, json, time, logging, platform, collections
 from .packages import requests
