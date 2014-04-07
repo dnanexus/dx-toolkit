@@ -3234,8 +3234,8 @@ class TestTcshEnvironment(unittest.TestCase):
         tcsh.expect("dx is a command-line client")
 
 class TestDXScripts(DXTestCase):
-    def test_import(self):
-        # For dxpy scripts that have no other tests, these imports
+    def test_minimal_invocation(self):
+        # For dxpy scripts that have no other tests, these dummy calls
         # ensure that the coverage report is aware of them (instead of
         # excluding them altogether from the report, which artificially
         # inflates our %covered).
@@ -3243,13 +3243,13 @@ class TestDXScripts(DXTestCase):
         # This is a hack and obviously it would be preferable to figure
         # out why the coverage generator sometimes likes to include
         # these files and sometimes likes to exclude them.
-        from dxpy.scripts import dx_gtf_to_genes
-        from dxpy.scripts import dx_gff_to_genes
-        from dxpy.scripts import dx_variants_to_vcf
-        from dxpy.scripts import dx_genes_to_gff
-        from dxpy.scripts import dx_mappings_to_fastq
-        from dxpy.scripts import dx_mappings_to_fastq
-        from dxpy.scripts import dx_build_applet
+        run('dx-gff-to-genes -h')
+        run('dx-gtf-to-genes -h')
+        run('dx-variants-to-vcf -h')
+        run('dx-genes-to-gff -h')
+        run('dx-genes-to-gtf -h')
+        run('dx-mappings-to-fastq -h')
+        run('dx-build-applet -h')
 
 
 if __name__ == '__main__':
