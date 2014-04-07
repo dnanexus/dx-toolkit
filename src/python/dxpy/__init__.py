@@ -240,25 +240,15 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
     if auth is True:
         auth = AUTH_HELPER
 
-    # When *data* is bytes but *headers* contains Unicode strings, httplib tries to concatenate them and decode *data*,
-    # which should not be done. Also, per HTTP/1.1 headers must be encoded with MIME, but we'll disregard that here, and
-    # just encode them with the Python default (ascii) and fail for any non-ascii content.
-    # TODO: ascertain whether this is a problem in Python 3/make test
-    if USING_PYTHON2:
-        headers = {k.encode(): v.encode() for k, v in headers.items()}
+    if 'verify' not in kwargs and 'DX_CA_CERT' in os.environ:
+        kwargs['verify'] = os.environ['DX_CA_CERT']
+        if os.environ['DX_CA_CERT'] == 'NOVERIFY':
+            kwargs['verify'] = False
 
     if jsonify_data:
         data = json.dumps(data)
         if 'Content-Type' not in headers and method == 'POST':
             headers['Content-Type'] = 'application/json'
-
-    # If the input is a buffer, its data gets consumed by
-    # requests.request (moving the read position). Record the initial
-    # buffer position so that we can return to it if the request fails
-    # and needs to be retried.
-    rewind_input_buffer_offset = None
-    if hasattr(data, 'seek') and hasattr(data, 'tell'):
-        rewind_input_buffer_offset = data.tell()
 
     headers['DNAnexus-API'] = API_VERSION
     headers['User-Agent'] = USER_AGENT
@@ -268,10 +258,22 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
             raise exceptions.DXError("Snappy compression requested, but the snappy module is unavailable")
         headers['accept-encoding'] = 'snappy'
 
-    if 'verify' not in kwargs and 'DX_CA_CERT' in os.environ:
-        kwargs['verify'] = os.environ['DX_CA_CERT']
-        if os.environ['DX_CA_CERT'] == 'NOVERIFY':
-            kwargs['verify'] = False
+    # When *data* is bytes but *headers* contains Unicode text, httplib tries to concatenate them and decode *data*,
+    # which should not be done. Also, per HTTP/1.1 headers must be encoded with MIME, but we'll disregard that here, and
+    # just encode them with the Python default (ascii) and fail for any non-ascii content.
+    # TODO: ascertain whether this is a problem in Python 3/make test
+    if USING_PYTHON2:
+        headers = {k.encode(): v.encode() for k, v in headers.items()}
+        url = url.encode()
+        method = method.encode()
+
+    # If the input is a buffer, its data gets consumed by
+    # requests.request (moving the read position). Record the initial
+    # buffer position so that we can return to it if the request fails
+    # and needs to be retried.
+    rewind_input_buffer_offset = None
+    if hasattr(data, 'seek') and hasattr(data, 'tell'):
+        rewind_input_buffer_offset = data.tell()
 
     last_error = None
     for retry in range(max_retries + 1):
@@ -372,9 +374,8 @@ class DXHTTPOAuth2(AuthBase):
 
     def __call__(self, r):
         if self.security_context["auth_token_type"].lower() == 'bearer':
-            r.headers['Authorization'] = \
-                self.security_context["auth_token_type"] + " " + \
-                self.security_context["auth_token"]
+            auth_header = self.security_context["auth_token_type"] + " " + self.security_context["auth_token"]
+            r.headers[b'Authorization'] = auth_header.encode()
         else:
             raise NotImplementedError("Token types other than bearer are not yet supported")
         return r
