@@ -184,7 +184,7 @@ class DXFile(DXDataObject):
                 _buffer = lines[len(lines) - 1]
             else:
                 more = self.read(self._read_bufsize)
-                if more == "":
+                if more == b"":
                     done = True
                 else:
                     _buffer = _buffer + more
@@ -543,7 +543,7 @@ class DXFile(DXDataObject):
             self._file_length = int(desc["size"])
 
         if self._pos == self._file_length:
-            return ""
+            return b""
 
         if length == None or length > self._file_length - self._pos:
             length = self._file_length - self._pos
