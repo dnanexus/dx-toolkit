@@ -2980,7 +2980,7 @@ def run(args):
     # workflow with outputFolder already set
     if dest_path is None:
         if is_workflow:
-            dest_path = handler.outputFolder # this could be None
+            dest_path = getattr(handler, 'outputFolder', None)
         if dest_path is None:
             dest_path = get_env_var('DX_CLI_WD', u'/')
 
