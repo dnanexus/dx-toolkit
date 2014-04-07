@@ -5,6 +5,16 @@ The Python library is called ```dxpy```.
 
 Documentation is available at http://autodoc.dnanexus.com/bindings/python/current/.
 
+## Python coding style and version compatibility
+* Conform to [PEP-8](http://legacy.python.org/dev/peps/pep-0008/).
+    * Relax the line length requirement to 120 characters per line, where you judge readability not to be compromised.
+    * Relax other PEP-8 requirements at your discretion if it simplifies code or is needed to follow conventions
+      established elsewhere at DNAnexus.
+* Document your code in a format usable by [Sphinx Autodoc](http://sphinx-doc.org/ext/autodoc.html).
+
+Other useful resources:
+* [The Hitchhiker’s Guide to Python](http://docs.python-guide.org/en/latest/index.html)
+
 ## Convention for Python scripts that are also modules
 
 Some scripts, such as format converters, are useful both as standalone executables and as importable modules.
@@ -40,9 +50,3 @@ We have the following convention for these scripts:
   if __name__ == '__main__':
       main()
   ```
-
-___
-
-## TODO
-
-Intro; this file should also show up on pypi
