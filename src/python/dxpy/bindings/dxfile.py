@@ -25,12 +25,12 @@ This remote file handler is a Python file-like object.
 
 import os, sys, logging, traceback, hashlib, copy, time
 import concurrent.futures
-from io import BytesIO
 
 import dxpy
 from . import DXDataObject
 from ..exceptions import DXFileError
 from ..utils import warn
+from ..compat import BytesIO
 
 if dxpy.snappy_available:
     import snappy

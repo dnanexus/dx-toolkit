@@ -226,7 +226,7 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
 
         bytes_available = max(file_size - offset, 0)
         if bytes_available == 0:
-            return ""
+            return b""
 
         return mmap.mmap(fd.fileno(), min(handler._write_bufsize, bytes_available), offset=offset, access=mmap.ACCESS_READ)
 
