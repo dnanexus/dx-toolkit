@@ -1,3 +1,11 @@
+dx-toolkit (0.93.0) precise; urgency=low
+
+  * dx describe entity no longer attempts to describe user-entity
+
+  * Various minor bug fixes and improvements
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 08 Apr 2014 17:38:29 +0000
+
 dx-toolkit (0.92.0) precise; urgency=low
 
   * Minor dx workflow fixes.
