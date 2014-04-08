@@ -212,13 +212,15 @@ class TestDXClient(DXTestCase):
             run("dx api {p} describe --input {fn}".format(p=self.project, fn=fd.name))
 
     def test_dx_invite(self):
-        for query in ("alice.nonexistent", "alice.nonexistent {p}", "user-alice.nonexistent {p}",
+        for query in ("Ψ", "alice.nonexistent", "alice.nonexistent {p}", "user-alice.nonexistent {p}",
                       "alice.nonexistent@example.com {p}", "alice.nonexistent : VIEW"):
             with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
                 run(("dx invite "+query).format(p=self.project))
+        with self.assertSubprocessFailure(stderr_regexp="invalid choice", exit_code=2):
+            run(("dx invite alice.nonexistent : ПРОСМОТР").format(p=self.project))
 
     def test_dx_uninvite(self):
-        for query in ("alice.nonexistent", "alice.nonexistent {p}", "user-alice.nonexistent {p}",
+        for query in ("Ψ", "alice.nonexistent", "alice.nonexistent {p}", "user-alice.nonexistent {p}",
                       "alice.nonexistent@example.com {p}"):
             with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
                 run(("dx uninvite "+query).format(p=self.project))
