@@ -200,6 +200,29 @@ class TestDXClient(DXTestCase):
         run(u"dx find analyses --project :")
         run(u"dx find data --project :")
 
+    def test_dx_env(self):
+        run("dx env")
+        run("dx env --bash")
+        run("dx env --dx-flags")
+
+    def test_dx_api(self):
+        with tempfile.NamedTemporaryFile() as fd:
+            fd.write("{}")
+            fd.flush()
+            run("dx api {p} describe --input {fn}".format(p=self.project, fn=fd.name))
+
+    def test_dx_invite(self):
+        for query in ("alice.nonexistent", "alice.nonexistent {p}", "user-alice.nonexistent {p}",
+                      "alice.nonexistent@example.com {p}", "alice.nonexistent : VIEW"):
+            with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
+                run(("dx invite "+query).format(p=self.project))
+
+    def test_dx_uninvite(self):
+        for query in ("alice.nonexistent", "alice.nonexistent {p}", "user-alice.nonexistent {p}",
+                      "alice.nonexistent@example.com {p}"):
+            with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
+                run(("dx uninvite "+query).format(p=self.project))
+
     def test_dx_get_record(self):
         with chdir(tempfile.mkdtemp()):
             run(u"dx new record -o :foo --verbose")
