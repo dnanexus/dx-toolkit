@@ -1664,7 +1664,7 @@ class TestDXSearch(unittest.TestCase):
                 with self.assertRaises(DXError):
                     method(**query)
 
-class TestPrettyrint(unittest.TestCase):
+class TestPrettyPrint(unittest.TestCase):
     def test_string_escaping(self):
         self.assertEqual(pretty_print.escape_unicode_string("a"), u"a")
         self.assertEqual(pretty_print.escape_unicode_string("foo\nbar"), u"foo\\nbar")
