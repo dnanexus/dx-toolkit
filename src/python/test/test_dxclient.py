@@ -225,6 +225,16 @@ class TestDXClient(DXTestCase):
             with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
                 run(("dx uninvite "+query).format(p=self.project))
 
+    def test_dx_add_rm_types(self):
+        run("dx new record Ψ")
+        run("dx add_types Ψ abc xyz")
+        with self.assertSubprocessFailure(output_regexp="be an array of valid strings for a type name", exit_code=1):
+            run("dx add_types Ψ ΨΨ")
+        run("dx remove_types Ψ abc xyz")
+        run("dx remove_types Ψ abc xyz")
+        with self.assertSubprocessFailure(stderr_regexp="Could not resolve", exit_code=1):
+            run("dx remove_types ΨΨ Ψ")
+
     def test_dx_get_record(self):
         with chdir(tempfile.mkdtemp()):
             run(u"dx new record -o :foo --verbose")
