@@ -1,6 +1,8 @@
+/build/coverage/
 /build/info/version
 /build/wrapper_table.json
 /build/doc_env/
+/build/pexpect/
 /build/py27_env/
 /build/requests/
 /doc/cpp/
