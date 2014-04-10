@@ -43,16 +43,14 @@ class TestDXFS(unittest.TestCase):
         dxpy.new_dxrecord(name="A/B testing")
 
         cls.mountpoint = tempfile.mkdtemp()
-        args = ['dx-mount', cls.mountpoint, '--foreground']
-        args.append('--debug')
-        cls.fuse_driver = subprocess.Popen(args)
-        time.sleep(1)
-        assert(cls.fuse_driver.poll() == None)
+        # TODO: redirect logs to someplace in case we need to debug
+        # problems in these tests
+        subprocess.check_call(['dx-mount', cls.mountpoint])
 
     @classmethod
     def tearDownClass(cls):
         try:
-            cls.fuse_driver.terminate()
+            subprocess.check_call(['fusermount', '-u', cls.mountpoint])
             subprocess.check_call(u"dx rmproject --yes {p}".format(p=cls.project_id), shell=True)
         except:
             pass
