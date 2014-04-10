@@ -175,10 +175,27 @@ class DXFS(LoggingMixIn, Operations):
         self.last_created = 0
         self.project_mtime = 0
         self.refresh_interval = refresh_interval
+        self.initialized_once = threading.Event()
+
+    def wait_until_initialized(self):
+        self.initialized_once.wait()
 
     def init(self, root_path):
         ''' This method is used both for initializing the filesystem and for reloading it upon modification.
         '''
+
+        # The event initialized_once is used to prevent any external
+        # calls to filesystem methods from being processed until we have
+        # populated the filesystem for the first time. This prevents the
+        # user from seeing the filesystem in an empty state. All
+        # filesystem methods (except trivial ones like statfs) should
+        # call self.wait_until_initialized() before proceeding. As a
+        # corollary, any filesystem method foo that is liable to be
+        # called from init() should be factored out into a 'foo' method
+        # for public consumption and a '_foo' method for internal use,
+        # where only the 'foo' method calls wait_until_initialized, and
+        # init() only calls the '_foo' (non-waiting) version.
+
         if self.project_id.startswith('project-'):
             self.project = dxpy.DXProject(self.project_id)
         elif self.project_id.startswith('container-'):
@@ -199,7 +216,7 @@ class DXFS(LoggingMixIn, Operations):
         for path in folders:
             if path == '/':
                 continue
-            self.mkdir(str(path), 0755 | stat.S_IFDIR, make_remote=False)
+            self._mkdir(str(path), 0755 | stat.S_IFDIR, make_remote=False)
 
         debug("Populated", len(folders), "folders")
         debug("Populating data objects...")
@@ -208,6 +225,10 @@ class DXFS(LoggingMixIn, Operations):
             self._new_dataobject(i["describe"])
 
         debug('Finished init')
+
+        if not self.initialized_once.is_set():
+            self.initialized_once.set()
+
         threading.Timer(self.refresh_interval, self.refresh).start()
 
     def _new_dataobject(self, dataobject, add_missing_folders=False):
@@ -219,7 +240,7 @@ class DXFS(LoggingMixIn, Operations):
             for path_element in dataobject["folder"].split('/')[1:]:
                 folderpath += path_element
                 if not self.root.child(folderpath):
-                    self.mkdir(str('/' + folderpath), 0755 | stat.S_IFDIR, make_remote=False)
+                    self._mkdir(str('/' + folderpath), 0755 | stat.S_IFDIR, make_remote=False)
                 folderpath += '/'
 
         if dataobject["class"] == "applet" or (dataobject["class"] == "record" and "pipeline" in dataobject["types"]):
@@ -228,13 +249,13 @@ class DXFS(LoggingMixIn, Operations):
             mode = 0644
 
         path = os.path.join(dataobject["folder"], dataobject["name"])
-        self.create(path,
-                    mode,
-                    ctime=dataobject['created']/1000,
-                    mtime=dataobject['modified']/1000,
-                    size=_get_size(dataobject),
-                    dxid=dataobject['id'],
-                    describe=dataobject)
+        self._create(path,
+                     mode,
+                     ctime=dataobject['created']/1000,
+                     mtime=dataobject['modified']/1000,
+                     size=_get_size(dataobject),
+                     dxid=dataobject['id'],
+                     describe=dataobject)
         self.last_created = max(self.last_created, dataobject['created'])
 
     def refresh(self):
@@ -248,7 +269,9 @@ class DXFS(LoggingMixIn, Operations):
         threading.Timer(self.refresh_interval, self.refresh).start()
 
     def chmod(self, path, mode):
+        self.wait_until_initialized()
         debug('chmod path:%s mode:%s' % (path, mode))
+
         node = self._node(path)
         if not node:
             raise FuseOSError(ENOENT)
@@ -256,15 +279,22 @@ class DXFS(LoggingMixIn, Operations):
         return 0
 
     def chown(self, path, uid, gid):
+        self.wait_until_initialized()
         debug('chown path:%s uid:%s gid:%s' % (path, uid, gid))
+
         node = self._node(path)
         if not node:
             raise FuseOSError(ENOENT)
         node.uid = uid
         node.gid = gid
 
-    def create(self, path, mode, ctime=None, mtime=None, size=0, dxid=None, describe=None):
+    def create(self, *args, **kwargs):
+        self.wait_until_initialized()
+        return self._create(*args, **kwargs)
+
+    def _create(self, path, mode, ctime=None, mtime=None, size=0, dxid=None, describe=None):
         debug('create path:%s mode:%s' % (path, mode))
+
         if ctime is None:
             ctime = time()
         if mtime is None:
@@ -299,7 +329,9 @@ class DXFS(LoggingMixIn, Operations):
         return self.fd
 
     def getattr(self, path, fh=None):
+        self.wait_until_initialized()
         debug('getattr path:%s' % path)
+
         node = self._node(path)
         if not node:
             debug("getattr: path", path, "not found")
@@ -308,6 +340,7 @@ class DXFS(LoggingMixIn, Operations):
             return node.stat()
 
     def getxattr(self, path, name, position=0):
+        self.wait_until_initialized()
         debug('getxattr path:%s name:%s' % (path, name))
 
         node = self._node(path)
@@ -332,6 +365,7 @@ class DXFS(LoggingMixIn, Operations):
         return value
 
     def listxattr(self, path):
+        self.wait_until_initialized()
         debug('listxattr path:%s' % path)
 
         node = self._node(path)
@@ -342,7 +376,11 @@ class DXFS(LoggingMixIn, Operations):
         debug(attrs)
         return attrs
 
-    def mkdir(self, path, mode, make_remote=True):
+    def mkdir(self, *args, **kwargs):
+        self.wait_until_initialized()
+        return self._mkdir(*args, **kwargs)
+
+    def _mkdir(self, path, mode, make_remote=True):
         debug('mkdir path:%s mode:%s' % (path, mode))
 
         dirname, filename = os.path.split(path)
@@ -372,6 +410,7 @@ class DXFS(LoggingMixIn, Operations):
     #     return self.fd
 
     def read(self, path, size, offset, fh):
+        self.wait_until_initialized()
         debug('read path:%s size:%s offset:%s' % (path, size, offset))
 
         node = self._node(path)
@@ -382,6 +421,7 @@ class DXFS(LoggingMixIn, Operations):
         return node.read(offset, size)
 
     def readdir(self, path, fh):
+        self.wait_until_initialized()
         debug('readdir path:%s' % path)
 
         node = self._node(path)
@@ -397,6 +437,7 @@ class DXFS(LoggingMixIn, Operations):
             #yield fuse.Direntry(child.name)
 
     def readlink(self, path):
+        self.wait_until_initialized()
         debug('readlink path:%s' % path)
 
         node = self._node(path)
@@ -406,6 +447,7 @@ class DXFS(LoggingMixIn, Operations):
         return node.data
 
     def removexattr(self, path, name):
+        self.wait_until_initialized()
         debug('removexattr path:%s name:%s' % (path, name))
 
         node = self._node(path)
@@ -417,6 +459,7 @@ class DXFS(LoggingMixIn, Operations):
         # See also ENOATTR
 
     def rename(self, oldpath, newpath):
+        self.wait_until_initialized()
         debug('rename oldpath:%s newpath:%s' % (oldpath, newpath))
 
         old_dirname, old_filename = os.path.split(oldpath)
@@ -443,6 +486,7 @@ class DXFS(LoggingMixIn, Operations):
         new_parent.child_nodes[new_filename] = node
 
     def rmdir(self, path):
+        self.wait_until_initialized()
         debug('rmdir path:%s' % path)
 
         parent      = self._parent(path)
@@ -458,6 +502,7 @@ class DXFS(LoggingMixIn, Operations):
         del parent.child_nodes[node.name]
 
     def setxattr(self, path, name, value, flags, position=0):
+        self.wait_until_initialized()
         debug('setxattr path:%s name:%s value:%s flags:%s' % (path, name, value, flags))
 
         node = self._node(path)
@@ -481,6 +526,7 @@ class DXFS(LoggingMixIn, Operations):
         return dict(f_bsize=512, f_blocks=4096, f_bavail=2048)
 
     def symlink(self, target, source):
+        self.wait_until_initialized()
         debug('symlink path:%s newpath:%s' % (target, source))
 
         source_node = self._node(target)
@@ -499,6 +545,7 @@ class DXFS(LoggingMixIn, Operations):
         parent.child_nodes[node.name] = node
 
     def truncate(self, path, length, fh=None):
+        self.wait_until_initialized()
         debug('truncate path:%s len:%s' % (path, length))
 
         node = self._node(path)
@@ -509,6 +556,7 @@ class DXFS(LoggingMixIn, Operations):
         node.truncate(length)
 
     def unlink(self, path):
+        self.wait_until_initialized()
         debug('unlink path:%s' % path)
 
         parent = self._parent(path)
@@ -522,13 +570,16 @@ class DXFS(LoggingMixIn, Operations):
         del parent.child_nodes[child.name]
 
     def utimens(self, path, times=None):
+        self.wait_until_initialized()
         debug('utime path:%s times:%s' % (path, times))
+
         node = self._node(path)
         if not node:
             raise FuseOSError(ENOENT)
         node.ctime = node.mtime = times[0]
 
     def write(self, path, data, offset, fh):
+        self.wait_until_initialized()
         debug('write path:%s buflen:%s offset:%s' % (path, len(data), offset))
 
         node = self._node(path)
