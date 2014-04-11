@@ -118,7 +118,7 @@ def interactive_help(in_class, param_desc, prompt):
         if dxpy.WORKSPACE_ID is not None:
             proj_name = None
             try:
-                proj_name = dxpy.DXHTTPRequest('/' + dxpy.WORKSPACE_ID + '/describe', {})['name']
+                proj_name = dxpy.api.project_describe(dxpy.WORKSPACE_ID)['name']
             except:
                 pass
             if proj_name is not None:

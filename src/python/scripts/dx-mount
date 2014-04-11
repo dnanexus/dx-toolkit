@@ -476,7 +476,7 @@ class DXFS(LoggingMixIn, Operations):
 
         node.name = new_filename
         if node.type == DXInode.DIR:
-            dxpy.DXHTTPRequest('/' + self.project_id + '/renameFolder', {"folder": oldpath, "newpath": newpath})
+            dxpy.api.project_rename_folder(self.project_id, {"folder": oldpath, "newpath": newpath})
         else:
             if new_dirname != old_dirname:
                 self.project.move(new_dirname, [node.handler.get_id()])

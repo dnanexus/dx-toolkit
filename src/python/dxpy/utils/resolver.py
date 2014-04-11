@@ -479,7 +479,7 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
 
 def resolve_job_ref(job_id, name, describe={}):
     try:
-        job_desc = dxpy.DXHTTPRequest('/' + job_id + '/describe', {})
+        job_desc = dxpy.api.job_describe(job_id)
     except Exception as details:
         raise ResolutionError(str(details))
     project = job_desc['project']

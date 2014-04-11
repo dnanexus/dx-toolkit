@@ -586,7 +586,7 @@ def get_pwd():
     if dxpy.WORKSPACE_ID is not None:
         if state['currentproj'] is None:
             try:
-                proj_name = dxpy.DXHTTPRequest('/' + dxpy.WORKSPACE_ID + '/describe', {})['name']
+                proj_name = dxpy.api.project_describe(dxpy.WORKSPACE_ID)['name']
                 state['currentproj'] = proj_name
             except:
                 pass
@@ -631,8 +631,7 @@ def invite(args):
     if args.invitee != 'PUBLIC' and not '-' in args.invitee and not '@' in args.invitee:
         args.invitee = 'user-' + args.invitee.lower()
     try:
-        resp = dxpy.DXHTTPRequest('/' + project + '/invite',
-                                  {"invitee": args.invitee, "level": args.level})
+        resp = dxpy.api.project_invite(project, {"invitee": args.invitee, "level": args.level})
     except:
         err_exit()
     print('Invited ' + args.invitee + ' to ' + project + ' (' + resp['state'] + ')')
@@ -647,8 +646,7 @@ def uninvite(args):
     if args.entity != 'PUBLIC' and not '-' in args.entity:
         args.entity = 'user-' + args.entity.lower()
     try:
-        dxpy.DXHTTPRequest('/' + project + '/decreasePermissions',
-                           {args.entity: None})
+        dxpy.api.project_decrease_permissions(project, {args.entity: None})
     except:
         err_exit()
     print('Uninvited ' + args.entity + ' from ' + project)
@@ -778,7 +776,7 @@ def mkdir(args):
         if project is None:
             print(fill('Could not resolve the project of "' + path + '"'))
         try:
-            dxpy.DXHTTPRequest('/' + project + '/newFolder', {"folder": folderpath, "parents": args.parents})
+            dxpy.api.project_new_folder(project, {"folder": folderpath, "parents": args.parents})
         except Exception as details:
             print("Error while creating " + folderpath + " in " + project)
             print("  " + str(details))
@@ -798,7 +796,7 @@ def rmdir(args):
         if project is None:
             print(fill('Could not resolve the project of "' + path + '"'))
         try:
-            dxpy.DXHTTPRequest('/' + project + '/removeFolder', {"folder": folderpath})
+            dxpy.api.project_remove_folder(project, {"folder": folderpath})
         except Exception as details:
             print("Error while removing " + folderpath + " in " + project)
             print("  " + str(details))
@@ -841,16 +839,13 @@ def rm(args):
     for project in projects:
         for folder in projects[project]['folders']:
             try:
-                dxpy.DXHTTPRequest('/' + project + '/removeFolder',
-                                   {"folder": folder,
-                                    "recurse": True})
+                dxpy.api.project_remove_folder(project, {"folder": folder, "recurse": True})
             except Exception as details:
                 print("Error while removing " + folder + " from " + project)
                 print("  " + str(details))
                 had_error = True
         try:
-            dxpy.DXHTTPRequest('/' + project + '/removeObjects',
-                               {"objects": projects[project]['objects']})
+            dxpy.api.project_remove_objects(project, {"objects": projects[project]['objects']})
         except Exception as details:
             print("Error while removing " + json.dumps(projects[project]['objects']) + " from " + project)
             print("  " + str(details))
@@ -878,7 +873,7 @@ def rmproject(args):
             had_error = True
             continue
         try:
-            proj_desc = dxpy.DXHTTPRequest('/' + proj_id + '/describe', {})
+            proj_desc = dxpy.api.project_describe(proj_id)
             if args.confirm:
                 value = input(fill('About to delete project "' + proj_desc['name'] + '" (' + proj_id + ')') + '\nPlease confirm [y/n]: ')
                 if len(value) == 0 or value.lower()[0] != 'y':
@@ -886,7 +881,7 @@ def rmproject(args):
                     print(fill('Aborting deletion of project "' + proj_desc['name'] + '"'))
                     continue
             try:
-                dxpy.DXHTTPRequest('/' + proj_id + '/destroy', {"terminateJobs": not args.confirm})
+                dxpy.api.project_destroy(proj_id, {"terminateJobs": not args.confirm})
             except dxpy.DXAPIError as apierror:
                 if apierror.name == 'InvalidState':
                     value = input(fill('WARNING: there are still unfinished jobs in the project.') + '\nTerminate all jobs and delete the project? [y/n]: ')
@@ -894,7 +889,7 @@ def rmproject(args):
                         had_error = True
                         print(fill('Aborting deletion of project "' + proj_desc['name'] + '"'))
                         continue
-                    dxpy.DXHTTPRequest('/' + proj_id + '/destroy', {"terminateJobs": True})
+                    dxpy.api.project_destroy(proj_id, {"terminateJobs": True})
                 else:
                     raise apierror
             if not args.quiet:
@@ -950,18 +945,16 @@ def mv(args):
             if src_path == '/':
                 parser.exit(1, fill('Cannot rename root folder; to rename the project, please use the "dx rename" subcommand.') + '\n')
             try:
-                dxpy.DXHTTPRequest('/' + src_proj + '/renameFolder',
-                                   {"folder": src_path,
-                                    "newpath": dest_path})
+                dxpy.api.project_rename_folder(src_proj, {"folder": src_path, "newpath": dest_path})
                 return
             except:
                 err_exit()
         else:
             try:
                 if src_results[0]['describe']['folder'] != dest_folder:
-                    dxpy.DXHTTPRequest('/' + src_proj + '/move',
-                                       {"objects": [result['id'] for result in src_results],
-                                        "destination": dest_folder})
+                    dxpy.api.project_move(src_proj,
+                                          {"objects": [result['id'] for result in src_results],
+                                           "destination": dest_folder})
                 for result in src_results:
                     dxpy.DXHTTPRequest('/' + result['id'] + '/rename',
                                        {"project": src_proj,
@@ -986,10 +979,10 @@ def mv(args):
         else:
             src_objects += [result['id'] for result in src_results]
     try:
-        dxpy.DXHTTPRequest('/' + src_proj + '/move',
-                           {"objects": src_objects,
-                            "folders": src_folders,
-                            "destination": dest_path})
+        dxpy.api.project_move(src_proj,
+                              {"objects": src_objects,
+                               "folders": src_folders,
+                               "destination": dest_path})
     except:
         err_exit()
 
@@ -1041,16 +1034,14 @@ def cp(args):
 
         if src_results is None:
             try:
-                contents = dxpy.DXHTTPRequest('/' + src_proj + '/listFolder',
-                                              {"folder": src_path,
-                                               "includeHidden": True})
-                dxpy.DXHTTPRequest('/' + dest_proj + '/newFolder',
-                                   {"folder": dest_path})
-                exists = dxpy.DXHTTPRequest('/' + src_proj + '/clone',
-                                          {"folders": contents['folders'],
-                                           "objects": [result['id'] for result in contents['objects']],
-                                           "project": dest_proj,
-                                           "destination": dest_path})['exists']
+                contents = dxpy.api.project_list_folder(src_proj,
+                                                        {"folder": src_path, "includeHidden": True})
+                dxpy.api.project_new_folder(dest_proj, {"folder": dest_path})
+                exists = dxpy.api.project_clone(src_proj,
+                                                {"folders": contents['folders'],
+                                                 "objects": [result['id'] for result in contents['objects']],
+                                                 "project": dest_proj,
+                                                 "destination": dest_path})['exists']
                 if len(exists) > 0:
                     print(fill('The following objects already existed in the destination container and were not copied:') + '\n ' + '\n '.join(json.dumps(exists)))
                 return
@@ -1058,10 +1049,10 @@ def cp(args):
                 err_exit()
         else:
             try:
-                exists = dxpy.DXHTTPRequest('/' + src_proj + '/clone',
-                                            {"objects": [result['id'] for result in src_results],
-                                             "project": dest_proj,
-                                             "destination": dest_folder})['exists']
+                exists = dxpy.api.project_clone(src_proj,
+                                                {"objects": [result['id'] for result in src_results],
+                                                 "project": dest_proj,
+                                                 "destination": dest_folder})['exists']
                 if len(exists) > 0:
                     print(fill('The following objects already existed in the destination container and were not copied:') + '\n ' + '\n '.join(json.dumps(exists)))
                 for result in src_results:
@@ -1201,8 +1192,7 @@ def describe(args):
             if args.path[-1] == ':' and project is not None:
                 # It is the project.
                 try:
-                    desc = dxpy.DXHTTPRequest('/' + project + '/describe',
-                                              json_input)
+                    desc = dxpy.api.project_describe(project, json_input)
                     found_match = True
                     if args.json:
                         json_output.append(desc)
@@ -1216,8 +1206,7 @@ def describe(args):
                         raise
             elif is_container_id(args.path):
                 try:
-                    desc = dxpy.DXHTTPRequest('/' + args.path + '/describe',
-                                              json_input)
+                    desc = dxpy.api.project_describe(args.path, json_input)
                     found_match = True
                     if args.json:
                         json_output.append(desc)
@@ -1255,7 +1244,7 @@ def describe(args):
             # Could be an app name
             if args.path.startswith('app-'):
                 try:
-                    desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {})
+                    desc = dxpy.api.app_describe(args.path)
                     if args.json:
                         json_output.append(desc)
                     elif args.name:
@@ -1281,7 +1270,7 @@ def describe(args):
             if args.path.startswith('user-'):
                 # User
                 try:
-                    desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {"appsInstalled": True, "subscriptions": True})
+                    desc = dxpy.api.user_describe(args.path, {"appsInstalled": True, "subscriptions": True})
                     found_match = True
                     if args.json:
                         json_output.append(desc)
@@ -1331,8 +1320,7 @@ def new_project(args):
             parser.exit(1, parser_new_project.format_help() +
                            fill("No project name supplied, and input is not interactive") + '\n')
     try:
-        resp = dxpy.DXHTTPRequest('/project/new',
-                                  {"name": args.name})
+        resp = dxpy.api.project_new({"name": args.name})
         if args.brief:
             print(resp['id'])
         else:
@@ -1618,8 +1606,7 @@ def rename(args):
         parser.exit(1, 'Cannot rename a non-project data container\n')
     else:
         try:
-            dxpy.DXHTTPRequest('/' + project + '/update',
-                               {"name": args.name})
+            dxpy.api.project_update(project, {"name": args.name})
         except:
             err_exit()
 
@@ -1649,8 +1636,7 @@ def set_properties(args):
         parser.exit(1, 'Cannot set properties on a non-project data container\n')
     else:
         try:
-            dxpy.DXHTTPRequest('/' + project + '/setProperties',
-                               {"properties": args.properties})
+            dxpy.api.project_set_properties(project, {"properties": args.properties})
         except:
             err_exit()
 
@@ -1681,8 +1667,7 @@ def unset_properties(args):
         parser.exit(1, 'Cannot unset properties on a non-project data container\n')
     else:
         try:
-            dxpy.DXHTTPRequest('/' + project + '/setProperties',
-                               {"properties": properties})
+            dxpy.api.project_set_properties(project, {"properties": properties})
         except:
             err_exit()
 
@@ -2485,7 +2470,7 @@ def add_users(args):
     app_desc = try_call(resolve_app, args.app)
     args.users = process_list_of_usernames(args.users)
     try:
-        dxpy.DXHTTPRequest('/' + app_desc['id'] + '/addAuthorizedUsers', {"authorizedUsers": args.users})
+        dxpy.api.app_add_authorized_users(app_desc['id'], input_params={"authorizedUsers": args.users})
     except:
         err_exit()
 
@@ -2494,7 +2479,7 @@ def remove_users(args):
     args.users = process_list_of_usernames(args.users)
 
     try:
-        dxpy.DXHTTPRequest('/' + app_desc['id'] + '/removeAuthorizedUsers', {"authorizedUsers": args.users})
+        dxpy.api.app_remove_authorized_users(app_desc['id'], input_params={"authorizedUsers": args.users})
     except:
         err_exit()
 
@@ -2510,7 +2495,7 @@ def add_developers(args):
     if any(entity.startswith('org-') for entity in args.developers):
         err_exit('Error: organizations as developers of an app is currently unsupported', code=3)
     try:
-        dxpy.DXHTTPRequest('/' + app_desc['id'] + '/addDevelopers', {"developers": args.developers})
+        dxpy.api.app_add_developers(app_desc['id'], input_params={"developers": args.developers})
     except:
         err_exit()
 
@@ -2518,7 +2503,7 @@ def list_developers(args):
     app_desc = try_call(resolve_app, args.app)
 
     try:
-        for user in dxpy.DXHTTPRequest('/' + app_desc['id'] + '/listDevelopers', {})['developers']:
+        for user in dxpy.api.app_list_developers(app_desc['id'])['developers']:
             print(user)
     except:
         err_exit()
@@ -2528,7 +2513,7 @@ def remove_developers(args):
     args.developers = process_list_of_usernames(args.developers)
 
     try:
-        dxpy.DXHTTPRequest('/' + app_desc['id'] + '/removeDevelopers', {"developers": args.developers})
+        dxpy.api.app_remove_developers(app_desc['id'], input_params={"developers": args.developers})
     except:
         err_exit()
 
@@ -2536,7 +2521,7 @@ def install(args):
     app_desc = try_call(resolve_app, args.app)
 
     try:
-        dxpy.DXHTTPRequest('/' + app_desc['id'] + '/install', {})
+        dxpy.api.app_install(app_desc['id'])
         print('Installed the ' + app_desc['name'] + ' app')
     except:
         err_exit()
@@ -2547,7 +2532,7 @@ def uninstall(args):
         parser.exit(1, 'Could not find the app\n')
     else:
         try:
-            dxpy.DXHTTPRequest('/' + app_desc['id'] + '/uninstall', {})
+            dxpy.api.app_uninstall(app_desc['id'])
             print('Uninstalled the ' + app_desc['name'] + ' app')
         except:
             err_exit()
