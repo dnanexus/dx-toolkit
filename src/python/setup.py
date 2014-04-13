@@ -39,8 +39,11 @@ for module in os.listdir(os.path.join(os.path.dirname(__file__), 'dxpy', 'script
     scripts.append("{s} = dxpy.scripts.{m}:main".format(s=script, m=module))
 
 dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements.txt"))]
-test_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_test.txt"))]
 dxfs_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_dxfs.txt"))]
+test_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_test.txt"))]
+
+if 'DNANEXUS_INSTALL_PYTHON_TEST_DEPS' in os.environ:
+    dependencies += test_dependencies
 
 # If on Windows, also depend on colorama, which translates ANSI terminal color control sequences into whatever cmd.exe uses.
 if platform.system() == 'Windows':
@@ -78,8 +81,6 @@ setup(
         "console_scripts": scripts,
     },
     install_requires = dependencies,
-    setup_requires = test_dependencies,
-    tests_require = test_dependencies,
     test_suite = "test",
     classifiers=[
         'Environment :: Console',
