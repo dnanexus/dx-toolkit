@@ -131,9 +131,9 @@ python: api_wrappers toolkit_version python_deps
 	rm -rf "$(DNANEXUS_HOME)"/share/dnanexus/lib/python* python/dist/*
 	(cd python; python setup.py bdist_wheel)
 	pip install --root python/dist --ignore-installed --use-wheel --find-links=../build/wheels python/dist/*.whl
-	mkdir -p "$(DNANEXUS_HOME)"/share/dnanexus/lib
-	mv -f python/dist/usr/local/lib/* "$(DNANEXUS_HOME)"/share/dnanexus/lib/
-	mv -f python/dist/usr/local/bin/* "$(DNANEXUS_HOME)"/bin/
+	mkdir -p "$(DNANEXUS_HOME)"/share/dnanexus/lib/python2.7
+	mv "$$(find python/dist -type d -name site-packages)" "$(DNANEXUS_HOME)"/share/dnanexus/lib/python2.7/
+	mv -f "$$(find python/dist -type d -name bin)"/* "$(DNANEXUS_HOME)"/bin/
 
 # TODO: fix up perl and java targets
 
