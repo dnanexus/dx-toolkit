@@ -43,7 +43,6 @@ endif
 
 export DNANEXUS_HOME=$(CURDIR)/..
 export PATH := $(DNANEXUS_HOME)/build/bin:$(PATH)
-export DNANEXUS_PY27_ENV=$(DNANEXUS_HOME)/build/py27_env
 
 # Short-circuit sudo when running as root. In a chrooted environment we are
 # likely to be running as root already, and sudo may not be present on minimal
@@ -76,7 +75,7 @@ toolkit_version:
 	    echo UNKNOWN_VERSION > "$(DNANEXUS_HOME)/build/info/version"; \
 	fi)
 	(if [ -d "$(DNANEXUS_HOME)/.git" ]; then \
-	    VERSION=$$(git describe --always|sed 's/-/+/'); \
+	    VERSION=$$(git describe --always | sed '/^[^v\d]/ s/^/v0.0.0-/' | sed 's/-/+/'); \
 	    echo "version = '$${VERSION/#v/}'" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; \
 	    echo $$VERSION | perl -ne '/^v(\d+.\d+.\d+)/ and print "module DX\n  VERSION = \"$$1\"\nend\n"' > "$(DNANEXUS_HOME)/src/ruby/lib/dxruby/version.rb"; \
 	    echo -e "package com.dnanexus;\nclass DXToolkitVersion {\n    public static final String TOOLKIT_VERSION = \"$$VERSION\";\n}" > "$(DNANEXUS_HOME)/src/java/src/main/java/com/dnanexus/DXToolkitVersion.java"; \
@@ -120,26 +119,23 @@ src_libs: api_wrappers
 	mkdir -p "$(DNANEXUS_HOME)/lib/perl5"
 	cp -R -v perl/lib/* "$(DNANEXUS_HOME)/lib/perl5/"
 
-python_deps: $(DNANEXUS_PY27_ENV)/lib
+python_deps: ../build/wheels
 
-$(DNANEXUS_PY27_ENV)/lib: python/requirements.txt python/requirements_dxfs.txt
-	rm -rf "$(DNANEXUS_PY27_ENV)"
-	virtualenv --python=python2.7 "$(DNANEXUS_PY27_ENV)"
-	virtualenv --relocatable "$(DNANEXUS_PY27_ENV)"
-	(source "$(DNANEXUS_PY27_ENV)/bin/activate"; pip install --ignore-installed --install-option="--install-lib=$(DNANEXUS_PY27_ENV)/lib/python2.7/site-packages" -r python/requirements_setuptools.txt)
-	(source "$(DNANEXUS_PY27_ENV)/bin/activate"; pip install --ignore-installed --install-option="--install-lib=$(DNANEXUS_PY27_ENV)/lib/python2.7/site-packages" -r python/requirements.txt -r python/requirements_dxfs.txt)
+python_test_deps: ../build/wheels
+	DNANEXUS_INSTALL_PYTHON_TEST_DEPS=1 $(MAKE) python
 
-# We are going to install libraries to lib/python2.7 and then move them
-# elsewhere (to share/dnanexus/lib/python2.7). Modify PYTHONPATH temporarily so
-# setup.py doesn't complain.
+../build/wheels: python/requirements.txt python/requirements_dxfs.txt python/requirements_test.txt
+	pip wheel -r python/requirements.txt -r python/requirements_test.txt -w ../build/wheels
+# xattr < 0.7 fails to install using Python 3; that's OK since it's only needed for dxfs, which doesn't work on Python 3 either.
+	-pip wheel -r python/requirements_dxfs.txt -w ../build/wheels
+
 python: api_wrappers toolkit_version python_deps
-	rm -rf "$(DNANEXUS_HOME)/share/dnanexus/lib/python2.7"
-	mkdir -p "$(DNANEXUS_HOME)/lib/python2.7/site-packages"
-	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/lib"
-	cp -a "$(DNANEXUS_PY27_ENV)/lib/python2.7/site-packages" "$(DNANEXUS_HOME)/lib/python2.7/"
-	cp -a "$(DNANEXUS_PY27_ENV)/bin/"*python-argcomplete* "$(DNANEXUS_HOME)/bin/"
-	(source ../environment; export PYTHONPATH="$(DNANEXUS_HOME)/lib/python2.7/site-packages:${PYTHONPATH}"; cd python; python2.7 ./setup.py build; python2.7 ./setup.py install --install-lib="$(DNANEXUS_HOME)/lib/python2.7/site-packages" --install-scripts="$(DNANEXUS_HOME)/bin"; mv $(DNANEXUS_HOME)/lib/python2.7 $(DNANEXUS_HOME)/share/dnanexus/lib)
-	rm -f ../bin/easy_install* ../bin/xattr
+	rm -rf "$(DNANEXUS_HOME)"/share/dnanexus/lib/python* python/dist/*
+	(cd python; python setup.py bdist_wheel)
+	pip install --root python/dist --ignore-installed --use-wheel --find-links=../build/wheels python/dist/*.whl
+	mkdir -p "$(DNANEXUS_HOME)"/share/dnanexus/lib/python2.7
+	mv "$$(find python/dist -type d -name site-packages -or -name dist-packages)" "$(DNANEXUS_HOME)"/share/dnanexus/lib/python2.7/site-packages
+	mv -f "$$(find python/dist -type d -name bin)"/* "$(DNANEXUS_HOME)"/bin/
 
 # TODO: fix up perl and java targets
 
@@ -185,10 +181,10 @@ test_ruby: ruby
 	(source ../environment && ruby ruby/test/test_dxruby.rb)
 
 coverage_python:
-	(cd python; export PYTHONPATH="$$PYTHONPATH:$$(echo $$(pwd)/coverage-*.egg)"; \
+	(cd python; \
 	 test/coveragereport.py --strip-prefix="$$(readlink -f $$(pwd))/build/lib.linux-x86_64-2.7" --cover dxpy. --cover scripts --exclude dxpy.packages --exclude EGG-INFO.scripts --exclude test. --exclude setuptools --path-alias "$$(readlink -f $$(pwd)/../../share/dnanexus/lib/python2.7/site-packages/dxpy*.egg)"="$$(readlink -f $$(pwd))" --path-alias "$$(readlink -f $$(pwd)/build/lib.linux-x86_64-2.7)"="$$(readlink -f $$(pwd))")
 
-test_python: python
+test_python: python_test_deps
 	../build/run_python_integration_tests.py
 
 test_perl: perl
@@ -442,12 +438,12 @@ clean:
 	$(MAKE) -C dx-verify-file clean
 	$(MAKE) -C ua clean
 	-find ../bin -type f \( -name jq -or -name dx -or -name '*argcomplete*' -or -name 'dx-*' \) -not -name 'dx-unpack*' -delete
-	-rm -rf python/{build,*.{egg,egg-info}}
+	-rm -rf python/{build,dist,*.{egg,egg-info}}
 	-rm -rf java/target
 	-rm -rf ../lib
 	-rm -rf ../share
+	-rm -rf ../build/wheels
 	-rm ../build/info/version
-	-rm -rf "$(DNANEXUS_PY27_ENV)"
 	-rm -rf boost c-ares curl file openssl
 
 .PHONY: all toolkit_version api_wrappers src_libs python_deps python perl java ruby dx-contigset-to-fasta ua test test_ruby test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R doc_ruby boost boost_build install_sysdeps
