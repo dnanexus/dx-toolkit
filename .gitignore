@@ -1,10 +1,7 @@
-/build/coverage/
 /build/info/version
 /build/wrapper_table.json
 /build/doc_env/
-/build/pexpect/
 /build/wheels/
-/build/requests/
 /doc/cpp/
 /doc/java/
 /doc/ruby/
@@ -17,9 +14,6 @@
 /src/perl/DNAnexus-*
 /src/python/dxpy/toolkit_version.py
 /src/python/coverage-reports/
-/src/python/coverage-*.egg/
-/src/python/nose-*.egg/
-/src/python/pexpect_*/
 /src/ruby/lib/dxruby/version.rb
 /src/dx-wig-to-wiggle/build
 /src/R/install_dxR_deps.Rout
