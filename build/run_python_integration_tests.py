@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 
+'''
+Runs Python integration tests and merges the resulting test coverage files.
+'''
+
 import argparse
 import os
 import subprocess
 
-parser = argparse.ArgumentParser(description="Runs Python integration tests and merges the resulting test coverage files.")
+parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument(
     '--tests',
     help='Specify a specific test to run.',
