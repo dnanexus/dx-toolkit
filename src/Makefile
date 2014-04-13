@@ -125,7 +125,9 @@ python_test_deps: ../build/wheels
 	DNANEXUS_INSTALL_PYTHON_TEST_DEPS=1 $(MAKE) python
 
 ../build/wheels: python/requirements.txt python/requirements_dxfs.txt python/requirements_test.txt
-	pip wheel -r python/requirements.txt -r python/requirements_dxfs.txt -r python/requirements_test.txt -w ../build/wheels
+	pip wheel -r python/requirements.txt -r python/requirements_test.txt -w ../build/wheels
+# xattr < 0.7 fails to install using Python 3; that's OK since it's only needed for dxfs, which doesn't work on Python 3 either.
+	-pip wheel -r python/requirements_dxfs.txt -w ../build/wheels
 
 python: api_wrappers toolkit_version python_deps
 	rm -rf "$(DNANEXUS_HOME)"/share/dnanexus/lib/python* python/dist/*
