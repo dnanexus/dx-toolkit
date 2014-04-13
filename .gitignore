@@ -3,7 +3,7 @@
 /build/wrapper_table.json
 /build/doc_env/
 /build/pexpect/
-/build/py27_env/
+/build/wheels/
 /build/requests/
 /doc/cpp/
 /doc/java/
