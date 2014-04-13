@@ -130,7 +130,7 @@ python_test_deps: ../build/wheels
 python: api_wrappers toolkit_version python_deps
 	rm -rf "$(DNANEXUS_HOME)"/share/dnanexus/lib/python* python/dist/*
 	(cd python; python setup.py bdist_wheel)
-	pip install --root python/dist --ignore-installed --use-wheel --no-index --find-links=../build/wheels python/dist/*.whl
+	pip install --root python/dist --ignore-installed --use-wheel --find-links=../build/wheels python/dist/*.whl
 	mkdir -p "$(DNANEXUS_HOME)"/share/dnanexus/lib
 	mv -f python/dist/usr/local/lib/* "$(DNANEXUS_HOME)"/share/dnanexus/lib/
 	mv -f python/dist/usr/local/bin/* "$(DNANEXUS_HOME)"/bin/
