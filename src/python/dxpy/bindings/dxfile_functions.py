@@ -264,9 +264,6 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     if filename is not None:
         fd.close()
 
-    if not keep_open:
-        handler.close(block=wait_on_close, report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
-
     if show_progress:
         sys.stderr.write("\n")
         sys.stderr.flush()
@@ -281,6 +278,9 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
             handler.rename(os.path.basename(file.name), **remaining_kwargs)
         except AttributeError:
             pass
+
+    if not keep_open:
+        handler.close(block=wait_on_close, report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
 
     return handler
 
