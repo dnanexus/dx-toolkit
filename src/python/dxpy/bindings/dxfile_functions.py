@@ -264,6 +264,8 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     if filename is not None:
         fd.close()
 
+    handler.flush(report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
+
     if show_progress:
         sys.stderr.write("\n")
         sys.stderr.flush()

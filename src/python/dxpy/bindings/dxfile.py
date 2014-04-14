@@ -424,7 +424,7 @@ class DXFile(DXDataObject):
         if hasattr(data, 'seek') and hasattr(data, 'tell'):
             # data is a buffer
             rewind_input_buffer_offset = data.tell() # record initial position (so we can rewind back)
-            while(True):
+            while True:
                 bytes_read = data.read(100 * 1024 * 1024) # TODO: What should be the value of this constant ?
                 if bytes_read:
                     md5.update(bytes_read)
