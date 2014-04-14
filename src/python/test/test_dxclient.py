@@ -211,6 +211,8 @@ class TestDXClient(DXTestCase):
             fd.flush()
             run("dx api {p} describe --input {fn}".format(p=self.project, fn=fd.name))
 
+    @unittest.skipUnless(testutil.TEST_NO_RATE_LIMITS,
+                         'skipping tests that need rate limits to be disabled')
     def test_dx_invite(self):
         for query in ("Ψ", "alice.nonexistent", "alice.nonexistent {p}", "user-alice.nonexistent {p}",
                       "alice.nonexistent@example.com {p}", "alice.nonexistent : VIEW"):
@@ -219,6 +221,8 @@ class TestDXClient(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp="invalid choice", exit_code=2):
             run(("dx invite alice.nonexistent : ПРОСМОТР").format(p=self.project))
 
+    @unittest.skipUnless(testutil.TEST_NO_RATE_LIMITS,
+                         'skipping tests that need rate limits to be disabled')
     def test_dx_uninvite(self):
         for query in ("Ψ", "alice.nonexistent", "alice.nonexistent {p}", "user-alice.nonexistent {p}",
                       "alice.nonexistent@example.com {p}"):
