@@ -30,7 +30,7 @@ class DXError(Exception):
 class DXAPIError(DXError):
     '''
     Exception for when the API server responds with a code that is not 200 (OK). See
-    https://wiki-next.dnanexus.com/API-Specification-v1.0.0/Protocols#Errors for complete documentation of API errors,
+    https://wiki.dnanexus.com/API-Specification-v1.0.0/Protocols#Errors for complete documentation of API errors,
     including those reflected by subclasses of this class.
     '''
     def __init__(self, content, code):
