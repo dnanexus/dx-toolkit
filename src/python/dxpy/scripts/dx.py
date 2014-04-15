@@ -1422,10 +1422,7 @@ def set_visibility(args):
         try:
             dxpy.DXHTTPRequest('/' + result['id'] + '/setVisibility',
                                {"hidden": (args.visibility == 'hidden')})
-        except dxpy.DXAPIError as details:
-            print(fill(str(details)))
-            had_error = True
-        except network_exceptions as details:
+        except (dxpy.DXAPIError,) + network_exceptions as details:
             print(fill(details.__class__.__name__ + ': ' + str(details)))
             had_error = True
 
@@ -1464,10 +1461,7 @@ def set_details(args):
         try:
             dxpy.DXHTTPRequest('/' + result['id'] + '/setDetails',
                                args.details)
-        except dxpy.DXAPIError as details:
-            print(fill(str(details)))
-            had_error = True
-        except network_exceptions as details:
+        except (dxpy.DXAPIError,) + network_exceptions as details:
             print(fill(details.__class__.__name__ + ': ' + str(details)))
             had_error = True
     if had_error:
@@ -1488,10 +1482,7 @@ def add_types(args):
         try:
             dxpy.DXHTTPRequest('/' + result['id'] + '/addTypes',
                                {"types": args.types})
-        except dxpy.DXAPIError as details:
-            print(fill(str(details)))
-            had_error = True
-        except network_exceptions as details:
+        except (dxpy.DXAPIError,) + network_exceptions as details:
             print(fill(details.__class__.__name__ + ': ' + str(details)))
             had_error = True
     if had_error:
@@ -1512,10 +1503,7 @@ def remove_types(args):
         try:
             dxpy.DXHTTPRequest('/' + result['id'] + '/removeTypes',
                                {"types": args.types})
-        except dxpy.DXAPIError as details:
-            print(fill(str(details)))
-            had_error = True
-        except network_exceptions as details:
+        except (dxpy.DXAPIError,) + network_exceptions as details:
             print(fill(details.__class__.__name__ + ': ' + str(details)))
             had_error = True
     if had_error:
@@ -1534,10 +1522,7 @@ def add_tags(args):
                 dxpy.DXHTTPRequest('/' + result['id'] + '/addTags',
                                    {"project": project,
                                     "tags": args.tags})
-            except dxpy.DXAPIError as details:
-                print(fill(str(details)))
-                had_error = True
-            except network_exceptions as details:
+            except (dxpy.DXAPIError,) + network_exceptions as details:
                 print(fill(details.__class__.__name__ + ': ' + str(details)))
                 had_error = True
         if had_error:
@@ -1564,10 +1549,7 @@ def remove_tags(args):
                 dxpy.DXHTTPRequest('/' + result['id'] + '/removeTags',
                                    {"project": project,
                                     "tags": args.tags})
-            except dxpy.DXAPIError as details:
-                print(fill(str(details)))
-                had_error = True
-            except network_exceptions as details:
+            except (dxpy.DXAPIError,) + network_exceptions as details:
                 print(fill(details.__class__.__name__ + ': ' + str(details)))
                 had_error = True
         if had_error:
@@ -1594,10 +1576,7 @@ def rename(args):
                 dxpy.DXHTTPRequest('/' + result['id'] + '/rename',
                                    {"project": project,
                                     "name": args.name})
-            except dxpy.DXAPIError as details:
-                print(fill(str(details)))
-                had_error = True
-            except network_exceptions as details:
+            except (dxpy.DXAPIError,) + network_exceptions as details:
                 print(fill(details.__class__.__name__ + ': ' + str(details)))
                 had_error = True
         if had_error:
@@ -1624,10 +1603,7 @@ def set_properties(args):
                 dxpy.DXHTTPRequest('/' + result['id'] + '/setProperties',
                                    {"project": project,
                                     "properties": args.properties})
-            except dxpy.DXAPIError as details:
-                print(fill(str(details)))
-                had_error = True
-            except network_exceptions as details:
+            except (dxpy.DXAPIError,) + network_exceptions as details:
                 print(fill(details.__class__.__name__ + ': ' + str(details)))
                 had_error = True
         if had_error:
@@ -1655,10 +1631,7 @@ def unset_properties(args):
                 dxpy.DXHTTPRequest('/' + result['id'] + '/setProperties',
                                    {"project": project,
                                     "properties": properties})
-            except dxpy.DXAPIError as details:
-                print(fill(str(details)))
-                had_error = True
-            except network_exceptions as details:
+            except (dxpy.DXAPIError,) + network_exceptions as details:
                 print(fill(details.__class__.__name__ + ': ' + str(details)))
                 had_error = True
         if had_error:
