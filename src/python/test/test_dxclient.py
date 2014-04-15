@@ -239,6 +239,16 @@ class TestDXClient(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp="Could not resolve", exit_code=1):
             run("dx remove_types ΨΨ Ψ")
 
+    def test_dx_shell(self):
+        shell = pexpect.spawn("bash")
+        shell.logfile = sys.stdout
+        shell.sendline("dx sh")
+        shell.expect(">")
+        shell.sendline("env")
+        shell.expect("Current user")
+        shell.sendline("help all")
+        shell.expect("Commands:")
+
     def test_dx_get_record(self):
         with chdir(tempfile.mkdtemp()):
             run(u"dx new record -o :foo --verbose")
@@ -2258,7 +2268,6 @@ class TestDXBuildApp(DXTestCase):
             self.assertTrue(os.path.exists("destfile"))
             self.assertTrue(os.path.exists(os.path.join("destfile", "dxapp.json")))
 
-
     def test_get_applet_field_cleanup(self):
         # TODO: not sure why self.assertEqual doesn't consider
         # assertEqual to pass unless the strings here are unicode strings
@@ -2405,7 +2414,6 @@ class TestDXBuildApp(DXTestCase):
                                            'the following developers will be removed: user-000000000000000000000001')
         app_developers = dxpy.api.app_list_developers('app-test_build_app_and_update_devs')['developers']
         self.assertEqual(app_developers, ['user-000000000000000000000000'])
-
 
     @unittest.skipUnless(testutil.TEST_CREATE_APPS,
                          'skipping test that would create apps')
