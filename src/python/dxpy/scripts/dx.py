@@ -2993,8 +2993,8 @@ def shell(orig_args):
             args.func(args)
         except StopIteration:
             exit(0)
-        except Exception as details:
-            if str(details) != '1' and str(details) != '0':
+        except BaseException as details:
+            if not isinstance(details, SystemExit):
                 print(str(details) + '\n')
 
 def watch(args):
