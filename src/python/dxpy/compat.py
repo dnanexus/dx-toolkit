@@ -81,13 +81,15 @@ def wrap_stdio_in_codecs():
 
             if hasattr(sys.stdout, 'fileno'):
                 sys.stdout = StderrTextIOWrapper(io.FileIO(sys.stdout.fileno(), mode='w'),
-                                                 encoding=getattr(sys.stdout, 'encoding', None))
+                                                 encoding=getattr(sys.stdout, 'encoding', None),
+                                                 line_buffering=True if sys.stdout.isatty() else False)
             else:
                 sys.stderr.write(__name__ + ": Warning: Unable to wrap sys.stdout with a text codec\n")
 
             if hasattr(sys.stderr, 'fileno'):
                 sys.stderr = StderrTextIOWrapper(io.FileIO(sys.stderr.fileno(), mode='w'),
-                                                 encoding=getattr(sys.stderr, 'encoding', None))
+                                                 encoding=getattr(sys.stderr, 'encoding', None),
+                                                 line_buffering=True if sys.stderr.isatty() else False)
             else:
                 sys.stderr.write(__name__ + ": Warning: Unable to wrap sys.stderr with a text codec\n")
 
