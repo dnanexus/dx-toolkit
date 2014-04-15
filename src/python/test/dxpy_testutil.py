@@ -41,6 +41,9 @@ TEST_NO_RATE_LIMITS = _run_all_tests or 'DXTEST_NO_RATE_LIMITS' in os.environ
 TEST_RUN_JOBS = _run_all_tests or 'DXTEST_RUN_JOBS' in os.environ
 TEST_TCSH = _run_all_tests or 'DXTEST_TCSH' in os.environ
 
+def _transform_words_to_regexp(s):
+    return r"\s+".join(re.escape(word) for word in s.split())
+
 class DXTestCase(unittest.TestCase):
     def setUp(self):
         proj_name = u"dxclient_test_pröject"
@@ -65,7 +68,31 @@ class DXTestCase(unittest.TestCase):
     # to use stderr_regexp. Python's usual subprocess.check_output
     # doesn't propagate stderr back to us.
     @contextmanager
-    def assertSubprocessFailure(self, output_regexp=None, stderr_regexp=None, exit_code=3):
+    def assertSubprocessFailure(self, output_regexp=None, output_text=None, stderr_regexp=None, stderr_text=None, exit_code=3):
+        """Asserts that the block being wrapped exits with CalledProcessError.
+
+        :param output_regexp: subprocess output must match this regexp
+        :type output_regexp: str
+        :param output_text: subprocess output must contain this string (allowing for whitespace changes)
+        :type output_text: str
+        :param stderr_regexp: subprocess stderr must match this regexp
+        :type stderr_regexp: str
+        :param stderr_text: subprocess stderr must contain this string (allowing for whitespace changes)
+        :type stderr_text: str
+        :param exit_code: assert subprocess exits with this exit code
+        :type exit_code: int
+
+        """
+        # TODO: print out raw output_text or stderr_text if assertion
+        # fails for easier human parsing
+        if output_text is not None:
+            if output_regexp is not None:
+                raise ValueError("Cannot specify both output_regexp and output_text")
+            output_regexp = _transform_words_to_regexp(output_text)
+        if stderr_text is not None:
+            if stderr_regexp is not None:
+                raise ValueError("Cannot specify both stderr_regexp and stderr_text")
+            stderr_regexp = _transform_words_to_regexp(stderr_text)
         try:
             yield
         except subprocess.CalledProcessError as e:

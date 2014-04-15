@@ -232,7 +232,7 @@ class TestDXClient(DXTestCase):
     def test_dx_add_rm_types(self):
         run("dx new record Ψ")
         run("dx add_types Ψ abc xyz")
-        with self.assertSubprocessFailure(output_regexp="be an array of valid strings for a type name", exit_code=1):
+        with self.assertSubprocessFailure(output_text="be an array of valid strings for a type name", exit_code=1):
             run("dx add_types Ψ ΨΨ")
         run("dx remove_types Ψ abc xyz")
         run("dx remove_types Ψ abc xyz")
