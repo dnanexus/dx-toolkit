@@ -136,6 +136,7 @@ logging.getLogger('dxpy.packages.requests.packages.urllib3.connectionpool').setL
 
 from . import exceptions
 from .toolkit_version import version as TOOLKIT_VERSION
+__version__ = TOOLKIT_VERSION
 
 snappy_available = True
 if sys.version_info < (3, 0):
