@@ -14,8 +14,6 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import (print_function, unicode_literals)
-
 '''
 Accessing App-Specific Containers
 +++++++++++++++++++++++++++++++++
@@ -24,6 +22,8 @@ Apps have associated resource containers and project cache containers.
 To easily access these, the following utility functions are provided.
 These functions are meant to be called only by a job.
 '''
+
+from __future__ import (print_function, unicode_literals)
 
 import os
 

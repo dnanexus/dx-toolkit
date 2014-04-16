@@ -14,8 +14,6 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import (print_function, unicode_literals)
-
 '''
 This file contains all the utilities needed for escaping and parsing
 names in the syntax of
@@ -24,6 +22,8 @@ names in the syntax of
 
 For more details, see external documentation [TODO: Put link here].
 '''
+
+from __future__ import (print_function, unicode_literals)
 
 import os, sys, json, re
 

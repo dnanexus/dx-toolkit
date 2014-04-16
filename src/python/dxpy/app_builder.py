@@ -14,8 +14,6 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import (print_function, unicode_literals)
-
 '''
 App Builder Library
 +++++++++++++++++++
@@ -35,6 +33,8 @@ You can use the function :func:`get_destination_project` to determine
 the effective destination project.
 
 '''
+
+from __future__ import (print_function, unicode_literals)
 
 import os, sys, json, subprocess, tempfile, multiprocessing
 import datetime

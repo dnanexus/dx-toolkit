@@ -14,8 +14,6 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import (print_function, unicode_literals)
-
 '''
 Helper Functions
 ****************
@@ -23,6 +21,8 @@ Helper Functions
 The following helper functions are useful shortcuts for interacting with File objects.
 
 '''
+
+from __future__ import (print_function, unicode_literals)
 
 import os, sys, math, mmap, stat
 
