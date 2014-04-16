@@ -244,6 +244,10 @@ class TestDXClient(DXTestCase):
         shell.logfile = sys.stdout
         shell.sendline("dx sh")
         shell.expect(">")
+        shell.sendline("Ψ 'Ψ Ψ'")
+        shell.expect("invalid choice:")
+        shell.expect("u03a8")
+        shell.expect(">")
         shell.sendline("env")
         shell.expect("Current user")
         shell.sendline("help all")

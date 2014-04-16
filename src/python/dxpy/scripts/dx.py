@@ -19,7 +19,7 @@
 
 from __future__ import print_function, unicode_literals
 
-import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, errno, platform
+import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, errno, platform, io
 import shlex # respects quoted substrings when splitting
 
 from ..cli import try_call
@@ -2930,20 +2930,22 @@ def terminate(args):
 def shell(orig_args):
     if orig_args.filename is not None:
         try:
-            with open(orig_args.filename, 'r') as script:
+            with io.open(orig_args.filename, 'rb') as script:
                 for line in script:
-                    args = parser.parse_args(shlex.split(line))
-                    set_cli_colors(args)
-                    args.func(args)
+                    args = [word.decode(sys_encoding) for word in shlex.split(line)]
+                    parsed_args = parser.parse_args(args)
+                    set_cli_colors(parsed_args)
+                    args.func(parsed_args)
             exit(0)
         except:
             err_exit()
     elif not sys.stdin.isatty():
         for line in sys.stdin.read().splitlines():
             if len(line) > 0:
-                args = parser.parse_args(shlex.split(line))
-                set_cli_colors(args)
-                args.func(args)
+                args = [word.decode('utf-8') for word in shlex.split(line.encode('utf-8'))]
+                parsed_args = parser.parse_args(args)
+                set_cli_colors(parsed_args)
+                args.func(parsed_args)
         exit(0)
 
     if state['interactive']:
@@ -2986,7 +2988,7 @@ def shell(orig_args):
         if cmd == '':
             continue
         try:
-            sys.argv[1:] = shlex.split(cmd)
+            sys.argv[1:] = [word.decode('utf-8') for word in shlex.split(cmd.encode('utf-8'))]
             args = parser.parse_args(sys.argv[1:])
             set_cli_colors(args)
             set_delim(args)
