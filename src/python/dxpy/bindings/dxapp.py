@@ -14,8 +14,6 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import (print_function, unicode_literals)
-
 """
 DXApp Handler
 +++++++++++++
@@ -46,6 +44,8 @@ of an app with a given name is created, the creating user initially
 becomes the sole developer of the app.
 
 """
+
+from __future__ import (print_function, unicode_literals)
 
 import re
 

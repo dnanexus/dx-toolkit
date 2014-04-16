@@ -14,11 +14,11 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import (print_function, unicode_literals)
-
 '''
 Utilities shared by dxpy modules.
 '''
+
+from __future__ import (print_function, unicode_literals)
 
 import os, json, collections, concurrent.futures, traceback, time, gc
 import dateutil.parser
