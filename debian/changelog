@@ -1,3 +1,9 @@
+dx-toolkit (0.94.1) precise; urgency=low
+
+  * Bug fixes for dx sh, output buffering.
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 16 Apr 2014 19:00:23 +0000
+
 dx-toolkit (0.94.0) precise; urgency=low
 
   * dxfs operations block until the tree has been populated
