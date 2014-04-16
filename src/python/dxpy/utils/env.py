@@ -14,14 +14,14 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import (print_function, unicode_literals)
-
 '''
 Logic for determining environment variable values.  See external
 documentation
 https://wiki.dnanexus.com/Command-Line-Client/Environment%20Variables
 for more details.
 '''
+
+from __future__ import (print_function, unicode_literals)
 
 import os, sys, shutil, textwrap, json, locale
 

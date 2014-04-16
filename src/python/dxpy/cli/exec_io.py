@@ -14,11 +14,11 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import (print_function, unicode_literals)
-
 '''
 Functions and classes used when launching platform executables from the CLI.
 '''
+
+from __future__ import (print_function, unicode_literals)
 
 # TODO: refactor all dx run helper functions here
 

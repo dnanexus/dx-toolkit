@@ -14,8 +14,6 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import (print_function, unicode_literals)
-
 """
 DXJob Handler
 +++++++++++++
@@ -28,6 +26,8 @@ via :func:`new_dxjob` or :func:`DXJob.new` in the case of an existing
 job creating a subjob.
 
 """
+
+from __future__ import (print_function, unicode_literals)
 
 import os, time
 

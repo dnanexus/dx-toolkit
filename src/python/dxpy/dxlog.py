@@ -22,22 +22,22 @@ from logging.handlers import SysLogHandler
 
 from dxpy.exceptions import DXError
 
-'''
-Logging handler for DNAnexus application level logging.
-Code adapted from logging.handlers.SysLogHandler.
-
-This handler is automatically enabled in the job template when running Python code in the execution environment.
-It forwards all log messages sent through the :mod:`logging` module to the DNAnexus log service,
-so that they can be examined through the log query API.
-To enable the handler in a Python subprocess in the execution environment, use:
-
-    import logging
-    logging.basicConfig(level=logging.DEBUG)
-    from dxpy.dxlog import DXLogHandler
-    logging.getLogger().addHandler(DXLogHandler())
-
-'''
 class DXLogHandler(SysLogHandler):
+    '''
+    Logging handler for DNAnexus application level logging.
+    Code adapted from logging.handlers.SysLogHandler.
+
+    This handler is automatically enabled in the job template when running Python code in the execution environment.
+    It forwards all log messages sent through the :mod:`logging` module to the DNAnexus log service,
+    so that they can be examined through the log query API.
+    To enable the handler in a Python subprocess in the execution environment, use:
+
+        import logging
+        logging.basicConfig(level=logging.DEBUG)
+        from dxpy.dxlog import DXLogHandler
+        logging.getLogger().addHandler(DXLogHandler())
+
+    '''
     def __init__(self, priority_log_address="/opt/dnanexus/log/priority",
                  bulk_log_address="/opt/dnanexus/log/bulk",
                  source="DX_APP"):

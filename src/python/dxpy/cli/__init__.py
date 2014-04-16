@@ -14,12 +14,12 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import (print_function, unicode_literals)
-
 '''
 This submodule contains various parsers and other utilities used
 almost exclusively by command-line tools such as dx.
 '''
+
+from __future__ import (print_function, unicode_literals)
 
 from ..exceptions import err_exit, default_expected_exceptions, DXError
 

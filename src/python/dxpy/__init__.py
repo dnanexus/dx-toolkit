@@ -14,8 +14,6 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import (print_function, unicode_literals)
-
 '''
 When this package is imported, configuration values will be loaded from
 the following sources in order of decreasing priority:
@@ -124,6 +122,8 @@ environment variables:
    HTTPS proxy, in the form 'protocol://hostname:port'
 
 '''
+
+from __future__ import (print_function, unicode_literals)
 
 import os, sys, json, time, logging, platform, collections
 from .packages import requests

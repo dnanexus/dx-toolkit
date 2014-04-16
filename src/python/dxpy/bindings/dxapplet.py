@@ -14,8 +14,6 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import (print_function, unicode_literals)
-
 """
 DXApplet Handler
 ++++++++++++++++
@@ -25,6 +23,8 @@ specifications for executing it, and (optionally) input and output
 signatures. They can be run by calling the :func:`DXApplet.run` method.
 
 """
+
+from __future__ import (print_function, unicode_literals)
 
 import dxpy
 from . import DXDataObject, DXJob
