@@ -14,11 +14,11 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import (print_function, unicode_literals)
-
 '''
 Exceptions for the :mod:`dxpy` package.
 '''
+
+from __future__ import (print_function, unicode_literals)
 
 import os, sys, json, traceback, errno
 from .packages import requests

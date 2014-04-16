@@ -14,12 +14,12 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import (print_function, unicode_literals)
-
 '''
 This file contains utility functions for interactive scripts such as
 dx for tab-completion, resolving naming conflicts, etc.
 '''
+
+from __future__ import (print_function, unicode_literals)
 
 import sys
 

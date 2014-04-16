@@ -14,8 +14,6 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import (print_function, unicode_literals)
-
 """
 DXAnalysis Handler
 ++++++++++++++++++
@@ -26,6 +24,8 @@ running workflow. They can be created from
 existing analysis ID.
 
 """
+
+from __future__ import (print_function, unicode_literals)
 
 import sys, time
 import dxpy

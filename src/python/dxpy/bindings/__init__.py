@@ -14,13 +14,13 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import (print_function, unicode_literals)
-
 """
 The :class:`DXObject` class is the abstract base class for all remote
 object handlers, and its subclass :class:`DXDataObject` is the abstract
 base class for all remote data object handlers.
 """
+
+from __future__ import (print_function, unicode_literals)
 
 import time, copy
 

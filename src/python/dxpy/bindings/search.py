@@ -14,8 +14,6 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import (print_function, unicode_literals)
-
 '''
 This module provides methods for finding existing objects and entities in the
 DNAnexus Platform. The :func:`~dxpy.bindings.search.find_data_objects` function
@@ -23,6 +21,8 @@ provides search functionality over all data objects in the system. The
 :func:`~dxpy.bindings.search.find_jobs` function can be used to find jobs
 (whether they are running, failed, or done).
 '''
+
+from __future__ import (print_function, unicode_literals)
 
 import dxpy
 from . import DXApplet, DXApp, DXWorkflow, DXProject, DXJob, DXAnalysis

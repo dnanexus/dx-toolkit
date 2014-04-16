@@ -14,8 +14,6 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import (print_function, unicode_literals)
-
 '''
 
 These functions provide shorthand functional interfaces for actions such
@@ -27,6 +25,8 @@ performing simple actions with an ID or link as input without creating a
 full object handler.
 
 '''
+
+from __future__ import (print_function, unicode_literals)
 
 import dxpy
 from . import DXDataObject

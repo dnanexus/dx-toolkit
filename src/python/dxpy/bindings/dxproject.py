@@ -14,8 +14,6 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import (print_function, unicode_literals)
-
 """
 
 Projects (:class:`~dxpy.bindings.dxproject.DXProject`) are platform
@@ -33,6 +31,8 @@ their permissions are fixed.
 of :class:`~dxpy.bindings.dxproject.DXContainer`.
 
 """
+
+from __future__ import (print_function, unicode_literals)
 
 import re
 

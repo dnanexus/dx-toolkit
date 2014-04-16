@@ -14,14 +14,14 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import (print_function, unicode_literals)
-
 '''
 DXFile Handler
 **************
 
 This remote file handler is a Python file-like object.
 '''
+
+from __future__ import (print_function, unicode_literals)
 
 import os, sys, logging, traceback, hashlib, copy, time
 import concurrent.futures
