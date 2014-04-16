@@ -1,3 +1,9 @@
+dx-toolkit (0.93.1) precise; urgency=low
+
+  * Bug fixes for dx sh, output buffering.
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 16 Apr 2014 19:01:07 +0000
+
 dx-toolkit (0.93.0) precise; urgency=low
 
   * dx describe entity no longer attempts to describe user-entity
