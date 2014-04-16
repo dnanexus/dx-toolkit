@@ -33,7 +33,25 @@ if USING_PYTHON2:
     builtin_int = int
     int = long
     open = io.open
-    input = raw_input
+    def input(prompt=None):
+        class Unbuffered(object):
+            def __init__(self, stream):
+                self.stream = stream
+
+            def write(self, data):
+                self.stream.write(data)
+                self.stream.flush()
+
+            def __getattr__(self, attr):
+                return getattr(self.stream, attr)
+
+        orig_stdout = sys.stdout
+        try:
+            sys.stdout = Unbuffered(sys.stdout)
+            result = raw_input(prompt)
+        finally:
+            sys.stdout = orig_stdout
+        return result
 else:
     from io import StringIO, BytesIO
     builtin_str = str
