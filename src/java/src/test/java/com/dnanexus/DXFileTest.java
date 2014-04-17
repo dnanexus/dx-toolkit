@@ -23,6 +23,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.dnanexus.DXDataObject.DescribeOptions;
 import com.dnanexus.DXFile.Describe;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -51,6 +52,16 @@ public class DXFileTest {
         DXFile f = DXFile.newFile().setProject(testProject).setName("foo").build();
         Describe describe = f.describe();
         Assert.assertEquals("foo", describe.getName());
+    }
+
+    @Test
+    public void testDescribeWithOptions() {
+        DXFile f =
+                DXFile.newFile().setProject(testProject).setName("test").setMediaType("foo/bar")
+                        .build();
+        Describe describe = f.describe(DescribeOptions.get());
+        Assert.assertEquals("test", describe.getName());
+        Assert.assertEquals("foo/bar", describe.getMediaType());
     }
 
     @Test

@@ -23,6 +23,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.dnanexus.DXDataObject.DescribeOptions;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -53,6 +54,14 @@ public class DXWorkflowTest {
         DXWorkflow a = DXWorkflow.newWorkflow().setProject(testProject).build();
 
         DXWorkflow.Describe d = a.describe();
+        Assert.assertEquals(testProject, d.getProject());
+    }
+
+    @Test
+    public void testDescribeWithOptions() {
+        DXWorkflow a = DXWorkflow.newWorkflow().setProject(testProject).build();
+
+        DXWorkflow.Describe d = a.describe(DescribeOptions.get());
         Assert.assertEquals(testProject, d.getProject());
     }
 

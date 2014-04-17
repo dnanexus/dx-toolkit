@@ -23,6 +23,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.dnanexus.DXDataObject.DescribeOptions;
 import com.dnanexus.DXJob.Describe;
 import com.dnanexus.TestEnvironment.ConfigOption;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -194,6 +195,17 @@ public class DXAppletTest {
         Assert.assertEquals("mytitle", d.getTitle());
         Assert.assertEquals("mysummary", d.getSummary());
         Assert.assertEquals("mydescription", d.getDescription());
+    }
+
+    @Test
+    public void testDescribeWithOptions() {
+        DXApplet a =
+                DXApplet.newApplet().setProject(testProject).setTitle("appletTitle")
+                        .setRunSpecification(RunSpecification.newRunSpec("bash", "false;").build())
+                        .build();
+
+        DXApplet.Describe d = a.describe(DescribeOptions.get());
+        Assert.assertEquals("appletTitle", d.getTitle());
     }
 
     @Test

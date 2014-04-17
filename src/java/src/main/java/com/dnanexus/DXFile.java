@@ -252,6 +252,12 @@ public class DXFile extends DXDataObject {
     }
 
     @Override
+    public Describe describe(DescribeOptions options) {
+        return DXJSON.safeTreeToValue(apiCallOnObject("describe", MAPPER.valueToTree(options)),
+                Describe.class);
+    }
+
+    @Override
     public Describe getCachedDescribe() {
         this.checkCachedDescribeAvailable();
         return DXJSON.safeTreeToValue(this.cachedDescribe, Describe.class);

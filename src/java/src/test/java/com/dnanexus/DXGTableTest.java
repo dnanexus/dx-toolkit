@@ -23,6 +23,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.dnanexus.DXDataObject.DescribeOptions;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 
@@ -54,6 +55,16 @@ public class DXGTableTest {
         DXGTable g = DXGTable.newGTable(ImmutableList.of(column1)).setProject(testProject).build();
 
         DXGTable.Describe describe = g.describe();
+
+        Assert.assertEquals(ImmutableList.of(column1), describe.getColumns());
+    }
+
+    @Test
+    public void testDescribeWithOptions() {
+        ColumnSpecification column1 = ColumnSpecification.getInstance("name", ColumnType.STRING);
+        DXGTable g = DXGTable.newGTable(ImmutableList.of(column1)).setProject(testProject).build();
+
+        DXGTable.Describe describe = g.describe(DescribeOptions.get());
 
         Assert.assertEquals(ImmutableList.of(column1), describe.getColumns());
     }

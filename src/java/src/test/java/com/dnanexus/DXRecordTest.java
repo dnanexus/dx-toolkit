@@ -23,6 +23,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.dnanexus.DXDataObject.DescribeOptions;
 import com.dnanexus.DXDataObjectTest.SampleMetadata;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -74,6 +75,13 @@ public class DXRecordTest {
         Assert.assertEquals("foo", r.describe().getName());
 
         p.destroy();
+    }
+
+    @Test
+    public void testDescribeWithOptions() {
+        DXRecord r = DXRecord.newRecord().setProject(testProject).setName("foo").build();
+        DXRecord.Describe describe = r.describe(DescribeOptions.get());
+        Assert.assertEquals("foo", describe.getName());
     }
 
     @Test
