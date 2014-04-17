@@ -402,8 +402,6 @@ def get_input_single(param_desc):
             return value
     except EOFError:
         raise Exception('')
-    except KeyboardInterrupt:
-        raise Exception('')
 
 def get_optional_input_str(param_desc):
     return param_desc.get('label', param_desc['name']) + ' (' + param_desc['name'] + ')'
