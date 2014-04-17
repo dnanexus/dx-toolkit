@@ -585,6 +585,23 @@ class TestDXClientUploadDownload(DXTestCase):
                 self.assertEqual(os.stat(os.path.join("t2", os.path.basename(fd.name))).st_size,
                                  len("0123456789ABCDEF"*64))
 
+    # TODO: the use of this test config variable isn't quite right here,
+    # but we'll at least be consistent with all other tests that make
+    # reference to user-0-- they all are conditional on TEST_CREATE_APPS
+    # as well. This test doesn't actually need to irreversibly pollute
+    # the environment-- a whoami API call would also solve the problem
+    # we have here.
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS,
+                         'skipping test that needs to run as user-0')
+    def test_dx_upload_with_upload_perm(self):
+        temp_project = dxpy.DXProject(dxpy.api.project_new({'name': 'test proj with UPLOAD perms'})['id'])
+        try:
+            temp_project.decrease_perms('user-000000000000000000000000', 'UPLOAD')
+            dxpy.upload_local_file(os.path.devnull, project=temp_project.get_id(), folder='/')
+        finally:
+            dxpy.DXHTTPRequest('/' + temp_project.get_id() + '/join', {'level': 'ADMINISTER'})
+            temp_project.destroy()
+
     @unittest.skipUnless(testutil.TEST_ENV,
                          'skipping test that would clobber your local environment')
     def test_dx_download_no_env(self):

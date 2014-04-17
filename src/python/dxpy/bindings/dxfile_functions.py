@@ -200,7 +200,23 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     else:
         # Use 'a' mode because we will be responsible for closing the file
         # ourselves later (if requested).
-        handler = new_dxfile(mode='a', media_type=media_type, write_buffer_size=buffer_size, **kwargs)
+        creation_kwargs = kwargs.copy()
+
+        # Set a reasonable name for the file if none has been set
+        # already
+        if 'name' not in kwargs:
+            if filename is not None:
+                creation_kwargs['name'] = os.path.basename(filename)
+            else:
+                # Try to get filename from file-like object
+                try:
+                    local_file_name = file.name
+                except AttributeError:
+                    pass
+                else:
+                    creation_kwargs['name'] = os.path.basename(local_file_name)
+
+        handler = new_dxfile(mode='a', media_type=media_type, write_buffer_size=buffer_size, **creation_kwargs)
 
     creation_kwargs, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
 
@@ -269,17 +285,6 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     if show_progress:
         sys.stderr.write("\n")
         sys.stderr.flush()
-
-    if 'name' in kwargs or use_existing_dxfile:
-        pass # File has already been named
-    elif filename is not None:
-        handler.rename(os.path.basename(filename), **remaining_kwargs)
-    else:
-        # Try to get filename from file-like object
-        try:
-            handler.rename(os.path.basename(file.name), **remaining_kwargs)
-        except AttributeError:
-            pass
 
     if not keep_open:
         handler.close(block=wait_on_close, report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
