@@ -602,7 +602,7 @@ class DXFS(LoggingMixIn, Operations):
 
 parser = argparse.ArgumentParser(description="DNAnexus FUSE driver")
 parser.add_argument("mountpoint", help="Directory to mount the filesystem on")
-parser.add_argument("--project-id", help="DNAnexus project ID to mount", default=dxpy.WORKSPACE_ID, nargs='?')
+parser.add_argument("--project-id", help="DNAnexus project ID to mount", default=dxpy.WORKSPACE_ID or '', nargs='?')
 parser.add_argument("--debug", action='store_true')
 parser.add_argument("--foreground", action='store_true')
 args = parser.parse_args()
