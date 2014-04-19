@@ -34,24 +34,16 @@ if USING_PYTHON2:
     int = long
     open = io.open
     def input(prompt=None):
-        class Unbuffered(object):
-            def __init__(self, stream):
-                self.stream = stream
-
-            def write(self, data):
-                self.stream.write(data)
-                self.stream.flush()
-
-            def __getattr__(self, attr):
-                return getattr(self.stream, attr)
-
-        orig_stdout = sys.stdout
         try:
-            sys.stdout = Unbuffered(sys.stdout)
-            result = raw_input(prompt)
+            cur_stdin, cur_stdout = sys.stdin, sys.stdout
+            if hasattr(sys.stdin, '_original_stream'):
+                sys.stdin = sys.stdin._original_stream
+            if hasattr(sys.stdout, '_original_stream'):
+                sys.stdout = sys.stdout._original_stream
+            encoded_prompt = prompt.encode(getattr(sys.stdout, 'encoding', 'utf-8'))
+            return raw_input(encoded_prompt).decode(getattr(sys.stdin, 'encoding', 'utf-8'))
         finally:
-            sys.stdout = orig_stdout
-        return result
+            sys.stdin, sys.stdout = cur_stdin, cur_stdout
 else:
     from io import StringIO, BytesIO
     builtin_str = str
@@ -75,21 +67,27 @@ def wrap_stdio_in_codecs():
                         TextIOWrapper.write(self, unicode(text, self.encoding))
 
             if hasattr(sys.stdin, 'fileno'):
+                original_stream = sys.stdin
                 sys.stdin = io.open(sys.stdin.fileno(), encoding=getattr(sys.stdin, 'encoding', None))
+                sys.stdin._original_stream = original_stream
             else:
                 sys.stderr.write(__name__ + ": Warning: Unable to wrap sys.stdin with a text codec\n")
 
             if hasattr(sys.stdout, 'fileno'):
+                original_stream = sys.stdout
                 sys.stdout = StderrTextIOWrapper(io.FileIO(sys.stdout.fileno(), mode='w'),
                                                  encoding=getattr(sys.stdout, 'encoding', None),
                                                  line_buffering=True if sys.stdout.isatty() else False)
+                sys.stdout._original_stream = original_stream
             else:
                 sys.stderr.write(__name__ + ": Warning: Unable to wrap sys.stdout with a text codec\n")
 
             if hasattr(sys.stderr, 'fileno'):
+                original_stream = sys.stderr
                 sys.stderr = StderrTextIOWrapper(io.FileIO(sys.stderr.fileno(), mode='w'),
                                                  encoding=getattr(sys.stderr, 'encoding', None),
                                                  line_buffering=True if sys.stderr.isatty() else False)
+                sys.stderr._original_stream = original_stream
             else:
                 sys.stderr.write(__name__ + ": Warning: Unable to wrap sys.stderr with a text codec\n")
 
