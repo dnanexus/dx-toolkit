@@ -153,7 +153,7 @@ def get_name(default=None):
                         print('')
                         continue
                 else:
-                    print(fill('A file named %s already exists.  Please choose another name or rename your file'))
+                    print(fill('A file named %s already exists.  Please choose another name or rename your file' % name))
                     continue
             break
     return name
