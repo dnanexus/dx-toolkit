@@ -213,17 +213,28 @@ class DXFile(DXDataObject):
         self._cur_part = 1
         self._num_uploaded_parts = 0
 
-    def seek(self, offset):
+    def seek(self, offset, from_what=os.SEEK_SET):
         '''
         :param offset: Position in the file to seek to
         :type offset: integer
 
-        Seeks to *offset* bytes from the beginning of the file.  This
-        is a no-op if the file is open for writing.
+        Seeks to *offset* bytes from the beginning of the file.  This is a no-op if the file is open for writing.
 
+        The position is computed from adding *offset* to a reference point; the reference point is selected by the
+        *from_what* argument. A *from_what* value of 0 measures from the beginning of the file, 1 uses the current file
+        position, and 2 uses the end of the file as the reference point. *from_what* can be omitted and defaults to 0,
+        using the beginning of the file as the reference point.
         '''
+        if from_what == os.SEEK_CUR:
+            from_what = self._pos
+        elif from_what == os.SEEK_END:
+            if self._file_length == None:
+                desc = self.describe()
+                self._file_length = int(desc["size"])
+            from_what = self._file_length
+
         orig_pos = self._pos
-        self._pos = offset
+        self._pos = from_what + offset
 
         in_buf = False
         orig_buf_pos = self._read_buf.tell()
