@@ -14,15 +14,16 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-# Miscellaneous utility classes and functions for the dx-app-wizard
-# command-line tool
+'''
+Miscellaneous utility classes and functions for the dx-app-wizard command-line tool
+'''
 
 from __future__ import print_function, unicode_literals
 
 import os, shutil, subprocess, re, json
 
 from ..utils.printing import (BOLD, DNANEXUS_LOGO, ENDC, fill)
-from ..compat import input
+from ..compat import input, open
 
 from . import python
 from . import cpp

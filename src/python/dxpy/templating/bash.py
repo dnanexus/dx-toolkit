@@ -14,9 +14,12 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from dxpy.utils.printing import fill
+'''
+bash templating code
+'''
+from __future__ import print_function, unicode_literals
 
-# bash templating code
+from ..utils.printing import fill
 
 def get_interpreter():
     return 'bash'
