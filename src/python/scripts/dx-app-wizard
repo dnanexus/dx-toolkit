@@ -103,8 +103,8 @@ else:
         if input_class == '':
             break
         if input_class not in category_completer.choices:
-            answer = input("This is not a recognized category name and users won't be able to browse this category to find your app. Use it anyway? [Y/n] ")
-            if answer.lower().startswith('n'):
+            if not prompt_for_yn("This is not a recognized category name; users won't be able to browse this category to find your app. Use it anyway?",
+                                 default=True):
                 continue
         categories.append(input_class)
     app_json["categories"] = categories
@@ -338,8 +338,7 @@ BOLD('https://wiki.dnanexus.com/App-Permissions') + '.'))
 
 print('')
 print(fill(UNDERLINE('Access to the Internet') + ' (other than accessing the DNAnexus API).'))
-answer = input("Will this app need access to the Internet? [y/N] ")
-if answer and answer.lower()[0] == 'y':
+if prompt_for_yn("Will this app need access to the Internet?", default=False):
     app_json.setdefault('access', {})
     app_json['access']['network'] = ['*']
     print(fill('App has full access to the Internet. To narrow access to specific sites, edit the ' +
@@ -348,8 +347,7 @@ if answer and answer.lower()[0] == 'y':
 print('')
 print(fill(UNDERLINE('Direct access to the parent project') + '''. This is not needed if your app specifies outputs,
 which will be copied into the project after it's done running.'''))
-answer = input("Will this app need access to the parent project? [y/N] ")
-if answer and answer.lower()[0] == 'y':
+if prompt_for_yn("Will this app need access to the parent project?", default=False):
     app_json.setdefault('access', {})
     app_json['access']['project'] = 'CONTRIBUTE'
     print(fill('App has CONTRIBUTE access to the parent project. To change the access level or request access to ' +
