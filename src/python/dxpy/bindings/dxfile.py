@@ -232,6 +232,8 @@ class DXFile(DXDataObject):
                 desc = self.describe()
                 self._file_length = int(desc["size"])
             from_what = self._file_length
+        elif from_what != os.SEEK_SET:
+            raise DXFileError("Invalid from_what value")
 
         orig_pos = self._pos
         self._pos = from_what + offset
