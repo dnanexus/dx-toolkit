@@ -235,6 +235,23 @@ class TestDXFile(unittest.TestCase):
             buf = same_dxfile.read()
             self.assertEqual(self.foo_str[1:], buf)
 
+            same_dxfile.seek(1, 0)
+            buf = same_dxfile.read()
+            self.assertEqual(self.foo_str[1:], buf)
+
+            same_dxfile.seek(2)
+            same_dxfile.seek(-1, 1)
+            buf = same_dxfile.read()
+            self.assertEqual(self.foo_str[1:], buf)
+
+            same_dxfile.seek(0, 2)
+            buf = same_dxfile.read()
+            self.assertEqual(b"", buf)
+
+            same_dxfile.seek(-1, 2)
+            buf = same_dxfile.read()
+            self.assertEqual(self.foo_str[-1:], buf)
+
     def test_iter_dxfile(self):
         dxid = ""
         with dxpy.new_dxfile() as self.dxfile:
