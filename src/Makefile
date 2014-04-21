@@ -129,13 +129,16 @@ python_wheels: ../build/wheels
 
 python_deps: $(DNANEXUS_PY27_ENV)/lib
 
-$(DNANEXUS_PY27_ENV)/lib: python/requirements.txt python/requirements_dxfs.txt
+$(DNANEXUS_PY27_ENV)/lib: python/requirements.txt python/requirements_dxfs.txt python/requirements_test.txt python/requirements_setuptools.txt
 	rm -rf "$(DNANEXUS_PY27_ENV)"
 	virtualenv --python=python2.7 "$(DNANEXUS_PY27_ENV)"
 	virtualenv --relocatable "$(DNANEXUS_PY27_ENV)"
 	(source "$(DNANEXUS_PY27_ENV)/bin/activate"; pip install --upgrade pip>=1.4)
 	(source "$(DNANEXUS_PY27_ENV)/bin/activate"; pip install --ignore-installed --use-wheel --find-links="file://$(DNANEXUS_HOME)/build/wheels" --install-option="--install-lib=$(DNANEXUS_PY27_ENV)/lib/python2.7/site-packages" -r python/requirements_setuptools.txt)
 	(source "$(DNANEXUS_PY27_ENV)/bin/activate"; pip install --ignore-installed --use-wheel --find-links="file://$(DNANEXUS_HOME)/build/wheels" --install-option="--install-lib=$(DNANEXUS_PY27_ENV)/lib/python2.7/site-packages" -r python/requirements.txt -r python/requirements_dxfs.txt)
+ifdef DNANEXUS_INSTALL_PYTHON_TEST_DEPS
+	(source "$(DNANEXUS_PY27_ENV)/bin/activate"; pip install --ignore-installed --use-wheel --find-links="file://$(DNANEXUS_HOME)/build/wheels" --install-option="--install-lib=$(DNANEXUS_PY27_ENV)/lib/python2.7/site-packages" -r python/requirements_test.txt)
+endif
 
 # We are going to install libraries to lib/python2.7 and then move them
 # elsewhere (to share/dnanexus/lib/python2.7). Modify PYTHONPATH temporarily so
@@ -196,7 +199,7 @@ coverage_python:
 	(cd python; export PYTHONPATH="$$PYTHONPATH:$$(echo $$(pwd)/coverage-*.egg)"; \
 	 test/coveragereport.py --strip-prefix="$$(readlink -f $$(pwd))/build/lib.linux-x86_64-2.7" --cover dxpy. --cover scripts --exclude dxpy.packages --exclude EGG-INFO.scripts --exclude test. --exclude setuptools --path-alias "$$(readlink -f $$(pwd)/../../share/dnanexus/lib/python2.7/site-packages/dxpy*.egg)"="$$(readlink -f $$(pwd))" --path-alias "$$(readlink -f $$(pwd)/build/lib.linux-x86_64-2.7)"="$$(readlink -f $$(pwd))")
 
-test_python: python
+test_python:
 	../build/run_python_integration_tests.py
 
 test_perl: perl

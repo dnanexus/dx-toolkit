@@ -78,7 +78,6 @@ setup(
         "console_scripts": scripts,
     },
     install_requires = dependencies,
-    setup_requires = test_dependencies,
     tests_require = test_dependencies,
     test_suite = "test",
     classifiers=[

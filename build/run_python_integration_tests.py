@@ -19,11 +19,15 @@ parser.add_argument(
 TOOLKIT_ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 PYTHON_DIR = os.path.join(TOOLKIT_ROOT_DIR, 'src', 'python')
 
+os.environ['DNANEXUS_INSTALL_PYTHON_TEST_DEPS'] = 'yes'
+
 env = os.environ.copy()
 env['COVERAGE_PROCESS_START'] = os.path.join(PYTHON_DIR, '.coveragerc')
 env['COVERAGE_FILE'] = os.path.join(PYTHON_DIR, '.coverage')
 
 def run():
+    subprocess.check_call(["make", "python"], cwd=TOOLKIT_ROOT_DIR)
+
     # Somewhat hacky-- ensures that all subprocess calls to dx-* tools
     # load the coverage instrumentation so that their use of dxpy is
     # reflected in the final report.
