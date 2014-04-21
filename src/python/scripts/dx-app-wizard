@@ -16,7 +16,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import print_function
+from __future__ import (print_function, unicode_literals)
 
 import sys, os
 import json
@@ -28,7 +28,8 @@ from dxpy.templating.utils import (print_intro, get_name, get_version, get_metad
                                    create_files_from_templates)
 from dxpy.utils.printing import *
 from dxpy.app_categories import APP_CATEGORIES
-from dxpy.compat import basestring, input
+from dxpy.compat import basestring, input, wrap_stdio_in_codecs
+wrap_stdio_in_codecs()
 from collections import OrderedDict
 
 IO_NAME_PATTERN = re.compile('^[a-zA-Z_][0-9a-zA-Z_]*$')
