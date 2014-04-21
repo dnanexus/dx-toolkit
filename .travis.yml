@@ -4,7 +4,7 @@ python:
 - '2.7'
 - pypy
 before_install:
-- pip install --quiet coverage
+- pip install --quiet coverage wheel
 install:
 - make python
 script:
