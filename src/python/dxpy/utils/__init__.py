@@ -301,4 +301,4 @@ def json_loads_raise_on_duplicates(*args, **kwargs):
     return json.loads(*args, **kwargs)
 
 def warn(*args, **kwargs):
-    print(*args, stream=sys.stderr, **kwargs)
+    print(*args, file=sys.stderr, **kwargs)
