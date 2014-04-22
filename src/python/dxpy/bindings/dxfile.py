@@ -225,18 +225,20 @@ class DXFile(DXDataObject):
         position, and 2 uses the end of the file as the reference point. *from_what* can be omitted and defaults to 0,
         using the beginning of the file as the reference point.
         '''
-        if from_what == os.SEEK_CUR:
-            from_what = self._pos
+        if from_what == os.SEEK_SET:
+            reference_pos = 0
+        elif from_what == os.SEEK_CUR:
+            reference_pos = self._pos
         elif from_what == os.SEEK_END:
             if self._file_length == None:
                 desc = self.describe()
                 self._file_length = int(desc["size"])
-            from_what = self._file_length
-        elif from_what != os.SEEK_SET:
-            raise DXFileError("Invalid from_what value")
+            reference_pos = self._file_length
+        else:
+            raise DXFileError("Invalid value supplied for from_what")
 
         orig_pos = self._pos
-        self._pos = from_what + offset
+        self._pos = reference_pos + offset
 
         in_buf = False
         orig_buf_pos = self._read_buf.tell()
