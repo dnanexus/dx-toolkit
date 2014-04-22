@@ -1,1 +1,2 @@
-setuptools==2.1
+pip==1.5.4
+setuptools==3.4.4

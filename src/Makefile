@@ -133,9 +133,7 @@ $(DNANEXUS_PY27_ENV)/lib: python/requirements.txt python/requirements_dxfs.txt p
 	rm -rf "$(DNANEXUS_PY27_ENV)"
 	virtualenv --python=python2.7 "$(DNANEXUS_PY27_ENV)"
 	virtualenv --relocatable "$(DNANEXUS_PY27_ENV)"
-	(source "$(DNANEXUS_PY27_ENV)/bin/activate"; pip install --upgrade pip>=1.4)
-	(source "$(DNANEXUS_PY27_ENV)/bin/activate"; pip uninstall --yes setuptools)
-	(source "$(DNANEXUS_PY27_ENV)/bin/activate"; pip install --ignore-installed --use-wheel --find-links="file://$(DNANEXUS_HOME)/build/wheels" --install-option="--install-lib=$(DNANEXUS_PY27_ENV)/lib/python2.7/site-packages" -r python/requirements_setuptools.txt)
+	(source "$(DNANEXUS_PY27_ENV)/bin/activate"; pip install --upgrade --find-links="file://$(DNANEXUS_HOME)/build/wheels" --install-option="--install-lib=$(DNANEXUS_PY27_ENV)/lib/python2.7/site-packages" -r python/requirements_setuptools.txt)
 	(source "$(DNANEXUS_PY27_ENV)/bin/activate"; pip install --ignore-installed --use-wheel --find-links="file://$(DNANEXUS_HOME)/build/wheels" --install-option="--install-lib=$(DNANEXUS_PY27_ENV)/lib/python2.7/site-packages" -r python/requirements.txt -r python/requirements_dxfs.txt)
 ifdef DNANEXUS_INSTALL_PYTHON_TEST_DEPS
 	(source "$(DNANEXUS_PY27_ENV)/bin/activate"; pip install --ignore-installed --use-wheel --find-links="file://$(DNANEXUS_HOME)/build/wheels" --install-option="--install-lib=$(DNANEXUS_PY27_ENV)/lib/python2.7/site-packages" -r python/requirements_test.txt)
