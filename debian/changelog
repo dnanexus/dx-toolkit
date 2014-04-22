@@ -1,3 +1,9 @@
+dx-toolkit (0.94.2) precise; urgency=low
+
+  * Support dxpy.DXFile.seek
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 22 Apr 2014 21:17:50 +0000
+
 dx-toolkit (0.94.1) precise; urgency=low
 
   * Bug fixes for dx sh, output buffering.
