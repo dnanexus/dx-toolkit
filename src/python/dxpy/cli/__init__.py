@@ -22,6 +22,7 @@ almost exclusively by command-line tools such as dx.
 from __future__ import (print_function, unicode_literals)
 
 from ..exceptions import err_exit, default_expected_exceptions, DXError
+from ..compat import input
 
 def try_call_err_exit():
     err_exit(expected_exceptions=default_expected_exceptions + (DXError,))
@@ -31,3 +32,30 @@ def try_call(func, *args, **kwargs):
         return func(*args, **kwargs)
     except:
         try_call_err_exit()
+
+def prompt_for_yn(prompt_str, default=None):
+    if default == True:
+        prompt = prompt_str + ' [Y/n]: '
+    elif default == False:
+        prompt = prompt_str + ' [y/N]: '
+    else:
+        prompt = prompt_str + ' [y/n]: '
+
+    while True:
+        try:
+            value = input(prompt)
+        except KeyboardInterrupt:
+            print('')
+            exit(1)
+        except EOFError:
+            print('')
+            exit(1)
+        if value != '':
+            if value.lower()[0] == 'y':
+                return True
+            elif value.lower()[0] == 'n':
+                return False
+            else:
+                print('Error: unrecognized response')
+        elif default is not None:
+            return default

@@ -22,7 +22,7 @@ from __future__ import print_function, unicode_literals
 import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, errno, platform, io
 import shlex # respects quoted substrings when splitting
 
-from ..cli import try_call
+from ..cli import try_call, prompt_for_yn
 from ..cli import workflow as workflow_cli
 from ..exceptions import err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions
 from ..packages import requests
@@ -432,7 +432,7 @@ def set_wd(folder, write):
         write_env_var("DX_CLI_WD", folder)
 
 # Will raise KeyboardInterrupt, EOFError
-def prompt_for_var(prompt_str, env_var_str):
+def prompt_for_env_var(prompt_str, env_var_str):
     prompt = prompt_str
     default = None
     if env_var_str in os.environ:
@@ -528,9 +528,9 @@ def setenv(args):
                 write_env_var(var, os.environ[var])
     else:
         try:
-            api_protocol = prompt_for_var('API server protocol (choose "http" or "https")', 'DX_APISERVER_PROTOCOL')
-            api_host = prompt_for_var('API server host', 'DX_APISERVER_HOST')
-            api_port = prompt_for_var('API server port', 'DX_APISERVER_PORT')
+            api_protocol = prompt_for_env_var('API server protocol (choose "http" or "https")', 'DX_APISERVER_PROTOCOL')
+            api_host = prompt_for_env_var('API server host', 'DX_APISERVER_HOST')
+            api_port = prompt_for_env_var('API server port', 'DX_APISERVER_PORT')
             set_api(api_protocol, api_host, api_port, args.save)
         except:
             parser.exit(1, '\n')
@@ -1325,7 +1325,7 @@ def new_project(args):
             print(resp['id'])
         else:
             print(fill('Created new project called "' + args.name + '" (' + resp['id'] + ')'))
-        if args.select:
+        if args.select or (sys.stdin.isatty() and prompt_for_yn("Switch to new project now?", default=False)):
             set_project(resp['id'], write=True, name=args.name)
             set_wd('/', write=True)
     except:

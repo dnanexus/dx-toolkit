@@ -23,6 +23,7 @@ from __future__ import print_function, unicode_literals
 import os, shutil, subprocess, re, json
 
 from ..utils.printing import (BOLD, DNANEXUS_LOGO, ENDC, fill)
+from ..cli import prompt_for_yn
 from ..compat import input, open
 
 from . import python
@@ -96,33 +97,6 @@ def prompt_for_var(prompt_str, default=None, allow_empty=False, choices=None):
             return default
         elif allow_empty:
             return value
-
-def prompt_for_yn(prompt_str, default=None):
-    if default == True:
-        prompt = prompt_str + ' [Y/n]: '
-    elif default == False:
-        prompt = prompt_str + ' [y/N]: '
-    else:
-        prompt = prompt_str + ' [y/n]: '
-
-    while True:
-        try:
-            value = input(prompt)
-        except KeyboardInterrupt:
-            print('')
-            exit(1)
-        except EOFError:
-            print('')
-            exit(1)
-        if value != '':
-            if value.lower()[0] == 'y':
-                return True
-            elif value.lower()[0] == 'n':
-                return False
-            else:
-                print('Error: unrecognized response')
-        elif default is not None:
-            return default
 
 def print_intro(api_version):
     print(DNANEXUS_LOGO() + ' App Wizard, API v' + api_version)
