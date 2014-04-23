@@ -612,7 +612,10 @@ def print_execution_desc(desc):
     if "rootExecution" in desc:
         print_field("Root execution", desc["rootExecution"])
     if "originJob" in desc:
-        print_field("Origin job", desc["originJob"])
+        if desc["originJob"] is None:
+            print_field("Origin job", "-")
+        else:
+            print_field("Origin job", desc["originJob"])
     if desc["parentJob"] is None:
         print_field("Parent job", "-")
     else:
