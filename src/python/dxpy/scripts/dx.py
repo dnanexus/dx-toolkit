@@ -2867,26 +2867,35 @@ def run(args):
             dest_proj = dest_proj or clone_desc["project"]
             dest_path = clone_desc["folder"]
 
+        # set name, tags, properties, and priority from the cloned
+        # execution if the options have not been explicitly set
+        if args.name is None:
+            match_obj = re.search("\(re-run\)$", clone_desc["name"])
+            if match_obj is None:
+                args.name = clone_desc["name"] + " (re-run)"
+            else:
+                args.name = clone_desc["name"]
+        for metadata in 'tags', 'properties', 'priority':
+            if getattr(args, metadata) is None:
+                setattr(args, metadata, clone_desc.get(metadata))
+
         if clone_desc['class'] == 'job':
             if args.executable == "":
                 args.executable = clone_desc.get("applet", clone_desc.get("app", ""))
-            if args.name is None:
-                match_obj = re.search("\(re-run\)$", clone_desc["name"])
-                if match_obj is None:
-                    args.name = clone_desc["name"] + " (re-run)"
-                else:
-                    args.name = clone_desc["name"]
             args.input_from_clone = clone_desc["runInput"]
             args.sys_reqs_from_clone = clone_desc["systemRequirements"]
-            args.details = {"clonedFrom": {"id": clone_desc["id"],
-                                           "executable": clone_desc.get("applet", clone_desc.get("app", "")),
-                                           "project": clone_desc["project"],
-                                           "folder": clone_desc["folder"],
-                                           "name": clone_desc["name"],
-                                           "runInput": clone_desc["runInput"],
-                                           "systemRequirements": clone_desc["systemRequirements"]
-                                           }
-                            }
+            if args.details is None:
+                args.details = {
+                    "clonedFrom": {
+                        "id": clone_desc["id"],
+                        "executable": clone_desc.get("applet", clone_desc.get("app", "")),
+                        "project": clone_desc["project"],
+                        "folder": clone_desc["folder"],
+                        "name": clone_desc["name"],
+                        "runInput": clone_desc["runInput"],
+                        "systemRequirements": clone_desc["systemRequirements"]
+                    }
+                }
         else:
             # make a temporary workflow
             args.executable = dxpy.api.workflow_new({"project": dest_proj,

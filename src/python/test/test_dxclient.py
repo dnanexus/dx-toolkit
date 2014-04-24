@@ -987,7 +987,7 @@ dx-jobutil-add-output record_array $second_record --array
                                  cloned_job_desc[metadata])
             # check not_overridden_fields match/have the correct transformation
             all_fields = set(['name', 'project', 'folder', 'input', 'systemRequirements',
-                              'applet'])
+                              'applet', 'tags', 'properties', 'priority'])
             fields_to_check = all_fields.difference(overridden_fields)
             for metadata in fields_to_check:
                 if metadata == 'name':
@@ -997,7 +997,13 @@ dx-jobutil-add-output record_array $second_record --array
 
         # originally, set everything and have an instance type for all
         # entry points
-        orig_job_id = run("dx run " + applet_id + ' -inumber=32 --name jobname --folder /output --instance-type mem2_hdd2_x2 --brief -y').strip()
+        orig_job_id = run("dx run " + applet_id +
+                          ' -inumber=32 --name jobname --folder /output ' +
+                          '--instance-type mem2_hdd2_x2 ' +
+                          u'--tag Ψ --tag $hello.world ' +
+                          u'--property Σ_1^n=n --property $hello.=world ' +
+                          '--priority normal ' +
+                          '--brief -y').strip()
         orig_job_desc = dxpy.api.job_describe(orig_job_id)
         # control
         self.assertEqual(orig_job_desc['name'], 'jobname')
@@ -1012,57 +1018,76 @@ dx-jobutil-add-output record_array $second_record --array
         new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --brief -y").strip())
         check_new_job_metadata(new_job_desc, orig_job_desc)
 
+        def get_new_job_desc(cmd_suffix):
+            new_job_id = run("dx run --clone " + orig_job_id + " --brief -y " + cmd_suffix).strip()
+            return dxpy.api.job_describe(new_job_id)
+
         # override applet
-        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " " + other_applet_id + " --brief -y").strip())
+        new_job_desc = get_new_job_desc(other_applet_id)
         self.assertEqual(new_job_desc['applet'], other_applet_id)
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['applet'])
 
         # override name
-        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --name newname --brief -y").strip())
+        new_job_desc = get_new_job_desc("--name newname")
         self.assertEqual(new_job_desc['name'], 'newname')
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['name'])
 
+        # override tags
+        new_job_desc = get_new_job_desc("--tag new_tag --tag second_new_tag")
+        self.assertEqual(new_job_desc['tags'], ['new_tag', 'second_new_tag'])
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['tags'])
+
+        # override properties
+        new_job_desc = get_new_job_desc("--property foo=bar --property baz=quux")
+        self.assertEqual(new_job_desc['properties'], {"foo": "bar", "baz": "quux"})
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['properties'])
+
+        # override priority
+        new_job_desc = get_new_job_desc("--priority high")
+        self.assertEqual(new_job_desc['priority'], "high")
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['priority'])
+
         # override folder
-        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --folder /otherfolder --brief -y").strip())
+        new_job_desc = get_new_job_desc("--folder /otherfolder")
         self.assertEqual(new_job_desc['folder'], '/otherfolder')
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['folder'])
 
         # override project
-        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --project " + self.other_proj_id + " --brief -y").strip())
+        new_job_desc = get_new_job_desc("--project " + self.other_proj_id)
         self.assertEqual(new_job_desc['project'], self.other_proj_id)
         self.assertEqual(new_job_desc['folder'], '/output')
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['project', 'folder'])
 
         # override project and folder
-        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --folder " + self.other_proj_id + ": --brief -y").strip())
+        new_job_desc = get_new_job_desc("--folder " + self.other_proj_id + ":")
         self.assertEqual(new_job_desc['project'], self.other_proj_id)
         self.assertEqual(new_job_desc['folder'], '/')
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['project', 'folder'])
 
         # override input with -i
-        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " -inumber=42 --brief -y").strip())
+        new_job_desc = get_new_job_desc("-inumber=42")
         self.assertEqual(new_job_desc['input'], {"number": 42})
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['input'])
 
         # add other input fields with -i
-        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " -inumber2=42 --brief -y").strip())
+        new_job_desc = get_new_job_desc("-inumber2=42")
         self.assertEqual(new_job_desc['input'], {"number": 32, "number2": 42})
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['input'])
 
         # override input with --input-json (original input discarded)
-        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --input-json '{\"number2\": 42}' --brief -y").strip())
+        new_job_desc = get_new_job_desc("--input-json '{\"number2\": 42}'")
         self.assertEqual(new_job_desc['input'], {"number2": 42})
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['input'])
 
         # override the blanket instance type
-        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --instance-type mem2_hdd2_x1 --brief -y").strip())
+        new_job_desc = get_new_job_desc("--instance-type mem2_hdd2_x1")
         self.assertEqual(new_job_desc['systemRequirements'],
                          {'*': {'instanceType': 'mem2_hdd2_x1'}})
         check_new_job_metadata(new_job_desc, orig_job_desc,
                                overridden_fields=['systemRequirements'])
 
         # override instance type for specific entry point(s)
-        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --instance-type '{\"some_ep\": \"mem2_hdd2_x1\", \"some_other_ep\": \"mem2_hdd2_x4\"}' --brief -y").strip())
+        new_job_desc = get_new_job_desc("--instance-type '{\"some_ep\": \"mem2_hdd2_x1\", \"some_other_ep\": \"mem2_hdd2_x4\"}'")
         self.assertEqual(new_job_desc['systemRequirements'],
                          {'*': {'instanceType': 'mem2_hdd2_x2'},
                           'some_ep': {'instanceType': 'mem2_hdd2_x1'},
@@ -1076,19 +1101,19 @@ dx-jobutil-add-output record_array $second_record --array
         self.assertEqual(orig_job_desc['systemRequirements'], {'some_ep': {'instanceType': 'mem2_hdd2_x1'}})
 
         # override all entry points
-        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --instance-type mem2_hdd2_x2 --brief -y").strip())
+        new_job_desc = get_new_job_desc("--instance-type mem2_hdd2_x2")
         self.assertEqual(new_job_desc['systemRequirements'], {'*': {'instanceType': 'mem2_hdd2_x2'}})
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
 
         # override a different entry point; original untouched
-        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --instance-type '{\"some_other_ep\": \"mem2_hdd2_x2\"}' --brief -y").strip())
+        new_job_desc = get_new_job_desc("--instance-type '{\"some_other_ep\": \"mem2_hdd2_x2\"}'")
         self.assertEqual(new_job_desc['systemRequirements'],
                          {'some_ep': {'instanceType': 'mem2_hdd2_x1'},
                           'some_other_ep': {'instanceType': 'mem2_hdd2_x2'}})
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
 
         # override the same entry point
-        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --instance-type '{\"some_ep\": \"mem2_hdd2_x2\"}' --brief -y").strip())
+        new_job_desc = get_new_job_desc("--instance-type '{\"some_ep\": \"mem2_hdd2_x2\"}'")
         self.assertEqual(new_job_desc['systemRequirements'],
                          {'some_ep': {'instanceType': 'mem2_hdd2_x2'}})
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
