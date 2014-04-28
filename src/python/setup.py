@@ -62,6 +62,12 @@ if platform.system() == 'Darwin':
 if platform.system() != 'Windows' and sys.version_info[0] < 3:
     dependencies.extend(dxfs_dependencies)
 
+template_files = []
+
+for directory, subdirectories, files in os.walk("dxpy/templating/templates"):
+    directory = directory[len("dxpy/templating/"):]
+    template_files.extend([os.path.join(directory, _file) for _file in files])
+
 setup(
     name='dxpy',
     version=version,
@@ -72,7 +78,8 @@ setup(
     zip_safe=False,
     license='Apache Software License',
     packages = find_packages(),
-    package_data={'dxpy.packages.requests': ['*.pem']},
+    package_data={'dxpy.packages.requests': ['*.pem'],
+                  'dxpy.templating': template_files},
     scripts = glob.glob(os.path.join(os.path.dirname(__file__), 'scripts', 'dx*')),
     entry_points = {
         "console_scripts": scripts,

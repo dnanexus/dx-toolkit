@@ -22,13 +22,14 @@ import sys, os
 import json
 import argparse
 import re
+import dxpy
 from dxpy.templating.utils import (print_intro, get_name, get_version, get_metadata, Completer, get_ordinal_str,
                                    prompt_for_var, prompt_for_yn, use_completer, get_language, language_options,
                                    get_pattern, get_parallelized_io, fill_in_name_and_ver, clean,
                                    create_files_from_templates)
-from dxpy.utils.printing import *
+from dxpy.utils.printing import fill, BOLD, UNDERLINE, DNANEXUS_LOGO, ENDC
 from dxpy.app_categories import APP_CATEGORIES
-from dxpy.compat import basestring, input, wrap_stdio_in_codecs
+from dxpy.compat import wrap_stdio_in_codecs
 wrap_stdio_in_codecs()
 from collections import OrderedDict
 
@@ -43,11 +44,6 @@ parser.add_argument('--json-file', help='Use the metadata and IO spec found in t
 parser.add_argument('--language', help='Programming language of your app')
 parser.add_argument('name', help='Name of your app', nargs='?')
 args = parser.parse_args()
-
-dx_home_dir = os.environ.get('DNANEXUS_HOME', None)
-if not isinstance(dx_home_dir, basestring):
-    sys.stderr.write(fill('''Error: Environment variable DNANEXUS_HOME is not set; cannot find code templates''') + '\n')
-    exit(1)
 
 if args.json_file is not None and not os.path.exists(args.json_file):
     parser.error('File not found: ' + args.json_file)
@@ -304,7 +300,7 @@ app_json["runSpec"] = OrderedDict({"interpreter": interpreter})
 
 # Prompt for execution pattern
 
-template_dir = os.path.join(dx_home_dir, 'doc', 'example-templates', language_options[language].get_path())
+template_dir = os.path.join(os.path.dirname(dxpy.__file__), 'templating', 'templates', language_options[language].get_path())
 pattern = get_pattern(template_dir)
 template_dir = os.path.join(template_dir, pattern)
 
