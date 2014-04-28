@@ -1,3 +1,9 @@
+dx-toolkit (0.95.1) precise; urgency=low
+
+  * Update new list of instance types
+
+ -- Phil Sung <psung@dnanexus.com>  Mon, 28 Apr 2014 19:08:09 +0000
+
 dx-toolkit (0.95.0) precise; urgency=low
 
   * Support dxpy.DXFile.seek
