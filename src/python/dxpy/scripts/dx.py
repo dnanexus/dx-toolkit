@@ -3540,7 +3540,7 @@ build_parser.prog = 'dx build'
 build_parser.set_defaults(mode="applet")
 
 parser_build = subparsers.add_parser('build', help='Upload and build a new applet/app',
-                                     description='Build an applet or app object from a local source directory.  You can use dx-app-wizard to generate a skeleton directory with the necessary files.',
+                                     description='Build an applet or app object from a local source directory.  You can use ' + BOLD("dx-app-wizard") + ' to generate a skeleton directory with the necessary files.',
                                      prog='dx build',
                                      add_help=False,
                                      parents=[build_parser, env_args]

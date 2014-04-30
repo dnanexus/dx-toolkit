@@ -77,7 +77,7 @@ app_options.add_argument("--no-publish", help=argparse.SUPPRESS, action="store_f
 
 # --[no-]remote
 parser.set_defaults(remote=False)
-parser.add_argument("--remote", help="Build the app remotely.", action="store_true", dest="remote")
+parser.add_argument("--remote", help="Build the app remotely by uploading the source directory to the DNAnexus Platform and building it there. This option is useful if you would otherwise need to cross-compile the app(let) to target the Execution Environment.", action="store_true", dest="remote")
 parser.add_argument("--no-remote", help=argparse.SUPPRESS, action="store_false", dest="remote")
 
 applet_options.add_argument("-f", "--overwrite", help="Remove existing applet(s) of the same name in the destination folder.",
@@ -91,8 +91,8 @@ app_options.add_argument("-b", "--bill-to", help="Entity (of the form user-NAME 
 
 # --[no-]check-syntax
 parser.set_defaults(check_syntax=True)
-parser.add_argument("--check-syntax", help="Fail when the entry point file contains invalid syntax", action="store_true", dest="check_syntax")
-parser.add_argument("--no-check-syntax", help="Warn but do not fail when syntax problems are found", action="store_false", dest="check_syntax")
+parser.add_argument("--check-syntax", help=argparse.SUPPRESS, action="store_true", dest="check_syntax")
+parser.add_argument("--no-check-syntax", help="Warn but do not fail when syntax problems are found (default is to fail on such errors)", action="store_false", dest="check_syntax")
 
 # --[no-]version-autonumbering
 app_options.set_defaults(version_autonumbering=True)
@@ -104,17 +104,17 @@ app_options.add_argument("--update", help=argparse.SUPPRESS, action="store_true"
 app_options.add_argument("--no-update", help="Never update an existing unpublished app in place.", action="store_false", dest="update")
 # --[no-]dx-toolkit-autodep
 parser.set_defaults(dx_toolkit_autodep="stable")
-parser.add_argument("--dx-toolkit-legacy-git-autodep", help="Auto-insert a dx-toolkit dependency on the latest git version (to be built from source at runtime)", action="store_const", dest="dx_toolkit_autodep", const="git")
-parser.add_argument("--dx-toolkit-stable-autodep", help="Auto-insert a dx-toolkit dependency on the dx-toolkit (stable) apt package", action="store_const", dest="dx_toolkit_autodep", const="stable")
+parser.add_argument("--dx-toolkit-legacy-git-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="git")
+parser.add_argument("--dx-toolkit-stable-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="stable")
 parser.add_argument("--dx-toolkit-beta-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="beta")         # deprecated
 parser.add_argument("--dx-toolkit-unstable-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="unstable") # deprecated
 parser.add_argument("--dx-toolkit-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="stable")
-parser.add_argument("--no-dx-toolkit-autodep", help="Do not auto-insert the dx-toolkit dependency if it's absent from the runSpec. See the documentation for more details.", action="store_false", dest="dx_toolkit_autodep")
+parser.add_argument("--no-dx-toolkit-autodep", help="Do not auto-insert the dx-toolkit dependency (default is to add it if it would otherwise be absent from the runSpec)", action="store_false", dest="dx_toolkit_autodep")
 
 # --[no-]parallel-build
 parser.set_defaults(parallel_build=True)
 parser.add_argument("--parallel-build", help=argparse.SUPPRESS, action="store_true", dest="parallel_build")
-parser.add_argument("--no-parallel-build", help="Build with make instead of make -jN.", action="store_false",
+parser.add_argument("--no-parallel-build", help="Build with " + BOLD("make") + " instead of " + BOLD("make -jN") + ".", action="store_false",
                     dest="parallel_build")
 
 app_options.set_defaults(use_temp_build_project=True)
