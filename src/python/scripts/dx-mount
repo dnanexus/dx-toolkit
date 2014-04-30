@@ -178,7 +178,11 @@ class DXFS(LoggingMixIn, Operations):
         self.initialized_once = threading.Event()
 
     def wait_until_initialized(self):
-        self.initialized_once.wait()
+        # Run a less expensive check that doesn't need to acquire a
+        # lock, so we can possibly short-circuit the real wait() call,
+        # which does.
+        if not self.initialized_once.is_set():
+            self.initialized_once.wait()
 
     def init(self, root_path):
         ''' This method is used both for initializing the filesystem and for reloading it upon modification.
