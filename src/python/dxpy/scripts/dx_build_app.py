@@ -817,7 +817,7 @@ def main(**kwargs):
                 **extra_args
                 )
 
-            if output is not None:
+            if output is not None and args.run is None:
                 print(json.dumps(output))
         except dxpy.app_builder.AppBuilderException as e:
             # AppBuilderException represents errors during app or applet building
