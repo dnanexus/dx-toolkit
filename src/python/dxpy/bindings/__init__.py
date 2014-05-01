@@ -22,7 +22,7 @@ base class for all remote data object handlers.
 
 from __future__ import (print_function, unicode_literals)
 
-import time, copy
+import time, copy, re
 
 import dxpy.api
 from ..exceptions import (DXError, DXAPIError, DXFileError, DXGTableError, DXSearchError, DXAppletError,
@@ -213,15 +213,22 @@ class DXDataObject(DXObject):
         data container is used).
 
         '''
-        self._proj = None
         if is_dxlink(dxid):
-            self._dxid, self._proj = get_dxlink_ids(dxid)
-        else:
-            self._dxid = dxid
+            dxid, project_from_link = get_dxlink_ids(dxid)
+            if project is None:
+                project = project_from_link
 
-        if self._proj is None and project is None:
+        if dxid is not None and not \
+           (isinstance(dxid, basestring) and
+            re.match('^' + self._class + '-[0-9a-zA-Z]{24}$', dxid)):
+            raise DXError('Invalid %s ID: %r' % (self._class, dxid))
+        self._dxid = dxid
+
+        if project is None:
             self._proj = dxpy.WORKSPACE_ID
         elif project is not None:
+            if not dxpy.utils.resolver.is_container_id(project):
+                raise DXError('Invalid project or container ID: %r' % (dxid,))
             self._proj = project
 
     def get_id(self):

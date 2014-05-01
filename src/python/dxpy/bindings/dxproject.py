@@ -67,12 +67,10 @@ class DXContainer(DXObject):
         with *dxid*.
 
         '''
-        if isinstance(self, DXProject):
-            if not re.match("^project-[0-9a-zA-Z]{24}$", dxid):
-                raise DXError("Given project ID %r does not match expected format" % (dxid,))
-        else:
-            if not re.match("^container-[0-9a-zA-Z]{24}$", dxid):
-                raise DXError("Given container ID %r does not match expected format" % (dxid,))
+        if dxid is not None and not (isinstance(dxid, basestring) and
+                                     re.match("^" + self._class + "-[0-9a-zA-Z]{24}$",
+                                              dxid)):
+            raise DXError("Invalid %s ID: %r" % (self._class, dxid))
 
         self._dxid = dxid
 

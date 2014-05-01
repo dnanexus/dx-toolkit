@@ -97,6 +97,7 @@ class DXJob(DXObject):
     def __init__(self, dxid=None):
         self._test_harness_result = None
         DXObject.__init__(self, dxid=dxid)
+        self.set_id(dxid)
 
     def new(self, fn_input, fn_name, name=None, tags=None, properties=None, details=None,
             instance_type=None, depends_on=None,
@@ -182,6 +183,9 @@ class DXJob(DXObject):
         Discards the currently stored ID and associates the handler
         with *dxid*.
         '''
+        if dxid is not None and not (isinstance(dxid, basestring) and
+                                     dxpy.utils.resolver.is_job_id(dxid)):
+            raise DXError('Invalid job ID: %r' % (dxid,))
         self._dxid = dxid
 
     def get_id(self):
