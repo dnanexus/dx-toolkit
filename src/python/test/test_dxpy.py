@@ -46,7 +46,7 @@ def tearDownTempProjects(thing):
     dxpy.set_workspace_id(thing.old_workspace_id)
 
 class TestDXProject(unittest.TestCase):
-    '''Also test DXContainer here'''
+    # Also test DXContainer here
     def setUp(self):
         setUpTempProjects(self)
 
