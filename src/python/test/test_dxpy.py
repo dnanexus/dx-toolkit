@@ -46,6 +46,7 @@ def tearDownTempProjects(thing):
     dxpy.set_workspace_id(thing.old_workspace_id)
 
 class TestDXProject(unittest.TestCase):
+    '''Also test DXContainer here'''
     def setUp(self):
         setUpTempProjects(self)
 
@@ -67,6 +68,24 @@ class TestDXProject(unittest.TestCase):
             with self.assertRaises(DXError):
                 dxproject = dxpy.DXProject()
                 dxproject.set_id(bad_value)
+
+    def test_dxcontainer_init_and_set_id(self):
+        for good_value in ["container-aB3456789012345678901234"]:
+            # Note: None is actually not a valid value if the current
+            # project context is a project
+            dxcontainer = dxpy.DXContainer(good_value)
+            dxcontainer.set_id(good_value)
+        for bad_value in ["foo",
+                          "project-123456789012345678901234",
+                          3,
+                          {},
+                          "container-aB34567890123456789012345",
+                          "container-aB345678901234567890123"]:
+            with self.assertRaises(DXError):
+                dxpy.DXContainer(bad_value)
+            with self.assertRaises(DXError):
+                dxcontainer = dxpy.DXContainer()
+                dxcontainer.set_id(bad_value)
 
     def test_update_describe(self):
         dxproject = dxpy.DXProject()

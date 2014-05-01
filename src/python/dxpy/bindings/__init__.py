@@ -33,7 +33,10 @@ class DXObject(object):
     """Abstract base class for all remote object handlers."""
 
     def __init__(self, dxid=None, project=None):
-        self._dxid, self._proj = dxid, project
+        # Initialize _dxid and _proj to None values, and have
+        # subclasses actually perform the setting of the values once
+        # they have been validated.
+        self._dxid, self._proj = None, None
         self._desc = {}
 
     def _repr(self, use_name=False):
