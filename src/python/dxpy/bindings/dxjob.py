@@ -97,6 +97,7 @@ class DXJob(DXObject):
     def __init__(self, dxid=None):
         self._test_harness_result = None
         DXObject.__init__(self, dxid=dxid)
+        self.set_id(dxid)
 
     def new(self, fn_input, fn_name, name=None, tags=None, properties=None, details=None,
             instance_type=None, depends_on=None,
@@ -173,28 +174,6 @@ class DXJob(DXObject):
             self.set_id(queue_entry_point(function=fn_name, input_hash=fn_input,
                                           depends_on=final_depends_on,
                                           name=name))
-
-    def set_id(self, dxid):
-        '''
-        :param dxid: Object ID
-        :type dxid: string
-
-        Discards the currently stored ID and associates the handler
-        with *dxid*.
-        '''
-        self._dxid = dxid
-
-    def get_id(self):
-        '''
-        :returns: Job ID of associated job
-        :rtype: string
-
-        Returns the job ID that the handler is currently associated
-        with.
-
-        '''
-
-        return self._dxid
 
     def describe(self, fields=None, io=None, **kwargs):
         """

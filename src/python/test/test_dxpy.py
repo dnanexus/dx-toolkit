@@ -46,11 +46,46 @@ def tearDownTempProjects(thing):
     dxpy.set_workspace_id(thing.old_workspace_id)
 
 class TestDXProject(unittest.TestCase):
+    # Also test DXContainer here
     def setUp(self):
         setUpTempProjects(self)
 
     def tearDown(self):
         tearDownTempProjects(self)
+
+    def test_init_and_set_id(self):
+        for good_value in ["project-aB3456789012345678901234", None]:
+            dxproject = dxpy.DXProject(good_value)
+            dxproject.set_id(good_value)
+        for bad_value in ["foo",
+                          "container-123456789012345678901234",
+                          3,
+                          {},
+                          "project-aB34567890123456789012345",
+                          "project-aB345678901234567890123"]:
+            with self.assertRaises(DXError):
+                dxpy.DXProject(bad_value)
+            with self.assertRaises(DXError):
+                dxproject = dxpy.DXProject()
+                dxproject.set_id(bad_value)
+
+    def test_dxcontainer_init_and_set_id(self):
+        for good_value in ["container-aB3456789012345678901234"]:
+            # Note: None is actually not a valid value if the current
+            # project context is a project
+            dxcontainer = dxpy.DXContainer(good_value)
+            dxcontainer.set_id(good_value)
+        for bad_value in ["foo",
+                          "project-123456789012345678901234",
+                          3,
+                          {},
+                          "container-aB34567890123456789012345",
+                          "container-aB345678901234567890123"]:
+            with self.assertRaises(DXError):
+                dxpy.DXContainer(bad_value)
+            with self.assertRaises(DXError):
+                dxcontainer = dxpy.DXContainer()
+                dxcontainer.set_id(bad_value)
 
     def test_update_describe(self):
         dxproject = dxpy.DXProject()
@@ -191,6 +226,41 @@ class TestDXFile(unittest.TestCase):
         os.remove(self.new_file.name)
 
         tearDownTempProjects(self)
+
+    def test_init_and_set_ids(self):
+        for good_dxid, good_project in [
+                ("file-aB3456789012345678901234", None),
+                (None, "project-aB3456789012345678901234"),
+                (None, "container-aB3456789012345678901234"),
+                (None, None),
+                ({"$dnanexus_link": {"id" : "file-aB3456789012345678901234"}}, None),
+                ({"$dnanexus_link": {"id" : "file-aB3456789012345678901234",
+                                     "project": "project-aB3456789012345678901234"}}, None),
+                ({"$dnanexus_link": {"id" : "file-aB3456789012345678901234",
+                                     "project": "container-aB3456789012345678901234"}}, None)
+        ]:
+            dxfile = dxpy.DXFile(good_dxid, project=good_project)
+            dxfile.set_ids(good_dxid, project=good_project)
+        for bad_dxid, bad_project in [
+                ("foo", None),
+                ("record-123456789012345678901234", None),
+                (3, None),
+                ({}, None),
+                ({"$dnanexus_link": {"id": "foo"}}, None),
+                ({"$dnanexus_link": {"id": "file-aB3456789012345678901234",
+                                     "project": "foo"}}, None)
+        ]:
+            with self.assertRaises(DXError):
+                dxpy.DXFile(bad_dxid, project=bad_project)
+            with self.assertRaises(DXError):
+                dxfile = dxpy.DXFile()
+                dxfile.set_ids(bad_dxid, project=bad_project)
+
+        # test logic
+        dxfile = dxpy.DXFile({"$dnanexus_link": {"id" : "file-aB3456789012345678901234",
+                                                 "project": "container-aB3456789012345678901234"}},
+                             project="project-aB3456789012345678901234")
+        self.assertEqual(dxfile.get_proj_id(), "project-aB3456789012345678901234")
 
     def test_upload_download_files_dxfile(self):
         self.dxfile = dxpy.upload_local_file(self.foo_file.name)
@@ -912,6 +982,22 @@ class TestDXAppletJob(unittest.TestCase):
     def tearDown(self):
         tearDownTempProjects(self)
 
+    def test_dxjob_init_and_set_id(self):
+        for good_value in ["job-aB3456789012345678901234", None]:
+            dxjob = dxpy.DXJob(good_value)
+            dxjob.set_id(good_value)
+        for bad_value in ["foo",
+                          "project-123456789012345678901234",
+                          3,
+                          {},
+                          "job-aB34567890123456789012345",
+                          "job-aB345678901234567890123"]:
+            with self.assertRaises(DXError):
+                dxpy.DXJob(bad_value)
+            with self.assertRaises(DXError):
+                dxjob = dxpy.DXJob()
+                dxjob.set_id(bad_value)
+
     def test_run_dxapplet_and_job_metadata(self):
         dxapplet = dxpy.DXApplet()
         dxapplet.new(name="test_applet",
@@ -990,6 +1076,22 @@ class TestDXWorkflow(unittest.TestCase):
 
     def tearDown(self):
         tearDownTempProjects(self)
+
+    def test_dxanalysis_init_and_set_id(self):
+        for good_value in ["analysis-aB3456789012345678901234", None]:
+            dxanalysis = dxpy.DXAnalysis(good_value)
+            dxanalysis.set_id(good_value)
+        for bad_value in ["foo",
+                          "project-123456789012345678901234",
+                          3,
+                          {},
+                          "analysis-aB34567890123456789012345",
+                          "analysis-aB345678901234567890123"]:
+            with self.assertRaises(DXError):
+                dxpy.DXAnalysis(bad_value)
+            with self.assertRaises(DXError):
+                dxanalysis = dxpy.DXAnalysis()
+                dxanalysis.set_id(bad_value)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping test that would run a job')
@@ -1425,6 +1527,30 @@ class TestDXApp(unittest.TestCase):
 
     def tearDown(self):
         tearDownTempProjects(self)
+
+    def test_init_and_set_id(self):
+        for good_values in [("app-aB3456789012345678901234", None, None),
+                            (None, 'name', 'tag'),
+                            (None, 'name', None),
+                            (None, None, None)]:
+            dxapp = dxpy.DXApp(*good_values)
+            dxapp.set_id(*good_values)
+        for bad_values in [("foo", None, None),
+                           ("app-aB3456789012345678901234", 'name', None),
+                           ("app-aB3456789012345678901234", None, 'tag'),
+                           ("app-aB3456789012345678901234", 'name', 'tag'),
+                           ("project-123456789012345678901234", None, None),
+                           (3, None, None),
+                           ({}, None, None),
+                           ("app-aB34567890123456789012345", None, None),
+                           ("app-aB345678901234567890123", None, None),
+                           (None, 3, None),
+                           (None, 'name', {})]:
+            with self.assertRaises(DXError):
+                dxpy.DXApp(*bad_values)
+            with self.assertRaises(DXError):
+                dxapp = dxpy.DXApp()
+                dxapp.set_id(*bad_values)
 
     def test_create_app(self):
         dxapplet = dxpy.DXApplet()
