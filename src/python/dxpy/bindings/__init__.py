@@ -67,10 +67,7 @@ class DXObject(object):
 
     def __getattr__(self, attr):
         if not self._desc:
-            try:
-                self.describe()
-            except:
-                pass
+            self.describe()
         try:
             return self._desc[attr]
         except:
@@ -483,6 +480,7 @@ class DXDataObject(DXObject):
         # Reset internal state
         del self._dxid
         del self._proj
+        self._desc = {}
 
     def move(self, folder, **kwargs):
         '''

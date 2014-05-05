@@ -772,6 +772,17 @@ class TestDXRecord(unittest.TestCase):
         self.assertEqual(desc["properties"], properties)
         self.assertEqual(desc["details"], details)
 
+    def test_getattr_dxrecord(self):
+        dxrecord = dxpy.new_dxrecord(name='foo')
+        record_id = dxrecord.get_id()
+        self.assertEqual(dxrecord.name, 'foo')
+        with self.assertRaises(AttributeError):
+            dxrecord.foo
+        dxrecord.remove()
+        dxrecord.set_ids(record_id)
+        with self.assertRaises(DXAPIError):
+            dxrecord.name
+
     def test_set_properties_of_dxrecord(self):
         dxrecord = dxpy.new_dxrecord()
         properties = {"project": "cancer project", "foo": "bar"}
