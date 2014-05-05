@@ -687,8 +687,7 @@ class TestDXRecord(unittest.TestCase):
             self.fail("Unexpected error when removing record object: " +
                       str(error))
 
-        with self.assertRaises(AttributeError):
-            firstDXRecord.get_id()
+        self.assertIsNone(firstDXRecord.get_id())
 
         try:
             secondDXRecord.remove()
@@ -696,8 +695,7 @@ class TestDXRecord(unittest.TestCase):
             self.fail("Unexpected error when removing record object: " +
                       str(error))
 
-        with self.assertRaises(AttributeError):
-            secondDXRecord.get_id()
+        self.assertIsNone(secondDXRecord.get_id())
 
         third_record = dxpy.DXRecord(firstID)
 
