@@ -20,7 +20,6 @@
 # $ source environment
 
 set SOURCE=`echo $_ | cut -f 2 -d " "`
-set SOURCE=`readlink -f "$SOURCE"`
 set SOURCE=`dirname "$SOURCE"`
 
 setenv DNANEXUS_HOME "$SOURCE"
