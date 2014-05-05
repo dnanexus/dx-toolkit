@@ -597,7 +597,18 @@ class TestDXClientUploadDownload(DXTestCase):
         temp_project = dxpy.DXProject(dxpy.api.project_new({'name': 'test proj with UPLOAD perms'})['id'])
         try:
             temp_project.decrease_perms('user-000000000000000000000000', 'UPLOAD')
-            dxpy.upload_local_file(os.path.devnull, project=temp_project.get_id(), folder='/')
+            testdir = tempfile.mkdtemp()
+            try:
+                # Filename provided with path
+                with open(os.path.join(testdir, 'myfilename'), 'w') as f:
+                    f.write('foo')
+                remote_file = dxpy.upload_local_file(filename=os.path.join(testdir, 'myfilename'), project=temp_project.get_id(), folder='/')
+                self.assertEqual(remote_file.name, 'myfilename')
+                # Filename provided with file handle
+                remote_file2 = dxpy.upload_local_file(file=open(os.path.join(testdir, 'myfilename')), project=temp_project.get_id(), folder='/')
+                self.assertEqual(remote_file2.name, 'myfilename')
+            finally:
+                shutil.rmtree(testdir)
         finally:
             dxpy.DXHTTPRequest('/' + temp_project.get_id() + '/join', {'level': 'ADMINISTER'})
             temp_project.destroy()

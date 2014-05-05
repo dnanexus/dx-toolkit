@@ -198,12 +198,9 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     if use_existing_dxfile:
         handler = use_existing_dxfile
     else:
-        # Use 'a' mode because we will be responsible for closing the file
-        # ourselves later (if requested).
-        creation_kwargs = kwargs.copy()
-
         # Set a reasonable name for the file if none has been set
         # already
+        creation_kwargs = kwargs.copy()
         if 'name' not in kwargs:
             if filename is not None:
                 creation_kwargs['name'] = os.path.basename(filename)
@@ -216,9 +213,13 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
                 else:
                     creation_kwargs['name'] = os.path.basename(local_file_name)
 
+        # Use 'a' mode because we will be responsible for closing the file
+        # ourselves later (if requested).
         handler = new_dxfile(mode='a', media_type=media_type, write_buffer_size=buffer_size, **creation_kwargs)
 
-    creation_kwargs, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
+    # For subsequent API calls, don't supply the dataobject metadata
+    # parameters that are only needed at creation time.
+    _, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
 
     num_ticks = 60
     offset = 0
@@ -317,7 +318,9 @@ def upload_string(to_upload, media_type=None, keep_open=False, wait_on_close=Fal
     # ourselves later (if requested).
     handler = new_dxfile(media_type=media_type, mode='a', **kwargs)
 
-    creation_kwargs, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
+    # For subsequent API calls, don't supply the dataobject metadata
+    # parameters that are only needed at creation time.
+    _, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
 
     handler.write(to_upload, **remaining_kwargs)
 
