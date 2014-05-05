@@ -34,11 +34,8 @@ of :class:`~dxpy.bindings.dxproject.DXContainer`.
 
 from __future__ import (print_function, unicode_literals)
 
-import re
-
 import dxpy
 from . import DXObject
-from ..exceptions import DXError
 
 ###############
 # DXContainer #
@@ -56,35 +53,6 @@ class DXContainer(DXObject):
             self.set_id(dxid)
         else:
             self.set_id(dxpy.WORKSPACE_ID)
-
-    def set_id(self, dxid):
-        '''
-        :param dxid: Project or container ID
-        :type dxid: string
-        :raises: :exc:`~dxpy.exceptions.DXError` if *dxid* does not match class type
-
-        Discards the currently stored ID and associates the handler
-        with *dxid*.
-
-        '''
-        if dxid is not None and not (isinstance(dxid, basestring) and
-                                     re.match("^" + self._class + "-[0-9a-zA-Z]{24}$",
-                                              dxid)):
-            raise DXError("Invalid %s ID: %r" % (self._class, dxid))
-
-        self._dxid = dxid
-
-    def get_id(self):
-        '''
-        :returns: ID of the associated project or container
-        :rtype: string
-
-        Returns the project or container ID that the handler is currently associated
-        with.
-
-        '''
-
-        return self._dxid
 
     def describe(self, **kwargs):
         """

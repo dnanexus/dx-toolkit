@@ -27,10 +27,10 @@ existing analysis ID.
 
 from __future__ import (print_function, unicode_literals)
 
-import sys, time
+import time
 import dxpy
 from dxpy.bindings import (DXObject, )
-from dxpy.exceptions import DXJobFailureError, DXError
+from dxpy.exceptions import DXJobFailureError
 
 ##############
 # DXAnalysis #
@@ -47,31 +47,6 @@ class DXAnalysis(DXObject):
         self._test_harness_result = None
         DXObject.__init__(self, dxid=dxid)
         self.set_id(dxid)
-
-    def set_id(self, dxid):
-        '''
-        :param dxid: Object ID
-        :type dxid: string
-
-        Discards the currently stored ID and associates the handler
-        with *dxid*.
-        '''
-        if dxid is not None and not (isinstance(dxid, basestring) and
-                                     dxpy.utils.resolver.is_analysis_id(dxid)):
-            raise DXError('Invalid analysis ID: %r' % (dxid,))
-        self._dxid = dxid
-
-    def get_id(self):
-        '''
-        :returns: Analysis ID of associated analysis
-        :rtype: string
-
-        Returns the analysis ID that the handler is currently
-        associated with.
-
-        '''
-
-        return self._dxid
 
     def describe(self, **kwargs):
         """

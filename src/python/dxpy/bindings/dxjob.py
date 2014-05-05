@@ -175,31 +175,6 @@ class DXJob(DXObject):
                                           depends_on=final_depends_on,
                                           name=name))
 
-    def set_id(self, dxid):
-        '''
-        :param dxid: Object ID
-        :type dxid: string
-
-        Discards the currently stored ID and associates the handler
-        with *dxid*.
-        '''
-        if dxid is not None and not (isinstance(dxid, basestring) and
-                                     dxpy.utils.resolver.is_job_id(dxid)):
-            raise DXError('Invalid job ID: %r' % (dxid,))
-        self._dxid = dxid
-
-    def get_id(self):
-        '''
-        :returns: Job ID of associated job
-        :rtype: string
-
-        Returns the job ID that the handler is currently associated
-        with.
-
-        '''
-
-        return self._dxid
-
     def describe(self, fields=None, io=None, **kwargs):
         """
         :param fields: Hash where the keys are field names that should be returned, and values should be set to True (default is that all fields are returned)
