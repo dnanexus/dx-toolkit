@@ -1491,9 +1491,10 @@ class TestDXApp(unittest.TestCase):
 
         self.assertEqual(appdesc.get("tags", []), [])
 
-        with self.assertRaises(AttributeError):
+        # ResourceNotFound will be thrown if the alias cannot be found
+        with self.assertRaises(DXAPIError):
             dxpy.DXApp(name="test_add_and_remove_tags_app", alias="moo").applet
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(DXAPIError):
             dxpy.DXApp(name="test_add_and_remove_tags_app", alias="oink").applet
 
         dxapp.add_tags(["moo", "oink"])
@@ -1503,15 +1504,15 @@ class TestDXApp(unittest.TestCase):
 
         dxapp.remove_tags(["moo"])
 
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(DXAPIError):
             dxpy.DXApp(name="test_add_and_remove_tags_app", alias="moo").applet
         self.assertEqual(dxapplet.get_id(), dxpy.DXApp(name="test_add_and_remove_tags_app", alias="oink").applet)
 
         dxapp.remove_tags(["oink"])
 
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(DXAPIError):
             dxpy.DXApp(name="test_add_and_remove_tags_app", alias="moo").applet
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(DXAPIError):
             dxpy.DXApp(name="test_add_and_remove_tags_app", alias="oink").applet
 
 
