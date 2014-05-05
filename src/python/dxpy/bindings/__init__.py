@@ -478,8 +478,8 @@ class DXDataObject(DXObject):
                                         **kwargs)
 
         # Reset internal state
-        del self._dxid
-        del self._proj
+        self._dxid = None
+        self._proj = None
         self._desc = {}
 
     def move(self, folder, **kwargs):
