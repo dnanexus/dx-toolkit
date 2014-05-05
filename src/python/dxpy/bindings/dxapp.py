@@ -47,10 +47,8 @@ becomes the sole developer of the app.
 
 from __future__ import (print_function, unicode_literals)
 
-import re
-
 import dxpy
-from . import DXObject, DXExecutable, DXJob
+from . import DXObject, DXExecutable, DXJob, verify_string_dxid
 from ..exceptions import DXError
 
 #########
@@ -92,17 +90,18 @@ class DXApp(DXObject, DXExecutable):
         if dxid is not None:
             if name is not None or alias is not None:
                 raise DXError("Did not expect name or alias to be given if dxid is given")
-            if not re.match("^app-[0-9a-zA-Z]{24}$", dxid):
-                raise DXError("Given app ID does not match expected format")
+            verify_string_dxid(dxid, self._class)
             self._dxid = dxid
         elif name is not None:
             self._name = name
+            if not isinstance(name, basestring):
+                raise DXError("App name needs to be a string: %r" % (name,))
             if alias is not None:
+                if not isinstance(alias, basestring):
+                    raise DXError("App alias needs to be a string: %r" % (alias,))
                 self._alias = alias
             else:
                 self._alias = 'default'
-        else:
-            raise DXError("Did not expect name or alias to be given if dxid is given")
 
     def get_id(self):
         '''
