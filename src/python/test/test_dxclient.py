@@ -60,7 +60,10 @@ def check_output(*popenargs, **kwargs):
         raise ValueError('stdout argument not allowed, it will be overridden.')
     if 'stderr' in kwargs:
         raise ValueError('stderr argument not allowed, it will be overridden.')
-    process = subprocess.Popen(stdout=subprocess.PIPE, stderr=subprocess.PIPE, *popenargs, **kwargs)
+    # Unplug stdin (if not already overridden) so that dx doesn't prompt
+    # user for input at the tty
+    process = subprocess.Popen(stdin=kwargs.get('stdin', subprocess.PIPE),
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, *popenargs, **kwargs)
     output, err = process.communicate()
     retcode = process.poll()
     if retcode:
@@ -568,16 +571,15 @@ class TestDXClientUploadDownload(DXTestCase):
             with chdir(tempfile.mkdtemp()):
                 run(u'dx download -r '+os.path.basename(wd))
 
-                tree1 = subprocess.check_output("cd {wd}; find .".format(wd=wd), shell=True)
-                tree2 = subprocess.check_output("cd {wd}; find .".format(wd=os.path.basename(wd)), shell=True)
+                tree1 = check_output("cd {wd}; find .".format(wd=wd), shell=True)
+                tree2 = check_output("cd {wd}; find .".format(wd=os.path.basename(wd)), shell=True)
                 self.assertEqual(tree1, tree2)
 
             with chdir(tempfile.mkdtemp()):
                 os.mkdir('t')
                 run(u'dx download -r -o t '+os.path.basename(wd))
-                tree1 = subprocess.check_output("cd {wd}; find .".format(wd=wd), shell=True)
-                tree2 = subprocess.check_output("cd {wd}; find .".format(wd=os.path.join("t", os.path.basename(wd))),
-                                                shell=True)
+                tree1 = check_output("cd {wd}; find .".format(wd=wd), shell=True)
+                tree2 = check_output("cd {wd}; find .".format(wd=os.path.join("t", os.path.basename(wd))), shell=True)
                 self.assertEqual(tree1, tree2)
 
                 os.mkdir('t2')
@@ -785,9 +787,7 @@ dx-jobutil-add-output record_array $second_record --array
                 run('dx get ' + applet_id)
                 return os.path.join(tempdir, dxpy.describe(applet_id)['name'])
         appdir = create_app_dir_from_applet(applet_id)
-        local_output = subprocess.check_output(['dx-run-app-locally',
-                                                appdir,
-                                                '-irecord=' + jbor_array_ref + '1'])
+        local_output = check_output(['dx-run-app-locally', appdir, '-irecord=' + jbor_array_ref + '1'])
         self.assertIn(remote_job_output[1]["$dnanexus_link"], local_output)
         self.assertNotIn(remote_job_output[0]["$dnanexus_link"], local_output)
 
@@ -2928,15 +2928,15 @@ def main(in1):
             "version": "1.0.0"
             }
         app_dir = self.write_app_directory("archive_in_another_project", json.dumps(app_spec), "code.py")
-        temp_project_id = subprocess.check_output(
+        temp_project_id = check_output(
             u"dx new project '{p}' --brief".format(p="Temporary working project"), shell=True).strip()
         try:
-            subprocess.check_output("dx select {p}".format(p=temp_project_id), shell=True)
+            check_output("dx select {p}".format(p=temp_project_id), shell=True)
             run("dx build -d {p}: {app_dir}".format(p=self.proj_id, app_dir=app_dir))
             run("dx build --archive -d {p}: {app_dir}".format(p=self.proj_id, app_dir=app_dir))
         finally:
-            subprocess.check_output("dx select {p}".format(p=self.proj_id), shell=True)
-            subprocess.check_output("dx rmproject --yes {p}".format(p=temp_project_id), shell=True)
+            check_output("dx select {p}".format(p=self.proj_id), shell=True)
+            check_output("dx rmproject --yes {p}".format(p=temp_project_id), shell=True)
 
 
 class TestDXBuildReportHtml(unittest.TestCase):

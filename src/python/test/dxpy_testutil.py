@@ -47,7 +47,8 @@ def _transform_words_to_regexp(s):
 class DXTestCase(unittest.TestCase):
     def setUp(self):
         proj_name = u"dxclient_test_pröject"
-        self.project = subprocess.check_output(u"dx new project '{p}' --brief".format(p=proj_name), shell=True).strip()
+        # Unplug stdin so that dx doesn't prompt user for input at the tty
+        self.project = subprocess.check_output(u"dx new project '{p}' --brief".format(p=proj_name), shell=True, stdin=subprocess.PIPE).strip()
         os.environ["DX_PROJECT_CONTEXT_ID"] = self.project
         subprocess.check_call(u"dx cd "+self.project+":/", shell=True)
         dxpy._initialize(suppress_warning=True)
