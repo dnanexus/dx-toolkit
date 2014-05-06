@@ -26,6 +26,7 @@ MAKE:=$(MAKE) $(MAKEOPTS)
 UNAME := $(shell uname)
 
 CENTOS_MAJOR_VERSION := $(shell test -e /etc/issue && (grep -o "CentOS release [0-9]\+" /etc/issue | sed -e "s/CentOS release //"))
+FEDORA_MAJOR_VERSION := $(shell test -e /etc/issue && (grep -o "Fedora release [0-9]\+" /etc/issue | sed -e "s/Fedora release //"))
 UBUNTU_VERSION := $(shell test -e /etc/issue && (grep -o "Ubuntu [0-9]\+\.[0-9]\+" /etc/issue | sed -e "s/Ubuntu //"))
 
 ifndef CCACHE_DISABLE
@@ -424,7 +425,11 @@ jq: git_submodules ../bin/jq
 
 ../bin/jq: jq/
 	(cd jq; autoreconf --install)
+ifeq ($(UNAME), Darwin)
+	(cd jq; LDFLAGS="$$LDFLAGS -lgcc_eh" ./configure --disable-docs)
+else
 	(cd jq; ./configure --disable-docs)
+endif
 	$(MAKE) -C jq -j PATH=$$(brew --prefix bison || echo .)/bin:$$PATH
 	cp -f jq/jq ../bin/
 
@@ -435,7 +440,13 @@ install_sysdeps:
 ifeq ($(CENTOS_MAJOR_VERSION), 5)
 	${MAYBE_SUDO} yum groupinstall -y "Development tools"
 	${MAYBE_SUDO} yum install -y cmake gcc44-c++ zlib-devel bzip2-devel curl-devel
+else ifeq ($(FEDORA_MAJOR_VERSION), 20)
+	${MAYBE_SUDO} yum groupinstall -y "Development tools"
+	${MAYBE_SUDO} yum install -y gcc gcc-c++ automake bison flex python python-pip python-virtualenv boost-devel boost-static cmake openssl-devel libcurl-devel bzip2-devel
 else ifeq ($(UBUNTU_VERSION), 12.04)
+	${MAYBE_SUDO} apt-get install make python-setuptools python-pip python-virtualenv python-dev \
+		g++ cmake libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison autoconf
+else ifeq ($(UBUNTU_VERSION), 14.04)
 	${MAYBE_SUDO} apt-get install make python-setuptools python-pip python-virtualenv python-dev \
 		g++ cmake libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison autoconf
 endif

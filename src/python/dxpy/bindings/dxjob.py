@@ -32,7 +32,7 @@ from __future__ import (print_function, unicode_literals)
 import os, time
 
 import dxpy
-from . import DXObject, DXDataObject, DXJobFailureError
+from . import DXObject, DXDataObject, DXJobFailureError, verify_string_dxid
 from ..exceptions import DXError
 from ..utils.local_exec_utils import queue_entry_point
 
@@ -97,6 +97,7 @@ class DXJob(DXObject):
     def __init__(self, dxid=None):
         self._test_harness_result = None
         DXObject.__init__(self, dxid=dxid)
+        self.set_id(dxid)
 
     def new(self, fn_input, fn_name, name=None, tags=None, properties=None, details=None,
             instance_type=None, depends_on=None,
@@ -176,25 +177,18 @@ class DXJob(DXObject):
 
     def set_id(self, dxid):
         '''
-        :param dxid: Object ID
+        :param dxid: New job ID to be associated with the handler (localjob IDs also accepted for local runs)
         :type dxid: string
 
-        Discards the currently stored ID and associates the handler
-        with *dxid*.
+        Discards the currently stored ID and associates the handler with *dxid*
         '''
+        if dxid is not None:
+            if not (isinstance(dxid, basestring) and dxid.startswith('localjob-')):
+                # localjob IDs (which do not follow the usual ID
+                # syntax) should be allowed; otherwise, follow the
+                # usual syntax checking
+                verify_string_dxid(dxid, self._class)
         self._dxid = dxid
-
-    def get_id(self):
-        '''
-        :returns: Job ID of associated job
-        :rtype: string
-
-        Returns the job ID that the handler is currently associated
-        with.
-
-        '''
-
-        return self._dxid
 
     def describe(self, fields=None, io=None, **kwargs):
         """

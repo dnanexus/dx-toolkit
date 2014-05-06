@@ -165,6 +165,11 @@ class DXFile(DXDataObject):
         Neither this nor context managers are compatible with kwargs pass-through (so e.g. no
         custom auth).
         '''
+        if not hasattr(self, '_write_buf'):
+            # This occurs when there is an exception initializing the
+            # DXFile object
+            return
+
         if self._write_buf.tell() > 0 or len(self._http_threadpool_futures) > 0:
             warn("=== WARNING! ===")
             warn("There is still unflushed data in the destructor of a DXFile object!")

@@ -22,18 +22,42 @@ base class for all remote data object handlers.
 
 from __future__ import (print_function, unicode_literals)
 
-import time, copy
+import time, copy, re
 
 import dxpy.api
 from ..exceptions import (DXError, DXAPIError, DXFileError, DXGTableError, DXSearchError, DXAppletError,
                           DXJobFailureError, AppError, AppInternalError, DXCLIError)
 
+def verify_string_dxid(dxid, expected_classes):
+    '''
+    :param dxid: Value to verify as a DNAnexus ID of class *expected_class*
+    :param expected_classes: Single string or list of strings of allowed classes of the ID, e.g. "file" or ["project", "container"]
+    :type expected_classes: string or list of strings
+    :raises: :exc:`~dxpy.exceptions.DXError` if *dxid* is not a string or is not a valid DNAnexus ID of the expected class
+    '''
+    if isinstance(expected_classes, basestring):
+        expected_classes = [expected_classes]
+    if not isinstance(expected_classes, list) or len(expected_classes) == 0:
+        raise DXError('verify_string_dxid: expected_classes should be a string or list of strings')
+    if not (isinstance(dxid, basestring) and
+            re.match('^(' + '|'.join(expected_classes) + ')-[0-9a-zA-Z]{24}$', dxid)):
+        if len(expected_classes) == 1:
+            str_expected_classes = expected_classes[0]
+        elif len(expected_classes) == 2:
+            str_expected_classes = ' or '.join(expected_classes)
+        else:
+            str_expected_classes = ', '.join(expected_classes[:-1]) + ', or ' + expected_classes[-1]
+
+        raise DXError('Invalid ID of class %s: %r' % (str_expected_classes, dxid))
 
 class DXObject(object):
     """Abstract base class for all remote object handlers."""
 
     def __init__(self, dxid=None, project=None):
-        self._dxid, self._proj = dxid, project
+        # Initialize _dxid and _proj to None values, and have
+        # subclasses actually perform the setting of the values once
+        # they have been validated.
+        self._dxid, self._proj = None, None
         self._desc = {}
 
     def _repr(self, use_name=False):
@@ -67,14 +91,34 @@ class DXObject(object):
 
     def __getattr__(self, attr):
         if not self._desc:
-            try:
-                self.describe()
-            except:
-                pass
+            self.describe()
         try:
             return self._desc[attr]
         except:
             raise AttributeError()
+
+    def set_id(self, dxid):
+        '''
+        :param dxid: New ID to be associated with the handler
+        :type dxid: string
+
+        Discards the currently stored ID and associates the handler with *dxid*
+        '''
+        if dxid is not None:
+            verify_string_dxid(dxid, self._class)
+
+        self._dxid = dxid
+
+    def get_id(self):
+        '''
+        :returns: ID of the associated object
+        :rtype: string
+
+        Returns the ID that the handler is currently associated with.
+
+        '''
+
+        return self._dxid
 
 class DXDataObject(DXObject):
     """Abstract base class for all remote data object handlers.
@@ -200,10 +244,21 @@ class DXDataObject(DXObject):
         dx_hash, remaining_kwargs = self._get_creation_params(kwargs)
         self._new(dx_hash, **remaining_kwargs)
 
+    def set_id(self, dxid):
+        '''
+        :param dxid: Object ID or a DNAnexus link (a dict with key "$dnanexus_link"); if a project ID is provided in the DNAnexus link, it will also be used to set the project ID
+        :type dxid: string or dict
+
+        Equivalent to calling
+        :meth:`~dxpy.bindings.DXDataObject.set_ids` with the same
+        arguments.
+        '''
+        self.set_ids(dxid)
+
     def set_ids(self, dxid, project=None):
         '''
-        :param dxid: Object ID
-        :type dxid: string
+        :param dxid: Object ID or a DNAnexus link (a dict with key "$dnanexus_link"); if a project ID is provided in the DNAnexus link, it will be used as *project* unless *project* has been explictly provided
+        :type dxid: string or dict
         :param project: Project ID
         :type project: string
 
@@ -213,28 +268,20 @@ class DXDataObject(DXObject):
         data container is used).
 
         '''
-        self._proj = None
         if is_dxlink(dxid):
-            self._dxid, self._proj = get_dxlink_ids(dxid)
-        else:
-            self._dxid = dxid
+            dxid, project_from_link = get_dxlink_ids(dxid)
+            if project is None:
+                project = project_from_link
 
-        if self._proj is None and project is None:
+        if dxid is not None:
+            verify_string_dxid(dxid, self._class)
+        self._dxid = dxid
+
+        if project is None:
             self._proj = dxpy.WORKSPACE_ID
         elif project is not None:
+            verify_string_dxid(project, ['project', 'container'])
             self._proj = project
-
-    def get_id(self):
-        '''
-        :returns: Object ID of associated object
-        :rtype: string
-
-        Returns the object ID that the handler is currently associated
-        with.
-
-        '''
-
-        return self._dxid
 
     def get_proj_id(self):
         '''
@@ -273,6 +320,12 @@ class DXDataObject(DXObject):
         associated with the handler, if possible.
 
         """
+
+        if self._dxid is None:
+            raise DXError('This {handler} handler has not been initialized with a {_class} ID and cannot be described'.format(
+                handler=self.__class__.__name__,
+                _class=self._class)
+            )
 
         if self._proj is not None:
             self._desc = self._describe(self._dxid, {"project": self._proj,
@@ -481,8 +534,9 @@ class DXDataObject(DXObject):
                                         **kwargs)
 
         # Reset internal state
-        del self._dxid
-        del self._proj
+        self._dxid = None
+        self._proj = None
+        self._desc = {}
 
     def move(self, folder, **kwargs):
         '''
