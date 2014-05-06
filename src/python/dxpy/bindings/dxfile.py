@@ -525,15 +525,17 @@ class DXFile(DXDataObject):
         if end_pos > self._file_length:
             raise DXFileError("Invalid end_pos")
 
-        def chunk_ranges(start_pos, end_pos, init_chunk_size=1024*64, limit_chunk_size=self._read_bufsize, ramp=4):
+        def chunk_ranges(start_pos, end_pos, init_chunk_size=1024*64, limit_chunk_size=self._read_bufsize, ramp=2, num_requests_between_ramp=4):
             cur_chunk_start = start_pos
             cur_chunk_size = min(init_chunk_size, limit_chunk_size)
+            i = 0
             while cur_chunk_start < end_pos:
                 cur_chunk_end = min(cur_chunk_start + cur_chunk_size - 1, end_pos)
                 yield cur_chunk_start, cur_chunk_end
                 cur_chunk_start += cur_chunk_size
-                if cur_chunk_size < limit_chunk_size:
+                if cur_chunk_size < limit_chunk_size and i % num_requests_between_ramp == (num_requests_between_ramp - 1):
                     cur_chunk_size = min(cur_chunk_size * ramp, limit_chunk_size)
+                i += 1
 
         for chunk_start_pos, chunk_end_pos in chunk_ranges(start_pos, end_pos):
             headers = copy.copy(headers)
