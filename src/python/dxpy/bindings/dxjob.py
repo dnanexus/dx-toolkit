@@ -180,7 +180,7 @@ class DXJob(DXObject):
         :param dxid: New job ID to be associated with the handler (localjob IDs also accepted for local runs)
         :type dxid: string
 
-        Discards the currently sotred ID and associates the handler with *dxid*
+        Discards the currently stored ID and associates the handler with *dxid*
         '''
         if dxid is not None:
             if not (isinstance(dxid, basestring) and dxid.startswith('localjob-')):
