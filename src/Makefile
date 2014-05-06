@@ -425,11 +425,8 @@ jq: git_submodules ../bin/jq
 
 ../bin/jq: jq/
 	(cd jq; autoreconf --install)
-ifeq ($(UNAME), Darwin)
-	(cd jq; LDFLAGS="$$LDFLAGS -lgcc_eh" ./configure --disable-docs)
-else
-	(cd jq; ./configure --disable-docs)
-endif
+	(if [[ "$(UNAME)" == Darwin ]] && ! (gcc --version | grep -q LLVM); then export LDFLAGS="$$LDFLAGS -lgcc_eh"; fi; \
+	 cd jq; ./configure --disable-docs)
 	$(MAKE) -C jq -j PATH=$$(brew --prefix bison || echo .)/bin:$$PATH
 	cp -f jq/jq ../bin/
 
