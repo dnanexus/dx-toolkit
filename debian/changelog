@@ -1,3 +1,9 @@
+dx-toolkit (0.96.1) precise; urgency=low
+
+  * Various build fixes
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 06 May 2014 19:11:02 +0000
+
 dx-toolkit (0.96.0) precise; urgency=low
 
   * Update new list of instance types
