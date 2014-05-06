@@ -32,7 +32,7 @@ from __future__ import (print_function, unicode_literals)
 import os, time
 
 import dxpy
-from . import DXObject, DXDataObject, DXJobFailureError
+from . import DXObject, DXDataObject, DXJobFailureError, verify_string_dxid
 from ..exceptions import DXError
 from ..utils.local_exec_utils import queue_entry_point
 
@@ -174,6 +174,21 @@ class DXJob(DXObject):
             self.set_id(queue_entry_point(function=fn_name, input_hash=fn_input,
                                           depends_on=final_depends_on,
                                           name=name))
+
+    def set_id(self, dxid):
+        '''
+        :param dxid: New job ID to be associated with the handler (localjob IDs also accepted for local runs)
+        :type dxid: string
+
+        Discards the currently sotred ID and associates the handler with *dxid*
+        '''
+        if dxid is not None:
+            if not (isinstance(dxid, basestring) and dxid.startswith('localjob-')):
+                # localjob IDs (which do not follow the usual ID
+                # syntax) should be allowed; otherwise, follow the
+                # usual syntax checking
+                verify_string_dxid(dxid, self._class)
+        self._dxid = dxid
 
     def describe(self, fields=None, io=None, **kwargs):
         """

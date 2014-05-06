@@ -519,7 +519,7 @@ class TestDXGTable(unittest.TestCase):
 
         # Use open_dxgtable and leave table open
         table3_id = dxpy.new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
-                                       dxpy.DXGTable.make_column_desc("b", "int32")])
+                                       dxpy.DXGTable.make_column_desc("b", "int32")]).get_id()
         with self.assertRaises(DXAPIError):
             with dxpy.open_dxgtable(table3_id, mode='a') as table3:
                 table3.add_row(["", 68719476736]) # Not in int32 range
@@ -983,7 +983,9 @@ class TestDXAppletJob(unittest.TestCase):
         tearDownTempProjects(self)
 
     def test_dxjob_init_and_set_id(self):
-        for good_value in ["job-aB3456789012345678901234", None]:
+        for good_value in ["job-aB3456789012345678901234",
+                           "localjob-1",
+                           None]:
             dxjob = dxpy.DXJob(good_value)
             dxjob.set_id(good_value)
         for bad_value in ["foo",
