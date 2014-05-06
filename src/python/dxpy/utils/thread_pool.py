@@ -14,6 +14,13 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+"""This module contains PrioritizingThreadPool, an implementation of an
+interface similar to that of concurrent.futures.Executor. See:
+https://docs.python.org/dev/library/concurrent.futures.html
+
+"""
+
+
 import collections
 import concurrent.futures
 import threading
@@ -50,7 +57,7 @@ def _non_leaky_worker(executor_reference, work_queue):
     except BaseException:
         concurrent.futures.thread._base.LOGGER.critical('Exception in worker', exc_info=True)
 
-def chain_result(outer_future):
+def _chain_result(outer_future):
     """Returns a callable that can be supplied to Future.add_done_callback
     to propagate a future's result to outer_future.
 
@@ -151,8 +158,7 @@ class PrioritizingThreadPool(object):
                 inner_future = self._submit_one(callable_, *args, **kwargs)
                 # Now that we have the real future (inner_future), chain
                 # its result to what we provided to our client
-                inner_future.add_done_callback(chain_result(outer_future))
-                # TODO: bind inner_future to outer_future
+                inner_future.add_done_callback(_chain_result(outer_future))
             finally:
                 self._queue_lock.release()
 
