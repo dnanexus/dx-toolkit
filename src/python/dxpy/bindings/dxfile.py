@@ -262,9 +262,22 @@ class DXFile(DXDataObject):
                 # offset is greater than original position but within the buffer
                 in_buf = True
 
-        if in_buf: # offset is within the buffer
+        if in_buf:
+            # offset is within the buffer (at least one byte following
+            # the offset can be read directly out of the buffer)
             self._read_buf.seek(orig_buf_pos - orig_pos + offset)
-        else: # offset is outside the buffer - reset buffer and queues. This is the failsafe behavior
+        elif offset == orig_pos:
+            # This seek is a no-op (the cursor is just past the end of
+            # the read buffer and coincides with the desired seek
+            # position). We don't have the data ready, but the request
+            # for the data starting here is already in flight.
+            #
+            # Detecting this case helps to optimize for sequential read
+            # access patterns.
+            pass
+        else:
+            # offset is outside the buffer-- reset buffer and queues.
+            # This is the failsafe behavior
             self._read_buf = BytesIO()
             # TODO: if the offset is within the next response(s), don't throw out the queues
             self._request_iterator, self._response_iterator = None, None
