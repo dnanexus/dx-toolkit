@@ -90,6 +90,11 @@ class DXFile(DXDataObject):
     def set_http_threadpool_size(cls, num_threads):
         cls._http_threadpool_size = num_threads
 
+    @classmethod
+    def _ensure_http_threadpool(cls):
+        if cls._http_threadpool is None:
+            cls._http_threadpool = dxpy.utils.get_futures_threadpool(max_workers=cls._http_threadpool_size)
+
     def __init__(self, dxid=None, project=None, mode=None,
                  read_buffer_size=DEFAULT_BUFFER_SIZE, write_buffer_size=DEFAULT_BUFFER_SIZE):
         DXDataObject.__init__(self, dxid=dxid, project=project)
@@ -298,8 +303,7 @@ class DXFile(DXDataObject):
                 self._http_threadpool_futures = set()
 
     def _async_upload_part_request(self, *args, **kwargs):
-        if self._http_threadpool == None:
-            DXFile._http_threadpool = dxpy.utils.get_futures_threadpool(max_workers=self._http_threadpool_size)
+        self._ensure_http_threadpool()
 
         while len(self._http_threadpool_futures) >= self._http_threadpool_size:
             future = dxpy.utils.wait_for_a_future(self._http_threadpool_futures)
@@ -530,8 +534,7 @@ class DXFile(DXDataObject):
                                                   'decode_response_body': False}
 
     def _next_response_content(self):
-        if self._http_threadpool is None:
-            DXFile._http_threadpool = dxpy.utils.get_futures_threadpool(max_workers=self._http_threadpool_size)
+        self._ensure_http_threadpool()
 
         if self._response_iterator is None:
             self._response_iterator = dxpy.utils.response_iterator(self._request_iterator, self._http_threadpool,
