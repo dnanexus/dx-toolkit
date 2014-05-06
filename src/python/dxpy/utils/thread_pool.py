@@ -67,21 +67,6 @@ def chain_result(outer_future):
 concurrent.futures.thread._worker = _non_leaky_worker
 
 
-class Task(object):
-    """Encapsulates a not-yet-started task to be run by the thread pool and
-    the corresponding Future that we gave to the client.
-
-    """
-    def __init__(self, callable_, args, kwargs, future):
-        self._callable = callable_
-        self._args = args
-        self._kwargs = kwargs
-        self._future = future
-    def get_args(self):
-        return self._callable, self._args, self._kwargs
-    def get_future(self):
-        return self._future
-
 def _run_callable_with_postamble(postamble, callable_, *args, **kwargs):
     """Returns a callable of no args that invokes callable_ (with the
     specified args and kwargs) and then invokes postamble (with no
@@ -124,8 +109,11 @@ class PrioritizingThreadPool(object):
         self._pool = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
         self._tasks = threading.Semaphore(max_workers)
         self._queue_lock = threading.Lock()
-        # Mapping of queue_id to a NONEMPTY list of Tasks representing
-        # items in that queue.
+        # Mapping of queue_id to a NONEMPTY list of Futures representing
+        # yet-unscheduled items in that queue. Each Future is the future
+        # we gave to the client, augmented with (1) a field args
+        # containing a tuple (callable, args, kwargs), and (2) a field
+        # priority_fn with the priority function for that task.
         self._queues = {}
 
     def _submit_one(self, callable_, *args, **kwargs):
@@ -153,14 +141,13 @@ class PrioritizingThreadPool(object):
             # the ThreadPoolExecutor.
             self._queue_lock.acquire()
             try:
-                task = self._next()
+                outer_future = self._next()
             except StopIteration:
                 # Oops, there is in fact no task to be served, so we
                 # won't be tying up a worker after all.
                 self._tasks.release()
             else:
-                callable_, args, kwargs = task.get_args()
-                outer_future = task.get_future()
+                callable_, args, kwargs = outer_future.args
                 inner_future = self._submit_one(callable_, *args, **kwargs)
                 # Now that we have the real future (inner_future), chain
                 # its result to what we provided to our client
@@ -236,11 +223,11 @@ class PrioritizingThreadPool(object):
             raise AssertionError('queue_id may not be None')
 
         outer_future = concurrent.futures._base.Future()
-        task = Task(callable_, args, kwargs, outer_future)
-        task.priority_fn = priority_fn
+        outer_future.priority_fn = priority_fn
+        outer_future.args = (callable_, args, kwargs)
         if queue_id not in self._queues:
             self._queues[queue_id] = collections.deque()
-        self._queues[queue_id].append(task)
+        self._queues[queue_id].append(outer_future)
 
         # Start the task now if there is a worker that can serve it.
         self._maybe_schedule_task()
