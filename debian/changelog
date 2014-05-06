@@ -1,3 +1,13 @@
+dx-toolkit (0.97.0) precise; urgency=low
+
+  * Minor improvements to dxpy handler initialization and describe logic
+
+  * Various build improvements and fixes
+
+  * Various minor bug fixes and test improvements
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 06 May 2014 18:59:39 +0000
+
 dx-toolkit (0.96.0) precise; urgency=low
 
   * Update new list of instance types
