@@ -254,10 +254,16 @@ def _lint(dxapp_json_filename):
         for i, input_field in enumerate(app_spec['inputSpec']):
             if not re.match("^[a-zA-Z_][0-9a-zA-Z_]*$", input_field['name']):
                 logger.error('input %d has illegal name "%s" (must match ^[a-zA-Z_][0-9a-zA-Z_]*$)' % (i, input_field['name']))
+    else:
+        logger.warn("dxapp.json contains no input specification (inputSpec). Your applet will not be usable as an " +
+                    "app, runnable from the GUI, or composable using workflows.")
     if 'outputSpec' in app_spec:
         for i, output_field in enumerate(app_spec['outputSpec']):
             if not re.match("^[a-zA-Z_][0-9a-zA-Z_]*$", output_field['name']):
                 logger.error('output %d has illegal name "%s" (must match ^[a-zA-Z_][0-9a-zA-Z_]*$)' % (i, output_field['name']))
+    else:
+        logger.warn("dxapp.json contains no output specification (outputSpec). Your applet will not be usable as an " +
+                    "app, runnable from the GUI, or composable using workflows.")
 
 def _check_syntax(code, lang, temp_dir, enforce=True):
     """
