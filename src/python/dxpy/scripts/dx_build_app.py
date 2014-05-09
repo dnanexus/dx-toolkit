@@ -16,7 +16,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
 import logging
 logging.basicConfig(level=logging.WARNING)
@@ -37,6 +37,7 @@ from dxpy.utils.resolver import resolve_path, is_container_id
 from dxpy.app_categories import APP_CATEGORIES
 from dxpy.exceptions import err_exit, DXError
 from dxpy.utils.printing import BOLD
+from dxpy.compat import open, USING_PYTHON2
 
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
@@ -281,7 +282,7 @@ def _check_syntax(code, lang, temp_dir, enforce=True):
         raise ValueError('lang must be one of "python2.7" or "bash"')
     # Dump the contents out to a temporary file, then call _check_file_syntax.
     with open(os.path.join(temp_dir, temp_basename), 'w') as ofile:
-        ofile.write(code.encode('utf-8'))
+        ofile.write(code)
     _check_file_syntax(os.path.join(temp_dir, temp_basename), temp_dir, override_lang=lang, enforce=enforce)
 
 def _check_file_syntax(filename, temp_dir, override_lang=None, enforce=True):
@@ -301,6 +302,8 @@ def _check_file_syntax(filename, temp_dir, override_lang=None, enforce=True):
         # problems.
         pyc_path = os.path.join(temp_dir, os.path.basename(filename) + ".pyc")
         try:
+            if USING_PYTHON2:
+                filename = filename.encode(sys.getfilesystemencoding())
             py_compile.compile(filename, cfile=pyc_path, doraise=True)
         finally:
             try:
@@ -786,6 +789,8 @@ def main(**kwargs):
 
     if args.src_dir is None:
         args.src_dir = os.getcwd()
+        if USING_PYTHON2:
+            args.src_dir = args.src_dir.decode(sys.getfilesystemencoding())
 
     if args.mode == "app" and args.destination != '.':
         parser.error("--destination cannot be used when creating an app (only an applet)")
