@@ -812,6 +812,14 @@ module DX
       return DX::http_request("/#{object_id}/setProperties", input_params, opts)
     end
 
+    # Invokes the /project-xxxx/transfer API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Ftransfer
+    def self.project_transfer(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/transfer", input_params, opts)
+    end
+
     # Invokes the /project-xxxx/update API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fupdate

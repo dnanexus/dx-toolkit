@@ -358,6 +358,9 @@ namespace dx {
   JSON projectSetProperties(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
   JSON projectSetProperties(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
+  JSON projectTransfer(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON projectTransfer(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
   JSON projectUpdate(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
   JSON projectUpdate(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 

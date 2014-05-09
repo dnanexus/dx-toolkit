@@ -950,6 +950,14 @@ namespace dx {
     return projectSetProperties(object_id, input_params.toString(), retry);
   }
 
+  JSON projectTransfer(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/transfer"), input_params, retry);
+  }
+
+  JSON projectTransfer(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return projectTransfer(object_id, input_params.toString(), retry);
+  }
+
   JSON projectUpdate(const std::string &object_id, const std::string &input_params, const bool retry) {
     return DXHTTPRequest(std::string("/") + object_id + std::string("/update"), input_params, retry);
   }

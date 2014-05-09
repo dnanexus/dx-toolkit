@@ -1804,6 +1804,24 @@ def project_set_properties(object_id, input_params={}, always_retry=True, **kwar
     """
     return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
 
+def projectTransfer(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`project_transfer()` instead.
+
+    """
+    print("dxpy.projectTransfer is deprecated; please use project_transfer instead.", file=sys.stderr)
+    return project_transfer(*args, **kwargs)
+
+def project_transfer(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /project-xxxx/transfer API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Ftransfer
+    """
+    return DXHTTPRequest('/%s/transfer' % object_id, input_params, always_retry=always_retry, **kwargs)
+
 def projectUpdate(*args, **kwargs):
     """
 

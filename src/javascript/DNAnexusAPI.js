@@ -577,6 +577,11 @@ exports.projectSetProperties = function(object_id, input_params) {
 };
 
 
+exports.projectTransfer = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/transfer', input_params);
+};
+
+
 exports.projectUpdate = function(object_id, input_params) {
   return dx.DXHTTPRequest('/' + object_id + '/update', input_params);
 };

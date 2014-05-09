@@ -891,6 +891,15 @@
         }
     ],
     [
+        "/project-xxxx/transfer",
+        "projectTransfer(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Ftransfer"
+        }
+    ],
+    [
         "/project-xxxx/update",
         "projectUpdate(req, objectId)",
         {
