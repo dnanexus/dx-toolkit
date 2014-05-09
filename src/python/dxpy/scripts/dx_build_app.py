@@ -564,7 +564,7 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
         # of binaries in it) and interrupt before uploading begins.
         app_tarball_file = os.path.join(temp_dir, "app_tarball.tar.gz")
         tar_subprocess = subprocess.Popen(["tar", "-czf", "-", "--exclude", "./.git", "."], cwd=src_dir, stdout=subprocess.PIPE)
-        with open(app_tarball_file, 'w') as tar_output_file:
+        with open(app_tarball_file, 'wb') as tar_output_file:
             total_num_bytes = 0
             last_console_update = 0
             start_time = time.time()
