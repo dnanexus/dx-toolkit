@@ -1325,7 +1325,8 @@ def new_project(args):
             print(resp['id'])
         else:
             print(fill('Created new project called "' + args.name + '" (' + resp['id'] + ')'))
-        if args.select or (sys.stdin.isatty() and prompt_for_yn("Switch to new project now?", default=False)):
+        if args.select or (sys.stdin.isatty() and sys.stdout.isatty() and
+                           prompt_for_yn("Switch to new project now?", default=False)):
             set_project(resp['id'], write=True, name=args.name)
             set_wd('/', write=True)
     except:
