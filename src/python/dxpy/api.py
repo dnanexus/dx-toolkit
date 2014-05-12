@@ -1638,7 +1638,7 @@ def project_invite(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /project-xxxx/invite API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Invitations and Join Requests#API-method%3A-%2Fproject-xxxx%2Finvite
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method%3A-%2Fproject-xxxx%2Finvite
     """
     return DXHTTPRequest('/%s/invite' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1818,7 +1818,7 @@ def project_transfer(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /project-xxxx/transfer API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Ftransfer
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method%3A-%2Fproject-xxxx%2Ftransfer
     """
     return DXHTTPRequest('/%s/transfer' % object_id, input_params, always_retry=always_retry, **kwargs)
 

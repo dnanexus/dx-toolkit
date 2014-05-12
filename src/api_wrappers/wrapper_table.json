@@ -806,7 +806,7 @@
         {
             "objectMethod": true,
             "retryable": false,
-            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Invitations and Join Requests#API-method%3A-%2Fproject-xxxx%2Finvite"
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method%3A-%2Fproject-xxxx%2Finvite"
         }
     ],
     [
@@ -896,7 +896,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Ftransfer"
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method%3A-%2Fproject-xxxx%2Ftransfer"
         }
     ],
     [

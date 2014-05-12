@@ -3068,7 +3068,7 @@ projectDestroy <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Invitations\%20and\%20Join\%20Requests#API-method\%3A-\%2Fproject-xxxx\%2Finvite}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method\%3A-\%2Fproject-xxxx\%2Finvite}
 projectInvite <- function(objectID,
                           inputParams=emptyNamedList,
                           jsonifyData=TRUE,
@@ -3398,7 +3398,7 @@ projectSetProperties <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method\%3A-\%2Fproject-xxxx\%2Ftransfer}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method\%3A-\%2Fproject-xxxx\%2Ftransfer}
 projectTransfer <- function(objectID,
                             inputParams=emptyNamedList,
                             jsonifyData=TRUE,
