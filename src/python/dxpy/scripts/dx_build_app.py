@@ -569,7 +569,7 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
             last_console_update = 0
             start_time = time.time()
             printed_static_message = False
-            # Pipe the output of tar into the output file, and
+            # Pipe the output of tar into the output file
             while True:
                 tar_exitcode = tar_subprocess.poll()
                 data = tar_subprocess.stdout.read(4 * 1024 * 1024)
