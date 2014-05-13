@@ -262,10 +262,11 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
     # When *data* is bytes but *headers* contains Unicode text, httplib tries to concatenate them and decode *data*,
     # which should not be done. Also, per HTTP/1.1 headers must be encoded with MIME, but we'll disregard that here, and
     # just encode them with the Python default (ascii) and fail for any non-ascii content.
+    # See http://tools.ietf.org/html/rfc3987 for a discussion of encoding URLs.
     # TODO: ascertain whether this is a problem in Python 3/make test
     if USING_PYTHON2:
         headers = {k.encode(): v.encode() for k, v in headers.items()}
-        url = url.encode()
+        url = url.encode('utf-8')
         method = method.encode()
 
     # If the input is a buffer, its data gets consumed by
