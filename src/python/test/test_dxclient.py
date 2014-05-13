@@ -203,6 +203,10 @@ class TestDXClient(DXTestCase):
         run(u"dx find analyses --project :")
         run(u"dx find data --project :")
 
+    def test_get_unicode_url(self):
+        with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
+            run("dx api project-эксперимент describe")
+
     def test_dx_env(self):
         run("dx env")
         run("dx env --bash")
