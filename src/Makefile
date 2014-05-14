@@ -44,7 +44,7 @@ endif
 
 export DNANEXUS_HOME=$(CURDIR)/..
 export PATH := $(DNANEXUS_HOME)/build/bin:$(PATH)
-export DNANEXUS_PY27_ENV=$(DNANEXUS_HOME)/build/py27_env
+export DX_PY_ENV=$(DNANEXUS_HOME)/build/py27_env
 
 # Short-circuit sudo when running as root. In a chrooted environment we are
 # likely to be running as root already, and sudo may not be present on minimal
@@ -123,21 +123,27 @@ src_libs: api_wrappers
 
 python_wheels: ../build/wheels
 
-../build/wheels: python/requirements.txt python/requirements_dxfs.txt python/requirements_test.txt python/requirements_setuptools.txt
+../build/wheels: python/requirements*.txt
 	pip wheel -r python/requirements.txt -r python/requirements_test.txt -r python/requirements_setuptools.txt --wheel-dir ../build/wheels
 # xattr < 0.7 fails to install using Python 3; that's OK since it's only needed for dxfs, which doesn't work on Python 3 either.
 	-pip wheel -r python/requirements_dxfs.txt --wheel-dir ../build/wheels
+ifeq ($(UNAME), Darwin)
+	pip wheel -r python/requirements_readline.txt
+endif
 
-python_deps: $(DNANEXUS_PY27_ENV)/lib
+python_deps: $(DX_PY_ENV)/lib
 
-$(DNANEXUS_PY27_ENV)/lib: python/requirements.txt python/requirements_dxfs.txt python/requirements_test.txt python/requirements_setuptools.txt
-	rm -rf "$(DNANEXUS_PY27_ENV)"
-	virtualenv --python=python2.7 "$(DNANEXUS_PY27_ENV)"
-	virtualenv --relocatable "$(DNANEXUS_PY27_ENV)"
-	(source "$(DNANEXUS_PY27_ENV)/bin/activate"; pip install --upgrade --find-links="file://$(DNANEXUS_HOME)/build/wheels" --install-option="--install-lib=$(DNANEXUS_PY27_ENV)/lib/python2.7/site-packages" -r python/requirements_setuptools.txt)
-	(source "$(DNANEXUS_PY27_ENV)/bin/activate"; pip install --ignore-installed --use-wheel --find-links="file://$(DNANEXUS_HOME)/build/wheels" --install-option="--install-lib=$(DNANEXUS_PY27_ENV)/lib/python2.7/site-packages" -r python/requirements.txt -r python/requirements_dxfs.txt)
+$(DX_PY_ENV)/lib: python/requirements*.txt
+	rm -rf "$(DX_PY_ENV)"
+	virtualenv --python=python2.7 "$(DX_PY_ENV)"
+	virtualenv --relocatable "$(DX_PY_ENV)"
+	(source "$(DX_PY_ENV)/bin/activate"; pip install --upgrade --find-links="file://$(DNANEXUS_HOME)/build/wheels" --install-option="--install-lib=$(DX_PY_ENV)/lib/python2.7/site-packages" -r python/requirements_setuptools.txt)
+	(source "$(DX_PY_ENV)/bin/activate"; pip install --ignore-installed --use-wheel --find-links="file://$(DNANEXUS_HOME)/build/wheels" --install-option="--install-lib=$(DX_PY_ENV)/lib/python2.7/site-packages" -r python/requirements.txt -r python/requirements_dxfs.txt)
+ifeq ($(UNAME), Darwin)
+	(source "$(DX_PY_ENV)/bin/activate"; pip install --ignore-installed --use-wheel --find-links="file://$(DNANEXUS_HOME)/build/wheels" --install-option="--install-lib=$(DX_PY_ENV)/lib/python2.7/site-packages" -r python/requirements_readline.txt)
+endif
 ifdef DNANEXUS_INSTALL_PYTHON_TEST_DEPS
-	(source "$(DNANEXUS_PY27_ENV)/bin/activate"; pip install --ignore-installed --use-wheel --find-links="file://$(DNANEXUS_HOME)/build/wheels" --install-option="--install-lib=$(DNANEXUS_PY27_ENV)/lib/python2.7/site-packages" -r python/requirements_test.txt)
+	(source "$(DX_PY_ENV)/bin/activate"; pip install --ignore-installed --use-wheel --find-links="file://$(DNANEXUS_HOME)/build/wheels" --install-option="--install-lib=$(DX_PY_ENV)/lib/python2.7/site-packages" -r python/requirements_test.txt)
 endif
 
 # We are going to install libraries to lib/python2.7 and then move them
@@ -147,8 +153,8 @@ python: api_wrappers toolkit_version python_deps
 	rm -rf "$(DNANEXUS_HOME)/share/dnanexus/lib/python2.7"
 	mkdir -p "$(DNANEXUS_HOME)/lib/python2.7/site-packages"
 	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/lib"
-	cp -a "$(DNANEXUS_PY27_ENV)/lib/python2.7/site-packages" "$(DNANEXUS_HOME)/lib/python2.7/"
-	cp -a "$(DNANEXUS_PY27_ENV)/bin/"*python-argcomplete* "$(DNANEXUS_HOME)/bin/"
+	cp -a "$(DX_PY_ENV)/lib/python2.7/site-packages" "$(DNANEXUS_HOME)/lib/python2.7/"
+	cp -a "$(DX_PY_ENV)/bin/"*python-argcomplete* "$(DNANEXUS_HOME)/bin/"
 	(source ../environment; export PYTHONPATH="$(DNANEXUS_HOME)/lib/python2.7/site-packages:${PYTHONPATH}"; cd python; python2.7 ./setup.py build; python2.7 ./setup.py install --install-lib="$(DNANEXUS_HOME)/lib/python2.7/site-packages" --install-scripts="$(DNANEXUS_HOME)/bin"; mv $(DNANEXUS_HOME)/lib/python2.7 $(DNANEXUS_HOME)/share/dnanexus/lib)
 	rm -f ../bin/easy_install* ../bin/xattr
 
@@ -465,7 +471,7 @@ clean:
 	-rm -rf ../lib
 	-rm -rf ../share
 	-rm ../build/info/version
-	-rm -rf "$(DNANEXUS_PY27_ENV)"
+	-rm -rf "$(DX_PY_ENV)"
 	-rm -rf boost c-ares curl file openssl
 
 .PHONY: all toolkit_version api_wrappers src_libs python_deps python perl java ruby dx-contigset-to-fasta ua test test_ruby test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R doc_ruby boost boost_build install_sysdeps

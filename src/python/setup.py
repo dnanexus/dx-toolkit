@@ -41,6 +41,7 @@ for module in os.listdir(os.path.join(os.path.dirname(__file__), 'dxpy', 'script
 dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements.txt"))]
 test_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_test.txt"))]
 dxfs_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_dxfs.txt"))]
+readline_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_readline.txt"))]
 
 # If on Windows, also depend on colorama, which translates ANSI terminal color control sequences into whatever cmd.exe uses.
 if platform.system() == 'Windows':
@@ -54,9 +55,9 @@ if platform.system() == 'Darwin':
     try:
         import readline
         if 'libedit' in readline.__doc__:
-            dependencies.append("readline==6.2.4.1")
+            dependencies.extend(readline_dependencies)
     except ImportError:
-        dependencies.append("readline==6.2.4.1")
+        dependencies.extend(readline_dependencies)
 
 # dxfs is not compatible with Windows, and is currently disabled on Python 3
 if platform.system() != 'Windows' and sys.version_info[0] < 3:
