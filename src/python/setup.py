@@ -78,7 +78,7 @@ setup(
     url='https://github.com/dnanexus/dx-toolkit',
     zip_safe=False,
     license='Apache Software License',
-    packages = find_packages(),
+    packages = find_packages(exclude=['test']),
     package_data={'dxpy.packages.requests': ['*.pem'],
                   'dxpy.templating': template_files},
     scripts = glob.glob(os.path.join(os.path.dirname(__file__), 'scripts', 'dx*')),
