@@ -92,3 +92,8 @@ def wrap_stdio_in_codecs():
                 sys.stderr.write(__name__ + ": Warning: Unable to wrap sys.stderr with a text codec\n")
 
             _stdio_wrapped = True
+
+def decode_command_line_args():
+    if USING_PYTHON2:
+        sys.argv = [i if isinstance(i, unicode) else i.decode(sys.stdin.encoding) for i in sys.argv]
+    return sys.argv
