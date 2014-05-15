@@ -22,7 +22,7 @@ import os, unittest, tempfile, filecmp, time, json, sys
 import dxpy
 import dxpy_testutil as testutil
 from dxpy.exceptions import DXAPIError, DXFileError, DXError, DXJobFailureError
-from dxpy.utils import pretty_print
+from dxpy.utils import pretty_print, warn
 
 def get_objects_from_listf(listf):
     objects = []
@@ -1827,6 +1827,10 @@ class TestPrettyPrint(unittest.TestCase):
         self.assertEqual(pretty_print.escape_unicode_string("foo\n\t\rbar"), u"foo\\n\\t\\rbar")
         self.assertEqual(pretty_print.escape_unicode_string("\n\\"), u"\\n\\\\")
         self.assertEqual(pretty_print.escape_unicode_string(u"ïñtérnaçiònale"), u"ïñtérnaçiònale")
+
+class TestWarn(unittest.TestCase):
+    def test_warn(self):
+        warn("testing, one two three...")
 
 class TestHTTPResponses(unittest.TestCase):
     def test_content_type_no_sniff(self):
