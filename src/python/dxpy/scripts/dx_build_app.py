@@ -37,7 +37,9 @@ from dxpy.utils.resolver import resolve_path, is_container_id
 from dxpy.app_categories import APP_CATEGORIES
 from dxpy.exceptions import err_exit, DXError
 from dxpy.utils.printing import BOLD
-from dxpy.compat import open, USING_PYTHON2
+from dxpy.compat import open, USING_PYTHON2, decode_command_line_args
+
+decode_command_line_args()
 
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
