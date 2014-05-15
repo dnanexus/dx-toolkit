@@ -842,7 +842,12 @@ def main(**kwargs):
         if args.run is not None:
             if output is None:
                 err_exit("The --run option was given, but no executable was created")
-            subprocess.check_call(['dx', 'run', output['id'], '--priority', 'high'] + args.run)
+            try:
+                subprocess.check_call(['dx', 'run', output['id'], '--priority', 'high'] + args.run)
+            except subprocess.CalledProcessError as e:
+                sys.exit(e.returncode)
+            except KeyboardInterrupt:
+                sys.exit(1)
 
         return
 
