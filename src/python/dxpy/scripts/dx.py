@@ -26,10 +26,11 @@ from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
 from ..exceptions import err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions
 from ..packages import requests
-from ..compat import USING_PYTHON2, basestring, str, input, wrap_stdio_in_codecs
+from ..compat import USING_PYTHON2, basestring, str, input, wrap_stdio_in_codecs, decode_command_line_args
 from ..utils.env import sys_encoding, set_env_var, get_env_var
 
 wrap_stdio_in_codecs()
+decode_command_line_args()
 
 try:
     import colorama
@@ -118,11 +119,7 @@ def set_delim(args=argparse.Namespace()):
     set_delimiter(state['delimiter'])
 
 # Loading environment
-
-if USING_PYTHON2:
-    args_list = [arg.decode(sys_encoding) for arg in sys.argv[1:]]
-else:
-    args_list = sys.argv[1:]
+args_list = sys.argv[1:]
 
 # Hard-coding a shortcut so that it won't print out the warning in
 # import dxpy when clearing it anyway.
