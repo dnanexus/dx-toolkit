@@ -1,3 +1,9 @@
+dx-toolkit (0.98.1) precise; urgency=low
+
+  * Diagnostics for PTFM-11932 issues.
+
+ -- Phil Sung <psung@dnanexus.com>  Thu, 15 May 2014 23:39:08 +0000
+
 dx-toolkit (0.98.0) precise; urgency=low
 
   * Performance improvements for dxfs
