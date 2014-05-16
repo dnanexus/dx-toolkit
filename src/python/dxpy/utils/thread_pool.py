@@ -121,11 +121,17 @@ class PrioritizingThreadPool(object):
         self._pool = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
         self._tasks = threading.Semaphore(max_workers)
         self._queue_lock = threading.Lock()
-        # Mapping of queue_id to a NONEMPTY list of Futures representing
-        # yet-unscheduled items in that queue. Each Future is the future
-        # we gave to the client, augmented with (1) a field args
-        # containing a tuple (callable, args, kwargs), and (2) a field
-        # priority_fn with the priority function for that task.
+        # Invariant: self._queues is a mapping of queue_id to a NONEMPTY
+        # list of Futures representing yet-unscheduled items in that
+        # queue. (This invariant may only be violated by threads that
+        # are holding _queue_lock.)
+        #
+        # Each Future is the future we gave to the client, augmented
+        # with:
+        # (1) a field "args" containing a tuple
+        #     (callable, args, kwargs), and
+        # (2) a field "priority_fn" with the priority function for that
+        #     task.
         self._queues = {}
 
     def _submit_one(self, callable_, *args, **kwargs):
@@ -243,9 +249,10 @@ class PrioritizingThreadPool(object):
         outer_future = concurrent.futures._base.Future()
         outer_future.priority_fn = priority_fn
         outer_future.args = (callable_, args, kwargs)
-        if queue_id not in self._queues:
-            self._queues[queue_id] = collections.deque()
-        self._queues[queue_id].append(outer_future)
+        with self._queue_lock:
+            if queue_id not in self._queues:
+                self._queues[queue_id] = collections.deque()
+            self._queues[queue_id].append(outer_future)
 
         # Start the task now if there is a worker that can serve it.
         self._maybe_schedule_task()
