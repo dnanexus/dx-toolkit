@@ -20,13 +20,10 @@ https://docs.python.org/dev/library/concurrent.futures.html
 
 """
 
-from __future__ import print_function
 
 import collections
 import concurrent.futures
-import sys
 import threading
-import traceback
 
 
 # Monkeypatch ThreadPoolExecutor with relevant logic from the patch for
@@ -69,8 +66,6 @@ def _chain_result(outer_future):
         try:
             result = inner_future.result()
         except BaseException as e:
-            print('PrioritizingThreadPool: encountered exception, saving it for client retrieval in its Future:', file=sys.stderr)
-            traceback.print_exception(*sys.exc_info(), file=sys.stderr)
             outer_future.set_exception(e)
         else:
             outer_future.set_result(result)
@@ -198,12 +193,9 @@ class PrioritizingThreadPool(object):
         best_priority_value = None
         for candidate_queue_id in queue_ids:
             selected_queue = self._queues[candidate_queue_id]
-            try:
-                head_of_queue = selected_queue[0]
-            except IndexError:
-                print('Failed trying to read from queue %r which has %d elements'
-                      % (candidate_queue_id, len(self._queues[candidate_queue_id])), file=sys.stderr)
-                raise
+            if not len(selected_queue):
+                raise AssertionError('Invariant violation: queue %r is empty' % (candidate_queue_id,))
+            head_of_queue = selected_queue[0]
             priority_value = head_of_queue.priority_fn() if head_of_queue.priority_fn else 0
             if best_queue_id is None or priority_value < best_priority_value:
                 best_queue_id = candidate_queue_id
