@@ -29,6 +29,8 @@ from dxpy_testutil import DXTestCase
 import dxpy_testutil as testutil
 from dxpy.packages import requests
 from dxpy.exceptions import DXAPIError
+from dxpy.compat import str
+from dxpy.utils.env import sys_encoding
 
 @contextmanager
 def chdir(dirname=None):
@@ -55,6 +57,9 @@ def check_output(*popenargs, **kwargs):
     "stderr" field on the resulting exception (in addition to "output")
     if the subprocess fails. (If the command succeeds, the contents of
     stderr are discarded.)
+
+    Unlike subprocess.check_output, unconditionally decodes the contents of the subprocess stdout and stderr using
+    sys.stdin.encoding.
     """
     if 'stdout' in kwargs:
         raise ValueError('stdout argument not allowed, it will be overridden.')
@@ -66,6 +71,10 @@ def check_output(*popenargs, **kwargs):
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, *popenargs, **kwargs)
     output, err = process.communicate()
     retcode = process.poll()
+    if not isinstance(output, str):
+        output = output.decode(sys.stdin.encoding)
+    if not isinstance(err, str):
+        err = err.decode(sys.stdin.encoding)
     if retcode:
         print(err)
         cmd = kwargs.get("args")
@@ -77,7 +86,7 @@ def check_output(*popenargs, **kwargs):
 
 def run(command, **kwargs):
     print("$ %s" % (command,))
-    output = check_output(command, shell=True, **kwargs).decode(sys.stdin.encoding)
+    output = check_output(command, shell=True, **kwargs)
     print(output)
     return output
 
