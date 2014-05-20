@@ -32,6 +32,7 @@ from .describe import get_ls_l_desc
 from ..exceptions import DXError
 from ..compat import str, input
 from ..utils.env import get_env_var
+from ..cli import INTERACTIVE_CLI
 
 def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False, more_choices=False):
     '''
@@ -355,7 +356,7 @@ def resolve_container_id_or_name(raw_string, is_error=False, unescape=True, mult
             raise ResolutionError('Could not find a project named "' + string + '"')
         return ([] if multi else None)
     elif not multi:
-        if sys.stdout.isatty():
+        if INTERACTIVE_CLI:
             print('Found multiple projects with name "' + string + '"')
             choice = pick(['{id} ({level})'.format(id=result['id'], level=result['level'])
                            for result in results])
@@ -643,7 +644,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
         if len(results) > 1:
             if allow_mult and (all_mult or is_glob_pattern(entity_name)):
                 return project, None, results
-            if sys.stdout.isatty():
+            if INTERACTIVE_CLI:
                 print('The given path "' + path + '" resolves to the following data objects:')
                 choice = pick([get_ls_l_desc(result['describe']) for result in results],
                               allow_mult=allow_mult)
@@ -739,7 +740,7 @@ def get_exec_handler(path, alias=None):
         elif entity_results is None and app_desc is not None:
             handler = get_handler_from_desc(app_desc)
         elif entity_results is not None:
-            if not sys.stdout.isatty():
+            if not INTERACTIVE_CLI:
                 raise ResolutionError('Found multiple executables with the path ' + path)
             print('Found multiple executables with the path ' + path)
             choice_descriptions = [get_ls_l_desc(r['describe']) for r in entity_results]
