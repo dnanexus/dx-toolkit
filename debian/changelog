@@ -1,3 +1,11 @@
+dx-toolkit (0.99.0) precise; urgency=low
+
+  * Bug fix for race condition in dxfile.
+
+  * Various bug fixes and packaging improvements.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 20 May 2014 19:35:09 +0000
+
 dx-toolkit (0.98.0) precise; urgency=low
 
   * Performance improvements for dxfs
