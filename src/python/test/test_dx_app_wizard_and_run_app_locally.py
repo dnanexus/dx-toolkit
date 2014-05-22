@@ -17,7 +17,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
 import os, sys, unittest, json, tempfile, subprocess
 import pexpect
@@ -32,22 +32,25 @@ supported_languages = ['Python', 'C++', 'bash']
 
 def run_dx_app_wizard():
     old_cwd = os.getcwd()
-    tempdir = tempfile.mkdtemp()
+    tempdir = tempfile.mkdtemp(prefix="Программа")
     os.chdir(tempdir)
     try:
         wizard = pexpect.spawn("dx-app-wizard")
         wizard.logfile = sys.stdout
         wizard.setwinsize(20, 90)
         wizard.expect("App Name:")
+        wizard.sendline("Имя")
+        wizard.expect("The name of your app must match")
+        wizard.expect("App Name:")
         wizard.sendline("MyTestApp")
         wizard.expect("Title")
-        wizard.sendline()
+        wizard.sendline("Заголовок")
         wizard.expect("Summary")
-        wizard.sendline()
+        wizard.sendline("Конспект")
         wizard.expect("Description")
-        wizard.sendline()
+        wizard.sendline("Описание")
         wizard.expect("Version")
-        wizard.sendline()
+        wizard.sendline("1.2.3")
         wizard.expect("Choose a category")
         wizard.sendline("Assembly")
         wizard.expect("Choose a category")
@@ -55,7 +58,7 @@ def run_dx_app_wizard():
         wizard.expect("1st input name")
         wizard.sendline("in1")
         wizard.expect("Label")
-        wizard.sendline()
+        wizard.sendline("Метка")
         wizard.expect("Choose a class")
         wizard.sendline("int")
         wizard.expect("optional parameter")
@@ -67,11 +70,18 @@ def run_dx_app_wizard():
         wizard.expect("Label")
         wizard.sendline()
         wizard.expect("Choose a class")
+        wizard.sendline("целое")
+        wizard.expect("Not a recognized class")
         wizard.sendline("int")
         wizard.expect("2nd output name")
         wizard.sendline()
         wizard.expect("Programming language")
+        wizard.sendline("АЛГОЛ")
+        wizard.expect("Error: unrecognized response")
         wizard.sendline("Python")
+        wizard.expect("Execution pattern")
+        wizard.sendline("параллельно")
+        wizard.expect("Error: unrecognized response")
         wizard.expect("Execution pattern")
         wizard.sendline("parallelized")
         wizard.expect("Will this app need access to the Internet?")
