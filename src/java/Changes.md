@@ -1,5 +1,14 @@
 # Java API Bindings Changelog
 
+## 0.100.0
+
+* Retry logic is now consistent with that of Python bindings, including support
+  for Retry-After. The wrappers DXHTTPRequest.request(String, String) and
+  DXHTTPRequest.request(String, JsonNode) have been deprecated in favor of
+  variants in which the caller must explicitly specify whether the request is
+  safe to retry. The previous default behavior was to assume that the call is
+  safe to retry (which, as a policy, is unsafe).
+
 ## 0.90.0
 
 * DXSearch.findDataObjects and findExecutions support a withIdsIn method that

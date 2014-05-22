@@ -24,12 +24,39 @@ import org.junit.Test;
 import com.dnanexus.DXHTTPRequest.RetryStrategy;
 import com.dnanexus.exceptions.InvalidAuthenticationException;
 import com.dnanexus.exceptions.InvalidInputException;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Tests for DXHTTPRequest and DXEnvironment.
  */
 public class DXHTTPRequestTest {
+
+    @JsonInclude(Include.NON_NULL)
+    private static class ComeBackLaterRequest {
+        @JsonProperty
+        private final Long waitUntil;
+
+        public ComeBackLaterRequest() {
+            this.waitUntil = null;
+        }
+
+        public ComeBackLaterRequest(long waitUntil) {
+            this.waitUntil = waitUntil;
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class ComeBackLaterResponse {
+        @JsonProperty
+        private long currentTime;
+    }
+
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     /**
      * Tests basic use of the API.
@@ -125,5 +152,26 @@ public class DXHTTPRequestTest {
                         .put("auth_token", "abcdef").build(),
                 envWithDifferentToken.getSecurityContextJson());
 
+    }
+
+    /**
+     * Tests retry logic following 503 Service Unavailable errors.
+     */
+    @Test
+    public void testRetryAfterServiceUnavailable() {
+        // Do this weird dance here in case there is clock skew between client
+        // and server.
+        long startTime = System.currentTimeMillis();
+        long serverTime =
+                DXJSON.safeTreeToValue(
+                        new DXHTTPRequest().request("/system/comeBackLater",
+                                mapper.valueToTree(new ComeBackLaterRequest()),
+                                RetryStrategy.SAFE_TO_RETRY), ComeBackLaterResponse.class).currentTime;
+        new DXHTTPRequest().request("/system/comeBackLater",
+                mapper.valueToTree(new ComeBackLaterRequest(serverTime + 8000)),
+                RetryStrategy.SAFE_TO_RETRY);
+        long timeElapsed = System.currentTimeMillis() - startTime;
+        Assert.assertTrue(8000 <= timeElapsed);
+        Assert.assertTrue(timeElapsed <= 16000);
     }
 }
