@@ -19,6 +19,7 @@ package com.dnanexus;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -69,6 +70,19 @@ public class DXHTTPRequest {
          * The request is idempotent and is safe to retry.
          */
         SAFE_TO_RETRY;
+    }
+
+    /**
+     * Internal exception used to indicate that the request yielded 503 Service Unavailable and
+     * suggested that we retry at some point in the future.
+     */
+    @SuppressWarnings("serial")
+    private static class ServiceUnavailableException extends Exception {
+        private final int secondsToWaitForRetry;
+
+        public ServiceUnavailableException(int secondsToWaitForRetry) {
+            this.secondsToWaitForRetry = secondsToWaitForRetry;
+        }
     }
 
     /**
@@ -130,7 +144,7 @@ public class DXHTTPRequest {
      * @param resource Name of resource, e.g. "/file-XXXX/describe"
      * @param data Request payload (to be converted to JSON)
      *
-     * @deprecated Use {@link #request(String, JsonNode, boolean)} instead.
+     * @deprecated Use {@link #request(String, JsonNode, RetryStrategy)} instead.
      *
      * @throws DXAPIException If the server returns a complete response with an HTTP status code
      *         other than 200 (OK).
@@ -166,7 +180,7 @@ public class DXHTTPRequest {
      * @param resource Name of resource, e.g. "/file-XXXX/describe"
      * @param data Request payload (String to be sent verbatim)
      *
-     * @deprecated Use {@link #request(String, String, boolean)} instead.
+     * @deprecated Use {@link #request(String, String, RetryStrategy)} instead.
      *
      * @throws DXAPIException If the server returns a complete response with an HTTP status code
      *         other than 200 (OK).
@@ -305,9 +319,25 @@ public class DXHTTPRequest {
                 } else {
                     // 500 InternalError should get retried unconditionally
                     retryRequest = true;
+                    if (statusCode == 503) {
+                        Header retryAfterHeader = response.getFirstHeader("retry-after");
+                        if (retryAfterHeader != null) {
+                            // Consume the response to avoid leaking resources
+                            EntityUtils.consume(entity);
+                            throw new ServiceUnavailableException(Integer.parseInt(retryAfterHeader
+                                    .getValue()));
+                        }
+                    }
                     throw new IOException(EntityUtils.toString(entity));
                 }
-
+            } catch (ServiceUnavailableException e) {
+                // Retries due to 503 Service Unavailable and Retry-After do NOT count against the
+                // allowed number of retries.
+                int secondsToWait = e.secondsToWaitForRetry;
+                System.err.println("POST " + resource + ": 503 Service Unavailable, waiting for "
+                        + Integer.toString(secondsToWait) + " seconds");
+                sleep(secondsToWait);
+                continue;
             } catch (IOException e) {
                 System.err.println(errorMessage("POST", resource, e.toString(), timeoutSeconds,
                         attempts + 1, NUM_RETRIES));

@@ -1836,6 +1836,16 @@ class TestHTTPResponses(unittest.TestCase):
     def test_content_type_no_sniff(self):
         resp = dxpy.api.system_find_projects({'limit': 1}, want_full_response=True)
         self.assertEqual(resp.headers['x-content-type-options'], 'nosniff')
+    def test_retry_after(self):
+        # Do this weird dance here in case there is clock skew between
+        # client and server
+        start_time = int(time.time() * 1000)
+        server_time = dxpy.DXHTTPRequest('/system/comeBackLater', {})['currentTime']
+        dxpy.DXHTTPRequest('/system/comeBackLater', {'waitUntil': server_time + 8000})
+        end_time = int(time.time() * 1000)
+        time_elapsed = end_time - start_time
+        self.assertTrue(8000 <= time_elapsed)
+        self.assertTrue(time_elapsed <= 16000)
 
 class TestDataobjectFunctions(unittest.TestCase):
     def setUp(self):

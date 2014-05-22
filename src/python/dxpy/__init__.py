@@ -347,7 +347,20 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
         except _expected_exceptions as e:
             last_error = e
 
-            # TODO: support HTTP/1.1 503 Retry-After
+            if response is not None and response.status_code == 503 and 'retry-after' in response.headers:
+                try:
+                    seconds_to_wait = int(response.headers['retry-after'])
+                except ValueError:
+                    # retry-after could be formatted as absolute time
+                    # instead of seconds to wait. We don't know how to
+                    # parse that, but the apiserver doesn't generate
+                    # such responses anyway.
+                    seconds_to_wait = 60.0
+                logger.warn("%s %s: %s. Waiting %d seconds due to server unavailability..."
+                            % (method, url, str(e), seconds_to_wait))
+                time.sleep(seconds_to_wait)
+                continue
+
             # TODO: if the socket was dropped mid-request,
             # ConnectionError or httplib.IncompleteRead is raised, but
             # non-idempotent requests can be unsafe to retry. We should
