@@ -50,7 +50,42 @@ public class DXHTTPRequest {
         }
     }
 
+    /**
+     * Indicates whether a particular API request can be retried.
+     *
+     * <p>
+     * See the <a
+     * href="https://github.com/dnanexus/dx-toolkit/blob/master/src/api_wrappers/README.md">API
+     * wrappers common documentation</a> for the retry logic specification.
+     * </p>
+     */
+    public static enum RetryStrategy {
+        /**
+         * The request has non-idempotent side effects and is generally not safe to retry if the
+         * outcome of a previous request is unknown.
+         */
+        UNSAFE_TO_RETRY,
+        /**
+         * The request is idempotent and is safe to retry.
+         */
+        SAFE_TO_RETRY;
+    }
+
+    /**
+     * Sleeps for the specified amount of time. Throws a {@link RuntimeException} if interrupted.
+     *
+     * @param seconds number of seconds to sleep for
+     */
+    private static void sleep(int seconds) {
+        try {
+            Thread.sleep(seconds * 1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private final JsonNode securityContext;
+
     private final String apiserver;
 
     private final DefaultHttpClient httpclient;
@@ -89,28 +124,74 @@ public class DXHTTPRequest {
     }
 
     /**
-     * Issues a request against the specified resource and returns the result as a JSON object.
+     * Issues a request against the specified resource (assuming requests ARE safe to be retried)
+     * and returns the result as a JSON object.
+     *
+     * @param resource Name of resource, e.g. "/file-XXXX/describe"
+     * @param data Request payload (to be converted to JSON)
+     *
+     * @deprecated Use {@link #request(String, JsonNode, boolean)} instead.
      *
      * @throws DXAPIException If the server returns a complete response with an HTTP status code
      *         other than 200 (OK).
      * @throws DXHTTPException If an error occurs while making the HTTP request or obtaining the
      *         response (includes HTTP protocol errors).
      */
+    @Deprecated
     public JsonNode request(String resource, JsonNode data) {
+        return request(resource, data, RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
+     * Issues a request against the specified resource and returns the result as a JSON object.
+     *
+     * @param resource Name of resource, e.g. "/file-XXXX/describe"
+     * @param data Request payload (to be converted to JSON)
+     * @param retryStrategy Indicates whether the request is idempotent and can be retried
+     *
+     * @throws DXAPIException If the server returns a complete response with an HTTP status code
+     *         other than 200 (OK).
+     * @throws DXHTTPException If an error occurs while making the HTTP request or obtaining the
+     *         response (includes HTTP protocol errors).
+     */
+    public JsonNode request(String resource, JsonNode data, RetryStrategy retryStrategy) {
         String dataAsString = data.toString();
-        return requestImpl(resource, dataAsString, true).responseJson;
+        return requestImpl(resource, dataAsString, true, retryStrategy).responseJson;
+    }
+
+    /**
+     * Issues a request against the specified resource (assuming requests ARE safe to be retried)
+     * and returns the result as a String.
+     *
+     * @param resource Name of resource, e.g. "/file-XXXX/describe"
+     * @param data Request payload (String to be sent verbatim)
+     *
+     * @deprecated Use {@link #request(String, String, boolean)} instead.
+     *
+     * @throws DXAPIException If the server returns a complete response with an HTTP status code
+     *         other than 200 (OK).
+     * @throws DXHTTPException If an error occurs while making the HTTP request or obtaining the
+     *         response (includes HTTP protocol errors).
+     */
+    @Deprecated
+    public String request(String resource, String data) {
+        return request(resource, data, RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
      * Issues a request against the specified resource and returns the result as a String.
      *
+     * @param resource Name of resource, e.g. "/file-XXXX/describe"
+     * @param data Request payload (String to be sent verbatim)
+     * @param retryStrategy Indicates whether the request is idempotent and can be retried
+     *
      * @throws DXAPIException If the server returns a complete response with an HTTP status code
      *         other than 200 (OK).
      * @throws DXHTTPException If an error occurs while making the HTTP request or obtaining the
      *         response (includes HTTP protocol errors).
      */
-    public String request(String resource, String data) {
-        return requestImpl(resource, data, false).responseText;
+    public String request(String resource, String data, RetryStrategy retryStrategy) {
+        return requestImpl(resource, data, false, retryStrategy).responseText;
     }
 
     /**
@@ -122,7 +203,8 @@ public class DXHTTPRequest {
      * @throws DXHTTPException If an error occurs while making the HTTP request or obtaining the
      *         response (includes HTTP protocol errors).
      */
-    private ParsedResponse requestImpl(String resource, String data, boolean parseResponse) {
+    private ParsedResponse requestImpl(String resource, String data, boolean parseResponse,
+            RetryStrategy retryStrategy) {
         HttpPost request = new HttpPost(apiserver + resource);
 
         request.setHeader("Content-Type", "application/json");
@@ -131,15 +213,26 @@ public class DXHTTPRequest {
         request.setEntity(new StringEntity(data, Charset.forName("UTF-8")));
 
         // Retry with exponential backoff
-        int timeout = 1;
+        int timeoutSeconds = 1;
+        int attempts = 0;
 
-        for (int i = 0; i <= NUM_RETRIES; i++) {
+        while (true) {
+            // This guarantees that we get at least one iteration around this loop before running
+            // out of retries, so we can check at the bottom of the loop instead of the top.
+            assert NUM_RETRIES > 0;
+
+            boolean retryRequest = false;
+
             try {
-                // In this block, any IOException will cause the request to be
-                // retried (up to a total of 5 retries). RuntimeException
-                // (including DXAPIException) are not caught and will
-                // immediately return control to the caller.
+                // In this block, any IOException will cause the request to be retried (up to a
+                // total of 5 retries). RuntimeException (including DXAPIException) are not caught
+                // and will immediately return control to the caller.
 
+                // TODO: distinguish between errors during connection init and socket errors while
+                // sending or receiving data. The former can always be retried, but the latter can
+                // only be retried if the request is idempotent. Since we can't tell the difference,
+                // we behave conservatively here and don't retry requests that throw an exception in
+                // the 'execute' method.
                 HttpResponse response = httpclient.execute(request);
 
                 int statusCode = response.getStatusLine().getStatusCode();
@@ -150,7 +243,8 @@ public class DXHTTPRequest {
                     byte[] value = EntityUtils.toByteArray(entity);
                     int realLength = value.length;
                     if (entity.getContentLength() >= 0 && realLength != entity.getContentLength()) {
-                        // Content length mismatch.
+                        // Content length mismatch. Retry is possible (if the route permits it).
+                        retryRequest = (retryStrategy == RetryStrategy.SAFE_TO_RETRY);
                         throw new IOException("Received response of " + realLength
                                 + " bytes but Content-Length was " + entity.getContentLength());
                     } else if (parseResponse) {
@@ -159,12 +253,10 @@ public class DXHTTPRequest {
                             responseJson = DXJSON.parseJson(new String(value, "UTF-8"));
                         } catch (JsonProcessingException e) {
                             if (entity.getContentLength() < 0) {
-                                // content-length was not provided, and the
-                                // JSON could not be parsed. Retry since this
-                                // is a streaming request from the server that
-                                // probably just encountered a transient error.
-                                // Retry the request (unless we've exceeded the
-                                // maximum number of retries)
+                                // content-length was not provided, and the JSON could not be
+                                // parsed. Retry (if the route permits it) since this is probably
+                                // just a streaming request that encountered a transient error.
+                                retryRequest = (retryStrategy == RetryStrategy.SAFE_TO_RETRY);
                                 throw new IOException(
                                         "Content-length was not provided and the response JSON could not be parsed.");
                             }
@@ -211,33 +303,31 @@ public class DXHTTPRequest {
 
                     throw DXAPIException.getInstance(errorType, errorMessage, statusCode);
                 } else {
-                    // 500 InternalError should get retried
+                    // 500 InternalError should get retried unconditionally
+                    retryRequest = true;
                     throw new IOException(EntityUtils.toString(entity));
                 }
 
-                // We should never fall through to here: the request should
-                // have succeeded (and returned) or thrown an exception (caught
-                // below) by now.
-
             } catch (IOException e) {
-                System.err.println(errorMessage("POST", resource, e.toString(), timeout, i + 1,
-                        NUM_RETRIES));
-                if (i == NUM_RETRIES) {
+                System.err.println(errorMessage("POST", resource, e.toString(), timeoutSeconds,
+                        attempts + 1, NUM_RETRIES));
+                if (attempts == NUM_RETRIES || !retryRequest) {
                     throw new DXHTTPException(e);
                 }
             }
 
-            if (i < NUM_RETRIES) {
-                try {
-                    Thread.sleep(timeout * 1000);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-                timeout *= 2;
-            }
-        }
+            assert attempts < NUM_RETRIES;
+            assert retryRequest;
 
-        // We should never get here.
-        throw new AssertionError("Exceeded max number of retries without throwing an error");
+            attempts++;
+
+            // The number of failed attempts is now no more than NUM_RETRIES, and the total number
+            // of attempts allowed is NUM_RETRIES + 1 (the first attempt, plus up to NUM_RETRIES
+            // retries). So there is at least one more retry left; sleep before we retry.
+            assert attempts <= NUM_RETRIES;
+
+            sleep(timeoutSeconds);
+            timeoutSeconds *= 2;
+        }
     }
 }

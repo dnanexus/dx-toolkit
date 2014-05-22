@@ -18,6 +18,7 @@ package com.dnanexus;
 
 import java.util.Map;
 
+import com.dnanexus.DXHTTPRequest.RetryStrategy;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -234,13 +235,15 @@ public class DXRecord extends DXDataObject {
 
     @Override
     public Describe describe() {
-        return DXJSON.safeTreeToValue(apiCallOnObject("describe"), Describe.class);
+        return DXJSON.safeTreeToValue(apiCallOnObject("describe", RetryStrategy.SAFE_TO_RETRY),
+                Describe.class);
     }
 
     @Override
     public Describe describe(DescribeOptions options) {
-        return DXJSON.safeTreeToValue(apiCallOnObject("describe", MAPPER.valueToTree(options)),
-                Describe.class);
+        return DXJSON.safeTreeToValue(
+                apiCallOnObject("describe", MAPPER.valueToTree(options),
+                        RetryStrategy.SAFE_TO_RETRY), Describe.class);
     }
 
     @Override

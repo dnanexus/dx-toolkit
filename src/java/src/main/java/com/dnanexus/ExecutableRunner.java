@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.dnanexus.DXHTTPRequest.RetryStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -58,7 +59,8 @@ public abstract class ExecutableRunner<T extends DXExecution> {
         public DXJob run() {
             ExecutableRunResult runResult =
                     DXJSON.safeTreeToValue(new DXHTTPRequest(env).request("/" + this.executableId
-                            + "/run", buildRequestHash()), ExecutableRunResult.class);
+                            + "/run", buildRequestHash(), RetryStrategy.UNSAFE_TO_RETRY),
+                            ExecutableRunResult.class);
             return DXJob.getInstanceWithEnvironment(runResult.id, env);
         }
     }
@@ -138,7 +140,8 @@ public abstract class ExecutableRunner<T extends DXExecution> {
         public DXAnalysis run() {
             ExecutableRunResult runResult =
                     DXJSON.safeTreeToValue(new DXHTTPRequest(env).request("/" + this.executableId
-                            + "/run", buildRequestHash()), ExecutableRunResult.class);
+                            + "/run", buildRequestHash(), RetryStrategy.UNSAFE_TO_RETRY),
+                            ExecutableRunResult.class);
             return DXAnalysis.getInstanceWithEnvironment(runResult.id, env);
         }
     }

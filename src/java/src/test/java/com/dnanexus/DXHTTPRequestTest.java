@@ -21,6 +21,7 @@ import java.io.IOException;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.dnanexus.DXHTTPRequest.RetryStrategy;
 import com.dnanexus.exceptions.InvalidAuthenticationException;
 import com.dnanexus.exceptions.InvalidInputException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -38,19 +39,23 @@ public class DXHTTPRequestTest {
     @Test
     public void testDXAPI() throws IOException {
         DXHTTPRequest c = new DXHTTPRequest();
-        JsonNode responseJson = c.request("/system/findDataObjects", DXJSON.parseJson("{}"));
+        JsonNode responseJson =
+                c.request("/system/findDataObjects", DXJSON.parseJson("{}"),
+                        RetryStrategy.SAFE_TO_RETRY);
         Assert.assertEquals(responseJson.isObject(), true);
 
         // System.out.println(responseJson);
 
-        String responseText = c.request("/system/findDataObjects", "{}");
+        String responseText =
+                c.request("/system/findDataObjects", "{}", RetryStrategy.SAFE_TO_RETRY);
         Assert.assertEquals(responseText.substring(0, 1), "{");
 
         // Tests deserialization of InvalidInput
         DXHTTPRequest c2 = new DXHTTPRequest();
         try {
             c2.request("/system/findDataObjects",
-                    DXJSON.parseJson("{\"state\": {\"invalid\": \"oops\"}}"));
+                    DXJSON.parseJson("{\"state\": {\"invalid\": \"oops\"}}"),
+                    RetryStrategy.SAFE_TO_RETRY);
             Assert.fail("Expected findDataObjects to fail with InvalidInput");
         } catch (InvalidInputException e) {
             // Error message should be something like
@@ -69,19 +74,23 @@ public class DXHTTPRequestTest {
     public void testDXAPICustomEnvironment() throws IOException {
         DXEnvironment env = DXEnvironment.create();
         DXHTTPRequest c = new DXHTTPRequest(env);
-        JsonNode responseJson = c.request("/system/findDataObjects", DXJSON.parseJson("{}"));
+        JsonNode responseJson =
+                c.request("/system/findDataObjects", DXJSON.parseJson("{}"),
+                        RetryStrategy.SAFE_TO_RETRY);
         Assert.assertEquals(responseJson.isObject(), true);
 
         // System.out.println(responseJson);
 
-        String responseText = c.request("/system/findDataObjects", "{}");
+        String responseText =
+                c.request("/system/findDataObjects", "{}", RetryStrategy.SAFE_TO_RETRY);
         Assert.assertEquals(responseText.substring(0, 1), "{");
 
         // Tests deserialization of InvalidAuthentication
         env = DXEnvironment.Builder.fromDefaults().setBearerToken("BOGUS").build();
         DXHTTPRequest c2 = new DXHTTPRequest(env);
         try {
-            c2.request("/system/findDataObjects", DXJSON.parseJson("{}"));
+            c2.request("/system/findDataObjects", DXJSON.parseJson("{}"),
+                    RetryStrategy.SAFE_TO_RETRY);
             Assert.fail("Expected findDataObjects to fail with InvalidAuthentication");
         } catch (InvalidAuthenticationException e) {
             // Error message should be something like

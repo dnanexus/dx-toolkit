@@ -26,6 +26,7 @@ preamble = '''/* Do not modify this file by hand.
 
 package com.dnanexus;
 
+import com.dnanexus.DXHTTPRequest.RetryStrategy;
 import com.dnanexus.exceptions.DXAPIException;
 import com.dnanexus.exceptions.DXHTTPException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -99,7 +100,7 @@ class_method_template = '''
      */
     public static <T> T {method_name}(Object inputObject, Class<T> outputClass) {{
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("{route}", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest().request("{route}", mapper.valueToTree(inputObject), {retry_strategy}),
                 outputClass);
     }}
     /**
@@ -120,7 +121,7 @@ class_method_template = '''
      */
     public static <T> T {method_name}(Object inputObject, Class<T> outputClass, DXEnvironment env) {{
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("{route}", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest(env).request("{route}", mapper.valueToTree(inputObject), {retry_strategy}),
                 outputClass);
     }}
 
@@ -160,7 +161,7 @@ class_method_template = '''
      */
     @Deprecated
     public static JsonNode {method_name}(JsonNode inputParams) {{
-        return new DXHTTPRequest().request("{route}", inputParams);
+        return new DXHTTPRequest().request("{route}", inputParams, {retry_strategy});
     }}
     /**
      * Invokes the {method_name} method with the specified environment.{wiki_link}
@@ -201,7 +202,7 @@ class_method_template = '''
      */
     @Deprecated
     public static JsonNode {method_name}(JsonNode inputParams, DXEnvironment env) {{
-        return new DXHTTPRequest(env).request("{route}", inputParams);
+        return new DXHTTPRequest(env).request("{route}", inputParams, {retry_strategy});
     }}'''
 
 object_method_template = '''
@@ -242,7 +243,7 @@ object_method_template = '''
     public static <T> T {method_name}(String objectId, Object inputObject, Class<T> outputClass) {{
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "{method_route}",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), {retry_strategy}), outputClass);
     }}
     /**
      * Invokes the {method_name} method with an empty input using the given environment, deserializing to an object of the specified class.{wiki_link}
@@ -283,7 +284,7 @@ object_method_template = '''
     public static <T> T {method_name}(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {{
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "{method_route}",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), {retry_strategy}), outputClass);
     }}
 
     /**
@@ -325,7 +326,8 @@ object_method_template = '''
      */
     @Deprecated
     public static JsonNode {method_name}(String objectId, JsonNode inputParams) {{
-        return new DXHTTPRequest().request("/" + objectId + "/" + "{method_route}", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "{method_route}", inputParams,
+                {retry_strategy});
     }}
     /**
      * Invokes the {method_name} method with the specified environment.{wiki_link}
@@ -368,7 +370,8 @@ object_method_template = '''
      */
     @Deprecated
     public static JsonNode {method_name}(String objectId, JsonNode inputParams, DXEnvironment env) {{
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "{method_route}", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "{method_route}", inputParams,
+                {retry_strategy});
     }}'''
 
 #app_object_method_template = '''
@@ -386,13 +389,14 @@ for method in json.loads(sys.stdin.read()):
     wiki_link = ''
     if opts.get('wikiLink', None):
         wiki_link = '\n     *\n     * <p>For more information about this method, see the <a href="%s">API specification</a>.' % (opts['wikiLink'],)
+    retry_param = "RetryStrategy.SAFE_TO_RETRY" if opts['retryable'] else "RetryStrategy.UNSAFE_TO_RETRY"
     if (opts['objectMethod']):
         root, oid_route, method_route = route.split("/")
         if oid_route == 'app-xxxx':
-            print app_object_method_template.format(method_name=method_name, method_route=method_route, wiki_link=wiki_link)
+            print app_object_method_template.format(method_name=method_name, method_route=method_route, wiki_link=wiki_link, retry_strategy=retry_param)
         else:
-            print object_method_template.format(method_name=method_name, method_route=method_route, wiki_link=wiki_link)
+            print object_method_template.format(method_name=method_name, method_route=method_route, wiki_link=wiki_link, retry_strategy=retry_param)
     else:
-        print class_method_template.format(method_name=method_name, route=route, wiki_link=wiki_link)
+        print class_method_template.format(method_name=method_name, route=route, wiki_link=wiki_link, retry_strategy=retry_param)
 
 print postscript
