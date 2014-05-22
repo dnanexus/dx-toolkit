@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import com.dnanexus.DXHTTPRequest.RetryStrategy;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -864,7 +865,8 @@ public abstract class DXDataObject extends DXObject {
      */
     public void addTags(List<String> tags) {
         apiCallOnObject("addTags",
-                MAPPER.valueToTree(new AddOrRemoveTagsRequest(this.container.getId(), tags)));
+                MAPPER.valueToTree(new AddOrRemoveTagsRequest(this.container.getId(), tags)),
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -873,7 +875,8 @@ public abstract class DXDataObject extends DXObject {
      * @param types List of types to add to the object
      */
     public void addTypes(List<String> types) {
-        apiCallOnObject("addTypes", MAPPER.valueToTree(new AddOrRemoveTypesRequest(types)));
+        apiCallOnObject("addTypes", MAPPER.valueToTree(new AddOrRemoveTypesRequest(types)),
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -897,7 +900,7 @@ public abstract class DXDataObject extends DXObject {
      * @return the same {@code DXDataObject}
      */
     public DXDataObject close() {
-        apiCallOnObject("close");
+        apiCallOnObject("close", RetryStrategy.SAFE_TO_RETRY);
         return this;
     }
 
@@ -938,7 +941,8 @@ public abstract class DXDataObject extends DXObject {
      * @return a {@code Describe} containing the data object's metadata.
      */
     public Describe describe() {
-        return DXJSON.safeTreeToValue(apiCallOnObject("describe"), Describe.class);
+        return DXJSON.safeTreeToValue(apiCallOnObject("describe", RetryStrategy.SAFE_TO_RETRY),
+                Describe.class);
     }
 
     /**
@@ -951,8 +955,9 @@ public abstract class DXDataObject extends DXObject {
      * @return a {@code Describe} containing the data object's metadata.
      */
     public Describe describe(DescribeOptions options) {
-        return DXJSON.safeTreeToValue(apiCallOnObject("describe", MAPPER.valueToTree(options)),
-                Describe.class);
+        return DXJSON.safeTreeToValue(
+                apiCallOnObject("describe", MAPPER.valueToTree(options),
+                        RetryStrategy.SAFE_TO_RETRY), Describe.class);
     }
 
     /*
@@ -1045,7 +1050,8 @@ public abstract class DXDataObject extends DXObject {
      */
     public Map<DXContainer, AccessLevel> listProjects() {
         Map<String, AccessLevel> rawMap =
-                deserializeListProjectsMap(apiCallOnObject("listProjects"));
+                deserializeListProjectsMap(apiCallOnObject("listProjects",
+                        RetryStrategy.SAFE_TO_RETRY));
         ImmutableMap.Builder<DXContainer, AccessLevel> resultBuilder = ImmutableMap.builder();
         for (Map.Entry<String, AccessLevel> entry : rawMap.entrySet()) {
             resultBuilder.put(DXContainer.getInstance(entry.getKey()), entry.getValue());
@@ -1089,7 +1095,7 @@ public abstract class DXDataObject extends DXObject {
         Preconditions.checkNotNull(this.container,
                 "Container must be supplied for this metadata operation");
         apiCallOnObject("setProperties", MAPPER.valueToTree(new SetPropertiesRequest(this.container
-                .getId(), propertiesToSet, propertiesToRemove)));
+                .getId(), propertiesToSet, propertiesToRemove)), RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -1143,7 +1149,8 @@ public abstract class DXDataObject extends DXObject {
         Preconditions.checkNotNull(this.container,
                 "Container must be supplied for this metadata operation");
         apiCallOnObject("removeTags",
-                MAPPER.valueToTree(new AddOrRemoveTagsRequest(this.container.getId(), tags)));
+                MAPPER.valueToTree(new AddOrRemoveTagsRequest(this.container.getId(), tags)),
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -1152,7 +1159,8 @@ public abstract class DXDataObject extends DXObject {
      * @param types List of types to remove
      */
     public void removeTypes(List<String> types) {
-        apiCallOnObject("removeTypes", MAPPER.valueToTree(new AddOrRemoveTypesRequest(types)));
+        apiCallOnObject("removeTypes", MAPPER.valueToTree(new AddOrRemoveTypesRequest(types)),
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -1172,7 +1180,8 @@ public abstract class DXDataObject extends DXObject {
         Preconditions.checkNotNull(this.container,
                 "Container must be supplied for this metadata operation");
         apiCallOnObject("removeTags",
-                MAPPER.valueToTree(new RenameRequest(this.container.getId(), newName)));
+                MAPPER.valueToTree(new RenameRequest(this.container.getId(), newName)),
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -1181,7 +1190,7 @@ public abstract class DXDataObject extends DXObject {
      * @param details an object whose JSON serialized form will be set as the details
      */
     public void setDetails(Object details) {
-        apiCallOnObject("setDetails", MAPPER.valueToTree(details));
+        apiCallOnObject("setDetails", MAPPER.valueToTree(details), RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -1190,7 +1199,8 @@ public abstract class DXDataObject extends DXObject {
      * @param visible
      */
     public void setVisibility(boolean visible) {
-        apiCallOnObject("setVisibility", MAPPER.valueToTree(new SetVisibilityRequest(!visible)));
+        apiCallOnObject("setVisibility", MAPPER.valueToTree(new SetVisibilityRequest(!visible)),
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
 }

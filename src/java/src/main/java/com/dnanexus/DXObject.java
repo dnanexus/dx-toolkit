@@ -18,6 +18,7 @@ package com.dnanexus;
 
 import java.util.regex.Pattern;
 
+import com.dnanexus.DXHTTPRequest.RetryStrategy;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Objects;
@@ -85,23 +86,30 @@ public abstract class DXObject {
     }
 
     /**
-     * Calls the specified API method on this object (with the specified input
-     * hash) and returns its result. Subclasses can use this method to call API
-     * methods with the correct object ID and environment settings.
+     * Calls the specified API method on this object (with the specified input hash) and returns its
+     * result. Subclasses can use this method to call API methods with the correct object ID and
+     * environment settings.
+     *
+     * @param method Name of method, e.g. "describe"
+     * @param input Request payload (to be converted to JSON)
+     * @param retryStrategy Indicates whether the request is idempotent and can be retried
      */
-    protected JsonNode apiCallOnObject(String method, JsonNode input) {
+    protected JsonNode apiCallOnObject(String method, JsonNode input, RetryStrategy retryStrategy) {
         // TODO: add a higher-level binding for calling common data object
         // methods on data objects of arbitrary class? Here and below
-        return new DXHTTPRequest(env).request("/" + this.dxId + "/" + method, input);
+        return new DXHTTPRequest(env).request("/" + this.dxId + "/" + method, input, retryStrategy);
     }
 
     /**
-     * Calls the specified API method on this object and returns its result.
-     * Subclasses can use this method to call API methods with the correct
-     * object ID and environment settings.
+     * Calls the specified API method on this object (with an empty input hash) and returns its
+     * result. Subclasses can use this method to call API methods with the correct object ID and
+     * environment settings.
+     *
+     * @param method Name of method, e.g. "describe"
+     * @param retryStrategy Indicates whether the request is idempotent and can be retried
      */
-    protected JsonNode apiCallOnObject(String method) {
-        return apiCallOnObject(method, MAPPER.createObjectNode());
+    protected JsonNode apiCallOnObject(String method, RetryStrategy retryStrategy) {
+        return apiCallOnObject(method, MAPPER.createObjectNode(), retryStrategy);
     }
 
     /* (non-Javadoc)

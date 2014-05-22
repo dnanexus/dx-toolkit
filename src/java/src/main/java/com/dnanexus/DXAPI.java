@@ -6,6 +6,7 @@
 
 package com.dnanexus;
 
+import com.dnanexus.DXHTTPRequest.RetryStrategy;
 import com.dnanexus.exceptions.DXAPIException;
 import com.dnanexus.exceptions.DXHTTPException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -64,7 +65,7 @@ public final class DXAPI {
     public static <T> T analysisAddTags(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "addTags",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the analysisAddTags method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -109,7 +110,7 @@ public final class DXAPI {
     public static <T> T analysisAddTags(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -155,7 +156,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode analysisAddTags(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the analysisAddTags method with the specified environment.
@@ -202,7 +204,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode analysisAddTags(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -246,7 +249,7 @@ public final class DXAPI {
     public static <T> T analysisDescribe(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "describe",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the analysisDescribe method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -291,7 +294,7 @@ public final class DXAPI {
     public static <T> T analysisDescribe(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "describe",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -337,7 +340,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode analysisDescribe(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the analysisDescribe method with the specified environment.
@@ -384,7 +388,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode analysisDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -428,7 +433,7 @@ public final class DXAPI {
     public static <T> T analysisRemoveTags(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeTags",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the analysisRemoveTags method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -473,7 +478,7 @@ public final class DXAPI {
     public static <T> T analysisRemoveTags(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -519,7 +524,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode analysisRemoveTags(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the analysisRemoveTags method with the specified environment.
@@ -566,7 +572,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode analysisRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -610,7 +617,7 @@ public final class DXAPI {
     public static <T> T analysisSetProperties(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "setProperties",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the analysisSetProperties method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -655,7 +662,7 @@ public final class DXAPI {
     public static <T> T analysisSetProperties(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -701,7 +708,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode analysisSetProperties(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the analysisSetProperties method with the specified environment.
@@ -748,7 +756,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode analysisSetProperties(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -792,7 +801,7 @@ public final class DXAPI {
     public static <T> T analysisTerminate(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "terminate",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the analysisTerminate method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -837,7 +846,7 @@ public final class DXAPI {
     public static <T> T analysisTerminate(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "terminate",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -883,7 +892,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode analysisTerminate(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "terminate", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "terminate", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the analysisTerminate method with the specified environment.
@@ -930,7 +940,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode analysisTerminate(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "terminate", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "terminate", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -974,7 +985,7 @@ public final class DXAPI {
     public static <T> T appAddAuthorizedUsers(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "addAuthorizedUsers",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appAddAuthorizedUsers method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -1019,7 +1030,7 @@ public final class DXAPI {
     public static <T> T appAddAuthorizedUsers(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "addAuthorizedUsers",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -1065,7 +1076,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appAddAuthorizedUsers(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addAuthorizedUsers", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addAuthorizedUsers", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appAddAuthorizedUsers method with the specified environment.
@@ -1112,7 +1124,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appAddAuthorizedUsers(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addAuthorizedUsers", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addAuthorizedUsers", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -1156,7 +1169,7 @@ public final class DXAPI {
     public static <T> T appAddCategories(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "addCategories",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appAddCategories method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -1201,7 +1214,7 @@ public final class DXAPI {
     public static <T> T appAddCategories(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "addCategories",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -1247,7 +1260,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appAddCategories(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addCategories", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addCategories", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appAddCategories method with the specified environment.
@@ -1294,7 +1308,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appAddCategories(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addCategories", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addCategories", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -1338,7 +1353,7 @@ public final class DXAPI {
     public static <T> T appAddDevelopers(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "addDevelopers",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appAddDevelopers method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -1383,7 +1398,7 @@ public final class DXAPI {
     public static <T> T appAddDevelopers(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "addDevelopers",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -1429,7 +1444,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appAddDevelopers(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addDevelopers", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addDevelopers", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appAddDevelopers method with the specified environment.
@@ -1476,7 +1492,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appAddDevelopers(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addDevelopers", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addDevelopers", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -1520,7 +1537,7 @@ public final class DXAPI {
     public static <T> T appAddTags(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "addTags",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appAddTags method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -1565,7 +1582,7 @@ public final class DXAPI {
     public static <T> T appAddTags(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -1611,7 +1628,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appAddTags(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appAddTags method with the specified environment.
@@ -1658,7 +1676,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appAddTags(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -1702,7 +1721,7 @@ public final class DXAPI {
     public static <T> T appDelete(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "delete",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appDelete method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -1747,7 +1766,7 @@ public final class DXAPI {
     public static <T> T appDelete(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "delete",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -1793,7 +1812,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appDelete(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "delete", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "delete", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appDelete method with the specified environment.
@@ -1840,7 +1860,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appDelete(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "delete", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "delete", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -1884,7 +1905,7 @@ public final class DXAPI {
     public static <T> T appDescribe(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "describe",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appDescribe method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -1929,7 +1950,7 @@ public final class DXAPI {
     public static <T> T appDescribe(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "describe",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -1975,7 +1996,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appDescribe(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appDescribe method with the specified environment.
@@ -2022,7 +2044,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -2066,7 +2089,7 @@ public final class DXAPI {
     public static <T> T appGet(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "get",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appGet method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -2111,7 +2134,7 @@ public final class DXAPI {
     public static <T> T appGet(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "get",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -2157,7 +2180,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appGet(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "get", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "get", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appGet method with the specified environment.
@@ -2204,7 +2228,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appGet(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "get", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "get", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -2248,7 +2273,7 @@ public final class DXAPI {
     public static <T> T appInstall(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "install",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appInstall method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -2293,7 +2318,7 @@ public final class DXAPI {
     public static <T> T appInstall(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "install",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -2339,7 +2364,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appInstall(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "install", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "install", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appInstall method with the specified environment.
@@ -2386,7 +2412,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appInstall(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "install", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "install", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -2430,7 +2457,7 @@ public final class DXAPI {
     public static <T> T appListAuthorizedUsers(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "listAuthorizedUsers",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appListAuthorizedUsers method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -2475,7 +2502,7 @@ public final class DXAPI {
     public static <T> T appListAuthorizedUsers(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "listAuthorizedUsers",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -2521,7 +2548,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appListAuthorizedUsers(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "listAuthorizedUsers", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "listAuthorizedUsers", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appListAuthorizedUsers method with the specified environment.
@@ -2568,7 +2596,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appListAuthorizedUsers(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "listAuthorizedUsers", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "listAuthorizedUsers", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -2612,7 +2641,7 @@ public final class DXAPI {
     public static <T> T appListCategories(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "listCategories",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appListCategories method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -2657,7 +2686,7 @@ public final class DXAPI {
     public static <T> T appListCategories(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "listCategories",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -2703,7 +2732,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appListCategories(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "listCategories", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "listCategories", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appListCategories method with the specified environment.
@@ -2750,7 +2780,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appListCategories(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "listCategories", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "listCategories", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -2794,7 +2825,7 @@ public final class DXAPI {
     public static <T> T appListDevelopers(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "listDevelopers",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appListDevelopers method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -2839,7 +2870,7 @@ public final class DXAPI {
     public static <T> T appListDevelopers(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "listDevelopers",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -2885,7 +2916,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appListDevelopers(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "listDevelopers", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "listDevelopers", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appListDevelopers method with the specified environment.
@@ -2932,7 +2964,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appListDevelopers(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "listDevelopers", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "listDevelopers", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -2976,7 +3009,7 @@ public final class DXAPI {
     public static <T> T appPublish(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "publish",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appPublish method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -3021,7 +3054,7 @@ public final class DXAPI {
     public static <T> T appPublish(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "publish",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -3067,7 +3100,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appPublish(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "publish", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "publish", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appPublish method with the specified environment.
@@ -3114,7 +3148,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appPublish(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "publish", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "publish", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -3158,7 +3193,7 @@ public final class DXAPI {
     public static <T> T appRemoveAuthorizedUsers(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeAuthorizedUsers",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appRemoveAuthorizedUsers method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -3203,7 +3238,7 @@ public final class DXAPI {
     public static <T> T appRemoveAuthorizedUsers(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeAuthorizedUsers",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -3249,7 +3284,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appRemoveAuthorizedUsers(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeAuthorizedUsers", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeAuthorizedUsers", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appRemoveAuthorizedUsers method with the specified environment.
@@ -3296,7 +3332,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appRemoveAuthorizedUsers(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeAuthorizedUsers", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeAuthorizedUsers", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -3340,7 +3377,7 @@ public final class DXAPI {
     public static <T> T appRemoveCategories(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeCategories",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appRemoveCategories method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -3385,7 +3422,7 @@ public final class DXAPI {
     public static <T> T appRemoveCategories(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeCategories",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -3431,7 +3468,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appRemoveCategories(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeCategories", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeCategories", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appRemoveCategories method with the specified environment.
@@ -3478,7 +3516,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appRemoveCategories(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeCategories", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeCategories", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -3522,7 +3561,7 @@ public final class DXAPI {
     public static <T> T appRemoveDevelopers(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeDevelopers",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appRemoveDevelopers method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -3567,7 +3606,7 @@ public final class DXAPI {
     public static <T> T appRemoveDevelopers(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeDevelopers",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -3613,7 +3652,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appRemoveDevelopers(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeDevelopers", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeDevelopers", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appRemoveDevelopers method with the specified environment.
@@ -3660,7 +3700,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appRemoveDevelopers(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeDevelopers", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeDevelopers", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -3704,7 +3745,7 @@ public final class DXAPI {
     public static <T> T appRemoveTags(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeTags",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appRemoveTags method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -3749,7 +3790,7 @@ public final class DXAPI {
     public static <T> T appRemoveTags(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -3795,7 +3836,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appRemoveTags(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appRemoveTags method with the specified environment.
@@ -3842,7 +3884,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -3886,7 +3929,7 @@ public final class DXAPI {
     public static <T> T appRun(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "run",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appRun method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -3931,7 +3974,7 @@ public final class DXAPI {
     public static <T> T appRun(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "run",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -3977,7 +4020,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appRun(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "run", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "run", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the appRun method with the specified environment.
@@ -4024,7 +4068,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appRun(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "run", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "run", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
 
     /**
@@ -4068,7 +4113,7 @@ public final class DXAPI {
     public static <T> T appUninstall(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "uninstall",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appUninstall method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -4113,7 +4158,7 @@ public final class DXAPI {
     public static <T> T appUninstall(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "uninstall",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -4159,7 +4204,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appUninstall(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "uninstall", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "uninstall", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appUninstall method with the specified environment.
@@ -4206,7 +4252,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appUninstall(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "uninstall", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "uninstall", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -4250,7 +4297,7 @@ public final class DXAPI {
     public static <T> T appUpdate(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "update",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appUpdate method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -4295,7 +4342,7 @@ public final class DXAPI {
     public static <T> T appUpdate(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "update",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -4341,7 +4388,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appUpdate(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "update", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "update", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appUpdate method with the specified environment.
@@ -4388,7 +4436,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appUpdate(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "update", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "update", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -4449,7 +4498,7 @@ public final class DXAPI {
      */
     public static <T> T appNew(Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/app/new", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest().request("/app/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -4472,7 +4521,7 @@ public final class DXAPI {
      */
     public static <T> T appNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/app/new", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest(env).request("/app/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -4516,7 +4565,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appNew(JsonNode inputParams) {
-        return new DXHTTPRequest().request("/app/new", inputParams);
+        return new DXHTTPRequest().request("/app/new", inputParams, RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the appNew method with the specified environment.
@@ -4561,7 +4610,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appNew(JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/app/new", inputParams);
+        return new DXHTTPRequest(env).request("/app/new", inputParams, RetryStrategy.UNSAFE_TO_RETRY);
     }
 
     /**
@@ -4605,7 +4654,7 @@ public final class DXAPI {
     public static <T> T appletAddTags(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "addTags",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appletAddTags method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -4650,7 +4699,7 @@ public final class DXAPI {
     public static <T> T appletAddTags(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -4696,7 +4745,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appletAddTags(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appletAddTags method with the specified environment.
@@ -4743,7 +4793,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appletAddTags(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -4787,7 +4838,7 @@ public final class DXAPI {
     public static <T> T appletDescribe(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "describe",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appletDescribe method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -4832,7 +4883,7 @@ public final class DXAPI {
     public static <T> T appletDescribe(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "describe",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -4878,7 +4929,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appletDescribe(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appletDescribe method with the specified environment.
@@ -4925,7 +4977,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appletDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -4969,7 +5022,7 @@ public final class DXAPI {
     public static <T> T appletGet(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "get",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appletGet method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -5014,7 +5067,7 @@ public final class DXAPI {
     public static <T> T appletGet(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "get",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -5060,7 +5113,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appletGet(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "get", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "get", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appletGet method with the specified environment.
@@ -5107,7 +5161,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appletGet(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "get", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "get", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -5151,7 +5206,7 @@ public final class DXAPI {
     public static <T> T appletGetDetails(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "getDetails",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appletGetDetails method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -5196,7 +5251,7 @@ public final class DXAPI {
     public static <T> T appletGetDetails(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "getDetails",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -5242,7 +5297,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appletGetDetails(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "getDetails", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "getDetails", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appletGetDetails method with the specified environment.
@@ -5289,7 +5345,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appletGetDetails(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "getDetails", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "getDetails", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -5333,7 +5390,7 @@ public final class DXAPI {
     public static <T> T appletListProjects(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "listProjects",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appletListProjects method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -5378,7 +5435,7 @@ public final class DXAPI {
     public static <T> T appletListProjects(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "listProjects",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -5424,7 +5481,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appletListProjects(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "listProjects", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "listProjects", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appletListProjects method with the specified environment.
@@ -5471,7 +5529,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appletListProjects(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "listProjects", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "listProjects", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -5515,7 +5574,7 @@ public final class DXAPI {
     public static <T> T appletRemoveTags(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeTags",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appletRemoveTags method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -5560,7 +5619,7 @@ public final class DXAPI {
     public static <T> T appletRemoveTags(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -5606,7 +5665,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appletRemoveTags(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appletRemoveTags method with the specified environment.
@@ -5653,7 +5713,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appletRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -5697,7 +5758,7 @@ public final class DXAPI {
     public static <T> T appletRename(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "rename",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appletRename method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -5742,7 +5803,7 @@ public final class DXAPI {
     public static <T> T appletRename(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "rename",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -5788,7 +5849,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appletRename(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "rename", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "rename", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appletRename method with the specified environment.
@@ -5835,7 +5897,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appletRename(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "rename", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "rename", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -5879,7 +5942,7 @@ public final class DXAPI {
     public static <T> T appletRun(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "run",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appletRun method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -5924,7 +5987,7 @@ public final class DXAPI {
     public static <T> T appletRun(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "run",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -5970,7 +6033,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appletRun(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "run", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "run", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the appletRun method with the specified environment.
@@ -6017,7 +6081,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appletRun(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "run", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "run", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
 
     /**
@@ -6061,7 +6126,7 @@ public final class DXAPI {
     public static <T> T appletSetProperties(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "setProperties",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appletSetProperties method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -6106,7 +6171,7 @@ public final class DXAPI {
     public static <T> T appletSetProperties(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -6152,7 +6217,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appletSetProperties(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the appletSetProperties method with the specified environment.
@@ -6199,7 +6265,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appletSetProperties(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -6260,7 +6327,7 @@ public final class DXAPI {
      */
     public static <T> T appletNew(Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/applet/new", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest().request("/applet/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -6283,7 +6350,7 @@ public final class DXAPI {
      */
     public static <T> T appletNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/applet/new", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest(env).request("/applet/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -6327,7 +6394,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appletNew(JsonNode inputParams) {
-        return new DXHTTPRequest().request("/applet/new", inputParams);
+        return new DXHTTPRequest().request("/applet/new", inputParams, RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the appletNew method with the specified environment.
@@ -6372,7 +6439,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode appletNew(JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/applet/new", inputParams);
+        return new DXHTTPRequest(env).request("/applet/new", inputParams, RetryStrategy.UNSAFE_TO_RETRY);
     }
 
     /**
@@ -6416,7 +6483,7 @@ public final class DXAPI {
     public static <T> T containerClone(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "clone",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the containerClone method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -6461,7 +6528,7 @@ public final class DXAPI {
     public static <T> T containerClone(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "clone",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -6507,7 +6574,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode containerClone(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "clone", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "clone", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the containerClone method with the specified environment.
@@ -6554,7 +6622,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode containerClone(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "clone", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "clone", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
 
     /**
@@ -6598,7 +6667,7 @@ public final class DXAPI {
     public static <T> T containerDescribe(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "describe",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the containerDescribe method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -6643,7 +6712,7 @@ public final class DXAPI {
     public static <T> T containerDescribe(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "describe",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -6689,7 +6758,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode containerDescribe(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the containerDescribe method with the specified environment.
@@ -6736,7 +6806,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode containerDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -6776,7 +6847,7 @@ public final class DXAPI {
     public static <T> T containerDestroy(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "destroy",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the containerDestroy method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -6817,7 +6888,7 @@ public final class DXAPI {
     public static <T> T containerDestroy(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "destroy",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -6859,7 +6930,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode containerDestroy(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "destroy", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "destroy", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the containerDestroy method with the specified environment.
@@ -6902,7 +6974,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode containerDestroy(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "destroy", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "destroy", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -6946,7 +7019,7 @@ public final class DXAPI {
     public static <T> T containerListFolder(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "listFolder",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the containerListFolder method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -6991,7 +7064,7 @@ public final class DXAPI {
     public static <T> T containerListFolder(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "listFolder",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -7037,7 +7110,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode containerListFolder(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "listFolder", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "listFolder", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the containerListFolder method with the specified environment.
@@ -7084,7 +7158,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode containerListFolder(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "listFolder", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "listFolder", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -7128,7 +7203,7 @@ public final class DXAPI {
     public static <T> T containerMove(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "move",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the containerMove method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -7173,7 +7248,7 @@ public final class DXAPI {
     public static <T> T containerMove(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "move",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -7219,7 +7294,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode containerMove(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "move", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "move", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the containerMove method with the specified environment.
@@ -7266,7 +7342,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode containerMove(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "move", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "move", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
 
     /**
@@ -7310,7 +7387,7 @@ public final class DXAPI {
     public static <T> T containerNewFolder(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "newFolder",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the containerNewFolder method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -7355,7 +7432,7 @@ public final class DXAPI {
     public static <T> T containerNewFolder(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "newFolder",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -7401,7 +7478,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode containerNewFolder(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "newFolder", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "newFolder", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the containerNewFolder method with the specified environment.
@@ -7448,7 +7526,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode containerNewFolder(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "newFolder", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "newFolder", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -7492,7 +7571,7 @@ public final class DXAPI {
     public static <T> T containerRemoveFolder(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeFolder",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the containerRemoveFolder method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -7537,7 +7616,7 @@ public final class DXAPI {
     public static <T> T containerRemoveFolder(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeFolder",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -7583,7 +7662,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode containerRemoveFolder(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeFolder", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeFolder", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the containerRemoveFolder method with the specified environment.
@@ -7630,7 +7710,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode containerRemoveFolder(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeFolder", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeFolder", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -7674,7 +7755,7 @@ public final class DXAPI {
     public static <T> T containerRemoveObjects(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeObjects",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the containerRemoveObjects method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -7719,7 +7800,7 @@ public final class DXAPI {
     public static <T> T containerRemoveObjects(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeObjects",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -7765,7 +7846,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode containerRemoveObjects(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeObjects", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeObjects", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the containerRemoveObjects method with the specified environment.
@@ -7812,7 +7894,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode containerRemoveObjects(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeObjects", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeObjects", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -7856,7 +7939,7 @@ public final class DXAPI {
     public static <T> T containerRenameFolder(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "renameFolder",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the containerRenameFolder method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -7901,7 +7984,7 @@ public final class DXAPI {
     public static <T> T containerRenameFolder(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "renameFolder",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -7947,7 +8030,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode containerRenameFolder(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "renameFolder", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "renameFolder", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the containerRenameFolder method with the specified environment.
@@ -7994,7 +8078,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode containerRenameFolder(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "renameFolder", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "renameFolder", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
 
     /**
@@ -8038,7 +8123,7 @@ public final class DXAPI {
     public static <T> T fileAddTags(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "addTags",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the fileAddTags method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -8083,7 +8168,7 @@ public final class DXAPI {
     public static <T> T fileAddTags(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -8129,7 +8214,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileAddTags(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the fileAddTags method with the specified environment.
@@ -8176,7 +8262,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileAddTags(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -8220,7 +8307,7 @@ public final class DXAPI {
     public static <T> T fileAddTypes(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "addTypes",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the fileAddTypes method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -8265,7 +8352,7 @@ public final class DXAPI {
     public static <T> T fileAddTypes(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "addTypes",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -8311,7 +8398,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileAddTypes(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addTypes", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addTypes", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the fileAddTypes method with the specified environment.
@@ -8358,7 +8446,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileAddTypes(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTypes", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTypes", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -8402,7 +8491,7 @@ public final class DXAPI {
     public static <T> T fileClose(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "close",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the fileClose method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -8447,7 +8536,7 @@ public final class DXAPI {
     public static <T> T fileClose(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "close",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -8493,7 +8582,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileClose(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "close", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "close", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the fileClose method with the specified environment.
@@ -8540,7 +8630,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileClose(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "close", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "close", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -8584,7 +8675,7 @@ public final class DXAPI {
     public static <T> T fileDescribe(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "describe",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the fileDescribe method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -8629,7 +8720,7 @@ public final class DXAPI {
     public static <T> T fileDescribe(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "describe",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -8675,7 +8766,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileDescribe(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the fileDescribe method with the specified environment.
@@ -8722,7 +8814,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -8766,7 +8859,7 @@ public final class DXAPI {
     public static <T> T fileDownload(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "download",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the fileDownload method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -8811,7 +8904,7 @@ public final class DXAPI {
     public static <T> T fileDownload(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "download",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -8857,7 +8950,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileDownload(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "download", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "download", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the fileDownload method with the specified environment.
@@ -8904,7 +8998,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileDownload(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "download", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "download", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -8948,7 +9043,7 @@ public final class DXAPI {
     public static <T> T fileGetDetails(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "getDetails",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the fileGetDetails method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -8993,7 +9088,7 @@ public final class DXAPI {
     public static <T> T fileGetDetails(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "getDetails",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -9039,7 +9134,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileGetDetails(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "getDetails", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "getDetails", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the fileGetDetails method with the specified environment.
@@ -9086,7 +9182,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileGetDetails(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "getDetails", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "getDetails", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -9130,7 +9227,7 @@ public final class DXAPI {
     public static <T> T fileListProjects(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "listProjects",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the fileListProjects method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -9175,7 +9272,7 @@ public final class DXAPI {
     public static <T> T fileListProjects(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "listProjects",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -9221,7 +9318,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileListProjects(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "listProjects", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "listProjects", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the fileListProjects method with the specified environment.
@@ -9268,7 +9366,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileListProjects(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "listProjects", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "listProjects", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -9312,7 +9411,7 @@ public final class DXAPI {
     public static <T> T fileRemoveTags(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeTags",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the fileRemoveTags method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -9357,7 +9456,7 @@ public final class DXAPI {
     public static <T> T fileRemoveTags(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -9403,7 +9502,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileRemoveTags(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the fileRemoveTags method with the specified environment.
@@ -9450,7 +9550,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -9494,7 +9595,7 @@ public final class DXAPI {
     public static <T> T fileRemoveTypes(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the fileRemoveTypes method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -9539,7 +9640,7 @@ public final class DXAPI {
     public static <T> T fileRemoveTypes(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTypes",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -9585,7 +9686,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileRemoveTypes(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the fileRemoveTypes method with the specified environment.
@@ -9632,7 +9734,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileRemoveTypes(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTypes", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTypes", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -9676,7 +9779,7 @@ public final class DXAPI {
     public static <T> T fileRename(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "rename",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the fileRename method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -9721,7 +9824,7 @@ public final class DXAPI {
     public static <T> T fileRename(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "rename",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -9767,7 +9870,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileRename(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "rename", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "rename", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the fileRename method with the specified environment.
@@ -9814,7 +9918,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileRename(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "rename", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "rename", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -9858,7 +9963,7 @@ public final class DXAPI {
     public static <T> T fileSetDetails(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "setDetails",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the fileSetDetails method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -9903,7 +10008,7 @@ public final class DXAPI {
     public static <T> T fileSetDetails(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "setDetails",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -9949,7 +10054,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileSetDetails(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "setDetails", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setDetails", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the fileSetDetails method with the specified environment.
@@ -9996,7 +10102,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileSetDetails(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setDetails", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setDetails", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -10040,7 +10147,7 @@ public final class DXAPI {
     public static <T> T fileSetProperties(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "setProperties",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the fileSetProperties method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -10085,7 +10192,7 @@ public final class DXAPI {
     public static <T> T fileSetProperties(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -10131,7 +10238,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileSetProperties(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the fileSetProperties method with the specified environment.
@@ -10178,7 +10286,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileSetProperties(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -10222,7 +10331,7 @@ public final class DXAPI {
     public static <T> T fileSetVisibility(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the fileSetVisibility method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -10267,7 +10376,7 @@ public final class DXAPI {
     public static <T> T fileSetVisibility(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "setVisibility",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -10313,7 +10422,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileSetVisibility(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the fileSetVisibility method with the specified environment.
@@ -10360,7 +10470,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileSetVisibility(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setVisibility", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setVisibility", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -10404,7 +10515,7 @@ public final class DXAPI {
     public static <T> T fileUpload(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "upload",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the fileUpload method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -10449,7 +10560,7 @@ public final class DXAPI {
     public static <T> T fileUpload(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "upload",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -10495,7 +10606,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileUpload(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "upload", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "upload", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the fileUpload method with the specified environment.
@@ -10542,7 +10654,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileUpload(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "upload", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "upload", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -10603,7 +10716,7 @@ public final class DXAPI {
      */
     public static <T> T fileNew(Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/file/new", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest().request("/file/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -10626,7 +10739,7 @@ public final class DXAPI {
      */
     public static <T> T fileNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/file/new", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest(env).request("/file/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -10670,7 +10783,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileNew(JsonNode inputParams) {
-        return new DXHTTPRequest().request("/file/new", inputParams);
+        return new DXHTTPRequest().request("/file/new", inputParams, RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the fileNew method with the specified environment.
@@ -10715,7 +10828,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode fileNew(JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/file/new", inputParams);
+        return new DXHTTPRequest(env).request("/file/new", inputParams, RetryStrategy.UNSAFE_TO_RETRY);
     }
 
     /**
@@ -10759,7 +10872,7 @@ public final class DXAPI {
     public static <T> T gtableAddRows(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "addRows",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the gtableAddRows method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -10804,7 +10917,7 @@ public final class DXAPI {
     public static <T> T gtableAddRows(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "addRows",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -10850,7 +10963,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableAddRows(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addRows", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addRows", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the gtableAddRows method with the specified environment.
@@ -10897,7 +11011,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableAddRows(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addRows", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addRows", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -10941,7 +11056,7 @@ public final class DXAPI {
     public static <T> T gtableAddTags(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "addTags",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the gtableAddTags method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -10986,7 +11101,7 @@ public final class DXAPI {
     public static <T> T gtableAddTags(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -11032,7 +11147,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableAddTags(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the gtableAddTags method with the specified environment.
@@ -11079,7 +11195,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableAddTags(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -11123,7 +11240,7 @@ public final class DXAPI {
     public static <T> T gtableAddTypes(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "addTypes",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the gtableAddTypes method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -11168,7 +11285,7 @@ public final class DXAPI {
     public static <T> T gtableAddTypes(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "addTypes",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -11214,7 +11331,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableAddTypes(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addTypes", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addTypes", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the gtableAddTypes method with the specified environment.
@@ -11261,7 +11379,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableAddTypes(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTypes", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTypes", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -11305,7 +11424,7 @@ public final class DXAPI {
     public static <T> T gtableClose(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "close",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the gtableClose method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -11350,7 +11469,7 @@ public final class DXAPI {
     public static <T> T gtableClose(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "close",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -11396,7 +11515,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableClose(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "close", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "close", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the gtableClose method with the specified environment.
@@ -11443,7 +11563,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableClose(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "close", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "close", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -11487,7 +11608,7 @@ public final class DXAPI {
     public static <T> T gtableDescribe(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "describe",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the gtableDescribe method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -11532,7 +11653,7 @@ public final class DXAPI {
     public static <T> T gtableDescribe(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "describe",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -11578,7 +11699,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableDescribe(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the gtableDescribe method with the specified environment.
@@ -11625,7 +11747,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -11669,7 +11792,7 @@ public final class DXAPI {
     public static <T> T gtableGet(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "get",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the gtableGet method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -11714,7 +11837,7 @@ public final class DXAPI {
     public static <T> T gtableGet(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "get",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -11760,7 +11883,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableGet(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "get", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "get", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the gtableGet method with the specified environment.
@@ -11807,7 +11931,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableGet(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "get", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "get", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -11851,7 +11976,7 @@ public final class DXAPI {
     public static <T> T gtableGetDetails(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "getDetails",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the gtableGetDetails method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -11896,7 +12021,7 @@ public final class DXAPI {
     public static <T> T gtableGetDetails(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "getDetails",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -11942,7 +12067,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableGetDetails(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "getDetails", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "getDetails", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the gtableGetDetails method with the specified environment.
@@ -11989,7 +12115,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableGetDetails(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "getDetails", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "getDetails", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -12033,7 +12160,7 @@ public final class DXAPI {
     public static <T> T gtableListProjects(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "listProjects",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the gtableListProjects method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -12078,7 +12205,7 @@ public final class DXAPI {
     public static <T> T gtableListProjects(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "listProjects",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -12124,7 +12251,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableListProjects(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "listProjects", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "listProjects", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the gtableListProjects method with the specified environment.
@@ -12171,7 +12299,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableListProjects(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "listProjects", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "listProjects", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -12215,7 +12344,7 @@ public final class DXAPI {
     public static <T> T gtableNextPart(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "nextPart",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the gtableNextPart method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -12260,7 +12389,7 @@ public final class DXAPI {
     public static <T> T gtableNextPart(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "nextPart",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -12306,7 +12435,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableNextPart(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "nextPart", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "nextPart", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the gtableNextPart method with the specified environment.
@@ -12353,7 +12483,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableNextPart(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "nextPart", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "nextPart", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -12397,7 +12528,7 @@ public final class DXAPI {
     public static <T> T gtableRemoveTags(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeTags",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the gtableRemoveTags method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -12442,7 +12573,7 @@ public final class DXAPI {
     public static <T> T gtableRemoveTags(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -12488,7 +12619,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableRemoveTags(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the gtableRemoveTags method with the specified environment.
@@ -12535,7 +12667,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -12579,7 +12712,7 @@ public final class DXAPI {
     public static <T> T gtableRemoveTypes(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the gtableRemoveTypes method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -12624,7 +12757,7 @@ public final class DXAPI {
     public static <T> T gtableRemoveTypes(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTypes",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -12670,7 +12803,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableRemoveTypes(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the gtableRemoveTypes method with the specified environment.
@@ -12717,7 +12851,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableRemoveTypes(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTypes", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTypes", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -12761,7 +12896,7 @@ public final class DXAPI {
     public static <T> T gtableRename(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "rename",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the gtableRename method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -12806,7 +12941,7 @@ public final class DXAPI {
     public static <T> T gtableRename(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "rename",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -12852,7 +12987,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableRename(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "rename", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "rename", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the gtableRename method with the specified environment.
@@ -12899,7 +13035,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableRename(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "rename", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "rename", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -12943,7 +13080,7 @@ public final class DXAPI {
     public static <T> T gtableSetDetails(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "setDetails",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the gtableSetDetails method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -12988,7 +13125,7 @@ public final class DXAPI {
     public static <T> T gtableSetDetails(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "setDetails",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -13034,7 +13171,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableSetDetails(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "setDetails", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setDetails", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the gtableSetDetails method with the specified environment.
@@ -13081,7 +13219,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableSetDetails(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setDetails", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setDetails", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -13125,7 +13264,7 @@ public final class DXAPI {
     public static <T> T gtableSetProperties(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "setProperties",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the gtableSetProperties method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -13170,7 +13309,7 @@ public final class DXAPI {
     public static <T> T gtableSetProperties(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -13216,7 +13355,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableSetProperties(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the gtableSetProperties method with the specified environment.
@@ -13263,7 +13403,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableSetProperties(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -13307,7 +13448,7 @@ public final class DXAPI {
     public static <T> T gtableSetVisibility(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the gtableSetVisibility method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -13352,7 +13493,7 @@ public final class DXAPI {
     public static <T> T gtableSetVisibility(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "setVisibility",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -13398,7 +13539,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableSetVisibility(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the gtableSetVisibility method with the specified environment.
@@ -13445,7 +13587,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableSetVisibility(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setVisibility", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setVisibility", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -13506,7 +13649,7 @@ public final class DXAPI {
      */
     public static <T> T gtableNew(Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/gtable/new", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest().request("/gtable/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -13529,7 +13672,7 @@ public final class DXAPI {
      */
     public static <T> T gtableNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/gtable/new", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest(env).request("/gtable/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -13573,7 +13716,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableNew(JsonNode inputParams) {
-        return new DXHTTPRequest().request("/gtable/new", inputParams);
+        return new DXHTTPRequest().request("/gtable/new", inputParams, RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the gtableNew method with the specified environment.
@@ -13618,7 +13761,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode gtableNew(JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/gtable/new", inputParams);
+        return new DXHTTPRequest(env).request("/gtable/new", inputParams, RetryStrategy.UNSAFE_TO_RETRY);
     }
 
     /**
@@ -13662,7 +13805,7 @@ public final class DXAPI {
     public static <T> T jobAddTags(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "addTags",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the jobAddTags method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -13707,7 +13850,7 @@ public final class DXAPI {
     public static <T> T jobAddTags(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -13753,7 +13896,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode jobAddTags(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the jobAddTags method with the specified environment.
@@ -13800,7 +13944,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode jobAddTags(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -13844,7 +13989,7 @@ public final class DXAPI {
     public static <T> T jobDescribe(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "describe",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the jobDescribe method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -13889,7 +14034,7 @@ public final class DXAPI {
     public static <T> T jobDescribe(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "describe",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -13935,7 +14080,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode jobDescribe(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the jobDescribe method with the specified environment.
@@ -13982,7 +14128,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode jobDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -14026,7 +14173,7 @@ public final class DXAPI {
     public static <T> T jobGetLog(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "getLog",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the jobGetLog method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -14071,7 +14218,7 @@ public final class DXAPI {
     public static <T> T jobGetLog(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "getLog",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -14117,7 +14264,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode jobGetLog(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "getLog", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "getLog", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the jobGetLog method with the specified environment.
@@ -14164,7 +14312,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode jobGetLog(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "getLog", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "getLog", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
 
     /**
@@ -14208,7 +14357,7 @@ public final class DXAPI {
     public static <T> T jobRemoveTags(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeTags",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the jobRemoveTags method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -14253,7 +14402,7 @@ public final class DXAPI {
     public static <T> T jobRemoveTags(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -14299,7 +14448,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode jobRemoveTags(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the jobRemoveTags method with the specified environment.
@@ -14346,7 +14496,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode jobRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -14390,7 +14541,7 @@ public final class DXAPI {
     public static <T> T jobSetProperties(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "setProperties",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the jobSetProperties method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -14435,7 +14586,7 @@ public final class DXAPI {
     public static <T> T jobSetProperties(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -14481,7 +14632,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode jobSetProperties(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the jobSetProperties method with the specified environment.
@@ -14528,7 +14680,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode jobSetProperties(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -14572,7 +14725,7 @@ public final class DXAPI {
     public static <T> T jobTerminate(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "terminate",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the jobTerminate method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -14617,7 +14770,7 @@ public final class DXAPI {
     public static <T> T jobTerminate(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "terminate",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -14663,7 +14816,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode jobTerminate(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "terminate", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "terminate", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the jobTerminate method with the specified environment.
@@ -14710,7 +14864,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode jobTerminate(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "terminate", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "terminate", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -14771,7 +14926,7 @@ public final class DXAPI {
      */
     public static <T> T jobNew(Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/job/new", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest().request("/job/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -14794,7 +14949,7 @@ public final class DXAPI {
      */
     public static <T> T jobNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/job/new", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest(env).request("/job/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -14838,7 +14993,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode jobNew(JsonNode inputParams) {
-        return new DXHTTPRequest().request("/job/new", inputParams);
+        return new DXHTTPRequest().request("/job/new", inputParams, RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the jobNew method with the specified environment.
@@ -14883,7 +15038,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode jobNew(JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/job/new", inputParams);
+        return new DXHTTPRequest(env).request("/job/new", inputParams, RetryStrategy.UNSAFE_TO_RETRY);
     }
 
     /**
@@ -14938,7 +15093,7 @@ public final class DXAPI {
      */
     public static <T> T notificationsGet(Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/notifications/get", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest().request("/notifications/get", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -14959,7 +15114,7 @@ public final class DXAPI {
      */
     public static <T> T notificationsGet(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/notifications/get", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest(env).request("/notifications/get", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -14999,7 +15154,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode notificationsGet(JsonNode inputParams) {
-        return new DXHTTPRequest().request("/notifications/get", inputParams);
+        return new DXHTTPRequest().request("/notifications/get", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the notificationsGet method with the specified environment.
@@ -15040,7 +15195,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode notificationsGet(JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/notifications/get", inputParams);
+        return new DXHTTPRequest(env).request("/notifications/get", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -15095,7 +15250,7 @@ public final class DXAPI {
      */
     public static <T> T notificationsMarkRead(Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/notifications/markRead", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest().request("/notifications/markRead", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -15116,7 +15271,7 @@ public final class DXAPI {
      */
     public static <T> T notificationsMarkRead(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/notifications/markRead", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest(env).request("/notifications/markRead", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -15156,7 +15311,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode notificationsMarkRead(JsonNode inputParams) {
-        return new DXHTTPRequest().request("/notifications/markRead", inputParams);
+        return new DXHTTPRequest().request("/notifications/markRead", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the notificationsMarkRead method with the specified environment.
@@ -15197,7 +15352,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode notificationsMarkRead(JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/notifications/markRead", inputParams);
+        return new DXHTTPRequest(env).request("/notifications/markRead", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -15241,7 +15396,7 @@ public final class DXAPI {
     public static <T> T projectAddTags(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "addTags",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the projectAddTags method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -15286,7 +15441,7 @@ public final class DXAPI {
     public static <T> T projectAddTags(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -15332,7 +15487,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectAddTags(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the projectAddTags method with the specified environment.
@@ -15379,7 +15535,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectAddTags(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -15423,7 +15580,7 @@ public final class DXAPI {
     public static <T> T projectClone(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "clone",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the projectClone method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -15468,7 +15625,7 @@ public final class DXAPI {
     public static <T> T projectClone(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "clone",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -15514,7 +15671,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectClone(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "clone", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "clone", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the projectClone method with the specified environment.
@@ -15561,7 +15719,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectClone(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "clone", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "clone", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
 
     /**
@@ -15605,7 +15764,7 @@ public final class DXAPI {
     public static <T> T projectDecreasePermissions(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "decreasePermissions",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the projectDecreasePermissions method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -15650,7 +15809,7 @@ public final class DXAPI {
     public static <T> T projectDecreasePermissions(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "decreasePermissions",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -15696,7 +15855,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectDecreasePermissions(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "decreasePermissions", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "decreasePermissions", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the projectDecreasePermissions method with the specified environment.
@@ -15743,7 +15903,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectDecreasePermissions(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "decreasePermissions", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "decreasePermissions", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -15787,7 +15948,7 @@ public final class DXAPI {
     public static <T> T projectDescribe(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "describe",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the projectDescribe method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -15832,7 +15993,7 @@ public final class DXAPI {
     public static <T> T projectDescribe(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "describe",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -15878,7 +16039,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectDescribe(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the projectDescribe method with the specified environment.
@@ -15925,7 +16087,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -15969,7 +16132,7 @@ public final class DXAPI {
     public static <T> T projectDestroy(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "destroy",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the projectDestroy method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -16014,7 +16177,7 @@ public final class DXAPI {
     public static <T> T projectDestroy(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "destroy",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -16060,7 +16223,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectDestroy(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "destroy", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "destroy", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the projectDestroy method with the specified environment.
@@ -16107,7 +16271,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectDestroy(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "destroy", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "destroy", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -16151,7 +16316,7 @@ public final class DXAPI {
     public static <T> T projectInvite(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "invite",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the projectInvite method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -16196,7 +16361,7 @@ public final class DXAPI {
     public static <T> T projectInvite(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "invite",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -16242,7 +16407,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectInvite(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "invite", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "invite", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the projectInvite method with the specified environment.
@@ -16289,7 +16455,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectInvite(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "invite", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "invite", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
 
     /**
@@ -16333,7 +16500,7 @@ public final class DXAPI {
     public static <T> T projectLeave(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "leave",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the projectLeave method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -16378,7 +16545,7 @@ public final class DXAPI {
     public static <T> T projectLeave(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "leave",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -16424,7 +16591,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectLeave(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "leave", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "leave", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the projectLeave method with the specified environment.
@@ -16471,7 +16639,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectLeave(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "leave", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "leave", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -16515,7 +16684,7 @@ public final class DXAPI {
     public static <T> T projectListFolder(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "listFolder",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the projectListFolder method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -16560,7 +16729,7 @@ public final class DXAPI {
     public static <T> T projectListFolder(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "listFolder",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -16606,7 +16775,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectListFolder(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "listFolder", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "listFolder", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the projectListFolder method with the specified environment.
@@ -16653,7 +16823,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectListFolder(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "listFolder", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "listFolder", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -16697,7 +16868,7 @@ public final class DXAPI {
     public static <T> T projectMove(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "move",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the projectMove method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -16742,7 +16913,7 @@ public final class DXAPI {
     public static <T> T projectMove(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "move",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -16788,7 +16959,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectMove(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "move", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "move", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the projectMove method with the specified environment.
@@ -16835,7 +17007,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectMove(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "move", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "move", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
 
     /**
@@ -16879,7 +17052,7 @@ public final class DXAPI {
     public static <T> T projectNewFolder(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "newFolder",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the projectNewFolder method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -16924,7 +17097,7 @@ public final class DXAPI {
     public static <T> T projectNewFolder(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "newFolder",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -16970,7 +17143,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectNewFolder(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "newFolder", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "newFolder", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the projectNewFolder method with the specified environment.
@@ -17017,7 +17191,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectNewFolder(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "newFolder", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "newFolder", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -17061,7 +17236,7 @@ public final class DXAPI {
     public static <T> T projectRemoveFolder(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeFolder",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the projectRemoveFolder method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -17106,7 +17281,7 @@ public final class DXAPI {
     public static <T> T projectRemoveFolder(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeFolder",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -17152,7 +17327,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectRemoveFolder(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeFolder", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeFolder", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the projectRemoveFolder method with the specified environment.
@@ -17199,7 +17375,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectRemoveFolder(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeFolder", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeFolder", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -17243,7 +17420,7 @@ public final class DXAPI {
     public static <T> T projectRemoveObjects(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeObjects",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the projectRemoveObjects method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -17288,7 +17465,7 @@ public final class DXAPI {
     public static <T> T projectRemoveObjects(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeObjects",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -17334,7 +17511,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectRemoveObjects(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeObjects", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeObjects", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the projectRemoveObjects method with the specified environment.
@@ -17381,7 +17559,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectRemoveObjects(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeObjects", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeObjects", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -17425,7 +17604,7 @@ public final class DXAPI {
     public static <T> T projectRemoveTags(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeTags",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the projectRemoveTags method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -17470,7 +17649,7 @@ public final class DXAPI {
     public static <T> T projectRemoveTags(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -17516,7 +17695,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectRemoveTags(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the projectRemoveTags method with the specified environment.
@@ -17563,7 +17743,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -17607,7 +17788,7 @@ public final class DXAPI {
     public static <T> T projectRenameFolder(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "renameFolder",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the projectRenameFolder method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -17652,7 +17833,7 @@ public final class DXAPI {
     public static <T> T projectRenameFolder(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "renameFolder",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -17698,7 +17879,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectRenameFolder(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "renameFolder", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "renameFolder", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the projectRenameFolder method with the specified environment.
@@ -17745,7 +17927,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectRenameFolder(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "renameFolder", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "renameFolder", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
 
     /**
@@ -17789,7 +17972,7 @@ public final class DXAPI {
     public static <T> T projectSetProperties(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "setProperties",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the projectSetProperties method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -17834,7 +18017,7 @@ public final class DXAPI {
     public static <T> T projectSetProperties(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -17880,7 +18063,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectSetProperties(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the projectSetProperties method with the specified environment.
@@ -17927,7 +18111,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectSetProperties(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -17971,7 +18156,7 @@ public final class DXAPI {
     public static <T> T projectTransfer(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "transfer",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the projectTransfer method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -18016,7 +18201,7 @@ public final class DXAPI {
     public static <T> T projectTransfer(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "transfer",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -18062,7 +18247,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectTransfer(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "transfer", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "transfer", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the projectTransfer method with the specified environment.
@@ -18109,7 +18295,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectTransfer(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "transfer", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "transfer", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -18153,7 +18340,7 @@ public final class DXAPI {
     public static <T> T projectUpdate(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "update",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the projectUpdate method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -18198,7 +18385,7 @@ public final class DXAPI {
     public static <T> T projectUpdate(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "update",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -18244,7 +18431,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectUpdate(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "update", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "update", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the projectUpdate method with the specified environment.
@@ -18291,7 +18479,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectUpdate(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "update", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "update", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -18352,7 +18541,7 @@ public final class DXAPI {
      */
     public static <T> T projectNew(Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/project/new", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest().request("/project/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -18375,7 +18564,7 @@ public final class DXAPI {
      */
     public static <T> T projectNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/project/new", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest(env).request("/project/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -18419,7 +18608,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectNew(JsonNode inputParams) {
-        return new DXHTTPRequest().request("/project/new", inputParams);
+        return new DXHTTPRequest().request("/project/new", inputParams, RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the projectNew method with the specified environment.
@@ -18464,7 +18653,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode projectNew(JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/project/new", inputParams);
+        return new DXHTTPRequest(env).request("/project/new", inputParams, RetryStrategy.UNSAFE_TO_RETRY);
     }
 
     /**
@@ -18508,7 +18697,7 @@ public final class DXAPI {
     public static <T> T recordAddTags(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "addTags",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the recordAddTags method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -18553,7 +18742,7 @@ public final class DXAPI {
     public static <T> T recordAddTags(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -18599,7 +18788,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordAddTags(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the recordAddTags method with the specified environment.
@@ -18646,7 +18836,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordAddTags(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -18690,7 +18881,7 @@ public final class DXAPI {
     public static <T> T recordAddTypes(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "addTypes",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the recordAddTypes method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -18735,7 +18926,7 @@ public final class DXAPI {
     public static <T> T recordAddTypes(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "addTypes",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -18781,7 +18972,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordAddTypes(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addTypes", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addTypes", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the recordAddTypes method with the specified environment.
@@ -18828,7 +19020,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordAddTypes(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTypes", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTypes", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -18872,7 +19065,7 @@ public final class DXAPI {
     public static <T> T recordClose(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "close",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the recordClose method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -18917,7 +19110,7 @@ public final class DXAPI {
     public static <T> T recordClose(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "close",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -18963,7 +19156,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordClose(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "close", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "close", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the recordClose method with the specified environment.
@@ -19010,7 +19204,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordClose(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "close", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "close", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -19054,7 +19249,7 @@ public final class DXAPI {
     public static <T> T recordDescribe(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "describe",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the recordDescribe method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -19099,7 +19294,7 @@ public final class DXAPI {
     public static <T> T recordDescribe(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "describe",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -19145,7 +19340,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordDescribe(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the recordDescribe method with the specified environment.
@@ -19192,7 +19388,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -19236,7 +19433,7 @@ public final class DXAPI {
     public static <T> T recordGetDetails(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "getDetails",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the recordGetDetails method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -19281,7 +19478,7 @@ public final class DXAPI {
     public static <T> T recordGetDetails(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "getDetails",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -19327,7 +19524,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordGetDetails(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "getDetails", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "getDetails", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the recordGetDetails method with the specified environment.
@@ -19374,7 +19572,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordGetDetails(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "getDetails", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "getDetails", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -19418,7 +19617,7 @@ public final class DXAPI {
     public static <T> T recordListProjects(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "listProjects",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the recordListProjects method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -19463,7 +19662,7 @@ public final class DXAPI {
     public static <T> T recordListProjects(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "listProjects",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -19509,7 +19708,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordListProjects(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "listProjects", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "listProjects", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the recordListProjects method with the specified environment.
@@ -19556,7 +19756,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordListProjects(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "listProjects", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "listProjects", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -19600,7 +19801,7 @@ public final class DXAPI {
     public static <T> T recordRemoveTags(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeTags",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the recordRemoveTags method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -19645,7 +19846,7 @@ public final class DXAPI {
     public static <T> T recordRemoveTags(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -19691,7 +19892,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordRemoveTags(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the recordRemoveTags method with the specified environment.
@@ -19738,7 +19940,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -19782,7 +19985,7 @@ public final class DXAPI {
     public static <T> T recordRemoveTypes(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the recordRemoveTypes method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -19827,7 +20030,7 @@ public final class DXAPI {
     public static <T> T recordRemoveTypes(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTypes",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -19873,7 +20076,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordRemoveTypes(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the recordRemoveTypes method with the specified environment.
@@ -19920,7 +20124,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordRemoveTypes(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTypes", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTypes", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -19964,7 +20169,7 @@ public final class DXAPI {
     public static <T> T recordRename(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "rename",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the recordRename method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -20009,7 +20214,7 @@ public final class DXAPI {
     public static <T> T recordRename(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "rename",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -20055,7 +20260,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordRename(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "rename", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "rename", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the recordRename method with the specified environment.
@@ -20102,7 +20308,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordRename(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "rename", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "rename", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -20146,7 +20353,7 @@ public final class DXAPI {
     public static <T> T recordSetDetails(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "setDetails",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the recordSetDetails method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -20191,7 +20398,7 @@ public final class DXAPI {
     public static <T> T recordSetDetails(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "setDetails",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -20237,7 +20444,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordSetDetails(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "setDetails", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setDetails", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the recordSetDetails method with the specified environment.
@@ -20284,7 +20492,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordSetDetails(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setDetails", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setDetails", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -20328,7 +20537,7 @@ public final class DXAPI {
     public static <T> T recordSetProperties(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "setProperties",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the recordSetProperties method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -20373,7 +20582,7 @@ public final class DXAPI {
     public static <T> T recordSetProperties(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -20419,7 +20628,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordSetProperties(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the recordSetProperties method with the specified environment.
@@ -20466,7 +20676,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordSetProperties(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -20510,7 +20721,7 @@ public final class DXAPI {
     public static <T> T recordSetVisibility(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the recordSetVisibility method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -20555,7 +20766,7 @@ public final class DXAPI {
     public static <T> T recordSetVisibility(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "setVisibility",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -20601,7 +20812,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordSetVisibility(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the recordSetVisibility method with the specified environment.
@@ -20648,7 +20860,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordSetVisibility(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setVisibility", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setVisibility", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -20709,7 +20922,7 @@ public final class DXAPI {
      */
     public static <T> T recordNew(Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/record/new", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest().request("/record/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -20732,7 +20945,7 @@ public final class DXAPI {
      */
     public static <T> T recordNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/record/new", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest(env).request("/record/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -20776,7 +20989,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordNew(JsonNode inputParams) {
-        return new DXHTTPRequest().request("/record/new", inputParams);
+        return new DXHTTPRequest().request("/record/new", inputParams, RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the recordNew method with the specified environment.
@@ -20821,7 +21034,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode recordNew(JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/record/new", inputParams);
+        return new DXHTTPRequest(env).request("/record/new", inputParams, RetryStrategy.UNSAFE_TO_RETRY);
     }
 
     /**
@@ -20876,7 +21089,7 @@ public final class DXAPI {
      */
     public static <T> T systemFindAffiliates(Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/system/findAffiliates", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest().request("/system/findAffiliates", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -20897,7 +21110,7 @@ public final class DXAPI {
      */
     public static <T> T systemFindAffiliates(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/system/findAffiliates", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest(env).request("/system/findAffiliates", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -20937,7 +21150,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode systemFindAffiliates(JsonNode inputParams) {
-        return new DXHTTPRequest().request("/system/findAffiliates", inputParams);
+        return new DXHTTPRequest().request("/system/findAffiliates", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the systemFindAffiliates method with the specified environment.
@@ -20978,7 +21191,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode systemFindAffiliates(JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/system/findAffiliates", inputParams);
+        return new DXHTTPRequest(env).request("/system/findAffiliates", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -21039,7 +21252,7 @@ public final class DXAPI {
      */
     public static <T> T systemFindApps(Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/system/findApps", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest().request("/system/findApps", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -21062,7 +21275,7 @@ public final class DXAPI {
      */
     public static <T> T systemFindApps(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/system/findApps", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest(env).request("/system/findApps", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -21106,7 +21319,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode systemFindApps(JsonNode inputParams) {
-        return new DXHTTPRequest().request("/system/findApps", inputParams);
+        return new DXHTTPRequest().request("/system/findApps", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the systemFindApps method with the specified environment.
@@ -21151,7 +21364,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode systemFindApps(JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/system/findApps", inputParams);
+        return new DXHTTPRequest(env).request("/system/findApps", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -21212,7 +21425,7 @@ public final class DXAPI {
      */
     public static <T> T systemFindDataObjects(Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/system/findDataObjects", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest().request("/system/findDataObjects", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -21235,7 +21448,7 @@ public final class DXAPI {
      */
     public static <T> T systemFindDataObjects(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/system/findDataObjects", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest(env).request("/system/findDataObjects", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -21279,7 +21492,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode systemFindDataObjects(JsonNode inputParams) {
-        return new DXHTTPRequest().request("/system/findDataObjects", inputParams);
+        return new DXHTTPRequest().request("/system/findDataObjects", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the systemFindDataObjects method with the specified environment.
@@ -21324,7 +21537,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode systemFindDataObjects(JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/system/findDataObjects", inputParams);
+        return new DXHTTPRequest(env).request("/system/findDataObjects", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -21385,7 +21598,7 @@ public final class DXAPI {
      */
     public static <T> T systemFindExecutions(Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/system/findExecutions", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest().request("/system/findExecutions", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -21408,7 +21621,7 @@ public final class DXAPI {
      */
     public static <T> T systemFindExecutions(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/system/findExecutions", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest(env).request("/system/findExecutions", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -21452,7 +21665,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode systemFindExecutions(JsonNode inputParams) {
-        return new DXHTTPRequest().request("/system/findExecutions", inputParams);
+        return new DXHTTPRequest().request("/system/findExecutions", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the systemFindExecutions method with the specified environment.
@@ -21497,7 +21710,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode systemFindExecutions(JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/system/findExecutions", inputParams);
+        return new DXHTTPRequest(env).request("/system/findExecutions", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -21558,7 +21771,7 @@ public final class DXAPI {
      */
     public static <T> T systemFindAnalyses(Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/system/findAnalyses", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest().request("/system/findAnalyses", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -21581,7 +21794,7 @@ public final class DXAPI {
      */
     public static <T> T systemFindAnalyses(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/system/findAnalyses", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest(env).request("/system/findAnalyses", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -21625,7 +21838,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode systemFindAnalyses(JsonNode inputParams) {
-        return new DXHTTPRequest().request("/system/findAnalyses", inputParams);
+        return new DXHTTPRequest().request("/system/findAnalyses", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the systemFindAnalyses method with the specified environment.
@@ -21670,7 +21883,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode systemFindAnalyses(JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/system/findAnalyses", inputParams);
+        return new DXHTTPRequest(env).request("/system/findAnalyses", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -21731,7 +21944,7 @@ public final class DXAPI {
      */
     public static <T> T systemFindJobs(Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/system/findJobs", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest().request("/system/findJobs", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -21754,7 +21967,7 @@ public final class DXAPI {
      */
     public static <T> T systemFindJobs(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/system/findJobs", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest(env).request("/system/findJobs", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -21798,7 +22011,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode systemFindJobs(JsonNode inputParams) {
-        return new DXHTTPRequest().request("/system/findJobs", inputParams);
+        return new DXHTTPRequest().request("/system/findJobs", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the systemFindJobs method with the specified environment.
@@ -21843,7 +22056,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode systemFindJobs(JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/system/findJobs", inputParams);
+        return new DXHTTPRequest(env).request("/system/findJobs", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -21904,7 +22117,7 @@ public final class DXAPI {
      */
     public static <T> T systemFindProjects(Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/system/findProjects", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest().request("/system/findProjects", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -21927,7 +22140,7 @@ public final class DXAPI {
      */
     public static <T> T systemFindProjects(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/system/findProjects", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest(env).request("/system/findProjects", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -21971,7 +22184,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode systemFindProjects(JsonNode inputParams) {
-        return new DXHTTPRequest().request("/system/findProjects", inputParams);
+        return new DXHTTPRequest().request("/system/findProjects", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the systemFindProjects method with the specified environment.
@@ -22016,7 +22229,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode systemFindProjects(JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/system/findProjects", inputParams);
+        return new DXHTTPRequest(env).request("/system/findProjects", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -22077,7 +22290,7 @@ public final class DXAPI {
      */
     public static <T> T systemFindUsers(Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/system/findUsers", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest().request("/system/findUsers", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -22100,7 +22313,7 @@ public final class DXAPI {
      */
     public static <T> T systemFindUsers(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/system/findUsers", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest(env).request("/system/findUsers", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -22144,7 +22357,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode systemFindUsers(JsonNode inputParams) {
-        return new DXHTTPRequest().request("/system/findUsers", inputParams);
+        return new DXHTTPRequest().request("/system/findUsers", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the systemFindUsers method with the specified environment.
@@ -22189,7 +22402,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode systemFindUsers(JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/system/findUsers", inputParams);
+        return new DXHTTPRequest(env).request("/system/findUsers", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -22250,7 +22463,7 @@ public final class DXAPI {
      */
     public static <T> T systemFindProjectMembers(Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/system/findProjectMembers", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest().request("/system/findProjectMembers", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -22273,7 +22486,7 @@ public final class DXAPI {
      */
     public static <T> T systemFindProjectMembers(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/system/findProjectMembers", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest(env).request("/system/findProjectMembers", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -22317,7 +22530,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode systemFindProjectMembers(JsonNode inputParams) {
-        return new DXHTTPRequest().request("/system/findProjectMembers", inputParams);
+        return new DXHTTPRequest().request("/system/findProjectMembers", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the systemFindProjectMembers method with the specified environment.
@@ -22362,7 +22575,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode systemFindProjectMembers(JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/system/findProjectMembers", inputParams);
+        return new DXHTTPRequest(env).request("/system/findProjectMembers", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -22417,7 +22630,7 @@ public final class DXAPI {
      */
     public static <T> T systemGreet(Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/system/greet", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest().request("/system/greet", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -22438,7 +22651,7 @@ public final class DXAPI {
      */
     public static <T> T systemGreet(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/system/greet", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest(env).request("/system/greet", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -22478,7 +22691,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode systemGreet(JsonNode inputParams) {
-        return new DXHTTPRequest().request("/system/greet", inputParams);
+        return new DXHTTPRequest().request("/system/greet", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the systemGreet method with the specified environment.
@@ -22519,7 +22732,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode systemGreet(JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/system/greet", inputParams);
+        return new DXHTTPRequest(env).request("/system/greet", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -22574,7 +22787,7 @@ public final class DXAPI {
      */
     public static <T> T systemShortenURL(Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/system/shortenURL", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest().request("/system/shortenURL", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -22595,7 +22808,7 @@ public final class DXAPI {
      */
     public static <T> T systemShortenURL(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/system/shortenURL", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest(env).request("/system/shortenURL", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -22635,7 +22848,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode systemShortenURL(JsonNode inputParams) {
-        return new DXHTTPRequest().request("/system/shortenURL", inputParams);
+        return new DXHTTPRequest().request("/system/shortenURL", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the systemShortenURL method with the specified environment.
@@ -22676,7 +22889,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode systemShortenURL(JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/system/shortenURL", inputParams);
+        return new DXHTTPRequest(env).request("/system/shortenURL", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -22720,7 +22933,7 @@ public final class DXAPI {
     public static <T> T userDescribe(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "describe",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the userDescribe method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -22765,7 +22978,7 @@ public final class DXAPI {
     public static <T> T userDescribe(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "describe",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -22811,7 +23024,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode userDescribe(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the userDescribe method with the specified environment.
@@ -22858,7 +23072,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode userDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -22902,7 +23117,7 @@ public final class DXAPI {
     public static <T> T userUpdate(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "update",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the userUpdate method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -22947,7 +23162,7 @@ public final class DXAPI {
     public static <T> T userUpdate(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "update",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -22993,7 +23208,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode userUpdate(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "update", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "update", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the userUpdate method with the specified environment.
@@ -23040,7 +23256,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode userUpdate(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "update", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "update", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
 
     /**
@@ -23084,7 +23301,7 @@ public final class DXAPI {
     public static <T> T workflowAddStage(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "addStage",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowAddStage method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -23129,7 +23346,7 @@ public final class DXAPI {
     public static <T> T workflowAddStage(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "addStage",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -23175,7 +23392,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowAddStage(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addStage", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addStage", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the workflowAddStage method with the specified environment.
@@ -23222,7 +23440,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowAddStage(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addStage", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addStage", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -23266,7 +23485,7 @@ public final class DXAPI {
     public static <T> T workflowAddTags(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "addTags",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowAddTags method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -23311,7 +23530,7 @@ public final class DXAPI {
     public static <T> T workflowAddTags(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -23357,7 +23576,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowAddTags(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the workflowAddTags method with the specified environment.
@@ -23404,7 +23624,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowAddTags(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -23448,7 +23669,7 @@ public final class DXAPI {
     public static <T> T workflowAddTypes(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "addTypes",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowAddTypes method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -23493,7 +23714,7 @@ public final class DXAPI {
     public static <T> T workflowAddTypes(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "addTypes",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -23539,7 +23760,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowAddTypes(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addTypes", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addTypes", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the workflowAddTypes method with the specified environment.
@@ -23586,7 +23808,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowAddTypes(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTypes", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTypes", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -23630,7 +23853,7 @@ public final class DXAPI {
     public static <T> T workflowClose(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "close",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowClose method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -23675,7 +23898,7 @@ public final class DXAPI {
     public static <T> T workflowClose(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "close",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -23721,7 +23944,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowClose(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "close", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "close", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the workflowClose method with the specified environment.
@@ -23768,7 +23992,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowClose(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "close", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "close", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -23812,7 +24037,7 @@ public final class DXAPI {
     public static <T> T workflowDescribe(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "describe",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowDescribe method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -23857,7 +24082,7 @@ public final class DXAPI {
     public static <T> T workflowDescribe(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "describe",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -23903,7 +24128,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowDescribe(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the workflowDescribe method with the specified environment.
@@ -23950,7 +24176,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -23994,7 +24221,7 @@ public final class DXAPI {
     public static <T> T workflowDryRun(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "dryRun",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowDryRun method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -24039,7 +24266,7 @@ public final class DXAPI {
     public static <T> T workflowDryRun(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "dryRun",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -24085,7 +24312,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowDryRun(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "dryRun", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "dryRun", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the workflowDryRun method with the specified environment.
@@ -24132,7 +24360,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowDryRun(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "dryRun", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "dryRun", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -24176,7 +24405,7 @@ public final class DXAPI {
     public static <T> T workflowGetDetails(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "getDetails",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowGetDetails method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -24221,7 +24450,7 @@ public final class DXAPI {
     public static <T> T workflowGetDetails(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "getDetails",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -24267,7 +24496,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowGetDetails(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "getDetails", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "getDetails", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the workflowGetDetails method with the specified environment.
@@ -24314,7 +24544,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowGetDetails(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "getDetails", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "getDetails", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -24358,7 +24589,7 @@ public final class DXAPI {
     public static <T> T workflowIsStageCompatible(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "isStageCompatible",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowIsStageCompatible method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -24403,7 +24634,7 @@ public final class DXAPI {
     public static <T> T workflowIsStageCompatible(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "isStageCompatible",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -24449,7 +24680,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowIsStageCompatible(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "isStageCompatible", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "isStageCompatible", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the workflowIsStageCompatible method with the specified environment.
@@ -24496,7 +24728,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowIsStageCompatible(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "isStageCompatible", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "isStageCompatible", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -24540,7 +24773,7 @@ public final class DXAPI {
     public static <T> T workflowListProjects(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "listProjects",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowListProjects method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -24585,7 +24818,7 @@ public final class DXAPI {
     public static <T> T workflowListProjects(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "listProjects",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -24631,7 +24864,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowListProjects(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "listProjects", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "listProjects", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the workflowListProjects method with the specified environment.
@@ -24678,7 +24912,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowListProjects(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "listProjects", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "listProjects", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -24722,7 +24957,7 @@ public final class DXAPI {
     public static <T> T workflowMoveStage(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "moveStage",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowMoveStage method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -24767,7 +25002,7 @@ public final class DXAPI {
     public static <T> T workflowMoveStage(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "moveStage",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -24813,7 +25048,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowMoveStage(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "moveStage", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "moveStage", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the workflowMoveStage method with the specified environment.
@@ -24860,7 +25096,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowMoveStage(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "moveStage", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "moveStage", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -24904,7 +25141,7 @@ public final class DXAPI {
     public static <T> T workflowOverwrite(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "overwrite",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowOverwrite method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -24949,7 +25186,7 @@ public final class DXAPI {
     public static <T> T workflowOverwrite(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "overwrite",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -24995,7 +25232,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowOverwrite(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "overwrite", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "overwrite", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the workflowOverwrite method with the specified environment.
@@ -25042,7 +25280,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowOverwrite(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "overwrite", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "overwrite", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -25086,7 +25325,7 @@ public final class DXAPI {
     public static <T> T workflowRemoveStage(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeStage",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowRemoveStage method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -25131,7 +25370,7 @@ public final class DXAPI {
     public static <T> T workflowRemoveStage(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeStage",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -25177,7 +25416,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowRemoveStage(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeStage", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeStage", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the workflowRemoveStage method with the specified environment.
@@ -25224,7 +25464,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowRemoveStage(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeStage", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeStage", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -25268,7 +25509,7 @@ public final class DXAPI {
     public static <T> T workflowRemoveTags(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeTags",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowRemoveTags method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -25313,7 +25554,7 @@ public final class DXAPI {
     public static <T> T workflowRemoveTags(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -25359,7 +25600,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowRemoveTags(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the workflowRemoveTags method with the specified environment.
@@ -25406,7 +25648,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -25450,7 +25693,7 @@ public final class DXAPI {
     public static <T> T workflowRemoveTypes(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowRemoveTypes method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -25495,7 +25738,7 @@ public final class DXAPI {
     public static <T> T workflowRemoveTypes(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTypes",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -25541,7 +25784,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowRemoveTypes(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the workflowRemoveTypes method with the specified environment.
@@ -25588,7 +25832,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowRemoveTypes(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTypes", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTypes", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -25632,7 +25877,7 @@ public final class DXAPI {
     public static <T> T workflowRename(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "rename",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowRename method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -25677,7 +25922,7 @@ public final class DXAPI {
     public static <T> T workflowRename(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "rename",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -25723,7 +25968,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowRename(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "rename", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "rename", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the workflowRename method with the specified environment.
@@ -25770,7 +26016,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowRename(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "rename", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "rename", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -25814,7 +26061,7 @@ public final class DXAPI {
     public static <T> T workflowRun(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "run",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowRun method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -25859,7 +26106,7 @@ public final class DXAPI {
     public static <T> T workflowRun(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "run",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -25905,7 +26152,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowRun(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "run", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "run", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the workflowRun method with the specified environment.
@@ -25952,7 +26200,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowRun(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "run", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "run", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
 
     /**
@@ -25996,7 +26245,7 @@ public final class DXAPI {
     public static <T> T workflowSetDetails(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "setDetails",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowSetDetails method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -26041,7 +26290,7 @@ public final class DXAPI {
     public static <T> T workflowSetDetails(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "setDetails",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -26087,7 +26336,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowSetDetails(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "setDetails", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setDetails", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the workflowSetDetails method with the specified environment.
@@ -26134,7 +26384,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowSetDetails(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setDetails", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setDetails", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -26178,7 +26429,7 @@ public final class DXAPI {
     public static <T> T workflowSetProperties(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "setProperties",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowSetProperties method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -26223,7 +26474,7 @@ public final class DXAPI {
     public static <T> T workflowSetProperties(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -26269,7 +26520,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowSetProperties(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the workflowSetProperties method with the specified environment.
@@ -26316,7 +26568,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowSetProperties(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -26360,7 +26613,7 @@ public final class DXAPI {
     public static <T> T workflowSetStageInputs(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "setStageInputs",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowSetStageInputs method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -26405,7 +26658,7 @@ public final class DXAPI {
     public static <T> T workflowSetStageInputs(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "setStageInputs",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -26451,7 +26704,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowSetStageInputs(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "setStageInputs", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setStageInputs", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the workflowSetStageInputs method with the specified environment.
@@ -26498,7 +26752,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowSetStageInputs(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setStageInputs", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setStageInputs", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -26542,7 +26797,7 @@ public final class DXAPI {
     public static <T> T workflowSetVisibility(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowSetVisibility method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -26587,7 +26842,7 @@ public final class DXAPI {
     public static <T> T workflowSetVisibility(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "setVisibility",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -26633,7 +26888,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowSetVisibility(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the workflowSetVisibility method with the specified environment.
@@ -26680,7 +26936,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowSetVisibility(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setVisibility", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setVisibility", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -26724,7 +26981,7 @@ public final class DXAPI {
     public static <T> T workflowUpdate(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "update",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowUpdate method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -26769,7 +27026,7 @@ public final class DXAPI {
     public static <T> T workflowUpdate(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "update",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -26815,7 +27072,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowUpdate(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "update", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "update", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the workflowUpdate method with the specified environment.
@@ -26862,7 +27120,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowUpdate(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "update", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "update", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -26906,7 +27165,7 @@ public final class DXAPI {
     public static <T> T workflowUpdateStageExecutable(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "updateStageExecutable",
-                        mapper.valueToTree(inputObject)), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowUpdateStageExecutable method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -26951,7 +27210,7 @@ public final class DXAPI {
     public static <T> T workflowUpdateStageExecutable(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "updateStageExecutable",
-                    mapper.valueToTree(inputObject)), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -26997,7 +27256,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowUpdateStageExecutable(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "updateStageExecutable", inputParams);
+        return new DXHTTPRequest().request("/" + objectId + "/" + "updateStageExecutable", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
     /**
      * Invokes the workflowUpdateStageExecutable method with the specified environment.
@@ -27044,7 +27304,8 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowUpdateStageExecutable(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "updateStageExecutable", inputParams);
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "updateStageExecutable", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -27105,7 +27366,7 @@ public final class DXAPI {
      */
     public static <T> T workflowNew(Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/workflow/new", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest().request("/workflow/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -27128,7 +27389,7 @@ public final class DXAPI {
      */
     public static <T> T workflowNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/workflow/new", mapper.valueToTree(inputObject)),
+                new DXHTTPRequest(env).request("/workflow/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -27172,7 +27433,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowNew(JsonNode inputParams) {
-        return new DXHTTPRequest().request("/workflow/new", inputParams);
+        return new DXHTTPRequest().request("/workflow/new", inputParams, RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the workflowNew method with the specified environment.
@@ -27217,7 +27478,7 @@ public final class DXAPI {
      */
     @Deprecated
     public static JsonNode workflowNew(JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/workflow/new", inputParams);
+        return new DXHTTPRequest(env).request("/workflow/new", inputParams, RetryStrategy.UNSAFE_TO_RETRY);
     }
 }
 

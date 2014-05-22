@@ -16,6 +16,7 @@
 
 package com.dnanexus;
 
+import com.dnanexus.DXHTTPRequest.RetryStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -182,14 +183,15 @@ public class DXProject extends DXContainer {
      * @return a {@code Describe} object containing metadata
      */
     public Describe describe() {
-        return DXJSON.safeTreeToValue(apiCallOnObject("describe"), Describe.class);
+        return DXJSON.safeTreeToValue(apiCallOnObject("describe", RetryStrategy.SAFE_TO_RETRY),
+                Describe.class);
     }
 
     /**
      * Destroys the project and all its contents.
      */
     public void destroy() {
-        this.apiCallOnObject("destroy");
+        this.apiCallOnObject("destroy", RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**
@@ -199,7 +201,8 @@ public class DXProject extends DXContainer {
      */
     public void destroy(boolean terminateJobs) {
         this.apiCallOnObject("destroy",
-                MAPPER.valueToTree(new ProjectTerminateRequest(terminateJobs)));
+                MAPPER.valueToTree(new ProjectTerminateRequest(terminateJobs)),
+                RetryStrategy.SAFE_TO_RETRY);
     }
 
     // The following unimplemented methods are sorted in approximately
