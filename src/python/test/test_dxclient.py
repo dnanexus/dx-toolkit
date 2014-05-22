@@ -25,7 +25,7 @@ import pexpect
 
 import dxpy
 from dxpy.scripts import dx_build_app
-from dxpy_testutil import DXTestCase
+from dxpy_testutil import DXTestCase, check_output
 import dxpy_testutil as testutil
 from dxpy.packages import requests
 from dxpy.exceptions import DXAPIError
@@ -50,39 +50,6 @@ class DXCalledProcessError(subprocess.CalledProcessError):
         self.stderr = stderr
     def __str__(self):
         return "Command '%s' returned non-zero exit status %d, stderr:\n%s" % (self.cmd, self.returncode, self.stderr)
-
-def check_output(*popenargs, **kwargs):
-    """
-    Adapted version of the builtin subprocess.check_output which sets a
-    "stderr" field on the resulting exception (in addition to "output")
-    if the subprocess fails. (If the command succeeds, the contents of
-    stderr are discarded.)
-
-    Unlike subprocess.check_output, unconditionally decodes the contents of the subprocess stdout and stderr using
-    sys.stdin.encoding.
-    """
-    if 'stdout' in kwargs:
-        raise ValueError('stdout argument not allowed, it will be overridden.')
-    if 'stderr' in kwargs:
-        raise ValueError('stderr argument not allowed, it will be overridden.')
-    # Unplug stdin (if not already overridden) so that dx doesn't prompt
-    # user for input at the tty
-    process = subprocess.Popen(stdin=kwargs.get('stdin', subprocess.PIPE),
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, *popenargs, **kwargs)
-    output, err = process.communicate()
-    retcode = process.poll()
-    if not isinstance(output, str):
-        output = output.decode(sys.stdin.encoding)
-    if not isinstance(err, str):
-        err = err.decode(sys.stdin.encoding)
-    if retcode:
-        print(err)
-        cmd = kwargs.get("args")
-        if cmd is None:
-            cmd = popenargs[0]
-        exc = DXCalledProcessError(retcode, cmd, output=output, stderr=err)
-        raise exc
-    return output
 
 def run(command, **kwargs):
     print("$ %s" % (command,))

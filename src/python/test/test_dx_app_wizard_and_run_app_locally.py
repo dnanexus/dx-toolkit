@@ -22,7 +22,7 @@ from __future__ import print_function, unicode_literals
 import os, sys, unittest, json, tempfile, subprocess
 import pexpect
 
-from dxpy_testutil import DXTestCase
+from dxpy_testutil import DXTestCase, check_output
 import dxpy_testutil as testutil
 
 import dxpy
@@ -32,7 +32,7 @@ supported_languages = ['Python', 'C++', 'bash']
 
 def run_dx_app_wizard():
     old_cwd = os.getcwd()
-    tempdir = tempfile.mkdtemp()
+    tempdir = tempfile.mkdtemp(prefix='Программа')
     os.chdir(tempdir)
     try:
         wizard = pexpect.spawn("dx-app-wizard")
@@ -152,7 +152,7 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
 
     def test_dx_run_app_locally(self):
         appdir = create_app_dir()
-        output = subprocess.check_output(['dx-run-app-locally', appdir, '-iin1=8'])
+        output = check_output(['dx-run-app-locally', appdir, '-iin1=8'])
         print(output)
         self.assertIn("App finished successfully", output)
         self.assertIn("Final output: out1 = 140", output)
