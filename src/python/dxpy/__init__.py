@@ -280,8 +280,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
     last_error = None
     for retry in range(max_retries + 1):
         streaming_response_truncated = False
+        response = None
         try:
-            response = None
             response = session_handler.request(method, url, data=data, headers=headers, timeout=timeout, auth=auth,
                                                **kwargs)
 
@@ -348,14 +348,17 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
             last_error = e
 
             # TODO: support HTTP/1.1 503 Retry-After
-            # TODO: if the socket was dropped mid-request, ConnectionError or httplib.IncompleteRead is raised,
-            # but non-idempotent requests can be unsafe to retry
-            # Distinguish between connection initiation errors and dropped socket errors
+            # TODO: if the socket was dropped mid-request,
+            # ConnectionError or httplib.IncompleteRead is raised, but
+            # non-idempotent requests can be unsafe to retry. We should
+            # distinguish between connection initiation errors and
+            # dropped socket errors. Currently the former are not
+            # retried even if it might be safe to do so.
             if retry < max_retries:
-                if (response is None) or isinstance(e, exceptions.ContentLengthError):
+                if response is None or isinstance(e, exceptions.ContentLengthError) or streaming_response_truncated:
                     ok_to_retry = always_retry or (method == 'GET')
                 else:
-                    ok_to_retry = (response.status_code >= 500 and response.status_code < 600) or streaming_response_truncated
+                    ok_to_retry = 500 <= response.status_code < 600
 
                 if ok_to_retry:
                     if rewind_input_buffer_offset is not None:
