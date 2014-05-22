@@ -32,7 +32,7 @@ supported_languages = ['Python', 'C++', 'bash']
 
 def run_dx_app_wizard():
     old_cwd = os.getcwd()
-    tempdir = tempfile.mkdtemp(prefix="Программа")
+    tempdir = tempfile.mkdtemp()
     os.chdir(tempdir)
     try:
         wizard = pexpect.spawn("dx-app-wizard")
