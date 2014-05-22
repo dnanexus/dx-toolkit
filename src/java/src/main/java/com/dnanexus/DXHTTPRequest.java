@@ -37,43 +37,6 @@ import com.fasterxml.jackson.databind.JsonNode;
  * Class for making a raw DNAnexus API call via HTTP.
  */
 public class DXHTTPRequest {
-    private final JsonNode securityContext;
-    private final String apiserver;
-    private final DefaultHttpClient httpclient;
-
-    private static final int NUM_RETRIES = 5;
-
-    private static final DXEnvironment defaultEnv = DXEnvironment.create();
-
-    private static final String USER_AGENT = DXUserAgent.getUserAgent();
-
-    /**
-    * Construct the DXHTTPRequest using the default DXEnvironment.
-    */
-    public DXHTTPRequest() {
-        this(defaultEnv);
-    }
-
-    /**
-    * Construct the DXHTTPRequest using the given DXEnvironment.
-    */
-    public DXHTTPRequest(DXEnvironment env) {
-        this.securityContext = env.getSecurityContextJson();
-        this.apiserver = env.getApiserverPath();
-        this.httpclient = new DefaultHttpClient();
-        httpclient.getParams().setParameter(CoreProtocolPNames.USER_AGENT, USER_AGENT);
-    }
-
-    private static String errorMessage(String method, String resource, String errorString, int retryWait,
-            int nextRetryNum, int maxRetries) {
-        String baseError = method + " " + resource + ": " + errorString + ".";
-        if (nextRetryNum <= maxRetries) {
-            return baseError + "  Waiting " + retryWait + " seconds before retry " + nextRetryNum
-                    + " of " + maxRetries;
-        }
-        return baseError;
-    }
-
     /**
      * Holds either the raw text of a response or a parsed JSON version of it.
      */
@@ -87,24 +50,84 @@ public class DXHTTPRequest {
         }
     }
 
+    private final JsonNode securityContext;
+    private final String apiserver;
+
+    private final DefaultHttpClient httpclient;
+
+    private static final int NUM_RETRIES = 5;
+
+    private static final DXEnvironment defaultEnv = DXEnvironment.create();
+
+    private static final String USER_AGENT = DXUserAgent.getUserAgent();
+
+    private static String errorMessage(String method, String resource, String errorString,
+            int retryWait, int nextRetryNum, int maxRetries) {
+        String baseError = method + " " + resource + ": " + errorString + ".";
+        if (nextRetryNum <= maxRetries) {
+            return baseError + "  Waiting " + retryWait + " seconds before retry " + nextRetryNum
+                    + " of " + maxRetries;
+        }
+        return baseError;
+    }
+
     /**
-     * Issues a request against the specified resource and returns either the
-     * text of the response or the parsed JSON of the response (depending on
-     * whether parseResponse is set).
+     * Construct the DXHTTPRequest using the default DXEnvironment.
+     */
+    public DXHTTPRequest() {
+        this(defaultEnv);
+    }
+
+    /**
+     * Construct the DXHTTPRequest using the given DXEnvironment.
+     */
+    public DXHTTPRequest(DXEnvironment env) {
+        this.securityContext = env.getSecurityContextJson();
+        this.apiserver = env.getApiserverPath();
+        this.httpclient = new DefaultHttpClient();
+        httpclient.getParams().setParameter(CoreProtocolPNames.USER_AGENT, USER_AGENT);
+    }
+
+    /**
+     * Issues a request against the specified resource and returns the result as a JSON object.
      *
-     * @throws DXAPIException
-     *             If the server returns a complete response with an HTTP status
-     *             code other than 200 (OK).
-     * @throws DXHTTPException
-     *             If an error occurs while making the HTTP request or obtaining
-     *             the response (includes HTTP protocol errors).
+     * @throws DXAPIException If the server returns a complete response with an HTTP status code
+     *         other than 200 (OK).
+     * @throws DXHTTPException If an error occurs while making the HTTP request or obtaining the
+     *         response (includes HTTP protocol errors).
+     */
+    public JsonNode request(String resource, JsonNode data) {
+        String dataAsString = data.toString();
+        return requestImpl(resource, dataAsString, true).responseJson;
+    }
+
+    /**
+     * Issues a request against the specified resource and returns the result as a String.
+     *
+     * @throws DXAPIException If the server returns a complete response with an HTTP status code
+     *         other than 200 (OK).
+     * @throws DXHTTPException If an error occurs while making the HTTP request or obtaining the
+     *         response (includes HTTP protocol errors).
+     */
+    public String request(String resource, String data) {
+        return requestImpl(resource, data, false).responseText;
+    }
+
+    /**
+     * Issues a request against the specified resource and returns either the text of the response
+     * or the parsed JSON of the response (depending on whether parseResponse is set).
+     *
+     * @throws DXAPIException If the server returns a complete response with an HTTP status code
+     *         other than 200 (OK).
+     * @throws DXHTTPException If an error occurs while making the HTTP request or obtaining the
+     *         response (includes HTTP protocol errors).
      */
     private ParsedResponse requestImpl(String resource, String data, boolean parseResponse) {
         HttpPost request = new HttpPost(apiserver + resource);
 
         request.setHeader("Content-Type", "application/json");
-        request.setHeader("Authorization", securityContext.get("auth_token_type").textValue()
-                          + " " + securityContext.get("auth_token").textValue());
+        request.setHeader("Authorization", securityContext.get("auth_token_type").textValue() + " "
+                + securityContext.get("auth_token").textValue());
         request.setEntity(new StringEntity(data, Charset.forName("UTF-8")));
 
         // Retry with exponential backoff
@@ -128,8 +151,8 @@ public class DXHTTPRequest {
                     int realLength = value.length;
                     if (entity.getContentLength() >= 0 && realLength != entity.getContentLength()) {
                         // Content length mismatch.
-                        throw new IOException("Received response of " + realLength + " bytes but Content-Length was "
-                                + entity.getContentLength());
+                        throw new IOException("Received response of " + realLength
+                                + " bytes but Content-Length was " + entity.getContentLength());
                     } else if (parseResponse) {
                         JsonNode responseJson = null;
                         try {
@@ -197,7 +220,8 @@ public class DXHTTPRequest {
                 // below) by now.
 
             } catch (IOException e) {
-                System.err.println(errorMessage("POST", resource, e.toString(), timeout, i + 1, NUM_RETRIES));
+                System.err.println(errorMessage("POST", resource, e.toString(), timeout, i + 1,
+                        NUM_RETRIES));
                 if (i == NUM_RETRIES) {
                     throw new DXHTTPException(e);
                 }
@@ -215,36 +239,5 @@ public class DXHTTPRequest {
 
         // We should never get here.
         throw new AssertionError("Exceeded max number of retries without throwing an error");
-    }
-
-    /**
-     * Issues a request against the specified resource and returns the result as
-     * a String.
-     *
-     * @throws DXAPIException
-     *             If the server returns a complete response with an HTTP status
-     *             code other than 200 (OK).
-     * @throws DXHTTPException
-     *             If an error occurs while making the HTTP request or obtaining
-     *             the response (includes HTTP protocol errors).
-     */
-    public String request(String resource, String data) {
-        return requestImpl(resource, data, false).responseText;
-    }
-
-    /**
-     * Issues a request against the specified resource and returns the result as
-     * a JSON object.
-     *
-     * @throws DXAPIException
-     *             If the server returns a complete response with an HTTP status
-     *             code other than 200 (OK).
-     * @throws DXHTTPException
-     *             If an error occurs while making the HTTP request or obtaining
-     *             the response (includes HTTP protocol errors).
-     */
-    public JsonNode request(String resource, JsonNode data) {
-        String dataAsString = data.toString();
-        return requestImpl(resource, dataAsString, true).responseJson;
     }
 }
