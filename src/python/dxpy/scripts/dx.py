@@ -22,7 +22,7 @@ from __future__ import print_function, unicode_literals
 import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, errno, platform, io
 import shlex # respects quoted substrings when splitting
 
-from ..cli import try_call, prompt_for_yn
+from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
 from ..exceptions import err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions
 from ..packages import requests
@@ -1311,7 +1311,7 @@ def describe(args):
 
 def new_project(args):
     if args.name == None:
-        if sys.stdin.isatty():
+        if INTERACTIVE_CLI:
             args.name = input("Enter name for new project: ")
         else:
             parser.exit(1, parser_new_project.format_help() +
@@ -1322,8 +1322,7 @@ def new_project(args):
             print(resp['id'])
         else:
             print(fill('Created new project called "' + args.name + '" (' + resp['id'] + ')'))
-        if args.select or (sys.stdin.isatty() and sys.stdout.isatty() and
-                           prompt_for_yn("Switch to new project now?", default=False)):
+        if args.select or (INTERACTIVE_CLI and prompt_for_yn("Switch to new project now?", default=False)):
             set_project(resp['id'], write=True, name=args.name)
             set_wd('/', write=True)
     except:
@@ -2610,7 +2609,7 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
 
     # Ask for confirmation if a tty and if input was not given as a
     # single JSON.
-    if args.confirm and sys.stdout.isatty():
+    if args.confirm and INTERACTIVE_CLI:
         try:
             value = input('Confirm running the executable with this input [Y/n]: ')
         except KeyboardInterrupt:
@@ -2631,7 +2630,7 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
 
         if args.wait and is_the_only_job:
             dxexecution.wait_on_done()
-        elif args.confirm and sys.stdin.isatty() and not args.watch and isinstance(dxexecution, dxpy.DXJob):
+        elif args.confirm and INTERACTIVE_CLI and not args.watch and isinstance(dxexecution, dxpy.DXJob):
             answer = input("Watch launched job now? [Y/n] ")
             if len(answer) == 0 or answer.lower()[0] == 'y':
                 args.watch = True
@@ -2946,7 +2945,7 @@ def shell(orig_args):
             exit(0)
         except:
             err_exit()
-    elif not sys.stdin.isatty():
+    elif not INTERACTIVE_CLI:
         for line in sys.stdin.read().splitlines():
             if len(line) > 0:
                 args = [word.decode('utf-8') for word in shlex.split(line.encode('utf-8'))]

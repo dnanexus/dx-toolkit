@@ -25,6 +25,7 @@ from __future__ import (print_function, unicode_literals)
 import os, sys, json, collections, pipes, shlex
 
 import dxpy
+from . import INTERACTIVE_CLI
 from ..exceptions import DXCLIError
 from ..utils.printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC, DELIMITER, UNDERLINE, get_delimiter, fill)
 from ..utils.describe import (get_find_executions_string, get_ls_l_desc, parse_typespec)
@@ -630,7 +631,7 @@ class ExecutableInputs(object):
         # For now, we do not handle prompting for workflow inputs nor
         # recognizing when not all inputs haven't been bound
         if require_all_inputs:
-            if sys.stdout.isatty():
+            if INTERACTIVE_CLI:
                 self.prompt_for_missing()
             else:
                 missing_required_inputs = set(self.required_inputs) - set(self.inputs.keys())

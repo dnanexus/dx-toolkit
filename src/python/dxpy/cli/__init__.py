@@ -21,6 +21,10 @@ almost exclusively by command-line tools such as dx.
 
 from __future__ import (print_function, unicode_literals)
 
+import sys
+
+INTERACTIVE_CLI = True if sys.stdin.isatty() and sys.stdout.isatty() else False
+
 from ..exceptions import err_exit, default_expected_exceptions, DXError
 from ..compat import input
 
