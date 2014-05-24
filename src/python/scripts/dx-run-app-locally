@@ -16,6 +16,8 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+from __future__ import (print_function, unicode_literals)
+
 import sys, collections
 import os, shutil, subprocess, tempfile
 import json
@@ -27,6 +29,9 @@ from dxpy.utils.describe import job_output_to_str, io_val_to_str
 from dxpy.cli.exec_io import *
 from dxpy.scripts import dx_build_app
 import dxpy.utils.local_exec_utils as local_exec_utils
+from dxpy.compat import open, wrap_env_var_handlers
+
+wrap_env_var_handlers()
 
 parser = argparse.ArgumentParser(description='Takes a local app directory and runs it locally for testing purposes.  This directory should have a valid dxapp.json file and can be built using dx build.')
 parser.add_argument('path', help='Local path to an app directory')
@@ -42,7 +47,7 @@ args.path = os.path.abspath(args.path)
 
 # Do the equivalent of "dx build --dry-run" to do some basic checking
 with tempfile.TemporaryFile() as fd:
-    print "About to run 'dx build --dry-run " + args.path + "'"
+    print("About to run 'dx build --dry-run " + args.path + "'")
     import logging
     logger = logging.getLogger('dxpy')
     logger.propagate = False
@@ -58,10 +63,10 @@ with tempfile.TemporaryFile() as fd:
     logger.propagate = True
     if build_error:
         fd.seek(0)
-        print fd.read()
+        print(fd.read())
         sys.exit(build_error)
     else:
-        print 'dx build dry run successful'
+        print('dx build dry run successful')
 
 path_to_dxapp_json = os.path.join(args.path, 'dxapp.json')
 
@@ -136,16 +141,16 @@ os.environ['DX_TEST_JOB_HOMEDIRS'] = job_homedirs
 if args.x:
     os.environ['DX_TEST_X_FLAG'] = '1'
 
-print 'About to run app ' + dxapp_json['name'] + ' locally'
+print('About to run app ' + dxapp_json['name'] + ' locally')
 
 main_job_id = local_exec_utils.queue_entry_point(function=args.function,
                                                  input_hash=job_inputs.inputs)
 local_exec_utils.run_entry_points(run_spec=dxapp_json['runSpec'])
 
-print 'App finished successfully'
+print('App finished successfully')
 with open(all_job_outputs_path, 'r') as fd:
     job_outputs = json.load(fd)
     if main_job_id in job_outputs:
-        print job_output_to_str(job_outputs[main_job_id], title="Final output: ").lstrip()
+        print(job_output_to_str(job_outputs[main_job_id], title="Final output: ").lstrip())
 
-print 'Local job workspaces can be found in: ' + job_homedirs
+print('Local job workspaces can be found in: ' + job_homedirs)

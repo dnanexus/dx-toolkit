@@ -97,3 +97,22 @@ def decode_command_line_args():
     if USING_PYTHON2:
         sys.argv = [i if isinstance(i, unicode) else i.decode(sys.stdin.encoding) for i in sys.argv]
     return sys.argv
+
+def wrap_env_var_handlers():
+    if USING_PYTHON2:
+        native_getenv, native_putenv = os.getenv, os.putenv
+
+        def getenv(varname, value=None):
+            v = native_getenv(varname, value)
+            if isinstance(v, bytes):
+                v = v.decode(sys.stdin.encoding)
+            return v
+
+        def putenv(varname, value):
+            if not isinstance(varname, bytes):
+                varname = varname.encode(sys.stdout.encoding)
+            if not isinstance(value, bytes):
+                value = value.encode(sys.stdout.encoding)
+            native_putenv(varname, value)
+
+        os.getenv, os.putenv = getenv, putenv
