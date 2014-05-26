@@ -643,7 +643,7 @@ public final class DXSearch {
          * {@link #includeDescribeOutput(com.dnanexus.DXDataObject.DescribeOptions)} you can use
          * this to "bulk describe" a large number of objects. Note that hidden objects among the
          * requested list will not be returned unless you use
-         * {@link #withVisibility(VisibilityQuery)} to request all objects.
+         * {@link #withVisibility(DXSearch.VisibilityQuery)} to request all objects.
          * </p>
          *
          * <p>
@@ -723,7 +723,7 @@ public final class DXSearch {
          *
          * <p>
          * To specify a complex query on the properties, use
-         * {@link #withProperties(PropertiesQuery)}.
+         * {@link #withProperties(DXSearch.PropertiesQuery)}.
          * </p>
          *
          * @param propertyKey property key that must be present
@@ -739,7 +739,7 @@ public final class DXSearch {
          *
          * <p>
          * To specify a complex query on the properties, use
-         * {@link #withProperties(PropertiesQuery)}.
+         * {@link #withProperties(DXSearch.PropertiesQuery)}.
          * </p>
          *
          * @param propertyKey property key
@@ -1517,7 +1517,7 @@ public final class DXSearch {
          *
          * <p>
          * To specify a complex query on the properties, use
-         * {@link #withProperties(PropertiesQuery)}.
+         * {@link #withProperties(DXSearch.PropertiesQuery)}.
          * </p>
          *
          * @param propertyKey property key that must be present
@@ -1533,7 +1533,7 @@ public final class DXSearch {
          *
          * <p>
          * To specify a complex query on the properties, use
-         * {@link #withProperties(PropertiesQuery)}.
+         * {@link #withProperties(DXSearch.PropertiesQuery)}.
          * </p>
          *
          * @param propertyKey property key
