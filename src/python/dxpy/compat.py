@@ -44,6 +44,32 @@ if USING_PYTHON2:
             return raw_input(encoded_prompt).decode(getattr(sys.stdin, 'encoding', 'utf-8'))
         finally:
             sys.stdin, sys.stdout = cur_stdin, cur_stdout
+    def expanduser(path):
+        '''
+        Copy of os.path.expanduser that decodes os.environ['HOME'] if necessary.
+        '''
+        if not path.startswith('~'):
+            return path
+        i = path.find('/', 1)
+        if i < 0:
+            i = len(path)
+        if i == 1:
+            if 'HOME' not in environ:
+                import pwd
+                userhome = pwd.getpwuid(os.getuid()).pw_dir
+            else:
+                userhome = environ['HOME']
+                if isinstance(userhome, bytes):
+                    userhome = userhome.decode(getattr(sys.stdin, 'encoding', 'utf-8'))
+        else:
+            import pwd
+            try:
+                pwent = pwd.getpwnam(path[1:i])
+            except KeyError:
+                return path
+            userhome = pwent.pw_dir
+        userhome = userhome.rstrip('/')
+        return (userhome + path[i:]) or '/'
 else:
     from io import StringIO, BytesIO
     builtin_str = str
@@ -54,6 +80,7 @@ else:
     builtin_int = int
     int = int
     open = open
+    expanduser = os.path.expanduser
 
 def wrap_stdio_in_codecs():
     if USING_PYTHON2:
@@ -98,8 +125,40 @@ def decode_command_line_args():
         sys.argv = [i if isinstance(i, unicode) else i.decode(sys.stdin.encoding) for i in sys.argv]
     return sys.argv
 
+class _Environ(object):
+    def __getitem__(self, item):
+        value = os.environ[item]
+        if isinstance(value, bytes):
+            value = value.decode(sys.stdin.encoding)
+        return value
+
+    def __setitem__(self, varname, value):
+        if not isinstance(varname, bytes):
+            varname = varname.encode(sys.stdout.encoding)
+        if not isinstance(value, bytes):
+            value = value.encode(sys.stdout.encoding)
+        os.environ[varname] = value
+
+    def __contains__(self, item):
+        return True if item in os.environ else False
+
+    def __getattr__(self, attr):
+        return getattr(os.environ, attr)
+
+    def __repr__(self):
+        return repr(os.environ)
+
+    def __iter__(self):
+        for key in os.environ:
+            yield key
+
+    def copy(self):
+        return {key: self[key] for key in self}
+
+environ = _Environ()
+
 def wrap_env_var_handlers():
-    if USING_PYTHON2:
+    if USING_PYTHON2 and not getattr(os, '__native_getenv', None):
         native_getenv, native_putenv = os.getenv, os.putenv
 
         def getenv(varname, value=None):
@@ -116,3 +175,8 @@ def wrap_env_var_handlers():
             native_putenv(varname, value)
 
         os.getenv, os.putenv = getenv, putenv
+        os.__native_getenv, os.__native_putenv = native_getenv, native_putenv
+
+def unwrap_env_var_handlers():
+    if USING_PYTHON2 and getattr(os, __native_getenv, None):
+        os.getenv, os.putenv = os.__native_getenv, os.__native_putenv

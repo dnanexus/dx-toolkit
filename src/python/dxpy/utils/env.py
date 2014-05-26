@@ -26,7 +26,7 @@ from __future__ import (print_function, unicode_literals)
 import os, sys, shutil, textwrap, json, locale
 
 from .. import DEFAULT_APISERVER_PROTOCOL, DEFAULT_APISERVER_HOST, DEFAULT_APISERVER_PORT
-from ..compat import USING_PYTHON2
+from ..compat import USING_PYTHON2, expanduser
 
 sys_encoding = locale.getdefaultlocale()[1] or 'UTF-8'
 
@@ -39,7 +39,7 @@ def get_global_conf_dir():
     return '/etc/dnanexus'
 
 def get_user_conf_dir():
-    return os.path.expanduser('~/.dnanexus_config')
+    return expanduser('~/.dnanexus_config')
 
 def get_session_conf_dir():
     '''
@@ -161,8 +161,8 @@ def write_env_var_to_conf_dir(var, value, conf_dir):
         with os.fdopen(os.open(os.path.join(conf_dir, var), os.O_CREAT | os.O_WRONLY, 0o600), 'w') as fd:
             fd.write(value.encode(sys_encoding) if USING_PYTHON2 else value)
 
-    if not os.path.exists(os.path.expanduser('~/.dnanexus_config/') + 'unsetenv'):
-        with open(os.path.expanduser('~/.dnanexus_config/') + 'unsetenv', 'w') as fd:
+    if not os.path.exists(expanduser('~/.dnanexus_config/') + 'unsetenv'):
+        with open(expanduser('~/.dnanexus_config/') + 'unsetenv', 'w') as fd:
             for var in CORE_VAR_NAMES:
                 fd.write('unset ' + var + '\n')
 
@@ -172,16 +172,16 @@ def clearenv(args):
         return
     shutil.rmtree(get_session_conf_dir(), ignore_errors=True)
     try:
-        os.remove(os.path.expanduser('~/.dnanexus_config/environment'))
+        os.remove(expanduser('~/.dnanexus_config/environment'))
     except:
         pass
     try:
-        os.remove(os.path.expanduser('~/.dnanexus_config/environment.json'))
+        os.remove(expanduser('~/.dnanexus_config/environment.json'))
     except:
         pass
     for f in STANDALONE_VAR_NAMES:
         try:
-            os.remove(os.path.expanduser('~/.dnanexus_config/' + f))
+            os.remove(expanduser('~/.dnanexus_config/' + f))
         except:
             pass
 
