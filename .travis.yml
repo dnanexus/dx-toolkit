@@ -1,15 +1,12 @@
 language: python
 python:
-- '3.3'
 - '2.7'
+- '3.3'
+- '3.4'
 - pypy
-before_install:
-- pip install --quiet coverage wheel
-install:
-- make python
 script:
 - source environment
-- make test_python
+- build/run_python_integration_tests.py --tests test.test_dxpy
 notifications:
   email: false
 env:
