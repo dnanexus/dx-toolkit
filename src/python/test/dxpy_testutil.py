@@ -18,15 +18,6 @@
 
 from __future__ import print_function, unicode_literals
 
-import platform, locale
-sys_encoding = locale.getdefaultlocale()[1] or 'UTF-8'
-if platform.python_implementation() != "PyPy":
-    try:
-        reload(sys).setdefaultencoding(sys_encoding)
-    except:
-        pass
-
-
 import os, sys, unittest, subprocess, re
 from contextlib import contextmanager
 
@@ -44,6 +35,15 @@ TEST_TCSH = _run_all_tests or 'DXTEST_TCSH' in os.environ
 
 def _transform_words_to_regexp(s):
     return r"\s+".join(re.escape(word) for word in s.split())
+
+class DXCalledProcessError(subprocess.CalledProcessError):
+    def __init__(self, returncode, cmd, output=None, stderr=None):
+        self.returncode = returncode
+        self.cmd = cmd
+        self.output = output
+        self.stderr = stderr
+    def __str__(self):
+        return "Command '%s' returned non-zero exit status %d, stderr:\n%s" % (self.cmd, self.returncode, self.stderr)
 
 def check_output(*popenargs, **kwargs):
     """

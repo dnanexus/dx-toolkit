@@ -42,15 +42,6 @@ def chdir(dirname=None):
     finally:
         os.chdir(curdir)
 
-class DXCalledProcessError(subprocess.CalledProcessError):
-    def __init__(self, returncode, cmd, output=None, stderr=None):
-        self.returncode = returncode
-        self.cmd = cmd
-        self.output = output
-        self.stderr = stderr
-    def __str__(self):
-        return "Command '%s' returned non-zero exit status %d, stderr:\n%s" % (self.cmd, self.returncode, self.stderr)
-
 def run(command, **kwargs):
     print("$ %s" % (command,))
     output = check_output(command, shell=True, **kwargs)
