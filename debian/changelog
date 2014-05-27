@@ -1,3 +1,13 @@
+dx-toolkit (0.100.0) precise; urgency=low
+
+  * Unicode fixes.
+
+  * Do not automatically retry methods that are not idempotent.
+
+  * Various minor bug fixes and test improvements.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 27 May 2014 22:30:51 +0000
+
 dx-toolkit (0.99.0) precise; urgency=low
 
   * Bug fix for race condition in dxfile.
