@@ -25,10 +25,12 @@ import pexpect
 
 import dxpy
 from dxpy.scripts import dx_build_app
-from dxpy_testutil import DXTestCase
+from dxpy_testutil import DXTestCase, check_output
 import dxpy_testutil as testutil
 from dxpy.packages import requests
 from dxpy.exceptions import DXAPIError
+from dxpy.compat import str
+from dxpy.utils.env import sys_encoding
 
 @contextmanager
 def chdir(dirname=None):
@@ -49,35 +51,9 @@ class DXCalledProcessError(subprocess.CalledProcessError):
     def __str__(self):
         return "Command '%s' returned non-zero exit status %d, stderr:\n%s" % (self.cmd, self.returncode, self.stderr)
 
-def check_output(*popenargs, **kwargs):
-    """
-    Adapted version of the builtin subprocess.check_output which sets a
-    "stderr" field on the resulting exception (in addition to "output")
-    if the subprocess fails. (If the command succeeds, the contents of
-    stderr are discarded.)
-    """
-    if 'stdout' in kwargs:
-        raise ValueError('stdout argument not allowed, it will be overridden.')
-    if 'stderr' in kwargs:
-        raise ValueError('stderr argument not allowed, it will be overridden.')
-    # Unplug stdin (if not already overridden) so that dx doesn't prompt
-    # user for input at the tty
-    process = subprocess.Popen(stdin=kwargs.get('stdin', subprocess.PIPE),
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, *popenargs, **kwargs)
-    output, err = process.communicate()
-    retcode = process.poll()
-    if retcode:
-        print(err)
-        cmd = kwargs.get("args")
-        if cmd is None:
-            cmd = popenargs[0]
-        exc = DXCalledProcessError(retcode, cmd, output=output, stderr=err)
-        raise exc
-    return output
-
 def run(command, **kwargs):
     print("$ %s" % (command,))
-    output = check_output(command, shell=True, **kwargs).decode(sys.stdin.encoding)
+    output = check_output(command, shell=True, **kwargs)
     print(output)
     return output
 
@@ -2119,7 +2095,7 @@ class TestDXBuildApp(DXTestCase):
 
     def test_version_suffixes(self):
         app_spec = {
-            "name": "test_versioning_app",
+            "name": "test_versioning_åpp",
             "dxapi": "1.0.0",
             "runSpec": {"file": "code.py", "interpreter": "python2.7"},
             "inputSpec": [],
@@ -2139,7 +2115,7 @@ class TestDXBuildApp(DXTestCase):
             "outputSpec": [],
             "version": "1.0.0"
             }
-        app_dir = self.write_app_directory("minimal_applet", json.dumps(app_spec), "code.py")
+        app_dir = self.write_app_directory("minimal_åpplet", json.dumps(app_spec), "code.py")
         new_applet = json.loads(run("dx build --json " + app_dir))
         applet_describe = json.loads(run("dx describe --json " + new_applet["id"]))
         self.assertEqual(applet_describe["class"], "applet")
@@ -2156,7 +2132,7 @@ class TestDXBuildApp(DXTestCase):
             "outputSpec": [],
             "version": "1.0.0"
             }
-        app_dir = self.write_app_directory("minimal_applet_to_run", json.dumps(app_spec), "code.py")
+        app_dir = self.write_app_directory("minimal_åpplet_to_run", json.dumps(app_spec), "code.py")
         job_id = run("dx build " + app_dir + ' --run -y --brief').strip()
         job_desc = json.loads(run('dx describe --json ' + job_id))
         # default priority should be high for running after building
@@ -2183,7 +2159,7 @@ class TestDXBuildApp(DXTestCase):
             "version": "1.0.0",
             "categories": ["foo", "Import", "Export"]
             }
-        app_dir = self.write_app_directory("first_applet", json.dumps(app_spec), "code.py")
+        app_dir = self.write_app_directory("first_åpplet", json.dumps(app_spec), "code.py")
         with open(os.path.join(app_dir, 'Readme.md'), 'w') as readme:
             readme.write('a readme file')
         first_expected_warnings = ["missing a name",
@@ -2218,7 +2194,7 @@ class TestDXBuildApp(DXTestCase):
             "outputSpec": [],
             "version": "foo"
             }
-        app_dir = self.write_app_directory("second_applet", json.dumps(app_spec), "code.py")
+        app_dir = self.write_app_directory("second_åpplet", json.dumps(app_spec), "code.py")
         try:
             # exit with error code to grab stderr
             run("dx build " + app_dir + " && exit 28")
@@ -2234,7 +2210,7 @@ class TestDXBuildApp(DXTestCase):
             "dxapi": "1.0.0",
             "runSpec": {"file": "code.py"}
             }
-        app_dir = self.write_app_directory("third_applet", json.dumps(app_spec), "code.py")
+        app_dir = self.write_app_directory("third_åpplet", json.dumps(app_spec), "code.py")
         with self.assertSubprocessFailure(stderr_regexp='interpreter field was not present'):
             run("dx build " + app_dir)
 
@@ -2258,7 +2234,7 @@ class TestDXBuildApp(DXTestCase):
         output_app_spec = dict((k, v) for (k, v) in app_spec.iteritems() if k not in ('description', 'developerNotes'))
         output_app_spec[u"runSpec"] = {u"file": u"src/code.py", u"interpreter": u"python2.7"}
 
-        app_dir = self.write_app_directory("get_applet", json.dumps(app_spec), "code.py", code_content="import os\n")
+        app_dir = self.write_app_directory("get_åpplet", json.dumps(app_spec), "code.py", code_content="import os\n")
         os.mkdir(os.path.join(app_dir, "resources"))
         with open(os.path.join(app_dir, "resources", "resources_file"), 'w') as f:
             f.write('content\n')
@@ -2346,7 +2322,7 @@ class TestDXBuildApp(DXTestCase):
         output_app_spec = app_spec.copy()
         output_app_spec[u"runSpec"] = {u"file": u"src/code.py", u"interpreter": u"python2.7"}
 
-        app_dir = self.write_app_directory("get_applet_field_cleanup", json.dumps(app_spec), "code.py", code_content="import os\n")
+        app_dir = self.write_app_directory("get_åpplet_field_cleanup", json.dumps(app_spec), "code.py", code_content="import os\n")
         os.mkdir(os.path.join(app_dir, "resources"))
         with open(os.path.join(app_dir, "resources", "resources_file"), 'w') as f:
             f.write('content\n')
@@ -2361,12 +2337,12 @@ class TestDXBuildApp(DXTestCase):
             self.assertFalse(os.path.exists(os.path.join("get_applet", "Readme.developer.md")))
 
     def test_build_applet_with_no_dxapp_json(self):
-        app_dir = self.write_app_directory("applet_with_no_dxapp_json", None, "code.py")
+        app_dir = self.write_app_directory("åpplet_with_no_dxapp_json", None, "code.py")
         with self.assertSubprocessFailure(stderr_regexp='does not contain dxapp\.json', exit_code=3):
             run("dx build " + app_dir)
 
     def test_build_applet_with_malformed_dxapp_json(self):
-        app_dir = self.write_app_directory("applet_with_malformed_dxapp_json", "{", "code.py")
+        app_dir = self.write_app_directory("åpplet_with_malformed_dxapp_json", "{", "code.py")
         with self.assertSubprocessFailure(stderr_regexp='Could not parse dxapp\.json file', exit_code=3):
             run("dx build " + app_dir)
 
@@ -2381,7 +2357,7 @@ class TestDXBuildApp(DXTestCase):
             "outputSpec": [],
             "version": "1.0.0"
             }
-        app_dir = self.write_app_directory("minimal_app", json.dumps(app_spec), "code.py")
+        app_dir = self.write_app_directory("minimal_åpp", json.dumps(app_spec), "code.py")
         new_app = json.loads(run("dx build --create-app --json " + app_dir))
         app_describe = json.loads(run("dx describe --json " + new_app["id"]))
         self.assertEqual(app_describe["class"], "app")
@@ -2892,7 +2868,7 @@ def main(in1):
             ],
             "version": "1.0.0"
             }
-        app_dir = self.write_app_directory("applet_help", json.dumps(app_spec), code_filename="code.py", code_content="")
+        app_dir = self.write_app_directory("åpplet_help", json.dumps(app_spec), code_filename="code.py", code_content="")
         applet_id = json.loads(run("dx build --json " + app_dir))["id"]
         applet_help = run("dx run " + applet_id + " -h")
         self.assertTrue("Reads: -ireads=(gtable, type LetterReads) [-ireads=... [...]]" in applet_help)
@@ -2911,7 +2887,7 @@ def main(in1):
             "outputSpec": [],
             "version": "1.0.0"
             }
-        app_dir = self.write_app_directory("upload_resources", json.dumps(app_spec), "code.py")
+        app_dir = self.write_app_directory("upload_åpp_resources", json.dumps(app_spec), "code.py")
         os.mkdir(os.path.join(app_dir, 'resources'))
         with open(os.path.join(app_dir, 'resources', 'test.txt'), 'w') as resources_file:
             resources_file.write('test\n')

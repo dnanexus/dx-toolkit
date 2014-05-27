@@ -16,7 +16,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
 import platform, locale
 sys_encoding = locale.getdefaultlocale()[1] or 'UTF-8'
@@ -31,6 +31,7 @@ import os, sys, unittest, subprocess, re
 from contextlib import contextmanager
 
 import dxpy
+from dxpy.compat import str
 
 _run_all_tests = 'DXTEST_FULL' in os.environ
 TEST_CREATE_APPS = _run_all_tests or 'DXTEST_CREATE_APPS' in os.environ
@@ -43,6 +44,40 @@ TEST_TCSH = _run_all_tests or 'DXTEST_TCSH' in os.environ
 
 def _transform_words_to_regexp(s):
     return r"\s+".join(re.escape(word) for word in s.split())
+
+def check_output(*popenargs, **kwargs):
+    """
+    Adapted version of the builtin subprocess.check_output which sets a
+    "stderr" field on the resulting exception (in addition to "output")
+    if the subprocess fails. (If the command succeeds, the contents of
+    stderr are discarded.)
+
+    Unlike subprocess.check_output, unconditionally decodes the contents of the subprocess stdout and stderr using
+    sys.stdin.encoding.
+    """
+    if 'stdout' in kwargs:
+        raise ValueError('stdout argument not allowed, it will be overridden.')
+    if 'stderr' in kwargs:
+        raise ValueError('stderr argument not allowed, it will be overridden.')
+    # Unplug stdin (if not already overridden) so that dx doesn't prompt
+    # user for input at the tty
+    process = subprocess.Popen(stdin=kwargs.get('stdin', subprocess.PIPE),
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, *popenargs, **kwargs)
+    output, err = process.communicate()
+    retcode = process.poll()
+    if not isinstance(output, str):
+        output = output.decode(sys.stdin.encoding)
+    if not isinstance(err, str):
+        err = err.decode(sys.stdin.encoding)
+    if retcode:
+        print(err)
+        cmd = kwargs.get("args")
+        if cmd is None:
+            cmd = popenargs[0]
+        exc = DXCalledProcessError(retcode, cmd, output=output, stderr=err)
+        raise exc
+    return output
+
 
 class DXTestCase(unittest.TestCase):
     def setUp(self):

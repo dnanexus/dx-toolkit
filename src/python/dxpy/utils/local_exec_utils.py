@@ -24,6 +24,7 @@ from dxpy.utils.describe import (get_field_from_jbor, get_job_from_jbor, get_ind
                                  is_job_ref, job_output_to_str, JOB_STATES)
 from dxpy.utils.printing import (GREEN, BLUE, BOLD, ENDC, fill)
 from dxpy.utils.resolver import is_localjob_id
+from dxpy.compat import open, str, environ, USING_PYTHON2
 
 def exit_with_error(msg):
     '''
@@ -33,7 +34,7 @@ def exit_with_error(msg):
     job workspaces
     '''
     msg += '\n'
-    msg += 'Local job workspaces can be found in: ' + str(os.environ.get('DX_TEST_JOB_HOMEDIRS'))
+    msg += 'Local job workspaces can be found in: ' + str(environ.get('DX_TEST_JOB_HOMEDIRS'))
     sys.exit(msg)
 
 def has_local_job_refs(io_hash):
@@ -211,7 +212,7 @@ def ensure_env_vars():
     for var in ['DX_FS_ROOT',
                 'DX_TEST_CODE_PATH',
                 'DX_TEST_JOB_HOMEDIRS']:
-        if var not in os.environ:
+        if var not in environ:
             sys.exit('Error: Cannot run an entry point locally if the environment variable ' + var + ' has not been set')
 
 def queue_entry_point(function, input_hash, depends_on=[], name=None):
@@ -233,21 +234,21 @@ def queue_entry_point(function, input_hash, depends_on=[], name=None):
     '''
     ensure_env_vars()
 
-    all_job_outputs_path = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], 'job_outputs.json')
+    all_job_outputs_path = os.path.join(environ['DX_TEST_JOB_HOMEDIRS'], 'job_outputs.json')
 
     with open(all_job_outputs_path, 'r') as fd:
         all_job_outputs = json.load(fd, object_pairs_hook=collections.OrderedDict)
         job_id = 'localjob-' + str(len(all_job_outputs))
 
-    with open(all_job_outputs_path, 'w') as fd:
+    with open(all_job_outputs_path, 'wb') as fd:
         all_job_outputs[job_id] = None
         json.dump(all_job_outputs, fd, indent=4)
-        fd.write('\n')
+        fd.write(b'\n')
 
-    job_homedir = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], job_id)
+    job_homedir = os.path.join(environ['DX_TEST_JOB_HOMEDIRS'], job_id)
     os.mkdir(job_homedir)
 
-    job_queue_path = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], 'job_queue.json')
+    job_queue_path = os.path.join(environ['DX_TEST_JOB_HOMEDIRS'], 'job_queue.json')
     with open(job_queue_path, 'r') as fd:
         job_queue = json.load(fd)
     job_entry = {"id": job_id,
@@ -257,9 +258,9 @@ def queue_entry_point(function, input_hash, depends_on=[], name=None):
     if name is not None:
         job_entry['name'] = name
     job_queue.append(job_entry)
-    with open(job_queue_path, 'w') as fd:
+    with open(job_queue_path, 'wb') as fd:
         json.dump(job_queue, fd, indent=4)
-        fd.write('\n')
+        fd.write(b'\n')
 
     return job_id
 
@@ -279,12 +280,12 @@ def run_one_entry_point(job_id, function, input_hash, run_spec, depends_on, name
     '''
     print('======')
 
-    job_homedir = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], job_id)
+    job_homedir = os.path.join(environ['DX_TEST_JOB_HOMEDIRS'], job_id)
 
-    job_env = os.environ.copy()
-    job_env['HOME'] = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], job_id)
+    job_env = environ.copy()
+    job_env['HOME'] = os.path.join(environ['DX_TEST_JOB_HOMEDIRS'], job_id)
 
-    all_job_outputs_path = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], 'job_outputs.json')
+    all_job_outputs_path = os.path.join(environ['DX_TEST_JOB_HOMEDIRS'], 'job_outputs.json')
 
     with open(all_job_outputs_path, 'r') as fd:
         all_job_outputs = json.load(fd, object_pairs_hook=collections.OrderedDict)
@@ -314,9 +315,9 @@ def run_one_entry_point(job_id, function, input_hash, run_spec, depends_on, name
         exit_with_error(job_name + ' ' + JOB_STATES('failed') + ' when processing depends_on:\n' + fill(str(e)))
 
     # Save job input to job_input.json
-    with open(os.path.join(job_homedir, 'job_input.json'), 'w') as fd:
+    with open(os.path.join(job_homedir, 'job_input.json'), 'wb') as fd:
         json.dump(input_hash, fd, indent=4)
-        fd.write('\n')
+        fd.write(b'\n')
 
     print(job_output_to_str(input_hash, title=(BOLD() + 'Input: ' + ENDC()),
                             title_len=len("Input: ")).lstrip())
@@ -340,9 +341,9 @@ def run_one_entry_point(job_id, function, input_hash, run_spec, depends_on, name
           else echo "$0: Global scope execution complete. Not invoking entry point function {function} because it was not found" 1>&2;
           fi'''.format(homedir=pipes.quote(job_homedir),
                        env_path=pipes.quote(os.path.join(job_env['HOME'], 'environment')),
-                       code_path=pipes.quote(os.environ['DX_TEST_CODE_PATH']),
+                       code_path=pipes.quote(environ['DX_TEST_CODE_PATH']),
                        function=function)
-        invocation_args = ['bash', '-c', '-e'] + (['-x'] if os.environ.get('DX_TEST_X_FLAG') else []) + [script]
+        invocation_args = ['bash', '-c', '-e'] + (['-x'] if environ.get('DX_TEST_X_FLAG') else []) + [script]
     elif run_spec['interpreter'] == 'python2.7':
         script = '''#!/usr/bin/env python
 import os
@@ -359,8 +360,13 @@ if dxpy.utils.exec_utils.RUN_COUNT == 0:
         job_env['DX_TEST_FUNCTION'] = function
         invocation_args = ['python', '-c', script]
 
-    fn_process = subprocess.Popen(invocation_args,
-                                  env=job_env)
+    if USING_PYTHON2:
+        invocation_args = [arg.encode(sys.stdout.encoding) for arg in invocation_args]
+        env = {k: v.encode(sys.stdout.encoding) for k, v in job_env.items()}
+    else:
+        env = job_env
+
+    fn_process = subprocess.Popen(invocation_args, env=env)
 
     fn_process.communicate()
     end_time = datetime.datetime.now()
@@ -383,7 +389,7 @@ if dxpy.utils.exec_utils.RUN_COUNT == 0:
     print(job_output_to_str(job_output, title=(BOLD() + "Output: " + ENDC()),
                             title_len=len("Output: ")).lstrip())
 
-    with open(os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], 'job_outputs.json'), 'r') as fd:
+    with open(os.path.join(environ['DX_TEST_JOB_HOMEDIRS'], 'job_outputs.json'), 'r') as fd:
         all_job_outputs = json.load(fd, object_pairs_hook=collections.OrderedDict)
     all_job_outputs[job_id] = job_output
 
@@ -394,9 +400,9 @@ if dxpy.utils.exec_utils.RUN_COUNT == 0:
             continue
         resolve_job_references(all_job_outputs[other_job_id], all_job_outputs, should_resolve=False)
 
-    with open(os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], 'job_outputs.json'), 'w') as fd:
+    with open(os.path.join(environ['DX_TEST_JOB_HOMEDIRS'], 'job_outputs.json'), 'wb') as fd:
         json.dump(all_job_outputs, fd, indent=4)
-        fd.write('\n')
+        fd.write(b'\n')
 
 def run_entry_points(run_spec):
     '''
@@ -407,8 +413,8 @@ def run_entry_points(run_spec):
     $DX_TEST_JOB_HOMEDIRS/job_queue.json in a first-in, first-out
     manner until it is an empty array (or an error occurs).
     '''
-    job_queue_path = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], 'job_queue.json')
-    all_job_outputs_path = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], 'job_outputs.json')
+    job_queue_path = os.path.join(environ['DX_TEST_JOB_HOMEDIRS'], 'job_queue.json')
+    all_job_outputs_path = os.path.join(environ['DX_TEST_JOB_HOMEDIRS'], 'job_outputs.json')
 
     while True:
         with open(job_queue_path, 'r') as fd:
@@ -438,11 +444,11 @@ def run_entry_points(run_spec):
             # the appropriate error
             entry_point_to_run = job_queue.pop(0)
 
-        with open(job_queue_path, 'w') as fd:
+        with open(job_queue_path, 'wb') as fd:
             # Update job queue with updated inputs and after having
             # popped the entry point to be run
             json.dump(job_queue, fd)
-            fd.write('\n')
+            fd.write(b'\n')
 
         run_one_entry_point(job_id=entry_point_to_run['id'],
                             function=entry_point_to_run['function'],

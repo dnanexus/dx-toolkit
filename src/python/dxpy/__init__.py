@@ -129,7 +129,7 @@ import os, sys, json, time, logging, platform, collections
 from .packages import requests
 from .packages.requests.exceptions import ConnectionError, HTTPError, Timeout
 from .packages.requests.auth import AuthBase
-from .compat import USING_PYTHON2
+from .compat import USING_PYTHON2, expanduser
 
 logger = logging.getLogger(__name__)
 logging.getLogger('dxpy.packages.requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
@@ -499,7 +499,7 @@ def _initialize(suppress_warning=False):
     '''
     global _DEBUG, _UPGRADE_NOTIFY
     _DEBUG = os.environ.get('_DX_DEBUG', False)
-    _UPGRADE_NOTIFY = os.path.expanduser('~/.dnanexus_config/.upgrade_notify')
+    _UPGRADE_NOTIFY = expanduser('~/.dnanexus_config/.upgrade_notify')
     if os.path.exists(_UPGRADE_NOTIFY) and os.path.getmtime(_UPGRADE_NOTIFY) > time.time() - 86400: # 24 hours
         _UPGRADE_NOTIFY = False
 
