@@ -113,7 +113,7 @@ def wrap_stdio_in_codecs():
                 original_stream = sys.stderr
                 sys.stderr = StderrTextIOWrapper(io.FileIO(sys.stderr.fileno(), mode='w'),
                                                  encoding=getattr(sys.stderr, 'encoding', None),
-                                                 line_buffering=True if sys.stderr.isatty() else False)
+                                                 line_buffering=True)
                 sys.stderr._original_stream = original_stream
             else:
                 sys.stderr.write(__name__ + ": Warning: Unable to wrap sys.stderr with a text codec\n")
