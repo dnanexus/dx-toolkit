@@ -1,6 +1,2 @@
-include requirements.txt
-include requirements_test.txt
-include requirements_dxfs.txt
-include requirements_readline.txt
-include requirements_setuptools.txt
+include requirements*.txt
 recursive-include dxpy/packages/requests *.pem
