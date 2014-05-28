@@ -4,6 +4,8 @@
 Runs Python integration tests and merges the resulting test coverage files.
 '''
 
+from __future__ import print_function, unicode_literals
+
 import argparse
 import os
 import subprocess
@@ -42,7 +44,7 @@ def run():
         else:
             cmd += ['discover', '--start-directory', 'test', '--verbose']
 
-        subprocess.check_call(cmd, cwd=PYTHON_DIR, shell=True)
+        subprocess.check_call(cmd, cwd=PYTHON_DIR)
         subprocess.check_call(["coverage", "combine"], cwd=PYTHON_DIR)
     finally:
         os.unlink(site_customize_filename)
