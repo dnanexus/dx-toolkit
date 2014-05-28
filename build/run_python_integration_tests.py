@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument(
     '--tests',
     help='Specify a specific test to run.',
-    metavar='test.test_module:TestCase.test_method',
+    metavar='test.test_module.TestCase.test_method',
     nargs='*'
 )
 
@@ -36,11 +36,13 @@ def run():
         site_customize_file.write("import coverage; coverage.process_startup()\n")
     try:
         subprocess.check_call("rm -vf .coverage .coverage.*", cwd=PYTHON_DIR, shell=True)
-        nose_cmd = ["./setup.py", "nosetests", "--exe", "--cover-inclusive", "--ignore-files=(pyopenssl|ntlmpool)"]
+        cmd = ['python', '-m', 'unittest']
         if args.tests:
-            nose_cmd.append('--tests')
-            nose_cmd.extend(args.tests)
-        subprocess.check_call(nose_cmd, cwd=PYTHON_DIR, env=env)
+            cmd += ['-v'] + args.tests
+        else:
+            cmd += ['discover', '--start-directory', 'test', '--verbose']
+
+        subprocess.check_call(cmd, cwd=PYTHON_DIR, shell=True)
         subprocess.check_call(["coverage", "combine"], cwd=PYTHON_DIR)
     finally:
         os.unlink(site_customize_filename)
