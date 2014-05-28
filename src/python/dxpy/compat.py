@@ -16,8 +16,10 @@
 
 from __future__ import (print_function, unicode_literals)
 
-import os, sys, io
+import os, sys, io, locale
 from io import TextIOWrapper
+
+sys_encoding = locale.getdefaultlocale()[1] or 'UTF-8'
 
 USING_PYTHON2 = True if sys.version_info < (3, 0) else False
 
@@ -40,8 +42,8 @@ if USING_PYTHON2:
                 sys.stdin = sys.stdin._original_stream
             if hasattr(sys.stdout, '_original_stream'):
                 sys.stdout = sys.stdout._original_stream
-            encoded_prompt = prompt.encode(getattr(sys.stdout, 'encoding', 'utf-8'))
-            return raw_input(encoded_prompt).decode(getattr(sys.stdin, 'encoding', 'utf-8'))
+            encoded_prompt = prompt.encode(sys_encoding)
+            return raw_input(encoded_prompt).decode(sys_encoding)
         finally:
             sys.stdin, sys.stdout = cur_stdin, cur_stdout
     def expanduser(path):
@@ -60,7 +62,7 @@ if USING_PYTHON2:
             else:
                 userhome = environ['HOME']
                 if isinstance(userhome, bytes):
-                    userhome = userhome.decode(getattr(sys.stdin, 'encoding', 'utf-8'))
+                    userhome = userhome.decode(sys_encoding)
         else:
             import pwd
             try:
@@ -122,21 +124,21 @@ def wrap_stdio_in_codecs():
 
 def decode_command_line_args():
     if USING_PYTHON2:
-        sys.argv = [i if isinstance(i, unicode) else i.decode(sys.stdin.encoding) for i in sys.argv]
+        sys.argv = [i if isinstance(i, unicode) else i.decode(sys_encoding) for i in sys.argv]
     return sys.argv
 
 class _Environ(object):
     def __getitem__(self, item):
         value = os.environ[item]
         if isinstance(value, bytes):
-            value = value.decode(sys.stdin.encoding)
+            value = value.decode(sys_encoding)
         return value
 
     def __setitem__(self, varname, value):
         if not isinstance(varname, bytes):
-            varname = varname.encode(sys.stdout.encoding)
+            varname = varname.encode(sys_encoding)
         if not isinstance(value, bytes):
-            value = value.encode(sys.stdout.encoding)
+            value = value.encode(sys_encoding)
         os.environ[varname] = value
 
     def __contains__(self, item):
@@ -164,14 +166,14 @@ def wrap_env_var_handlers():
         def getenv(varname, value=None):
             v = native_getenv(varname, value)
             if isinstance(v, bytes):
-                v = v.decode(sys.stdin.encoding)
+                v = v.decode(sys_encoding)
             return v
 
         def putenv(varname, value):
             if not isinstance(varname, bytes):
-                varname = varname.encode(sys.stdout.encoding)
+                varname = varname.encode(sys_encoding)
             if not isinstance(value, bytes):
-                value = value.encode(sys.stdout.encoding)
+                value = value.encode(sys_encoding)
             native_putenv(varname, value)
 
         os.getenv, os.putenv = getenv, putenv
