@@ -459,7 +459,6 @@ endif
 
 distclean: clean
 
-# TODO: clean up files in /bin, too
 clean:
 	$(MAKE) -C dx-contigset-to-fasta clean
 	$(MAKE) -C dx-wig-to-wiggle clean
@@ -473,5 +472,6 @@ clean:
 	-rm ../build/info/version
 	-rm -rf "$(DX_PY_ENV)"
 	-rm -rf boost c-ares curl file openssl
+	-git submodule deinit -f .
 
 .PHONY: all toolkit_version api_wrappers src_libs python_deps python perl java ruby dx-contigset-to-fasta ua test test_ruby test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R doc_ruby boost boost_build install_sysdeps
