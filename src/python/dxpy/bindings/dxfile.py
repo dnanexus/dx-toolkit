@@ -187,7 +187,7 @@ class DXFile(DXDataObject):
         _buffer = self.read(self._read_bufsize)
         done = False
         while not done:
-            if "\n" in _buffer:
+            if b"\n" in _buffer:
                 lines = _buffer.splitlines()
                 for i in range(len(lines) - 1):
                     yield lines[i]
