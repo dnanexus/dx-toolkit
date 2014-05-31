@@ -6,7 +6,7 @@ python:
 - pypy
 script:
 - source environment
-- build/run_python_integration_tests.py --tests test.test_dxpy
+- build/run_python_integration_tests.py --tests test.test_dxpy_utils test.test_dxpy.TestDX{Project,File,Record} test.test_dxclient.TestDXClient
 notifications:
   email: false
 env:
