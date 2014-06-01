@@ -33,7 +33,7 @@ from ..exceptions import DXError
 
 class DXExecutable:
     '''Methods in :class:`!DXExecutable` are used by
-    :class:`~dxpy.bindings.dxapp.DXApp`
+    :class:`~dxpy.bindings.dxapp.DXApp`,
     :class:`~dxpy.bindings.dxapplet.DXApplet`, and
     :class:`~dxpy.bindings.dxworkflow.DXWorkflow`
     '''
@@ -54,11 +54,9 @@ class DXExecutable:
     @staticmethod
     def _get_run_input_common_fields(executable_input, **kwargs):
         '''
-        Takes the same arguments as the run method. Creates an input
-        hash for the /executable-xxxx/run method, translating ONLY the
-        fields that can be handled uniformly across all executables:
-        project, folder, name, tags, properties, details, depends_on,
-        delay_workspace_destruction, and extra_args.
+        Takes the same arguments as the run method. Creates an input hash for the /executable-xxxx/run method,
+        translating ONLY the fields that can be handled uniformly across all executables: project, folder, name, tags,
+        properties, details, depends_on, allow_ssh, debug_on, delay_workspace_destruction, and extra_args.
         '''
         project = kwargs.get('project') or dxpy.WORKSPACE_ID
 
@@ -87,6 +85,12 @@ class DXExecutable:
 
         if kwargs.get('delay_workspace_destruction') is not None:
             run_input["delayWorkspaceDestruction"] = kwargs['delay_workspace_destruction']
+
+        if kwargs.get('allow_ssh') is not None:
+            run_input["allowSSH"] = kwargs['allow_ssh']
+
+        if kwargs.get('debug_on') is not None:
+            run_input["debugOn"] = kwargs['debug_on']
 
         if kwargs.get('priority') is not None:
             run_input["priority"] = kwargs['priority']
@@ -132,7 +136,7 @@ class DXExecutable:
 
     def run(self, executable_input, project=None, folder=None, name=None, tags=None, properties=None, details=None,
             instance_type=None, stage_instance_types=None, stage_folders=None, rerun_stages=None,
-            depends_on=None, delay_workspace_destruction=None, priority=None,
+            depends_on=None, allow_ssh=None, debug_on=None, delay_workspace_destruction=None, priority=None,
             extra_args=None, **kwargs):
         '''
         :param executable_input: Hash of the executable's input arguments
@@ -182,6 +186,8 @@ class DXExecutable:
                                         stage_folders=stage_folders,
                                         rerun_stages=rerun_stages,
                                         depends_on=depends_on,
+                                        allow_ssh=allow_ssh,
+                                        debug_on=debug_on,
                                         delay_workspace_destruction=delay_workspace_destruction,
                                         priority=priority,
                                         extra_args=extra_args)
