@@ -155,6 +155,9 @@ python: api_wrappers toolkit_version python_deps
 	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/lib"
 	cp -a "$(DX_PY_ENV)/lib/python2.7/site-packages" "$(DNANEXUS_HOME)/lib/python2.7/"
 	cp -a "$(DX_PY_ENV)/bin/"*python-argcomplete* "$(DNANEXUS_HOME)/bin/"
+ifdef DNANEXUS_INSTALL_PYTHON_TEST_DEPS
+	cp -af "$(DX_PY_ENV)/bin/"* "$(DNANEXUS_HOME)/bin/"
+endif
 	(source ../environment; export PYTHONPATH="$(DNANEXUS_HOME)/lib/python2.7/site-packages:${PYTHONPATH}"; cd python; python ./setup.py build; python ./setup.py install --install-lib="$(DNANEXUS_HOME)/lib/python2.7/site-packages" --install-scripts="$(DNANEXUS_HOME)/bin"; mv $(DNANEXUS_HOME)/lib/python2.7 $(DNANEXUS_HOME)/share/dnanexus/lib)
 	rm -f ../bin/easy_install* ../bin/xattr
 
