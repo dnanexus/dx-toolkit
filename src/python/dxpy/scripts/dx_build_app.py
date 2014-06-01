@@ -848,8 +848,8 @@ def main(**kwargs):
                 subprocess.check_call(['dx', 'run', output['id'], '--priority', 'high'] + args.run)
             except subprocess.CalledProcessError as e:
                 sys.exit(e.returncode)
-            except KeyboardInterrupt:
-                sys.exit(1)
+            except:
+                err_exit()
 
         return
 
