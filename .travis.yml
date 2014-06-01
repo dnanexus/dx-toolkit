@@ -5,6 +5,7 @@ python:
 - '3.4'
 - pypy
 script:
+- deactivate
 - source environment
 - build/run_python_integration_tests.py --tests test.test_dxpy_utils test.test_dxpy.TestDX{Project,File,Record} test.test_dxclient.TestDXClient
 notifications:
