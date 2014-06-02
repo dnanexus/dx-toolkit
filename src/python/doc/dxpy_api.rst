@@ -12,12 +12,23 @@ Pythonized JSON (a list or dict) that is returned from the API server.
 
 .. describe:: An example API call
 
-      .. function:: api_call(object_id, input_params={}, **kwargs)
+      .. function:: classname_methodname(object_id, input_params={}, always_retry=False, **kwargs)
 
          :param object_id: Object ID of remote object to be manipulated
 	 :type object_id: string
 	 :param input_params: Request body (will be converted to JSON)
 	 :type input_params: list or dict
+	 :param always_retry: True if the request is idempotent and is safe to
+                              retry. Note that this parameter is misleadingly
+                              named; setting it to True (False, respectively)
+                              does not guarantee that the request will always
+                              (never) be retried. Rather, it is advisory and
+                              whether the request is retried depends on the
+                              specific error condition: see `the retry logic
+                              specification
+                              <https://github.com/dnanexus/dx-toolkit/blob/master/src/api_wrappers/README.md#http-retry-logic>`_
+                              for more information.
+	 :type always_retry: bool
 	 :param kwargs: Additional arguments to be passed to the :class:`dxpy.DXHTTPRequest` object (such as headers)
 	 :returns: Contents of response from API server (Pythonized JSON object)
 	 :rtype: list or dict
@@ -28,7 +39,7 @@ by their name and version (or tag), in addition to their app ID.
 
 .. describe:: An example API call on an app instance
 
-     .. function:: api_call_for_apps(app_name_or_id, alias=None, input_params={}, **kwargs)
+     .. function:: app_methodname(app_name_or_id, alias=None, input_params={}, always_retry=False, **kwargs)
 
          :param app_name_or_id: Either "app-NAME" or the hash ID "app-xxxx"
          :type app_name_or_id: string
@@ -36,6 +47,17 @@ by their name and version (or tag), in addition to their app ID.
          :type alias: string
          :param input_params: Request body (will be converted to JSON)
 	 :type input_params: list or dict
+	 :param always_retry: True if the request is idempotent and is safe to
+                              retry. Note that this parameter is misleadingly
+                              named; setting it to True (False, respectively)
+                              does not guarantee that the request will always
+                              (never) be retried. Rather, it is advisory and
+                              whether the request is retried depends on the
+                              specific error condition: see `the retry logic
+                              specification
+                              <https://github.com/dnanexus/dx-toolkit/blob/master/src/api_wrappers/README.md#http-retry-logic>`_
+                              for more information.
+	 :type always_retry: bool
 	 :param kwargs: Additional arguments to be passed to the :class:`dxpy.DXHTTPRequest` object (such as headers)
 	 :returns: Contents of response from API server (Pythonized JSON object)
 	 :rtype: list or dict
