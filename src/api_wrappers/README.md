@@ -65,7 +65,7 @@ An HTTP request to the API server should be retried (up to some fixed number of 
 * A response is received from the server, and the response has an HTTP status code in 5xx range.
     * This may indicate that the server encountered a transient error.
     * If the status code is 503 (Service Unavailable) and Retry-After is set, the failure should not count against the maximum allowed number of retries.
-* Either *always_retry* (caller-supplied parameter) is True or the request *method* is "GET", and one of the following is true:
+* *safe_to_retry* (caller-supplied parameter; for compatibility reasons this is called *always_retry* in some language bindings) is True, or the request *method* is "GET"; and one of the following is true:
     * No response is received from the server.
     * A response is received from the server, and the content length received does not match the "Content-Length" header.
         * This indicates that the response was likely corrupted (truncated).

@@ -19,15 +19,15 @@ useful as you develop your own scripts and apps:</p>
 
 <h4>dxcpp provides the following handler classes for DNAnexus objects:</h4>
 <ul>
-  <li>DXApp</li>
-  <li>DXApplet</li>
-  <li>DXContainer</li>
-  <li>DXFile</li>
-  <li>DXGTable</li>
-  <li>DXJob</li>
-  <li>DXProject</li>
-  <li>DXRecord</li>
-  <li>DXSystem</li>
+  <li>dx::DXApp</li>
+  <li>dx::DXApplet</li>
+  <li>dx::DXContainer</li>
+  <li>dx::DXFile</li>
+  <li>dx::DXGTable</li>
+  <li>dx::DXJob</li>
+  <li>dx::DXProject</li>
+  <li>dx::DXRecord</li>
+  <li>dx::DXSystem</li>
 </ul>
 
 <h4>The following helpers will provide assistance with interfacing between your
@@ -39,11 +39,11 @@ app(let) and the execution environment:</h4>
 
 <h4>The following classes are used for throwing exceptions (all derive eventually from std::exception):</h4>
 <ul>
-  <li>DXAPIError</li>
-  <li>DXError</li>
-  <li>DXFileError</li>
-  <li>DXGTableError</li>
-  <li>DXNotImplementedError</li>
+  <li>dx::DXAPIError</li>
+  <li>dx::DXError</li>
+  <li>dx::DXFileError</li>
+  <li>dx::DXGTableError</li>
+  <li>dx::DXNotImplementedError</li>
 </ul>
 
 \endhtmlonly
