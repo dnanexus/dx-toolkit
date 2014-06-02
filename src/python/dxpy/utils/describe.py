@@ -845,7 +845,9 @@ def get_find_executions_string(desc, has_children, single_result=False, show_out
                 runtime = datetime.timedelta(seconds=int(desc['stoppedRunning']-desc['startedRunning'])/1000)
                 cached_and_runtime_strs.append("runtime " + str(runtime))
             elif desc['state'] == 'running':
-                cached_and_runtime_strs.append("running for {rt}".format(rt=datetime.timedelta(seconds=int(time.time()-desc['startedRunning']/1000))))
+                seconds_running = max(int(time.time()-desc['startedRunning']/1000), 0)
+                msg = "running for {rt}".format(rt=datetime.timedelta(seconds=seconds_running))
+                cached_and_runtime_strs.append(msg)
 
     if cached_and_runtime_strs:
         result += " (" + ", ".join(cached_and_runtime_strs) + ")"
