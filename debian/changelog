@@ -1,3 +1,9 @@
+dx-toolkit (0.100.1) precise; urgency=low
+
+  * Various bug fixes.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 03 Jun 2014 20:00:28 +0000
+
 dx-toolkit (0.100.0) precise; urgency=low
 
   * Unicode fixes.
