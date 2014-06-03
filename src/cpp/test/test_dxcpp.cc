@@ -63,6 +63,25 @@ void createANewApplet(DXApplet &apl) {
   apl.create(applet_details);
 }
 
+/////////////////
+// Retry logic //
+/////////////////
+
+TEST(DXHTTPRequestTest, retryLogicWithRetryAfter) {
+  // Do this weird dance here in case there is clock skew between client and
+  // server
+  int64_t localStartTime = std::time(NULL) * 1000;
+  JSON response = DXHTTPRequest(std::string("/system/comeBackLater"), std::string("{}"));
+  long currentTime = response["currentTime"].get<long>();
+  long waitUntil = currentTime + 8000;
+  DXHTTPRequest(std::string("/system/comeBackLater"),
+		std::string("{\"waitUntil\": ") + boost::lexical_cast<string>(waitUntil) + std::string("}"));
+  long localTimeElapsed = std::time(NULL) * 1000 - localStartTime;
+  cerr << "Local time elapsed: " << localTimeElapsed;
+  ASSERT_GE(localTimeElapsed, 8000);
+  ASSERT_LE(localTimeElapsed, 16000);
+}
+
 ////////////
 // DXLink //
 ////////////

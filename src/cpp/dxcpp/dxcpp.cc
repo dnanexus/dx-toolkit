@@ -105,14 +105,14 @@ namespace dx {
   }
 
   // Note: We only consider 200 as a successful response, all others are considered "failures"
-  JSON DXHTTPRequest(const string &resource, const string &data, const bool alwaysRetry, const map<string, string> &headers) {
+  JSON DXHTTPRequest(const string &resource, const string &data, const bool safeToRetry, const map<string, string> &headers) {
     DXLOG(logDEBUG) << "In DXHTTPRequest(), inputs:" << endl
                   << " --resources = '" << resource << "'" << endl
-                  << " --alwaysRetry = " << alwaysRetry << endl
+                  << " --safeToRetry = " << safeToRetry << endl
                   << " --data = '" << data.substr(0, 100) << "'" << endl
                   << " --headers = '" << JSON(headers).toString() << "'";
     const unsigned int NUM_MAX_RETRIES = 5u; // maximum number of retries for an individual request
-    
+
     if (config::APISERVER().empty()) {
       throw DXError("dxcpp::DXHTTPRequest()-> API server information not found. Please set DX_APISERVER_HOST, DX_APISERVER_PORT, and DX_APISERVER_PROTOCOL.", "ApiserverInfoMissing");
     }
@@ -154,22 +154,26 @@ namespace dx {
     // TODO: Load retry parameters (wait time, max number of retries, etc)
     // from some config file
 
-    unsigned int countTries;
+    unsigned int countTries = 0u;
     HttpRequest req;
     unsigned int sec_to_wait = 2; // number of seconds to wait before retrying first time. Will keep on doubling the wait time for each subsequent retry.
     bool reqCompleted; // did last request actually went through, i.e., some response was received)
     bool contentLengthMismatch;
     bool contentLengthMissing;
+    unsigned int retryAfterSeconds = 60u; // Number of seconds to retry after,
+                                          // in the event of a 503 response
     HttpRequestException hre;
 
     // The HTTP Request is always executed at least once,
     // a maximum of NUM_MAX_RETRIES number of subsequent tries are made, if required and feasible.
-    for (countTries = 0u; countTries <= NUM_MAX_RETRIES; ++countTries, sec_to_wait *= 2u) {
-      
+    while (true) {
+
       // Variable "toRetry" indicates whether or not the request should be retried on failure
       // Note: Initial value of "false" is just a dummy value, toRetry will always be re-init before being used.
       //       This dummy initial value is provided, to prevent some spurious warnings from clang
       bool toRetry = false;
+      // True if the request returns with a 503
+      bool serviceUnavailable = false;
 
       reqCompleted = true; // will explicitly set it to false in case request couldn't be completed
       try {
@@ -180,10 +184,14 @@ namespace dx {
       } catch (HttpRequestException &e) {
         DXLOG(logDEBUG) << "HttpRequestException thrown ... message = '" << e.what() << "'";
         // Retry the request in any of these three scenarios:
-        //  - alwaysRetry = true in the call to this function
-        //  - errorCode returned by HttpRequestException is < 0 (which implies that request was never made to the server)server
-        //  - isAlwaysRetryableCurlError() - A list of curl codes, which are *ALWAYS* safe to retry (irrespective of the request being made - idempotent or not, etc).
-        toRetry = alwaysRetry || (e.errorCode < 0) || isAlwaysRetryableCurlError(e.errorCode);
+        //
+        //  - safeToRetry is true
+        //  - errorCode returned by HttpRequestException is < 0 (implies that
+        //    the request was never made to the server)
+        //  - isAlwaysRetryableCurlError() - A list of curl codes, which are
+        //    *ALWAYS* safe to retry (irrespective of the request being made -
+        //    idempotent or not, etc).
+        toRetry = safeToRetry || (e.errorCode < 0) || isAlwaysRetryableCurlError(e.errorCode);
         reqCompleted = false;
         hre = e;
       }
@@ -192,6 +200,13 @@ namespace dx {
         if (req.responseCode != 200) {
           DXLOG(logWARNING) << "POST '" << url << "' returned with HTTP code '" << req.responseCode << "'; and body: '" << req.respData << "'";
           toRetry = isAlwaysRetryableHttpCode(req.responseCode);
+          if (req.responseCode == 503) {
+            serviceUnavailable = true;
+            string retryAfterHeader;
+            bool retryAfterMissing;
+            retryAfterMissing = !req.respHeader.getHeaderString("Retry-After", retryAfterHeader);
+            retryAfterSeconds = retryAfterMissing ? 60 : boost::lexical_cast<size_t>(retryAfterHeader);
+          }
         } else {
           // We are here => The request went thru, we got 200 and a response
           string clHeader; // content-length header
@@ -199,13 +214,13 @@ namespace dx {
           contentLengthMismatch = !contentLengthMissing && (boost::lexical_cast<size_t>(clHeader) != req.respData.size());
           if (contentLengthMismatch) {
             // This is an error situation for us, retry only if explicitly asked
-            toRetry = alwaysRetry;
+            toRetry = safeToRetry;
             DXLOG(logWARNING) << "POST '" << url << "': Expected Content-Length to be '" << clHeader << "' (from Content-Length header)"
-                              << "but received " << req.respData.size() << ", retry = " << ((alwaysRetry) ? "true" : "false");
+                              << "but received " << req.respData.size() << ", retry = " << ((safeToRetry) ? "true" : "false");
           } else {
             try {
               JSON out = JSON::parse(req.respData);
-              if (countTries != 0u) { 
+              if (countTries != 0u) {
                 // if at least one retry was made, print eventual success on stderr
                 DXLOG(logWARNING) << "Request completed successfully in Retry #" << countTries;
               }
@@ -231,18 +246,35 @@ namespace dx {
         }
       }
 
-      if (toRetry && (countTries < NUM_MAX_RETRIES)) {
-        if (!reqCompleted) {
-          DXLOG(logWARNING) << "Unable to complete request: POST '" << url << "' (in retry #" << (countTries + 1) << "). Details: '" << hre.what() << "'";
-        }
-        DXLOG(logWARNING) << "Waiting ... " << sec_to_wait << " seconds before retry " << (countTries + 1) << " of " << NUM_MAX_RETRIES << " ...";
-        boost::this_thread::interruption_point();
-        _internal::sleepUsingNanosleep(sec_to_wait);
-        DXLOG(logDEBUG) << "Sleep finished, will go & retry the request";
-      } else {
+      if (!toRetry || (countTries >= NUM_MAX_RETRIES)) {
+        // Code after this loop wants to know how many attempts were made, so
+        // update to reflect the most recent attempt.
         countTries++;
         break;
       }
+
+      // 503 with Retry-After-- do not count such responses against the allowed
+      // number of retries
+      if (serviceUnavailable) {
+        DXLOG(logWARNING) << "Service unavailable, waiting for " << retryAfterSeconds << " seconds : POST '" << url << "'";
+        boost::this_thread::interruption_point();
+        _internal::sleepUsingNanosleep(retryAfterSeconds);
+        DXLOG(logDEBUG) << "Sleep finished, will recheck for service availability";
+        continue;
+      }
+
+      assert(countTries < NUM_MAX_RETRIES);
+
+      if (!reqCompleted) {
+        DXLOG(logWARNING) << "Unable to complete request: POST '" << url << "' (in retry #" << (countTries + 1) << "). Details: '" << hre.what() << "'";
+      }
+      DXLOG(logWARNING) << "Waiting ... " << sec_to_wait << " seconds before retry " << (countTries + 1) << " of " << NUM_MAX_RETRIES << " ...";
+      boost::this_thread::interruption_point();
+      _internal::sleepUsingNanosleep(sec_to_wait);
+      DXLOG(logDEBUG) << "Sleep finished, will go & retry the request";
+
+      countTries++;
+      sec_to_wait *= 2u;
     }
 
     // We are here, implies, All retries were exhausted (or not attempted) with failure.

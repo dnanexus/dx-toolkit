@@ -66,11 +66,11 @@ namespace dx {
    *
    * @param resource API server route to access, e.g. "/file/new"
    * @param data Data to send in the request
-   * @param alwaysRetry If true, then a failed request is <b>always</b> retried. Should be set to true for <b>only</b> idempotent requests. Default value = false.
+   * @param safeToRetry If true, indicates that the request is idempotent and that a failed request may be retried. Defaults to false.
    * @param headers Additional HTTP headers to include in the request
    * @return The response from the API server, parsed as a JSON
    */
-  dx::JSON DXHTTPRequest(const std::string &resource, const std::string &data, const bool alwaysRetry = false,
+  dx::JSON DXHTTPRequest(const std::string &resource, const std::string &data, const bool safeToRetry = false,
                          const std::map<std::string, std::string> &headers = std::map<std::string, std::string>());
 
   /**
