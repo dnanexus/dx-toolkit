@@ -43,6 +43,7 @@ from . import logger
 from .utils import merge
 from .utils.printing import fill
 from .compat import input
+from .cli import INTERACTIVE_CLI
 
 NUM_CORES = multiprocessing.cpu_count()
 
@@ -464,7 +465,7 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
                 parts.append('the following developers will be removed: ' + ', '.join(sorted(developers_to_remove)))
             developer_change_message = '; and '.join(parts)
             if confirm:
-                if sys.stdout.isatty():
+                if INTERACTIVE_CLI:
                     try:
                         print('***')
                         print(fill('WARNING: ' + developer_change_message))
@@ -499,7 +500,7 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
         if 'PUBLIC' in authorized_users_to_add:
             acl_change_message = 'app-%s will be made public. Anyone will be able to view and run all published versions of this app.' % (app_spec['name'],)
             if confirm:
-                if sys.stdout.isatty():
+                if INTERACTIVE_CLI:
                     try:
                         print('***')
                         print(fill('WARNING: ' + acl_change_message))
