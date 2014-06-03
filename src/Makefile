@@ -134,6 +134,7 @@ endif
 python_deps: $(DX_PY_ENV)/lib
 
 $(DX_PY_ENV)/lib: python/requirements*.txt
+	python -c 'import sys; exit("dx-toolkit is not compatible with Python < 2.7" if sys.version_info < (2, 7) else 0)'
 	rm -rf "$(DX_PY_ENV)"
 	virtualenv --python=python "$(DX_PY_ENV)"
 	virtualenv --relocatable "$(DX_PY_ENV)"
