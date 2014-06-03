@@ -350,8 +350,8 @@ else
 endif
 	$(MAKE) -C openssl -j1 install
 
-BOOST_PV=1.53
-BOOST_SHA=e6dd1b62ceed0a51add3dda6f3fc3ce0f636a7f3
+BOOST_PV=1.55
+BOOST_SHA=cef9a0cc7084b1d639e06cd3bc34e4251524c840
 BOOST_LIBS=filesystem,program_options,regex,system,thread,atomic,chrono,date_time,exception,iostreams,signals
 boost: boost/stage
 
