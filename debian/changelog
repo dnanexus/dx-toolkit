@@ -1,3 +1,11 @@
+dx-toolkit (0.101.0) precise; urgency=low
+
+  * More uniform client retry logic and support for Retry-After.
+
+  * Build and CI improvements.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 03 Jun 2014 19:57:55 +0000
+
 dx-toolkit (0.100.0) precise; urgency=low
 
   * Unicode fixes.
