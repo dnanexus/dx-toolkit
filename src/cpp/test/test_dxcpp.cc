@@ -599,12 +599,12 @@ public:
 protected:
   virtual void SetUp() {
     char name [L_tmpnam];
-    tmpnam(name);
+    ASSERT_STRNE(NULL, tmpnam(name));
     tempfilename = string(name);
 
     if (foofilename == "") {
       char fooname [L_tmpnam];
-      tmpnam(fooname);
+      ASSERT_STRNE(NULL, tmpnam(fooname));
       foofilename = string(fooname);
       ofstream foofile(fooname);
       foofile << foostr;
@@ -683,7 +683,7 @@ TEST_F(DXFileTest, UploadEmptyFile) {
   ASSERT_EQ(dxf.describe()["size"], 0);
 
   char fname[L_tmpnam];
-  tmpnam(fname);
+  ASSERT_STRNE(NULL, tmpnam(fname));
   ofstream lf(fname);
   lf.close();
   DXFile dxf2 = DXFile::uploadLocalFile(fname);
@@ -696,7 +696,7 @@ TEST(DXFileTest_Async, UploadAndDownloadLargeFile_1_SLOW) {
 
   char fname[L_tmpnam];
   const int file_size = 25 * 1024 * 1024;
-  tmpnam(fname);
+  ASSERT_STRNE(NULL, tmpnam(fname));
   ofstream lf(fname);
   for (int i = 0; i < file_size; ++i)
     lf<<"$";
@@ -705,7 +705,7 @@ TEST(DXFileTest_Async, UploadAndDownloadLargeFile_1_SLOW) {
   dxf.waitOnClose();
 
   char fname2[L_tmpnam];
-  tmpnam(fname2);
+  ASSERT_STRNE(NULL, tmpnam(fname2));
   DXFile::downloadDXFile(dxf.getID(), fname2, 99999);
 
 
