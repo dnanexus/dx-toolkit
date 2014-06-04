@@ -3791,8 +3791,8 @@ parser_watch.add_argument('jobid', help='ID of the job to watch')
 parser_watch.add_argument('-n', '--num-recent-messages', help='Number of recent messages to get',
                           type=int, default=1024*256)
 parser_watch.add_argument('--tree', help='Include the entire job tree', action='store_true')
-parser_watch.add_argument('-l', '--levels', nargs='*', choices=["EMERG", "ALERT", "CRITICAL", "ERROR", "WARNING",
-                                                                "NOTICE", "INFO", "DEBUG", "STDERR", "STDOUT"])
+parser_watch.add_argument('-l', '--levels', action='append', choices=["EMERG", "ALERT", "CRITICAL", "ERROR", "WARNING",
+                                                                      "NOTICE", "INFO", "DEBUG", "STDERR", "STDOUT"])
 parser_watch.add_argument('--get-stdout', help='Extract stdout only from this job', action='store_true')
 parser_watch.add_argument('--get-stderr', help='Extract stderr only from this job', action='store_true')
 parser_watch.add_argument('--get-streams', help='Extract only stdout and stderr from this job', action='store_true')
