@@ -27,7 +27,7 @@ from ..cli import workflow as workflow_cli
 from ..exceptions import err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions
 from ..packages import requests
 from ..compat import USING_PYTHON2, basestring, str, input, wrap_stdio_in_codecs, decode_command_line_args
-from ..utils.env import sys_encoding, set_env_var, get_env_var
+from ..utils.env import sys_encoding, set_env_var, get_env_var, get_user_conf_dir
 
 wrap_stdio_in_codecs()
 decode_command_line_args()
@@ -373,6 +373,13 @@ def login(args):
     elif args.projects:
         pick_and_set_project(args)
 
+    if args.save:
+        msg = "You are now logged in. Your credentials are stored in {conf_dir} and will expire in {timeout}. {tip}"
+        tip = "You can use " + BOLD("dx login --timeout") + " to control the expiration date."
+        print(fill(msg.format(conf_dir=get_user_conf_dir(),
+                              timeout=datetime.timedelta(seconds=normalize_time_input(args.timeout)/1000),
+                              tip=tip)))
+
 def logout(args):
     if dxpy.AUTH_HELPER is not None:
         authserver = dxpy.get_auth_server_name(args.host, args.port)
@@ -466,14 +473,18 @@ def pick_and_set_project(args):
             except:
                 err_exit('Error while listing available projects')
         if not any_results:
-            parser.exit(0, '\n' + fill('No projects to choose from.  You can create one with the command "dx new project".  To pick from projects for which you only have VIEW permissions, use "dx select --level VIEW" or "dx select --public".') + '\n')
+            parser.exit(0, '\n' + fill("No projects to choose from.  You can create one with the command " +
+                                       BOLD("dx new project") + ".  To pick from projects for which you only have " +
+                                       " VIEW permissions, use " + BOLD("dx select --level VIEW") + " or " +
+                                       BOLD("dx select --public") + ".") + '\n')
         elif len(results) == 0:
             parser.exit(1, 'No projects left to choose from.\n')
 
         if first_pass:
             if not args.public and args.level == "CONTRIBUTE":
                 print('')
-                print(fill('Note: Use "dx select --level VIEW" or "dx select --public" to select from projects for which you only have VIEW permissions.'))
+                print(fill("Note: Use " + BOLD("dx select --level VIEW") + " or " + BOLD("dx select --public") +
+                           " to select from projects for which you only have VIEW permissions."))
             first_pass = False
 
         project_ids = [result['id'] for result in results]
@@ -496,7 +507,7 @@ def pick_and_set_project(args):
         if choice == 'm':
             continue
         else:
-            print('Setting current project to: ' + results[choice]['describe']['name'])
+            print('Setting current project to: ' + BOLD(results[choice]['describe']['name']))
             set_project(project_ids[choice], not state['interactive'] or args.save, name=results[choice]['describe']['name'])
             state['currentproj'] = results[choice]['describe']['name']
             set_wd('/', not state['interactive'] or args.save)
