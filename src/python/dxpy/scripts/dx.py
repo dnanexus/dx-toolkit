@@ -375,7 +375,8 @@ def login(args):
 
     if args.save:
         msg = "You are now logged in. Your credentials are stored in {conf_dir} and will expire in {timeout}. {tip}"
-        tip = "You can use " + BOLD("dx login --timeout") + " to control the expiration date."
+        tip = "Use " + BOLD("dx login --timeout") + " to control the expiration date, or " + BOLD("dx logout") + \
+              " to end this session."
         print(fill(msg.format(conf_dir=get_user_conf_dir(),
                               timeout=datetime.timedelta(seconds=normalize_time_input(args.timeout)/1000),
                               tip=tip)))
