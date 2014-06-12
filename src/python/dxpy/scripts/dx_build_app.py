@@ -634,6 +634,16 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
                     sys.exit(3)
                 else:
                     raise e
+
+            dxpy.DXJob(job_id).wait_on_done(interval=1)
+
+            if mode == 'applet':
+                applet_id, _ = dxpy.get_dxlink_ids(dxpy.api.job_describe(job_id)['output']['output_applet'])
+                return applet_id
+            else:
+                # TODO: determine and return the app ID, to allow
+                # running the app if args.run is specified
+                return None
         finally:
             if not using_temp_project_for_remote_build:
                 dxpy.DXProject(build_project_id).remove_objects([remote_file.get_id()])
@@ -641,8 +651,6 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
         if using_temp_project_for_remote_build:
             dxpy.api.project_destroy(build_project_id, {"terminateJobs": True})
         shutil.rmtree(temp_dir)
-
-    return
 
 # TODO: do_build_step and do_upload_step could probably be removed
 # following https://github.com/dnanexus/dx_app_builder/commit/4803fbba
@@ -841,17 +849,9 @@ def main(**kwargs):
             print("Error: %s" % (e,), file=sys.stderr)
             sys.exit(3)
 
-        if args.run is not None:
-            if output is None:
-                err_exit("The --run option was given, but no executable was created")
-            try:
-                subprocess.check_call(['dx', 'run', output['id'], '--priority', 'high'] + args.run)
-            except subprocess.CalledProcessError as e:
-                sys.exit(e.returncode)
-            except:
-                err_exit()
-
-        return
+        if output is None:
+            err_exit("The --run option was given, but no executable was created")
+        executable_id = output['id']
 
     else:
         # REMOTE BUILD
@@ -896,7 +896,22 @@ def main(**kwargs):
         if not args.check_syntax:
             more_kwargs['do_check_syntax'] = False
 
-        return _build_app_remote(args.mode, args.src_dir, destination_override=args.destination, publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep, **more_kwargs)
+        executable_id = _build_app_remote(args.mode, args.src_dir, destination_override=args.destination, publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep, **more_kwargs)
+
+        if executable_id is None:
+            if args.mode == 'applet':
+                raise AssertionError('mode is "applet", so expected executable_id to be set here')
+            err_exit("dx build --remote --run does not support apps (only applets)")
+
+    if args.run is not None:
+        try:
+            subprocess.check_call(['dx', 'run', executable_id, '--priority', 'high'] + args.run)
+        except subprocess.CalledProcessError as e:
+            sys.exit(e.returncode)
+        except:
+            err_exit()
+
+    return
 
 
 if __name__ == '__main__':
