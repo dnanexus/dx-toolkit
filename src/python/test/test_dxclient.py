@@ -30,7 +30,6 @@ import dxpy_testutil as testutil
 from dxpy.packages import requests
 from dxpy.exceptions import DXAPIError
 from dxpy.compat import str
-from dxpy.utils.env import sys_encoding
 
 @contextmanager
 def chdir(dirname=None):
@@ -515,6 +514,36 @@ class TestDXClient(DXTestCase):
             expect_dx_env_cwd(shell1, "sessiontest1")
         except:
             print("*** TODO: FIXME: Unable to verify that grandchild subprocess inherited session")
+
+    def test_dx_ssh_config(self):
+        wd = tempfile.mkdtemp()
+        dx_ssh_config = pexpect.spawn("dx ssh-config", env=overrideEnvironment(HOME=wd))
+        dx_ssh_config.logfile = sys.stdout
+        dx_ssh_config.setwinsize(20, 90)
+        dx_ssh_config.expect("The DNAnexus configuration directory")
+        dx_ssh_config.expect("does not exist")
+
+        os.mkdir(os.path.join(wd, ".dnanexus_config"))
+
+        dx_ssh_config = pexpect.spawn("dx ssh-config", env=overrideEnvironment(HOME=wd))
+        dx_ssh_config.logfile = sys.stdout
+        dx_ssh_config.setwinsize(20, 90)
+        dx_ssh_config.expect("Select an SSH key pair")
+        dx_ssh_config.sendline("1")
+        dx_ssh_config.expect("Enter the location of your SSH key")
+        dx_ssh_config.sendline("нет ключа")
+        dx_ssh_config.expect("Unable to find")
+
+        dx_ssh_config = pexpect.spawn("dx ssh-config", env=overrideEnvironment(HOME=wd))
+        dx_ssh_config.logfile = sys.stdout
+        dx_ssh_config.setwinsize(20, 90)
+        dx_ssh_config.expect("Select an SSH key pair")
+        dx_ssh_config.sendline("0")
+        dx_ssh_config.expect("Enter passphrase")
+        dx_ssh_config.sendline("")
+        dx_ssh_config.expect("again")
+        dx_ssh_config.sendline("")
+        dx_ssh_config.expect("Your account has been configured for use with SSH")
 
 class TestDXClientUploadDownload(DXTestCase):
     def test_dx_upload_download(self):
