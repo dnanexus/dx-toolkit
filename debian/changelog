@@ -1,3 +1,9 @@
+dx-toolkit (0.101.2) precise; urgency=low
+
+  * Fix dx-app-wizard when distributed through PyPI.
+
+ -- Andrey Kislyuk <akislyuk@ec2-54-208-148-42.compute-1.amazonaws.com>  Thu, 12 Jun 2014 17:34:42 +0000
+
 dx-toolkit (0.101.1) precise; urgency=low
 
   * Python build fix.
