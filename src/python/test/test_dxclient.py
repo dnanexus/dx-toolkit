@@ -515,6 +515,8 @@ class TestDXClient(DXTestCase):
         except:
             print("*** TODO: FIXME: Unable to verify that grandchild subprocess inherited session")
 
+    @unittest.skipUnless(dxpy.APISERVER_HOST.endswith('api.dnanexus.com'),
+                         'Skipping test that requires production authserver configuration')
     def test_dx_ssh_config(self):
         wd = tempfile.mkdtemp()
         dx_ssh_config = pexpect.spawn("dx ssh-config", env=overrideEnvironment(HOME=wd))
