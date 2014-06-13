@@ -63,23 +63,12 @@ toolkit that doesn't require them.
       g++ cmake libboost1.54-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison \
       autoconf
 
-### Ubuntu 13.04
-
-    sudo apt-get install make python-setuptools python-pip python-virtualenv python-dev \
-      g++ cmake libboost1.53-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison \
-      autoconf
-
-### Ubuntu 12.10
-
-    sudo apt-get install make python-setuptools python-pip python-virtualenv python-dev \
-      g++ cmake libboost1.50-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison \
-      autoconf
-
 ### Ubuntu 12.04
 
-    sudo apt-get install make python-setuptools python-pip python-virtualenv python-dev \
+    sudo apt-get install make python-setuptools python-pip python-dev \
       g++ cmake libboost1.48-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison \
       autoconf
+    sudo pip install --upgrade virtualenv
 
 ### Ubuntu 10.04
 
