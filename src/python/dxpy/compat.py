@@ -129,6 +129,8 @@ def decode_command_line_args():
 
 class _Environ(object):
     def __getitem__(self, item):
+        if not isinstance(item, bytes):
+            item = item.encode(sys_encoding)
         value = os.environ[item]
         if isinstance(value, bytes):
             value = value.decode(sys_encoding)
@@ -142,6 +144,8 @@ class _Environ(object):
         os.environ[varname] = value
 
     def __contains__(self, item):
+        if not isinstance(item, bytes):
+            item = item.encode(sys_encoding)
         return True if item in os.environ else False
 
     def __getattr__(self, attr):
