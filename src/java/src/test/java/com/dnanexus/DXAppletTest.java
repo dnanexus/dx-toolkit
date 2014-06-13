@@ -17,6 +17,7 @@
 package com.dnanexus;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -97,6 +98,25 @@ public class DXAppletTest {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private DXProject testProject;
+
+    /**
+     * Remove properties that may be automatically set by jobs and should be excluded from
+     * assertions.
+     *
+     * @param jobProperties map of job properties
+     *
+     * @return Cleaned version of map
+     */
+    private Map<String, String> cleanJobProperties(Map<String, String> jobProperties) {
+        // Copy over all keys except ssh_host_rsa_key
+        ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+        for (Map.Entry<String, String> entry : jobProperties.entrySet()) {
+            if (!entry.getKey().equals("ssh_host_rsa_key")) {
+                builder.put(entry);
+            }
+        }
+        return builder.build();
+    }
 
     @Before
     public void setUp() {
@@ -283,7 +303,8 @@ public class DXAppletTest {
         SampleAppDetails jobDetails = jobDescribe.getDetails(SampleAppDetails.class);
         Assert.assertEquals("sample-1234", jobDetails.sampleId);
         Assert.assertEquals(ImmutableList.of("t1"), jobDescribe.getTags());
-        Assert.assertEquals(ImmutableMap.of("k1", "v1"), jobDescribe.getProperties());
+        Assert.assertEquals(ImmutableMap.of("k1", "v1"),
+                cleanJobProperties(jobDescribe.getProperties()));
 
         // Examine and verify the job's output
         SampleAppOutput output = job.getOutput(SampleAppOutput.class);
