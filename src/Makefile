@@ -161,6 +161,7 @@ ifdef DNANEXUS_INSTALL_PYTHON_TEST_DEPS
 endif
 	(source ../environment; export PYTHONPATH="$(DNANEXUS_HOME)/lib/python2.7/site-packages:${PYTHONPATH}"; cd python; python ./setup.py build; python ./setup.py install --install-lib="$(DNANEXUS_HOME)/lib/python2.7/site-packages" --install-scripts="$(DNANEXUS_HOME)/bin"; mv $(DNANEXUS_HOME)/lib/python2.7 $(DNANEXUS_HOME)/share/dnanexus/lib)
 	rm -f ../bin/easy_install* ../bin/xattr
+	../build/fix_shebang_lines.sh ../bin
 
 # TODO: fix up perl and java targets
 

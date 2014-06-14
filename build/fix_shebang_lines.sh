@@ -36,7 +36,7 @@ fi
 #
 # Also, insert a stub that tries to detect when the user hasn't sourced the
 # environment file and prints a warning.
-py_header="#!/usr/bin/env python2.7
+py_header="#!/usr/bin/env python
 import os, sys
 if \"DNANEXUS_HOME\" not in os.environ:
     sys.stderr.write(\"\"\"***\n*** WARNING: DNANEXUS_HOME is not set. $msg\n***\n\"\"\")
@@ -44,6 +44,7 @@ if \"DNANEXUS_HOME\" not in os.environ:
 
 for f in "$dirname"/*; do
     if head -n 1 "$f" | egrep -iq "(python|pypy)"; then
+        echo "Rewriting $f to use portable interpreter paths"
         perl -i -pe 's|^#!/.+|'"$py_header"'| if $. == 1' "$f"
     fi
 done
