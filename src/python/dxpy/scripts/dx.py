@@ -3351,9 +3351,10 @@ parser_login = subparsers.add_parser('login', help='Log in (interactively or wit
                                      description='Log in interactively and acquire credentials.  Use "--token" to log in with an existing API token.',
                                      prog='dx login', parents=[env_args])
 parser_login.add_argument('--token', help='Authentication token to use')
-parser_login.add_argument('--host', help='Log into the given auth server host (port must also be given)')
-parser_login.add_argument('--port', type=int, help='Log into the given auth server port (host must also be given)')
-parser_login.add_argument('--protocol', help='Use the given protocol to contact auth server (by default, the correct protocol is guessed based on --port)')
+host_action = parser_login.add_argument('--host', help='Log into the given auth server host (port must also be given)')
+port_action = parser_login.add_argument('--port', type=int, help='Log into the given auth server port (host must also be given)')
+protocol_action = parser_login.add_argument('--protocol', help='Use the given protocol to contact auth server (by default, the correct protocol is guessed based on --port)')
+host_action.help = port_action.help = protocol_action.help = argparse.SUPPRESS
 parser_login.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
 parser_login.add_argument('--save', help='Save token and other environment variables for future sessions',
                           action='store_true')
