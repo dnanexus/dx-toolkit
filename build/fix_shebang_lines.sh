@@ -43,8 +43,10 @@ if \"DNANEXUS_HOME\" not in os.environ:
 "
 
 for f in "$dirname"/*; do
-    if head -n 1 "$f" | egrep -iq "(python|pypy)"; then
-        echo "Rewriting $f to use portable interpreter paths"
-        perl -i -pe 's|^#!/.+|'"$py_header"'| if $. == 1' "$f"
+    if ! grep -q 'WARNING: DNANEXUS_HOME' "$f"; then
+        if head -n 1 "$f" | egrep -iq "(python|pypy)"; then
+            echo "Rewriting $f to use portable interpreter paths"
+            perl -i -pe 's|^#!/.+|'"$py_header"'| if $. == 1' "$f"
+        fi
     fi
 done
