@@ -1,3 +1,11 @@
+dx-toolkit (0.103.0) precise; urgency=low
+
+  * Support for dx ssh.
+
+  * Various build and packaging improvements.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 17 Jun 2014 18:15:20 +0000
+
 dx-toolkit (0.102.0) precise; urgency=low
 
   * Support Retry-After in dxcpp.
