@@ -1,0 +1,107 @@
+#!/usr/bin/env python
+#
+# Copyright (C) 2013-2014 DNAnexus, Inc.
+#
+# This file is part of dx-toolkit (DNAnexus platform client libraries).
+#
+#   Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#   use this file except in compliance with the License. You may obtain a copy
+#   of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#   License for the specific language governing permissions and limitations
+#   under the License.
+
+'''
+Downloads all input files into the virtual machine
+
+
+   job_input.json is in the working directory of the code.
+   parse job_input.json, figure out the set of input files
+   construct directory structure
+   download the files (in parallel, or sequentially)
+'''
+
+import os, sys, json, argparse, subprocess
+import pprint
+import dxpy
+
+'''
+The input format looks something like this:
+
+{
+    "seq2": {
+        "$dnanexus_link": {
+            "project": "project-BKJfY1j0b06Z4y8PX8bQ094f", 
+            "id": "file-BKQGkjj0b06xG5560GGQ001K"
+        }
+    }, 
+    "seq1": {
+        "$dnanexus_link": {
+            "project": "project-BKJfY1j0b06Z4y8PX8bQ094f", 
+            "id": "file-BKQGkgQ0b06xG5560GGQ001B"
+        }
+    }
+    "blast_args": "", 
+    "evalue": 0.01
+}
+
+The first two elements are files {seq1, seq2}, the other elements {blast_args, evalue}.
+
+The file for seq2 should be saved into: /out/seq2/filename
+'''
+pp = pprint.PrettyPrinter(indent=4)
+
+## extract list of files
+def parse_job_input(job_input_file):
+    with open(job_input_file) as fh:
+        job_input = json.load(fh)
+        pp.pprint(input_spec)
+
+        files = list()
+        for input_name, value in job_input.iteritems():
+            ## we need to figure out which of these is a file
+            if not dxpy.is_dxlink(value):
+                continue
+            handler = dxpy.get_handler(value)
+            if not isinstance(handler, dxpy.DXFile):
+                continue
+            filename = handler.name
+            trg_fname = os.path.join('/out', input_name, filename)
+            kv = (trg_fname, src_fid)
+            files.append(kv)
+    return files
+    
+'''
+key --- target file name
+value --- file descriptor
+
+example:
+key == "seq1"
+desc == { "$dnanexus_link": {
+            "project": "project-BKJfY1j0b06Z4y8PX8bQ094f", 
+            "id": "file-BKQGkgQ0b06xG5560GGQ001B"
+        }
+'''
+def download_all(inputs):
+    for trg_fname, src_fid in inputs:
+        ## Downloading file
+        # dxpy.download_dxfile(dep['id'], dep['name'])
+        # subprocess.check_call(['dx-unpack', dep['name']])
+        print("download file: " + src_fname)
+        dxpy.download_dxfile(src_fid, trg_fname)
+
+## figure out the source dir
+## Is it always "/" ? 
+src_dir = './'
+
+job_input_file = os.path.join(src_dir, "job_input.json")
+inputs = parse_job_input(job_input_file)
+pp.pprint(inputs)
+download_all(inputs)
+
+
