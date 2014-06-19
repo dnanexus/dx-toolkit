@@ -22,36 +22,43 @@ import dxpy
 
 ## Global convenience variables
 pp = pprint.PrettyPrinter(indent=4)
-##idir = '/in'    ## input directory, where all inputs are downloaded
-idir = './in' 
 
 '''
 This will not be compatible with previous uses
 
 TODO
   +* setup working test app
-   * make sure /in exists
-   * handle file arrays   
-
-   * report errors using:   
-
-error_hash = {
-    "error": {
-        "type": args.type,
-        "message": args.message
-        }
-    }
-
-with open(os.path.expanduser(os.path.join('~', 'job_error.json')), 'w') as error_file:
-    error_file.write(json.dumps(error_hash, indent=4) + '\n')
-
-from: dx-jobutil-report-error
-
-
-
+  +* make sure /in exists
+  +* handle file arrays   
+  +* hack to make it work for running the app locally
+  
+Questions
 * testing, how to integrate into testing framework
-* git commit
-   
+* additional scripts
+    + download-all-inputs
+    upload-all-outputs
+    download-input  [input_name]
+    upload-input  [output_name]
+
+* How should we report errors? 
+   = example from [dx-log-stream]
+     try 
+       ...
+     except Exception as e:
+        print >> sys.stderr, "dx_log_stream: Error while initializing logging:", str(e)
+        sys.exit(1)
+
+   = example from dx-jobutil-report-error
+     error_hash = {
+      "error": {
+          "type": args.type,
+          "message": args.message
+        }
+      }
+
+    with open(os.path.expanduser(os.path.join('~', 'job_error.json')), 'w') as error_file:
+         error_file.write(json.dumps(error_hash, indent=4) + '\n')
+
 '''
 
 '''
@@ -119,7 +126,7 @@ This file array with two files, will appear in the virtual machine as:
   extract list of files, returns a set of directories to create, and 
   a set of files, with sources and destinations. 
 '''
-def parse_job_input(job_input_file):
+def parse_job_input(idir, job_input_file):
     with open(job_input_file) as fh:
         job_input = json.load(fh)
         pp.pprint(job_input)
@@ -185,27 +192,41 @@ For example, seq1 could be stored under:
 
 TODO: this call could fail, we need to report a reasonable error code
 '''
-def create_dirs(dirs):
+def create_dirs(idir, dirs):
     print ("create_dirs " + str(len(dirs)))
     if len(dirs) == 0:
         return
-    ## create the <idir> directory
-    ensure_dir(idir)
     ## create each subdir
     for d in dirs:
         ensure_dir(os.path.join(idir, d))
 
+'''
+When we run a script locally, we don't have access to the "/in" directory (<idir>). To get around this problem, we convert "/in" to "./in", if we can't write into "/in".
+
+Note: this is a hack, we need to find a better way to do this.
+'''
+def setup_idir_local_exec_hack(idir):
+    ## create the <idir> directory
+    if not os.access("/", os.W_OK):
+        idir = "." + idir
+    ensure_dir(idir)
+    return idir
+
 ## entry point
+idir = '/in'    ## input directory, where all inputs are downloaded
+idir = setup_idir_local_exec_hack(idir)
+
 job_input_file = "./job_input.json"
-dirs, inputs = parse_job_input(job_input_file)
+dirs, inputs = parse_job_input(idir, job_input_file)
 pp.pprint(inputs)
 pp.pprint(dirs)
 
 ## Create the directory structure, in preparation for download.
 ## Allows performing the download in parallel.
-create_dirs(dirs)
+create_dirs(idir, dirs)
 
-## Download the files
+## Download the files, currently, this is done sequentially (one file at 
+## a time.
 download_all(inputs)
 
 
