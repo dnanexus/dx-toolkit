@@ -327,15 +327,12 @@ class DXDataObject(DXObject):
                 _class=self._class)
             )
 
+        describe_input = dict(properties=incl_properties, details=incl_details)
         if self._proj is not None:
-            self._desc = self._describe(self._dxid, {"project": self._proj,
-                                                     "properties": incl_properties,
-                                                     "details": incl_details},
-                                        **kwargs)
-        else:
-            self._desc = self._describe(self._dxid, {"properties": incl_properties,
-                                                     "details": incl_details},
-                                        **kwargs)
+            describe_input["project"] = self._proj
+
+        self._desc = self._describe(self._dxid, describe_input, **kwargs)
+
         return self._desc
 
     def add_types(self, types, **kwargs):
