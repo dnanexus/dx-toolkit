@@ -16,9 +16,46 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+import os, sys, json, argparse, subprocess
+import pprint
+import dxpy
+
+## Global convenience variables
+pp = pprint.PrettyPrinter(indent=4)
+##idir = '/in'    ## input directory, where all inputs are downloaded
+idir = './in' 
+
+'''
+This will not be compatible with previous uses
+
+TODO
+  +* setup working test app
+   * make sure /in exists
+   * handle file arrays   
+
+   * report errors using:   
+
+error_hash = {
+    "error": {
+        "type": args.type,
+        "message": args.message
+        }
+    }
+
+with open(os.path.expanduser(os.path.join('~', 'job_error.json')), 'w') as error_file:
+    error_file.write(json.dumps(error_hash, indent=4) + '\n')
+
+from: dx-jobutil-report-error
+
+
+
+* testing, how to integrate into testing framework
+* git commit
+   
+'''
+
 '''
 Downloads all input files into the virtual machine
-
 
    job_input.json is in the working directory of the code.
    parse job_input.json, figure out the set of input files
@@ -26,12 +63,8 @@ Downloads all input files into the virtual machine
    download the files (in parallel, or sequentially)
 '''
 
-import os, sys, json, argparse, subprocess
-import pprint
-import dxpy
-
 '''
-The input format looks something like this:
+A simple example of the input specification:
 
 {
     "seq2": {
@@ -51,30 +84,72 @@ The input format looks something like this:
 }
 
 The first two elements are files {seq1, seq2}, the other elements {blast_args, evalue}.
+The file for seq2 should be saved into: <idir>/seq2/filename
 
-The file for seq2 should be saved into: /out/seq2/filename
+source command line
+  -iseq1=NC_000868.fasta -iseq2=NC_001422.fasta 
+
+file seq1 is supposed to appear in the virutal machine at path:
+<idir>/seq1/NC_000868.fasta
+
+
+File Arrays
+
+{
+    "reads": [{
+        "$dnanexus_link": {
+            "project": "project-BKJfY1j0b06Z4y8PX8bQ094f", 
+            "id": "file-BKQGkjj0b06xG5560GGQ001K"
+        }
+    }, 
+    {
+        "$dnanexus_link": {
+            "project": "project-BKJfY1j0b06Z4y8PX8bQ094f", 
+            "id": "file-BKQGkgQ0b06xG5560GGQ001B"
+        }
+    }]
+}
+
+This file array with two files, will appear in the virtual machine as:
+<idir>/reads/<handler.name>
+<idir>/reads/<handler.name>
 '''
-pp = pprint.PrettyPrinter(indent=4)
 
-## extract list of files
+'''
+  extract list of files, returns a set of directories to create, and 
+  a set of files, with sources and destinations. 
+'''
 def parse_job_input(job_input_file):
     with open(job_input_file) as fh:
         job_input = json.load(fh)
-        pp.pprint(input_spec)
+        pp.pprint(job_input)
 
-        files = list()
-        for input_name, value in job_input.iteritems():
-            ## we need to figure out which of these is a file
-            if not dxpy.is_dxlink(value):
-                continue
+        files = list() 
+        dirs = set()  ## directories to create under <idir>
+        
+        ## local function for adding a file to the list of files to be created
+        ## for example: 
+        ##   "seq1" <$dnanexus_link ... >    ---> <idir>/seq1/<filename>
+        def add_file(iname, value):
             handler = dxpy.get_handler(value)
             if not isinstance(handler, dxpy.DXFile):
-                continue
+                return
             filename = handler.name
-            trg_fname = os.path.join('/out', input_name, filename)
-            kv = (trg_fname, src_fid)
+            kv = {'trg_fname' : os.path.join(idir, iname, filename),
+                  'src_fname' : handler.id}
             files.append(kv)
-    return files
+            dirs.add(iname)
+
+        for input_name, value in job_input.iteritems():
+            if dxpy.is_dxlink(value):
+                ## This is a single file
+                add_file(input_name, value)
+            elif isinstance(value, list):
+               ## This is a file array, we use the field name as the directory
+               for link in value:
+                   add_file(input_name, link)
+
+        return (dirs, files)
     
 '''
 key --- target file name
@@ -88,20 +163,49 @@ desc == { "$dnanexus_link": {
         }
 '''
 def download_all(inputs):
-    for trg_fname, src_fid in inputs:
-        ## Downloading file
-        # dxpy.download_dxfile(dep['id'], dep['name'])
-        # subprocess.check_call(['dx-unpack', dep['name']])
-        print("download file: " + src_fname)
-        dxpy.download_dxfile(src_fid, trg_fname)
+    for rec in inputs:
+        print("download file: " + rec['src_fname'] + "-> " + rec['trg_fname'])
+        dxpy.download_dxfile(rec['src_fname'], rec['trg_fname'])
 
-## figure out the source dir
-## Is it always "/" ? 
-src_dir = './'
+'''
+ create a directory if it does not already exist .
 
-job_input_file = os.path.join(src_dir, "job_input.json")
-inputs = parse_job_input(job_input_file)
+ TODO: report appropriate errors if this is a file, instead of a directory
+'''
+def ensure_dir(d):
+    pp.pprint("ensure_dir " + d)
+    if not os.path.exists(d):
+        print ("create_dir " + d)
+        os.mkdir(d)
+
+'''
+create a set of directories, so we could store the input files.
+For example, seq1 could be stored under:
+   /out/seq1/NC_001122.fasta
+
+TODO: this call could fail, we need to report a reasonable error code
+'''
+def create_dirs(dirs):
+    print ("create_dirs " + str(len(dirs)))
+    if len(dirs) == 0:
+        return
+    ## create the <idir> directory
+    ensure_dir(idir)
+    ## create each subdir
+    for d in dirs:
+        ensure_dir(os.path.join(idir, d))
+
+## entry point
+job_input_file = "./job_input.json"
+dirs, inputs = parse_job_input(job_input_file)
 pp.pprint(inputs)
+pp.pprint(dirs)
+
+## Create the directory structure, in preparation for download.
+## Allows performing the download in parallel.
+create_dirs(dirs)
+
+## Download the files
 download_all(inputs)
 
 
