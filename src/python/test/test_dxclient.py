@@ -547,6 +547,11 @@ class TestDXClient(DXTestCase):
         dx_ssh_config.sendline("")
         dx_ssh_config.expect("Your account has been configured for use with SSH")
 
+        self.assertTrue(os.path.exists(os.path.join(wd, ".dnanexus_config/ssh_id")))
+
+        with open(os.path.join(wd, ".dnanexus_config/ssh_id.pub")) as fh:
+            self.assertEqual(fh.read(), dxpy.api.user_describe(dxpy.user_info()['userId']).get('SSHPublicKey'))
+
 class TestDXClientUploadDownload(DXTestCase):
     def test_dx_upload_download(self):
         with self.assertSubprocessFailure(stderr_regexp='expected the path to be a non-empty string', exit_code=3):
