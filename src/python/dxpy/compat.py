@@ -72,6 +72,9 @@ if USING_PYTHON2:
             userhome = pwent.pw_dir
         userhome = userhome.rstrip('/')
         return (userhome + path[i:]) or '/'
+    if os.name == 'nt':
+        # The POSIX os.path.expanduser doesn't work on NT, so just leave it be
+        expanduser = os.path.expanduser
 else:
     from io import StringIO, BytesIO
     builtin_str = str
