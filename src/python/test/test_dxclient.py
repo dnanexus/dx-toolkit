@@ -519,7 +519,7 @@ class TestDXClient(DXTestCase):
                          'Skipping test that requires production authserver configuration')
     def test_dx_ssh_config(self):
         wd = tempfile.mkdtemp()
-        dx_ssh_config = pexpect.spawn("dx ssh-config", env=overrideEnvironment(HOME=wd))
+        dx_ssh_config = pexpect.spawn("dx ssh_config", env=overrideEnvironment(HOME=wd))
         dx_ssh_config.logfile = sys.stdout
         dx_ssh_config.setwinsize(20, 90)
         dx_ssh_config.expect("The DNAnexus configuration directory")
@@ -527,7 +527,7 @@ class TestDXClient(DXTestCase):
 
         os.mkdir(os.path.join(wd, ".dnanexus_config"))
 
-        dx_ssh_config = pexpect.spawn("dx ssh-config", env=overrideEnvironment(HOME=wd))
+        dx_ssh_config = pexpect.spawn("dx ssh_config", env=overrideEnvironment(HOME=wd))
         dx_ssh_config.logfile = sys.stdout
         dx_ssh_config.setwinsize(20, 90)
         dx_ssh_config.expect("Select an SSH key pair")
@@ -536,7 +536,7 @@ class TestDXClient(DXTestCase):
         dx_ssh_config.sendline("нет ключа")
         dx_ssh_config.expect("Unable to find")
 
-        dx_ssh_config = pexpect.spawn("dx ssh-config", env=overrideEnvironment(HOME=wd))
+        dx_ssh_config = pexpect.spawn("dx ssh_config", env=overrideEnvironment(HOME=wd))
         dx_ssh_config.logfile = sys.stdout
         dx_ssh_config.setwinsize(20, 90)
         dx_ssh_config.expect("Select an SSH key pair")
