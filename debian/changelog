@@ -1,3 +1,9 @@
+dx-toolkit (0.103.1) precise; urgency=low
+
+  * Fix bug in dx ssh-config when handling existing SSH private keys.
+
+ -- Andrey Kislyuk <akislyuk@dnanexus.com>  Fri, 20 Jun 2014 06:47:35 +0000
+
 dx-toolkit (0.103.0) precise; urgency=low
 
   * Support for dx ssh.
