@@ -3173,7 +3173,7 @@ def ssh(args, ssh_config_verified=False):
     host, host_key = None, None
     for i in range(90):
         host = job_desc.get('host')
-        host_key = job_desc.get('SSHHostKey') or job_desc['properties'].get('ssh_host_rsa_key')
+        host_key = job_desc.get('sshHostKey') or job_desc['properties'].get('ssh_host_rsa_key')
         if host and host_key:
             break
         else:
