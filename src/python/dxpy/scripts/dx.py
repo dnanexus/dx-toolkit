@@ -3144,7 +3144,7 @@ def verify_ssh_config():
     except Exception as e:
         msg = RED("Warning:") + " Unable to verify configuration of your account for SSH connectivity: {}".format(e) + \
               ". SSH connection will likely fail. To set up your account for SSH, quit this command and run " + \
-              BOLD("dx ssh-config") + ". Continue with the current command?"
+              BOLD("dx ssh_config") + ". Continue with the current command?"
         if not prompt_for_yn(fill(msg), default=False):
             err_exit()
 
@@ -3170,30 +3170,31 @@ def ssh(args, ssh_config_verified=False):
 
     sys.stdout.write("Resolving job hostname and SSH host key...")
     sys.stdout.flush()
+    host, host_key = None, None
     for i in range(90):
-        if 'host' in job_desc and 'ssh_host_rsa_key' in job_desc.get('properties', []):
+        host = job_desc.get('host')
+        host_key = job_desc.get('SSHHostKey') or job_desc['properties'].get('ssh_host_rsa_key')
+        if host and host_key:
             break
-        time.sleep(1)
-        job_desc = dxpy.describe(args.job_id)
-        sys.stdout.write(".")
-        sys.stdout.flush()
-    known_hosts_file = os.path.expanduser('~/.dnanexus_config/ssh_known_hosts')
-    with open(known_hosts_file, 'a') as fh:
-        line = "{job_id}.dnanexus.io {key}".format(job_id=args.job_id, key=job_desc['properties']['ssh_host_rsa_key'])
-        if not line.endswith("\n"):
-            line += "\n"
-        fh.write(line)
+        else:
+            time.sleep(1)
+            job_desc = dxpy.describe(args.job_id)
+            sys.stdout.write(".")
+            sys.stdout.flush()
 
-    if 'host' not in job_desc or 'ssh_host_rsa_key' not in job_desc.get('properties', []):
-        msg = "Cannot resolve hostname or key for {}. Please check your permissions and run settings."
+    if not (host and host_key):
+        msg = "Cannot resolve hostname or hostkey for {}. Please check your permissions and run settings."
         err_exit(msg.format(args.job_id))
 
-    print("Connecting to", job_desc['host'])
+    known_hosts_file = os.path.expanduser('~/.dnanexus_config/ssh_known_hosts')
+    with open(known_hosts_file, 'a') as fh:
+        fh.write("{job_id}.dnanexus.io {key}\n".format(job_id=args.job_id, key=host_key.rstrip()))
+
+    print("Connecting to", host)
     ssh_args = ['ssh', '-i', os.path.expanduser('~/.dnanexus_config/ssh_id'),
                 '-o', 'HostKeyAlias={}.dnanexus.io'.format(args.job_id),
                 '-o', 'UserKnownHostsFile={}'.format(known_hosts_file),
-                '-l', 'dnanexus',
-                job_desc['host']]
+                '-l', 'dnanexus', host]
     ssh_args += args.ssh_args
     exit_code = subprocess.call(ssh_args)
     try:
@@ -3963,9 +3964,9 @@ parser_watch.add_argument('--no-wait', '--no-follow', action='store_false', dest
 parser_watch.set_defaults(func=watch)
 register_subparser(parser_watch, categories='exec')
 
-parser_ssh_config = subparsers.add_parser('ssh-config', help='Configure SSH keys for your DNAnexus account',
+parser_ssh_config = subparsers.add_parser('ssh_config', help='Configure SSH keys for your DNAnexus account',
                                    description='Configure SSH access credentials for your DNAnexus account',
-                                   prog='dx ssh-config',
+                                   prog='dx ssh_config',
                                    parents=[env_args])
 parser_ssh_config.add_argument('ssh_keygen_args', help='Command-line arguments to pass to ssh-keygen',
                                nargs=argparse.REMAINDER)
@@ -3975,7 +3976,7 @@ register_subparser(parser_ssh_config, categories='exec')
 parser_ssh = subparsers.add_parser('ssh', help='Connect to a running job via SSH',
                                    description='Use an SSH client to connect to a job being executed on the DNAnexus ' +
                                                'platform. The job must be launched using "dx run --allow-ssh" or ' +
-                                               'equivalent API options. Use "dx ssh-config" or the Profile page on ' +
+                                               'equivalent API options. Use "dx ssh_config" or the Profile page on ' +
                                                'the DNAnexus website to configure SSH for your DNAnexus account.',
                                    prog='dx ssh',
                                    parents=[env_args])
