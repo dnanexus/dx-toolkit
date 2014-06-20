@@ -3120,7 +3120,7 @@ def ssh_config(args):
             else:
                 err_exit("Unable to find {k} and {k}.pub".format(k=key_src))
         else:
-            key_src, pub_key_src = choices[choice], choices[choice][:-4]
+            key_src, pub_key_src = choices[choice][:-4], choices[choice]
 
         os.symlink(key_src, key_dest)
         os.symlink(pub_key_src, pub_key_dest)
