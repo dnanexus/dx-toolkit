@@ -2792,6 +2792,9 @@ def run(args):
     if args.help:
         print_run_help(args.executable, args.alias)
 
+    if args.allow_ssh == [] or (args.ssh and not args.allow_ssh):
+        args.allow_ssh = ['*']
+
     if args.ssh or args.allow_ssh:
         verify_ssh_config()
 
@@ -2944,9 +2947,6 @@ def run(args):
             dest_path = get_env_var('DX_CLI_WD', u'/')
 
     process_instance_type_arg(args, is_workflow)
-
-    if args.allow_ssh == [] or (args.ssh and not args.allow_ssh):
-        args.allow_ssh = ['*']
 
     run_one(args, handler, dest_proj, dest_path)
 
