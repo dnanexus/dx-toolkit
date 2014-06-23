@@ -3093,15 +3093,29 @@ def ssh_config(args):
         msg = "The DNAnexus configuration directory {d} does not exist. Use {c} to create it."
         err_exit(msg.format(d=dnanexus_conf_dir, c=BOLD("dx login")))
 
-    keys = [k for k in glob.glob(os.path.join(os.path.expanduser("~/.ssh"), "*.pub")) if os.path.exists(k[:-4])]
     print(fill("Select an SSH key pair to use when connecting to DNAnexus jobs. The public key will be saved to your " +
-               "DNAnexus account (readable only by you). The private key will remain on this computer."))
-    print()
-    choices = ['Generate a new SSH key pair using ssh-keygen'] + keys + ['Select another SSH key pair...']
-    choice = pick(choices, default=0)
+               "DNAnexus account (readable only by you). The private key will remain on this computer.") + "\n")
 
     key_dest = os.path.join(dnanexus_conf_dir, 'ssh_id')
     pub_key_dest = key_dest + ".pub"
+
+    if os.path.exists(os.path.realpath(key_dest)) and os.path.exists(os.path.realpath(pub_key_dest)):
+        print(BOLD("dx") + " is already configured to use the SSH key pair at:\n    {}\n    {}".format(key_dest,
+                                                                                                       pub_key_dest))
+        if pick(["Use this SSH key pair", "Select or create another SSH key pair..."]) == 1:
+            os.remove(key_dest)
+            os.remove(pub_key_dest)
+        else:
+            update_pub_key(user_id, pub_key_dest)
+            return
+    elif os.path.exists(key_dest) or os.path.exists(pub_key_dest):
+        os.remove(key_dest)
+        os.remove(pub_key_dest)
+
+    keys = [k for k in glob.glob(os.path.join(os.path.expanduser("~/.ssh"), "*.pub")) if os.path.exists(k[:-4])]
+
+    choices = ['Generate a new SSH key pair using ssh-keygen'] + keys + ['Select another SSH key pair...']
+    choice = pick(choices, default=0)
 
     if choice == 0:
         try:
@@ -3125,7 +3139,10 @@ def ssh_config(args):
         os.symlink(key_src, key_dest)
         os.symlink(pub_key_src, pub_key_dest)
 
-    with open(pub_key_dest) as fh:
+    update_pub_key(user_id, pub_key_dest)
+
+def update_pub_key(user_id, pub_key_file):
+    with open(pub_key_file) as fh:
         pub_key = fh.read()
         dxpy.api.user_update(user_id, {"SSHPublicKey": pub_key})
 

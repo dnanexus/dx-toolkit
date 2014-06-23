@@ -523,39 +523,61 @@ class TestDXClient(DXTestCase):
             user_id = dxpy.user_info()['userId']
             original_ssh_public_key = dxpy.api.user_describe(user_id).get('SSHPublicKey')
 
+            def get_dx_ssh_config():
+                dx_ssh_config = pexpect.spawn("dx ssh_config", env=overrideEnvironment(HOME=wd))
+                dx_ssh_config.logfile = sys.stdout
+                dx_ssh_config.setwinsize(20, 90)
+                return dx_ssh_config
+
+            def read_back_pub_key():
+                self.assertTrue(os.path.exists(os.path.join(wd, ".dnanexus_config/ssh_id")))
+
+                with open(os.path.join(wd, ".dnanexus_config/ssh_id.pub")) as fh:
+                    self.assertEqual(fh.read(), dxpy.api.user_describe(user_id).get('SSHPublicKey'))
+
             wd = tempfile.mkdtemp()
-            dx_ssh_config = pexpect.spawn("dx ssh_config", env=overrideEnvironment(HOME=wd))
-            dx_ssh_config.logfile = sys.stdout
-            dx_ssh_config.setwinsize(20, 90)
+            dx_ssh_config = get_dx_ssh_config()
             dx_ssh_config.expect("The DNAnexus configuration directory")
             dx_ssh_config.expect("does not exist")
 
             os.mkdir(os.path.join(wd, ".dnanexus_config"))
 
-            dx_ssh_config = pexpect.spawn("dx ssh_config", env=overrideEnvironment(HOME=wd))
-            dx_ssh_config.logfile = sys.stdout
-            dx_ssh_config.setwinsize(20, 90)
+            dx_ssh_config = get_dx_ssh_config()
             dx_ssh_config.expect("Select an SSH key pair")
             dx_ssh_config.sendline("1")
             dx_ssh_config.expect("Enter the location of your SSH key")
             dx_ssh_config.sendline("нет ключа")
             dx_ssh_config.expect("Unable to find")
 
-            dx_ssh_config = pexpect.spawn("dx ssh_config", env=overrideEnvironment(HOME=wd))
-            dx_ssh_config.logfile = sys.stdout
-            dx_ssh_config.setwinsize(20, 90)
+            dx_ssh_config = get_dx_ssh_config()
             dx_ssh_config.expect("Select an SSH key pair")
             dx_ssh_config.sendline("0")
             dx_ssh_config.expect("Enter passphrase")
-            dx_ssh_config.sendline("")
+            dx_ssh_config.sendline()
             dx_ssh_config.expect("again")
-            dx_ssh_config.sendline("")
+            dx_ssh_config.sendline()
             dx_ssh_config.expect("Your account has been configured for use with SSH")
+            read_back_pub_key()
 
-            self.assertTrue(os.path.exists(os.path.join(wd, ".dnanexus_config/ssh_id")))
+            dx_ssh_config = get_dx_ssh_config()
+            dx_ssh_config.expect("Select an SSH key pair")
+            dx_ssh_config.expect("already configured")
+            dx_ssh_config.sendline("0")
+            dx_ssh_config.expect("Your account has been configured for use with SSH")
+            read_back_pub_key()
 
-            with open(os.path.join(wd, ".dnanexus_config/ssh_id.pub")) as fh:
-                self.assertEqual(fh.read(), dxpy.api.user_describe(user_id).get('SSHPublicKey'))
+            dx_ssh_config = get_dx_ssh_config()
+            dx_ssh_config.expect("Select an SSH key pair")
+            dx_ssh_config.expect("already configured")
+            dx_ssh_config.sendline("1")
+            dx_ssh_config.expect("Generate a new SSH key pair")
+            dx_ssh_config.sendline("0")
+            dx_ssh_config.expect("Enter passphrase")
+            dx_ssh_config.sendline()
+            dx_ssh_config.expect("again")
+            dx_ssh_config.sendline()
+            dx_ssh_config.expect("Your account has been configured for use with SSH")
+            read_back_pub_key()
         finally:
             if original_ssh_public_key:
                 dxpy.api.user_update(user_id, {"SSHPublicKey": original_ssh_public_key})
