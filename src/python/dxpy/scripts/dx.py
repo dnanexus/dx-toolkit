@@ -3085,11 +3085,6 @@ def watch(args):
 def ssh_config(args):
     user_id = try_call(dxpy.user_info)['userId']
 
-    dnanexus_conf_dir = os.path.expanduser('~/.dnanexus_config')
-    if not os.path.exists(dnanexus_conf_dir):
-        msg = "The DNAnexus configuration directory {d} does not exist. Use {c} to create it."
-        err_exit(msg.format(d=dnanexus_conf_dir, c=BOLD("dx login")))
-
     keys = [k for k in glob.glob(os.path.join(os.path.expanduser("~/.ssh"), "*.pub")) if os.path.exists(k[:-4])]
     print(fill("Select an SSH key pair to use when connecting to DNAnexus jobs. The public key will be saved to your " +
                "DNAnexus account (readable only by you). The private key will remain on this computer."))
@@ -3097,7 +3092,7 @@ def ssh_config(args):
     choices = ['Generate a new SSH key pair using ssh-keygen'] + keys + ['Select another SSH key pair...']
     choice = pick(choices, default=0)
 
-    key_dest = os.path.join(dnanexus_conf_dir, 'ssh_id')
+    key_dest = os.path.expanduser('~/.dnanexus_config/ssh_id')
     pub_key_dest = key_dest + ".pub"
 
     if choice == 0:
