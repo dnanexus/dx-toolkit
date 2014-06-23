@@ -1875,6 +1875,23 @@ class TestDataobjectFunctions(unittest.TestCase):
         # Handle project IDs
         dxproject = dxpy.get_handler(self.proj_id)
 
+        # Handle apps
+        handler = dxpy.get_handler("app-foo")
+        self.assertIsNone(handler._dxid)
+        self.assertEqual(handler._name, 'foo')
+        self.assertEqual(handler._alias, 'default')
+
+        handler = dxpy.get_handler("app-foo/1.0.0")
+        self.assertIsNone(handler._dxid)
+        self.assertEqual(handler._name, 'foo')
+        self.assertEqual(handler._alias, '1.0.0')
+
+        app_id = "app-123456789012345678901234"
+        handler = dxpy.get_handler(app_id)
+        self.assertEqual(handler._dxid, app_id)
+        self.assertIsNone(handler._name)
+        self.assertIsNone(handler._alias)
+
 class TestResolver(unittest.TestCase):
     def setUp(self):
         setUpTempProjects(self)
