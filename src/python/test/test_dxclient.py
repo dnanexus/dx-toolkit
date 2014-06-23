@@ -2174,6 +2174,21 @@ class TestDXBuildApp(DXTestCase):
         self.assertEqual(applet_describe["id"], applet_describe["id"])
         self.assertEqual(applet_describe["name"], "minimal_applet")
 
+    def test_build_applet_dry_run(self):
+        app_spec = {
+            "name": "minimal_applet_dry_run",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("minimal_applet_dry_run", json.dumps(app_spec), "code.py")
+        with self.assertSubprocessFailure(stderr_regexp='cannot be specified together', exit_code=2):
+            run("dx build --dry-run " + app_dir + " --run -y --brief")
+        run("dx build --dry-run " + app_dir)
+        self.assertEqual(len(list(dxpy.find_data_objects(name="minimal_applet_dry_run"))), 0)
+
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
     def test_build_applet_and_run_immediately(self):
         app_spec = {
@@ -2215,6 +2230,34 @@ class TestDXBuildApp(DXTestCase):
         resulting_jobs = list(dxpy.find_executions(name=job_name, return_handler=True))
         self.assertEqual(1, len(resulting_jobs))
         self.assertEqual('minimal_remote_build_applet_to_run', resulting_jobs[0].describe()['executableName'])
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_CREATE_APPS,
+                         'skipping test that would create apps and run jobs')
+    def test_remote_build_app(self):
+        app_spec = {
+            "name": "minimal_remote_build_app",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("minimal_remote_build_åpp", json.dumps(app_spec), "code.py")
+        run("dx build --remote --app " + app_dir)
+
+    def test_remote_build_app_and_run_immediately(self):
+        app_spec = {
+            "name": "minimal_remote_build_app_to_run",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("minimal_remote_build_åpp_to_run", json.dumps(app_spec), "code.py")
+        # Not supported yet
+        with self.assertSubprocessFailure(stderr_regexp='cannot all be specified together', exit_code=2):
+            run("dx build --remote --app " + app_dir + " --run --yes")
 
     def test_build_applet_warnings(self):
         app_spec = {

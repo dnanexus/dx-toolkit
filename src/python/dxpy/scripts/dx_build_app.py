@@ -772,47 +772,13 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             dxpy.api.project_destroy(working_project)
 
 
-def main(**kwargs):
+def _build_app(args, extra_args):
+    """Builds an app or applet and returns the resulting executable ID
+    (unless it was a dry-run, in which case None is returned).
+
+    TODO: remote app builds still return None, but we should fix this.
+
     """
-    Entry point for dx-build-app(let).
-
-    Don't call this function as a subroutine in your program! It is liable to
-    sys.exit your program when it detects certain error conditions, so you
-    can't recover from those as you could if it raised exceptions. Instead,
-    call dx_build_app.build_and_upload_locally which provides the real
-    implementation for dx-build-app(let) but is easier to use in your program.
-    """
-
-    if len(sys.argv) > 0:
-        if sys.argv[0].endswith('dx-build-app'):
-            logging.warn('Warning: dx-build-app has been replaced with "dx build --create-app". Please update your scripts.')
-        elif sys.argv[0].endswith('dx-build-applet'):
-            logging.warn('Warning: dx-build-applet has been replaced with "dx build". Please update your scripts.')
-
-    if len(kwargs) == 0:
-        args = parser.parse_args()
-    else:
-        args = parser.parse_args(**kwargs)
-
-    if dxpy.AUTH_HELPER is None and not args.dry_run:
-        parser.error('Authentication required to build an executable on the platform; please run "dx login" first')
-
-    if args.src_dir is None:
-        args.src_dir = os.getcwd()
-        if USING_PYTHON2:
-            args.src_dir = args.src_dir.decode(sys.getfilesystemencoding())
-
-    if args.mode == "app" and args.destination != '.':
-        parser.error("--destination cannot be used when creating an app (only an applet)")
-
-    if args.dx_toolkit_autodep in ['beta', 'unstable']:
-        logging.warn('The --dx-toolkit-beta-autodep and --dx-toolkit-unstable-autodep flags have no effect and will be removed at some date in the future.')
-
-    if args.overwrite and args.archive:
-        parser.error("Options -f/--overwrite and -a/--archive cannot be specified together")
-
-    extra_args = json.loads(args.extra_args) if args.extra_args else {}
-
     if not args.remote:
         # LOCAL BUILD
 
@@ -849,9 +815,10 @@ def main(**kwargs):
             print("Error: %s" % (e,), file=sys.stderr)
             sys.exit(3)
 
-        if output is None:
-            err_exit("The --run option was given, but no executable was created")
-        executable_id = output['id']
+        if args.dry_run:
+            return None
+
+        return output['id']
 
     else:
         # REMOTE BUILD
@@ -896,14 +863,62 @@ def main(**kwargs):
         if not args.check_syntax:
             more_kwargs['do_check_syntax'] = False
 
-        executable_id = _build_app_remote(args.mode, args.src_dir, destination_override=args.destination, publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep, **more_kwargs)
+        return _build_app_remote(args.mode, args.src_dir, destination_override=args.destination, publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep, **more_kwargs)
 
-        if executable_id is None:
-            if args.mode == 'applet':
-                raise AssertionError('mode is "applet", so expected executable_id to be set here')
-            err_exit("dx build --remote --run does not support apps (only applets)")
+
+def main(**kwargs):
+    """
+    Entry point for dx-build-app(let).
+
+    Don't call this function as a subroutine in your program! It is liable to
+    sys.exit your program when it detects certain error conditions, so you
+    can't recover from those as you could if it raised exceptions. Instead,
+    call dx_build_app.build_and_upload_locally which provides the real
+    implementation for dx-build-app(let) but is easier to use in your program.
+    """
+
+    if len(sys.argv) > 0:
+        if sys.argv[0].endswith('dx-build-app'):
+            logging.warn('Warning: dx-build-app has been replaced with "dx build --create-app". Please update your scripts.')
+        elif sys.argv[0].endswith('dx-build-applet'):
+            logging.warn('Warning: dx-build-applet has been replaced with "dx build". Please update your scripts.')
+
+    if len(kwargs) == 0:
+        args = parser.parse_args()
+    else:
+        args = parser.parse_args(**kwargs)
+
+    if dxpy.AUTH_HELPER is None and not args.dry_run:
+        parser.error('Authentication required to build an executable on the platform; please run "dx login" first')
+
+    if args.src_dir is None:
+        args.src_dir = os.getcwd()
+        if USING_PYTHON2:
+            args.src_dir = args.src_dir.decode(sys.getfilesystemencoding())
+
+    if args.mode == "app" and args.destination != '.':
+        parser.error("--destination cannot be used when creating an app (only an applet)")
+
+    if args.dx_toolkit_autodep in ['beta', 'unstable']:
+        logging.warn('The --dx-toolkit-beta-autodep and --dx-toolkit-unstable-autodep flags have no effect and will be removed at some date in the future.')
+
+    if args.overwrite and args.archive:
+        parser.error("Options -f/--overwrite and -a/--archive cannot be specified together")
+
+    if args.run is not None and args.dry_run:
+        parser.error("Options --dry-run and --run cannot be specified together")
+
+    if args.run and args.remote and args.mode == 'app':
+        parser.error("Options --remote, --app, and --run cannot all be specified together. Try removing --run and then separately invoking dx run.")
+
+    executable_id = _build_app(args,
+                               json.loads(args.extra_args) if args.extra_args else {})
 
     if args.run is not None:
+
+        if executable_id is None:
+            raise AssertionError('Expected executable_id to be set here')
+
         try:
             subprocess.check_call(['dx', 'run', executable_id, '--priority', 'high'] + args.run)
         except subprocess.CalledProcessError as e:
