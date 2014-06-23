@@ -1,0 +1,64 @@
+#!/usr/bin/env python
+#
+# Copyright (C) 2013-2014 DNAnexus, Inc.
+#
+# This file is part of dx-toolkit (DNAnexus platform client libraries).
+#
+#   Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#   use this file except in compliance with the License. You may obtain a copy
+#   of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#   License for the specific language governing permissions and limitations
+#   under the License.
+
+'''
+Download one file. 
+
+Example usage from a script:
+   download-input <input file name>
+
+
+Implementation Overview
+1. extract filename from command line
+2. Make sure <idir> exists
+3. download 
+'''
+import os, sys, json, argparse, subprocess
+from dxpy.utils import download_utils
+
+# extract the file name
+if len(sys.argv) != 2:
+    raise "Filename must be specified, there must be exactly one command line argument"
+input_file = sys.argv[1]
+
+## entry point
+##
+## input directory, where all inputs are downloaded
+idir = download_utils.calc_input_dir();
+
+## Parse input
+dirs, inputs = download_utils.parse_job_input(idir)
+
+## make sure <idir> exists
+download_utils.ensure_dir(idir);
+
+## Go over the inputs, ignore everything except 
+## the particular file the user wants
+def download_all(inputs):
+    for rec in inputs:
+        if not rec['src_fname'] == input_file:
+            continue
+        download_utils.ensure_dir(rec['trg_dir'])
+        dxpy.download_dxfile(rec['src_fname'], rec['trg_fname'])
+
+
+
+
+
+
+

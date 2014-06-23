@@ -85,6 +85,9 @@ dxR.Rcheck
 /bin/register-python-argcomplete
 /bin/jq
 /bin/ua
+/bin/dx-download-all-inputs
+/bin/dx-download-input
+/bin/dx-upload-all-outputs
 /src/ua/dist/ua
 /src/ua/dnanexus-upload-agent-*-linux.tar.gz
 /src/ua/dnanexus-upload-agent-*-linux
