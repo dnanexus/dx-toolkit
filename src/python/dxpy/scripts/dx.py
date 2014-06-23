@@ -19,7 +19,7 @@
 
 from __future__ import print_function, unicode_literals
 
-import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, errno, io, time, subprocess, glob
+import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, errno, platform, io
 import shlex # respects quoted substrings when splitting
 
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
@@ -2548,8 +2548,6 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
         "tags": args.tags,
         "properties": args.properties,
         "details": args.details,
-        "allow_ssh": args.allow_ssh,
-        "debug_on": args.debug_on,
         "delay_workspace_destruction": args.delay_workspace_destruction,
         "priority": ("high" if args.watch else args.priority),
         "instance_type": args.instance_type,
@@ -2644,21 +2642,17 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
 
         if args.wait and is_the_only_job:
             dxexecution.wait_on_done()
-        elif args.confirm and INTERACTIVE_CLI and not (args.watch or args.ssh) and isinstance(dxexecution, dxpy.DXJob):
+        elif args.confirm and INTERACTIVE_CLI and not args.watch and isinstance(dxexecution, dxpy.DXJob):
             answer = input("Watch launched job now? [Y/n] ")
             if len(answer) == 0 or answer.lower()[0] == 'y':
                 args.watch = True
 
-        if is_the_only_job and isinstance(dxexecution, dxpy.DXJob):
-            if args.watch:
-                watch_args = parser.parse_args(['watch', dxexecution.get_id()])
-                print('')
-                print('Job Log')
-                print('-------')
-                watch(watch_args)
-            elif args.ssh:
-                ssh_args = parser.parse_args(['ssh', dxexecution.get_id()])
-                ssh(ssh_args)
+        if args.watch and is_the_only_job and isinstance(dxexecution, dxpy.DXJob):
+            watch_args = parser.parse_args(['watch', dxexecution.get_id()])
+            print('')
+            print('Job Log')
+            print('-------')
+            watch(watch_args)
     except Exception:
         err_exit()
 
@@ -2942,9 +2936,6 @@ def run(args):
 
     process_instance_type_arg(args, is_workflow)
 
-    if args.allow_ssh == [] or (args.ssh and not args.allow_ssh):
-        args.allow_ssh = ['*']
-
     run_one(args, handler, dest_proj, dest_path)
 
 def terminate(args):
@@ -3081,106 +3072,6 @@ def watch(args):
         log_client.connect()
     except Exception as details:
         parser.exit(3, fill(str(details)) + '\n')
-
-def ssh_config(args):
-    user_id = try_call(dxpy.user_info)['userId']
-
-    keys = [k for k in glob.glob(os.path.join(os.path.expanduser("~/.ssh"), "*.pub")) if os.path.exists(k[:-4])]
-    print(fill("Select an SSH key pair to use when connecting to DNAnexus jobs. The public key will be saved to your " +
-               "DNAnexus account (readable only by you). The private key will remain on this computer."))
-    print()
-    choices = ['Generate a new SSH key pair using ssh-keygen'] + keys + ['Select another SSH key pair...']
-    choice = pick(choices, default=0)
-
-    key_dest = os.path.expanduser('~/.dnanexus_config/ssh_id')
-    pub_key_dest = key_dest + ".pub"
-
-    if choice == 0:
-        try:
-            subprocess.check_call(['ssh-keygen', '-f', key_dest] + args.ssh_keygen_args)
-        except subprocess.CalledProcessError:
-            err_exit("Unable to generate a new SSH key pair", expected_exceptions=(subprocess.CalledProcessError, ))
-    else:
-        if choice == len(choices) - 1:
-            key_src = input('Enter the location of your SSH key: ')
-            pub_key_src = key_src + ".pub"
-            if os.path.exists(key_src) and os.path.exists(pub_key_src):
-                print("Using {} and {} as the key pair".format(key_src, pub_key_src))
-            elif key_src.endswith(".pub") and os.path.exists(key_src[:-4]) and os.path.exists(key_src):
-                key_src, pub_key_src = key_src[:-4], key_src
-                print("Using {} and {} as the key pair".format(key_src, pub_key_src))
-            else:
-                err_exit("Unable to find {k} and {k}.pub".format(k=key_src))
-        else:
-            key_src, pub_key_src = choices[choice], choices[choice][:-4]
-
-        os.symlink(key_src, key_dest)
-        os.symlink(pub_key_src, pub_key_dest)
-
-    with open(pub_key_dest) as fh:
-        pub_key = fh.read()
-        dxpy.api.user_update(user_id, {"SSHPublicKey": pub_key})
-
-    print("Updated public key for user {}".format(user_id))
-    print(fill("Your account has been configured for use with SSH. Use " + BOLD("dx run") + " with the --allow-ssh, " +
-               "--ssh, or --debug-on options to launch jobs and connect to them."))
-
-def ssh(args):
-    if not re.match("^job-[0-9a-zA-Z]{24}$", args.job_id):
-        err_exit(args.job_id + " does not look like a DNAnexus job ID")
-    job_desc = try_call(dxpy.describe, args.job_id)
-
-    if job_desc['state'] in ['done', 'failed', 'terminated']:
-        err_exit(args.job_id + " is in a terminal state, and you cannot connect to it")
-
-    sys.stdout.write("Waiting for {} to start...".format(args.job_id))
-    sys.stdout.flush()
-    while job_desc['state'] != 'running':
-        time.sleep(1)
-        job_desc = dxpy.describe(args.job_id)
-        sys.stdout.write(".")
-        sys.stdout.flush()
-    sys.stdout.write("\n")
-
-    sys.stdout.write("Resolving job hostname and SSH host key...")
-    sys.stdout.flush()
-    for i in range(90):
-        if 'host' in job_desc and 'ssh_host_rsa_key' in job_desc.get('properties', []):
-            break
-        time.sleep(1)
-        job_desc = dxpy.describe(args.job_id)
-        sys.stdout.write(".")
-        sys.stdout.flush()
-    known_hosts_file = os.path.expanduser('~/.dnanexus_config/ssh_known_hosts')
-    with open(known_hosts_file, 'a') as fh:
-        line = "{job_id}.dnanexus.io {key}".format(job_id=args.job_id, key=job_desc['properties']['ssh_host_rsa_key'])
-        if not line.endswith("\n"):
-            line += "\n"
-        fh.write(line)
-
-    if 'host' not in job_desc or 'ssh_host_rsa_key' not in job_desc.get('properties', []):
-        msg = "Cannot resolve hostname or key for {}. Please check your permissions and run settings."
-        err_exit(msg.format(args.job_id))
-
-    print("Connecting to", job_desc['host'])
-    ssh_args = ['ssh', '-i', os.path.expanduser('~/.dnanexus_config/ssh_id'),
-                '-o', 'HostKeyAlias={}.dnanexus.io'.format(args.job_id),
-                '-o', 'UserKnownHostsFile={}'.format(known_hosts_file),
-                '-l', 'dnanexus',
-                job_desc['host']]
-    ssh_args += args.ssh_args
-    exit_code = subprocess.call(ssh_args)
-    try:
-        job_desc = dxpy.describe(args.job_id)
-        if job_desc['state'] == 'running':
-            msg = "Job {job_id} is still running. Terminate now?".format(job_id=args.job_id)
-            if prompt_for_yn(msg, default=False):
-                dxpy.api.job_terminate(args.job_id)
-    except default_expected_exceptions as e:
-        tip = "Unable to check the state of {job_id}. Please check it and use " + BOLD("dx terminate {job_id}") + \
-              " to stop it if necessary."
-        print(fill(tip.format(job_id=args.job_id)))
-    exit(exit_code)
 
 def upgrade(args):
     if len(args.args) == 0:
@@ -3897,12 +3788,6 @@ parser_run.add_argument('--priority',
 parser_run.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
 parser_run.add_argument('--wait', help='Wait until the job is done before returning', action='store_true')
 parser_run.add_argument('--watch', help="Watch the job after launching it; sets --priority high", action='store_true')
-parser_run.add_argument('--allow-ssh', nargs='*', metavar='ADDRESS',
-                        help=fill("Configure the job to allow SSH access; sets --priority high. If arguments are " +
-                                  "supplied, they are interpreted as IP or hostname masks to allow connections from"))
-parser_run.add_argument('--ssh', help="Configure the job to allow SSH access and connect to it after launching; sets --priority high", action='store_true')
-parser_run.add_argument('--debug-on', action='append', choices=['AppError', 'AppInternalError', 'ExecutionError'],
-                        help="Configure the job to hold for debugging when any of the listed errors occur")
 parser_run.add_argument('--input-help',
                         help=fill('Print help and examples for how to specify inputs',
                                   width_adjustment=-24),
@@ -3935,27 +3820,6 @@ parser_watch.add_argument('--no-wait', '--no-follow', action='store_false', dest
                           help='Exit after the first new message is received, instead of waiting for all logs')
 parser_watch.set_defaults(func=watch)
 register_subparser(parser_watch, categories='exec')
-
-parser_ssh_config = subparsers.add_parser('ssh-config', help='Configure SSH keys for your DNAnexus account',
-                                   description='Configure SSH access credentials for your DNAnexus account',
-                                   prog='dx ssh-config',
-                                   parents=[env_args])
-parser_ssh_config.add_argument('ssh_keygen_args', help='Command-line arguments to pass to ssh-keygen',
-                               nargs=argparse.REMAINDER)
-parser_ssh_config.set_defaults(func=ssh_config)
-register_subparser(parser_ssh_config, categories='exec')
-
-parser_ssh = subparsers.add_parser('ssh', help='Connect to a running job via SSH',
-                                   description='Use an SSH client to connect to a job being executed on the DNAnexus ' +
-                                               'platform. The job must be launched using "dx run --allow-ssh" or ' +
-                                               'equivalent API options. Use "dx ssh-config" or the Profile page on ' +
-                                               'the DNAnexus website to configure SSH for your DNAnexus account.',
-                                   prog='dx ssh',
-                                   parents=[env_args])
-parser_ssh.add_argument('job_id', help='Name of job to connect to')
-parser_ssh.add_argument('ssh_args', help='Command-line arguments to pass to the SSH client', nargs=argparse.REMAINDER)
-parser_ssh.set_defaults(func=ssh)
-register_subparser(parser_ssh, categories='exec')
 
 parser_terminate = subparsers.add_parser('terminate', help='Terminate job(s)',
                                          description='Terminate a job or jobs that have not yet finished',
