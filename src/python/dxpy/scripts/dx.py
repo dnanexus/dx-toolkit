@@ -2658,7 +2658,7 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
                 watch(watch_args)
             elif args.ssh:
                 ssh_args = parser.parse_args(['ssh', dxexecution.get_id()])
-                ssh(ssh_args, ssh_config_verified=True)
+                ssh(ssh_args)
     except Exception:
         err_exit()
 
@@ -2791,9 +2791,6 @@ SPECIFYING JSON INPUT
 def run(args):
     if args.help:
         print_run_help(args.executable, args.alias)
-
-    if args.ssh or args.allow_ssh:
-        verify_ssh_config()
 
     try_call(process_extra_args, args)
     try_call(process_properties_args, args)
@@ -3133,31 +3130,13 @@ def ssh_config(args):
     print(fill("Your account has been configured for use with SSH. Use " + BOLD("dx run") + " with the --allow-ssh, " +
                "--ssh, or --debug-on options to launch jobs and connect to them."))
 
-def verify_ssh_config():
-    try:
-        with open(os.path.expanduser('~/.dnanexus_config/ssh_id.pub')) as fh:
-            user_desc = try_call(dxpy.api.user_describe, try_call(dxpy.user_info)['userId'])
-            if 'SSHPublicKey' not in user_desc:
-                raise DXError("User's SSH public key is not set")
-            if fh.read() != user_desc['SSHPublicKey']:
-                raise DXError("Public key mismatch")
-    except Exception as e:
-        msg = RED("Warning:") + " Unable to verify configuration of your account for SSH connectivity: {}".format(e) + \
-              ". SSH connection will likely fail. To set up your account for SSH, quit this command and run " + \
-              BOLD("dx ssh-config") + ". Continue with the current command?"
-        if not prompt_for_yn(fill(msg), default=False):
-            err_exit()
-
-def ssh(args, ssh_config_verified=False):
+def ssh(args):
     if not re.match("^job-[0-9a-zA-Z]{24}$", args.job_id):
         err_exit(args.job_id + " does not look like a DNAnexus job ID")
     job_desc = try_call(dxpy.describe, args.job_id)
 
     if job_desc['state'] in ['done', 'failed', 'terminated']:
         err_exit(args.job_id + " is in a terminal state, and you cannot connect to it")
-
-    if not ssh_config_verified:
-        verify_ssh_config()
 
     sys.stdout.write("Waiting for {} to start...".format(args.job_id))
     sys.stdout.flush()
@@ -3202,7 +3181,6 @@ def ssh(args, ssh_config_verified=False):
             msg = "Job {job_id} is still running. Terminate now?".format(job_id=args.job_id)
             if prompt_for_yn(msg, default=False):
                 dxpy.api.job_terminate(args.job_id)
-                print("Terminated {}.".format(args.job_id))
     except default_expected_exceptions as e:
         tip = "Unable to check the state of {job_id}. Please check it and use " + BOLD("dx terminate {job_id}") + \
               " to stop it if necessary."
