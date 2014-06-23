@@ -29,7 +29,7 @@ Implementation Overview
 3. download 
 '''
 import os, sys, json, argparse, subprocess
-from dxpy.utils import download_utils
+from dxpy.utils import file_load_utils
 
 # extract the file name
 if len(sys.argv) != 2:
@@ -39,13 +39,13 @@ input_file = sys.argv[1]
 ## entry point
 ##
 ## input directory, where all inputs are downloaded
-idir = download_utils.calc_input_dir();
+idir = file_load_utils.calc_input_dir();
 
 ## Parse input
-dirs, inputs = download_utils.parse_job_input(idir)
+dirs, inputs = file_load_utils.parse_job_input(idir)
 
 ## make sure <idir> exists
-download_utils.ensure_dir(idir);
+file_load_utils.ensure_dir(idir);
 
 ## Go over the inputs, ignore everything except 
 ## the particular file the user wants
@@ -53,7 +53,7 @@ def download_all(inputs):
     for rec in inputs:
         if not rec['src_fname'] == input_file:
             continue
-        download_utils.ensure_dir(rec['trg_dir'])
+        file_load_utils.ensure_dir(rec['trg_dir'])
         dxpy.download_dxfile(rec['src_fname'], rec['trg_fname'])
 
 

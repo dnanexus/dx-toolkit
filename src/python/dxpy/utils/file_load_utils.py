@@ -81,10 +81,32 @@ def calc_input_dir():
     idir = os.path.join(home_dir, 'in');
     return idir
 
+def calc_output_dir():
+    home_dir = os.environ.get('HOME')
+    idir = os.path.join(home_dir, 'out');
+    return idir
+
 ## input JSON file
 def calc_input_json():
     home_dir = os.environ.get('HOME')
     return os.path.join(home_dir, "job_input.json");
+
+## output JSON file
+def calc_output_json():
+    home_dir = os.environ.get('HOME')
+    return os.path.join(home_dir, "job_ouput.json");
+
+'''
+ create a directory if it does not already exist .
+
+ TODO: report appropriate errors if this is a file, instead of a directory
+'''
+def ensure_dir(d):
+    ##pp = pprint.PrettyPrinter(indent=4)
+    ##pp.pprint("ensure_dir " + d)
+    if not os.path.exists(d):
+        ##print ("create_dir " + d)
+        os.mkdir(d)
 
 '''
 key --- target file name
@@ -97,7 +119,6 @@ desc == { "$dnanexus_link": {
             "id": "file-BKQGkgQ0b06xG5560GGQ001B"
         }
 '''
-
 def parse_job_input(idir):
     '''
     extract list of files, returns a set of directories to create, and 
@@ -142,15 +163,10 @@ def parse_job_input(idir):
         return (dirs, files)
 
 '''
- create a directory if it does not already exist .
-
- TODO: report appropriate errors if this is a file, instead of a directory
+Example of an output spec file
 '''
-def ensure_dir(d):
-    ##pp = pprint.PrettyPrinter(indent=4)
-    ##pp.pprint("ensure_dir " + d)
-    if not os.path.exists(d):
-        ##print ("create_dir " + d)
-        os.mkdir(d)
+def parse_job_output(idir):
+    
+
 
 

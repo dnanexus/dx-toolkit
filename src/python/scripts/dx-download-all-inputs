@@ -23,7 +23,7 @@ import dxpy
 import dxpy.utils
 
 ## contains specific helper functions
-from dxpy.utils import download_utils
+from dxpy.utils import file_load_utils
 
 
 '''
@@ -38,10 +38,10 @@ def create_dirs(idir, dirs):
     if len(dirs) == 0:
         return
     ## create the <idir> itself
-    download_utils.ensure_dir(idir)
+    file_load_utils.ensure_dir(idir)
     ## create each subdir
     for d in dirs:
-        download_utils.ensure_dir(os.path.join(idir, d))
+        file_load_utils.ensure_dir(os.path.join(idir, d))
 
 ## entry point
 ##
@@ -57,8 +57,8 @@ parser.add_argument('--except',
 args = parser.parse_args()
 
 ## input directory, where all inputs are downloaded
-idir = download_utils.calc_input_dir();
-dirs, inputs = download_utils.parse_job_input(idir)
+idir = file_load_utils.calc_input_dir();
+dirs, inputs = file_load_utils.parse_job_input(idir)
 #pp = pprint.PrettyPrinter(indent=4)
 #pp.pprint(inputs)
 #pp.pprint(dirs)

@@ -25,7 +25,6 @@ running in the cloud to the cloud filesystem (S3).
 
 Assumption
   * we are uploading a flat directory structure
-  * located in /out
 
 Design
   
@@ -34,10 +33,18 @@ TODO
 Issues
   * testing
   * recursive directory upload, or flat support only? 
-  * How do we set the output directory, so it will work for local cases as well? 
-    Should we use chroot? 
-'''
 
+
+Specification
+
+Part 1: 
+   Upload everything that is in the output directory, and generate a
+   $HOME/job_output.json file that describes it. 
+Part 2:
+   If there is an output spec, compare against it. 
+
+   I can get the input spec by doing a "describe" on the job, and extracting information from there. 
+'''
 
 
 ## upload one file
