@@ -30,7 +30,7 @@ if [[ $2 == "--debian-system-install" ]]; then
 fi
 
 # setuptools bakes the path of the Python interpreter into all installed Python
-# scripts. Rewrite it back to the more portable form "/usr/bin/env python2.7",
+# scripts. Rewrite it back to the more portable form "/usr/bin/env python",
 # since we don't always know where the right interpreter is on the target
 # system.
 #
