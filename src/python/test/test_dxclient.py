@@ -521,7 +521,7 @@ class TestDXClient(DXTestCase):
         original_ssh_public_key = None
         try:
             user_id = dxpy.user_info()['userId']
-            original_ssh_public_key = dxpy.api.user_describe(user_id).get('SSHPublicKey')
+            original_ssh_public_key = dxpy.api.user_describe(user_id).get('sshPublicKey')
 
             def get_dx_ssh_config():
                 dx_ssh_config = pexpect.spawn("dx ssh_config", env=overrideEnvironment(HOME=wd))
@@ -533,7 +533,7 @@ class TestDXClient(DXTestCase):
                 self.assertTrue(os.path.exists(os.path.join(wd, ".dnanexus_config/ssh_id")))
 
                 with open(os.path.join(wd, ".dnanexus_config/ssh_id.pub")) as fh:
-                    self.assertEqual(fh.read(), dxpy.api.user_describe(user_id).get('SSHPublicKey'))
+                    self.assertEqual(fh.read(), dxpy.api.user_describe(user_id).get('sshPublicKey'))
 
             wd = tempfile.mkdtemp()
             dx_ssh_config = get_dx_ssh_config()
@@ -580,7 +580,7 @@ class TestDXClient(DXTestCase):
             read_back_pub_key()
         finally:
             if original_ssh_public_key:
-                dxpy.api.user_update(user_id, {"SSHPublicKey": original_ssh_public_key})
+                dxpy.api.user_update(user_id, {"sshPublicKey": original_ssh_public_key})
 
 class TestDXClientUploadDownload(DXTestCase):
     def test_dx_upload_download(self):

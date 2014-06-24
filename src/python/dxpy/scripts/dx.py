@@ -3145,7 +3145,7 @@ def ssh_config(args):
 def update_pub_key(user_id, pub_key_file):
     with open(pub_key_file) as fh:
         pub_key = fh.read()
-        dxpy.api.user_update(user_id, {"SSHPublicKey": pub_key})
+        dxpy.api.user_update(user_id, {"sshPublicKey": pub_key})
 
     print("Updated public key for user {}".format(user_id))
     print(fill("Your account has been configured for use with SSH. Use " + BOLD("dx run") + " with the --allow-ssh, " +
@@ -3155,9 +3155,9 @@ def verify_ssh_config():
     try:
         with open(os.path.expanduser('~/.dnanexus_config/ssh_id.pub')) as fh:
             user_desc = try_call(dxpy.api.user_describe, try_call(dxpy.user_info)['userId'])
-            if 'SSHPublicKey' not in user_desc:
+            if 'sshPublicKey' not in user_desc:
                 raise DXError("User's SSH public key is not set")
-            if fh.read() != user_desc['SSHPublicKey']:
+            if fh.read() != user_desc['sshPublicKey']:
                 raise DXError("Public key mismatch")
     except Exception as e:
         msg = RED("Warning:") + " Unable to verify configuration of your account for SSH connectivity: {}".format(e) + \
