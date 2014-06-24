@@ -1,3 +1,11 @@
+dx-toolkit (0.103.2) precise; urgency=low
+
+  * Revert dx ssh.
+
+  * Minor bug fix for compat methods.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 24 Jun 2014 18:26:12 +0000
+
 dx-toolkit (0.103.1) precise; urgency=low
 
   * Fix bug in dx ssh-config when handling existing SSH private keys.
