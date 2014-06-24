@@ -303,7 +303,8 @@ def login(args):
             parser.exit(1, '\n')
 
         def get_token(**data):
-            return dxpy.DXHTTPRequest(authserver+"/authorizations", data, prepend_srv=False, auth=None)
+            return dxpy.DXHTTPRequest(authserver+"/authorizations", data,
+                                      prepend_srv=False, auth=None, always_retry=True)
         try:
             token_res = get_token(username=username, password=password,
                                   expires=normalize_time_input(args.timeout, future=True))
