@@ -2133,23 +2133,6 @@ class TestDXBuildApp(DXTestCase):
         self.assertEqual(job_desc['name'], 'minimal_applet_to_run')
         self.assertEqual(job_desc['priority'], 'normal')
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
-    def test_remote_build_applet_and_run_immediately(self):
-        app_spec = {
-            "name": "minimal_remote_build_applet_to_run",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
-        app_dir = self.write_app_directory("minimal_remote_build_åpplet_to_run", json.dumps(app_spec), "code.py")
-        job_name = "remote_build_test_run_" + str(int(time.time() * 1000)) + "_" + str(random.randint(0, 1000))
-        run("dx build --remote " + app_dir + " --run -y --name=" + job_name)
-        resulting_jobs = list(dxpy.find_executions(name=job_name, return_handler=True))
-        self.assertEqual(1, len(resulting_jobs))
-        self.assertEqual('minimal_remote_build_applet_to_run', resulting_jobs[0].describe()['executableName'])
-
     def test_build_applet_warnings(self):
         app_spec = {
             "title": "title",
