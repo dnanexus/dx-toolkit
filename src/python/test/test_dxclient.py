@@ -578,6 +578,12 @@ class TestDXClient(DXTestCase):
             dx_ssh_config.sendline()
             dx_ssh_config.expect("Your account has been configured for use with SSH")
             read_back_pub_key()
+
+            # Ensure that private key upload is rejected
+            with open(os.path.join(wd, ".dnanexus_config", "ssh_id")) as private_key:
+                with self.assertRaisesRegexp(DXAPIError,
+                                             'Tried to put a private key in the sshPublicKey field'):
+                    dxpy.api.user_update(user_id, {"sshPublicKey": private_key.read()})
         finally:
             if original_ssh_public_key:
                 dxpy.api.user_update(user_id, {"sshPublicKey": original_ssh_public_key})
