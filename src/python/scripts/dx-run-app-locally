@@ -138,6 +138,8 @@ if platform.system() == 'Darwin':
 os.environ['DX_FS_ROOT'] = resources_path
 os.environ['DX_TEST_CODE_PATH'] = code_path
 os.environ['DX_TEST_JOB_HOMEDIRS'] = job_homedirs
+os.environ['DX_TEST_DXAPP_JSON'] = path_to_dxapp_json
+
 if args.x:
     os.environ['DX_TEST_X_FLAG'] = '1'
 
