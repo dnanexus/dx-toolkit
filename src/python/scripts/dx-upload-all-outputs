@@ -16,36 +16,175 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import os, sys, json, argparse, subprocess
+import os, sys, json, argparse
 import pprint
 import dxpy
 
+## contains specific helper functions
+from dxpy.utils import file_load_utils
+
+
 ''' This helper script uploads all output files from the virtual machine
 running in the cloud to the cloud filesystem (S3).
-
-Assumption
-  * we are uploading a flat directory structure
-
-Design
-  
-TODO
-
-Issues
-  * testing
-  * recursive directory upload, or flat support only? 
-
 
 Specification
 
 Part 1: 
    Upload everything that is in the output directory, and generate a
    $HOME/job_output.json file that describes it. 
+   (a)
+      Figure out what exists in the output directory, and is relevant. 
+      The relevant formats are: 
+      <odir>/xxx/yyy
+          xxx == key
+          yyy == file name
+
+   (b) Upload everything that is in the output directory
+         fasta_gz = dxpy.upload_local_file("%s.fa.gz" % name);
+
+   (c) Generate a $HOME/job_output.json file that describes it. 
+
 Part 2:
    If there is an output spec, compare against it. 
-
-   I can get the input spec by doing a "describe" on the job, and extracting information from there. 
 '''
+pp = pprint.PrettyPrinter(indent=4)
+
+# Extract the outputSpec, if it exists
+def get_output_spec():
+    outputSpec = None
+    pp.pprint(os.environ)
+    if 'DX_JOB_ID' in os.environ:
+        print("found the job id");
+        job = dxpy.api.job_describe(dxpy.JOB_ID)
+        outputSpec = job.outputSpec  ## what if there is no such field? 
+    print("output spec=")
+    pp.pprint(outputSpec)
+    return outputSpec
+
+'''
+Traverse an output directory, and return all the files in
+it. Skip directory, for sanity. 
+'''
+def traverse_output_subdir(odir, subdir):
+    files = []  
+    for fname in os.listdir(subdir):
+        path = os.path.join(odir, fname)
+        if os.path.isdir(path):
+            continue
+        if path.startswith('.'):
+            continue
+        files.append(fname)
+    return files
+
+'''
+figure out what the output directory looks like. 
+We are interested in elements of the form:
+     <odir>/xxx/yyy
+         xxx == key
+         yyy == file name
+ 
+     Arrays look like this:
+       <odir>/xxx/yyy
+       <odir>/xxx/vvv
+       <odir>/xxx/zzz
+'''
+def analyze_output_dir():
+    # figure out the subdirs, these map to keys
+    odir = file_load_utils.calc_output_dir()
+    pp.pprint(odir)
+    l = os.listdir(odir)
+    pp.pprint(l)
+    subdirs = []  
+    for fname in l:
+        path = os.path.join(odir, fname)
+        if not os.path.isdir(path):
+            continue
+        if path.startswith('.'):
+            continue
+        rec = {'name' : fname,
+               'path' : path,
+               'files' : traverse_output_subdir(odir, path),
+               'dx_links' : []}
+        subdirs.append(rec)
+    return subdirs
+    
+'''
+Compare the records found in the output directory to the
+output specification
+'''
+def compare_to_output_spec(recs):
+    return
+
+'''
+(b)
+ Upload everything that is in the output directory
+Add references to the uploaded objects into the records.
+
+note: currently, files are uploaded sequentially, not in 
+parallel. This could be improved in the future.
+'''
+def upload_all(subdirs_recs):
+    for rec in subdirs_recs:
+        for fname in rec['files']:
+            ## Upload the file
+            path = os.path.join(rec['path'], fname)
+            pp.pprint("uploading file: " + path)
+            f_obj = dxpy.upload_local_file(path)
+            rec['dx_links'].append(dxpy.dxlink(f_obj))
+    return subdirs_recs
+
+'''
+update the output json file.
+'''
+def update_output_json(subdir_recs):
+    # load existing file, if it exists
+    output_json = {}
+    output_file = file_load_utils.calc_output_json()
+    if os.path.exists(output_file):
+        with open(output_file, 'r') as fh:
+            output_json = json.loads(fh.read())
+
+    # add one record to the json output file
+    def add_rec_to_json(key, dxlinks):
+        if not key in output_json:
+            if len(dxlinks) == 1:
+                ## singleton
+                output_json[key] = dxlinks[0]
+            else:
+                ## array type
+                output_json[key] = dxlinks
+        else:
+            if isinstance(output_json[key], list):
+                output_json[key].extend(dxlinks)
+            else:
+                raise dxpy.AppError("Key " + key + " was found in output but is not an array")
+
+    # add all the records
+    for rec in subdir_recs:
+        key = rec['name']
+        dxlinks = rec['dx_links']
+        if len(dxlinks) == 0:
+            continue
+        add_rec_to_json(key, dxlinks)
+    
+    # write it back out
+    pp.pprint(output_json)
+    with open(output_file, 'w') as fh:
+        fh.write(json.dumps(output_json, indent=4) + '\n')
+
+## entry point
+
+outputSpec = get_output_spec()
+recs = analyze_output_dir()
+print "found ", len(recs), " records"
+
+# compare against the output spec
+if not outputSpec == None:
+    compare_to_output_spec(recs)
+
+pp.pprint(recs)
+recs = upload_all(recs)
+update_output_json(recs)
 
 
-## upload one file
-fasta_gz = dxpy.upload_local_file("%s.fa.gz" % name);
+

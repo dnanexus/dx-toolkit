@@ -78,13 +78,13 @@ This file array with two files, will appear in the virtual machine as:
 ## input directory, where all inputs are downloaded
 def calc_input_dir():
     home_dir = os.environ.get('HOME')
-    idir = os.path.join(home_dir, 'in');
+    idir = os.path.join(home_dir, 'in')
     return idir
 
 def calc_output_dir():
     home_dir = os.environ.get('HOME')
-    idir = os.path.join(home_dir, 'out');
-    return idir
+    odir = os.path.join(home_dir, 'out')
+    return odir
 
 ## input JSON file
 def calc_input_json():
@@ -161,12 +161,5 @@ def parse_job_input(idir):
                    add_file(input_name, link)
 
         return (dirs, files)
-
-'''
-Example of an output spec file
-'''
-def parse_job_output(idir):
-    
-
 
 
