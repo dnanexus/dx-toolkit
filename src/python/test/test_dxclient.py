@@ -522,6 +522,7 @@ class TestDXClient(DXTestCase):
         try:
             user_id = dxpy.user_info()['userId']
             original_ssh_public_key = dxpy.api.user_describe(user_id).get('sshPublicKey')
+            wd = tempfile.mkdtemp()
 
             def get_dx_ssh_config():
                 dx_ssh_config = pexpect.spawn("dx ssh_config", env=overrideEnvironment(HOME=wd))
@@ -535,7 +536,6 @@ class TestDXClient(DXTestCase):
                 with open(os.path.join(wd, ".dnanexus_config/ssh_id.pub")) as fh:
                     self.assertEqual(fh.read(), dxpy.api.user_describe(user_id).get('sshPublicKey'))
 
-            wd = tempfile.mkdtemp()
             dx_ssh_config = get_dx_ssh_config()
             dx_ssh_config.expect("The DNAnexus configuration directory")
             dx_ssh_config.expect("does not exist")
@@ -587,6 +587,57 @@ class TestDXClient(DXTestCase):
         finally:
             if original_ssh_public_key:
                 dxpy.api.user_update(user_id, {"sshPublicKey": original_ssh_public_key})
+
+    @unittest.skipUnless(dxpy.APISERVER_HOST.endswith('api.dnanexus.com') and testutil.TEST_RUN_JOBS,
+                         'Skipping test that would run jobs and requires production authserver configuration')
+    def test_dx_ssh(self):
+        original_ssh_public_key = None
+        try:
+            user_id = dxpy.user_info()['userId']
+            original_ssh_public_key = dxpy.api.user_describe(user_id).get('sshPublicKey')
+            wd = tempfile.mkdtemp()
+            os.mkdir(os.path.join(wd, ".dnanexus_config"))
+
+            dx_ssh_config = pexpect.spawn("dx ssh_config", env=overrideEnvironment(HOME=wd))
+            dx_ssh_config.logfile = sys.stdout
+            dx_ssh_config.setwinsize(20, 90)
+            dx_ssh_config.expect("Select an SSH key pair")
+            dx_ssh_config.sendline("0")
+            dx_ssh_config.expect("Enter passphrase")
+            dx_ssh_config.sendline()
+            dx_ssh_config.expect("again")
+            dx_ssh_config.sendline()
+            dx_ssh_config.expect("Your account has been configured for use with SSH")
+
+            sleep_applet = dxpy.api.applet_new(dict(name="sleep",
+                                                    runSpec={"code": "sleep 1200", "interpreter": "bash",
+                                                             "execDepends": [{"name": "dx-toolkit"}]},
+                                                    inputSpec=[], outputSpec=[],
+                                                    dxapi="1.0.0", version="1.0.0",
+                                                    project=self.project))["id"]
+
+            dx = pexpect.spawn("dx run {} --yes --ssh".format(sleep_applet), env=overrideEnvironment(HOME=wd))
+            dx.logfile = sys.stdout
+            dx.setwinsize(20, 90)
+            dx.expect("Waiting for job")
+            dx.expect("Resolving job hostname and SSH host key", timeout=1200)
+            dx.expect("dnanexus@job", timeout=600)
+            # TODO: talk to tmux here
+            #dx.expect("still running. Terminate now?")
+            #dx.sendline("y")
+            #dx.expect("Terminated job")
+
+            job_id = dxpy.find_jobs(name="sleep").next()['id']
+            dx = pexpect.spawn("dx ssh " + job_id, env=overrideEnvironment(HOME=wd))
+            dx.logfile = sys.stdout
+            dx.setwinsize(20, 90)
+            dx.expect("Waiting for job")
+            dx.expect("Resolving job hostname and SSH host key", timeout=1200)
+            dx.expect("dnanexus@job", timeout=600)
+        finally:
+            if original_ssh_public_key:
+                dxpy.api.user_update(user_id, {"sshPublicKey": original_ssh_public_key})
+
 
 class TestDXClientUploadDownload(DXTestCase):
     def test_dx_upload_download(self):
