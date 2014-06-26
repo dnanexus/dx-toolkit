@@ -1,0 +1,15 @@
+{ "name": "app2",
+  "title": "app2",
+  "summary" : "file upload/download test 1",
+  "runSpec": {
+    "file": "src/run.sh",
+    "interpreter": "bash"
+  },
+  "inputSpec": [
+    {"name": "seq1", "class": "file"},
+    {"name": "seq2", "class": "file"}
+  ],
+  "outputSpec": [
+    {"name": "result", "class": "file"}
+  ]
+}

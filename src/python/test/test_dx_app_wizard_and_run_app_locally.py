@@ -158,6 +158,37 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
         self.assertIn("Final output: out1 = 140", output)
         return appdir
 
+    def test_updn_helpers(self):
+        '''
+        test the upload/download helpers by running them locally
+        '''
+        # Make a couple files for testing
+        print("testing upload/download helpers")
+        dxpy.upload_string("1234", name="A.txt")
+        dxpy.upload_string("ABCD", name="B.txt")
+        output1 = check_output(['dx-run-app-locally', 
+                                'file_load/app1',
+                                '-iseq1=A.txt',
+                                '-iseq2=B.txt'])
+        print(output1)
+
+        output2 = check_output(["dx-run-app-locally",
+                                "file_load/app2",
+                               "-ireads=A.txt",
+                               "-ireads=B.txt",
+                               "-iref=A.txt",
+                               "-iref=B.txt"])
+        print(output2)
+
+        # cleanup 
+        # remove A.txt, B.txt
+        try:
+            subprocess.call("dx rm A.txt")
+            subprocess.call("dx rm B.txt")
+        except:
+            print("Error removing A and B files")
+        print("Done")
+        
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping test that would run jobs')
     def test_dx_run_app_locally_and_compare_results(self):
@@ -175,6 +206,7 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
         remote_job.wait_on_done()
         result = remote_job.describe()
         self.assertEqual(result["output"]["out1"], 140)
+
 
     def test_file_download(self):
         '''

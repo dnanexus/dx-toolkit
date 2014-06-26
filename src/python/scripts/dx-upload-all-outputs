@@ -142,8 +142,9 @@ def compare_to_output_spec(recs, output_spec):
         if clazz == 'file':
             if not num_files == 1:
                 raise dxpy.AppError("key {} is of class {} but there are {} files".format(key, clazz, num_files))
-'''
 
+
+'''
 (b)
  Upload everything that is in the output directory
 Add references to the uploaded objects into the records.
@@ -157,7 +158,7 @@ def upload_all(subdirs):
         for fname in rec['files']:
             ## Upload the file
             path = os.path.join(rec['path'], fname)
-            pp.pprint("uploading file: " + path)
+            #pp.pprint("uploading file: " + path)
             f_obj = dxpy.upload_local_file(path)
             rec['dx_links'].append(dxpy.dxlink(f_obj))
     return subdirs
@@ -176,7 +177,7 @@ def update_output_json(subdirs):
     # add one record to the json output file
     def add_rec_to_json(key, clazz, dxlinks):
         if not key in output_json:
-            if clazz == 'file:array':
+            if clazz == 'array:file':
                 ## array type
                 output_json[key] = dxlinks
             elif not len(dxlinks) == 1:
@@ -202,7 +203,7 @@ def update_output_json(subdirs):
         add_rec_to_json(key, clazz, dxlinks)
     
     # write it back out
-    pp.pprint(output_json)
+    #pp.pprint(output_json)
     with open(output_file, 'w') as fh:
         fh.write(json.dumps(output_json, indent=4) + '\n')
 
@@ -214,7 +215,7 @@ print "found ", len(recs), " records"
 # compare against the output spec
 compare_to_output_spec(recs, output_spec)
 
-pp.pprint(recs)
+#pp.pprint(recs)
 recs = upload_all(recs)
 update_output_json(recs)
 
