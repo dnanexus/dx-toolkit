@@ -158,37 +158,6 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
         self.assertIn("Final output: out1 = 140", output)
         return appdir
 
-    def test_updn_helpers(self):
-        '''
-        test the upload/download helpers by running them locally
-        '''
-        # Make a couple files for testing
-        print("testing upload/download helpers")
-        dxpy.upload_string("1234", name="A.txt")
-        dxpy.upload_string("ABCD", name="B.txt")
-        output1 = check_output(['dx-run-app-locally', 
-                                'file_load/app1',
-                                '-iseq1=A.txt',
-                                '-iseq2=B.txt'])
-        print(output1)
-
-        output2 = check_output(["dx-run-app-locally",
-                                "file_load/app2",
-                               "-ireads=A.txt",
-                               "-ireads=B.txt",
-                               "-iref=A.txt",
-                               "-iref=B.txt"])
-        print(output2)
-
-        # cleanup 
-        # remove A.txt, B.txt
-        try:
-            subprocess.call("dx rm A.txt")
-            subprocess.call("dx rm B.txt")
-        except:
-            print("Error removing A and B files")
-        print("Done")
-        
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping test that would run jobs')
     def test_dx_run_app_locally_and_compare_results(self):
@@ -380,6 +349,43 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
                 applet_name = dxapp_json['name'] + '-' + lang
                 subprocess.check_output(['dx', 'build', appdir, '--destination', applet_name])
                 subprocess.check_output(['dx', 'run', applet_name, '-y', '--wait'] + cmdline_args)
+
+'''
+test the upload/download helpers by running them locally
+'''
+class TestDXUpDnHelpers(DXTestCase):
+    def run_apps(self):
+        path = os.path.join(os.path.dirname(__file__), "file_load")
+        check_output(['dx-run-app-locally', 
+                      os.path.join(path, 'app1'),
+                     '-iseq1=A.txt',
+                     '-iseq2=B.txt'])
+        check_output(["dx-run-app-locally",
+                      os.path.join(path, 'app2'),
+                     "-ireads=A.txt",
+                     "-ireads=B.txt",
+                     "-iref=A.txt",
+                     "-iref=B.txt"])
+
+    def test(self):
+        # Make a couple files for testing
+        print("testing upload/download helpers")
+        dxpy.upload_string("1234", name="A.txt")
+
+        # these invocations should fail
+        try:
+            self.run_apps()
+            raise Exception("Error: this should have failed")
+        except:
+            pass
+
+        dxpy.upload_string("ABCD", name="B.txt")
+
+        # these invocations should succeed
+        self.run_apps()
+
+        print("Done")
+
 
 if __name__ == '__main__':
     unittest.main()
