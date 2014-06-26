@@ -2793,10 +2793,10 @@ def run(args):
     if args.help:
         print_run_help(args.executable, args.alias)
 
-    args.allow_ssh = [i for i in args.allow_ssh if i is not None]
+    if args.allow_ssh is not None:
+        args.allow_ssh = [i for i in args.allow_ssh if i is not None]
     if args.allow_ssh == [] or (args.ssh and not args.allow_ssh):
         args.allow_ssh = ['*']
-
     if args.ssh or args.allow_ssh:
         verify_ssh_config()
 
