@@ -2793,6 +2793,7 @@ def run(args):
     if args.help:
         print_run_help(args.executable, args.alias)
 
+    args.allow_ssh = [i for i in args.allow_ssh if i is not None]
     if args.allow_ssh == [] or (args.ssh and not args.allow_ssh):
         args.allow_ssh = ['*']
 
@@ -3943,9 +3944,10 @@ parser_run.add_argument('--priority',
 parser_run.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
 parser_run.add_argument('--wait', help='Wait until the job is done before returning', action='store_true')
 parser_run.add_argument('--watch', help="Watch the job after launching it; sets --priority high", action='store_true')
-parser_run.add_argument('--allow-ssh', nargs='*', metavar='ADDRESS',
-                        help=fill("Configure the job to allow SSH access; sets --priority high. If arguments are " +
-                                  "supplied, they are interpreted as IP or hostname masks to allow connections from"))
+parser_run.add_argument('--allow-ssh', action='append', nargs='?', metavar='ADDRESS',
+                        help=fill('Configure the job to allow SSH access; sets --priority high. If an argument is ' +
+                                  'supplied, it is interpreted as an IP or hostname mask to allow connections from, ' +
+                                  'e.g. "--allow-ssh 1.2.3.4 --allow-ssh berkeley.edu"'))
 parser_run.add_argument('--ssh', help="Configure the job to allow SSH access and connect to it after launching; sets --priority high", action='store_true')
 parser_run.add_argument('--debug-on', action='append', choices=['AppError', 'AppInternalError', 'ExecutionError'],
                         help="Configure the job to hold for debugging when any of the listed errors occur")
