@@ -89,3 +89,5 @@ dxR.Rcheck
 /src/ua/dnanexus-upload-agent-*-linux.tar.gz
 /src/ua/dnanexus-upload-agent-*-linux
 /src/ua/ua
+
+/.arcconfig
