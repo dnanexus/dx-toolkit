@@ -17,13 +17,13 @@
 import json, pprint, os
 import dxpy
 
-'''
-This module provides support for file download. It works with the input specification 
-provided in 'job_input.json', this helps automate mundate tasks for the user.
-'''
+'''This module provides support for file download and upload. It calculates the location of the input and output directories. It also has a utility for parsing the job input file ('job_input.json'). 
 
-'''
-A simple example of the input specification:
+We use the following shorthands
+   <idir> == input directory     $home/in
+   <odir> == output directory    $home/out
+
+A simple example of the job input
 
 {
     "seq2": {
@@ -42,15 +42,15 @@ A simple example of the input specification:
     "evalue": 0.01
 }
 
-The first two elements are files {seq1, seq2}, the other elements {blast_args, evalue}.
-The file for seq2 should be saved into: <idir>/seq2/filename
+The first two elements are files {seq1, seq2}, the other elements
+{blast_args, evalue}.  The file for seq2 should be saved into:
+<idir>/seq2/filename
 
 source command line
   -iseq1=NC_000868.fasta -iseq2=NC_001422.fasta 
 
 file seq1 is supposed to appear in the virutal machine at path:
 <idir>/seq1/NC_000868.fasta
-
 
 File Arrays
 
@@ -70,8 +70,9 @@ File Arrays
 }
 
 This file array with two files, will appear in the virtual machine as:
-<idir>/reads/<handler.name>
-<idir>/reads/<handler.name>
+<idir>/reads/A.txt
+             B.txt
+
 '''
 
     
@@ -130,9 +131,6 @@ def parse_job_input(idir):
     job_input_file = calc_input_json();
     with open(job_input_file) as fh:
         job_input = json.load(fh)
-        #pp = pprint.PrettyPrinter(indent=4)
-        #pp.pprint(job_input)
-
         files = list() 
         dirs = set()  ## directories to create under <idir>
         
