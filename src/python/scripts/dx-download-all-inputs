@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (C) 2013-2014 DNAnexus, Inc.
+# Copyright (C) 2014 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #
@@ -27,7 +27,7 @@ from dxpy.utils import file_load_utils
 
 
 '''
-create a set of directories, so we could store the input files.
+Create a set of directories, so we could store the input files.
 For example, seq1 could be stored under:
    /out/seq1/NC_001122.fasta
 
@@ -46,7 +46,7 @@ def create_dirs(idir, dirs):
 ## entry point
 ##
 
-## parse the command line
+## Parse the command line
 ##
 ## exclude -- a list of arguments to skip over
 parser = argparse.ArgumentParser(description='Download all the files as described in the input json file')
@@ -56,12 +56,9 @@ parser.add_argument('--except',
                     dest="exclude")
 args = parser.parse_args()
 
-## input directory, where all inputs are downloaded
+## Input directory, where all inputs are downloaded
 idir = file_load_utils.get_input_dir();
 dirs, inputs = file_load_utils.parse_job_input(idir)
-#pp = pprint.PrettyPrinter(indent=4)
-#pp.pprint(inputs)
-#pp.pprint(dirs)
 
 ## Create the directory structure, in preparation for download.
 ## Allows performing the download in parallel.

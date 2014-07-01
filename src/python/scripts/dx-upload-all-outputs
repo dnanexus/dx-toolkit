@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (C) 2013-2014 DNAnexus, Inc.
+# Copyright (C) 2014 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #
@@ -49,8 +49,9 @@ Part 2:
 '''
 pp = pprint.PrettyPrinter(indent=4)
 
-# Extract the outputSpec, if it exists
 def get_output_spec():
+    ''' Extract the outputSpec, if it exists 
+    '''
     output_spec = None
     if 'DX_JOB_ID' in os.environ:
         # works in the cloud, not locally
@@ -82,11 +83,11 @@ def get_output_spec():
     
     return rc
 
-'''
-Traverse an output directory, and return all the files in
-it. Skip directories, for sanity. 
-'''
 def traverse_output_subdir(odir, subdir):
+    '''
+    Traverse an output directory, and return all the files in
+    it. Skip directories, for sanity. 
+    '''
     files = []  
     for fname in os.listdir(subdir):
         path = os.path.join(odir, fname)
@@ -99,10 +100,11 @@ def traverse_output_subdir(odir, subdir):
         files.append(fname)
     return files
 
-'''
-figure out what the output directory looks like. 
-We are interested in elements of the form:
-     <odir>/xxx/yyy
+def analyze_output_dir():
+    '''
+    Figure out what the output directory looks like. 
+    We are interested in elements of the form:
+    <odir>/xxx/yyy
          xxx == key
          yyy == file name
  
@@ -110,9 +112,7 @@ We are interested in elements of the form:
        <odir>/xxx/yyy
        <odir>/xxx/vvv
        <odir>/xxx/zzz
-'''
-def analyze_output_dir():
-    # figure out the subdirs, these map to keys
+    '''
     odir = file_load_utils.get_output_dir()
     if not os.path.isdir(odir):
         return {}
@@ -137,7 +137,7 @@ output specification
 An output spec is a list of records with {class, name} attributes.
 '''
 def compare_to_output_spec(recs, output_spec):
-    # check all the output fields have been generated
+    # Check all the output fields have been generated
     for key in output_spec:
         if output_spec[key]['optional']:
             # ignore optional fields
@@ -145,7 +145,7 @@ def compare_to_output_spec(recs, output_spec):
         if not key in recs:
             raise dxpy.AppError("output key {} not generated".format(key))
 
-    # annotate with classes, and sanity check
+    # Annotate with classes, and sanity check
     for key in output_spec:
         class_ = output_spec[key]['class']
         rec = recs[key]
@@ -178,14 +178,14 @@ def upload_all(subdirs):
 update the output json file.
 '''
 def update_output_json(subdirs):
-    # load existing file, if it exists
+    # Load existing file, if it exists
     output_json = {}
     output_file = file_load_utils.get_output_json_file()
     if os.path.exists(output_file):
         with open(output_file, 'r') as fh:
             output_json = json.loads(fh.read())
 
-    # add one record to the json output file
+    # Add one record to the json output file
     def add_rec_to_json(key, class_, dxlinks):
         if not key in output_json:
             if class_ == 'array:file':
@@ -202,7 +202,7 @@ def update_output_json(subdirs):
             else:
                 raise dxpy.AppError("Key " + key + " was found in output but is not an array")
 
-    # add all the records
+    # Add all the records
     for key in subdirs:
         rec = subdirs[key]
         dxlinks = rec['dx_links']
@@ -222,7 +222,7 @@ output_spec = get_output_spec()
 recs = analyze_output_dir()
 print "found ", len(recs), " records"
 
-# compare against the output spec
+# Compare against the output spec
 compare_to_output_spec(recs, output_spec)
 
 recs = upload_all(recs)

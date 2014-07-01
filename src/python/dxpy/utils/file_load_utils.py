@@ -77,14 +77,14 @@ This file array with two files, will appear in the virtual machine as:
 
     
 def get_input_dir():
-    ''' returns the input directory, where all inputs are downloaded '''
+    ''' Returns the input directory, where all inputs are downloaded '''
     home_dir = os.environ.get('HOME')
     idir = os.path.join(home_dir, 'in')
     return idir
 
 def get_output_dir():
     ''' 
-    returns the output directory, where all ouptus are created, and 
+    Returns the output directory, where all ouptus are created, and 
     uploaded from
     '''
     home_dir = os.environ.get('HOME')
@@ -92,18 +92,18 @@ def get_output_dir():
     return odir
 
 def get_input_json_file():
-    ''' input JSON file '''
+    ''' Input JSON file '''
     home_dir = os.environ.get('HOME')
     return os.path.join(home_dir, "job_input.json");
 
 def get_output_json_file():
-    ''' output JSON file '''
+    ''' Output JSON file '''
     home_dir = os.environ.get('HOME')
     return os.path.join(home_dir, "job_ouput.json");
 
 def ensure_dir(d):
     '''
-    create a directory if it does not already exist .
+    Create a directory if it does not already exist .
     '''
     if not os.path.exists(d):
         # path does not exist, create the directory
@@ -115,7 +115,7 @@ def ensure_dir(d):
 
 def parse_job_input(idir):
     '''
-    extract list of files, returns a set of directories to create, and 
+    Extract list of files, returns a set of directories to create, and 
     a set of files, with sources and destinations. 
 
     :param idir: input directory
@@ -127,7 +127,7 @@ def parse_job_input(idir):
         files = []
         dirs = set()  ## directories to create under <idir>
         
-        # local function for adding a file to the list of files to be created
+        # Local function for adding a file to the list of files to be created
         # for example: 
         #    iname == "seq1"
         #    value == { "$dnanexus_link": {
