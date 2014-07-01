@@ -356,16 +356,19 @@ test the upload/download helpers by running them locally
 class TestDXUpDnHelpers(DXTestCase):
     def run_apps(self):
         path = os.path.join(os.path.dirname(__file__), "file_load")
+        # test for {dx-download-all-inputs, dx-upload-all-outputs}
         check_output(['dx-run-app-locally', 
                       os.path.join(path, 'app1'),
                      '-iseq1=A.txt',
                      '-iseq2=B.txt'])
+        # test for {dx-download-all-inputs, dx-upload-all-outputs}
         check_output(["dx-run-app-locally",
                       os.path.join(path, 'app2'),
                      "-ireads=A.txt",
                      "-ireads=B.txt",
                      "-iref=A.txt",
                      "-iref=B.txt"])
+        # test for dx-download-input
         check_output(['dx-run-app-locally', 
                       os.path.join(path, 'app3'),
                      '-iseq1=A.txt',
