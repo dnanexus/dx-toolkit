@@ -68,13 +68,18 @@ def get_output_spec():
     # has {name, class} attributes. 
     if output_spec == None:
         return {}
-
+    
     # for each field name, we want to know its class, and if it
-    # is optional 
+    # is optional
     rc = {}
     for spec in output_spec:
-        rc[spec['name']] = {'class' : spec['class'],
-                            'optional' : spec['optional']}
+        name = spec['name']
+        rc[name] = {'class' : spec['class']}
+        if 'optional' in spec:
+            rc[name]['optional'] = spec['optional']
+        else:
+            rc[name]['optional'] = False
+    
     return rc
 
 '''
@@ -134,9 +139,9 @@ An output spec is a list of records with {class, name} attributes.
 def compare_to_output_spec(recs, output_spec):
     # check all the output fields have been generated
     for key in output_spec:
-        if key['optional']:
+        if output_spec[key]['optional']:
             # ignore optional fields
-            continue:
+            continue
         if not key in recs:
             raise dxpy.AppError("output key {} not generated".format(key))
 
@@ -165,7 +170,6 @@ def upload_all(subdirs):
         for fname in rec['files']:
             ## Upload the file
             path = os.path.join(rec['path'], fname)
-            #pp.pprint("uploading file: " + path)
             f_obj = dxpy.upload_local_file(path)
             rec['dx_links'].append(dxpy.dxlink(f_obj))
     return subdirs
@@ -205,12 +209,11 @@ def update_output_json(subdirs):
         if len(dxlinks) == 0:
             continue
         class_ = None
-`        if 'class' in rec:
+        if 'class' in rec:
             class_ = rec['class']
         add_rec_to_json(key, class_, dxlinks)
     
     # write it back out
-    #pp.pprint(output_json)
     with open(output_file, 'w') as fh:
         fh.write(json.dumps(output_json, indent=4) + '\n')
 
@@ -222,7 +225,6 @@ print "found ", len(recs), " records"
 # compare against the output spec
 compare_to_output_spec(recs, output_spec)
 
-#pp.pprint(recs)
 recs = upload_all(recs)
 update_output_json(recs)
 

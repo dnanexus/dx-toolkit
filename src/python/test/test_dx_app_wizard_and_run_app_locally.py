@@ -366,6 +366,10 @@ class TestDXUpDnHelpers(DXTestCase):
                      "-ireads=B.txt",
                      "-iref=A.txt",
                      "-iref=B.txt"])
+        check_output(['dx-run-app-locally', 
+                      os.path.join(path, 'app3'),
+                     '-iseq1=A.txt',
+                     '-iseq2=B.txt'])
 
     def test(self):
         # Make a couple files for testing

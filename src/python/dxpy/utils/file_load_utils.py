@@ -113,17 +113,6 @@ def ensure_dir(d):
         if os.path.isfile(d):
             raise Exception("Path %s already exists, and it is a file, not a directory" % d)
 
-'''
-key --- target file name
-value --- file descriptor
-
-example:
-key == "seq1"
-desc == { "$dnanexus_link": {
-            "project": "project-BKJfY1j0b06Z4y8PX8bQ094f", 
-            "id": "file-BKQGkgQ0b06xG5560GGQ001B"
-        }
-'''
 def parse_job_input(idir):
     '''
     extract list of files, returns a set of directories to create, and 
@@ -132,15 +121,19 @@ def parse_job_input(idir):
     :param idir: input directory
     :param job_input_file: a json file that provides the input format
     '''
-    job_input_file = calc_input_json();
+    job_input_file = get_input_json_file();
     with open(job_input_file) as fh:
         job_input = json.load(fh)
         files = []
         dirs = set()  ## directories to create under <idir>
         
-        ## local function for adding a file to the list of files to be created
-        ## for example: 
-        ##   "seq1" <$dnanexus_link ... >    ---> <idir>/seq1/<filename>
+        # local function for adding a file to the list of files to be created
+        # for example: 
+        #    iname == "seq1"
+        #    value == { "$dnanexus_link": {
+        #       "project": "project-BKJfY1j0b06Z4y8PX8bQ094f", 
+        #       "id": "file-BKQGkgQ0b06xG5560GGQ001B"
+        #    }
         def add_file(iname, value):
             handler = dxpy.get_handler(value)
             if not isinstance(handler, dxpy.DXFile):
