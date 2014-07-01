@@ -1,3 +1,9 @@
+dx-toolkit (0.105.0) precise; urgency=low
+
+  * dx ssh improvements and tests.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 01 Jul 2014 21:09:03 +0000
+
 dx-toolkit (0.104.0) precise; urgency=low
 
   * dx ssh improvements.
