@@ -53,13 +53,12 @@ pp = pprint.PrettyPrinter(indent=4)
 def get_output_spec():
     output_spec = None
     if 'DX_JOB_ID' in os.environ:
-        # this ins't going to work because 
-        # look at the API for app-describe, job-describe
-        # get the ID of the executable and describe that
+        # works in the cloud, not locally
         print("found the job id");
         job = dxpy.api.job_describe(dxpy.JOB_ID)
         output_spec = job.outputSpec  ## what if there is no such field? 
     elif 'DX_TEST_DXAPP_JSON' in os.environ:
+        # works only locally
         path_to_dxapp_json = os.environ['DX_TEST_DXAPP_JSON']
         with open(path_to_dxapp_json, 'r') as fd:
             dxapp_json = json.load(fd)
@@ -67,25 +66,30 @@ def get_output_spec():
         
     # convert to a dictionary. Each record in the output spec
     # has {name, class} attributes. 
-    rc = {}
     if output_spec == None:
-        return rc
-    else:
-        for spec in output_spec:
-            rc[spec['name']] = spec['class']
-        return rc
+        return {}
+
+    # for each field name, we want to know its class, and if it
+    # is optional 
+    rc = {}
+    for spec in output_spec:
+        rc[spec['name']] = {'class' : spec['class'],
+                            'optional' : spec['optional']}
+    return rc
 
 '''
 Traverse an output directory, and return all the files in
-it. Skip directory, for sanity. 
+it. Skip directories, for sanity. 
 '''
 def traverse_output_subdir(odir, subdir):
     files = []  
     for fname in os.listdir(subdir):
         path = os.path.join(odir, fname)
         if os.path.isdir(path):
+            # ignore directories
             continue
         if path.startswith('.'):
+            # ignore hidden files
             continue
         files.append(fname)
     return files
@@ -104,7 +108,7 @@ We are interested in elements of the form:
 '''
 def analyze_output_dir():
     # figure out the subdirs, these map to keys
-    odir = file_load_utils.calc_output_dir()
+    odir = file_load_utils.get_output_dir()
     if not os.path.isdir(odir):
         return {}
     l = os.listdir(odir)
@@ -130,18 +134,21 @@ An output spec is a list of records with {class, name} attributes.
 def compare_to_output_spec(recs, output_spec):
     # check all the output fields have been generated
     for key in output_spec:
+        if key['optional']:
+            # ignore optional fields
+            continue:
         if not key in recs:
             raise dxpy.AppError("output key {} not generated".format(key))
 
     # annotate with classes, and sanity check
     for key in output_spec:
-        clazz = output_spec[key]
+        class_ = output_spec[key]['class']
         rec = recs[key]
-        rec['class'] = clazz
+        rec['class'] = class_
         num_files = len(rec['files'])
-        if clazz == 'file':
+        if class_ == 'file':
             if not num_files == 1:
-                raise dxpy.AppError("key {} is of class {} but there are {} files".format(key, clazz, num_files))
+                raise dxpy.AppError("key {} is of class {} but there are {} files".format(key, class_, num_files))
 
 
 '''
@@ -169,15 +176,15 @@ update the output json file.
 def update_output_json(subdirs):
     # load existing file, if it exists
     output_json = {}
-    output_file = file_load_utils.calc_output_json()
+    output_file = file_load_utils.get_output_json_file()
     if os.path.exists(output_file):
         with open(output_file, 'r') as fh:
             output_json = json.loads(fh.read())
 
     # add one record to the json output file
-    def add_rec_to_json(key, clazz, dxlinks):
+    def add_rec_to_json(key, class_, dxlinks):
         if not key in output_json:
-            if clazz == 'array:file':
+            if class_ == 'array:file':
                 ## array type
                 output_json[key] = dxlinks
             elif not len(dxlinks) == 1:
@@ -197,10 +204,10 @@ def update_output_json(subdirs):
         dxlinks = rec['dx_links']
         if len(dxlinks) == 0:
             continue
-        clazz = None
-        if 'class' in rec:
-            clazz = rec['class']
-        add_rec_to_json(key, clazz, dxlinks)
+        class_ = None
+`        if 'class' in rec:
+            class_ = rec['class']
+        add_rec_to_json(key, class_, dxlinks)
     
     # write it back out
     #pp.pprint(output_json)

@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2014 DNAnexus, Inc.
+# Copyright (C) 2014 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #
@@ -49,7 +49,7 @@ The first two elements are files {seq1, seq2}, the other elements
 source command line
   -iseq1=NC_000868.fasta -iseq2=NC_001422.fasta 
 
-file seq1 is supposed to appear in the virutal machine at path:
+file seq1 is supposed to appear in the execution environment at path:
 <idir>/seq1/NC_000868.fasta
 
 File Arrays
@@ -76,38 +76,42 @@ This file array with two files, will appear in the virtual machine as:
 '''
 
     
-## input directory, where all inputs are downloaded
-def calc_input_dir():
+def get_input_dir():
+    ''' returns the input directory, where all inputs are downloaded '''
     home_dir = os.environ.get('HOME')
     idir = os.path.join(home_dir, 'in')
     return idir
 
-def calc_output_dir():
+def get_output_dir():
+    ''' 
+    returns the output directory, where all ouptus are created, and 
+    uploaded from
+    '''
     home_dir = os.environ.get('HOME')
     odir = os.path.join(home_dir, 'out')
     return odir
 
-## input JSON file
-def calc_input_json():
+def get_input_json_file():
+    ''' input JSON file '''
     home_dir = os.environ.get('HOME')
     return os.path.join(home_dir, "job_input.json");
 
-## output JSON file
-def calc_output_json():
+def get_output_json_file():
+    ''' output JSON file '''
     home_dir = os.environ.get('HOME')
     return os.path.join(home_dir, "job_ouput.json");
 
-'''
- create a directory if it does not already exist .
-
- TODO: report appropriate errors if this is a file, instead of a directory
-'''
 def ensure_dir(d):
-    ##pp = pprint.PrettyPrinter(indent=4)
-    ##pp.pprint("ensure_dir " + d)
+    '''
+    create a directory if it does not already exist .
+    '''
     if not os.path.exists(d):
-        ##print ("create_dir " + d)
+        # path does not exist, create the directory
         os.mkdir(d)
+    else:
+        # The path exists, check that it is not a file
+        if os.path.isfile(d):
+            raise Exception("Path %s already exists, and it is a file, not a directory" % d)
 
 '''
 key --- target file name
@@ -131,7 +135,7 @@ def parse_job_input(idir):
     job_input_file = calc_input_json();
     with open(job_input_file) as fh:
         job_input = json.load(fh)
-        files = list() 
+        files = []
         dirs = set()  ## directories to create under <idir>
         
         ## local function for adding a file to the list of files to be created
@@ -144,7 +148,7 @@ def parse_job_input(idir):
             filename = handler.name
             kv = {'trg_fname' : os.path.join(idir, iname, filename),
                   'trg_dir' : os.path.join(idir, iname),
-                  'src_fname' : handler.id,
+                  'src_file_id' : handler.id,
                   'iname' : iname}
             files.append(kv)
             dirs.add(iname)

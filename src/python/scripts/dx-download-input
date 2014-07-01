@@ -39,7 +39,7 @@ input_file = sys.argv[1]
 ## entry point
 ##
 ## input directory, where all inputs are downloaded
-idir = file_load_utils.calc_input_dir();
+idir = file_load_utils.get_input_dir();
 
 ## Parse input
 dirs, inputs = file_load_utils.parse_job_input(idir)
@@ -49,12 +49,11 @@ file_load_utils.ensure_dir(idir);
 
 ## Go over the inputs, ignore everything except 
 ## the particular file the user wants
-def download_all(inputs):
-    for rec in inputs:
-        if not rec['src_fname'] == input_file:
-            continue
-        file_load_utils.ensure_dir(rec['trg_dir'])
-        dxpy.download_dxfile(rec['src_fname'], rec['trg_fname'])
+for rec in inputs:
+    if not rec['src_file_id'] == input_file:
+        continue
+    file_load_utils.ensure_dir(rec['trg_dir'])
+    dxpy.download_dxfile(rec['src_file_id'], rec['trg_fname'])
 
 
 

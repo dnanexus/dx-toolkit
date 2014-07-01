@@ -57,7 +57,7 @@ parser.add_argument('--except',
 args = parser.parse_args()
 
 ## input directory, where all inputs are downloaded
-idir = file_load_utils.calc_input_dir();
+idir = file_load_utils.get_input_dir();
 dirs, inputs = file_load_utils.parse_job_input(idir)
 #pp = pprint.PrettyPrinter(indent=4)
 #pp.pprint(inputs)
@@ -79,8 +79,8 @@ else:
 ## Download the files, currently, this is done sequentially (one file at 
 ## a time).
 for rec in to_download:
-    print("download file: " + rec['src_fname'] + "-> " + rec['trg_fname'])
-    dxpy.download_dxfile(rec['src_fname'], rec['trg_fname'])
+    print("download file: " + rec['src_file_id'] + "-> " + rec['trg_fname'])
+    dxpy.download_dxfile(rec['src_file_id'], rec['trg_fname'])
 
 
 
