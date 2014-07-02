@@ -334,19 +334,9 @@ class LocalCompleter():
         self.matches = []
 
     def _populate_matches(self, prefix):
-        import subprocess, shlex
-
-        lexer = shlex.shlex(prefix, posix=True)
-        tomatch = lexer.get_token()
-        tomatch = '' if tomatch is None else tomatch
-        file_completions = subprocess.Popen('bash -c "compgen -f -o filenames -- \'' + tomatch + '\'"',
-                                            shell=True,
-                                            stdout=subprocess.PIPE).stdout.read().splitlines()
-        self.matches = subprocess.Popen('bash -c "compgen -d -o filenames -S / -- \'' + tomatch + '\'"',
-                                        shell=True,
-                                        stdout=subprocess.PIPE).stdout.read().splitlines()
-        self.matches = [match.replace(" ", "\ ") for match in self.matches if match != '']
-        self.matches += [(completion.replace(" ", "\ ") + " ") for completion in file_completions if (completion != '' and completion + "/" not in self.matches)]
+        from argcomplete.completers import FilesCompleter
+        completer = FilesCompleter()
+        self.matches = completer(prefix)
 
     def get_matches(self, line, point, prefix, suffix):
         self._populate_matches(prefix)
@@ -357,7 +347,7 @@ class LocalCompleter():
             self._populate_matches(text)
 
         if state < len(self.matches):
-            return self.matches[state].replace(' ', '\ ')
+            return self.matches[state]
         else:
             return None
 

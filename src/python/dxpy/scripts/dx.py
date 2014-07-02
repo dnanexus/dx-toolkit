@@ -174,7 +174,6 @@ class DXCLICompleter():
                    'update': ['stage ', 'workflow ']}
 
     def __init__(self):
-        global subparsers
         self.commands = [subcmd + ' ' for subcmd in subparsers.choices.keys()]
         self.matches = []
         self.text = None
@@ -256,12 +255,8 @@ class DXCLICompleter():
 
         return self.matches
 
-    def get_argcomplete_matches(self, cline, cpoint, prefix, suffix):
-        # Remove the leading "dx " and match only on the point up to the cursor
-        return self.get_matches(cline[3:cpoint])
-
     def complete(self, text, state):
-        if state == 0 and self.text != text:
+        if state == 0:
             self.get_matches(text, want_prefix=True)
 
         if state < len(self.matches):
@@ -3608,7 +3603,7 @@ parser_upload = subparsers.add_parser('upload', help='Upload file(s) or director
                                       prog="dx upload")
 upload_filename_action = parser_upload.add_argument('filename', nargs='+',
                                                     help='Local file or directory to upload ("-" indicates stdin input); provide multiple times to upload multiple files or directories')
-#upload_filename_action.completer = LocalCompleter()
+upload_filename_action.completer = LocalCompleter()
 parser_upload.add_argument('-o', '--output', help=argparse.SUPPRESS) # deprecated; equivalent to --path/--destination
 parser_upload.add_argument('--path', '--destination',
                            help=fill('DNAnexus path to upload file(s) to (default uses current project and folder if not provided)', width_adjustment=-24),
