@@ -176,7 +176,6 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
         result = remote_job.describe()
         self.assertEqual(result["output"]["out1"], 140)
 
-
     def test_file_download(self):
         '''
         This test assumes a well-formed input spec and tests that the
@@ -354,43 +353,38 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
 test the upload/download helpers by running them locally
 '''
 class TestDXUpDnHelpers(DXTestCase):
-    def run_apps(self):
+    def run_test_app_locally(self, arg_list):
+        '''
+        :param arg_list: list of command line arguments given to an app
+
+        Runs an app locally, with a given set of command line arguments
+        '''
         path = os.path.join(os.path.dirname(__file__), "file_load")
-        # test for {dx-download-all-inputs, dx-upload-all-outputs}
-        check_output(['dx-run-app-locally', 
-                      os.path.join(path, 'app1'),
-                     '-iseq1=A.txt',
-                     '-iseq2=B.txt'])
-        # test for {dx-download-all-inputs, dx-upload-all-outputs}
-        check_output(["dx-run-app-locally",
-                      os.path.join(path, 'app2'),
-                     "-ireads=A.txt",
-                     "-ireads=B.txt",
-                     "-iref=A.txt",
-                     "-iref=B.txt"])
-        # test for dx-download-input
-        check_output(['dx-run-app-locally', 
-                      os.path.join(path, 'app3'),
-                     '-iseq1=A.txt',
-                     '-iseq2=B.txt'])
+        args = ['dx-run-app-locally',
+                os.path.join(path, 'app1')]
+        args.extend(arg_list)
+        check_output(args)
 
     def test(self):
         # Make a couple files for testing
         print("testing upload/download helpers")
         dxpy.upload_string("1234", name="A.txt")
 
-        # these invocations should fail
+        # this invocation should fail
         try:
-            self.run_apps()
+            self.run_test_app_locally(['-iseq1=A.txt', '-iseq2=B.txt'])
             raise Exception("Error: this should have failed")
         except:
             pass
 
         dxpy.upload_string("ABCD", name="B.txt")
 
-        # these invocations should succeed
-        self.run_apps()
-
+        # these should succeed
+        self.run_test_app_locally(['-iseq1=A.txt', '-iseq2=B.txt', '-ibar=A.txt', '-iref=A.txt', '-iref=B.txt',
+                                   "-ivalue=5"])
+        #self.run_test_app_locally(['-iseq1=A.txt', '-iseq2=B.txt', '-iref=A.txt', '-iref=B.txt'])
+        self.run_test_app_locally(['-iseq1=A.txt', '-iseq2=B.txt', '-ibar=A.txt', '-iref=A.txt', '-iref=B.txt',
+                                   "-ivalue=5"])
         print("Done")
 
 

@@ -29,12 +29,13 @@ Implementation Overview
 3. download 
 '''
 import os, sys, json, argparse, subprocess
+import dxpy
 from dxpy.utils import file_load_utils
 
 # extract the file name
-if len(sys.argv) != 2:
-    raise "Filename must be specified, there must be exactly one command line argument"
-input_file = sys.argv[1]
+parser = argparse.ArgumentParser(description='Download one element')
+parser.add_argument("input_name", help="input name to download")
+args = parser.parse_args()
 
 ## entry point
 ##
@@ -50,14 +51,7 @@ file_load_utils.ensure_dir(idir);
 ## Go over the inputs, ignore everything except 
 ## the particular file the user wants
 for rec in inputs:
-    if not rec['src_file_id'] == input_file:
+    if rec['iname'] != args.input_name:
         continue
     file_load_utils.ensure_dir(rec['trg_dir'])
     dxpy.download_dxfile(rec['src_file_id'], rec['trg_fname'])
-
-
-
-
-
-
-

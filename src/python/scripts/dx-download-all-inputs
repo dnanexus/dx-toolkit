@@ -25,15 +25,27 @@ import dxpy.utils
 ## contains specific helper functions
 from dxpy.utils import file_load_utils
 
+# Parse the command line
+#
+# exclude -- a list of arguments to skip over
+parser = argparse.ArgumentParser(description='Download all the files as described in the input json file')
+parser.add_argument('--except', 
+                    help='Do not download this argument',
+                    action="append",
+                    dest="exclude")
+args = parser.parse_args()
 
-'''
-Create a set of directories, so we could store the input files.
-For example, seq1 could be stored under:
-   /out/seq1/NC_001122.fasta
+if args.exclude is None:
+    args.exclude = []
 
-TODO: this call could fail, we need to report a reasonable error code
-'''
 def create_dirs(idir, dirs):
+    '''
+    Create a set of directories, so we could store the input files.
+    For example, seq1 could be stored under:
+        /out/seq1/NC_001122.fasta
+
+    TODO: this call could fail, we need to report a reasonable error code
+    '''
     print ("create_dirs " + str(len(dirs)))
     if len(dirs) == 0:
         return
@@ -43,18 +55,40 @@ def create_dirs(idir, dirs):
     for d in dirs:
         file_load_utils.ensure_dir(os.path.join(idir, d))
 
-## entry point
-##
+def get_input_spec():
+    ''' Extract the inputSpec, if it exists
+    '''
+    input_spec = None
+    if 'DX_JOB_ID' in os.environ:
+        # works in the cloud, not locally
+        # print("found the job id");
+        job_desc = dxpy.describe(dxpy.JOB_ID)
+        desc = dxpy.describe(job_desc.get("app", job_desc.get("applet")))
+        if "inputSpec" in desc:
+            input_spec = desc["input_spec"]
+    elif 'DX_TEST_DXAPP_JSON' in os.environ:
+        # works only locally
+        path_to_dxapp_json = os.environ['DX_TEST_DXAPP_JSON']
+        with open(path_to_dxapp_json, 'r') as fd:
+            dxapp_json = json.load(fd)
+            input_spec = dxapp_json.get('inputSpec')
 
-## Parse the command line
-##
-## exclude -- a list of arguments to skip over
-parser = argparse.ArgumentParser(description='Download all the files as described in the input json file')
-parser.add_argument('--except', 
-                    help='Do not download this argument',
-                    action="append",
-                    dest="exclude")
-args = parser.parse_args()
+    # convert to a dictionary. Each record in the output spec
+    # has {name, class, optional} attributes.
+    if input_spec == None:
+        return {}
+
+    # for each field name, we want to know its class, and if it
+    # is optional
+    recs = {}
+    for spec in input_spec:
+        name = spec['name']
+        recs[name] = {'class': spec['class']}
+        if 'optional' in spec:
+            recs[name]['optional'] = spec['optional']
+        else:
+            recs[name]['optional'] = False
+    return recs
 
 ## Input directory, where all inputs are downloaded
 idir = file_load_utils.get_input_dir();
@@ -64,21 +98,34 @@ dirs, inputs = file_load_utils.parse_job_input(idir)
 ## Allows performing the download in parallel.
 create_dirs(idir, dirs)
 
+# Extract the input spec. We need to check for optional downloads
+input_spec = get_input_spec()
+
 ## Remove from the excluded records
 to_download = []
-if args.exclude == None:
-    to_download = inputs
-else:
-    for rec in inputs:
-        if not rec['iname'] in args.exclude:
-            to_download.append(rec)
+for rec in inputs:
+    iname = rec['iname']
+    if iname in args.exclude:
+        # ignore excluded arguments
+        continue
+    if iname not in input_spec:
+        # ignore elements out of the spec
+        continue
+    if not input_spec[iname]['class'].endswith('file'):
+        # ignore non file elements
+        continue
+    to_download.append(rec)
 
-## Download the files, currently, this is done sequentially (one file at 
-## a time).
+# Download the files, currently, this is done sequentially (one file at
+# a time). We are all set up to do this in parallel
 for rec in to_download:
-    print("download file: " + rec['src_file_id'] + "-> " + rec['trg_fname'])
-    dxpy.download_dxfile(rec['src_file_id'], rec['trg_fname'])
-
-
+    try:
+        print("download file: " + rec['src_file_id'] + "-> " + rec['trg_fname'])
+        dxpy.download_dxfile(rec['src_file_id'], rec['trg_fname'])
+    except:
+        # ignore failed download of optional files
+        iname = rec['iname']
+        if input_spec[iname]['optional']:
+            pass
 
 
