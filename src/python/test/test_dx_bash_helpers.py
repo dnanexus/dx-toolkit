@@ -110,20 +110,26 @@ for each kwarg)
     return output
 
 class TestDXBashHelpers(DXTestCase):
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping tests that would run jobs')
+#    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping tests that would run jobs')
     def test_app1(self):
         with temporary_project('TestDXBashHelpers.test_app1 temporary project') as p:
             env = update_environ(DX_PROJECT_CONTEXT_ID=p.get_id())
 
             # Upload some files for use by the applet
             dxpy.upload_string("foo\n", project=p.get_id(), name="f1")
+            dxpy.upload_string("1234\n", project=p.get_id(), name="A.txt")
+            dxpy.upload_string("ABCD\n", project=p.get_id(), name="B.txt")
 
             # Build the applet, patching in the bash helpers from the
             # local checkout
             applet_id = build_app_with_bash_helpers(os.path.join(TEST_APPS, 'app1'), p.get_id())
 
             # Run the applet
-            run(['dx', 'run', '--yes', '--watch', applet_id, '-iseq1=f1'], env=env)
+            applet_args = ['-iseq1=A.txt', '-iseq2=B.txt', '-iref=A.txt', '-iref=B.txt', "-ivalue=5"]
+            cmd_args = ['dx', 'run', '--yes', '--watch', applet_id]
+            cmd_args.extend(applet_args)
+            run(cmd_args, env=env)
+
 
 if __name__ == '__main__':
     unittest.main()
