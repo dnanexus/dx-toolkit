@@ -152,7 +152,6 @@ def parse_job_input(idir):
             elif isinstance(value, list):
                 # This is a file array, we use the field name as the directory
                 for link in value:
-                    if dxpy.is_dxlink(value):
-                        add_file(input_name, link)
+                    add_file(input_name, link)
 
         return dirs, files

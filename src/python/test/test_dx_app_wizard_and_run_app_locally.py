@@ -371,18 +371,17 @@ class TestDXUpDnHelpers(DXTestCase):
         dxpy.upload_string("1234", name="A.txt")
 
         # this invocation should fail
-        try:
-            self.run_test_app_locally(['-iseq1=A.txt', '-iseq2=B.txt'])
-            raise Exception("Error: this should have failed")
-        except:
-            pass
+        if False:
+            try:
+                self.run_test_app_locally(['-iseq1=A.txt', '-iseq2=B.txt'])
+                raise Exception("Error: this should have failed")
+            except:
+                pass
 
         dxpy.upload_string("ABCD", name="B.txt")
 
         # these should succeed
-        self.run_test_app_locally(['-iseq1=A.txt', '-iseq2=B.txt', '-ibar=A.txt', '-iref=A.txt', '-iref=B.txt',
-                                   "-ivalue=5"])
-        #self.run_test_app_locally(['-iseq1=A.txt', '-iseq2=B.txt', '-iref=A.txt', '-iref=B.txt'])
+        self.run_test_app_locally(['-iseq1=A.txt', '-iseq2=B.txt', '-iref=A.txt', '-iref=B.txt', "-ivalue=5"])
         self.run_test_app_locally(['-iseq1=A.txt', '-iseq2=B.txt', '-ibar=A.txt', '-iref=A.txt', '-iref=B.txt',
                                    "-ivalue=5"])
         print("Done")

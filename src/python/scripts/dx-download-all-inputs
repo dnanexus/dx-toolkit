@@ -98,7 +98,7 @@ dirs, inputs = file_load_utils.parse_job_input(idir)
 ## Allows performing the download in parallel.
 create_dirs(idir, dirs)
 
-# Extract the input spec. We need to check for optional downloads
+# Extract the input spec. We need to check which files are optional downloads.
 input_spec = get_input_spec()
 
 ## Remove from the excluded records
