@@ -78,6 +78,26 @@ def check_output(*popenargs, **kwargs):
         raise exc
     return output
 
+@contextmanager
+def temporary_project(name='dx client tests temporary project', cleanup=True, reclaim_permissions=False):
+    """Creates a temporary project scoped to the context manager, and yields
+a DXProject handler for the project.
+
+    :param cleanup: if False, do not clean up the project when done (useful for debugging so you can examine the state of the project)
+    :type cleanup: bool
+    :param reclaim_permissions: if True, attempts a project-xxxx/join before trying to destroy the project. May be needed if the test reduced its own permissions in the project.
+    :type reclaim_permissions: bool
+
+    """
+    temp_project = dxpy.DXProject(dxpy.api.project_new({'name': name})['id'])
+    try:
+        yield temp_project
+    finally:
+        if reclaim_permissions:
+            dxpy.DXHTTPRequest('/' + temp_project.get_id() + '/join', {'level': 'ADMINISTER'})
+        if cleanup:
+            temp_project.destroy()
+
 
 class DXTestCase(unittest.TestCase):
     def setUp(self):
