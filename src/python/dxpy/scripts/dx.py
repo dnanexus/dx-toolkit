@@ -369,7 +369,7 @@ def login(args):
     elif args.projects:
         pick_and_set_project(args)
 
-    if args.save:
+    if args.save and not args.token:
         msg = "You are now logged in. Your credentials are stored in {conf_dir} and will expire in {timeout}. {tip}"
         tip = "Use " + BOLD("dx login --timeout") + " to control the expiration date, or " + BOLD("dx logout") + \
               " to end this session."
