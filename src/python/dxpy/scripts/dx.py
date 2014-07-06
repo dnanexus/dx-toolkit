@@ -3680,7 +3680,7 @@ parser_import = subparsers.add_parser('import',
 parser_import.add_argument('format', help='Format to import from')
 import_args_action = parser_import.add_argument('importer_args', help=fill('Arguments passed to the importer', width_adjustment=-24),
                                                 nargs=argparse.REMAINDER)
-#import_args_action.completer = LocalCompleter()
+import_args_action.completer = LocalCompleter()
 parser_import.set_defaults(func=dximport)
 register_subparser(parser_import, categories='data')
 
@@ -3707,7 +3707,7 @@ parser_build = subparsers.add_parser('build', help='Upload and build a new apple
                                      parents=[build_parser, env_args]
 )
 parser_build.set_defaults(func=build)
-#parser_build.completer = LocalCompleter()
+parser_build.completer = LocalCompleter()
 register_subparser(parser_build, categories='exec')
 
 parser_add = subparsers.add_parser('add', help='Add one or more items to a list',
