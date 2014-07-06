@@ -3707,7 +3707,6 @@ parser_build = subparsers.add_parser('build', help='Upload and build a new apple
                                      parents=[build_parser, env_args]
 )
 parser_build.set_defaults(func=build)
-parser_build.completer = LocalCompleter()
 register_subparser(parser_build, categories='exec')
 
 parser_add = subparsers.add_parser('add', help='Add one or more items to a list',

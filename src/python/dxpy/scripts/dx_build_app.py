@@ -34,6 +34,7 @@ from dxpy import logger
 
 from dxpy.utils import json_load_raise_on_duplicates
 from dxpy.utils.resolver import resolve_path, is_container_id
+from dxpy.utils.completer import LocalCompleter
 from dxpy.app_categories import APP_CATEGORIES
 from dxpy.exceptions import err_exit, DXError
 from dxpy.utils.printing import BOLD
@@ -49,7 +50,8 @@ app_options = parser.add_argument_group('options for creating apps', '(Only vali
 applet_options = parser.add_argument_group('options for creating applets', '(Only valid when --app/--create-app is NOT specified)')
 
 # COMMON OPTIONS
-parser.add_argument("src_dir", help="App or applet source directory (default: current directory)", nargs='?')
+src_dir_action = parser.add_argument("src_dir", help="App or applet source directory (default: current directory)", nargs='?')
+src_dir_action.completer = LocalCompleter()
 
 parser.set_defaults(mode="app")
 parser.add_argument("--app", "--create-app", help="Create an app (otherwise, creates an applet)", action="store_const",
