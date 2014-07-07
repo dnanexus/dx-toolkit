@@ -104,7 +104,7 @@ public class DXHTTPRequest {
 
     private final DefaultHttpClient httpclient;
 
-    private static final int NUM_RETRIES = 5;
+    private static final int NUM_RETRIES = 6;
 
     private static final DXEnvironment defaultEnv = DXEnvironment.create();
 
@@ -242,8 +242,8 @@ public class DXHTTPRequest {
 
             try {
                 // In this block, any IOException will cause the request to be retried (up to a
-                // total of 5 retries). RuntimeException (including DXAPIException) are not caught
-                // and will immediately return control to the caller.
+                // total of NUM_RETRIES retries). RuntimeException (including DXAPIException)
+                // instances are not caught and will immediately return control to the caller.
 
                 // TODO: distinguish between errors during connection init and socket errors while
                 // sending or receiving data. The former can always be retried, but the latter can
