@@ -183,7 +183,7 @@ unsigned int File::createChunks(dx::BlockingQueue<Chunk *> &queue, const int tri
   for (int64_t start = 0; start < size; start += chunkSize) {
     string partIndex = boost::lexical_cast<string>(countChunks + 1); // minimum part index is 1
     const int64_t end = min(start + chunkSize, size);
-    if (desc["parts"].has(partIndex) && desc["parts"][partIndex]["state"] == "complete") {
+    if (desc["parts"].has(partIndex) && desc["parts"][partIndex]["state"].get<string>() == "complete") {
       DXLOG(logINFO) << "Part index " << partIndex << " for fileID " << fileID << " is in complete state. Will not create an upload chunk for it.";
       bytesUploaded += (end - start);
       atleastOnePartDone = true;
