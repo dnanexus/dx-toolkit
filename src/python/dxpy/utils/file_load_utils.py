@@ -84,7 +84,7 @@ def get_input_dir():
 
 def get_output_dir():
     ''' 
-    Returns the output directory, where all ouptus are created, and 
+    Returns the output directory, where all outputs are created, and
     uploaded from
     '''
     home_dir = os.environ.get('HOME')
