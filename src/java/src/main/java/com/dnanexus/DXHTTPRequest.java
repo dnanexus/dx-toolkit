@@ -235,7 +235,10 @@ public class DXHTTPRequest {
             // out of retries, so we can check at the bottom of the loop instead of the top.
             assert NUM_RETRIES > 0;
 
-            boolean retryRequest = false;
+            // By default, our conservative strategy is to retry if the route permits it. Later we
+            // may update this to unconditionally retry if we can definitely determine that the
+            // server never saw the request.
+            boolean retryRequest = (retryStrategy == RetryStrategy.SAFE_TO_RETRY);
 
             try {
                 // In this block, any IOException will cause the request to be retried (up to a
@@ -244,9 +247,7 @@ public class DXHTTPRequest {
 
                 // TODO: distinguish between errors during connection init and socket errors while
                 // sending or receiving data. The former can always be retried, but the latter can
-                // only be retried if the request is idempotent. Since we can't tell the difference,
-                // we behave conservatively here and don't retry requests that throw an exception in
-                // the 'execute' method.
+                // only be retried if the request is idempotent.
                 HttpResponse response = httpclient.execute(request);
 
                 int statusCode = response.getStatusLine().getStatusCode();
@@ -258,7 +259,6 @@ public class DXHTTPRequest {
                     int realLength = value.length;
                     if (entity.getContentLength() >= 0 && realLength != entity.getContentLength()) {
                         // Content length mismatch. Retry is possible (if the route permits it).
-                        retryRequest = (retryStrategy == RetryStrategy.SAFE_TO_RETRY);
                         throw new IOException("Received response of " + realLength
                                 + " bytes but Content-Length was " + entity.getContentLength());
                     } else if (parseResponse) {
@@ -270,7 +270,6 @@ public class DXHTTPRequest {
                                 // content-length was not provided, and the JSON could not be
                                 // parsed. Retry (if the route permits it) since this is probably
                                 // just a streaming request that encountered a transient error.
-                                retryRequest = (retryStrategy == RetryStrategy.SAFE_TO_RETRY);
                                 throw new IOException(
                                         "Content-length was not provided and the response JSON could not be parsed.");
                             }
@@ -339,6 +338,9 @@ public class DXHTTPRequest {
                 sleep(secondsToWait);
                 continue;
             } catch (IOException e) {
+                // Note, this catches both exceptions directly thrown from httpclient.execute (e.g.
+                // no connectivity to server) and exceptions thrown by our code above after parsing
+                // the response.
                 System.err.println(errorMessage("POST", resource, e.toString(), timeoutSeconds,
                         attempts + 1, NUM_RETRIES));
                 if (attempts == NUM_RETRIES || !retryRequest) {
