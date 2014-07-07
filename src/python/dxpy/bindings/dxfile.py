@@ -43,6 +43,8 @@ if dxpy.JOB_ID:
     # platform.
     DEFAULT_BUFFER_SIZE = 1024*1024*96
 
+MD5_READ_CHUNK_SIZE = 1024*1024*4
+
 class DXFile(DXDataObject):
     '''Remote file object handler.
 
@@ -462,7 +464,7 @@ class DXFile(DXDataObject):
             # data is a buffer
             rewind_input_buffer_offset = data.tell() # record initial position (so we can rewind back)
             while True:
-                bytes_read = data.read(100 * 1024 * 1024) # TODO: What should be the value of this constant ?
+                bytes_read = data.read(MD5_READ_CHUNK_SIZE)
                 if bytes_read:
                     md5.update(bytes_read)
                 else:
