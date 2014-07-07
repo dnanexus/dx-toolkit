@@ -99,7 +99,7 @@ def get_input_json_file():
 def get_output_json_file():
     ''' Output JSON file '''
     home_dir = os.environ.get('HOME')
-    return os.path.join(home_dir, "job_ouput.json");
+    return os.path.join(home_dir, "job_output.json");
 
 def ensure_dir(path):
     '''

@@ -81,7 +81,7 @@ def get_output_spec():
             # The output spec does not apply for subjobs
             desc = dxpy.describe(job_desc.get("app", job_desc.get("applet")))
             if "outputSpec" in desc:
-                output_spec = desc["output_spec"]
+                output_spec = desc["outputSpec"]
     elif 'DX_TEST_DXAPP_JSON' in os.environ:
         # works only locally
         path_to_dxapp_json = os.environ['DX_TEST_DXAPP_JSON']
@@ -218,13 +218,13 @@ def upload_all(subdirs):
         for fname in rec['files']:
             ## Upload the file
             path = os.path.join(rec['path'], fname)
-            f_obj = dxpy.upload_local_file(path)
+            f_obj = dxpy.upload_local_file(path, wait_on_close=True)
             rec['dx_links'].append(dxpy.dxlink(f_obj))
     return subdirs
 
 
 
-def update_output_json(subdirs):
+def update_output_json(file_recs):
     ''' update the output json file.'''
 
     # Load existing file, if it exists
@@ -252,8 +252,8 @@ def update_output_json(subdirs):
                 report_error_and_exit("Key {} was found in output but is not an array".format(key))
 
     # Add all the records
-    for key in subdirs:
-        rec = subdirs[key]
+    for key in file_recs:
+        rec = file_recs[key]
         dxlinks = rec['dx_links']
         if len(dxlinks) == 0:
             continue
@@ -263,6 +263,7 @@ def update_output_json(subdirs):
         add_rec_to_json(key, class_, dxlinks)
 
     # write it back out
+
     with open(output_file, 'w') as fh:
         json.dump(output_json, fh, indent=4)
 
@@ -276,6 +277,5 @@ compare_to_output_spec(file_recs, output_spec)
 
 file_recs = upload_all(file_recs)
 update_output_json(file_recs)
-
 
 

@@ -352,7 +352,7 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
 '''
 test the upload/download helpers by running them locally
 '''
-class TestDXUpDnHelpers(DXTestCase):
+class TestDXBashHelpers(DXTestCase):
     def run_test_app_locally(self, arg_list):
         '''
         :param arg_list: list of command line arguments given to an app
@@ -365,7 +365,7 @@ class TestDXUpDnHelpers(DXTestCase):
         args.extend(arg_list)
         check_output(args)
 
-    def test(self):
+    def test_app1(self):
         # Make a couple files for testing
         print("testing upload/download helpers")
         dxpy.upload_string("1234", name="A.txt")

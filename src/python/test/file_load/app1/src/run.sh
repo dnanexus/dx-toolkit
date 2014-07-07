@@ -18,9 +18,8 @@ main() {
     done
     diff -r ref in/ref
 
-    echo "hello world, $seq1, $seq2" > report.txt
     mkdir -p out/result
-    cp -f report.txt out/result/
+    echo "hello world, $seq1, $seq2" > out/result/report.txt
 
     mkdir -p out/genes
     echo 'ls in/$ref' > out/genes/refs_ls.txt
