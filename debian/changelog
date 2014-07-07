@@ -1,3 +1,9 @@
+dx-toolkit (0.105.2) precise; urgency=low
+
+  * Java: raise number of retries
+
+ -- Phil Sung <psung@dnanexus.com>  Mon, 07 Jul 2014 22:58:07 +0000
+
 dx-toolkit (0.105.1) precise; urgency=low
 
   * Java: allow retries when server is unavailable
