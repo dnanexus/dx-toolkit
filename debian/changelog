@@ -1,3 +1,13 @@
+dx-toolkit (0.106.0) precise; urgency=low
+
+  * Improvements to clang/OSX builds and documentation.
+
+  * Fixes for Java bindings retry logic.
+
+  * Fix completion of local paths.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 08 Jul 2014 21:53:59 +0000
+
 dx-toolkit (0.105.0) precise; urgency=low
 
   * dx ssh improvements and tests.
