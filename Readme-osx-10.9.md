@@ -61,6 +61,11 @@ The environment setup steps for each option are shown below.
       sudo pip install virtualenv
       sudo pip install --upgrade setuptools
       ```
+      
+      Make sure to place /usr/local/bin ahead of /usr/bin in your PATH so the homebrew Python is used in later steps:
+      ```
+      export PATH=/usr/local/bin:$PATH
+      ```
 
       Note: If you skip that step and use the Apple-provided Python, you'll see this error during installation of the Python psutil package:
 
