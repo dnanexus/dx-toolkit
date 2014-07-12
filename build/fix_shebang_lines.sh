@@ -26,26 +26,34 @@ fi
 
 msg="Please source the environment file at the root of dx-toolkit."
 if [[ $2 == "--debian-system-install" ]]; then
-  msg="Please source the environment file /etc/profile.d/dnanexus.environment."
+    msg="Please source the environment file /etc/profile.d/dnanexus.environment."
+    shift
 fi
 
-# setuptools bakes the path of the Python interpreter into all installed Python
-# scripts. Rewrite it back to the more portable form "/usr/bin/env python",
-# since we don't always know where the right interpreter is on the target
-# system.
+# setuptools bakes the path of the Python interpreter into all
+# installed Python scripts. Rewrite it back to the more portable form,
+# since we don't always know where the right interpreter is on the
+# target system.
 #
 # Also, insert a stub that tries to detect when the user hasn't sourced the
 # environment file and prints a warning.
-py_header="#!/usr/bin/env python
+interpreter="/usr/bin/env python"
+if [[ $2 != "" ]]; then
+    interpreter=$2
+fi
+
+py_header="#!$interpreter
 import os, sys
 if \"DNANEXUS_HOME\" not in os.environ:
     sys.stderr.write(\"\"\"***\n*** WARNING: DNANEXUS_HOME is not set. $msg\n***\n\"\"\")
 "
 
 for f in "$dirname"/*; do
-    if ! grep -q 'WARNING: DNANEXUS_HOME' "$f"; then
-        if head -n 1 "$f" | egrep -iq "(python|pypy)"; then
-            echo "Rewriting $f to use portable interpreter paths"
+    if head -n 1 "$f" | egrep -iq "(python|pypy)"; then
+        echo "Rewriting $f to use portable interpreter paths"
+        if grep -q 'WARNING: DNANEXUS_HOME' "$f"; then
+            perl -i -pe 's|^#!/.+|'"#!$interpreter"'| if $. == 1' "$f"
+        else
             perl -i -pe 's|^#!/.+|'"$py_header"'| if $. == 1' "$f"
         fi
     fi

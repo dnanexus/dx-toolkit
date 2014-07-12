@@ -35,7 +35,7 @@ rm Makefile
 rm -rf debian src/{java,javascript,perl,R,ruby,ua,python/build,{dx-verify-file,dx-contigset-to-fasta,dx-wig-to-wiggle}/build} build/py27_env share/dnanexus/lib/javascript
 mv build/Prebuilt-Readme.md Readme.md
 
-"$(dirname $0)/fix_shebang_lines.sh" bin
+"$(dirname $0)/fix_shebang_lines.sh" bin "/usr/bin/env python2.7"
 
 if [[ "$ostype" == 'Linux' ]]; then
   osversion=$(lsb_release -c | sed s/Codename:.//)
