@@ -278,7 +278,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
         rewind_input_buffer_offset = data.tell()
 
     last_error = None
-    for retry in range(max_retries + 1):
+    try_index = 0
+    while True:
         streaming_response_truncated = False
         response = None
         try:
@@ -344,6 +345,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                             streaming_response_truncated = 'content-length' not in response.headers
                             raise HTTPError("Invalid JSON received from server")
                 return content
+            raise AssertionError('Should never reach this line: expected a result to have been returned by now')
         except _expected_exceptions as e:
             last_error = e
 
@@ -359,6 +361,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                 logger.warn("%s %s: %s. Waiting %d seconds due to server unavailability..."
                             % (method, url, str(e), seconds_to_wait))
                 time.sleep(seconds_to_wait)
+                # Note, we escape the "except" block here without
+                # incrementing try_index because 503 responses with
+                # Retry-After should not count against the number of
+                # permitted retries.
                 continue
 
             # TODO: if the socket was dropped mid-request,
@@ -367,7 +373,15 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
             # distinguish between connection initiation errors and
             # dropped socket errors. Currently the former are not
             # retried even if it might be safe to do so.
-            if retry < max_retries:
+
+            # Total number of allowed tries is the initial try + up to
+            # (max_retries) subsequent retries.
+            total_allowed_tries = max_retries + 1
+            # Because try_index is not incremented until we escape this
+            # iteration of the loop, try_index is equal to the number of
+            # tries that have failed so far, minus one. Test whether we
+            # have exhausted all retries.
+            if try_index + 1 < total_allowed_tries:
                 if response is None or isinstance(e, exceptions.ContentLengthError) or streaming_response_truncated:
                     ok_to_retry = always_retry or (method == 'GET')
                 else:
@@ -376,14 +390,22 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                 if ok_to_retry:
                     if rewind_input_buffer_offset is not None:
                         data.seek(rewind_input_buffer_offset)
-                    delay = 2 ** retry
-                    logger.warn("%s %s: %s. Waiting %d seconds before retry %d of %d..." % (method, url, str(e), delay,
-                                                                                            retry+1, max_retries))
+                    delay = 2 ** try_index
+                    logger.warn("%s %s: %s. Waiting %d seconds before retry %d of %d..."
+                                % (method, url, str(e), delay, try_index + 1, max_retries))
                     time.sleep(delay)
+                    try_index += 1
                     continue
+            # We get here if all retries have been exhausted OR if the
+            # error is deemed not retryable.
             break
-        if last_error is None:
-            last_error = exceptions.DXError("Internal error in DXHTTPRequest")
+
+        raise AssertionError('Should never reach this line: should have attempted a retry or broken out of loop by now')
+
+    if last_error is None:
+        # The only "break" above follows some code that sets last_error
+        raise AssertionError('Expected last_error to be set here')
+
     raise last_error
 
 class DXHTTPOAuth2(AuthBase):
