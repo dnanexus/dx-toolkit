@@ -1,0 +1,30 @@
+{
+  "name": "with-subjobs",
+  "title": "with-subjobs",
+  "summary": "with-subjobs",
+  "dxapi": "1.0.0",
+  "version": "0.0.1",
+  "categories": [],
+  "inputSpec": [
+    {
+      "name": "files",
+      "class": "array:file",
+      "optional": false
+    }
+  ],
+  "outputSpec": [
+    {
+      "name": "first_file",
+      "class": "file"
+    },
+    {
+      "name": "final_file",
+      "class": "file"
+    }
+  ],
+  "runSpec": {
+    "interpreter": "bash",
+    "file": "code.sh"
+  },
+  "authorizedUsers": []
+}

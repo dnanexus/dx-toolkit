@@ -1,0 +1,22 @@
+{ "name": "basic",
+  "title": "basic",
+  "summary" : "basic file upload/download",
+  "runSpec": {
+    "file": "run.sh",
+    "interpreter": "bash"
+  },
+  "inputSpec": [
+    {"name": "seq1", "class": "file"},
+    {"name": "seq2", "class": "file"},
+    {"name": "ref",  "class": "array:file"},
+    {"name": "bar",  "class": "file", "optional" : true},
+    {"name": "value", "class" : "int"},
+    {"name": "ages", "class": "array:int"}
+  ],
+  "outputSpec": [
+    {"name": "result", "class": "file"},
+    {"name": "genes", "class":  "array:file"},
+    {"name": "foo",    "class": "array:file", "optional" : true},
+    {"name": "bar",    "class": "int", "optional" : true}
+  ]
+}

@@ -1,0 +1,261 @@
+#!/usr/bin/env python
+#
+# Copyright (C) 2014 DNAnexus, Inc.
+#
+# This file is part of dx-toolkit (DNAnexus platform client libraries).
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#   use this file except in compliance with the License. You may obtain a copy
+#   of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#   License for the specific language governing permissions and limitations
+#   under the License.
+
+''' This helper script uploads all output files from the execution environment
+to the job's workspace.
+
+Overview
+   Upload everything that is in the output directory, and generate a
+   $HOME/job_output.json file that describes it.
+
+   (a) Figure out what exists in the output directory, and is relevant.
+      The relevant formats are:
+      <odir>/xxx/yyy
+          xxx == key
+          yyy == file name
+   (b) If there is an output spec, compare against it.
+   (c) Upload everything that is in the output directory
+   (d) Generate a $HOME/job_output.json file that describes it.
+'''
+
+import os, sys, json
+import dxpy
+from dxpy.utils import file_load_utils
+
+def report_error_and_exit(message):
+    ''' Report an error, since this is called from a bash script, we
+        can't simply raise an exception. Instead, we write the error to
+        a standard JSON file.
+
+        TODO: refactor, shared code with dx-jobutil-report-error
+    '''
+    error_hash = {
+        "error": {
+            "type": "string",
+            "message": message
+        }
+    }
+    with open(os.path.expanduser(os.path.join('~', 'job_error.json')), 'w') as error_file:
+        error_file.write(json.dumps(error_hash, indent=4) + '\n')
+    sys.exit(1)
+
+
+def get_output_spec():
+    ''' Extract the outputSpec, if it exists
+    '''
+    output_spec = None
+    if 'DX_JOB_ID' in os.environ:
+        # works in the cloud, not locally
+        # print("found the job id");
+        job_desc = dxpy.describe(dxpy.JOB_ID)
+        if job_desc["function"] == "main":
+            # The output spec does not apply for subjobs
+            desc = dxpy.describe(job_desc.get("app", job_desc.get("applet")))
+            if "outputSpec" in desc:
+                output_spec = desc["outputSpec"]
+    elif 'DX_TEST_DXAPP_JSON' in os.environ:
+        # works only locally
+        path_to_dxapp_json = os.environ['DX_TEST_DXAPP_JSON']
+        with open(path_to_dxapp_json, 'r') as fd:
+            dxapp_json = json.load(fd)
+            output_spec = dxapp_json.get('outputSpec')
+
+    # convert to a dictionary. Each entry in the output spec
+    # has {name, class} attributes.
+    if output_spec == None:
+        return {}
+
+    # for each field name, we want to know its class, and if it
+    # is optional
+    subdir_recs = {}
+    for spec in output_spec:
+        name = spec['name']
+        subdir_recs[name] = {'class': spec['class']}
+        if 'optional' in spec:
+            subdir_recs[name]['optional'] = spec['optional']
+        else:
+            subdir_recs[name]['optional'] = False
+    return subdir_recs
+
+
+def traverse_output_subdir(odir, subdir):
+    '''
+    Traverse an output directory, and return all the files in
+    it.
+
+    TODO: Support directories. For example, upload file
+    $HOME/out/outputname/foo/bar/baz.txt as a file into the folder
+    /foo/bar in the job's workspace.
+    '''
+    files = []
+    for fname in os.listdir(subdir):
+        path = os.path.join(odir, fname)
+        if os.path.isdir(path):
+            # ignore directories
+            continue
+        if path.startswith('.'):
+            # ignore hidden files
+            continue
+        files.append(fname)
+    return files
+
+
+def analyze_output_dir():
+    '''
+    Figure out what the output directory looks like.
+    We are interested in elements of the form:
+    <odir>/xxx/yyy
+         xxx == key
+         yyy == file name
+
+     Arrays look like this:
+       <odir>/xxx/yyy
+       <odir>/xxx/vvv
+       <odir>/xxx/zzz
+
+    return dictionary that maps subdir name (key) to a tuple. Each
+    tuple includes the subdir path, and a list of all the files.
+    '''
+    odir = file_load_utils.get_output_dir()
+    if not os.path.isdir(odir):
+        return {}
+    l = os.listdir(odir)
+    subdir_recs = {}  # mapping from name to attributes
+    for subdir in l:
+        path = os.path.join(odir, subdir)
+        if not os.path.isdir(path):
+            continue
+        s_rec = {'path': path,
+                   'files': traverse_output_subdir(odir, path),
+                   'dx_links': []}
+        subdir_recs[subdir] = s_rec
+    return subdir_recs
+
+
+def compare_to_output_spec_and_annotate(subdir_recs, output_spec):
+    '''
+    Compare the subdirectories found in the output directory to the
+    output specification, and adds annotations to the directory
+    descriptions.
+
+    An output spec is a list of entries with {class, name} attributes.
+    '''
+    def sanity_check_field(key):
+        '''Annotate with a class, and sanity check'''
+        class_ = output_spec[key]['class']
+        s_rec = subdir_recs[key]
+        s_rec['class'] = class_
+        num_files = len(s_rec['files'])
+        if class_ == 'file':
+            if num_files != 1:
+                report_error_and_exit("key {} is of class {} but there are {} files".format(key, class_, num_files))
+        else:
+            # array of files, there could be any number of files in the subdirectory (including zero)
+            pass
+
+
+    for key in output_spec:
+        '''Check that all the relevant output fields have been generated'''
+        class_ = output_spec[key]['class']
+        if (class_ == 'file' or class_ == 'array:file'):
+            # file field, with a directory
+            if key not in subdir_recs:
+                sys.stderr.write("Warning: output key {} not generated\n".format(key))
+            else:
+                sanity_check_field(key)
+        elif output_spec[key]['optional']:
+            # optional output field
+            if key in subdir_recs:
+                sanity_check_field(key)
+        else:
+            # detects when a subdirectory appears for an output that is not "file" nor "array:file".
+            if key in subdir_recs:
+                report_error_and_exit(
+                    "key {} is of class {} but it appears in the output directory".format(key, class_))
+
+
+def upload_all(subdirs):
+    '''
+     Upload everything that is in the output directory
+    Add references to the uploaded objects into the entries.
+
+    note: currently, files are uploaded sequentially, not in
+    parallel. This could be improved in the future.
+    '''
+    for key in subdirs:
+        s_rec = subdirs[key]
+        for fname in s_rec['files']:
+            ## Upload the file
+            path = os.path.join(s_rec['path'], fname)
+            f_obj = dxpy.upload_local_file(path)
+            s_rec['dx_links'].append(dxpy.dxlink(f_obj))
+
+
+def update_output_json(subdir_recs):
+    ''' update the output json file.'''
+
+    # Load existing file, if it exists
+    output_json = {}
+    output_file = file_load_utils.get_output_json_file()
+    if os.path.exists(output_file):
+        with open(output_file, 'r') as fh:
+            output_json = json.load(fh)
+
+    # Add one entry to the json output file
+    def add_rec_to_json(key, class_, dxlinks):
+        if not key in output_json:
+            if class_ == 'array:file':
+                ## array type
+                output_json[key] = dxlinks
+            elif not len(dxlinks) == 1:
+                output_json[key] = dxlinks
+            else:
+                ## singleton
+                output_json[key] = dxlinks[0]
+        else:
+            if isinstance(output_json[key], list):
+                output_json[key].extend(dxlinks)
+            else:
+                report_error_and_exit("Key {} was found in output but is not an array".format(key))
+
+    # Add all the entries
+    for key in subdir_recs:
+        s_rec = subdir_recs[key]
+        dxlinks = s_rec['dx_links']
+        if len(dxlinks) == 0:
+            continue
+        class_ = None
+        if 'class' in s_rec:
+            class_ = s_rec['class']
+        add_rec_to_json(key, class_, dxlinks)
+
+    # write it back out
+
+    with open(output_file, 'w') as fh:
+        json.dump(output_json, fh, indent=4)
+
+
+## entry point
+output_spec = get_output_spec()
+subdir_recs = analyze_output_dir()
+
+# Compare against the output spec
+compare_to_output_spec_and_annotate(subdir_recs, output_spec)
+
+upload_all(subdir_recs)
+update_output_json(subdir_recs)

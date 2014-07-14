@@ -1,0 +1,75 @@
+#!/usr/bin/env python
+#
+# Copyright (C) 2014 DNAnexus, Inc.
+#
+# This file is part of dx-toolkit (DNAnexus platform client libraries).
+#
+#   Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#   use this file except in compliance with the License. You may obtain a copy
+#   of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#   License for the specific language governing permissions and limitations
+#   under the License.
+
+import os, sys, json, argparse
+import dxpy
+from dxpy.utils import file_load_utils
+
+# Parse the command line
+#
+# exclude -- a list of arguments to skip over
+parser = argparse.ArgumentParser(
+    description='Download all the files as described in the input JSON file.' +
+                ' Note that an exception is raised if files with the same name are given in the same array input.')
+parser.add_argument('--except',
+                    help='Do not download the input with this name',
+                    action="append",
+                    dest="exclude",
+                    default=[])
+args = parser.parse_args()
+
+def create_dirs(idir, dirs):
+    '''
+    Create a set of directories, so we could store the input files.
+    For example, seq1 could be stored under:
+        /in/seq1/NC_001122.fasta
+
+    TODO: this call could fail, we need to report a reasonable error code
+
+    Note that we create a directory for every file array, even if
+    it has zero inputs.
+    '''
+    # create the <idir> itself
+    file_load_utils.ensure_dir(idir)
+    # create each subdir
+    for d in dirs:
+        file_load_utils.ensure_dir(os.path.join(idir, d))
+
+
+# Input directory, where all inputs are downloaded
+idir = file_load_utils.get_input_dir()
+dirs, inputs = file_load_utils.get_job_input_filenames(idir)
+
+# Create the directory structure, in preparation for download.
+# Allows performing the download in parallel.
+create_dirs(idir, dirs)
+
+# Remove excluded inputs
+to_download = []
+for file_rec in inputs:
+    iname = file_rec['iname']
+    if iname in args.exclude:
+        # ignore excluded arguments
+        continue
+    to_download.append(file_rec)
+
+# Download the files. Currently, this is done sequentially (one file at
+# a time). We are all set up to do this in parallel.
+for file_rec in to_download:
+    print("downloading file: " + file_rec['src_file_id'] + " to filesystem: " + file_rec['trg_fname'])
+    dxpy.download_dxfile(file_rec['src_file_id'], file_rec['trg_fname'])
