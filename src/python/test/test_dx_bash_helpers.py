@@ -129,6 +129,7 @@ class TestDXBashHelpers(DXTestCase):
             cmd_args.extend(applet_args)
             run(cmd_args, env=env)
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping tests that would run jobs')
     def test_sub_jobs(self):
         '''  Tests a bash script that generates sub-jobs '''
         with temporary_project('TestDXBashHelpers.test_app1 temporary project') as p:
