@@ -1,3 +1,9 @@
+dx-toolkit (0.106.1) precise; urgency=low
+
+  * Build fixes for systems where the default Python is 2.6.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 15 Jul 2014 21:58:02 +0000
+
 dx-toolkit (0.106.0) precise; urgency=low
 
   * Improvements to clang/OSX builds and documentation.
