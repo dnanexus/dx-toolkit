@@ -17,7 +17,7 @@
 #   under the License.
 
 import os, unittest, subprocess
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, mkdtemp
 
 import dxpy
 import dxpy_testutil as testutil
@@ -203,6 +203,16 @@ class TestDXTabCompletion(unittest.TestCase):
     def test_local_file_completion(self):
         with NamedTemporaryFile(dir=os.getcwd()) as local_file:
             self.assert_completion("dx upload ", os.path.basename(local_file.name))
+
+    def test_local_dir_completion(self):
+        old_cwd = os.getcwd()
+        tempdir = mkdtemp()
+        os.chdir(tempdir)
+        try:
+            os.makedirs("subdir/subsubdir")
+            self.assert_completion("dx upload ", "subdir/")
+        finally:
+            os.chdir(old_cwd)
 
     def test_noninterference_of_local_files(self):
         self.assert_no_completions("dx ls ")
