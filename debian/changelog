@@ -1,3 +1,13 @@
+dx-toolkit (0.107.0) precise; urgency=low
+
+  * New experimental tools added: dx-download-all-inputs, dx-upload-all-outputs for bash apps.
+
+  * Adjustment to Retry-After logic in dxpy.
+
+  * Build and test fixes and improvements.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 15 Jul 2014 21:53:56 +0000
+
 dx-toolkit (0.106.0) precise; urgency=low
 
   * Improvements to clang/OSX builds and documentation.
