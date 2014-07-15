@@ -211,6 +211,7 @@ class TestDXTabCompletion(unittest.TestCase):
         try:
             os.makedirs("subdir/subsubdir")
             self.assert_completion("dx upload ", "subdir/")
+            self.assert_completion("dx build ", "subdir/")
         finally:
             os.chdir(old_cwd)
 
