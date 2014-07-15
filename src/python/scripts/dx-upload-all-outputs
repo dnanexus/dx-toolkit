@@ -33,9 +33,32 @@ Overview
    (d) Generate a $HOME/job_output.json file that describes it.
 '''
 
-import os, sys, json
+import os, sys, json, argparse
 import dxpy
 from dxpy.utils import file_load_utils
+from dxpy.utils.printing import fill
+
+parser = argparse.ArgumentParser(
+    description=fill('''This is a utility for bash apps written for
+the DNAnexus platform.  It uploads all files that are in the directory
+$HOME/out, and adds relevant entries into the job_output.json file.  By
+convention, only directories with names equal to output parameter
+names are expected to be found in the output directory, and any
+file(s) found in those subdirectories will be uploaded as those
+outputs.  For example, a file found in the path''') + '''
+
+    $HOME/out/foo/output.txt
+
+''' + fill('''will be uploaded, and the key "foo" will be added to the
+job_output.json file with value''') + '''
+
+    {"$dnanexus_link": "file-xxxx"}
+
+''' + fill('''where "file-xxxx" is the file ID obtained after having
+uploaded the file.  If multiple files are found, they will be added as
+an array output.'''),
+    formatter_class=argparse.RawTextHelpFormatter)
+parser.parse_args()
 
 def report_error_and_exit(message):
     ''' Report an error, since this is called from a bash script, we

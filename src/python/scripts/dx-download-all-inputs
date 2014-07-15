@@ -19,13 +19,28 @@
 import os, sys, json, argparse
 import dxpy
 from dxpy.utils import file_load_utils
+from dxpy.utils.printing import fill
 
 # Parse the command line
 #
 # exclude -- a list of arguments to skip over
 parser = argparse.ArgumentParser(
-    description='Download all the files as described in the input JSON file.' +
-                ' Note that an exception is raised if files with the same name are given in the same array input.')
+    description=fill('''This is a utility for bash apps written for
+the DNAnexus platform.  It downloads all the files as described in the
+input JSON file.  By convention, if an input parameter "foo" has
+value''') + '''
+
+    {"$dnanexus_link": "file-xxxx"}
+
+''' + fill('''then the linked file will be downloaded into the path''') + '''
+
+    $HOME/in/foo/<filename>
+
+''' + fill('''where the filename used is the name of the file on the
+platform.  If the value is an array of files, then all files will be
+placed into the same directory.  Note that an exception is raised if
+files with the same name are given in the same array input.'''),
+    formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument('--except',
                     help='Do not download the input with this name',
                     action="append",
