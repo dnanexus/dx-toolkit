@@ -145,3 +145,14 @@ def pager(content, pager=None, file=None):
             pager_process.terminate()
         except:
             pass
+
+def refill_paragraphs(string, ignored_prefix='    '):
+    """Refills the given text, where the text is composed of paragraphs
+    separated by blank lines (i.e. '\n\n'). Lines that begin with
+    ignored_prefix are not touched; this can be used to keep indented
+    code snippets from being incorrectly reformatted.
+
+    """
+    paragraphs = string.split('\n\n')
+    refilled_paragraphs = [fill(paragraph) if not paragraph.startswith(ignored_prefix) else paragraph for paragraph in paragraphs]
+    return '\n\n'.join(refilled_paragraphs).strip('\n')
