@@ -36,28 +36,36 @@ Overview
 import os, sys, json, argparse
 import dxpy
 from dxpy.utils import file_load_utils
-from dxpy.utils.printing import fill
+from dxpy.utils.printing import refill_paragraphs, BOLD, RED
 
-parser = argparse.ArgumentParser(
-    description=fill('''This is a utility for bash apps written for
-the DNAnexus platform.  It uploads all files that are in the directory
-$HOME/out, and adds relevant entries into the job_output.json file.  By
-convention, only directories with names equal to output parameter
-names are expected to be found in the output directory, and any
-file(s) found in those subdirectories will be uploaded as those
-outputs.  For example, a file found in the path''') + '''
+description = BOLD('Note') + ''': this is a utility for use by bash apps
+running in the DNAnexus Platform.
 
-    $HOME/out/foo/output.txt
+This utility is ''' + RED(BOLD('EXPERIMENTAL')) + ''' and its
+functionality is subject to change at any time without notice.
 
-''' + fill('''will be uploaded, and the key "foo" will be added to the
-job_output.json file with value''') + '''
+Uploads all files in the directory $HOME/out, as described below, and
+adds relevant entries into the job_output.json file.
+
+By convention, only directories with names equal to output parameter
+names are expected to be found in the output directory, and any file(s)
+found in those subdirectories will be uploaded as the corresponding
+outputs.  For example, a file with the path
+
+    $HOME/out/FOO/OUTPUT.TXT
+
+will be uploaded, and the key "FOO" will be added to the job_output.json
+file with value
 
     {"$dnanexus_link": "file-xxxx"}
 
-''' + fill('''where "file-xxxx" is the file ID obtained after having
-uploaded the file.  If multiple files are found, they will be added as
-an array output.'''),
-    formatter_class=argparse.RawTextHelpFormatter)
+where "file-xxxx" is the ID of the newly uploaded file.  If multiple
+files are found, they will be added as an array output (in unspecified
+order).
+'''
+
+parser = argparse.ArgumentParser(description=refill_paragraphs(description),
+                                 formatter_class=argparse.RawTextHelpFormatter)
 parser.parse_args()
 
 def report_error_and_exit(message):
