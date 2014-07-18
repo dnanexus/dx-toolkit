@@ -2284,6 +2284,22 @@ def system_shorten_url(input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/system/shortenURL', input_params, always_retry=always_retry, **kwargs)
 
+def systemWhoami(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`system_whoami()` instead.
+
+    """
+    print("dxpy.systemWhoami is deprecated; please use system_whoami instead.", file=sys.stderr)
+    return system_whoami(*args, **kwargs)
+
+def system_whoami(input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /system/whoami API method.
+    """
+    return DXHTTPRequest('/system/whoami', input_params, always_retry=always_retry, **kwargs)
+
 def userDescribe(*args, **kwargs):
     """
 

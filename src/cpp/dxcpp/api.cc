@@ -1166,6 +1166,14 @@ namespace dx {
     return systemShortenURL(input_params.toString(), safe_to_retry);
   }
 
+  JSON systemWhoami(const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest("/system/whoami", input_params, safe_to_retry);
+  }
+
+  JSON systemWhoami(const JSON &input_params, const bool safe_to_retry) {
+    return systemWhoami(input_params.toString(), safe_to_retry);
+  }
+
   JSON userDescribe(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params, safe_to_retry);
   }

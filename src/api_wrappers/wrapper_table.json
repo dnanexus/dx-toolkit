@@ -1134,6 +1134,15 @@
         }
     ],
     [
+        "/system/whoami",
+        "systemWhoami(req)",
+        {
+            "objectMethod": false,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
         "/user-xxxx/describe",
         "userDescribe(req, objectId)",
         {

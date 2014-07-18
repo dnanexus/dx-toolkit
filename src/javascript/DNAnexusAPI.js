@@ -712,6 +712,11 @@ exports.systemShortenURL = function(input_params) {
 };
 
 
+exports.systemWhoami = function(input_params) {
+  return dx.DXHTTPRequest('/system/whoami', input_params);
+};
+
+
 exports.userDescribe = function(object_id, input_params) {
   return dx.DXHTTPRequest('/' + object_id + '/describe', input_params);
 };
