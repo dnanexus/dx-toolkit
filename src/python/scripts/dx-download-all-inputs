@@ -19,7 +19,7 @@
 import os, sys, json, argparse
 import dxpy
 from dxpy.utils import file_load_utils
-from dxpy.utils.printing import refill_paragraphs, BOLD, RED
+from dxpy.utils.printing import fill, refill_paragraphs, BOLD, RED
 
 description = BOLD('Note') + ''': this is a utility for use by bash apps
 running in the DNAnexus Platform.
@@ -49,7 +49,8 @@ parser = argparse.ArgumentParser(
     description=refill_paragraphs(description),
     formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument('--except',
-                    help='Do not download the input with this name. (May be used multiple times.)',
+                    help=fill('Do not download the input with this name. (May be used multiple times.)',
+                              width_adjustment=-20),
                     action="append",
                     dest="exclude",
                     default=[])
