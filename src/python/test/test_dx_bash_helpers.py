@@ -78,7 +78,7 @@ def build_app_with_bash_helpers(app_dir, project_id):
         utils_staging_area = os.path.join(updated_app_dir, 'resources', 'opt', 'utils_staging_area')
         os.makedirs(utils_staging_area)
         preamble = []
-        for filename in ('file_load_utils.py',):
+        for filename in ('file_load_utils.py', 'printing.py'):
             shutil.copy(os.path.join(LOCAL_UTILS, filename), utils_staging_area)
             preamble.append('cp /opt/utils_staging_area/%s /usr/share/dnanexus/lib/python2.7/site-packages/*/dxpy/utils;\n' % (filename,))
         # Now find the applet entry point file and prepend the copy
