@@ -48,7 +48,7 @@ while True:
     line = sys.stdin.readline()
     if line == '':
         break
-    if len(line) > 8192:
-        line = line[:8192] + '... [truncated]'
+    if len(line) > 8100:
+        line = line[:8100] + '... [truncated]'
     # print "Logging line:", line.rstrip("\n"), "to log handler w/level", args.level
     log_function(line.rstrip("\n"))
