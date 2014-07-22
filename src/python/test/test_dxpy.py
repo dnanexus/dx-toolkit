@@ -1566,8 +1566,8 @@ class TestDXApp(unittest.TestCase):
                               "interpreter": "python2.7",
                               "execDepends": [{"name": "python-numpy"}]})
         dxapp = dxpy.DXApp()
-        dxapp.new(applet=dxapplet.get_id(), version="0.0.1",
-                  bill_to="user-000000000000000000000000", name="app_name")
+        my_userid = dxpy.whoami()
+        dxapp.new(applet=dxapplet.get_id(), version="0.0.1", bill_to=my_userid, name="app_name")
         appdesc = dxapp.describe()
         self.assertEqual(appdesc["name"], "app_name")
         self.assertEqual(appdesc["version"], "0.0.1")
@@ -1611,8 +1611,8 @@ class TestDXApp(unittest.TestCase):
                               "interpreter": "python2.7",
                               "execDepends": [{"name": "python-numpy"}]})
         dxapp = dxpy.DXApp()
-        dxapp.new(applet=dxapplet.get_id(), version="0.0.1",
-                  bill_to="user-000000000000000000000000", name="test_add_and_remove_tags_app")
+        my_userid = dxpy.whoami()
+        dxapp.new(applet=dxapplet.get_id(), version="0.0.1", bill_to=my_userid, name="test_add_and_remove_tags_app")
         appdesc = dxapp.describe()
 
         self.assertEqual(appdesc.get("tags", []), [])

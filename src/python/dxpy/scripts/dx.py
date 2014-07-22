@@ -513,15 +513,11 @@ def pick_and_set_project(args):
 def whoami(args):
     if dxpy.AUTH_HELPER is None:
         parser.exit(3, 'You are not logged in; run "dx login" to obtain a token.\n')
-    try:
-        user_info = dxpy.user_info(args.host, args.port)
-    except DXError as details:
-        print("Error obtaining user info; consider setting --host and --port.", file=sys.stderr)
-        parser.exit(3, fill(str(details)))
+    user_id = dxpy.whoami()
     if args.user_id:
-        print(user_info['userId'])
+        print(user_id)
     else:
-        print(user_info['username'])
+        print(dxpy.api.user_describe(user_id)['handle'])
 
 def setenv(args):
     if not state['interactive']:
@@ -3083,7 +3079,7 @@ def watch(args):
         parser.exit(3, fill(str(details)) + '\n')
 
 def ssh_config(args):
-    user_id = try_call(dxpy.user_info)['userId']
+    user_id = try_call(dxpy.whoami)
 
     dnanexus_conf_dir = os.path.expanduser('~/.dnanexus_config')
     if not os.path.exists(dnanexus_conf_dir):
@@ -3150,7 +3146,7 @@ def update_pub_key(user_id, pub_key_file):
 def verify_ssh_config():
     try:
         with open(os.path.expanduser('~/.dnanexus_config/ssh_id.pub')) as fh:
-            user_desc = try_call(dxpy.api.user_describe, try_call(dxpy.user_info)['userId'])
+            user_desc = try_call(dxpy.api.user_describe, try_call(dxpy.whoami))
             if 'sshPublicKey' not in user_desc:
                 raise DXError("User's SSH public key is not set")
             if fh.read() != user_desc['sshPublicKey']:

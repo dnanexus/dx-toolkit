@@ -16,9 +16,21 @@
 
 from dxpy import get_auth_server_name, DXHTTPRequest
 
+from dxpy.api import system_whoami
+
 def user_info(authserver_host=None, authserver_port=None):
-    """
-    Returns the result of the user_info call against the specified auth server.
+    """Returns the result of the user_info call against the specified auth
+    server.
+
+    .. deprecated:: 0.108.0
+       Use :func:`whoami` instead where possible.
+
     """
     authserver = get_auth_server_name(authserver_host, authserver_port)
     return DXHTTPRequest(authserver + "/user_info", {}, prepend_srv=False)
+
+def whoami():
+    """
+    Returns the user ID of the currently requesting user.
+    """
+    return system_whoami()['id']

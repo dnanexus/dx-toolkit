@@ -25,7 +25,7 @@ import pexpect
 
 import dxpy
 from dxpy.scripts import dx_build_app
-from dxpy_testutil import DXTestCase, check_output
+from dxpy_testutil import DXTestCase, check_output, temporary_project
 import dxpy_testutil as testutil
 from dxpy.packages import requests
 from dxpy.exceptions import DXAPIError
@@ -515,12 +515,10 @@ class TestDXClient(DXTestCase):
         except:
             print("*** TODO: FIXME: Unable to verify that grandchild subprocess inherited session")
 
-    @unittest.skipUnless(dxpy.APISERVER_HOST.endswith('api.dnanexus.com'),
-                         'Skipping test that requires production authserver configuration')
     def test_dx_ssh_config(self):
         original_ssh_public_key = None
         try:
-            user_id = dxpy.user_info()['userId']
+            user_id = dxpy.whoami()
             original_ssh_public_key = dxpy.api.user_describe(user_id).get('sshPublicKey')
             wd = tempfile.mkdtemp()
 
@@ -588,12 +586,11 @@ class TestDXClient(DXTestCase):
             if original_ssh_public_key:
                 dxpy.api.user_update(user_id, {"sshPublicKey": original_ssh_public_key})
 
-    @unittest.skipUnless(dxpy.APISERVER_HOST.endswith('api.dnanexus.com') and testutil.TEST_RUN_JOBS,
-                         'Skipping test that would run jobs and requires production authserver configuration')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'Skipping test that would run jobs')
     def test_dx_ssh(self):
         original_ssh_public_key = None
         try:
-            user_id = dxpy.user_info()['userId']
+            user_id = dxpy.whoami()
             original_ssh_public_key = dxpy.api.user_describe(user_id).get('sshPublicKey')
             wd = tempfile.mkdtemp()
             os.mkdir(os.path.join(wd, ".dnanexus_config"))
@@ -639,6 +636,15 @@ class TestDXClient(DXTestCase):
                 dxpy.api.user_update(user_id, {"sshPublicKey": original_ssh_public_key})
 
 
+class TestDXWhoami(DXTestCase):
+    def test_dx_whoami_name(self):
+        whoami_output = run("dx whoami").strip()
+        self.assertEqual(whoami_output, dxpy.api.user_describe(dxpy.whoami())['handle'])
+    def test_dx_whoami_id(self):
+        whoami_output = run("dx whoami --id").strip()
+        self.assertEqual(whoami_output, dxpy.whoami())
+
+
 class TestDXClientUploadDownload(DXTestCase):
     def test_dx_upload_download(self):
         with self.assertSubprocessFailure(stderr_regexp='expected the path to be a non-empty string', exit_code=3):
@@ -676,18 +682,9 @@ class TestDXClientUploadDownload(DXTestCase):
                 self.assertEqual(os.stat(os.path.join("t2", os.path.basename(fd.name))).st_size,
                                  len("0123456789ABCDEF"*64))
 
-    # TODO: the use of this test config variable isn't quite right here,
-    # but we'll at least be consistent with all other tests that make
-    # reference to user-0-- they all are conditional on TEST_CREATE_APPS
-    # as well. This test doesn't actually need to irreversibly pollute
-    # the environment-- a whoami API call would also solve the problem
-    # we have here.
-    @unittest.skipUnless(testutil.TEST_CREATE_APPS,
-                         'skipping test that needs to run as user-0')
     def test_dx_upload_with_upload_perm(self):
-        temp_project = dxpy.DXProject(dxpy.api.project_new({'name': 'test proj with UPLOAD perms'})['id'])
-        try:
-            temp_project.decrease_perms('user-000000000000000000000000', 'UPLOAD')
+        with temporary_project('test proj with UPLOAD perms', reclaim_permissions=True) as temp_project:
+            temp_project.decrease_perms(dxpy.whoami(), 'UPLOAD')
             testdir = tempfile.mkdtemp()
             try:
                 # Filename provided with path
@@ -700,9 +697,6 @@ class TestDXClientUploadDownload(DXTestCase):
                 self.assertEqual(remote_file2.name, 'myfilename')
             finally:
                 shutil.rmtree(testdir)
-        finally:
-            dxpy.DXHTTPRequest('/' + temp_project.get_id() + '/join', {'level': 'ADMINISTER'})
-            temp_project.destroy()
 
     @unittest.skipUnless(testutil.TEST_ENV,
                          'skipping test that would clobber your local environment')
@@ -2590,20 +2584,22 @@ class TestDXBuildApp(DXTestCase):
             }
         app_dir = self.write_app_directory("test_build_app_and_update_devs", json.dumps(app_spec), "code.py")
 
+        my_userid = dxpy.whoami()
+
         run('dx build --create-app --json ' + app_dir)
         app_developers = dxpy.api.app_list_developers('app-test_build_app_and_update_devs')['developers']
-        self.assertEqual(app_developers, ['user-000000000000000000000000'])
+        self.assertEqual(app_developers, [my_userid])
 
         # Add a developer
-        app_spec['developers'] = ['user-000000000000000000000000', 'user-eve']
+        app_spec['developers'] = [my_userid, 'user-eve']
         self.write_app_directory("test_build_app_and_update_devs", json.dumps(app_spec), "code.py")
         self.run_and_assert_stderr_matches('dx build --create-app --yes --json ' + app_dir,
                                            'the following developers will be added: user-eve')
         app_developers = dxpy.api.app_list_developers('app-test_build_app_and_update_devs')['developers']
-        self.assertEqual(sorted(app_developers), ['user-000000000000000000000000', 'user-eve'])
+        self.assertEqual(sorted(app_developers), sorted([my_userid, 'user-eve']))
 
         # Add and remove a developer
-        app_spec['developers'] = ['user-000000000000000000000000', 'user-000000000000000000000001']
+        app_spec['developers'] = [my_userid, 'user-000000000000000000000001']
         self.write_app_directory("test_build_app_and_update_devs", json.dumps(app_spec), "code.py")
         self.run_and_assert_stderr_matches(
             'dx build --create-app --yes --json ' + app_dir,
@@ -2611,15 +2607,15 @@ class TestDXBuildApp(DXTestCase):
             + 'the following developers will be removed: user-eve'
         )
         app_developers = dxpy.api.app_list_developers('app-test_build_app_and_update_devs')['developers']
-        self.assertEqual(sorted(app_developers), ['user-000000000000000000000000', 'user-000000000000000000000001'])
+        self.assertEqual(sorted(app_developers), sorted([my_userid, 'user-000000000000000000000001']))
 
         # Remove a developer
-        app_spec['developers'] = ['user-000000000000000000000000']
+        app_spec['developers'] = [my_userid]
         self.write_app_directory("test_build_app_and_update_devs", json.dumps(app_spec), "code.py")
         self.run_and_assert_stderr_matches('dx build --create-app --yes --json ' + app_dir,
                                            'the following developers will be removed: user-000000000000000000000001')
         app_developers = dxpy.api.app_list_developers('app-test_build_app_and_update_devs')['developers']
-        self.assertEqual(app_developers, ['user-000000000000000000000000'])
+        self.assertEqual(app_developers, [my_userid])
 
     @unittest.skipUnless(testutil.TEST_CREATE_APPS,
                          'skipping test that would create apps')
