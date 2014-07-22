@@ -1,3 +1,9 @@
+dx-toolkit (0.108.0) precise; urgency=low
+
+  * Minor improvements and bug fixes.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 22 Jul 2014 19:58:55 +0000
+
 dx-toolkit (0.107.0) precise; urgency=low
 
   * New experimental tools added: dx-download-all-inputs, dx-upload-all-outputs for bash apps.
