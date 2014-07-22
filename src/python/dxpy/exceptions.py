@@ -23,6 +23,8 @@ from __future__ import (print_function, unicode_literals)
 import os, sys, json, traceback, errno
 from .packages import requests
 
+EXPECTED_ERR_EXIT_STATUS = 3
+
 class DXError(Exception):
     '''Base class for exceptions in this package.'''
     pass
@@ -214,7 +216,8 @@ def err_exit(message='', code=None, expected_exceptions=default_expected_excepti
 
     exc = exception if exception is not None else sys.exc_info()[1]
     if isinstance(exc, expected_exceptions):
-        exit_with_exc_info(3, message, print_tb=True if '_DX_DEBUG' in os.environ else False,
+        exit_with_exc_info(EXPECTED_ERR_EXIT_STATUS, message,
+                           print_tb=True if '_DX_DEBUG' in os.environ else False,
                            exception=exception)
     elif ignore_sigpipe and isinstance(exc, IOError) and getattr(exc, 'errno', None) == errno.EPIPE:
         sys.exit(3)

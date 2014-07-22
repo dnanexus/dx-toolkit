@@ -28,7 +28,7 @@ from dxpy.scripts import dx_build_app
 from dxpy_testutil import DXTestCase, check_output, temporary_project
 import dxpy_testutil as testutil
 from dxpy.packages import requests
-from dxpy.exceptions import DXAPIError
+from dxpy.exceptions import DXAPIError, EXPECTED_ERR_EXIT_STATUS
 from dxpy.compat import str
 
 @contextmanager
@@ -634,6 +634,40 @@ class TestDXClient(DXTestCase):
         finally:
             if original_ssh_public_key:
                 dxpy.api.user_update(user_id, {"sshPublicKey": original_ssh_public_key})
+
+    @unittest.skipUnless(testutil.TEST_DX_LOGIN,
+                         'This test requires authserver to run, requires dx login to select the right authserver, ' +
+                         'and may result in temporary account lockout. TODO: update test instrumentation to allow ' +
+                         'it to run')
+    def test_dx_login(self):
+        wd = tempfile.mkdtemp()
+        username = dxpy.user_info()['username']
+
+        def get_dx_login(opts=""):
+            dx_login = pexpect.spawn("dx login" + opts, env=overrideEnvironment(HOME=wd))
+            dx_login.logfile = sys.stdout
+            dx_login.setwinsize(20, 90)
+            return dx_login
+
+        dx_login = get_dx_login()
+        dx_login.expect("Acquiring credentials")
+        dx_login.expect("Username")
+        dx_login.sendline(username)
+        dx_login.expect("Password: ")
+        dx_login.sendline("wrong passwörd")
+        dx_login.expect("Incorrect username and/or password")
+        dx_login.expect("Username")
+        dx_login.sendline()
+        dx_login.expect("Password: ")
+        dx_login.sendline("wrong passwörd")
+        dx_login.expect("Incorrect username and/or password")
+        dx_login.expect("Username")
+        dx_login.sendline()
+        dx_login.expect("Password: ")
+        dx_login.sendline("wrong passwörd")
+        dx_login.expect("dx: Incorrect username and/or password")
+        dx_login.close()
+        self.assertEqual(dx_login.exitstatus, EXPECTED_ERR_EXIT_STATUS)
 
 
 class TestDXWhoami(DXTestCase):
