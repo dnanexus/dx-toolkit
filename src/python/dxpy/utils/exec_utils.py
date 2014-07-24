@@ -147,13 +147,12 @@ def run(function_name=None, function_input=None):
                 fh.write(json.dumps({"error": {"type": "AppInternalError", "message": _format_exception_message(e)}}) + "\n")
         raise
 
-    result = convert_handlers_to_dxlinks(result)
-
     if result is not None:
         # TODO: protect against client removing its original working directory
         os.chdir(dx_working_dir)
         with open("job_output.json", "w") as fh:
-            fh.write(json.dumps(result) + "\n")
+            fh.write(json.dumps(result, indent=2, cls=DXJSONEncoder))
+            fh.write("\n")
 
     return result
 
@@ -223,3 +222,12 @@ def entry_point(entry_point_name):
             f(*args, **kwargs)
         return wrapped_f
     return wrap
+
+class DXJSONEncoder(json.JSONEncoder):
+    ''' Like json.JSONEncoder, but converts DXObject objects into dxlinks.
+    '''
+    def default(self, obj):
+        if isinstance(obj, dxpy.DXObject):
+            return dxpy.dxlink(obj)
+        # Let the base class default method raise the TypeError
+        return json.JSONEncoder.default(self, obj)

@@ -19,9 +19,9 @@
 
 from __future__ import print_function
 
-import unittest, time
-from dxpy import AppError
-from dxpy.utils import (describe, exec_utils, genomic_utils, response_iterator, get_futures_threadpool)
+import unittest, time, json
+from dxpy import AppError, DXFile, DXRecord
+from dxpy.utils import (describe, exec_utils, genomic_utils, response_iterator, get_futures_threadpool, DXJSONEncoder)
 from dxpy.compat import USING_PYTHON2
 
 # TODO: unit tests for dxpy.utils.get_field_from_jbor, get_job_from_jbor, is_job_ref
@@ -115,6 +115,14 @@ class TestResponseIterator(unittest.TestCase):
         for i, res in enumerate(response_iterator(tasks2(), get_futures_threadpool(5), num_retries=2, retry_after=0.1)):
             self.assertEqual(i, res)
 
+class TestDXUtils(unittest.TestCase):
+    def test_dxjsonencoder(self):
+        f = DXFile("file-" + "x"*24, project="project-" + "y"*24)
+        r = DXRecord("record-" + "r"*24, project="project-" + "y"*24)
+        data = {"a": [{"b": f}, r]}
+        serialized = json.dumps(data, cls=DXJSONEncoder)
+        self.assertEqual(serialized,
+                         '{"a": [{"b": {"$dnanexus_link": "file-xxxxxxxxxxxxxxxxxxxxxxxx"}}, {"$dnanexus_link": "record-rrrrrrrrrrrrrrrrrrrrrrrr"}]}')
 
 if __name__ == '__main__':
     unittest.main()
