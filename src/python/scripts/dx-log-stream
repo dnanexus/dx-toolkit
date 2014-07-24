@@ -20,8 +20,12 @@
 Redirects stdin to a DNAnexus log socket in the execution environment.
 '''
 
+from __future__ import print_function
+
 import sys, logging, argparse
 import dxpy
+
+USING_PYTHON2 = True if sys.version_info < (3, 0) else False
 
 logging.basicConfig(level=logging.DEBUG, format="%(message)s")
 
@@ -30,6 +34,10 @@ parser.add_argument("-l", "--level", help="Logging level to use", default='info'
 parser.add_argument("-s", "--source", help="Source ID to use", default='DX_APP_STREAM',
                     choices=['DX_APP', 'DX_APP_STREAM'])
 args = parser.parse_args()
+
+if not USING_PYTHON2:
+    print("dx-log-stream: This script is not compatible with Python 3", file=sys.stderr)
+    sys.exit(1)
 
 try:
     log_function = logging.__dict__[args.level]
@@ -41,13 +49,17 @@ try:
     logger.handlers = []
     logger.addHandler(dxpy.DXLogHandler(source=args.source))
 except Exception as e:
-    print >> sys.stderr, "dx_log_stream: Error while initializing logging:", str(e)
+    print("dx-log-stream: Error while initializing logging:", str(e), file=sys.stderr)
     sys.exit(1)
 
 while True:
     line = sys.stdin.readline()
     if line == '':
         break
+    # The Linux domain socket datagram size limit is 8 KB, but with the extra padding introduced by the log function,
+    # the incoming message needs to be smaller - we truncate it to 8100 bytes here.
+    # Note: we use Python 2 semantics here (byte strings). This script is not Python 3 ready. If *line* was a unicode
+    # string with wide chars, its byte length would exceed the limit.
     if len(line) > 8100:
         line = line[:8100] + '... [truncated]'
     # print "Logging line:", line.rstrip("\n"), "to log handler w/level", args.level
