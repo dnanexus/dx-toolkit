@@ -125,7 +125,7 @@ environment variables:
 
 from __future__ import (print_function, unicode_literals)
 
-import os, sys, json, time, logging, platform, collections
+import os, sys, json, time, logging, platform, collections, ssl
 from .packages import requests
 from .packages.requests.exceptions import ConnectionError, HTTPError, Timeout
 from .packages.requests.auth import AuthBase
@@ -168,7 +168,7 @@ USER_AGENT = "{name}/{version} ({platform})".format(name=__name__,
                                                     version=TOOLKIT_VERSION,
                                                     platform=platform.platform())
 
-_expected_exceptions = exceptions.network_exceptions + (exceptions.DXAPIError, )
+_expected_exceptions = exceptions.network_exceptions + (exceptions.DXAPIError, ssl.SSLError)
 
 def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeout=600,
                   use_compression=None, jsonify_data=True, want_full_response=False,
@@ -347,6 +347,13 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                 return content
             raise AssertionError('Should never reach this line: expected a result to have been returned by now')
         except _expected_exceptions as e:
+            # SSL protocol errors are not differentiated by type from transport/socket errors. Here, we use a heuristic
+            # to catch only those SSL errors which are probably caused by a transport failure. See also
+            # https://github.com/python-git/python/blob/master/Lib/ssl.py,
+            # https://github.com/python-git/python/blob/master/Modules/_ssl.c
+            if isinstance(e, ssl.SSLError) and not str(e).endswith("operation timed out"):
+                raise
+
             last_error = e
 
             if response is not None and response.status_code == 503 and 'retry-after' in response.headers:
