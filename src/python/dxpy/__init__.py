@@ -125,7 +125,7 @@ environment variables:
 
 from __future__ import (print_function, unicode_literals)
 
-import os, sys, json, time, logging, platform, collections
+import os, sys, json, time, logging, platform, collections, traceback
 from .packages import requests
 from .packages.requests.exceptions import ConnectionError, HTTPError, Timeout
 from .packages.requests.auth import AuthBase
@@ -277,7 +277,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
     if hasattr(data, 'seek') and hasattr(data, 'tell'):
         rewind_input_buffer_offset = data.tell()
 
-    last_error = None
+    last_exc_type, last_error, last_traceback = None, None, None
     try_index = 0
     while True:
         streaming_response_truncated = False
@@ -347,7 +347,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                 return content
             raise AssertionError('Should never reach this line: expected a result to have been returned by now')
         except _expected_exceptions as e:
-            last_error = e
+            last_exc_type, last_error, last_traceback = sys.exc_info()
+            exception_msg = traceback.format_exc().splitlines()[-1].strip()
 
             if response is not None and response.status_code == 503:
                 DEFAULT_RETRY_AFTER_INTERVAL = 60
@@ -360,7 +361,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                     # such responses anyway.
                     seconds_to_wait = DEFAULT_RETRY_AFTER_INTERVAL
                 logger.warn("%s %s: %s. Waiting %d seconds due to server unavailability..."
-                            % (method, url, str(e), seconds_to_wait))
+                            % (method, url, exception_msg, seconds_to_wait))
                 time.sleep(seconds_to_wait)
                 # Note, we escape the "except" block here without
                 # incrementing try_index because 503 responses with
@@ -393,7 +394,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                         data.seek(rewind_input_buffer_offset)
                     delay = 2 ** try_index
                     logger.warn("%s %s: %s. Waiting %d seconds before retry %d of %d..."
-                                % (method, url, str(e), delay, try_index + 1, max_retries))
+                                % (method, url, exception_msg, delay, try_index + 1, max_retries))
                     time.sleep(delay)
                     try_index += 1
                     continue
@@ -406,6 +407,17 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
     if last_error is None:
         # The only "break" above follows some code that sets last_error
         raise AssertionError('Expected last_error to be set here')
+
+    # TODO: suppress this message for classes of errors where it
+    # probably wouldn't be useful, e.g. it's pretty clear where API
+    # errors come from and the client generally has code to handle them,
+    # so this trace isn't useful then.
+    logger.warn('---- DXHTTPRequest %s %s failed after %d tries ----' % (method, url, try_index + 1))
+    logger.warn('**** The following error, from the last try, will be raised: ****')
+    for entry in traceback.format_exception(last_exc_type, last_error, last_traceback):
+        for line in entry.rstrip('\n').split('\n'):
+            logger.warn(line)
+    logger.warn('---------------------------------------')
 
     raise last_error
 
