@@ -356,15 +356,16 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
 
             last_error = e
 
-            if response is not None and response.status_code == 503 and 'retry-after' in response.headers:
+            if response is not None and response.status_code == 503:
+                DEFAULT_RETRY_AFTER_INTERVAL = 60
                 try:
-                    seconds_to_wait = int(response.headers['retry-after'])
+                    seconds_to_wait = int(response.headers.get('retry-after', DEFAULT_RETRY_AFTER_INTERVAL))
                 except ValueError:
                     # retry-after could be formatted as absolute time
                     # instead of seconds to wait. We don't know how to
                     # parse that, but the apiserver doesn't generate
                     # such responses anyway.
-                    seconds_to_wait = 60.0
+                    seconds_to_wait = DEFAULT_RETRY_AFTER_INTERVAL
                 logger.warn("%s %s: %s. Waiting %d seconds due to server unavailability..."
                             % (method, url, str(e), seconds_to_wait))
                 time.sleep(seconds_to_wait)
