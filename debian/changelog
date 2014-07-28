@@ -1,3 +1,11 @@
+dx-toolkit (0.108.1) precise; urgency=low
+
+  * Experimental: show more helpful stacktrace for exceptions raised by DXHTTPRequest
+
+  * Accept 503 responses even if they don't have Retry-After set.
+
+ -- Phil Sung <psung@dnanexus.com>  Mon, 28 Jul 2014 19:18:10 +0000
+
 dx-toolkit (0.108.0) precise; urgency=low
 
   * Minor improvements and bug fixes.
