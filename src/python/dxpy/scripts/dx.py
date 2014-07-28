@@ -27,6 +27,7 @@ from ..cli import workflow as workflow_cli
 from ..exceptions import err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions
 from ..packages import requests
 from ..compat import USING_PYTHON2, basestring, str, input, wrap_stdio_in_codecs, decode_command_line_args
+from ..utils import warn
 from ..utils.env import sys_encoding, set_env_var, get_env_var, get_user_conf_dir
 
 wrap_stdio_in_codecs()
@@ -285,38 +286,54 @@ def login(args):
 
         using_default = authserver == default_authserver
 
-        print('Acquiring credentials from ' + authserver)
-
-        try:
-            if 'DX_USERNAME' in os.environ:
-                username = input('Username [' + os.environ['DX_USERNAME'] + ']: ') or os.environ['DX_USERNAME']
-            else:
-                username = input('Username: ')
-            write_env_var('DX_USERNAME', username)
-            password = getpass.getpass()
-        except (KeyboardInterrupt, EOFError):
-            parser.exit(1, '\n')
-
         def get_token(**data):
             return dxpy.DXHTTPRequest(authserver+"/authorizations", data,
                                       prepend_srv=False, auth=None, always_retry=True)
-        try:
-            token_res = get_token(username=username, password=password,
-                                  expires=normalize_time_input(args.timeout, future=True))
-        except dxpy.DXAPIError as e:
-            if e.name == 'OTPRequiredError':
-                otp = input('Verification code: ')
-                try:
-                    token_res = get_token(username=username, password=password, otp=otp,
-                                          expires=normalize_time_input(args.timeout, future=True))
-                except:
-                    err_exit("Login error", arg_parser=parser)
-            elif e.name == 'UsernameOrPasswordError':
-                err_exit("Incorrect username and/or password", arg_parser=parser)
+
+        def get_credentials(reuse=None, get_otp=False):
+            if reuse:
+                username, password = reuse
             else:
-                err_exit("Login error", arg_parser=parser)
-        except:
-            err_exit("Login error", arg_parser=parser)
+                username = None
+                while not username:
+                    if 'DX_USERNAME' in os.environ:
+                        username = input('Username [' + os.environ['DX_USERNAME'] + ']: ') or os.environ['DX_USERNAME']
+                    else:
+                        username = input('Username: ')
+                write_env_var('DX_USERNAME', username)
+                password = getpass.getpass()
+
+            otp = input('Verification code: ') if get_otp else None
+            return dict(username=username, password=password, otp=otp)
+
+        print('Acquiring credentials from ' + authserver)
+        attempt, using_otp, reuse = 1, False, None
+        while attempt <= 3:
+            try:
+                credentials = get_credentials(reuse=reuse, get_otp=using_otp)
+                token_res = get_token(expires=normalize_time_input(args.timeout, future=True), **credentials)
+                break
+            except (KeyboardInterrupt, EOFError):
+                err_exit()
+            except dxpy.DXAPIError as e:
+                if e.name == 'OTPRequiredError':
+                    using_otp = True
+                    reuse = (credentials['username'], credentials['password'])
+                    continue
+                elif e.name in ('UsernameOrPasswordError', 'OTPMismatchError'):
+                    if attempt < 3:
+                        if e.name == 'UsernameOrPasswordError':
+                            warn("Incorrect username and/or password")
+                        else:
+                            warn("Incorrect verification code")
+                        attempt += 1
+                        continue
+                    else:
+                        err_exit("Incorrect username and/or password", arg_parser=parser)
+                else:
+                    err_exit("Login error: {}".format(e), arg_parser=parser)
+            except Exception as e:
+                err_exit("Login error: {}".format(e), arg_parser=parser)
 
         sec_context=json.dumps({'auth_token': token_res["access_token"], 'auth_token_type': token_res["token_type"]})
 
