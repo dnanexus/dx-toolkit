@@ -40,13 +40,22 @@ public class DXHTTPRequestTest {
     private static class ComeBackLaterRequest {
         @JsonProperty
         private final Long waitUntil;
+        @JsonProperty
+        private final boolean setRetryAfter;
 
         public ComeBackLaterRequest() {
             this.waitUntil = null;
+            this.setRetryAfter = true;
         }
 
         public ComeBackLaterRequest(long waitUntil) {
             this.waitUntil = waitUntil;
+            this.setRetryAfter = true;
+        }
+
+        public ComeBackLaterRequest(long waitUntil, boolean setRetryAfter) {
+            this.waitUntil = waitUntil;
+            this.setRetryAfter = setRetryAfter;
         }
     }
 
@@ -57,6 +66,12 @@ public class DXHTTPRequestTest {
     }
 
     private static final ObjectMapper mapper = new ObjectMapper();
+
+    private long getServerTime() {
+        return DXJSON.safeTreeToValue(new DXHTTPRequest().request("/system/comeBackLater",
+                mapper.valueToTree(new ComeBackLaterRequest()), RetryStrategy.SAFE_TO_RETRY),
+                ComeBackLaterResponse.class).currentTime;
+    }
 
     /**
      * Tests basic use of the API.
@@ -162,16 +177,44 @@ public class DXHTTPRequestTest {
         // Do this weird dance here in case there is clock skew between client
         // and server.
         long startTime = System.currentTimeMillis();
-        long serverTime =
-                DXJSON.safeTreeToValue(
-                        new DXHTTPRequest().request("/system/comeBackLater",
-                                mapper.valueToTree(new ComeBackLaterRequest()),
-                                RetryStrategy.SAFE_TO_RETRY), ComeBackLaterResponse.class).currentTime;
+        long serverTime = getServerTime();
         new DXHTTPRequest().request("/system/comeBackLater",
                 mapper.valueToTree(new ComeBackLaterRequest(serverTime + 8000)),
                 RetryStrategy.SAFE_TO_RETRY);
         long timeElapsed = System.currentTimeMillis() - startTime;
         Assert.assertTrue(8000 <= timeElapsed);
         Assert.assertTrue(timeElapsed <= 16000);
+    }
+
+    /**
+     * Retry logic: test that Retry-After requests do not count towards the max number of retries.
+     */
+    @Test
+    public void testRetryAfterServiceUnavailableExceedingMaxRetries() {
+        long startTime = System.currentTimeMillis();
+        long serverTime = getServerTime();
+        // Retry-After is 2s for the comeBackLater route and this time exceeds 7 tries * 2s
+        new DXHTTPRequest().request("/system/comeBackLater",
+                mapper.valueToTree(new ComeBackLaterRequest(serverTime + 20000)),
+                RetryStrategy.SAFE_TO_RETRY);
+        long timeElapsed = System.currentTimeMillis() - startTime;
+        Assert.assertTrue(16000 <= timeElapsed);
+        Assert.assertTrue(timeElapsed <= 30000);
+    }
+
+    /**
+     * Retry logic: test that the default value of 60 seconds is used when no Retry-After header is
+     * specified.
+     */
+    @Test
+    public void testRetryAfterServiceUnavailableWithoutRetryAfter() {
+        long startTime = System.currentTimeMillis();
+        long serverTime = getServerTime();
+        new DXHTTPRequest().request("/system/comeBackLater",
+                mapper.valueToTree(new ComeBackLaterRequest(serverTime + 20000, false)),
+                RetryStrategy.SAFE_TO_RETRY);
+        long timeElapsed = System.currentTimeMillis() - startTime;
+        Assert.assertTrue(50000 <= timeElapsed);
+        Assert.assertTrue(timeElapsed <= 70000);
     }
 }

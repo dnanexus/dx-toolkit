@@ -1841,11 +1841,27 @@ class TestHTTPResponses(unittest.TestCase):
         # client and server
         start_time = int(time.time() * 1000)
         server_time = dxpy.DXHTTPRequest('/system/comeBackLater', {})['currentTime']
+        dxpy.DXHTTPRequest('/system/comeBackLater', {'waitUntil': server_time + 8000})
+        end_time = int(time.time() * 1000)
+        time_elapsed = end_time - start_time
+        self.assertTrue(8000 <= time_elapsed)
+        self.assertTrue(time_elapsed <= 16000)
+    def test_retry_after_exceeding_max_retries(self):
+        start_time = int(time.time() * 1000)
+        server_time = dxpy.DXHTTPRequest('/system/comeBackLater', {})['currentTime']
         dxpy.DXHTTPRequest('/system/comeBackLater', {'waitUntil': server_time + 20000})
         end_time = int(time.time() * 1000)
         time_elapsed = end_time - start_time
         self.assertTrue(20000 <= time_elapsed)
         self.assertTrue(time_elapsed <= 30000)
+    def test_retry_after_without_header_set(self):
+        start_time = int(time.time() * 1000)
+        server_time = dxpy.DXHTTPRequest('/system/comeBackLater', {})['currentTime']
+        dxpy.DXHTTPRequest('/system/comeBackLater', {'waitUntil': server_time + 20000, 'setRetryAfter': False})
+        end_time = int(time.time() * 1000)
+        time_elapsed = end_time - start_time
+        self.assertTrue(50000 <= time_elapsed)
+        self.assertTrue(time_elapsed <= 70000)
 
 class TestDataobjectFunctions(unittest.TestCase):
     def setUp(self):
