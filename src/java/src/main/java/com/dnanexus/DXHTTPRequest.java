@@ -319,13 +319,18 @@ public class DXHTTPRequest {
                     // 500 InternalError should get retried unconditionally
                     retryRequest = true;
                     if (statusCode == 503) {
+                        int retryAfterSeconds = 60;
                         Header retryAfterHeader = response.getFirstHeader("retry-after");
+                        // Consume the response to avoid leaking resources
+                        EntityUtils.consume(entity);
                         if (retryAfterHeader != null) {
-                            // Consume the response to avoid leaking resources
-                            EntityUtils.consume(entity);
-                            throw new ServiceUnavailableException(Integer.parseInt(retryAfterHeader
-                                    .getValue()));
+                            try {
+                                retryAfterSeconds = Integer.parseInt(retryAfterHeader.getValue());
+                            } catch (NumberFormatException e) {
+                                // Just fall back to the default
+                            }
                         }
+                        throw new ServiceUnavailableException(retryAfterSeconds);
                     }
                     throw new IOException(EntityUtils.toString(entity));
                 }
