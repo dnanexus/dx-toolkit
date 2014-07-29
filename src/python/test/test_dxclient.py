@@ -618,19 +618,43 @@ class TestDXClient(DXTestCase):
             dx.setwinsize(20, 90)
             dx.expect("Waiting for job")
             dx.expect("Resolving job hostname and SSH host key", timeout=1200)
-            dx.expect("dnanexus@job", timeout=600)
-            # TODO: talk to tmux here
-            #dx.expect("still running. Terminate now?")
-            #dx.sendline("y")
-            #dx.expect("Terminated job")
 
+            # Wait for the line displayed between the first and second MOTDs,
+            # since we only care about checking the second set of MOTD lines.
+            # Example of the dividing line:
+            # dnanexus@job-BP90K3Q0X2v81PXXPZj005Zj.dnanexus.io (10.0.0.200) - byobu
+            dx.expect("dnanexus.io \(10.0.0.200\) - byobu", timeout=120)
+            dx.expect("This is the DNAnexus Execution Environment", timeout=600)
+            # Check for job name (e.g. "Job: sleep")
+            dx.expect("Job: \x1b\[1msleep", timeout=5)
+            # \xf6 is ö
+            dx.expect(u"Project: dxclient_test_pr\xf6ject".encode('utf-8'))
+            dx.expect("The job is running in terminal 1.", timeout=5)
+            # Check for terminal prompt and verify we're in the container
             job_id = dxpy.find_jobs(name="sleep").next()['id']
-            dx = pexpect.spawn("dx ssh " + job_id, env=overrideEnvironment(HOME=wd))
-            dx.logfile = sys.stdout
-            dx.setwinsize(20, 90)
-            dx.expect("Waiting for job")
-            dx.expect("Resolving job hostname and SSH host key", timeout=1200)
-            dx.expect("dnanexus@job", timeout=600)
+            dx.expect(("dnanexus@%s" % job_id), timeout=10)
+
+            # Make sure the job can be connected to using 'dx ssh <job id>'
+            dx2 = pexpect.spawn("dx ssh " + job_id, env=overrideEnvironment(HOME=wd))
+            dx2.logfile = sys.stdout
+            dx2.setwinsize(20, 90)
+            dx2.expect("Waiting for job")
+            dx2.expect("Resolving job hostname and SSH host key", timeout=1200)
+            dx2.expect(("dnanexus@%s" % job_id), timeout=10)
+            dx2.sendline("whoami")
+            dx2.expect("dnanexus", timeout=10)
+            dx2.sendline("df -h /")
+            dx2.expect("/dev/dm-1", timeout=10)
+            # Exit SSH session and terminate job
+            dx2.sendline("exit")
+            dx2.expect("bash running")
+            dx2.sendcontrol("c") # CTRL-c
+            dx2.expect("[exited]")
+            dx2.expect("dnanexus@job", timeout=10)
+            dx2.sendline("exit")
+            dx2.expect("still running. Terminate now?")
+            dx2.sendline("y")
+            dx2.expect("Terminated job", timeout=60)
         finally:
             if original_ssh_public_key:
                 dxpy.api.user_update(user_id, {"sshPublicKey": original_ssh_public_key})
@@ -668,7 +692,6 @@ class TestDXClient(DXTestCase):
         dx_login.expect("dx: Incorrect username and/or password")
         dx_login.close()
         self.assertEqual(dx_login.exitstatus, EXPECTED_ERR_EXIT_STATUS)
-
 
 class TestDXWhoami(DXTestCase):
     def test_dx_whoami_name(self):
