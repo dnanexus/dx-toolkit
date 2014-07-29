@@ -259,6 +259,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
             raise exceptions.DXError("Snappy compression requested, but the snappy module is unavailable")
         headers['accept-encoding'] = 'snappy'
 
+    # Original unicode version of URL (we will encode to UTF-8 in
+    # Python2), mostly useful for printing error messages and the like
+    orig_url = url
+
     # When *data* is bytes but *headers* contains Unicode text, httplib tries to concatenate them and decode *data*,
     # which should not be done. Also, per HTTP/1.1 headers must be encoded with MIME, but we'll disregard that here, and
     # just encode them with the Python default (ascii) and fail for any non-ascii content.
@@ -361,7 +365,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                     # such responses anyway.
                     seconds_to_wait = DEFAULT_RETRY_AFTER_INTERVAL
                 logger.warn("%s %s: %s. Waiting %d seconds due to server unavailability..."
-                            % (method, url, exception_msg, seconds_to_wait))
+                            % (method, orig_url, exception_msg, seconds_to_wait))
                 time.sleep(seconds_to_wait)
                 # Note, we escape the "except" block here without
                 # incrementing try_index because 503 responses with
@@ -394,7 +398,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                         data.seek(rewind_input_buffer_offset)
                     delay = 2 ** try_index
                     logger.warn("%s %s: %s. Waiting %d seconds before retry %d of %d..."
-                                % (method, url, exception_msg, delay, try_index + 1, max_retries))
+                                % (method, orig_url, exception_msg, delay, try_index + 1, max_retries))
                     time.sleep(delay)
                     try_index += 1
                     continue
@@ -412,7 +416,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
     # probably wouldn't be useful, e.g. it's pretty clear where API
     # errors come from and the client generally has code to handle them,
     # so this trace isn't useful then.
-    logger.warn('---- DXHTTPRequest %s %s failed after %d tries ----' % (method, url, try_index + 1))
+    logger.warn('---- DXHTTPRequest %s %s failed after %d tries ----' % (method, orig_url, try_index + 1))
     logger.warn('**** The following error, from the last try, will be raised: ****')
     for entry in traceback.format_exception(last_exc_type, last_error, last_traceback):
         for line in entry.rstrip('\n').split('\n'):
