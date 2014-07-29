@@ -1,3 +1,13 @@
+dx-toolkit (0.109.0) precise; urgency=low
+
+  * dx login usability improvements.
+
+  * Fixes for 503 behavior in Python and Java clients.
+
+  * dx whoami now relies on API server instead of authserver.
+
+  * Various other improvements.
+
 dx-toolkit (0.108.0) precise; urgency=low
 
   * Minor improvements and bug fixes.
