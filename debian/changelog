@@ -1,3 +1,9 @@
+dx-toolkit (0.109.1) precise; urgency=low
+
+  * Fix changelog.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 29 Jul 2014 22:14:48 +0000
+
 dx-toolkit (0.109.0) precise; urgency=low
 
   * dx login usability improvements.
