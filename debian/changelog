@@ -1,3 +1,9 @@
+dx-toolkit (0.108.2) precise; urgency=low
+
+  * Remove experimental stacktraces for production release.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 29 Jul 2014 21:11:39 +0000
+
 dx-toolkit (0.108.1) precise; urgency=low
 
   * Experimental: show more helpful stacktrace for exceptions raised by DXHTTPRequest
