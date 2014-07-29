@@ -8,6 +8,8 @@ dx-toolkit (0.109.0) precise; urgency=low
 
   * Various other improvements.
 
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 29 Jul 2014 21:10:39 +0000
+
 dx-toolkit (0.108.0) precise; urgency=low
 
   * Minor improvements and bug fixes.
