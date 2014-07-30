@@ -1,3 +1,2 @@
 include requirements*.txt
-recursive-include dxpy/packages/requests *.pem
 recursive-include dxpy/templating/templates *

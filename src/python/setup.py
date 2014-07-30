@@ -79,8 +79,7 @@ setup(
     zip_safe=False,
     license='Apache Software License',
     packages = find_packages(exclude=['test']),
-    package_data={'dxpy.packages.requests': ['*.pem'],
-                  'dxpy.templating': template_files},
+    package_data={'dxpy.templating': template_files},
     scripts = glob.glob(os.path.join(os.path.dirname(__file__), 'scripts', 'dx*')),
     entry_points = {
         "console_scripts": scripts,
