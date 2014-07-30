@@ -402,7 +402,7 @@ def get_input_single(param_desc):
                            + BOLD() + param_desc['name'] + ENDC() + ' is not in the list of choices for that input'))
             return value
     except EOFError:
-        raise Exception('')
+        raise DXCLIError('Unexpected end of input')
 
 def get_optional_input_str(param_desc):
     return param_desc.get('label', param_desc['name']) + ' (' + param_desc['name'] + ')'
