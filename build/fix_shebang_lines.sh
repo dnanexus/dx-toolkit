@@ -16,7 +16,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-# Usage: fix_shebang_lines.sh DIRNAME [--debian-system-install]
+# Usage: fix_shebang_lines.sh DIRNAME [--debian-system-install] [interpreter]
 #   Rewrites shebang lines for all Python scripts in DIRNAME.
 
 dirname=$1
