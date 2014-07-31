@@ -643,8 +643,6 @@ class TestDXClient(DXTestCase):
             dx2.expect(("dnanexus@%s" % job_id), timeout=10)
             dx2.sendline("whoami")
             dx2.expect("dnanexus", timeout=10)
-            dx2.sendline("df -h /")
-            dx2.expect("/dev/dm-1", timeout=10)
             # Exit SSH session and terminate job
             dx2.sendline("exit")
             dx2.expect("bash running")
