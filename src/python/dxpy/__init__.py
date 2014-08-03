@@ -170,12 +170,28 @@ USER_AGENT = "{name}/{version} ({platform})".format(name=__name__,
 
 _expected_exceptions = exceptions.network_exceptions + (exceptions.DXAPIError, ssl.SSLError)
 
+def _process_method_url_headers(method, url, headers):
+    if callable(url):
+        _url, _headers = url()
+        _headers.update(headers)
+    else:
+        _url, _headers = url, headers
+    # When *data* is bytes but *headers* contains Unicode text, httplib tries to concatenate them and decode
+    # *data*, which should not be done. Also, per HTTP/1.1 headers must be encoded with MIME, but we'll
+    # disregard that here, and just encode them with the Python default (ascii) and fail for any non-ascii
+    # content. See http://tools.ietf.org/html/rfc3987 for a discussion of encoding URLs.
+    # TODO: ascertain whether this is a problem in Python 3/make test
+    if USING_PYTHON2:
+        return method.encode(), _url.encode('utf-8'), {k.encode(): v.encode() for k, v in _headers.items()}
+    else:
+        return method, _url, _headers
+
 def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeout=600,
                   use_compression=None, jsonify_data=True, want_full_response=False,
                   decode_response_body=True, prepend_srv=True, session_handler=None,
                   max_retries=DEFAULT_RETRIES, always_retry=False, **kwargs):
     '''
-    :param resource: API server route, e.g. "/record/new"
+    :param resource: API server route, e.g. "/record/new". If *prepend_srv* is False, a fully qualified URL is expected. If this argument is a callable, it will be called just before each request attempt, and expected to return a tuple (URL, headers). Headers returned by the callback are updated with *headers* (including headers set by this method).
     :type resource: string
     :param data: Content of the request body
     :type data: list or dict, if *jsonify_data* is True; or string or file-like object, otherwise
@@ -259,20 +275,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
             raise exceptions.DXError("Snappy compression requested, but the snappy module is unavailable")
         headers['accept-encoding'] = 'snappy'
 
-    # Original unicode version of URL (we will encode to UTF-8 in
-    # Python2), mostly useful for printing error messages and the like
-    orig_url = url
-
-    # When *data* is bytes but *headers* contains Unicode text, httplib tries to concatenate them and decode *data*,
-    # which should not be done. Also, per HTTP/1.1 headers must be encoded with MIME, but we'll disregard that here, and
-    # just encode them with the Python default (ascii) and fail for any non-ascii content.
-    # See http://tools.ietf.org/html/rfc3987 for a discussion of encoding URLs.
-    # TODO: ascertain whether this is a problem in Python 3/make test
-    if USING_PYTHON2:
-        headers = {k.encode(): v.encode() for k, v in headers.items()}
-        url = url.encode('utf-8')
-        method = method.encode()
-
     # If the input is a buffer, its data gets consumed by
     # requests.request (moving the read position). Record the initial
     # buffer position so that we can return to it if the request fails
@@ -287,7 +289,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
         streaming_response_truncated = False
         response = None
         try:
-            response = session_handler.request(method, url, data=data, headers=headers, timeout=timeout, auth=auth,
+            _method, _url, _headers = _process_method_url_headers(method, url, headers)
+            response = session_handler.request(_method, _url, headers=_headers, data=data, timeout=timeout, auth=auth,
                                                **kwargs)
 
             if _UPGRADE_NOTIFY and response.headers.get('x-upgrade-info', '').startswith('A recommended update is available') and not os.environ.has_key('_ARGCOMPLETE'):
@@ -372,7 +375,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                     # such responses anyway.
                     seconds_to_wait = DEFAULT_RETRY_AFTER_INTERVAL
                 logger.warn("%s %s: %s. Waiting %d seconds due to server unavailability..."
-                            % (method, orig_url, exception_msg, seconds_to_wait))
+                            % (method, url, exception_msg, seconds_to_wait))
                 time.sleep(seconds_to_wait)
                 # Note, we escape the "except" block here without
                 # incrementing try_index because 503 responses with
@@ -405,7 +408,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                         data.seek(rewind_input_buffer_offset)
                     delay = 2 ** try_index
                     logger.warn("%s %s: %s. Waiting %d seconds before retry %d of %d..."
-                                % (method, orig_url, exception_msg, delay, try_index + 1, max_retries))
+                                % (method, url, exception_msg, delay, try_index + 1, max_retries))
                     time.sleep(delay)
                     try_index += 1
                     continue
@@ -423,7 +426,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
     # probably wouldn't be useful, e.g. it's pretty clear where API
     # errors come from and the client generally has code to handle them,
     # so this trace isn't useful then.
-    logger.warn('---- DXHTTPRequest %s %s failed after %d tries ----' % (method, orig_url, try_index + 1))
+    logger.warn('---- DXHTTPRequest %s %s failed after %d tries ----' % (method, url, try_index + 1))
     logger.warn('**** The following error, from the last try, will be raised: ****')
     for entry in traceback.format_exception(last_exc_type, last_error, last_traceback):
         for line in entry.rstrip('\n').split('\n'):
