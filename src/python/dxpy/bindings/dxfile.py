@@ -454,15 +454,10 @@ class DXFile(DXDataObject):
         if index is not None:
             req_input["index"] = int(index)
 
-        resp = dxpy.api.file_upload(self._dxid, req_input, **kwargs)
-        url = resp["url"]
-        headers = resp.get("headers", {})
-        headers['Content-Length'] = str(len(data))
-
         md5 = hashlib.md5()
         if hasattr(data, 'seek') and hasattr(data, 'tell'):
-            # data is a buffer
-            rewind_input_buffer_offset = data.tell() # record initial position (so we can rewind back)
+            # data is a buffer; record initial position (so we can rewind back)
+            rewind_input_buffer_offset = data.tell()
             while True:
                 bytes_read = data.read(MD5_READ_CHUNK_SIZE)
                 if bytes_read:
@@ -474,9 +469,26 @@ class DXFile(DXDataObject):
         else:
             md5.update(data)
 
-        headers['Content-MD5'] = md5.hexdigest()
+        def get_upload_url_and_headers():
+            # This function is called from within a retry loop, so to avoid amplifying the number of retries
+            # geometrically, we decrease the allowed number of retries for the nested API call every time.
+            if 'max_retries' not in kwargs:
+                kwargs['max_retries'] = dxpy.DEFAULT_RETRIES
+            elif kwargs['max_retries'] > 0:
+                kwargs['max_retries'] -= 1
 
-        dxpy.DXHTTPRequest(url, data, headers=headers, jsonify_data=False, prepend_srv=False, always_retry=True, auth=None)
+            resp = dxpy.api.file_upload(self._dxid, req_input, **kwargs)
+            url = resp["url"]
+            headers = resp.get("headers", {})
+            headers['Content-Length'] = str(len(data))
+            headers['Content-MD5'] = md5.hexdigest()
+            return url, headers
+
+        # The file upload API requires us to get a pre-authenticated upload URL (and headers for it) every time we
+        # attempt an upload. Because DXHTTPRequest will retry requests under retryable conditions, we give it a callback
+        # to ask us for a new upload URL every time it attempts a request (instead of giving them directly).
+        dxpy.DXHTTPRequest(get_upload_url_and_headers, data, jsonify_data=False, prepend_srv=False, always_retry=True,
+                           auth=None)
 
         self._num_uploaded_parts += 1
 
