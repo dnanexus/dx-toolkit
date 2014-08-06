@@ -1,3 +1,9 @@
+dx-toolkit (0.110.0) precise; urgency=low
+
+  * Improvements to HTTP retry logic.
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 06 Aug 2014 08:10:06 +0000
+
 dx-toolkit (0.109.0) precise; urgency=low
 
   * dx login usability improvements.
