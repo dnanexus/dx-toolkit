@@ -1,3 +1,11 @@
+dx-toolkit (0.109.2) precise; urgency=low
+
+  * Bug fix.
+
+  * Revert diagnostics used for debugging.
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 06 Aug 2014 08:10:51 +0000
+
 dx-toolkit (0.109.1) precise; urgency=low
 
   * Fix changelog.
