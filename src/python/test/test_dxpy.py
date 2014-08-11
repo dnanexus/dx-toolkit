@@ -192,6 +192,18 @@ class TestDXProject(unittest.TestCase):
         with self.assertRaises(DXAPIError):
             dxrecord.describe()
 
+class TestDXFileFunctions(unittest.TestCase):
+    def test_get_buffer_size(self):
+        for file_is_mmapd in (False, True):
+            # This method implements its own sanity checks, so just
+            # ensure that those pass for a variety of sizes.
+            dxpy.bindings.dxfile_functions._get_buffer_size_for_file(0, file_is_mmapd=file_is_mmapd)
+            dxpy.bindings.dxfile_functions._get_buffer_size_for_file(1, file_is_mmapd=file_is_mmapd)
+            dxpy.bindings.dxfile_functions._get_buffer_size_for_file(5 * 1024 * 1024, file_is_mmapd=file_is_mmapd)
+            dxpy.bindings.dxfile_functions._get_buffer_size_for_file(16 * 1024 * 1024, file_is_mmapd=file_is_mmapd)
+            dxpy.bindings.dxfile_functions._get_buffer_size_for_file(160 * 1024 * 1024 * 1024, file_is_mmapd=file_is_mmapd)
+            dxpy.bindings.dxfile_functions._get_buffer_size_for_file(290 * 1024 * 1024 * 1024, file_is_mmapd=file_is_mmapd)
+
 class TestDXFile(unittest.TestCase):
 
     '''
