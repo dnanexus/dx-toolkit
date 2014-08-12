@@ -1,3 +1,9 @@
+dx-toolkit (0.110.1) precise; urgency=low
+
+  * Revert diagnostics used for debugging.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 12 Aug 2014 18:57:13 +0000
+
 dx-toolkit (0.110.0) precise; urgency=low
 
   * Improvements to HTTP retry logic.
