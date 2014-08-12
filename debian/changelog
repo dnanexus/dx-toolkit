@@ -1,3 +1,9 @@
+dx-toolkit (0.111.0) precise; urgency=low
+
+  * Bug fix for dxpy file upload.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 12 Aug 2014 18:54:36 +0000
+
 dx-toolkit (0.110.0) precise; urgency=low
 
   * Improvements to HTTP retry logic.
