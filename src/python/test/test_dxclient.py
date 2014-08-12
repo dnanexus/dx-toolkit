@@ -585,8 +585,8 @@ class TestDXClient(DXTestCase):
             if original_ssh_public_key:
                 dxpy.api.user_update(user_id, {"sshPublicKey": original_ssh_public_key})
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'Skipping test that would run jobs')
-    def test_dx_ssh(self):
+    @contextmanager
+    def configure_ssh(self):
         original_ssh_public_key = None
         try:
             user_id = dxpy.whoami()
@@ -604,7 +604,14 @@ class TestDXClient(DXTestCase):
             dx_ssh_config.expect("again")
             dx_ssh_config.sendline()
             dx_ssh_config.expect("Your account has been configured for use with SSH")
+            yield wd
+        finally:
+            if original_ssh_public_key:
+                dxpy.api.user_update(user_id, {"sshPublicKey": original_ssh_public_key})
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
+    def test_dx_ssh(self):
+        with self.configure_ssh() as wd:
             sleep_applet = dxpy.api.applet_new(dict(name="sleep",
                                                     runSpec={"code": "sleep 1200", "interpreter": "bash",
                                                              "execDepends": [{"name": "dx-toolkit"}]},
@@ -652,9 +659,33 @@ class TestDXClient(DXTestCase):
             dx2.expect("still running. Terminate now?")
             dx2.sendline("y")
             dx2.expect("Terminated job", timeout=60)
-        finally:
-            if original_ssh_public_key:
-                dxpy.api.user_update(user_id, {"sshPublicKey": original_ssh_public_key})
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
+    def test_dx_run_debug_on(self):
+        with self.configure_ssh() as wd:
+            crash_applet = dxpy.api.applet_new(dict(name="crash",
+                                                    runSpec={"code": "exit 5", "interpreter": "bash",
+                                                             "execDepends": [{"name": "dx-toolkit"}]},
+                                                    inputSpec=[], outputSpec=[],
+                                                    dxapi="1.0.0", version="1.0.0",
+                                                    project=self.project))["id"]
+
+            job_id = run("dx run {} --yes --brief --debug-on AppInternalError".format(crash_applet),
+                         env=overrideEnvironment(HOME=wd)).strip()
+            elapsed = 0
+            while True:
+                job_desc = dxpy.describe(job_id)
+                if job_desc["state"] == "debug_hold":
+                    break
+                time.sleep(1)
+                elapsed += 1
+                if elapsed > 1200:
+                    raise Exception("Timeout while waiting for job to enter debug hold")
+
+            dx = pexpect.spawn("dx ssh " + job_id, env=overrideEnvironment(HOME=wd))
+            dx.logfile = sys.stdout
+            dx.setwinsize(20, 90)
+            dx.expect("dnanexus@{}".format(job_id), timeout=1200)
 
     @unittest.skipUnless(testutil.TEST_DX_LOGIN,
                          'This test requires authserver to run, requires dx login to select the right authserver, ' +
