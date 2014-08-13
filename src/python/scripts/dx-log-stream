@@ -23,7 +23,6 @@ Redirects stdin to a DNAnexus log socket in the execution environment.
 from __future__ import print_function
 
 import sys, logging, argparse
-import dxpy
 
 USING_PYTHON2 = True if sys.version_info < (3, 0) else False
 
@@ -45,12 +44,14 @@ except:
     log_function = logging.info
 
 try:
+    import dxpy
     logger = logging.getLogger()
     logger.handlers = []
     logger.addHandler(dxpy.DXLogHandler(source=args.source))
 except Exception as e:
-    print("dx-log-stream: Error while initializing logging:", str(e), file=sys.stderr)
-    sys.exit(1)
+    import traceback
+    traceback.print_exc()
+    print("dx-log-stream: Error while initializing logging. Continuing.", file=sys.stderr)
 
 while True:
     line = sys.stdin.readline()
