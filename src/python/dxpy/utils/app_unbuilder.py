@@ -23,15 +23,16 @@ and generating an equivalent applet source directory.
 
 '''
 
-from __future__ import print_function
-
-from dxpy import get_handler, download_dxfile
+from __future__ import print_function, unicode_literals
 
 import collections
 import json
 import os
 import subprocess
 import sys
+
+from .. import get_handler, download_dxfile
+from ..compat import open
 
 def dump_applet(applet, destination_directory):
     """
