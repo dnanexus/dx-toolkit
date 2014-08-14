@@ -168,7 +168,7 @@ USER_AGENT = "{name}/{version} ({platform})".format(name=__name__,
                                                     version=TOOLKIT_VERSION,
                                                     platform=platform.platform())
 
-_expected_exceptions = exceptions.network_exceptions + (exceptions.DXAPIError, ssl.SSLError)
+_expected_exceptions = exceptions.network_exceptions + (exceptions.DXAPIError, )
 
 def _process_method_url_headers(method, url, headers):
     if callable(url):
@@ -354,13 +354,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                 return content
             raise AssertionError('Should never reach this line: expected a result to have been returned by now')
         except _expected_exceptions as e:
-            # SSL protocol errors are not differentiated by type from transport/socket errors. Here, we use a heuristic
-            # to catch only those SSL errors which are probably caused by a transport failure. See also
-            # https://github.com/python-git/python/blob/master/Lib/ssl.py,
-            # https://github.com/python-git/python/blob/master/Modules/_ssl.c
-            if isinstance(e, ssl.SSLError) and not str(e).endswith("operation timed out"):
-                raise
-
             last_exc_type, last_error, last_traceback = sys.exc_info()
             exception_msg = traceback.format_exc().splitlines()[-1].strip()
 
