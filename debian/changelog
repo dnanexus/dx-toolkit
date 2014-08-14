@@ -1,3 +1,9 @@
+dx-toolkit (0.111.2) precise; urgency=low
+
+  * Fix exception handling after requests upgrade
+
+ -- Phil Sung <psung@dnanexus.com>  Thu, 14 Aug 2014 22:08:05 +0000
+
 dx-toolkit (0.111.1) precise; urgency=low
 
   * Continue running dx-log-stream after error
