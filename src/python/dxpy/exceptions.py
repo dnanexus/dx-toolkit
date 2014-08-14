@@ -184,6 +184,8 @@ def exit_with_exc_info(code=1, message='', print_tb=False, exception=None):
     sys.exit(code)
 
 network_exceptions = (requests.ConnectionError,
+                      requests.exceptions.ChunkedEncodingError,
+                      requests.exceptions.ContentDecodingError,
                       requests.HTTPError,
                       requests.Timeout,
                       requests.packages.urllib3.connectionpool.HTTPException)
