@@ -56,7 +56,7 @@ class DXExecutable:
         '''
         Takes the same arguments as the run method. Creates an input hash for the /executable-xxxx/run method,
         translating ONLY the fields that can be handled uniformly across all executables: project, folder, name, tags,
-        properties, details, depends_on, allow_ssh, debug_on, delay_workspace_destruction, and extra_args.
+        properties, details, depends_on, allow_ssh, debug, delay_workspace_destruction, and extra_args.
         '''
         project = kwargs.get('project') or dxpy.WORKSPACE_ID
 
@@ -89,8 +89,8 @@ class DXExecutable:
         if kwargs.get('allow_ssh') is not None:
             run_input["allowSSH"] = kwargs['allow_ssh']
 
-        if kwargs.get('debug_on') is not None:
-            run_input["debugOn"] = kwargs['debug_on']
+        if kwargs.get('debug') is not None:
+            run_input["debug"] = kwargs['debug']
 
         if kwargs.get('priority') is not None:
             run_input["priority"] = kwargs['priority']
@@ -136,7 +136,7 @@ class DXExecutable:
 
     def run(self, executable_input, project=None, folder=None, name=None, tags=None, properties=None, details=None,
             instance_type=None, stage_instance_types=None, stage_folders=None, rerun_stages=None,
-            depends_on=None, allow_ssh=None, debug_on=None, delay_workspace_destruction=None, priority=None,
+            depends_on=None, allow_ssh=None, debug=None, delay_workspace_destruction=None, priority=None,
             extra_args=None, **kwargs):
         '''
         :param executable_input: Hash of the executable's input arguments
@@ -157,6 +157,10 @@ class DXExecutable:
         :type instance_type: string or dict
         :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
         :type depends_on: list
+        :param allow_ssh: List of hostname or IP masks to allow SSH connections from
+        :type debug: dict
+        :param debug: Configuration options for job debugging
+        :type debug: dict
         :param delay_workspace_destruction: Whether to keep the job's temporary workspace around for debugging purposes for 3 days after it succeeds or fails
         :type delay_workspace_destruction: boolean
         :param priority: Priority level to request for all jobs created in the execution tree, either "normal" or "high"
@@ -187,7 +191,7 @@ class DXExecutable:
                                         rerun_stages=rerun_stages,
                                         depends_on=depends_on,
                                         allow_ssh=allow_ssh,
-                                        debug_on=debug_on,
+                                        debug=debug,
                                         delay_workspace_destruction=delay_workspace_destruction,
                                         priority=priority,
                                         extra_args=extra_args)

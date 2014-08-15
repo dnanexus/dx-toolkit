@@ -2558,7 +2558,7 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
         "properties": args.properties,
         "details": args.details,
         "allow_ssh": args.allow_ssh,
-        "debug_on": args.debug_on,
+        "debug": {"debugOn": args.debug_on} if args.debug_on else None,
         "delay_workspace_destruction": args.delay_workspace_destruction,
         "priority": ("high" if args.watch else args.priority),
         "instance_type": args.instance_type,
