@@ -14,6 +14,8 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+from __future__ import (print_function, unicode_literals)
+
 from dxpy import get_auth_server_name, DXHTTPRequest
 
 from dxpy.api import system_whoami

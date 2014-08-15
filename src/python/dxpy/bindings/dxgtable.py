@@ -19,6 +19,8 @@ DXGTable Handler
 ****************
 """
 
+from __future__ import (print_function, unicode_literals)
+
 import os, sys, json, traceback
 import concurrent.futures
 
@@ -26,6 +28,7 @@ import dxpy
 from . import DXDataObject
 from ..exceptions import DXError
 from ..compat import StringIO
+from ..utils import warn
 
 DXGTABLE_HTTP_THREADS = 4
 
@@ -142,15 +145,15 @@ class DXGTable(DXDataObject):
         custom auth).
         '''
         if len(self._row_buf) > 0 or (self._string_row_buf != None and self._string_row_buf.tell() > len('{"data": [')) or len(self._http_threadpool_futures) > 0:
-            print >> sys.stderr, "=== WARNING! ==="
-            print >> sys.stderr, "There is still unflushed data in the destructor of a DXGTable object!"
-            print >> sys.stderr, "We will attempt to flush it now, but if an error were to occur, we could not report it back to you."
-            print >> sys.stderr, "Your program could fail to flush the data but appear to succeed."
-            print >> sys.stderr, "Instead, please call flush() or close(), or use the context managed version (e.g., with open_dxgtable(ID, mode='w') as gtable:)"
+            warn("=== WARNING! ===")
+            warn("There is still unflushed data in the destructor of a DXGTable object!")
+            warn("We will attempt to flush it now, but if an error were to occur, we could not report it back to you.")
+            warn("Your program could fail to flush the data but appear to succeed.")
+            warn("Instead, please call flush() or close(), or use the context managed version (e.g., with open_dxgtable(ID, mode='w') as gtable:)")
         try:
             self.flush(multithread=False)
         except Exception as e:
-            print >> sys.stderr, "=== Exception occurred while flushing accumulated row data for %r" % (self._dxid,)
+            warn("=== Exception occurred while flushing accumulated row data for %r" % (self._dxid,))
             traceback.print_exception(*sys.exc_info())
             raise
 
@@ -595,7 +598,7 @@ class DXGTable(DXDataObject):
         """
         for column in columns:
             if type(column) is list:
-                print >> sys.stderr, "Warning: passing a list of lists to lexicographic_index() is deprecated, please use lexicographic_index_column instead."
+                warn("Warning: passing a list of lists to lexicographic_index() is deprecated, please use lexicographic_index_column instead.")
 
         return {"name": name, "type": "lexicographic", "columns": columns}
 
