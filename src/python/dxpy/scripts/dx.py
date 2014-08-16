@@ -3188,7 +3188,7 @@ def ssh(args, ssh_config_verified=False):
 
     sys.stdout.write("Waiting for {} to start...".format(args.job_id))
     sys.stdout.flush()
-    while job_desc['state'] != 'running':
+    while job_desc['state'] not in ['running', 'debug_hold']:
         time.sleep(1)
         job_desc = dxpy.describe(args.job_id)
         sys.stdout.write(".")
