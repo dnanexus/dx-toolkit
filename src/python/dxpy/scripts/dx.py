@@ -3208,6 +3208,7 @@ def ssh(args, ssh_config_verified=False):
             job_desc = dxpy.describe(args.job_id)
             sys.stdout.write(".")
             sys.stdout.flush()
+    sys.stdout.write("\n")
 
     if not (host and host_key):
         msg = "Cannot resolve hostname or hostkey for {}. Please check your permissions and run settings."
@@ -3216,6 +3217,25 @@ def ssh(args, ssh_config_verified=False):
     known_hosts_file = os.path.expanduser('~/.dnanexus_config/ssh_known_hosts')
     with open(known_hosts_file, 'a') as fh:
         fh.write("{job_id}.dnanexus.io {key}\n".format(job_id=args.job_id, key=host_key.rstrip()))
+
+    import socket
+    connected = False
+    sys.stdout.write("Checking connectivity to {}...".format(host))
+    sys.stdout.flush()
+    for i in range(12):
+        try:
+            socket.create_connection((host, 22), timeout=5)
+            connected = True
+            break
+        except Exception:
+            sys.stdout.write(".")
+            sys.stdout.flush()
+    if connected:
+        sys.stdout.write(GREEN("OK") + "\n")
+    else:
+        msg = "Failed to connect to {h}. Please check your connectivity and try {cmd} again."
+        err_exit(msg.format(h=host, cmd=BOLD("dx ssh {}".format(args.job_id))),
+                 exception=DXCLIError())
 
     print("Connecting to", host)
     ssh_args = ['ssh', '-i', os.path.expanduser('~/.dnanexus_config/ssh_id'),
