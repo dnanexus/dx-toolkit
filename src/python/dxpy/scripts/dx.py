@@ -3228,6 +3228,7 @@ def ssh(args, ssh_config_verified=False):
             connected = True
             break
         except Exception:
+            time.sleep(2)
             sys.stdout.write(".")
             sys.stdout.flush()
     if connected:
