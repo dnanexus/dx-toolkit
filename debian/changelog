@@ -1,3 +1,13 @@
+dx-toolkit (0.112.0) precise; urgency=low
+
+  * Stability improvements for "dx ssh"
+
+  * Debug features are compatible with latest apiserver
+
+  * Various bug fixes and stability improvements
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 19 Aug 2014 18:35:06 +0000
+
 dx-toolkit (0.111.0) precise; urgency=low
 
   * Bug fix for dxpy file upload.
