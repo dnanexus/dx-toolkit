@@ -158,7 +158,7 @@ class DXExecutable:
         :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
         :type depends_on: list
         :param allow_ssh: List of hostname or IP masks to allow SSH connections from
-        :type debug: dict
+        :type allow_ssh: list
         :param debug: Configuration options for job debugging
         :type debug: dict
         :param delay_workspace_destruction: Whether to keep the job's temporary workspace around for debugging purposes for 3 days after it succeeds or fails
