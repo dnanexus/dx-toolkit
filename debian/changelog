@@ -1,3 +1,11 @@
+dx-toolkit (0.111.3) precise; urgency=low
+
+  * Debug feature is compatible with latest apiserver
+
+  * Remove diagnostics used for debugging
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 19 Aug 2014 18:40:22 +0000
+
 dx-toolkit (0.111.2) precise; urgency=low
 
   * Fix exception handling after requests upgrade
