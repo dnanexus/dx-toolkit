@@ -1,3 +1,9 @@
+dx-toolkit (0.112.1) precise; urgency=low
+
+  * Revert diagnostics used for debugging.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 26 Aug 2014 19:59:51 +0000
+
 dx-toolkit (0.112.0) precise; urgency=low
 
   * Stability improvements for "dx ssh"
