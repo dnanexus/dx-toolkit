@@ -3358,6 +3358,16 @@ class DXArgumentParser(argparse.ArgumentParser):
         if message:
             pager(message, file=file)
 
+    def _check_value(self, action, value):
+        # Override argparse.ArgumentParser._check_value to eliminate "u'x'" strings in output that result from repr()
+        # calls in the original, and to line wrap the output
+
+        # converted value must be one of the choices (if specified)
+        if action.choices is not None and value not in action.choices:
+            choices = fill("(choose from {})".format(", ".join(action.choices)))
+            msg = "invalid choice: {choice}\n{choices}".format(choice=value, choices=choices)
+            raise argparse.ArgumentError(action, msg)
+
     def exit(self, status=0, message=None):
         if isinstance(status, basestring):
             message = message + status if message else status
