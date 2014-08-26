@@ -532,7 +532,7 @@ class ExecutableInputs(object):
         except:
             pass
 
-    def prompt_for_missing(self):
+    def prompt_for_missing(self, confirm=True):
         # No-op if there is no input spec
         if self.input_spec is None:
             return
@@ -547,7 +547,7 @@ class ExecutableInputs(object):
                 if len(self.inputs) == 0:
                     print('Entering interactive mode for input selection.')
                 self.inputs[i] = self.prompt_for_input(i)
-        if no_prior_inputs and len(self.optional_inputs) > 0:
+        if no_prior_inputs and len(self.optional_inputs) > 0 and confirm:
             self.prompt_for_optional_inputs()
 
         self.uninit_completer()
@@ -632,7 +632,7 @@ class ExecutableInputs(object):
         # recognizing when not all inputs haven't been bound
         if require_all_inputs:
             if INTERACTIVE_CLI:
-                self.prompt_for_missing()
+                self.prompt_for_missing(args.confirm)
             else:
                 missing_required_inputs = set(self.required_inputs) - set(self.inputs.keys())
                 if missing_required_inputs:
