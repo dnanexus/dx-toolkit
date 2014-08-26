@@ -1,3 +1,9 @@
+dx-toolkit (0.113.0) precise; urgency=low
+
+  * Usability improvements for dx run --debug-on
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 26 Aug 2014 19:58:40 +0000
+
 dx-toolkit (0.112.0) precise; urgency=low
 
   * Stability improvements for "dx ssh"
