@@ -3364,6 +3364,13 @@ class DXArgumentParser(argparse.ArgumentParser):
         if action.choices is not None and value not in action.choices:
             choices = fill("(choose from {})".format(", ".join(action.choices)))
             msg = "invalid choice: {choice}\n{choices}".format(choice=value, choices=choices)
+
+            if len(args_list) == 1:
+                from dxpy.utils import spelling_corrector
+                suggestion = spelling_corrector.correct(value, action.choices)
+                if suggestion in action.choices:
+                    msg += "\n\nDid you mean: " + BOLD("dx " + suggestion)
+
             err = argparse.ArgumentError(action, msg)
             if USING_PYTHON2:
                 err.message = err.message.encode(sys_encoding)
