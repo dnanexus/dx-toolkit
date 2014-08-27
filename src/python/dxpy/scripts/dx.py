@@ -3366,7 +3366,12 @@ class DXArgumentParser(argparse.ArgumentParser):
         if action.choices is not None and value not in action.choices:
             choices = fill("(choose from {})".format(", ".join(action.choices)))
             msg = "invalid choice: {choice}\n{choices}".format(choice=value, choices=choices)
-            raise argparse.ArgumentError(action, msg)
+            err = argparse.ArgumentError(action, msg)
+            if USING_PYTHON2:
+                err.message = err.message.encode(sys_encoding)
+                if err.argument_name is not None:
+                    err.argument_name = err.argument_name.encode(sys_encoding)
+            raise err
 
     def exit(self, status=0, message=None):
         if isinstance(status, basestring):
@@ -3377,6 +3382,8 @@ class DXArgumentParser(argparse.ArgumentParser):
         sys.exit(status)
 
     def error(self, message):
+        if USING_PYTHON2:
+            message = message.decode(sys_encoding)
         self.exit(2, '{help}\n{prog}: error: {msg}\n'.format(help=self.format_help(),
                                                              prog=self.prog,
                                                              msg=message))
