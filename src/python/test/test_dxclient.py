@@ -29,7 +29,7 @@ from dxpy_testutil import DXTestCase, check_output, temporary_project
 import dxpy_testutil as testutil
 from dxpy.packages import requests
 from dxpy.exceptions import DXAPIError, EXPECTED_ERR_EXIT_STATUS
-from dxpy.compat import str
+from dxpy.compat import str, sys_encoding
 
 @contextmanager
 def chdir(dirname=None):
@@ -89,85 +89,85 @@ class TestDXClient(DXTestCase):
         with self.assertRaises(subprocess.CalledProcessError):
             run("dx")
         run("dx help")
-        folder_name = u"эксперимент 1"
+        folder_name = "эксперимент 1"
         run("dx cd /")
         run("dx ls")
-        run(u"dx mkdir '{f}'".format(f=folder_name))
-        run(u"dx cd '{f}'".format(f=folder_name))
+        run("dx mkdir '{f}'".format(f=folder_name))
+        run("dx cd '{f}'".format(f=folder_name))
         with tempfile.NamedTemporaryFile() as f:
             local_filename = f.name
             filename = folder_name
-            run(u"echo xyzzt > {tf}".format(tf=local_filename))
-            fileid = run(u"dx upload --wait {tf} -o '../{f}/{f}' --brief".format(tf=local_filename, f=filename))
-            self.assertEqual(fileid, run(u"dx ls '../{f}/{f}' --brief".format(f=filename)))
-            self.assertEqual("xyzzt\n", run(u"dx head '../{f}/{f}'".format(f=filename)))
-        run(u'dx pwd')
-        run(u"dx cd ..")
-        run(u'dx pwd')
-        run(u'dx ls')
+            run("echo xyzzt > {tf}".format(tf=local_filename))
+            fileid = run("dx upload --wait {tf} -o '../{f}/{f}' --brief".format(tf=local_filename, f=filename))
+            self.assertEqual(fileid, run("dx ls '../{f}/{f}' --brief".format(f=filename)))
+            self.assertEqual("xyzzt\n", run("dx head '../{f}/{f}'".format(f=filename)))
+        run("dx pwd")
+        run("dx cd ..")
+        run("dx pwd")
+        run("dx ls")
         with self.assertRaises(subprocess.CalledProcessError):
-            run(u"dx rm '{f}'".format(f=filename))
-        run(u"dx cd '{f}'".format(f=folder_name))
+            run("dx rm '{f}'".format(f=filename))
+        run("dx cd '{f}'".format(f=folder_name))
 
-        run(u"dx mv '{f}' '{f}2'".format(f=filename))
-        run(u"dx mv '{f}2' '{f}'".format(f=filename))
+        run("dx mv '{f}' '{f}2'".format(f=filename))
+        run("dx mv '{f}2' '{f}'".format(f=filename))
 
-        run(u"dx rm '{f}'".format(f=filename))
+        run("dx rm '{f}'".format(f=filename))
 
         table_name = folder_name
         with tempfile.NamedTemporaryFile(suffix='.csv') as f:
             writer = csv.writer(f)
             writer.writerows([['a:uint8', 'b:string', 'c:float'], [1, "x", 1.0], [2, "y", 4.0]])
             f.flush()
-            run(u"dx import csv -o '../{n}' '{f}' --wait".format(n=table_name, f=f.name))
-            run(u"dx export csv '../{n}' --output {o} -f".format(n=table_name, o=f.name))
+            run("dx import csv -o '../{n}' '{f}' --wait".format(n=table_name, f=f.name))
+            run("dx export csv '../{n}' --output {o} -f".format(n=table_name, o=f.name))
 
-        run(u"dx get_details '../{n}'".format(n=table_name))
+        run("dx get_details '../{n}'".format(n=table_name))
 
-        run(u"dx cd ..")
-        run(u"dx rmdir '{f}'".format(f=folder_name))
+        run("dx cd ..")
+        run("dx rmdir '{f}'".format(f=folder_name))
 
-        run(u'dx tree')
-        run(u"dx find data --name '{n}'".format(n=table_name))
-        run(u"dx find data --name '{n} --property foo=bar'".format(n=table_name))
-        run(u"dx rename '{n}' '{n}'2".format(n=table_name))
-        run(u"dx rename '{n}'2 '{n}'".format(n=table_name))
-        run(u"dx set_properties '{n}' '{n}={n}' '{n}2={n}3'".format(n=table_name))
-        run(u"dx unset_properties '{n}' '{n}' '{n}2'".format(n=table_name))
-        run(u"dx tag '{n}' '{n}'2".format(n=table_name))
-        run(u"dx describe '{n}'".format(n=table_name))
+        run("dx tree")
+        run("dx find data --name '{n}'".format(n=table_name))
+        run("dx find data --name '{n} --property foo=bar'".format(n=table_name))
+        run("dx rename '{n}' '{n}'2".format(n=table_name))
+        run("dx rename '{n}'2 '{n}'".format(n=table_name))
+        run("dx set_properties '{n}' '{n}={n}' '{n}2={n}3'".format(n=table_name))
+        run("dx unset_properties '{n}' '{n}' '{n}2'".format(n=table_name))
+        run("dx tag '{n}' '{n}'2".format(n=table_name))
+        run("dx describe '{n}'".format(n=table_name))
 
-        self.assertTrue(self.project in run(u"dx find projects --brief"))
+        self.assertTrue(self.project in run("dx find projects --brief"))
 
-        run(u"dx new record -o :foo --verbose")
-        record_id = run(u"dx new record -o :foo2 --brief --visibility hidden --property foo=bar --property baz=quux --tag onetag --tag twotag --type foo --type bar --details '{\"hello\": \"world\"}'").strip()
-        self.assertEqual(record_id, run(u"dx ls :foo2 --brief").strip())
-        self.assertEqual({"hello": "world"}, json.loads(run(u"dx get -o - :foo2")))
+        run("dx new record -o :foo --verbose")
+        record_id = run("dx new record -o :foo2 --brief --visibility hidden --property foo=bar --property baz=quux --tag onetag --tag twotag --type foo --type bar --details '{\"hello\": \"world\"}'").strip()
+        self.assertEqual(record_id, run("dx ls :foo2 --brief").strip())
+        self.assertEqual({"hello": "world"}, json.loads(run("dx get -o - :foo2")))
 
-        second_record_id = run(u"dx new record :somenewfolder/foo --parents --brief").strip()
-        self.assertEqual(second_record_id, run(u"dx ls :somenewfolder/foo --brief").strip())
+        second_record_id = run("dx new record :somenewfolder/foo --parents --brief").strip()
+        self.assertEqual(second_record_id, run("dx ls :somenewfolder/foo --brief").strip())
 
         # describe
-        run(u"dx describe {record}".format(record=record_id))
-        desc = json.loads(run(u"dx describe {record} --details --json".format(record=record_id)))
+        run("dx describe {record}".format(record=record_id))
+        desc = json.loads(run("dx describe {record} --details --json".format(record=record_id)))
         self.assertEqual(desc['tags'], ['onetag', 'twotag'])
         self.assertEqual(desc['types'], ['foo', 'bar'])
         self.assertEqual(desc['properties'], {"foo": "bar", "baz": "quux"})
         self.assertEqual(desc['details'], {"hello": "world"})
         self.assertEqual(desc['hidden'], True)
 
-        desc = json.loads(run(u"dx describe {record} --json".format(record=second_record_id)))
+        desc = json.loads(run("dx describe {record} --json".format(record=second_record_id)))
         self.assertEqual(desc['folder'], '/somenewfolder')
 
-        run(u"dx rm :foo")
-        run(u"dx rm :foo2")
-        run(u"dx rm -r :somenewfolder")
+        run("dx rm :foo")
+        run("dx rm :foo2")
+        run("dx rm -r :somenewfolder")
 
         # Path resolution is used
-        run(u"dx find jobs --project :")
-        run(u"dx find executions --project :")
-        run(u"dx find analyses --project :")
-        run(u"dx find data --project :")
+        run("dx find jobs --project :")
+        run("dx find executions --project :")
+        run("dx find analyses --project :")
+        run("dx find data --project :")
 
     def test_get_unicode_url(self):
         with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
@@ -218,7 +218,7 @@ class TestDXClient(DXTestCase):
         shell.sendline("dx sh")
         shell.expect(">")
         shell.sendline("Ψ 'Ψ Ψ'")
-        shell.expect("invalid choice: Ψ")
+        shell.expect("invalid choice: Ψ".encode(sys_encoding))
         shell.expect(">")
         shell.sendline("env")
         shell.expect("Current user")
@@ -227,32 +227,32 @@ class TestDXClient(DXTestCase):
 
     def test_dx_get_record(self):
         with chdir(tempfile.mkdtemp()):
-            run(u"dx new record -o :foo --verbose")
-            run(u"dx get :foo")
+            run("dx new record -o :foo --verbose")
+            run("dx get :foo")
             self.assertTrue(os.path.exists('foo.json'))
-            run(u"dx get --no-ext :foo")
+            run("dx get --no-ext :foo")
             self.assertTrue(os.path.exists('foo'))
             run("diff -q foo foo.json")
 
     def test_dx_object_tagging(self):
-        the_tags = [u"Σ1=n", u"helloo0", u"ωω"]
+        the_tags = ["Σ1=n", "helloo0", "ωω"]
         # tag
-        record_id = run(u"dx new record Ψ --brief").strip()
-        run(u"dx tag Ψ " + u" ".join(the_tags))
+        record_id = run("dx new record Ψ --brief").strip()
+        run("dx tag Ψ " + " ".join(the_tags))
         mytags = dxpy.describe(record_id)['tags']
         for tag in the_tags:
             self.assertIn(tag, mytags)
         # untag
-        run(u"dx untag Ψ " + u" ".join(the_tags[:2]))
+        run("dx untag Ψ " + " ".join(the_tags[:2]))
         mytags = dxpy.describe(record_id)['tags']
         for tag in the_tags[:2]:
             self.assertNotIn(tag, mytags)
         self.assertIn(the_tags[2], mytags)
 
         # -a flag
-        second_record_id = run(u"dx new record Ψ --brief").strip()
+        second_record_id = run("dx new record Ψ --brief").strip()
         self.assertNotEqual(record_id, second_record_id)
-        run(u"dx tag -a Ψ " + u" ".join(the_tags))
+        run("dx tag -a Ψ " + " ".join(the_tags))
         mytags = dxpy.describe(record_id)['tags']
         for tag in the_tags:
             self.assertIn(tag, mytags)
@@ -260,7 +260,7 @@ class TestDXClient(DXTestCase):
         for tag in the_tags:
             self.assertIn(tag, second_tags)
 
-        run(u"dx untag -a Ψ " + u" ".join(the_tags))
+        run("dx untag -a Ψ " + " ".join(the_tags))
         mytags = dxpy.describe(record_id)['tags']
         self.assertEqual(len(mytags), 0)
         second_tags = dxpy.describe(second_record_id)['tags']
@@ -268,19 +268,19 @@ class TestDXClient(DXTestCase):
 
         # nonexistent name
         with self.assertSubprocessFailure(stderr_regexp='Could not resolve', exit_code=3):
-            run(u"dx tag nonexistent atag")
+            run("dx tag nonexistent atag")
         with self.assertSubprocessFailure(stderr_regexp='Could not resolve', exit_code=3):
-            run(u"dx untag nonexistent atag")
+            run("dx untag nonexistent atag")
 
     def test_dx_project_tagging(self):
-        the_tags = [u"$my.tag", u"secoиdtag", u"тhird тagggg"]
+        the_tags = ["$my.tag", "secoиdtag", "тhird тagggg"]
         # tag
-        run(u"dx tag : \\" + the_tags[0] + u" " + the_tags[1] + u" '" + the_tags[2] + u"'")
+        run("dx tag : \\" + the_tags[0] + " " + the_tags[1] + " '" + the_tags[2] + "'")
         mytags = dxpy.describe(self.project)['tags']
         for tag in the_tags:
             self.assertIn(tag, mytags)
         # untag
-        run(u"dx untag : \\" + the_tags[0] + u" '" + the_tags[2] + u"'")
+        run("dx untag : \\" + the_tags[0] + " '" + the_tags[2] + "'")
         mytags = dxpy.describe(self.project)['tags']
         self.assertIn(the_tags[1], mytags)
         for tag in [the_tags[0], the_tags[2]]:
@@ -288,22 +288,22 @@ class TestDXClient(DXTestCase):
 
         # nonexistent name
         with self.assertSubprocessFailure(stderr_regexp='Could not find a project named', exit_code=3):
-            run(u"dx tag nonexistent: atag")
+            run("dx tag nonexistent: atag")
         with self.assertSubprocessFailure(stderr_regexp='Could not find a project named', exit_code=3):
-            run(u"dx untag nonexistent: atag")
+            run("dx untag nonexistent: atag")
 
     def test_dx_object_properties(self):
-        property_names = [u"Σ_1^n", u"helloo0", u"ωω"]
-        property_values = [u"n", u"world z", u"ω()"]
+        property_names = ["Σ_1^n", "helloo0", "ωω"]
+        property_values = ["n", "world z", "ω()"]
         # set_properties
-        record_id = run(u"dx new record Ψ --brief").strip()
-        run(u"dx set_properties Ψ " + u" ".join([u"'" + prop[0] + u"'='" + prop[1] + u"'" for prop in zip(property_names, property_values)]))
+        record_id = run("dx new record Ψ --brief").strip()
+        run("dx set_properties Ψ " + " ".join(["'" + prop[0] + "'='" + prop[1] + "'" for prop in zip(property_names, property_values)]))
         my_properties = dxpy.api.record_describe(record_id, {"properties": True})['properties']
         for (name, value) in zip(property_names, property_values):
             self.assertIn(name, my_properties)
             self.assertEqual(value, my_properties[name])
         # unset_properties
-        run(u"dx unset_properties Ψ '" + u"' '".join(property_names[:2]) + u"'")
+        run("dx unset_properties Ψ '" + "' '".join(property_names[:2]) + "'")
         my_properties = dxpy.api.record_describe(record_id, {"properties": True})['properties']
         for name in property_names[:2]:
             self.assertNotIn(name, my_properties)
@@ -311,9 +311,9 @@ class TestDXClient(DXTestCase):
         self.assertEqual(property_values[2], my_properties[property_names[2]])
 
         # -a flag
-        second_record_id = run(u"dx new record Ψ --brief").strip()
+        second_record_id = run("dx new record Ψ --brief").strip()
         self.assertNotEqual(record_id, second_record_id)
-        run(u"dx set_properties -a Ψ " + u" ".join([u"'" + prop[0] + u"'='" + prop[1] + u"'" for prop in zip(property_names, property_values)]))
+        run("dx set_properties -a Ψ " + " ".join(["'" + prop[0] + "'='" + prop[1] + "'" for prop in zip(property_names, property_values)]))
         my_properties = dxpy.api.record_describe(record_id, {"properties": True})['properties']
         for (name, value) in zip(property_names, property_values):
             self.assertIn(name, my_properties)
@@ -323,7 +323,7 @@ class TestDXClient(DXTestCase):
             self.assertIn(name, my_properties)
             self.assertEqual(value, my_properties[name])
 
-        run(u"dx unset_properties -a Ψ '" + u"' '".join(property_names) + u"'")
+        run("dx unset_properties -a Ψ '" + "' '".join(property_names) + "'")
         my_properties = dxpy.api.record_describe(record_id, {"properties": True})['properties']
         self.assertEqual(len(my_properties), 0)
         second_properties = dxpy.api.record_describe(second_record_id, {"properties": True})['properties']
@@ -331,9 +331,9 @@ class TestDXClient(DXTestCase):
 
         # nonexistent name
         with self.assertSubprocessFailure(stderr_regexp='Could not resolve', exit_code=3):
-            run(u"dx set_properties nonexistent key=value")
+            run("dx set_properties nonexistent key=value")
         with self.assertSubprocessFailure(stderr_regexp='Could not resolve', exit_code=3):
-            run(u"dx unset_properties nonexistent key")
+            run("dx unset_properties nonexistent key")
 
         # Errors parsing --property value
         with self.assertSubprocessFailure(stderr_regexp='property_key', exit_code=3):
@@ -354,16 +354,16 @@ class TestDXClient(DXTestCase):
         self.assertEqual(my_properties["bar"], "")
 
     def test_dx_project_properties(self):
-        property_names = [u"$my.prop", u"secoиdprop", u"тhird prop"]
-        property_values = [u"$hello.world", u"Σ2,n", u"stuff"]
+        property_names = ["$my.prop", "secoиdprop", "тhird prop"]
+        property_values = ["$hello.world", "Σ2,n", "stuff"]
         # set_properties
-        run(u"dx set_properties : " + u" ".join([u"'" + prop[0] + u"'='" + prop[1] + u"'" for prop in zip(property_names, property_values)]))
+        run("dx set_properties : " + " ".join(["'" + prop[0] + "'='" + prop[1] + "'" for prop in zip(property_names, property_values)]))
         my_properties = dxpy.api.project_describe(self.project, {"properties": True})['properties']
         for (name, value) in zip(property_names, property_values):
             self.assertIn(name, my_properties)
             self.assertEqual(value, my_properties[name])
         # unset_properties
-        run(u"dx unset_properties : '" + property_names[0] + u"' '" + property_names[2] + u"'")
+        run("dx unset_properties : '" + property_names[0] + "' '" + property_names[2] + "'")
         my_properties = dxpy.api.project_describe(self.project, {"properties": True})['properties']
         self.assertIn(property_names[1], my_properties)
         self.assertEqual(property_values[1], my_properties[property_names[1]])
@@ -372,9 +372,9 @@ class TestDXClient(DXTestCase):
 
         # nonexistent name
         with self.assertSubprocessFailure(stderr_regexp='Could not find a project named', exit_code=3):
-            run(u"dx set_properties nonexistent: key=value")
+            run("dx set_properties nonexistent: key=value")
         with self.assertSubprocessFailure(stderr_regexp='Could not find a project named', exit_code=3):
-            run(u"dx unset_properties nonexistent: key")
+            run("dx unset_properties nonexistent: key")
 
         # Errors parsing --property value
         with self.assertSubprocessFailure(stderr_regexp='property_key', exit_code=3):
@@ -395,7 +395,7 @@ class TestDXClient(DXTestCase):
         self.assertEqual(my_properties["bar"], "")
 
     def test_dx_describe_project(self):
-        describe_output = run(u"dx describe :").strip()
+        describe_output = run("dx describe :").strip()
         print(describe_output)
         self.assertTrue(re.search(r'ID\s+%s.*\n.*\nName\s+dxclient_test_pröject' % (self.project,),
                                   describe_output))
@@ -414,7 +414,7 @@ class TestDXClient(DXTestCase):
         project_name = "test_dx_cp_" + str(random.randint(0, 1000000)) + "_" + str(int(time.time() * 1000))
         dest_project_id = run("dx new project {name} --brief".format(name=project_name)).strip()
         try:
-            record_id = run(u"dx new record --brief --details '{\"hello\": 1}'").strip()
+            record_id = run("dx new record --brief --details '{\"hello\": 1}'").strip()
             run("dx close --wait {r}".format(r=record_id))
             self.assertEqual(run("dx ls --brief {p}".format(p=dest_project_id)), "")
             run("dx cp {r} {p}".format(r=record_id, p=dest_project_id))
@@ -424,16 +424,16 @@ class TestDXClient(DXTestCase):
 
     def test_dx_gtables(self):
         # new gtable
-        gri_gtable_id = run(u"dx new gtable --gri mychr mylo myhi --columns mychr,mylo:int32,myhi:int32 --brief --property hello=world --details '{\"hello\":\"world\"}' --visibility visible").strip()
+        gri_gtable_id = run("dx new gtable --gri mychr mylo myhi --columns mychr,mylo:int32,myhi:int32 --brief --property hello=world --details '{\"hello\":\"world\"}' --visibility visible").strip()
         # Add rows to it (?)
         # TODO: make this better.
         add_rows_input = {"data": [["chr", 1, 10], ["chr2", 3, 13], ["chr1", 3, 10], ["chr1", 11, 13], ["chr1", 5, 12]]}
-        run(u"dx api {gt} addRows '{rows}'".format(gt=gri_gtable_id, rows=json.dumps(add_rows_input)))
+        run("dx api {gt} addRows '{rows}'".format(gt=gri_gtable_id, rows=json.dumps(add_rows_input)))
         # close
-        run(u"dx close {gt} --wait".format(gt=gri_gtable_id))
+        run("dx close {gt} --wait".format(gt=gri_gtable_id))
 
         # describe
-        desc = json.loads(run(u"dx describe {gt} --details --json".format(gt=gri_gtable_id)))
+        desc = json.loads(run("dx describe {gt} --details --json".format(gt=gri_gtable_id)))
         self.assertEqual(desc['types'], ['gri'])
         self.assertEqual(desc['indices'], [{"type":"genomic", "name":"gri", "chr":"mychr", "lo":"mylo", "hi":"myhi"}])
         self.assertEqual(desc['properties'], {"hello": "world"})
@@ -441,29 +441,29 @@ class TestDXClient(DXTestCase):
         self.assertEqual(desc['hidden'], False)
 
         # gri query
-        self.assertEqual(run(u"dx export tsv {gt} --gri chr1 1 10 -o -".format(gt=gri_gtable_id)),
+        self.assertEqual(run("dx export tsv {gt} --gri chr1 1 10 -o -".format(gt=gri_gtable_id)),
                          '\r\n'.join(['mychr:string\tmylo:int32\tmyhi:int32', 'chr1\t3\t10', 'chr1\t5\t12', '']))
 
         # "get" is not supported on gtables
         with self.assertSubprocessFailure(stderr_regexp='given object is of class gtable', exit_code=3):
-            run(u"dx get {gt}".format(gt=gri_gtable_id))
+            run("dx get {gt}".format(gt=gri_gtable_id))
 
         # Download and re-import with gri
         with tempfile.NamedTemporaryFile(suffix='.csv') as fd:
-            run(u"dx export tsv {gt} -o {fd} -f".format(gt=gri_gtable_id, fd=fd.name))
+            run("dx export tsv {gt} -o {fd} -f".format(gt=gri_gtable_id, fd=fd.name))
             fd.flush()
-            run(u"dx import tsv {fd} -o gritableimport --gri mychr mylo myhi --wait".format(fd=fd.name))
+            run("dx import tsv {fd} -o gritableimport --gri mychr mylo myhi --wait".format(fd=fd.name))
 
             # Also, upload and download the file just to test out upload/download
-            run(u"dx upload {fd} -o uploadedfile --wait".format(fd=fd.name))
-            run(u"dx download uploadedfile -f")
-            run(u"dx download uploadedfile -o -")
+            run("dx upload {fd} -o uploadedfile --wait".format(fd=fd.name))
+            run("dx download uploadedfile -f")
+            run("dx download uploadedfile -o -")
         try:
             os.remove("uploadedfile")
         except IOError:
             pass
 
-        second_desc = json.loads(run(u"dx describe gritableimport --json"))
+        second_desc = json.loads(run("dx describe gritableimport --json"))
         self.assertEqual(second_desc['types'], ['gri'])
         self.assertEqual(second_desc['indices'], [{"type":"genomic", "name":"gri", "chr":"mychr", "lo":"mylo", "hi":"myhi"}])
         self.assertEqual(desc['size'], second_desc['size'])
@@ -471,10 +471,10 @@ class TestDXClient(DXTestCase):
 
     def test_dx_mkdir(self):
         with self.assertRaises(subprocess.CalledProcessError):
-            run(u'dx mkdir mkdirtest/b/c')
-        run(u'dx mkdir -p mkdirtest/b/c')
-        run(u'dx mkdir -p mkdirtest/b/c')
-        run(u'dx rm -r mkdirtest')
+            run("dx mkdir mkdirtest/b/c")
+        run("dx mkdir -p mkdirtest/b/c")
+        run("dx mkdir -p mkdirtest/b/c")
+        run("dx rm -r mkdirtest")
 
     def test_dxpy_session_isolation(self):
         for var in 'DX_PROJECT_CONTEXT_ID', 'DX_PROJECT_CONTEXT_NAME', 'DX_CLI_WD':
@@ -634,7 +634,7 @@ class TestDXClient(DXTestCase):
             # Check for job name (e.g. "Job: sleep")
             dx.expect("Job: \x1b\[1msleep", timeout=5)
             # \xf6 is ö
-            dx.expect(u"Project: dxclient_test_pr\xf6ject".encode('utf-8'))
+            dx.expect("Project: dxclient_test_pr\xf6ject".encode(sys_encoding))
             dx.expect("The job is running in terminal 1.", timeout=5)
             # Check for terminal prompt and verify we're in the container
             job_id = dxpy.find_jobs(name="sleep").next()['id']
@@ -736,20 +736,20 @@ class TestDXClientUploadDownload(DXTestCase):
             run('dx download ""')
         wd = tempfile.mkdtemp()
         os.mkdir(os.path.join(wd, "a"))
-        os.mkdir(os.path.join(wd, "a", u"б"))
-        os.mkdir(os.path.join(wd, "a", u"б", "c"))
-        with tempfile.NamedTemporaryFile(dir=os.path.join(wd, "a", u"б")) as fd:
+        os.mkdir(os.path.join(wd, "a", "б"))
+        os.mkdir(os.path.join(wd, "a", "б", "c"))
+        with tempfile.NamedTemporaryFile(dir=os.path.join(wd, "a", "б")) as fd:
             fd.write("0123456789ABCDEF"*64)
             fd.flush()
             with self.assertSubprocessFailure(stderr_regexp='is a directory but the -r/--recursive option was not given', exit_code=1):
-                run(u'dx upload '+wd)
-            run(u'dx upload -r '+wd)
-            run(u'dx wait "{f}"'.format(f=os.path.join(os.path.basename(wd), "a", u"б", os.path.basename(fd.name))))
+                run("dx upload "+wd)
+            run("dx upload -r "+wd)
+            run('dx wait "{f}"'.format(f=os.path.join(os.path.basename(wd), "a", "б", os.path.basename(fd.name))))
             with self.assertSubprocessFailure(stderr_regexp='is a folder but the -r/--recursive option was not given', exit_code=1):
-                run(u'dx download '+os.path.basename(wd))
+                run("dx download "+os.path.basename(wd))
             old_dir = os.getcwd()
             with chdir(tempfile.mkdtemp()):
-                run(u'dx download -r '+os.path.basename(wd))
+                run("dx download -r "+os.path.basename(wd))
 
                 tree1 = check_output("cd {wd}; find .".format(wd=wd), shell=True)
                 tree2 = check_output("cd {wd}; find .".format(wd=os.path.basename(wd)), shell=True)
@@ -757,13 +757,13 @@ class TestDXClientUploadDownload(DXTestCase):
 
             with chdir(tempfile.mkdtemp()):
                 os.mkdir('t')
-                run(u'dx download -r -o t '+os.path.basename(wd))
+                run("dx download -r -o t "+os.path.basename(wd))
                 tree1 = check_output("cd {wd}; find .".format(wd=wd), shell=True)
                 tree2 = check_output("cd {wd}; find .".format(wd=os.path.join("t", os.path.basename(wd))), shell=True)
                 self.assertEqual(tree1, tree2)
 
                 os.mkdir('t2')
-                run(u'dx download -o t2 '+os.path.join(os.path.basename(wd), "a", u"б", os.path.basename(fd.name)))
+                run("dx download -o t2 "+os.path.join(os.path.basename(wd), "a", "б", os.path.basename(fd.name)))
                 self.assertEqual(os.stat(os.path.join("t2", os.path.basename(fd.name))).st_size,
                                  len("0123456789ABCDEF"*64))
 
@@ -790,7 +790,7 @@ class TestDXClientUploadDownload(DXTestCase):
         with tempfile.NamedTemporaryFile(dir=testdir) as fd:
             fd.write("foo")
             fd.flush()
-            file_id = run(u'dx upload ' + fd.name + ' --brief --wait').strip()
+            file_id = run("dx upload " + fd.name + " --brief --wait").strip()
             self.assertTrue(file_id.startswith('file-'))
 
             # unset environment
@@ -810,7 +810,7 @@ class TestDXClientUploadDownload(DXTestCase):
         with tempfile.NamedTemporaryFile(dir=testdir) as fd:
             fd.write("foo")
             fd.flush()
-            file_id = run(u'dx upload ' + fd.name + ' --brief --wait').strip()
+            file_id = run("dx upload " + fd.name + " --brief --wait").strip()
             self.assertTrue(file_id.startswith('file-'))
 
             # download file
@@ -833,12 +833,12 @@ class TestDXClientUploadDownload(DXTestCase):
                 fd2.write("a-file")
                 fd2.flush()
 
-                run(u'dx upload -r {testdir}/{rootfile} {testdir}/a --wait'.format(testdir=testdir,
+                run("dx upload -r {testdir}/{rootfile} {testdir}/a --wait".format(testdir=testdir,
                                                                                    rootfile=os.path.basename(fd.name)))
-                listing = run(u'dx ls').split('\n')
+                listing = run("dx ls").split("\n")
                 self.assertIn("a/", listing)
                 self.assertIn(os.path.basename(fd.name), listing)
-                listing = run(u'dx ls a').split('\n')
+                listing = run("dx ls a").split("\n")
                 self.assertIn(os.path.basename(fd2.name), listing)
 
 class TestDXClientDescribe(DXTestCase):
@@ -849,7 +849,7 @@ class TestDXClientDescribe(DXTestCase):
 
         # need colon to recognize as project name
         with self.assertSubprocessFailure(exit_code=3):
-            run(u"dx describe dxclient_test_pröject")
+            run("dx describe dxclient_test_pröject")
 
         # bad project name
         with self.assertSubprocessFailure(exit_code=3):
@@ -1080,12 +1080,12 @@ dx-jobutil-add-output record_array $second_record --array
                                          "runSpec": {"interpreter": "bash",
                                                      "code": "echo 'hello'"}
                                          })['id']
-        property_names = [u"$my.prop", u"secoиdprop", u"тhird prop"]
-        property_values = [u"$hello.world", u"Σ2,n", u"stuff"]
-        the_tags = [u"Σ1=n", u"helloo0", u"ωω"]
-        job_id = run(u"dx run " + applet_id + ' -inumber=32 --brief -y ' + \
-                     u" ".join([u"--property '" + prop[0] + u"'='" + prop[1] + u"'" for prop in zip(property_names, property_values)]) + \
-                     u"".join([u" --tag " + tag for tag in the_tags])).strip()
+        property_names = ["$my.prop", "secoиdprop", "тhird prop"]
+        property_values = ["$hello.world", "Σ2,n", "stuff"]
+        the_tags = ["Σ1=n", "helloo0", "ωω"]
+        job_id = run("dx run " + applet_id + ' -inumber=32 --brief -y ' + \
+                     " ".join(["--property '" + prop[0] + "'='" + prop[1] + "'" for prop in zip(property_names, property_values)]) + \
+                     "".join([" --tag " + tag for tag in the_tags])).strip()
 
         job_desc = dxpy.api.job_describe(job_id)
         self.assertEqual(job_desc['tags'].sort(), the_tags.sort())
@@ -1095,7 +1095,7 @@ dx-jobutil-add-output record_array $second_record --array
 
         # Test setting tags and properties afterwards
         run("dx tag " + job_id + " foo bar foo")
-        run(u"dx set_properties " + job_id + u" foo=bar Σ_1^n=n")
+        run("dx set_properties " + job_id + " foo=bar Σ_1^n=n")
         job_desc_lines = run("dx describe " + job_id + " --delim ' '").splitlines()
         found_tags = False
         found_properties = False
@@ -1106,17 +1106,17 @@ dx-jobutil-add-output record_array $second_record --array
                 found_tags = True
             if line.startswith('Properties'):
                 self.assertIn("foo=bar", line)
-                self.assertIn(u"Σ_1^n=n", line)
+                self.assertIn("Σ_1^n=n", line)
                 found_properties = True
         self.assertTrue(found_tags)
         self.assertTrue(found_properties)
         run("dx untag " + job_id + " foo")
-        run(u"dx unset_properties " + job_id + u" Σ_1^n")
+        run("dx unset_properties " + job_id + " Σ_1^n")
         job_desc = json.loads(run("dx describe " + job_id + " --json"))
         self.assertIn("bar", job_desc['tags'])
         self.assertNotIn("foo", job_desc['tags'])
         self.assertEqual(job_desc["properties"]["foo"], "bar")
-        self.assertNotIn(u"Σ_1^n", job_desc["properties"])
+        self.assertNotIn("Σ_1^n", job_desc["properties"])
 
     def test_dx_run_extra_args(self):
         # success
@@ -1179,8 +1179,8 @@ dx-jobutil-add-output record_array $second_record --array
         orig_job_id = run("dx run " + applet_id +
                           ' -inumber=32 --name jobname --folder /output ' +
                           '--instance-type mem2_hdd2_x2 ' +
-                          u'--tag Ψ --tag $hello.world ' +
-                          u'--property Σ_1^n=n --property $hello.=world ' +
+                          '--tag Ψ --tag $hello.world ' +
+                          '--property Σ_1^n=n --property $hello.=world ' +
                           '--priority normal ' +
                           '--brief -y').strip()
         orig_job_desc = dxpy.api.job_describe(orig_job_id)
@@ -1324,7 +1324,7 @@ class TestDXClientWorkflow(DXTestCase):
 
         # Test setting tags and properties on analysis
         run("dx tag " + analysis_id + " foo bar foo")
-        run(u"dx set_properties " + analysis_id + u" foo=bar Σ_1^n=n")
+        run("dx set_properties " + analysis_id + " foo=bar Σ_1^n=n")
         analysis_desc_lines = run("dx describe " + analysis_id).splitlines()
         found_tags = False
         found_properties = False
@@ -1335,12 +1335,12 @@ class TestDXClientWorkflow(DXTestCase):
                 found_tags = True
             if line.startswith('Properties'):
                 self.assertIn("foo=bar", line)
-                self.assertIn(u"Σ_1^n=n", line)
+                self.assertIn("Σ_1^n=n", line)
                 found_properties = True
         self.assertTrue(found_tags)
         self.assertTrue(found_properties)
         run("dx untag " + analysis_id + " foo")
-        run(u"dx unset_properties " + analysis_id + u" Σ_1^n")
+        run("dx unset_properties " + analysis_id + " Σ_1^n")
         analysis_desc = run("dx describe " + analysis_id + " --delim ' '")
         self.assertIn("Tags bar\n", analysis_desc)
         self.assertIn("Properties foo=bar\n", analysis_desc)
@@ -1591,15 +1591,15 @@ class TestDXClientWorkflow(DXTestCase):
             run("dx run myworkflow")
 
     def test_dx_new_workflow(self):
-        workflow_id = run(u"dx new workflow --title=тitle --summary=SΨmmary --description=DΣsc wØrkflØwname --output-folder /wØrkflØwØutput --brief").strip()
+        workflow_id = run("dx new workflow --title=тitle --summary=SΨmmary --description=DΣsc wØrkflØwname --output-folder /wØrkflØwØutput --brief").strip()
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(desc["id"], workflow_id)
         self.assertEqual(desc["editVersion"], 0)
-        self.assertEqual(desc["name"], u"wØrkflØwname")
-        self.assertEqual(desc["title"], u"тitle")
-        self.assertEqual(desc["summary"], u"SΨmmary")
-        self.assertEqual(desc["description"], u"DΣsc")
-        self.assertEqual(desc["outputFolder"], u"/wØrkflØwØutput")
+        self.assertEqual(desc["name"], "wØrkflØwname")
+        self.assertEqual(desc["title"], "тitle")
+        self.assertEqual(desc["summary"], "SΨmmary")
+        self.assertEqual(desc["description"], "DΣsc")
+        self.assertEqual(desc["outputFolder"], "/wØrkflØwØutput")
         self.assertEqual(desc["project"], self.project)
 
         # add some stages and then create a new one initializing from
@@ -1611,25 +1611,25 @@ class TestDXClientWorkflow(DXTestCase):
                                          "outputSpec": [],
                                          "runSpec": {"interpreter": "bash", "code": ""}
                                          })['id']
-        run(u"dx add stage wØrkflØwname " + applet_id)
+        run("dx add stage wØrkflØwname " + applet_id)
 
-        new_workflow_id = run(u"dx new workflow --init wØrkflØwname --title newtitle " +
-                              u"--summary newsummary --output-folder /output --brief").strip()
+        new_workflow_id = run("dx new workflow --init wØrkflØwname --title newtitle " +
+                              "--summary newsummary --output-folder /output --brief").strip()
         desc = dxpy.describe(new_workflow_id)
         self.assertNotEqual(new_workflow_id, workflow_id)
         self.assertEqual(desc["id"], new_workflow_id)
         self.assertEqual(desc["editVersion"], 0)
-        self.assertEqual(desc["name"], u"wØrkflØwname")
+        self.assertEqual(desc["name"], "wØrkflØwname")
         self.assertEqual(desc["title"], "newtitle")
         self.assertEqual(desc["summary"], "newsummary")
-        self.assertEqual(desc["description"], u"DΣsc")
+        self.assertEqual(desc["description"], "DΣsc")
         self.assertEqual(desc["outputFolder"], "/output")
         self.assertEqual(desc["project"], self.project)
         self.assertEqual(len(desc["stages"]), 1)
         self.assertEqual(desc["stages"][0]["executable"], applet_id)
 
         # run without --brief; should see initializedFrom information
-        new_workflow_desc = run(u"dx new workflow --init " + workflow_id)
+        new_workflow_desc = run("dx new workflow --init " + workflow_id)
         self.assertIn(workflow_id, new_workflow_desc)
 
         # error when initializing from a nonexistent workflow
@@ -1647,7 +1647,7 @@ class TestDXClientWorkflow(DXTestCase):
             run("dx update workflow " + record_id)
 
     def test_dx_describe_workflow(self):
-        workflow_id = run(u"dx new workflow myworkflow --title title --brief").strip()
+        workflow_id = run("dx new workflow myworkflow --title title --brief").strip()
         desc = run("dx describe " + workflow_id)
         self.assertIn("Input Spec", desc)
         self.assertIn("Output Spec", desc)
@@ -1665,7 +1665,7 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertIn("default=10", desc)
 
     def test_dx_add_remove_list_stages(self):
-        workflow_id = run(u"dx new workflow myworkflow --title title --brief").strip()
+        workflow_id = run("dx new workflow myworkflow --title title --brief").strip()
         run("dx describe " + workflow_id)
         applet_id = dxpy.api.applet_new({"name": "myapplet",
                                          "project": self.project,
@@ -1770,44 +1770,44 @@ class TestDXClientWorkflow(DXTestCase):
             run("dx remove stage /myworkflow stage-123456789012345678901234")
 
     def test_dx_update_workflow(self):
-        workflow_id = run(u"dx new workflow myworkflow --brief").strip()
+        workflow_id = run("dx new workflow myworkflow --brief").strip()
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(desc['editVersion'], 0)
         self.assertEqual(desc['title'], "myworkflow")
         self.assertIsNone(desc["outputFolder"])
 
         # set title, summary, description, outputFolder
-        run(u"dx update workflow myworkflow --title тitle --summary SΨmmary --description=DΣsc --output-folder .")
+        run("dx update workflow myworkflow --title тitle --summary SΨmmary --description=DΣsc --output-folder .")
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(desc['editVersion'], 1)
-        self.assertEqual(desc['title'], u"тitle")
-        self.assertEqual(desc['summary'], u"SΨmmary")
-        self.assertEqual(desc['description'], u"DΣsc")
-        self.assertEqual(desc['outputFolder'], u"/")
+        self.assertEqual(desc['title'], "тitle")
+        self.assertEqual(desc['summary'], "SΨmmary")
+        self.assertEqual(desc['description'], "DΣsc")
+        self.assertEqual(desc['outputFolder'], "/")
 
         # describe
-        describe_output = run(u"dx describe myworkflow --delim ' '")
-        self.assertIn(u"Output Folder /", describe_output)
+        describe_output = run("dx describe myworkflow --delim ' '")
+        self.assertIn("Output Folder /", describe_output)
 
         # unset title, outputFolder
-        run(u"dx update workflow myworkflow --no-title --no-output-folder")
+        run("dx update workflow myworkflow --no-title --no-output-folder")
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(desc['editVersion'], 2)
         self.assertEqual(desc['title'], "myworkflow")
         self.assertIsNone(desc['outputFolder'])
 
         # describe
-        describe_output = run(u"dx describe myworkflow --delim ' '")
-        self.assertNotIn(u"Title тitle", describe_output)
-        self.assertIn(u"Summary SΨmmary", describe_output)
+        describe_output = run("dx describe myworkflow --delim ' '")
+        self.assertNotIn("Title тitle", describe_output)
+        self.assertIn("Summary SΨmmary", describe_output)
         self.assertNotIn("Description", describe_output)
-        self.assertNotIn(u"DΣsc", describe_output)
+        self.assertNotIn("DΣsc", describe_output)
         self.assertIn("Output Folder -", describe_output)
         describe_output = run("dx describe myworkflow --verbose --delim ' '")
-        self.assertIn(u"Description DΣsc", describe_output)
+        self.assertIn("Description DΣsc", describe_output)
 
         # no-op
-        output = run(u"dx update workflow myworkflow")
+        output = run("dx update workflow myworkflow")
         self.assertIn("No updates requested", output)
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(desc['editVersion'], 2)
@@ -1819,7 +1819,7 @@ class TestDXClientWorkflow(DXTestCase):
             run("dx update workflow myworkflow --output-folder /foo --no-output-folder")
 
     def test_dx_update_stage(self):
-        workflow_id = run(u"dx new workflow myworkflow --brief").strip()
+        workflow_id = run("dx new workflow myworkflow --brief").strip()
         run("dx describe " + workflow_id)
         applet_id = dxpy.api.applet_new({"name": "myapplet",
                                          "project": self.project,
@@ -1846,19 +1846,19 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertEqual(desc["stages"][0]["systemRequirements"], {})
 
         # set the name, folder, some input, and the instance type
-        run(u"dx update stage myworkflow 0 --name тitle -inumber=32 --relative-output-folder=foo --instance-type mem2_hdd2_x2")
+        run("dx update stage myworkflow 0 --name тitle -inumber=32 --relative-output-folder=foo --instance-type mem2_hdd2_x2")
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(desc["editVersion"], 2)
-        self.assertEqual(desc["stages"][0]["name"], u"тitle")
+        self.assertEqual(desc["stages"][0]["name"], "тitle")
         self.assertEqual(desc["stages"][0]["folder"], "foo")
         self.assertEqual(desc["stages"][0]["input"]["number"], 32)
         self.assertEqual(desc["stages"][0]["systemRequirements"], {"*": {"instanceType": "mem2_hdd2_x2"}})
 
         # use a relative folder path and also set instance type using JSON
-        run(u"dx update stage myworkflow 0 --name тitle -inumber=32 --output-folder=. --instance-type '{\"main\": \"mem2_hdd2_x2\"}'")
+        run("dx update stage myworkflow 0 --name тitle -inumber=32 --output-folder=. --instance-type '{\"main\": \"mem2_hdd2_x2\"}'")
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(desc["editVersion"], 3)
-        self.assertEqual(desc["stages"][0]["folder"], u"/")
+        self.assertEqual(desc["stages"][0]["folder"], "/")
         self.assertEqual(desc["stages"][0]["systemRequirements"],
                          {"main": {"instanceType": "mem2_hdd2_x2"}})
 
@@ -1890,7 +1890,7 @@ class TestDXClientWorkflow(DXTestCase):
             run("dx update stage myworkflow 0 --instance-type {]")
 
         # no-op
-        output = run(u"dx update stage myworkflow 0 --alias default --force")
+        output = run("dx update stage myworkflow 0 --alias default --force")
         self.assertIn("No updates requested", output)
 
         # update something out of range
@@ -1930,13 +1930,13 @@ class TestDXClientFind(DXTestCase):
         record_ids = [run("dx new record --brief --tag Ψ --tag foo --tag baz").strip(),
                       run("dx new record --brief --tag Ψ --tag foo --tag bar").strip()]
 
-        found_records = run(u"dx find data --tag baz --brief").strip()
+        found_records = run("dx find data --tag baz --brief").strip()
         self.assertEqual(found_records, dxpy.WORKSPACE_ID + ':' + record_ids[0])
 
-        found_records = run(u"dx find data --tag Ψ --tag foo --tag foobar --brief").strip()
+        found_records = run("dx find data --tag Ψ --tag foo --tag foobar --brief").strip()
         self.assertEqual(found_records, '')
 
-        found_records = run(u"dx find data --tag foo --tag Ψ --brief").strip().split("\n")
+        found_records = run("dx find data --tag foo --tag Ψ --brief").strip().split("\n")
         self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[0], found_records)
         self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[1], found_records)
 
@@ -1944,15 +1944,15 @@ class TestDXClientFind(DXTestCase):
         record_ids = [run("dx new record --brief --property Ψ=world --property foo=bar --property bar=").strip(),
                       run("dx new record --brief --property Ψ=notworld --property foo=bar").strip()]
 
-        found_records = run(u"dx find data --property Ψ=world --property foo=bar --brief").strip()
+        found_records = run("dx find data --property Ψ=world --property foo=bar --brief").strip()
         self.assertEqual(found_records, dxpy.WORKSPACE_ID + ':' + record_ids[0])
 
         # presence
-        found_records = run(u"dx find data --property Ψ --brief").strip().split("\n")
+        found_records = run("dx find data --property Ψ --brief").strip().split("\n")
         self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[0], found_records)
         self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[1], found_records)
 
-        found_records = run(u"dx find data --property Ψ --property foo=baz --brief").strip()
+        found_records = run("dx find data --property Ψ --property foo=baz --brief").strip()
         self.assertEqual(found_records, '')
 
         found_records = run("dx find data --property Ψ --property foo=bar --brief").strip().split("\n")
@@ -1977,21 +1977,21 @@ class TestDXClientFind(DXTestCase):
     def test_dx_find_projects_by_tag(self):
         other_project_id = run("dx new project other --brief").strip()
         try:
-            run(u"dx tag : Ψ world")
+            run("dx tag : Ψ world")
             proj_desc = dxpy.describe(dxpy.WORKSPACE_ID)
             self.assertEqual(len(proj_desc["tags"]), 2)
-            self.assertIn(u"Ψ", proj_desc["tags"])
+            self.assertIn("Ψ", proj_desc["tags"])
             self.assertIn("world", proj_desc["tags"])
 
-            found_projects = run(u"dx find projects --tag Ψ --tag world --brief").strip().split('\n')
+            found_projects = run("dx find projects --tag Ψ --tag world --brief").strip().split('\n')
             self.assertIn(dxpy.WORKSPACE_ID, found_projects)
             self.assertNotIn(other_project_id, found_projects)
 
-            found_projects = run(u"dx find projects --tag Ψ --tag world --tag foobar --brief").strip().split('\n')
+            found_projects = run("dx find projects --tag Ψ --tag world --tag foobar --brief").strip().split('\n')
             self.assertNotIn(dxpy.WORKSPACE_ID, found_projects)
             self.assertNotIn(other_project_id, found_projects)
 
-            run(u"dx tag " + other_project_id + u" Ψ world foobar")
+            run("dx tag " + other_project_id + " Ψ world foobar")
             found_projects = run("dx find projects --tag world --tag Ψ --brief").strip().split("\n")
             self.assertIn(dxpy.WORKSPACE_ID, found_projects)
             self.assertIn(other_project_id, found_projects)
@@ -2003,29 +2003,29 @@ class TestDXClientFind(DXTestCase):
     def test_dx_find_projects_by_property(self):
         other_project_id = run("dx new project other --brief").strip()
         try:
-            run(u"dx set_properties : Ψ=world foo=bar bar=")
+            run("dx set_properties : Ψ=world foo=bar bar=")
             proj_desc = dxpy.api.project_describe(dxpy.WORKSPACE_ID, {"properties": True})
             self.assertEqual(len(proj_desc["properties"]), 3)
-            self.assertEqual(proj_desc["properties"][u"Ψ"], "world")
+            self.assertEqual(proj_desc["properties"]["Ψ"], "world")
             self.assertEqual(proj_desc["properties"]["foo"], "bar")
             self.assertEqual(proj_desc["properties"]["bar"], "")
 
-            run(u"dx set_properties " + other_project_id + u" Ψ=notworld foo=bar")
+            run("dx set_properties " + other_project_id + " Ψ=notworld foo=bar")
 
-            found_projects = run(u"dx find projects --property Ψ=world --property foo=bar --brief").strip().split("\n")
+            found_projects = run("dx find projects --property Ψ=world --property foo=bar --brief").strip().split("\n")
             self.assertIn(dxpy.WORKSPACE_ID, found_projects)
             self.assertNotIn(other_project_id, found_projects)
 
-            found_projects = run(u"dx find projects --property bar= --brief").strip().split('\n')
+            found_projects = run("dx find projects --property bar= --brief").strip().split('\n')
             self.assertIn(dxpy.WORKSPACE_ID, found_projects)
             self.assertNotIn(other_project_id, found_projects)
 
             # presence
-            found_projects = run(u"dx find projects --property Ψ --brief").strip().split("\n")
+            found_projects = run("dx find projects --property Ψ --brief").strip().split("\n")
             self.assertIn(dxpy.WORKSPACE_ID, found_projects)
             self.assertIn(other_project_id, found_projects)
 
-            found_projects = run(u"dx find projects --property Ψ --property foo=baz --brief").strip().split("\n")
+            found_projects = run("dx find projects --property Ψ --property foo=baz --brief").strip().split("\n")
             self.assertNotIn(dxpy.WORKSPACE_ID, found_projects)
             self.assertNotIn(other_project_id, found_projects)
 
@@ -2058,31 +2058,31 @@ class TestDXClientFind(DXTestCase):
                                          "runSpec": {"interpreter": "bash",
                                                      "code": "echo 'hello'"}
                                          })['id']
-        property_names = [u"$my.prop", u"secoиdprop", u"тhird prop"]
-        property_values = [u"$hello.world", u"Σ2,n", u"stuff"]
-        the_tags = [u"Σ1=n", u"helloo0", u"ωω"]
-        job_id = run(u"dx run " + applet_id + ' -inumber=32 --brief -y ' + \
-                     u" ".join([u"--property '" + prop[0] + u"'='" + prop[1] + u"'" for prop in zip(property_names, property_values)]) + \
-                     u"".join([u" --tag " + tag for tag in the_tags])).strip()
+        property_names = ["$my.prop", "secoиdprop", "тhird prop"]
+        property_values = ["$hello.world", "Σ2,n", "stuff"]
+        the_tags = ["Σ1=n", "helloo0", "ωω"]
+        job_id = run("dx run " + applet_id + ' -inumber=32 --brief -y ' + \
+                     " ".join(["--property '" + prop[0] + "'='" + prop[1] + "'" for prop in zip(property_names, property_values)]) + \
+                     "".join([" --tag " + tag for tag in the_tags])).strip()
 
         # matches
-        self.assertEqual(run(u"dx find jobs --brief --tag " + the_tags[0]).strip(), job_id)
-        self.assertEqual(run(u"dx find jobs --brief" + u"".join([u" --tag " + tag for tag in the_tags])).strip(),
+        self.assertEqual(run("dx find jobs --brief --tag " + the_tags[0]).strip(), job_id)
+        self.assertEqual(run("dx find jobs --brief" + "".join([" --tag " + tag for tag in the_tags])).strip(),
                          job_id)
-        self.assertEqual(run(u"dx find jobs --brief --property " + property_names[1]).strip(), job_id)
-        self.assertEqual(run(u"dx find jobs --brief --property '" + \
-                             property_names[1] + u"'='" + property_values[1] + "'").strip(),
+        self.assertEqual(run("dx find jobs --brief --property " + property_names[1]).strip(), job_id)
+        self.assertEqual(run("dx find jobs --brief --property '" + \
+                             property_names[1] + "'='" + property_values[1] + "'").strip(),
                          job_id)
-        self.assertEqual(run(u"dx find jobs --brief" + \
-                             u"".join([u" --property '" + key + u"'='" + value + u"'" for
+        self.assertEqual(run("dx find jobs --brief" + \
+                             "".join([" --property '" + key + "'='" + value + "'" for
                                        key, value in zip(property_names, property_values)])).strip(),
                          job_id)
 
         # no matches
-        self.assertEqual(run(u"dx find jobs --brief --tag foo").strip(), "")
-        self.assertEqual(run(u"dx find jobs --brief --property foo").strip(), "")
-        self.assertEqual(run(u"dx find jobs --brief --property '" + \
-                             property_names[1] + u"'=badvalue").strip(), "")
+        self.assertEqual(run("dx find jobs --brief --tag foo").strip(), "")
+        self.assertEqual(run("dx find jobs --brief --property foo").strip(), "")
+        self.assertEqual(run("dx find jobs --brief --property '" + \
+                             property_names[1] + "'=badvalue").strip(), "")
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping test that would run a job')
@@ -2466,21 +2466,21 @@ class TestDXBuildApp(DXTestCase):
         # TODO: not sure why self.assertEqual doesn't consider
         # assertEqual to pass unless the strings here are unicode strings
         app_spec = {
-            u"name": u"get_applet",
-            u"dxapi": u"1.0.0",
-            u"runSpec": {u"file": u"code.py", u"interpreter": u"python2.7"},
-            u"inputSpec": [{u"name": u"in1", u"class": u"file"}],
-            u"outputSpec": [{u"name": u"out1", u"class": u"file"}],
-            u"description": u"Description\n",
-            u"developerNotes": u"Developer notes\n",
-            u"types": [u"Foo"],
-            u"tags": [u"bar"],
-            u"properties": {u"sample_id": u"123456"},
-            u"details": {u"key1": u"value1"},
+            "name": "get_applet",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [{"name": "in1", "class": "file"}],
+            "outputSpec": [{"name": "out1", "class": "file"}],
+            "description": "Description\n",
+            "developerNotes": "Developer notes\n",
+            "types": ["Foo"],
+            "tags": ["bar"],
+            "properties": {"sample_id": "123456"},
+            "details": {"key1": "value1"},
             }
         # description and developerNotes should be un-inlined back to files
         output_app_spec = dict((k, v) for (k, v) in app_spec.iteritems() if k not in ('description', 'developerNotes'))
-        output_app_spec[u"runSpec"] = {u"file": u"src/code.py", u"interpreter": u"python2.7"}
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7"}
 
         app_dir = self.write_app_directory("get_åpplet", json.dumps(app_spec), "code.py", code_content="import os\n")
         os.mkdir(os.path.join(app_dir, "resources"))
@@ -2561,14 +2561,14 @@ class TestDXBuildApp(DXTestCase):
         # types, tags, etc. Those should not be written back to the
         # dxapp.json so as not to pollute it.
         app_spec = {
-            u"name": u"get_applet_field_cleanup",
-            u"dxapi": u"1.0.0",
-            u"runSpec": {u"file": u"code.py", u"interpreter": u"python2.7"},
-            u"inputSpec": [],
-            u"outputSpec": []
+            "name": "get_applet_field_cleanup",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": []
             }
         output_app_spec = app_spec.copy()
-        output_app_spec[u"runSpec"] = {u"file": u"src/code.py", u"interpreter": u"python2.7"}
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7"}
 
         app_dir = self.write_app_directory("get_åpplet_field_cleanup", json.dumps(app_spec), "code.py", code_content="import os\n")
         os.mkdir(os.path.join(app_dir, "resources"))
@@ -3159,7 +3159,7 @@ def main(in1):
             }
         app_dir = self.write_app_directory("archive_in_another_project", json.dumps(app_spec), "code.py")
         temp_project_id = check_output(
-            u"dx new project '{p}' --brief".format(p="Temporary working project"), shell=True).strip()
+            "dx new project '{p}' --brief".format(p="Temporary working project"), shell=True).strip()
         try:
             check_output("dx select {p}".format(p=temp_project_id), shell=True)
             run("dx build -d {p}: {app_dir}".format(p=self.proj_id, app_dir=app_dir))
@@ -3199,7 +3199,7 @@ class TestDXBuildReportHtml(unittest.TestCase):
         dxpy.api.project_destroy(self.proj_id, {'terminateJobs': True})
 
     def test_local_file(self):
-        run(u"dx-build-report-html {d}/index.html --local {d}/out.html".format(d=self.temp_file_path))
+        run("dx-build-report-html {d}/index.html --local {d}/out.html".format(d=self.temp_file_path))
         out_path = "{}/out.html".format(self.temp_file_path)
         self.assertTrue(os.path.exists(out_path))
         f = open(out_path, "r")
@@ -3218,7 +3218,7 @@ class TestDXBuildReportHtml(unittest.TestCase):
         self.assertFalse(re.search("index.js", html))
 
     def test_image_only(self):
-        run(u"dx-build-report-html {d}/img.gif --local {d}/gif.html".format(d=self.temp_file_path))
+        run("dx-build-report-html {d}/img.gif --local {d}/gif.html".format(d=self.temp_file_path))
         out_path = "{}/gif.html".format(self.temp_file_path)
         self.assertTrue(os.path.exists(out_path))
         f = open(out_path, "r")
@@ -3227,18 +3227,18 @@ class TestDXBuildReportHtml(unittest.TestCase):
         self.assertTrue(re.search("<img src=\"data:", html))
 
     def test_remote_file(self):
-        report = json.loads(run(u"dx-build-report-html {d}/index.html --remote /html_report -w 47 -g 63".format(d=self.temp_file_path)))
+        report = json.loads(run("dx-build-report-html {d}/index.html --remote /html_report -w 47 -g 63".format(d=self.temp_file_path)))
         fileId = report["fileIds"][0]
-        desc = json.loads(run(u"dx describe {record} --details --json".format(record=report["recordId"])))
-        self.assertEquals(desc["types"], [u"Report", u"HTMLReport"])
-        self.assertEquals(desc["name"], u"html_report")
+        desc = json.loads(run("dx describe {record} --details --json".format(record=report["recordId"])))
+        self.assertEquals(desc["types"], ["Report", "HTMLReport"])
+        self.assertEquals(desc["name"], "html_report")
         self.assertEquals(desc["details"]["files"][0]["$dnanexus_link"], fileId)
         self.assertEquals(desc["details"]["width"], "47")
         self.assertEquals(desc["details"]["height"], "63")
-        desc = json.loads(run(u"dx describe {file} --details --json".format(file=fileId)))
+        desc = json.loads(run("dx describe {file} --details --json".format(file=fileId)))
         self.assertTrue(desc["hidden"])
-        self.assertEquals(desc["name"], u"index.html")
-        run(u"dx rm {record} {file}".format(record=report["recordId"], file=fileId))
+        self.assertEquals(desc["name"], "index.html")
+        run("dx rm {record} {file}".format(record=report["recordId"], file=fileId))
 
 
 class TestDXBedToSpans(DXTestCase):
