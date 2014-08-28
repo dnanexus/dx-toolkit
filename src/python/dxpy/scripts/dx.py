@@ -2633,11 +2633,7 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
     # Ask for confirmation if a tty and if input was not given as a
     # single JSON.
     if args.confirm and INTERACTIVE_CLI:
-        try:
-            value = input('Confirm running the executable with this input [Y/n]: ')
-        except KeyboardInterrupt:
-            value = 'n'
-        if value != '' and not value.lower().startswith('y'):
+        if not prompt_for_yn('Confirm running the executable with this input', default=True):
             parser.exit(0)
 
     if not args.brief:

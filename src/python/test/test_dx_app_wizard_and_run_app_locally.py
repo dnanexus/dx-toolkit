@@ -154,6 +154,8 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
     def test_dx_run_app_locally_interactively(self):
         appdir = create_app_dir()
         local_run = pexpect.spawn("dx-run-app-locally {} -iin1=8".format(appdir))
+        local_run.expect("Confirm")
+        local_run.sendline()
         local_run.expect("App finished successfully")
         local_run.expect("Final output: out1 = 140")
         local_run.close()
