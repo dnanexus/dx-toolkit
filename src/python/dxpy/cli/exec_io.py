@@ -632,7 +632,7 @@ class ExecutableInputs(object):
         # recognizing when not all inputs haven't been bound
         if require_all_inputs:
             if INTERACTIVE_CLI:
-                self.prompt_for_missing(args.confirm)
+                self.prompt_for_missing(getattr(args, 'confirm', None))
             else:
                 missing_required_inputs = set(self.required_inputs) - set(self.inputs.keys())
                 if missing_required_inputs:

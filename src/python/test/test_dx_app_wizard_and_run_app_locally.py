@@ -151,13 +151,19 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
         dxapp_json = json.load(open(os.path.join(appdir, 'dxapp.json')))
         self.assertEqual(dxapp_json.get('authorizedUsers'), [])
 
-    def test_dx_run_app_locally(self):
+    def test_dx_run_app_locally_interactively(self):
+        appdir = create_app_dir()
+        local_run = pexpect.spawn("dx-run-app-locally {} -iin1=8".format(appdir))
+        local_run.expect("App finished successfully")
+        local_run.expect("Final output: out1 = 140")
+        local_run.close()
+
+    def test_dx_run_app_locally_noninteractively(self):
         appdir = create_app_dir()
         output = check_output(['dx-run-app-locally', appdir, '-iin1=8'])
         print(output)
         self.assertIn("App finished successfully", output)
         self.assertIn("Final output: out1 = 140", output)
-        return appdir
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping test that would run jobs')
