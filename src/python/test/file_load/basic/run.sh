@@ -8,13 +8,16 @@ main() {
     diff seq2 in/seq2/*
 
     # check file content for arrays
+    var=0
     echo "Checking file arrays"
     mkdir -p ref
     echo "ref=$ref"
 
     for i in "${ref[@]}"
     do
-        dx download "$i" -o ref/
+        mkdir -p ref/$var
+        dx download "$i" -o ref/$var/
+        var=$((var+1))
     done
     diff -r ref in/ref
 

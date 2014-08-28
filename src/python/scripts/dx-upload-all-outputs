@@ -36,7 +36,7 @@ Overview
 import os, sys, json, argparse
 import dxpy
 from dxpy.utils import file_load_utils
-from dxpy.utils.printing import refill_paragraphs, BOLD, RED
+from dxpy.utils.printing import fill, refill_paragraphs, BOLD, RED
 
 description = BOLD('Note') + ''': this is a utility for use by bash apps
 running in the DNAnexus Platform.
@@ -66,6 +66,13 @@ order).
 
 parser = argparse.ArgumentParser(description=refill_paragraphs(description),
                                  formatter_class=argparse.RawTextHelpFormatter)
+parser.add_argument('--except',
+                    help=fill('Do not upload the input with this name. (May be used multiple times.)',
+                              width_adjustment=-20),
+                    action="append",
+                    dest="exclude",
+                    default=[])
+args = parser.parse_args()
 parser.parse_args()
 
 def report_error_and_exit(message):
@@ -172,8 +179,8 @@ def analyze_output_dir():
         if not os.path.isdir(path):
             continue
         s_rec = {'path': path,
-                   'files': traverse_output_subdir(odir, path),
-                   'dx_links': []}
+                 'files': traverse_output_subdir(odir, path),
+                 'dx_links': []}
         subdir_recs[subdir] = s_rec
     return subdir_recs
 
@@ -281,9 +288,22 @@ def update_output_json(subdir_recs):
         json.dump(output_json, fh, indent=4)
 
 
+## filter from a dictionary a list of matching keys
+def filter_dict(dict, excl_keys):
+    sub_dict = {}
+    for k, v in dict.iteritems():
+        if k not in excl_keys:
+            sub_dict[k] = v
+    return sub_dict
+
 ## entry point
 output_spec = get_output_spec()
 subdir_recs = analyze_output_dir()
+
+# remove entries the user asked to exclude
+if len(args.exclude) > 0:
+    output_spec = filter_dict(output_spec, args.exclude)
+    subdir_recs = filter_dict(subdir_recs, args.exclude)
 
 # Compare against the output spec
 compare_to_output_spec_and_annotate(subdir_recs, output_spec)
