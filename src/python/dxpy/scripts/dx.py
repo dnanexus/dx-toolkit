@@ -26,7 +26,8 @@ from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
 from ..exceptions import err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions
 from ..packages import requests
-from ..compat import USING_PYTHON2, basestring, str, input, wrap_stdio_in_codecs, decode_command_line_args
+from ..compat import (USING_PYTHON2, basestring, str, input, wrap_stdio_in_codecs, decode_command_line_args,
+                      unwrap_stream)
 from ..utils import warn
 from ..utils.env import sys_encoding, set_env_var, get_env_var, get_user_conf_dir
 
@@ -301,7 +302,8 @@ def login(args):
                     else:
                         username = input('Username: ')
                 write_env_var('DX_USERNAME', username)
-                password = getpass.getpass()
+                with unwrap_stream('stdin'):
+                    password = getpass.getpass()
 
             otp = input('Verification code: ') if get_otp else None
             return dict(username=username, password=password, otp=otp)

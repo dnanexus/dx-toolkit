@@ -18,6 +18,7 @@ from __future__ import (print_function, unicode_literals)
 
 import os, sys, io, locale
 from io import TextIOWrapper
+from contextlib import contextmanager
 
 sys_encoding = locale.getdefaultlocale()[1] or 'UTF-8'
 
@@ -189,3 +190,18 @@ def wrap_env_var_handlers():
 def unwrap_env_var_handlers():
     if USING_PYTHON2 and getattr(os, __native_getenv, None):
         os.getenv, os.putenv = os.__native_getenv, os.__native_putenv
+
+@contextmanager
+def unwrap_stream(stream_name):
+    """
+    Temporarily unwraps a given stream (stdin, stdout, or stderr) to undo the effects of wrap_stdio_in_codecs().
+    """
+    wrapped_stream = None
+    try:
+        wrapped_stream = getattr(sys, stream_name)
+        if hasattr(wrapped_stream, '_original_stream'):
+            setattr(sys, stream_name, wrapped_stream._original_stream)
+        yield
+    finally:
+        if wrapped_stream:
+            setattr(sys, stream_name, wrapped_stream)
