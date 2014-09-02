@@ -98,7 +98,7 @@ a DXProject handler for the project.
         if reclaim_permissions:
             dxpy.DXHTTPRequest('/' + temp_project.get_id() + '/join', {'level': 'ADMINISTER'})
         if cleanup:
-            temp_project.destroy()
+            dxpy.api.project_destroy(temp_project.get_id(), {"terminateJobs": True})
 
 
 class DXTestCase(unittest.TestCase):
