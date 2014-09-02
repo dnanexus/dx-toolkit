@@ -1,3 +1,13 @@
+dx-toolkit (0.114.0) precise; urgency=low
+
+  * Fix password prompting on Windows
+
+  * New --except option for dx-{upload,download}-* scripts
+
+  * Various bug fixes
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 02 Sep 2014 20:46:02 +0000
+
 dx-toolkit (0.113.0) precise; urgency=low
 
   * Usability improvements for dx run --debug-on
