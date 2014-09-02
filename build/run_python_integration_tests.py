@@ -2,6 +2,25 @@
 
 '''
 Runs Python integration tests and merges the resulting test coverage files.
+
+To run a single test method:
+
+   # Runs the method "test_basic" in class TestDXBashHelpers, in file
+   # src/python/test/test_dx_bash_helpers.py
+   build/run_python_integration_tests.py --tests \
+           test.test_dx_bash_helpers.TestDXBashHelpers.test_basic
+
+To run an entire test class:
+
+    build/run_python_integration_tests.py --tests \
+            test.test_dx_bash_helpers.TestDXBashHelper
+
+To run all tests in a file:
+
+    build/run_python_integration_tests.py --tests \
+            test.test_dx_bash_helpers
+
+If no arguments are given, all tests in src/python/test/ are run.
 '''
 
 from __future__ import print_function, unicode_literals
@@ -23,10 +42,6 @@ PYTHON_DIR = os.path.join(TOOLKIT_ROOT_DIR, 'src', 'python')
 
 os.environ['DNANEXUS_INSTALL_PYTHON_TEST_DEPS'] = 'yes'
 
-env = os.environ.copy()
-env['COVERAGE_PROCESS_START'] = os.path.join(PYTHON_DIR, '.coveragerc')
-env['COVERAGE_FILE'] = os.path.join(PYTHON_DIR, '.coverage')
-
 def run():
     subprocess.check_call(["make", "python"], cwd=TOOLKIT_ROOT_DIR)
 
@@ -44,7 +59,14 @@ def run():
         else:
             cmd += ['discover', '--start-directory', 'test', '--verbose']
 
-        subprocess.check_call(cmd, cwd=PYTHON_DIR)
+        # Setting COVERAGE_PROCESS_START is required to collect coverage for
+        # subprocess calls to dx.py and friends:
+        subproc_env = dict(
+                os.environ,
+                COVERAGE_PROCESS_START = os.path.join(PYTHON_DIR, '.coveragerc'),
+                COVERAGE_FILE = os.path.join(PYTHON_DIR, '.coverage'))
+        subprocess.check_call(cmd, cwd=PYTHON_DIR, env=subproc_env)
+
         subprocess.check_call(["coverage", "combine"], cwd=PYTHON_DIR)
     finally:
         os.unlink(site_customize_filename)
