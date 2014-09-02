@@ -601,7 +601,7 @@ class DXDataObject(DXObject):
 
         return self.describe(**kwargs)["state"]
 
-    def _wait_on_close(self, timeout=3600*24*7, **kwargs):
+    def _wait_on_close(self, timeout=3600*24*1, **kwargs):
         elapsed = 0
         while True:
             state = self._get_state(**kwargs)
