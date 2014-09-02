@@ -20,7 +20,6 @@
 from __future__ import print_function, unicode_literals
 
 import os, unittest, json, tempfile, shutil, pipes
-import pprint
 
 import dxpy
 from dxpy_testutil import DXTestCase, check_output, temporary_project
@@ -80,7 +79,8 @@ def build_app_with_bash_helpers(app_dir, project_id):
         preamble = []
         for filename in ('file_load_utils.py', 'printing.py'):
             shutil.copy(os.path.join(LOCAL_UTILS, filename), utils_staging_area)
-            preamble.append('cp /opt/utils_staging_area/%s /usr/share/dnanexus/lib/python2.7/site-packages/*/dxpy/utils;\n' % (filename,))
+            cmd = "cp /opt/utils_staging_area/{f} /usr/share/dnanexus/lib/python2.7/site-packages/*/dxpy/utils;\n"
+            preamble.append(cmd.format(f=filename))
         # Now find the applet entry point file and prepend the copy
         # operations (step 2 above), overwriting it in place.
         dxapp_json = json.load(open(os.path.join(app_dir, 'dxapp.json')))
@@ -97,9 +97,8 @@ def build_app_with_bash_helpers(app_dir, project_id):
         shutil.rmtree(tempdir)
 
 def update_environ(**kwargs):
-    """Returns a copy of os.environ with the specified updates (VAR=value
-for each kwarg)
-
+    """
+    Returns a copy of os.environ with the specified updates (VAR=value for each kwarg)
     """
     output = os.environ.copy()
     for k, v in kwargs.iteritems():
@@ -164,14 +163,15 @@ class TestDXBashHelpers(DXTestCase):
             job_handler = dxpy.get_handler(job_id)
             job_output = job_handler.output
 
-            def strip_white_space(str):
-                return ''.join(str.split())
+            def strip_white_space(_str):
+                return ''.join(_str.split())
 
             # The output should include two files, this section verifies that they have
             # the correct data.
             def check_file_content(out_param_name, out_filename, tmp_fname, str_content):
-                ''' Download a file, read it from local disk, and verify that it has
-                    the correct contents'''
+                """
+                Download a file, read it from local disk, and verify that it has the correct contents
+                """
                 if not out_param_name in job_output:
                     raise "Error: key {} does not appear in the job output".format(out_param_name)
                 dxlink = job_output[out_param_name]
@@ -182,8 +182,8 @@ class TestDXBashHelpers(DXTestCase):
 
                 # download the file and check the contents
                 dxpy.download_dxfile(dxlink, tmp_fname)
-                with open (tmp_fname, "r") as fh:
-                    data=fh.read()
+                with open(tmp_fname, "r") as fh:
+                    data = fh.read()
                     print(data)
                     if not (strip_white_space(data) == strip_white_space(str_content)):
                         raise Exception("contents of file {} do not match".format(out_param_name))
