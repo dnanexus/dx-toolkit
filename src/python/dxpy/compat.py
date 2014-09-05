@@ -16,7 +16,7 @@
 
 from __future__ import (print_function, unicode_literals)
 
-import os, sys, io, locale, shlex
+import os, sys, io, locale
 from io import TextIOWrapper
 from contextlib import contextmanager
 
@@ -69,12 +69,14 @@ if USING_PYTHON2:
     if os.name == 'nt':
         # The POSIX os.path.expanduser doesn't work on NT, so just leave it be
         expanduser = os.path.expanduser
-    shlex._split = shlex.split
-    def _split(s, comments=False, posix=True):
-        return [i.decode(sys_encoding) for i in shlex._split(s.encode(sys_encoding), comments=comments, posix=posix)]
-    shlex.split = _split
+    # Prior to 2.7.3, shlex is not compatible with Unicode strings, so we bundle a replacement from 2.7.6.
+    if sys.version_info < (2, 7, 3):
+        from .packages import shlex
+    else:
+        import shlex
 else:
     from io import StringIO, BytesIO
+    import shlex
     builtin_str = str
     str = str
     bytes = bytes
