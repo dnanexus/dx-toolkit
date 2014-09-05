@@ -166,6 +166,12 @@ class TestDXBashHelpers(DXTestCase):
             def strip_white_space(_str):
                 return ''.join(_str.split())
 
+            def silent_file_remove(filename):
+                try:
+                    os.remove(filename)
+                except OSError:
+                    pass
+
             # The output should include two files, this section verifies that they have
             # the correct data.
             def check_file_content(out_param_name, out_filename, tmp_fname, str_content):
@@ -181,15 +187,90 @@ class TestDXBashHelpers(DXTestCase):
                 self.assertEqual(trg_fname, out_filename)
 
                 # download the file and check the contents
+                silent_file_remove(tmp_fname)
                 dxpy.download_dxfile(dxlink, tmp_fname)
                 with open(tmp_fname, "r") as fh:
                     data = fh.read()
                     print(data)
                     if not (strip_white_space(data) == strip_white_space(str_content)):
                         raise Exception("contents of file {} do not match".format(out_param_name))
+                silent_file_remove(tmp_fname)
 
             check_file_content('first_file', 'first_file.txt', "f1.txt", "contents of first_file")
             check_file_content('final_file', 'final_file.txt', "f2.txt", "1234ABCD")
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping tests that would run jobs')
+    def test_parseq(self):
+        ''' Tests the parallel/sequential variations '''
+        with temporary_project('TestDXBashHelpers.test_app1 temporary project') as p:
+            env = update_environ(DX_PROJECT_CONTEXT_ID=p.get_id())
+
+            # Upload some files for use by the applet
+            dxpy.upload_string("1234\n", project=p.get_id(), name="A.txt")
+            dxpy.upload_string("ABCD\n", project=p.get_id(), name="B.txt")
+
+            # Build the applet, patching in the bash helpers from the
+            # local checkout
+            applet_id = build_app_with_bash_helpers(os.path.join(TEST_APPS, 'parseq'), p.get_id())
+
+            # Run the applet
+            applet_args = ["-iseq1=A.txt", "-iseq2=B.txt", "-iref=A.txt", "-iref=B.txt"]
+            cmd_args = ['dx', 'run', '--yes', '--watch', applet_id]
+            cmd_args.extend(applet_args)
+            run(cmd_args, env=env)
+
+
+class TestDXBashHelpersBenchmark(DXTestCase):
+
+    def create_file_of_size(self, fname, size_bytes):
+        assert(size_bytes > 1);
+        try:
+            os.remove(fname)
+        except:
+            pass
+        with open(fname, "wb") as out:
+            out.seek(size_bytes - 1)
+            out.write('\0')
+
+    def run_applet_with_flags(self, flag_list, num_files, file_size_bytes):
+        with temporary_project('TestDXBashHelpers.test_app1 temporary project') as p:
+            env = update_environ(DX_PROJECT_CONTEXT_ID=p.get_id())
+
+            # Upload file
+            self.create_file_of_size("A.txt", file_size_bytes);
+            remote_file = dxpy.upload_local_file(filename="A.txt", project=p.get_id(), folder='/')
+
+            # Build the applet, patching in the bash helpers from the
+            # local checkout
+            applet_id = build_app_with_bash_helpers(os.path.join(TEST_APPS, 'benchmark'), p.get_id())
+
+            # Add several files to the output
+            applet_args = []
+            applet_args.extend(['-iref=A.txt'] * num_files)
+            cmd_args = ['dx', 'run', '--yes', '--watch', '--instance-type=mem1_ssd1_x2', applet_id]
+            cmd_args.extend(applet_args)
+            cmd_args.extend(flag_list)
+            run(cmd_args, env=env)
+
+    @unittest.skipUnless(testutil.TEST_BENCH, 'skipping tests that run benchmarks')
+    def test_seq(self):
+        self.run_applet_with_flags(["-iparallel=false"], 40, 1024 * 1024)
+
+    @unittest.skipUnless(testutil.TEST_BENCH, 'skipping tests that run benchmarks')
+    def test_par(self):
+        self.run_applet_with_flags(["-iparallel=true"], 40, 1024 * 1024)
+
+    @unittest.skipUnless(testutil.TEST_BENCH, 'skipping tests that run benchmarks')
+    def test_seq_100m(self):
+        self.run_applet_with_flags(["-iparallel=false"], 40, 100 * 1024 * 1024)
+
+    @unittest.skipUnless(testutil.TEST_BENCH, 'skipping tests that run benchmarks')
+    def test_par_100m(self):
+        self.run_applet_with_flags(["-iparallel=true"], 40, 100 * 1024 * 1024)
+
+    @unittest.skipUnless(testutil.TEST_BENCH, 'skipping tests that run benchmarks')
+    def test_par_1g(self):
+        self.run_applet_with_flags(["-iparallel=true"], 10, 1024 * 1024 * 1024)
 
 
 if __name__ == '__main__':

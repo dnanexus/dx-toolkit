@@ -33,7 +33,11 @@ Overview
    (d) Generate a $HOME/job_output.json file that describes it.
 '''
 
-import os, sys, json, argparse
+import concurrent.futures
+import os
+import sys
+import json
+import argparse
 import dxpy
 from dxpy.utils import file_load_utils
 from dxpy.utils.printing import fill, refill_paragraphs, BOLD, RED
@@ -72,8 +76,18 @@ parser.add_argument('--except',
                     action="append",
                     dest="exclude",
                     default=[])
+
+parser.set_defaults(parallel=False)
+parser.add_argument("--parallel", help="Upload the files in parallel", action="store_true",
+                    dest="parallel")
+parser.add_argument("--sequential", help="Upload the files sequentially", action="store_false",
+                    dest="parallel")
+parser.add_argument('--clearJSON',
+                    help='Clears the output JSON file prior to starting upload.')
+
 args = parser.parse_args()
 parser.parse_args()
+max_num_parallel_uploads = 8
 
 def report_error_and_exit(message):
     ''' Report an error, since this is called from a bash script, we
@@ -142,7 +156,7 @@ def traverse_output_subdir(odir, subdir):
     '''
     files = []
     for fname in os.listdir(subdir):
-        path = os.path.join(odir, fname)
+        path = os.path.join(odir, subdir, fname)
         if os.path.isdir(path):
             # ignore directories
             continue
@@ -227,22 +241,41 @@ def compare_to_output_spec_and_annotate(subdir_recs, output_spec):
                     "key {} is of class {} but it appears in the output directory".format(key, class_))
 
 
-def upload_all(subdirs):
-    '''
-     Upload everything that is in the output directory
-    Add references to the uploaded objects into the entries.
+# Create an entry encapsulating the context required to upload a file.
+# The idea is to avoid sharing data between parallel threads of execution.
+def create_entry(subdir_desc, fname):
+    return {'subdir_desc': subdir_desc,
+            'fname': fname,
+            'dxlink': None}
 
-    note: currently, files are uploaded sequentially, not in
-    parallel. This could be improved in the future.
+def upload_one_file(entry):
+    '''Upload a file from the output directory. Record a reference to the
+    uploaded object in the entry.
     '''
-    for key in subdirs:
-        s_rec = subdirs[key]
-        for fname in s_rec['files']:
-            ## Upload the file
-            path = os.path.join(s_rec['path'], fname)
-            f_obj = dxpy.upload_local_file(path)
-            s_rec['dx_links'].append(dxpy.dxlink(f_obj))
+    path = os.path.join(entry['subdir_desc']['path'], entry['fname'])
+    f_obj = dxpy.upload_local_file(path)
+    entry['dxlink'] = dxpy.dxlink(f_obj)
+    print("uploaded file %s" % path)
 
+def sequential_file_upload(to_upload):
+    '''Sequentially upload everything that is in the output directory.
+    '''
+    for entry in to_upload:
+        upload_one_file(entry)
+
+def parallel_file_upload(to_upload):
+    ''' same as sequential_file_upload, but in parallel '''
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_num_parallel_uploads) as executor:
+        future_files = {executor.submit(upload_one_file, e): e for e in to_upload}
+        for future in concurrent.futures.as_completed(future_files):
+            entry = future_files[future]
+            try:
+                future.result()
+            except Exception as exc:
+                print('file %s generated an exception %r' % (entry['fname'], entry['dxlink']))
+                raise
+            else:
+                pass
 
 def update_output_json(subdir_recs):
     ''' update the output json file.'''
@@ -273,17 +306,16 @@ def update_output_json(subdir_recs):
 
     # Add all the entries
     for key in subdir_recs:
-        s_rec = subdir_recs[key]
-        dxlinks = s_rec['dx_links']
+        subdir_desc = subdir_recs[key]
+        dxlinks = subdir_desc['dx_links']
         if len(dxlinks) == 0:
             continue
         class_ = None
-        if 'class' in s_rec:
-            class_ = s_rec['class']
+        if 'class' in subdir_desc:
+            class_ = subdir_desc['class']
         add_rec_to_json(key, class_, dxlinks)
 
     # write it back out
-
     with open(output_file, 'w') as fh:
         json.dump(output_json, fh, indent=4)
 
@@ -302,11 +334,31 @@ subdir_recs = analyze_output_dir()
 
 # remove entries the user asked to exclude
 if len(args.exclude) > 0:
-    output_spec = filter_dict(output_spec, args.exclude)
-    subdir_recs = filter_dict(subdir_recs, args.exclude)
+    output_spec = file_load_utils.filter_dict(output_spec, args.exclude)
+    subdir_recs = file_load_utils.filter_dict(subdir_recs, args.exclude)
 
 # Compare against the output spec
 compare_to_output_spec_and_annotate(subdir_recs, output_spec)
 
-upload_all(subdir_recs)
+# Open the subdirectories hash into a list with an entry per file. This avoids
+# sharing data between concurrent threads.
+to_upload = []
+for key in subdir_recs:
+    subdir_desc = subdir_recs[key]
+    for fname in subdir_desc['files']:
+        to_upload.append(create_entry(subdir_desc, fname))
+
+# upload concurrently
+if args.parallel:
+    parallel_file_upload(to_upload)
+else:
+    sequential_file_upload(to_upload)
+
+# Uploads are complete, we can collect all results. This avoids
+# data races in the parallel upload case.
+for entry in to_upload:
+    entry['subdir_desc']['dx_links'].append(entry['dxlink'])
+
+if args.clearJSON:
+    file_load_utils.rm_output_json_file()
 update_output_json(subdir_recs)

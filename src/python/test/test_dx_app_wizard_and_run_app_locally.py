@@ -408,6 +408,11 @@ class TestDXBashHelpers(DXTestCase):
         dxpy.upload_string("ABCD", name="B.txt")
         self.run_test_app_locally('with-subjobs', ["-ifiles=A.txt", "-ifiles=B.txt"])
 
+    def test_parseq(self):
+        ''' Tests the parallel/sequential variations '''
+        dxpy.upload_string("1234", name="A.txt")
+        dxpy.upload_string("ABCD", name="B.txt")
+        self.run_test_app_locally('parseq', ["-iseq1=A.txt", "-iseq2=B.txt", "-iref=A.txt", "-iref=B.txt"])
 
 if __name__ == '__main__':
     unittest.main()

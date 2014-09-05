@@ -84,6 +84,7 @@ import json
 import os
 import math
 import sys
+import collections
 import dxpy
 from ..exceptions import DXError
 
@@ -126,6 +127,19 @@ def get_output_json_file():
     home_dir = os.environ.get('HOME')
     return os.path.join(home_dir, "job_output.json")
 
+def rm_output_json_file():
+    """ Warning: this is not for casual use.
+    It erases the output json file, and should be used for testing purposes only.
+    """
+    path = get_output_json_file()
+    try:
+        os.remove(path)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            pass
+        else:
+            raise
+
 def ensure_dir(path):
     """
     :param path: path to directory to be created
@@ -158,6 +172,14 @@ def make_unix_filename(fname):
         raise DXError("Invalid filename {}".format(fname))
     return fname.replace('/', '%2F')
 
+## filter from a dictionary a list of matching keys
+def filter_dict(dict_, excl_keys):
+    sub_dict = {}
+    for k, v in dict_.iteritems():
+        if k not in excl_keys:
+            sub_dict[k] = v
+    return sub_dict
+
 def get_job_input_filenames():
     """Extract list of files, returns a set of directories to create, and
     a set of files, with sources and destinations. The paths created are
@@ -170,7 +192,7 @@ def get_job_input_filenames():
     job_input_file = get_input_json_file()
     with open(job_input_file) as fh:
         job_input = json.load(fh)
-        files = []
+        files = collections.defaultdict(list)  # dictionary, with empty as default elements
         dirs = []  # directories to create under <idir>
 
         # Local function for adding a file to the list of files to be created
@@ -193,10 +215,8 @@ def get_job_input_filenames():
             trg_dir = iname
             if subdir is not None:
                 trg_dir = os.path.join(trg_dir, subdir)
-            files.append({'trg_fname': os.path.join(trg_dir, filename),
-                         'trg_dir': trg_dir,
-                         'src_file_id': handler.id,
-                         'iname': iname})
+            files[iname].append({'trg_fname': os.path.join(trg_dir, filename),
+                                 'src_file_id': handler.id})
             dirs.append(trg_dir)
 
         # An array of inputs, for a single key. A directory

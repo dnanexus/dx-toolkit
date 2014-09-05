@@ -28,5 +28,12 @@ main() {
     echo 'ls in/$ref' > out/genes/refs_ls.txt
     echo 'ls in/$reads' > out/genes/reads_ls.txt
 
+    mkdir -p out/foo
+    echo "ABC" > out/foo/X_1.txt
+    for i in 2 3 4 5 6 7 8;
+    do
+        cp out/foo/X_1.txt out/foo/X_$i.txt
+    done
+
     dx-upload-all-outputs
 }

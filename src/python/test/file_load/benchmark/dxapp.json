@@ -1,0 +1,15 @@
+{ "name": "benchmark",
+  "title": "benchmark",
+  "summary" : "benchmark for dx-upload and dx-download",
+  "runSpec": {
+    "file": "run.sh",
+    "interpreter": "bash"
+  },
+  "inputSpec": [
+    {"name": "parallel", "class": "boolean", "optional": true},
+    {"name": "ref",  "class": "array:file"}
+  ],
+  "outputSpec": [
+    {"name": "results", "class": "array:file"}
+  ]
+}

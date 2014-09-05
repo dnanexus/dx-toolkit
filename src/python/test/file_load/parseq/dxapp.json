@@ -1,0 +1,19 @@
+{ "name": "parseq",
+  "title": "parseq",
+  "summary" : "testing parallel/sequential upload/download",
+  "runSpec": {
+    "file": "run.sh",
+    "interpreter": "bash"
+  },
+  "inputSpec": [
+    {"name": "seq1", "class": "file"},
+    {"name": "seq2", "class": "file"},
+    {"name": "ref",  "class": "array:file"}
+  ],
+  "outputSpec": [
+    {"name": "result1", "class": "file"},
+    {"name": "result2", "class": "file"},
+    {"name": "result3", "class": "file"},
+    {"name": "result4", "class": "file"}
+  ]
+}
