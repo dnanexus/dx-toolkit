@@ -16,7 +16,7 @@
 
 from __future__ import (print_function, unicode_literals)
 
-import os, sys, io, locale
+import os, sys, io, locale, shlex
 from io import TextIOWrapper
 from contextlib import contextmanager
 
@@ -37,16 +37,9 @@ if USING_PYTHON2:
     int = long
     open = io.open
     def input(prompt=None):
-        try:
-            cur_stdin, cur_stdout = sys.stdin, sys.stdout
-            if hasattr(sys.stdin, '_original_stream'):
-                sys.stdin = sys.stdin._original_stream
-            if hasattr(sys.stdout, '_original_stream'):
-                sys.stdout = sys.stdout._original_stream
-            encoded_prompt = prompt.encode(sys_encoding)
+        encoded_prompt = prompt.encode(sys_encoding)
+        with unwrap_stream("stdin"), unwrap_stream("stdout"):
             return raw_input(encoded_prompt).decode(sys_encoding)
-        finally:
-            sys.stdin, sys.stdout = cur_stdin, cur_stdout
     def expanduser(path):
         '''
         Copy of os.path.expanduser that decodes os.environ['HOME'] if necessary.
@@ -76,6 +69,10 @@ if USING_PYTHON2:
     if os.name == 'nt':
         # The POSIX os.path.expanduser doesn't work on NT, so just leave it be
         expanduser = os.path.expanduser
+    shlex._split = shlex.split
+    def _split(s, comments=False, posix=True):
+        return [i.decode(sys_encoding) for i in shlex._split(s.encode(sys_encoding), comments=comments, posix=posix)]
+    shlex.split = _split
 else:
     from io import StringIO, BytesIO
     builtin_str = str
