@@ -252,23 +252,23 @@ class TestDXBashHelpersBenchmark(DXTestCase):
             cmd_args.extend(flag_list)
             run(cmd_args, env=env)
 
-    @unittest.skipUnless(testutil.TEST_BENCH, 'skipping tests that run benchmarks')
+    @unittest.skipUnless(testutil.TEST_BENCHMARKS, 'skipping tests that run benchmarks')
     def test_seq(self):
         self.run_applet_with_flags(["-iparallel=false"], 40, 1024 * 1024)
 
-    @unittest.skipUnless(testutil.TEST_BENCH, 'skipping tests that run benchmarks')
+    @unittest.skipUnless(testutil.TEST_BENCHMARKS, 'skipping tests that run benchmarks')
     def test_par(self):
         self.run_applet_with_flags(["-iparallel=true"], 40, 1024 * 1024)
 
-    @unittest.skipUnless(testutil.TEST_BENCH, 'skipping tests that run benchmarks')
+    @unittest.skipUnless(testutil.TEST_BENCHMARKS, 'skipping tests that run benchmarks')
     def test_seq_100m(self):
         self.run_applet_with_flags(["-iparallel=false"], 40, 100 * 1024 * 1024)
 
-    @unittest.skipUnless(testutil.TEST_BENCH, 'skipping tests that run benchmarks')
+    @unittest.skipUnless(testutil.TEST_BENCHMARKS, 'skipping tests that run benchmarks')
     def test_par_100m(self):
         self.run_applet_with_flags(["-iparallel=true"], 40, 100 * 1024 * 1024)
 
-    @unittest.skipUnless(testutil.TEST_BENCH, 'skipping tests that run benchmarks')
+    @unittest.skipUnless(testutil.TEST_BENCHMARKS, 'skipping tests that run benchmarks')
     def test_par_1g(self):
         self.run_applet_with_flags(["-iparallel=true"], 10, 1024 * 1024 * 1024)
 
