@@ -19,6 +19,10 @@
 from __future__ import (print_function, unicode_literals)
 
 import sys, collections
+
+for i in sys.path:
+    print("PATH:", i)
+
 import os, shutil, subprocess, tempfile
 import json
 import argparse
