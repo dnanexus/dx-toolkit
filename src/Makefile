@@ -131,7 +131,7 @@ ifeq ($(UNAME), Darwin)
 	pip wheel -r python/requirements_readline.txt
 endif
 
-python_build_venv: $(DX_PY_ENV)/lib
+python_deps: $(DX_PY_ENV)/lib
 
 $(DX_PY_ENV)/lib: python/requirements*.txt
 	python -c 'import sys; exit("dx-toolkit is not compatible with Python < 2.7" if sys.version_info < (2, 7) else 0)'
@@ -139,6 +139,10 @@ $(DX_PY_ENV)/lib: python/requirements*.txt
 	virtualenv --python=python "$(DX_PY_ENV)"
 	virtualenv --relocatable "$(DX_PY_ENV)"
 	(source "$(DX_PY_ENV)/bin/activate"; pip install --upgrade --find-links="file://$(DNANEXUS_HOME)/build/wheels" --install-option="--install-lib=$(DX_PY_ENV)/lib/python2.7/site-packages" -r python/requirements_setuptools.txt)
+	(source "$(DX_PY_ENV)/bin/activate"; pip install --ignore-installed --use-wheel --find-links="file://$(DNANEXUS_HOME)/build/wheels" --install-option="--install-lib=$(DX_PY_ENV)/lib/python2.7/site-packages" -r python/requirements.txt -r python/requirements_dxfs.txt)
+ifeq ($(UNAME), Darwin)
+	(source "$(DX_PY_ENV)/bin/activate"; pip install --ignore-installed --use-wheel --find-links="file://$(DNANEXUS_HOME)/build/wheels" --install-option="--install-lib=$(DX_PY_ENV)/lib/python2.7/site-packages" -r python/requirements_readline.txt)
+endif
 ifdef DNANEXUS_INSTALL_PYTHON_TEST_DEPS
 	(source "$(DX_PY_ENV)/bin/activate"; pip install --ignore-installed --use-wheel --find-links="file://$(DNANEXUS_HOME)/build/wheels" --install-option="--install-lib=$(DX_PY_ENV)/lib/python2.7/site-packages" -r python/requirements_test.txt)
 endif
@@ -146,20 +150,16 @@ endif
 # We are going to install libraries to lib/python2.7 and then move them
 # elsewhere (to share/dnanexus/lib/python2.7). Modify PYTHONPATH temporarily so
 # setup.py doesn't complain.
-python: api_wrappers toolkit_version python_build_venv
+python: api_wrappers toolkit_version python_deps
 	rm -rf "$(DNANEXUS_HOME)/share/dnanexus/lib/python2.7"
-	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/lib/python2.7"
-	mkdir -p "$(DNANEXUS_HOME)/lib/python2.7"
-
-	rm -f python/dist/dxpy-*.tar.gz
-	(source ../environment; cd python; python ./setup.py sdist)
-	(source "$(DX_PY_ENV)/bin/activate"; pip install --ignore-installed --use-wheel --find-links="file://$(DNANEXUS_HOME)/build/wheels" --install-option="--install-lib=$(DX_PY_ENV)/lib/python2.7/site-packages" python/dist/dxpy-*.tar.gz)
-
-	cp -a "$(DX_PY_ENV)/lib/python2.7/site-packages" "$(DNANEXUS_HOME)/share/dnanexus/lib/python2.7/"
-	cp -a "$(DX_PY_ENV)/bin/"{dx*,*python-argcomplete*} "$(DNANEXUS_HOME)/bin/"
+	mkdir -p "$(DNANEXUS_HOME)/lib/python2.7/site-packages"
+	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/lib"
+	cp -a "$(DX_PY_ENV)/lib/python2.7/site-packages" "$(DNANEXUS_HOME)/lib/python2.7/"
+	cp -a "$(DX_PY_ENV)/bin/"*python-argcomplete* "$(DNANEXUS_HOME)/bin/"
 ifdef DNANEXUS_INSTALL_PYTHON_TEST_DEPS
 	cp -af "$(DX_PY_ENV)"/bin/coverage* "$(DNANEXUS_HOME)/bin/"
 endif
+	(source ../environment; export PYTHONPATH="$(DNANEXUS_HOME)/lib/python2.7/site-packages:${PYTHONPATH}"; cd python; python ./setup.py build; python ./setup.py install --install-lib="$(DNANEXUS_HOME)/lib/python2.7/site-packages" --install-scripts="$(DNANEXUS_HOME)/bin"; mv $(DNANEXUS_HOME)/lib/python2.7 $(DNANEXUS_HOME)/share/dnanexus/lib)
 	rm -f ../bin/easy_install* ../bin/xattr
 
 # TODO: fix up perl and java targets
@@ -478,4 +478,4 @@ clean:
 	-rm -rf boost c-ares curl file openssl
 	-$(MAKE) -C jq clean
 
-.PHONY: all toolkit_version api_wrappers src_libs python_build_venv python perl java ruby dx-contigset-to-fasta ua test test_ruby test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R doc_ruby boost boost_build install_sysdeps
+.PHONY: all toolkit_version api_wrappers src_libs python_deps python perl java ruby dx-contigset-to-fasta ua test test_ruby test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R doc_ruby boost boost_build install_sysdeps
