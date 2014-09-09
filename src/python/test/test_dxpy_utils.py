@@ -44,19 +44,6 @@ class TestDescribe(unittest.TestCase):
         jobref = {"$dnanexus_link": "job-B55ZF5kZKQGz1Xxyb5FQ0003"}
         self.assertFalse(describe.is_job_ref(jobref))
 
-    def test_get_resolved_jbors(self):
-        resolved_jbors = {}
-        orig_thing = {"job": "job-B55ZF5kZKQGz1Xxyb5FQ0003", "field": "number"}
-        resolved_thing = 32
-        describe.get_resolved_jbors(resolved_thing, orig_thing, resolved_jbors)
-        self.assertIn("job-B55ZF5kZKQGz1Xxyb5FQ0003:number", resolved_jbors)
-
-        resolved_jbors = {}
-        orig_thing = {"$dnanexus_link": {"job": "job-B55ZF5kZKQGz1Xxyb5FQ0003", "field": "number"}}
-        resolved_thing = 32
-        describe.get_resolved_jbors(resolved_thing, orig_thing, resolved_jbors)
-        self.assertIn("job-B55ZF5kZKQGz1Xxyb5FQ0003:number", resolved_jbors)
-
 class TestErrorSanitizing(unittest.TestCase):
     def test_error_sanitizing(self):
         # ASCII str
