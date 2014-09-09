@@ -1,3 +1,9 @@
+dx-toolkit (0.114.2) precise; urgency=low
+
+  * Remove diagnostic behavior
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 09 Sep 2014 19:10:41 +0000
+
 dx-toolkit (0.114.1) precise; urgency=low
 
   * Fix build infrastructure issue affecting old Python installations.
