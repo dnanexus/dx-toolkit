@@ -378,13 +378,13 @@ class TestDXBashHelpers(DXTestCase):
     def test_basic(self):
         # Make a couple files for testing
         print("testing upload/download helpers")
-        dxpy.upload_string("1234", name="A.txt")
+        dxpy.upload_string("1234", wait_on_close=True, name="A.txt")
 
         # this invocation should fail with a CLI exception
         with self.assertRaises(testutil.DXCalledProcessError):
             self.run_test_app_locally('basic', ['-iseq1=A.txt', '-iseq2=B.txt'])
 
-        dxpy.upload_string("ABCD", name="B.txt")
+        dxpy.upload_string("ABCD", wait_on_close=True, name="B.txt")
 
         # these should succeed
         self.run_test_app_locally('basic', ['-iseq1=A.txt', '-iseq2=B.txt',
@@ -404,14 +404,14 @@ class TestDXBashHelpers(DXTestCase):
 
     def test_sub_jobs(self):
         '''  Tests a bash script that generates sub-jobs '''
-        dxpy.upload_string("1234", name="A.txt")
-        dxpy.upload_string("ABCD", name="B.txt")
+        dxpy.upload_string("1234", wait_on_close=True, name="A.txt")
+        dxpy.upload_string("ABCD", wait_on_close=True, name="B.txt")
         self.run_test_app_locally('with-subjobs', ["-ifiles=A.txt", "-ifiles=B.txt"])
 
     def test_parseq(self):
         ''' Tests the parallel/sequential variations '''
-        dxpy.upload_string("1234", name="A.txt")
-        dxpy.upload_string("ABCD", name="B.txt")
+        dxpy.upload_string("1234", wait_on_close=True, name="A.txt")
+        dxpy.upload_string("ABCD", wait_on_close=True, name="B.txt")
         self.run_test_app_locally('parseq', ["-iseq1=A.txt", "-iseq2=B.txt", "-iref=A.txt", "-iref=B.txt"])
 
 if __name__ == '__main__':
