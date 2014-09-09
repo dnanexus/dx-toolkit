@@ -1297,6 +1297,44 @@ dx-jobutil-add-output record_array $second_record --array
                          {'some_ep': {'instanceType': 'mem2_hdd2_x2'}})
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
 
+    def test_dx_describe_job_with_resolved_jbors(self):
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "inputSpec": [{"name": "array", "class": "array:int"}],
+                                         "outputSpec": [{"name": "array", "class": "array:int"}],
+                                         "runSpec": {"interpreter": "python2.7",
+                                                     "code": '''#!/usr/bin/env python
+
+@dxpy.entry_point('main')
+def main(array):
+    output = {"array": array}
+    return output
+'''}})['id']
+        first_job_handler = dxpy.DXJob(dxpy.api.applet_run(applet_id,
+                                                           {"project": self.project,
+                                                            "input": {"array": [0, 1, 2]}})['id'])
+
+        # Launch a second job which depends on the first, using two
+        # arrays in an array (to be flattened) as input
+        second_job_handler = dxpy.DXJob(dxpy.api.applet_run(applet_id,
+                                                 {"project": self.project,
+                                                  "input": {"array": [first_job_handler.get_output_ref("array"), first_job_handler.get_output_ref("array")]}})['id'])
+        first_job_handler.wait_on_done()
+        second_job_desc = run("dx describe " + second_job_handler.get_id())
+        first_job_res = first_job_handler.get_id() + ":array => [ 0, 1, 2 ]"
+        self.assertIn(first_job_res, second_job_desc)
+
+        # Launch another job which depends on the first done job and
+        # the second (not-done) job; the first job can and should be
+        # mentioned in the resolved JBORs list, but the second
+        # shouldn't.
+        third_job = dxpy.api.applet_run(applet_id,
+                                        {"project": self.project,
+                                         "input": {"array": [first_job_handler.get_output_ref("array"), second_job_handler.get_output_ref("array")]}})['id']
+        third_job_desc = run("dx describe " + third_job)
+        self.assertIn(first_job_res, third_job_desc)
+        self.assertNotIn(second_job_handler.get_id() + ":array =>", third_job_desc)
+
 class TestDXClientWorkflow(DXTestCase):
     default_inst_type = "mem2_hdd2_x2"
 

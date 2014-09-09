@@ -266,8 +266,20 @@ def get_io_field(io_hash, defaults=None, delim='=', highlight_fields=()):
                                  break_long_words=False) for key, value in defaults.items()])[16:]
 
 def get_resolved_jbors(resolved_thing, orig_thing, resolved_jbors):
+    if resolved_thing == orig_thing:
+        return
     if is_job_ref(orig_thing):
-        resolved_jbors[jbor_to_str(orig_thing)] = resolved_thing
+        jbor_str = jbor_to_str(orig_thing)
+        if jbor_str not in resolved_jbors:
+            try:
+                from dxpy.api import job_describe
+                job_output = job_describe(get_job_from_jbor(orig_thing)).get('output')
+                if job_output is not None:
+                    resolved_jbors[jbor_str] = job_output.get(get_field_from_jbor(orig_thing))
+            except:
+                # Just don't report any resolved JBORs if there are
+                # any problems
+                pass
     elif isinstance(orig_thing, list):
         for i in range(len(orig_thing)):
             get_resolved_jbors(resolved_thing[i], orig_thing[i], resolved_jbors)
