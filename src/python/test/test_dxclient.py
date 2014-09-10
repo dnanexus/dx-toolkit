@@ -98,7 +98,8 @@ class TestDXClient(DXTestCase):
             local_filename = f.name
             filename = folder_name
             run("echo xyzzt > {tf}".format(tf=local_filename))
-            fileid = run("dx upload --wait {tf} -o '../{f}/{f}' --brief".format(tf=local_filename, f=filename))
+            fileid = run("dx upload --wait {tf} -o '../{f}/{f}' --brief".format(tf=local_filename,
+                                                                                f=filename))
             self.assertEqual(fileid, run("dx ls '../{f}/{f}' --brief".format(f=filename)))
             self.assertEqual("xyzzt\n", run("dx head '../{f}/{f}'".format(f=filename)))
         run("dx pwd")
@@ -140,7 +141,9 @@ class TestDXClient(DXTestCase):
         self.assertTrue(self.project in run("dx find projects --brief"))
 
         run("dx new record -o :foo --verbose")
-        record_id = run("dx new record -o :foo2 --brief --visibility hidden --property foo=bar --property baz=quux --tag onetag --tag twotag --type foo --type bar --details '{\"hello\": \"world\"}'").strip()
+        record_id = run("dx new record -o :foo2 --brief --visibility hidden --property foo=bar " +
+                        "--property baz=quux --tag onetag --tag twotag --type foo --type bar " +
+                        "--details '{\"hello\": \"world\"}'").strip()
         self.assertEqual(record_id, run("dx ls :foo2 --brief").strip())
         self.assertEqual({"hello": "world"}, json.loads(run("dx get -o - :foo2")))
 
@@ -205,7 +208,8 @@ class TestDXClient(DXTestCase):
     def test_dx_add_rm_types(self):
         run("dx new record Ψ")
         run("dx add_types Ψ abc xyz")
-        with self.assertSubprocessFailure(output_text="be an array of valid strings for a type name", exit_code=1):
+        with self.assertSubprocessFailure(output_text="be an array of valid strings for a type name",
+                                          exit_code=1):
             run("dx add_types Ψ ΨΨ")
         run("dx remove_types Ψ abc xyz")
         run("dx remove_types Ψ abc xyz")
@@ -297,7 +301,9 @@ class TestDXClient(DXTestCase):
         property_values = ["n", "world z", "ω()"]
         # set_properties
         record_id = run("dx new record Ψ --brief").strip()
-        run("dx set_properties Ψ " + " ".join(["'" + prop[0] + "'='" + prop[1] + "'" for prop in zip(property_names, property_values)]))
+        run("dx set_properties Ψ " +
+            " ".join(["'" + prop[0] + "'='" + prop[1] + "'" for prop in zip(property_names,
+                                                                            property_values)]))
         my_properties = dxpy.api.record_describe(record_id, {"properties": True})['properties']
         for (name, value) in zip(property_names, property_values):
             self.assertIn(name, my_properties)
@@ -313,12 +319,15 @@ class TestDXClient(DXTestCase):
         # -a flag
         second_record_id = run("dx new record Ψ --brief").strip()
         self.assertNotEqual(record_id, second_record_id)
-        run("dx set_properties -a Ψ " + " ".join(["'" + prop[0] + "'='" + prop[1] + "'" for prop in zip(property_names, property_values)]))
+        run("dx set_properties -a Ψ " +
+            " ".join(["'" + prop[0] + "'='" + prop[1] + "'" for prop in zip(property_names,
+                                                                            property_values)]))
         my_properties = dxpy.api.record_describe(record_id, {"properties": True})['properties']
         for (name, value) in zip(property_names, property_values):
             self.assertIn(name, my_properties)
             self.assertEqual(value, my_properties[name])
-        second_properties = dxpy.api.record_describe(second_record_id, {"properties": True})['properties']
+        second_properties = dxpy.api.record_describe(second_record_id,
+                                                     {"properties": True})['properties']
         for (name, value) in zip(property_names, property_values):
             self.assertIn(name, my_properties)
             self.assertEqual(value, my_properties[name])
@@ -326,7 +335,8 @@ class TestDXClient(DXTestCase):
         run("dx unset_properties -a Ψ '" + "' '".join(property_names) + "'")
         my_properties = dxpy.api.record_describe(record_id, {"properties": True})['properties']
         self.assertEqual(len(my_properties), 0)
-        second_properties = dxpy.api.record_describe(second_record_id, {"properties": True})['properties']
+        second_properties = dxpy.api.record_describe(second_record_id,
+                                                     {"properties": True})['properties']
         self.assertEqual(len(second_properties), 0)
 
         # nonexistent name
@@ -357,7 +367,9 @@ class TestDXClient(DXTestCase):
         property_names = ["$my.prop", "secoиdprop", "тhird prop"]
         property_values = ["$hello.world", "Σ2,n", "stuff"]
         # set_properties
-        run("dx set_properties : " + " ".join(["'" + prop[0] + "'='" + prop[1] + "'" for prop in zip(property_names, property_values)]))
+        run("dx set_properties : " +
+            " ".join(["'" + prop[0] + "'='" + prop[1] + "'" for prop in zip(property_names,
+                                                                            property_values)]))
         my_properties = dxpy.api.project_describe(self.project, {"properties": True})['properties']
         for (name, value) in zip(property_names, property_values):
             self.assertIn(name, my_properties)
@@ -404,9 +416,11 @@ class TestDXClient(DXTestCase):
     def test_dx_remove_project_by_name(self):
         # TODO: this test makes no use of the DXTestCase-provided
         # project.
-        project_name = "test_dx_remove_project_by_name_" + str(random.randint(0, 1000000)) + "_" + str(int(time.time() * 1000))
+        project_name = ("test_dx_remove_project_by_name_" + str(random.randint(0, 1000000)) + "_" +
+                        str(int(time.time() * 1000)))
         project_id = run("dx new project {name} --brief".format(name=project_name)).strip()
-        self.assertEqual(run("dx find projects --brief --name {name}".format(name=project_name)).strip(), project_id)
+        self.assertEqual(run("dx find projects --brief --name {name}".format(name=project_name)).strip(),
+                         project_id)
         run("dx rmproject -y {name}".format(name=project_name))
         self.assertEqual(run("dx find projects --brief --name {name}".format(name=project_name)), "")
 
@@ -424,10 +438,13 @@ class TestDXClient(DXTestCase):
 
     def test_dx_gtables(self):
         # new gtable
-        gri_gtable_id = run("dx new gtable --gri mychr mylo myhi --columns mychr,mylo:int32,myhi:int32 --brief --property hello=world --details '{\"hello\":\"world\"}' --visibility visible").strip()
+        gri_gtable_id = run("dx new gtable --gri mychr mylo myhi " +
+                            "--columns mychr,mylo:int32,myhi:int32 --brief --property hello=world " +
+                            "--details '{\"hello\":\"world\"}' --visibility visible").strip()
         # Add rows to it (?)
         # TODO: make this better.
-        add_rows_input = {"data": [["chr", 1, 10], ["chr2", 3, 13], ["chr1", 3, 10], ["chr1", 11, 13], ["chr1", 5, 12]]}
+        add_rows_input = {"data": [["chr", 1, 10], ["chr2", 3, 13], ["chr1", 3, 10], ["chr1", 11, 13],
+                                   ["chr1", 5, 12]]}
         run("dx api {gt} addRows '{rows}'".format(gt=gri_gtable_id, rows=json.dumps(add_rows_input)))
         # close
         run("dx close {gt} --wait".format(gt=gri_gtable_id))
@@ -435,14 +452,16 @@ class TestDXClient(DXTestCase):
         # describe
         desc = json.loads(run("dx describe {gt} --details --json".format(gt=gri_gtable_id)))
         self.assertEqual(desc['types'], ['gri'])
-        self.assertEqual(desc['indices'], [{"type":"genomic", "name":"gri", "chr":"mychr", "lo":"mylo", "hi":"myhi"}])
+        self.assertEqual(desc['indices'],
+                         [{"type":"genomic", "name":"gri", "chr":"mychr", "lo":"mylo", "hi":"myhi"}])
         self.assertEqual(desc['properties'], {"hello": "world"})
         self.assertEqual(desc['details'], {"hello": "world"})
         self.assertEqual(desc['hidden'], False)
 
         # gri query
         self.assertEqual(run("dx export tsv {gt} --gri chr1 1 10 -o -".format(gt=gri_gtable_id)),
-                         '\r\n'.join(['mychr:string\tmylo:int32\tmyhi:int32', 'chr1\t3\t10', 'chr1\t5\t12', '']))
+                         '\r\n'.join(['mychr:string\tmylo:int32\tmyhi:int32', 'chr1\t3\t10',
+                                      'chr1\t5\t12', '']))
 
         # "get" is not supported on gtables
         with self.assertSubprocessFailure(stderr_regexp='given object is of class gtable', exit_code=3):
@@ -465,7 +484,8 @@ class TestDXClient(DXTestCase):
 
         second_desc = json.loads(run("dx describe gritableimport --json"))
         self.assertEqual(second_desc['types'], ['gri'])
-        self.assertEqual(second_desc['indices'], [{"type":"genomic", "name":"gri", "chr":"mychr", "lo":"mylo", "hi":"myhi"}])
+        self.assertEqual(second_desc['indices'],
+                         [{"type":"genomic", "name":"gri", "chr":"mychr", "lo":"mylo", "hi":"myhi"}])
         self.assertEqual(desc['size'], second_desc['size'])
         self.assertEqual(desc['length'], second_desc['length'])
 
@@ -613,13 +633,15 @@ class TestDXClient(DXTestCase):
     def test_dx_ssh(self):
         with self.configure_ssh() as wd:
             sleep_applet = dxpy.api.applet_new(dict(name="sleep",
-                                                    runSpec={"code": "sleep 1200", "interpreter": "bash",
+                                                    runSpec={"code": "sleep 1200",
+                                                             "interpreter": "bash",
                                                              "execDepends": [{"name": "dx-toolkit"}]},
                                                     inputSpec=[], outputSpec=[],
                                                     dxapi="1.0.0", version="1.0.0",
                                                     project=self.project))["id"]
 
-            dx = pexpect.spawn("dx run {} --yes --ssh".format(sleep_applet), env=overrideEnvironment(HOME=wd))
+            dx = pexpect.spawn("dx run {} --yes --ssh".format(sleep_applet),
+                               env=overrideEnvironment(HOME=wd))
             dx.logfile = sys.stdout
             dx.setwinsize(20, 90)
             dx.expect("Waiting for job")
@@ -732,7 +754,8 @@ class TestDXWhoami(DXTestCase):
 
 class TestDXClientUploadDownload(DXTestCase):
     def test_dx_upload_download(self):
-        with self.assertSubprocessFailure(stderr_regexp='expected the path to be a non-empty string', exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp='expected the path to be a non-empty string',
+                                          exit_code=3):
             run('dx download ""')
         wd = tempfile.mkdtemp()
         os.mkdir(os.path.join(wd, "a"))
@@ -744,7 +767,8 @@ class TestDXClientUploadDownload(DXTestCase):
             with self.assertSubprocessFailure(stderr_regexp='is a directory but the -r/--recursive option was not given', exit_code=1):
                 run("dx upload "+wd)
             run("dx upload -r "+wd)
-            run('dx wait "{f}"'.format(f=os.path.join(os.path.basename(wd), "a", "б", os.path.basename(fd.name))))
+            run('dx wait "{f}"'.format(f=os.path.join(os.path.basename(wd), "a", "б",
+                                                      os.path.basename(fd.name))))
             with self.assertSubprocessFailure(stderr_regexp='is a folder but the -r/--recursive option was not given', exit_code=1):
                 run("dx download "+os.path.basename(wd))
             old_dir = os.getcwd()
@@ -759,11 +783,14 @@ class TestDXClientUploadDownload(DXTestCase):
                 os.mkdir('t')
                 run("dx download -r -o t "+os.path.basename(wd))
                 tree1 = check_output("cd {wd}; find .".format(wd=wd), shell=True)
-                tree2 = check_output("cd {wd}; find .".format(wd=os.path.join("t", os.path.basename(wd))), shell=True)
+                tree2 = check_output("cd {wd}; find .".format(wd=os.path.join("t",
+                                                                              os.path.basename(wd))),
+                                     shell=True)
                 self.assertEqual(tree1, tree2)
 
                 os.mkdir('t2')
-                run("dx download -o t2 "+os.path.join(os.path.basename(wd), "a", "б", os.path.basename(fd.name)))
+                run("dx download -o t2 "+os.path.join(os.path.basename(wd), "a", "б",
+                                                      os.path.basename(fd.name)))
                 self.assertEqual(os.stat(os.path.join("t2", os.path.basename(fd.name))).st_size,
                                  len("0123456789ABCDEF"*64))
 
@@ -775,10 +802,12 @@ class TestDXClientUploadDownload(DXTestCase):
                 # Filename provided with path
                 with open(os.path.join(testdir, 'myfilename'), 'w') as f:
                     f.write('foo')
-                remote_file = dxpy.upload_local_file(filename=os.path.join(testdir, 'myfilename'), project=temp_project.get_id(), folder='/')
+                remote_file = dxpy.upload_local_file(filename=os.path.join(testdir, 'myfilename'),
+                                                     project=temp_project.get_id(), folder='/')
                 self.assertEqual(remote_file.name, 'myfilename')
                 # Filename provided with file handle
-                remote_file2 = dxpy.upload_local_file(file=open(os.path.join(testdir, 'myfilename')), project=temp_project.get_id(), folder='/')
+                remote_file2 = dxpy.upload_local_file(file=open(os.path.join(testdir, 'myfilename')),
+                                                      project=temp_project.get_id(), folder='/')
                 self.assertEqual(remote_file2.name, 'myfilename')
             finally:
                 shutil.rmtree(testdir)
@@ -833,8 +862,8 @@ class TestDXClientUploadDownload(DXTestCase):
                 fd2.write("a-file")
                 fd2.flush()
 
-                run("dx upload -r {testdir}/{rootfile} {testdir}/a --wait".format(testdir=testdir,
-                                                                                   rootfile=os.path.basename(fd.name)))
+                run(("dx upload -r {testdir}/{rootfile} {testdir}/a " +
+                     "--wait").format(testdir=testdir, rootfile=os.path.basename(fd.name)))
                 listing = run("dx ls").split("\n")
                 self.assertIn("a/", listing)
                 self.assertIn(os.path.basename(fd.name), listing)
@@ -1083,8 +1112,9 @@ dx-jobutil-add-output record_array $second_record --array
         property_names = ["$my.prop", "secoиdprop", "тhird prop"]
         property_values = ["$hello.world", "Σ2,n", "stuff"]
         the_tags = ["Σ1=n", "helloo0", "ωω"]
-        job_id = run("dx run " + applet_id + ' -inumber=32 --brief -y ' + \
-                     " ".join(["--property '" + prop[0] + "'='" + prop[1] + "'" for prop in zip(property_names, property_values)]) + \
+        job_id = run("dx run " + applet_id + ' -inumber=32 --brief -y ' +
+                     " ".join(["--property '" + prop[0] + "'='" + prop[1] + "'" for
+                               prop in zip(property_names, property_values)]) +
                      "".join([" --tag " + tag for tag in the_tags])).strip()
 
         job_desc = dxpy.api.job_describe(job_id)
@@ -1125,7 +1155,9 @@ dx-jobutil-add-output record_array $second_record --array
                                          "runSpec": {"interpreter": "bash",
                                                      "code": "echo 'hello'"}
                                          })['id']
-        job_id = run("dx run " + applet_id + ' -inumber=32 --name overwritten_name --delay-workspace-destruction --extra-args \'{"input": {"second": true}, "name": "new_name"}\' --brief -y').strip()
+        job_id = run("dx run " + applet_id + " -inumber=32 --name overwritten_name " +
+                     '--delay-workspace-destruction --brief -y ' +
+                     '--extra-args \'{"input": {"second": true}, "name": "new_name"}\'').strip()
         job_desc = dxpy.api.job_describe(job_id)
         self.assertTrue(job_desc['delayWorkspaceDestruction'])
         self.assertEqual(job_desc['name'], 'new_name')
@@ -1194,7 +1226,8 @@ dx-jobutil-add-output record_array $second_record --array
         # clone the job
 
         # nothing different
-        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --brief -y").strip())
+        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id +
+                                                 " --brief -y").strip())
         check_new_job_metadata(new_job_desc, orig_job_desc)
 
         def get_new_job_desc(cmd_suffix):
@@ -1266,7 +1299,9 @@ dx-jobutil-add-output record_array $second_record --array
                                overridden_fields=['systemRequirements'])
 
         # override instance type for specific entry point(s)
-        new_job_desc = get_new_job_desc("--instance-type '{\"some_ep\": \"mem2_hdd2_x1\", \"some_other_ep\": \"mem2_hdd2_x4\"}'")
+        new_job_desc = get_new_job_desc("--instance-type " +
+                                        json.dumps({"some_ep": "mem2_hdd2_x1",
+                                                    "some_other_ep": "mem2_hdd2_x4"}))
         self.assertEqual(new_job_desc['systemRequirements'],
                          {'*': {'instanceType': 'mem2_hdd2_x2'},
                           'some_ep': {'instanceType': 'mem2_hdd2_x1'},
@@ -1275,9 +1310,11 @@ dx-jobutil-add-output record_array $second_record --array
                                overridden_fields=['systemRequirements'])
 
         # new original job with entry point-specific systemRequirements
-        orig_job_id = run("dx run " + applet_id + " --instance-type '{\"some_ep\": \"mem2_hdd2_x1\"}' --brief -y").strip()
+        orig_job_id = run("dx run " + applet_id +
+                          " --instance-type '{\"some_ep\": \"mem2_hdd2_x1\"}' --brief -y").strip()
         orig_job_desc = dxpy.api.job_describe(orig_job_id)
-        self.assertEqual(orig_job_desc['systemRequirements'], {'some_ep': {'instanceType': 'mem2_hdd2_x1'}})
+        self.assertEqual(orig_job_desc['systemRequirements'],
+                         {'some_ep': {'instanceType': 'mem2_hdd2_x1'}})
 
         # override all entry points
         new_job_desc = get_new_job_desc("--instance-type mem2_hdd2_x2")
@@ -1316,9 +1353,10 @@ def main(array):
 
         # Launch a second job which depends on the first, using two
         # arrays in an array (to be flattened) as input
-        second_job_handler = dxpy.DXJob(dxpy.api.applet_run(applet_id,
-                                                 {"project": self.project,
-                                                  "input": {"array": [first_job_handler.get_output_ref("array"), first_job_handler.get_output_ref("array")]}})['id'])
+        second_job_run_input = {"project": self.project,
+                                "input": {"array": [first_job_handler.get_output_ref("array"),
+                                                    first_job_handler.get_output_ref("array")]}}
+        second_job_handler = dxpy.DXJob(dxpy.api.applet_run(applet_id, second_job_run_input)['id'])
         first_job_handler.wait_on_done()
         second_job_desc = run("dx describe " + second_job_handler.get_id())
         first_job_res = first_job_handler.get_id() + ":array => [ 0, 1, 2 ]"
@@ -1328,9 +1366,10 @@ def main(array):
         # the second (not-done) job; the first job can and should be
         # mentioned in the resolved JBORs list, but the second
         # shouldn't.
-        third_job = dxpy.api.applet_run(applet_id,
-                                        {"project": self.project,
-                                         "input": {"array": [first_job_handler.get_output_ref("array"), second_job_handler.get_output_ref("array")]}})['id']
+        third_job_run_input = {"project": self.project,
+                               "input": {"array": [first_job_handler.get_output_ref("array"),
+                                                   second_job_handler.get_output_ref("array")]}}
+        third_job = dxpy.api.applet_run(applet_id, third_job_run_input)['id']
         third_job_desc = run("dx describe " + third_job)
         self.assertIn(first_job_res, third_job_desc)
         self.assertNotIn(second_job_handler.get_id() + ":array =>", third_job_desc)
@@ -1419,8 +1458,10 @@ class TestDXClientWorkflow(DXTestCase):
 
         # test cases
         no_change_analysis_id = run("dx run --clone " + analysis_id + " --brief -y").strip()
-        change_an_input_analysis_id = run("dx run --clone " + analysis_id + " -i0.number=52 --brief -y").strip()
-        change_inst_type_analysis_id = run("dx run --clone " + analysis_id + " --instance-type mem2_hdd2_x2 --brief -y").strip()
+        change_an_input_analysis_id = run("dx run --clone " + analysis_id +
+                                          " -i0.number=52 --brief -y").strip()
+        change_inst_type_analysis_id = run("dx run --clone " + analysis_id +
+                                           " --instance-type mem2_hdd2_x2 --brief -y").strip()
 
         time.sleep(2) # May need to wait for any new jobs to be created in the system
 
@@ -1436,7 +1477,8 @@ class TestDXClientWorkflow(DXTestCase):
 
         # change an input: new job for that stage
         change_an_input_analysis_desc = dxpy.describe(change_an_input_analysis_id)
-        self.assertEqual(change_an_input_analysis_desc['stages'][0]['execution']['input'], {"number": 52})
+        self.assertEqual(change_an_input_analysis_desc['stages'][0]['execution']['input'],
+                         {"number": 52})
         # second stage still the same
         self.assertEqual(change_an_input_analysis_desc['stages'][1]['execution']['id'],
                          orig_analysis_desc['stages'][1]['execution']['id'])
@@ -1527,7 +1569,8 @@ class TestDXClientWorkflow(DXTestCase):
         all_stg_req_id = run('dx run myworkflow --instance-type mem2_hdd2_x1 -y --brief').strip()
 
         # request for a stage specifically (by name)
-        stg_req_id = run('dx run myworkflow --instance-type an=awful=name=mem2_hdd2_x2 --instance-type second=mem2_hdd2_x1 -y --brief').strip()
+        stg_req_id = run('dx run myworkflow --instance-type an=awful=name=mem2_hdd2_x2 ' +
+                         '--instance-type second=mem2_hdd2_x1 -y --brief').strip()
 
         time.sleep(2) # give time for all jobs to be populated
 
@@ -1566,8 +1609,10 @@ class TestDXClientWorkflow(DXTestCase):
                                                      "code": ""}
                                          })['id']
         workflow_id = run("dx new workflow myworkflow --brief").strip()
-        stage_ids = [run("dx add stage myworkflow myapplet --name 'a_simple_name' --output-folder /foo --brief").strip(),
-                     run("dx add stage myworkflow myapplet --name 'second' --relative-output-folder foo --brief").strip()]
+        stage_ids = [run("dx add stage myworkflow myapplet --name 'a_simple_name' " +
+                         "--output-folder /foo --brief").strip(),
+                     run("dx add stage myworkflow myapplet --name 'second' " +
+                         "--relative-output-folder foo --brief").strip()]
 
         cmd = 'dx run myworkflow --folder /output -y --brief --rerun-stage "*" '
 
@@ -1629,7 +1674,8 @@ class TestDXClientWorkflow(DXTestCase):
             run("dx run myworkflow")
 
     def test_dx_new_workflow(self):
-        workflow_id = run("dx new workflow --title=тitle --summary=SΨmmary --description=DΣsc wØrkflØwname --output-folder /wØrkflØwØutput --brief").strip()
+        workflow_id = run("dx new workflow --title=тitle --summary=SΨmmary --brief " +
+                          "--description=DΣsc wØrkflØwname --output-folder /wØrkflØwØutput").strip()
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(desc["id"], workflow_id)
         self.assertEqual(desc["editVersion"], 0)
@@ -1697,7 +1743,8 @@ class TestDXClientWorkflow(DXTestCase):
                                          "runSpec": {"interpreter": "bash",
                                                      "code": "exit 0"}
                                          })['id']
-        first_stage = run("dx add stage " + workflow_id + " -inumber=10 " + applet_id + " --brief").strip()
+        first_stage = run("dx add stage " + workflow_id + " -inumber=10 " + applet_id +
+                          " --brief").strip()
         desc = run("dx describe myworkflow")
         self.assertIn("Input Spec", desc)
         self.assertIn("default=10", desc)
@@ -1719,14 +1766,18 @@ class TestDXClientWorkflow(DXTestCase):
         list_output = run("dx list stages myworkflow")
         self.assertIn("No stages", list_output)
 
-        stage_ids.append(run("dx add stage " + workflow_id + " --name first " + applet_id + " --brief").strip())
+        stage_ids.append(run("dx add stage " + workflow_id + " --name first " + applet_id +
+                             " --brief").strip())
         # not-yet-existing folder path should work
         # also, set input and instance type
-        stage_ids.append(run("dx add stage myworkflow --relative-output-folder output myapplet --brief -inumber=32 --instance-type mem2_hdd2_x2").strip())
+        stage_ids.append(run("dx add stage myworkflow --relative-output-folder output myapplet " +
+                             "--brief -inumber=32 --instance-type mem2_hdd2_x2").strip())
         # test relative folder path
         run("dx mkdir -p a/b/c")
         run("dx cd a/b/c")
-        stage_ids.append(run("dx add stage " + workflow_id + " --name second --output-folder . " + applet_id + " --brief --instance-type '{\"main\": \"mem2_hdd2_x2\"}'").strip())
+        stage_ids.append(run("dx add stage " + workflow_id + " --name second --output-folder . " +
+                             applet_id +
+                             " --brief --instance-type '{\"main\": \"mem2_hdd2_x2\"}'").strip())
         with self.assertSubprocessFailure(stderr_regexp='not found in the input spec', exit_code=3):
             # input spec should be checked
             run("dx add stage " + workflow_id + " " + applet_id + " -inonexistent=42")
@@ -1737,7 +1788,8 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertEqual(desc['stages'][0]['folder'], None)
         self.assertEqual(desc['stages'][1]['folder'], 'output')
         self.assertEqual(desc['stages'][1]['input']['number'], 32)
-        self.assertEqual(desc['stages'][1]['systemRequirements'], {"*": {"instanceType": "mem2_hdd2_x2"}})
+        self.assertEqual(desc['stages'][1]['systemRequirements'],
+                         {"*": {"instanceType": "mem2_hdd2_x2"}})
         self.assertEqual(desc['stages'][2]['folder'], '/a/b/c')
         self.assertEqual(desc['stages'][2]['systemRequirements'],
                          {"main": {"instanceType": "mem2_hdd2_x2"}})
@@ -1745,7 +1797,8 @@ class TestDXClientWorkflow(DXTestCase):
         # errors
         # when adding a stage with both absolute and relative output folders
         with self.assertSubprocessFailure(stderr_regexp="output-folder", exit_code=2):
-            run("dx add stage " + workflow_id + " " + applet_id + " --output-folder /foo --relative-output-folder foo")
+            run("dx add stage " + workflow_id + " " + applet_id +
+                " --output-folder /foo --relative-output-folder foo")
         # bad executable that can't be found
         with self.assertSubprocessFailure(stderr_regexp="ResolutionError", exit_code=3):
             run("dx add stage " + workflow_id + " foo")
@@ -1815,7 +1868,8 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertIsNone(desc["outputFolder"])
 
         # set title, summary, description, outputFolder
-        run("dx update workflow myworkflow --title тitle --summary SΨmmary --description=DΣsc --output-folder .")
+        run("dx update workflow myworkflow --title тitle --summary SΨmmary --description=DΣsc " +
+            "--output-folder .")
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(desc['editVersion'], 1)
         self.assertEqual(desc['title'], "тitle")
@@ -1884,16 +1938,19 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertEqual(desc["stages"][0]["systemRequirements"], {})
 
         # set the name, folder, some input, and the instance type
-        run("dx update stage myworkflow 0 --name тitle -inumber=32 --relative-output-folder=foo --instance-type mem2_hdd2_x2")
+        run("dx update stage myworkflow 0 --name тitle -inumber=32 --relative-output-folder=foo " +
+            "--instance-type mem2_hdd2_x2")
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(desc["editVersion"], 2)
         self.assertEqual(desc["stages"][0]["name"], "тitle")
         self.assertEqual(desc["stages"][0]["folder"], "foo")
         self.assertEqual(desc["stages"][0]["input"]["number"], 32)
-        self.assertEqual(desc["stages"][0]["systemRequirements"], {"*": {"instanceType": "mem2_hdd2_x2"}})
+        self.assertEqual(desc["stages"][0]["systemRequirements"],
+                         {"*": {"instanceType": "mem2_hdd2_x2"}})
 
         # use a relative folder path and also set instance type using JSON
-        run("dx update stage myworkflow 0 --name тitle -inumber=32 --output-folder=. --instance-type '{\"main\": \"mem2_hdd2_x2\"}'")
+        run("dx update stage myworkflow 0 --name тitle -inumber=32 --output-folder=. " +
+            "--instance-type '{\"main\": \"mem2_hdd2_x2\"}'")
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(desc["editVersion"], 3)
         self.assertEqual(desc["stages"][0]["folder"], "/")
@@ -1979,7 +2036,8 @@ class TestDXClientFind(DXTestCase):
         self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[1], found_records)
 
     def test_dx_find_data_by_property(self):
-        record_ids = [run("dx new record --brief --property Ψ=world --property foo=bar --property bar=").strip(),
+        record_ids = [run("dx new record --brief " +
+                          "--property Ψ=world --property foo=bar --property bar=").strip(),
                       run("dx new record --brief --property Ψ=notworld --property foo=bar").strip()]
 
         found_records = run("dx find data --property Ψ=world --property foo=bar --brief").strip()
@@ -2099,8 +2157,8 @@ class TestDXClientFind(DXTestCase):
         property_names = ["$my.prop", "secoиdprop", "тhird prop"]
         property_values = ["$hello.world", "Σ2,n", "stuff"]
         the_tags = ["Σ1=n", "helloo0", "ωω"]
-        job_id = run("dx run " + applet_id + ' -inumber=32 --brief -y ' + \
-                     " ".join(["--property '" + prop[0] + "'='" + prop[1] + "'" for prop in zip(property_names, property_values)]) + \
+        job_id = run("dx run " + applet_id + ' -inumber=32 --brief -y ' +
+                     " ".join(["--property '" + prop[0] + "'='" + prop[1] + "'" for prop in zip(property_names, property_values)]) +
                      "".join([" --tag " + tag for tag in the_tags])).strip()
 
         # matches
@@ -2108,10 +2166,10 @@ class TestDXClientFind(DXTestCase):
         self.assertEqual(run("dx find jobs --brief" + "".join([" --tag " + tag for tag in the_tags])).strip(),
                          job_id)
         self.assertEqual(run("dx find jobs --brief --property " + property_names[1]).strip(), job_id)
-        self.assertEqual(run("dx find jobs --brief --property '" + \
+        self.assertEqual(run("dx find jobs --brief --property '" +
                              property_names[1] + "'='" + property_values[1] + "'").strip(),
                          job_id)
-        self.assertEqual(run("dx find jobs --brief" + \
+        self.assertEqual(run("dx find jobs --brief" +
                              "".join([" --property '" + key + "'='" + value + "'" for
                                        key, value in zip(property_names, property_values)])).strip(),
                          job_id)
@@ -2119,7 +2177,7 @@ class TestDXClientFind(DXTestCase):
         # no matches
         self.assertEqual(run("dx find jobs --brief --tag foo").strip(), "")
         self.assertEqual(run("dx find jobs --brief --property foo").strip(), "")
-        self.assertEqual(run("dx find jobs --brief --property '" + \
+        self.assertEqual(run("dx find jobs --brief --property '" +
                              property_names[1] + "'=badvalue").strip(), "")
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
@@ -2246,7 +2304,9 @@ class TestHTTPProxySupport(DXTestCase):
             try:
                 if requests.get("http://localhost:3129").status_code == requests.codes.bad_request:
                     if self.proxy_process.poll() is not None:
-                        # Got a response on port 3129, but our proxy quit with an error, so it must be another process.
+                        # Got a response on port 3129, but our proxy
+                        # quit with an error, so it must be another
+                        # process.
                         raise Exception("Tried launching squid, but port 3129 is already bound")
                     print("squid is up")
                     break
@@ -2306,7 +2366,8 @@ class TestDXBuildApp(DXTestCase):
         return os.path.join(self.temp_file_path, app_name)
 
     def test_help_without_security_context(self):
-        env = overrideEnvironment(DX_SECURITY_CONTEXT=None, DX_APISERVER_HOST=None, DX_APISERVER_PORT=None, DX_APISERVER_PROTOCOL=None)
+        env = overrideEnvironment(DX_SECURITY_CONTEXT=None, DX_APISERVER_HOST=None,
+                                  DX_APISERVER_PORT=None, DX_APISERVER_PROTOCOL=None)
         run("dx build -h", env=env)
 
     def test_accepts_semver(self):
@@ -2330,7 +2391,8 @@ class TestDXBuildApp(DXTestCase):
             }
         app_dir = self.write_app_directory("test_versioning_app", json.dumps(app_spec), "code.py")
         self.assertTrue(dx_build_app._get_version_suffix(app_dir, '1.0.0').startswith('+build.'))
-        self.assertTrue(dx_build_app._get_version_suffix(app_dir, '1.0.0+git.abcdef').startswith('.build.'))
+        self.assertTrue(dx_build_app._get_version_suffix(app_dir, '1.0.0+git.abcdef')
+                        .startswith('.build.'))
 
     def test_build_applet(self):
         app_spec = {
@@ -2398,12 +2460,15 @@ class TestDXBuildApp(DXTestCase):
             "outputSpec": [],
             "version": "1.0.0"
             }
-        app_dir = self.write_app_directory("minimal_remote_build_åpplet_to_run", json.dumps(app_spec), "code.py")
-        job_name = "remote_build_test_run_" + str(int(time.time() * 1000)) + "_" + str(random.randint(0, 1000))
+        app_dir = self.write_app_directory("minimal_remote_build_åpplet_to_run", json.dumps(app_spec),
+                                           "code.py")
+        job_name = ("remote_build_test_run_" + str(int(time.time() * 1000)) + "_" +
+                    str(random.randint(0, 1000)))
         run("dx build --remote " + app_dir + " --run -y --name=" + job_name)
         resulting_jobs = list(dxpy.find_executions(name=job_name, return_handler=True))
         self.assertEqual(1, len(resulting_jobs))
-        self.assertEqual('minimal_remote_build_applet_to_run', resulting_jobs[0].describe()['executableName'])
+        self.assertEqual('minimal_remote_build_applet_to_run',
+                         resulting_jobs[0].describe()['executableName'])
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_CREATE_APPS,
                          'skipping test that would create apps and run jobs')
@@ -2428,7 +2493,8 @@ class TestDXBuildApp(DXTestCase):
             "outputSpec": [],
             "version": "1.0.0"
             }
-        app_dir = self.write_app_directory("minimal_remote_build_åpp_to_run", json.dumps(app_spec), "code.py")
+        app_dir = self.write_app_directory("minimal_remote_build_åpp_to_run", json.dumps(app_spec),
+                                           "code.py")
         # Not supported yet
         with self.assertSubprocessFailure(stderr_regexp='cannot all be specified together', exit_code=2):
             run("dx build --remote --app " + app_dir + " --run --yes")
@@ -2517,10 +2583,12 @@ class TestDXBuildApp(DXTestCase):
             "details": {"key1": "value1"},
             }
         # description and developerNotes should be un-inlined back to files
-        output_app_spec = dict((k, v) for (k, v) in app_spec.iteritems() if k not in ('description', 'developerNotes'))
+        output_app_spec = dict((k, v) for (k, v) in app_spec.iteritems() if k not in ('description',
+                                                                                      'developerNotes'))
         output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7"}
 
-        app_dir = self.write_app_directory("get_åpplet", json.dumps(app_spec), "code.py", code_content="import os\n")
+        app_dir = self.write_app_directory("get_åpplet", json.dumps(app_spec), "code.py",
+                                           code_content="import os\n")
         os.mkdir(os.path.join(app_dir, "resources"))
         with open(os.path.join(app_dir, "resources", "resources_file"), 'w') as f:
             f.write('content\n')
@@ -2534,10 +2602,12 @@ class TestDXBuildApp(DXTestCase):
             self.assertEqual(output_app_spec, output_json)
 
             self.assertEqual("Description\n", open(os.path.join("get_applet", "Readme.md")).read())
-            self.assertEqual("Developer notes\n", open(os.path.join("get_applet", "Readme.developer.md")).read())
+            self.assertEqual("Developer notes\n",
+                             open(os.path.join("get_applet", "Readme.developer.md")).read())
             self.assertEqual("import os\n", open(os.path.join("get_applet", "src", "code.py")).read())
 
-            self.assertEqual("content\n", open(os.path.join("get_applet", "resources", "resources_file")).read())
+            self.assertEqual("content\n",
+                             open(os.path.join("get_applet", "resources", "resources_file")).read())
 
             # Target applet does not exist
             with self.assertSubprocessFailure(stderr_regexp='Could not resolve', exit_code=3):
@@ -2578,7 +2648,8 @@ class TestDXBuildApp(DXTestCase):
             with open(os.path.join('destdir_withfile_force', 'get_applet'), 'w') as f:
                 f.write('content')
             run("dx get --overwrite -o destdir_withfile_force get_applet")
-            self.assertTrue(os.path.exists(os.path.join("destdir_withfile_force", "get_applet", "dxapp.json")))
+            self.assertTrue(os.path.exists(os.path.join("destdir_withfile_force", "get_applet",
+                                                        "dxapp.json")))
 
             # -o file
             with open('destfile', 'w') as f:
@@ -2608,7 +2679,8 @@ class TestDXBuildApp(DXTestCase):
         output_app_spec = app_spec.copy()
         output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7"}
 
-        app_dir = self.write_app_directory("get_åpplet_field_cleanup", json.dumps(app_spec), "code.py", code_content="import os\n")
+        app_dir = self.write_app_directory("get_åpplet_field_cleanup", json.dumps(app_spec), "code.py",
+                                           code_content="import os\n")
         os.mkdir(os.path.join(app_dir, "resources"))
         with open(os.path.join(app_dir, "resources", "resources_file"), 'w') as f:
             f.write('content\n')
@@ -2665,7 +2737,8 @@ class TestDXBuildApp(DXTestCase):
             "version": "1.0.0",
             "authorizedUsers": ['PUBLIC']
             }
-        app_dir = self.write_app_directory("test_build_app_and_make_it_public", json.dumps(app_spec), "code.py")
+        app_dir = self.write_app_directory("test_build_app_and_make_it_public", json.dumps(app_spec),
+                                           "code.py")
 
         run("dx build --create-app --json " + app_dir)
         app_authorized_users = run("dx list users app-test_build_app_and_make_it_public")
@@ -2686,7 +2759,8 @@ class TestDXBuildApp(DXTestCase):
             "version": "1.0.0",
             "developers": ['user-dnanexus']
             }
-        app_dir = self.write_app_directory("test_build_app_and_pretend_to_update_devs", json.dumps(app_spec), "code.py")
+        app_dir = self.write_app_directory("test_build_app_and_pretend_to_update_devs",
+                                           json.dumps(app_spec), "code.py")
 
         # Without --yes, the build will succeed except that it will skip
         # the developer update
@@ -2705,7 +2779,8 @@ class TestDXBuildApp(DXTestCase):
             "outputSpec": [],
             "version": "1.0.0"
             }
-        app_dir = self.write_app_directory("test_build_app_and_update_devs", json.dumps(app_spec), "code.py")
+        app_dir = self.write_app_directory("test_build_app_and_update_devs", json.dumps(app_spec),
+                                           "code.py")
 
         my_userid = dxpy.whoami()
 
@@ -2736,7 +2811,8 @@ class TestDXBuildApp(DXTestCase):
         app_spec['developers'] = [my_userid]
         self.write_app_directory("test_build_app_and_update_devs", json.dumps(app_spec), "code.py")
         self.run_and_assert_stderr_matches('dx build --create-app --yes --json ' + app_dir,
-                                           'the following developers will be removed: user-000000000000000000000001')
+                                           'the following developers will be removed: ' +
+                                           'user-000000000000000000000001')
         app_developers = dxpy.api.app_list_developers('app-test_build_app_and_update_devs')['developers']
         self.assertEqual(app_developers, [my_userid])
 
@@ -2793,7 +2869,8 @@ class TestDXBuildApp(DXTestCase):
             run("dx build --json " + app_dir)
 
         app_spec["authorizedUsers"] = ["foo"]
-        app_dir = self.write_app_directory("invalid_authorized_users_2", json.dumps(app_spec), "code.py")
+        app_dir = self.write_app_directory("invalid_authorized_users_2", json.dumps(app_spec),
+                                           "code.py")
         with self.assertSubprocessFailure(stderr_regexp='contains an entry which is not'):
             run("dx build --json " + app_dir)
 
@@ -2827,8 +2904,11 @@ class TestDXBuildApp(DXTestCase):
             "outputSpec": [],
             "version": "1.0.0"
             }
-        app_dir = self.write_app_directory("deps_without_network_access", json.dumps(app_spec), "code.py")
-        with self.assertSubprocessFailure(stderr_regexp="runSpec.execDepends specifies non-APT dependencies, but no network access spec is given"):
+        app_dir = self.write_app_directory("deps_without_network_access", json.dumps(app_spec),
+                                           "code.py")
+        with self.assertSubprocessFailure(stderr_regexp=("runSpec.execDepends specifies non-APT " +
+                                                         "dependencies, but no network access spec " +
+                                                         "is given")):
             run("dx build --json " + app_dir)
 
     def test_overwrite_applet(self):
@@ -2910,17 +2990,21 @@ class TestDXBuildApp(DXTestCase):
             "version": "1.0.1",
             "authorizedUsers": ["PUBLIC"]
             }
-        app_dir = self.write_app_directory("update_app_authorized_users", json.dumps(app0_spec), "code.py")
+        app_dir = self.write_app_directory("update_app_authorized_users", json.dumps(app0_spec),
+                                           "code.py")
         app_id = json.loads(run("dx build --create-app --json " + app_dir))['id']
-        self.assertEquals(json.loads(run("dx api " + app_id + " listAuthorizedUsers"))["authorizedUsers"], [])
+        self.assertEquals(json.loads(run("dx api " + app_id +
+                                         " listAuthorizedUsers"))["authorizedUsers"], [])
         shutil.rmtree(app_dir)
         self.write_app_directory("update_app_authorized_users", json.dumps(app1_spec), "code.py")
         run("dx build --create-app --json " + app_dir)
-        self.assertEquals(json.loads(run("dx api " + app_id + " listAuthorizedUsers"))["authorizedUsers"], [])
+        self.assertEquals(json.loads(run("dx api " + app_id +
+                                         " listAuthorizedUsers"))["authorizedUsers"], [])
         shutil.rmtree(app_dir)
         self.write_app_directory("update_app_authorized_users", json.dumps(app2_spec), "code.py")
         run("dx build --create-app --yes --json " + app_dir)
-        self.assertEquals(json.loads(run("dx api " + app_id + " listAuthorizedUsers"))["authorizedUsers"], ["PUBLIC"])
+        self.assertEquals(json.loads(run("dx api " + app_id +
+                                         " listAuthorizedUsers"))["authorizedUsers"], ["PUBLIC"])
 
     @unittest.skipUnless(testutil.TEST_CREATE_APPS,
                          'skipping test that would create apps')
@@ -3147,16 +3231,20 @@ def main(in1):
             "dxapi": "1.0.0",
             "runSpec": {"file": "code.py", "interpreter": "python2.7"},
             "inputSpec": [
-                {"name": "reads", "class": "array:gtable", "type": "LetterReads", "label": "Reads", "help": "One or more Reads table objects."},
+                {"name": "reads", "class": "array:gtable", "type": "LetterReads", "label": "Reads",
+                 "help": "One or more Reads table objects."},
                 {"name": "required", "class": "file", "label": "Required", "help": "Another parameter"},
-                {"name": "optional", "class": "file", "label": "Optional", "help": "Optional parameter", "optional": True}
+                {"name": "optional", "class": "file", "label": "Optional",
+                 "help": "Optional parameter", "optional": True}
             ],
             "outputSpec": [
-                {"name": "mappings", "class": "gtable", "type": "LetterMappings", "label": "Mappings", "help": "The mapped reads."}
+                {"name": "mappings", "class": "gtable", "type": "LetterMappings", "label": "Mappings",
+                 "help": "The mapped reads."}
             ],
             "version": "1.0.0"
             }
-        app_dir = self.write_app_directory("åpplet_help", json.dumps(app_spec), code_filename="code.py", code_content="")
+        app_dir = self.write_app_directory("åpplet_help", json.dumps(app_spec),
+                                           code_filename="code.py", code_content="")
         applet_id = json.loads(run("dx build --json " + app_dir))["id"]
         applet_help = run("dx run " + applet_id + " -h")
         self.assertTrue("Reads: -ireads=(gtable, type LetterReads) [-ireads=... [...]]" in applet_help)
@@ -3502,19 +3590,19 @@ class TestDXJobutilAddOutput(DXTestCase):
     dummy_ids = [obj_class + '-' + dummy_hash for obj_class in data_obj_classes]
     dummy_job_id = "job-" + dummy_hash
     dummy_analysis_id = "analysis-123456789012345678901234"
-    test_cases = [["32", 32],
-                  ["3.4", 3.4],
-                  ["true", True],
-                  ["'32 tables'", "32 tables"],
-                  ['\'{"foo": "bar"}\'', {"foo": "bar"}],
-                  [dummy_job_id + ":foo", {"job": dummy_job_id,
-                                           "field": "foo"}],
-                  [dummy_analysis_id + ":bar",
-                   {"$dnanexus_link": {"analysis": dummy_analysis_id,
-                                       "field": "bar"}}]] + \
-        [[dummy_id, {"$dnanexus_link": dummy_id}] for dummy_id in dummy_ids] + \
-        [["'" + json.dumps({"$dnanexus_link": dummy_id}) + "'",
-          {"$dnanexus_link": dummy_id}] for dummy_id in dummy_ids]
+    test_cases = ([["32", 32],
+                   ["3.4", 3.4],
+                   ["true", True],
+                   ["'32 tables'", "32 tables"],
+                   ['\'{"foo": "bar"}\'', {"foo": "bar"}],
+                   [dummy_job_id + ":foo", {"job": dummy_job_id,
+                                            "field": "foo"}],
+                   [dummy_analysis_id + ":bar",
+                    {"$dnanexus_link": {"analysis": dummy_analysis_id,
+                                        "field": "bar"}}]] +
+                  [[dummy_id, {"$dnanexus_link": dummy_id}] for dummy_id in dummy_ids] +
+                  [["'" + json.dumps({"$dnanexus_link": dummy_id}) + "'",
+                    {"$dnanexus_link": dummy_id}] for dummy_id in dummy_ids])
 
     def test_auto(self):
         with tempfile.NamedTemporaryFile() as f:
@@ -3569,16 +3657,17 @@ class TestDXJobutilAddOutput(DXTestCase):
             f.flush()
             local_filename = f.name
             cmd_prefix = "dx-jobutil-add-output -o " + local_filename + " "
-            error_test_cases = [["int", "3.4"],
-                                ["int", "foo"],
-                                ["float", "foo"],
-                                ["boolean", "something"],
-                                ["hash", "{]"],
-                                ["jobref", "thing"],
-                                ["analysisref", "thing"]] + \
-                [[classname,
-                  "'" + json.dumps({"dnanexus_link": classname + "-" + self.dummy_hash}) + "'"] for \
-                 classname in self.data_obj_classes]
+            error_test_cases = ([["int", "3.4"],
+                                 ["int", "foo"],
+                                 ["float", "foo"],
+                                 ["boolean", "something"],
+                                 ["hash", "{]"],
+                                 ["jobref", "thing"],
+                                 ["analysisref", "thing"]] +
+                                [[classname,
+                                  "'" +
+                                  json.dumps({"dnanexus_link": classname + "-" + self.dummy_hash}) +
+                                  "'"] for classname in self.data_obj_classes])
             for i, tc in enumerate(error_test_cases):
                 with self.assertSubprocessFailure(stderr_regexp='Value could not be parsed',
                                                   exit_code=3):
