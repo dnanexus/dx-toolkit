@@ -30,13 +30,19 @@ if [[ $2 == "--debian-system-install" ]]; then
     shift
 fi
 
-# setuptools bakes the path of the Python interpreter into all
-# installed Python scripts. Rewrite it back to the more portable form,
-# since we don't always know where the right interpreter is on the
-# target system.
+# * Setuptools bakes the path of the Python interpreter into all
+#   installed Python scripts. Rewrite it back to the more portable form,
+#   since we don't always know where the right interpreter is on the
+#   target system.
 #
-# Also, insert a stub that tries to detect when the user hasn't sourced the
-# environment file and prints a warning.
+# * Insert a stub that tries to detect when the user hasn't sourced the
+#   environment file and prints a warning.
+#
+# * Force our Python path to appear before everything else in sys.path. This is
+#   necessary when an out-of-date installation of Setuptools appears in
+#   sys.path, providing a version of pkg_resources.py that is unable to read our
+#   Python package requirements metadata, and crashes with a
+#   pkg_resources.DistributionNotFound error.
 interpreter="/usr/bin/env python"
 if [[ $2 != "" ]]; then
     interpreter=$2
@@ -46,6 +52,7 @@ py_header="#!$interpreter
 import os, sys
 if \"DNANEXUS_HOME\" not in os.environ:
     sys.stderr.write(\"\"\"***\n*** WARNING: DNANEXUS_HOME is not set. $msg\n***\n\"\"\")
+sys.path.insert(1, os.path.join(os.path.dirname(__file__), '../share/dnanexus/lib/python2.7/site-packages'))
 "
 
 for f in "$dirname"/*; do
