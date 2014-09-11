@@ -1323,6 +1323,9 @@ def main(array):
                                                  {"project": self.project,
                                                   "input": {"array": [first_job_handler.get_output_ref("array"), first_job_handler.get_output_ref("array")]}})['id'])
         first_job_handler.wait_on_done()
+        # Need to wait for second job to become runnable
+        while second_job_handler.describe()['state'] != 'runnable':
+            time.sleep(0.1)
         second_job_desc = run("dx describe " + second_job_handler.get_id())
         first_job_res = first_job_handler.get_id() + ":array => [ 0, 1, 2 ]"
         self.assertIn(first_job_res, second_job_desc)
