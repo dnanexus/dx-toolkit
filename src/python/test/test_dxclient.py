@@ -228,6 +228,9 @@ class TestDXClient(DXTestCase):
         shell.expect("Current user")
         shell.sendline("help all")
         shell.expect("Commands:")
+        shell.sendline("exit")
+        shell.sendline("echo find projects | dx sh")
+        shell.expect("project-")
 
     def test_dx_get_record(self):
         with chdir(tempfile.mkdtemp()):

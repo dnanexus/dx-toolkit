@@ -2983,7 +2983,7 @@ def shell(orig_args):
                 args = [word.decode('utf-8') for word in shlex.split(line.encode('utf-8'))]
                 parsed_args = parser.parse_args(args)
                 set_cli_colors(parsed_args)
-                args.func(parsed_args)
+                parsed_args.func(parsed_args)
         exit(0)
 
     if state['interactive']:
