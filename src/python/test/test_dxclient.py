@@ -1299,9 +1299,9 @@ dx-jobutil-add-output record_array $second_record --array
                                overridden_fields=['systemRequirements'])
 
         # override instance type for specific entry point(s)
-        new_job_desc = get_new_job_desc("--instance-type " +
+        new_job_desc = get_new_job_desc("--instance-type '" +
                                         json.dumps({"some_ep": "mem2_hdd2_x1",
-                                                    "some_other_ep": "mem2_hdd2_x4"}))
+                                                    "some_other_ep": "mem2_hdd2_x4"}) + "'")
         self.assertEqual(new_job_desc['systemRequirements'],
                          {'*': {'instanceType': 'mem2_hdd2_x2'},
                           'some_ep': {'instanceType': 'mem2_hdd2_x1'},
