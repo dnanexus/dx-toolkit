@@ -653,8 +653,9 @@ class TestDXClient(DXTestCase):
             # Wait for the line displayed between the first and second MOTDs,
             # since we only care about checking the second set of MOTD lines.
             # Example of the dividing line:
-            # dnanexus@job-BP90K3Q0X2v81PXXPZj005Zj.dnanexus.io (10.0.0.200) - byobu
-            dx.expect("dnanexus.io \(10.0.0.200\) - byobu", timeout=120)
+            # dnanexus@job-BP90K3Q0X2v81PXXPZj005Zj.dnanex.us (10.0.0.200) - byobu
+            dx.expect(["dnanexus.io \(10.0.0.200\) - byobu",
+                       "dnanex.us \(10.0.0.200\) - byobu"], timeout=120)
             dx.expect("This is the DNAnexus Execution Environment", timeout=600)
             # Check for job name (e.g. "Job: sleep")
             dx.expect("Job: \x1b\[1msleep", timeout=5)
