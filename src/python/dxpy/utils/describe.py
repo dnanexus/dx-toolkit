@@ -275,7 +275,13 @@ def get_resolved_jbors(resolved_thing, orig_thing, resolved_jbors):
                 from dxpy.api import job_describe
                 job_output = job_describe(get_job_from_jbor(orig_thing)).get('output')
                 if job_output is not None:
-                    resolved_jbors[jbor_str] = job_output.get(get_field_from_jbor(orig_thing))
+                    field_value = job_output.get(get_field_from_jbor(orig_thing))
+                    jbor_index = get_index_from_jbor(orig_thing)
+                    if jbor_index is not None:
+                        if isinstance(field_value, list):
+                            resolved_jbors[jbor_str] = field_value[jbor_index]
+                    else:
+                        resolved_jbors[jbor_str] = field_value
             except:
                 # Just don't report any resolved JBORs if there are
                 # any problems
