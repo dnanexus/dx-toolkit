@@ -1358,6 +1358,9 @@ def main(array):
                                                     first_job_handler.get_output_ref("array")]}}
         second_job_handler = dxpy.DXJob(dxpy.api.applet_run(applet_id, second_job_run_input)['id'])
         first_job_handler.wait_on_done()
+        # Need to wait for second job to become runnable
+        while second_job_handler.describe()['state'] != 'runnable':
+            time.sleep(0.1)
         second_job_desc = run("dx describe " + second_job_handler.get_id())
         first_job_res = first_job_handler.get_id() + ":array => [ 0, 1, 2 ]"
         self.assertIn(first_job_res, second_job_desc)
