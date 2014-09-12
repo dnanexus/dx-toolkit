@@ -874,6 +874,26 @@ class TestDXClientUploadDownload(DXTestCase):
                 listing = run("dx ls a").split("\n")
                 self.assertIn(os.path.basename(fd2.name), listing)
 
+    def test_dx_upload_mult_paths_with_dest(self):
+        testdir = tempfile.mkdtemp()
+        os.mkdir(os.path.join(testdir, 'a'))
+        with tempfile.NamedTemporaryFile(dir=testdir) as fd:
+            fd.write("root-file")
+            fd.flush()
+            with tempfile.NamedTemporaryFile(dir=os.path.join(testdir, "a")) as fd2:
+                fd2.write("a-file")
+                fd2.flush()
+
+                run("dx mkdir /destdir")
+                run(("dx upload -r {testdir}/{rootfile} {testdir}/a --destination /destdir " +
+                     "--wait").format(testdir=testdir, rootfile=os.path.basename(fd.name)))
+                listing = run("dx ls /destdir/").split("\n")
+                self.assertIn("a/", listing)
+                self.assertIn(os.path.basename(fd.name), listing)
+                listing = run("dx ls /destdir/a").split("\n")
+                self.assertIn(os.path.basename(fd2.name), listing)
+
+
 class TestDXClientDescribe(DXTestCase):
     def test_projects(self):
         run("dx describe :")

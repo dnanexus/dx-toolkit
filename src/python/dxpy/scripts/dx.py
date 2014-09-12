@@ -1974,6 +1974,12 @@ def upload(args, **kwargs):
     elif args.path is None:
         args.path = args.output
 
+    if len(args.filename) > 1 and not args.path.endswith("/"):
+        # When called as "dx upload x --dest /y", we upload to "/y"; with --dest "/y/", we upload to "/y/x".
+        # Called as "dx upload x y --dest /z", z is implicitly a folder, so append a slash to avoid incorrect path
+        # resolution.
+        args.path += "/"
+
     paths = copy.copy(args.filename)
     for path in paths:
         args.filename = path
