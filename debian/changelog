@@ -1,3 +1,11 @@
+dx-toolkit (0.115.1) precise; urgency=low
+
+  * Packaging bug fix when running with older versions of setuptools in the system
+
+  * Fix enabling dx sh to work with stdin input again
+
+ -- Andrey Kislyuk <akislyuk@localhost>  Fri, 12 Sep 2014 00:28:21 +0000
+
 dx-toolkit (0.115.0) precise; urgency=low
 
   * Add spelling suggestions for first-level dx subcommands
