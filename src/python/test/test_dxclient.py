@@ -1373,7 +1373,7 @@ def main(array):
 '''}})['id']
         first_job_handler = dxpy.DXJob(dxpy.api.applet_run(applet_id,
                                                            {"project": self.project,
-                                                            "input": {"array": [0, 1, 2]}})['id'])
+                                                            "input": {"array": [0, 1, 5]}})['id'])
 
         # Launch a second job which depends on the first, using two
         # arrays in an array (to be flattened) as input
@@ -1382,11 +1382,13 @@ def main(array):
                                                     first_job_handler.get_output_ref("array")]}}
         second_job_handler = dxpy.DXJob(dxpy.api.applet_run(applet_id, second_job_run_input)['id'])
         first_job_handler.wait_on_done()
-        # Need to wait for second job to become runnable
-        while second_job_handler.describe()['state'] != 'runnable':
+        # Need to wait for second job to become runnable (idle and
+        # waiting_on_input are the only states before it becomes
+        # runnable)
+        while second_job_handler.describe()['state'] in ['idle', 'waiting_on_input']:
             time.sleep(0.1)
         second_job_desc = run("dx describe " + second_job_handler.get_id())
-        first_job_res = first_job_handler.get_id() + ":array => [ 0, 1, 2 ]"
+        first_job_res = first_job_handler.get_id() + ":array => [ 0, 1, 5 ]"
         self.assertIn(first_job_res, second_job_desc)
 
         # Launch another job which depends on the first done job and
@@ -1395,10 +1397,12 @@ def main(array):
         # shouldn't.
         third_job_run_input = {"project": self.project,
                                "input": {"array": [first_job_handler.get_output_ref("array"),
+                                                   first_job_handler.get_output_ref("array", index=2),
                                                    second_job_handler.get_output_ref("array")]}}
         third_job = dxpy.api.applet_run(applet_id, third_job_run_input)['id']
         third_job_desc = run("dx describe " + third_job)
         self.assertIn(first_job_res, third_job_desc)
+        self.assertIn(first_job_handler.get_id() + ":array.2 => 5", third_job_desc)
         self.assertNotIn(second_job_handler.get_id() + ":array =>", third_job_desc)
 
 class TestDXClientWorkflow(DXTestCase):
