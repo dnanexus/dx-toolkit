@@ -415,16 +415,13 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
         # The only "break" above follows some code that sets last_error
         raise AssertionError('Expected last_error to be set here')
 
-    # TODO: suppress this message for classes of errors where it
-    # probably wouldn't be useful, e.g. it's pretty clear where API
-    # errors come from and the client generally has code to handle them,
-    # so this trace isn't useful then.
-    logger.warn('---- DXHTTPRequest %s %s failed after %d tries ----' % (method, url, try_index + 1))
-    logger.warn('**** The following error, from the last try, will be raised: ****')
-    for entry in traceback.format_exception(last_exc_type, last_error, last_traceback):
-        for line in entry.rstrip('\n').split('\n'):
-            logger.warn(line)
-    logger.warn('---------------------------------------')
+    if _DEBUG == '2':
+        logger.warn('---- DXHTTPRequest %s %s failed after %d tries ----' % (method, url, try_index + 1))
+        logger.warn('**** The following error, from the last try, will be raised: ****')
+        for entry in traceback.format_exception(last_exc_type, last_error, last_traceback):
+            for line in entry.rstrip('\n').split('\n'):
+                logger.warn(line)
+        logger.warn('---------------------------------------')
 
     raise last_error
 
