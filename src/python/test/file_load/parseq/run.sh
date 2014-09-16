@@ -49,6 +49,8 @@ function compare_upload_to_outdir()
     do
         basename=${f##*/}
 
+        # ensure the file is closed before downloading it
+        dx wait "$basename"
         dx download "$basename" -o tmp/"$basename"
         DIFF=$(diff out/$basename/$basename tmp/$basename)
         if [ "$DIFF" != "" ]
