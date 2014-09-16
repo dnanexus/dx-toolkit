@@ -415,7 +415,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
         # The only "break" above follows some code that sets last_error
         raise AssertionError('Expected last_error to be set here')
 
-    if _DEBUG == '2':
+    if _DEBUG:
         logger.warn('---- DXHTTPRequest %s %s failed after %d tries ----' % (method, url, try_index + 1))
         logger.warn('**** The following error, from the last try, will be raised: ****')
         for entry in traceback.format_exception(last_exc_type, last_error, last_traceback):
