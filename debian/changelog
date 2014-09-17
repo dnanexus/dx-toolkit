@@ -1,3 +1,11 @@
+dx-toolkit (0.116.0) precise; urgency=low
+
+  * Fixes for packaging on CentOS
+
+  * Misc Bugs Fixes 
+
+ -- Ric Medlinger <ric@dnanexus.com>  Wed, 17 Sep 2014 20:33:20 +0000
+
 dx-toolkit (0.115.0) precise; urgency=low
 
   * Add spelling suggestions for first-level dx subcommands
