@@ -1,3 +1,9 @@
+dx-toolkit (0.115.2) precise; urgency=low
+
+  * Disable extended stack traces by default 
+
+ -- Ric Medlinger <rmedlinger@localhost>  Wed, 17 Sep 2014 20:42:38 +0000
+
 dx-toolkit (0.115.1) precise; urgency=low
 
   * Packaging bug fix when running with older versions of setuptools in the system
