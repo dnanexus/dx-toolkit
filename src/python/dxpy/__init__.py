@@ -162,7 +162,8 @@ APISERVER_PORT = DEFAULT_APISERVER_PORT
 SESSION_HANDLERS = collections.defaultdict(requests.session)
 
 DEFAULT_RETRIES = 6
-_DEBUG, _UPGRADE_NOTIFY = False, True
+_DEBUG = 0  # debug verbosity level
+_UPGRADE_NOTIFY = True
 
 USER_AGENT = "{name}/{version} ({platform})".format(name=__name__,
                                                     version=TOOLKIT_VERSION,
@@ -248,9 +249,9 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
 
     url = APISERVER + resource if prepend_srv else resource
     method = method.upper() # Convert method name to uppercase, to ease string comparisons later
-    if _DEBUG == '2':
+    if _DEBUG >= 2:
         print(method, url, "=>\n" + json.dumps(data, indent=2), file=sys.stderr)
-    elif _DEBUG:
+    elif _DEBUG > 0:
         from repr import Repr
         print(method, url, "=>", Repr().repr(data), file=sys.stderr)
 
@@ -334,10 +335,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                     if response.headers.get('content-type', '').startswith('application/json'):
                         try:
                             content = json.loads(content)
-                            if _DEBUG == '2':
+                            if _DEBUG >= 2:
                                 t = int(response.elapsed.total_seconds()*1000)
                                 print(method, url, "<=", response.status_code, "(%dms)"%t, "\n" + json.dumps(content, indent=2), file=sys.stderr)
-                            elif _DEBUG:
+                            elif _DEBUG > 0:
                                 t = int(response.elapsed.total_seconds()*1000)
                                 print(method, url, "<=", response.status_code, "(%dms)"%t, Repr().repr(content), file=sys.stderr)
 
@@ -415,7 +416,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
         # The only "break" above follows some code that sets last_error
         raise AssertionError('Expected last_error to be set here')
 
-    if _DEBUG:
+    if _DEBUG > 0:
         logger.warn('---- DXHTTPRequest %s %s failed after %d tries ----' % (method, url, try_index + 1))
         logger.warn('**** The following error, from the last try, will be raised: ****')
         for entry in traceback.format_exception(last_exc_type, last_error, last_traceback):
@@ -550,7 +551,12 @@ def _initialize(suppress_warning=False):
     :type suppress_warning: boolean
     '''
     global _DEBUG, _UPGRADE_NOTIFY
-    _DEBUG = os.environ.get('_DX_DEBUG', False)
+    try:
+        _DEBUG = int(os.environ.get('_DX_DEBUG', 0))
+    except ValueError as e:
+        print('WARNING: Expected _DX_DEBUG to be an integer, but got %r' % (os.environ['_DX_DEBUG'],),
+              file=sys.stderr)
+        _DEBUG = 0
     _UPGRADE_NOTIFY = expanduser('~/.dnanexus_config/.upgrade_notify')
     if os.path.exists(_UPGRADE_NOTIFY) and os.path.getmtime(_UPGRADE_NOTIFY) > time.time() - 86400: # 24 hours
         _UPGRADE_NOTIFY = False

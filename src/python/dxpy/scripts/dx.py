@@ -4460,7 +4460,7 @@ def main():
             sys.stdout.flush()
         except IOError as e:
             if e.errno == errno.EPIPE:
-                if dxpy._DEBUG:
+                if dxpy._DEBUG > 0:
                     print("Broken pipe", file=sys.stderr)
             else:
                 raise
