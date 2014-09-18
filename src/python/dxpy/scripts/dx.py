@@ -1773,6 +1773,7 @@ def download(args):
             return [f for f in cached_folder_lists[project] if f.startswith(path) and '/' not in f[len(path)+1:]]
 
     folders_to_get, files_to_get, count = collections.defaultdict(list), collections.defaultdict(list), 0
+    foldernames, filenames = [], []
     for path in args.paths:
         # Attempt to resolve name. If --all is given or the path looks like a glob, download all matches.
         # Otherwise, the resolver will display a picker (or error out if there is no tty to display to).
@@ -1805,14 +1806,15 @@ def download(args):
         folders_to_get[project].extend(((f, strip_prefix) for f in matching_folders))
         count += len(matching_files) + len(matching_folders)
 
-    from itertools import chain
-    filenames = set(f["describe"]["name"] for f in chain.from_iterable(files_to_get.values()))
-    foldernames = set(f[len(prefix):].lstrip('/') for f, prefix in chain.from_iterable(folders_to_get.values()))
-    conflicts = filenames & foldernames
-    if conflicts:
-        msg = "Error: The following paths are both file and folder names, and cannot be downloaded to the same destination: "
-        msg += ", ".join(sorted(conflicts))
-        err_exit(fill(msg))
+        filenames.extend(f["describe"]["name"] for f in matching_files)
+        foldernames.extend(f[len(strip_prefix):].lstrip('/') for f in matching_folders)
+
+    if len(filenames) > 0 and len(foldernames) > 0:
+        name_conflicts = set(filenames) & set(foldernames)
+        if len(name_conflicts) > 0:
+            msg = "Error: The following paths are both file and folder names, and cannot be downloaded to the same destination: "
+            msg += ", ".join(sorted(name_conflicts))
+            err_exit(fill(msg))
 
     if args.output is None:
         destdir, dest_filename = os.getcwd(), None
