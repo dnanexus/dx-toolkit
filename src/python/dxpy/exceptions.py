@@ -23,6 +23,8 @@ from __future__ import (print_function, unicode_literals)
 import os, sys, json, traceback, errno
 from .packages import requests
 
+import dxpy
+
 EXPECTED_ERR_EXIT_STATUS = 3
 
 class DXError(Exception):
