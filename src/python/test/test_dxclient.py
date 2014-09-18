@@ -798,6 +798,17 @@ class TestDXClientUploadDownload(DXTestCase):
                 self.assertEqual(os.stat(os.path.join("t2", os.path.basename(fd.name))).st_size,
                                  len("0123456789ABCDEF"*64))
 
+            with chdir(tempfile.mkdtemp()), temporary_project('dx download test proj') as other_project:
+                run("dx mkdir /super/")
+                run("dx mv '{}' /super/".format( os.path.basename(wd)))
+                run("dx select " + other_project.get_id())
+                run("dx download -r '{proj}:/super/{path}'".format(proj=self.project, path=os.path.basename(wd)))
+
+                tree1 = check_output("cd {wd}/super/{path}; find .".format(wd=wd, path=os.path.basename(wd)),
+                                     shell=True)
+                tree2 = check_output("cd {wd}; find .".format(wd=os.path.basename(wd)), shell=True)
+                self.assertEqual(tree1, tree2)
+
     def test_dx_upload_with_upload_perm(self):
         with temporary_project('test proj with UPLOAD perms', reclaim_permissions=True) as temp_project:
             temp_project.decrease_perms(dxpy.whoami(), 'UPLOAD')
