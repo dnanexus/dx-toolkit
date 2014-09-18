@@ -800,7 +800,7 @@ class TestDXClientUploadDownload(DXTestCase):
 
             with chdir(tempfile.mkdtemp()), temporary_project('dx download test proj') as other_project:
                 run("dx mkdir /super/")
-                run("dx mv '{}' /super/".format( os.path.basename(wd)))
+                run("dx mv '{}' /super/".format(os.path.basename(wd)))
                 run("dx select " + other_project.get_id())
                 run("dx download -r '{proj}:/super/{path}'".format(proj=self.project, path=os.path.basename(wd)))
 
@@ -808,6 +808,11 @@ class TestDXClientUploadDownload(DXTestCase):
                                      shell=True)
                 tree2 = check_output("cd {wd}; find .".format(wd=os.path.basename(wd)), shell=True)
                 self.assertEqual(tree1, tree2)
+
+            with self.assertSubprocessFailure(stderr_regexp="paths are both file and folder names", exit_code=1):
+                cmd = "dx cd {d}; dx mkdir {f}; dx download -r {f}*"
+                run(cmd.format(d=os.path.join("/super", os.path.basename(wd), "a", "б"),
+                               f=os.path.basename(fd.name)))
 
     def test_dx_upload_with_upload_perm(self):
         with temporary_project('test proj with UPLOAD perms', reclaim_permissions=True) as temp_project:

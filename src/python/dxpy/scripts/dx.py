@@ -1805,6 +1805,15 @@ def download(args):
         folders_to_get[project].extend(((f, strip_prefix) for f in matching_folders))
         count += len(matching_files) + len(matching_folders)
 
+    from itertools import chain
+    filenames = set(f["describe"]["name"] for f in chain.from_iterable(files_to_get.values()))
+    foldernames = set(f[len(prefix):].lstrip('/') for f, prefix in chain.from_iterable(folders_to_get.values()))
+    conflicts = filenames & foldernames
+    if conflicts:
+        msg = "Error: The following paths are both file and folder names, and cannot be downloaded to the same destination: "
+        msg += ", ".join(sorted(conflicts))
+        err_exit(fill(msg))
+
     if args.output is None:
         destdir, dest_filename = os.getcwd(), None
     elif count > 1:
