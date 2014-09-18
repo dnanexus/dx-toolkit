@@ -1788,6 +1788,9 @@ def download(args):
         matching_folders = []
         if project is not None:
             # project may be none if path is an ID and there is no project context
+            colon_pos = get_first_pos_of_char(":", path)
+            if colon_pos >= 0:
+                path = path[colon_pos + 1:]
             abs_path, strip_prefix = rel2abs(path, project)
 
             parent_folder = os.path.dirname(abs_path)
