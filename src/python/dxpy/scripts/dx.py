@@ -366,17 +366,20 @@ def login(args):
             print(fill(str(details)), file=sys.stderr)
 
     if using_default or args.staging:
-        greeting = dxpy.api.system_greet({'client': 'dxclient', 'version': 'v'+dxpy.TOOLKIT_VERSION})
-        if greeting.get('messages'):
-            print(BOLD("New messages from ") + DNANEXUS_LOGO())
-            for message in greeting['messages']:
-                print(BOLD("Date:    ") + datetime.datetime.fromtimestamp(message['date']/1000).ctime())
-                print(BOLD("Subject: ") + fill(message['title'], subsequent_indent=' '*9))
-                body = message['body'].splitlines()
-                if len(body) > 0:
-                    print(BOLD("Message: ") + body[0])
-                    for line in body[1:]:
-                        print(' '*9 + line)
+        try:
+            greeting = dxpy.api.system_greet({'client': 'dxclient', 'version': 'v'+dxpy.TOOLKIT_VERSION})
+            if greeting.get('messages'):
+                print(BOLD("New messages from ") + DNANEXUS_LOGO())
+                for message in greeting['messages']:
+                    print(BOLD("Date:    ") + datetime.datetime.fromtimestamp(message['date']/1000).ctime())
+                    print(BOLD("Subject: ") + fill(message['title'], subsequent_indent=' '*9))
+                    body = message['body'].splitlines()
+                    if len(body) > 0:
+                        print(BOLD("Message: ") + body[0])
+                        for line in body[1:]:
+                            print(' '*9 + line)
+        except Exception as e:
+            warn("Error while retrieving greet data: {}".format(e))
 
     args.current = False
     args.name = None
