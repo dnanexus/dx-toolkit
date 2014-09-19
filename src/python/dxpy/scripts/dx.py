@@ -1753,7 +1753,7 @@ def download(args):
 
     def rel2abs(path, project):
         if path.startswith('/') or dxpy.WORKSPACE_ID != project:
-            abs_path, strip_prefix = path, ''
+            abs_path, strip_prefix = path, os.path.dirname(path.rstrip('/'))
         else:
             wd = get_env_var('DX_CLI_WD', u'/')
             abs_path, strip_prefix = os.path.join(wd, path), wd
