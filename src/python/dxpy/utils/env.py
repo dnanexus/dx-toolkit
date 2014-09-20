@@ -50,7 +50,7 @@ def get_session_conf_dir():
     sessions_dir = os.path.join(get_user_conf_dir(), 'sessions')
     try:
         import psutil
-        parent_process = psutil.Process(os.getpid()).parent
+        parent_process = psutil.Process(os.getpid()).parent()
         default_session_dir = os.path.join(sessions_dir, str(parent_process.pid))
         while parent_process is not None and parent_process.pid != 0:
             session_dir = os.path.join(sessions_dir, str(parent_process.pid))

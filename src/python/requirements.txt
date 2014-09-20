@@ -5,5 +5,5 @@ python-dateutil==2.2
 python-magic==0.4.6
 beautifulsoup4==4.3.2
 argcomplete==0.8.1
-psutil==1.2.1
+psutil==2.1.1
 requests==2.3.0
