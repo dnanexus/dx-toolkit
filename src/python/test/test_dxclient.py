@@ -804,7 +804,8 @@ class TestDXClientUploadDownload(DXTestCase):
                 run("dx select " + other_project.get_id())
                 run("dx download -r '{proj}:/super/{path}'".format(proj=self.project, path=os.path.basename(wd)))
 
-                tree1 = check_output("cd {wd}; find .".format(wd=wd), shell=True)
+                tree1 = check_output("cd {wd}/super/{path}; find .".format(wd=wd, path=os.path.basename(wd)),
+                                     shell=True)
                 tree2 = check_output("cd {wd}; find .".format(wd=os.path.basename(wd)), shell=True)
                 self.assertEqual(tree1, tree2)
 
