@@ -808,6 +808,15 @@ class TestDXClientUploadDownload(DXTestCase):
                 tree2 = check_output("cd {wd}; find .".format(wd=os.path.basename(wd)), shell=True)
                 self.assertEqual(tree1, tree2)
 
+                with chdir(tempfile.mkdtemp()):
+                    # Now try it when it's a relative path in the same project
+
+                    run("dx select " + self.project)
+                    run("dx download -r super/{path}".format(path=os.path.basename(wd)))
+
+                    tree3 = check_output("cd {wd}; find .".format(wd=os.path.basename(wd)), shell=True)
+                    self.assertEqual(tree1, tree3)
+
             with self.assertSubprocessFailure(stderr_regexp="paths are both file and folder names", exit_code=1):
                 cmd = "dx cd {d}; dx mkdir {f}; dx download -r {f}*"
                 run(cmd.format(d=os.path.join("/super", os.path.basename(wd), "a", "б"),
