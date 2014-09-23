@@ -1,8 +1,14 @@
+dx-toolkit (0.116.1) precise; urgency=low
+
+  * Bug fixes for "dx download"
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 23 Sep 2014 23:25:35 +0000
+
 dx-toolkit (0.116.0) precise; urgency=low
 
   * Fixes for packaging on CentOS
 
-  * Misc Bugs Fixes 
+  * Misc Bugs Fixes
 
  -- Ric Medlinger <ric@dnanexus.com>  Wed, 17 Sep 2014 20:33:20 +0000
 
