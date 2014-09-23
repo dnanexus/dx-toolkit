@@ -1756,7 +1756,7 @@ def download(args):
             abs_path, strip_prefix = path, os.path.dirname(path.rstrip('/'))
         else:
             wd = get_env_var('DX_CLI_WD', u'/')
-            abs_path, strip_prefix = os.path.join(wd, path), os.path.dirname(os.path.join(wd, path))
+            abs_path, strip_prefix = os.path.join(wd, path), os.path.dirname(os.path.join(wd, path).rstrip('/'))
         if len(abs_path) > 1:
             abs_path = abs_path.rstrip('/')
         return abs_path, strip_prefix

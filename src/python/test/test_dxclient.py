@@ -804,17 +804,17 @@ class TestDXClientUploadDownload(DXTestCase):
                 run("dx select " + other_project.get_id())
                 run("dx download -r '{proj}:/super/{path}'".format(proj=self.project, path=os.path.basename(wd)))
 
-                tree1 = check_output("cd {wd}; find .".format(wd=wd), shell=True)
-                tree2 = check_output("cd {wd}; find .".format(wd=os.path.basename(wd)), shell=True)
+                tree1 = check_output("cd {wd} && find .".format(wd=wd), shell=True)
+                tree2 = check_output("cd {wd} && find .".format(wd=os.path.basename(wd)), shell=True)
                 self.assertEqual(tree1, tree2)
 
                 with chdir(tempfile.mkdtemp()):
                     # Now try it when it's a relative path in the same project
 
                     run("dx select " + self.project)
-                    run("dx download -r super/{path}".format(path=os.path.basename(wd)))
+                    run("dx download -r super/{path}/".format(path=os.path.basename(wd)))
 
-                    tree3 = check_output("cd {wd}; find .".format(wd=os.path.basename(wd)), shell=True)
+                    tree3 = check_output("cd {wd} && find .".format(wd=os.path.basename(wd)), shell=True)
                     self.assertEqual(tree1, tree3)
 
     def test_dx_upload_with_upload_perm(self):
