@@ -1,8 +1,16 @@
+dx-toolkit (0.117.0) precise; urgency=low
+
+  * Various improvements to "dx download" semantics
+
+  * Support Ubuntu build against openjdk 7
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 23 Sep 2014 23:24:14 +0000
+
 dx-toolkit (0.116.0) precise; urgency=low
 
   * Fixes for packaging on CentOS
 
-  * Misc Bugs Fixes 
+  * Misc Bugs Fixes
 
  -- Ric Medlinger <ric@dnanexus.com>  Wed, 17 Sep 2014 20:33:20 +0000
 
