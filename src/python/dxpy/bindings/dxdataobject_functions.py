@@ -41,10 +41,16 @@ def dxlink(object_id, project_id=None):
     :type project_id: string
 
     Creates a DXLink (a dict formatted as a symbolic DNAnexus object
-    reference) to the specified object.
+    reference) to the specified object.  Returns *object_id* if it
+    appears to be a DXLink already.
     '''
     if isinstance(object_id, DXDataObject):
         object_id = object_id.get_id()
+    if isinstance(object_id, dict):
+        if '$dnanexus_link' in object_id:
+            # In this case, dxlink was called on something that
+            # already looks like a link
+            return object_id
     if project_id is None:
         return {'$dnanexus_link': object_id}
     else:

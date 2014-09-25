@@ -1882,6 +1882,23 @@ class TestDataobjectFunctions(unittest.TestCase):
     def tearDown(self):
         tearDownTempProjects(self)
 
+    def test_dxlink(self):
+        # Wrap a data object in a link
+        dxrecord = dxpy.new_dxrecord(project=self.proj_id)
+        self.assertEqual(dxpy.dxlink(dxrecord.get_id()),
+                         {"$dnanexus_link": dxrecord.get_id()})
+        self.assertEqual(dxpy.dxlink(dxrecord, self.proj_id),
+                         {"$dnanexus_link": {"project": self.proj_id, "id": dxrecord.get_id()}})
+        self.assertEqual(dxpy.dxlink(dxrecord),
+                         {"$dnanexus_link": dxrecord.get_id()})
+
+        # Wrapping an existing link is a no-op
+        self.assertEqual(dxpy.dxlink(dxpy.dxlink(dxrecord)),
+                         dxpy.dxlink(dxrecord))
+        dxjob = dxpy.DXJob('job-123456789012345678901234')
+        self.assertEqual(dxpy.dxlink(dxjob.get_output_ref('output')),
+                         dxjob.get_output_ref('output'))
+
     def test_get_handler(self):
         dxpy.set_workspace_id(self.second_proj_id)
 
