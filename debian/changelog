@@ -314,7 +314,7 @@ dx-toolkit (0.82.0) precise; urgency=low
 dx-toolkit (0.81.0) precise; urgency=low
 
   * DXWorkflow supports stage_instance_types parameter; other workflow
-	improvements.
+    improvements.
 
   * Various bug fixes.
 
