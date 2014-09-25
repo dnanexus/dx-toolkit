@@ -35,7 +35,7 @@
 }
 \references{
   API spec documentation:
-  \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method\%3A-\%2Fworkflow-xxxx\%2FremoveStage}
+  \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method\%3A-\%2Fworkflow-xxxx\%2Frun}
 }
 \seealso{
   \code{\link{dxHTTPRequest}}
