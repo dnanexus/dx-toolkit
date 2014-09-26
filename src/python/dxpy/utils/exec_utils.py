@@ -219,7 +219,7 @@ def entry_point(entry_point_name):
         ENTRY_POINT_TABLE[entry_point_name] = f
         @wraps(f)
         def wrapped_f(*args, **kwargs):
-            f(*args, **kwargs)
+            return f(*args, **kwargs)
         return wrapped_f
     return wrap
 
