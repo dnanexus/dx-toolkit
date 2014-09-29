@@ -966,6 +966,14 @@ namespace dx {
     return projectUpdate(object_id, input_params.toString(), safe_to_retry);
   }
 
+  JSON projectUpdateSponsorship(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/updateSponsorship"), input_params, safe_to_retry);
+  }
+
+  JSON projectUpdateSponsorship(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return projectUpdateSponsorship(object_id, input_params.toString(), safe_to_retry);
+  }
+
   JSON projectNew(const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest("/project/new", input_params, safe_to_retry);
   }

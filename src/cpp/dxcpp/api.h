@@ -367,6 +367,9 @@ namespace dx {
   JSON projectUpdate(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON projectUpdate(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
+  JSON projectUpdateSponsorship(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON projectUpdateSponsorship(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
   JSON projectNew(const std::string &input_params="{}", const bool safe_to_retry=false);
   JSON projectNew(const dx::JSON &input_params, const bool safe_to_retry=false);
 

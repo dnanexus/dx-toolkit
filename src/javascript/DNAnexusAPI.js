@@ -587,6 +587,11 @@ exports.projectUpdate = function(object_id, input_params) {
 };
 
 
+exports.projectUpdateSponsorship = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/updateSponsorship', input_params);
+};
+
+
 exports.projectNew = function(input_params) {
   return dx.DXHTTPRequest('/project/new', input_params);
 };

@@ -828,6 +828,14 @@ module DX
       return DX::http_request("/#{object_id}/update", input_params, opts)
     end
 
+    # Invokes the /project-xxxx/updateSponsorship API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FupdateSponsorship
+    def self.project_update_sponsorship(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/updateSponsorship", input_params, opts)
+    end
+
     # Invokes the /project/new API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject%2Fnew

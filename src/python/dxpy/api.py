@@ -1840,6 +1840,24 @@ def project_update(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/update' % object_id, input_params, always_retry=always_retry, **kwargs)
 
+def projectUpdateSponsorship(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`project_update_sponsorship()` instead.
+
+    """
+    print("dxpy.projectUpdateSponsorship is deprecated; please use project_update_sponsorship instead.", file=sys.stderr)
+    return project_update_sponsorship(*args, **kwargs)
+
+def project_update_sponsorship(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /project-xxxx/updateSponsorship API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FupdateSponsorship
+    """
+    return DXHTTPRequest('/%s/updateSponsorship' % object_id, input_params, always_retry=always_retry, **kwargs)
+
 def projectNew(*args, **kwargs):
     """
 
