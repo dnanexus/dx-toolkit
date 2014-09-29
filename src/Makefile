@@ -93,9 +93,6 @@ cpp/dxcpp/api.h: api_wrappers/wrapper_table.json api_wrappers/generateCppAPIHWra
 cpp/dxcpp/api.cc: api_wrappers/wrapper_table.json api_wrappers/generateCppAPICCWrappers.py
 	cat api_wrappers/wrapper_table.json | api_wrappers/generateCppAPICCWrappers.py > cpp/dxcpp/api.cc
 
-javascript/DNAnexusAPI.js: api_wrappers/wrapper_table.json api_wrappers/generateJSAPIWrappers.py
-	cat api_wrappers/wrapper_table.json | api_wrappers/generateJSAPIWrappers.py > javascript/DNAnexusAPI.js
-
 perl/lib/DNAnexus/API.pm: api_wrappers/wrapper_table.json api_wrappers/generatePerlAPIWrappers.py
 	cat api_wrappers/wrapper_table.json | api_wrappers/generatePerlAPIWrappers.py > perl/lib/DNAnexus/API.pm
 
@@ -108,7 +105,7 @@ R/dxR/R/api.R: api_wrappers/wrapper_table.json api_wrappers/generateRAPIWrappers
 ruby/lib/dxruby/api.rb: api_wrappers/wrapper_table.json api_wrappers/generateRubyAPIWrappers.py
 	cat api_wrappers/wrapper_table.json | api_wrappers/generateRubyAPIWrappers.py > ruby/lib/dxruby/api.rb
 
-api_wrappers: toolkit_version python/dxpy/api.py cpp/dxcpp/api.h cpp/dxcpp/api.cc javascript/DNAnexusAPI.js perl/lib/DNAnexus/API.pm java/src/main/java/com/dnanexus/DXAPI.java R/dxR/R/api.R ruby/lib/dxruby/api.rb
+api_wrappers: toolkit_version python/dxpy/api.py cpp/dxcpp/api.h cpp/dxcpp/api.cc perl/lib/DNAnexus/API.pm java/src/main/java/com/dnanexus/DXAPI.java R/dxR/R/api.R ruby/lib/dxruby/api.rb
 
 cpp: api_wrappers
 	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/src"
@@ -117,7 +114,7 @@ cpp: api_wrappers
 src_libs: api_wrappers
 	$(eval DNANEXUS_LIBDIR := "$(DNANEXUS_HOME)/share/dnanexus/lib")
 	mkdir -p "$(DNANEXUS_LIBDIR)"
-	cp -R -v bash javascript "$(DNANEXUS_LIBDIR)"
+	cp -R -v bash "$(DNANEXUS_LIBDIR)"
 	mkdir -p "$(DNANEXUS_HOME)/lib/perl5"
 	cp -R -v perl/lib/* "$(DNANEXUS_HOME)/lib/perl5/"
 
