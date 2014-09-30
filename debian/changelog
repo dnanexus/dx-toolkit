@@ -1,3 +1,9 @@
+dx-toolkit (0.117.1) precise; urgency=low
+
+  * Entry point decorator passes return value through
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 30 Sep 2014 20:12:40 +0000
+
 dx-toolkit (0.117.0) precise; urgency=low
 
   * Various improvements to "dx download" semantics
