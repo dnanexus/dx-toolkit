@@ -1,3 +1,11 @@
+dx-toolkit (0.118.0) precise; urgency=low
+
+  * Build and packaging improvements
+
+  * Add bindings to project-xxxx/updateSponsorship method
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 30 Sep 2014 20:10:49 +0000
+
 dx-toolkit (0.117.0) precise; urgency=low
 
   * Various improvements to "dx download" semantics
