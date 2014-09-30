@@ -41,6 +41,9 @@ The Platform SDK contains API language bindings for the following platforms:
 * Java
 * R
 
+Javascript support lives in a separate repo,
+[dnanexus/dx-javascript-toolkit.git](https://github.com/dnanexus/dx-javascript-toolkit).
+
 Build dependencies
 ------------------
 
