@@ -1,3 +1,9 @@
+dx-toolkit (0.118.1) precise; urgency=low
+
+  * Perf optimization for file downloads in jobs
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 01 Oct 2014 20:52:50 +0000
+
 dx-toolkit (0.118.0) precise; urgency=low
 
   * Build and packaging improvements
