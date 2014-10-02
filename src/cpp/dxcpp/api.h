@@ -439,6 +439,9 @@ namespace dx {
   JSON systemFindProjectMembers(const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON systemFindProjectMembers(const dx::JSON &input_params, const bool safe_to_retry=true);
 
+  JSON systemGlobalSearch(const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON systemGlobalSearch(const dx::JSON &input_params, const bool safe_to_retry=true);
+
   JSON systemGreet(const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON systemGreet(const dx::JSON &input_params, const bool safe_to_retry=true);
 

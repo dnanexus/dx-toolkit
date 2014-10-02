@@ -2270,6 +2270,24 @@ def system_find_project_members(input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/system/findProjectMembers', input_params, always_retry=always_retry, **kwargs)
 
+def systemGlobalSearch(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`system_global_search()` instead.
+
+    """
+    print("dxpy.systemGlobalSearch is deprecated; please use system_global_search instead.", file=sys.stderr)
+    return system_global_search(*args, **kwargs)
+
+def system_global_search(input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /system/globalSearch API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/globalSearch
+    """
+    return DXHTTPRequest('/system/globalSearch', input_params, always_retry=always_retry, **kwargs)
+
 def systemGreet(*args, **kwargs):
     """
 
