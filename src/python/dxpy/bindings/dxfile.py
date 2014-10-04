@@ -606,7 +606,10 @@ class DXFile(DXDataObject):
         # size for this heuristic so we don't incur the overhead for
         # tiny files (which wouldn't contribute as much to the load
         # anyway).
-        get_first_chunk_sequentially = self._file_length > 128 * 1024 and self._pos == 0 and dxpy.JOB_ID
+        if self._file_length > 128 * 1024 and self._pos == 0 and dxpy.JOB_ID:
+            get_first_chunk_sequentially = True
+        else:
+            get_first_chunk_sequentially = False
 
         if self._pos == self._file_length:
             return b""
