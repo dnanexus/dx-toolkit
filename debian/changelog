@@ -1,3 +1,9 @@
+dx-toolkit (0.119.0) precise; urgency=low
+
+  * First file download request blocks all subsequent request
+
+ -- Ric Medlinger <ric@dnanexus.com>  Tue, 07 Oct 2014 21:44:06 +0000
+
 dx-toolkit (0.118.0) precise; urgency=low
 
   * Build and packaging improvements
