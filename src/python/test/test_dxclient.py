@@ -20,6 +20,7 @@
 from __future__ import print_function, unicode_literals
 
 import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re, base64, random, time
+import pipes
 from contextlib import contextmanager
 import pexpect
 
@@ -215,6 +216,55 @@ class TestDXClient(DXTestCase):
         run("dx remove_types Ψ abc xyz")
         with self.assertSubprocessFailure(stderr_regexp="Could not resolve", exit_code=1):
             run("dx remove_types ΨΨ Ψ")
+
+    def test_dx_set_details(self):
+        record_id = run("dx new record Ψ1 --brief").strip()
+        run("dx set_details Ψ1 '{\"foo\": \"bar\"}'")
+        dxrecord = dxpy.DXRecord(record_id)
+        details = dxrecord.get_details()
+        self.assertEqual({"foo": "bar"}, details, msg="dx set_details with valid JSON string input failed.")
+
+    def test_dx_set_details_with_file(self):
+        # Create temporary JSON file with valid JSON.
+        with tempfile.NamedTemporaryFile() as tmp_file, tempfile.NamedTemporaryFile() as tmp_invalid_file:
+            tmp_file.write('{\"foo\": \"bar\"}')
+            tmp_file.flush()
+
+            # Test -f with valid JSON file.
+            record_id = run("dx new record Ψ2 --brief").strip()
+            run("dx set_details Ψ2 -f " + pipes.quote(tmp_file.name))
+            dxrecord = dxpy.DXRecord(record_id)
+            details = dxrecord.get_details()
+            self.assertEqual({"foo": "bar"}, details, msg="dx set_details -f with valid JSON input file failed.")
+
+            # Test --details-file with valid JSON file.
+            record_id = run("dx new record Ψ3 --brief").strip()
+            run("dx set_details Ψ3 --details-file " + pipes.quote(tmp_file.name))
+            dxrecord = dxpy.DXRecord(record_id)
+            details = dxrecord.get_details()
+            self.assertEqual({"foo": "bar"}, details,
+                             msg="dx set_details --details-file with valid JSON input file failed.")
+
+            # Create temporary JSON file with invalid JSON.
+            tmp_invalid_file.write('{\"foo\": \"bar\"')
+            tmp_invalid_file.flush()
+
+            # Test above with invalid JSON file.
+            record_id = run("dx new record Ψ4 --brief").strip()
+            with self.assertSubprocessFailure(stderr_regexp="JSON", exit_code=3):
+                run("dx set_details Ψ4 -f " + pipes.quote(tmp_invalid_file.name))
+
+            # Test command with (-f or --details-file) and CL JSON.
+            with self.assertSubprocessFailure(stderr_regexp="Error: Cannot provide both -f/--details-file and details",
+                                              exit_code=3):
+                run("dx set_details Ψ4 '{ \"foo\":\"bar\" }' -f " + pipes.quote(tmp_file.name))
+
+            # Test piping JSON from STDIN.
+            record_id = run("dx new record Ψ5 --brief").strip()
+            run("cat " + pipes.quote(tmp_file.name) + " | dx set_details Ψ5 -f -")
+            dxrecord = dxpy.DXRecord(record_id)
+            details = dxrecord.get_details()
+            self.assertEqual({"foo": "bar"}, details, msg="dx set_details -f - with valid JSON input failed.")
 
     def test_dx_shell(self):
         shell = pexpect.spawn("bash")

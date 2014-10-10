@@ -1473,20 +1473,41 @@ def set_details(args):
                                                      allow_mult=True, all_mult=args.all)
 
     if entity_results is None:
-        parser.exit(1, fill('Could not resolve "' + args.path + '" to a name or ID') + '\n')
+        err_exit(exception=ResolutionError('Could not resolve "' + args.path + '" to a name or ID'),
+                 expected_exceptions=(ResolutionError,))
 
-    try:
-        args.details = json.loads(args.details)
-    except ValueError:
-        parser.exit(1, 'Error: details could not be parsed as JSON')
+    # Throw error if both -f/--details-file and details supplied.
+    if args.details is not None and args.details_file is not None:
+        err_exit(exception=DXParserError('Cannot provide both -f/--details-file and details'),
+                 expected_exceptions=(DXParserError,))
+
+    elif args.details is not None:
+        try:
+            details = json.loads(args.details)
+        except ValueError as e:
+            err_exit('Error: Details could not be parsed as JSON', expected_exceptions=(ValueError,), exception=e)
+
+    elif args.details_file is not None:
+        with (sys.stdin if args.details_file == '-' else open(args.details_file, 'r')) as fd:
+            data = fd.read()
+            try:
+                details = json.loads(data)
+            except ValueError as e:
+                err_exit('Error: File contents could not be parsed as JSON', expected_exceptions=(ValueError,),
+                         exception=e)
+
+    # Throw error if missing arguments.
+    else:
+        err_exit(exception=DXParserError('Must set one of -f/--details-file or details'),
+                 expected_exceptions=(DXParserError,))
 
     for result in entity_results:
         try:
-            dxpy.DXHTTPRequest('/' + result['id'] + '/setDetails',
-                               args.details)
-        except (dxpy.DXAPIError,) + network_exceptions as details:
-            print(fill(details.__class__.__name__ + ': ' + str(details)))
+            dxpy.DXHTTPRequest('/' + result['id'] + '/setDetails', details)
+        except (dxpy.DXAPIError,) + network_exceptions as exc_details:
+            print(fill(exc_details.__class__.__name__ + ': ' + str(exc_details)))
             had_error = True
+
     if had_error:
         parser.exit(1)
 
@@ -4170,7 +4191,8 @@ parser_set_details = subparsers.add_parser('set_details', help='Set details on a
                                            description='Set the JSON details of a data object.', prog="dx set_details",
                                            parents=[env_args, all_arg])
 parser_set_details.add_argument('path', help='ID or path to data object to modify').completer = DXPathCompleter()
-parser_set_details.add_argument('details', help='JSON to store as details')
+parser_set_details.add_argument('details', help='JSON to store as details', nargs='?')
+parser_set_details.add_argument('-f', '--details-file', help='Path to local file containing JSON to store as details')
 parser_set_details.set_defaults(func=set_details)
 register_subparser(parser_set_details, categories='metadata')
 
