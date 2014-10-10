@@ -1,0 +1,12 @@
+{
+  "linters": {
+    "pep8": {
+      "type": "pep8",
+      "flags": ["--max-line-length=119"],
+      "severity.rules": {
+        "(^E)": "warning",
+        "(^W)": "advice"
+      }
+    }
+  }
+}
