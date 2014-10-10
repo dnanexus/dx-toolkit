@@ -2,6 +2,7 @@
   "linters": {
     "pep8": {
       "type": "pep8",
+      "include": "(\\.py$)",
       "flags": ["--max-line-length=119"],
       "severity.rules": {
         "(^E)": "warning",
