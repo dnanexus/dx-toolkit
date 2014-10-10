@@ -3972,7 +3972,7 @@ run_executable_action = parser_run.add_argument('executable',
 run_executable_action.completer = MultiCompleter([DXAppCompleter(),
                                                   DXPathCompleter(classes=['applet', 'workflow'], visibility="visible")])
 parser_run.add_argument('-h', '--help', help='show this help message and exit', nargs=0, action=runHelp)
-parser_run.add_argument('--clone', help=fill('Job ID or name from which to use as default options (will use the exact same executable ID, destination project and folder, job input, instance type requests, and a similar name unless explicitly overridden by command-line arguments)', width_adjustment=-24))
+parser_run.add_argument('--clone', help=fill('Job or analysis ID or name from which to use as default options (will use the exact same executable ID, destination project and folder, job input, instance type requests, and a similar name unless explicitly overridden by command-line arguments)', width_adjustment=-24))
 parser_run.add_argument('--alias', '--version', dest='alias',
                         help=fill('Alias (tag) or version of the app to run (default: "default" if an app)', width_adjustment=-24))
 parser_run.add_argument('--destination', '--folder', metavar='PATH', dest='folder', help=fill('The full project:folder path in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
