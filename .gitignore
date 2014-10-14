@@ -88,3 +88,4 @@ dxR.Rcheck
 /src/ua/ua
 test-job-workspaces
 /.arcconfig
+.idea/
