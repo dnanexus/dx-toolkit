@@ -82,7 +82,7 @@ def check_output(*popenargs, **kwargs):
     return output
 
 @contextmanager
-def temporary_project(name='dx client tests temporary project', cleanup=True, reclaim_permissions=False):
+def temporary_project(name='dx client tests temporary project', cleanup=True, reclaim_permissions=False, select=False):
     """Creates a temporary project scoped to the context manager, and yields
 a DXProject handler for the project.
 
@@ -90,16 +90,53 @@ a DXProject handler for the project.
     :type cleanup: bool
     :param reclaim_permissions: if True, attempts a project-xxxx/join before trying to destroy the project. May be needed if the test reduced its own permissions in the project.
     :type reclaim_permissions: bool
+    :param select:
+        if True, sets the environment variable DX_PROJECT_CONTEXT_ID
+        (and restores the previous value afterwards) so that subprocess
+        calls made within the block use the new project by default.
+    :type select: bool
 
     """
     temp_project = dxpy.DXProject(dxpy.api.project_new({'name': name})['id'])
     try:
-        yield temp_project
+        if select:
+            with select_project(temp_project):
+                yield temp_project
+        else:
+            yield temp_project
     finally:
         if reclaim_permissions:
             dxpy.DXHTTPRequest('/' + temp_project.get_id() + '/join', {'level': 'ADMINISTER'})
         if cleanup:
             dxpy.api.project_destroy(temp_project.get_id(), {"terminateJobs": True})
+
+
+@contextmanager
+def select_project(project_or_project_id):
+    """Selects a project by setting the DX_PROJECT_CONTEXT_ID in os.environ;
+this change is propagated to subprocesses that are invoked with the
+default settings. The original setting of DX_PROJECT_CONTEXT_ID is
+restored when the block exits.
+
+    :param project_or_project_id:
+        Project or container to select. May be specified either as a
+        string containing the project ID, or a DXProject handler.
+    :type project_or_project_id: str or DXProject
+
+    """
+    if isinstance(project_or_project_id, basestring):
+        project_id = project_or_project_id
+    else:
+        project_id = project_or_project_id.get_id()
+    current_project_env_var = os.environ.get('DX_PROJECT_CONTEXT_ID', None)
+    os.environ['DX_PROJECT_CONTEXT_ID'] = project_id
+    try:
+        yield None
+    finally:
+        if current_project_env_var is None:
+            del os.environ['DX_PROJECT_CONTEXT_ID']
+        else:
+            os.environ['DX_PROJECT_CONTEXT_ID'] = current_project_env_var
 
 
 class DXTestCase(unittest.TestCase):

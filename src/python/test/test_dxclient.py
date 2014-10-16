@@ -26,7 +26,7 @@ import pexpect
 
 import dxpy
 from dxpy.scripts import dx_build_app
-from dxpy_testutil import DXTestCase, check_output, temporary_project
+from dxpy_testutil import DXTestCase, check_output, temporary_project, select_project
 import dxpy_testutil as testutil
 from dxpy.packages import requests
 from dxpy.exceptions import DXAPIError, EXPECTED_ERR_EXIT_STATUS
@@ -80,6 +80,24 @@ def makeGenomeObject():
     sequence_file.wait_on_close()
 
     return genome_record.get_id()
+
+
+class TestDXTestUtils(DXTestCase):
+    def test_temporary_project(self):
+        test_dirname = '/test_folder'
+        with temporary_project('test_temporary_project', select=True) as temp_project:
+            self.assertEquals('test_temporary_project:/', run('dx pwd').strip())
+
+    def test_select_project(self):
+        test_dirname = '/test_folder'
+        with temporary_project('test_select_project') as temp_project:
+            test_projectid = temp_project.get_id()
+            run('dx mkdir -p {project}:{dirname}'.format(project=test_projectid, dirname=test_dirname))
+            with select_project(test_projectid):
+                # This would fail if the project context hadn't been
+                # successfully changed by select_project
+                run('dx cd {dirname}'.format(dirname=test_dirname))
+
 
 class TestDXClient(DXTestCase):
     def test_dx_version(self):
@@ -851,17 +869,17 @@ class TestDXClientUploadDownload(DXTestCase):
             with chdir(tempfile.mkdtemp()), temporary_project('dx download test proj') as other_project:
                 run("dx mkdir /super/")
                 run("dx mv '{}' /super/".format(os.path.basename(wd)))
-                run("dx select " + other_project.get_id())
-                run("dx download -r '{proj}:/super/{path}'".format(proj=self.project, path=os.path.basename(wd)))
 
-                tree1 = check_output("cd {wd} && find .".format(wd=wd), shell=True)
-                tree2 = check_output("cd {wd} && find .".format(wd=os.path.basename(wd)), shell=True)
-                self.assertEqual(tree1, tree2)
+                # Specify an absolute path in another project
+                with select_project(other_project):
+                    run("dx download -r '{proj}:/super/{path}'".format(proj=self.project, path=os.path.basename(wd)))
 
-                with chdir(tempfile.mkdtemp()):
-                    # Now try it when it's a relative path in the same project
+                    tree1 = check_output("cd {wd} && find .".format(wd=wd), shell=True)
+                    tree2 = check_output("cd {wd} && find .".format(wd=os.path.basename(wd)), shell=True)
+                    self.assertEqual(tree1, tree2)
 
-                    run("dx select " + self.project)
+                # Now specify a relative path in the same project
+                with chdir(tempfile.mkdtemp()), select_project(self.project):
                     run("dx download -r super/{path}/".format(path=os.path.basename(wd)))
 
                     tree3 = check_output("cd {wd} && find .".format(wd=os.path.basename(wd)), shell=True)
@@ -3389,15 +3407,10 @@ def main(in1):
             "version": "1.0.0"
             }
         app_dir = self.write_app_directory("archive_in_another_project", json.dumps(app_spec), "code.py")
-        temp_project_id = check_output(
-            "dx new project '{p}' --brief".format(p="Temporary working project"), shell=True).strip()
-        try:
-            check_output("dx select {p}".format(p=temp_project_id), shell=True)
+
+        with temporary_project("Temporary working project", select=True) as temp_project:
             run("dx build -d {p}: {app_dir}".format(p=self.proj_id, app_dir=app_dir))
             run("dx build --archive -d {p}: {app_dir}".format(p=self.proj_id, app_dir=app_dir))
-        finally:
-            check_output("dx select {p}".format(p=self.proj_id), shell=True)
-            check_output("dx rmproject --yes {p}".format(p=temp_project_id), shell=True)
 
 
 class TestDXBuildReportHtml(unittest.TestCase):
