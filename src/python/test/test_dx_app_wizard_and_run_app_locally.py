@@ -375,6 +375,9 @@ class TestDXBashHelpers(DXTestCase):
         args.extend(arg_list)
         check_output(args)
 
+    def test_deepdirs(self):
+        self.run_test_app_locally('deepdirs', [])
+
     def test_basic(self):
         # Make a couple files for testing
         print("testing upload/download helpers")

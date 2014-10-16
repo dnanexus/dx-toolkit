@@ -32,7 +32,6 @@ Overview
    (c) Upload everything that is in the output directory
    (d) Generate a $HOME/job_output.json file that describes it.
 '''
-
 import concurrent.futures
 import os
 import sys
@@ -48,8 +47,9 @@ running in the DNAnexus Platform.
 This utility is ''' + RED(BOLD('EXPERIMENTAL')) + ''' and its
 functionality is subject to change at any time without notice.
 
-Uploads all files in the directory $HOME/out, as described below, and
-adds relevant entries into the job_output.json file.
+Uploads all files and subdirectories in the directory $HOME/out, as
+described below. It also adds relevant entries into the job_output.json
+file.
 
 By convention, only directories with names equal to output parameter
 names are expected to be found in the output directory, and any file(s)
@@ -63,9 +63,15 @@ file with value
 
     {"$dnanexus_link": "file-xxxx"}
 
-where "file-xxxx" is the ID of the newly uploaded file.  If multiple
+where "file-xxxx" is the ID of the newly uploaded file. If multiple
 files are found, they will be added as an array output (in unspecified
-order).
+order). If subdirectories are found under $HOME/out/FOO, then they are
+uploaded in their entirety to the workspace, and values are added
+to FOO in the job_output.json file. For example, the path:
+
+    $HOME/out/FOO/BAR/XXX.TXT
+
+will be uploaded to /BAR/XXX.TXT.
 '''
 
 parser = argparse.ArgumentParser(description=refill_paragraphs(description),
@@ -98,10 +104,11 @@ def report_error_and_exit(message):
     '''
     error_hash = {
         "error": {
-            "type": "string",
+            "type": "AppInternalError",
             "message": message
         }
     }
+    sys.stderr.write("AppError: {}\n".format(message))
     with open(os.path.expanduser(os.path.join('~', 'job_error.json')), 'w') as error_file:
         error_file.write(json.dumps(error_hash, indent=4) + '\n')
     sys.exit(1)
@@ -113,7 +120,6 @@ def get_output_spec():
     output_spec = None
     if 'DX_JOB_ID' in os.environ:
         # works in the cloud, not locally
-        # print("found the job id");
         job_desc = dxpy.describe(dxpy.JOB_ID)
         if job_desc["function"] == "main":
             # The output spec does not apply for subjobs
@@ -130,7 +136,7 @@ def get_output_spec():
     # convert to a dictionary. Each entry in the output spec
     # has {name, class} attributes.
     if output_spec == None:
-        return {}
+        return None
 
     # for each field name, we want to know its class, and if it
     # is optional
@@ -145,29 +151,49 @@ def get_output_spec():
     return subdir_recs
 
 
-def traverse_output_subdir(odir, subdir):
-    '''
-    Traverse an output directory, and return all the files in
-    it.
-
-    TODO: Support directories. For example, upload file
-    $HOME/out/outputname/foo/bar/baz.txt as a file into the folder
-    /foo/bar in the job's workspace.
-    '''
+def listdir_only_files_and_subdirs(path):
+    ''' Traverses *path* and returns a pair of lists, one for regular files,
+    the other for regular subdirectories. Symbolic links and hidden files/dirs
+    are ignored. '''
     files = []
-    for fname in os.listdir(subdir):
-        path = os.path.join(odir, subdir, fname)
-        if os.path.isdir(path):
-            # ignore directories
+    subdirs = []
+    for fname in os.listdir(path):
+        fname_fullpath = os.path.join(path, fname)
+        if (fname.startswith('.') or
+            os.path.islink(fname_fullpath)):
+            # explicitly ignore hidden files, directories, and symbolic links
             continue
-        if path.startswith('.'):
-            # ignore hidden files
-            continue
-        files.append(fname)
-    return files
+        elif os.path.isdir(fname_fullpath):
+            subdirs.append(fname)
+        elif os.path.isfile(fname_fullpath):
+            files.append(fname)
+        else:
+            # ignore anything else
+            pass
+    return files, subdirs
 
+def deep_list(base_path, rel_path):
+    '''
+    :param base_path: path in the local filesystem to a directory
+    :type base_path: string
+    :param rel_path: relative path to *base_path*
+    :type rel_path: string
+    :returns: A list of file paths residing in *base_path*/*rel_path*. The results
+    are relative to *base_path*.
+    :rtype: string list
 
-def analyze_output_dir():
+    Recursively traverse local directory *base_path*/*rel_path*, and make a list of all the files.
+    Files are returned represented as paths relative to *base_path*.
+    '''
+    result = []
+    files, subdirs = listdir_only_files_and_subdirs(os.path.join(base_path, rel_path))
+    for filename in files:
+        result.append(os.path.join(rel_path, filename))
+    for dirname in subdirs:
+        result.extend(deep_list(base_path, os.path.join(rel_path, dirname)))
+    return result
+
+def get_output_subdir_info():
     '''
     Figure out what the output directory looks like.
     We are interested in elements of the form:
@@ -186,40 +212,48 @@ def analyze_output_dir():
     odir = file_load_utils.get_output_dir()
     if not os.path.isdir(odir):
         return {}
-    l = os.listdir(odir)
+    _, subdir_list = listdir_only_files_and_subdirs(odir)
     subdir_recs = {}  # mapping from name to attributes
-    for subdir in l:
+    for subdir in subdir_list:
         path = os.path.join(odir, subdir)
         if not os.path.isdir(path):
             continue
+        files, child_dirs = listdir_only_files_and_subdirs(os.path.join(odir, subdir))
+        child_dfiles = []  # list of files inside each child directory
+        tot_num_files = len(files)
+        for ddir in child_dirs:
+            dfiles = deep_list(path, ddir)
+            child_dfiles.append(dfiles)
+            tot_num_files += len(dfiles)
         s_rec = {'path': path,
-                 'files': traverse_output_subdir(odir, path),
-                 'dx_links': []}
+                 'files': files,
+                 'child_dirs': child_dirs,
+                 'child_dfiles': child_dfiles,
+                 'dx_links': [],
+                 'tot_num_files': tot_num_files}
         subdir_recs[subdir] = s_rec
     return subdir_recs
 
 
 def compare_to_output_spec_and_annotate(subdir_recs, output_spec):
-    '''
-    Compare the subdirectories found in the output directory to the
+    '''Compare the subdirectories found in the output directory to the
     output specification, and adds annotations to the directory
     descriptions.
 
     An output spec is a list of entries with {class, name} attributes.
     '''
     def sanity_check_field(key):
-        '''Annotate with a class, and sanity check'''
+        ''' Annotate with a class, and sanity check '''
         class_ = output_spec[key]['class']
         s_rec = subdir_recs[key]
         s_rec['class'] = class_
-        num_files = len(s_rec['files'])
+        num_files = s_rec['tot_num_files']
         if class_ == 'file':
             if num_files != 1:
                 report_error_and_exit("key {} is of class {} but there are {} files".format(key, class_, num_files))
         else:
             # array of files, there could be any number of files in the subdirectory (including zero)
             pass
-
 
     for key in output_spec:
         '''Check that all the relevant output fields have been generated'''
@@ -243,19 +277,28 @@ def compare_to_output_spec_and_annotate(subdir_recs, output_spec):
 
 # Create an entry encapsulating the context required to upload a file.
 # The idea is to avoid sharing data between parallel threads of execution.
-def create_entry(subdir_desc, fname):
-    return {'subdir_desc': subdir_desc,
-            'fname': fname,
+def create_entry(subdir_desc, local_path, target_path, basename):
+    return {'subdir_desc' : subdir_desc,
+            'local_dir_path': local_path,
+            'target_dir_path': target_path,
+            'fname': basename,
             'dxlink': None}
 
 def upload_one_file(entry):
     '''Upload a file from the output directory. Record a reference to the
     uploaded object in the entry.
     '''
-    path = os.path.join(entry['subdir_desc']['path'], entry['fname'])
-    f_obj = dxpy.upload_local_file(path)
+    local_path = os.path.join(entry['local_dir_path'], entry['fname'])
+    if entry['target_dir_path'] is None:
+        trg_path = "/{}".format(entry['fname'])
+        f_obj = dxpy.upload_local_file(local_path)
+    else:
+        trg_path = "/{}/{}".format(entry['target_dir_path'], entry['fname'])
+        f_obj = dxpy.upload_local_file(local_path,
+                                       folder=("/" + entry['target_dir_path']),
+                                       parents=True)
     entry['dxlink'] = dxpy.dxlink(f_obj)
-    print("uploaded file %s" % path)
+    print("uploaded file {} -> {}".format(local_path, trg_path))
 
 def sequential_file_upload(to_upload):
     '''Sequentially upload everything that is in the output directory.
@@ -287,22 +330,26 @@ def update_output_json(subdir_recs):
         with open(output_file, 'r') as fh:
             output_json = json.load(fh)
 
-    # Add one entry to the json output file
-    def add_rec_to_json(key, class_, dxlinks):
-        if not key in output_json:
-            if class_ == 'array:file':
-                ## array type
-                output_json[key] = dxlinks
-            elif not len(dxlinks) == 1:
-                output_json[key] = dxlinks
+    def get_new_file_output_value(key, class_, dxlinks):
+        # Get the old value as a list, an empty list if the value
+        # does not exist yet.
+        orig_value_as_list = output_json.get(key, [])
+        if not isinstance(orig_value_as_list, list):
+            orig_value_as_list = [orig_value_as_list]
+        if class_ is None:
+            # Make it into an array if there are already values there
+            final_list = orig_value_as_list + dxlinks
+            if len(final_list) == 1:
+                return final_list[0]
             else:
-                ## singleton
-                output_json[key] = dxlinks[0]
+                return final_list
+        elif class_ == 'array:file':
+            return orig_value_as_list + dxlinks
+        elif class_ == 'file' and len(dxlinks) == 1:
+            return dxlinks[0]
         else:
-            if isinstance(output_json[key], list):
-                output_json[key].extend(dxlinks)
-            else:
-                report_error_and_exit("Key {} was found in output but is not an array".format(key))
+            report_error_and_exit("Type mismatch, key {} is of type {}, json={} num_dxlinks={}".
+                                  format(key, class_, type(output_json[key]), len(dxlinks)))
 
     # Add all the entries
     for key in subdir_recs:
@@ -313,40 +360,49 @@ def update_output_json(subdir_recs):
         class_ = None
         if 'class' in subdir_desc:
             class_ = subdir_desc['class']
-        add_rec_to_json(key, class_, dxlinks)
+        output_json[key] = get_new_file_output_value(key, class_, dxlinks)
 
     # write it back out
     with open(output_file, 'w') as fh:
         json.dump(output_json, fh, indent=4)
 
 
-## filter from a dictionary a list of matching keys
-def filter_dict(dict, excl_keys):
-    sub_dict = {}
-    for k, v in dict.iteritems():
-        if k not in excl_keys:
-            sub_dict[k] = v
-    return sub_dict
-
 ## entry point
 output_spec = get_output_spec()
-subdir_recs = analyze_output_dir()
+subdir_recs = get_output_subdir_info()
 
 # remove entries the user asked to exclude
 if len(args.exclude) > 0:
-    output_spec = file_load_utils.filter_dict(output_spec, args.exclude)
+    if output_spec is not None:
+        output_spec = file_load_utils.filter_dict(output_spec, args.exclude)
     subdir_recs = file_load_utils.filter_dict(subdir_recs, args.exclude)
 
 # Compare against the output spec
-compare_to_output_spec_and_annotate(subdir_recs, output_spec)
+if output_spec is not None:
+    compare_to_output_spec_and_annotate(subdir_recs, output_spec)
 
 # Open the subdirectories hash into a list with an entry per file. This avoids
 # sharing data between concurrent threads.
 to_upload = []
 for key in subdir_recs:
     subdir_desc = subdir_recs[key]
-    for fname in subdir_desc['files']:
-        to_upload.append(create_entry(subdir_desc, fname))
+    for filename in subdir_desc['files']:
+        to_upload.append(create_entry(subdir_desc, subdir_desc['path'], None, filename))
+
+# Go through the deep subdirectories, make a listing of files to upload.
+# We are relying on the platform to create all subdirectories, this
+# means that we do not need to explicitly create them.
+for key in subdir_recs:
+    subdir_desc = subdir_recs[key]
+    for idx, ddir in enumerate(subdir_desc['child_dirs']):
+        dfiles = subdir_desc['child_dfiles'][idx]
+        for dfile in dfiles:
+            rel_path = os.path.dirname(dfile)
+            local_path = os.path.join(subdir_desc['path'], rel_path)
+            to_upload.append(create_entry(subdir_desc,
+                                          local_path,
+                                          rel_path,
+                                          os.path.basename(dfile)))
 
 # upload concurrently
 if args.parallel:
