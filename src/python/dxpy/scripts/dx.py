@@ -2310,6 +2310,13 @@ def find_executions(args):
         err_exit()
 
 def find_data(args):
+    # --folder deprecated to --path.
+    if args.folder is None and args.path is not None:
+        args.folder = args.path
+    elif args.folder is not None and args.path is not None:
+        err_exit(exception=DXParserError('Cannot supply both --folder and --path.'),
+                 expected_exceptions=(DXParserError,))
+
     try_call(process_find_by_property_args, args)
     if args.all_projects:
         args.project = None
@@ -2320,8 +2327,17 @@ def find_data(args):
     else:
         if get_last_pos_of_char(':', args.project) == -1:
             args.project = args.project + ':'
+
+        if args.folder is not None and get_last_pos_of_char(':', args.folder) != -1:
+            err_exit(exception=DXParserError('Cannot supply both --project and --path PROJECTID:FOLDERPATH.'),
+                     expected_exceptions=(DXParserError,))
+
         args.project, _none, _none = try_call(resolve_existing_path,
                                               args.project, 'project')
+
+    if args.folder is not None and not args.folder.startswith('/'):
+        args.project, args.folder, _none = try_call(resolve_path, args.folder, 'folder')
+
     try:
         results = list(dxpy.find_data_objects(classname=args.classname,
                                               state=args.state,
@@ -4376,8 +4392,13 @@ parser_find_executions.completer = DXPathCompleter(expected='project')
 register_subparser(parser_find_executions, subparsers_action=subparsers_find, categories='exec')
 
 parser_find_data = subparsers_find.add_parser('data', help='Find data objects',
-                                              description='Finds data objects with the given search parameters.  By default, restricts the search to the current project if set.  To search over all projects (excludes public projects), use --all-projects (overrides --project, --folder, --norecurse).',
-                                              parents=[stdout_args, json_arg, no_color_arg, delim_arg, env_args, find_by_properties_and_tags_args], prog='dx find data')
+                                              description='Finds data objects with the given search parameters.  By' +
+                                              ' default, restricts the search to the current project if set.  To ' +
+                                              'search over all projects (excludes public projects), use ' +
+                                              '--all-projects (overrides --path and --norecurse).',
+                                              parents=[stdout_args, json_arg, no_color_arg, delim_arg, env_args,
+                                                       find_by_properties_and_tags_args],
+                                              prog='dx find data')
 parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'gtable', 'applet', 'workflow'], help='Data object class')
 parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
 parser_find_data.add_argument('--visibility', choices=['hidden', 'visible', 'either'], default='visible', help='Whether the object is hidden or not')
@@ -4385,8 +4406,10 @@ parser_find_data.add_argument('--name', help='Name of the object')
 parser_find_data.add_argument('--type', help='Type of the data object')
 parser_find_data.add_argument('--link', help='Object ID that the data object links to')
 parser_find_data.add_argument('--all-projects', '--allprojects', help='Extend search to all projects (excluding public projects)', action='store_true')
-parser_find_data.add_argument('--project', help='Project with which to restrict the results')
-parser_find_data.add_argument('--folder', help='Folder path with which to restrict the results (\'--project\' must be used in this case)').completer = DXPathCompleter(expected='folder')
+parser_find_data.add_argument('--project', help=argparse.SUPPRESS)
+parser_find_data.add_argument('--folder', help=argparse.SUPPRESS).completer = DXPathCompleter(expected='folder')
+parser_find_data.add_argument('--path', help='Project and/or folder in which to restrict the results',
+                              metavar='PROJECT:FOLDER').completer = DXPathCompleter(expected='folder')
 parser_find_data.add_argument('--norecurse', dest='recurse', help='Do not recurse into subfolders', action='store_false')
 parser_find_data.add_argument('--mod-after', help='Date (e.g. 2012-01-01) or integer timestamp after which the object was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
 parser_find_data.add_argument('--mod-before', help='Date (e.g. 2012-01-01) or integer timestamp before which the object was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')

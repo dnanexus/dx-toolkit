@@ -124,12 +124,15 @@ restored when the block exits.
     :type project_or_project_id: str or DXProject
 
     """
-    if isinstance(project_or_project_id, basestring):
+    if isinstance(project_or_project_id, basestring) or project_or_project_id is None:
         project_id = project_or_project_id
     else:
         project_id = project_or_project_id.get_id()
     current_project_env_var = os.environ.get('DX_PROJECT_CONTEXT_ID', None)
-    os.environ['DX_PROJECT_CONTEXT_ID'] = project_id
+    if project_id is None:
+        del os.environ['DX_PROJECT_CONTEXT_ID']
+    else:
+        os.environ['DX_PROJECT_CONTEXT_ID'] = project_id
     try:
         yield None
     finally:
