@@ -44,9 +44,6 @@ from dxpy.utils.printing import fill, refill_paragraphs, BOLD, RED
 description = BOLD('Note') + ''': this is a utility for use by bash apps
 running in the DNAnexus Platform.
 
-This utility is ''' + RED(BOLD('EXPERIMENTAL')) + ''' and its
-functionality is subject to change at any time without notice.
-
 Uploads all files and subdirectories in the directory $HOME/out, as
 described below. It also adds relevant entries into the job_output.json
 file.
