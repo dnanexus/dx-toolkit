@@ -565,7 +565,6 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
     NOTE: if expected_classes is provided and conflicts with the class
     of the hash ID, it will return None for all fields.
     '''
-
     project, folderpath, entity_name = resolve_path(path, expected, allow_empty_string=allow_empty_string)
 
     if entity_name is None:
@@ -612,6 +611,10 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
         if is_job_id(project):
             # The following will raise if no results could be found
             results = resolve_job_ref(project, entity_name, describe=describe)
+
+            # If results able to resolve without error, project will be
+            # incorporated into results assuming results were found.
+            project = None
         else:
             try:
                 results = list(dxpy.find_data_objects(project=project,

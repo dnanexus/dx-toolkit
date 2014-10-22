@@ -985,6 +985,65 @@ class TestDXClientUploadDownload(DXTestCase):
                 listing = run("dx ls /destdir/a").split("\n")
                 self.assertIn(os.path.basename(fd2.name), listing)
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
+    def test_dx_download_by_job_id_and_output_field(self):
+        test_project_name = 'PTFM-13437'
+        test_file_name = 'test_file_01'
+        expected_result = 'asdf1234...'
+        with temporary_project(test_project_name, select=True) as temp_project:
+            temp_project_id = temp_project.get_id()
+
+            # Create and run minimal applet to generate output file.
+            code_str = """import dxpy
+@dxpy.entry_point('main')
+def main():
+    test_file_01 = dxpy.upload_string('{exp_res}', name='{filename}')
+    output = {{}}
+    output['{filename}'] = dxpy.dxlink(test_file_01)
+    return output
+dxpy.run()
+"""
+            code_str = code_str.format(exp_res=expected_result, filename=test_file_name)
+            app_spec = {"name": "test_applet_dx_download_by_jbor",
+                        "project": temp_project_id,
+                        "dxapi": "1.0.0",
+                        "inputSpec": [],
+                        "outputSpec": [{"name": test_file_name, "class": "file"}],
+                        "runSpec": {"code": code_str, "interpreter": "python2.7"},
+                        "version": "1.0.0"}
+            applet_id = dxpy.api.applet_new(app_spec)['id']
+            applet = dxpy.DXApplet(applet_id)
+            job = applet.run({}, project=temp_project_id)
+            job.wait_on_done()
+            job_id = job.get_id()
+
+            # Case: Correctly specify "<job_id>:<output_field>"; save to file.
+            with chdir(tempfile.mkdtemp()):
+                run("dx download " + job_id + ":" + test_file_name)
+                with open(test_file_name) as fh:
+                    result = fh.read()
+                    self.assertEqual(expected_result, result)
+
+            # Case: Correctly specify file id; print to stdout.
+            test_file_id = dxpy.DXFile(job.describe()['output'][test_file_name]).get_id()
+            result = run("dx download " + test_file_id + " -o -").strip()
+            self.assertEqual(expected_result, result)
+
+            # Case: Correctly specify file name; print to stdout.
+            result = run("dx download " + test_file_name + " -o -").strip()
+            self.assertEqual(expected_result, result)
+
+            # Case: Correctly specify "<job_id>:<output_field>"; print to stdout.
+            result = run("dx download " + job_id + ":" + test_file_name + " -o -").strip()
+            self.assertEqual(expected_result, result)
+
+            # Case: File does not exist.
+            with self.assertSubprocessFailure(stderr_regexp="Could not resolve", exit_code=1):
+                run("dx download foo -o -")
+
+            # Case: Invalid output field name when specifying <job_id>:<output_field>.
+            with self.assertSubprocessFailure(stderr_regexp="Could not find", exit_code=3):
+                run("dx download " + job_id + ":foo -o -")
 
 class TestDXClientDescribe(DXTestCase):
     def test_projects(self):
