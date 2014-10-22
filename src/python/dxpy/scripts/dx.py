@@ -470,13 +470,15 @@ def prompt_for_env_var(prompt_str, env_var_str):
         elif default is not None:
             return default
 
+
 def pick_and_set_project(args):
     try:
         result_generator = dxpy.find_projects(describe=True,
                                               name=args.name, name_mode='glob',
                                               level=('VIEW' if args.public else args.level),
                                               explicit_perms=(not args.public if not args.public else None),
-                                              public=(args.public if args.public else None))
+                                              public=(args.public if args.public else None),
+                                              first_page_size=10)
     except:
         err_exit('Error while listing available projects')
     any_results = False
