@@ -1,6 +1,16 @@
+dx-toolkit (0.121.0) precise; urgency=low
+
+  * "dx download JOB:FIELD"
+
+  * New --path flag to "dx find data" replaces --project and --folder
+
+  * dx-upload-all copies subdirectory structure into output
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 22 Oct 2014 22:38:17 +0000
+
 dx-toolkit (0.120.0) precise; urgency=low
 
-  * New flag dx set_details -f 
+  * New flag dx set_details -f
 
  -- Ric Medlinger <ric@dnanexus.com>  Tue, 14 Oct 2014 18:09:19 +0000
 
