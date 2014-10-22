@@ -157,8 +157,6 @@ class TestDXClient(DXTestCase):
         run("dx tag '{n}' '{n}'2".format(n=table_name))
         run("dx describe '{n}'".format(n=table_name))
 
-        self.assertTrue(self.project in run("dx find projects --brief"))
-
         run("dx new record -o :foo --verbose")
         record_id = run("dx new record -o :foo2 --brief --visibility hidden --property foo=bar " +
                         "--property baz=quux --tag onetag --tag twotag --type foo --type bar " +
@@ -2410,6 +2408,16 @@ class TestDXClientFind(DXTestCase):
                 run('dx find data --brief --folder ' + test_projectid + ':' + test_dirname + ' --path ' +
                     test_projectid + ':' + test_dirname)
 
+    def test_dx_find_projects(self):
+        unique_project_name = 'dx find projects test ' + str(time.time())
+        with temporary_project(unique_project_name) as unique_project:
+            self.assertEqual(run("dx find projects --name " + pipes.quote(unique_project_name)),
+                             unique_project.get_id() + ' : ' + unique_project_name + ' (ADMINISTER)\n')
+            self.assertEqual(run("dx find projects --brief --name " + pipes.quote(unique_project_name)),
+                             unique_project.get_id() + '\n')
+            json_output = json.loads(run("dx find projects --json --name " + pipes.quote(unique_project_name)))
+            self.assertEqual(len(json_output), 1)
+            self.assertEqual(json_output[0]['id'], unique_project.get_id())
 
     def test_dx_find_projects_by_tag(self):
         other_project_id = run("dx new project other --brief").strip()
