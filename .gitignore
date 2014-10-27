@@ -74,6 +74,7 @@ dxR.Rcheck
 /bin/dx-verify-file
 /bin/dx-workflow-to-applet
 /bin/dx-wig-to-wiggle
+/bin/dx-print-bash-vars
 /bin/activate-global-python-argcomplete
 /bin/python-argcomplete-check-easy-install-script
 /bin/register-python-argcomplete

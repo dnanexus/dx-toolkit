@@ -128,7 +128,8 @@ def parallel_file_download(to_download):
 
 # Input directory, where all inputs are downloaded
 idir = file_load_utils.get_input_dir()
-dirs, inputs = file_load_utils.get_job_input_filenames()
+job_input_file = file_load_utils.get_input_json_file()
+dirs, inputs, rest = file_load_utils.get_job_input_filenames(job_input_file)
 
 # Exclude directories
 dirs_to_create = []

@@ -81,39 +81,49 @@ will download into the execution environment:
 '''
 
 import json
+import pipes
 import os
 import math
 import sys
 import collections
 import dxpy
+from dxpy.compat import environ
 from ..exceptions import DXError
 
-def get_input_dir():
+def get_input_dir(expand_home_var=True):
     '''
-    :rtype : string
-    :returns : path to input directory
+    :param expand_home_var: if true, expand the home directory to a full path
+    :rtype: string
+    :returns: path to input directory
 
     Returns the input directory, where all inputs are downloaded
     '''
-    home_dir = os.environ.get('HOME')
+    if expand_home_var:
+        home_dir = os.environ.get('HOME')
+    else:
+        home_dir = "$HOME"
     idir = os.path.join(home_dir, 'in')
     return idir
 
-def get_output_dir():
+def get_output_dir(expand_home_var=True):
     '''
-    :rtype : string
-    :returns : path to output directory
+    :param expand_home_var: if true, expand the home directory to a full path
+    :rtype: string
+    :returns: path to output directory
 
     Returns the output directory, where all outputs are created, and
     uploaded from
     '''
-    home_dir = os.environ.get('HOME')
+    if expand_home_var:
+        home_dir = os.environ.get('HOME')
+    else:
+        home_dir = "$HOME"
     odir = os.path.join(home_dir, 'out')
     return odir
 
 def get_input_json_file():
     """
-    :rtype : string
+    :rtype: string
     :returns: path to input JSON file
     """
     home_dir = os.environ.get('HOME')
@@ -121,8 +131,8 @@ def get_input_json_file():
 
 def get_output_json_file():
     """
-    :rtype : string
-    :returns : Path to output JSON file
+    :rtype: string
+    :returns: Path to output JSON file
     """
     home_dir = os.environ.get('HOME')
     return os.path.join(home_dir, "job_output.json")
@@ -157,9 +167,9 @@ def ensure_dir(path):
 def make_unix_filename(fname):
     """
     :param fname: the basename of a file (e.g., xxx in /zzz/yyy/xxx).
-    :return: a valid unix filename
+    :returns: a valid unix filename
     :rtype: string
-    :raises DXError: if the filename is invalid on a Unix system
+    :raises: DXError if the filename is invalid on a Unix system
 
     The problem being solved here is that *fname* is a python string, it
     may contain characters that are invalid for a file name. We replace all the slashes with %2F.
@@ -174,13 +184,9 @@ def make_unix_filename(fname):
 
 ## filter from a dictionary a list of matching keys
 def filter_dict(dict_, excl_keys):
-    sub_dict = {}
-    for k, v in dict_.iteritems():
-        if k not in excl_keys:
-            sub_dict[k] = v
-    return sub_dict
+    return {k: v for k, v in dict_.iteritems() if k not in excl_keys}
 
-def get_job_input_filenames():
+def get_job_input_filenames(job_input_file):
     """Extract list of files, returns a set of directories to create, and
     a set of files, with sources and destinations. The paths created are
     relative to the input directory.
@@ -189,57 +195,191 @@ def get_job_input_filenames():
     separate subdirectory for each. This avoids clobbering files when
     duplicate filenames appear in an array.
     """
-    job_input_file = get_input_json_file()
-    with open(job_input_file) as fh:
-        job_input = json.load(fh)
-        files = collections.defaultdict(list)  # dictionary, with empty as default elements
-        dirs = []  # directories to create under <idir>
+    def get_input_hash():
+        with open(job_input_file) as fh:
+            job_input = json.load(fh)
+            return job_input
+    job_input = get_input_hash()
 
-        # Local function for adding a file to the list of files to be created
-        # for example:
-        #    iname == "seq1"
-        #    subdir == "015"
-        #    value == { "$dnanexus_link": {
-        #       "project": "project-BKJfY1j0b06Z4y8PX8bQ094f",
-        #       "id": "file-BKQGkgQ0b06xG5560GGQ001B"
-        #    }
-        # will create a record describing that the file should
-        # be downloaded into seq1/015/<filename>
-        def add_file(iname, subdir, value):
-            if not dxpy.is_dxlink(value):
-                return
-            handler = dxpy.get_handler(value)
-            if not isinstance(handler, dxpy.DXFile):
-                return
-            filename = make_unix_filename(handler.name)
-            trg_dir = iname
-            if subdir is not None:
-                trg_dir = os.path.join(trg_dir, subdir)
-            files[iname].append({'trg_fname': os.path.join(trg_dir, filename),
-                                 'src_file_id': handler.id})
-            dirs.append(trg_dir)
+    files = collections.defaultdict(list)  # dictionary, with empty lists as default elements
+    dirs = []  # directories to create under <idir>
 
-        # An array of inputs, for a single key. A directory
-        # will be created per array entry. For example, if the input key is
-        # FOO, and the inputs are {A, B, C}.vcf then, the directory structure
-        # will be:
-        #   <idir>/FOO/00/A.vcf
-        #   <idir>/FOO/01/B.vcf
-        #   <idir>/FOO/02/C.vcf
-        def add_file_array(input_name, links):
-            num_files = len(links)
-            if num_files == 0:
-                return
-            num_digits = len(str(num_files - 1))
-            dirs.append(input_name)
-            for i, link in enumerate(links):
-                subdir = str(i).zfill(num_digits)
-                add_file(input_name, subdir, link)
+    # Local function for adding a file to the list of files to be created
+    # for example:
+    #    iname == "seq1"
+    #    subdir == "015"
+    #    value == { "$dnanexus_link": {
+    #       "project": "project-BKJfY1j0b06Z4y8PX8bQ094f",
+    #       "id": "file-BKQGkgQ0b06xG5560GGQ001B"
+    #    }
+    # will create a record describing that the file should
+    # be downloaded into seq1/015/<filename>
+    def add_file(iname, subdir, value):
+        if not dxpy.is_dxlink(value):
+            return
+        handler = dxpy.get_handler(value)
+        if not isinstance(handler, dxpy.DXFile):
+            return
+        filename = make_unix_filename(handler.name)
+        trg_dir = iname
+        if subdir is not None:
+            trg_dir = os.path.join(trg_dir, subdir)
+        files[iname].append({'trg_fname': os.path.join(trg_dir, filename),
+                             'handler': handler,
+                             'src_file_id': handler.id})
+        dirs.append(trg_dir)
 
-        for input_name, value in job_input.iteritems():
-            if isinstance(value, list):
-                # This is a file array
-                add_file_array(input_name, value)
+    # An array of inputs, for a single key. A directory
+    # will be created per array entry. For example, if the input key is
+    # FOO, and the inputs are {A, B, C}.vcf then, the directory structure
+    # will be:
+    #   <idir>/FOO/00/A.vcf
+    #   <idir>/FOO/01/B.vcf
+    #   <idir>/FOO/02/C.vcf
+    def add_file_array(input_name, links):
+        num_files = len(links)
+        if num_files == 0:
+            return
+        num_digits = len(str(num_files - 1))
+        dirs.append(input_name)
+        for i, link in enumerate(links):
+            subdir = str(i).zfill(num_digits)
+            add_file(input_name, subdir, link)
+
+    for input_name, value in job_input.iteritems():
+        if isinstance(value, list):
+            # This is a file array
+            add_file_array(input_name, value)
+        else:
+            add_file(input_name, None, value)
+
+    ## create a dictionary of the all non-file elements
+    rest_hash = {key: val for key, val in job_input.iteritems() if key not in files}
+    return dirs, files, rest_hash
+
+def analyze_bash_vars(job_input_file):
+    '''
+    This function examines the input file, and calculates variables to
+    instantiate in the shell environment. It is called right before starting the
+    execution of an app in a worker.
+
+    For each input key, we want to have
+    $var
+    $var_filename
+    $var_prefix
+       remove last dot (+gz), and/or remove patterns
+    $var_path
+       $HOME/in/var/$var_filename
+
+    For example,
+    $HOME/in/genes/A.txt
+                   B.txt
+
+    export genes=('{"$dnanexus_link": "file-xxxx"}' '{"$dnanexus_link": "file-yyyy"}')
+    export genes_filename=("A.txt" "B.txt")
+    export genes_prefix=("A" "B")
+    export genes_path=("$HOME/in/genes/A.txt" "$HOME/in/genes/B.txt")
+    '''
+    _, file_entries, rest_hash = get_job_input_filenames(job_input_file)
+    def factory():
+        return {'handler': [], 'basename': [],  'prefix': [], 'path': []}
+    file_key_descs = collections.defaultdict(factory)
+    rel_home_dir = get_input_dir(expand_home_var=False)
+    for key, entries in file_entries.iteritems():
+        for entry in entries:
+            filename = entry['trg_fname']
+            basename = os.path.basename(filename)
+            prefix = os.path.splitext(basename)[0]
+            k_desc = file_key_descs[key]
+            k_desc['handler'].append(entry['handler'])
+            k_desc['basename'].append(basename)
+            k_desc['prefix'].append(prefix)
+            k_desc['path'].append(os.path.join(rel_home_dir, filename))
+    return file_key_descs, rest_hash
+
+
+#
+# Note: pipes.quote() to be replaced with shlex.quote() in Python 3
+# (see http://docs.python.org/2/library/pipes.html#pipes.quote)
+#
+def gen_bash_vars(job_input_file, check_name_collision=True):
+    """
+    :param job_input_file: path to a JSON file describing the job inputs
+    :param check_name_collision: should we check for name collisions?
+    :return: list of lines
+    :rtype: list of strings
+
+    Calculates a line for each shell variable to instantiate.
+    If *check_name_collision* is true, then detect and warn about
+    collisions with essential environment variables.
+    """
+    file_key_descs, rest_hash = analyze_bash_vars(job_input_file)
+
+    def string_of_elem(elem):
+        result = None
+        if isinstance(elem, basestring):
+            result = elem
+        elif isinstance(elem, dxpy.DXFile):
+            result = json.dumps(dxpy.dxlink(elem))
+        else:
+            result = json.dumps(elem)
+        return pipes.quote(result)
+
+    def string_of_value(val):
+        if isinstance(val, list):
+            str = " ".join([string_of_elem(vitem) for vitem in val])
+            return "( {} )".format(str)
+        else:
+            return string_of_elem(val)
+
+    var_defs_hash = {}
+    def gen_text_line_and_name_collision(key, val):
+        ''' In the absence of a name collision, create a line describing a bash variable.
+        '''
+        if check_name_collision:
+            if key not in environ and key not in var_defs_hash:
+                var_defs_hash[key] = val
             else:
-                add_file(input_name, None, value)
-        return dirs, files
+                sys.stderr.write(dxpy.utils.printing.fill(
+                    "Creating environment variable ({}) would cause a name collision".format(key))
+                                 + "\n")
+        else:
+            var_defs_hash[key] = val
+
+    # Processing non-file variables before the file variables. This priorities them,
+    # so that in case of name collisions, the file-variables will be dropped.
+    for key, desc in rest_hash.iteritems():
+        gen_text_line_and_name_collision(key, string_of_value(desc))
+    for file_key, desc in file_key_descs.iteritems():
+        gen_text_line_and_name_collision(file_key, string_of_value(desc['handler']))
+        gen_text_line_and_name_collision(file_key + "_basename", string_of_value(desc['basename']))
+        gen_text_line_and_name_collision(file_key + "_prefix", string_of_value(desc['prefix']))
+        gen_text_line_and_name_collision(file_key + "_path", string_of_value(desc['path']))
+
+    return var_defs_hash
+
+
+def _gen_bash_vars_old(job_input_file):
+    """
+    Old code for generating bash variables from the input file. Previously used inside a script.
+    We use it to verify the new version of the code.
+    """
+    def old_string_of_elem(elem):
+        """
+        :param elem: a value read from a JSON file
+        :returns: string to be instantiated as a bash variable
+        :rtype: string
+        """
+        if isinstance(v, list):
+            return "( {} )".format(" ".join([pipes.quote(vitem if isinstance(vitem, basestring) else json.dumps(vitem)) for vitem in v]))
+        else:
+            return "{}".format(pipes.quote(v if isinstance(v, basestring) else json.dumps(v)))
+
+    key_val_map={}
+    for k, v in json.load(open(job_input_file)).iteritems():
+        key_val_map[k] = old_string_of_elem(v)
+    return key_val_map
+
+def _gen_bash_var_lines_old(job_input_file):
+    ''' The original old code for generating bash variables. Used for comparison purposes. '''
+    return ["export {k}=( {vlist} )".format(k=k, vlist=" ".join([pipes.quote(vitem if isinstance(vitem, basestring) else json.dumps(vitem)) for vitem in v])) if isinstance(v, list) else "export {k}={v}".format(k=k, v=pipes.quote(v if isinstance(v, basestring) else json.dumps(v))) for k, v in json.load(open(job_input_file)).iteritems()]

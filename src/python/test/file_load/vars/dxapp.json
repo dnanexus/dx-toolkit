@@ -1,0 +1,25 @@
+{ "name": "vars",
+  "title": "vars",
+  "summary" : "testing bash variable generation",
+  "runSpec": {
+    "file": "run.sh",
+    "interpreter": "bash"
+  },
+  "inputSpec": [
+    {"name": "seq1", "class": "file"},
+    {"name": "seq2", "class": "file"},
+    {"name": "genes",  "class": "array:file"},
+    {"name": "i", "class": "int"},
+    {"name": "x", "class": "float"},
+    {"name": "b", "class": "boolean"},
+    {"name": "s", "class": "string"},
+    {"name": "il", "class": "array:int"},
+    {"name": "xl", "class": "array:float"},
+    {"name": "bl", "class": "array:boolean"},
+    {"name": "sl", "class": "array:string"},
+    {"name": "misc", "class": "hash", "optional" : true}
+  ],
+  "outputSpec": [
+    {"name": "foo",    "class": "array:file", "optional" : true}
+  ]
+}

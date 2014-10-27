@@ -375,6 +375,19 @@ class TestDXBashHelpers(DXTestCase):
         args.extend(arg_list)
         check_output(args)
 
+    def test_vars(self):
+        # Make a couple files for testing
+        print("testing bash variable generation")
+        dxpy.upload_string("1234", name="A.txt")
+        self.run_test_app_locally('vars', ['-iseq1=A.txt', '-iseq2=A.txt', '-igenes=A.txt', '-igenes=A.txt',
+                                           '-ii=5', '-ix=4.2', '-ib=true', '-is=hello',
+                                           '-iil=6', '-iil=7', '-iil=8',
+                                           '-ixl=3.3', '-ixl=4.4', '-ixl=5.0',
+                                           '-ibl=true', '-ibl=false', '-ibl=true',
+                                           '-isl=hello', '-isl=world', '-isl=next',
+                                           '-imisc={"hello": "world", "foo": true}'])
+
+
     def test_deepdirs(self):
         self.run_test_app_locally('deepdirs', [])
 
