@@ -108,11 +108,11 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
         ticks = int(round((bytes_downloaded / float(effective_file_size)) * num_ticks))
         percent = int(round((bytes_downloaded / float(effective_file_size)) * 100))
 
-        fmt = "[{done}{pending}] Downloaded {done_bytes} of {total_bytes} bytes ({percent}%) {name}"
+        fmt = "[{done}{pending}] Downloaded {done_bytes:,}{remaining} bytes ({percent}%) {name}"
         sys.stderr.write(fmt.format(done=('=' * (ticks - 1) + '>') if ticks > 0 else '',
                                     pending=' ' * (num_ticks - ticks),
                                     done_bytes=bytes_downloaded,
-                                    total_bytes=file_size if file_size else "",
+                                    remaining=' of {size:,}'.format(size=file_size) if file_size else "",
                                     percent=percent,
                                     name=filename))
         sys.stderr.flush()
@@ -268,7 +268,7 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
             ticks = int(round((handler._num_bytes_transmitted / float(file_size)) * num_ticks))
             percent = int(round((handler._num_bytes_transmitted / float(file_size)) * 100))
 
-            fmt = "[{done}{pending}] Uploaded ({done_bytes} of {total} bytes) {percent}% {name}"
+            fmt = "[{done}{pending}] Uploaded {done_bytes:,} of {total:,} bytes ({percent}%) {name}"
             sys.stderr.write(fmt.format(done='=' * (ticks - 1) + '>' if ticks > 0 else '',
                                         pending=' ' * (num_ticks - ticks),
                                         done_bytes=handler._num_bytes_transmitted,
