@@ -1,3 +1,9 @@
+dx-toolkit (0.121.1) precise; urgency=low
+
+  * bug fix for dx cp 
+
+ -- Ric Medlinger <ric@dnanexus.com>  Wed, 29 Oct 2014 19:12:01 +0000
+
 dx-toolkit (0.121.0) precise; urgency=low
 
   * "dx download JOB:FIELD"
