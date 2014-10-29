@@ -1068,7 +1068,7 @@ def cp(args):
                                                  "project": dest_proj,
                                                  "destination": dest_path})['exists']
                 if len(exists) > 0:
-                    print(fill('The following objects already existed in the destination container and were not copied:') + '\n ' + '\n '.join(json.dumps(exists)))
+                    print(fill('The following objects already existed in the destination container and were not copied:') + '\n ' + '\n '.join(exists))
                 return
             except:
                 err_exit()
@@ -1079,7 +1079,7 @@ def cp(args):
                                                  "project": dest_proj,
                                                  "destination": dest_folder})['exists']
                 if len(exists) > 0:
-                    print(fill('The following objects already existed in the destination container and were not copied:') + '\n ' + '\n '.join(json.dumps(exists)))
+                    print(fill('The following objects already existed in the destination container and were not copied:') + '\n ' + '\n '.join(exists))
                 for result in src_results:
                     if result['id'] not in exists:
                         dxpy.DXHTTPRequest('/' + result['id'] + '/rename',
