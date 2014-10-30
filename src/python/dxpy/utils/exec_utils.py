@@ -14,16 +14,19 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-'''
+"""
 Utilities used in the DNAnexus execution environment and test harness.
-'''
+"""
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
-import os, json, collections, logging, argparse, string
+import os, sys, json, re, collections, logging, argparse, string, itertools, subprocess, tempfile
 from functools import wraps
+from collections import namedtuple
+
 import dxpy
-from ..compat import USING_PYTHON2
+from ..compat import USING_PYTHON2, open
+from ..exceptions import AppInternalError
 
 ENTRY_POINT_TABLE = {}
 
@@ -67,7 +70,7 @@ def _format_exception_message(e):
         return e.__class__.__name__ + ": " + _safe_unicode(e)
 
 def run(function_name=None, function_input=None):
-    '''
+    """
     Triggers the execution environment entry point processor.
 
     Use this function in the program entry point code:
@@ -98,7 +101,7 @@ def run(function_name=None, function_input=None):
     changed; instead, use a local file *job_input.json*.
 
     With this, no program code requires changing between the two modes.
-    '''
+    """
 
     global RUN_COUNT
     RUN_COUNT += 1
@@ -207,14 +210,14 @@ def parse_args_as_job_input(args, app_spec):
     return inputs
 
 def entry_point(entry_point_name):
-    '''
+    """
     Use this to decorate a DNAnexus execution environment entry point. Example:
 
     @dxpy.entry_point('main')
     def hello(i):
         pass
 
-    '''
+    """
     def wrap(f):
         ENTRY_POINT_TABLE[entry_point_name] = f
         @wraps(f)
@@ -224,10 +227,152 @@ def entry_point(entry_point_name):
     return wrap
 
 class DXJSONEncoder(json.JSONEncoder):
-    ''' Like json.JSONEncoder, but converts DXObject objects into dxlinks.
-    '''
+    """
+    Like json.JSONEncoder, but converts DXObject objects into dxlinks.
+    """
     def default(self, obj):
         if isinstance(obj, dxpy.DXObject):
             return dxpy.dxlink(obj)
         # Let the base class default method raise the TypeError
         return json.JSONEncoder.default(self, obj)
+
+class DXExecDependencyError(AppInternalError):
+    pass
+
+class DXExecDependencyInstaller(object):
+    """
+    Installs dependencies specified by the job.
+
+    Dependencies are processed in the order specified in the bundledDepends, execDepends, and dependencies arrays of the
+    runSpec hash (the former two are deprecated). Neighboring package dependencies of the same type are grouped.
+    """
+    group_pms = ("apt", "pip", "gem", "cpan", "cran")
+
+    def __init__(self, executable_desc, job_desc, use_dx_log_handler=True, log_level=logging.INFO):
+        if "runSpec" not in executable_desc:
+            raise DXExecDependencyError('Expected field "runSpec" to be present in executable description"')
+
+        self.exec_desc = executable_desc
+        self.run_spec = executable_desc["runSpec"]
+        self.job_desc = job_desc
+        self.stage = self.job_desc.get("function", "main")
+        self.logger = logging.getLogger("DXEE")
+        self.logger.setLevel(log_level)
+        self.logger.addHandler(dxpy.DXLogHandler() if use_dx_log_handler else logging.StreamHandler())
+
+        self.dep_groups = []
+        for dep in itertools.chain(self.run_spec.get("bundledDepends", []),
+                                   self.run_spec.get("execDepends", []),
+                                   self.run_spec.get("dependencies", [])):
+            self._validate_dependency(dep)
+            if "stages" in dep and self.stage not in dep["stages"]:
+                self.log("Skipping dependency {} because it is inactive in stage (function) {}".format(dep["name"],
+                                                                                                       self.stage))
+                continue
+
+            dep_type = self._get_dependency_type(dep)
+            if len(self.dep_groups) == 0 or self.dep_groups[-1]["type"] != dep_type or dep_type not in self.group_pms:
+                self.dep_groups.append({"type": dep_type, "deps": [], "index": len(self.dep_groups)})
+            self.dep_groups[-1]["deps"].append(dep)
+
+    def log(self, message):
+        self.logger.info(message)
+
+    def generate_shellcode(self, dep_group):
+        base_apt_shellcode = "apt-get install --yes --no-install-recommends {p}"
+        dx_apt_update_shellcode = "apt-get update -o Dir::Etc::sourcelist=sources.list.d/nucleus.list -o Dir::Etc::sourceparts=- -o APT::Get::List-Cleanup=0"
+        change_apt_archive = r"sed -i -e s?http://.*.ec2.archive.ubuntu.com?http://us.archive.ubuntu.com? /etc/apt/sources.list"
+        apt_err_msg = "APT failed, retrying with full update against ubuntu.com"
+        apt_shellcode_template = "({dx_upd} && {inst}) || (echo {e}; {change_apt_archive} && apt-get update && {inst})"
+        apt_shellcode = apt_shellcode_template.format(dx_upd=dx_apt_update_shellcode,
+                                                      change_apt_archive=change_apt_archive,
+                                                      inst=base_apt_shellcode,
+                                                      e=apt_err_msg)
+        def make_pm_atoms(packages, version_separator="="):
+            package_atoms = (p["name"] + (version_separator+p["version"] if "version" in p else "") for p in packages)
+            return " ".join(map(str, package_atoms))
+
+        dep_type, packages = dep_group["type"], dep_group["deps"]
+        if dep_type == "apt":
+            return apt_shellcode.format(p=make_pm_atoms(packages))
+        elif dep_type == "pip":
+            return "pip install --upgrade " + make_pm_atoms(packages, version_separator="==")
+        elif dep_type == "gem":
+            commands = []
+            for p in packages:
+                commands.append("gem install " + p["name"])
+                if "version" in p:
+                    commands[-1] += " --version " + p["version"]
+            return " && ".join(map(str, commands))
+        elif dep_type == "cpan":
+            return "cpanm --notest " + make_pm_atoms(packages, version_separator="~")
+        elif dep_type == "cran":
+            r_shellcode = "R -e 'die <- function() { q(status=1) }; options(error=die); options(warn=2); install.packages(commandArgs(trailingOnly=TRUE), repos=\"http://cran.us.r-project.org\")' --args "
+            return r_shellcode + make_pm_atoms(packages)
+        elif dep_type == "git":
+            commands = ["apt-get install --yes git make", "export GIT_SSH=dx-git-ssh-helper"]
+            for dep in packages:
+                subcommands = []
+                build_dir = str(dep.get("destdir", "$(mktemp -d)"))
+                subcommands.append("mkdir -p %s" % build_dir)
+                subcommands.append("cd %s" % build_dir)
+                subcommands.append("git clone " + str(dep["url"]))
+                subdir = re.search("([^\/]+)$", str(dep["url"])).group(1)
+                if subdir.endswith(".git"):
+                    subdir = subdir[:-len(".git")]
+                subcommands.append("cd '%s'" % subdir)
+                if "tag" in dep:
+                    subcommands.append("git checkout " + str(dep["tag"]))
+                if "build_commands" in dep:
+                    subcommands.append(str(dep["build_commands"]))
+                commands.append("(" + " && ".join(subcommands) + ")")
+            return " && ".join(commands)
+        else:
+            raise DXExecDependencyError("Package manager type {pm} not supported".format(pm=dep_type))
+
+    def run(self, cmd, log_fh=None):
+        subprocess.check_call(cmd, shell=True, stdout=log_fh, stderr=log_fh)
+
+    def _install_dep_group(self, dep_group):
+        self.log("Installing {} packages {}".format(dep_group["type"],
+                                                    ", ".join(dep["name"] for dep in dep_group["deps"])))
+        cmd = self.generate_shellcode(dep_group)
+        log_filename = os.path.join(tempfile.gettempdir(), "dx_{type}_install_{index}.log".format(**dep_group))
+
+        try:
+            with open(log_filename, "w") as fh:
+                self.run(cmd, log_fh=fh)
+        except subprocess.CalledProcessError as e:
+            with open(log_filename) as fh:
+                sys.stdout.write(fh.read())
+            raise DXExecDependencyError("Error while installing {type} packages {deps}".format(**dep_group))
+
+    def _install_dep_bundle(self, bundle):
+        if bundle["id"].get("$dnanexus_link", "").startswith("file-"):
+            self.log("Downloading bundled file {name}".format(**bundle))
+            dxpy.download_dxfile(bundle["id"], bundle["name"])
+            self.run("dx-unpack '{}'".format(bundle["name"]))
+        else:
+            self.log('Skipping bundled dependency "{name}" because it does not refer to a file'.format(**bundle))
+
+    def install(self):
+        for dep_group in self.dep_groups:
+            if dep_group["type"] == "bundle":
+                self._install_dep_bundle(dep_group["deps"][0])
+            else:
+                self._install_dep_group(dep_group)
+
+    def _validate_dependency(self, dep):
+        if "name" not in dep:
+            raise DXExecDependencyError('Expected field "name" to be present in execution dependency "{}"'.format(dep))
+        if dep.get("package_manager") == "cran" and "version" in dep:
+            msg = 'Execution dependency {} has a "version" field, but versioning is not supported for CRAN dependencies'
+            raise DXExecDependencyError(msg.format(dep))
+        elif dep.get("package_manager") == "git" and "url" not in dep:
+            raise DXExecDependencyError('Execution dependency "{}" does not have a "url" field'.format(dep))
+
+    def _get_dependency_type(self, dep):
+        if "id" in dep:
+            return "bundle"
+        else:
+            return dep.get("package_manager", "apt")

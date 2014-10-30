@@ -17,11 +17,12 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
 import unittest, time, json
-from dxpy import AppError, DXFile, DXRecord
+from dxpy import AppError, AppInternalError, DXFile, DXRecord
 from dxpy.utils import (describe, exec_utils, genomic_utils, response_iterator, get_futures_threadpool, DXJSONEncoder)
+from dxpy.utils.exec_utils import DXExecDependencyInstaller
 from dxpy.compat import USING_PYTHON2
 
 # TODO: unit tests for dxpy.utils.get_field_from_jbor, get_job_from_jbor, is_job_ref
@@ -110,6 +111,96 @@ class TestDXUtils(unittest.TestCase):
         serialized = json.dumps(data, cls=DXJSONEncoder)
         self.assertEqual(serialized,
                          '{"a": [{"b": {"$dnanexus_link": "file-xxxxxxxxxxxxxxxxxxxxxxxx"}}, {"$dnanexus_link": "record-rrrrrrrrrrrrrrrrrrrrrrrr"}]}')
+
+class TestEDI(DXExecDependencyInstaller):
+    def __init__(self, *args, **kwargs):
+        self.command_log, self.message_log = [], []
+        DXExecDependencyInstaller.__init__(self, *args, **kwargs)
+
+    def run(self, cmd, **kwargs):
+        self.command_log.append(cmd)
+
+    def log(self, message, **kwargs):
+        self.message_log.append(message)
+
+class TestDXExecDependsUtils(unittest.TestCase):
+    def test_dx_execdepends_installer(self):
+        def get_edi(run_spec, job_desc=None):
+            return TestEDI(executable_desc={"runSpec": run_spec},
+                           job_desc=job_desc if job_desc else {},
+                           use_dx_log_handler=False)
+
+        def assert_cmd_ran(edi, regexp):
+            self.assertRegexpMatches("\n".join(edi.command_log), regexp)
+
+        def assert_log_contains(edi, regexp):
+            self.assertRegexpMatches("\n".join(edi.message_log), regexp)
+
+        with self.assertRaisesRegexp(AppInternalError, 'Expected field "runSpec" to be present'):
+            DXExecDependencyInstaller({}, {}, use_dx_log_handler=False)
+
+        with self.assertRaisesRegexp(AppInternalError, 'Expected field "name" to be present'):
+            get_edi({"dependencies": [{"foo": "bar"}]})
+
+        with self.assertRaisesRegexp(AppInternalError, "versioning is not supported for CRAN dependencies"):
+            get_edi({"dependencies": [{"name": "foo", "package_manager": "cran", "version": "1.2.3"}]})
+
+        with self.assertRaisesRegexp(AppInternalError, 'does not have a "url" field'):
+            get_edi({"dependencies": [{"name": "foo", "package_manager": "git"}]})
+
+        edi = get_edi({"execDepends": [{"name": "git"}], "dependencies": [{"name": "tmux"}]})
+        edi.install()
+        assert_cmd_ran(edi, "apt-get install --yes --no-install-recommends git tmux")
+
+        edi = get_edi({})
+        edi.install()
+
+        edi = get_edi({"execDepends": [], "bundledDepends": [], "dependencies": []})
+        edi.install()
+
+        edi = get_edi({"dependencies": [{"name": "pytz", "package_manager": "pip", "version": "2014.7"},
+                                        {"name": "certifi", "package_manager": "pip", "stages": ["main"]},
+                                        {"name": "tmux", "package_manager": "apt"},
+                                        {"name": "rake", "package_manager": "gem", "version": "10.3.2"},
+                                        {"name": "nokogiri", "package_manager": "gem", "stages": ["main"]},
+                                        {"name": "Module::Provision", "package_manager": "cpan", "version": "0.36.1"},
+                                        {"name": "LWP::MediaTypes", "package_manager": "cpan"},
+                                        {"name": "RJSONIO", "package_manager": "cran"},
+                                        {"name": "ggplot2", "package_manager": "cran", "stages": ["main"]},
+                                        {"name": "r1", "id": {"$dnanexus_link": "record-123"}},
+                                        {"name": "g1",
+                                         "package_manager": "git",
+                                         "url": "https://github.com/dnanexus/oauth2-demo"},
+                                        {"name": "g2",
+                                         "package_manager": "git",
+                                         "url": "https://github.com/dnanexus/bwa",
+                                         "tag": "production",
+                                         "destdir": "/tmp/ee-edi-test-bwa",
+                                         "buld_commands": "echo build bwa here",
+                                         "stages": ["main"]}]})
+        edi.install()
+        assert_cmd_ran(edi, "pip install --upgrade pytz==2014.7 certifi")
+        assert_cmd_ran(edi, "apt-get install --yes --no-install-recommends tmux")
+        assert_cmd_ran(edi, "gem install rake --version 10.3.2 && gem install nokogiri")
+        assert_cmd_ran(edi, "R -e .+ install.packages.+ --args RJSONIO ggplot2")
+        assert_log_contains(edi, 'Skipping bundled dependency "r1" because it does not refer to a file')
+        assert_cmd_ran(edi, "cd \$\(mktemp -d\) && git clone https://github.com/dnanexus/oauth2-demo")
+        assert_cmd_ran(edi, "cd /tmp/ee-edi-test-bwa && git clone https://github.com/dnanexus/bwa")
+        assert_cmd_ran(edi, "git checkout production")
+
+        edi = get_edi({"execDepends": [{"name": "w00t", "stages": ["foo", "bar"]},
+                                       {"name": "f1", "id": {"$dnanexus_link": "file-123"}, "stages": ["xyzzt"]}]})
+        edi.install()
+        self.assertNotRegexpMatches("\n".join(edi.command_log), "w00t")
+        for name in "w00t", "f1":
+            assert_log_contains(edi,
+                                "Skipping dependency {} because it is inactive in stage \(function\) main".format(name))
+
+        edi = get_edi({"execDepends": [{"name": "git", "stages": ["foo", "bar"]}]},
+                      job_desc = {"function": "foo"})
+        edi.install()
+        assert_cmd_ran(edi, "apt-get install --yes --no-install-recommends git")
+
 
 if __name__ == '__main__':
     unittest.main()
