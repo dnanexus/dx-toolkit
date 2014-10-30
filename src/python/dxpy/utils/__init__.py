@@ -253,7 +253,7 @@ class OrderedDefaultdict(collections.OrderedDict):
         self.default_factory = newdefault
         super(self.__class__, self).__init__(*newargs, **kwargs)
 
-    def __missing__ (self, key):
+    def __missing__(self, key):
         if self.default_factory is None:
             raise KeyError(key)
         self[key] = value = self.default_factory()
