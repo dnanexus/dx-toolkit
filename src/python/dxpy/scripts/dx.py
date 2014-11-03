@@ -21,6 +21,7 @@ from __future__ import print_function, unicode_literals
 
 import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, errno, io, time, subprocess, glob
 import shlex # respects quoted substrings when splitting
+import traceback
 
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
@@ -119,6 +120,14 @@ def set_delim(args=argparse.Namespace()):
     else:
         state['delimiter'] = None
     set_delimiter(state['delimiter'])
+
+
+def format_exception(e):
+    """Returns a string containing the type and text of the exception.
+
+    """
+    return '\n'.join(fill(line) for line in traceback.format_exception_only(type(e), e))
+
 
 # Loading environment
 args_list = sys.argv[1:]
@@ -1448,7 +1457,7 @@ def set_visibility(args):
             dxpy.DXHTTPRequest('/' + result['id'] + '/setVisibility',
                                {"hidden": (args.visibility == 'hidden')})
         except (dxpy.DXAPIError,) + network_exceptions as details:
-            print(fill(details.__class__.__name__ + ': ' + str(details)))
+            print(format_exception(details), file=sys.stderr)
             had_error = True
 
     if had_error:
@@ -1507,7 +1516,7 @@ def set_details(args):
         try:
             dxpy.DXHTTPRequest('/' + result['id'] + '/setDetails', details)
         except (dxpy.DXAPIError,) + network_exceptions as exc_details:
-            print(fill(exc_details.__class__.__name__ + ': ' + str(exc_details)))
+            print(format_exceptions(exc_details), file=sys.stderr)
             had_error = True
 
     if had_error:
@@ -1529,7 +1538,7 @@ def add_types(args):
             dxpy.DXHTTPRequest('/' + result['id'] + '/addTypes',
                                {"types": args.types})
         except (dxpy.DXAPIError,) + network_exceptions as details:
-            print(fill(details.__class__.__name__ + ': ' + str(details)))
+            print(format_exception(details), file=sys.stderr)
             had_error = True
     if had_error:
         parser.exit(1)
@@ -1550,7 +1559,7 @@ def remove_types(args):
             dxpy.DXHTTPRequest('/' + result['id'] + '/removeTypes',
                                {"types": args.types})
         except (dxpy.DXAPIError,) + network_exceptions as details:
-            print(fill(details.__class__.__name__ + ': ' + str(details)))
+            print(format_exception(details), file=sys.stderr)
             had_error = True
     if had_error:
         parser.exit(1)
@@ -1569,7 +1578,7 @@ def add_tags(args):
                                    {"project": project,
                                     "tags": args.tags})
             except (dxpy.DXAPIError,) + network_exceptions as details:
-                print(fill(details.__class__.__name__ + ': ' + str(details)))
+                print(format_exception(details), file=sys.stderr)
                 had_error = True
         if had_error:
             parser.exit(1)
@@ -1596,7 +1605,7 @@ def remove_tags(args):
                                    {"project": project,
                                     "tags": args.tags})
             except (dxpy.DXAPIError,) + network_exceptions as details:
-                print(fill(details.__class__.__name__ + ': ' + str(details)))
+                print(format_exception(details), file=sys.stderr)
                 had_error = True
         if had_error:
             parser.exit(1)
@@ -1623,7 +1632,7 @@ def rename(args):
                                    {"project": project,
                                     "name": args.name})
             except (dxpy.DXAPIError,) + network_exceptions as details:
-                print(fill(details.__class__.__name__ + ': ' + str(details)))
+                print(format_exception(details), file=sys.stderr)
                 had_error = True
         if had_error:
             parser.exit(1)
@@ -1650,7 +1659,7 @@ def set_properties(args):
                                    {"project": project,
                                     "properties": args.properties})
             except (dxpy.DXAPIError,) + network_exceptions as details:
-                print(fill(details.__class__.__name__ + ': ' + str(details)))
+                print(format_exception(details), file=sys.stderr)
                 had_error = True
         if had_error:
             parser.exit(1)
@@ -1678,7 +1687,7 @@ def unset_properties(args):
                                    {"project": project,
                                     "properties": properties})
             except (dxpy.DXAPIError,) + network_exceptions as details:
-                print(fill(details.__class__.__name__ + ': ' + str(details)))
+                print(format_exception(details), file=sys.stderr)
                 had_error = True
         if had_error:
             parser.exit(1)
