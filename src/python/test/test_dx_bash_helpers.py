@@ -19,8 +19,12 @@
 
 from __future__ import print_function, unicode_literals
 
-import os, unittest, json, tempfile, shutil, pipes
-
+import os
+import unittest
+import json
+import tempfile
+import shutil
+import pipes
 import dxpy
 from dxpy_testutil import DXTestCase, check_output, temporary_project
 import dxpy_testutil as testutil
@@ -60,6 +64,7 @@ def build_app_with_bash_helpers(app_dir, project_id):
             os.makedirs(resources_bindir)
         shutil.copy(os.path.join(LOCAL_SCRIPTS, 'dx-download-all-inputs'), resources_bindir)
         shutil.copy(os.path.join(LOCAL_SCRIPTS, 'dx-upload-all-outputs'), resources_bindir)
+        shutil.copy(os.path.join(LOCAL_SCRIPTS, 'dx-print-bash-vars'), resources_bindir)
 
         # Now copy any libraries we depend on. This is tricky to get
         # right in general (because we will end up with some subset of
@@ -108,8 +113,33 @@ def update_environ(**kwargs):
             output[k] = v
     return output
 
+
+@unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping tests that would run jobs')
 class TestDXBashHelpers(DXTestCase):
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping tests that would run jobs')
+    def test_vars(self):
+        '''  Quick test for the bash variables '''
+        with temporary_project('TestDXBashHelpers.test_app1 temporary project') as p:
+            env = update_environ(DX_PROJECT_CONTEXT_ID=p.get_id())
+
+            # Upload some files for use by the applet
+            dxpy.upload_string("1234\n", project=p.get_id(), name="A.txt")
+
+            # Build the applet, patching in the bash helpers from the
+            # local checkout
+            applet_id = build_app_with_bash_helpers(os.path.join(TEST_APPS, 'vars'), p.get_id())
+
+            # Run the applet
+            applet_args = ['-iseq1=A.txt', '-iseq2=A.txt', '-igenes=A.txt', '-igenes=A.txt',
+                           '-ii=5', '-ix=4.2', '-ib=true', '-is=hello',
+                           '-iil=6', '-iil=7', '-iil=8',
+                           '-ixl=3.3', '-ixl=4.4', '-ixl=5.0',
+                           '-ibl=true', '-ibl=false', '-ibl=true',
+                           '-isl=hello', '-isl=world', '-isl=next',
+                           '-imisc={"hello": "world", "foo": true}']
+            cmd_args = ['dx', 'run', '--yes', '--watch', applet_id]
+            cmd_args.extend(applet_args)
+            run(cmd_args, env=env)
+
     def test_basic(self):
         with temporary_project('TestDXBashHelpers.test_app1 temporary project') as dxproj:
             env = update_environ(DX_PROJECT_CONTEXT_ID=dxproj.get_id())
@@ -128,7 +158,6 @@ class TestDXBashHelpers(DXTestCase):
             cmd_args.extend(applet_args)
             run(cmd_args, env=env)
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping tests that would run jobs')
     def test_sub_jobs(self):
         '''  Tests a bash script that generates sub-jobs '''
         with temporary_project('TestDXBashHelpers.test_app1 temporary project') as dxproj:
@@ -199,7 +228,6 @@ class TestDXBashHelpers(DXTestCase):
             check_file_content('first_file', 'first_file.txt', "f1.txt", "contents of first_file")
             check_file_content('final_file', 'final_file.txt', "f2.txt", "1234ABCD")
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping tests that would run jobs')
     def test_parseq(self):
         ''' Tests the parallel/sequential variations '''
         with temporary_project('TestDXBashHelpers.test_app1 temporary project') as dxproj:
@@ -219,7 +247,6 @@ class TestDXBashHelpers(DXTestCase):
             cmd_args.extend(applet_args)
             run(cmd_args, env=env)
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping tests that would run jobs')
     def test_deepdirs(self):
         ''' Tests the use of subdirectories in the output directory '''
         def check_output_key(job_output, out_param_name, num_files, dxproj):
@@ -275,6 +302,9 @@ class TestDXBashHelpers(DXTestCase):
             verify_files_in_dir("/foo/bar", ["luke.txt"], dxproj)
             verify_files_in_dir("/", ["A.txt", "B.txt", "C.txt", "num_chrom.txt"], dxproj)
 
+
+@unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_BENCHMARKS,
+                     'skipping tests that would run jobs, or, run benchmarks')
 class TestDXBashHelpersBenchmark(DXTestCase):
 
     def create_file_of_size(self, fname, size_bytes):
@@ -307,23 +337,18 @@ class TestDXBashHelpersBenchmark(DXTestCase):
             cmd_args.extend(flag_list)
             run(cmd_args, env=env)
 
-    @unittest.skipUnless(testutil.TEST_BENCHMARKS, 'skipping tests that run benchmarks')
     def test_seq(self):
         self.run_applet_with_flags(["-iparallel=false"], 40, 1024 * 1024)
 
-    @unittest.skipUnless(testutil.TEST_BENCHMARKS, 'skipping tests that run benchmarks')
     def test_par(self):
         self.run_applet_with_flags(["-iparallel=true"], 40, 1024 * 1024)
 
-    @unittest.skipUnless(testutil.TEST_BENCHMARKS, 'skipping tests that run benchmarks')
     def test_seq_100m(self):
         self.run_applet_with_flags(["-iparallel=false"], 40, 100 * 1024 * 1024)
 
-    @unittest.skipUnless(testutil.TEST_BENCHMARKS, 'skipping tests that run benchmarks')
     def test_par_100m(self):
         self.run_applet_with_flags(["-iparallel=true"], 40, 100 * 1024 * 1024)
 
-    @unittest.skipUnless(testutil.TEST_BENCHMARKS, 'skipping tests that run benchmarks')
     def test_par_1g(self):
         self.run_applet_with_flags(["-iparallel=true"], 10, 1024 * 1024 * 1024)
 

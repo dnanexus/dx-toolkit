@@ -40,7 +40,7 @@ main() {
 
 # download files uploaded from the "out" directory, and compare
 # against the originals
-function compare_upload_to_outdir() 
+function compare_upload_to_outdir()
 {
     files=$(find "out" -type f)
 
@@ -64,7 +64,7 @@ function compare_upload_to_outdir()
 }
 
 
-function remove_uploaded_files() 
+function remove_uploaded_files()
 {
     files=$(find "out" -type f)
 
