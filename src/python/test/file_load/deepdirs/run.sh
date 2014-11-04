@@ -1,4 +1,6 @@
 main() {
+    set -x
+
 #    dx-download-all-inputs
 
     gene_d="out/genes"
@@ -50,9 +52,8 @@ main() {
     #  Check that directory structure was copied
     #  correctly to the project space
     mkdir space
-    pushd space
-    dx download --overwrite --recursive "/"
-    popd
+    dx download -o space -f --recursive "/*"
+
     mkdir tmp
     mkdir tmp/genes
     mv space/{A.txt,B.txt,hint,clue} tmp/genes/
