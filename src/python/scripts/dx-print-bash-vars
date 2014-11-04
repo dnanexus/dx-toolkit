@@ -23,8 +23,7 @@ from dxpy.utils.printing import fill, refill_paragraphs, BOLD, RED
 
 
 description = '''Parses $HOME/job_input.json and prints the bash
-variables that would be available in the execution environment.
-This utility is ''' + RED(BOLD('EXPERIMENTAL')) + '''.'''
+variables that would be available in the execution environment.'''
 
 parser = argparse.ArgumentParser(description=refill_paragraphs(description),
                                  formatter_class=argparse.RawTextHelpFormatter)
