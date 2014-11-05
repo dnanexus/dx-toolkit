@@ -58,6 +58,37 @@ def overrideEnvironment(**kwargs):
             env[key] = kwargs[key]
     return env
 
+
+def create_file_in_project(fname, trg_proj_id, folder=None):
+    data = "foo"
+    if folder is None:
+        dxfile = dxpy.upload_string(data, name=fname, project=trg_proj_id, wait_on_close=True)
+    else:
+        dxfile = dxpy.upload_string(data, name=fname, project=trg_proj_id, folder=folder, wait_on_close=True)
+    return dxfile.get_id()
+
+
+def create_project():
+    project_name = "test_dx_cp_" + str(random.randint(0, 1000000)) + "_" + str(int(time.time() * 1000))
+    return dxpy.api.project_new({'name': project_name})['id']
+
+
+def rm_project(proj_id):
+    dxpy.api.project_destroy(proj_id, {"terminateJobs": True})
+
+
+def create_folder_in_project(proj_id, path):
+    dxpy.api.project_new_folder(proj_id, {"folder": path})
+
+
+def list_folder(proj_id, path):
+    output = dxpy.api.project_list_folder(proj_id, {"folder": path})
+    # Sort the results to create ordering. This allows using the results
+    # for comparison purposes.
+    output['folders'] = sorted(output['folders'])
+    output['objects'] = sorted(output['objects'])
+    return output
+
 def makeGenomeObject():
     # NOTE: for these tests we don't upload a full sequence file (which
     # would be huge, for hg19). Importers and exporters that need to
@@ -4055,6 +4086,157 @@ class TestDXScripts(DXTestCase):
         run('dx-genes-to-gtf -h')
         run('dx-mappings-to-fastq -h')
         run('dx-build-applet -h')
+
+
+class TestDXCp(DXTestCase):
+    @classmethod
+    def setUpClass(cls):
+        # setup two projects
+        cls.proj_id1 = create_project()
+        cls.proj_id2 = create_project()
+        cls.counter = 1
+
+    @classmethod
+    def tearDownClass(cls):
+        rm_project(cls.proj_id1)
+        rm_project(cls.proj_id2)
+
+    @classmethod
+    def gen_uniq_fname(cls):
+        cls.counter += 1
+        return "file_{}".format(cls.counter)
+
+    # Make sure a folder (path) has the same contents in the two projects.
+    # Note: the contents of the folders are not listed recursively.
+    def verify_folders_are_equal(self, path):
+        listing_proj1 = list_folder(self.proj_id1, path)
+        listing_proj2 = list_folder(self.proj_id2, path)
+        self.assertEqual(listing_proj1, listing_proj2)
+
+    def verify_file_ids_are_equal(self, path1, path2=None):
+        if path2 is None:
+            path2 = path1
+        listing_proj1 = run("dx ls {proj}:/{path} --brief".format(proj=self.proj_id1, path=path1).strip())
+        listing_proj2 = run("dx ls {proj}:/{path} --brief".format(proj=self.proj_id2, path=path2).strip())
+        self.assertEqual(listing_proj1, listing_proj2)
+
+    # create new file with the same name in the target
+    #    dx cp  proj-1111:/file-1111   proj-2222:/
+    def test_file_with_same_name(self):
+        create_folder_in_project(self.proj_id1, "/earthsea")
+        create_folder_in_project(self.proj_id2, "/earthsea")
+        file_id = create_file_in_project(self.gen_uniq_fname(), self.proj_id1, folder="/earthsea")
+        run("dx cp {p1}:/earthsea/{f} {p2}:/earthsea/".format(f=file_id, p1=self.proj_id1, p2=self.proj_id2))
+        self.verify_folders_are_equal("/earthsea")
+
+    # copy and rename
+    #   dx cp  proj-1111:/file-1111   proj-2222:/file-2222
+    def test_cp_rename(self):
+        basename = self.gen_uniq_fname()
+        file_id = create_file_in_project(basename, self.proj_id1)
+        run("dx cp {p1}:/{f1} {p2}:/{f2}".format(f1=basename, f2="AAA.txt",
+                                                 p1=self.proj_id1, p2=self.proj_id2))
+        self.verify_file_ids_are_equal(basename, path2="AAA.txt")
+
+    # multiple arguments
+    #   dx cp  proj-1111:/file-1111 proj-2222:/file-2222 proj-3333:/
+    def test_multiple_args(self):
+        fname1 = self.gen_uniq_fname()
+        fname2 = self.gen_uniq_fname()
+        fname3 = self.gen_uniq_fname()
+        create_file_in_project(fname1, self.proj_id1)
+        create_file_in_project(fname2, self.proj_id1)
+        create_file_in_project(fname3, self.proj_id1)
+        run("dx cp {p1}:/{f1} {p1}:/{f2} {p1}:/{f3} {p2}:/".
+            format(f1=fname1, f2=fname2, f3=fname3, p1=self.proj_id1, p2=self.proj_id2))
+        self.verify_file_ids_are_equal(fname1)
+        self.verify_file_ids_are_equal(fname2)
+        self.verify_file_ids_are_equal(fname3)
+
+    # copy an entire directory
+    def test_cp_dir(self):
+        create_folder_in_project(self.proj_id1, "/foo")
+        run("dx cp {p1}:/foo {p2}:/".format(p1=self.proj_id1, p2=self.proj_id2))
+        self.verify_folders_are_equal("/foo")
+
+    # Weird error code:
+    #   This part makes sense:
+    #     'InvalidState: If cloned, a folder would conflict with the route of an existing folder.'
+    #   This does not:
+    #     'Successfully cloned from project: None, code 422'
+    #
+    def test_copy_empty_folder_on_existing_folder(self):
+        create_folder_in_project(self.proj_id1, "/bar")
+        create_folder_in_project(self.proj_id2, "/bar")
+        with self.assertSubprocessFailure(stderr_regexp='If cloned, a folder would conflict', exit_code=3):
+            run("dx cp {p1}:/bar {p2}:/".format(p1=self.proj_id1, p2=self.proj_id2))
+        self.verify_folders_are_equal("/bar")
+
+    def test_copy_folder_on_existing_folder(self):
+        create_folder_in_project(self.proj_id1, "/baz")
+        create_file_in_project(self.gen_uniq_fname(), self.proj_id1, folder="/baz")
+        run("dx cp {p1}:/baz {p2}:/".format(p1=self.proj_id1, p2=self.proj_id2))
+        with self.assertSubprocessFailure(stderr_regexp='If cloned, a folder would conflict', exit_code=3):
+            run("dx cp {p1}:/baz {p2}:/".format(p1=self.proj_id1, p2=self.proj_id2))
+        self.verify_folders_are_equal("/baz")
+
+    # PTFM-13569: This used to give a weird error message, like so:
+    # dx cp project-BV80zyQ0Ffb7fj64v03fffqX:/foo/XX.txt  project-BV80vzQ0P9vk785K1GgvfZKv:/foo/XX.txt
+    # The following objects already existed in the destination container and were not copied:
+    #   [
+    #   "
+    #   f
+    #   l
+    #   ...
+    def test_copy_overwrite(self):
+        fname1 = self.gen_uniq_fname()
+        file_id1 = create_file_in_project(fname1, self.proj_id1)
+        run("dx cp {p1}:/{f} {p2}:/{f}".format(p1=self.proj_id1, f=fname1, p2=self.proj_id2))
+        output = run("dx cp {p1}:/{f} {p2}:/{f}".format(p1=self.proj_id1,
+                                                        f=fname1, p2=self.proj_id2))
+        self.assertIn("destination", output)
+        self.assertIn("already existed", output)
+        self.assertIn(file_id1, output)
+
+    @unittest.skip("PTFM-11906 This doesn't work yet.")
+    def test_file_in_other_project(self):
+        ''' Copy a file-id, where the file is not located in the default project-id.
+
+        Main idea: create projects A and B. Create a file in A, and copy it to project B,
+        -without- specifying a source project.
+
+        This could work, with some enhancements to the 'dx cp' implementation.
+        '''
+        file_id = create_file_in_project(self.gen_uniq_fname(), self.proj_id1)
+        run('dx cp ' + file_id + ' ' + self.proj_id2)
+
+    @unittest.skipUnless(testutil.TEST_ENV,
+                         'skipping test that would clobber your local environment')
+    # This will start working, once PTFM-11906 is addressed. The issue is
+    # that you must specify a project when copying a file. In theory this
+    # can be addressed, because the project can be found, given the file-id.
+    def test_no_env(self):
+        ''' Try to copy a file when the context is empty.
+        '''
+        # create a file in the current project
+        #  -- how do we get the current project id?
+        file_id = create_file_in_project(self.gen_uniq_fname(), self.project)
+
+        # Unset environment
+        from dxpy.utils.env import write_env_var
+        write_env_var('DX_PROJECT_CONTEXT_ID', None)
+        del os.environ['DX_PROJECT_CONTEXT_ID']
+        self.assertNotIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
+
+        # Copy the file to a new project.
+        # This does not currently work, because the context is not set.
+        proj_id = create_project()
+        with self.assertSubprocessFailure(stderr_regexp='project must be specified or a current project set',
+                                          exit_code=1):
+            run('dx cp ' + file_id + ' ' + proj_id)
+
+        #cleanup
+        rm_project(proj_id)
 
 
 if __name__ == '__main__':
