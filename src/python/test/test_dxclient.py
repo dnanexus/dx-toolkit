@@ -1585,6 +1585,30 @@ def main(array):
         self.assertIn(first_job_handler.get_id() + ":array.2 => 5", third_job_desc)
         self.assertNotIn(second_job_handler.get_id() + ":array =>", third_job_desc)
 
+    def test_dx_run_ssh_no_config(self):
+        # Create minimal applet.
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "inputSpec": [],
+                                         "outputSpec": [],
+                                         "runSpec": {"interpreter": "python2.7",
+                                                     "code": '''#!/usr/bin/env python
+
+@dxpy.entry_point('main')
+def main():
+    return
+'''}})['id']
+
+        # Case: Execute "dx run --ssh" before configuring SSH.
+        path = tempfile.mkdtemp()
+        shell = pexpect.spawn("dx run --ssh " + applet_id, env=dict(os.environ, DX_USER_CONF_DIR=path))
+        shell.expect("Warning:")
+        shell.sendline("N")
+        shell.expect("IOError")
+        shell.close()
+        self.assertEqual(3, shell.exitstatus)
+
+
 class TestDXClientWorkflow(DXTestCase):
     default_inst_type = "mem2_hdd2_x2"
 

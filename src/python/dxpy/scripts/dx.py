@@ -3166,7 +3166,7 @@ def watch(args):
 def ssh_config(args):
     user_id = try_call(dxpy.whoami)
 
-    dnanexus_conf_dir = os.path.expanduser('~/.dnanexus_config')
+    dnanexus_conf_dir = get_user_conf_dir()
     if not os.path.exists(dnanexus_conf_dir):
         msg = "The DNAnexus configuration directory {d} does not exist. Use {c} to create it."
         err_exit(msg.format(d=dnanexus_conf_dir, c=BOLD("dx login")))
@@ -3230,7 +3230,7 @@ def update_pub_key(user_id, pub_key_file):
 
 def verify_ssh_config():
     try:
-        with open(os.path.expanduser('~/.dnanexus_config/ssh_id.pub')) as fh:
+        with open(os.path.join(get_user_conf_dir(), 'ssh_id.pub')) as fh:
             user_desc = try_call(dxpy.api.user_describe, try_call(dxpy.whoami))
             if 'sshPublicKey' not in user_desc:
                 raise DXError("User's SSH public key is not set")
@@ -3241,7 +3241,7 @@ def verify_ssh_config():
               ". SSH connection will likely fail. To set up your account for SSH, quit this command and run " + \
               BOLD("dx ssh_config") + ". Continue with the current command?"
         if not prompt_for_yn(fill(msg), default=False):
-            err_exit()
+            err_exit(expected_exceptions=(IOError, DXError))
 
 def ssh(args, ssh_config_verified=False):
     if not re.match("^job-[0-9a-zA-Z]{24}$", args.job_id):

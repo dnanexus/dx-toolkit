@@ -39,6 +39,8 @@ def get_global_conf_dir():
     return '/etc/dnanexus'
 
 def get_user_conf_dir():
+    if "DX_USER_CONF_DIR" in os.environ:
+        return expanduser(os.environ["DX_USER_CONF_DIR"])
     return expanduser('~/.dnanexus_config')
 
 def get_session_conf_dir():
