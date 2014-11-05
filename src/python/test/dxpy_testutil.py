@@ -145,8 +145,7 @@ restored when the block exits.
 class DXTestCase(unittest.TestCase):
     def setUp(self):
         proj_name = u"dxclient_test_pröject"
-        # Unplug stdin so that dx doesn't prompt user for input at the tty
-        self.project = subprocess.check_output(u"dx new project '{p}' --brief".format(p=proj_name), shell=True, stdin=subprocess.PIPE).strip()
+        self.project = dxpy.api.project_new({"name": proj_name})['id']
         os.environ["DX_PROJECT_CONTEXT_ID"] = self.project
         subprocess.check_call(u"dx cd "+self.project+":/", shell=True)
         dxpy._initialize(suppress_warning=True)
@@ -155,7 +154,7 @@ class DXTestCase(unittest.TestCase):
 
     def tearDown(self):
         try:
-            subprocess.check_call(u"dx rmproject --yes --quiet {p}".format(p=self.project), shell=True)
+            dxpy.api.project_destroy(self.project, {})
         except Exception as e:
             print("Failed to remove test project:", str(e))
         if 'DX_PROJECT_CONTEXT_ID' in os.environ:
@@ -203,8 +202,9 @@ class DXTestCase(unittest.TestCase):
             if stderr_regexp:
                 if not hasattr(e, 'stderr'):
                     raise Exception('A stderr_regexp was supplied but the CalledProcessError did not return the contents of stderr')
-                print("stderr:")
-                print(e.stderr)
-                self.assertTrue(re.search(stderr_regexp, e.stderr), "Expected stderr to match '%s' but it didn't" % (stderr_regexp,))
+                if not re.search(stderr_regexp, e.stderr):
+                    print("stderr:")
+                    print(e.stderr)
+                    self.fail("Expected stderr to match '%s' but it didn't" % (stderr_regexp,))
             return
         self.assertFalse(True, "Expected command to fail with CalledProcessError but it succeeded")

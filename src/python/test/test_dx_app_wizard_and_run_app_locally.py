@@ -376,8 +376,10 @@ class TestDXBashHelpers(DXTestCase):
         check_output(args)
 
     def test_vars(self):
+        """Tests bash variable generation
+
+        """
         # Make a couple files for testing
-        print("testing bash variable generation")
         dxpy.upload_string("1234", name="A.txt")
         self.run_test_app_locally('vars', ['-iseq1=A.txt', '-iseq2=A.txt', '-igenes=A.txt', '-igenes=A.txt',
                                            '-ii=5', '-ix=4.2', '-ib=true', '-is=hello',
@@ -391,8 +393,10 @@ class TestDXBashHelpers(DXTestCase):
         self.run_test_app_locally('deepdirs', [])
 
     def test_basic(self):
+        '''Tests upload/download helpers
+
+        '''
         # Make a couple files for testing
-        print("testing upload/download helpers")
         dxpy.upload_string("1234", wait_on_close=True, name="A.txt")
 
         # this invocation should fail with a CLI exception

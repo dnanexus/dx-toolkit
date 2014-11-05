@@ -50,6 +50,7 @@ TEST_APPS = os.path.join(os.path.dirname(__file__), 'file_load')
 LOCAL_SCRIPTS = os.path.join(os.path.dirname(__file__), '..', 'scripts')
 LOCAL_UTILS = os.path.join(os.path.dirname(__file__), '..', 'dxpy', 'utils')
 
+
 def build_app_with_bash_helpers(app_dir, project_id):
     tempdir = tempfile.mkdtemp()
     try:
@@ -178,8 +179,7 @@ class TestDXBashHelpers(DXTestCase):
             cmd_args.extend(applet_args)
             job_id = run(cmd_args, env=env).strip()
 
-            # figure out the job-id, so we can wait for the parent job to complete.
-            run(['dx', 'wait', job_id], env=env)
+            dxpy.DXJob(job_id).wait_on_done()
 
             # Assertions -- making sure the script worked
             # Assertions to make about the job's output after it is done running:
@@ -281,8 +281,7 @@ class TestDXBashHelpers(DXTestCase):
             cmd_args = ['dx', 'run', '--yes', '--brief', applet_id]
             job_id = run(cmd_args, env=env).strip()
 
-            # figure out the job-id, so we can wait for the parent job to complete.
-            run(['dx', 'wait', job_id], env=env)
+            dxpy.DXJob(job_id).wait_on_done()
 
             print("Test completed successfully, checking outputs\n")
 
