@@ -154,7 +154,7 @@ class DXTestCase(unittest.TestCase):
 
     def tearDown(self):
         try:
-            dxpy.api.project_destroy(self.project, {})
+            dxpy.api.project_destroy(self.project, {"terminateJobs": True})
         except Exception as e:
             print("Failed to remove test project:", str(e))
         if 'DX_PROJECT_CONTEXT_ID' in os.environ:
