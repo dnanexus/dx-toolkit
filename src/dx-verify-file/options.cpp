@@ -77,7 +77,7 @@ void Options::setApiserverDxConfig() {
   if (authToken.empty()) {
     // If --auth-token flag is not used, check that dx::config::SECURITY_CONTEXT() has a auth token, else throw
     if (SECURITY_CONTEXT().size() == 0) 
-      throw runtime_error("No Authentication token found, please provide a correct auth token (you may use --auth-token option)");
+      throw runtime_error("No Authentication token found, please provide a correct auth token (use --auth-token or dx login)");
   } else {
     LOG << "Setting dx::config::SECURITY_CONTEXT() from value provided at run time: '" << authToken << "'" << endl;
     SECURITY_CONTEXT() = dx::JSON::parse("{\"auth_token_type\": \"Bearer\", \"auth_token\": \"" + authToken + "\"}");
