@@ -25,7 +25,8 @@ import traceback
 
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
-from ..exceptions import err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions
+from ..exceptions import (err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions,
+                          format_exception)
 from ..packages import requests
 from ..compat import (USING_PYTHON2, basestring, str, input, wrap_stdio_in_codecs, decode_command_line_args,
                       unwrap_stream)
@@ -120,13 +121,6 @@ def set_delim(args=argparse.Namespace()):
     else:
         state['delimiter'] = None
     set_delimiter(state['delimiter'])
-
-
-def format_exception(e):
-    """Returns a string containing the type and text of the exception.
-
-    """
-    return '\n'.join(fill(line) for line in traceback.format_exception_only(type(e), e))
 
 
 # Loading environment
