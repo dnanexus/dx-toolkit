@@ -1,3 +1,9 @@
+dx-toolkit (0.123.1) precise; urgency=low
+
+  * Improvements to bash helper prefix variables
+
+ -- Katherine Lai <klai@dnanexus.com>  Mon, 10 Nov 2014 21:09:01 +0000
+
 dx-toolkit (0.123.0) precise; urgency=low
 
   * adding bash helper variables 
