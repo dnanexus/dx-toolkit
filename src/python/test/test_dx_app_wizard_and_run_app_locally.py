@@ -376,11 +376,9 @@ class TestDXBashHelpers(DXTestCase):
         check_output(args)
 
     def test_vars(self):
-        """Tests bash variable generation
-
-        """
+        """Tests bash variable generation """
         # Make a couple files for testing
-        dxpy.upload_string("1234", name="A.txt")
+        dxpy.upload_string("1234", name="A.txt", wait_on_close=True)
         self.run_test_app_locally('vars', ['-iseq1=A.txt', '-iseq2=A.txt', '-igenes=A.txt', '-igenes=A.txt',
                                            '-ii=5', '-ix=4.2', '-ib=true', '-is=hello',
                                            '-iil=6', '-iil=7', '-iil=8',
@@ -388,6 +386,23 @@ class TestDXBashHelpers(DXTestCase):
                                            '-ibl=true', '-ibl=false', '-ibl=true',
                                            '-isl=hello', '-isl=world', '-isl=next',
                                            '-imisc={"hello": "world", "foo": true}'])
+
+    def test_prefix_patterns(self):
+        """ Tests that the bash prefix variable works correctly, and
+        respects patterns.
+        """
+        buf = "1234"
+        filenames = ["A.bar", "A.json.dot.bar", "A.vcf.pam", "A.foo.bar", "fooxxx.bam", "A.bar.gz", "x13year23.sam"]
+        for fname in filenames:
+            dxpy.upload_string(buf, name=fname, wait_on_close=True)
+        self.run_test_app_locally('prefix_patterns', ['-iseq1=A.bar',
+                                                      '-iseq2=A.json.dot.bar',
+                                                      '-igene=A.vcf.pam',
+                                                      '-imap=A.foo.bar',
+                                                      '-imap2=fooxxx.bam',
+                                                      '-imap3=A.bar',
+                                                      '-imap4=A.bar.gz',
+                                                      '-imulti=x13year23.sam'])
 
     def test_deepdirs(self):
         self.run_test_app_locally('deepdirs', [])

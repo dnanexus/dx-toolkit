@@ -1,0 +1,50 @@
+{ "name": "prefix_patterns",
+  "title": "prefix_patterns",
+  "summary" : "prefix_patterns",
+  "runSpec": {
+    "file": "run.sh",
+    "interpreter": "bash"
+  },
+  "inputSpec": [
+    {
+      "name": "seq1",
+      "class": "file"
+    },
+    {
+      "name": "seq2",
+      "class": "file",
+      "patterns": ["*.json.dot.bar"]
+    },
+    {
+      "name": "gene",  
+      "class": "file",
+      "patterns": ["*.vcf.pam", "*.vcf.gz", "*.sam"]
+    },
+    {
+      "name": "map",  
+      "class": "file",
+      "patterns": ["*.bam", "*.sam"]
+    },
+    {
+      "name": "map2",  
+      "class": "file",
+      "patterns": ["foo*.bam", "foo*.sam"]
+    },
+    {
+      "name": "map3",  
+      "class": "file",
+      "patterns": ["*.y"]
+    },
+    {
+      "name": "map4",  
+      "class": "file",
+      "patterns": ["*.y", "*.pxxx"]
+    },
+    {
+      "name": "multi",  
+      "class": "file",
+      "patterns": ["*year*.sam"]
+    }
+  ],
+  "outputSpec": []
+}

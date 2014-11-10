@@ -65,7 +65,6 @@ def build_app_with_bash_helpers(app_dir, project_id):
             os.makedirs(resources_bindir)
         shutil.copy(os.path.join(LOCAL_SCRIPTS, 'dx-download-all-inputs'), resources_bindir)
         shutil.copy(os.path.join(LOCAL_SCRIPTS, 'dx-upload-all-outputs'), resources_bindir)
-        shutil.copy(os.path.join(LOCAL_SCRIPTS, 'dx-print-bash-vars'), resources_bindir)
 
         # Now copy any libraries we depend on. This is tricky to get
         # right in general (because we will end up with some subset of
@@ -243,6 +242,34 @@ class TestDXBashHelpers(DXTestCase):
 
             # Run the applet
             applet_args = ["-iseq1=A.txt", "-iseq2=B.txt", "-iref=A.txt", "-iref=B.txt"]
+            cmd_args = ['dx', 'run', '--yes', '--watch', applet_id]
+            cmd_args.extend(applet_args)
+            run(cmd_args, env=env)
+
+    def test_prefix_patterns(self):
+        """ Tests that the bash prefix variable works correctly, and
+        respects patterns.
+        """
+        with temporary_project('TestDXBashHelpers.test_app1 temporary project') as dxproj:
+            env = update_environ(DX_PROJECT_CONTEXT_ID=dxproj.get_id())
+            filenames = ["A.bar", "A.json.dot.bar", "A.vcf.pam", "A.foo.bar",
+                         "fooxxx.bam", "A.bar.gz", "x13year23.sam"]
+            for fname in filenames:
+                dxpy.upload_string("1234", project=dxproj.get_id(), name=fname)
+
+            # Build the applet, patching in the bash helpers from the
+            # local checkout
+            applet_id = build_app_with_bash_helpers(os.path.join(TEST_APPS, 'prefix_patterns'), dxproj.get_id())
+
+            # Run the applet
+            applet_args = ['-iseq1=A.bar',
+                           '-iseq2=A.json.dot.bar',
+                           '-igene=A.vcf.pam',
+                           '-imap=A.foo.bar',
+                           '-imap2=fooxxx.bam',
+                           '-imap3=A.bar',
+                           '-imap4=A.bar.gz',
+                           '-imulti=x13year23.sam']
             cmd_args = ['dx', 'run', '--yes', '--watch', applet_id]
             cmd_args.extend(applet_args)
             run(cmd_args, env=env)
