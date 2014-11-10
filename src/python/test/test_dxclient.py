@@ -2740,13 +2740,12 @@ class TestHTTPProxySupport(DXTestCase):
 
 class TestDXBuildApp(DXTestCase):
     def setUp(self):
+        super(TestDXBuildApp, self).setUp()
         self.temp_file_path = tempfile.mkdtemp()
-        self.proj_id = dxpy.api.project_new({'name': 'TestDXBuildApp Project'})['id']
-        os.environ['DX_PROJECT_CONTEXT_ID'] = self.proj_id
 
     def tearDown(self):
         shutil.rmtree(self.temp_file_path)
-        dxpy.api.project_destroy(self.proj_id, {'terminateJobs': True})
+        super(TestDXBuildApp, self).tearDown()
 
     def run_and_assert_stderr_matches(self, cmd, stderr_regexp):
         with self.assertSubprocessFailure(stderr_regexp=stderr_regexp, exit_code=28):
@@ -2813,6 +2812,64 @@ class TestDXBuildApp(DXTestCase):
         self.assertEqual(applet_describe["class"], "applet")
         self.assertEqual(applet_describe["id"], applet_describe["id"])
         self.assertEqual(applet_describe["name"], "minimal_applet")
+
+    def test_dx_build_applet_no_app_linting(self):
+        run("dx clearenv")
+
+        # Case: Missing title, summary, description.
+        app_spec = {
+            "name": "dx_build_applet_missing_fields",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0",
+            "categories": ["Annotation"]
+            }
+        app_dir = self.write_app_directory("dx_build_applet_missing_fields", json.dumps(app_spec), "code.py")
+        args = ['dx', 'build', app_dir]
+        p = subprocess.Popen(args, stderr=subprocess.PIPE)
+        out, err = p.communicate()
+        self.assertFalse(err.startswith("WARNING"))
+
+        # Case: Usage of period at end of summary.
+        app_spec = {
+            "name": "dx_build_applet_summary_with_period",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0",
+            "title": "Title",
+            "summary": "Summary without period",
+            "description": "Description with period.",
+            "categories": ["Annotation"]
+            }
+        app_dir = self.write_app_directory("dx_build_applet_summary_with_period", json.dumps(app_spec), "code.py")
+        args = ['dx', 'build', app_dir]
+        p = subprocess.Popen(args, stderr=subprocess.PIPE)
+        out, err = p.communicate()
+        self.assertFalse(err.startswith("WARNING"))
+
+        # Case: Usage of unknown categories.
+        unknown_category = "asdf1234"
+        app_spec = {
+            "name": "dx_build_applet_unknown_cat",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0",
+            "title": "Title",
+            "summary": "Summary without period",
+            "description": "Description without period",
+            "categories": [unknown_category]
+            }
+        app_dir = self.write_app_directory("dx_build_applet_unknown_cat", json.dumps(app_spec), "code.py")
+        args = ['dx', 'build', app_dir]
+        p = subprocess.Popen(args, stderr=subprocess.PIPE)
+        out, err = p.communicate()
+        self.assertFalse(err.startswith("WARNING"))
 
     def test_build_applet_dry_run(self):
         app_spec = {
@@ -2915,33 +2972,45 @@ class TestDXBuildApp(DXTestCase):
             "version": "1.0.0",
             "categories": ["foo", "Import", "Export"]
             }
-        app_dir = self.write_app_directory("first_åpplet", json.dumps(app_spec), "code.py")
+        app_dir = self.write_app_directory("test_build_åpplet_warnings", json.dumps(app_spec), "code.py")
         with open(os.path.join(app_dir, 'Readme.md'), 'w') as readme:
             readme.write('a readme file')
-        first_expected_warnings = ["missing a name",
-                                   "should be a short phrase not ending in a period",
-                                   '"description" field shadows file',
-                                   '"description" field should be written in complete sentences',
-                                   'unrecognized category',
-                                   'should end in "Importer"',
-                                   'should end in "Exporter"',
-                                   'input 0 has illegal name',
-                                   'output 0 has illegal name']
-        second_expected_warnings = ["should be all lowercase",
-                                    "does not match containing directory",
-                                    "missing a title",
-                                    "missing a summary",
-                                    "missing a description",
-                                    "should be semver compliant"]
+        applet_expected_warnings = ["missing a name",
+                                    'input 0 has illegal name',
+                                    'output 0 has illegal name']
+        applet_unexpected_warnings = ["should be all lowercase",
+                                      "does not match containing directory",
+                                      "missing a title",
+                                      "missing a summary",
+                                      "should be a short phrase not ending in a period",
+                                      "missing a description",
+                                      '"description" field shadows file',
+                                      '"description" field should be written in complete sentences',
+                                      'unrecognized category',
+                                      'should end in "Importer"',
+                                      'should end in "Exporter"',
+                                      "should be semver compliant"]
         try:
             run("dx build " + app_dir)
             self.fail("dx build invocation should have failed because of bad IO spec")
         except subprocess.CalledProcessError as err:
-            for warning in first_expected_warnings:
+            for warning in applet_expected_warnings:
                 self.assertIn(warning, err.stderr)
-            for warning in second_expected_warnings:
+            for warning in applet_unexpected_warnings:
                 self.assertNotIn(warning, err.stderr)
 
+        # some more errors
+        app_spec = {
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py"}
+            }
+        app_dir = self.write_app_directory("test_build_second_åpplet_warnings", json.dumps(app_spec), "code.py")
+        with self.assertSubprocessFailure(stderr_regexp='interpreter field was not present'):
+            run("dx build " + app_dir)
+
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS,
+                         'skipping test that would create apps')
+    def test_build_app_warnings(self):
         app_spec = {
             "name": "Foo",
             "dxapi": "1.0.0",
@@ -2950,25 +3019,32 @@ class TestDXBuildApp(DXTestCase):
             "outputSpec": [],
             "version": "foo"
             }
-        app_dir = self.write_app_directory("second_åpplet", json.dumps(app_spec), "code.py")
+        app_dir = self.write_app_directory("test_build_app_warnings", json.dumps(app_spec), "code.py")
+        app_unexpected_warnings = ["missing a name",
+                                   "should be a short phrase not ending in a period",
+                                   '"description" field shadows file',
+                                   '"description" field should be written in complete sentences',
+                                   'unrecognized category',
+                                   'should end in "Importer"',
+                                   'should end in "Exporter"',
+                                   'input 0 has illegal name',
+                                   'output 0 has illegal name']
+        app_expected_warnings = ["should be all lowercase",
+                                 "does not match containing directory",
+                                 "missing a title",
+                                 "missing a summary",
+                                 "missing a description",
+                                 "should be semver compliant"]
         try:
-            # exit with error code to grab stderr
-            run("dx build " + app_dir + " && exit 28")
+            # Expect "dx build" to succeed, exit with error code to
+            # grab stderr.
+            run("dx build --app " + app_dir + " && exit 28")
         except subprocess.CalledProcessError as err:
             self.assertEqual(err.returncode, 28)
-            for warning in first_expected_warnings:
+            for warning in app_unexpected_warnings:
                 self.assertNotIn(warning, err.stderr)
-            for warning in second_expected_warnings:
+            for warning in app_expected_warnings:
                 self.assertIn(warning, err.stderr)
-
-        # some more errors
-        app_spec = {
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py"}
-            }
-        app_dir = self.write_app_directory("third_åpplet", json.dumps(app_spec), "code.py")
-        with self.assertSubprocessFailure(stderr_regexp='interpreter field was not present'):
-            run("dx build " + app_dir)
 
     def test_get_applet(self):
         # TODO: not sure why self.assertEqual doesn't consider
@@ -3690,8 +3766,8 @@ def main(in1):
         app_dir = self.write_app_directory("archive_in_another_project", json.dumps(app_spec), "code.py")
 
         with temporary_project("Temporary working project", select=True) as temp_project:
-            run("dx build -d {p}: {app_dir}".format(p=self.proj_id, app_dir=app_dir))
-            run("dx build --archive -d {p}: {app_dir}".format(p=self.proj_id, app_dir=app_dir))
+            run("dx build -d {p}: {app_dir}".format(p=self.project, app_dir=app_dir))
+            run("dx build --archive -d {p}: {app_dir}".format(p=self.project, app_dir=app_dir))
 
 
 class TestDXBuildReportHtml(unittest.TestCase):
