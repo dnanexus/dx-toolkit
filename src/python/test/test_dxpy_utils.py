@@ -126,9 +126,7 @@ class TestEDI(DXExecDependencyInstaller):
 class TestDXExecDependsUtils(unittest.TestCase):
     def test_dx_execdepends_installer(self):
         def get_edi(run_spec, job_desc=None):
-            return TestEDI(executable_desc={"runSpec": run_spec},
-                           job_desc=job_desc if job_desc else {},
-                           use_dx_log_handler=False)
+            return TestEDI(executable_desc={"runSpec": run_spec}, job_desc=job_desc if job_desc else {})
 
         def assert_cmd_ran(edi, regexp):
             self.assertRegexpMatches("\n".join(edi.command_log), regexp)
@@ -137,7 +135,7 @@ class TestDXExecDependsUtils(unittest.TestCase):
             self.assertRegexpMatches("\n".join(edi.message_log), regexp)
 
         with self.assertRaisesRegexp(AppInternalError, 'Expected field "runSpec" to be present'):
-            DXExecDependencyInstaller({}, {}, use_dx_log_handler=False)
+            DXExecDependencyInstaller({}, {})
 
         with self.assertRaisesRegexp(AppInternalError, 'Expected field "name" to be present'):
             get_edi({"dependencies": [{"foo": "bar"}]})

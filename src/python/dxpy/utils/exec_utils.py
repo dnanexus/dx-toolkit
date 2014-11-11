@@ -134,30 +134,31 @@ def run(function_name=None, function_input=None):
     try:
         result = ENTRY_POINT_TABLE[job['function']](**job['input'])
     except dxpy.AppError as e:
-        if dxpy.JOB_ID is not None:
-            os.chdir(dx_working_dir)
-            with open("job_error.json", "w") as fh:
-                fh.write(json.dumps({"error": {"type": "AppError", "message": _format_exception_message(e)}}) + "\n")
+        save_error(e, dx_working_dir, error_type="AppError")
         raise
     except Exception as e:
-        if dxpy.JOB_ID is not None:
-            os.chdir(dx_working_dir)
-            try:
-                os.unlink("job_error_reserved_space")
-            except:
-                pass
-            with open("job_error.json", "w") as fh:
-                fh.write(json.dumps({"error": {"type": "AppInternalError", "message": _format_exception_message(e)}}) + "\n")
+        save_error(e, dx_working_dir)
         raise
 
     if result is not None:
         # TODO: protect against client removing its original working directory
         os.chdir(dx_working_dir)
-        with open("job_output.json", "w") as fh:
-            fh.write(json.dumps(result, indent=2, cls=DXJSONEncoder))
-            fh.write("\n")
+        with open("job_output.json", "wb") as fh:
+            json.dump(result, fh, indent=2, cls=DXJSONEncoder)
+            fh.write(b"\n")
 
     return result
+
+def save_error(e, working_dir, error_type="AppInternalError"):
+    if dxpy.JOB_ID is not None:
+        os.chdir(working_dir)
+        try:
+            os.unlink("job_error_reserved_space")
+        except:
+            pass
+        with open("job_error.json", "wb") as fh:
+            json.dump({"error": {"type": error_type, "message": _format_exception_message(e)}}, fh)
+            fh.write(b"\n")
 
 # TODO: make this less naive with respect to cycles and any other things json.dumps() can handle
 def convert_handlers_to_dxlinks(x):
@@ -248,7 +249,7 @@ class DXExecDependencyInstaller(object):
     """
     group_pms = ("apt", "pip", "gem", "cpan", "cran")
 
-    def __init__(self, executable_desc, job_desc, use_dx_log_handler=True, log_level=logging.INFO):
+    def __init__(self, executable_desc, job_desc, logger=None):
         if "runSpec" not in executable_desc:
             raise DXExecDependencyError('Expected field "runSpec" to be present in executable description"')
 
@@ -256,9 +257,7 @@ class DXExecDependencyInstaller(object):
         self.run_spec = executable_desc["runSpec"]
         self.job_desc = job_desc
         self.stage = self.job_desc.get("function", "main")
-        self.logger = logging.getLogger("DXEE")
-        self.logger.setLevel(log_level)
-        self.logger.addHandler(dxpy.DXLogHandler() if use_dx_log_handler else logging.StreamHandler())
+        self.logger = logger
 
         self.dep_groups = []
         for dep in itertools.chain(self.run_spec.get("bundledDepends", []),
@@ -276,7 +275,10 @@ class DXExecDependencyInstaller(object):
             self.dep_groups[-1]["deps"].append(dep)
 
     def log(self, message):
-        self.logger.info(message)
+        if self.logger:
+            self.logger.info(message)
+        else:
+            print(message)
 
     def generate_shellcode(self, dep_group):
         base_apt_shellcode = "apt-get install --yes --no-install-recommends {p}"
