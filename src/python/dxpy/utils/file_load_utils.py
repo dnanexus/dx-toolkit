@@ -84,7 +84,6 @@ import json
 import pipes
 import os
 import fnmatch
-import math
 import sys
 import collections
 import dxpy
@@ -270,6 +269,9 @@ def get_job_input_filenames(job_input_file):
 
 def get_input_spec_patterns():
     ''' Extract the inputSpec patterns, if they exist -- modifed from dx-upload-all-outputs
+
+    Returns a dict of all patterns, with keys equal to the respective
+    input parameter names.
     '''
     input_spec = None
     if 'DX_JOB_ID' in os.environ:
@@ -290,7 +292,7 @@ def get_input_spec_patterns():
     # convert to a dictionary. Each entry in the input spec
     # has {name, class} attributes.
     if input_spec is None:
-        return None
+        return {}
 
     # For each field name, return its patterns.
     # Make sure a pattern is legal, ignore illegal patterns.
@@ -366,7 +368,7 @@ def analyze_bash_vars(job_input_file):
         if patterns is not None:
             for pattern in patterns:
                 if fnmatch.fnmatch(basename, pattern):
-                    left_piece, separator, right_piece = pattern.rpartition("*")
+                    _, _, right_piece = pattern.rpartition("*")
                     best_prefix = choose_shorter_string(best_prefix, basename[:-len(right_piece)])
         if best_prefix is not None:
             return best_prefix
@@ -423,8 +425,8 @@ def gen_bash_vars(job_input_file, check_name_collision=True):
 
     def string_of_value(val):
         if isinstance(val, list):
-            str = " ".join([string_of_elem(vitem) for vitem in val])
-            return "( {} )".format(str)
+            string = " ".join([string_of_elem(vitem) for vitem in val])
+            return "( {} )".format(string)
         else:
             return string_of_elem(val)
 
@@ -461,9 +463,9 @@ def _gen_bash_vars_old(job_input_file):
     Old code for generating bash variables from the input file. Previously used inside a script.
     We use it to verify the new version of the code.
     """
-    def old_string_of_elem(elem):
+    def old_string_of_elem(v):
         """
-        :param elem: a value read from a JSON file
+        :param v: a value read from a JSON file
         :returns: string to be instantiated as a bash variable
         :rtype: string
         """
