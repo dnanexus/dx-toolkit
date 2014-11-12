@@ -1,3 +1,7 @@
+DNAnexus Upload Agent 1.5.5 <support@dnanexus.com>, 2014-Nov-12
+---------------------------------------------------------------
+  * Deadvertise options for running import apps.
+
 DNAnexus Upload Agent 1.5.4 <support@dnanexus.com>, 2014-Jun-10
 ---------------------------------------------------------------
   * Support for 503/Retry-After to improve resilience during apiserver maintenance.
