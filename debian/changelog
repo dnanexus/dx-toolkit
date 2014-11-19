@@ -1,3 +1,11 @@
+dx-toolkit (0.125.0) precise; urgency=low
+
+  * Upgrade dependencies
+
+  * Expand bash path variables
+
+ -- Ric Medlinger <ric@dnanexus.com>  Wed, 19 Nov 2014 17:50:37 +0000
+
 dx-toolkit (0.124.0) precise; urgency=low
 
   * Improvements to bash prefix variables
