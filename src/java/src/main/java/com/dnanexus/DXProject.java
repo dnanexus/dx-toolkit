@@ -72,8 +72,15 @@ public class DXProject extends DXContainer {
     public static class Builder {
 
         private String name = null;
+        private final DXEnvironment env;
 
-        private Builder() {}
+        private Builder() {
+            this.env = DXEnvironment.create();
+        }
+
+        private Builder(DXEnvironment env) {
+            this.env = env;
+        }
 
         /**
          * Sets the name of the new project.
@@ -104,8 +111,8 @@ public class DXProject extends DXContainer {
          * @return a {@code DXProject} corresponding to the newly created project
          */
         public DXProject build() {
-            return new DXProject(DXAPI.projectNew(this.buildRequestHash(), ObjectNewResponse.class)
-                    .getId());
+            return new DXProject(DXAPI.projectNew(this.buildRequestHash(), ObjectNewResponse.class,
+                    env).getId(), env);
         }
     }
 
@@ -175,6 +182,16 @@ public class DXProject extends DXContainer {
      */
     public static Builder newProject() {
         return new Builder();
+    }
+
+    /**
+     * Returns a Builder object for creating a new {@code DXProject} using the specified
+     * environment.
+     *
+     * @return a newly initialized {@code Builder}
+     */
+    public static Builder newProjectWithEnvironment(DXEnvironment env) {
+        return new Builder(env);
     }
 
     /**
