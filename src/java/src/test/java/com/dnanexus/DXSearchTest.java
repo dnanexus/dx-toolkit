@@ -29,6 +29,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.dnanexus.DXSearch.PropertiesQuery;
+import com.dnanexus.DXSearch.TypeQuery;
 import com.dnanexus.DXSearch.VisibilityQuery;
 import com.dnanexus.TestEnvironment.ConfigOption;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -47,7 +48,6 @@ public class DXSearchTest {
 
     @JsonInclude(Include.NON_NULL)
     private static class SampleAppInput {
-        @SuppressWarnings("unused")
         @JsonProperty("input_string")
         public final String inputString;
 
@@ -108,18 +108,17 @@ public class DXSearchTest {
      */
     @Test
     public void testFindDataObjects() {
-        DXRecord moo =
-                DXRecord.newRecord().setProject(testProject).setName("Moo")
-                        .putProperty("sampleId", "1").putProperty("process", "a")
-                        .addTypes(ImmutableList.of("genome")).build().close();
-        DXRecord foo =
-                DXRecord.newRecord().setProject(testProject).setName("foo")
-                        .putProperty("sampleId", "2").addTags(ImmutableList.of("mytag")).build()
-                        .close();
-        DXRecord food =
-                DXRecord.newRecord().setProject(testProject).setName("food")
-                        .putProperty("process", "a").setFolder("/subfolder", true).build().close();
-        DXRecord open = DXRecord.newRecord().setProject(testProject).setName("open").build();
+        DXRecord moo = DXRecord.newRecord().setProject(testProject).setName("Moo")
+                .putProperty("sampleId", "1").putProperty("process", "a")
+                .addTypes(ImmutableList.of("genome", "report")).build().close();
+        DXRecord foo = DXRecord.newRecord().setProject(testProject).setName("foo")
+                .putProperty("sampleId", "2").addTags(ImmutableList.of("mytag"))
+                .addTypes(ImmutableList.of("genome")).build().close();
+        DXRecord food = DXRecord.newRecord().setProject(testProject).setName("food")
+                .putProperty("process", "a").setFolder("/subfolder", true)
+                .addTypes(ImmutableList.of("report")).build().close();
+        DXRecord open = DXRecord.newRecord().setProject(testProject).setName("open")
+                .addTypes(ImmutableList.of("type")).build();
         DXRecord invisible =
                 DXRecord.newRecord().setProject(testProject).setName("invisible")
                         .setVisibility(false).build().close();
@@ -217,7 +216,20 @@ public class DXSearchTest {
         // withTypes
 
         assertEqualsAnyOrder(DXSearch.findDataObjects().inProject(testProject).withType("genome")
-                .execute().asList(), moo);
+                .execute().asList(), moo, foo);
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects().inProject(testProject)
+                        .withTypes(TypeQuery.allOf("genome", "report")).execute().asList(), moo);
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects().inProject(testProject)
+                        .withTypes(TypeQuery.anyOf("genome", "report")).execute().asList(), moo,
+                foo, food);
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects()
+                        .inProject(testProject)
+                        .withTypes(
+                                TypeQuery.anyOf(TypeQuery.allOf("genome", "report"),
+                                        TypeQuery.of("type"))).execute().asList(), moo, open);
 
         // withVisibility
 
@@ -362,6 +374,16 @@ public class DXSearchTest {
                         .withTags(
                                 DXSearch.TagsQuery.anyOf(DXSearch.TagsQuery.allOf("a", "b"),
                                         DXSearch.TagsQuery.of("c"))).buildRequestHash()));
+
+        Assert.assertEquals(DXJSON.parseJson("{\"type\": \"a\"}"),
+                mapper.valueToTree(DXSearch.findDataObjects().withType("a").buildRequestHash()));
+        Assert.assertEquals(DXJSON
+                .parseJson("{\"type\": {\"$or\": [{\"$and\": [\"a\", \"b\"]}, \"c\"]}}"), mapper
+                .valueToTree(DXSearch
+                        .findDataObjects()
+                        .withTypes(
+                                DXSearch.TypeQuery.anyOf(DXSearch.TypeQuery.allOf("a", "b"),
+                                        DXSearch.TypeQuery.of("c"))).buildRequestHash()));
 
         Assert.assertEquals(
                 DXJSON.parseJson("{\"properties\": {\"foo\": true}}"),

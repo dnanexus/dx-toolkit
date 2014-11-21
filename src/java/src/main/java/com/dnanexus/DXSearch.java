@@ -110,9 +110,8 @@ public final class DXSearch {
         private final VisibilityQuery visibility;
         @JsonProperty
         private final NameQuery name;
-        // TODO: support $and and $or queries on type, not just a single type
         @JsonProperty
-        private final String type;
+        private final TypeQuery type;
         @JsonProperty
         private final TagsQuery tags;
         @JsonProperty
@@ -229,7 +228,7 @@ public final class DXSearch {
         private DataObjectState state;
         private VisibilityQuery visibilityQuery;
         private NameQuery nameQuery;
-        private String type;
+        private TypeQuery type;
         private TagsQuery tags;
         private List<PropertiesQuery> properties = Lists.newArrayList(); // Implicit $and
         private String link;
@@ -783,7 +782,7 @@ public final class DXSearch {
         }
 
         /**
-         * Only returns data objects with the specified tags query.
+         * Only returns data objects matching the specified tags query.
          *
          * @param tagsQuery tags query
          *
@@ -804,7 +803,20 @@ public final class DXSearch {
          */
         public FindDataObjectsRequestBuilder<T> withType(String type) {
             Preconditions.checkState(this.type == null, "Cannot call withType more than once");
-            this.type = Preconditions.checkNotNull(type, "type may not be null");
+            this.type = TypeQuery.of(Preconditions.checkNotNull(type, "type may not be null"));
+            return this;
+        }
+
+        /**
+         * Only returns data objects matching the specified types query.
+         *
+         * @param typeQuery types query
+         *
+         * @return the same builder object
+         */
+        public FindDataObjectsRequestBuilder<T> withTypes(TypeQuery typeQuery) {
+            Preconditions.checkState(this.type == null, "Cannot specify withType* more than once");
+            this.type = Preconditions.checkNotNull(typeQuery, "typeQuery may not be null");
             return this;
         }
 
@@ -2010,7 +2022,7 @@ public final class DXSearch {
     }
 
     /**
-     * Query for objects (data objects, executions, or projects) with the specified properties.
+     * A query for objects (data objects, executions, or projects) with specified properties.
      */
     public static abstract class PropertiesQuery {
 
@@ -2023,17 +2035,9 @@ public final class DXSearch {
                 this.operands = ImmutableList.copyOf(operands);
             }
 
-            @SuppressWarnings("unused")
             @JsonValue
             protected JsonNode getValue() {
-                List<JsonNode> transformedArgs = Lists.newArrayList();
-                for (PropertiesQuery propertiesQuery : this.operands) {
-                    transformedArgs.add(MAPPER.valueToTree(propertiesQuery));
-                }
-                return DXJSON
-                        .getObjectBuilder()
-                        .put(this.operator,
-                                DXJSON.getArrayBuilder().addAll(transformedArgs).build()).build();
+                return serializeCompoundQuery(this.operator, this.operands);
             }
         }
 
@@ -2143,7 +2147,7 @@ public final class DXSearch {
 
 
     /**
-     * Query for objects (data objects, executions, or projects) with the specified tags.
+     * A query for objects (data objects, executions, or projects) with specified tags.
      */
     public static abstract class TagsQuery {
 
@@ -2156,17 +2160,9 @@ public final class DXSearch {
                 this.operands = ImmutableList.copyOf(operands);
             }
 
-            @SuppressWarnings("unused")
             @JsonValue
             protected JsonNode getValue() {
-                List<JsonNode> transformedArgs = Lists.newArrayList();
-                for (TagsQuery tagsQuery : this.operands) {
-                    transformedArgs.add(MAPPER.valueToTree(tagsQuery));
-                }
-                return DXJSON
-                        .getObjectBuilder()
-                        .put(this.operator,
-                                DXJSON.getArrayBuilder().addAll(transformedArgs).build()).build();
+                return serializeCompoundQuery(this.operator, this.operands);
             }
         }
 
@@ -2306,6 +2302,131 @@ public final class DXSearch {
             }
             return before.getTime();
         }
+    }
+
+    /**
+     * A query for data objects with specified types.
+     */
+    public static abstract class TypeQuery {
+
+        private static class CompoundTypeQuery extends TypeQuery {
+            private final String operator;
+            private final List<TypeQuery> operands;
+
+            public CompoundTypeQuery(String operator, List<TypeQuery> operands) {
+                this.operator = operator;
+                this.operands = ImmutableList.copyOf(operands);
+            }
+
+            @JsonValue
+            protected JsonNode getValue() {
+                return serializeCompoundQuery(this.operator, this.operands);
+            }
+
+        }
+
+        private static class SimpleTypeQuery extends TypeQuery {
+            private final String type;
+
+            public SimpleTypeQuery(String type) {
+                this.type = Preconditions.checkNotNull(type);
+            }
+
+            @JsonValue
+            protected String getValue() {
+                return this.type;
+            }
+        }
+
+        /**
+         * A query that must match all of the type queries in the provided list.
+         *
+         * @param typeQueries list of queries, all of which must be matched
+         *
+         * @return query
+         */
+        public static TypeQuery allOf(List<TypeQuery> typeQueries) {
+            return new CompoundTypeQuery("$and", typeQueries);
+        }
+
+        /**
+         * A query that must match all of the specified types.
+         *
+         * @param types Strings containing types, all of which must be matched
+         *
+         * @return query
+         */
+        public static TypeQuery allOf(String... types) {
+            List<TypeQuery> typeQueries = Lists.newArrayList();
+            for (String type : types) {
+                typeQueries.add(TypeQuery.of(type));
+            }
+            return TypeQuery.allOf(typeQueries);
+        }
+
+        /**
+         * A query that must match all of the specified type queries recursively.
+         *
+         * @param typeQueries queries, all of which must be matched
+         *
+         * @return query
+         */
+        public static TypeQuery allOf(TypeQuery... typeQueries) {
+            return TypeQuery.allOf(ImmutableList.copyOf(typeQueries));
+        }
+
+        /**
+         * A query that matches any of the type queries in the provided list.
+         *
+         * @param typeQueries list of queries, at least one of which must be matched
+         *
+         * @return query
+         */
+        public static TypeQuery anyOf(List<TypeQuery> typeQueries) {
+            return new CompoundTypeQuery("$or", typeQueries);
+        }
+
+        /**
+         * A query that matches any of the specified types.
+         *
+         * @param types Strings containing types, at least one of which must be matched
+         *
+         * @return query
+         */
+        public static TypeQuery anyOf(String... types) {
+            List<TypeQuery> typeQueries = Lists.newArrayList();
+            for (String type : types) {
+                typeQueries.add(TypeQuery.of(type));
+            }
+            return TypeQuery.anyOf(typeQueries);
+        }
+
+        /**
+         * A query that matches any of the specified type queries recursively.
+         *
+         * @param typeQueries queries, at least one of which must be matched
+         *
+         * @return query
+         */
+        public static TypeQuery anyOf(TypeQuery... typeQueries) {
+            return TypeQuery.anyOf(ImmutableList.copyOf(typeQueries));
+        }
+
+        /**
+         * A query that matches the specified type.
+         *
+         * @param type String containing type to match
+         *
+         * @return query
+         */
+        public static TypeQuery of(String type) {
+            return new SimpleTypeQuery(type);
+        }
+
+        private TypeQuery() {
+            // Do not allow subclassing except by the implementations provided here
+        }
+
     }
 
     /**
@@ -2453,5 +2574,19 @@ public final class DXSearch {
 
     // Prevent this utility class from being instantiated.
     private DXSearch() {}
+
+    // Serializes a query to the form
+    //
+    //   {operator: [operand1, operand2, ...]}
+    //
+    // where operator is typically either "$and" or "$or"
+    private static JsonNode serializeCompoundQuery(String operator, List<? extends Object> operands) {
+        List<JsonNode> transformedArgs = Lists.newArrayList();
+        for (Object operand : operands) {
+            transformedArgs.add(MAPPER.valueToTree(operand));
+        }
+        return DXJSON.getObjectBuilder()
+                .put(operator, DXJSON.getArrayBuilder().addAll(transformedArgs).build()).build();
+    }
 
 }
