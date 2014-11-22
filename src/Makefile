@@ -432,7 +432,7 @@ jq: git_submodules ../bin/jq
 
 ../bin/jq: jq/
 	(cd jq; autoreconf --install)
-	(if [[ "$(UNAME)" == Darwin ]] && ! (gcc --version | grep -q LLVM); then export LDFLAGS="$$LDFLAGS -lgcc_eh"; fi; \
+	(if [[ "$(UNAME)" == Darwin ]] && [[ ! "$(CC)" == clang ]] && ! (gcc --version | grep -q LLVM); then export LDFLAGS="$$LDFLAGS -lgcc_eh"; fi; \
 	 cd jq; ./configure --disable-docs)
 	$(MAKE) -C jq -j PATH=$$(brew --prefix bison || echo .)/bin:$$PATH
 	cp -f jq/jq ../bin/
