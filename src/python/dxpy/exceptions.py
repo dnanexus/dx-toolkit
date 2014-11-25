@@ -180,11 +180,14 @@ def exit_with_exc_info(code=1, message='', print_tb=False, exception=None):
     :type print_tb: boolean
     :type exception: an exception to use in place of the last exception raised
     '''
-    exc_type, exc_value = (exception.__class__.__name__, exception) \
+    exc_type, exc_value = (exception.__class__, exception) \
                           if exception is not None else sys.exc_info()[:2]
+
     if exc_type is not None:
         if print_tb:
             traceback.print_exc()
+        elif isinstance(exc_value, KeyboardInterrupt):
+            sys.stderr.write('^C\n')
         else:
             for line in traceback.format_exception_only(exc_type, exc_value):
                 sys.stderr.write(line)
