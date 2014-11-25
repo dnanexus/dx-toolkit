@@ -406,25 +406,13 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                     time.sleep(delay)
                     try_index += 1
                     continue
-            # We get here if all retries have been exhausted OR if the
-            # error is deemed not retryable.
-            break
+            # All retries have been exhausted OR the error is deemed not
+            # retryable. Propagate the latest error back to the caller.
+            raise
 
-        raise AssertionError('Should never reach this line: should have attempted a retry or broken out of loop by now')
+        raise AssertionError('Should never reach this line: should have attempted a retry or reraised by now')
+    raise AssertionError('Should never reach this line: should never break out of loop')
 
-    if last_error is None:
-        # The only "break" above follows some code that sets last_error
-        raise AssertionError('Expected last_error to be set here')
-
-    if _DEBUG > 0:
-        logger.warn('---- DXHTTPRequest %s %s failed after %d tries ----' % (method, url, try_index + 1))
-        logger.warn('**** The following error, from the last try, will be raised: ****')
-        for entry in traceback.format_exception(last_exc_type, last_error, last_traceback):
-            for line in entry.rstrip('\n').split('\n'):
-                logger.warn(line)
-        logger.warn('---------------------------------------')
-
-    raise last_error
 
 class DXHTTPOAuth2(AuthBase):
     def __init__(self, security_context):
