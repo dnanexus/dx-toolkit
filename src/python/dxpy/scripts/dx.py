@@ -25,6 +25,7 @@ import traceback
 
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
+from ..cli.cp import cp
 from ..exceptions import (err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions,
                           format_exception)
 from ..packages import requests
@@ -1014,117 +1015,6 @@ def mv(args):
     except:
         err_exit()
 
-# ONLY for between DIFFERENT projects.  Will exit fatally otherwise.
-def cp(args):
-    dest_proj, dest_path, _none = try_call(resolve_path,
-                                           args.destination, 'folder')
-    try:
-        if dest_path is None:
-            raise ValueError()
-        dx_dest = dxpy.get_handler(dest_proj)
-        dx_dest.list_folder(folder=dest_path, only='folders')
-    except:
-        if dest_path is None:
-            parser.exit(1, 'Cannot copy to a hash ID\n')
-        # Destination folder path is new => renaming
-        if len(args.sources) != 1:
-            # Can't copy and rename more than one object
-            parser.exit(1, 'The destination folder does not exist\n')
-        last_slash_pos = get_last_pos_of_char('/', dest_path)
-        if last_slash_pos == 0:
-            dest_folder = '/'
-        else:
-            dest_folder = dest_path[:last_slash_pos]
-        dest_name = dest_path[last_slash_pos + 1:].replace('\/', '/')
-        try:
-            dx_dest.list_folder(folder=dest_folder, only='folders')
-        except dxpy.DXAPIError as details:
-            if details.code == requests.codes.not_found:
-                parser.exit(1, 'The destination folder does not exist\n')
-            else:
-                raise
-        except:
-            err_exit()
-
-        # Clone and rename either the data object or the folder
-        # src_result is None if it could not be resolved to an object
-        src_proj, src_path, src_results = try_call(resolve_existing_path,
-                                                   args.sources[0],
-                                                   allow_mult=True, all_mult=args.all)
-
-        if src_proj == dest_proj:
-            if is_hashid(args.sources[0]):
-                # This is the only case in which the source project is
-                # purely assumed, so give a better error message.
-                parser.exit(1, fill('Error: You must specify a source project for ' + args.sources[0]) + '\n')
-            else:
-                parser.exit(1, fill('A source path and the destination path resolved to the same project or container.  Please specify different source and destination containers, e.g.') + '\n  dx cp source-project:source-id-or-path dest-project:dest-path' + '\n')
-
-        if src_results is None:
-            try:
-                contents = dxpy.api.project_list_folder(src_proj,
-                                                        {"folder": src_path, "includeHidden": True})
-                dxpy.api.project_new_folder(dest_proj, {"folder": dest_path})
-                exists = dxpy.api.project_clone(src_proj,
-                                                {"folders": contents['folders'],
-                                                 "objects": [result['id'] for result in contents['objects']],
-                                                 "project": dest_proj,
-                                                 "destination": dest_path})['exists']
-                if len(exists) > 0:
-                    print(fill('The following objects already existed in the destination container and were not copied:') + '\n ' + '\n '.join(exists))
-                return
-            except:
-                err_exit()
-        else:
-            try:
-                exists = dxpy.api.project_clone(src_proj,
-                                                {"objects": [result['id'] for result in src_results],
-                                                 "project": dest_proj,
-                                                 "destination": dest_folder})['exists']
-                if len(exists) > 0:
-                    print(fill('The following objects already existed in the destination container and were not copied:') + '\n ' + '\n '.join(exists))
-                for result in src_results:
-                    if result['id'] not in exists:
-                        dxpy.DXHTTPRequest('/' + result['id'] + '/rename',
-                                           {"project": dest_proj,
-                                            "name": dest_name})
-                return
-            except:
-                err_exit()
-
-    if len(args.sources) == 0:
-        parser.exit(1, 'No sources provided to copy to another project\n')
-    src_objects = []
-    src_folders = []
-    for source in args.sources:
-        src_proj, src_folderpath, src_results = try_call(resolve_existing_path,
-                                                         source,
-                                                         allow_mult=True, all_mult=args.all)
-        if src_proj == dest_proj:
-            if is_hashid(source):
-                # This is the only case in which the source project is
-                # purely assumed, so give a better error message.
-                parser.exit(1, fill('Error: You must specify a source project for ' + source) + '\n')
-            else:
-                parser.exit(1, fill('Error: A source path and the destination path resolved to the same project or container.  Please specify different source and destination containers, e.g.') + '\n  dx cp source-project:source-id-or-path dest-project:dest-path' + '\n')
-
-        if src_proj is None:
-            parser.exit(1, fill('Error: A source project must be specified or a current project set in order to clone objects between projects') + '\n')
-
-        if src_results is None:
-            src_folders.append(src_folderpath)
-        else:
-            src_objects += [result['id'] for result in src_results]
-    try:
-        exists = dxpy.DXHTTPRequest('/' + src_proj + '/clone',
-                                    {"objects": src_objects,
-                                     "folders": src_folders,
-                                     "project": dest_proj,
-                                     "destination": dest_path})['exists']
-        if len(exists) > 0:
-            print(fill('The following objects already existed in the destination container and were left alone:') + '\n ' + '\n '.join(exists))
-    except:
-        err_exit()
 
 def tree(args):
     project, folderpath, _none = try_call(resolve_existing_path, args.path,
