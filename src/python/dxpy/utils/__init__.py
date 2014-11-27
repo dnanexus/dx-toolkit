@@ -228,11 +228,12 @@ def normalize_time_input(t, future=False):
 def normalize_timedelta(timedelta):
     """
     Given a string like "1w" or "-5d", convert it to an integer in milliseconds.
+    Integers without a suffix are interpreted as seconds.
     Note: not related to the datetime timedelta class.
     """
     try:
-        return int(timedelta)
-    except ValueError:
+        return int(timedelta) * 1000
+    except ValueError as e:
         t, suffix = timedelta[:-1], timedelta[-1:]
         suffix_multipliers = {'s': 1000, 'm': 1000*60, 'h': 1000*60*60, 'd': 1000*60*60*24, 'w': 1000*60*60*24*7,
                               'M': 1000*60*60*24*30, 'y': 1000*60*60*24*365}

@@ -21,7 +21,8 @@ from __future__ import print_function, unicode_literals
 
 import unittest, time, json, re
 from dxpy import AppError, AppInternalError, DXFile, DXRecord
-from dxpy.utils import (describe, exec_utils, genomic_utils, response_iterator, get_futures_threadpool, DXJSONEncoder)
+from dxpy.utils import (describe, exec_utils, genomic_utils, response_iterator, get_futures_threadpool, DXJSONEncoder,
+                        normalize_timedelta)
 from dxpy.utils.exec_utils import DXExecDependencyInstaller
 from dxpy.compat import USING_PYTHON2
 
@@ -200,6 +201,17 @@ class TestDXExecDependsUtils(unittest.TestCase):
         edi.install()
         assert_cmd_ran(edi, "apt-get install --yes --no-install-recommends git")
 
+class TestTimeUtils(unittest.TestCase):
+    def test_normalize_timedelta(self):
+        for i, o in (("-15", -15000),
+                     ("15", 15000),
+                     ("15s", 15000),
+                     ("0", 0),
+                     ("0w", 0),
+                     ("1m", 1000*60),
+                     ("1M", 1000*60*60*24*30),
+                     ("-1w", -1000*60*60*24*7)):
+            self.assertEqual(normalize_timedelta(i), o)
 
 if __name__ == '__main__':
     unittest.main()
