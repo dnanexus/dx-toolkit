@@ -87,7 +87,6 @@ class DXJobLogStreamClient(WebSocketBaseClient):
 
             logger.warn("Server restart, reconnecting...")
             self.reconnect()
-            logger.warn("Reconnected")
         else:
             WebSocketBaseClient.terminate(self)
 
