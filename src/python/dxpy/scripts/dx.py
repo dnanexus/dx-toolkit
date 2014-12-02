@@ -1510,7 +1510,7 @@ def set_details(args):
         try:
             dxpy.DXHTTPRequest('/' + result['id'] + '/setDetails', details)
         except (dxpy.DXAPIError,) + network_exceptions as exc_details:
-            print(format_exceptions(exc_details), file=sys.stderr)
+            print(format_exception(exc_details), file=sys.stderr)
             had_error = True
 
     if had_error:
