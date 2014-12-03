@@ -1,3 +1,17 @@
+dx-toolkit (0.126.0) precise; urgency=low
+
+  * General improvements to error and keyboard interrupt handling
+
+  * Mac build fixes
+
+  * Move execution dependency installation code into client distribution
+
+  * Java: compound type queries for finding data objects
+
+  * Various bug fixes 
+
+ -- Ric Medlinger <ric@dnanexus.com>  Wed, 03 Dec 2014 21:10:59 +0000
+
 dx-toolkit (0.125.0) precise; urgency=low
 
   * Upgrade dependencies
