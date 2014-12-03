@@ -1,3 +1,9 @@
+dx-toolkit (0.125.1) precise; urgency=low
+
+  * Fix typo in error-handling code
+
+ -- Ric Medlinger <ric@dnanexus.com>  Wed, 03 Dec 2014 21:11:54 +0000
+
 dx-toolkit (0.125.0) precise; urgency=low
 
   * Upgrade dependencies
