@@ -844,6 +844,10 @@ class TestDXClient(DXTestCase):
         dx_login.close()
         self.assertEqual(dx_login.exitstatus, EXPECTED_ERR_EXIT_STATUS)
 
+    def test_dx_with_bad_job_id_env(self):
+        env = overrideEnvironment(DX_JOB_ID="foobar")
+        run("dx env", env=env)
+
 class TestDXWhoami(DXTestCase):
     def test_dx_whoami_name(self):
         whoami_output = run("dx whoami").strip()

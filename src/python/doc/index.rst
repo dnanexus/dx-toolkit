@@ -38,6 +38,7 @@ Table of Contents
    dxpy_app_builder
    dxpy_api
    dxpy_exceptions
+   dxpy_utils
 
 Indices and tables
 ==================

@@ -580,23 +580,4 @@ _initialize()
 
 from .bindings import *
 from .dxlog import DXLogHandler
-from .utils.exec_utils import run, entry_point
-
-# This should be in exec_utils but fails because of circular imports
-# TODO: fix the imports
-current_job, current_applet, current_app = None, None, None
-if JOB_ID is not None:
-    current_job = DXJob(JOB_ID)
-    try:
-        job_desc = current_job.describe()
-    except exceptions.DXAPIError as e:
-        if e.name == 'ResourceNotFound':
-            err_msg = "Job ID %r was not found. Unset the DX_JOB_ID environment variable OR set it to be the ID of a valid job."
-            print(err_msg % (JOB_ID,), file=sys.stderr)
-            sys.exit(1)
-        else:
-            raise
-    if 'applet' in job_desc:
-        current_applet = DXApplet(job_desc['applet'])
-    else:
-        current_app = DXApp(job_desc['app'])
+from .utils import run, entry_point, get_current_job, get_current_executable
