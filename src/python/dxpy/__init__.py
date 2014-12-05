@@ -132,6 +132,7 @@ from .packages.requests.auth import AuthBase
 from .compat import USING_PYTHON2, expanduser
 
 logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 logging.getLogger('dxpy.packages.requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
 
 from . import exceptions
@@ -312,6 +313,9 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                     error_class = getattr(exceptions, content["error"]["type"], exceptions.DXAPIError)
                     raise error_class(content, response.status_code)
                 response.raise_for_status()
+
+            if try_index > 0:
+                logger.info("{} {}: Recovered after {} retries".format(method, url, try_index))
 
             if want_full_response:
                 return response
