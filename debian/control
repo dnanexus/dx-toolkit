@@ -37,13 +37,6 @@ Depends: ${misc:Depends}, ${perl:Depends}, perl, dx-toolkit
 Description: Perl bindings to DNAnexus Platform
  Bindings for interacting with the DNAnexus platform from Perl.
 
-Package: dx-r-bindings
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, r-base-core, r-cran-bitops
-Recommends: dx-toolkit
-Description: R bindings to DNAnexus Platform
- Bindings for interacting with the DNAnexus platform from R.
-
 Package: dx-ruby-bindings
 Architecture: any
 Depends: ${misc:Depends}, ruby1.9.1, dx-toolkit, ruby-json
