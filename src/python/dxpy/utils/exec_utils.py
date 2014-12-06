@@ -69,41 +69,6 @@ def _format_exception_message(e):
     else:
         return e.__class__.__name__ + ": " + _safe_unicode(e)
 
-_current_job, _current_executable = None, None
-
-def get_current_job():
-    """
-    When dxpy is run in an Execution Environment, returns a dxpy job handler for the DNAnexus job that is currently
-    running (as indicated by ``dxpy.JOB_ID``). If no job is indicated as running, returns *None*.
-
-    :returns: :class:`dxpy.DXJob`
-    """
-    global _current_job
-    if _current_job is None or _current_job._dxid != dxpy.JOB_ID:
-        if dxpy.JOB_ID is None:
-            _current_job = None
-        else:
-            _current_job = dxpy.DXJob(dxpy.JOB_ID)
-    return _current_job
-
-def get_current_executable():
-    """
-    When dxpy is run in an Execution Environment, returns a dxpy app or applet handler for the DNAnexus job that is
-    currently running (as indicated by ``dxpy.JOB_ID``). If no job is indicated as running, returns *None*.
-
-    :returns: :class:`dxpy.DXApp` or :class:`dxpy.DXApplet`
-    """
-    if get_current_job() is None:
-        return None
-    else:
-        global _current_executable
-        if _current_executable is None or get_current_job().executable != _current_executable:
-            if get_current_job().executable.startswith("app-"):
-                _current_executable = dxpy.DXApp(get_current_job().executable)
-            else:
-                _current_executable = dxpy.DXApplet(get_current_job().executable)
-        return _current_executable
-
 def run(function_name=None, function_input=None):
     """
     Triggers the execution environment entry point processor.

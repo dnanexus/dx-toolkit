@@ -203,34 +203,6 @@ class TestDXExecUtils(unittest.TestCase):
         edi.install()
         assert_cmd_ran(edi, "apt-get install --yes --no-install-recommends git")
 
-    def test_get_current_job_executable(self):
-        from dxpy import get_current_job, get_current_executable
-        dxpy.JOB_ID = "job-" + "x"*24
-        self.assertEqual(get_current_job()._dxid, dxpy.JOB_ID)
-        dxpy.JOB_ID = "job-" + "y"*24
-        self.assertEqual(get_current_job()._dxid, dxpy.JOB_ID)
-        dxpy.JOB_ID = None
-        self.assertIsNone(get_current_job())
-        self.assertIsNone(get_current_executable())
-
-        dxpy.JOB_ID = "job-" + "z"*24
-        get_current_job().executable = "app-" + "a"*24
-        self.assertIsInstance(get_current_executable(), dxpy.DXApp)
-        self.assertEqual(get_current_executable()._dxid, "app-" + "a"*24)
-
-        dxpy.JOB_ID = "job-" + "t"*24
-        get_current_job().executable = "applet-" + "a"*24
-        self.assertIsInstance(get_current_executable(), dxpy.DXApplet)
-        self.assertEqual(get_current_executable()._dxid, "applet-" + "a"*24)
-
-        get_current_job().executable = "app-bwa"
-        with self.assertRaisesRegexp(dxpy.DXError, "Invalid ID of class app"):
-            get_current_executable()
-
-        dxpy.JOB_ID = "job-foo"
-        with self.assertRaisesRegexp(dxpy.DXError, "Invalid ID of class job"):
-            get_current_job()
-
 class TestTimeUtils(unittest.TestCase):
     def test_normalize_timedelta(self):
         for i, o in (("-15", -15000),
