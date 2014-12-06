@@ -288,7 +288,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
     last_exc_type, last_error, last_traceback = None, None, None
     try_index = 0
     while True:
-        streaming_response_truncated = False
+        success, streaming_response_truncated = True, False
         response = None
         try:
             _method, _url, _headers = _process_method_url_headers(method, url, headers)
@@ -313,9 +313,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                     error_class = getattr(exceptions, content["error"]["type"], exceptions.DXAPIError)
                     raise error_class(content, response.status_code)
                 response.raise_for_status()
-
-            if try_index > 0:
-                logger.info("{} {}: Recovered after {} retries".format(method, url, try_index))
 
             if want_full_response:
                 return response
@@ -345,7 +342,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                             elif _DEBUG > 0:
                                 t = int(response.elapsed.total_seconds()*1000)
                                 print(method, url, "<=", response.status_code, "(%dms)"%t, Repr().repr(content), file=sys.stderr)
-
                             return content
                         except ValueError:
                             # If a streaming API call (no content-length
@@ -359,6 +355,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                 return content
             raise AssertionError('Should never reach this line: expected a result to have been returned by now')
         except _expected_exceptions as e:
+            success = False
             last_exc_type, last_error, last_traceback = sys.exc_info()
             exception_msg = traceback.format_exc().splitlines()[-1].strip()
 
@@ -413,6 +410,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
             # All retries have been exhausted OR the error is deemed not
             # retryable. Propagate the latest error back to the caller.
             raise
+        finally:
+            if success and try_index > 0:
+                logger.info("{} {}: Recovered after {} retries".format(method, url, try_index))
+
 
         raise AssertionError('Should never reach this line: should have attempted a retry or reraised by now')
     raise AssertionError('Should never reach this line: should never break out of loop')
