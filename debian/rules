@@ -8,7 +8,6 @@ override_dh_auto_install:
 	DESTDIR="$(CURDIR)/debian/dx-toolkit" PREFIX="/usr" $(MAKE) -C src debian_install
 	DESTDIR="$(CURDIR)/debian/dx-java-bindings" PREFIX="/usr" $(MAKE) -C src debian_java_install
 	DESTDIR="$(CURDIR)/debian/dx-perl-bindings" PREFIX="/usr" $(MAKE) -C src debian_perl_install
-	DESTDIR="$(CURDIR)/debian/dx-r-bindings" PREFIX="/usr" $(MAKE) -C src debian_r_install
 	DESTDIR="$(CURDIR)/debian/dx-ruby-bindings" PREFIX="/usr" $(MAKE) -C src debian_ruby_install
 
 override_dh_auto_test:
