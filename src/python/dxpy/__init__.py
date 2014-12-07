@@ -354,59 +354,61 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                             raise HTTPError("Invalid JSON received from server")
                 return content
             raise AssertionError('Should never reach this line: expected a result to have been returned by now')
-        except _expected_exceptions as e:
+        except Exception as e:
             success = False
-            last_exc_type, last_error, last_traceback = sys.exc_info()
-            exception_msg = traceback.format_exc().splitlines()[-1].strip()
+            if isinstance(e, _expected_exceptions):
+                last_exc_type, last_error, last_traceback = sys.exc_info()
+                exception_msg = traceback.format_exc().splitlines()[-1].strip()
 
-            if response is not None and response.status_code == 503:
-                DEFAULT_RETRY_AFTER_INTERVAL = 60
-                try:
-                    seconds_to_wait = int(response.headers.get('retry-after', DEFAULT_RETRY_AFTER_INTERVAL))
-                except ValueError:
-                    # retry-after could be formatted as absolute time
-                    # instead of seconds to wait. We don't know how to
-                    # parse that, but the apiserver doesn't generate
-                    # such responses anyway.
-                    seconds_to_wait = DEFAULT_RETRY_AFTER_INTERVAL
-                logger.warn("%s %s: %s. Waiting %d seconds due to server unavailability..."
-                            % (method, url, exception_msg, seconds_to_wait))
-                time.sleep(seconds_to_wait)
-                # Note, we escape the "except" block here without
-                # incrementing try_index because 503 responses with
-                # Retry-After should not count against the number of
-                # permitted retries.
-                continue
-
-            # TODO: if the socket was dropped mid-request,
-            # ConnectionError or httplib.IncompleteRead is raised, but
-            # non-idempotent requests can be unsafe to retry. We should
-            # distinguish between connection initiation errors and
-            # dropped socket errors. Currently the former are not
-            # retried even if it might be safe to do so.
-
-            # Total number of allowed tries is the initial try + up to
-            # (max_retries) subsequent retries.
-            total_allowed_tries = max_retries + 1
-            # Because try_index is not incremented until we escape this
-            # iteration of the loop, try_index is equal to the number of
-            # tries that have failed so far, minus one. Test whether we
-            # have exhausted all retries.
-            if try_index + 1 < total_allowed_tries:
-                if response is None or isinstance(e, exceptions.ContentLengthError) or streaming_response_truncated:
-                    ok_to_retry = always_retry or (method == 'GET')
-                else:
-                    ok_to_retry = 500 <= response.status_code < 600
-
-                if ok_to_retry:
-                    if rewind_input_buffer_offset is not None:
-                        data.seek(rewind_input_buffer_offset)
-                    delay = 2 ** try_index
-                    logger.warn("%s %s: %s. Waiting %d seconds before retry %d of %d..."
-                                % (method, url, exception_msg, delay, try_index + 1, max_retries))
-                    time.sleep(delay)
-                    try_index += 1
+                if response is not None and response.status_code == 503:
+                    DEFAULT_RETRY_AFTER_INTERVAL = 60
+                    try:
+                        seconds_to_wait = int(response.headers.get('retry-after', DEFAULT_RETRY_AFTER_INTERVAL))
+                    except ValueError:
+                        # retry-after could be formatted as absolute time
+                        # instead of seconds to wait. We don't know how to
+                        # parse that, but the apiserver doesn't generate
+                        # such responses anyway.
+                        seconds_to_wait = DEFAULT_RETRY_AFTER_INTERVAL
+                    logger.warn("%s %s: %s. Waiting %d seconds due to server unavailability..."
+                                % (method, url, exception_msg, seconds_to_wait))
+                    time.sleep(seconds_to_wait)
+                    # Note, we escape the "except" block here without
+                    # incrementing try_index because 503 responses with
+                    # Retry-After should not count against the number of
+                    # permitted retries.
                     continue
+
+                # TODO: if the socket was dropped mid-request,
+                # ConnectionError or httplib.IncompleteRead is raised, but
+                # non-idempotent requests can be unsafe to retry. We should
+                # distinguish between connection initiation errors and
+                # dropped socket errors. Currently the former are not
+                # retried even if it might be safe to do so.
+
+                # Total number of allowed tries is the initial try + up to
+                # (max_retries) subsequent retries.
+                total_allowed_tries = max_retries + 1
+                # Because try_index is not incremented until we escape this
+                # iteration of the loop, try_index is equal to the number of
+                # tries that have failed so far, minus one. Test whether we
+                # have exhausted all retries.
+                if try_index + 1 < total_allowed_tries:
+                    if response is None or isinstance(e, exceptions.ContentLengthError) or streaming_response_truncated:
+                        ok_to_retry = always_retry or (method == 'GET')
+                    else:
+                        ok_to_retry = 500 <= response.status_code < 600
+
+                    if ok_to_retry:
+                        if rewind_input_buffer_offset is not None:
+                            data.seek(rewind_input_buffer_offset)
+                        delay = 2 ** try_index
+                        logger.warn("%s %s: %s. Waiting %d seconds before retry %d of %d..."
+                                    % (method, url, exception_msg, delay, try_index + 1, max_retries))
+                        time.sleep(delay)
+                        try_index += 1
+                        continue
+
             # All retries have been exhausted OR the error is deemed not
             # retryable. Propagate the latest error back to the caller.
             raise
