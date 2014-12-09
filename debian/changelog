@@ -1,3 +1,13 @@
+dx-toolkit (0.127.0) precise; urgency=low
+
+  * Remove import-time side effects from describing job
+
+  * Cease building R packages for Debian
+
+  * Various bug fixes
+
+ -- Ric Medlinger <ric@dnanexus.com>  Tue, 09 Dec 2014 22:01:46 +0000
+
 dx-toolkit (0.126.0) precise; urgency=low
 
   * General improvements to error and keyboard interrupt handling
