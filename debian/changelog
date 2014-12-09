@@ -18,7 +18,7 @@ dx-toolkit (0.126.0) precise; urgency=low
 
   * Java: compound type queries for finding data objects
 
-  * Various bug fixes 
+  * Various bug fixes
 
  -- Ric Medlinger <ric@dnanexus.com>  Wed, 03 Dec 2014 21:10:59 +0000
 
