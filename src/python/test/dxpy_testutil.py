@@ -18,7 +18,7 @@
 
 from __future__ import print_function, unicode_literals
 
-import os, sys, unittest, subprocess, re
+import os, sys, unittest, subprocess, re, platform
 from contextlib import contextmanager
 
 import dxpy
@@ -38,6 +38,13 @@ TEST_BENCHMARKS = 'DXTEST_BENCHMARKS' in os.environ   ## Used to exclude benchma
 
 def _transform_words_to_regexp(s):
     return r"\s+".join(re.escape(word) for word in s.split())
+
+
+def host_is_centos_5():
+    distro = platform.linux_distribution()
+    if distro[0] == 'CentOS' and distro[1].startswith('5.'):
+        return True
+    return False
 
 class DXCalledProcessError(subprocess.CalledProcessError):
     def __init__(self, returncode, cmd, output=None, stderr=None):

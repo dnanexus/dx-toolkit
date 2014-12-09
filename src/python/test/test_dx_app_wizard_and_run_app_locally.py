@@ -353,7 +353,8 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
             print(output)
             self.assertIn("App finished successfully", output)
 
-            if testutil.TEST_RUN_JOBS:
+            # See PTFM-13697 for CentOS 5 details
+            if testutil.TEST_RUN_JOBS and not testutil.host_is_centos_5():
                 # Now actually make it an applet and run it
                 applet_name = dxapp_json['name'] + '-' + lang
                 subprocess.check_output(['dx', 'build', appdir, '--destination', applet_name])
