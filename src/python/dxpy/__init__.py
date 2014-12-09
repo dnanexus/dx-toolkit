@@ -263,6 +263,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
         kwargs['verify'] = os.environ['DX_CA_CERT']
         if os.environ['DX_CA_CERT'] == 'NOVERIFY':
             kwargs['verify'] = False
+            from requests.packages import urllib3
+            urllib3.disable_warnings()
 
     if jsonify_data:
         data = json.dumps(data)
