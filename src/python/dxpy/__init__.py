@@ -126,6 +126,8 @@ environment variables:
 from __future__ import (print_function, unicode_literals)
 
 import os, sys, json, time, logging, platform, collections, ssl, traceback
+import socket
+
 from .packages import requests
 from .packages.requests.exceptions import ConnectionError, HTTPError, Timeout
 from .packages.requests.auth import AuthBase
@@ -187,6 +189,32 @@ def _process_method_url_headers(method, url, headers):
         return method.encode(), _url.encode('utf-8'), {k.encode(): v.encode() for k, v in _headers.items()}
     else:
         return method, _url, _headers
+
+
+def _is_retryable_exception(e):
+    """Returns True if the exception is always safe to retry.
+
+    This is True if the client was never able to establish a connection
+    to the server (for example, name resolution failed or the connection
+    could otherwise not be initialized).
+
+    Conservatively, if we can't tell whether a network connection could
+    have been established, we return False.
+
+    """
+    # TODO: what other errors can be safely retried?
+    try:
+        # TODO: there seems to be some issue with checking isinstance(e,
+        # requests.exceptions.ConnectionError) -- the type of e reports
+        # ConnectionError but it doesn't match; could there be two
+        # classes of that name??
+        #
+        # Unfortunately requests doesn't seem to provide a sensible API
+        # to retrieve the cause
+        return isinstance(e.args[0].args[1], (socket.gaierror, socket.herror))
+    except (AttributeError, TypeError, IndexError):
+        return False
+
 
 def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeout=600,
                   use_compression=None, jsonify_data=True, want_full_response=False,
@@ -381,13 +409,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                     # permitted retries.
                     continue
 
-                # TODO: if the socket was dropped mid-request,
-                # ConnectionError or httplib.IncompleteRead is raised, but
-                # non-idempotent requests can be unsafe to retry. We should
-                # distinguish between connection initiation errors and
-                # dropped socket errors. Currently the former are not
-                # retried even if it might be safe to do so.
-
                 # Total number of allowed tries is the initial try + up to
                 # (max_retries) subsequent retries.
                 total_allowed_tries = max_retries + 1
@@ -396,8 +417,9 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                 # tries that have failed so far, minus one. Test whether we
                 # have exhausted all retries.
                 if try_index + 1 < total_allowed_tries:
-                    if response is None or isinstance(e, exceptions.ContentLengthError) or streaming_response_truncated:
-                        ok_to_retry = always_retry or (method == 'GET')
+                    if response is None or isinstance(e, exceptions.ContentLengthError) or \
+                       streaming_response_truncated:
+                        ok_to_retry = always_retry or (method == 'GET') or _is_retryable_exception(e)
                     else:
                         ok_to_retry = 500 <= response.status_code < 600
 
