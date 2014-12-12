@@ -288,12 +288,12 @@ def upload_one_file(entry):
     local_path = os.path.join(entry['local_dir_path'], entry['fname'])
     if entry['target_dir_path'] is None:
         trg_path = "/{}".format(entry['fname'])
-        f_obj = dxpy.upload_local_file(local_path)
+        f_obj = dxpy.upload_local_file(local_path, wait_on_close=True)
     else:
         trg_path = "/{}/{}".format(entry['target_dir_path'], entry['fname'])
         f_obj = dxpy.upload_local_file(local_path,
                                        folder=("/" + entry['target_dir_path']),
-                                       parents=True)
+                                       parents=True, wait_on_close=True)
     entry['dxlink'] = dxpy.dxlink(f_obj)
     print("uploaded file {} -> {}".format(local_path, trg_path))
 

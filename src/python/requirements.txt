@@ -1,4 +1,4 @@
-futures==2.1.2
+futures==2.2.0
 ctypes-snappy==1.02
 ws4py==0.3.2
 python-dateutil==2.2
@@ -6,4 +6,4 @@ python-magic==0.4.6
 beautifulsoup4==4.3.2
 argcomplete==0.8.1
 psutil==2.1.1
-requests==2.3.0
+requests==2.4.3

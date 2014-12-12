@@ -1,12 +1,50 @@
+dx-toolkit (0.127.0) precise; urgency=low
+
+  * Remove import-time side effects from describing job
+
+  * Cease building R packages for Debian
+
+  * Various bug fixes
+
+ -- Ric Medlinger <ric@dnanexus.com>  Tue, 09 Dec 2014 22:01:46 +0000
+
+dx-toolkit (0.126.0) precise; urgency=low
+
+  * General improvements to error and keyboard interrupt handling
+
+  * Mac build fixes
+
+  * Move execution dependency installation code into client distribution
+
+  * Java: compound type queries for finding data objects
+
+  * Various bug fixes
+
+ -- Ric Medlinger <ric@dnanexus.com>  Wed, 03 Dec 2014 21:10:59 +0000
+
+dx-toolkit (0.125.0) precise; urgency=low
+
+  * Upgrade dependencies
+
+  * Expand bash path variables
+
+ -- Ric Medlinger <ric@dnanexus.com>  Wed, 19 Nov 2014 17:50:37 +0000
+
+dx-toolkit (0.124.0) precise; urgency=low
+
+  * Improvements to bash prefix variables
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 12 Nov 2014 18:43:07 +0000
+
 dx-toolkit (0.123.0) precise; urgency=low
 
-  * adding bash helper variables 
+  * adding bash helper variables
 
  -- Ric Medlinger <ric@dnanexus.com>  Wed, 05 Nov 2014 20:22:15 +0000
 
 dx-toolkit (0.122.0) precise; urgency=low
 
-  * minor bug fixes and clean up 
+  * minor bug fixes and clean up
 
  -- Ric Medlinger <ric@dnanexus.com>  Wed, 29 Oct 2014 19:10:51 +0000
 

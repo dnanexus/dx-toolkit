@@ -38,22 +38,21 @@ import threading
 def _non_leaky_worker(executor_reference, work_queue):
     try:
         while True:
-            try:
-                work_item = work_queue.get(block=True, timeout=0.1)
-            except concurrent.futures.thread.queue.Empty:
-                executor = executor_reference()
-                # Exit if:
-                #   - The interpreter is shutting down OR
-                #   - The executor that owns the worker has been collected OR
-                #   - The executor that owns the worker has been shutdown.
-                if concurrent.futures.thread._shutdown or executor is None or executor._shutdown:
-                    return
-                del executor
-            else:
+            work_item = work_queue.get(block=True)
+            if work_item is not None:
                 work_item.run()
-                del work_item # <= free this item before the next
-                              #    work_queue.get call runs, rather than
-                              #    after
+                del work_item
+                continue
+            executor = executor_reference()
+            # Exit if:
+            #   - The interpreter is shutting down OR
+            #   - The executor that owns the worker has been collected OR
+            #   - The executor that owns the worker has been shutdown.
+            if concurrent.futures.thread._shutdown or executor is None or executor._shutdown:
+                # Notice other workers
+                work_queue.put(None)
+                return
+            del executor
     except BaseException:
         concurrent.futures.thread._base.LOGGER.critical('Exception in worker', exc_info=True)
 

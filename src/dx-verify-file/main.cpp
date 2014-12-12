@@ -213,7 +213,7 @@ int main(int argc, char * argv[]) {
     return 0;
   } else if (opt.help()) {
     opt.printHelp(argv[0]);
-    return 1;
+    return 0;
   }
 
   LOG << "dx-verify-file" << DX_VERIFY_FILE_VERSION << " (git version: " << DXTOOLKIT_GITVERSION << ")" << endl;

@@ -14,12 +14,12 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-'''
+"""
 Logic for determining environment variable values.  See external
 documentation
 https://wiki.dnanexus.com/Command-Line-Client/Environment%20Variables
 for more details.
-'''
+"""
 
 from __future__ import (print_function, unicode_literals)
 
@@ -28,28 +28,28 @@ import os, sys, shutil, textwrap, json, locale
 from .. import DEFAULT_APISERVER_PROTOCOL, DEFAULT_APISERVER_HOST, DEFAULT_APISERVER_PORT
 from ..compat import USING_PYTHON2, expanduser
 
-sys_encoding = locale.getdefaultlocale()[1] or 'UTF-8'
+sys_encoding = locale.getdefaultlocale()[1] or "UTF-8"
 
-CORE_VAR_NAMES = ['DX_APISERVER_HOST', 'DX_APISERVER_PORT', 'DX_APISERVER_PROTOCOL', 'DX_PROJECT_CONTEXT_ID',
-                  'DX_WORKSPACE_ID', 'DX_SECURITY_CONTEXT']
-STANDALONE_VAR_NAMES = ['DX_CLI_WD', 'DX_USERNAME', 'DX_PROJECT_CONTEXT_NAME']
+CORE_VAR_NAMES = ["DX_APISERVER_HOST", "DX_APISERVER_PORT", "DX_APISERVER_PROTOCOL", "DX_PROJECT_CONTEXT_ID",
+                  "DX_WORKSPACE_ID", "DX_SECURITY_CONTEXT"]
+STANDALONE_VAR_NAMES = ["DX_CLI_WD", "DX_USERNAME", "DX_PROJECT_CONTEXT_NAME"]
 VAR_NAMES = CORE_VAR_NAMES + STANDALONE_VAR_NAMES
 
 def get_global_conf_dir():
-    return '/etc/dnanexus'
+    return "/etc/dnanexus"
 
 def get_user_conf_dir():
     if "DX_USER_CONF_DIR" in os.environ:
         return expanduser(os.environ["DX_USER_CONF_DIR"])
-    return expanduser('~/.dnanexus_config')
+    return expanduser("~/.dnanexus_config")
 
 def get_session_conf_dir():
-    '''
+    """
     Tries to find the session configuration directory by looking in ~/.dnanexus_config/sessions/<PID>,
     where <PID> is pid of the parent of this process, then its parent, and so on.
     If none of those exist, the path for the immediate parent is given, even if it doesn't exist.
-    '''
-    sessions_dir = os.path.join(get_user_conf_dir(), 'sessions')
+    """
+    sessions_dir = os.path.join(get_user_conf_dir(), "sessions")
     try:
         import psutil
         parent_process = psutil.Process(os.getpid()).parent()
@@ -63,7 +63,8 @@ def get_session_conf_dir():
     except (ImportError, IOError, AttributeError):
         pass # psutil may not be available, or fail with IOError or AttributeError when /proc is not mounted
     except Exception as e:
-        sys.stderr.write(textwrap.fill("Unexpected error ({e}) while retrieving session configuration\n".format(e=type(e))))
+        msg = "Unexpected error ({e}) while retrieving session configuration\n"
+        sys.stderr.write(textwrap.fill(msg.format(e=type(e))))
     return _get_ppid_session_conf_dir(sessions_dir)
 
 def _get_ppid_session_conf_dir(sessions_dir):
@@ -72,12 +73,13 @@ def _get_ppid_session_conf_dir(sessions_dir):
     except AttributeError:
         pass # os.getppid is not available on Windows
     except Exception as e:
-        sys.stderr.write(textwrap.fill("Unexpected error ({e}) while retrieving session configuration\n".format(e=type(e))))
+        msg = "Unexpected error ({e}) while retrieving session configuration\n"
+        sys.stderr.write(textwrap.fill(msg.format(e=type(e))))
     return os.path.join(sessions_dir, str(os.getpid()))
 
 def read_conf_dir(dirname):
     try:
-        with open(os.path.join(dirname, 'environment.json')) as fd:
+        with open(os.path.join(dirname, "environment.json")) as fd:
             env_vars = json.load(fd)
     except:
         env_vars = {}
@@ -91,7 +93,7 @@ def read_conf_dir(dirname):
     return env_vars
 
 def get_env(suppress_warning=False):
-    '''
+    """
     :returns env_vars: mapping of environment variable names to resolved values
     :type env_vars: dict
 
@@ -99,7 +101,7 @@ def get_env(suppress_warning=False):
     are not found, then attempts to resolve them by looking in the
     file ~/.dnanexus_config/environment, followed by the installed
     defaults in /opt/dnanexus/environment.
-    '''
+    """
 
     env_vars = read_conf_dir(get_global_conf_dir())
     env_vars.update(read_conf_dir(get_user_conf_dir()))
@@ -115,8 +117,8 @@ def get_env(suppress_warning=False):
 
     if sys.stdout.isatty():
         if not suppress_warning and len(env_overrides) > 0:
-            sys.stderr.write(textwrap.fill("WARNING: The following environment variables were found to be different than the values last stored by dx: " + ", ".join(env_overrides), width=80) + '\n')
-            sys.stderr.write(textwrap.fill('To use the values stored by dx, unset the environment variables in your shell by running "source ~/.dnanexus_config/unsetenv".  To clear the dx-stored values, run "dx clearenv".', width=80) + '\n')
+            sys.stderr.write(textwrap.fill("WARNING: The following environment variables were found to be different than the values last stored by dx: " + ", ".join(env_overrides), width=80) + "\n")
+            sys.stderr.write(textwrap.fill('To use the values stored by dx, unset the environment variables in your shell by running "source ~/.dnanexus_config/unsetenv".  To clear the dx-stored values, run "dx clearenv".', width=80) + "\n")
 
     return env_vars
 
@@ -135,7 +137,7 @@ def write_env_var(var, value):
     write_env_var_to_conf_dir(var, value, session_conf_dir)
 
 def write_env_var_to_conf_dir(var, value, conf_dir):
-    env_jsonfile_path = os.path.join(conf_dir, 'environment.json')
+    env_jsonfile_path = os.path.join(conf_dir, "environment.json")
     if var in CORE_VAR_NAMES:
         try:
             with open(env_jsonfile_path) as fd:
@@ -151,7 +153,7 @@ def write_env_var_to_conf_dir(var, value, conf_dir):
             os.remove(env_jsonfile_path)
         except:
             pass
-        with os.fdopen(os.open(env_jsonfile_path, os.O_CREAT | os.O_WRONLY, 0o600), 'w') as fd:
+        with os.fdopen(os.open(env_jsonfile_path, os.O_CREAT | os.O_WRONLY, 0o600), "w") as fd:
             json.dump(env_vars, fd, indent=4)
             fd.write("\n")
     else: # DX_CLI_WD, DX_USERNAME, DX_PROJECT_CONTEXT_NAME
@@ -160,44 +162,44 @@ def write_env_var_to_conf_dir(var, value, conf_dir):
             os.remove(os.path.join(conf_dir, var))
         except:
             pass
-        with os.fdopen(os.open(os.path.join(conf_dir, var), os.O_CREAT | os.O_WRONLY, 0o600), 'w') as fd:
+        with os.fdopen(os.open(os.path.join(conf_dir, var), os.O_CREAT | os.O_WRONLY, 0o600), "w") as fd:
             fd.write(value.encode(sys_encoding) if USING_PYTHON2 else value)
 
-    if not os.path.exists(expanduser('~/.dnanexus_config/') + 'unsetenv'):
-        with open(expanduser('~/.dnanexus_config/') + 'unsetenv', 'w') as fd:
+    if not os.path.exists(expanduser("~/.dnanexus_config/") + "unsetenv"):
+        with open(expanduser("~/.dnanexus_config/") + "unsetenv", "w") as fd:
             for var in CORE_VAR_NAMES:
-                fd.write('unset ' + var + '\n')
+                fd.write("unset " + var + "\n")
 
 def clearenv(args):
     if args.interactive:
-        print('The clearenv command is not available in the interactive shell')
+        print("The clearenv command is not available in the interactive shell")
         return
     shutil.rmtree(get_session_conf_dir(), ignore_errors=True)
     try:
-        os.remove(expanduser('~/.dnanexus_config/environment'))
+        os.remove(expanduser("~/.dnanexus_config/environment"))
     except:
         pass
     try:
-        os.remove(expanduser('~/.dnanexus_config/environment.json'))
+        os.remove(expanduser("~/.dnanexus_config/environment.json"))
     except:
         pass
     for f in STANDALONE_VAR_NAMES:
         try:
-            os.remove(expanduser('~/.dnanexus_config/' + f))
+            os.remove(expanduser("~/.dnanexus_config/" + f))
         except:
             pass
 
     if args.reset:
-        defaults = {'DX_SECURITY_CONTEXT': json.dumps({'auth_token': '', 'auth_token_type': ''}),
-                    'DX_APISERVER_PROTOCOL': DEFAULT_APISERVER_PROTOCOL,
-                    'DX_APISERVER_HOST': DEFAULT_APISERVER_HOST,
-                    'DX_APISERVER_PORT': DEFAULT_APISERVER_PORT,
-                    'DX_CLI_WD': '/'}
+        defaults = {"DX_SECURITY_CONTEXT": json.dumps({"auth_token": "", "auth_token_type": ""}),
+                    "DX_APISERVER_PROTOCOL": DEFAULT_APISERVER_PROTOCOL,
+                    "DX_APISERVER_HOST": DEFAULT_APISERVER_HOST,
+                    "DX_APISERVER_PORT": DEFAULT_APISERVER_PORT,
+                    "DX_CLI_WD": "/"}
         for var in VAR_NAMES:
             if var in defaults:
                 write_env_var(var, defaults[var])
             else:
-                write_env_var(var, '')
+                write_env_var(var, "")
 
 # The following adapters ensure consistent behavior of non-ASCII
 # environment variable values across Python 2 and 3. Note that when

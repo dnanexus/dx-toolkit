@@ -221,6 +221,10 @@ public class DXHTTPRequest {
             RetryStrategy retryStrategy) {
         HttpPost request = new HttpPost(apiserver + resource);
 
+        if (securityContext == null) {
+            throw new DXHTTPException(new IOException("No security context was set"));
+        }
+
         request.setHeader("Content-Type", "application/json");
         request.setHeader("Authorization", securityContext.get("auth_token_type").textValue() + " "
                 + securityContext.get("auth_token").textValue());

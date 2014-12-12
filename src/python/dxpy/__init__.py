@@ -132,6 +132,7 @@ from .packages.requests.auth import AuthBase
 from .compat import USING_PYTHON2, expanduser
 
 logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 logging.getLogger('dxpy.packages.requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
 
 from . import exceptions
@@ -262,6 +263,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
         kwargs['verify'] = os.environ['DX_CA_CERT']
         if os.environ['DX_CA_CERT'] == 'NOVERIFY':
             kwargs['verify'] = False
+            from requests.packages import urllib3
+            urllib3.disable_warnings()
 
     if jsonify_data:
         data = json.dumps(data)
@@ -287,7 +290,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
     last_exc_type, last_error, last_traceback = None, None, None
     try_index = 0
     while True:
-        streaming_response_truncated = False
+        success, streaming_response_truncated = True, False
         response = None
         try:
             _method, _url, _headers = _process_method_url_headers(method, url, headers)
@@ -341,7 +344,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                             elif _DEBUG > 0:
                                 t = int(response.elapsed.total_seconds()*1000)
                                 print(method, url, "<=", response.status_code, "(%dms)"%t, Repr().repr(content), file=sys.stderr)
-
                             return content
                         except ValueError:
                             # If a streaming API call (no content-length
@@ -354,77 +356,72 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                             raise HTTPError("Invalid JSON received from server")
                 return content
             raise AssertionError('Should never reach this line: expected a result to have been returned by now')
-        except _expected_exceptions as e:
-            last_exc_type, last_error, last_traceback = sys.exc_info()
-            exception_msg = traceback.format_exc().splitlines()[-1].strip()
+        except Exception as e:
+            success = False
+            if isinstance(e, _expected_exceptions):
+                last_exc_type, last_error, last_traceback = sys.exc_info()
+                exception_msg = traceback.format_exc().splitlines()[-1].strip()
 
-            if response is not None and response.status_code == 503:
-                DEFAULT_RETRY_AFTER_INTERVAL = 60
-                try:
-                    seconds_to_wait = int(response.headers.get('retry-after', DEFAULT_RETRY_AFTER_INTERVAL))
-                except ValueError:
-                    # retry-after could be formatted as absolute time
-                    # instead of seconds to wait. We don't know how to
-                    # parse that, but the apiserver doesn't generate
-                    # such responses anyway.
-                    seconds_to_wait = DEFAULT_RETRY_AFTER_INTERVAL
-                logger.warn("%s %s: %s. Waiting %d seconds due to server unavailability..."
-                            % (method, url, exception_msg, seconds_to_wait))
-                time.sleep(seconds_to_wait)
-                # Note, we escape the "except" block here without
-                # incrementing try_index because 503 responses with
-                # Retry-After should not count against the number of
-                # permitted retries.
-                continue
-
-            # TODO: if the socket was dropped mid-request,
-            # ConnectionError or httplib.IncompleteRead is raised, but
-            # non-idempotent requests can be unsafe to retry. We should
-            # distinguish between connection initiation errors and
-            # dropped socket errors. Currently the former are not
-            # retried even if it might be safe to do so.
-
-            # Total number of allowed tries is the initial try + up to
-            # (max_retries) subsequent retries.
-            total_allowed_tries = max_retries + 1
-            # Because try_index is not incremented until we escape this
-            # iteration of the loop, try_index is equal to the number of
-            # tries that have failed so far, minus one. Test whether we
-            # have exhausted all retries.
-            if try_index + 1 < total_allowed_tries:
-                if response is None or isinstance(e, exceptions.ContentLengthError) or streaming_response_truncated:
-                    ok_to_retry = always_retry or (method == 'GET')
-                else:
-                    ok_to_retry = 500 <= response.status_code < 600
-
-                if ok_to_retry:
-                    if rewind_input_buffer_offset is not None:
-                        data.seek(rewind_input_buffer_offset)
-                    delay = 2 ** try_index
-                    logger.warn("%s %s: %s. Waiting %d seconds before retry %d of %d..."
-                                % (method, url, exception_msg, delay, try_index + 1, max_retries))
-                    time.sleep(delay)
-                    try_index += 1
+                if response is not None and response.status_code == 503:
+                    DEFAULT_RETRY_AFTER_INTERVAL = 60
+                    try:
+                        seconds_to_wait = int(response.headers.get('retry-after', DEFAULT_RETRY_AFTER_INTERVAL))
+                    except ValueError:
+                        # retry-after could be formatted as absolute time
+                        # instead of seconds to wait. We don't know how to
+                        # parse that, but the apiserver doesn't generate
+                        # such responses anyway.
+                        seconds_to_wait = DEFAULT_RETRY_AFTER_INTERVAL
+                    logger.warn("%s %s: %s. Waiting %d seconds due to server unavailability..."
+                                % (method, url, exception_msg, seconds_to_wait))
+                    time.sleep(seconds_to_wait)
+                    # Note, we escape the "except" block here without
+                    # incrementing try_index because 503 responses with
+                    # Retry-After should not count against the number of
+                    # permitted retries.
                     continue
-            # We get here if all retries have been exhausted OR if the
-            # error is deemed not retryable.
-            break
 
-        raise AssertionError('Should never reach this line: should have attempted a retry or broken out of loop by now')
+                # TODO: if the socket was dropped mid-request,
+                # ConnectionError or httplib.IncompleteRead is raised, but
+                # non-idempotent requests can be unsafe to retry. We should
+                # distinguish between connection initiation errors and
+                # dropped socket errors. Currently the former are not
+                # retried even if it might be safe to do so.
 
-    if last_error is None:
-        # The only "break" above follows some code that sets last_error
-        raise AssertionError('Expected last_error to be set here')
+                # Total number of allowed tries is the initial try + up to
+                # (max_retries) subsequent retries.
+                total_allowed_tries = max_retries + 1
+                # Because try_index is not incremented until we escape this
+                # iteration of the loop, try_index is equal to the number of
+                # tries that have failed so far, minus one. Test whether we
+                # have exhausted all retries.
+                if try_index + 1 < total_allowed_tries:
+                    if response is None or isinstance(e, exceptions.ContentLengthError) or streaming_response_truncated:
+                        ok_to_retry = always_retry or (method == 'GET')
+                    else:
+                        ok_to_retry = 500 <= response.status_code < 600
 
-    if _DEBUG > 0:
-        logger.warn('---- DXHTTPRequest %s %s failed after %d tries ----' % (method, url, try_index + 1))
-        logger.warn('**** The following error, from the last try, will be raised: ****')
-        for entry in traceback.format_exception(last_exc_type, last_error, last_traceback):
-            for line in entry.rstrip('\n').split('\n'):
-                logger.warn(line)
-        logger.warn('---------------------------------------')
+                    if ok_to_retry:
+                        if rewind_input_buffer_offset is not None:
+                            data.seek(rewind_input_buffer_offset)
+                        delay = 2 ** try_index
+                        logger.warn("%s %s: %s. Waiting %d seconds before retry %d of %d..."
+                                    % (method, url, exception_msg, delay, try_index + 1, max_retries))
+                        time.sleep(delay)
+                        try_index += 1
+                        continue
 
-    raise last_error
+            # All retries have been exhausted OR the error is deemed not
+            # retryable. Propagate the latest error back to the caller.
+            raise
+        finally:
+            if success and try_index > 0:
+                logger.info("{} {}: Recovered after {} retries".format(method, url, try_index))
+
+
+        raise AssertionError('Should never reach this line: should have attempted a retry or reraised by now')
+    raise AssertionError('Should never reach this line: should never break out of loop')
+
 
 class DXHTTPOAuth2(AuthBase):
     def __init__(self, security_context):
@@ -589,22 +586,3 @@ _initialize()
 from .bindings import *
 from .dxlog import DXLogHandler
 from .utils.exec_utils import run, entry_point
-
-# This should be in exec_utils but fails because of circular imports
-# TODO: fix the imports
-current_job, current_applet, current_app = None, None, None
-if JOB_ID is not None:
-    current_job = DXJob(JOB_ID)
-    try:
-        job_desc = current_job.describe()
-    except exceptions.DXAPIError as e:
-        if e.name == 'ResourceNotFound':
-            err_msg = "Job ID %r was not found. Unset the DX_JOB_ID environment variable OR set it to be the ID of a valid job."
-            print(err_msg % (JOB_ID,), file=sys.stderr)
-            sys.exit(1)
-        else:
-            raise
-    if 'applet' in job_desc:
-        current_applet = DXApplet(job_desc['applet'])
-    else:
-        current_app = DXApp(job_desc['app'])

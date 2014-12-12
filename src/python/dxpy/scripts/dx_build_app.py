@@ -191,7 +191,8 @@ def parse_destination(dest_str):
     # [PROJECT]:/FOLDER/ENTITYNAME
     return resolve_path(dest_str)
 
-def _lint(dxapp_json_filename):
+
+def _lint(dxapp_json_filename, mode):
     """
     Examines the specified dxapp.json file and warns about any
     violations of app guidelines.
@@ -209,6 +210,36 @@ def _lint(dxapp_json_filename):
 
     dirname = os.path.basename(os.path.dirname(os.path.abspath(dxapp_json_filename)))
 
+    if mode == "app":
+        if 'title' not in app_spec:
+            logger.warn('app is missing a title, please add one in the "title" field of dxapp.json')
+
+        if 'summary' in app_spec:
+            if app_spec['summary'].endswith('.'):
+                logger.warn('summary "%s" should be a short phrase not ending in a period' % (app_spec['summary'],))
+        else:
+            logger.warn('app is missing a summary, please add one in the "summary" field of dxapp.json')
+
+        readme_filename = _find_readme(os.path.dirname(dxapp_json_filename))
+        if 'description' in app_spec:
+            if readme_filename:
+                logger.warn('"description" field shadows file ' + readme_filename)
+            if not app_spec['description'].strip().endswith('.'):
+                logger.warn('"description" field should be written in complete sentences and end with a period')
+        else:
+            if readme_filename is None:
+                logger.warn("app is missing a description, please supply one in README.md")
+        if 'categories' in app_spec:
+            for category in app_spec['categories']:
+                if category not in APP_CATEGORIES:
+                    logger.warn('app has unrecognized category "%s"' % (category,))
+                if category == 'Import':
+                    if 'title' in app_spec and not app_spec['title'].endswith('Importer'):
+                        logger.warn('title "%s" should end in "Importer"' % (app_spec['title'],))
+                if category == 'Export':
+                    if 'title' in app_spec and not app_spec['title'].endswith('Exporter'):
+                        logger.warn('title "%s" should end in "Exporter"' % (app_spec['title'],))
+
     if 'name' in app_spec:
         if app_spec['name'] != app_spec['name'].lower():
             logger.warn('name "%s" should be all lowercase' % (app_spec['name'],))
@@ -217,39 +248,9 @@ def _lint(dxapp_json_filename):
     else:
         logger.warn('app is missing a name, please add one in the "name" field of dxapp.json')
 
-    if 'title' not in app_spec:
-        logger.warn('app is missing a title, please add one in the "title" field of dxapp.json')
-
-    if 'summary' in app_spec:
-        if app_spec['summary'].endswith('.'):
-            logger.warn('summary "%s" should be a short phrase not ending in a period' % (app_spec['summary'],))
-    else:
-        logger.warn('app is missing a summary, please add one in the "summary" field of dxapp.json')
-
-    readme_filename = _find_readme(os.path.dirname(dxapp_json_filename))
-    if 'description' in app_spec:
-        if readme_filename:
-            logger.warn('"description" field shadows file ' + readme_filename)
-        if not app_spec['description'].strip().endswith('.'):
-            logger.warn('"description" field should be written in complete sentences and end with a period')
-    else:
-        if readme_filename is None:
-            logger.warn("app is missing a description, please supply one in README.md")
-
     if 'version' in app_spec:
         if not APP_VERSION_RE.match(app_spec['version']):
             logger.warn('"version" %s should be semver compliant (e.g. of the form X.Y.Z)' % (app_spec['version'],))
-
-    if 'categories' in app_spec:
-        for category in app_spec['categories']:
-            if category not in APP_CATEGORIES:
-                logger.warn('app has unrecognized category "%s"' % (category,))
-            if category == 'Import':
-                if 'title' in app_spec and not app_spec['title'].endswith('Importer'):
-                    logger.warn('title "%s" should end in "Importer"' % (app_spec['title'],))
-            if category == 'Export':
-                if 'title' in app_spec and not app_spec['title'].endswith('Exporter'):
-                    logger.warn('title "%s" should end in "Exporter"' % (app_spec['title'],))
 
     # Note that identical checks are performed on the server side (and
     # will cause the app build to fail), but the checks here are printed
@@ -288,6 +289,7 @@ def _check_syntax(code, lang, temp_dir, enforce=True):
     with open(os.path.join(temp_dir, temp_basename), 'w') as ofile:
         ofile.write(code)
     _check_file_syntax(os.path.join(temp_dir, temp_basename), temp_dir, override_lang=lang, enforce=enforce)
+
 
 def _check_file_syntax(filename, temp_dir, override_lang=None, enforce=True):
     """
@@ -347,12 +349,13 @@ def _check_file_syntax(filename, temp_dir, override_lang=None, enforce=True):
         if enforce:
             raise DXSyntaxError(e.msg.strip())
 
-def _verify_app_source_dir_impl(src_dir, temp_dir, enforce=True):
+
+def _verify_app_source_dir_impl(src_dir, temp_dir, mode, enforce=True):
     """Performs syntax and lint checks on the app source.
 
     Precondition: the dxapp.json file exists and can be parsed.
     """
-    _lint(os.path.join(src_dir, "dxapp.json"))
+    _lint(os.path.join(src_dir, "dxapp.json"), mode)
 
     # Check that the entry point file parses as the type it is going to
     # be interpreted as. The extension is irrelevant.
@@ -431,14 +434,15 @@ def _verify_app_source_dir_impl(src_dir, temp_dir, enforce=True):
         files_str = files_with_problems[0] if len(files_with_problems) == 1 else (files_with_problems[0] + " and " + str(len(files_with_problems) - 1) + " other file" + ("s" if len(files_with_problems) > 2 else ""))
         logging.warn('%s contained syntax errors, see above for details' % (files_str,))
 
-def _verify_app_source_dir(src_dir, enforce=True):
+
+def _verify_app_source_dir(src_dir, mode, enforce=True):
     """Performs syntax and lint checks on the app source.
 
     Precondition: the dxapp.json file exists and can be parsed.
     """
     temp_dir = tempfile.mkdtemp(prefix='dx-build_tmp')
     try:
-        _verify_app_source_dir_impl(src_dir, temp_dir, enforce=enforce)
+        _verify_app_source_dir_impl(src_dir, temp_dir, mode, enforce=enforce)
     finally:
         shutil.rmtree(temp_dir)
 
@@ -654,17 +658,15 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
             dxpy.api.project_destroy(build_project_id, {"terminateJobs": True})
         shutil.rmtree(temp_dir)
 
-# TODO: do_build_step and do_upload_step could probably be removed
-# following https://github.com/dnanexus/dx_app_builder/commit/4803fbba
+
 def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publish=False, destination_override=None,
                              version_override=None, bill_to_override=None, use_temp_build_project=True,
                              do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
-                             dx_toolkit_autodep="stable", do_build_step=True, do_upload_step=True, do_check_syntax=True,
-                             dry_run=False, return_object_dump=False, confirm=True,
-                             **kwargs):
+                             dx_toolkit_autodep="stable", do_check_syntax=True, dry_run=False,
+                             return_object_dump=False, confirm=True, **kwargs):
     app_json = _parse_app_spec(src_dir)
 
-    _verify_app_source_dir(src_dir, enforce=do_check_syntax)
+    _verify_app_source_dir(src_dir, mode, enforce=do_check_syntax)
     if mode == "app" and not dry_run:
         _verify_app_writable(app_json['name'])
 
@@ -688,13 +690,28 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
         if "buildOptions" in app_json:
             if app_json["buildOptions"].get("dx_toolkit_autodep") == False:
                 dx_toolkit_autodep = False
-            del app_json["buildOptions"]
 
-        if do_build_step:
-            dxpy.app_builder.build(src_dir, parallel_build=do_parallel_build)
+        # Perform check for existence of applet with same name in
+        # destination for case in which neither "-f" nor "-a" is
+        # given BEFORE uploading resources.
+        if mode == "applet" and not overwrite and not archive:
+            try:
+                dest_name = override_applet_name or app_json.get('name') or os.path.basename(os.path.abspath(src_dir))
+            except:
+                raise dxpy.app_builder.AppBuilderException("Could not determine applet name from specification + "
+                                                           "(dxapp.json) or from working directory (%r)" % (src_dir,))
+            dest_folder = override_folder or app_json.get('folder') or '/'
+            if not dest_folder.endswith('/'):
+                dest_folder = dest_folder + '/'
+            dest_project = working_project if working_project else dxpy.WORKSPACE_ID
+            for result in dxpy.find_data_objects(classname="applet", name=dest_name, folder=dest_folder,
+                                                 project=dest_project, recurse=False):
+                dest_path = dest_folder + dest_name
+                raise dxpy.app_builder.AppBuilderException("An applet already exists at {} (id {}) and the " +
+                                                           "--overwrite (-f) or --archive (-a) options were not " +
+                                                           "given".format(dest_path, result['id']))
 
-        if not do_upload_step:
-            return
+        dxpy.app_builder.build(src_dir, parallel_build=do_parallel_build)
 
         bundled_resources = dxpy.app_builder.upload_resources(
             src_dir, project=working_project, folder=override_folder) if not dry_run else []
@@ -827,7 +844,7 @@ def _build_app(args, extra_args):
 
         try:
             app_json = _parse_app_spec(args.src_dir)
-            _verify_app_source_dir(args.src_dir)
+            _verify_app_source_dir(args.src_dir, args.mode)
             if args.mode == "app" and not args.dry_run:
                 _verify_app_writable(app_json['name'])
         except dxpy.app_builder.AppBuilderException as e:

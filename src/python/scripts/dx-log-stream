@@ -43,15 +43,10 @@ try:
 except:
     log_function = logging.info
 
-try:
-    import dxpy
-    logger = logging.getLogger()
-    logger.handlers = []
-    logger.addHandler(dxpy.DXLogHandler(source=args.source))
-except Exception as e:
-    import traceback
-    traceback.print_exc()
-    print("dx-log-stream: Error while initializing logging. Continuing.", file=sys.stderr)
+import dxpy
+logger = logging.getLogger()
+logger.handlers = []
+logger.addHandler(dxpy.DXLogHandler(source=args.source))
 
 while True:
     line = sys.stdin.readline()

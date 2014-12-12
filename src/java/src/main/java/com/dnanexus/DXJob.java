@@ -408,7 +408,7 @@ public final class DXJob extends DXExecution {
 
     private Describe describeImpl(JsonNode describeInput) {
         return new Describe(DXAPI.jobDescribe(this.getId(), describeInput,
-                DescribeResponseHash.class), this.env);
+                DescribeResponseHash.class, this.env), this.env);
     }
 
     @Override

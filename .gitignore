@@ -76,6 +76,7 @@ dxR.Rcheck
 /bin/dx-wig-to-wiggle
 /bin/dx-print-bash-vars
 /bin/activate-global-python-argcomplete
+/bin/coverage*
 /bin/python-argcomplete-check-easy-install-script
 /bin/register-python-argcomplete
 /bin/jq
