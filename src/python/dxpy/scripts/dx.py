@@ -179,7 +179,7 @@ else:
 # appropriate sub-subcommand.
 class DXCLICompleter():
     subcommands = {'find': ['data ', 'projects ', 'apps ', 'jobs ', 'executions ', 'analyses '],
-                   'new': ['project ', 'workflow '],
+                   'new': ['record', 'project ', 'workflow '],
                    'add': ['developers ', 'users ', 'stage '],
                    'remove': ['developers ', 'users ', 'stage '],
                    'update': ['stage ', 'workflow ']}
@@ -4165,7 +4165,7 @@ parser_new_project.add_argument('-s', '--select', help='Select the new project a
 parser_new_project.set_defaults(func=new_project)
 register_subparser(parser_new_project, subparsers_action=subparsers_new, categories='fs')
 
-parser_new_record = subparsers_new.add_parser('record', add_help=False, #help='Create a new record',
+parser_new_record = subparsers_new.add_parser('record', help='Create a new record',
                                               description='Create a new record',
                                               parents=[parser_dataobject_args, parser_single_dataobject_output_args,
                                                        stdout_args, env_args],
@@ -4506,7 +4506,7 @@ def main():
         import argcomplete
         argcomplete.autocomplete(parser,
                                  always_complete_options=False,
-                                 exclude=['add_types', 'import', 'gtable', 'record'],
+                                 exclude=['import', 'gtable'],
                                  output_stream=sys.stdout if '_DX_ARC_DEBUG' in os.environ else None)
 
     if len(args_list) > 0:
