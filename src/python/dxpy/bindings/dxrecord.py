@@ -82,6 +82,8 @@ class DXRecord(DXDataObject):
         :type dx_hash: dict
         :param init_from: Record from which to initialize the metadata
         :type init_from: :class:`DXRecord`
+        :param close: Whether or not to close the record immediately after creating it
+        :type init_from: boolean
 
         Create a new remote record object.
 
@@ -95,5 +97,10 @@ class DXRecord(DXDataObject):
                     {"id": kwargs["init_from"].get_id(),
                      "project": kwargs["init_from"].get_proj_id()}
             del kwargs["init_from"]
+
+        if "close" in kwargs:
+            dx_hash["close"] = kwargs["close"]
+            del kwargs["close"]
+
         resp = dxpy.api.record_new(dx_hash, **kwargs)
         self.set_ids(resp["id"], dx_hash["project"])
