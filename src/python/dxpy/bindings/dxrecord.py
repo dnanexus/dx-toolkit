@@ -83,7 +83,7 @@ class DXRecord(DXDataObject):
         :param init_from: Record from which to initialize the metadata
         :type init_from: :class:`DXRecord`
         :param close: Whether or not to close the record immediately after creating it
-        :type init_from: boolean
+        :type close: boolean
 
         Create a new remote record object.
 
