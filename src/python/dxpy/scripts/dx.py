@@ -1250,7 +1250,6 @@ def new_record(args):
     try_call(process_dataobject_args, args)
     try_call(process_single_dataobject_output_args, args)
     init_from = None
-    close = args.close == True
 
     if args.init is not None:
         init_project, _init_folder, init_result = try_call(resolve_existing_path,
@@ -1272,7 +1271,7 @@ def new_record(args):
                                      hidden=args.hidden, properties=args.properties,
                                      details=args.details,
                                      folder=folder,
-                                     close=close,
+                                     close=args.close,
                                      parents=args.parents, init_from=init_from)
         if args.brief:
             print(dxrecord.get_id())
