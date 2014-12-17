@@ -58,7 +58,15 @@ def get_session_conf_dir(cleanup=True):
         from psutil import Process, pid_exists
 
         if cleanup:
-            for session_dir in os.listdir(sessions_dir):
+            try:
+                session_dirs = os.listdir(sessions_dir)
+            except OSError as e:
+                # Silently skip cleanup and continue if we are unable to
+                # enumerate the session directories for any reason
+                # (including, most commonly, because the sessions dir
+                # doesn't exist)
+                session_dirs = []
+            for session_dir in session_dirs:
                 if not pid_exists(int(session_dir)):
                     rmtree(os.path.join(sessions_dir, session_dir), ignore_errors=True)
 
