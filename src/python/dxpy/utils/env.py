@@ -23,7 +23,8 @@ for more details.
 
 from __future__ import (print_function, unicode_literals)
 
-import os, sys, shutil, textwrap, json, locale
+import os, sys, textwrap, json, locale
+from shutil import rmtree
 
 from .. import DEFAULT_APISERVER_PROTOCOL, DEFAULT_APISERVER_HOST, DEFAULT_APISERVER_PORT
 from ..compat import USING_PYTHON2, expanduser
@@ -43,16 +44,33 @@ def get_user_conf_dir():
         return expanduser(os.environ["DX_USER_CONF_DIR"])
     return expanduser("~/.dnanexus_config")
 
-def get_session_conf_dir():
+def get_session_conf_dir(cleanup=True):
     """
     Tries to find the session configuration directory by looking in ~/.dnanexus_config/sessions/<PID>,
     where <PID> is pid of the parent of this process, then its parent, and so on.
     If none of those exist, the path for the immediate parent is given, even if it doesn't exist.
+
+    If *cleanup* is True, looks up and deletes all session configuration directories that belong to nonexistent
+    processes.
     """
     sessions_dir = os.path.join(get_user_conf_dir(), "sessions")
     try:
-        import psutil
-        parent_process = psutil.Process(os.getpid()).parent()
+        from psutil import Process, pid_exists
+
+        if cleanup:
+            try:
+                session_dirs = os.listdir(sessions_dir)
+            except OSError as e:
+                # Silently skip cleanup and continue if we are unable to
+                # enumerate the session directories for any reason
+                # (including, most commonly, because the sessions dir
+                # doesn't exist)
+                session_dirs = []
+            for session_dir in session_dirs:
+                if not pid_exists(int(session_dir)):
+                    rmtree(os.path.join(sessions_dir, session_dir), ignore_errors=True)
+
+        parent_process = Process(os.getpid()).parent()
         default_session_dir = os.path.join(sessions_dir, str(parent_process.pid))
         while parent_process is not None and parent_process.pid != 0:
             session_dir = os.path.join(sessions_dir, str(parent_process.pid))
@@ -123,7 +141,7 @@ def get_env(suppress_warning=False):
     return env_vars
 
 def write_env_var(var, value):
-    user_conf_dir, session_conf_dir = get_user_conf_dir(), get_session_conf_dir()
+    user_conf_dir, session_conf_dir = get_user_conf_dir(), get_session_conf_dir(cleanup=False)
     try:
         os.makedirs(user_conf_dir, 0o700)
     except OSError:
@@ -174,7 +192,7 @@ def clearenv(args):
     if args.interactive:
         print("The clearenv command is not available in the interactive shell")
         return
-    shutil.rmtree(get_session_conf_dir(), ignore_errors=True)
+    rmtree(get_session_conf_dir(), ignore_errors=True)
     try:
         os.remove(expanduser("~/.dnanexus_config/environment"))
     except:

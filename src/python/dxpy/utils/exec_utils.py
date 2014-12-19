@@ -69,25 +69,39 @@ def _format_exception_message(e):
     else:
         return e.__class__.__name__ + ": " + _safe_unicode(e)
 
+
 def run(function_name=None, function_input=None):
-    """
-    Triggers the execution environment entry point processor.
+    """Triggers the execution environment entry point processor.
 
     Use this function in the program entry point code:
 
-    import dxpy
+    .. code-block:: python
 
-    @dxpy.entry_point('main')
-    def hello(i):
-        pass
+       import dxpy
 
-    dxpy.run()
+       @dxpy.entry_point('main')
+       def hello(i):
+           pass
 
-    If the environment variable *DX_JOB_ID* is set, the processor retrieves the job with that ID from the API server.
-    The job's *job.function* field is used to invoke the entry point function in the module from which run() has been
-    called. The function name is looked up in the table of all functions decorated with *@dxpy.entry_point('name')*.
-    This is the mode of operation used in the DNAnexus execution environment.
-    WARNING: The parameters *function_name* and *function_input* are disregarded in this mode of operation.
+       dxpy.run()
+
+    This method may be used to invoke the program either in a production
+    environment (inside the execution environment) or for local
+    debugging (in the debug harness), as follows:
+
+    If the environment variable *DX_JOB_ID* is set, the processor
+    retrieves the job with that ID from the API server. The job's
+    *function* field indicates the function name to be invoked. That
+    function name is looked up in the table of all methods decorated
+    with *@dxpy.entry_point('name')* in the module from which
+    :func:`run()` was called, and the matching method is invoked (with
+    the job's input supplied as parameters). This is the mode of
+    operation used in the DNAnexus execution environment.
+
+    .. warning::
+
+       The parameters *function_name* and *function_input* are
+       disregarded in this mode of operation.
 
     If the environment variable *DX_JOB_ID* is not set, the function
     name may be given in *function_name*; if not set, it is set by the
@@ -95,12 +109,12 @@ def run(function_name=None, function_input=None):
     given in *function_input*; if not set, it is set by the local file
     *job_input.json* which is expected to be present.
 
-    The absence of *DX_JOB_ID* signals to run() that execution is happening in the debug harness. In this mode of
-    operation, all calls to *dxpy.bindings.DXJob.new* (and higher level handler methods which use it) are intercepted, and run()
-    is invoked instead with appropriate inputs. The initial invocation of *dxpy.run()* (with no arguments) need not be
-    changed; instead, use a local file *job_input.json*.
+    The absence of *DX_JOB_ID* signals to :func:`run()` that execution
+    is happening in the debug harness. In this mode of operation, all
+    calls to :func:`dxpy.bindings.dxjob.new_dxjob()` (and higher level
+    handler methods which use it) are intercepted, and :func:`run()` is
+    invoked instead with appropriate inputs.
 
-    With this, no program code requires changing between the two modes.
     """
 
     global RUN_COUNT
@@ -211,12 +225,15 @@ def parse_args_as_job_input(args, app_spec):
     return inputs
 
 def entry_point(entry_point_name):
-    """
-    Use this to decorate a DNAnexus execution environment entry point. Example:
+    """Use this to decorate a DNAnexus execution environment entry point.
 
-    @dxpy.entry_point('main')
-    def hello(i):
-        pass
+    Example:
+
+    .. code-block:: python
+
+       @dxpy.entry_point('main')
+       def hello(i):
+           pass
 
     """
     def wrap(f):
