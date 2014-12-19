@@ -175,12 +175,12 @@ else:
 # appropriate sub-subcommand.
 class DXCLICompleter():
     subcommands = {'find': ['data ', 'projects ', 'apps ', 'jobs ', 'executions ', 'analyses '],
-                   'new': ['record', 'project ', 'workflow '],
+                   'new': ['record ', 'project ', 'workflow '],
                    'add': ['developers ', 'users ', 'stage '],
                    'remove': ['developers ', 'users ', 'stage '],
                    'update': ['stage ', 'workflow ']}
 
-    silent_commands = set(['add_types', 'import'])
+    silent_commands = set(['import'])
 
     def __init__(self):
         self.commands = [subcmd + ' ' for subcmd in subparsers.choices.keys() if subcmd not in self.silent_commands]
