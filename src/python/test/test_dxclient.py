@@ -4304,8 +4304,6 @@ class TestDXCp(DXTestCase):
 
     # 'dx cp' used to give a confusing error message when source file is not found.
     # Check that this has been fixed
-    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"),
-                         "Skipping a test that relies on unreleased features")
     def test_error_msg_for_nonexistent_folder(self):
         fname1 = self.gen_uniq_fname()
         file_id1 = create_file_in_project(fname1, self.proj_id1)
@@ -4316,6 +4314,15 @@ class TestDXCp(DXTestCase):
             p1=self.proj_id1, f=fname1, p2=self.project)
         with self.assertSubprocessFailure(stderr_regexp=expected_err_msg, exit_code=3):
             run("dx cp {p1}/{f} {p2}:/".format(p1=self.proj_id1, f=fname1, p2=self.proj_id2))
+
+        with self.assertSubprocessFailure(stderr_regexp="The destination folder does not exist",
+                                          exit_code=3):
+            run("dx cp {p1}:/{f} {p2}:/xxx/yyy/z.txt".format(p1=self.proj_id1, f=fname1, p2=self.proj_id2))
+
+        with self.assertSubprocessFailure(
+                stderr_regexp="source path and the destination path resolved to the same project",
+                exit_code=3):
+            run("dx cp {p1}:/{f} {p1}:/".format(p1=self.proj_id1, f=fname1))
 
     @unittest.skip("PTFM-11906 This doesn't work yet.")
     def test_file_in_other_project(self):
