@@ -1143,13 +1143,6 @@ def describe(args):
             if len(entity_results) > 0:
                 found_match = True
             for result in entity_results:
-                if result['describe']['class'] == 'workflow':
-                    # Workflows have more information if described
-                    # directly and not via findDataObjects; redo the
-                    # query to get it before proceeding
-                    json_input['project'] = result['describe']['project']
-                    result['describe'] = dxpy.DXHTTPRequest('/' + result['id'] + '/describe',
-                                                            json_input)
                 if args.json:
                     json_output.append(result['describe'])
                 elif args.name:
