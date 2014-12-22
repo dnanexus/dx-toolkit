@@ -808,7 +808,7 @@ class TestDXClient(DXTestCase):
             dx = pexpect.spawn("dx ssh " + job_id, env=overrideEnvironment(HOME=wd))
             dx.logfile = sys.stdout
             dx.setwinsize(20, 90)
-            dx.expect("dnanexus@{}".format(job_id), timeout=1200)
+            dx.expect("dnanexus@", timeout=1200)
 
     @unittest.skipUnless(testutil.TEST_DX_LOGIN,
                          'This test requires authserver to run, requires dx login to select the right authserver, ' +
