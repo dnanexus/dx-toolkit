@@ -175,13 +175,15 @@ else:
 # appropriate sub-subcommand.
 class DXCLICompleter():
     subcommands = {'find': ['data ', 'projects ', 'apps ', 'jobs ', 'executions ', 'analyses '],
-                   'new': ['record ', 'gtable ', 'project '],
+                   'new': ['record ', 'project ', 'workflow '],
                    'add': ['developers ', 'users ', 'stage '],
                    'remove': ['developers ', 'users ', 'stage '],
                    'update': ['stage ', 'workflow ']}
 
+    silent_commands = set(['import'])
+
     def __init__(self):
-        self.commands = [subcmd + ' ' for subcmd in subparsers.choices.keys()]
+        self.commands = [subcmd + ' ' for subcmd in subparsers.choices.keys() if subcmd not in self.silent_commands]
         self.matches = []
         self.text = None
 
@@ -4025,7 +4027,7 @@ parser_rmproject.set_defaults(func=rmproject)
 register_subparser(parser_rmproject, categories='fs')
 
 parser_new = subparsers.add_parser('new', help='Create a new project or data object',
-                                   description='Use this command with one of the available subcommands (classes) to create a new project or data object from scratch.  Not all data types are supported.  See \'dx upload\' for files, \'dx build\' for applets, and \'dx import\' for importing special file formats (e.g. csv, fastq) into GenomicTables.',
+                                   description='Use this command with one of the available subcommands (classes) to create a new project or data object from scratch.  Not all data types are supported.  See \'dx upload\' for files and \'dx build\' for applets.',
                                    prog="dx new")
 subparsers_new = parser_new.add_subparsers(parser_class=DXArgumentParser)
 subparsers_new.metavar = 'class'
@@ -4067,7 +4069,7 @@ init_action.completer = DXPathCompleter(classes=['workflow'])
 parser_new_workflow.set_defaults(func=workflow_cli.new_workflow)
 register_subparser(parser_new_workflow, subparsers_action=subparsers_new, categories='workflow')
 
-parser_new_gtable = subparsers_new.add_parser('gtable', help='Create a new gtable',
+parser_new_gtable = subparsers_new.add_parser('gtable', add_help=False, #help='Create a new gtable',
                                               description='Create a new gtable from scratch.  See \'dx import\' for importing special file formats (e.g. csv, fastq) into GenomicTables.',
                                               parents=[parser_dataobject_args, parser_single_dataobject_output_args,
                                                        stdout_args, env_args],
@@ -4382,6 +4384,7 @@ def main():
         import argcomplete
         argcomplete.autocomplete(parser,
                                  always_complete_options=False,
+                                 exclude=['import', 'gtable'],
                                  output_stream=sys.stdout if '_DX_ARC_DEBUG' in os.environ else None)
 
     if len(args_list) > 0:
