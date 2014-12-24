@@ -188,7 +188,7 @@ def _process_method_url_headers(method, url, headers):
     else:
         return method, _url, _headers
 
-def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeout=600,
+def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeout=None,
                   use_compression=None, jsonify_data=True, want_full_response=False,
                   decode_response_body=True, prepend_srv=True, session_handler=None,
                   max_retries=DEFAULT_RETRIES, always_retry=False, **kwargs):
@@ -287,14 +287,17 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
     if hasattr(data, 'seek') and hasattr(data, 'tell'):
         rewind_input_buffer_offset = data.tell()
 
-    last_exc_type, last_error, last_traceback = None, None, None
+    time_started, last_exc_type, last_error, last_traceback = None, None, None, None
+    if timeout:
+        time_started = time.time()
     try_index = 0
     while True:
         success, streaming_response_truncated = True, False
         response = None
         try:
             _method, _url, _headers = _process_method_url_headers(method, url, headers)
-            response = session_handler.request(_method, _url, headers=_headers, data=data, timeout=timeout, auth=auth,
+            _timeout = timeout or 600
+            response = session_handler.request(_method, _url, headers=_headers, data=data, timeout=_timeout, auth=auth,
                                                **kwargs)
 
             if _UPGRADE_NOTIFY and response.headers.get('x-upgrade-info', '').startswith('A recommended update is available') and not os.environ.has_key('_ARGCOMPLETE'):
@@ -358,7 +361,9 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
             raise AssertionError('Should never reach this line: expected a result to have been returned by now')
         except Exception as e:
             success = False
-            if isinstance(e, _expected_exceptions):
+            if timeout and time.time() - time_started > timeout:
+                logger.error("{} {}: Timeout exceeded".format(method, url))
+            elif isinstance(e, _expected_exceptions):
                 last_exc_type, last_error, last_traceback = sys.exc_info()
                 exception_msg = traceback.format_exc().splitlines()[-1].strip()
 
