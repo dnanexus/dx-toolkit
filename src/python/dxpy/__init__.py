@@ -287,9 +287,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
     if hasattr(data, 'seek') and hasattr(data, 'tell'):
         rewind_input_buffer_offset = data.tell()
 
-    time_started, last_exc_type, last_error, last_traceback = None, None, None, None
-    if timeout:
-        time_started = time.time()
+    last_exc_type, last_error, last_traceback = None, None, None
+    time_started = time.time() if timeout else None
     try_index = 0
     while True:
         success, streaming_response_truncated = True, False
