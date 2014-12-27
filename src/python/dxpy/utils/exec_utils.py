@@ -266,7 +266,7 @@ class DXExecDependencyInstaller(object):
     runSpec hash (the former two are deprecated). Neighboring package
     dependencies of the same type are grouped.
     """
-    group_pms = ("apt", "gem", "cpan", "cran")
+    group_pms = ("apt", "gem", "cpan", "cran", "pip")
 
     def __init__(self, executable_desc, job_desc, logger=None):
         if "runSpec" not in executable_desc:
