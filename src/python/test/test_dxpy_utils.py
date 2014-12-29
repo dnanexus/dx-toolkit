@@ -178,8 +178,7 @@ class TestDXExecDependsUtils(unittest.TestCase):
                                          "buld_commands": "echo build bwa here",
                                          "stages": ["main"]}]})
         edi.install()
-        assert_cmd_ran(edi, re.escape("pip install --upgrade pytz==2014.7"))
-        assert_cmd_ran(edi, "pip install --upgrade certifi")
+        assert_cmd_ran(edi, re.escape("pip install --upgrade pytz==2014.7 certifi"))
         assert_cmd_ran(edi, "apt-get install --yes --no-install-recommends tmux")
         assert_cmd_ran(edi, re.escape("gem install rake --version 10.3.2 && gem install nokogiri"))
         assert_cmd_ran(edi, "R -e .+ install.packages.+ --args RJSONIO ggplot2")
