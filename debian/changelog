@@ -1,3 +1,9 @@
+dx-toolkit (0.127.1) precise; urgency=low
+
+  * Add pip back to the list of grouping PMs
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 30 Dec 2014 00:32:41 +0000
+
 dx-toolkit (0.127.0) precise; urgency=low
 
   * Remove import-time side effects from describing job
