@@ -1,3 +1,9 @@
+dx-toolkit (0.128.1) precise; urgency=low
+
+  * Add pip back to the list of grouping PMs
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 30 Dec 2014 00:32:27 +0000
+
 dx-toolkit (0.128.0) precise; urgency=low
 
   * Improvements to session cleanup
