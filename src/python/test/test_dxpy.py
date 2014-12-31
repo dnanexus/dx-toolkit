@@ -1886,7 +1886,6 @@ class TestHTTPResponses(unittest.TestCase):
         dxpy.DXHTTPRequest('/system/comeBackLater', {'waitUntil': server_time + 20000}, timeout=8)
         end_time = int(time.time() * 1000)
         time_elapsed = end_time - start_time
-        print("ELAPSED:", time_elapsed)
         self.assertTrue(8000 <= time_elapsed)
         self.assertTrue(time_elapsed <= 15000)
 
