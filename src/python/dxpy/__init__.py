@@ -126,6 +126,7 @@ environment variables:
 from __future__ import (print_function, unicode_literals)
 
 import os, sys, json, time, logging, platform, collections, ssl, traceback
+import errno
 import requests
 import socket
 
@@ -191,6 +192,9 @@ def _process_method_url_headers(method, url, headers):
         return method, _url, _headers
 
 
+_RETRYABLE_SOCKET_ERRORS = set([errno.ENETDOWN, errno.ENETUNREACH, errno.ECONNREFUSED])
+
+
 def _is_retryable_exception(e):
     """Returns True if the exception is always safe to retry.
 
@@ -202,16 +206,16 @@ def _is_retryable_exception(e):
     have been established, we return False.
 
     """
-    # TODO: what other errors can be safely retried?
     try:
-        # TODO: there seems to be some issue with checking isinstance(e,
-        # requests.exceptions.ConnectionError) -- the type of e reports
-        # ConnectionError but it doesn't match; could there be two
-        # classes of that name??
-        #
-        # Unfortunately requests doesn't seem to provide a sensible API
-        # to retrieve the cause
-        return isinstance(e.args[0].args[1], (socket.gaierror, socket.herror))
+        if isinstance(e, requests.exceptions.ConnectionError):
+            # Unfortunately requests doesn't seem to provide a sensible
+            # API to retrieve the cause
+            cause = e.args[0].args[1]
+            if isinstance(cause, (socket.gaierror, socket.herror)):
+                return True
+            if isinstance(cause, socket.error) and cause.errno in _RETRYABLE_SOCKET_ERRORS:
+                return True
+        return False
     except (AttributeError, TypeError, IndexError):
         return False
 

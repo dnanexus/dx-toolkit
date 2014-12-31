@@ -1877,6 +1877,23 @@ class TestHTTPResponses(unittest.TestCase):
         self.assertTrue(50000 <= time_elapsed)
         self.assertTrue(time_elapsed <= 70000)
 
+    @unittest.skip("Example of a request that should be retried")
+    def test_bad_host(self):
+        # This call shouldn't return immediately, rather it should be
+        # retried with the entire retry loop taking approximately 1
+        # minute.
+        dxpy.DXHTTPRequest('http://doesnotresolve.dnanexus.com/', {}, prepend_srv=False, always_retry=False)
+
+    @unittest.skip("Example of a request that should be retried")
+    def test_connection_refused(self):
+        # This call shouldn't return immediately, rather it should be
+        # retried with the entire retry loop taking approximately 1
+        # minute.
+        #
+        # Connecting to a port on which there is no server running
+        dxpy.DXHTTPRequest('http://localhost:20406', {}, prepend_srv=False, always_retry=False)
+
+
 class TestDataobjectFunctions(unittest.TestCase):
     def setUp(self):
         setUpTempProjects(self)
