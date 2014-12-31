@@ -24,7 +24,7 @@ command-line client.
 from __future__ import (print_function, unicode_literals)
 
 import dxpy
-from ..packages import requests
+import requests
 import dxpy.utils.printing as printing
 from ..utils.resolver import (resolve_existing_path, resolve_path, is_analysis_id, is_hashid,
                               get_last_pos_of_char, get_first_pos_of_char)
