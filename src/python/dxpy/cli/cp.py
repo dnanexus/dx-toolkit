@@ -24,9 +24,8 @@ command-line client.
 from __future__ import (print_function, unicode_literals)
 
 import dxpy
+from ..packages import requests
 import dxpy.utils.printing as printing
-from .parsers import (process_dataobject_args, process_single_dataobject_output_args,
-                      process_instance_type_arg)
 from ..utils.resolver import (resolve_existing_path, resolve_path, is_analysis_id, is_hashid,
                               get_last_pos_of_char, get_first_pos_of_char)
 from ..exceptions import (err_exit, DXCLIError, InvalidState)
@@ -41,7 +40,7 @@ def cp_to_noexistent_destination(args, dest_path, dx_dest, dest_proj):
     # Destination folder path is new => renaming
     if len(args.sources) != 1:
         # Can't copy and rename more than one object
-        parser.exit(1, 'The destination folder does not exist\n')
+        raise DXCLIError('The destination folder does not exist')
     last_slash_pos = get_last_pos_of_char('/', dest_path)
     if last_slash_pos == 0:
         dest_folder = '/'
@@ -51,8 +50,8 @@ def cp_to_noexistent_destination(args, dest_path, dx_dest, dest_proj):
     try:
         dx_dest.list_folder(folder=dest_folder, only='folders')
     except dxpy.DXAPIError as details:
-        if details.code == requests.codes.not_found:
-            parser.exit(1, 'The destination folder does not exist\n')
+        if details.code == requests.codes['not_found']:
+            raise DXCLIError('The destination folder does not exist')
         else:
             raise
     except:
@@ -68,12 +67,12 @@ def cp_to_noexistent_destination(args, dest_path, dx_dest, dest_proj):
         if is_hashid(args.sources[0]):
             # This is the only case in which the source project is
             # purely assumed, so give a better error message.
-            parser.exit(1, fill('Error: You must specify a source project for ' + args.sources[0]) + '\n')
+            raise DXCLIError(fill('Error: You must specify a source project for ' + args.sources[0]))
         else:
-            parser.exit(1, fill('A source path and the destination path resolved to the ' +
+            raise DXCLIError(fill('A source path and the destination path resolved to the ' +
                                 'same project or container.  Please specify different source ' +
                                 'and destination containers, e.g.') +
-                        '\n  dx cp source-project:source-id-or-path dest-project:dest-path' + '\n')
+                             '\n  dx cp source-project:source-id-or-path dest-project:dest-path')
 
     if src_results is None:
         try:
@@ -114,7 +113,7 @@ def cp(args):
     dest_proj, dest_path, _none = try_call(resolve_path,
                                            args.destination, 'folder')
     if dest_path is None:
-        parser.exit(1, 'Cannot copy to a hash ID\n')
+        raise DXCLIError('Cannot copy to a hash ID')
     dx_dest = dxpy.get_handler(dest_proj)
     try:
         # check if the destination exists
@@ -125,7 +124,7 @@ def cp(args):
 
     # The destination exists, we need to copy all of the sources to it.
     if len(args.sources) == 0:
-        parser.exit(1, 'No sources provided to copy to another project\n')
+        raise DXCLIError('No sources provided to copy to another project')
     src_objects = []
     src_folders = []
     for source in args.sources:
@@ -136,16 +135,16 @@ def cp(args):
             if is_hashid(source):
                 # This is the only case in which the source project is
                 # purely assumed, so give a better error message.
-                parser.exit(1, fill('Error: You must specify a source project for ' + source) + '\n')
+                raise DXCLIError(fill('Error: You must specify a source project for ' + source))
             else:
-                parser.exit(1, fill('Error: A source path and the destination path resolved ' +
+                raise DXCLIError(fill('Error: A source path and the destination path resolved ' +
                                     'to the same project or container. Please specify ' +
                                     'different source and destination containers, e.g.') +
-                            '\n  dx cp source-project:source-id-or-path dest-project:dest-path' + '\n')
+                                 '\n  dx cp source-project:source-id-or-path dest-project:dest-path')
 
         if src_proj is None:
-            parser.exit(1, fill('Error: A source project must be specified or a current ' +
-                                'project set in order to clone objects between projects') + '\n')
+            raise DXCLIError(fill('Error: A source project must be specified or a current ' +
+                                  'project set in order to clone objects between projects'))
 
         if src_results is None:
             src_folders.append(src_folderpath)

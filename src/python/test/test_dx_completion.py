@@ -136,7 +136,7 @@ class TestDXTabCompletion(unittest.TestCase):
 
     def test_subcommand_completion(self):
         self.assert_completions("dx find ", ["apps", "data", "jobs", "projects"])
-        self.assert_completions("dx new   ", ["project", "record", "gtable"])
+        self.assert_completions("dx new   ", ["project", "record", "workflow"])
 
     def test_option_completion(self):
         self.assert_completions("dx -", ["-h", "--help", "--env-help"])
