@@ -126,11 +126,11 @@ environment variables:
 from __future__ import (print_function, unicode_literals)
 
 import os, sys, json, time, logging, platform, collections, ssl, traceback
+import requests
 import socket
 
-from .packages import requests
-from .packages.requests.exceptions import ConnectionError, HTTPError, Timeout
-from .packages.requests.auth import AuthBase
+from requests.exceptions import ConnectionError, HTTPError, Timeout
+from requests.auth import AuthBase
 from .compat import USING_PYTHON2, expanduser
 
 logger = logging.getLogger(__name__)

@@ -21,7 +21,7 @@ Exceptions for the :mod:`dxpy` package.
 from __future__ import (print_function, unicode_literals)
 
 import os, sys, json, traceback, errno
-from .packages import requests
+import requests
 
 import dxpy
 

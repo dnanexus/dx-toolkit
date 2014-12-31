@@ -23,12 +23,12 @@ import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re, base64, r
 import pipes
 from contextlib import contextmanager
 import pexpect
+import requests
 
 import dxpy
 from dxpy.scripts import dx_build_app
 from dxpy_testutil import DXTestCase, check_output, temporary_project, select_project
 import dxpy_testutil as testutil
-from dxpy.packages import requests
 from dxpy.exceptions import DXAPIError, EXPECTED_ERR_EXIT_STATUS
 from dxpy.compat import str, sys_encoding
 

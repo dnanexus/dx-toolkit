@@ -32,7 +32,7 @@ import imghdr
 import json
 import os
 import re
-from dxpy.packages import requests
+import requests
 
 parser = argparse.ArgumentParser(description="Constructs and saves/uploads an HTML report from HTML and/or linked images")
 parser.add_argument("src", help="Source image or HTML file(s)", nargs="+")
