@@ -1,2 +1,2 @@
 pip==6.0.3
-setuptools==5.4.1
+setuptools==10.2
