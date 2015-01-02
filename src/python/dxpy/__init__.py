@@ -192,7 +192,14 @@ def _process_method_url_headers(method, url, headers):
         return method, _url, _headers
 
 
-_RETRYABLE_SOCKET_ERRORS = set([errno.ENETDOWN, errno.ENETUNREACH, errno.ECONNREFUSED])
+# When any of the following errors are indicated, we are sure that the
+# server never received our request and therefore the request can be
+# retried (even if the request is not idempotent).
+_RETRYABLE_SOCKET_ERRORS = {
+    errno.ENETDOWN,     # The network was down
+    errno.ENETUNREACH,  # The subnet containing the remote host was unreachable
+    errno.ECONNREFUSED  # A remote host refused to allow the network connection
+}
 
 
 def _is_retryable_exception(e):
@@ -207,7 +214,7 @@ def _is_retryable_exception(e):
 
     """
     try:
-        if isinstance(e, requests.exceptions.ConnectionError):
+        if isinstance(e, ConnectionError):
             # Unfortunately requests doesn't seem to provide a sensible
             # API to retrieve the cause
             cause = e.args[0].args[1]
