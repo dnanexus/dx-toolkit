@@ -23,7 +23,7 @@ import os, unittest, tempfile, filecmp, time, json, sys
 
 import dxpy
 import dxpy_testutil as testutil
-from dxpy.exceptions import DXAPIError, DXFileError, DXError, DXJobFailureError
+from dxpy.exceptions import DXAPIError, DXFileError, DXError, DXJobFailureError, ServiceUnavailable
 from dxpy.utils import pretty_print, warn
 
 def get_objects_from_listf(listf):
@@ -1883,7 +1883,8 @@ class TestHTTPResponses(unittest.TestCase):
     def test_dxhttprequest_timeout(self):
         start_time = int(time.time() * 1000)
         server_time = dxpy.DXHTTPRequest('/system/comeBackLater', {})['currentTime']
-        dxpy.DXHTTPRequest('/system/comeBackLater', {'waitUntil': server_time + 20000}, timeout=8)
+        with self.assertRaises(ServiceUnavailable):
+            dxpy.DXHTTPRequest('/system/comeBackLater', {'waitUntil': server_time + 20000}, timeout=8)
         end_time = int(time.time() * 1000)
         time_elapsed = end_time - start_time
         self.assertTrue(8000 <= time_elapsed)
