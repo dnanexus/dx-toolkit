@@ -20,6 +20,7 @@
 from __future__ import print_function, unicode_literals
 
 import os, unittest, tempfile, filecmp, time, json, sys
+import requests
 
 import dxpy
 import dxpy_testutil as testutil
@@ -1877,21 +1878,21 @@ class TestHTTPResponses(unittest.TestCase):
         self.assertTrue(50000 <= time_elapsed)
         self.assertTrue(time_elapsed <= 70000)
 
-    @unittest.skip("Example of a request that should be retried")
     def test_bad_host(self):
-        # This call shouldn't return immediately, rather it should be
-        # retried with the entire retry loop taking approximately 1
-        # minute.
-        dxpy.DXHTTPRequest('http://doesnotresolve.dnanexus.com/', {}, prepend_srv=False, always_retry=False)
+        # Verify that the exception raised is one that dxpy would
+        # consider to be retryable, but skip the actual retry loop
+        with self.assertRaises(requests.exceptions.ConnectionError) as exception_cm:
+            dxpy.DXHTTPRequest('http://doesnotresolve.dnanexus.com/', {}, prepend_srv=False, always_retry=False,
+                               max_retries=0)
+        self.assertTrue(dxpy._is_retryable_exception(exception_cm.exception))
 
-    @unittest.skip("Example of a request that should be retried")
     def test_connection_refused(self):
-        # This call shouldn't return immediately, rather it should be
-        # retried with the entire retry loop taking approximately 1
-        # minute.
-        #
-        # Connecting to a port on which there is no server running
-        dxpy.DXHTTPRequest('http://localhost:20406', {}, prepend_srv=False, always_retry=False)
+        # Verify that the exception raised is one that dxpy would
+        # consider to be retryable, but skip the actual retry loop
+        with self.assertRaises(requests.exceptions.ConnectionError) as exception_cm:
+            # Connecting to a port on which there is no server running
+            dxpy.DXHTTPRequest('http://localhost:20406', {}, prepend_srv=False, always_retry=False, max_retries=0)
+        self.assertTrue(dxpy._is_retryable_exception(exception_cm.exception))
 
 
 class TestDataobjectFunctions(unittest.TestCase):
