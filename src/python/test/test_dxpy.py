@@ -1878,6 +1878,9 @@ class TestHTTPResponses(unittest.TestCase):
         self.assertTrue(50000 <= time_elapsed)
         self.assertTrue(time_elapsed <= 70000)
 
+    def test_generic_exception_not_retryable(self):
+        self.assertFalse(dxpy._is_retryable_exception(KeyError('oops')))
+
     def test_bad_host(self):
         # Verify that the exception raised is one that dxpy would
         # consider to be retryable, but truncate the actual retry loop
