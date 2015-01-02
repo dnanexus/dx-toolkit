@@ -376,6 +376,9 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                         # parse that, but the apiserver doesn't generate
                         # such responses anyway.
                         seconds_to_wait = DEFAULT_RETRY_AFTER_INTERVAL
+                    if timeout:
+                        time_left = int(max(1, time_started + timeout - time.time()))
+                        seconds_to_wait = min(seconds_to_wait, time_left)
                     logger.warn("%s %s: %s. Waiting %d seconds due to server unavailability..."
                                 % (method, url, exception_msg, seconds_to_wait))
                     time.sleep(seconds_to_wait)
