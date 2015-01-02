@@ -126,7 +126,10 @@ environment variables:
 from __future__ import (print_function, unicode_literals)
 
 import os, sys, json, time, logging, platform, collections, ssl, traceback
+import errno
 import requests
+import socket
+
 from requests.exceptions import ConnectionError, HTTPError, Timeout
 from requests.auth import AuthBase
 from .compat import USING_PYTHON2, expanduser
@@ -187,6 +190,42 @@ def _process_method_url_headers(method, url, headers):
         return method.encode(), _url.encode('utf-8'), {k.encode(): v.encode() for k, v in _headers.items()}
     else:
         return method, _url, _headers
+
+
+# When any of the following errors are indicated, we are sure that the
+# server never received our request and therefore the request can be
+# retried (even if the request is not idempotent).
+_RETRYABLE_SOCKET_ERRORS = {
+    errno.ENETDOWN,     # The network was down
+    errno.ENETUNREACH,  # The subnet containing the remote host was unreachable
+    errno.ECONNREFUSED  # A remote host refused to allow the network connection
+}
+
+
+def _is_retryable_exception(e):
+    """Returns True if the exception is always safe to retry.
+
+    This is True if the client was never able to establish a connection
+    to the server (for example, name resolution failed or the connection
+    could otherwise not be initialized).
+
+    Conservatively, if we can't tell whether a network connection could
+    have been established, we return False.
+
+    """
+    try:
+        if isinstance(e, ConnectionError):
+            # Unfortunately requests doesn't seem to provide a sensible
+            # API to retrieve the cause
+            cause = e.args[0].args[1]
+            if isinstance(cause, (socket.gaierror, socket.herror)):
+                return True
+            if isinstance(cause, socket.error) and cause.errno in _RETRYABLE_SOCKET_ERRORS:
+                return True
+        return False
+    except (AttributeError, TypeError, IndexError):
+        return False
+
 
 def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeout=None,
                   use_compression=None, jsonify_data=True, want_full_response=False,
@@ -388,13 +427,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                     # permitted retries.
                     continue
 
-                # TODO: if the socket was dropped mid-request,
-                # ConnectionError or httplib.IncompleteRead is raised, but
-                # non-idempotent requests can be unsafe to retry. We should
-                # distinguish between connection initiation errors and
-                # dropped socket errors. Currently the former are not
-                # retried even if it might be safe to do so.
-
                 # Total number of allowed tries is the initial try + up to
                 # (max_retries) subsequent retries.
                 total_allowed_tries = max_retries + 1
@@ -403,8 +435,9 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                 # tries that have failed so far, minus one. Test whether we
                 # have exhausted all retries.
                 if try_index + 1 < total_allowed_tries:
-                    if response is None or isinstance(e, exceptions.ContentLengthError) or streaming_response_truncated:
-                        ok_to_retry = always_retry or (method == 'GET')
+                    if response is None or isinstance(e, exceptions.ContentLengthError) or \
+                       streaming_response_truncated:
+                        ok_to_retry = always_retry or (method == 'GET') or _is_retryable_exception(e)
                     else:
                         ok_to_retry = 500 <= response.status_code < 600
 
