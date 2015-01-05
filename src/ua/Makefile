@@ -50,6 +50,15 @@ LDFLAGS = -L$(boost_dir)/stage/lib -L$(curl_dir)/lib -L$(cares_dir)/lib -L$(libm
 
 UNAME := $(shell uname)
 
+# Determine path to OS X dyldinfo util; as of 10.9 it's no longer in /usr/bin
+# If it's not in PATH, set it to the usual default location:
+ifeq ($(UNAME), Darwin)
+	DYLDINFO_PATH := $(shell type -p dyldinfo)
+	ifndef DYLDINFO_PATH
+		DYLDINFO_PATH := /Library/Developer/CommandLineTools/usr/bin/dyldinfo
+	endif
+endif
+
 # We use the -std=gnu++0x flag instead of c++0x for Windows compilation, because
 # c++0x mode turns on the __STRICT_ANSI__ flag, which forbids functions such as fseeko64() (which we use)
 ifeq ($(OS), Windows_NT)
@@ -58,16 +67,25 @@ ifeq ($(OS), Windows_NT)
 	LDFLAGS += -lcurl.dll -lcares.dll -lboost_program_options-mt.dll -lboost_filesystem-mt.dll -lboost_system-mt.dll -lboost_thread-mt.dll -lboost_regex-mt.dll
 else
 	LDFLAGS += -pthread -lcurl -lcares -lboost_program_options-mt -lboost_filesystem-mt -lboost_system-mt -lboost_thread-mt -lboost_regex-mt
+
 	ifeq ($(UNAME), Darwin)
 		CXXFLAGS += -DMAC_BUILD=1 -std=c++0x
 		LDFLAGS += -Wl,-headerpad,100
+		ifeq ($(CC), clang)
+			CXXFLAGS += -stdlib=libc++
+		endif
 	else
 		CXXFLAGS += -DLINUX_BUILD=1 -std=c++0x
 		LDFLAGS += -lrt -lidn -static
 	endif
 endif
 
-LDFLAGS += -lssl -lcrypto -lz -ldl -lmagic -lstdc++ -lm
+LDFLAGS += -lssl -lcrypto -lz -ldl -lmagic -lm
+ifeq ($(UNAME)$(CC), Darwinclang)
+	LDFLAGS += -lc++
+else
+	LDFLAGS += -lstdc++
+endif
 
 dxjson_objs = dxjson.o
 dxhttp_objs = SimpleHttp.o SimpleHttpHeaders.o Utility.o
@@ -99,11 +117,15 @@ else ifeq ($(UNAME), Linux)
 else ifeq ($(UNAME), Darwin)
 	cp -af {$(curl_dir)/lib,$(cares_dir)/lib,$(libmagic_dir)/lib,$(boost_dir)/stage/lib,$(openssl_dir)}/*.dylib dist/
 	mkdir -p dist/resources && install ca-certificates.crt dist/resources/
-	install $$(dyldinfo -dylibs ua|grep libstdc++) dist/
-	install $$(dyldinfo -dylibs ua|grep libgcc) dist/
+ifeq ($(CC), clang)
+	install $$($(DYLDINFO_PATH) -dylibs ua|grep libc++) dist/
+else
+	install $$($(DYLDINFO_PATH) -dylibs ua|grep libstdc++) dist/
+	install $$($(DYLDINFO_PATH) -dylibs ua|grep libgcc) dist/
+endif
 	install -s ua dist/
 	for bin in dist/ua dist/*.dylib; do \
-	    for lib in $$(dyldinfo -dylibs $$bin|egrep -v '(for arch|attributes|/usr/lib)'); do \
+	    for lib in $$($(DYLDINFO_PATH) -dylibs $$bin|egrep -v '(for arch|attributes|/usr/lib)'); do \
 	        install_name_tool -change $$lib "@loader_path/$$(basename $$lib)" $$bin; \
 	    done; \
 	done

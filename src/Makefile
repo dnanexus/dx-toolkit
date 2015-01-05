@@ -348,15 +348,26 @@ else
 endif
 	$(MAKE) -C openssl -j1 install
 
-BOOST_PV=1.55
-BOOST_SHA=cef9a0cc7084b1d639e06cd3bc34e4251524c840
 BOOST_LIBS=filesystem,program_options,regex,system,thread,atomic,chrono,date_time,exception,iostreams,signals
+
+ifeq ($(UNAME)$(CC), Darwinclang)
+	BOOST_MAJOR=1
+	BOOST_MINOR=56
+	BOOST_PV=$(BOOST_MAJOR).$(BOOST_MINOR)
+	BOOST_URL=http://downloads.sourceforge.net/project/boost/boost/${BOOST_PV}.0/boost_${BOOST_MAJOR}_${BOOST_MINOR}_0.tar.bz2
+	BOOST_SHA=f94bb008900ed5ba1994a1072140590784b9b5df
+else
+	BOOST_PV=1.55
+	BOOST_URL=${UBUNTU_MIRROR}/pool/universe/b/boost${BOOST_PV}/boost${BOOST_PV}_${BOOST_PV}.0.orig.tar.bz2
+	BOOST_SHA=cef9a0cc7084b1d639e06cd3bc34e4251524c840
+endif
+
 boost: boost/stage
 
 # See https://svn.boost.org/trac/boost/ticket/5680 for Windows/MinGW details
 boost/stage: shasum
 	mkdir -p boost
-	curl ${UBUNTU_MIRROR}/pool/universe/b/boost${BOOST_PV}/boost${BOOST_PV}_${BOOST_PV}.0.orig.tar.bz2 > boost-$(BOOST_PV).tar.bz2
+	curl -L ${BOOST_URL} > boost-$(BOOST_PV).tar.bz2
 	[[ $$(shasum boost-$(BOOST_PV).tar.bz2|cut -f 1 -d ' ') == $(BOOST_SHA) ]]
 	tar -xjf boost-$(BOOST_PV).tar.bz2 -C boost --strip-components=1
 ifeq ($(OS), Windows_NT)
@@ -366,6 +377,9 @@ ifeq ($(OS), Windows_NT)
 else ifeq ($(CENTOS_MAJOR_VERSION), 5)
 	echo 'using gcc : 4.4 : g++44 ;' >> boost/tools/build/v2/user-config.jam
 	$(MAKE) boost_build
+else ifeq ($(UNAME)$(CC), Darwinclang)
+	cd boost; ./bootstrap.sh --with-libraries=${BOOST_LIBS} --with-toolset=clang
+	cd boost; ./b2 --layout=tagged -j8 stage cxxflags="-std=c++11 -stdlib=libc++" linkflags="-stdlib=libc++" toolset=clang
 else
 	$(MAKE) boost_build
 endif
