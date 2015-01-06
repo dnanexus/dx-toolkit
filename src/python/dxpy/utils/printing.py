@@ -138,6 +138,8 @@ def pager(content, pager=None, file=None):
         pager_process.stdin.write(content.encode(sys_encoding))
         pager_process.stdin.close()
         pager_process.wait()
+        if pager_process.returncode != os.EX_OK:
+            raise DXCLIError() # Pager had a problem, print the content without it
     except:
         file.write(content.encode(sys_encoding) if USING_PYTHON2 else content)
     finally:
