@@ -1,3 +1,9 @@
+dx-toolkit (0.128.2) precise; urgency=low
+
+  * Test fixes 
+
+ -- Ric Medlinger <ric@dnanexus.com>  Wed, 07 Jan 2015 22:22:17 +0000
+
 dx-toolkit (0.128.1) precise; urgency=low
 
   * Add pip back to the list of grouping PMs
