@@ -1,3 +1,15 @@
+dx-toolkit (0.129.0) precise; urgency=low
+
+  * Support building SDK and UA with clang
+
+  * Bump setuptools and friends to fix installation issues
+
+  * Retry ConnectionErrors even for non-idempotent requests
+
+  * Various bug fixes
+
+ -- Ric Medlinger <ric@dnanexus.com>  Wed, 07 Jan 2015 15:58:16 +0000
+
 dx-toolkit (0.128.0) precise; urgency=low
 
   * Improvements to session cleanup
