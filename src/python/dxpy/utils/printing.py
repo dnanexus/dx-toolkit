@@ -104,11 +104,9 @@ def set_delimiter(delim=None):
     delimiter = delim
 
 def get_delimiter(delim=None):
-    global delimiter
     return delimiter
 
 def DELIMITER(alt_delim):
-    global delimiter
     return alt_delim if delimiter is None else delimiter
 
 def fill(string, width_adjustment=0, **kwargs):
