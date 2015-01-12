@@ -23,7 +23,7 @@ those parsers.
 from __future__ import (print_function, unicode_literals)
 
 import argparse, json, os
-from ..utils.env import set_env_var
+from .. import config
 from ..utils.printing import fill
 from ..utils.pretty_print import format_table
 from ..utils.resolver import split_unescaped
@@ -188,37 +188,23 @@ def set_env_from_args(args):
     '''
     args = vars(args)
 
-    require_initialize = False
-
     if args.get('apiserver_host') is not None:
-        os.environ['DX_APISERVER_HOST'] = args['apiserver_host']
-        require_initialize = True
+        config['DX_APISERVER_HOST'] = args['apiserver_host']
     if args.get('apiserver_port') is not None:
-        os.environ['DX_APISERVER_PORT'] = args['apiserver_port']
-        require_initialize = True
+        config['DX_APISERVER_PORT'] = args['apiserver_port']
     if args.get('apiserver_protocol') is not None:
-        os.environ['DX_APISERVER_PROTOCOL'] = args['apiserver_protocol']
-        require_initialize = True
+        config['DX_APISERVER_PROTOCOL'] = args['apiserver_protocol']
     if args.get('project_context_id') is not None:
-        os.environ['DX_PROJECT_CONTEXT_ID'] = args['project_context_id']
-        require_initialize = True
+        config['DX_PROJECT_CONTEXT_ID'] = args['project_context_id']
     if args.get('workspace_id') is not None:
-        os.environ['DX_WORKSPACE_ID'] = args['workspace_id']
-        require_initialize = True
+        config['DX_WORKSPACE_ID'] = args['workspace_id']
     if args.get('cli_wd') is not None:
-        set_env_var('DX_CLI_WD', args['cli_wd'])
-        require_initialize = True
+        config['DX_CLI_WD'] = args['cli_wd']
     if args.get('security_context') is not None:
-        os.environ['DX_SECURITY_CONTEXT'] = args['security_context']
-        require_initialize = True
+        config['DX_SECURITY_CONTEXT'] = args['security_context']
     if args.get('auth_token') is not None:
-        os.environ['DX_SECURITY_CONTEXT'] = json.dumps({"auth_token": args['auth_token'],
-                                                        "auth_token_type": "Bearer"})
-        require_initialize = True
-
-    if require_initialize:
-        from dxpy import _initialize
-        _initialize(suppress_warning=True)
+        config['DX_SECURITY_CONTEXT'] = json.dumps({"auth_token": args['auth_token'],
+                                                    "auth_token_type": "Bearer"})
 
 extra_args = argparse.ArgumentParser(add_help=False)
 extra_args.add_argument('--extra-args', help=fill("Arguments (in JSON format) to pass to the underlying API method, overriding the default settings", width_adjustment=-24))

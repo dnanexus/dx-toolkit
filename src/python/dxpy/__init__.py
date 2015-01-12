@@ -561,8 +561,6 @@ def set_project_context(dxid):
     global PROJECT_CONTEXT_ID
     PROJECT_CONTEXT_ID = dxid
 
-from .utils.env import get_env
-
 def get_auth_server_name(host_override=None, port_override=None):
     """
     Chooses the auth server name from the currently configured API server name.
@@ -582,47 +580,9 @@ def get_auth_server_name(host_override=None, port_override=None):
         err_msg = "Could not determine which auth server is associated with {apiserver}."
         raise exceptions.DXError(err_msg.format(apiserver=APISERVER_HOST))
 
-def _initialize(suppress_warning=False):
-    '''
-    :param suppress_warning: Whether to suppress the warning message for any mismatch found in the environment variables and the dx configuration file
-    :type suppress_warning: boolean
-    '''
-    global _DEBUG, _UPGRADE_NOTIFY
-    try:
-        _DEBUG = int(os.environ.get('_DX_DEBUG', 0))
-    except ValueError as e:
-        print('WARNING: Expected _DX_DEBUG to be an integer, but got %r' % (os.environ['_DX_DEBUG'],),
-              file=sys.stderr)
-        _DEBUG = 0
-    _UPGRADE_NOTIFY = expanduser('~/.dnanexus_config/.upgrade_notify')
-    if os.path.exists(_UPGRADE_NOTIFY) and os.path.getmtime(_UPGRADE_NOTIFY) > time.time() - 86400: # 24 hours
-        _UPGRADE_NOTIFY = False
-
-    env_vars = get_env(suppress_warning)
-    for var in env_vars:
-        if env_vars[var] is not None:
-            os.environ[var] = env_vars[var]
-
-    set_api_server_info(host=os.environ.get("DX_APISERVER_HOST", None),
-                        port=os.environ.get("DX_APISERVER_PORT", None),
-                        protocol=os.environ.get("DX_APISERVER_PROTOCOL", None))
-
-    if "DX_SECURITY_CONTEXT" in os.environ:
-        set_security_context(json.loads(os.environ['DX_SECURITY_CONTEXT']))
-
-    if "DX_JOB_ID" in os.environ:
-        set_job_id(os.environ["DX_JOB_ID"])
-        if "DX_WORKSPACE_ID" in os.environ:
-            set_workspace_id(os.environ["DX_WORKSPACE_ID"])
-        if "DX_PROJECT_CONTEXT_ID" in os.environ:
-            set_project_context(os.environ["DX_PROJECT_CONTEXT_ID"])
-    else:
-        if "DX_PROJECT_CONTEXT_ID" in os.environ:
-            set_workspace_id(os.environ["DX_PROJECT_CONTEXT_ID"])
-            set_project_context(os.environ["DX_PROJECT_CONTEXT_ID"])
-
-_initialize()
-
 from .bindings import *
 from .dxlog import DXLogHandler
 from .utils.exec_utils import run, entry_point
+from .utils.config import DXConfig as _DXConfig
+
+config = _DXConfig()

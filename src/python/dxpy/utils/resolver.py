@@ -31,7 +31,6 @@ import dxpy
 from .describe import get_ls_l_desc
 from ..exceptions import DXError
 from ..compat import str, input
-from ..utils.env import get_env_var
 from ..cli import INTERACTIVE_CLI
 
 def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False, more_choices=False):
@@ -466,7 +465,7 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
         project = dxpy.WORKSPACE_ID
         if expected == 'folder' and project is None:
             raise ResolutionError('a project context was expected for a path, but a current project is not set, nor was one provided in the path (preceding a colon) in "' + path + '"')
-        wd = get_env_var('DX_CLI_WD', u'/')
+        wd = dxpy.config.get('DX_CLI_WD', u'/')
 
     # Determine folderpath and entity_name if necessary
     if folderpath is None:

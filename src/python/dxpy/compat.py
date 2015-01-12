@@ -151,18 +151,20 @@ class _Environ(object):
             item = item.encode(sys_encoding)
         return True if item in os.environ else False
 
-    def __getattr__(self, attr):
-        return getattr(os.environ, attr)
-
     def __repr__(self):
-        return repr(os.environ)
+        return repr(dict(self))
 
     def __iter__(self):
         for key in os.environ:
+            if isinstance(key, bytes):
+                key = key.decode(sys_encoding)
             yield key
 
     def copy(self):
         return {key: self[key] for key in self}
+
+    def copy(self):
+        return dict(self)
 
 environ = _Environ()
 

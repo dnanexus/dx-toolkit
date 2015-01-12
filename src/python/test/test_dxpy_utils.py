@@ -19,10 +19,11 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import unittest, time, json, re
+import unittest, time, json, re, os
+import dxpy
 from dxpy import AppError, AppInternalError, DXFile, DXRecord
 from dxpy.utils import (describe, exec_utils, genomic_utils, response_iterator, get_futures_threadpool, DXJSONEncoder,
-                        normalize_timedelta)
+                        normalize_timedelta, config)
 from dxpy.utils.exec_utils import DXExecDependencyInstaller
 from dxpy.compat import USING_PYTHON2
 
@@ -211,6 +212,28 @@ class TestTimeUtils(unittest.TestCase):
                      ("1M", 1000*60*60*24*30),
                      ("-1w", -1000*60*60*24*7)):
             self.assertEqual(normalize_timedelta(i), o)
+
+class TestDXConfig(unittest.TestCase):
+    def test_dxconfig(self):
+        environ_backup = os.environ.copy()
+        try:
+            c = config.DXConfig()
+            for var in c.VAR_NAMES:
+                value = '{"foo": "bar"}'
+                c[var] = value
+                if var in c.CORE_VAR_NAMES - {"DX_SECURITY_CONTEXT", "DX_WORKSPACE_ID"}:
+                    self.assertEqual(getattr(dxpy, var.lstrip("DX_")), value)
+                elif var == "DX_SECURITY_CONTEXT":
+                    self.assertEqual(json.dumps(dxpy.SECURITY_CONTEXT), value)
+                del c[var]
+            c.update(DX_CLI_WD="/")
+            self.assertIn("DX_CLI_WD", c)
+            self.assertEqual(c["DX_CLI_WD"], "/")
+            self.assertEqual(c.pop("DX_CLI_WD"), "/")
+            self.assertEqual(c.pop("DX_CLI_WD", "sentinel"), "sentinel")
+        finally:
+            os.environ.update(environ_backup)
+            dxpy.config.__init__(suppress_warning=True)
 
 if __name__ == '__main__':
     unittest.main()
