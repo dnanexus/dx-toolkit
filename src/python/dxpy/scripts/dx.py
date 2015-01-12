@@ -1250,11 +1250,13 @@ def new_record(args):
     try_call(process_dataobject_args, args)
     try_call(process_single_dataobject_output_args, args)
     init_from = None
+
     if args.init is not None:
         init_project, _init_folder, init_result = try_call(resolve_existing_path,
                                                            args.init,
                                                            expected='entity')
         init_from = dxpy.DXRecord(dxid=init_result['id'], project=init_project)
+
     if args.output is None:
         project = dxpy.WORKSPACE_ID
         folder = get_env_var('DX_CLI_WD', u'/')
@@ -1269,6 +1271,7 @@ def new_record(args):
                                      hidden=args.hidden, properties=args.properties,
                                      details=args.details,
                                      folder=folder,
+                                     close=args.close,
                                      parents=args.parents, init_from=init_from)
         if args.brief:
             print(dxrecord.get_id())
@@ -4051,6 +4054,7 @@ parser_new_record = subparsers_new.add_parser('record', help='Create a new recor
                                               formatter_class=argparse.RawTextHelpFormatter,
                                               prog='dx new record')
 init_action = parser_new_record.add_argument('--init', help='Path to record from which to initialize all metadata')
+parser_new_record.add_argument('--close', help='Close the record immediately after creating it', action='store_true')
 init_action.completer = DXPathCompleter(classes=['record'])
 parser_new_record.set_defaults(func=new_record)
 register_subparser(parser_new_record, subparsers_action=subparsers_new, categories='fs')

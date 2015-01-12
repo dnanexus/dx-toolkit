@@ -329,6 +329,13 @@ class TestDXClient(DXTestCase):
         shell.sendline("echo find projects | dx sh")
         shell.expect("project-")
 
+    def test_dx_new_record_with_close(self):
+        record_id = run("dx new record --close --brief").strip()
+        self.assertEqual("closed", dxpy.describe(record_id)['state'])
+
+        second_record_id = run("dx new record --brief").strip()
+        self.assertEqual("open", dxpy.describe(second_record_id)['state'])
+
     def test_dx_get_record(self):
         with chdir(tempfile.mkdtemp()):
             run("dx new record -o :foo --verbose")
