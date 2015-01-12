@@ -76,7 +76,7 @@ class DXRecord(DXDataObject):
     _close = staticmethod(dxpy.api.record_close)
     _list_projects = staticmethod(dxpy.api.record_list_projects)
 
-    def _new(self, dx_hash, **kwargs):
+    def _new(self, dx_hash, close=False, **kwargs):
         """
         :param dx_hash: Standard hash populated in :func:`dxpy.bindings.DXDataObject.new()` containing attributes common to all data object classes.
         :type dx_hash: dict
@@ -98,9 +98,8 @@ class DXRecord(DXDataObject):
                      "project": kwargs["init_from"].get_proj_id()}
             del kwargs["init_from"]
 
-        if "close" in kwargs:
-            dx_hash["close"] = kwargs["close"]
-            del kwargs["close"]
+        if close:
+            dx_hash["close"] = True
 
         resp = dxpy.api.record_new(dx_hash, **kwargs)
         self.set_ids(resp["id"], dx_hash["project"])
