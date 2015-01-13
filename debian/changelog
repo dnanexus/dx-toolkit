@@ -1,3 +1,11 @@
+dx-toolkit (0.130.0) precise; urgency=low
+
+  * dx new record --close
+
+  * Fix possible boost issue on clang builds
+
+ -- Ric Medlinger <ric@dnanexus.com>  Tue, 13 Jan 2015 22:06:19 +0000
+
 dx-toolkit (0.129.0) precise; urgency=low
 
   * Support building SDK and UA with clang
