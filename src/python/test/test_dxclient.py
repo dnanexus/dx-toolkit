@@ -767,7 +767,7 @@ class TestDXClient(DXTestCase):
             dx.expect("Project: dxclient_test_pr\xf6ject".encode(sys_encoding))
             dx.expect("The job is running in terminal 1.", timeout=5)
             # Check for terminal prompt and verify we're in the container
-            job_id = dxpy.find_jobs(name="sleep").next()['id']
+            job_id = dxpy.find_jobs(name="sleep", project=self.project).next()['id']
             dx.expect(("dnanexus@%s" % job_id), timeout=10)
 
             # Make sure the job can be connected to using 'dx ssh <job id>'
@@ -2937,7 +2937,7 @@ class TestDXBuildApp(DXTestCase):
         job_name = ("remote_build_test_run_" + str(int(time.time() * 1000)) + "_" +
                     str(random.randint(0, 1000)))
         run("dx build --remote " + app_dir + " --run -y --name=" + job_name)
-        resulting_jobs = list(dxpy.find_executions(name=job_name, return_handler=True))
+        resulting_jobs = list(dxpy.find_executions(name=job_name, project=self.project, return_handler=True))
         self.assertEqual(1, len(resulting_jobs))
         self.assertEqual('minimal_remote_build_applet_to_run',
                          resulting_jobs[0].describe()['executableName'])
