@@ -61,7 +61,7 @@ def parse_obj(string, klass):
         return {'$dnanexus_link': {"project": entity_result['describe']['project'],
                                    "id": entity_result['id']}}
 
-dx_data_classes = ['record', 'gtable', 'file', 'applet', 'table']
+dx_data_classes = ['record', 'gtable', 'file', 'applet', 'workflow']
 
 parse_input = {'boolean': parse_bool,
                'string': (lambda string: string),
@@ -72,9 +72,9 @@ parse_input = {'boolean': parse_bool,
                'gtable': (lambda string: parse_obj(string, 'gtable')),
                'file': (lambda string: parse_obj(string, 'file')),
                'applet': (lambda string: parse_obj(string, 'applet')),
+               'workflow': (lambda string: parse_obj(string, 'workflow')),
                'job': (lambda string: {'$dnanexus_link': string}),
-               'app': (lambda string: {'$dnanexus_link': string}),
-               'table': (lambda string: parse_obj(string, 'table'))}
+               'app': (lambda string: {'$dnanexus_link': string})}
 
 def _construct_jbor(job_id, field_name_and_maybe_index):
     '''

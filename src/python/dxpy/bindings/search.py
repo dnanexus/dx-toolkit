@@ -73,7 +73,9 @@ def find_data_objects(classname=None, state=None, visibility=None,
                       return_handler=False, first_page_size=100,
                       **kwargs):
     """
-    :param classname: Class with which to restrict the search, i.e. one of "record", "file", "gtable", "table", "applet", "workflow"
+    :param classname:
+        Class with which to restrict the search, i.e. one of "record",
+        "file", "gtable", "applet", "workflow"
     :type classname: string
     :param state: State of the object ("open", "closing", "closed", "any")
     :type state: string

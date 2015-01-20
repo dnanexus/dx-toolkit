@@ -112,7 +112,7 @@ namespace dx {
   {
     vector<string> pieces  = Split(s, '-');
     return ((pieces.size() == 2) &&
-            (pieces[0] == "record" || pieces[0] == "gtable" || pieces[0] == "file" || pieces[0] == "table" || pieces[0] == "applet") &&
+            (pieces[0] == "record" || pieces[0] == "gtable" || pieces[0] == "file" || pieces[0] == "applet") &&
             (IsId(pieces[1])));
   }
 

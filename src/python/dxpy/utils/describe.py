@@ -574,7 +574,7 @@ def print_data_obj_desc(desc, verbose=False):
                 else:
                     print_field("Size", str(desc['size']))
             elif field == "length":
-                if desc["class"] == "gtable" or desc['class'] == 'table':
+                if desc["class"] == "gtable":
                     print_field("Size (rows)", str(desc['length']))
                 else:
                     print_field("Length", str(desc['length']))
