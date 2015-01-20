@@ -1809,7 +1809,12 @@ class TestDXSearch(unittest.TestCase):
             for i in range(len(methods)):
                 conditions = dict(common_conditions, **query['conditions'])
                 conditions['launched_by'] = me
-                results = list(methods[i](**conditions))
+                try:
+                    results = list(methods[i](**conditions))
+                except:
+                    print('Exception occurred when processing query: %r, method: %r' % (query, methods[i]),
+                          file=sys.stderr)
+                    raise
                 if len(results) != query['n_results'][i]:
                     raise Exception("Query " + json.dumps(query['conditions']) + " returned " + str(len(results)) + ", but " + str(query['n_results'][i]) + " were expected")
                 self.assertEqual(len(results), query['n_results'][i])
