@@ -24,6 +24,7 @@ import string
 import random
 import sys
 import argparse
+import os
 
 # to find the magic library
 import magic
@@ -581,10 +582,14 @@ def import_BED(**args):
     current_file = 1
 
     for import_filename in split_on_track(bed_filename_uncomp):
+        try:
+            bed_basename = os.path.basename(bed_filename)
+        except:
+            bed_basename = bed_filename
         if current_file == 1:
-            name = bed_filename
+            name = bed_basename
         else:
-            name = bed_filename+"_"+str(current_file)
+            name = bed_basename+"_"+str(current_file)
         current_file += 1
         bed_type = detect_type(import_filename)["type"]
         delimiter = detect_type(import_filename)["delimiter"]
