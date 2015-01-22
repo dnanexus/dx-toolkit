@@ -1684,15 +1684,6 @@ def download(args):
     def list_subfolders(project, path, recurse=True):
         if project not in cached_folder_lists:
             cached_folder_lists[project] = dxpy.get_handler(project).describe(input_params={'folders': True})['folders']
-            if '/' in cached_folder_lists[project]:
-                # In a directory structure like:
-                # /
-                #   A/
-                #   B/
-                # The subdir list is: ['/', '/A', '/B']. This code removes the
-                # '/' from the list. Otherwise, everything is downloaded twice
-                # (PTFM-14106).
-                cached_folder_lists[project].remove('/')
         # TODO: support shell-style path globbing (i.e. /a*/c matches /ab/c but not /a/b/c)
         # return pathmatch.filter(cached_folder_lists[project], os.path.join(path, '*'))
         if recurse:
