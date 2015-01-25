@@ -450,7 +450,7 @@ class TestDXGTable(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.dxgtable.add_rows(data=[["303", 1.248, 123, "True"]], part=4) # Bad column 3
         # Correct column types
-        self.dxgtable.add_rows(data=[[u"303", 1.248, 123, True]], part=5)
+        self.dxgtable.add_rows(data=[["303", 1.248, 123, True]], part=5)
         self.dxgtable.close(block=True)
 
     def test_add_rows_no_index(self):
@@ -692,10 +692,10 @@ class TestDXGTable(unittest.TestCase):
                                           indices=[lex_index])
         self.dxgtable.close(block=True)
         desc = self.dxgtable.describe()
-        self.assertEqual({u"name": u"search",
-                          u"type": u"lexicographic",
-                          u"columns": [{u"name": u"a", u"order": u"asc", u"caseSensitive": False},
-                                       {u"name": u"b", u"order": u"desc"}]},
+        self.assertEqual({"name": "search",
+                          "type": "lexicographic",
+                          "columns": [{"name": "a", "order": "asc", "caseSensitive": False},
+                                       {"name": "b", "order": "desc"}]},
                          desc['indices'][0])
 
     # TODO: Test with > 1 index
@@ -1841,12 +1841,12 @@ class TestDXSearch(unittest.TestCase):
 
 class TestPrettyPrint(unittest.TestCase):
     def test_string_escaping(self):
-        self.assertEqual(pretty_print.escape_unicode_string("a"), u"a")
-        self.assertEqual(pretty_print.escape_unicode_string("foo\nbar"), u"foo\\nbar")
-        self.assertEqual(pretty_print.escape_unicode_string("foo\x11bar"), u"foo\\x11bar")
-        self.assertEqual(pretty_print.escape_unicode_string("foo\n\t\rbar"), u"foo\\n\\t\\rbar")
-        self.assertEqual(pretty_print.escape_unicode_string("\n\\"), u"\\n\\\\")
-        self.assertEqual(pretty_print.escape_unicode_string(u"ïñtérnaçiònale"), u"ïñtérnaçiònale")
+        self.assertEqual(pretty_print.escape_unicode_string("a"), "a")
+        self.assertEqual(pretty_print.escape_unicode_string("foo\nbar"), "foo\\nbar")
+        self.assertEqual(pretty_print.escape_unicode_string("foo\x11bar"), "foo\\x11bar")
+        self.assertEqual(pretty_print.escape_unicode_string("foo\n\t\rbar"), "foo\\n\\t\\rbar")
+        self.assertEqual(pretty_print.escape_unicode_string("\n\\"), "\\n\\\\")
+        self.assertEqual(pretty_print.escape_unicode_string("ïñtérnaçiònale"), "ïñtérnaçiònale")
 
 class TestWarn(unittest.TestCase):
     def test_warn(self):

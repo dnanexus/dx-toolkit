@@ -51,16 +51,16 @@ class TestErrorSanitizing(unittest.TestCase):
         # ASCII str
         self.assertEqual(exec_utils._safe_unicode(ValueError("foo")), "foo")
         # UTF-8 encoded str
-        self.assertEqual(exec_utils._safe_unicode(ValueError(u"crème".encode("utf-8"))),
-                         u"cr\xe8me" if USING_PYTHON2 else u"b'cr\\xc3\\xa8me'")
+        self.assertEqual(exec_utils._safe_unicode(ValueError("crème".encode("utf-8"))),
+                         "cr\xe8me" if USING_PYTHON2 else "b'cr\\xc3\\xa8me'")
         # Unicode obj
-        self.assertEqual(exec_utils._safe_unicode(ValueError(u"brûlée")), u"br\xfbl\xe9e")
+        self.assertEqual(exec_utils._safe_unicode(ValueError("brûlée")), "br\xfbl\xe9e")
         # Not UTF-8
         if USING_PYTHON2:
             expected = "Invalid read name: D??n?x?s [Raw error message: 496e76616c69642072656164206e616d653a2044d1c16ee878fb73]"
         else:
             expected = "b'Invalid read name: D\\xd1\\xc1n\\xe8x\\xfbs'"
-        self.assertEqual(exec_utils._safe_unicode(ValueError(u"Invalid read name: DÑÁnèxûs".encode("ISO-8859-1"))), expected)
+        self.assertEqual(exec_utils._safe_unicode(ValueError("Invalid read name: DÑÁnèxûs".encode("ISO-8859-1"))), expected)
 
     def test_formatting_exceptions(self):
         self.assertEqual(exec_utils._format_exception_message(ValueError("foo")), "ValueError: foo")
@@ -69,11 +69,11 @@ class TestErrorSanitizing(unittest.TestCase):
 class TestGenomicUtils(unittest.TestCase):
     def test_reverse_complement(self):
         self.assertEqual(b"TTTTAAACCG", genomic_utils.reverse_complement(b"CGGTTTAAAA"))
-        self.assertEqual(b"TTTTAAACCG", genomic_utils.reverse_complement(u"CGGTTTAAAA"))
+        self.assertEqual(b"TTTTAAACCG", genomic_utils.reverse_complement("CGGTTTAAAA"))
         self.assertEqual(b"TTTTAAACCG", genomic_utils.reverse_complement(b"cggtttaaaa"))
-        self.assertEqual(b"TTTTAAACCG", genomic_utils.reverse_complement(u"cggtttaaaa"))
+        self.assertEqual(b"TTTTAAACCG", genomic_utils.reverse_complement("cggtttaaaa"))
         self.assertEqual(b"NNNNNTTTTAAACCG", genomic_utils.reverse_complement(b"CGGTTTAAAANNNNN"))
-        self.assertEqual(b"NNNNNTTTTAAACCG", genomic_utils.reverse_complement(u"CGGTTTAAAANNNNN"))
+        self.assertEqual(b"NNNNNTTTTAAACCG", genomic_utils.reverse_complement("CGGTTTAAAANNNNN"))
         with self.assertRaises(ValueError):
             genomic_utils.reverse_complement("oops")
 
