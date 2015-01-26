@@ -17,6 +17,7 @@
 from __future__ import (print_function, unicode_literals)
 
 import os, sys, io, locale
+import collections as _collections
 from io import TextIOWrapper
 from contextlib import contextmanager
 
@@ -130,7 +131,7 @@ def decode_command_line_args():
         sys.argv = [i if isinstance(i, unicode) else i.decode(sys_encoding) for i in sys.argv]
     return sys.argv
 
-class _Environ(object):
+class _Environ(_collections.MutableMapping):
     def __getitem__(self, item):
         if not isinstance(item, bytes):
             item = item.encode(sys_encoding)
@@ -161,8 +162,11 @@ class _Environ(object):
         for key in os.environ:
             yield key
 
-    def copy(self):
-        return {key: self[key] for key in self}
+    def __delitem__(self, item):
+        del os.environ[item]
+
+    def __len__(self):
+        return len(os.environ)
 
 environ = _Environ()
 
