@@ -82,7 +82,7 @@ endif
 
 LDFLAGS += -lssl -lcrypto -lz -ldl -lmagic -lm
 ifeq ($(UNAME)$(CC), Darwinclang)
-	LDFLAGS += -lc++
+	LDFLAGS += -lc++ -lc++abi
 else
 	LDFLAGS += -lstdc++
 endif
@@ -117,13 +117,15 @@ else ifeq ($(UNAME), Linux)
 else ifeq ($(UNAME), Darwin)
 	cp -af {$(curl_dir)/lib,$(cares_dir)/lib,$(libmagic_dir)/lib,$(boost_dir)/stage/lib,$(openssl_dir)}/*.dylib dist/
 	mkdir -p dist/resources && install ca-certificates.crt dist/resources/
+	install -s ua dist/
 ifeq ($(CC), clang)
 	install $$($(DYLDINFO_PATH) -dylibs ua|grep libc++) dist/
+	install_name_tool -change /usr/lib/libc++.1.dylib "@loader_path/libc++.1.dylib" dist/ua
+	install_name_tool -change /usr/lib/libc++abi.dylib "@loader_path/libc++abi.dylib" dist/ua
 else
 	install $$($(DYLDINFO_PATH) -dylibs ua|grep libstdc++) dist/
 	install $$($(DYLDINFO_PATH) -dylibs ua|grep libgcc) dist/
 endif
-	install -s ua dist/
 	for bin in dist/ua dist/*.dylib; do \
 	    for lib in $$($(DYLDINFO_PATH) -dylibs $$bin|egrep -v '(for arch|attributes|/usr/lib)'); do \
 	        install_name_tool -change $$lib "@loader_path/$$(basename $$lib)" $$bin; \
