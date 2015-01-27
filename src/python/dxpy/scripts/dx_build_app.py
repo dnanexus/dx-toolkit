@@ -708,7 +708,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                                                  project=dest_project, recurse=False):
                 dest_path = dest_folder + dest_name
                 msg = "An applet already exists at {} (id {}) and neither".format(dest_path, result["id"])
-                msg += "-f/--overwrite nor -a/--archive were given."
+                msg += " -f/--overwrite nor -a/--archive were given."
                 raise dxpy.app_builder.AppBuilderException(msg)
 
         dxpy.app_builder.build(src_dir, parallel_build=do_parallel_build)
