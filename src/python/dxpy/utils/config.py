@@ -28,8 +28,10 @@ from collections import MutableMapping
 from shutil import rmtree
 
 import dxpy
+from . import warn
 from .. import DEFAULT_APISERVER_PROTOCOL, DEFAULT_APISERVER_HOST, DEFAULT_APISERVER_PORT
 from ..compat import environ, expanduser, open, USING_PYTHON2, sys_encoding
+from ..exceptions import format_exception
 from .printing import fill
 
 def _remove_ignore_errors(filename):
@@ -92,7 +94,7 @@ class DXConfig(MutableMapping):
         try:
             dxpy._DEBUG = int(environ.get("_DX_DEBUG", 0))
         except ValueError as e:
-            print("WARNING: Expected _DX_DEBUG to be an integer, but got", environ["_DX_DEBUG"], file=sys.stderr)
+            warn("WARNING: Expected _DX_DEBUG to be an integer, but got", environ["_DX_DEBUG"])
             dxpy._DEBUG = 0
 
         self._user_conf_dir = expanduser(environ.get("DX_USER_CONF_DIR", "~/.dnanexus_config"))
@@ -120,10 +122,10 @@ class DXConfig(MutableMapping):
             if not suppress_warning and len(env_overrides) > 0:
                 msg = "WARNING: The following environment variables were found to be different than the values " + \
                       "last stored by dx: "
-                sys.stderr.write(fill(msg + ", ".join(env_overrides), width=80) + "\n")
+                warn(fill(msg + ", ".join(env_overrides), width=80))
                 msg = "To use the values stored by dx, unset the environment variables in your shell by running " + \
                       '"source ~/.dnanexus_config/unsetenv".  To clear the dx-stored values, run "dx clearenv".'
-                sys.stderr.write(fill(msg, width=80) + "\n")
+                warn(fill(msg, width=80))
 
         self._sync_dxpy_state()
 
@@ -190,8 +192,7 @@ class DXConfig(MutableMapping):
             # psutil may not be available, or fail with IOError or AttributeError when /proc is not mounted
             pass
         except Exception as e:
-            msg = "Unexpected error ({e}) while retrieving session configuration\n"
-            sys.stderr.write(fill(msg.format(e=type(e))))
+            warn(fill("Unexpected error while retrieving session configuration: " + format_exception(e)))
         return self._get_ppid_session_conf_dir(sessions_dir)
 
     def _get_ppid_session_conf_dir(self, sessions_dir):
@@ -200,8 +201,7 @@ class DXConfig(MutableMapping):
         except AttributeError:
             pass # os.getppid is not available on Windows
         except Exception as e:
-            msg = "Unexpected error ({e}) while retrieving session configuration\n"
-            sys.stderr.write(fill(msg.format(e=type(e))))
+            warn(fill("Unexpected error while retrieving session configuration: " + format_exception(e)))
         return os.path.join(sessions_dir, str(os.getpid()))
 
     def _read_conf_dir(self, dirname):
