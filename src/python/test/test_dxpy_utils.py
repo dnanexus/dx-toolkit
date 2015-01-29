@@ -226,11 +226,13 @@ class TestDXConfig(unittest.TestCase):
                 elif var == "DX_SECURITY_CONTEXT":
                     self.assertEqual(json.dumps(dxpy.SECURITY_CONTEXT), value)
                 del c[var]
-            c.update(DX_CLI_WD="/")
+            c.update(DX_CLI_WD="/wd")
             self.assertIn("DX_CLI_WD", c)
-            self.assertEqual(c["DX_CLI_WD"], "/")
-            self.assertEqual(c.pop("DX_CLI_WD"), "/")
-            self.assertEqual(c.pop("DX_CLI_WD", "sentinel"), "sentinel")
+            self.assertEqual(c["DX_CLI_WD"], "/wd")
+            self.assertEqual(c.pop("DX_CLI_WD"), "/wd")
+            self.assertEqual(c.pop("DX_CLI_WD", None), None)
+            dict(c)
+            repr(c)
         finally:
             os.environ.update(environ_backup)
             dxpy.config.__init__(suppress_warning=True)

@@ -186,11 +186,10 @@ class DXConfig(MutableMapping):
                 session_dir = os.path.join(sessions_dir, str(parent_process.pid))
                 if os.path.exists(session_dir):
                     return session_dir
-                parent_process = parent_process.parent
+                parent_process = parent_process.parent()
             return default_session_dir
         except (ImportError, IOError, AttributeError):
-            # psutil may not be available, or fail with IOError or AttributeError when /proc is not mounted
-            pass
+            warn(fill("Error while retrieving session configuration: " + format_exception(e)))
         except Exception as e:
             warn(fill("Unexpected error while retrieving session configuration: " + format_exception(e)))
         return self._get_ppid_session_conf_dir(sessions_dir)
@@ -240,10 +239,18 @@ class DXConfig(MutableMapping):
 
     def __iter__(self):
         for item in self.VAR_NAMES:
-            yield item
+            if item in environ:
+                yield item
 
     def __len__(self):
         return len(self.VAR_NAMES)
+
+    def __repr__(self):
+        desc = "<{module}.{classname} object at 0x{mem_loc:x}: {data}>"
+        return desc.format(module=self.__module__,
+                           classname=self.__class__.__name__,
+                           mem_loc=id(self),
+                           data=dict(self))
 
     def write(self, item, value):
         self[item] = value
