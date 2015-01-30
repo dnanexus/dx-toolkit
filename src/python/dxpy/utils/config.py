@@ -76,7 +76,7 @@ class DXConfig(MutableMapping):
     """
     VAR_NAMES = set.union(CORE_VAR_NAMES, STANDALONE_VAR_NAMES)
     defaults = {
-        "DX_SECURITY_CONTEXT": json.dumps({"auth_token": "", "auth_token_type": ""}),
+        "DX_SECURITY_CONTEXT": json.dumps({"auth_token": "PUBLIC", "auth_token_type": "Bearer"}),
         "DX_APISERVER_PROTOCOL": DEFAULT_APISERVER_PROTOCOL,
         "DX_APISERVER_HOST": DEFAULT_APISERVER_HOST,
         "DX_APISERVER_PORT": DEFAULT_APISERVER_PORT,
@@ -226,6 +226,8 @@ class DXConfig(MutableMapping):
     def __setitem__(self, key, value):
         if key not in self.VAR_NAMES:
             raise KeyError(key)
+        if value is None:
+            value = self.defaults.get(key, "")
         environ[key] = value
         if key in self.CORE_VAR_NAMES:
             self._sync_dxpy_state()

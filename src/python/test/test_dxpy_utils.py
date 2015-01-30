@@ -225,6 +225,7 @@ class TestDXConfig(unittest.TestCase):
                     self.assertEqual(getattr(dxpy, var.lstrip("DX_")), value)
                 elif var == "DX_SECURITY_CONTEXT":
                     self.assertEqual(json.dumps(dxpy.SECURITY_CONTEXT), value)
+                c.write(var, None)
                 del c[var]
             c.update(DX_CLI_WD="/wd")
             self.assertIn("DX_CLI_WD", c)
