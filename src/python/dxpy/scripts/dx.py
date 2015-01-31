@@ -410,22 +410,23 @@ def login(args):
 def logout(args):
     if dxpy.AUTH_HELPER is not None:
         authserver = dxpy.get_auth_server_name(args.host, args.port)
-        print('Deleting credentials from ' + authserver + '...')
-        session = requests.session()
-        token = dxpy.AUTH_HELPER.security_context['auth_token']
+        print("Deleting credentials from {}...".format(authserver))
+        token = dxpy.AUTH_HELPER.security_context["auth_token"]
         try:
             token_sig = hashlib.sha256(token).hexdigest()
-            response = session.delete(authserver + '/authorizations/' + token_sig, auth=dxpy.AUTH_HELPER)
-            if response.status_code not in (requests.codes.forbidden, requests.codes.not_found):
-                response.raise_for_status()
-            if response.status_code == requests.codes.ok:
-                print('Deleted token with signature', token_sig)
+            response = dxpy.DXHTTPRequest(authserver + "/system/destroyAuthToken",
+                                          dict(token_signature=token_sig),
+                                          prepend_srv=False,
+                                          max_retries=1)
+            print("Deleted token with signature", token_sig)
+        except dxpy.DXAPIError as e:
+            print(format_exception(e))
         except:
             err_exit()
-        if not state['interactive']:
-            write_env_var("DX_SECURITY_CONTEXT", None)
-        else:
+        if state["interactive"]:
             dxpy.AUTH_HELPER = None
+        else:
+            write_env_var("DX_SECURITY_CONTEXT", None)
 
 def set_api(protocol, host, port, write):
     os.environ['DX_APISERVER_PROTOCOL'] = protocol
