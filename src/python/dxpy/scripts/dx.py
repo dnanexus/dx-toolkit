@@ -1089,13 +1089,23 @@ def describe(args):
                     if details.code != requests.codes.not_found:
                         raise
 
-        # Otherwise, attempt to look for it as a data object.
+        # Otherwise, attempt to look for it as a data object or
+        # execution
         try:
             project, _folderpath, entity_results = resolve_existing_path(args.path,
                                                                          expected='entity',
                                                                          ask_to_resolve=False,
                                                                          describe=json_input)
-        except ResolutionError:
+        except ResolutionError as details:
+            # PermissionDenied or InvalidAuthentication
+            if str(details).endswith('code 401'):
+                # Surface permissions-related errors here (for data
+                # objects, jobs, and analyses). Other types of errors
+                # may be recoverable below.
+                #
+                # TODO: better way of obtaining the response code when
+                # the exception corresponds to an API error
+                raise DXCLIError(str(details))
             project, entity_results = None, None
 
         found_match = False
