@@ -296,7 +296,7 @@ def login(args):
         using_default = authserver == default_authserver
 
         def get_token(**data):
-            return dxpy.DXHTTPRequest(authserver+"/authorizations", data,
+            return dxpy.DXHTTPRequest(authserver+"/system/newAuthToken", data,
                                       prepend_srv=False, auth=None, always_retry=True)
 
         def get_credentials(reuse=None, get_otp=False):
