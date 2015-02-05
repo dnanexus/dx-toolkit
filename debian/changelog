@@ -1,3 +1,12 @@
+dx-toolkit (0.131.0) precise; urgency=low
+
+  * Ensure ua uses bundled libc++ dylibs
+
+  * Various bug fixes
+ 
+
+ -- Ric Medlinger <ric@dnanexus.com>  Thu, 05 Feb 2015 15:57:23 +0000
+
 dx-toolkit (0.130.0) precise; urgency=low
 
   * dx new record --close
