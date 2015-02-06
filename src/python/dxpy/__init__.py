@@ -625,4 +625,4 @@ _initialize()
 
 from .bindings import *
 from .dxlog import DXLogHandler
-from .utils.exec_utils import run, entry_point
+from .utils import run, entry_point, get_current_job, get_current_executable

@@ -315,4 +315,5 @@ def warn(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 # Moved to the bottom due to circular imports
-from .exec_utils import run, convert_handlers_to_dxlinks, parse_args_as_job_input, entry_point, DXJSONEncoder
+from .exec_utils import (run, convert_handlers_to_dxlinks, parse_args_as_job_input, entry_point, DXJSONEncoder,
+                         get_current_job, get_current_executable)
