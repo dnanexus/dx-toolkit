@@ -5,9 +5,14 @@ python:
 - '3.4'
 - pypy
 script:
-- deactivate
-- source environment
-- build/run_python_integration_tests.py --tests test.test_dxpy_utils test.test_dxpy.TestDX{Project,File,Record} test.test_dxclient.TestDXClient
+- make api_wrappers toolkit_version
+- cd src/python; ./setup.py install
+- test/test_dxpy_utils.py
+- test/test_dxpy.py
+- test/test_dxclient.py
+- test/test_dx_completion.py
+- test/test_dx_app_wizard_and_run_app_locally.py
+# build/run_python_integration_tests.py --tests test.test_dxpy_utils test.test_dxpy.TestDX{Project,File,Record} test.test_dxclient.TestDXClient
 notifications:
   email: false
 env:
