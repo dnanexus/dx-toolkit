@@ -167,7 +167,7 @@ class _Environ(MutableMapping):
     def copy(self):
         return dict(self)
 
-environ = _Environ()
+environ = _Environ() if USING_PYTHON2 else os.environ
 
 def wrap_env_var_handlers():
     if USING_PYTHON2 and not getattr(os, '__native_getenv', None):

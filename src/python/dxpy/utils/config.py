@@ -188,7 +188,7 @@ class DXConfig(MutableMapping):
                     return session_dir
                 parent_process = parent_process.parent()
             return default_session_dir
-        except (ImportError, IOError, AttributeError):
+        except (ImportError, IOError, AttributeError) as e:
             warn(fill("Error while retrieving session configuration: " + format_exception(e)))
         except Exception as e:
             warn(fill("Unexpected error while retrieving session configuration: " + format_exception(e)))
