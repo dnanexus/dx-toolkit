@@ -1085,6 +1085,63 @@ dxpy.run()
             with self.assertSubprocessFailure(stderr_regexp="Could not find", exit_code=3):
                 run("dx download " + job_id + ":foo -o -")
 
+    # In a directory structure like:
+    # ROOT/
+    #      X.txt
+    #      A/
+    #      B/
+    # Make sure that files/subdirs are not downloaded twice. This checks that we fixed
+    # PTFM-14106.
+    def test_dx_download_root_recursive(self):
+        data = "ABCD"
+
+        def gen_file(fname, proj_id):
+            dxfile = dxpy.upload_string(data, name=fname, project=proj_id, wait_on_close=True)
+            return dxfile
+
+        # Download the project recursively, with command [cmd_string].
+        # Compare the downloaded directory against the first download
+        # structure.
+        def test_download_cmd(org_dir, cmd_string):
+            testdir = tempfile.mkdtemp()
+            with chdir(testdir):
+                run(cmd_string)
+                run("diff -Naur {} {}".format(org_dir, testdir))
+                shutil.rmtree(testdir)
+
+        with temporary_project('test_proj', select=True) as temp_project:
+            proj_id = temp_project.get_id()
+            gen_file("X.txt", proj_id)
+            dxpy.api.project_new_folder(proj_id, {"folder": "/A"})
+            dxpy.api.project_new_folder(proj_id, {"folder": "/B"})
+
+            # Create an entire copy of the project directory structure,
+            # which will be compared to all other downloads.
+            orig_dir = tempfile.mkdtemp()
+            with chdir(orig_dir):
+                run("dx download -r {}:/".format(proj_id))
+
+            test_download_cmd(orig_dir, "dx download -r /")
+            test_download_cmd(orig_dir, "dx download -r {}:/*".format(proj_id))
+            test_download_cmd(orig_dir, "dx download -r *")
+
+            shutil.rmtree(orig_dir)
+
+    # Test download to stdout
+    def test_download_to_stdout(self):
+        data = "ABCD"
+
+        def gen_file(fname, proj_id):
+            dxfile = dxpy.upload_string(data, name=fname, project=proj_id, wait_on_close=True)
+            return dxfile
+
+        with temporary_project('test_proj', select=True) as temp_project:
+            proj_id = temp_project.get_id()
+            gen_file("X.txt", proj_id)
+            buf = run("dx download -o - X.txt")
+            self.assertEqual(buf, data)
+
+
 class TestDXClientDescribe(DXTestCase):
     def test_projects(self):
         run("dx describe :")
