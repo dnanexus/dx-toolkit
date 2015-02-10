@@ -43,7 +43,7 @@ process() {
     mkdir -p out/p_output
     cp in/process_input/* out/p_output/
 
-    dx-upload-all-outputs
+    dx-upload-all-outputs --wait-on-close
 }
 
 postprocess() {
@@ -60,5 +60,5 @@ postprocess() {
     cat in/pp_input0/* >> out/final_file/final_file.txt
     cat in/pp_input1/* >> out/final_file/final_file.txt
 
-    dx-upload-all-outputs
+    dx-upload-all-outputs --wait-on-close
 }

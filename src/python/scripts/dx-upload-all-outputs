@@ -87,7 +87,10 @@ parser.add_argument("--sequential", help="Upload the files sequentially", action
                     dest="parallel")
 parser.add_argument('--clearJSON',
                     help='Clears the output JSON file prior to starting upload.')
-
+parser.add_argument("--wait-on-close", help="Wait for files to close, default is not to wait",
+                    action="store_true",
+                    default=False,
+                    dest="wait_on_close")
 args = parser.parse_args()
 parser.parse_args()
 max_num_parallel_uploads = 8
@@ -281,32 +284,32 @@ def create_entry(subdir_desc, local_path, target_path, basename):
             'fname': basename,
             'dxlink': None}
 
-def upload_one_file(entry):
+def upload_one_file(entry, wait_on_close):
     '''Upload a file from the output directory. Record a reference to the
     uploaded object in the entry.
     '''
     local_path = os.path.join(entry['local_dir_path'], entry['fname'])
     if entry['target_dir_path'] is None:
         trg_path = "/{}".format(entry['fname'])
-        f_obj = dxpy.upload_local_file(local_path, wait_on_close=True)
+        f_obj = dxpy.upload_local_file(local_path, wait_on_close=wait_on_close)
     else:
         trg_path = "/{}/{}".format(entry['target_dir_path'], entry['fname'])
         f_obj = dxpy.upload_local_file(local_path,
                                        folder=("/" + entry['target_dir_path']),
-                                       parents=True, wait_on_close=True)
+                                       parents=True, wait_on_close=wait_on_close)
     entry['dxlink'] = dxpy.dxlink(f_obj)
     print("uploaded file {} -> {}".format(local_path, trg_path))
 
-def sequential_file_upload(to_upload):
+def sequential_file_upload(to_upload, wait_on_close):
     '''Sequentially upload everything that is in the output directory.
     '''
     for entry in to_upload:
-        upload_one_file(entry)
+        upload_one_file(entry, wait_on_close)
 
-def parallel_file_upload(to_upload):
+def parallel_file_upload(to_upload, wait_on_close):
     ''' same as sequential_file_upload, but in parallel '''
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_num_parallel_uploads) as executor:
-        future_files = {executor.submit(upload_one_file, e): e for e in to_upload}
+        future_files = {executor.submit(upload_one_file, e, wait_on_close): e for e in to_upload}
         for future in concurrent.futures.as_completed(future_files):
             entry = future_files[future]
             try:
@@ -403,9 +406,9 @@ for key in subdir_recs:
 
 # upload concurrently
 if args.parallel:
-    parallel_file_upload(to_upload)
+    parallel_file_upload(to_upload, args.wait_on_close)
 else:
-    sequential_file_upload(to_upload)
+    sequential_file_upload(to_upload, args.wait_on_close)
 
 # Uploads are complete, we can collect all results. This avoids
 # data races in the parallel upload case.

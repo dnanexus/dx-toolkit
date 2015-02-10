@@ -47,7 +47,7 @@ main() {
     ln -s $gene_d/clue/X_1.txt $phen_d/clue_symlink
     ln -s $gene_d/hint/V_1.txt $phen_d/hint_symlink
 
-    dx-upload-all-outputs
+    dx-upload-all-outputs --wait-on-close
 
     #  Check that directory structure was copied
     #  correctly to the project space
