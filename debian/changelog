@@ -1,3 +1,9 @@
+dx-toolkit (0.132.0) precise; urgency=low
+
+  * dx-upload-all-outputs waits for files to close
+
+ -- Ric Medlinger <ric@dnanexus.com>  Wed, 11 Feb 2015 15:43:51 +0000
+
 dx-toolkit (0.131.0) precise; urgency=low
 
   * Ensure ua uses bundled libc++ dylibs
