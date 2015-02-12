@@ -36,6 +36,7 @@ import dxpy
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
 from ..cli.cp import cp
+from ..cli.download import (download_one_file, download)
 from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, parser_dataobject_args,
                            parser_single_dataobject_output_args, process_properties_args,
                            find_by_properties_and_tags_args, process_find_by_property_args, process_dataobject_args,
@@ -283,7 +284,7 @@ def login(args):
         using_default = authserver == default_authserver
 
         def get_token(**data):
-            return dxpy.DXHTTPRequest(authserver+"/authorizations", data,
+            return dxpy.DXHTTPRequest(authserver+"/system/newAuthToken", data,
                                       prepend_srv=False, auth=None, always_retry=True)
 
         def get_credentials(reuse=None, get_otp=False):
@@ -397,22 +398,23 @@ def login(args):
 def logout(args):
     if dxpy.AUTH_HELPER is not None:
         authserver = dxpy.get_auth_server_name(args.host, args.port)
-        print('Deleting credentials from ' + authserver + '...')
-        session = requests.session()
-        token = dxpy.AUTH_HELPER.security_context['auth_token']
+        print("Deleting credentials from {}...".format(authserver))
+        token = dxpy.AUTH_HELPER.security_context["auth_token"]
         try:
             token_sig = hashlib.sha256(token).hexdigest()
-            response = session.delete(authserver + '/authorizations/' + token_sig, auth=dxpy.AUTH_HELPER)
-            if response.status_code not in (requests.codes.forbidden, requests.codes.not_found):
-                response.raise_for_status()
-            if response.status_code == requests.codes.ok:
-                print('Deleted token with signature', token_sig)
+            response = dxpy.DXHTTPRequest(authserver + "/system/destroyAuthToken",
+                                          dict(token_signature=token_sig),
+                                          prepend_srv=False,
+                                          max_retries=1)
+            print("Deleted token with signature", token_sig)
+        except dxpy.DXAPIError as e:
+            print(format_exception(e))
         except:
             err_exit()
-        if not state['interactive']:
-            dxpy.config.write("DX_SECURITY_CONTEXT", None)
-        else:
+        if state["interactive"]:
             dxpy.AUTH_HELPER = None
+        else:
+            dxpy.config.write("DX_SECURITY_CONTEXT", None)
 
 def set_api(protocol, host, port, write):
     dxpy.config.update(DX_APISERVER_PROTOCOL=protocol,
@@ -1078,13 +1080,23 @@ def describe(args):
                     if details.code != requests.codes.not_found:
                         raise
 
-        # Otherwise, attempt to look for it as a data object.
+        # Otherwise, attempt to look for it as a data object or
+        # execution
         try:
             project, _folderpath, entity_results = resolve_existing_path(args.path,
                                                                          expected='entity',
                                                                          ask_to_resolve=False,
                                                                          describe=json_input)
-        except ResolutionError:
+        except ResolutionError as details:
+            # PermissionDenied or InvalidAuthentication
+            if str(details).endswith('code 401'):
+                # Surface permissions-related errors here (for data
+                # objects, jobs, and analyses). Other types of errors
+                # may be recoverable below.
+                #
+                # TODO: better way of obtaining the response code when
+                # the exception corresponds to an API error
+                raise DXCLIError(str(details))
             project, entity_results = None, None
 
         found_match = False
@@ -1594,152 +1606,6 @@ def make_download_url(args):
     except:
         err_exit()
 
-def download_one_file(project, file_desc, dest_filename, args):
-    if not args.overwrite:
-        if os.path.exists(dest_filename):
-            err_exit(fill('Error: path "' + dest_filename + '" already exists but -f/--overwrite was not set'))
-
-    if file_desc['class'] != 'file':
-        print("Skipping non-file data object {name} ({id})".format(**file_desc), file=sys.stderr)
-        return
-
-    if file_desc['state'] != 'closed':
-        print("Skipping file {name} ({id}) because it is not closed".format(**file_desc), file=sys.stderr)
-        return
-
-    try:
-        show_progress = args.show_progress
-    except AttributeError:
-        show_progress = False
-
-    try:
-        dxpy.download_dxfile(file_desc['id'], dest_filename, show_progress=show_progress, project=project)
-    except:
-        err_exit()
-
-def download(args):
-    if args.output == '-':
-        cat(parser.parse_args(['cat'] + args.paths))
-        return
-
-    from dxpy.utils import pathmatch
-
-    def ensure_local_dir(d):
-        if not os.path.isdir(d):
-            if os.path.exists(d):
-                err_exit(fill('Error: path "' + d + '" already exists and is not a directory'))
-            os.makedirs(d)
-
-    def download_one_folder(project, folder, strip_prefix, destdir):
-        assert(folder.startswith(strip_prefix))
-        if not args.recursive:
-            err_exit('Error: "' + folder + '" is a folder but the -r/--recursive option was not given')
-
-        for subfolder in list_subfolders(project, folder, recurse=True):
-            ensure_local_dir(os.path.join(destdir, subfolder[len(strip_prefix):].lstrip('/')))
-
-        # TODO: control visibility=hidden
-        for f in dxpy.search.find_data_objects(classname='file', state='closed', project=project, folder=folder,
-                                               recurse=True, describe=True):
-            file_desc = f['describe']
-            dest_filename = os.path.join(destdir, file_desc['folder'][len(strip_prefix):].lstrip('/'), file_desc['name'])
-            download_one_file(project, file_desc, dest_filename, args)
-
-    def download_files(files, destdir, dest_filename=None):
-        for project in files:
-            for f in files[project]:
-                file_desc = f['describe']
-                dest = dest_filename or os.path.join(destdir, file_desc['name'].replace('/', '%2F'))
-                download_one_file(project, file_desc, dest, args)
-
-    def download_folders(folders, destdir):
-        for project in folders:
-            for folder, strip_prefix in folders[project]:
-                download_one_folder(project, folder, strip_prefix, destdir)
-
-    def is_glob(path):
-        return get_first_pos_of_char('*', path) > -1 or get_first_pos_of_char('?', path) > -1
-
-    def rel2abs(path, project):
-        if path.startswith('/') or dxpy.WORKSPACE_ID != project:
-            abs_path, strip_prefix = path, os.path.dirname(path.rstrip('/'))
-        else:
-            wd = dxpy.config.get('DX_CLI_WD', u'/')
-            abs_path, strip_prefix = os.path.join(wd, path), os.path.dirname(os.path.join(wd, path).rstrip('/'))
-        if len(abs_path) > 1:
-            abs_path = abs_path.rstrip('/')
-        return abs_path, strip_prefix
-
-    cached_folder_lists = {}
-    def list_subfolders(project, path, recurse=True):
-        if project not in cached_folder_lists:
-            cached_folder_lists[project] = dxpy.get_handler(project).describe(input_params={'folders': True})['folders']
-        # TODO: support shell-style path globbing (i.e. /a*/c matches /ab/c but not /a/b/c)
-        # return pathmatch.filter(cached_folder_lists[project], os.path.join(path, '*'))
-        if recurse:
-            return [f for f in cached_folder_lists[project] if f.startswith(path)]
-        else:
-            return [f for f in cached_folder_lists[project] if f.startswith(path) and '/' not in f[len(path)+1:]]
-
-    folders_to_get, files_to_get, count = collections.defaultdict(list), collections.defaultdict(list), 0
-    foldernames, filenames = [], []
-    for path in args.paths:
-        # Attempt to resolve name. If --all is given or the path looks like a glob, download all matches.
-        # Otherwise, the resolver will display a picker (or error out if there is no tty to display to).
-        resolver_kwargs = {'allow_empty_string': False}
-        if args.all or is_glob(path):
-            resolver_kwargs.update({'allow_mult': True, 'all_mult': True})
-        project, folderpath, matching_files = try_call(resolve_existing_path, path, **resolver_kwargs)
-        if matching_files is None:
-            matching_files = []
-        elif not isinstance(matching_files, list):
-            matching_files = [matching_files]
-
-        matching_folders = []
-        if project is not None:
-            # project may be none if path is an ID and there is no project context
-            colon_pos = get_first_pos_of_char(":", path)
-            if colon_pos >= 0:
-                path = path[colon_pos + 1:]
-            abs_path, strip_prefix = rel2abs(path, project)
-
-            parent_folder = os.path.dirname(abs_path)
-            #folder_listing = dxpy.get_handler(project).list_folder(folder=parent_folder, only='folders')['folders'] # includeHidden=
-            folder_listing = list_subfolders(project, parent_folder, recurse=False)
-            matching_folders = pathmatch.filter(folder_listing, abs_path)
-
-        if len(matching_files) == 0 and len(matching_folders) == 0:
-            err_exit(fill('Error: {path} is neither a file nor a folder name'.format(path=path)))
-
-        files_to_get[project].extend(matching_files)
-        folders_to_get[project].extend(((f, strip_prefix) for f in matching_folders))
-        count += len(matching_files) + len(matching_folders)
-
-        filenames.extend(f["describe"]["name"] for f in matching_files)
-        foldernames.extend(f[len(strip_prefix):].lstrip('/') for f in matching_folders)
-
-    if len(filenames) > 0 and len(foldernames) > 0:
-        name_conflicts = set(filenames) & set(foldernames)
-        if len(name_conflicts) > 0:
-            msg = "Error: The following paths are both file and folder names, and cannot be downloaded to the same destination: "
-            msg += ", ".join(sorted(name_conflicts))
-            err_exit(fill(msg))
-
-    if args.output is None:
-        destdir, dest_filename = os.getcwd(), None
-    elif count > 1:
-        if not os.path.exists(args.output):
-            err_exit(fill("Error: When downloading multiple objects, --output must be an existing directory"))
-        destdir, dest_filename = args.output, None
-    elif os.path.isdir(args.output):
-        destdir, dest_filename = args.output, None
-    elif args.output.endswith('/'):
-        err_exit(fill("Error: {path} could not be found".format(path=args.output)))
-    else:
-        destdir, dest_filename = os.getcwd(), args.output
-
-    download_folders(folders_to_get, destdir)
-    download_files(files_to_get, destdir, dest_filename=dest_filename)
 
 def get(args):
     # Attempt to resolve name
@@ -1829,6 +1695,14 @@ def cat(args):
                 sys.stdout.buffer.write(chunk)
         except:
             err_exit()
+
+
+def download_or_cat(args):
+    if args.output == '-':
+        cat(parser.parse_args(['cat'] + args.paths))
+        return
+    download(args)
+
 
 def head(args):
     # Attempt to resolve name
@@ -3631,7 +3505,7 @@ parser_download.add_argument('-a', '--all', help='If multiple objects match the 
                              action='store_true')
 parser_download.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress',
                              action='store_false', default=sys.stderr.isatty())
-parser_download.set_defaults(func=download)
+parser_download.set_defaults(func=download_or_cat)
 register_subparser(parser_download, categories='data')
 
 parser_make_download_url = subparsers.add_parser('make_download_url', help='Create a file download link for sharing',

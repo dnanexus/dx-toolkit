@@ -191,7 +191,7 @@ string resolveProject(const string &projectSpec) {
 
   if (matchingProjectIdToName.size() == 0) {
     DXLOG(logINFO) << " failure.";
-    throw runtime_error("\"" + projectSpec + "\" does not represent a valid project name or ID (with >=UPLOAD access)");
+    throw runtime_error("\"" + projectSpec + "\" does not represent a valid project name or ID (with >=UPLOAD access). Please check the project name/ID given and whether you have >= UPLOAD permission to project specified.");
   }
 
   if (matchingProjectIdToName.size() > 1) {

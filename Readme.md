@@ -60,12 +60,6 @@ toolkit that doesn't require them.
       g++ cmake libboost1.55-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison \
       autoconf
 
-### Ubuntu 13.10
-
-    sudo apt-get install make python-setuptools python-pip python-virtualenv python-dev \
-      g++ cmake libboost1.54-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison \
-      autoconf
-
 ### Ubuntu 12.04
 
     sudo apt-get install make python-setuptools python-pip python-dev \

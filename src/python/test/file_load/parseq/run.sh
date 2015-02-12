@@ -29,12 +29,12 @@ main() {
     done
 
     # sequential upload
-    dx-upload-all-outputs --sequential
+    dx-upload-all-outputs --sequential --wait-on-close
     compare_upload_to_outdir
     remove_uploaded_files
 
     # parallel upload
-    dx-upload-all-outputs --clearJSON=true --parallel
+    dx-upload-all-outputs --clearJSON=true --parallel --wait-on-close
     compare_upload_to_outdir
 }
 
