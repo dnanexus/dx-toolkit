@@ -20,7 +20,10 @@ import os, sys, io, locale
 from io import TextIOWrapper
 from contextlib import contextmanager
 
-sys_encoding = locale.getdefaultlocale()[1] or 'UTF-8'
+try:
+    sys_encoding = locale.getdefaultlocale()[1] or "UTF-8"
+except Exception:
+    sys_encoding = "UTF-8"
 
 USING_PYTHON2 = True if sys.version_info < (3, 0) else False
 
