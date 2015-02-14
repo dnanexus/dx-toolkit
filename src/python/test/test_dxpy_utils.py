@@ -237,6 +237,8 @@ class TestDXConfig(unittest.TestCase):
             self.assertEqual(len(c), len(list(c)))
             del c[c.defaults.keys()[0]]
             self.assertEqual(len(c), len(list(c)))
+            dxpy.config["DX_PROJECT_CONTEXT_NAME"] = None
+            self.assertEqual(os.environ["DX_PROJECT_CONTEXT_NAME"], "")
         finally:
             os.environ.update(environ_backup)
             dxpy.config.__init__(suppress_warning=True)

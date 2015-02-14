@@ -425,22 +425,12 @@ def set_api(protocol, host, port, write):
 
 def set_project(project, write, name=None):
     if dxpy.JOB_ID is None:
-        os.environ['DX_PROJECT_CONTEXT_ID'] = project
-        if name is not None:
-            dxpy.config["DX_PROJECT_CONTEXT_NAME"] = name
-        if write:
-            dxpy.config.write("DX_PROJECT_CONTEXT_ID", project)
-            if name is not None:
-                dxpy.config.write("DX_PROJECT_CONTEXT_NAME", name)
-            else:
-                try:
-                    os.remove(os.path.expanduser('~/.dnanexus_config/DX_PROJECT_CONTEXT_NAME'))
-                except:
-                    pass
+        dxpy.config["DX_PROJECT_CONTEXT_ID"] = project
+        dxpy.config["DX_PROJECT_CONTEXT_NAME"] = name
     else:
-        os.environ['DX_WORKSPACE_ID'] = project
-        if write:
-            dxpy.config.write('DX_WORKSPACE_ID', project)
+        dxpy.config["DX_WORKSPACE_ID"] = project
+    if write:
+        dxpy.config.save()
     dxpy.set_workspace_id(project)
 
 def set_wd(folder, write):
@@ -541,10 +531,7 @@ def setenv(args):
     if not state['interactive']:
         args.save = True
     if args.current:
-        env_vars = ['DX_SECURITY_CONTEXT', 'DX_APISERVER_HOST', 'DX_APISERVER_PORT', 'DX_PROJECT_CONTEXT_ID', 'DX_CLI_WD', 'DX_USERNAME', 'DX_WORKSPACE_ID']
-        for var in env_vars:
-            if var in os.environ:
-                dxpy.config.write(var, os.environ[var])
+        dxpy.config.save()
     else:
         try:
             api_protocol = prompt_for_env_var('API server protocol (choose "http" or "https")', 'DX_APISERVER_PROTOCOL')
