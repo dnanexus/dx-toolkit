@@ -2603,6 +2603,14 @@ def print_run_input_help():
     Syntax :  -i<input name>=<job id>:<output name>
     Example:  dx run mapper -ireads=job-B0fbxvGY00j9jqGQvj8Q0001:reads
 ''')
+    print(fill('You can ' + BOLD() + 'extract an element of an array output' + ENDC() +
+               ' using the <job id>:<output name>.<element> syntax:',
+               initial_indent='  ', subsequent_indent='  '))
+    print('''
+    Syntax :  -i<input name>=<job id>:<output name>.<element>
+    Example:  dx run mapper -ireadsfile=job-B0fbxvGY00j9jqGQvj8Q0001:reads.1
+              # Extracts second element of array output
+''')
     print(fill('When executing ' + BOLD() + 'workflows' + ENDC() + ', stage inputs can be specified using the <stage key>.<input name>=<value> syntax:', initial_indent='  ', subsequent_indent='  '))
     print('''
     Syntax :  -i<stage key>.<input name>=<input value>
