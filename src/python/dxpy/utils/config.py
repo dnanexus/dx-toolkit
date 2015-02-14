@@ -245,7 +245,7 @@ class DXConfig(MutableMapping):
                 yield item
 
     def __len__(self):
-        return len(self.VAR_NAMES)
+        return len([var for var in self.VAR_NAMES if var in environ])
 
     def __repr__(self):
         desc = "<{module}.{classname} object at 0x{mem_loc:x}: {data}>"

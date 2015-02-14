@@ -233,6 +233,10 @@ class TestDXConfig(unittest.TestCase):
             self.assertEqual(c.pop("DX_CLI_WD"), "/wd")
             self.assertEqual(c.pop("DX_CLI_WD", None), None)
             self.assertIn("DXConfig object at", repr(c))
+            c.update(c.defaults)
+            self.assertEqual(len(c), len(list(c)))
+            del c[c.defaults.keys()[0]]
+            self.assertEqual(len(c), len(list(c)))
         finally:
             os.environ.update(environ_backup)
             dxpy.config.__init__(suppress_warning=True)
