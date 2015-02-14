@@ -261,6 +261,12 @@ class DXConfig(MutableMapping):
     def save(self):
         self._write_conf_dir(self._user_conf_dir)
         self._write_conf_dir(self.get_session_conf_dir())
+        self._write_unsetenv(self._user_conf_dir)
+
+    def _write_unsetenv(self, conf_dir):
+        if not os.path.exists(os.path.join(conf_dir, "unsetenv")):
+            with open(os.path.join(conf_dir, "unsetenv"), "w") as fd:
+                fd.writelines("unset {}\n".format(var) for var in self.CORE_VAR_NAMES)
 
     def _write_conf_dir(self, conf_dir):
         try:
@@ -279,10 +285,6 @@ class DXConfig(MutableMapping):
             with _open_for_writing_with_permissions(os.path.join(conf_dir, var), 0o600) as fd:
                 value = self.get(var, self.defaults.get(var, ""))
                 fd.write(value.encode(sys_encoding) if USING_PYTHON2 else value)
-
-        if not os.path.exists(os.path.join(self._user_conf_dir, "unsetenv")):
-            with open(os.path.join(self._user_conf_dir, "unsetenv"), "w") as fd:
-                fd.writelines("unset {}\n".format(var) for var in self.CORE_VAR_NAMES)
 
     def clear(self, reset=False):
         rmtree(self.get_session_conf_dir(), ignore_errors=True)
