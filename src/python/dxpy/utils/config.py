@@ -106,7 +106,7 @@ class DXConfig(MutableMapping):
 
         env_vars = self._read_conf_dir(self.get_global_conf_dir())
         env_vars.update(self._read_conf_dir(self.get_user_conf_dir()))
-        env_vars.update(self._read_conf_dir(self.get_session_conf_dir()))
+        env_vars.update(self._read_conf_dir(self.get_session_conf_dir(cleanup=True)))
         env_overrides = []
         for var in self.VAR_NAMES:
             if var in environ:
@@ -154,7 +154,7 @@ class DXConfig(MutableMapping):
     def get_user_conf_dir(self):
         return self._user_conf_dir
 
-    def get_session_conf_dir(self, cleanup=True):
+    def get_session_conf_dir(self, cleanup=False):
         """
         Tries to find the session configuration directory by looking in ~/.dnanexus_config/sessions/<PID>,
         where <PID> is pid of the parent of this process, then its parent, and so on.
