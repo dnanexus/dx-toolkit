@@ -24,21 +24,44 @@ import shlex # respects quoted substrings when splitting
 
 import requests
 
-from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
-from ..cli import workflow as workflow_cli
-from ..cli.cp import cp
-from ..cli.download import (download_one_file, download)
-from ..exceptions import (err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions,
-                          format_exception)
+logging.basicConfig(level=logging.INFO)
+
 from ..compat import (USING_PYTHON2, basestring, str, input, wrap_stdio_in_codecs, decode_command_line_args,
-                      unwrap_stream)
-from ..utils import warn
-from ..utils.env import sys_encoding, set_env_var, get_env_var, get_user_conf_dir
+                      unwrap_stream, sys_encoding)
 
 wrap_stdio_in_codecs()
 decode_command_line_args()
 
-logging.basicConfig(level=logging.INFO)
+import dxpy
+from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
+from ..cli import workflow as workflow_cli
+from ..cli.cp import cp
+from ..cli.download import (download_one_file, download)
+from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, parser_dataobject_args,
+                           parser_single_dataobject_output_args, process_properties_args,
+                           find_by_properties_and_tags_args, process_find_by_property_args, process_dataobject_args,
+                           process_single_dataobject_output_args, find_executions_args, add_find_executions_search_gp,
+                           set_env_from_args, extra_args, process_extra_args, DXParserError, exec_input_args,
+                           instance_type_arg, process_instance_type_arg)
+from ..cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
+from ..exceptions import (err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions,
+                          format_exception)
+from ..utils import warn, group_array_by_field, normalize_timedelta, normalize_time_input
+
+from ..app_categories import APP_CATEGORIES
+from ..utils.printing import (CYAN, BLUE, YELLOW, GREEN, RED, WHITE, UNDERLINE, BOLD, ENDC, DNANEXUS_LOGO,
+                              DNANEXUS_X, set_colors, set_delimiter, get_delimiter, DELIMITER, fill,
+                              tty_rows, tty_cols, pager)
+from ..utils.pretty_print import format_tree, format_table
+from ..utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id,
+                              is_analysis_id, get_last_pos_of_char, resolve_container_id_or_name, resolve_path,
+                              resolve_existing_path, get_app_from_path, resolve_app, get_exec_handler,
+                              split_unescaped, ResolutionError, get_first_pos_of_char,
+                              resolve_to_objects_or_project)
+from ..utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, LocalCompleter,
+                               ListCompleter, MultiCompleter)
+from ..utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_desc,
+                              get_io_desc, get_find_executions_string)
 
 try:
     import colorama
@@ -126,44 +149,8 @@ def set_delim(args=argparse.Namespace()):
         state['delimiter'] = None
     set_delimiter(state['delimiter'])
 
-
-# Loading environment
+# Loading command line arguments
 args_list = sys.argv[1:]
-
-# Hard-coding a shortcut so that it won't print out the warning in
-# import dxpy when clearing it anyway.
-if len(args_list) > 0 and args_list[0] == 'clearenv':
-    from dxpy.utils.env import clearenv
-    clearenv(argparse.Namespace(interactive=False, reset=True if '--reset' in args_list else False))
-    exit(0)
-
-# importing dxpy will now appropriately load env variables
-import dxpy
-from dxpy.app_categories import APP_CATEGORIES
-from dxpy.utils import group_array_by_field, normalize_timedelta, normalize_time_input
-from dxpy.utils.env import clearenv, write_env_var
-from dxpy.utils.printing import (CYAN, BLUE, YELLOW, GREEN, RED, WHITE, UNDERLINE, BOLD, ENDC, DNANEXUS_LOGO,
-                                 DNANEXUS_X, set_colors, set_delimiter, get_delimiter, DELIMITER, fill,
-                                 tty_rows, tty_cols, pager)
-from dxpy.utils.pretty_print import format_tree, format_table
-from dxpy.utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id,
-                                 is_analysis_id, get_last_pos_of_char, resolve_container_id_or_name, resolve_path,
-                                 resolve_existing_path, get_app_from_path, resolve_app, get_exec_handler,
-                                 split_unescaped, ResolutionError, get_first_pos_of_char,
-                                 resolve_to_objects_or_project)
-from dxpy.utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, LocalCompleter,
-                                  ListCompleter, MultiCompleter)
-from dxpy.utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_desc,
-                                 get_io_desc, get_find_executions_string)
-from dxpy.cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg,
-                              parser_dataobject_args, parser_single_dataobject_output_args,
-                              process_properties_args,
-                              find_by_properties_and_tags_args, process_find_by_property_args,
-                              process_dataobject_args, process_single_dataobject_output_args, find_executions_args, add_find_executions_search_gp,
-                              set_env_from_args,
-                              extra_args, process_extra_args, DXParserError,
-                              exec_input_args, instance_type_arg, process_instance_type_arg)
-from dxpy.cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
 
 # Loading other variables used for pretty-printing
 if "LESS" in os.environ:
@@ -310,7 +297,7 @@ def login(args):
                         username = input('Username [' + os.environ['DX_USERNAME'] + ']: ') or os.environ['DX_USERNAME']
                     else:
                         username = input('Username: ')
-                write_env_var('DX_USERNAME', username)
+                dxpy.config.write("DX_USERNAME", username)
                 with unwrap_stream('stdin'):
                     password = getpass.getpass()
 
@@ -360,7 +347,7 @@ def login(args):
     os.environ['DX_SECURITY_CONTEXT'] = sec_context
     dxpy.set_security_context(json.loads(sec_context))
     if args.save:
-        write_env_var('DX_SECURITY_CONTEXT', sec_context)
+        dxpy.config.write("DX_SECURITY_CONTEXT", sec_context)
 
     # If login via token, obtain current username from auth server.
     if args.token is not None:
@@ -368,7 +355,7 @@ def login(args):
         if dxpy.APISERVER_HOST not in ['api.dnanexus.com', 'stagingapi.dnanexus.com']:
             host, port = args.host, args.port
         try:
-            write_env_var('DX_USERNAME', dxpy.user_info(host, port)['username'])
+            dxpy.config.write("DX_USERNAME", dxpy.user_info(host, port)['username'])
         except DXError as details:
             # Consider failure to obtain username to be a non-fatal error.
             print("Could not obtain username from auth server. Consider setting both --host and --port.", file=sys.stderr)
@@ -404,7 +391,7 @@ def login(args):
         msg = "You are now logged in. Your credentials are stored in {conf_dir} and will expire in {timeout}. {tip}"
         tip = "Use " + BOLD("dx login --timeout") + " to control the expiration date, or " + BOLD("dx logout") + \
               " to end this session."
-        print(fill(msg.format(conf_dir=get_user_conf_dir(),
+        print(fill(msg.format(conf_dir=dxpy.config.get_user_conf_dir(),
                               timeout=datetime.timedelta(seconds=normalize_time_input(args.timeout)/1000),
                               tip=tip)))
 
@@ -427,42 +414,29 @@ def logout(args):
         if state["interactive"]:
             dxpy.AUTH_HELPER = None
         else:
-            write_env_var("DX_SECURITY_CONTEXT", None)
+            dxpy.config.write("DX_SECURITY_CONTEXT", None)
 
 def set_api(protocol, host, port, write):
-    os.environ['DX_APISERVER_PROTOCOL'] = protocol
-    os.environ['DX_APISERVER_HOST'] = host
-    os.environ['DX_APISERVER_PORT'] = port
+    dxpy.config.update(DX_APISERVER_PROTOCOL=protocol,
+                       DX_APISERVER_HOST=host,
+                       DX_APISERVER_PORT=port)
     if write:
-        write_env_var("DX_APISERVER_PROTOCOL", protocol)
-        write_env_var("DX_APISERVER_HOST", host)
-        write_env_var("DX_APISERVER_PORT", port)
-    dxpy.set_api_server_info(host=host, port=port, protocol=protocol)
+        dxpy.config.save()
 
 def set_project(project, write, name=None):
     if dxpy.JOB_ID is None:
-        os.environ['DX_PROJECT_CONTEXT_ID'] = project
-        if name is not None:
-            set_env_var("DX_PROJECT_CONTEXT_NAME", name)
-        if write:
-            write_env_var("DX_PROJECT_CONTEXT_ID", project)
-            if name is not None:
-                write_env_var("DX_PROJECT_CONTEXT_NAME", name)
-            else:
-                try:
-                    os.remove(os.path.expanduser('~/.dnanexus_config/DX_PROJECT_CONTEXT_NAME'))
-                except:
-                    pass
+        dxpy.config["DX_PROJECT_CONTEXT_ID"] = project
+        dxpy.config["DX_PROJECT_CONTEXT_NAME"] = name
     else:
-        os.environ['DX_WORKSPACE_ID'] = project
-        if write:
-            write_env_var('DX_WORKSPACE_ID', project)
+        dxpy.config["DX_WORKSPACE_ID"] = project
+    if write:
+        dxpy.config.save()
     dxpy.set_workspace_id(project)
 
 def set_wd(folder, write):
-    set_env_var('DX_CLI_WD', folder)
+    dxpy.config.update(DX_CLI_WD=folder)
     if write:
-        write_env_var("DX_CLI_WD", folder)
+        dxpy.config.save()
 
 # Will raise KeyboardInterrupt, EOFError
 def prompt_for_env_var(prompt_str, env_var_str):
@@ -557,10 +531,7 @@ def setenv(args):
     if not state['interactive']:
         args.save = True
     if args.current:
-        env_vars = ['DX_SECURITY_CONTEXT', 'DX_APISERVER_HOST', 'DX_APISERVER_PORT', 'DX_PROJECT_CONTEXT_ID', 'DX_CLI_WD', 'DX_USERNAME', 'DX_WORKSPACE_ID']
-        for var in env_vars:
-            if var in os.environ:
-                write_env_var(var, os.environ[var])
+        dxpy.config.save()
     else:
         try:
             api_protocol = prompt_for_env_var('API server protocol (choose "http" or "https")', 'DX_APISERVER_PROTOCOL')
@@ -576,6 +547,12 @@ def setenv(args):
         args.current = False
         args.level = 'CONTRIBUTE'
         pick_and_set_project(args)
+
+def clearenv(args):
+    if args.interactive:
+        print("The clearenv command is not available in the interactive shell")
+        return
+    dxpy.config.clear(reset=args.reset)
 
 def env(args):
     if args.bash:
@@ -612,8 +589,8 @@ def env(args):
         print("API server port\t\t" + dxpy.APISERVER_PORT)
         print("Current workspace\t" + str(dxpy.WORKSPACE_ID))
         if "DX_PROJECT_CONTEXT_NAME" in os.environ:
-            print(u'Current workspace name\t"{n}"'.format(n=get_env_var("DX_PROJECT_CONTEXT_NAME")))
-        print("Current folder\t\t" + get_env_var("DX_CLI_WD", "None"))
+            print(u'Current workspace name\t"{n}"'.format(n=dxpy.config.get("DX_PROJECT_CONTEXT_NAME")))
+        print("Current folder\t\t" + dxpy.config.get("DX_CLI_WD", "None"))
         print("Current user\t\t" + str(os.environ.get("DX_USERNAME")))
 
 def get_pwd():
@@ -626,7 +603,7 @@ def get_pwd():
             except:
                 pass
     if state['currentproj'] is not None:
-        pwd_str = state['currentproj'] + ':' + get_env_var('DX_CLI_WD', u'/')
+        pwd_str = state['currentproj'] + ':' + dxpy.config.get('DX_CLI_WD', u'/')
     return pwd_str
 
 def pwd(args):
@@ -1271,7 +1248,7 @@ def new_record(args):
 
     if args.output is None:
         project = dxpy.WORKSPACE_ID
-        folder = get_env_var('DX_CLI_WD', u'/')
+        folder = dxpy.config.get('DX_CLI_WD', u'/')
         name = None
     else:
         project, folder, name = resolve_path(args.output)
@@ -1298,7 +1275,7 @@ def new_gtable(args):
 
     if args.output is None:
         project = dxpy.WORKSPACE_ID
-        folder = get_env_var('DX_CLI_WD', u'/')
+        folder = dxpy.config.get('DX_CLI_WD', u'/')
         name = None
     else:
         project, folder, name = resolve_path(args.output)
@@ -1616,6 +1593,7 @@ def make_download_url(args):
     except:
         err_exit()
 
+
 def get(args):
     # Attempt to resolve name
     project, _folderpath, entity_result = try_call(resolve_existing_path,
@@ -1799,7 +1777,7 @@ def upload_one(args):
 
     if args.path is None:
         project = dxpy.WORKSPACE_ID
-        folder = get_env_var('DX_CLI_WD', u'/')
+        folder = dxpy.config.get('DX_CLI_WD', u'/')
         name = None if args.filename == '-' else os.path.basename(args.filename)
     else:
         project, folder, name = resolve_path(args.path)
@@ -2787,7 +2765,7 @@ def run(args):
         if is_workflow:
             dest_path = getattr(handler, 'outputFolder', None)
         if dest_path is None:
-            dest_path = get_env_var('DX_CLI_WD', u'/')
+            dest_path = dxpy.config.get('DX_CLI_WD', u'/')
 
     process_instance_type_arg(args, is_workflow)
 
@@ -2865,6 +2843,8 @@ def shell(orig_args):
             args = parser.parse_args(sys.argv[1:])
             set_cli_colors(args)
             set_delim(args)
+            if args.func == clearenv:
+                args.interactive = True
             args.func(args)
         except StopIteration:
             exit(0)
@@ -2931,7 +2911,7 @@ def watch(args):
 def ssh_config(args):
     user_id = try_call(dxpy.whoami)
 
-    dnanexus_conf_dir = get_user_conf_dir()
+    dnanexus_conf_dir = dxpy.config.get_user_conf_dir()
     if not os.path.exists(dnanexus_conf_dir):
         msg = "The DNAnexus configuration directory {d} does not exist. Use {c} to create it."
         err_exit(msg.format(d=dnanexus_conf_dir, c=BOLD("dx login")))
@@ -2995,7 +2975,7 @@ def update_pub_key(user_id, pub_key_file):
 
 def verify_ssh_config():
     try:
-        with open(os.path.join(get_user_conf_dir(), 'ssh_id.pub')) as fh:
+        with open(os.path.join(dxpy.config.get_user_conf_dir(), 'ssh_id.pub')) as fh:
             user_desc = try_call(dxpy.api.user_describe, try_call(dxpy.whoami))
             if 'sshPublicKey' not in user_desc:
                 raise DXError("User's SSH public key is not set")
@@ -3327,7 +3307,7 @@ parser_clearenv = subparsers.add_parser('clearenv', help='Clears all environment
                                         description='Clears all environment variables set by dx.  More specifically, it removes local state stored in ~/.dnanexus_config/environment.  Does not affect the environment variables currently set in your shell.', prog='dx clearenv')
 parser_clearenv.add_argument('--reset', help='Reset dx environment variables to empty values. Use this to avoid interference between multiple dx sessions when using shell environment variables.',
                              action='store_true')
-parser_clearenv.set_defaults(func=clearenv, interactive=True)
+parser_clearenv.set_defaults(func=clearenv, interactive=False)
 register_subparser(parser_clearenv, categories='session')
 
 parser_invite = subparsers.add_parser('invite',

@@ -193,9 +193,8 @@ class TestDXTabCompletion(unittest.TestCase):
     @unittest.skipUnless(testutil.TEST_ENV,
                          'skipping test that would clobber your local environment')
     def test_completion_with_no_current_project(self):
-        from dxpy.utils.env import write_env_var
-        write_env_var('DX_PROJECT_CONTEXT_ID', None)
-        del os.environ['DX_PROJECT_CONTEXT_ID']
+        del dxpy.config['DX_PROJECT_CONTEXT_ID']
+        dxpy.config.save()
 
         self.assert_completion("dx select ", "tab-completion project\\:")
         self.assert_completion("dx cd ta", "tab-completion project\\:")

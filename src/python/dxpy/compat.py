@@ -19,6 +19,7 @@ from __future__ import (print_function, unicode_literals)
 import os, sys, io, locale
 from io import TextIOWrapper
 from contextlib import contextmanager
+from collections import MutableMapping
 
 try:
     sys_encoding = locale.getdefaultlocale()[1] or "UTF-8"
@@ -133,41 +134,43 @@ def decode_command_line_args():
         sys.argv = [i if isinstance(i, unicode) else i.decode(sys_encoding) for i in sys.argv]
     return sys.argv
 
-class _Environ(object):
+def _ensure_bytes(i):
+    if not isinstance(i, bytes):
+        i = i.encode(sys_encoding)
+    return i
+
+def _ensure_str(i):
+    if isinstance(i, bytes):
+        i = i.decode(sys_encoding)
+    return i
+
+class _Environ(MutableMapping):
     def __getitem__(self, item):
-        if not isinstance(item, bytes):
-            item = item.encode(sys_encoding)
-        value = os.environ[item]
-        if isinstance(value, bytes):
-            value = value.decode(sys_encoding)
-        return value
+        return _ensure_str(os.environ[_ensure_bytes(item)])
 
     def __setitem__(self, varname, value):
-        if not isinstance(varname, bytes):
-            varname = varname.encode(sys_encoding)
-        if not isinstance(value, bytes):
-            value = value.encode(sys_encoding)
-        os.environ[varname] = value
+        os.environ[_ensure_bytes(varname)] = _ensure_bytes(value)
 
     def __contains__(self, item):
-        if not isinstance(item, bytes):
-            item = item.encode(sys_encoding)
-        return True if item in os.environ else False
-
-    def __getattr__(self, attr):
-        return getattr(os.environ, attr)
+        return True if _ensure_bytes(item) in os.environ else False
 
     def __repr__(self):
-        return repr(os.environ)
+        return repr(dict(self))
 
     def __iter__(self):
         for key in os.environ:
-            yield key
+            yield _ensure_str(key)
+
+    def __delitem__(self, item):
+        del os.environ[_ensure_bytes(item)]
+
+    def __len__(self):
+        return len(os.environ)
 
     def copy(self):
-        return {key: self[key] for key in self}
+        return dict(self)
 
-environ = _Environ()
+environ = _Environ() if USING_PYTHON2 else os.environ
 
 def wrap_env_var_handlers():
     if USING_PYTHON2 and not getattr(os, '__native_getenv', None):

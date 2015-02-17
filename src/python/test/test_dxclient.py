@@ -959,9 +959,8 @@ class TestDXClientUploadDownload(DXTestCase):
             self.assertTrue(file_id.startswith('file-'))
 
             # unset environment
-            from dxpy.utils.env import write_env_var
-            write_env_var('DX_PROJECT_CONTEXT_ID', None)
-            del os.environ['DX_PROJECT_CONTEXT_ID']
+            del dxpy.config['DX_PROJECT_CONTEXT_ID']
+            dxpy.config.save()
             self.assertNotIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
 
             # download file
@@ -4421,9 +4420,8 @@ class TestDXCp(DXTestCase):
         file_id = create_file_in_project(self.gen_uniq_fname(), self.project)
 
         # Unset environment
-        from dxpy.utils.env import write_env_var
-        write_env_var('DX_PROJECT_CONTEXT_ID', None)
-        del os.environ['DX_PROJECT_CONTEXT_ID']
+        del dxpy.config['DX_PROJECT_CONTEXT_ID']
+        dxpy.config.save()
         self.assertNotIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
 
         # Copy the file to a new project.

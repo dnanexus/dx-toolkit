@@ -90,8 +90,8 @@ def check_output(*popenargs, **kwargs):
 
 @contextmanager
 def temporary_project(name='dx client tests temporary project', cleanup=True, reclaim_permissions=False, select=False):
-    """Creates a temporary project scoped to the context manager, and yields
-a DXProject handler for the project.
+    """Creates a temporary project scoped to the context manager, and
+    yields a DXProject handler for the project.
 
     :param cleanup: if False, do not clean up the project when done (useful for debugging so you can examine the state of the project)
     :type cleanup: bool
@@ -120,10 +120,11 @@ a DXProject handler for the project.
 
 @contextmanager
 def select_project(project_or_project_id):
-    """Selects a project by setting the DX_PROJECT_CONTEXT_ID in os.environ;
-this change is propagated to subprocesses that are invoked with the
-default settings. The original setting of DX_PROJECT_CONTEXT_ID is
-restored when the block exits.
+    """Selects a project by setting the DX_PROJECT_CONTEXT_ID in
+    dxpy.config (and therefore os.environ); this change is propagated
+    to subprocesses that are invoked with the default settings. The
+    original setting of DX_PROJECT_CONTEXT_ID is restored when the
+    block exits.
 
     :param project_or_project_id:
         Project or container to select. May be specified either as a
@@ -135,39 +136,39 @@ restored when the block exits.
         project_id = project_or_project_id
     else:
         project_id = project_or_project_id.get_id()
-    current_project_env_var = os.environ.get('DX_PROJECT_CONTEXT_ID', None)
+    current_project_env_var = dxpy.config.get('DX_PROJECT_CONTEXT_ID', None)
     if project_id is None:
-        del os.environ['DX_PROJECT_CONTEXT_ID']
+        del dxpy.config['DX_PROJECT_CONTEXT_ID']
     else:
-        os.environ['DX_PROJECT_CONTEXT_ID'] = project_id
+        dxpy.config['DX_PROJECT_CONTEXT_ID'] = project_id
     try:
         yield None
     finally:
         if current_project_env_var is None:
-            del os.environ['DX_PROJECT_CONTEXT_ID']
+            del dxpy.config['DX_PROJECT_CONTEXT_ID']
         else:
-            os.environ['DX_PROJECT_CONTEXT_ID'] = current_project_env_var
+            dxpy.config['DX_PROJECT_CONTEXT_ID'] = current_project_env_var
 
 
 class DXTestCase(unittest.TestCase):
     def setUp(self):
         proj_name = u"dxclient_test_pröject"
         self.project = dxpy.api.project_new({"name": proj_name})['id']
-        os.environ["DX_PROJECT_CONTEXT_ID"] = self.project
+        dxpy.config["DX_PROJECT_CONTEXT_ID"] = self.project
         subprocess.check_call(u"dx cd "+self.project+":/", shell=True)
-        dxpy._initialize(suppress_warning=True)
-        if 'DX_CLI_WD' in os.environ:
-            del os.environ['DX_CLI_WD']
+        dxpy.config.__init__(suppress_warning=True)
+        if 'DX_CLI_WD' in dxpy.config:
+            del dxpy.config['DX_CLI_WD']
 
     def tearDown(self):
         try:
             dxpy.api.project_destroy(self.project, {"terminateJobs": True})
         except Exception as e:
             print("Failed to remove test project:", str(e))
-        if 'DX_PROJECT_CONTEXT_ID' in os.environ:
-            del os.environ['DX_PROJECT_CONTEXT_ID']
-        if 'DX_CLI_WD' in os.environ:
-            del os.environ['DX_CLI_WD']
+        if 'DX_PROJECT_CONTEXT_ID' in dxpy.config:
+            del dxpy.config['DX_PROJECT_CONTEXT_ID']
+        if 'DX_CLI_WD' in dxpy.config:
+            del dxpy.config['DX_CLI_WD']
 
     # Be sure to use the check_output defined in this module if you wish
     # to use stderr_regexp. Python's usual subprocess.check_output

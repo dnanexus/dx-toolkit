@@ -33,7 +33,6 @@ from ..utils.resolver import (get_first_pos_of_char, is_hashid, is_job_id, is_lo
                               resolve_existing_path, split_unescaped)
 from ..utils import OrderedDefaultdict
 from ..compat import input, str, shlex
-from ..utils.env import get_env_var
 
 ####################
 # -i Input Parsing #
@@ -123,7 +122,7 @@ def interactive_help(in_class, param_desc, prompt):
             except:
                 pass
             if proj_name is not None:
-                print('Your current working directory is ' + proj_name + ':' + get_env_var('DX_CLI_WD', u'/'))
+                print('Your current working directory is ' + proj_name + ':' + dxpy.config.get('DX_CLI_WD', '/'))
         while True:
             print('Pick an option to find input data:')
             try:

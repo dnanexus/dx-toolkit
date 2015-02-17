@@ -31,7 +31,6 @@ from ..exceptions import (err_exit, DXCLIError, InvalidState)
 from . import (try_call, try_call_err_exit)
 from dxpy.utils.printing import (fill)
 from dxpy.utils import pathmatch
-from ..utils.env import get_env_var
 
 
 def download_one_file(project, file_desc, dest_filename, args):
@@ -102,7 +101,7 @@ def _rel2abs(path, project):
     if path.startswith('/') or dxpy.WORKSPACE_ID != project:
         abs_path, strip_prefix = path, os.path.dirname(path.rstrip('/'))
     else:
-        wd = get_env_var('DX_CLI_WD', u'/')
+        wd = dxpy.config.get('DX_CLI_WD', u'/')
         abs_path, strip_prefix = os.path.join(wd, path), os.path.dirname(os.path.join(wd, path).rstrip('/'))
     if len(abs_path) > 1:
         abs_path = abs_path.rstrip('/')

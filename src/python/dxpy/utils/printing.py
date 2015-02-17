@@ -19,8 +19,7 @@ This submodule gives basic utilities for printing to the terminal.
 '''
 
 import textwrap, subprocess, os, sys
-from .env import sys_encoding
-from ..compat import USING_PYTHON2
+from ..compat import USING_PYTHON2, sys_encoding
 from ..exceptions import DXCLIError
 
 if sys.stdout.isatty():
