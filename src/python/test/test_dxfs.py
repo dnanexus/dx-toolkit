@@ -32,10 +32,10 @@ class TestDXFS(unittest.TestCase):
             return
         proj_name = u"dxclient_test_pröject"
         cls.project_id = subprocess.check_output(u"dx new project '{p}' --brief".format(p=proj_name), shell=True).strip()
-        os.environ["DX_PROJECT_CONTEXT_ID"] = cls.project_id
-        os.environ["DX_CLI_WD"] = '/'
+        dxpy.config["DX_PROJECT_CONTEXT_ID"] = cls.project_id
+        dxpy.config["DX_CLI_WD"] = '/'
         cls.project = dxpy.DXProject(cls.project_id)
-        dxpy._initialize(suppress_warning=True)
+        dxpy.config.__init__(suppress_warning=True)
 
         subprocess.check_call(['dx', 'mkdir', 'foo'])
         subprocess.check_call(['dx', 'mkdir', 'bar'])
