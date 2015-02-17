@@ -147,6 +147,7 @@ class DXConfig(MutableMapping):
             if "DX_PROJECT_CONTEXT_ID" in environ:
                 dxpy.set_workspace_id(environ["DX_PROJECT_CONTEXT_ID"])
                 dxpy.set_project_context(environ["DX_PROJECT_CONTEXT_ID"])
+                dxpy.set_job_id(None)
 
     def get_global_conf_dir(self):
         return self._global_conf_dir
