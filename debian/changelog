@@ -1,3 +1,9 @@
+dx-toolkit (0.133.0) precise; urgency=low
+
+  * Improved config management in dxpy 
+
+ -- Ric Medlinger <ric@dnanexus.com>  Wed, 18 Feb 2015 22:27:23 +0000
+
 dx-toolkit (0.132.0) precise; urgency=low
 
   * dx-upload-all-outputs waits for files to close
