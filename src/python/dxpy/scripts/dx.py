@@ -2039,14 +2039,18 @@ def find_executions(args):
                             if stage_desc['execution']['id'] not in descriptions:
                                 descriptions[stage_desc['execution']['id']] = stage_desc['execution']
 
-            for execution_result in dxpy.find_executions(**query):
-                process_execution_result(execution_result)
+            # Short-circuit the find_execution API call(s) if there are
+            # no root executions (and therefore we would have gotten 0
+            # results anyway)
+            if len(roots.keys()) > 0:
+                for execution_result in dxpy.find_executions(**query):
+                    process_execution_result(execution_result)
 
-            # ensure roots are sorted by their creation time
-            sorted_roots = sorted(roots.values(), key=lambda x: -descriptions[x]['created'])
+                # ensure roots are sorted by their creation time
+                sorted_roots = sorted(roots.values(), key=lambda x: -descriptions[x]['created'])
 
-            for root in sorted_roots:
-                process_tree(descriptions[roots[root]], executions_by_parent, descriptions)
+                for root in sorted_roots:
+                    process_tree(descriptions[roots[root]], executions_by_parent, descriptions)
         if args.json:
             print(json.dumps(json_output, indent=4))
 
