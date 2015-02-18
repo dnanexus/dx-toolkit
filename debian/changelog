@@ -1,6 +1,6 @@
 dx-toolkit (0.133.0) precise; urgency=low
 
-  * Improved config management in dxpy 
+  * Improved config management in dxpy
 
  -- Ric Medlinger <ric@dnanexus.com>  Wed, 18 Feb 2015 22:27:23 +0000
 
@@ -15,7 +15,6 @@ dx-toolkit (0.131.0) precise; urgency=low
   * Ensure ua uses bundled libc++ dylibs
 
   * Various bug fixes
- 
 
  -- Ric Medlinger <ric@dnanexus.com>  Thu, 05 Feb 2015 15:57:23 +0000
 
