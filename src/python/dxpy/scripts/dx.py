@@ -2089,24 +2089,24 @@ def find_data(args):
         args.project, args.folder, _none = try_call(resolve_path, args.folder, 'folder')
 
     try:
-        results = list(dxpy.find_data_objects(classname=args.classname,
-                                              state=args.state,
-                                              visibility=args.visibility,
-                                              properties=args.properties,
-                                              name=args.name,
-                                              name_mode='glob',
-                                              typename=args.type,
-                                              tags=args.tag, link=args.link,
-                                              project=args.project,
-                                              folder=args.folder,
-                                              recurse=(args.recurse if not args.recurse else None),
-                                              modified_after=args.mod_after,
-                                              modified_before=args.mod_before,
-                                              created_after=args.created_after,
-                                              created_before=args.created_before,
-                                              describe=(not args.brief)))
+        results = dxpy.find_data_objects(classname=args.classname,
+                                         state=args.state,
+                                         visibility=args.visibility,
+                                         properties=args.properties,
+                                         name=args.name,
+                                         name_mode='glob',
+                                         typename=args.type,
+                                         tags=args.tag, link=args.link,
+                                         project=args.project,
+                                         folder=args.folder,
+                                         recurse=(args.recurse if not args.recurse else None),
+                                         modified_after=args.mod_after,
+                                         modified_before=args.mod_before,
+                                         created_after=args.created_after,
+                                         created_before=args.created_before,
+                                         describe=(not args.brief))
         if args.json:
-            print(json.dumps(results, indent=4))
+            print(json.dumps(list(results), indent=4))
             return
         if args.brief:
             for result in results:
@@ -2150,33 +2150,35 @@ def find_apps(args):
         return DNANEXUS_X() if result['describe']['billTo'] == 'org-dnanexus' else ' '
 
     try:
-        results = list(dxpy.find_apps(name=args.name, name_mode='glob', category=args.category,
-                                      all_versions=args.all,
-                                      published=(not args.unpublished),
-                                      billed_to=args.billed_to,
-                                      created_by=args.creator,
-                                      developer=args.developer,
-                                      created_after=args.created_after,
-                                      created_before=args.created_before,
-                                      modified_after=args.mod_after,
-                                      modified_before=args.mod_before,
-                                      describe={"fields": {"name": True, "installed": args.installed,
-                                                           "title": not args.brief,
-                                                           "version": not args.brief,
-                                                           "published": args.verbose,
-                                                           "billTo": not args.brief}}))
+        raw_results = dxpy.find_apps(name=args.name, name_mode='glob', category=args.category,
+                                     all_versions=args.all,
+                                     published=(not args.unpublished),
+                                     billed_to=args.billed_to,
+                                     created_by=args.creator,
+                                     developer=args.developer,
+                                     created_after=args.created_after,
+                                     created_before=args.created_before,
+                                     modified_after=args.mod_after,
+                                     modified_before=args.mod_before,
+                                     describe={"fields": {"name": True,
+                                                          "installed": args.installed,
+                                                          "title": not args.brief,
+                                                          "version": not args.brief,
+                                                          "published": args.verbose,
+                                                          "billTo": not args.brief}})
 
         if args.installed:
-            results = [result for result in results if result['describe']['installed']]
+            maybe_filtered_by_install = (result for result in raw_results if result['describe']['installed'])
+        else:
+            maybe_filtered_by_install = raw_results
 
         if args.brief:
-            results = [{"id": result['id']} for result in results]
-
-        if not args.brief:
-            results.sort(key = lambda result: result['describe']['name'])
+            results = ({"id": result['id']} for result in maybe_filtered_by_install)
+        else:
+            results = sorted(maybe_filtered_by_install, key=lambda result: result['describe']['name'])
 
         if args.json:
-            print(json.dumps(results, indent=4))
+            print(json.dumps(list(results), indent=4))
             return
         if args.brief:
             for result in results:
