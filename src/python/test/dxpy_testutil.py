@@ -150,12 +150,26 @@ def select_project(project_or_project_id):
             dxpy.config['DX_PROJECT_CONTEXT_ID'] = current_project_env_var
 
 
+# Invoke "dx cd" without using bash (as 'run' would) so that the config
+# gets attached to this Python process (instead of the bash process) and
+# will be applied in later calls in the same test.
+#
+# Some tests can also use the select_project helper but that code sets
+# the environment variables, and this writes the config to disk, and we
+# should test both code paths.
+def cd(directory):
+    print("$ dx cd %s" % (directory,))
+    output = check_output(['dx', 'cd', directory], shell=False)
+    print(output)
+    return output
+
+
 class DXTestCase(unittest.TestCase):
     def setUp(self):
         proj_name = u"dxclient_test_pröject"
         self.project = dxpy.api.project_new({"name": proj_name})['id']
         dxpy.config["DX_PROJECT_CONTEXT_ID"] = self.project
-        subprocess.check_call(u"dx cd "+self.project+":/", shell=True)
+        cd(self.project + ":/")
         dxpy.config.__init__(suppress_warning=True)
         if 'DX_CLI_WD' in dxpy.config:
             del dxpy.config['DX_CLI_WD']

@@ -27,7 +27,7 @@ import requests
 
 import dxpy
 from dxpy.scripts import dx_build_app
-from dxpy_testutil import DXTestCase, check_output, temporary_project, select_project
+from dxpy_testutil import DXTestCase, check_output, temporary_project, select_project, cd
 import dxpy_testutil as testutil
 from dxpy.exceptions import DXAPIError, EXPECTED_ERR_EXIT_STATUS
 from dxpy.compat import str, sys_encoding
@@ -140,10 +140,10 @@ class TestDXClient(DXTestCase):
             run("dx")
         run("dx help")
         folder_name = "эксперимент 1"
-        run("dx cd /")
+        cd("/")
         run("dx ls")
         run("dx mkdir '{f}'".format(f=folder_name))
-        run("dx cd '{f}'".format(f=folder_name))
+        cd(folder_name)
         with tempfile.NamedTemporaryFile() as f:
             local_filename = f.name
             filename = folder_name
@@ -153,12 +153,12 @@ class TestDXClient(DXTestCase):
             self.assertEqual(fileid, run("dx ls '../{f}/{f}' --brief".format(f=filename)))
             self.assertEqual("xyzzt\n", run("dx head '../{f}/{f}'".format(f=filename)))
         run("dx pwd")
-        run("dx cd ..")
+        cd("..")
         run("dx pwd")
         run("dx ls")
         with self.assertRaises(subprocess.CalledProcessError):
             run("dx rm '{f}'".format(f=filename))
-        run("dx cd '{f}'".format(f=folder_name))
+        cd(folder_name)
 
         run("dx mv '{f}' '{f}2'".format(f=filename))
         run("dx mv '{f}2' '{f}'".format(f=filename))
@@ -175,7 +175,7 @@ class TestDXClient(DXTestCase):
 
         run("dx get_details '../{n}'".format(n=table_name))
 
-        run("dx cd ..")
+        cd("..")
         run("dx rmdir '{f}'".format(f=folder_name))
 
         run("dx tree")
@@ -2076,7 +2076,7 @@ class TestDXClientWorkflow(DXTestCase):
                              "--brief -inumber=32 --instance-type mem2_hdd2_x2").strip())
         # test relative folder path
         run("dx mkdir -p a/b/c")
-        run("dx cd a/b/c")
+        cd("a/b/c")
         stage_ids.append(run("dx add stage " + workflow_id + " --name second --output-folder . " +
                              applet_id +
                              " --brief --instance-type '{\"main\": \"mem2_hdd2_x2\"}'").strip())
@@ -2504,7 +2504,7 @@ class TestDXClientFind(DXTestCase):
         test_recordname = '/test-record-12'
         run('dx new record -p --brief ' + test_recordname)
         record_id = run('dx new record -p --brief ' + test_dirname + test_subdirname + test_recordname).strip()
-        run('dx cd ' + test_dirname)
+        cd(test_dirname)
         found_record_id = run('dx find data --brief --path ' + test_subdirname[1:]).strip()
         self.assertEqual(found_record_id, dxpy.WORKSPACE_ID + ':' + record_id)
 
@@ -2678,7 +2678,7 @@ class TestDXClientFind(DXTestCase):
                              tags=["foo", "bar"],
                              properties={"foo": "baz"})
 
-        run("dx cd {project_id}:/".format(project_id=dxapplet.get_proj_id()))
+        cd("{project_id}:/".format(project_id=dxapplet.get_proj_id()))
 
         # Wait for job to be created
         executions = [stage['execution']['id'] for stage in dxanalysis.describe()['stages']]
@@ -3801,7 +3801,7 @@ def main(in1):
 
     def test_upload_resources(self):
         run("dx mkdir /subfolder")
-        run("dx cd /subfolder")
+        cd("/subfolder")
         app_spec = {
             "name": "upload_resources",
             "dxapi": "1.0.0",
