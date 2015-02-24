@@ -1,3 +1,9 @@
+dx-toolkit (0.134.0) precise; urgency=low
+
+  *  Minor optimizations 
+
+ -- Ric Medlinger <ric@dnanexus.com>  Tue, 24 Feb 2015 23:47:09 +0000
+
 dx-toolkit (0.133.0) precise; urgency=low
 
   * Improved config management in dxpy
