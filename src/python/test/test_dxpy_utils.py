@@ -23,7 +23,7 @@ import unittest, time, json, re, os
 import dxpy
 from dxpy import AppError, AppInternalError, DXFile, DXRecord
 from dxpy.utils import (describe, exec_utils, genomic_utils, response_iterator, get_futures_threadpool, DXJSONEncoder,
-                        normalize_timedelta, config)
+                        normalize_timedelta, normalize_time_input, config)
 from dxpy.utils.exec_utils import DXExecDependencyInstaller
 from dxpy.compat import USING_PYTHON2
 
@@ -201,6 +201,7 @@ class TestDXExecDependsUtils(unittest.TestCase):
         edi.install()
         assert_cmd_ran(edi, "apt-get install --yes --no-install-recommends git")
 
+
 class TestTimeUtils(unittest.TestCase):
     def test_normalize_timedelta(self):
         for i, o in (("-15", -15000),
@@ -212,6 +213,17 @@ class TestTimeUtils(unittest.TestCase):
                      ("1M", 1000*60*60*24*30),
                      ("-1w", -1000*60*60*24*7)):
             self.assertEqual(normalize_timedelta(i), o)
+
+    def test_strings_vs_ints(self):
+        # This is potentially confusing; it would be nice to have two
+        # separate methods, or a flag to control the interpretation of
+        # the field when a string with no suffix is supplied.
+
+        # "dx login" can supply this form
+        self.assertEqual(normalize_time_input("1414141414"), 1414141414000)   # interpreted as sec
+        # find methods can supply this form
+        self.assertEqual(normalize_time_input(1414141414000), 1414141414000)  # interpreted as ms
+
 
 class TestDXConfig(unittest.TestCase):
     def test_dxconfig(self):

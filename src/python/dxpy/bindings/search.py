@@ -131,9 +131,9 @@ def find_data_objects(classname=None, state=None, visibility=None,
        * A nonnegative integer, interpreted as milliseconds since the Epoch
        * A negative integer, interpreted as an offset in milliseconds relative
          to the current time
-       * A string with one of the suffixes "s", "m", "d", "w", or "y" (for
-         seconds, minutes, days, weeks, or years), interpreted as an offset
-         from the current time.
+       * A string containing a negative integer with one of the suffixes
+         "s", "m", "d", "w", or "y" (for seconds, minutes, days, weeks,
+         or years), interpreted as an offset from the current time.
 
        The following examples both find all items that were created more
        than 1 week ago::

@@ -1680,6 +1680,53 @@ class TestDXSearch(unittest.TestCase):
         with self.assertRaises(DXError):
             dxpy.search.find_data_objects(tag='foo', tags=['foo', 'bar'])
 
+    def test_find_data_objs_by_time(self):
+        def query(**kwargs):
+            return dxpy.search.find_data_objects(name='find_by_time', project=self.proj_id, **kwargs)
+
+        dxrecord = dxpy.new_dxrecord(name='find_by_time')
+        now = int(time.time()) * 1000
+
+        # Negative integers interpreted as offsets (in ms) to the
+        # current time
+        #
+        # Sleep for a short time so we can formulate tests that allow us
+        # to verify that negative offsets are being interpreted as ms,
+        # not as seconds.
+        time.sleep(2.0)
+        self.assertEqual(len(list(query(modified_after=-100))), 0)
+        self.assertEqual(len(list(query(modified_after=-60 * 1000))), 1)
+        self.assertEqual(len(list(query(modified_before=-60 * 1000))), 0)
+        self.assertEqual(len(list(query(modified_before=-100))), 1)
+        self.assertEqual(len(list(query(created_after=-60 * 1000))), 1)
+        self.assertEqual(len(list(query(created_after=-100))), 0)
+        self.assertEqual(len(list(query(created_before=-60 * 1000))), 0)
+        self.assertEqual(len(list(query(created_before=-100))), 1)
+
+        # Nonnegative integers interpreted as ms since epoch
+        self.assertEqual(len(list(query(modified_after=now - 60 * 1000))), 1)
+        self.assertEqual(len(list(query(modified_after=now + 60 * 1000))), 0)
+        self.assertEqual(len(list(query(modified_before=now + 60 * 1000))), 1)
+        self.assertEqual(len(list(query(modified_before=now - 60 * 1000))), 0)
+        self.assertEqual(len(list(query(created_after=now - 60 * 1000))), 1)
+        self.assertEqual(len(list(query(created_after=now + 60 * 1000))), 0)
+        self.assertEqual(len(list(query(created_before=now + 60 * 1000))), 1)
+        self.assertEqual(len(list(query(created_before=now - 60 * 1000))), 0)
+
+        # Strings with (negative int + suffix) to be interpreted as
+        # offset from the current time
+        self.assertEqual(len(list(query(modified_after="-60s"))), 1)
+        self.assertEqual(len(list(query(modified_before="-60s"))), 0)
+        self.assertEqual(len(list(query(created_after="-60s"))), 1)
+        self.assertEqual(len(list(query(created_before="-60s"))), 0)
+        # Positive numbers don't get the same treatment; currently, they
+        # are interpreted as offsets to the Epoch
+        #
+        # self.assertEqual(len(list(query(modified_after="60s"))), 0)
+        # self.assertEqual(len(list(query(modified_before="60s"))), 1)
+        # self.assertEqual(len(list(query(created_after="60s"))), 0)
+        # self.assertEqual(len(list(query(created_before="60s"))), 1)
+
     def test_find_data_objs_in_workspace(self):
         old_workspace = dxpy.WORKSPACE_ID
         dxpy.WORKSPACE_ID = self.proj_id
