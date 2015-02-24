@@ -126,7 +126,7 @@ public class DXAppletTest {
     @After
     public void tearDown() {
         if (testProject != null) {
-            testProject.destroy();
+            testProject.destroy(true);
         }
     }
 
