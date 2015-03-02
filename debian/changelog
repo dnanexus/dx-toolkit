@@ -1,3 +1,9 @@
+dx-toolkit (0.134.1) precise; urgency=low
+
+  * Fix regression in buffer size detection
+
+ -- Phil Sung <psung@dnanexus.com>  Mon, 02 Mar 2015 20:09:40 +0000
+
 dx-toolkit (0.134.0) precise; urgency=low
 
   *  Minor optimizations 
