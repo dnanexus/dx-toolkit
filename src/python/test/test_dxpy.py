@@ -21,6 +21,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os, unittest, tempfile, filecmp, time, json, sys
 import requests
+import subprocess
 
 import dxpy
 import dxpy_testutil as testutil
@@ -206,6 +207,17 @@ class TestDXFileFunctions(unittest.TestCase):
             dxpy.bindings.dxfile_functions._get_buffer_size_for_file(16 * 1024 * 1024, file_is_mmapd=file_is_mmapd)
             dxpy.bindings.dxfile_functions._get_buffer_size_for_file(160 * 1024 * 1024 * 1024, file_is_mmapd=file_is_mmapd)
             dxpy.bindings.dxfile_functions._get_buffer_size_for_file(290 * 1024 * 1024 * 1024, file_is_mmapd=file_is_mmapd)
+
+    def test_job_detection(self):
+        env = dict(os.environ, DX_JOB_ID='job-00000000000000000000')
+        buffer_size = subprocess.check_output(
+            "python -c 'import dxpy; print dxpy.bindings.dxfile.DEFAULT_BUFFER_SIZE'", shell=True, env=env)
+        self.assertEqual(int(buffer_size), 96 * 1024 * 1024)
+        del env['DX_JOB_ID']
+        buffer_size = subprocess.check_output(
+            "python -c 'import dxpy; print dxpy.bindings.dxfile.DEFAULT_BUFFER_SIZE'", shell=True, env=env)
+        self.assertEqual(int(buffer_size), 16 * 1024 * 1024)
+
 
 class TestDXFile(unittest.TestCase):
 
