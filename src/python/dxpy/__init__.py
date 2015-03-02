@@ -580,9 +580,9 @@ def get_auth_server_name(host_override=None, port_override=None):
         err_msg = "Could not determine which auth server is associated with {apiserver}."
         raise exceptions.DXError(err_msg.format(apiserver=APISERVER_HOST))
 
+from .utils.config import DXConfig as _DXConfig
+config = _DXConfig()
+
 from .bindings import *
 from .dxlog import DXLogHandler
 from .utils.exec_utils import run, entry_point
-from .utils.config import DXConfig as _DXConfig
-
-config = _DXConfig()
