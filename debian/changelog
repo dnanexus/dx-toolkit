@@ -1,3 +1,9 @@
+dx-toolkit (0.135.0) precise; urgency=low
+
+  * Fix regression in DXFile buffer size selection
+
+ -- Ric Medlinger <ric@dnanexus.com>  Wed, 04 Mar 2015 23:38:09 +0000
+
 dx-toolkit (0.134.0) precise; urgency=low
 
   *  Minor optimizations
