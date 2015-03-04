@@ -70,8 +70,19 @@ class DXLogHandler(SysLogHandler):
 
     def emit(self, record):
         level = self.encodePriority(record)
+        message = record.getMessage()
+        # The Linux domain socket datagram size limit is 8 KB, but
+        # with the extra padding introduced by the log function, the
+        # incoming message needs to be smaller - we truncate it to
+        # at most 8015 bytes here.
+        # Note: we use Python 2 semantics here (byte strings). This
+        # script is not Python 3 ready. If *line* was a unicode string
+        # with wide chars, its byte length would exceed the limit.
+        if len(message) > 8015:
+            message = message[:8000] + "... [truncated]"
+
         data = json.dumps({"source": self.source, "timestamp": int(round(time.time() * 1000)),
-                           "level": level, "msg": record.getMessage()})
+                           "level": level, "msg": message})
 
         if int(record.levelno) > 40:
             # Critical, alert or emerg
