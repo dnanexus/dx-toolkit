@@ -1,3 +1,9 @@
+dx-toolkit (0.135.1) precise; urgency=low
+
+  * Disable concurrent.futures monkeypatching
+
+ -- Phil Sung <psung@dnanexus.com>  Fri, 06 Mar 2015 19:44:15 +0000
+
 dx-toolkit (0.135.0) precise; urgency=low
 
   * Fix regression in DXFile buffer size selection
