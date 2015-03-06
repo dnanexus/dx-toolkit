@@ -70,7 +70,7 @@ def _chain_result(outer_future):
             outer_future.set_result(result)
     return f
 
-concurrent.futures.thread._worker = _non_leaky_worker
+#concurrent.futures.thread._worker = _non_leaky_worker
 
 
 def _run_callable_with_postamble(postamble, callable_, *args, **kwargs):
