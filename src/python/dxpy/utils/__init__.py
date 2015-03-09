@@ -36,8 +36,8 @@ def get_futures_threadpool(max_workers):
     #import signal
     #if force_quit_on_sigint:
     #    signal.signal(signal.SIGINT, _force_quit)
-    #return concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
-    return PrioritizingThreadPool(max_workers=max_workers)
+    return concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
+    #return PrioritizingThreadPool(max_workers=max_workers)
 
 def wait_for_a_future(futures, print_traceback=False):
     """
@@ -133,7 +133,8 @@ def response_iterator(request_iterator, thread_pool, max_active_tasks=4, num_ret
 
         Return (future, (callable_, args, kwargs), retries)
         """
-        future = thread_pool.submit_to_queue(queue_id, make_priority_fn(next_request_index), callable_, *args, **kwargs)
+        #future = thread_pool.submit_to_queue(queue_id, make_priority_fn(next_request_index), callable_, *args, **kwargs)
+        future = thread_pool.submit(callable_, *args, **kwargs)
         return (future, (callable_, args, kwargs), retries)
 
     def resubmit(callable_, args, kwargs, retries):
