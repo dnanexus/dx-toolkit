@@ -1,3 +1,9 @@
+dx-toolkit (0.135.2) precise; urgency=low
+
+  * Disable concurrent.futures monkeypatching and custom threadpool queue prioritization
+
+ -- Andrey Kislyuk <akislyuk@home.vdev.dnanexus.com>  Mon, 09 Mar 2015 18:08:08 +0000
+
 dx-toolkit (0.135.1) precise; urgency=low
 
   * Disable concurrent.futures monkeypatching
