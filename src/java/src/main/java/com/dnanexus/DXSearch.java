@@ -132,7 +132,7 @@ public final class DXSearch {
 
         @SuppressWarnings("unused")
         @JsonProperty
-        private final FindDataObjectsResponse.Entry starting;
+        private final JsonNode starting;
         @SuppressWarnings("unused")
         @JsonProperty
         private final Integer limit;
@@ -147,7 +147,7 @@ public final class DXSearch {
          *        (server-provided) limit
          */
         private FindDataObjectsRequest(FindDataObjectsRequest previousQuery,
-                FindDataObjectsResponse.Entry next, Integer limit) {
+                JsonNode next, Integer limit) {
             this.classConstraint = previousQuery.classConstraint;
             this.id = previousQuery.id;
             this.state = previousQuery.state;
@@ -858,7 +858,7 @@ public final class DXSearch {
         private List<Entry> results;
 
         @JsonProperty
-        private Entry next;
+        private JsonNode next;
 
     }
 
@@ -1037,7 +1037,7 @@ public final class DXSearch {
 
         @SuppressWarnings("unused")
         @JsonProperty
-        private final String starting;
+        private final JsonNode starting;
         @SuppressWarnings("unused")
         @JsonProperty
         private final Integer limit;
@@ -1051,7 +1051,7 @@ public final class DXSearch {
          * @param limit maximum number of results to return, or null to use the default
          *        (server-provided) limit
          */
-        private FindExecutionsRequest(FindExecutionsRequest previousQuery, String next,
+        private FindExecutionsRequest(FindExecutionsRequest previousQuery, JsonNode next,
                 Integer limit) {
             this.classConstraint = previousQuery.classConstraint;
             this.id = previousQuery.id;
@@ -1669,7 +1669,7 @@ public final class DXSearch {
         private List<Entry> results;
 
         @JsonProperty
-        private String next;
+        private JsonNode next;
 
     }
 
