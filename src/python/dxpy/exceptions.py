@@ -46,10 +46,15 @@ class DXAPIError(DXError):
             self.details = None
         self.code = code
 
-    def __str__(self):
+    def error_message(self):
+        "Returns a one-line description of the error."
         output = self.msg + ", code " + str(self.code)
         if self.name != self.__class__.__name__:
             output = self.name + ": " + output
+        return output
+
+    def __str__(self):
+        output = self.error_message()
         if self.details:
             output += "\nDetails: " + json.dumps(self.details, indent=4)
         return output

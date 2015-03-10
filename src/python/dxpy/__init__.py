@@ -403,7 +403,14 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                 logger.error("{} {}: Timeout exceeded".format(method, url))
             elif isinstance(e, _expected_exceptions):
                 last_exc_type, last_error, last_traceback = sys.exc_info()
-                exception_msg = traceback.format_exc().splitlines()[-1].strip()
+                if isinstance(last_error, exceptions.DXAPIError):
+                    # Using the same code path as below would not
+                    # produce a useful message when the error contains a
+                    # 'details' hash (which would have a last line of
+                    # '}')
+                    exception_msg = last_error.error_message()
+                else:
+                    exception_msg = traceback.format_exc().splitlines()[-1].strip()
 
                 if response is not None and response.status_code == 503:
                     DEFAULT_RETRY_AFTER_INTERVAL = 60
