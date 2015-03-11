@@ -26,19 +26,19 @@ row_chunk_size = 100000
 
 @dxpy.entry_point("postprocess")
 def postprocess(output_gtable_id):
-    DX_APP_WIZARD_||_OUTPUT = dxpy.DXGTable(output_gtable_id)
-    DX_APP_WIZARD_||_OUTPUT.close()
+    DX_APP_WIZARD_PARALLELIZED_OUTPUT = dxpy.DXGTable(output_gtable_id)
+    DX_APP_WIZARD_PARALLELIZED_OUTPUT.close()
 
 @dxpy.entry_point("process")
 def process(input_gtable_id, start_row, end_row, output_gtable_id):
-    DX_APP_WIZARD_||_INPUT = dxpy.DXGTable(input_gtable_id)
+    DX_APP_WIZARD_PARALLELIZED_INPUT = dxpy.DXGTable(input_gtable_id)
 
     # Using the context manager here is useful so that the flush()
     # method is called once the context manager exits, and any rows
     # added will be flushed to the platform.  The mode is set to "a"
     # for "append".
 
-    with dxpy.open_dxgtable(output_gtable_id, mode="a") as DX_APP_WIZARD_||_OUTPUT:
+    with dxpy.open_dxgtable(output_gtable_id, mode="a") as DX_APP_WIZARD_PARALLELIZED_OUTPUT:
 
         # The following loop iterates over each row from start_row to
         # end_row (not including end_row).  You can find documentation on
@@ -46,7 +46,7 @@ def process(input_gtable_id, start_row, end_row, output_gtable_id):
         # range query with iterate_query_rows) in the dxpy library here:
         # http://autodoc.dnanexus.com/bindings/python/current/dxpy_dxgtable.html
 
-        for row in DX_APP_WIZARD_||_INPUT.iterate_rows(start_row, end_row):
+        for row in DX_APP_WIZARD_PARALLELIZED_INPUT.iterate_rows(start_row, end_row):
             # Fill in code here to perform whatever computation is
             # necessary to process the row and compute the new row.
             #
@@ -54,7 +54,7 @@ def process(input_gtable_id, start_row, end_row, output_gtable_id):
             # and the rest of the elements appear in the same order as
             # the GTable's column specification.  You can retrieve the
             # column specifications or names by using
-            # DX_APP_WIZARD_||_INPUT.get_columns() or DX_APP_WIZARD_||_INPUT.get_col_names().
+            # DX_APP_WIZARD_PARALLELIZED_INPUT.get_columns() or DX_APP_WIZARD_PARALLELIZED_INPUT.get_col_names().
 
             new_row = []
 
@@ -62,10 +62,10 @@ def process(input_gtable_id, start_row, end_row, output_gtable_id):
             # of data that should be added to the output GTable.
             # Queued rows will be flushed to the platform periodically.
 
-            DX_APP_WIZARD_||_OUTPUT.add_row(new_row)
+            DX_APP_WIZARD_PARALLELIZED_OUTPUT.add_row(new_row)
 
     # At the end of the "with" block, any queued rows for
-    # DX_APP_WIZARD_||_OUTPUT will have been flushed to the platform.
+    # DX_APP_WIZARD_PARALLELIZED_OUTPUT will have been flushed to the platform.
 
 @dxpy.entry_point("main")
 def main(DX_APP_WIZARD_INPUT_SIGNATURE):
@@ -78,7 +78,7 @@ DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
     # using the same exact columns and indices as your input GTable,
     # you can easily initialize your new GTable as follows:
     #
-    # DX_APP_WIZARD_||_OUTPUT = dxpy.new_dxgtable(init_from=DX_APP_WIZARD_||_INPUT)
+    # DX_APP_WIZARD_PARALLELIZED_OUTPUT = dxpy.new_dxgtable(init_from=DX_APP_WIZARD_PARALLELIZED_INPUT)
     #
     # In the more general case, you may want to specify different
     # columns.  The following lines assume you would like to create a
@@ -90,7 +90,7 @@ DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
                dxpy.DXGTable.make_column_desc("lo", "int"),
                dxpy.DXGTable.make_column_desc("hi", "int"),
                dxpy.DXGTable.make_column_desc("somedata", "string")]
-    DX_APP_WIZARD_||_OUTPUT = dxpy.new_dxgtable(columns=columns,
+    DX_APP_WIZARD_PARALLELIZED_OUTPUT = dxpy.new_dxgtable(columns=columns,
                                                           indices=[dxpy.DXGTable.genomic_range_index("chr", "lo", "hi")])
 
     # Split your input to be solved by the next stage of your app.
@@ -98,14 +98,14 @@ DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
     # 100000 rows of a GenomicTable per subjob running the
     # "process" entry point.
 
-    num_rows = DX_APP_WIZARD_||_INPUT.describe()["length"]
+    num_rows = DX_APP_WIZARD_PARALLELIZED_INPUT.describe()["length"]
 
     subjobs = []
     for i in range(num_rows / row_chunk_size + (0 if num_rows % row_chunk_size == 0 else 1)):
-        subjob_input = { "input_gtable_id": DX_APP_WIZARD_||_INPUT.get_id(),
+        subjob_input = { "input_gtable_id": DX_APP_WIZARD_PARALLELIZED_INPUT.get_id(),
                          "start_row": row_chunk_size * i,
                          "end_row": min(row_chunk_size * (i + 1), num_rows),
-                         "output_gtable_id": DX_APP_WIZARD_||_OUTPUT.get_id()}
+                         "output_gtable_id": DX_APP_WIZARD_PARALLELIZED_OUTPUT.get_id()}
         subjobs.append(dxpy.new_dxjob(subjob_input, "process"))
 
     # The next line creates the job that will perform the
@@ -124,7 +124,7 @@ DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
     # their DXJob handlers to the "depends_on" field (it accepts
     # either dxpy handlers or string IDs in the list).
 
-    postprocess_job = dxpy.new_dxjob(fn_input={ "output_gtable_id": DX_APP_WIZARD_||_OUTPUT.get_id() },
+    postprocess_job = dxpy.new_dxjob(fn_input={ "output_gtable_id": DX_APP_WIZARD_PARALLELIZED_OUTPUT.get_id() },
                                      fn_name="postprocess",
                                      depends_on=subjobs)
 

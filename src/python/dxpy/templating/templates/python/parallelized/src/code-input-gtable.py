@@ -35,7 +35,7 @@ def postprocess(process_outputs):
 
 @dxpy.entry_point("process")
 def process(gtable_id, start_row, end_row):
-    DX_APP_WIZARD_||_INPUT = dxpy.DXGTable(gtable_id)
+    DX_APP_WIZARD_PARALLELIZED_INPUT = dxpy.DXGTable(gtable_id)
 
     # The following loop iterates over each row from start_row to
     # end_row (not including end_row).  You can find documentation on
@@ -43,7 +43,7 @@ def process(gtable_id, start_row, end_row):
     # range query with iterate_query_rows) in the dxpy library here:
     # http://autodoc.dnanexus.com/bindings/python/current/dxpy_dxgtable.html
 
-    for row in DX_APP_WIZARD_||_INPUT.iterate_rows(start_row, end_row):
+    for row in DX_APP_WIZARD_PARALLELIZED_INPUT.iterate_rows(start_row, end_row):
         # Fill in code here to perform whatever computation is
         # necessary to process the row.
         #
@@ -51,7 +51,7 @@ def process(gtable_id, start_row, end_row):
         # the rest of the elements appear in the same order as the
         # GTable's column specification.  You can retrieve the column
         # specifications or names by using
-        # DX_APP_WIZARD_||_INPUT.get_columns() or DX_APP_WIZARD_||_INPUT.get_col_names().
+        # DX_APP_WIZARD_PARALLELIZED_INPUT.get_columns() or DX_APP_WIZARD_PARALLELIZED_INPUT.get_col_names().
 
         pass
 
@@ -68,12 +68,12 @@ DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
     # 100000 rows of a GenomicTable per subjob running the "process"
     # entry point.
 
-    num_rows = DX_APP_WIZARD_||_INPUT.describe()["length"]
+    num_rows = DX_APP_WIZARD_PARALLELIZED_INPUT.describe()["length"]
 
     subjobs = []
 
     for i in range(num_rows / row_chunk_size + (0 if num_rows % row_chunk_size == 0 else 1)):
-        subjob_input = { "gtable_id": DX_APP_WIZARD_||_INPUT.get_id(),
+        subjob_input = { "gtable_id": DX_APP_WIZARD_PARALLELIZED_INPUT.get_id(),
                          "start_row": row_chunk_size * i,
                          "end_row": min(row_chunk_size * (i + 1), num_rows)}
         subjobs.append(dxpy.new_dxjob(subjob_input, "process"))

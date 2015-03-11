@@ -305,8 +305,8 @@ def create_files_from_templates(template_dir, app_json, language,
                     code_file_text = code_file_text.replace('DX_APP_WIZARD_DOWNLOAD_ANY_FILES', dl_files_str)
                     code_file_text = code_file_text.replace('DX_APP_WIZARD_UPLOAD_ANY_FILES', ul_files_str)
                     code_file_text = code_file_text.replace('DX_APP_WIZARD_OUTPUT', outputs_str)
-                    code_file_text = code_file_text.replace('DX_APP_WIZARD_||_INPUT', parallelized_input)
-                    code_file_text = code_file_text.replace('DX_APP_WIZARD_||_OUTPUT', parallelized_output)
+                    code_file_text = code_file_text.replace('DX_APP_WIZARD_PARALLELIZED_INPUT', parallelized_input)
+                    code_file_text = code_file_text.replace('DX_APP_WIZARD_PARALLELIZED_OUTPUT', parallelized_output)
 
                     filled_code_filename = os.path.join(name, 'src', template_filename.replace('code' + pattern_suffix, name + '.'))
                     with open(filled_code_filename, 'w') as filled_code_file:
