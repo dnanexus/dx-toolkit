@@ -33,14 +33,14 @@ fi
 $MAYBE_SUDO yum groupinstall -y "Development tools"
 $MAYBE_SUDO yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel readline
 
-# Install Python 2.7.5, setuptools, and pip.
+# Install Python 2.7.9, setuptools, and pip.
 
 TEMPDIR=$(mktemp -d)
 
 pushd $TEMPDIR
-curl -L -O https://www.python.org/ftp/python/2.7.5/Python-2.7.5.tar.bz2
-tar -xjf Python-2.7.5.tar.bz2
-cd Python-2.7.5
+curl -L -O https://www.python.org/ftp/python/2.7.9/Python-2.7.9.tar.bz2
+tar -xjf Python-2.7.9.tar.bz2
+cd Python-2.7.9
 ./configure --prefix=/usr/local
 make
 $MAYBE_SUDO make altinstall

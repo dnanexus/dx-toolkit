@@ -126,7 +126,7 @@ versions (abbreviated list):
 
 Install Python 2.7. Python 2.7 is not available natively on CentOS 5 or 6. You
 can use the script ```build/centos_install_python27.sh```, which installs it
-into ```/usr/local/bin```.
+into ```/usr/local/bin```. (Run the script as root.)
 
 Install boost 1.48 or higher (at least the ```thread``` and ```regex```
 libraries). This version of boost is not available natively on CentOS 5 or 6.
