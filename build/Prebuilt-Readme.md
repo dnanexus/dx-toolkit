@@ -3,6 +3,8 @@ DNAnexus Platform SDK
 
 **To build ```dx-toolkit``` from source, see https://wiki.dnanexus.com/Downloads.**
 
+* **Found a bug? See [Reporting Bugs](#reporting-bugs) below.**
+
 ```dx-toolkit``` contains the DNAnexus API language bindings and utilities for
 interacting with the DNAnexus platform.
 
@@ -41,6 +43,12 @@ distribution, or install a prebuilt package specific to the language.
 Runtime dependencies
 --------------------
 
+### Ubuntu 14.04
+
+    sudo apt-get install libboost-filesystem1.55.0 libboost-program-options1.55.0 \
+        libboost-regex1.55.0 libboost-system1.55.0 libboost-thread1.55.0 libcurl3 \
+        libbz2-1.0 zlib1g python-fuse python-pyxattr
+
 ### Ubuntu 12.04
 
     sudo apt-get install libboost-filesystem1.48.0 libboost-program-options1.48.0 \
@@ -67,28 +75,19 @@ Then:
 
     sudo apt-get install libcurl3 libbz2 zlib1g
 
-### CentOS 5.x/6.x
+### CentOS/RHEL 5.x/6.x
 
 Install Python 2.7. Python 2.7 is not available natively on CentOS 5 or 6. You
 can use the script ```build/centos_install_python27.sh```, which installs it
-into ```/usr/local/bin```.
-
-Install boost 1.48 or higher (at least the ```thread``` and ```regex```
-libraries). This version of boost is not available natively on CentOS 5 or 6.
-You can use the script ```build/centos_install_boost.sh```, which installs it
-into ```/usr/local/lib```.
-
-Then:
-
-    yum install libcurl
+into ```/usr/local/bin```. (Run the script as root.)
 
 Notes:
 
-- On CentOS 5.x, two of the utilities, ```dx-contigset-to-fasta``` and
-  ```dx-reads-validator```, will not function correctly, as some of the library
-  versions are too old.
+  - On CentOS 5.x, two of the utilities, ```dx-contigset-to-fasta``` and
+    ```dx-reads-validator```, will not function correctly, as some of
+    the library versions are too old.
 
-- Tested on CentOS 5.4 and CentOS 6.2.
+  - Tested on CentOS 5.4 and CentOS 6.2.
 
 ### OS X
 
@@ -112,3 +111,9 @@ Install the following packages, either from source or via [Homebrew](http://mxcl
         export CC=gcc-4.7
         export CXX=g++-4.7
         ```
+
+Reporting Bugs
+--------------
+
+Please use [GitHub](https://github.com/dnanexus/dx-toolkit/issues) to
+report bugs, post suggestions, or send us pull requests.
