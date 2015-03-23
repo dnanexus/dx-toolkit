@@ -1,6 +1,12 @@
+dx-toolkit (0.137.1) precise; urgency=low
+
+  * Avoid using threadpool for file downloads on PV 14.04+ (test build)
+
+ -- Andrey Kislyuk <akislyuk@home.vdev.dnanexus.com>  Mon, 23 Mar 2015 15:25:02 +0000
+
 dx-toolkit (0.137.0) precise; urgency=low
 
-  * Bug fixes 
+  * Bug fixes
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 18 Mar 2015 20:31:08 +0000
 
