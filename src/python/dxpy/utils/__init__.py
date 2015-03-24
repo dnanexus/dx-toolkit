@@ -91,7 +91,7 @@ _bypass_thread_pool = None
 def _using_non_1204_xen_pv_linux():
     try:
         with open("/sys/hypervisor/properties/features") as hypervisor_info:
-            if hypervisor_info.read() == "000000f0": # paravirtualized (PV)
+            if hypervisor_info.read() == "000000f0\n": # paravirtualized (PV)
                 with open("/proc/version_signature") as sys_info:
                     if not sys_info.read().startswith("Ubuntu 3.2.0"):
                         return True
