@@ -34,6 +34,7 @@ Overview
 '''
 import concurrent.futures
 import os
+import stat
 import sys
 import json
 import argparse
@@ -165,7 +166,7 @@ def listdir_only_files_and_subdirs(path):
             continue
         elif os.path.isdir(fname_fullpath):
             subdirs.append(fname)
-        elif os.path.isfile(fname_fullpath):
+        elif os.path.isfile(fname_fullpath) or stat.S_ISFIFO(os.stat(fname_fullpath).st_mode):
             files.append(fname)
         else:
             # ignore anything else
