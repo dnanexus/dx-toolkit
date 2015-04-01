@@ -37,6 +37,7 @@ from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
 from ..cli.cp import cp
 from ..cli.download import (download_one_file, download)
+from ..cli.bamurai import bamuraize
 from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, parser_dataobject_args,
                            parser_single_dataobject_output_args, process_properties_args,
                            find_by_properties_and_tags_args, process_find_by_property_args, process_dataobject_args,
@@ -1683,6 +1684,23 @@ def cat(args):
         except:
             err_exit()
 
+def bamurai(args):
+    bai_project, _bai_folderpath, bai_entity_result = try_call(resolve_existing_path, args.bai_path)
+    if bai_entity_result is None:
+        parser.exit(1, fill('Could not resolve ' + args.bai_path + ' to a data object') + '\n')
+    if bai_entity_result['describe']['class'] != 'file':
+        parser.exit(1, 'Error: The given object is of class ' + bai_entity_result['describe']['class'] + ' but an object of class file was expected\n')
+
+    bam_project, _bam_folderpath, bam_entity_result = try_call(resolve_existing_path, args.bam_path)
+    if bam_entity_result is None:
+        parser.exit(1, fill('Could not resolve ' + args.bam_path + ' to a data object') + '\n')
+    if bam_entity_result['describe']['class'] != 'file':
+        parser.exit(1, 'Error: The given object is of class ' + bam_entity_result['describe']['class'] + ' but an object of class file was expected\n')
+
+    dx_bai = dxpy.DXFile(bai_entity_result['id'], bai_project)
+    dx_bam = dxpy.DXFile(bam_entity_result['id'], bam_project)
+
+    bamuraize(dx_bai, dx_bam, args.chr_lo-1, args.chr_hi-1, args.show_progress)
 
 def download_or_cat(args):
     if args.output == '-':
@@ -3508,6 +3526,22 @@ parser_download.add_argument('--no-progress', help='Do not show a progress bar',
                              action='store_false', default=sys.stderr.isatty())
 parser_download.set_defaults(func=download_or_cat)
 register_subparser(parser_download, categories='data')
+
+parser_bamurai = subparsers.add_parser('bamurai', help='Slice chromosomes from bam file',
+                                        description='Slice a range of chromosomes from a remote bam file.',
+                                        prog='dx bamurai',
+                                        parents=[env_args])
+parser_bamurai_bai_arg = parser_bamurai.add_argument('bai_path', help='Data object ID or name of bai (bam index) file', metavar='<bai file>')
+parser_bamurai_bai_arg.completer = DXPathCompleter(classes=['file'])
+parser_bamurai_bam_arg = parser_bamurai.add_argument('bam_path', help='Data object ID or name of bam file', metavar='<bam file>')
+parser_bamurai_bam_arg.completer = DXPathCompleter(classes=['file'])
+parser_bamurai_chr_lo_arg = parser_bamurai.add_argument('chr_lo', help='First chromosome to include in bam file', metavar='<First chromosome>', type=int)
+parser_bamurai_chr_hi_arg = parser_bamurai.add_argument('chr_hi', help='Last chromosome to include in bam file', metavar='<Last chromosome>', type=int)
+parser_bamurai.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress',
+                             action='store_false', default=sys.stderr.isatty())
+
+parser_bamurai.set_defaults(func=bamurai)
+register_subparser(parser_bamurai, categories='data')
 
 parser_make_download_url = subparsers.add_parser('make_download_url', help='Create a file download link for sharing',
                                                  description='Creates a pre-authenticated link that can be used to download a file without logging in.')
