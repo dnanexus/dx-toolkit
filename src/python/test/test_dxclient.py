@@ -3870,6 +3870,76 @@ def main(in1):
         self.assertEqual(sorted(dxpy.DXApplet(applet_id2).describe()["tags"]),
                          sorted(["Import"]))
 
+    def test_bundled_depends_reuse(self):
+        app_spec = {
+            "name": "bundled_depends_reuse",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("bundled_depends_reuse", json.dumps(app_spec), "code.py")
+        os.mkdir(os.path.join(app_dir, 'resources'))
+        with open(os.path.join(app_dir, 'resources', 'foo.txt'), 'w') as file_in_resources:
+            file_in_resources.write('foo\n')
+
+        first_applet = json.loads(run("dx build --json -d {p}:applet1 {app_dir}".format(
+            p=self.project, app_dir=app_dir)))["id"]
+        second_applet = json.loads(run("dx build --json -d {p}:applet2 {app_dir}".format(
+            p=self.project, app_dir=app_dir)))["id"]
+
+        # The second applet should reuse the bundle from the first.
+
+        # touch foo.txt
+        os.utime(os.path.join(app_dir, 'resources', 'foo.txt'), None)
+
+        # But the third applet should not share with the first two,
+        # because the resources have been touched in between.
+
+        third_applet = json.loads(run("dx build --json -d {p}:applet3 {app_dir}".format(
+            p=self.project, app_dir=app_dir)))["id"]
+
+        self.assertEquals(
+            dxpy.DXApplet(first_applet).describe()['runSpec']['bundledDepends'][0]['id']['$dnanexus_link'],
+            dxpy.DXApplet(second_applet).describe()['runSpec']['bundledDepends'][0]['id']['$dnanexus_link']
+        )
+        self.assertNotEqual(
+            dxpy.DXApplet(first_applet).describe()['runSpec']['bundledDepends'][0]['id']['$dnanexus_link'],
+            dxpy.DXApplet(third_applet).describe()['runSpec']['bundledDepends'][0]['id']['$dnanexus_link']
+        )
+
+    def test_bundled_depends_reuse_with_force(self):
+        app_spec = {
+            "name": "bundled_depends_reuse_with_force",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("bundled_depends_reuse_with_force", json.dumps(app_spec), "code.py")
+        os.mkdir(os.path.join(app_dir, 'resources'))
+        with open(os.path.join(app_dir, 'resources', 'foo.txt'), 'w') as file_in_resources:
+            file_in_resources.write('foo\n')
+
+        # For this to work, "dx build" must not remove the first applet
+        # until after the second applet has been built, since otherwise
+        # the first applet's bundled depends will be garbage collected
+        first_applet = json.loads(run("dx build --json -d {p}:applet1 {app_dir}".format(
+            p=self.project, app_dir=app_dir)))["id"]
+        first_bundled_resources = \
+            dxpy.DXApplet(first_applet).describe()['runSpec']['bundledDepends'][0]['id']['$dnanexus_link']
+        second_applet = json.loads(run("dx build --json -f -d {p}:applet1 {app_dir}".format(
+            p=self.project, app_dir=app_dir)))["id"]
+        second_bundled_resources = \
+            dxpy.DXApplet(second_applet).describe()['runSpec']['bundledDepends'][0]['id']['$dnanexus_link']
+        # Verify that the resources are shared...
+        self.assertEquals(first_bundled_resources, second_bundled_resources)
+        # ...and that the first applet has been removed
+        with self.assertSubprocessFailure(exit_code=3):
+            run("dx describe " + first_applet)
+
 
 class TestDXBuildReportHtml(unittest.TestCase):
     js = "console.log('javascript');"

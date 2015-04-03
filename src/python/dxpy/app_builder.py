@@ -38,6 +38,8 @@ from __future__ import (print_function, unicode_literals)
 
 import os, sys, json, subprocess, tempfile, multiprocessing
 import datetime
+import hashlib
+
 import dxpy
 from . import logger
 from .utils import merge
@@ -129,6 +131,57 @@ def get_destination_project(src_dir, project=None):
         return project
     return _get_applet_spec(src_dir)['project']
 
+
+def _directory_checksum(resources_dir):
+    """Returns a hash of the contents of resources_dir.
+
+    The hash is based purely on the names, mtimes, and modes of the
+    files, and not on the contents or other metadata.
+
+    """
+
+    # The input to the SHA1 contains entries of the form (whitespace
+    # only included here for readability):
+    #
+    # / \0 MODE \0 MTIME \0
+    # /foo \0 MODE \0 MTIME \0
+    # ...
+    #
+    # where there is one entry for each directory or file (order is
+    # specified below), followed by a numeric representation of the
+    # mode, and the mtime in milliseconds since the epoch.
+
+    output_sha1 = hashlib.sha1()
+
+    for dirname, subdirs, files in os.walk(resources_dir):
+        if not dirname.startswith(resources_dir):
+            raise AssertionError('Expected %r to start with root directory %r' % (dirname, resources_dir))
+
+        # Add an entry for the directory itself
+        relative_dirname = dirname[len(resources_dir):]
+        dir_stat = os.stat(dirname)
+        if not relative_dirname.startswith('/'):
+            relative_dirname = '/' + relative_dirname
+        fields = [relative_dirname, str(dir_stat.st_mode), str(int(dir_stat.st_mtime * 1000))]
+        output_sha1.update(b''.join(s.encode('utf-8') + b'\0' for s in fields))
+
+        # Canonicalize the order of files so that we compute the
+        # checksum in a consistent order
+        for filename in sorted(files):
+            relative_filename = os.path.join(relative_dirname, filename)
+            true_filename = os.path.join(dirname, filename)
+
+            file_stat = os.stat(true_filename)
+            fields = [relative_filename, str(file_stat.st_mode), str(int(file_stat.st_mtime * 1000))]
+            output_sha1.update(b''.join(s.encode('utf-8') + b'\0' for s in fields))
+
+        # Canonicalize the order of subdirectories; this is the order in
+        # which they will be visited by os.walk
+        subdirs.sort()
+
+    return output_sha1.hexdigest()
+
+
 def upload_resources(src_dir, project=None, folder='/'):
     """
     :returns: A list (possibly empty) of references to the generated archive(s)
@@ -150,20 +203,54 @@ def upload_resources(src_dir, project=None, folder='/'):
 
     resources_dir = os.path.join(src_dir, "resources")
     if os.path.exists(resources_dir) and len(os.listdir(resources_dir)) > 0:
-        logger.debug("Uploading in " + src_dir)
+        target_folder = applet_spec['folder'] if 'folder' in applet_spec else folder
 
-        with tempfile.NamedTemporaryFile(suffix=".tar.gz") as tar_fh:
-            subprocess.check_call(['tar', '-C', resources_dir, '-czf', tar_fh.name, '.'])
-            if 'folder' in applet_spec:
-                try:
-                    dxpy.get_handler(dest_project).new_folder(applet_spec['folder'], parents=True)
-                except dxpy.exceptions.DXAPIError:
-                    pass # TODO: make this better
-            target_folder = applet_spec['folder'] if 'folder' in applet_spec else folder
-            dx_resource_archive = dxpy.upload_local_file(tar_fh.name, wait_on_close=True,
-                                                         project=dest_project, folder=target_folder, hidden=True)
-            archive_link = dxpy.dxlink(dx_resource_archive.get_id())
-            return [{'name': 'resources.tar.gz', 'id': archive_link}]
+        # Optimistically look for a resource bundle with the same
+        # contents, and reuse it if possible. The resource bundle
+        # carries a property 'resource_bundle_checksum' that indicates
+        # the checksum; the way in which the checksum is computed is
+        # given in the documentation of _directory_checksum.
+        directory_checksum = _directory_checksum(resources_dir)
+        existing_resources = dxpy.find_one_data_object(
+            project=dest_project,
+            folder=target_folder,
+            properties=dict(resource_bundle_checksum=directory_checksum),
+            visibility='either',
+            zero_ok=True,
+            return_handler=True
+        )
+
+        if existing_resources:
+            logger.info("Found existing resource bundle that matches local resources directory: " +
+                        existing_resources.get_id())
+
+            dx_resource_archive = existing_resources
+        else:
+            logger.debug("Uploading in " + src_dir)
+
+            with tempfile.NamedTemporaryFile(suffix=".tar.gz") as tar_fh:
+                # The directory contents may have changed since the
+                # first time we checksummed the directory. Ideally we
+                # would extract the tar file to determine the checksum
+                # of the actually archived files, but maybe this is a
+                # little too paranoid.
+                subprocess.check_call(['tar', '-C', resources_dir, '-czf', tar_fh.name, '.'])
+                if 'folder' in applet_spec:
+                    try:
+                        dxpy.get_handler(dest_project).new_folder(applet_spec['folder'], parents=True)
+                    except dxpy.exceptions.DXAPIError:
+                        pass # TODO: make this better
+                dx_resource_archive = dxpy.upload_local_file(
+                    tar_fh.name,
+                    wait_on_close=True,
+                    project=dest_project,
+                    folder=target_folder,
+                    hidden=True,
+                    properties=dict(resource_bundle_checksum=directory_checksum)
+                )
+
+        archive_link = dxpy.dxlink(dx_resource_archive.get_id())
+        return [{'name': 'resources.tar.gz', 'id': archive_link}]
     else:
         return []
 
@@ -230,15 +317,19 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     if 'dxapi' not in applet_spec:
         applet_spec['dxapi'] = dxpy.API_VERSION
 
+    applet_to_overwrite = None
     archived_applet = None
     if check_name_collisions and not dry_run:
         destination_path = applet_spec['folder'] + ('/' if not applet_spec['folder'].endswith('/') else '') + applet_spec['name']
         logger.debug("Checking for existing applet at " + destination_path)
         for result in dxpy.find_data_objects(classname="applet", name=applet_spec["name"], folder=applet_spec['folder'], project=dest_project, recurse=False):
             if overwrite:
-                logger.info("Deleting applet %s" % (result['id']))
-                # TODO: test me
-                dxpy.DXProject(dest_project).remove_objects([result['id']])
+                # Don't remove the old applet until after the new one
+                # has been created. This avoids a race condition where
+                # we remove the old applet, but that causes garbage
+                # collection of the bundled resources that will be
+                # shared with the new applet
+                applet_to_overwrite = result['id']
             elif archive:
                 logger.debug("Archiving applet %s" % (result['id']))
                 proj = dxpy.DXProject(dest_project)
@@ -329,7 +420,14 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     if archived_applet:
         archived_applet.set_properties({'replacedWith': applet_id})
 
+    # Now it is permissible to delete the old applet, if any
+    if applet_to_overwrite:
+        logger.info("Deleting applet %s" % (applet_to_overwrite,))
+        # TODO: test me
+        dxpy.DXProject(dest_project).remove_objects([applet_to_overwrite])
+
     return applet_id, applet_spec
+
 
 def _create_or_update_version(app_name, version, app_spec, try_update=True):
     """
