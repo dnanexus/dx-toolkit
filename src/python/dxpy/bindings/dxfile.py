@@ -519,7 +519,7 @@ class DXFile(DXDataObject):
             args["filename"] = filename
         if project is not None:
             args["project"] = project
-        if self._download_url is None or self._download_url_expires > time.time():
+        if self._download_url is None or self._download_url_expires < time.time():
             # logging.debug("Download URL unset or expired, requesting a new one")
             resp = dxpy.api.file_download(self._dxid, args, **kwargs)
             self._download_url = resp["url"]
