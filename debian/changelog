@@ -1,3 +1,9 @@
+dx-toolkit (0.140.0) precise; urgency=low
+
+  * Minor fixes 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 08 Apr 2015 17:05:49 +0000
+
 dx-toolkit (0.139.0) precise; urgency=low
 
   * Minor fixes
