@@ -325,7 +325,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
         dxpy.DXApplet(applet_id, project=dest_project).add_tags(applet_spec["categories"])
 
     if archived_applet:
-        archived_applet.set_properties({'replacedWith': archived_applet.get_id()})
+        archived_applet.set_properties({'replacedWith': applet_id})
 
     return applet_id, applet_spec
 

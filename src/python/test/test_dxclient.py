@@ -3833,8 +3833,12 @@ def main(in1):
         app_dir = self.write_app_directory("archive_in_another_project", json.dumps(app_spec), "code.py")
 
         with temporary_project("Temporary working project", select=True) as temp_project:
-            run("dx build -d {p}: {app_dir}".format(p=self.project, app_dir=app_dir))
-            run("dx build --archive -d {p}: {app_dir}".format(p=self.project, app_dir=app_dir))
+            orig_applet = json.loads(run("dx build --json -d {p}: {app_dir}".format(
+                p=self.project, app_dir=app_dir)))["id"]
+            new_applet = json.loads(run("dx build --json --archive -d {p}: {app_dir}".format(
+                p=self.project, app_dir=app_dir)))["id"]
+            self.assertEqual(dxpy.DXApplet(orig_applet).describe(incl_properties=True)["properties"]["replacedWith"],
+                             new_applet)
 
 
 class TestDXBuildReportHtml(unittest.TestCase):
