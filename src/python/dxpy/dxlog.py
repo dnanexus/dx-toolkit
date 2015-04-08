@@ -84,8 +84,9 @@ class DXLogHandler(SysLogHandler):
         data = json.dumps({"source": self.source, "timestamp": int(round(time.time() * 1000)),
                            "level": level, "msg": message})
 
-        if int(record.levelno) > 40:
-            # Critical, alert or emerg
+        levelno = int(record.levelno)
+        if levelno >= logging.CRITICAL or (levelno == logging.INFO and message.startswith("CPU: ")):
+            # Critical, alert, emerg, or resource status
             cur_socket = self.priority_log_socket
             cur_socket_address = self.priority_log_address
         else:
