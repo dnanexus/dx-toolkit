@@ -319,10 +319,12 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
         print("*** DRY-RUN-- no applet was created ***")
         return None, None
 
-    applet_id = dxpy.api.applet_new(applet_spec)["id"]
+    if applet_spec.get("categories", []):
+        if "tags" not in applet_spec:
+            applet_spec["tags"] = []
+        applet_spec["tags"] = list(set(applet_spec["tags"]) | set(applet_spec["categories"]))
 
-    if "categories" in applet_spec:
-        dxpy.DXApplet(applet_id, project=dest_project).add_tags(applet_spec["categories"])
+    applet_id = dxpy.api.applet_new(applet_spec)["id"]
 
     if archived_applet:
         archived_applet.set_properties({'replacedWith': applet_id})

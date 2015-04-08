@@ -3840,6 +3840,36 @@ def main(in1):
             self.assertEqual(dxpy.DXApplet(orig_applet).describe(incl_properties=True)["properties"]["replacedWith"],
                              new_applet)
 
+    def test_categories_propagated_to_tags(self):
+        app_spec = {
+            "name": "categories_propagated_to_tags",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0",
+            "tags": ["mytag"],
+            "categories": ["Import"]
+            }
+        app_dir = self.write_app_directory("categories_propagated_to_tags", json.dumps(app_spec), "code.py")
+        applet_id = json.loads(run("dx build --json -d categories1 " + app_dir))["id"]
+        self.assertEqual(sorted(dxpy.DXApplet(applet_id).describe()["tags"]),
+                         sorted(["mytag", "Import"]))
+
+        app_spec2 = {
+            "name": "categories_propagated_to_tags",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0",
+            "categories": ["Import"]
+            }
+        app_dir2 = self.write_app_directory("categories_propagated_to_tags", json.dumps(app_spec2), "code.py")
+        applet_id2 = json.loads(run("dx build --json -d categories2 " + app_dir2))["id"]
+        self.assertEqual(sorted(dxpy.DXApplet(applet_id2).describe()["tags"]),
+                         sorted(["Import"]))
+
 
 class TestDXBuildReportHtml(unittest.TestCase):
     js = "console.log('javascript');"
