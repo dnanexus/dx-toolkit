@@ -519,7 +519,7 @@ class DXFile(DXDataObject):
             args["filename"] = filename
         if project is not None:
             args["project"] = project
-        if self._download_url is None or self._download_url_expires > time.time():
+        if self._download_url is None or self._download_url_expires < time.time():
             # logging.debug("Download URL unset or expired, requesting a new one")
             resp = dxpy.api.file_download(self._dxid, args, **kwargs)
             self._download_url = resp["url"]
@@ -528,8 +528,6 @@ class DXFile(DXDataObject):
         return self._download_url, self._download_url_headers
 
     def _generate_read_requests(self, start_pos=0, end_pos=None, **kwargs):
-        url, headers = self.get_download_url(**kwargs)
-
         if self._file_length == None:
             desc = self.describe(**kwargs)
             self._file_length = int(desc["size"])
@@ -552,6 +550,7 @@ class DXFile(DXDataObject):
                 i += 1
 
         for chunk_start_pos, chunk_end_pos in chunk_ranges(start_pos, end_pos):
+            url, headers = self.get_download_url(**kwargs)
             headers = copy.copy(headers)
             headers['Range'] = "bytes=" + str(chunk_start_pos) + "-" + str(chunk_end_pos)
             yield dxpy.DXHTTPRequest, [url, ''], {'method': 'GET',

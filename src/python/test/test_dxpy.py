@@ -389,6 +389,21 @@ class TestDXFile(unittest.TestCase):
         dxfile.write("Haha")
         # No assertion here, but this should print an error
 
+    def test_download_url_helper(self):
+        dxfile = dxpy.upload_string(self.foo_str, wait_on_close=True)
+        for opts in {}, {"preauthenticated": True, "filename": "foo"}:
+            # File download token/URL is cached
+            dxfile = dxpy.open_dxfile(dxfile.get_id())
+            url1 = dxfile.get_download_url(**opts)
+            url2 = dxfile.get_download_url(**opts)
+            self.assertEqual(url1, url2)
+            # Cache is invalidated when the client knows the token has expired
+            # (subject to clock skew allowance of 60s)
+            dxfile = dxpy.open_dxfile(dxfile.get_id())
+            url3 = dxfile.get_download_url(duration=60, **opts)
+            url4 = dxfile.get_download_url(**opts)
+            self.assertNotEqual(url3, url4)
+
 class TestDXGTable(unittest.TestCase):
     """
     TODO: Test iterators, gri, and other queries
