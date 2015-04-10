@@ -441,6 +441,12 @@ class InstanceTypesCompleter():
               InstanceTypeSpec('mem3_ssd1_x16', 122.0, 320, 16),
               InstanceTypeSpec('mem3_ssd1_x32', 244.0, 640, 32),
 
+              InstanceTypeSpec('mem1_ssd2_x2', 3.8, 160, 2),
+              InstanceTypeSpec('mem1_ssd2_x4', 7.5, 320, 4),
+              InstanceTypeSpec('mem1_ssd2_x8', 15, 640, 8),
+              InstanceTypeSpec('mem1_ssd2_x16', 30, 1280, 16),
+              InstanceTypeSpec('mem1_ssd2_x36', 60, 2880, 36),
+
               InstanceTypeSpec('mem3_hdd2_x2', 17.1, 420, 2),
               InstanceTypeSpec('mem3_hdd2_x4', 34.2, 850, 4),
               InstanceTypeSpec('mem3_hdd2_x8', 68.4, 1680, 8)):
