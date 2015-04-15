@@ -105,8 +105,6 @@ string userAgentString; // definition (declared in chunk.h)
 
 // Max number of times to check if a chunk is complete.
 int NUM_CHUNK_CHECKS = 3;
-// Time in milliseconds between checks to see if a chunk is complete.
-int CHUNK_CHECK_SLEEP = 1000;
 
 bool finished() {
   return (chunksFinished.size() + chunksFailed.size() == totalChunks);
@@ -210,13 +208,7 @@ void uploadChunks(vector<File> &files) {
       bool uploaded = false;
       try {
         c->upload(opt);
-
-        for(int currRetry=0; currRetry < NUM_CHUNK_CHECKS; ++currRetry) {
-            if(is_chunk_complete(c))
-                uploaded = true;
-                break;
-            boost::this_thread::sleep(boost::posix_time::milliseconds(CHUNK_CHECK_SLEEP));
-        }
+        uploaded = true;
       } catch (runtime_error &e) {
         ostringstream msg;
         msg << "Upload failed: " << e.what();
@@ -689,6 +681,37 @@ int main(int argc, char * argv[]) {
     interruptWorkerThreads();
     joinWorkerThreads();
 
+    // There is currently the possibility of a race condition if a chunk
+    // upload timed-out.  It's possible that a second upload succeeds,
+    // has the chunk marked as "complete" and then the first request makes
+    // its way through the queue and marks the chunk as pending again.
+    // Since we are just about to close the file, we'll check to see if any
+    // chunks are marked as pending, and if so, we'll retry them.
+    for(int currCheckNum=0; currCheckNum < NUM_CHUNK_CHECKS; ++currCheckNum){
+      while(!chunksFinished.empty()) {
+        Chunk *c = chunksFinished.consume();
+        if(!is_chunk_complete(c)) {
+            chunksToUpload.produce(c);
+        }
+      }
+      // All of the chunks were marked as complete, so let's exit and we
+      // should be safeish to close the file.
+      if(chunksToUpload.size() == 0)
+        break;
+
+      // Upload the chunks which weren't marked as complete.
+      DXLOG(logINFO) << " upload...";
+      for (int i = 0; i < opt.uploadThreads; ++i) {
+        uploadThreads.push_back(boost::thread(uploadChunks, boost::ref(files)));
+      }
+
+      // Wait for the upload threads to complete.
+      DXLOG(logINFO) << " upload...";
+      for (int i = 0; i < (int) uploadThreads.size(); ++i) {
+        uploadThreads[i].join();
+      }
+    }
+
     while (!chunksFailed.empty()) {
       Chunk * c = chunksFailed.consume();
       c->log("Chunk failed", logERROR);
@@ -697,12 +720,11 @@ int main(int argc, char * argv[]) {
     if (opt.verbose) {
       cerr << endl;
     }
+
     for (unsigned int i = 0; i < files.size(); ++i) {
       if (files[i].failed) {
         cerr << "File \""<< files[i].localFile << "\" could not be uploaded." << endl;
       } else {
-        // @TODO Insert code to check if chunks are pending or complete.
-        // @TODO Try to reupload any pending chunks.
         cerr << "File \"" << files[i].localFile << "\" was uploaded successfully. Closing..." << endl;
         if (files[i].isRemoteFileOpen) {
           files[i].close();
