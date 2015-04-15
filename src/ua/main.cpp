@@ -103,6 +103,11 @@ int NUMTRIES_g; // Number of max tries for a chunk (to be given by user)
 
 string userAgentString; // definition (declared in chunk.h)
 
+// Max number of times to check if a chunk is complete.
+int NUM_CHUNK_CHECKS = 3;
+// Time in milliseconds between checks to see if a chunk is complete.
+int CHUNK_CHECK_SLEEP = 1000;
+
 bool finished() {
   return (chunksFinished.size() + chunksFailed.size() == totalChunks);
 }
@@ -184,6 +189,17 @@ void compressChunks() {
   }
 }
 
+bool is_chunk_complete(Chunk *c) {
+    bool chunk_complete = false;
+    JSON result = fileDescribe(c->fileID);
+    string partIndex = boost::lexical_cast<string>(c->index + 1); // minimum part index is 1
+
+    if (result["parts"].has(partIndex) && result["parts"][partIndex]["state"].get<string>() == "complete")
+        chunk_complete = true;
+
+    return chunk_complete;
+}
+
 void uploadChunks(vector<File> &files) {
   try {
     while (true) {
@@ -194,7 +210,13 @@ void uploadChunks(vector<File> &files) {
       bool uploaded = false;
       try {
         c->upload(opt);
-        uploaded = true;
+
+        for(int currRetry=0; currRetry < NUM_CHUNK_CHECKS; ++currRetry) {
+            if(is_chunk_complete(c))
+                uploaded = true;
+                break;
+            boost::this_thread::sleep(boost::posix_time::milliseconds(CHUNK_CHECK_SLEEP));
+        }
       } catch (runtime_error &e) {
         ostringstream msg;
         msg << "Upload failed: " << e.what();
@@ -679,6 +701,8 @@ int main(int argc, char * argv[]) {
       if (files[i].failed) {
         cerr << "File \""<< files[i].localFile << "\" could not be uploaded." << endl;
       } else {
+        // @TODO Insert code to check if chunks are pending or complete.
+        // @TODO Try to reupload any pending chunks.
         cerr << "File \"" << files[i].localFile << "\" was uploaded successfully. Closing..." << endl;
         if (files[i].isRemoteFileOpen) {
           files[i].close();
