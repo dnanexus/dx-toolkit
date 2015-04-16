@@ -543,6 +543,39 @@ void printEnvironmentInfo() {
   }
 }
 
+// There is currently the possibility of a race condition if a chunk
+// upload timed-out.  It's possible that a second upload succeeds,
+// has the chunk marked as "complete" and then the first request makes
+// its way through the queue and marks the chunk as pending again.
+// Since we are just about to close the file, we'll check to see if any
+// chunks are marked as pending, and if so, we'll retry them.
+void check_for_complete_chunks(vector<File> &files) {
+  for (int currCheckNum=0; currCheckNum < NUM_CHUNK_CHECKS; ++currCheckNum){
+    while (!chunksFinished.empty()) {
+      Chunk *c = chunksFinished.consume();
+      if (!is_chunk_complete(c)) {
+          chunksToUpload.produce(c);
+      }
+    }
+    // All of the chunks were marked as complete, so let's exit and we
+    // should be safeish to close the file.
+    if(chunksToUpload.size() == 0)
+      break;
+
+    // Upload the chunks which weren't marked as complete.
+    DXLOG(logINFO) << " upload...";
+    for (int i = 0; i < opt.uploadThreads; ++i) {
+      uploadThreads.push_back(boost::thread(uploadChunks, boost::ref(files)));
+    }
+
+    // Wait for the upload threads to complete.
+    DXLOG(logINFO) << " upload...";
+    for (int i = 0; i < (int) uploadThreads.size(); ++i) {
+      uploadThreads[i].join();
+    }
+  }
+}
+
 int main(int argc, char * argv[]) {
   try {
     // Note: Verbose mode logging is enabled (if requested) by options parse()
@@ -681,36 +714,7 @@ int main(int argc, char * argv[]) {
     interruptWorkerThreads();
     joinWorkerThreads();
 
-    // There is currently the possibility of a race condition if a chunk
-    // upload timed-out.  It's possible that a second upload succeeds,
-    // has the chunk marked as "complete" and then the first request makes
-    // its way through the queue and marks the chunk as pending again.
-    // Since we are just about to close the file, we'll check to see if any
-    // chunks are marked as pending, and if so, we'll retry them.
-    for(int currCheckNum=0; currCheckNum < NUM_CHUNK_CHECKS; ++currCheckNum){
-      while(!chunksFinished.empty()) {
-        Chunk *c = chunksFinished.consume();
-        if(!is_chunk_complete(c)) {
-            chunksToUpload.produce(c);
-        }
-      }
-      // All of the chunks were marked as complete, so let's exit and we
-      // should be safeish to close the file.
-      if(chunksToUpload.size() == 0)
-        break;
-
-      // Upload the chunks which weren't marked as complete.
-      DXLOG(logINFO) << " upload...";
-      for (int i = 0; i < opt.uploadThreads; ++i) {
-        uploadThreads.push_back(boost::thread(uploadChunks, boost::ref(files)));
-      }
-
-      // Wait for the upload threads to complete.
-      DXLOG(logINFO) << " upload...";
-      for (int i = 0; i < (int) uploadThreads.size(); ++i) {
-        uploadThreads[i].join();
-      }
-    }
+    check_for_complete_chunks(files);
 
     while (!chunksFailed.empty()) {
       Chunk * c = chunksFailed.consume();
