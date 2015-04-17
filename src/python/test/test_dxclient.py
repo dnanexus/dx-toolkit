@@ -832,6 +832,16 @@ class TestDXClient(DXTestCase):
             dx_login.setwinsize(20, 90)
             return dx_login
 
+        dx_login = get_dx_login(" --token BAD_TOKEN")
+        dx_login.expect("The token could not be found")
+        dx_login.close()
+        self.assertEqual(dx_login.exitstatus, 1)
+
+        dx_login = get_dx_login(" --auth-token BAD_TOKEN")
+        dx_login.expect("The token could not be found")
+        dx_login.close()
+        self.assertEqual(dx_login.exitstatus, 1)
+
         dx_login = get_dx_login()
         dx_login.expect("Acquiring credentials")
         dx_login.expect("Username")

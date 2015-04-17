@@ -269,6 +269,10 @@ def login(args):
     default_authserver = 'https://auth.dnanexus.com'
     using_default = False
 
+    if args.auth_token and not args.token:
+        args.token = args.auth_token
+        args.auth_token = None
+
     # API server should have already been set up if --host or one of
     # the --special-host flags has been set.
     if args.token is None:
