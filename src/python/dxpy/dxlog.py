@@ -85,7 +85,9 @@ class DXLogHandler(SysLogHandler):
                            "level": level, "msg": message})
 
         levelno = int(record.levelno)
-        if levelno >= logging.CRITICAL or (levelno == logging.INFO and message.startswith("CPU: ")):
+        if levelno >= logging.CRITICAL or (levelno == logging.INFO and
+                                           isinstance(message, bytes) and
+                                           message.startswith(b"CPU: ")):
             # Critical, alert, emerg, or resource status
             cur_socket = self.priority_log_socket
             cur_socket_address = self.priority_log_address
