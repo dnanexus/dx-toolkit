@@ -1,3 +1,9 @@
+dx-toolkit (0.141.1) precise; urgency=low
+
+  * Fix encoding error in logger
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 21 Apr 2015 21:45:43 +0000
+
 dx-toolkit (0.141.0) precise; urgency=low
 
   * Support for mem1_ssd2_* instances
@@ -6,13 +12,13 @@ dx-toolkit (0.141.0) precise; urgency=low
 
   * Prevent expiry of download URLs in "dx cat"
 
-  * Reuse bundled depends if contents have not changed 
+  * Reuse bundled depends if contents have not changed
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 15 Apr 2015 18:38:34 +0000
 
 dx-toolkit (0.140.0) precise; urgency=low
 
-  * Minor fixes 
+  * Minor fixes
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 08 Apr 2015 17:05:49 +0000
 
