@@ -1,3 +1,9 @@
+dx-toolkit (0.142.0) precise; urgency=low
+
+  * Minor fixes 
+
+ -- Kaveh Nafissi <knafissi@home.vdev.dnanexus.com>  Wed, 22 Apr 2015 20:05:04 +0000
+
 dx-toolkit (0.141.0) precise; urgency=low
 
   * Support for mem1_ssd2_* instances
