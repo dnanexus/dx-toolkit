@@ -83,9 +83,10 @@ def create_folder_in_project(proj_id, path):
 
 def list_folder(proj_id, path):
     output = dxpy.api.project_list_folder(proj_id, {"folder": path})
-    # Sort the results to create ordering. This allows using the results
-    # for comparison purposes.
-    output['folders'] = sorted(output['folders'])
+    # Canonicalize to account for possibly different ordering
+    output['folders'] = set(output['folders'])
+    # (objects is a list of dicts-- which are not hashable-- so just
+    # sort them to canonicalize instead of putting them in a set)
     output['objects'] = sorted(output['objects'])
     return output
 
@@ -2735,8 +2736,8 @@ class TestDXClientFind(DXTestCase):
         self.assertEqual(len(run("dx find analyses "+options2).splitlines()), 0)
 
         def assert_cmd_gives_ids(cmd, ids):
-            self.assertEqual(sorted(execid.strip() for execid in run(cmd).splitlines()),
-                             sorted(ids))
+            self.assertEqual(set(execid.strip() for execid in run(cmd).splitlines()),
+                             set(ids))
 
         # Search by tag
         options2 = options + " --all-jobs --brief"
@@ -3341,7 +3342,7 @@ class TestDXBuildApp(DXTestCase):
         self.run_and_assert_stderr_matches('dx build --create-app --yes --json ' + app_dir,
                                            'the following developers will be added: user-eve')
         app_developers = dxpy.api.app_list_developers('app-test_build_app_and_update_devs')['developers']
-        self.assertEqual(sorted(app_developers), sorted([my_userid, 'user-eve']))
+        self.assertEqual(set(app_developers), set([my_userid, 'user-eve']))
 
         # Add and remove a developer
         app_spec['developers'] = [my_userid, 'user-000000000000000000000001']
@@ -3352,7 +3353,7 @@ class TestDXBuildApp(DXTestCase):
             + 'the following developers will be removed: user-eve'
         )
         app_developers = dxpy.api.app_list_developers('app-test_build_app_and_update_devs')['developers']
-        self.assertEqual(sorted(app_developers), sorted([my_userid, 'user-000000000000000000000001']))
+        self.assertEqual(set(app_developers), set([my_userid, 'user-000000000000000000000001']))
 
         # Remove a developer
         app_spec['developers'] = [my_userid]
@@ -3853,8 +3854,8 @@ def main(in1):
             }
         app_dir = self.write_app_directory("categories_propagated_to_tags", json.dumps(app_spec), "code.py")
         applet_id = json.loads(run("dx build --json -d categories1 " + app_dir))["id"]
-        self.assertEqual(sorted(dxpy.DXApplet(applet_id).describe()["tags"]),
-                         sorted(["mytag", "Import"]))
+        self.assertEqual(set(dxpy.DXApplet(applet_id).describe()["tags"]),
+                         set(["mytag", "Import"]))
 
         app_spec2 = {
             "name": "categories_propagated_to_tags",
@@ -3867,8 +3868,8 @@ def main(in1):
             }
         app_dir2 = self.write_app_directory("categories_propagated_to_tags", json.dumps(app_spec2), "code.py")
         applet_id2 = json.loads(run("dx build --json -d categories2 " + app_dir2))["id"]
-        self.assertEqual(sorted(dxpy.DXApplet(applet_id2).describe()["tags"]),
-                         sorted(["Import"]))
+        self.assertEqual(set(dxpy.DXApplet(applet_id2).describe()["tags"]),
+                         set(["Import"]))
 
     def test_bundled_depends_reuse(self):
         app_spec = {

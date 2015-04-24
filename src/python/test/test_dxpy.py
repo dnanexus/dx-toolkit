@@ -1088,14 +1088,14 @@ def main():
         dxjob.add_tags(["foo", "bar", "foo"])
         dxjob.set_properties({"foo": "bar", "$dnanexus.link": "thing"})
         jobdesc = dxjob.describe()
-        self.assertEqual(sorted(jobdesc["tags"]), sorted(["foo", "bar", "$foo.bar"]))
+        self.assertEqual(set(jobdesc["tags"]), set(["foo", "bar", "$foo.bar"]))
         self.assertEqual(jobdesc["properties"], {"foo": "bar",
                                                  "$dnanexus.link": "thing",
                                                  "$dnanexus_link.foo": "barbaz"})
         dxjob.remove_tags(["bar", "baz"])
         dxjob.set_properties({"$dnanexus.link": None})
         jobdesc = dxjob.describe()
-        self.assertEqual(sorted(jobdesc["tags"]), sorted(["foo", "$foo.bar"]))
+        self.assertEqual(set(jobdesc["tags"]), set(["foo", "$foo.bar"]))
         self.assertEqual(jobdesc["properties"], {"foo": "bar", "$dnanexus_link.foo": "barbaz"})
 
         # Test with fields parameter
@@ -1174,7 +1174,7 @@ def main(number):
         dxanalysis.add_tags(["foo", "bar", "foo"])
         dxanalysis.set_properties({"foo": "bar", "$dnanexus.link": "thing"})
         analysis_desc = dxanalysis.describe()
-        self.assertEqual(sorted(analysis_desc["tags"]), sorted(["foo", "bar"]))
+        self.assertEqual(set(analysis_desc["tags"]), set(["foo", "bar"]))
         self.assertEqual(analysis_desc["properties"], {"foo": "bar", "$dnanexus.link": "thing"})
         dxanalysis.remove_tags(["bar", "baz"])
         dxanalysis.set_properties({"$dnanexus.link": None})
