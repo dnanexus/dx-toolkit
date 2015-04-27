@@ -328,8 +328,18 @@ class DXExecDependencyInstaller(object):
         elif dep_type == "cpan":
             return "cpanm --notest " + make_pm_atoms(packages, version_separator="~")
         elif dep_type == "cran":
-            r_shellcode = "R -e 'die <- function() { q(status=1) }; options(error=die); options(warn=2); install.packages(commandArgs(trailingOnly=TRUE), repos=\"http://cran.us.r-project.org\")' --args "
-            return r_shellcode + make_pm_atoms(packages)
+            repo = "http://cran.us.r-project.org"
+            r_preamble = "die <- function() { q(status=1) }; options(error=die); options(warn=2)"
+            r_cmd_template = "R -e '{preamble}; {cmd}'"
+            bootstrap_cmd = 'install.packages("devtools", repos="{repo}")'.format(repo=repo)
+            commands = [r_cmd_template.format(preamble=r_preamble, cmd=bootstrap_cmd)]
+            for package in packages:
+                args = '"{name}", repos="{repo}"'.format(name=package["name"], repo=repo)
+                if "version" in package:
+                    args += ', version="{}"'.format(package["version"])
+                cmd = "require(devtools); install_version({args})".format(args=args)
+                commands.append(r_cmd_template.format(preamble=r_preamble, cmd=cmd))
+            return " && ".join(commands)
         elif dep_type == "git":
             commands = ["apt-get install --yes git make", "export GIT_SSH=dx-git-ssh-helper"]
             for dep in packages:
@@ -386,9 +396,6 @@ class DXExecDependencyInstaller(object):
     def _validate_dependency(self, dep):
         if "name" not in dep:
             raise DXExecDependencyError('Expected field "name" to be present in execution dependency "{}"'.format(dep))
-        if dep.get("package_manager") == "cran" and "version" in dep:
-            msg = 'Execution dependency {} has a "version" field, but versioning is not supported for CRAN dependencies'
-            raise DXExecDependencyError(msg.format(dep))
         elif dep.get("package_manager") == "git" and "url" not in dep:
             raise DXExecDependencyError('Execution dependency "{}" does not have a "url" field'.format(dep))
 
