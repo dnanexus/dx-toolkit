@@ -2526,9 +2526,25 @@ class TestDXClientFind(DXTestCase):
             test_projectid = temp_project.get_id()
             run('dx new record -p --brief ' + test_projectid + ':' + test_dirname + test_recordname)
 
-            # Case: --path specified, WORKSPACE_ID not set (fail).
-            with self.assertSubprocessFailure(stderr_regexp="if a project is not specified", exit_code=1):
-                run('dx find data --brief --path ' + test_dirname)
+            # FIXME: the following test is flaky because we're not able
+            # to effectively unset the project using
+            # select_project(None). This merely unsets the environment
+            # variable, which doesn't work because it just allows the
+            # previous value of the project context (e.g. obtained from
+            # the user-global config) to bleed through. Therefore,
+            # although we run 'clearenv' above, another process can
+            # swoop in and set a project which is then seen in the
+            # subprocess call below-- contrary to our intentions. (Given
+            # this, the current implementation of select_project(None)
+            # may be completely faulty to begin with.)
+            #
+            # In order to really make this test work, we need to be able
+            # to encode (in the environment variable or in the config
+            # file) an empty project in such a way that it sticks.
+            #
+            # # Case: --path specified, WORKSPACE_ID not set (fail).
+            # with self.assertSubprocessFailure(stderr_regexp="if a project is not specified", exit_code=1):
+            #     run('dx find data --brief --path ' + test_dirname)
 
             # Case: --project and --path PROJECTID:FOLDERPATH specified (fail).
             with self.assertSubprocessFailure(stderr_regexp="Cannot supply both --project and --path " +
