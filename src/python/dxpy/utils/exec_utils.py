@@ -329,12 +329,14 @@ class DXExecDependencyInstaller(object):
             return "cpanm --notest " + make_pm_atoms(packages, version_separator="~")
         elif dep_type == "cran":
             repo = "http://cran.us.r-project.org"
-            r_preamble = "die <- function() { q(status=1) }; options(error=die); options(warn=2)"
+            r_preamble = "die <- function() { q(status=1) }; options(error=die); options(warn=2);"
+            r_preamble += "r <- getOption('repos'); r['CRAN'] = '{repo}'; options(repos=r)".format(repo=repo)
+
             r_cmd_template = "R -e '{preamble}; {cmd}'"
-            bootstrap_cmd = 'install.packages("devtools", repos="{repo}")'.format(repo=repo)
+            bootstrap_cmd = 'install.packages("devtools")'
             commands = [r_cmd_template.format(preamble=r_preamble, cmd=bootstrap_cmd)]
             for package in packages:
-                args = '"{name}", repos="{repo}"'.format(name=package["name"], repo=repo)
+                args = '"{}"'.format(package["name"])
                 if "version" in package:
                     args += ', version="{}"'.format(package["version"])
                 cmd = "require(devtools); install_version({args})".format(args=args)
