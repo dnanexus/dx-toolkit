@@ -327,8 +327,8 @@ build_git:
 	(cd git && autoreconf --install && ./configure && $(MAKE) && $(MAKE) install)
 	(cd ../build/bin && ln -s ../../src/git/git)
 
-OPENSSL_PV=1.0.1e
-OPENSSL_SHA=3f1b1223c9e8189bfe4e186d86449775bd903460
+OPENSSL_PV=1.0.1f
+OPENSSL_SHA=9ef09e97dfc9f14ac2c042f3b7e301098794fc0f
 openssl: shasum
 	if [[ "$(OS)" == Windows_NT || "$(UNAME)" == Darwin || "$(CENTOS_MAJOR_VERSION)" == "5" ]]; then \
 	    $(MAKE) build_openssl; \
@@ -390,8 +390,8 @@ boost_build:
 
 curl: c-ares/stage/lib/libcares.la curl/stage/lib/libcurl.la
 
-CURL_PV=7.32.0
-CURL_SHA=cadc5648e4cd4ea750a8c580311722ed1fb1573a
+CURL_PV=7.35.0
+CURL_SHA=35c2b1f8c56912ab7bebaa61cf4494c94a0ed0d1
 ifeq ($(OS), Windows_NT)
 	CURL_WITH_SSL=--with-winssl
 	CURL_SHARED_LIBS=--enable-shared=yes
