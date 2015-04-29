@@ -1,6 +1,12 @@
+dx-toolkit (0.143.0) precise; urgency=low
+
+  * Bug fixes
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 29 Apr 2015 19:24:16 +0000
+
 dx-toolkit (0.142.0) precise; urgency=low
 
-  * Minor fixes 
+  * Minor fixes
 
  -- Kaveh Nafissi <knafissi@home.vdev.dnanexus.com>  Wed, 22 Apr 2015 20:05:04 +0000
 
@@ -12,13 +18,13 @@ dx-toolkit (0.141.0) precise; urgency=low
 
   * Prevent expiry of download URLs in "dx cat"
 
-  * Reuse bundled depends if contents have not changed 
+  * Reuse bundled depends if contents have not changed
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 15 Apr 2015 18:38:34 +0000
 
 dx-toolkit (0.140.0) precise; urgency=low
 
-  * Minor fixes 
+  * Minor fixes
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 08 Apr 2015 17:05:49 +0000
 
