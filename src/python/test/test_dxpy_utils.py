@@ -184,7 +184,7 @@ class TestDXExecDependsUtils(unittest.TestCase):
         assert_cmd_ran(edi, re.escape("pip install --upgrade pytz==2014.7 certifi"))
         assert_cmd_ran(edi, "apt-get install --yes --no-install-recommends tmux")
         assert_cmd_ran(edi, re.escape("gem install rake --version 10.3.2 && gem install nokogiri"))
-        assert_cmd_ran(edi, "R -e .+ install_version.+\"RJSONIO\".+\"ggplot2\".+version=\"1.0.1\"")
+        assert_cmd_ran(edi, "R -e .+ install.packages.+\"RJSONIO\".+install_version.+\"ggplot2\".+version=\"1.0.1\"")
         assert_log_contains(edi, 'Skipping bundled dependency "r1" because it does not refer to a file')
         assert_cmd_ran(edi, re.escape("cd $(mktemp -d) && git clone https://github.com/dnanexus/oauth2-demo"))
         assert_cmd_ran(edi, "cd /tmp/ee-edi-test-bwa && git clone https://github.com/dnanexus/bwa")
