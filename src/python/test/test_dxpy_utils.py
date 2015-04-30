@@ -167,6 +167,7 @@ class TestDXExecDependsUtils(unittest.TestCase):
                                         {"name": "Module::Provision", "package_manager": "cpan", "version": "0.36.1"},
                                         {"name": "LWP::MediaTypes", "package_manager": "cpan"},
                                         {"name": "RJSONIO", "package_manager": "cran"},
+                                        {"name": "plyr", "package_manager": "cran", "version": "1.8.1"},
                                         {"name": "ggplot2", "package_manager": "cran", "stages": ["main"],
                                          "version": "1.0.1"},
                                         {"name": "r1", "id": {"$dnanexus_link": "record-123"}},
