@@ -3284,9 +3284,10 @@ parser_exit.set_defaults(func=exit_shell)
 register_subparser(parser_exit, categories='session')
 
 parser_whoami = subparsers.add_parser('whoami', help='Print the username of the current user',
-                                      description='Print the username of the current user, in the form "user-USERNAME"')
-parser_whoami.add_argument('--host', help='Query the specified auth server host (port must also be given)')
-parser_whoami.add_argument('--port', type=int, help='Query the specified auth server port (host must also be given)')
+                                      description='Print the username of the current user, ' +
+                                                  'in the form "user-USERNAME"',
+                                      prog='dx whoami',
+                                      parents=[env_args])
 parser_whoami.add_argument('--id', help='Print user ID instead of username', action='store_true', dest='user_id')
 parser_whoami.set_defaults(func=whoami)
 register_subparser(parser_whoami, categories='session')
@@ -3304,7 +3305,8 @@ register_subparser(parser_env, categories='session')
 
 parser_setenv = subparsers.add_parser('setenv',
                                       help='Sets environment variables for the session',
-                                      description='Sets environment variables for communication with the API server')
+                                      description='Sets environment variables for communication with the API server',
+                                      prog='dx setenv')
 parser_setenv.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
 parser_setenv.add_argument('--save', help='Save settings for future sessions.  Only one set of settings can be saved at a time.  Always set to true if login is run in a non-interactive session',
                            action='store_true')
