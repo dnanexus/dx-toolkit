@@ -553,9 +553,9 @@ void check_for_complete_chunks(vector<File> &files) {
       // Cache file descriptions so we only have to do once per file,
       // not once per chunk.
       if (fileDescriptions.find(c->fileID) == fileDescriptions.end())
-          fileDescriptions[c->fileId] = fileDescribe(c->fileID);
+          fileDescriptions[c->fileID] = fileDescribe(c->fileID);
 
-      if (!is_chunk_complete(c, fileDescriptions[c->fileId])) {
+      if (!is_chunk_complete(c, fileDescriptions[c->fileID])) {
           chunksToUpload.produce(c);
       }
     }
@@ -587,9 +587,9 @@ void check_for_complete_chunks(vector<File> &files) {
     // Cache file descriptions so we only have to do once per file,
     // not once per chunk.
     if (fileDescriptions.find(c->fileID) == fileDescriptions.end())
-        fileDescriptions[c->fileId] = fileDescribe(c->fileID);
+        fileDescriptions[c->fileID] = fileDescribe(c->fileID);
 
-    if (!is_chunk_complete(c, fileDescriptions[c->fileId])) {
+    if (!is_chunk_complete(c, fileDescriptions[c->fileID])) {
         cerr << "Chunk " << c->index << " of file " << c->fileID << " did not complete.  This file will not be accessible.  PLease try to upload this file again." << endl;
     }
   }
