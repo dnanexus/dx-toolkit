@@ -187,15 +187,10 @@ void compressChunks() {
   }
 }
 
-bool is_chunk_complete(Chunk *c) {
-    bool chunk_complete = false;
-    JSON result = fileDescribe(c->fileID);
+bool is_chunk_complete(Chunk *c, JSON &fileDescription) {
     string partIndex = boost::lexical_cast<string>(c->index + 1); // minimum part index is 1
 
-    if (result["parts"].has(partIndex) && result["parts"][partIndex]["state"].get<string>() == "complete")
-        chunk_complete = true;
-
-    return chunk_complete;
+    return (fileDescription["parts"].has(partIndex) && fileDescription["parts"][partIndex]["state"].get<string>() == "complete");
 }
 
 void uploadChunks(vector<File> &files) {
@@ -551,16 +546,23 @@ void printEnvironmentInfo() {
 // chunks are marked as pending, and if so, we'll retry them.
 void check_for_complete_chunks(vector<File> &files) {
   for (int currCheckNum=0; currCheckNum < NUM_CHUNK_CHECKS; ++currCheckNum){
+    map<string, JSON> fileDescriptions;
     while (!chunksFinished.empty()) {
       Chunk *c = chunksFinished.consume();
-      if (!is_chunk_complete(c)) {
+
+      // Cache file descriptions so we only have to do once per file,
+      // not once per chunk.
+      if (fileDescriptions.find(c->fileID) == fileDescriptions.end())
+          fileDescriptions[c->fileId] = fileDescribe(c->fileID);
+
+      if (!is_chunk_complete(c, fileDescriptions[c->fileId])) {
           chunksToUpload.produce(c);
       }
     }
     // All of the chunks were marked as complete, so let's exit and we
     // should be safeish to close the file.
     if(chunksToUpload.size() == 0)
-      break;
+      return;
 
     // Upload the chunks which weren't marked as complete.
     DXLOG(logINFO) << " upload...";
@@ -572,6 +574,23 @@ void check_for_complete_chunks(vector<File> &files) {
     DXLOG(logINFO) << " upload...";
     for (int i = 0; i < (int) uploadThreads.size(); ++i) {
       uploadThreads[i].join();
+    }
+  }
+
+  // We have tried to upload incomplete chunks NUM_CHUNK_CHECKS times!
+  // Check to see if there are any chunks still not complete and if so,
+  // print warning.
+  map<string, JSON> fileDescriptions;
+  while (!chunksFinished.empty()) {
+    Chunk *c = chunksFinished.consume();
+
+    // Cache file descriptions so we only have to do once per file,
+    // not once per chunk.
+    if (fileDescriptions.find(c->fileID) == fileDescriptions.end())
+        fileDescriptions[c->fileId] = fileDescribe(c->fileID);
+
+    if (!is_chunk_complete(c, fileDescriptions[c->fileId])) {
+        cerr << "Chunk " << c->index << " of file " << c->fileID << " did not complete.  This file will not be accessible.  PLease try to upload this file again." << endl;
     }
   }
 }
