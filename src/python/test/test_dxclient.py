@@ -1176,6 +1176,28 @@ class TestDXClientDescribe(DXTestCase):
 
         run("dx describe " + self.project + " --project-context-id foo")
 
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS,
+                         'skipping test that would create apps')
+    def test_describe_deleted_app(self):
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "inputSpec": [],
+                                         "outputSpec": [],
+                                         "runSpec": {"interpreter": "bash",
+                                                     "code": ""},
+                                         "name": "applet_to_delete"})['id']
+        app_new_output = dxpy.api.app_new({"name": "app_to_delete",
+                                           "applet": applet_id,
+                                           "version": "1.0.0"})
+
+        # make second app with no default tag
+        app_new_output2 = dxpy.api.app_new({"name": "app_to_delete",
+                                           "applet": applet_id,
+                                           "version": "1.0.1"})
+        dxpy.api.app_delete(app_new_output2["id"])
+
+        run("dx describe " + app_new_output2["id"])
+
 @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                      'skipping tests that would run jobs')
 class TestDXClientRun(DXTestCase):
