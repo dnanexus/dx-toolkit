@@ -553,10 +553,19 @@ void check_for_complete_chunks(vector<File> &files) {
       // Cache file descriptions so we only have to do once per file,
       // not once per chunk.
       if (fileDescriptions.find(c->fileID) == fileDescriptions.end())
-          fileDescriptions[c->fileID] = fileDescribe(c->fileID);
+        fileDescriptions[c->fileID] = fileDescribe(c->fileID);
 
+      // Note that currently we are re-reading the chunk data and perhaps
+      // compressing it in the main thread.  Ideally we'd do this in separate
+      // threads like the original loop.  However, this should be a rare
+      // event, so we'll stick to this simple implementation for now.
       if (!is_chunk_complete(c, fileDescriptions[c->fileID])) {
-          chunksToUpload.produce(c);
+        // After the chunk was uploaded, it was cleared, removing the data
+        // from the buffer.  We need to reload if we're going to upload again.
+        c->read();
+        if (c->toCompress)
+          c->compress();
+        chunksToUpload.produce(c);
       }
     }
     // All of the chunks were marked as complete, so let's exit and we
@@ -564,10 +573,23 @@ void check_for_complete_chunks(vector<File> &files) {
     if(chunksToUpload.size() == 0)
       return;
 
+    // Set the totalChunks variable to the # of chunks we're going
+    // to retry now.
+    totalChunks = chunksToUpload.size();
     // Upload the chunks which weren't marked as complete.
     DXLOG(logINFO) << " upload...";
     for (int i = 0; i < opt.uploadThreads; ++i) {
       uploadThreads.push_back(boost::thread(uploadChunks, boost::ref(files)));
+    }
+    // The upload threads don't exit once the upload is complete.  Instead they
+    // keep looping, and sleeping for a short bit of time.  I assume this allows
+    // the chunks to upload queue to be continually fed?  Anyway, to actually
+    // terminate, we have this monitor thread which will check to see if
+    // chunksFinished + chunksFailed == totalChunks. Then we interrupt the threads.
+    boost::thread monitorThread(monitor);
+    monitorThread.join();
+    for (int i = 0; i < (int) uploadThreads.size(); ++i) {
+      uploadThreads[i].interrupt();
     }
 
     // Wait for the upload threads to complete.
