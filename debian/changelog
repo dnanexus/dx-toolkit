@@ -1,3 +1,9 @@
+dx-toolkit (0.144.0) precise; urgency=low
+
+  * Bug fix for session configuration loading due to Mac metadata files 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 06 May 2015 20:32:58 +0000
+
 dx-toolkit (0.143.0) precise; urgency=low
 
   * Bug fixes
