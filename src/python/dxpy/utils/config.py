@@ -175,7 +175,13 @@ class DXConfig(MutableMapping):
                     # doesn't exist)
                     session_dirs = []
                 for session_dir in session_dirs:
-                    if not pid_exists(int(session_dir)):
+                    try:
+                        session_pid = int(session_dir)
+                    except ValueError:
+                        # If dir name doesn't look like an int, leave it
+                        # alone
+                        continue
+                    if not pid_exists(session_pid):
                         rmtree(os.path.join(sessions_dir, session_dir), ignore_errors=True)
 
             parent_process = Process(os.getpid()).parent()
