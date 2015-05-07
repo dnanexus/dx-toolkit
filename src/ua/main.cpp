@@ -103,6 +103,9 @@ int NUMTRIES_g; // Number of max tries for a chunk (to be given by user)
 
 string userAgentString; // definition (declared in chunk.h)
 
+// Max number of times to check if a chunk is complete.
+int NUM_CHUNK_CHECKS = 3;
+
 bool finished() {
   return (chunksFinished.size() + chunksFailed.size() == totalChunks);
 }
@@ -182,6 +185,12 @@ void compressChunks() {
   } catch (boost::thread_interrupted &ti) {
     return;
   }
+}
+
+bool is_chunk_complete(Chunk *c, JSON &fileDescription) {
+    string partIndex = boost::lexical_cast<string>(c->index + 1); // minimum part index is 1
+
+    return (fileDescription["parts"].has(partIndex) && fileDescription["parts"][partIndex]["state"].get<string>() == "complete");
 }
 
 void uploadChunks(vector<File> &files) {
@@ -529,6 +538,68 @@ void printEnvironmentInfo() {
   }
 }
 
+// There is currently the possibility of a race condition if a chunk
+// upload timed-out.  It's possible that a second upload succeeds,
+// has the chunk marked as "complete" and then the first request makes
+// its way through the queue and marks the chunk as pending again.
+// Since we are just about to close the file, we'll check to see if any
+// chunks are marked as pending, and if so, we'll retry them.
+void check_for_complete_chunks(vector<File> &files) {
+  for (int currCheckNum=0; currCheckNum < NUM_CHUNK_CHECKS; ++currCheckNum){
+    map<string, JSON> fileDescriptions;
+    while (!chunksFinished.empty()) {
+      Chunk *c = chunksFinished.consume();
+
+      // Cache file descriptions so we only have to do once per file,
+      // not once per chunk.
+      if (fileDescriptions.find(c->fileID) == fileDescriptions.end())
+        fileDescriptions[c->fileID] = fileDescribe(c->fileID);
+
+      if (!is_chunk_complete(c, fileDescriptions[c->fileID])) {
+        // After the chunk was uploaded, it was cleared, removing the data
+        // from the buffer.  We need to reload if we're going to upload again.
+        chunksToRead.produce(c);
+      }
+    }
+    // All of the chunks were marked as complete, so let's exit and we
+    // should be safeish to close the file.
+    if(chunksToRead.size() == 0)
+      return;
+
+    // Set the totalChunks variable to the # of chunks we're going
+    // to retry now plus the number of chunks in the failed queue.  The monitor
+    // thread will be busy until the size of chunksFinished + chunksFailed
+    // equals totalChunks.
+    DXLOG(logINFO) << "Retrying " << chunksToRead.size() << " chunks that did not complete.";
+    totalChunks = chunksToRead.size() + chunksFailed.size();
+    // Read, compress, and upload the chunks which weren't marked as complete.
+    createWorkerThreads(files);
+
+    boost::thread monitorThread(monitor);
+    monitorThread.join();
+
+    interruptWorkerThreads();
+    joinWorkerThreads();
+  }
+
+  // We have tried to upload incomplete chunks NUM_CHUNK_CHECKS times!
+  // Check to see if there are any chunks still not complete and if so,
+  // print warning.
+  map<string, JSON> fileDescriptions;
+  while (!chunksFinished.empty()) {
+    Chunk *c = chunksFinished.consume();
+
+    // Cache file descriptions so we only have to do once per file,
+    // not once per chunk.
+    if (fileDescriptions.find(c->fileID) == fileDescriptions.end())
+        fileDescriptions[c->fileID] = fileDescribe(c->fileID);
+
+    if (!is_chunk_complete(c, fileDescriptions[c->fileID])) {
+        cerr << "Chunk " << c->index << " of file " << c->fileID << " did not complete.  This file will not be accessible.  PLease try to upload this file again." << endl;
+    }
+  }
+}
+
 int main(int argc, char * argv[]) {
   try {
     // Note: Verbose mode logging is enabled (if requested) by options parse()
@@ -667,6 +738,8 @@ int main(int argc, char * argv[]) {
     interruptWorkerThreads();
     joinWorkerThreads();
 
+    check_for_complete_chunks(files);
+
     while (!chunksFailed.empty()) {
       Chunk * c = chunksFailed.consume();
       c->log("Chunk failed", logERROR);
@@ -675,6 +748,7 @@ int main(int argc, char * argv[]) {
     if (opt.verbose) {
       cerr << endl;
     }
+
     for (unsigned int i = 0; i < files.size(); ++i) {
       if (files[i].failed) {
         cerr << "File \""<< files[i].localFile << "\" could not be uploaded." << endl;
