@@ -3604,7 +3604,7 @@ parser_add_users = subparsers_add.add_parser('users', help='Add authorized users
                                              prog='dx add users', parents=[env_args])
 parser_add_users.add_argument('app', help='Name or ID of an app').completer = DXAppCompleter(installed=True)
 parser_add_users.add_argument('users', metavar='authorizedUser',
-                              help='One or more users or orgs to add; use "PUBLIC" to allow all access',
+                              help='One or more users or orgs to add',
                               nargs='+')
 parser_add_users.set_defaults(func=add_users)
 register_subparser(parser_add_users, subparsers_action=subparsers_add, categories='exec')
@@ -3676,7 +3676,7 @@ parser_remove_users = subparsers_remove.add_parser('users', help='Remove authori
                                                    prog='dx remove users', parents=[env_args])
 parser_remove_users.add_argument('app', help='Name or ID of an app').completer = DXAppCompleter(installed=True)
 parser_remove_users.add_argument('users', metavar='authorizedUser',
-                                 help='One or more users or orgs to remove; use "PUBLIC" to remove public access',
+                                 help='One or more users or orgs to remove',
                                  nargs='+')
 parser_remove_users.set_defaults(func=remove_users)
 register_subparser(parser_remove_users, subparsers_action=subparsers_remove, categories='exec')
