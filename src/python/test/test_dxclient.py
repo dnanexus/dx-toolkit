@@ -3323,28 +3323,6 @@ class TestDXBuildApp(DXTestCase):
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
 
     @unittest.skipUnless(testutil.TEST_CREATE_APPS, 'skipping test that would create apps')
-    def test_build_app_and_make_it_public(self):
-        app_spec = {
-            "name": "test_build_app_and_make_it_public",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0",
-            "authorizedUsers": ['PUBLIC']
-            }
-        app_dir = self.write_app_directory("test_build_app_and_make_it_public", json.dumps(app_spec),
-                                           "code.py")
-
-        run("dx build --create-app --json " + app_dir)
-        app_authorized_users = run("dx list users app-test_build_app_and_make_it_public")
-        self.assertEqual(app_authorized_users, '')
-
-        run("dx build --create-app --yes --version=1.0.1 --json " + app_dir)
-        app_authorized_users = run("dx list users app-test_build_app_and_make_it_public")
-        self.assertEqual(app_authorized_users.strip().split('\n'), ['PUBLIC'])
-
-    @unittest.skipUnless(testutil.TEST_CREATE_APPS, 'skipping test that would create apps')
     def test_build_app_and_pretend_to_update_devs(self):
         app_spec = {
             "name": "test_build_app_and_pretend_to_update_devs",
@@ -3584,7 +3562,7 @@ class TestDXBuildApp(DXTestCase):
             "inputSpec": [],
             "outputSpec": [],
             "version": "1.0.1",
-            "authorizedUsers": ["PUBLIC"]
+            "authorizedUsers": ["user-eve"]
             }
         app_dir = self.write_app_directory("update_app_authorized_users", json.dumps(app0_spec),
                                            "code.py")
@@ -3600,7 +3578,7 @@ class TestDXBuildApp(DXTestCase):
         self.write_app_directory("update_app_authorized_users", json.dumps(app2_spec), "code.py")
         run("dx build --create-app --yes --json " + app_dir)
         self.assertEquals(json.loads(run("dx api " + app_id +
-                                         " listAuthorizedUsers"))["authorizedUsers"], ["PUBLIC"])
+                                         " listAuthorizedUsers"))["authorizedUsers"], ["user-eve"])
 
     @unittest.skipUnless(testutil.TEST_CREATE_APPS,
                          'skipping test that would create apps')
@@ -3629,33 +3607,23 @@ class TestDXBuildApp(DXTestCase):
                 }
             app_dir = self.write_app_directory("test_dx_users", json.dumps(app_spec), "code.py")
             app_id = json.loads(run("dx build --create-app --json " + app_dir))['id']
-        # initialize as PUBLIC app
-        run("dx add users test_dx_users PUBLIC")
-        users = run("dx list users app-test_dx_users").strip()
-        self.assertEqual(users, "PUBLIC")
-        # use hash ID
-        run("dx remove users " + app_id + " PUBLIC")
-        users = run("dx list users app-test_dx_users").strip()
-        self.assertEqual(users, "")
         # don't use "app-" prefix, duplicate and multiple members are fine
-        run("dx add users test_dx_users PUBLIC eve user-eve org-piratelabs")
+        run("dx add users test_dx_users eve user-eve org-piratelabs")
         users = run("dx list users app-test_dx_users").strip().split("\n")
-        self.assertEqual(len(users), 3)
-        self.assertIn("PUBLIC", users)
+        self.assertEqual(len(users), 2)
         self.assertIn("user-eve", users)
         self.assertIn("org-piratelabs", users)
         run("dx remove users test_dx_users eve org-piratelabs")
         # use version string
         users = run("dx list users app-test_dx_users/0.0.1").strip()
-        self.assertEqual(users, 'PUBLIC')
 
         # bad paths and exit codes
         with self.assertSubprocessFailure(stderr_regexp='could not be resolved', exit_code=3):
-            run('dx add users nonexistentapp PUBLIC')
+            run('dx add users nonexistentapp user-eve')
         with self.assertSubprocessFailure(stderr_regexp='could not be resolved', exit_code=3):
             run('dx list users app-nonexistentapp')
         with self.assertSubprocessFailure(stderr_regexp='could not be resolved', exit_code=3):
-            run('dx remove users app-nonexistentapp/1.0.0 PUBLIC')
+            run('dx remove users app-nonexistentapp/1.0.0 user-eve')
         with self.assertSubprocessFailure(stderr_regexp='ResourceNotFound', exit_code=3):
             run('dx add users test_dx_users org-nonexistentorg')
         with self.assertSubprocessFailure(stderr_regexp='ResourceNotFound', exit_code=3):
