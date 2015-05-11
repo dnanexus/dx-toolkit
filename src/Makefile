@@ -364,11 +364,16 @@ endif
 
 boost: boost/stage
 
-# See https://svn.boost.org/trac/boost/ticket/5680 for Windows/MinGW details
-boost/stage: shasum
-	mkdir -p boost
+boost-$(BOOST_PV).tar.bz2:
 	curl -L ${BOOST_URL} > boost-$(BOOST_PV).tar.bz2
+
+boost.download-shasum-checked: boost-$(BOOST_PV).tar.bz2 shasum
 	[[ $$(shasum boost-$(BOOST_PV).tar.bz2|cut -f 1 -d ' ') == $(BOOST_SHA) ]]
+	touch boost.download-shasum-checked
+
+# See https://svn.boost.org/trac/boost/ticket/5680 for Windows/MinGW details
+boost/stage: boost.download-shasum-checked
+	mkdir -p boost
 	tar -xjf boost-$(BOOST_PV).tar.bz2 -C boost --strip-components=1
 ifeq ($(OS), Windows_NT)
 	cd boost; ./bootstrap.sh --with-toolset=mingw --with-libraries=${BOOST_LIBS}
