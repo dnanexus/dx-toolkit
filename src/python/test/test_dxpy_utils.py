@@ -142,8 +142,9 @@ class TestDXExecDependsUtils(unittest.TestCase):
         with self.assertRaisesRegexp(AppInternalError, 'Expected field "name" to be present'):
             get_edi({"dependencies": [{"foo": "bar"}]})
 
-        with self.assertRaisesRegexp(AppInternalError, "versioning is not supported for CRAN dependencies"):
-            get_edi({"dependencies": [{"name": "foo", "package_manager": "cran", "version": "1.2.3"}]})
+        edi = get_edi({"dependencies": [{"name": "foo", "package_manager": "cran", "version": "1.2.3"}]})
+        edi.install()
+        assert_cmd_ran(edi, "R -e .+ install.packages.+devtools.+install_version.+foo.+version.+1.2.3")
 
         with self.assertRaisesRegexp(AppInternalError, 'does not have a "url" field'):
             get_edi({"dependencies": [{"name": "foo", "package_manager": "git"}]})
@@ -166,7 +167,9 @@ class TestDXExecDependsUtils(unittest.TestCase):
                                         {"name": "Module::Provision", "package_manager": "cpan", "version": "0.36.1"},
                                         {"name": "LWP::MediaTypes", "package_manager": "cpan"},
                                         {"name": "RJSONIO", "package_manager": "cran"},
-                                        {"name": "ggplot2", "package_manager": "cran", "stages": ["main"]},
+                                        {"name": "plyr", "package_manager": "cran", "version": "1.8.1"},
+                                        {"name": "ggplot2", "package_manager": "cran", "stages": ["main"],
+                                         "version": "1.0.1"},
                                         {"name": "r1", "id": {"$dnanexus_link": "record-123"}},
                                         {"name": "g1",
                                          "package_manager": "git",
@@ -182,7 +185,7 @@ class TestDXExecDependsUtils(unittest.TestCase):
         assert_cmd_ran(edi, re.escape("pip install --upgrade pytz==2014.7 certifi"))
         assert_cmd_ran(edi, "apt-get install --yes --no-install-recommends tmux")
         assert_cmd_ran(edi, re.escape("gem install rake --version 10.3.2 && gem install nokogiri"))
-        assert_cmd_ran(edi, "R -e .+ install.packages.+ --args RJSONIO ggplot2")
+        assert_cmd_ran(edi, "R -e .+ install.packages.+\"RJSONIO\".+install_version.+\"ggplot2\".+version=\"1.0.1\"")
         assert_log_contains(edi, 'Skipping bundled dependency "r1" because it does not refer to a file')
         assert_cmd_ran(edi, re.escape("cd $(mktemp -d) && git clone https://github.com/dnanexus/oauth2-demo"))
         assert_cmd_ran(edi, "cd /tmp/ee-edi-test-bwa && git clone https://github.com/dnanexus/bwa")
