@@ -44,6 +44,7 @@ if dxpy.JOB_ID:
     DEFAULT_BUFFER_SIZE = 1024*1024*96
 
 MD5_READ_CHUNK_SIZE = 1024*1024*4
+FILE_REQUEST_TIMEOUT = 60
 
 class DXFile(DXDataObject):
     '''Remote file object handler.
@@ -487,7 +488,11 @@ class DXFile(DXDataObject):
         # The file upload API requires us to get a pre-authenticated upload URL (and headers for it) every time we
         # attempt an upload. Because DXHTTPRequest will retry requests under retryable conditions, we give it a callback
         # to ask us for a new upload URL every time it attempts a request (instead of giving them directly).
-        dxpy.DXHTTPRequest(get_upload_url_and_headers, data, jsonify_data=False, prepend_srv=False, always_retry=True,
+        dxpy.DXHTTPRequest(get_upload_url_and_headers, data,
+                           jsonify_data=False,
+                           prepend_srv=False,
+                           always_retry=True,
+                           timeout=FILE_REQUEST_TIMEOUT,
                            auth=None)
 
         self._num_uploaded_parts += 1
@@ -559,6 +564,7 @@ class DXFile(DXDataObject):
                                                   'jsonify_data': False,
                                                   'prepend_srv': False,
                                                   'always_retry': True,
+                                                  'timeout': FILE_REQUEST_TIMEOUT,
                                                   'decode_response_body': False}
 
     def _next_response_content(self):
