@@ -22,7 +22,6 @@ Utilities for client-side usage of the streaming log API
 from __future__ import print_function, unicode_literals
 
 import json, logging, time
-from collections import defaultdict
 
 #from ws4py.client.threadedclient import WebSocketClient
 from ws4py.client import WebSocketBaseClient
@@ -38,12 +37,10 @@ class DXJobLogStreamingException(Exception):
     pass
 
 class DXJobLogStreamClient(WebSocketBaseClient):
-    def __init__(self, job_id, input_params={}, msg_output_format="{job} {level} {msg}", msg_callback=None,
+    def __init__(self, job_id, input_params=None, msg_output_format="{job} {level} {msg}", msg_callback=None,
                  print_job_info=True):
         self.job_id = job_id
         self.seen_jobs = {}
-        self.last_seen_log_lines = defaultdict(dict)
-        self.skipped_messages = 0
         self.input_params = input_params
         self.msg_output_format = msg_output_format
         self.msg_callback = msg_callback
@@ -62,7 +59,8 @@ class DXJobLogStreamClient(WebSocketBaseClient):
     def opened(self):
         args = {"access_token": dxpy.SECURITY_CONTEXT['auth_token'],
                 "token_type": dxpy.SECURITY_CONTEXT['auth_token_type']}
-        args.update(self.input_params)
+        if self.input_params:
+            args.update(self.input_params)
         self.send(json.dumps(args))
 
     def reconnect(self):
@@ -115,17 +113,6 @@ class DXJobLogStreamClient(WebSocketBaseClient):
 
     def received_message(self, message):
         message = json.loads(message.__unicode__())
-
-        if "job" in message and "level" in message and "line" in message:
-            last_line = self.last_seen_log_lines[message["job"]].get(message["level"], 0)
-            if last_line < message["line"]:
-                self.last_seen_log_lines[message["job"]][message["level"]] = message["line"]
-                if self.skipped_messages > 0:
-                    logger.warn("Skipped {} seen messages".format(self.skipped_messages))
-                    self.skipped_messages = 0
-            else:
-                self.skipped_messages += 1
-                return
 
         if self.print_job_info and 'job' in message and message['job'] not in self.seen_jobs:
             self.seen_jobs[message['job']] = dxpy.describe(message['job'])
