@@ -478,6 +478,9 @@ class DXFile(DXDataObject):
             elif kwargs['max_retries'] > 0:
                 kwargs['max_retries'] -= 1
 
+            if "timeout" not in kwargs:
+                kwargs["timeout"] = FILE_REQUEST_TIMEOUT
+
             resp = dxpy.api.file_upload(self._dxid, req_input, **kwargs)
             url = resp["url"]
             headers = resp.get("headers", {})
@@ -525,6 +528,8 @@ class DXFile(DXDataObject):
         if project is not None:
             args["project"] = project
         if self._download_url is None or self._download_url_expires < time.time():
+            if "timeout" not in kwargs:
+                kwargs["timeout"] = FILE_REQUEST_TIMEOUT
             # logging.debug("Download URL unset or expired, requesting a new one")
             resp = dxpy.api.file_download(self._dxid, args, **kwargs)
             self._download_url = resp["url"]
