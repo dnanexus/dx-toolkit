@@ -89,5 +89,4 @@ dxR.Rcheck
 /src/ua/dnanexus-upload-agent-*-linux
 /src/ua/ua
 test-job-workspaces
-/.arcconfig
 .idea/

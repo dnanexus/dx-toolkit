@@ -1,0 +1,5 @@
+{
+  "phabricator.uri" : "https://dnanexus.phacility.com/",
+  "repository.callsign": "SDK",
+  "base": "git:merge-base(origin/master)"
+}
