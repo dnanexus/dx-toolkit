@@ -217,6 +217,7 @@ def upload_resources(src_dir, project=None, folder='/'):
             properties=dict(resource_bundle_checksum=directory_checksum),
             visibility='either',
             zero_ok=True,
+            state='closed',
             return_handler=True
         )
 
