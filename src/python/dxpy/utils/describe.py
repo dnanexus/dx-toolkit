@@ -743,6 +743,13 @@ def print_user_desc(desc):
     print_field("Name", desc["first"] + " " + ((desc["middle"] + " ") if desc["middle"] != '' else '') + desc["last"])
     if "email" in desc:
         print_field("Email", desc["email"])
+
+    bill_to_label = "Default bill to"
+    if "billTo" in desc:
+        print_field(bill_to_label, desc["billTo"])
+    else:
+        print_field(bill_to_label, desc["id"])
+
     if "appsInstalled" in desc:
         print_list_field("Apps installed", desc["appsInstalled"])
 
