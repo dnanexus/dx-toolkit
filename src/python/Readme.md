@@ -33,7 +33,7 @@ and 2.7. To facilitate Python 2 compatibility, we have the compat module in http
 inserted into all Python source files:
 
 ```
-from __future__ import (print_function, unicode_literals)
+from __future__ import absolute_import, division, print_function, unicode_literals
 ```
 
 - `dxpy.compat` has some simple shims that mirror Python 3.3 builtins and redirect them to Python 2.7 equivalents when on 2.7. Most critically, `from dxpy.compat import str` will import the `unicode` builtin on 2.7 and the `str` builtin on 3.3. Use `str` wherever you would have used `unicode`. To convert unicode strings to bytes, use `.encode('utf-8')`.
