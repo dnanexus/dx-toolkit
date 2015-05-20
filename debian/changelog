@@ -1,11 +1,22 @@
+dx-toolkit (0.146.0) precise; urgency=low
+
+  * Improved reliability for "dx rm"
+
+  * Lower default timeout value for file requests
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 20 May 2015 22:26:42 +0000
+
 dx-toolkit (0.145.0) precise; urgency=low
 
   * PTFM-14962 Use devtools to install versioned CRAN execDepends
+
   * PTFM-14493 Fixing integration tests for restrictions on adding PUBLIC to auth users
+
   * PTFM-14493 Remove support for PUBLIC apps
+
   * Check that all chunks are marked as complete before closing an uploaded file
 
- -- Kaveh Nafissi <knafissi@home.vdev.dnanexus.com>  Wed, 13 May 2015 17:27:42 +0000
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 13 May 2015 17:27:42 +0000
 
 dx-toolkit (0.144.0) precise; urgency=low
 
@@ -23,7 +34,7 @@ dx-toolkit (0.142.0) precise; urgency=low
 
   * Minor fixes
 
- -- Kaveh Nafissi <knafissi@home.vdev.dnanexus.com>  Wed, 22 Apr 2015 20:05:04 +0000
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 22 Apr 2015 20:05:04 +0000
 
 dx-toolkit (0.141.0) precise; urgency=low
 
