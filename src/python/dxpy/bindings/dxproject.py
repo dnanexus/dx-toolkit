@@ -174,12 +174,14 @@ class DXContainer(DXObject):
                                 "destination": destination},
                    **kwargs)
 
-    def remove_folder(self, folder, recurse=False, **kwargs):
+    def remove_folder(self, folder, recurse=False, force=False, **kwargs):
         """
         :param folder: Full path to the folder to remove
         :type folder: string
         :param recurse: If True, recursively remove all objects and subfolders in the folder
         :type recurse: bool
+        :param force: If True, will suppress errors for folders that do not exist
+        :type force: bool
 
         Removes the specified folder from the project or container. It
         must be empty to be removed, unless *recurse* is True.
@@ -194,13 +196,15 @@ class DXContainer(DXObject):
         if isinstance(self, DXProject):
             api_method = dxpy.api.project_remove_folder
 
-        api_method(self._dxid, {"folder": folder, "recurse": recurse},
+        api_method(self._dxid, {"folder": folder, "recurse": recurse, "force": force},
                    **kwargs)
 
-    def remove_objects(self, objects, **kwargs):
+    def remove_objects(self, objects, force=False, **kwargs):
         """
         :param objects: List of object IDs to remove from the project or container
         :type objects: list of strings
+        :param force: If True, will suppress errors for objects that do not exist
+        :type force: bool
 
         Removes the specified objects from the project or container.
 
@@ -213,7 +217,7 @@ class DXContainer(DXObject):
         if isinstance(self, DXProject):
             api_method = dxpy.api.project_remove_objects
 
-        api_method(self._dxid, {"objects": objects},
+        api_method(self._dxid, {"objects": objects, "force": force},
                    **kwargs)
 
     def clone(self, container, destination="/", objects=[], folders=[],

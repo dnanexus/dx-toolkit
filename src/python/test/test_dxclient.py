@@ -29,7 +29,7 @@ import dxpy
 from dxpy.scripts import dx_build_app
 from dxpy_testutil import DXTestCase, check_output, temporary_project, select_project, cd
 import dxpy_testutil as testutil
-from dxpy.exceptions import DXAPIError, EXPECTED_ERR_EXIT_STATUS
+from dxpy.exceptions import DXAPIError, DXSearchError, EXPECTED_ERR_EXIT_STATUS
 from dxpy.compat import str, sys_encoding
 
 @contextmanager
@@ -130,6 +130,45 @@ class TestDXTestUtils(DXTestCase):
                 # successfully changed by select_project
                 run('dx cd {dirname}'.format(dirname=test_dirname))
 
+
+# TODO: these 'dx rm' and related commands should really exit with code 3 to distinguish user and internal errors
+class TestDXRemove(DXTestCase):
+    def test_remove_folders(self):
+        folder_name = "/test_folder"
+        record_name = "test_folder"
+        record_name2 = "test_folder2"
+
+        # Throw error on non-existent folder
+        with self.assertSubprocessFailure(exit_code=1):
+            run("dx rm -r {f}".format(f=folder_name))
+
+        # make folder and file of the same name, confirm that file is deleted with regular rm call
+        create_folder_in_project(self.project, folder_name)
+        self.assertIn(folder_name, list_folder(self.project, "/")['folders'])
+        run("dx new record {f}".format(f=record_name))
+        self.assertEquals(record_name,
+                          dxpy.find_one_data_object(classname="record",
+                                                    describe=True,
+                                                    project=self.project)['describe']['name'])
+        # -r flag shouldn't matter, object will take precedence over folder
+        run("dx rm -r {f}".format(f=record_name))
+        with self.assertRaises(DXSearchError):
+            dxpy.find_one_data_object(classname="record", describe=True, project=self.project)
+        # if no -r flag provided, should throw error since it's a folder
+        with self.assertSubprocessFailure(exit_code=1):
+            run("dx rm {f}".format(f=record_name))
+        # finally remove the folder
+        run("dx rm -r {f}".format(f=record_name))
+        self.assertNotIn(folder_name, list_folder(self.project, "/")['folders'])
+
+        # make a record and then try to delete that record along with a non-existent record
+        run("dx new record {f}".format(f=record_name))
+        self.assertEquals(record_name,
+                          dxpy.find_one_data_object(classname="record",
+                                                    describe=True,
+                                                    project=self.project)['describe']['name'])
+        with self.assertSubprocessFailure(exit_code=1):
+            run("dx rm {f} {f2}".format(f=record_name, f2=record_name2))
 
 class TestDXClient(DXTestCase):
     def test_dx_version(self):
@@ -262,7 +301,7 @@ class TestDXClient(DXTestCase):
             run("dx add_types Ψ ΨΨ")
         run("dx remove_types Ψ abc xyz")
         run("dx remove_types Ψ abc xyz")
-        with self.assertSubprocessFailure(stderr_regexp="Could not resolve", exit_code=1):
+        with self.assertSubprocessFailure(stderr_regexp="Unable to resolve", exit_code=3):
             run("dx remove_types ΨΨ Ψ")
 
     def test_dx_set_details(self):
@@ -379,9 +418,9 @@ class TestDXClient(DXTestCase):
         self.assertEqual(len(second_tags), 0)
 
         # nonexistent name
-        with self.assertSubprocessFailure(stderr_regexp='Could not resolve', exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp='Unable to resolve', exit_code=3):
             run("dx tag nonexistent atag")
-        with self.assertSubprocessFailure(stderr_regexp='Could not resolve', exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp='Unable to resolve', exit_code=3):
             run("dx untag nonexistent atag")
 
     def test_dx_project_tagging(self):
@@ -448,9 +487,9 @@ class TestDXClient(DXTestCase):
         self.assertEqual(len(second_properties), 0)
 
         # nonexistent name
-        with self.assertSubprocessFailure(stderr_regexp='Could not resolve', exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp='Unable to resolve', exit_code=3):
             run("dx set_properties nonexistent key=value")
-        with self.assertSubprocessFailure(stderr_regexp='Could not resolve', exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp='Unable to resolve', exit_code=3):
             run("dx unset_properties nonexistent key")
 
         # Errors parsing --property value
@@ -1088,7 +1127,7 @@ dxpy.run()
             self.assertEqual(expected_result, result)
 
             # Case: File does not exist.
-            with self.assertSubprocessFailure(stderr_regexp="Could not resolve", exit_code=1):
+            with self.assertSubprocessFailure(stderr_regexp="Unable to resolve", exit_code=3):
                 run("dx download foo -o -")
 
             # Case: Invalid output field name when specifying <job_id>:<output_field>.
@@ -1235,6 +1274,7 @@ class TestDXClientRun(DXTestCase):
 
     def test_dx_run_no_hidden_executables(self):
         # hidden applet
+        applet_name = "hidden_applet"
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
                                          "inputSpec": [],
@@ -1242,17 +1282,20 @@ class TestDXClientRun(DXTestCase):
                                          "runSpec": {"interpreter": "bash",
                                                      "code": "echo 'hello'"},
                                          "hidden": True,
-                                         "name": "hidden_applet"})['id']
+                                         "name": applet_name})['id']
         run("dx describe hidden_applet")
-        with self.assertSubprocessFailure(stderr_regexp='No matches found', exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp='ResolutionError: Unable to resolve "{f}"'
+                                          .format(f=applet_name), exit_code=3):
             run("dx run hidden_applet")
         # by ID will still work
         run("dx run " + applet_id + " -y")
 
         # hidden workflow
-        dxworkflow = dxpy.new_dxworkflow(name="hidden_workflow", hidden=True)
+        workflow_name = "hidden_workflow"
+        dxworkflow = dxpy.new_dxworkflow(name=workflow_name, hidden=True)
         dxworkflow.add_stage(applet_id)
-        with self.assertSubprocessFailure(stderr_regexp='No matches found', exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp='ResolutionError: Unable to resolve "{f}"'
+                                          .format(f=workflow_name), exit_code=3):
             run("dx run hidden_workflow")
         # by ID will still work
         run("dx run " + dxworkflow.get_id() + " -y")
@@ -2081,7 +2124,7 @@ class TestDXClientWorkflow(DXTestCase):
             run("dx new workflow --init " + workflow_id)
 
     def test_dx_workflow_resolution(self):
-        with self.assertSubprocessFailure(stderr_regexp='Could not resolve', exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp='Unable to resolve', exit_code=3):
             run("dx update workflow foo")
 
         record_id = run("dx new record --type pipeline --brief").strip()
@@ -3230,7 +3273,7 @@ class TestDXBuildApp(DXTestCase):
                              open(os.path.join("get_applet", "resources", "resources_file")).read())
 
             # Target applet does not exist
-            with self.assertSubprocessFailure(stderr_regexp='Could not resolve', exit_code=3):
+            with self.assertSubprocessFailure(stderr_regexp='Unable to resolve', exit_code=3):
                 run("dx get path_does_not_exist")
 
             # -o dest (dest does not exist yet)
@@ -4526,8 +4569,8 @@ class TestDXCp(DXTestCase):
 
         # The file {p1}:/{f} exists, however, {p1}/{f} does not. We
         # want to see an error message that reflects this.
-        expected_err_msg = "A folder to be cloned \(/{p1}/{f}\) does not exist in the source container {p2}".format(
-            p1=self.proj_id1, f=fname1, p2=self.project)
+        expected_err_msg = "ResolutionError: The folder could not be found in {p2}".format(
+            p2=self.project)
         with self.assertSubprocessFailure(stderr_regexp=expected_err_msg, exit_code=3):
             run("dx cp {p1}/{f} {p2}:/".format(p1=self.proj_id1, f=fname1, p2=self.proj_id2))
 
