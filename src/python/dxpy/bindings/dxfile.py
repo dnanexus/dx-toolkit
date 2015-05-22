@@ -620,6 +620,9 @@ class DXFile(DXDataObject):
             get_first_chunk_sequentially = True
         else:
             get_first_chunk_sequentially = False
+        # PTFM-15309: disable this optimization as a workaround to
+        # prevent corruption of the reads
+        get_first_chunk_sequentially = False
 
         if self._pos == self._file_length:
             return b""
