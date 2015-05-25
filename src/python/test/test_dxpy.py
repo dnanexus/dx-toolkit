@@ -354,19 +354,23 @@ class TestDXFile(unittest.TestCase):
         # Make data longer than 128k to trigger the
         # first-sequential-read optimization
         data = (string.ascii_letters + string.digits + '._+') * 2017
+        previous_job_id = dxpy.JOB_ID
         # Optimization is only applied within a job environment
         dxpy.set_job_id('job-000000000000000000000000')
-        file_id = dxpy.upload_string(data, wait_on_close=True).get_id()
-        for first_read_length in [65498, 120001, 230001]:
-            fh = dxpy.DXFile(file_id)
-            first_read = fh.read(first_read_length)
-            cptr = fh.tell()
-            self.assertEqual(cptr, min(first_read_length, len(data)))
-            next_read = fh.read(2 ** 16)
-            fh.seek(cptr)
-            read_after_seek = fh.read(2 ** 16)
-            self.assertEqual(next_read, read_after_seek)
-            self.assertEqual(next_read, data[first_read_length:first_read_length + 2 ** 16].encode('utf-8'))
+        try:
+            file_id = dxpy.upload_string(data, wait_on_close=True).get_id()
+            for first_read_length in [65498, 120001, 230001]:
+                fh = dxpy.DXFile(file_id)
+                first_read = fh.read(first_read_length)
+                cptr = fh.tell()
+                self.assertEqual(cptr, min(first_read_length, len(data)))
+                next_read = fh.read(2 ** 16)
+                fh.seek(cptr)
+                read_after_seek = fh.read(2 ** 16)
+                self.assertEqual(next_read, read_after_seek)
+                self.assertEqual(next_read, data[first_read_length:first_read_length + 2 ** 16].encode('utf-8'))
+        finally:
+            dxpy.set_job_id(previous_job_id)
 
     def test_iter_dxfile(self):
         dxid = ""
