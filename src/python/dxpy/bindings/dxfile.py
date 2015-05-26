@@ -599,9 +599,6 @@ class DXFile(DXDataObject):
            until next seek).
 
         '''
-        if self._response_iterator == None:
-            self._request_iterator = self._generate_read_requests(start_pos=self._pos, **kwargs)
-
         if self._file_length == None:
             desc = self.describe(**kwargs)
             if desc["state"] != "closed":
@@ -639,6 +636,9 @@ class DXFile(DXDataObject):
             self._pos += buf_remaining_bytes
             while self._pos < orig_file_pos + length:
                 remaining_len = orig_file_pos + length - self._pos
+
+                if self._response_iterator is None:
+                    self._request_iterator = self._generate_read_requests(start_pos=self._pos, **kwargs)
 
                 if get_first_chunk_sequentially:
                     # Make the first chunk request without using the
