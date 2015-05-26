@@ -1,3 +1,9 @@
+dx-toolkit (0.146.2) precise; urgency=low
+
+  * Revert "Lower default timeout value for file requests"
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 26 May 2015 21:21:11 +0000
+
 dx-toolkit (0.146.1) precise; urgency=low
 
   * Workaround for corruption of small DXFile reads
