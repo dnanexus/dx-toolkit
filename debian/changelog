@@ -1,3 +1,11 @@
+dx-toolkit (0.147.0) precise; urgency=low
+
+  * Fix corruption of small DXFile reads within a job
+
+  * Revert "Fix corruption of small DXFile reads within a job"
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 26 May 2015 21:20:44 +0000
+
 dx-toolkit (0.146.0) precise; urgency=low
 
   * Improved reliability for "dx rm"
