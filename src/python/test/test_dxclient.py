@@ -1272,6 +1272,63 @@ class TestDXClientRun(DXTestCase):
         dxpy.api.project_destroy(self.other_proj_id, {'terminateJobs': True})
         super(TestDXClientRun, self).tearDown()
 
+    def test_dx_run_depends_on_success(self):
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "inputSpec": [],
+                                         "outputSpec": [],
+                                         "runSpec": {"interpreter": "bash",
+                                                     "code": "echo 'hello'"}
+                                         })['id']
+
+        job_dep_id = run("dx run " + applet_id + " --brief -y").strip()
+
+        record_dep_id = dxpy.api.record_new({"project": self.project})['id']
+
+        job_id = run("dx run " + applet_id + " --brief -y").strip()
+        job_desc = dxpy.describe(job_id)
+        self.assertEquals(job_desc['dependsOn'], [])
+
+        job_id = run("dx run " + applet_id + " --brief -y -d " + job_dep_id).strip()
+        job_desc = dxpy.describe(job_id)
+        self.assertEqual(job_desc['dependsOn'], [job_dep_id])
+
+        job_id = run("dx run " + applet_id + " -d " + job_dep_id + " --depends-on " +
+                     record_dep_id + " --brief -y").strip()
+        job_desc = dxpy.describe(job_id)
+        self.assertEqual(sorted(job_desc['dependsOn']), sorted([job_dep_id, record_dep_id]))
+
+    def test_dx_run_depends_on_failure(self):
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "inputSpec": [],
+                                         "outputSpec": [],
+                                         "runSpec": {"interpreter": "bash",
+                                                     "code": "echo 'hello'"}
+                                         })['id']
+
+        job1_dep_id = run("dx run " + applet_id + " --brief -y").strip()
+
+        job2_dep_id = run("dx run " + applet_id + " --brief -y").strip()
+
+        # Testing for missing arguments:
+        with self.assertSubprocessFailure(stderr_regexp='\-d/\-\-depends-on.*expected one argument', exit_code=2):
+            run("dx run " + applet_id + " --brief -y --depends-on " + job2_dep_id + " --depends-on")
+        with self.assertSubprocessFailure(stderr_regexp='\-d/\-\-depends-on.*expected one argument', exit_code=2):
+            run("dx run " + applet_id + " -d " + " --depends-on " + job1_dep_id + " --brief -y")
+        with self.assertSubprocessFailure(stderr_regexp='unrecognized arguments', exit_code=2):
+            run("dx run " + applet_id + " --brief -y -d " + job2_dep_id + " " + job1_dep_id)
+
+        with self.assertSubprocessFailure(stderr_regexp='could not be found', exit_code=3):
+            run("dx run " + applet_id + " --brief -y -d not_a_real_job_id")
+
+        # Testing for use of --depends-on with running workflows
+        workflow_id = run("dx new workflow myworkflow --output-folder /foo --brief").strip()
+        stage_id = dxpy.api.workflow_add_stage(workflow_id,
+                                               {"editVersion": 0, "executable": applet_id})['stage']
+        with self.assertSubprocessFailure(stderr_regexp='\-\-depends\-on.*workflow', exit_code=3):
+            analysis_id = run("dx run " + workflow_id + " -d " + job1_dep_id + " -y --brief").strip()
+
     def test_dx_run_no_hidden_executables(self):
         # hidden applet
         applet_name = "hidden_applet"

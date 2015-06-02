@@ -45,7 +45,7 @@ from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_a
                            instance_type_arg, process_instance_type_arg)
 from ..cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
 from ..exceptions import (err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions,
-                          format_exception)
+                          format_exception, InvalidInput)
 from ..utils import warn, group_array_by_field, normalize_timedelta, normalize_time_input
 
 from ..app_categories import APP_CATEGORIES
@@ -2381,6 +2381,7 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
         "tags": args.tags,
         "properties": args.properties,
         "details": args.details,
+        "depends_on": args.depends_on if args.depends_on else None,
         "allow_ssh": args.allow_ssh,
         "debug": {"debugOn": args.debug_on} if args.debug_on else None,
         "delay_workspace_destruction": args.delay_workspace_destruction,
@@ -2628,6 +2629,11 @@ SPECIFYING JSON INPUT
 def run(args):
     if args.help:
         print_run_help(args.executable, args.alias)
+
+    if args.depends_on and re.search('^workflow\-', args.executable):
+        raise InvalidInput({"error": {"message": "-d/--depends-on cannot be supplied when running workflows.",
+                                      "type": "InvalidInput"}},
+                           code=422)
 
     if args.allow_ssh is not None:
         args.allow_ssh = [i for i in args.allow_ssh if i is not None]
@@ -3782,6 +3788,15 @@ run_executable_action = parser_run.add_argument('executable',
                                                 nargs="?", default="")
 run_executable_action.completer = MultiCompleter([DXAppCompleter(),
                                                   DXPathCompleter(classes=['applet', 'workflow'], visibility="visible")])
+
+parser_run.add_argument('-d', '--depends-on',
+                        help=fill('ID of job, analysis, or data object that must be in the "done" or ' +
+                                  '"closed" state, as appropriate, before this executable can be run; ' +
+                                  'repeat as necessary (e.g. "--depends-on id1 ... --depends-on idN"). ' +
+                                  'Cannot be supplied when running workflows',
+                                  width_adjustment=-24),
+                        action='append', type=str)
+
 parser_run.add_argument('-h', '--help', help='show this help message and exit', nargs=0, action=runHelp)
 parser_run.add_argument('--clone', help=fill('Job or analysis ID or name from which to use as default options (will use the exact same executable ID, destination project and folder, job input, instance type requests, and a similar name unless explicitly overridden by command-line arguments)', width_adjustment=-24))
 parser_run.add_argument('--alias', '--version', dest='alias',
