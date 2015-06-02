@@ -166,6 +166,9 @@ APISERVER_PORT = DEFAULT_APISERVER_PORT
 SESSION_HANDLERS = collections.defaultdict(requests.session)
 
 DEFAULT_RETRIES = 6
+DEFAULT_TIMEOUT = 600
+DEFAULT_RETRY_AFTER_503_INTERVAL = 60
+
 _DEBUG = 0  # debug verbosity level
 _UPGRADE_NOTIFY = True
 
@@ -227,7 +230,35 @@ def _is_retryable_exception(e):
         return False
 
 
-def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeout=None,
+def _extract_msg_from_last_exception():
+    ''' Extract a useful error message from the last thrown exception '''
+    last_exc_type, last_error, last_traceback = sys.exc_info()
+    if isinstance(last_error, exceptions.DXAPIError):
+        # Using the same code path as below would not
+        # produce a useful message when the error contains a
+        # 'details' hash (which would have a last line of
+        # '}')
+        return last_error.error_message()
+    else:
+        return traceback.format_exc().splitlines()[-1].strip()
+
+
+def _extract_retry_after_timeout(response):
+    '''Returns the time in seconds that the server is asking us to
+    wait. The information is deduced from the server http response.'''
+    try:
+        seconds_to_wait = int(response.headers.get('retry-after', DEFAULT_RETRY_AFTER_503_INTERVAL))
+    except ValueError:
+        # retry-after could be formatted as absolute time
+        # instead of seconds to wait. We don't know how to
+        # parse that, but the apiserver doesn't generate
+        # such responses anyway.
+        seconds_to_wait = DEFAULT_RETRY_AFTER_503_INTERVAL
+    return max(1, seconds_to_wait)
+
+
+def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
+                  timeout=DEFAULT_TIMEOUT,
                   use_compression=None, jsonify_data=True, want_full_response=False,
                   decode_response_body=True, prepend_srv=True, session_handler=None,
                   max_retries=DEFAULT_RETRIES, always_retry=False, **kwargs):
@@ -326,17 +357,14 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
     if hasattr(data, 'seek') and hasattr(data, 'tell'):
         rewind_input_buffer_offset = data.tell()
 
-    last_exc_type, last_error, last_traceback = None, None, None
-    time_started = time.time() if timeout else None
     try_index = 0
     while True:
         success, streaming_response_truncated = True, False
         response = None
         try:
             _method, _url, _headers = _process_method_url_headers(method, url, headers)
-            _timeout = timeout or 600
-            response = session_handler.request(_method, _url, headers=_headers, data=data, timeout=_timeout, auth=auth,
-                                               **kwargs)
+            response = session_handler.request(_method, _url, headers=_headers, data=data,
+                                               timeout=timeout, auth=auth, **kwargs)
 
             if _UPGRADE_NOTIFY and response.headers.get('x-upgrade-info', '').startswith('A recommended update is available') and not os.environ.has_key('_ARGCOMPLETE'):
                 logger.info(response.headers['x-upgrade-info'])
@@ -399,32 +427,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
             raise AssertionError('Should never reach this line: expected a result to have been returned by now')
         except Exception as e:
             success = False
-            if timeout and time.time() - time_started > timeout:
-                logger.error("{} {}: Timeout exceeded".format(method, url))
-            elif isinstance(e, _expected_exceptions):
-                last_exc_type, last_error, last_traceback = sys.exc_info()
-                if isinstance(last_error, exceptions.DXAPIError):
-                    # Using the same code path as below would not
-                    # produce a useful message when the error contains a
-                    # 'details' hash (which would have a last line of
-                    # '}')
-                    exception_msg = last_error.error_message()
-                else:
-                    exception_msg = traceback.format_exc().splitlines()[-1].strip()
-
+            if isinstance(e, _expected_exceptions):
+                exception_msg = _extract_msg_from_last_exception()
                 if response is not None and response.status_code == 503:
-                    DEFAULT_RETRY_AFTER_INTERVAL = 60
-                    try:
-                        seconds_to_wait = int(response.headers.get('retry-after', DEFAULT_RETRY_AFTER_INTERVAL))
-                    except ValueError:
-                        # retry-after could be formatted as absolute time
-                        # instead of seconds to wait. We don't know how to
-                        # parse that, but the apiserver doesn't generate
-                        # such responses anyway.
-                        seconds_to_wait = DEFAULT_RETRY_AFTER_INTERVAL
-                    if timeout:
-                        time_left = int(max(1, time_started + timeout - time.time()))
-                        seconds_to_wait = min(seconds_to_wait, time_left)
+                    seconds_to_wait = _extract_retry_after_timeout(response)
                     logger.warn("%s %s: %s. Waiting %d seconds due to server unavailability..."
                                 % (method, url, exception_msg, seconds_to_wait))
                     time.sleep(seconds_to_wait)
@@ -437,6 +443,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                 # Total number of allowed tries is the initial try + up to
                 # (max_retries) subsequent retries.
                 total_allowed_tries = max_retries + 1
+                ok_to_retry = False
                 # Because try_index is not incremented until we escape this
                 # iteration of the loop, try_index is equal to the number of
                 # tries that have failed so far, minus one. Test whether we
@@ -448,15 +455,15 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                     else:
                         ok_to_retry = 500 <= response.status_code < 600
 
-                    if ok_to_retry:
-                        if rewind_input_buffer_offset is not None:
-                            data.seek(rewind_input_buffer_offset)
-                        delay = 2 ** try_index
-                        logger.warn("%s %s: %s. Waiting %d seconds before retry %d of %d..."
-                                    % (method, url, exception_msg, delay, try_index + 1, max_retries))
-                        time.sleep(delay)
-                        try_index += 1
-                        continue
+                if ok_to_retry:
+                    if rewind_input_buffer_offset is not None:
+                        data.seek(rewind_input_buffer_offset)
+                    delay = min(2 ** try_index, DEFAULT_TIMEOUT)
+                    logger.warn("%s %s: %s. Waiting %d seconds before retry %d of %d..."
+                                % (method, url, exception_msg, delay, try_index + 1, max_retries))
+                    time.sleep(delay)
+                    try_index += 1
+                    continue
 
             # All retries have been exhausted OR the error is deemed not
             # retryable. Propagate the latest error back to the caller.
