@@ -23,6 +23,7 @@ from time import time
 from fuse import FUSE, FuseOSError, Operations, LoggingMixIn
 
 import dxpy
+dxpy.USER_AGENT += " dxfs"
 
 if not hasattr(__builtins__, 'bytes'):
     bytes = str
