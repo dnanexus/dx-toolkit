@@ -1315,12 +1315,12 @@ class TestDXClientRun(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp='\-d/\-\-depends-on.*expected one argument', exit_code=2):
             run("dx run " + applet_id + " --brief -y --depends-on " + job2_dep_id + " --depends-on")
         with self.assertSubprocessFailure(stderr_regexp='\-d/\-\-depends-on.*expected one argument', exit_code=2):
-            run("dx run " + applet_id + " -d " + " --depends-on " + job1_dep_id + " --brief -y")
+            run("dx run " + applet_id + " -d --depends-on " + job1_dep_id + " --brief -y")
         with self.assertSubprocessFailure(stderr_regexp='unrecognized arguments', exit_code=2):
             run("dx run " + applet_id + " --brief -y -d " + job2_dep_id + " " + job1_dep_id)
 
         with self.assertSubprocessFailure(stderr_regexp='could not be found', exit_code=3):
-            run("dx run " + applet_id + " --brief -y -d not_a_real_job_id")
+            run("dx run " + applet_id + " --brief -y -d not_a_valid_id")
 
         # Testing for use of --depends-on with running workflows
         workflow_id = run("dx new workflow myworkflow --output-folder /foo --brief").strip()
