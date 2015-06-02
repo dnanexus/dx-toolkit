@@ -45,7 +45,7 @@ from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_a
                            instance_type_arg, process_instance_type_arg)
 from ..cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
 from ..exceptions import (err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions,
-                          format_exception, InvalidInput)
+                          format_exception)
 from ..utils import warn, group_array_by_field, normalize_timedelta, normalize_time_input
 
 from ..app_categories import APP_CATEGORIES
@@ -2381,7 +2381,7 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
         "tags": args.tags,
         "properties": args.properties,
         "details": args.details,
-        "depends_on": args.depends_on if args.depends_on else None,
+        "depends_on": args.depends_on or None,
         "allow_ssh": args.allow_ssh,
         "debug": {"debugOn": args.debug_on} if args.debug_on else None,
         "delay_workspace_destruction": args.delay_workspace_destruction,
@@ -2630,11 +2630,6 @@ def run(args):
     if args.help:
         print_run_help(args.executable, args.alias)
 
-    if args.depends_on and re.search('^workflow\-', args.executable):
-        raise InvalidInput({"error": {"message": "-d/--depends-on cannot be supplied when running workflows.",
-                                      "type": "InvalidInput"}},
-                           code=422)
-
     if args.allow_ssh is not None:
         args.allow_ssh = [i for i in args.allow_ssh if i is not None]
     if args.allow_ssh == [] or ((args.ssh or args.debug_on) and not args.allow_ssh):
@@ -2768,6 +2763,10 @@ def run(args):
                                                      "temporary": True})["id"]
 
     handler = try_call(get_exec_handler, args.executable, args.alias)
+
+    if args.depends_on and isinstance(handler, dxpy.DXWorkflow):
+        err_exit(exception=DXParserError("-d/--depends-on cannot be supplied when running workflows."),
+                 expected_exceptions=(DXParserError,))
 
     # if the destination project has still not been set, use the
     # current project

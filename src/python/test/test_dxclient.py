@@ -1312,10 +1312,11 @@ class TestDXClientRun(DXTestCase):
         job2_dep_id = run("dx run " + applet_id + " --brief -y").strip()
 
         # Testing for missing arguments:
-        with self.assertSubprocessFailure(stderr_regexp='\-d/\-\-depends-on.*expected one argument', exit_code=2):
+        with self.assertSubprocessFailure(stderr_regexp='-d/--depends-on.*expected one argument', exit_code=2):
             run("dx run " + applet_id + " --brief -y --depends-on " + job2_dep_id + " --depends-on")
-        with self.assertSubprocessFailure(stderr_regexp='\-d/\-\-depends-on.*expected one argument', exit_code=2):
+        with self.assertSubprocessFailure(stderr_regexp='-d/--depends-on.*expected one argument', exit_code=2):
             run("dx run " + applet_id + " -d --depends-on " + job1_dep_id + " --brief -y")
+
         with self.assertSubprocessFailure(stderr_regexp='unrecognized arguments', exit_code=2):
             run("dx run " + applet_id + " --brief -y -d " + job2_dep_id + " " + job1_dep_id)
 
@@ -1326,8 +1327,11 @@ class TestDXClientRun(DXTestCase):
         workflow_id = run("dx new workflow myworkflow --output-folder /foo --brief").strip()
         stage_id = dxpy.api.workflow_add_stage(workflow_id,
                                                {"editVersion": 0, "executable": applet_id})['stage']
-        with self.assertSubprocessFailure(stderr_regexp='\-\-depends\-on.*workflow', exit_code=3):
-            analysis_id = run("dx run " + workflow_id + " -d " + job1_dep_id + " -y --brief").strip()
+        with self.assertSubprocessFailure(stderr_regexp='--depends-on.*workflows', exit_code=3):
+            run("dx run " + workflow_id + " -d " + job1_dep_id + " -y --brief")
+        with self.assertSubprocessFailure(stderr_regexp='--depends-on.*workflows', exit_code=3):
+            run("dx run myworkflow -d " + job1_dep_id + " -y --brief")
+
 
     def test_dx_run_no_hidden_executables(self):
         # hidden applet
