@@ -4120,9 +4120,9 @@ parser_find_apps.add_argument('--category-help',
                               help='Print a list of common app categories',
                               nargs=0,
                               action=PrintCategoryHelp)
-parser_find_apps.add_argument('-a', '--all', help='Whether to return all versions of the app', action='store_true')
-parser_find_apps.add_argument('--unpublished', help='Whether to return unpublished apps as well', action='store_true')
-parser_find_apps.add_argument('--installed', help='Whether to restrict the list to installed apps only', action='store_true')
+parser_find_apps.add_argument('-a', '--all', help='Return all versions of each app', action='store_true')
+parser_find_apps.add_argument('--unpublished', help='Return only unpublished apps (if omitted, returns only published apps)', action='store_true')
+parser_find_apps.add_argument('--installed', help='Return only installed apps', action='store_true')
 parser_find_apps.add_argument('--billed-to', help='User or organization responsible for the app')
 parser_find_apps.add_argument('--creator', help='Creator of the app version')
 parser_find_apps.add_argument('--developer', help='Developer of the app')
