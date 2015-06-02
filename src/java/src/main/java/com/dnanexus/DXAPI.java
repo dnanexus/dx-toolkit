@@ -7571,7 +7571,7 @@ public final class DXAPI {
     public static <T> T containerRemoveFolder(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeFolder",
-                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the containerRemoveFolder method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -7616,7 +7616,7 @@ public final class DXAPI {
     public static <T> T containerRemoveFolder(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeFolder",
-                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -7663,7 +7663,7 @@ public final class DXAPI {
     @Deprecated
     public static JsonNode containerRemoveFolder(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeFolder", inputParams,
-                RetryStrategy.SAFE_TO_RETRY);
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the containerRemoveFolder method with the specified environment.
@@ -7711,7 +7711,7 @@ public final class DXAPI {
     @Deprecated
     public static JsonNode containerRemoveFolder(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeFolder", inputParams,
-                RetryStrategy.SAFE_TO_RETRY);
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
 
     /**
@@ -7755,7 +7755,7 @@ public final class DXAPI {
     public static <T> T containerRemoveObjects(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeObjects",
-                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the containerRemoveObjects method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -7800,7 +7800,7 @@ public final class DXAPI {
     public static <T> T containerRemoveObjects(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeObjects",
-                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -7847,7 +7847,7 @@ public final class DXAPI {
     @Deprecated
     public static JsonNode containerRemoveObjects(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeObjects", inputParams,
-                RetryStrategy.SAFE_TO_RETRY);
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the containerRemoveObjects method with the specified environment.
@@ -7895,7 +7895,7 @@ public final class DXAPI {
     @Deprecated
     public static JsonNode containerRemoveObjects(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeObjects", inputParams,
-                RetryStrategy.SAFE_TO_RETRY);
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
 
     /**
@@ -17236,7 +17236,7 @@ public final class DXAPI {
     public static <T> T projectRemoveFolder(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeFolder",
-                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the projectRemoveFolder method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -17281,7 +17281,7 @@ public final class DXAPI {
     public static <T> T projectRemoveFolder(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeFolder",
-                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -17328,7 +17328,7 @@ public final class DXAPI {
     @Deprecated
     public static JsonNode projectRemoveFolder(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeFolder", inputParams,
-                RetryStrategy.SAFE_TO_RETRY);
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the projectRemoveFolder method with the specified environment.
@@ -17376,7 +17376,7 @@ public final class DXAPI {
     @Deprecated
     public static JsonNode projectRemoveFolder(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeFolder", inputParams,
-                RetryStrategy.SAFE_TO_RETRY);
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
 
     /**
@@ -17420,7 +17420,7 @@ public final class DXAPI {
     public static <T> T projectRemoveObjects(String objectId, Object inputObject, Class<T> outputClass) {
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "removeObjects",
-                        mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
+                        mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the projectRemoveObjects method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -17465,7 +17465,7 @@ public final class DXAPI {
     public static <T> T projectRemoveObjects(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "removeObjects",
-                    mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY), outputClass);
+                    mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -17512,7 +17512,7 @@ public final class DXAPI {
     @Deprecated
     public static JsonNode projectRemoveObjects(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeObjects", inputParams,
-                RetryStrategy.SAFE_TO_RETRY);
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
      * Invokes the projectRemoveObjects method with the specified environment.
@@ -17560,7 +17560,7 @@ public final class DXAPI {
     @Deprecated
     public static JsonNode projectRemoveObjects(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeObjects", inputParams,
-                RetryStrategy.SAFE_TO_RETRY);
+                RetryStrategy.UNSAFE_TO_RETRY);
     }
 
     /**

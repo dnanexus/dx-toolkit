@@ -1520,7 +1520,7 @@ containerNewFolder <- function(objectID,
 containerRemoveFolder <- function(objectID,
                                   inputParams=emptyNamedList,
                                   jsonifyData=TRUE,
-                                  alwaysRetry=TRUE) {
+                                  alwaysRetry=FALSE) {
   resource <- paste('/', objectID, '/', 'removeFolder', sep='')
   dxHTTPRequest(resource,
                 inputParams,
@@ -1553,7 +1553,7 @@ containerRemoveFolder <- function(objectID,
 containerRemoveObjects <- function(objectID,
                                    inputParams=emptyNamedList,
                                    jsonifyData=TRUE,
-                                   alwaysRetry=TRUE) {
+                                   alwaysRetry=FALSE) {
   resource <- paste('/', objectID, '/', 'removeObjects', sep='')
   dxHTTPRequest(resource,
                 inputParams,
@@ -3237,7 +3237,7 @@ projectNewFolder <- function(objectID,
 projectRemoveFolder <- function(objectID,
                                 inputParams=emptyNamedList,
                                 jsonifyData=TRUE,
-                                alwaysRetry=TRUE) {
+                                alwaysRetry=FALSE) {
   resource <- paste('/', objectID, '/', 'removeFolder', sep='')
   dxHTTPRequest(resource,
                 inputParams,
@@ -3270,7 +3270,7 @@ projectRemoveFolder <- function(objectID,
 projectRemoveObjects <- function(objectID,
                                  inputParams=emptyNamedList,
                                  jsonifyData=TRUE,
-                                 alwaysRetry=TRUE) {
+                                 alwaysRetry=FALSE) {
   resource <- paste('/', objectID, '/', 'removeObjects', sep='')
   dxHTTPRequest(resource,
                 inputParams,

@@ -373,7 +373,7 @@
         "containerRemoveFolder(req, objectId)",
         {
             "objectMethod": true,
-            "retryable": true,
+            "retryable": false,
             "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveFolder"
         }
     ],
@@ -382,7 +382,7 @@
         "containerRemoveObjects(req, objectId)",
         {
             "objectMethod": true,
-            "retryable": true,
+            "retryable": false,
             "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveObjects"
         }
     ],
@@ -850,7 +850,7 @@
         "projectRemoveFolder(req, objectId)",
         {
             "objectMethod": true,
-            "retryable": true,
+            "retryable": false,
             "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveFolder"
         }
     ],
@@ -859,7 +859,7 @@
         "projectRemoveObjects(req, objectId)",
         {
             "objectMethod": true,
-            "retryable": true,
+            "retryable": false,
             "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveObjects"
         }
     ],

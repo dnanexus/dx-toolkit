@@ -196,7 +196,9 @@ class DXContainer(DXObject):
         if isinstance(self, DXProject):
             api_method = dxpy.api.project_remove_folder
 
-        api_method(self._dxid, {"folder": folder, "recurse": recurse, "force": force},
+        api_method(self._dxid,
+                   {"folder": folder, "recurse": recurse, "force": force},
+                   always_retry=force,  # api call is idempotent under 'force' semantics
                    **kwargs)
 
     def remove_objects(self, objects, force=False, **kwargs):
@@ -217,7 +219,9 @@ class DXContainer(DXObject):
         if isinstance(self, DXProject):
             api_method = dxpy.api.project_remove_objects
 
-        api_method(self._dxid, {"objects": objects, "force": force},
+        api_method(self._dxid,
+                   {"objects": objects, "force": force},
+                   always_retry=force,  # api call is idempotent under 'force' semantics
                    **kwargs)
 
     def clone(self, container, destination="/", objects=[], folders=[],

@@ -774,7 +774,7 @@ def containerRemoveFolder(*args, **kwargs):
     print("dxpy.containerRemoveFolder is deprecated; please use container_remove_folder instead.", file=sys.stderr)
     return container_remove_folder(*args, **kwargs)
 
-def container_remove_folder(object_id, input_params={}, always_retry=True, **kwargs):
+def container_remove_folder(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /container-xxxx/removeFolder API method.
 
@@ -792,7 +792,7 @@ def containerRemoveObjects(*args, **kwargs):
     print("dxpy.containerRemoveObjects is deprecated; please use container_remove_objects instead.", file=sys.stderr)
     return container_remove_objects(*args, **kwargs)
 
-def container_remove_objects(object_id, input_params={}, always_retry=True, **kwargs):
+def container_remove_objects(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /container-xxxx/removeObjects API method.
 
@@ -1724,7 +1724,7 @@ def projectRemoveFolder(*args, **kwargs):
     print("dxpy.projectRemoveFolder is deprecated; please use project_remove_folder instead.", file=sys.stderr)
     return project_remove_folder(*args, **kwargs)
 
-def project_remove_folder(object_id, input_params={}, always_retry=True, **kwargs):
+def project_remove_folder(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /project-xxxx/removeFolder API method.
 
@@ -1742,7 +1742,7 @@ def projectRemoveObjects(*args, **kwargs):
     print("dxpy.projectRemoveObjects is deprecated; please use project_remove_objects instead.", file=sys.stderr)
     return project_remove_objects(*args, **kwargs)
 
-def project_remove_objects(object_id, input_params={}, always_retry=True, **kwargs):
+def project_remove_objects(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /project-xxxx/removeObjects API method.
 

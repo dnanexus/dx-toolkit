@@ -187,11 +187,11 @@ namespace dx {
   JSON containerNewFolder(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON containerNewFolder(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
-  JSON containerRemoveFolder(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON containerRemoveFolder(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+  JSON containerRemoveFolder(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=false);
+  JSON containerRemoveFolder(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=false);
 
-  JSON containerRemoveObjects(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON containerRemoveObjects(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+  JSON containerRemoveObjects(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=false);
+  JSON containerRemoveObjects(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=false);
 
   JSON containerRenameFolder(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=false);
   JSON containerRenameFolder(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=false);
@@ -346,11 +346,11 @@ namespace dx {
   JSON projectNewFolder(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON projectNewFolder(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
-  JSON projectRemoveFolder(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON projectRemoveFolder(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+  JSON projectRemoveFolder(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=false);
+  JSON projectRemoveFolder(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=false);
 
-  JSON projectRemoveObjects(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON projectRemoveObjects(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+  JSON projectRemoveObjects(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=false);
+  JSON projectRemoveObjects(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=false);
 
   JSON projectRemoveTags(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON projectRemoveTags(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);

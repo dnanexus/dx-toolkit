@@ -356,7 +356,7 @@ module DX
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveFolder
     def self.container_remove_folder(object_id, input_params={}, opts={})
-      opts = { "always_retry" => true }.merge(opts)
+      opts = { "always_retry" => false }.merge(opts)
       return DX::http_request("/#{object_id}/removeFolder", input_params, opts)
     end
 
@@ -364,7 +364,7 @@ module DX
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveObjects
     def self.container_remove_objects(object_id, input_params={}, opts={})
-      opts = { "always_retry" => true }.merge(opts)
+      opts = { "always_retry" => false }.merge(opts)
       return DX::http_request("/#{object_id}/removeObjects", input_params, opts)
     end
 
@@ -776,7 +776,7 @@ module DX
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveFolder
     def self.project_remove_folder(object_id, input_params={}, opts={})
-      opts = { "always_retry" => true }.merge(opts)
+      opts = { "always_retry" => false }.merge(opts)
       return DX::http_request("/#{object_id}/removeFolder", input_params, opts)
     end
 
@@ -784,7 +784,7 @@ module DX
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveObjects
     def self.project_remove_objects(object_id, input_params={}, opts={})
-      opts = { "always_retry" => true }.merge(opts)
+      opts = { "always_retry" => false }.merge(opts)
       return DX::http_request("/#{object_id}/removeObjects", input_params, opts)
     end
 
