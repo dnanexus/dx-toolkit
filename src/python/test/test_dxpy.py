@@ -1983,17 +1983,6 @@ class TestHTTPResponses(unittest.TestCase):
         self.assertTrue(50000 <= time_elapsed)
         self.assertTrue(time_elapsed <= 70000)
 
-    @unittest.skip("Outdated test")
-    def test_dxhttprequest_timeout(self):
-        start_time = int(time.time() * 1000)
-        server_time = dxpy.DXHTTPRequest('/system/comeBackLater', {})['currentTime']
-        with self.assertRaises(ServiceUnavailable):
-            dxpy.DXHTTPRequest('/system/comeBackLater', {'waitUntil': server_time + 20000}, timeout=8)
-        end_time = int(time.time() * 1000)
-        time_elapsed = end_time - start_time
-        self.assertTrue(8000 <= time_elapsed)
-        self.assertTrue(time_elapsed <= 15000)
-
     def test_generic_exception_not_retryable(self):
         self.assertFalse(dxpy._is_retryable_exception(KeyError('oops')))
 
