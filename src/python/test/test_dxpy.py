@@ -1983,6 +1983,7 @@ class TestHTTPResponses(unittest.TestCase):
         self.assertTrue(50000 <= time_elapsed)
         self.assertTrue(time_elapsed <= 70000)
 
+    @unittest.skip("Outdated test")
     def test_dxhttprequest_timeout(self):
         start_time = int(time.time() * 1000)
         server_time = dxpy.DXHTTPRequest('/system/comeBackLater', {})['currentTime']
