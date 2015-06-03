@@ -1,3 +1,10 @@
+dx-toolkit (0.148.0) precise; urgency=low
+
+  * Improve dxpy socket timeout logic
+  * Add "dx run --depends-on"
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 03 Jun 2015 21:18:22 +0000
+
 dx-toolkit (0.147.0) precise; urgency=low
 
   * Fix corruption of small DXFile reads within a job
