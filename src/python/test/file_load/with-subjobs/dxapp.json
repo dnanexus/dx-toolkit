@@ -15,11 +15,13 @@
   "outputSpec": [
     {
       "name": "first_file",
-      "class": "file"
+      "class": "file",
+      "optional": true
     },
     {
       "name": "final_file",
-      "class": "file"
+      "class": "file",
+      "optional": true
     }
   ],
   "runSpec": {

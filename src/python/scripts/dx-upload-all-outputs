@@ -96,7 +96,7 @@ args = parser.parse_args()
 parser.parse_args()
 max_num_parallel_uploads = 8
 
-def report_error_and_exit(message):
+def report_error_and_exit(err_type, message):
     ''' Report an error, since this is called from a bash script, we
         can't simply raise an exception. Instead, we write the error to
         a standard JSON file.
@@ -105,11 +105,11 @@ def report_error_and_exit(message):
     '''
     error_hash = {
         "error": {
-            "type": "AppInternalError",
+            "type": err_type,
             "message": message
         }
     }
-    sys.stderr.write("AppError: {}\n".format(message))
+    sys.stderr.write("{}: {}\n".format(err_type, message))
     with open(os.path.expanduser(os.path.join('~', 'job_error.json')), 'w') as error_file:
         error_file.write(json.dumps(error_hash, indent=4) + '\n')
     sys.exit(1)
@@ -243,38 +243,41 @@ def compare_to_output_spec_and_annotate(subdir_recs, output_spec):
 
     An output spec is a list of entries with {class, name} attributes.
     '''
-    def sanity_check_field(key):
+    def sanity_check_field(key, is_optional):
         ''' Annotate with a class, and sanity check '''
         class_ = output_spec[key]['class']
         s_rec = subdir_recs[key]
         s_rec['class'] = class_
         num_files = s_rec['tot_num_files']
         if class_ == 'file':
-            if num_files != 1:
-                report_error_and_exit("key {} is of class {} but there are {} files".format(key, class_, num_files))
+            if num_files > 1:
+                report_error_and_exit(
+                    "AppInternalError",
+                    "Expected to find 1 file for key {} of class file, but there are {} files".format(key, num_files))
+            if num_files == 0 and not is_optional:
+                # This is an error that the jobmanager will deal with.
+                pass
         else:
-            # array of files, there could be any number of files in the subdirectory (including zero)
+            # array of files, there could be any number of files in the
+            # subdirectory (including zero)
             pass
 
     for key in output_spec:
         '''Check that all the relevant output fields have been generated'''
         class_ = output_spec[key]['class']
-        if (class_ == 'file' or class_ == 'array:file'):
-            # file field, with a directory
-            if key not in subdir_recs:
-                sys.stderr.write("Warning: output key {} not generated\n".format(key))
-            else:
-                sanity_check_field(key)
-        elif output_spec[key]['optional']:
-            # optional output field
+        if class_ == 'file' or class_ == 'array:file':
+            is_optional = output_spec[key]['optional']
             if key in subdir_recs:
-                sanity_check_field(key)
+                sanity_check_field(key, is_optional)
+            # Note: the jobmanager will throw an error for missing outputs
         else:
-            # detects when a subdirectory appears for an output that is not "file" nor "array:file".
+            # detects when a subdirectory appears for an output that
+            # is not "file" nor "array:file".
             if key in subdir_recs:
                 report_error_and_exit(
-                    "key {} is of class {} but it appears in the output directory".format(key, class_))
-
+                    "AppInternalError",
+                    "key {} is of class {} but it appears in the output directory".
+                    format(key, class_))
 
 # Create an entry encapsulating the context required to upload a file.
 # The idea is to avoid sharing data between parallel threads of execution.
@@ -349,8 +352,10 @@ def update_output_json(subdir_recs):
         elif class_ == 'file' and len(dxlinks) == 1:
             return dxlinks[0]
         else:
-            report_error_and_exit("Type mismatch, key {} is of type {}, json={} num_dxlinks={}".
-                                  format(key, class_, type(output_json[key]), len(dxlinks)))
+            report_error_and_exit(
+                "AppInternalError",
+                "Type mismatch, key {} is of type {}, json={} num_dxlinks={}".
+                format(key, class_, type(output_json[key]), len(dxlinks)))
 
     # Add all the entries
     for key in subdir_recs:

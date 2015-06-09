@@ -449,5 +449,9 @@ class TestDXBashHelpers(DXTestCase):
         dxpy.upload_string("ABCD", wait_on_close=True, name="B.txt")
         self.run_test_app_locally('parseq', ["-iseq1=A.txt", "-iseq2=B.txt", "-iref=A.txt", "-iref=B.txt"])
 
+    def test_file_optional(self):
+        ''' Tests that file optional input arguments are handled correctly '''
+        self.run_test_app_locally('file_optional', ["-icreate_seq3=true"])
+
 if __name__ == '__main__':
     unittest.main()

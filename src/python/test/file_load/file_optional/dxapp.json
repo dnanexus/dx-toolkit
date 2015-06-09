@@ -1,0 +1,15 @@
+{ "name": "file optional",
+  "title": "file optional",
+  "summary" : "file optional input",
+  "runSpec": {
+    "file": "run.sh",
+    "interpreter": "bash"
+  },
+  "inputSpec": [
+    {"name": "create_seq3", "class" : "boolean" }
+  ],
+  "outputSpec": [
+    {"name": "seq2", "class": "file", "optional" : true},
+    {"name": "seq3", "class": "file"}
+  ]
+}
