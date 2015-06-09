@@ -318,8 +318,15 @@ void Chunk::upload(Options &opt) {
       checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_MAX_SEND_SPEED_LARGE, tval), errorBuffer);
     }
 
-    // Set time out to infinite
-    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_TIMEOUT, 0l), errorBuffer);
+    // Abort if we cannot connect within 30 seconds
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 30l), errorBuffer);
+
+    // Time out after 30 minutes. That should be plenty of time to upload a part
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_TIMEOUT, 1800l), errorBuffer);
+
+    // If the average bytes per second is below 1 over a 60 second window, abort the request
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 1l), errorBuffer);
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 60l), errorBuffer);
 
     if (!dx::config::LIBCURL_VERBOSE().empty() && dx::config::LIBCURL_VERBOSE() != "0") { 
       checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_VERBOSE, 1), errorBuffer);
