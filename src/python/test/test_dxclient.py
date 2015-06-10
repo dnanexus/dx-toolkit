@@ -3966,6 +3966,65 @@ def main(in1):
         # Verify that the bundled depends appear in the same folder.
         self.assertEqual(resources_file_describe['folder'], '/subfolder')
 
+    def test_upload_resources_advanced(self):
+        app_spec = {
+            "name": "upload_resources_advanced",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("upload_åpp_resources_advanced", json.dumps(app_spec), "code.py")
+        os.mkdir(os.path.join(app_dir, 'resources'))
+
+        with open(os.path.join(app_dir, 'test_file1.txt'), 'w') as file1:
+            file1.write('test_file1\n')  # Not in resources folder, so will not affect checksum
+        with open(os.path.join(app_dir, 'resources', 'test_file2.txt'), 'w') as resources_file2:
+            resources_file2.write('test_file2\n')
+
+        # Create symbolic link to test_file1.txt
+        if 'symbolic_link' in os.listdir(os.path.join(app_dir, 'resources')):
+            os.remove(os.path.join(app_dir, 'resources', 'symbolic_link'))
+        os.symlink(os.path.join(app_dir, 'test_file1.txt'), os.path.join(app_dir, 'resources', 'symbolic_link'))
+
+        new_applet = json.loads(run("dx build --json " + app_dir))
+        applet_describe = dxpy.api.applet_describe(new_applet["id"])
+        resources_file = applet_describe['runSpec']['bundledDepends'][0]['id']['$dnanexus_link']
+        id1 = dxpy.api.file_describe(resources_file)['id']
+
+        # Remove test_file1.txt, even though symbolic_link points to it. Removal itself will not affect checksum
+        os.remove(os.path.join(app_dir, 'test_file1.txt'))
+
+        new_applet = json.loads(run("dx build -f --json " + app_dir))
+        applet_describe = dxpy.api.applet_describe(new_applet["id"])
+        resources_file = applet_describe['runSpec']['bundledDepends'][0]['id']['$dnanexus_link']
+        id2 = dxpy.api.file_describe(resources_file)['id']
+
+        self.assertEqual(id1, id2)  # No upload happened
+
+        # Make symbolic_link point to test_file2.txt, giving it a different modification time
+        os.remove(os.path.join(app_dir, 'resources', 'symbolic_link'))
+        os.symlink(os.path.join(app_dir, 'resources', 'test_file2.txt'),
+                   os.path.join(app_dir, 'resources', 'symbolic_link'))
+
+        new_applet = json.loads(run("dx build -f --json " + app_dir))
+        applet_describe = dxpy.api.applet_describe(new_applet["id"])
+        resources_file = applet_describe['runSpec']['bundledDepends'][0]['id']['$dnanexus_link']
+        id3 = dxpy.api.file_describe(resources_file)['id']
+
+        self.assertNotEqual(id2, id3)  # Upload should have happened
+
+        new_applet = json.loads(run("dx build -f --ensure-upload --json " + app_dir))
+        applet_describe = dxpy.api.applet_describe(new_applet["id"])
+        resources_file = applet_describe['runSpec']['bundledDepends'][0]['id']['$dnanexus_link']
+        resources_file_describe = json.loads(run("dx describe --json " + resources_file))
+
+        id4 = resources_file_describe['id']
+
+        self.assertNotEqual(id3, id4)  # Upload should have happened
+        self.assertNotIn('resource_bundle_checksum', resources_file_describe['properties'])
+
     def test_archive_in_another_project(self):
         app_spec = {
             "name": "archive_in_another_project",

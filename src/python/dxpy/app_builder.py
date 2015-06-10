@@ -159,7 +159,7 @@ def _directory_checksum(resources_dir):
 
         # Add an entry for the directory itself
         relative_dirname = dirname[len(resources_dir):]
-        dir_stat = os.stat(dirname)
+        dir_stat = os.lstat(dirname)
         if not relative_dirname.startswith('/'):
             relative_dirname = '/' + relative_dirname
         fields = [relative_dirname, str(dir_stat.st_mode), str(int(dir_stat.st_mtime * 1000))]
@@ -171,7 +171,7 @@ def _directory_checksum(resources_dir):
             relative_filename = os.path.join(relative_dirname, filename)
             true_filename = os.path.join(dirname, filename)
 
-            file_stat = os.stat(true_filename)
+            file_stat = os.lstat(true_filename)
             fields = [relative_filename, str(file_stat.st_mode), str(int(file_stat.st_mtime * 1000))]
             output_sha1.update(b''.join(s.encode('utf-8') + b'\0' for s in fields))
 
@@ -182,8 +182,15 @@ def _directory_checksum(resources_dir):
     return output_sha1.hexdigest()
 
 
-def upload_resources(src_dir, project=None, folder='/'):
+def upload_resources(src_dir, project=None, folder='/', ensure_upload=False):
     """
+    :param ensure_upload: If True, will bypass checksum of resources directory
+                          and upload resources bundle unconditionally;
+                          will NOT be able to reuse this bundle in future builds.
+                          Else if False, will compute checksum and upload bundle
+                          if checksum is different from a previously uploaded
+                          bundle's checksum.
+    :type ensure_upload: boolean
     :returns: A list (possibly empty) of references to the generated archive(s)
     :rtype: list
 
@@ -210,16 +217,22 @@ def upload_resources(src_dir, project=None, folder='/'):
         # carries a property 'resource_bundle_checksum' that indicates
         # the checksum; the way in which the checksum is computed is
         # given in the documentation of _directory_checksum.
-        directory_checksum = _directory_checksum(resources_dir)
-        existing_resources = dxpy.find_one_data_object(
-            project=dest_project,
-            folder=target_folder,
-            properties=dict(resource_bundle_checksum=directory_checksum),
-            visibility='either',
-            zero_ok=True,
-            state='closed',
-            return_handler=True
-        )
+
+        if ensure_upload:
+            properties_dict = {}
+            existing_resources = False
+        else:
+            directory_checksum = _directory_checksum(resources_dir)
+            properties_dict = dict(resource_bundle_checksum=directory_checksum)
+            existing_resources = dxpy.find_one_data_object(
+                project=dest_project,
+                folder=target_folder,
+                properties=dict(resource_bundle_checksum=directory_checksum),
+                visibility='either',
+                zero_ok=True,
+                state='closed',
+                return_handler=True
+            )
 
         if existing_resources:
             logger.info("Found existing resource bundle that matches local resources directory: " +
@@ -247,7 +260,7 @@ def upload_resources(src_dir, project=None, folder='/'):
                     project=dest_project,
                     folder=target_folder,
                     hidden=True,
-                    properties=dict(resource_bundle_checksum=directory_checksum)
+                    properties=properties_dict
                 )
 
         archive_link = dxpy.dxlink(dx_resource_archive.get_id())

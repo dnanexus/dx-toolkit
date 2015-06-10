@@ -50,6 +50,12 @@ app_options = parser.add_argument_group('options for creating apps', '(Only vali
 applet_options = parser.add_argument_group('options for creating applets', '(Only valid when --app/--create-app is NOT specified)')
 
 # COMMON OPTIONS
+parser.add_argument("--ensure-upload", help="If specified, will bypass computing checksum of " +
+                                            "resources directory and upload it unconditionally; " +
+                                            "by default, will compute checksum and upload only if " +
+                                            "it differs from a previously uploaded resources bundle.",
+                    action="store_true")
+
 src_dir_action = parser.add_argument("src_dir", help="App or applet source directory (default: current directory)", nargs='?')
 src_dir_action.completer = LocalCompleter()
 
@@ -663,7 +669,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                              version_override=None, bill_to_override=None, use_temp_build_project=True,
                              do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
                              dx_toolkit_autodep="stable", do_check_syntax=True, dry_run=False,
-                             return_object_dump=False, confirm=True, **kwargs):
+                             return_object_dump=False, confirm=True, ensure_upload=False, **kwargs):
     app_json = _parse_app_spec(src_dir)
 
     _verify_app_source_dir(src_dir, mode, enforce=do_check_syntax)
@@ -713,8 +719,10 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
 
         dxpy.app_builder.build(src_dir, parallel_build=do_parallel_build)
 
-        bundled_resources = dxpy.app_builder.upload_resources(
-            src_dir, project=working_project, folder=override_folder) if not dry_run else []
+        bundled_resources = dxpy.app_builder.upload_resources(src_dir,
+                                                              project=working_project,
+                                                              folder=override_folder,
+                                                              ensure_upload=ensure_upload) if not dry_run else []
 
         try:
             # TODO: the "auto" setting is vestigial and should be removed.
@@ -817,6 +825,7 @@ def _build_app(args, extra_args):
                 do_try_update=args.update,
                 dx_toolkit_autodep=args.dx_toolkit_autodep,
                 do_check_syntax=args.check_syntax,
+                ensure_upload=args.ensure_upload,
                 dry_run=args.dry_run,
                 confirm=args.confirm,
                 return_object_dump=args.json,
