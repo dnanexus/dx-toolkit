@@ -63,7 +63,9 @@ def is_dxlink(x):
     Returns whether *x* appears to be a DNAnexus link (is a dict with
     key ``"$dnanexus_link"``) with a referenced data object.
     '''
-    if not isinstance(x, dict) or '$dnanexus_link' not in x:
+    if not isinstance(x, dict):
+        return False
+    if '$dnanexus_link' not in x:
         return False
     link = x['$dnanexus_link']
     if isinstance(link, basestring):
