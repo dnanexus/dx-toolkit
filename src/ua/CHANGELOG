@@ -1,3 +1,7 @@
+DNAnexus Upload Agent 1.5.9 <support@dnanexus.com>, 2015-Jun-10
+---------------------------------------------------------------
+  * Adding several configuration options which should prevent uploads from getting stuck
+
 DNAnexus Upload Agent 1.5.8 <support@dnanexus.com>, 2015-May-13
 ---------------------------------------------------------------
   * Check that all chunks are marked as complete before closing an uploaded file.  Will retry non-complete chunks up to 3 times.
