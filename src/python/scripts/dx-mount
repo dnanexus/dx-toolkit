@@ -270,8 +270,8 @@ class DXFS(LoggingMixIn, Operations):
             debug("Project was modified ({t1} < {t2}), reloading".format(t1=self.project_mtime, t2=new_mtime))
             self.init(None)
             self.project_mtime = new_mtime
-
-        threading.Timer(self.refresh_interval, self.refresh).start()
+        else:
+            threading.Timer(self.refresh_interval, self.refresh).start()
 
     def chmod(self, path, mode):
         self.wait_until_initialized()
