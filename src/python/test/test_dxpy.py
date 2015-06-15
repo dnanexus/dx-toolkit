@@ -2027,6 +2027,15 @@ class TestDataobjectFunctions(unittest.TestCase):
         self.assertEqual(dxpy.dxlink(dxjob.get_output_ref('output')),
                          dxjob.get_output_ref('output'))
 
+        # is_dxlink works as expected
+        self.assertFalse(dxpy.is_dxlink(None))
+        self.assertFalse(dxpy.is_dxlink({}))
+        self.assertFalse(dxpy.is_dxlink({"$dnanexus_link": None}))
+        self.assertFalse(dxpy.is_dxlink({"$dnanexus_link": {}}))
+        self.assertTrue(dxpy.is_dxlink({"$dnanexus_link": "x"}))
+        self.assertTrue(dxpy.is_dxlink({"$dnanexus_link": {"id": None}}))
+        self.assertTrue(dxpy.is_dxlink({"$dnanexus_link": {"job": None}}))
+
     def test_get_handler(self):
         dxpy.set_workspace_id(self.second_proj_id)
 
