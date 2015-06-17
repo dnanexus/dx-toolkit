@@ -1,10 +1,23 @@
+dx-toolkit (0.150.0) precise; urgency=low
+
+  * Bug fix for dxfs
+
+  * dxpy.is_dxlink returns true on JBOR dxlink
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 17 Jun 2015 17:10:47 +0000
+
 dx-toolkit (0.149.0) precise; urgency=low
 
   * Adding several configuration options which should prevent uploads from getting stuck
+
   * PTFM-15394 Resource upload does not follow symlinks, can specify to upload without checksumming
+
   * PTFM-14794 Optional file arguments
+
   * don't redownload boost
+
   * PTFM-15358 Adding dxfs to user-agent
+
   * Remove dxpy timeout test
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 10 Jun 2015 21:59:43 +0000
@@ -12,6 +25,7 @@ dx-toolkit (0.149.0) precise; urgency=low
 dx-toolkit (0.148.0) precise; urgency=low
 
   * Improve dxpy socket timeout logic
+
   * Add "dx run --depends-on"
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 03 Jun 2015 21:18:22 +0000
