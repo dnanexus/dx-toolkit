@@ -41,7 +41,7 @@ boost::mutex instantaneousBytesMutex;
 // (like ~30sec) to mitigate rounding effect.
 const size_t MAX_QUEUE_SIZE = 5000;
 
-// Replace contents of "dest" with gzip of empty string 
+// Replace contents of "dest" with gzip of empty string
 void get_empty_string_gzip(vector<char> &dest) {
   DXLOG(dx::logINFO) << "Computing gzip of zero length string...";
   int64_t destLen = gzCompressBound(0);
@@ -118,8 +118,8 @@ void Chunk::read() {
   in.read(&(data[0]), len);
   if (!in.good()) {
     ostringstream msg;
-    msg << "unable to read '" << len << "' bytes from location '" << start << "' in the file '" 
-        << localFile.c_str() << "' (fail bit = " << in.fail() << ", bad bit = " << in.bad() 
+    msg << "unable to read '" << len << "' bytes from location '" << start << "' in the file '"
+        << localFile.c_str() << "' (fail bit = " << in.fail() << ", bad bit = " << in.bad()
         << ", eofbit = " << in.eof() <<")... readdata failed on chunk " << (*this);
     throw runtime_error(msg.str());
   }
@@ -290,7 +290,7 @@ void Chunk::upload(Options &opt) {
     if (!hostName.empty() && !resolvedIP.empty()) { // Will never be true when compiling on windows
       log("Adding ip '" + resolvedIP + "' to resolve list for hostname '" + hostName + "'");
       slist_resolved_ip = curl_slist_append(slist_resolved_ip, (hostName + ":443:" + resolvedIP).c_str());
-      slist_resolved_ip = curl_slist_append(slist_resolved_ip, (hostName + ":80:" + resolvedIP).c_str()); 
+      slist_resolved_ip = curl_slist_append(slist_resolved_ip, (hostName + ":80:" + resolvedIP).c_str());
       checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_RESOLVE, slist_resolved_ip), errorBuffer);
       // Note: We don't remove this extra host name resolution info by setting "-HOST:PORT:IP" at the end,
       // since we don't reuse the curl handle anyway
@@ -328,7 +328,7 @@ void Chunk::upload(Options &opt) {
     checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 1l), errorBuffer);
     checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 60l), errorBuffer);
 
-    if (!dx::config::LIBCURL_VERBOSE().empty() && dx::config::LIBCURL_VERBOSE() != "0") { 
+    if (!dx::config::LIBCURL_VERBOSE().empty() && dx::config::LIBCURL_VERBOSE() != "0") {
       checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_VERBOSE, 1), errorBuffer);
     }
 
@@ -346,38 +346,18 @@ void Chunk::upload(Options &opt) {
     /* See: http://curl.haxx.se/libcurl/c/libcurl-tutorial.html#Multi-threading */
     checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1l), errorBuffer);
 
-    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_POST, 1), errorBuffer);
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_UPLOAD, 1), errorBuffer);
     checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_URL, url.c_str()), errorBuffer);
     checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_READFUNCTION, curlReadFunction), errorBuffer);
     checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_READDATA, this), errorBuffer);
 
     // Set callback for recieving the response data
-    /** set callback function */
     respData.clear();
     checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback) , errorBuffer);
-    /** "respData" is a member variable of Chunk class*/
     checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_WRITEDATA, &respData), errorBuffer);
 
-
-    // Set the Content-Length header.
-    {
-      ostringstream clen;
-      clen << "Content-Length: " << data.size();
-      slist_headers = curl_slist_append(slist_headers, clen.str().c_str());
-    }
-
-    // Compute the MD5 sum of data, and add the Content-MD5 header
-    expectedMD5 = dx::getHexifiedMD5(data);
-    {
-      ostringstream cmd5;
-      cmd5 << "Content-MD5: " << expectedMD5;
-      slist_headers = curl_slist_append(slist_headers, cmd5.str().c_str());
-    }
-
     // Remove the Content-Type header (libcurl sets "Content-Type: application/x-www-form-urlencoded" by default for POST)
-    {
-      slist_headers = curl_slist_append(slist_headers, "Content-Type:");
-    }
+    slist_headers = curl_slist_append(slist_headers, "Content-Type:");
 
     // Append additional headers requested by /file-xxxx/upload call
     for (dx::JSON::const_object_iterator it = headersToSend.object_begin(); it != headersToSend.object_end(); ++it) {
@@ -387,6 +367,10 @@ void Chunk::upload(Options &opt) {
     }
 
     checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_HTTPHEADER, slist_headers), errorBuffer);
+
+    // curl wants to know this (otherwise it uses chunked transfer), even
+    // though we have set the content-length header above
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t)data.size()), errorBuffer);
 
     log("Starting curl_easy_perform...");
 
@@ -402,6 +386,7 @@ void Chunk::upload(Options &opt) {
     upload_cleanup(&curl, &slist_headers, &slist_resolved_ip);
     throw;
   }
+
   if ((responseCode < 200) || (responseCode >= 300)) {
     log("Response code not in 2xx range ... throwing runtime_error", dx::logERROR);
     ostringstream msg;
@@ -409,27 +394,7 @@ void Chunk::upload(Options &opt) {
     throw runtime_error(msg.str());
   }
 
-  /************************************************************************************************/
-  /* Assertions for testing APIservers checksum logic (in case of succesful /UPLOAD/xxxx request) */
-  /* Can be removed later (when we are relatively confident of apiserver's checksum logic) ********/
-
-  // We check that /UPLOAD/xxxx returned back a hash of form {md5: xxxxx},
-  // and that value is equal to md5 we computed (and sent as Content-MD5 header).
-  // If the values differ - it's a MAJOR apiserver bug (since server must have rejected request with incorrect Content-MD5 anyway)
-  dx::JSON apiserverResp;
-  try {
-    apiserverResp = dx::JSON::parse(respData);
-  } catch(dx::JSONException &jexcp) {
-    cerr << "\nUNEXPECTED FATAL ERROR: Response from /UPLOAD/xxxx route could not be parsed as valid JSON" << endl
-         << "JSONException = '" << jexcp.what() << "'" << endl
-         << "APIServer response = '" << respData << "'" << endl;
-    assert(false); // This should not happen (apiserver response could not be parsed as JSON)
-    throw jexcp;
-  }
-  assert(apiserverResp.type() == dx::JSON_HASH);
-  assert(apiserverResp.has("md5") && apiserverResp["md5"].type() == dx::JSON_STRING);
-  assert(apiserverResp["md5"].get<string>() == expectedMD5);
-  /************************************************************************************************/
+  assert(respData == "");
 }
 
 void Chunk::clear() {
@@ -461,7 +426,7 @@ static string extractHostFromURL(const string &url) {
 // This function looks at the hostname extracted from the url, and decides if we want to resolve the
 // ip address explicitly or not, e.g., we do not attempt to resolve a hostname if it is already an ip address
 // (which is actually the case when UA is run from within a job in DNAnexus)
-// Note: The regexp for IP address we use is quite lenient, and matches some non-valid ips, but that's 
+// Note: The regexp for IP address we use is quite lenient, and matches some non-valid ips, but that's
 //       fine for our purpose here, since:
 //       1) Not resolving a hostname explicitly does not break anything (but the opposite can be dangerous),
 //       2) The input received by this function is not arbitrary but rather something decided by apiserver
@@ -475,13 +440,15 @@ static bool attemptExplicitDNSResolve(const string &host) {
 pair<string, dx::JSON> Chunk::uploadURL(Options &opt) {
   dx::JSON params(dx::JSON_OBJECT);
   params["index"] = index + 1;  // minimum part index is 1
+  params["size"] = data.size();
+  params["md5"] = dx::getHexifiedMD5(data);
   log("Generating Upload URL for index = " + boost::lexical_cast<string>(params["index"].get<int>()));
   dx::JSON result = fileUpload(fileID, params);
   pair<string, dx::JSON> toReturn = make_pair(result["url"].get<string>(), result["headers"]);
   const string &url = toReturn.first;
   log("/" + fileID + "/upload call returned this url: " + url);
 
-  if (!opt.noRoundRobinDNS) { 
+  if (!opt.noRoundRobinDNS) {
     // Now, try to resolve the host name in url to an ip address (for explicit round robin DNS)
     // If we are unable to do so, just leave the resolvedIP variable an empty string
     resolvedIP.clear();
