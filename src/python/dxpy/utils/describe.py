@@ -747,8 +747,6 @@ def print_user_desc(desc):
     bill_to_label = "Default bill to"
     if "billTo" in desc:
         print_field(bill_to_label, desc["billTo"])
-    else:
-        print_field(bill_to_label, desc["id"])
 
     if "appsInstalled" in desc:
         print_list_field("Apps installed", desc["appsInstalled"])

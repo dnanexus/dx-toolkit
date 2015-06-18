@@ -1215,7 +1215,7 @@ class TestDXClientDescribe(DXTestCase):
 
         run("dx describe " + self.project + " --project-context-id foo")
 
-    def test_user_has_bill_to_field(self):
+    def test_user_describe_self_shows_bill_to(self):
         ## Verify `billTo` from /user-xxxx/describe.
         user_id = dxpy.whoami()
         user_desc = dxpy.api.user_describe(user_id)
