@@ -1534,6 +1534,132 @@ def notifications_mark_read(input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/notifications/markRead', input_params, always_retry=always_retry, **kwargs)
 
+def orgDescribe(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`org_describe()` instead.
+
+    """
+    print("dxpy.orgDescribe is deprecated; please use org_describe instead.", file=sys.stderr)
+    return org_describe(*args, **kwargs)
+
+def org_describe(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /org-xxxx/describe API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2Fdescribe
+    """
+    return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def orgFindProjects(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`org_find_projects()` instead.
+
+    """
+    print("dxpy.orgFindProjects is deprecated; please use org_find_projects instead.", file=sys.stderr)
+    return org_find_projects(*args, **kwargs)
+
+def org_find_projects(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /org-xxxx/findProjects API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FfindProjects
+    """
+    return DXHTTPRequest('/%s/findProjects' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def orgGetMemberAccess(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`org_get_member_access()` instead.
+
+    """
+    print("dxpy.orgGetMemberAccess is deprecated; please use org_get_member_access instead.", file=sys.stderr)
+    return org_get_member_access(*args, **kwargs)
+
+def org_get_member_access(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /org-xxxx/getMemberAccess API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FgetMemberAccess
+    """
+    return DXHTTPRequest('/%s/getMemberAccess' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def orgInvite(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`org_invite()` instead.
+
+    """
+    print("dxpy.orgInvite is deprecated; please use org_invite instead.", file=sys.stderr)
+    return org_invite(*args, **kwargs)
+
+def org_invite(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /org-xxxx/invite API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2Finvite
+    """
+    return DXHTTPRequest('/%s/invite' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def orgSetMemberAccess(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`org_set_member_access()` instead.
+
+    """
+    print("dxpy.orgSetMemberAccess is deprecated; please use org_set_member_access instead.", file=sys.stderr)
+    return org_set_member_access(*args, **kwargs)
+
+def org_set_member_access(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /org-xxxx/setMemberAccess API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FsetMemberAccess
+    """
+    return DXHTTPRequest('/%s/setMemberAccess' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def orgUpdate(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`org_update()` instead.
+
+    """
+    print("dxpy.orgUpdate is deprecated; please use org_update instead.", file=sys.stderr)
+    return org_update(*args, **kwargs)
+
+def org_update(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /org-xxxx/update API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2Fupdate
+    """
+    return DXHTTPRequest('/%s/update' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def orgNew(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`org_new()` instead.
+
+    """
+    print("dxpy.orgNew is deprecated; please use org_new instead.", file=sys.stderr)
+    return org_new(*args, **kwargs)
+
+def org_new(input_params={}, always_retry=False, **kwargs):
+    """
+    Invokes the /org/new API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg%2Fnew
+    """
+    return DXHTTPRequest('/org/new', input_params, always_retry=always_retry, **kwargs)
+
 def projectAddTags(*args, **kwargs):
     """
 

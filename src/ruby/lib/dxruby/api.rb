@@ -692,6 +692,62 @@ module DX
       return DX::http_request("/notifications/markRead", input_params, opts)
     end
 
+    # Invokes the /org-xxxx/describe API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2Fdescribe
+    def self.org_describe(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/describe", input_params, opts)
+    end
+
+    # Invokes the /org-xxxx/findProjects API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FfindProjects
+    def self.org_find_projects(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/findProjects", input_params, opts)
+    end
+
+    # Invokes the /org-xxxx/getMemberAccess API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FgetMemberAccess
+    def self.org_get_member_access(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/getMemberAccess", input_params, opts)
+    end
+
+    # Invokes the /org-xxxx/invite API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2Finvite
+    def self.org_invite(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/invite", input_params, opts)
+    end
+
+    # Invokes the /org-xxxx/setMemberAccess API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FsetMemberAccess
+    def self.org_set_member_access(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/setMemberAccess", input_params, opts)
+    end
+
+    # Invokes the /org-xxxx/update API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2Fupdate
+    def self.org_update(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/update", input_params, opts)
+    end
+
+    # Invokes the /org/new API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg%2Fnew
+    def self.org_new(input_params={}, opts={})
+      opts = { "always_retry" => false }.merge(opts)
+      return DX::http_request("/org/new", input_params, opts)
+    end
+
     # Invokes the /project-xxxx/addTags API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FaddTags

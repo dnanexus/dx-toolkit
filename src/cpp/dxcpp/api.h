@@ -316,6 +316,27 @@ namespace dx {
   JSON notificationsMarkRead(const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON notificationsMarkRead(const dx::JSON &input_params, const bool safe_to_retry=true);
 
+  JSON orgDescribe(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON orgDescribe(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON orgFindProjects(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON orgFindProjects(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON orgGetMemberAccess(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON orgGetMemberAccess(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON orgInvite(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON orgInvite(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON orgSetMemberAccess(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON orgSetMemberAccess(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON orgUpdate(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON orgUpdate(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON orgNew(const std::string &input_params="{}", const bool safe_to_retry=false);
+  JSON orgNew(const dx::JSON &input_params, const bool safe_to_retry=false);
+
   JSON projectAddTags(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON projectAddTags(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
