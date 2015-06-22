@@ -192,9 +192,13 @@ class DXJob(DXObject):
 
     def describe(self, fields=None, io=None, **kwargs):
         """
-        :param fields: Hash where the keys are field names that should be returned, and values should be set to True (default is that all fields are returned)
+        :param fields: dict where the keys are field names that should
+            be returned, and values should be set to True (by default,
+            all fields are returned)
         :type fields: dict
-        :param io: Include input and output fields in description; cannot be provided with *fields*; default is True if *fields* is not provided (deprecated)
+        :param io: Include input and output fields in description;
+            cannot be provided with *fields*; default is True if
+            *fields* is not provided (deprecated)
         :type io: bool
         :returns: Description of the job
         :rtype: dict
@@ -339,4 +343,4 @@ class DXJob(DXObject):
 
         '''
 
-        return self.describe(io=False, **kwargs)["state"]
+        return self.describe(fields=dict(state=True), **kwargs)["state"]
