@@ -1,3 +1,9 @@
+dx-toolkit (0.150.2) precise; urgency=low
+
+  * Revert upload API V2 changes
+
+ -- Phil Sung <psung@dnanexus.com>  Mon, 22 Jun 2015 21:35:21 +0000
+
 dx-toolkit (0.150.1) precise; urgency=low
 
   * Use upload API V2
