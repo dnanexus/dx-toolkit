@@ -269,16 +269,6 @@ require 'dxruby'
 
 In Ruby 1.9, `require 'rubygems'` is not necessary.
 
-Virtual filesystem support
---------------------------
-Optional support is available for mounting DNAnexus Platform projects as virtual filesystems. Install the following dependencies:
-
-Platform     | Dependency
--------------|-----------
-Ubuntu 12.04 | `apt-get install libfuse2`
-OS X         | [FUSE for OS X](http://osxfuse.github.io/)
-
-See https://wiki.dnanexus.com/Virtual-Filesystem for more information.
 
 Upload Agent
 ------------
