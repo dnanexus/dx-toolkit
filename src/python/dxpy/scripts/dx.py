@@ -728,8 +728,15 @@ def ls(args):
     resp = None
     if entity_results is None:
         try:
+            # Request the minimal set of describe fields possible
+            if args.brief:
+                describe_input = dict(fields={'id': True, 'name': True})
+            elif args.verbose:
+                describe_input = True
+            else:
+                describe_input = dict(fields={'id': True, 'class': True, 'name': True})
             resp = dxproj.list_folder(folder=folderpath,
-                                      describe={},
+                                      describe=describe_input,
                                       only=only,
                                       includeHidden=args.all)
 
@@ -754,7 +761,8 @@ def ls(args):
                         print(BOLD() + 'State' + DELIMITER('\t') + 'Last modified' + DELIMITER('       ') + 'Size' + DELIMITER('     ') + 'Name' + DELIMITER(' (') + 'ID' + DELIMITER(')') + ENDC())
                     else:
                         print("No data objects found in the folder")
-                name_counts = collections.Counter(obj['describe']['name'] for obj in resp['objects'])
+                if not args.brief and not args.verbose:
+                    name_counts = collections.Counter(obj['describe']['name'] for obj in resp['objects'])
                 for obj in resp['objects']:
                     if args.brief:
                         print(obj['id'])

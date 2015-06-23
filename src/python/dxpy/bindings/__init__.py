@@ -295,25 +295,41 @@ class DXDataObject(DXObject):
 
         return self._proj
 
-    def describe(self, incl_properties=False, incl_details=False, **kwargs):
+    def describe(self, fields=None, default_fields=None, incl_properties=False, incl_details=False, **kwargs):
         """
-        :param incl_properties: If true, includes the properties of the object in the output
-        :type incl_properties: boolean
-        :param incl_details: If true, includes the details of the object in the output
-        :type incl_details: boolean
+        :param fields: set of fields to include in the output, for
+            example ``{'name', 'modified'}``. The field ``id`` is always
+            implicitly included. If ``fields`` is specified, the default
+            fields are not included (that is, only the fields specified
+            here, and ``id``, are included) unless ``default_fields`` is
+            additionally set to True.
+        :type fields: set or sequence of str
+        :param default_fields: if True, include the default fields in
+            addition to fields requested in ``fields``, if any; if
+            False, only the fields specified in ``fields``, if any, are
+            returned (defaults to False if ``fields`` is specified, True
+            otherwise)
+        :type default_fields: bool
+        :param incl_properties: if true, includes the properties of the
+            object in the output (deprecated; use
+            ``fields={'properties'}, default_fields=True`` instead)
+        :type incl_properties: bool
+        :param incl_details: if true, includes the details of the object
+            in the output (deprecated; use ``fields={'details'},
+            default_fields=True`` instead)
+        :type incl_details: bool
         :returns: Description of the remote object
         :rtype: dict
 
-        Returns a dict with a description of the remote data object. The
-        result includes the key-value pairs as specified in the API
-        documentation for the ``/describe`` method of each data object
-        class. At a minimum, "id", "class", etc. should be available,
-        but different classes of objects may have additional fields.
+        Return a dict with a description of the remote data object.
 
-        If *incl_properties* is set, the output contains an additional
-        key-value pair with key "properties". If *incl_details* is set,
-        the output contains an additional key-value pair with key
-        "details".
+        The result includes the key-value pairs as specified in the API
+        documentation for the ``/describe`` method of each data object
+        class. The API defines some default set of fields that will be
+        included (at a minimum, "id", "class", etc. should be available,
+        and there may be additional fields that vary based on the
+        class); the set of fields may be customized using ``fields`` and
+        ``default_fields``.
 
         Any project-specific metadata fields (name, properties, and
         tags) are obtained from the copy of the object in the project
@@ -327,7 +343,18 @@ class DXDataObject(DXObject):
                 _class=self._class)
             )
 
-        describe_input = dict(properties=incl_properties, details=incl_details)
+        if (incl_properties or incl_details) and (fields is not None or default_fields is not None):
+            raise ValueError('Cannot specify properties or details in conjunction with fields or default_fields')
+
+        if incl_properties or incl_details:
+            describe_input = dict(properties=incl_properties, details=incl_details)
+        else:
+            describe_input = {}
+            if default_fields is not None:
+                describe_input['defaultFields'] = default_fields
+            if fields is not None:
+                describe_input['fields'] = {field_name: True for field_name in fields}
+
         if self._proj is not None:
             describe_input["project"] = self._proj
 
@@ -599,7 +626,7 @@ class DXDataObject(DXObject):
 
         '''
 
-        return self.describe(**kwargs)["state"]
+        return self.describe(fields={'state'}, **kwargs)["state"]
 
     def _wait_on_close(self, timeout=3600*24*1, **kwargs):
         elapsed = 0

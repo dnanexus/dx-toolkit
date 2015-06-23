@@ -1039,6 +1039,19 @@ class TestDXRecord(unittest.TestCase):
         with self.assertRaises(TypeError):
             dxrecord = dxpy.new_dxrecord(foo=1)
 
+    def test_custom_describe_fields(self):
+        dxrecord = dxpy.new_dxrecord(name="recordname", tags=["tag"], details={}, folder="/")
+        self.assertEqual(dxrecord.describe(fields={"name", "tags"}),
+                         {"id": dxrecord.get_id(), "name": "recordname", "tags": ["tag"]})
+        self.assertEqual(dxrecord.describe(fields={"name", "tags"}, default_fields=False),
+                         {"id": dxrecord.get_id(), "name": "recordname", "tags": ["tag"]})
+        describe_with_custom_fields = dxrecord.describe(fields={"name", "properties"}, default_fields=True)
+        self.assertIn('name', describe_with_custom_fields)
+        self.assertIn('modified', describe_with_custom_fields)
+        self.assertIn('properties', describe_with_custom_fields)
+        self.assertNotIn('details', describe_with_custom_fields)
+
+
 @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
 class TestDXAppletJob(unittest.TestCase):
     def setUp(self):

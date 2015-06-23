@@ -392,7 +392,7 @@ class DXFile(DXDataObject):
         be in either the "open" or "closing" states.
         '''
 
-        return self.describe(**kwargs)["state"] == "closed"
+        return self.describe(fields={'state'}, **kwargs)["state"] == "closed"
 
     def close(self, block=False, **kwargs):
         '''

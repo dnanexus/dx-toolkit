@@ -118,6 +118,11 @@ class DXContainer(DXObject):
         input hash to be supplied to each ``/describe`` call.
 
         """
+        # TODO: it would be nice if we could supply describe
+        # fields/defaultFields in a similar way to what we pass to the
+        # high-level describe method, rather than having to construct
+        # the literal API input
+
         api_method = dxpy.api.container_list_folder
         if isinstance(self, DXProject):
             api_method = dxpy.api.project_list_folder
