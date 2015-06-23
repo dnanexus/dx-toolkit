@@ -295,7 +295,7 @@ class DXDataObject(DXObject):
 
         return self._proj
 
-    def describe(self, fields=None, default_fields=None, incl_properties=False, incl_details=False, **kwargs):
+    def describe(self, incl_properties=False, incl_details=False, fields=None, default_fields=None, **kwargs):
         """
         :param fields: set of fields to include in the output, for
             example ``{'name', 'modified'}``. The field ``id`` is always
