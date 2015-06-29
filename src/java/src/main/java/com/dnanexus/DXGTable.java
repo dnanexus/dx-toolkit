@@ -104,7 +104,7 @@ public class DXGTable extends DXDataObject {
         @JsonProperty
         private List<ColumnSpecification> columns;
         @JsonProperty
-        private long size;
+        private Long size;
         @JsonProperty
         private Long length; // May be null if table is not closing or closed
 
@@ -118,6 +118,9 @@ public class DXGTable extends DXDataObject {
          * @return byte size of GTable
          */
         public long getByteSize() {
+            Preconditions
+                    .checkState(this.size != null,
+                            "byte size is not available because it was not retrieved with the describe call");
             return this.size;
         }
 
@@ -127,6 +130,8 @@ public class DXGTable extends DXDataObject {
          * @return List of columns in the order they appear in the GTable
          */
         public List<ColumnSpecification> getColumns() {
+            Preconditions.checkState(this.columns != null,
+                    "columns is not available because it was not retrieved with the describe call");
             return ImmutableList.copyOf(this.columns);
         }
 
@@ -136,10 +141,9 @@ public class DXGTable extends DXDataObject {
          * @return Number of rows
          */
         public long getNumRows() {
-            if (this.length == null) {
-                throw new IllegalStateException(
-                        "Row count is not available until table is closing or closed");
-            }
+            Preconditions.checkState(this.length != null,
+                    "row count is not available because table was open or "
+                            + "because row count was not retrieved with the describe call");
             return this.length;
         }
     }

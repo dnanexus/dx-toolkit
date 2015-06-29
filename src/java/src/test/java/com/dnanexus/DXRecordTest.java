@@ -24,10 +24,42 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.dnanexus.DXDataObject.DescribeOptions;
-import com.dnanexus.DXDataObjectTest.SampleMetadata;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class DXRecordTest {
+
+    /**
+     * Sample object to be serialized into "details" for test data objects.
+     */
+    @JsonInclude(Include.NON_NULL)
+    public static class SampleMetadata {
+        @JsonProperty
+        private String sampleId;
+
+        @SuppressWarnings("unused")
+        private SampleMetadata() {}
+
+        /**
+         * Initializes a metadata object with the specified sample ID.
+         *
+         * @param sampleId sample ID
+         */
+        public SampleMetadata(String sampleId) {
+            this.sampleId = sampleId;
+        }
+
+        /**
+         * Returns the sample ID.
+         *
+         * @return sample ID
+         */
+        public String getSampleId() {
+            return this.sampleId;
+        }
+    }
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -45,7 +77,16 @@ public class DXRecordTest {
         }
     }
 
-    // External tests
+    @Test
+    public void testBuilder() {
+        DXDataObjectTest.testBuilder(testProject,
+                new DXDataObjectTest.BuilderFactory<DXRecord.Builder, DXRecord>() {
+                    @Override
+                    public DXRecord.Builder getBuilder() {
+                        return DXRecord.newRecord();
+                    }
+                });
+    }
 
     @Test
     public void testCreateRecordSimple() {
@@ -75,6 +116,99 @@ public class DXRecordTest {
         Assert.assertEquals("foo", r.describe().getName());
 
         p.destroy();
+    }
+
+    @Test
+    public void testCustomFields() {
+        DXRecord record = DXRecord.newRecord().setProject(testProject).setName("foo")
+                .setFolder("/").build();
+
+        // Retrieve some fields and verify that the ones we want are there and the ones we don't
+        // want are not there
+        DXRecord.Describe describe = record.describe(DescribeOptions.get().withCustomFields("name",
+                "created", "details", "folder", "modified"));
+
+        Assert.assertEquals("foo", describe.getName());
+        Assert.assertTrue(describe.getCreationDate().getTime() > 0);
+        Assert.assertNotNull(describe.getDetails(SampleMetadata.class));
+        Assert.assertEquals("/", describe.getFolder());
+        Assert.assertTrue(describe.getModificationDate().getTime() > 0);
+        try {
+            describe.getProject();
+            Assert.fail("Expected getProject to fail with IllegalStateException");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+        try {
+            describe.getProperties();
+            Assert.fail("Expected getProperties to fail with IllegalStateException");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+        try {
+            describe.getState();
+            Assert.fail("Expected getState to fail with IllegalStateException");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+        try {
+            describe.getTags();
+            Assert.fail("Expected getTags to fail with IllegalStateException");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+        try {
+            describe.getTypes();
+            Assert.fail("Expected getTypes to fail with IllegalStateException");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+        try {
+            describe.isVisible();
+            Assert.fail("Expected isVisible to fail with IllegalStateException");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+
+        // Now retrieve the complementary set of fields and do the same
+        describe = record.describe(DescribeOptions.get().withCustomFields("project", "properties",
+                "state", "tags", "types", "hidden"));
+        Assert.assertEquals(testProject, describe.getProject());
+        Assert.assertTrue(describe.getProperties().isEmpty());
+        Assert.assertEquals(DataObjectState.OPEN, describe.getState());
+        Assert.assertTrue(describe.getTags().isEmpty());
+        Assert.assertTrue(describe.getTypes().isEmpty());
+        Assert.assertTrue(describe.isVisible());
+        try {
+            describe.getName();
+            Assert.fail("Expected getName to fail with IllegalStateException");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+        try {
+            describe.getFolder();
+            Assert.fail("Expected getFolder to fail with IllegalStateException");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+        try {
+            describe.getCreationDate();
+            Assert.fail("Expected getCreationDate to fail with IllegalStateException");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+        try {
+            describe.getDetails(SampleMetadata.class);
+            Assert.fail("Expected getDetails to fail with IllegalStateException");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+        try {
+            describe.getModificationDate();
+            Assert.fail("Expected getModificationDate to fail with IllegalStateException");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
     }
 
     @Test
@@ -128,19 +262,6 @@ public class DXRecordTest {
         DXDataObjectTest.testOpenDataObjectMethods(testProject, builderFactory);
         DXDataObjectTest.testClosedDataObjectMethods(testProject, builderFactory);
     }
-
-    @Test
-    public void testBuilder() {
-        DXDataObjectTest.testBuilder(testProject,
-                new DXDataObjectTest.BuilderFactory<DXRecord.Builder, DXRecord>() {
-                    @Override
-                    public DXRecord.Builder getBuilder() {
-                        return DXRecord.newRecord();
-                    }
-                });
-    }
-
-    // Internal tests
 
     @Test
     public void testCreateRecordSerialization() throws IOException {

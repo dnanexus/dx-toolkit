@@ -119,6 +119,8 @@ public class DXFile extends DXDataObject {
          * @return Internet Media Type
          */
         public String getMediaType() {
+            Preconditions.checkState(this.media != null,
+                    "media type is not accessible because it was not retrieved with the describe call");
             return media;
         }
     }

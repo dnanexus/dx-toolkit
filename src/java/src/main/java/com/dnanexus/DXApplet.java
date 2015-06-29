@@ -267,6 +267,9 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
          * @return applet description
          */
         public String getDescription() {
+            Preconditions
+                    .checkState(this.description != null,
+                            "description is not available because it was not retrieved with the describe call");
             return description;
         }
 
@@ -276,6 +279,9 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
          * @return API version
          */
         public String getDXAPIVersion() {
+            Preconditions
+                    .checkState(this.dxapi != null,
+                            "dxapi version is not available because it was not retrieved with the describe call");
             return dxapi;
         }
 
@@ -285,6 +291,9 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
          * @return applet input specification
          */
         public List<InputParameter> getInputSpecification() {
+            Preconditions
+                    .checkState(this.inputSpec != null,
+                            "input specification is not available because it was not retrieved with the describe call");
             return ImmutableList.copyOf(this.inputSpec);
         }
 
@@ -294,6 +303,9 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
          * @return applet output specification
          */
         public List<OutputParameter> getOutputSpecification() {
+            Preconditions
+                    .checkState(this.outputSpec != null,
+                            "output specification is not available because it was not retrieved with the describe call");
             return ImmutableList.copyOf(this.outputSpec);
         }
 
@@ -303,6 +315,9 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
          * @return applet run specification
          */
         public RunSpecification getRunSpecification() {
+            Preconditions
+                    .checkState(this.runSpec != null,
+                            "run specification is not available because it was not retrieved with the describe call");
             return runSpec;
         }
 
@@ -312,6 +327,8 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
          * @return applet summary
          */
         public String getSummary() {
+            Preconditions.checkState(this.summary != null,
+                    "summary is not available because it was not retrieved with the describe call");
             return summary;
         }
 
@@ -321,6 +338,8 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
          * @return applet title
          */
         public String getTitle() {
+            Preconditions.checkState(this.title != null,
+                    "title is not available because it was not retrieved with the describe call");
             return title;
         }
     }

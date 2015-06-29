@@ -26,6 +26,7 @@ import org.junit.Test;
 import com.dnanexus.DXDataObject.DescribeOptions;
 import com.dnanexus.DXFile.Describe;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
 
 public class DXFileTest {
 
@@ -45,13 +46,50 @@ public class DXFileTest {
         }
     }
 
-    // External tests
+    @Test
+    public void testCreateFileSerialization() throws IOException {
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"project\":\"project-000011112222333344445555\", \"name\": \"foo\", \"media\": \"application/json\"}"),
+                mapper.valueToTree(DXFile.newFile()
+                        .setProject(DXProject.getInstance("project-000011112222333344445555"))
+                        .setName("foo").setMediaType("application/json").buildRequestHash()));
+    }
 
     @Test
     public void testCreateFileSimple() {
         DXFile f = DXFile.newFile().setProject(testProject).setName("foo").build();
         Describe describe = f.describe();
         Assert.assertEquals("foo", describe.getName());
+    }
+
+    @Test
+    public void testCustomFields() {
+        DXFile f = DXFile.newFile().setProject(testProject).setName("test").setMediaType("foo/bar")
+                .build();
+
+        // Retrieve some fields and verify that the ones we want are there and the ones we don't
+        // want are not there
+        DXFile.Describe describe = f.describe(DescribeOptions.get().withCustomFields(
+                ImmutableList.of("media")));
+
+        Assert.assertEquals("foo/bar", describe.getMediaType());
+        try {
+            describe.getName();
+            Assert.fail("Expected getName to fail with IllegalStateException");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+
+        // Now describe with some complementary fields and perform the same check
+        describe = f.describe(DescribeOptions.get().withCustomFields(ImmutableList.of("name")));
+
+        Assert.assertEquals("test", describe.getName());
+        try {
+            describe.getMediaType();
+            Assert.fail("Expected getMediaType to fail with IllegalStateException");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
     }
 
     @Test
@@ -122,17 +160,6 @@ public class DXFileTest {
         DXFile file =
                 DXFile.newFile().setProject(testProject).setMediaType("application/json").build();
         Assert.assertEquals("application/json", file.describe().getMediaType());
-    }
-
-    // Internal tests
-
-    @Test
-    public void testCreateFileSerialization() throws IOException {
-        Assert.assertEquals(
-                DXJSON.parseJson("{\"project\":\"project-000011112222333344445555\", \"name\": \"foo\", \"media\": \"application/json\"}"),
-                mapper.valueToTree(DXFile.newFile()
-                        .setProject(DXProject.getInstance("project-000011112222333344445555"))
-                        .setName("foo").setMediaType("application/json").buildRequestHash()));
     }
 
 }

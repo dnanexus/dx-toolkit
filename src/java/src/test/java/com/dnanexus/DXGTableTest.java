@@ -47,7 +47,17 @@ public class DXGTableTest {
         }
     }
 
-    // External tests
+    @Test
+    public void testCreateGTableSerialization() throws IOException {
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"project\":\"project-000011112222333344445555\", \"name\": \"foo\", \"columns\": [{\"name\": \"name\", \"type\": \"string\"}]}"),
+                mapper.valueToTree(DXGTable
+                        .newGTable(
+                                ImmutableList.of(ColumnSpecification.getInstance("name",
+                                        ColumnType.STRING)))
+                        .setProject(DXProject.getInstance("project-000011112222333344445555"))
+                        .setName("foo").buildRequestHash()));
+    }
 
     @Test
     public void testCreateGTableSimple() {
@@ -57,6 +67,54 @@ public class DXGTableTest {
         DXGTable.Describe describe = g.describe();
 
         Assert.assertEquals(ImmutableList.of(column1), describe.getColumns());
+
+
+    }
+
+    @Test
+    public void testCustomFields() {
+        ColumnSpecification column1 = ColumnSpecification.getInstance("name", ColumnType.STRING);
+        DXGTable g = DXGTable.newGTable(ImmutableList.of(column1)).setName("mygtable")
+                .setProject(testProject).build();
+        g.closeAndWait();
+
+        // Retrieve some fields and verify that the ones we want are there and the ones we don't
+        // want are not there
+        DXGTable.Describe describe = g.describe(DescribeOptions.get().withCustomFields(
+                ImmutableList.of("columns", "size")));
+
+        Assert.assertEquals(ImmutableList.of(column1), describe.getColumns());
+        Assert.assertEquals(0, describe.getByteSize());
+        try {
+            describe.getNumRows();
+            Assert.fail("Expected getNumRows to fail with IllegalStateException");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+        try {
+            describe.getName();
+            Assert.fail("Expected getName to fail with IllegalStateException");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+
+        // Now describe with some complementary fields and perform the same check
+        describe = g.describe(DescribeOptions.get().withCustomFields(ImmutableList.of("name", "length")));
+
+        Assert.assertEquals("mygtable", describe.getName());
+        Assert.assertEquals(0, describe.getNumRows());
+        try {
+            describe.getColumns();
+            Assert.fail("Expected getColumns to fail with IllegalStateException");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+        try {
+            describe.getByteSize();
+            Assert.fail("Expected getByteSize to fail with IllegalStateException");
+        } catch (IllegalStateException e) {
+            // Expected
+        }
     }
 
     @Test
@@ -148,20 +206,6 @@ public class DXGTableTest {
                 });
 
         // Retrieving the columns is tested in testCreateGTableSimple
-    }
-
-    // Internal tests
-
-    @Test
-    public void testCreateGTableSerialization() throws IOException {
-        Assert.assertEquals(
-                DXJSON.parseJson("{\"project\":\"project-000011112222333344445555\", \"name\": \"foo\", \"columns\": [{\"name\": \"name\", \"type\": \"string\"}]}"),
-                mapper.valueToTree(DXGTable
-                        .newGTable(
-                                ImmutableList.of(ColumnSpecification.getInstance("name",
-                                        ColumnType.STRING)))
-                        .setProject(DXProject.getInstance("project-000011112222333344445555"))
-                        .setName("foo").buildRequestHash()));
     }
 
 }
