@@ -36,7 +36,8 @@ import com.google.common.collect.Maps;
 public enum DataObjectState {
     OPEN("open"),
     CLOSING("closing"),
-    CLOSED("closed");
+    CLOSED("closed"),
+    ABANDONED("abandoned");
 
     private static Map<String, DataObjectState> createMap;
 

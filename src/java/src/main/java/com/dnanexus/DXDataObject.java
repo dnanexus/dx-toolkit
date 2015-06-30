@@ -974,8 +974,16 @@ public abstract class DXDataObject extends DXObject {
     public DXDataObject closeAndWait() {
         DXDataObject obj = this.close();
         // TODO: allow supplying a timeout
-        while (this.describe(DescribeOptions.get().withCustomFields(ImmutableList.of("state")))
-                .getState() != DataObjectState.CLOSED) {
+        while (true) {
+            DataObjectState currentState = this.describe(
+                    DescribeOptions.get().withCustomFields(ImmutableList.of("state"))).getState();
+            if (currentState == DataObjectState.CLOSED) {
+                return obj;
+            }
+            if (currentState == DataObjectState.ABANDONED) {
+                throw new IllegalStateException("data object " + this.getId()
+                        + " has been abandoned");
+            }
             // TODO: some kind of exponential backoff so short requests don't
             // take 2000ms to complete
             try {
@@ -984,7 +992,6 @@ public abstract class DXDataObject extends DXObject {
                 throw new RuntimeException(e);
             }
         }
-        return obj;
     }
 
     /**
