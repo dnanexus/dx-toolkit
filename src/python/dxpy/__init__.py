@@ -427,12 +427,12 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             raise AssertionError('Should never reach this line: expected a result to have been returned by now')
         except Exception as e:
             success = False
+            exception_msg = _extract_msg_from_last_exception()
             if isinstance(e, _expected_exceptions):
-                exception_msg = _extract_msg_from_last_exception()
                 if response is not None and response.status_code == 503:
                     seconds_to_wait = _extract_retry_after_timeout(response)
-                    logger.warn("%s %s: %s. Waiting %d seconds due to server unavailability..."
-                                % (method, url, exception_msg, seconds_to_wait))
+                    logger.warn("%s %s: %s. Waiting %d seconds due to server unavailability...",
+                                method, url, exception_msg, seconds_to_wait)
                     time.sleep(seconds_to_wait)
                     # Note, we escape the "except" block here without
                     # incrementing try_index because 503 responses with
@@ -459,19 +459,20 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     if rewind_input_buffer_offset is not None:
                         data.seek(rewind_input_buffer_offset)
                     delay = min(2 ** try_index, DEFAULT_TIMEOUT)
-                    logger.warn("%s %s: %s. Waiting %d seconds before retry %d of %d..."
-                                % (method, url, exception_msg, delay, try_index + 1, max_retries))
+                    logger.warn("%s %s: %s. Waiting %d seconds before retry %d of %d...",
+                                method, url, exception_msg, delay, try_index + 1, max_retries)
                     time.sleep(delay)
                     try_index += 1
                     continue
 
             # All retries have been exhausted OR the error is deemed not
-            # retryable. Propagate the latest error back to the caller.
+            # retryable. Print the latest error and propagate it back to the caller.
+            if not isinstance(e, exceptions.DXAPIError):
+                logger.error("%s %s: %s", method, url, exception_msg)
             raise
         finally:
             if success and try_index > 0:
-                logger.info("{} {}: Recovered after {} retries".format(method, url, try_index))
-
+                logger.info("%s %s: Recovered after %d retries", method, url, try_index)
 
         raise AssertionError('Should never reach this line: should have attempted a retry or reraised by now')
     raise AssertionError('Should never reach this line: should never break out of loop')
