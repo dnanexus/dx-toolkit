@@ -1,3 +1,7 @@
+DNAnexus Upload Agent 1.5.10 <support@dnanexus.com>, 2015-Jul-01
+----------------------------------------------------------------
+  * Use upload API v2
+
 DNAnexus Upload Agent 1.5.9 <support@dnanexus.com>, 2015-Jun-10
 ---------------------------------------------------------------
   * Adding several configuration options which should prevent uploads from getting stuck
