@@ -1026,6 +1026,14 @@ module DX
       return DX::http_request("/system/findDataObjects", input_params, opts)
     end
 
+    # Invokes the /system/resolveDataObjects API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/resolveDataObjects
+    def self.system_resolve_data_objects(input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/system/resolveDataObjects", input_params, opts)
+    end
+
     # Invokes the /system/findExecutions API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindExecutions

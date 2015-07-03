@@ -23002,6 +23002,179 @@ public final class DXAPI {
     }
 
     /**
+     * Invokes the systemResolveDataObjects method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/resolveDataObjects">API specification</a>.
+     *
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemResolveDataObjects(Class<T> outputClass) {
+        return systemResolveDataObjects(mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the systemResolveDataObjects method with an empty input using the specified environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/resolveDataObjects">API specification</a>.
+     *
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemResolveDataObjects(Class<T> outputClass, DXEnvironment env) {
+        return systemResolveDataObjects(mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the systemResolveDataObjects method with the specified input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/resolveDataObjects">API specification</a>.
+     *
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemResolveDataObjects(Object inputObject, Class<T> outputClass) {
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/system/resolveDataObjects", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
+                outputClass);
+    }
+    /**
+     * Invokes the systemResolveDataObjects method with the specified input using the specified environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/resolveDataObjects">API specification</a>.
+     *
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemResolveDataObjects(Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest(env).request("/system/resolveDataObjects", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
+                outputClass);
+    }
+
+    /**
+     * Invokes the systemResolveDataObjects method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/resolveDataObjects">API specification</a>.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemResolveDataObjects(Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemResolveDataObjects() {
+        return systemResolveDataObjects(mapper.createObjectNode());
+    }
+    /**
+     * Invokes the systemResolveDataObjects method with the specified input parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/resolveDataObjects">API specification</a>.
+     *
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemResolveDataObjects(Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemResolveDataObjects(JsonNode inputParams) {
+        return new DXHTTPRequest().request("/system/resolveDataObjects", inputParams, RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the systemResolveDataObjects method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/resolveDataObjects">API specification</a>.
+     *
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemResolveDataObjects(Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemResolveDataObjects(DXEnvironment env) {
+        return systemResolveDataObjects(mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the systemResolveDataObjects method with the specified environment and input parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/resolveDataObjects">API specification</a>.
+     *
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemResolveDataObjects(Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemResolveDataObjects(JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/system/resolveDataObjects", inputParams, RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
      * Invokes the systemFindExecutions method with an empty input, deserializing to an object of the specified class.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindExecutions">API specification</a>.

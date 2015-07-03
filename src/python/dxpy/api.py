@@ -2288,6 +2288,24 @@ def system_find_data_objects(input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/system/findDataObjects', input_params, always_retry=always_retry, **kwargs)
 
+def systemResolveDataObjects(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`system_resolve_data_objects()` instead.
+
+    """
+    print("dxpy.systemResolveDataObjects is deprecated; please use system_resolve_data_objects instead.", file=sys.stderr)
+    return system_resolve_data_objects(*args, **kwargs)
+
+def system_resolve_data_objects(input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /system/resolveDataObjects API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/resolveDataObjects
+    """
+    return DXHTTPRequest('/system/resolveDataObjects', input_params, always_retry=always_retry, **kwargs)
+
 def systemFindExecutions(*args, **kwargs):
     """
 
