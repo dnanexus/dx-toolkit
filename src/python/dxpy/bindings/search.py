@@ -28,6 +28,41 @@ import dxpy
 from . import DXApplet, DXApp, DXWorkflow, DXProject, DXJob, DXAnalysis
 from ..exceptions import DXError, DXSearchError
 
+
+def resolve_data_objects(objects, project=None, folder=None):
+    """
+    :param objects: Data object specifications, each with fields "name"
+                    (required), "folder", and "project"
+    :type objects: list of dictionaries
+    :param project: ID of project context; a data object's project defaults
+                    to this if not specified for that object
+    :type project: string
+    :param folder: Folder path within the project; a data object's folder
+                   path defaults to this if not specified for that object
+    :type folder: string
+    :returns: List of results parallel to input objects, where each
+              entry is a list containing 0 or more dicts, each corresponding
+              to a resolved object
+    :rtype: List of lists of dictionaries
+
+    Each returned element is a list of dictionaries with keys "project" and
+    "id". The number of dictionaries for each element may be 0, 1, or more.
+    """
+    args = {}
+    if project:
+        args.update({'project': project})
+    if folder:
+        args.update({'folder': folder})
+
+    results = []
+
+    # Call API method /system/resolveDataObjects in batches of 1000
+    for i in range(0, len(objects), 1000):
+        args.update({'objects': objects[i:(i+1000)]})
+        results.extend(dxpy.api.system_resolve_data_objects(args)['results'])
+    return results
+
+
 def _find(api_method, query, limit, return_handler, first_page_size, **kwargs):
     ''' Takes an API method handler (dxpy.api.find...) and calls it with *query*, then wraps a generator around its
     output. Used by the methods below.

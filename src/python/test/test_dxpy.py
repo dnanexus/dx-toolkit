@@ -26,7 +26,7 @@ import subprocess
 
 import dxpy
 import dxpy_testutil as testutil
-from dxpy.exceptions import DXAPIError, DXFileError, DXError, DXJobFailureError, ServiceUnavailable
+from dxpy.exceptions import DXAPIError, DXFileError, DXError, DXJobFailureError, ServiceUnavailable, InvalidInput
 from dxpy.utils import pretty_print, warn
 
 def get_objects_from_listf(listf):
@@ -1726,6 +1726,39 @@ class TestDXSearch(unittest.TestCase):
 
     def tearDown(self):
         tearDownTempProjects(self)
+
+    def test_resolve_data_objects(self):
+        # If the project is provided for an object, then it will be used instead of
+        # the top-level project specification
+        new_proj_id = dxpy.api.project_new({'name': 'test project 1'})['id']
+        dxrecord0 = dxpy.new_dxrecord(name="myrecord0", project=self.proj_id)
+        dxrecord1 = dxpy.new_dxrecord(name="myrecord1", project=new_proj_id)
+        dxrecord2 = dxpy.new_dxrecord(name="myrecord2", project=self.proj_id)
+        dxrecord2 = dxpy.new_dxrecord(name="myrecord3", project=new_proj_id)
+        records = [{"name": "myrecord0", "project": self.proj_id, "folder": "/"},
+                   {"name": "myrecord1"},
+                   {"name": "myrecord2"},
+                   {"name": "myrecord3", "project": self.proj_id, "folder": "/"}]
+
+        objects = list(dxpy.search.resolve_data_objects(records, project=new_proj_id))
+        self.assertEqual(len(objects), 4)
+        self.assertEqual(objects[0][0]["project"], self.proj_id)
+        self.assertEqual(objects[0][0]["id"], dxrecord0.get_id())
+        self.assertEqual(objects[1][0]["project"], new_proj_id)
+        self.assertEqual(objects[1][0]["id"], dxrecord1.get_id())
+        self.assertEqual(objects[2], [])
+        self.assertEqual(objects[3], [])
+
+        # Test that batching happens correctly
+        record_names = []
+        record_ids = []
+        for i in range(1005):
+            record_ids.append(dxpy.new_dxrecord(name=("record" + str(i))).get_id())
+            record_names.append({"name": "record" + str(i)})
+        objects = list(dxpy.search.resolve_data_objects(record_names, project=self.proj_id))
+        self.assertEqual(len(objects), 1005)
+        self.assertEqual(objects[200][0]["id"], record_ids[200])
+        self.assertEqual(objects[1003][0]["id"], record_ids[1003])
 
     def test_find_data_objs(self):
         dxrecord = dxpy.new_dxrecord()
