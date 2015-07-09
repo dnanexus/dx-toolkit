@@ -328,6 +328,9 @@ namespace dx {
   JSON orgInvite(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON orgInvite(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
+  JSON orgRemoveMember(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON orgRemoveMember(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
   JSON orgSetMemberAccess(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON orgSetMemberAccess(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 

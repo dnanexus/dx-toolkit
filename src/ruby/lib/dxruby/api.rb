@@ -724,6 +724,14 @@ module DX
       return DX::http_request("/#{object_id}/invite", input_params, opts)
     end
 
+    # Invokes the /org-xxxx/removeMember API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FremoveMember
+    def self.org_remove_member(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/removeMember", input_params, opts)
+    end
+
     # Invokes the /org-xxxx/setMemberAccess API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FsetMemberAccess

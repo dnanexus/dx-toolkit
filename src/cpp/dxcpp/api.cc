@@ -862,6 +862,14 @@ namespace dx {
     return orgInvite(object_id, input_params.toString(), safe_to_retry);
   }
 
+  JSON orgRemoveMember(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/removeMember"), input_params, safe_to_retry);
+  }
+
+  JSON orgRemoveMember(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return orgRemoveMember(object_id, input_params.toString(), safe_to_retry);
+  }
+
   JSON orgSetMemberAccess(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest(std::string("/") + object_id + std::string("/setMemberAccess"), input_params, safe_to_retry);
   }

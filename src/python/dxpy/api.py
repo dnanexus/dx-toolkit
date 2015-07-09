@@ -1606,6 +1606,24 @@ def org_invite(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/invite' % object_id, input_params, always_retry=always_retry, **kwargs)
 
+def orgRemoveMember(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`org_remove_member()` instead.
+
+    """
+    print("dxpy.orgRemoveMember is deprecated; please use org_remove_member instead.", file=sys.stderr)
+    return org_remove_member(*args, **kwargs)
+
+def org_remove_member(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /org-xxxx/removeMember API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FremoveMember
+    """
+    return DXHTTPRequest('/%s/removeMember' % object_id, input_params, always_retry=always_retry, **kwargs)
+
 def orgSetMemberAccess(*args, **kwargs):
     """
 

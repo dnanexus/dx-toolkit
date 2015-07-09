@@ -792,6 +792,15 @@
         }
     ],
     [
+        "/org-xxxx/removeMember",
+        "orgRemoveMember(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FremoveMember"
+        }
+    ],
+    [
         "/org-xxxx/setMemberAccess",
         "orgSetMemberAccess(req, objectId)",
         {
