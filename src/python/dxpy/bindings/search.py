@@ -377,7 +377,7 @@ def find_executions(classname=None, launched_by=None, executable=None, project=N
             query["created"]["after"] = dxpy.utils.normalize_time_input(created_after)
         if created_before is not None:
             query["created"]["before"] = dxpy.utils.normalize_time_input(created_before)
-    if describe is not None and describe is Not False:
+    if describe is not None and describe is not False:
         query["describe"] = describe
     if name is not None:
         if name_mode == 'exact':
