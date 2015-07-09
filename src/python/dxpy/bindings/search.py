@@ -104,7 +104,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
                       link=None, project=None, folder=None, recurse=None,
                       modified_after=None, modified_before=None,
                       created_after=None, created_before=None,
-                      describe=None, limit=None, level=None,
+                      describe=False, limit=None, level=None,
                       return_handler=False, first_page_size=100,
                       **kwargs):
     """
@@ -144,8 +144,12 @@ def find_data_objects(classname=None, state=None, visibility=None,
     :type created_after: int or string
     :param created_before: Timestamp before which each result was last created (see note below for interpretation)
     :type created_before: int or string
-    :param describe: Whether to also return the output of calling describe() on the object
-    :type describe: boolean
+    :param describe: Controls whether to also return the output of
+        calling describe() on each object. Supply False to omit describe
+        output, True to obtain the default describe output, or a dict to
+        be supplied as the describe call input (which may, among other
+        things, be used to customize the set of fields that is returned)
+    :type describe: bool or dict
     :param level: The minimum permissions level for which results should be returned (one of "VIEW", "UPLOAD", "CONTRIBUTE", or "ADMINISTER")
     :type level: string
     :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
@@ -239,7 +243,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
             query["created"]["after"] = dxpy.utils.normalize_time_input(created_after)
         if created_before is not None:
             query["created"]["before"] = dxpy.utils.normalize_time_input(created_before)
-    if describe is not None:
+    if describe is not None and describe is not False:
         query["describe"] = describe
     if level is not None:
         query['level'] = level
@@ -280,8 +284,14 @@ def find_executions(classname=None, launched_by=None, executable=None, project=N
     :type created_after: int or string
     :param created_before: Timestamp before which each result was last created (see note accompanying :meth:`find_data_objects()` for interpretation)
     :type created_before: int or string
-    :param describe: Whether to also return the output of calling describe() on the execution. Besides supplying True (full description) or False (no details), you can also supply the dict {"io": False} to suppress detailed information about the execution's inputs and outputs.
-    :type describe: boolean or dict
+    :param describe: Controls whether to also return the output of
+        calling describe() on each execution. Supply False to omit
+        describe output, True to obtain the default describe output, or
+        a dict to be supplied as the describe call input (which may be
+        used to customize the set of fields that is to be returned; for
+        example, you can supply {"io": False} to suppress detailed
+        information about the execution's inputs and outputs)
+    :type describe: bool or dict
     :param name: Name of the job or analysis to search by (also see *name_mode*)
     :type name: string
     :param name_mode: Method by which to interpret the *name* field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
@@ -367,7 +377,8 @@ def find_executions(classname=None, launched_by=None, executable=None, project=N
             query["created"]["after"] = dxpy.utils.normalize_time_input(created_after)
         if created_before is not None:
             query["created"]["before"] = dxpy.utils.normalize_time_input(created_before)
-    query["describe"] = describe
+    if describe is not None and describe is Not False:
+        query["describe"] = describe
     if name is not None:
         if name_mode == 'exact':
             query['name'] = name
@@ -403,7 +414,7 @@ def find_analyses(*args, **kwargs):
     return find_executions(*args, **kwargs)
 
 def find_projects(name=None, name_mode='exact', properties=None, tags=None,
-                  level=None, describe=None, explicit_perms=None,
+                  level=None, describe=False, explicit_perms=None,
                   public=None, billed_to=None, limit=None, return_handler=False, first_page_size=100, **kwargs):
     """
     :param name: Name of the project (also see *name_mode*)
@@ -416,8 +427,12 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
     :type tags: list of strings
     :param level: One of "VIEW", "UPLOAD", "CONTRIBUTE", or "ADMINSTER". If specified, only returns projects where the current user has at least the specified permission level.
     :type level: string
-    :param describe: Either false or the input to the describe call for the project
-    :type describe: boolean or dict
+    :param describe: Controls whether to also return the output of
+        calling describe() on each project. Supply False to omit
+        describe output, True to obtain the default describe output, or
+        a dict to be supplied as the describe call input (which may be
+        used to customize the set of fields that is returned)
+    :type describe: bool or dict
     :param explicit_perms: Filter on presence of an explicit permision. If True, matching projects must have an explicit permission (any permission granted directly to the user or an organization to which the user belongs). If False, matching projects must not have any explicit permissions for the user. (default is None, for no filter)
     :type explicit_perms: boolean or None
     :param public: Filter on the project being public. If True, matching projects must be public. If False, matching projects must not be public. (default is None, for no filter)
@@ -457,7 +472,7 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
         query["tags"] = {"$and": tags}
     if level is not None:
         query["level"] = level
-    if describe is not None:
+    if describe is not None and describe is not False:
         query["describe"] = describe
     if explicit_perms is not None:
         query['explicitPermission'] = explicit_perms
@@ -475,7 +490,7 @@ def find_apps(name=None, name_mode='exact', category=None,
               billed_to=None, created_by=None, developer=None,
               created_after=None, created_before=None,
               modified_after=None, modified_before=None,
-              describe=None, limit=None, return_handler=False, first_page_size=100, **kwargs):
+              describe=False, limit=None, return_handler=False, first_page_size=100, **kwargs):
     """
     :param name: Name of the app (also see *name_mode*)
     :type name: string
@@ -501,8 +516,12 @@ def find_apps(name=None, name_mode='exact', category=None,
     :type modified_after: int or string
     :param modified_before: Timestamp before which each result was last modified (see note accompanying :meth:`find_data_objects()` for interpretation)
     :type modified_before: int or string
-    :param describe: If True, also returns the output of calling describe() on the object
-    :type describe: boolean
+    :param describe: Controls whether to also return the output of
+        calling describe() on each app. Supply False to omit describe
+        output, True to obtain the default describe output, or a dict to
+        be supplied as the describe call input (which may be used to
+        customize the set of fields that is returned)
+    :type describe: bool or dict
     :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
     :type limit: int
     :param first_page_size: The number of results that the initial API call will return. Subsequent calls will raise this by multiplying by 2 up to a maximum of 1000.
@@ -552,7 +571,7 @@ def find_apps(name=None, name_mode='exact', category=None,
             query["created"]["after"] = dxpy.utils.normalize_time_input(created_after)
         if created_before is not None:
             query["created"]["before"] = dxpy.utils.normalize_time_input(created_before)
-    if describe is not None:
+    if describe is not None and describe is not False:
         query["describe"] = describe
     if limit is not None:
         query["limit"] = limit
