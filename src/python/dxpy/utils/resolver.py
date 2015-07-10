@@ -533,33 +533,32 @@ def resolve_job_ref(job_id, name, describe={}):
     return results
 
 
-def _resolve_folder(project, folderpath, folder_name):
+def _resolve_folder(project, parent_folder, folder_name):
     """
     :param project: The project that the folder belongs to
     :type project: string
-    :param folderpath: Full path to the folder
-    :type folderpath: string
+    :param parent_folder: Full path to the parent folder that contains
+                         folder_name
+    :type parent_folder: string
     :param folder_name: Name of the folder
     :type folder_name: string
-    :returns: The resolved folder at location folderpath if it exists
+    :returns: The path to folder_name, if it exists, in the form of
+              "<parent_folder>/<folder_name>"
     :rtype: string
     :raises: ResolutionError if folder_name is not a folder, or if
              folder_name points to a folder that does not exist
 
-    Attempt to resolve folder_name at location folderpath in project.
+    Attempts to resolve folder_name at location parent_folder in project.
     """
     if '/' in folder_name:
         # Then there's no way it's supposed to be a folder
         raise ResolutionError('Object of name ' + str(folder_name) + ' could not be resolved in folder ' +
-                              str(folderpath) + ' of project ID ' + str(project))
+                              str(parent_folder) + ' of project ID ' + str(project))
+    possible_folder, _skip = clean_folder_path(parent_folder + '/' + folder_name, 'folder')
 
-    # This is the only possibility left.  Leave the
-    # error-checking for later.
-    possible_folder, _skip = clean_folder_path(folderpath + '/' + folder_name, 'folder')
-
-    if not check_folder_exists(project, folderpath, folder_name):
+    if not check_folder_exists(project, parent_folder, folder_name):
         raise ResolutionError('Unable to resolve "' + folder_name +
-                              '" to a data object or folder name in \'' + folderpath + "'")
+                              '" to a data object or folder name in \'' + parent_folder + "'")
     return possible_folder
 
 
@@ -601,14 +600,16 @@ def _validate_resolution_output_length(path, entity_name, results, allow_mult=Fa
               where <resolved_object> is of the following form:
               {"project": <project_id>, "id": <object_id>}
     :rtype: dict or list of dicts
-    :raises: ValueError if results is empty, or if all_mult is True but
-             allow_mult is False
+    :raises: ValueError if results is empty
     :raises: ResolutionError if too many results are found and the user is
              not in interactive mode and cannot select one
 
     Precondition: results must be a nonempty list
 
     Validates length of results.
+
+    If there are multiple results found and the user is in interactive mode,
+    then the user will be prompted to select a single result to be returned.
     """
     if len(results) == 0:
         raise ValueError("'results' must be nonempty.")
@@ -638,7 +639,7 @@ def _validate_resolution_output_length(path, entity_name, results, allow_mult=Fa
         return [results[0]] if allow_mult else results[0]
 
 
-def _resolve_global_entity(project_or_job_id, folderpath, entity_name, describe={}, visibility="either"):
+def _resolve_global_entity(project_or_job_id, folderpath, entity_name, describe=True, visibility="either"):
     """
     :param project_or_job_id: The project ID to which the entity belongs
                               (then the entity is an existing data object),
@@ -651,8 +652,9 @@ def _resolve_global_entity(project_or_job_id, folderpath, entity_name, describe=
     :param entity_name: Name of the object
     :type entity_name: string
     :param describe: Input mapping used to describe the job's project if
-                     project_or_job_id is a job ID
-    :type describe: dictionary
+                     project_or_job_id is a job ID, or True if the input
+                     mapping is to be empty
+    :type describe: dict or True
     :param visibility: The expected visibility of the entity ("either",
                        "hidden", or "visible"); to be used in resolution
     :type visibility: string
@@ -673,6 +675,8 @@ def _resolve_global_entity(project_or_job_id, folderpath, entity_name, describe=
     TODO: Inspect entity_name and conditionally treat it as a "glob" pattern.
     """
     if is_job_id(project_or_job_id):
+        if describe is True:
+            describe = {}
         # The following function call will raise a ResolutionError if no results
         # could be found.
         # If the call is successful, then the project will be incorporated into the
@@ -691,15 +695,16 @@ def _resolve_global_entity(project_or_job_id, folderpath, entity_name, describe=
             raise ResolutionError(str(details))
 
 
-def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_classes=None, allow_mult=False, describe={}, all_mult=False, allow_empty_string=True,
-                          visibility="either"):
+def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_classes=None, allow_mult=False,
+                          describe=True, all_mult=False, allow_empty_string=True, visibility="either"):
     '''
     :param ask_to_resolve: Whether picking may be necessary (if true, a list is returned; if false, only one result is returned)
     :type ask_to_resolve: boolean
     :param allow_mult: Whether to allow the user to select multiple results from the same path
     :type allow_mult: boolean
-    :param describe: Input hash to describe call for the results
-    :type describe: dict
+    :param describe: Input hash to describe call for the results, or True if no describe input
+                     is to be provided
+    :type describe: dict or True
     :param all_mult: Whether to return all matching results without prompting (only applicable if allow_mult == True)
     :type all_mult: boolean
     :returns: A LIST of results when ask_to_resolve is False or allow_mult is True
@@ -724,7 +729,6 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
     of the hash ID, it will return None for all fields.
     '''
     project, folderpath, entity_name = resolve_path(path, expected, allow_empty_string=allow_empty_string)
-
     if entity_name is None:
         # Definitely a folder (or project)
         # TODO: find a good way to check if folder exists and expected=folder
@@ -738,6 +742,9 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
                     found_valid_class = True
         if not found_valid_class:
             return None, None, None
+
+        if describe is True:
+            describe = {}
 
         if 'project' not in describe:
             if project != dxpy.WORKSPACE_ID:
@@ -764,11 +771,13 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
     elif project is None:
         raise ResolutionError('Could not resolve "' + path + '" to a project context.  Please either set a default project using dx select or cd, or add a colon (":") after your project ID or name')
     else:
+        # If project is a job ID, then _resolve_global_entity will return the
+        # result of resolve_job_ref, which will never return an empty list
         results = _resolve_global_entity(project, folderpath, entity_name, describe=describe, visibility=visibility)
         if len(results) == 0:
             # Could not resolve entity, so it is probably a folder
-            possible_folder = _resolve_folder(project, folderpath, entity_name)
-            return project, possible_folder, None
+            folder = _resolve_folder(project, folderpath, entity_name)
+            return project, folder, None
         else:
             validated_results = _validate_resolution_output_length(path,
                                                                    entity_name,
@@ -776,6 +785,8 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
                                                                    allow_mult=allow_mult,
                                                                    all_mult=all_mult,
                                                                    ask_to_resolve=ask_to_resolve)
+            if is_job_id(project):
+                return None, None, validated_results
             return project, None, validated_results
 
 
