@@ -41,7 +41,6 @@ public class DXProject extends DXContainer {
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Describe {
-        @SuppressWarnings("unused")
         @JsonProperty
         private String id;
         @JsonProperty
@@ -118,7 +117,6 @@ public class DXProject extends DXContainer {
 
     @JsonInclude(Include.NON_NULL)
     private static class ProjectNewRequest {
-        @SuppressWarnings("unused")
         @JsonProperty
         private String name;
 
@@ -129,7 +127,6 @@ public class DXProject extends DXContainer {
 
     @JsonInclude(Include.NON_NULL)
     private static class ProjectTerminateRequest {
-        @SuppressWarnings("unused")
         @JsonProperty
         private boolean terminateJobs;
 

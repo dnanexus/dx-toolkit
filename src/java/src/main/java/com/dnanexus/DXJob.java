@@ -241,7 +241,6 @@ public final class DXJob extends DXExecution {
         private List<StateTransition> stateTransitions;
         @JsonProperty
         private String function;
-        @SuppressWarnings("unused")
         @JsonProperty
         private List<String> dependsOn;
         @JsonProperty
@@ -252,7 +251,6 @@ public final class DXJob extends DXExecution {
         private Boolean isFree;
         @JsonProperty
         private String applet;
-        @SuppressWarnings("unused")
         @JsonProperty
         private String app;
         @JsonProperty

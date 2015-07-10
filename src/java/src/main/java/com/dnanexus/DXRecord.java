@@ -112,7 +112,6 @@ public class DXRecord extends DXDataObject {
      *
      * @return data object
      */
-    @SuppressWarnings("unused")
     @JsonCreator
     private static DXRecord create(Map<String, Object> value) {
         checkDXLinkFormat(value);

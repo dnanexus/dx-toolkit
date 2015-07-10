@@ -84,7 +84,6 @@ public enum ColumnType {
         createMap = ImmutableMap.copyOf(result);
     }
 
-    @SuppressWarnings("unused")
     @JsonCreator
     private static ColumnType create(String value) {
         return createMap.get(value);

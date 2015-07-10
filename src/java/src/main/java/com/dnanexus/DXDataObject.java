@@ -51,10 +51,8 @@ public abstract class DXDataObject extends DXObject {
      */
     @JsonInclude(Include.NON_NULL)
     private static class AddOrRemoveTagsRequest {
-        @SuppressWarnings("unused")
         @JsonProperty("project")
         private String projectId;
-        @SuppressWarnings("unused")
         @JsonProperty
         private List<String> tags;
 
@@ -69,7 +67,6 @@ public abstract class DXDataObject extends DXObject {
      */
     @JsonInclude(Include.NON_NULL)
     private static class AddOrRemoveTypesRequest {
-        @SuppressWarnings("unused")
         @JsonProperty
         private List<String> types;
 
@@ -304,31 +301,22 @@ public abstract class DXDataObject extends DXObject {
      */
     @JsonInclude(Include.NON_NULL)
     static class DataObjectNewRequest {
-        @SuppressWarnings("unused")
         @JsonProperty("project")
         private String projectId;
-        @SuppressWarnings("unused")
         @JsonProperty
         private String name;
-        @SuppressWarnings("unused")
         @JsonProperty
         private String folder;
-        @SuppressWarnings("unused")
         @JsonProperty("parents")
         private Boolean createParents;
-        @SuppressWarnings("unused")
         @JsonProperty
         private Boolean hidden;
-        @SuppressWarnings("unused")
         @JsonProperty
         private List<String> types;
-        @SuppressWarnings("unused")
         @JsonProperty
         private JsonNode details;
-        @SuppressWarnings("unused")
         @JsonProperty
         private List<String> tags;
-        @SuppressWarnings("unused")
         @JsonProperty
         private Map<String, String> properties;
 
@@ -367,7 +355,6 @@ public abstract class DXDataObject extends DXObject {
     public static class Describe {
         @JsonProperty
         private String project;
-        @SuppressWarnings("unused")
         @JsonProperty
         private String id;
         @JsonProperty
@@ -658,10 +645,8 @@ public abstract class DXDataObject extends DXObject {
 
     @JsonInclude(Include.NON_NULL)
     private static class RenameRequest {
-        @SuppressWarnings("unused")
         @JsonProperty("project")
         private String projectId;
-        @SuppressWarnings("unused")
         @JsonProperty
         private String name;
 
@@ -673,10 +658,8 @@ public abstract class DXDataObject extends DXObject {
 
     @JsonInclude(Include.NON_NULL)
     private static class SetPropertiesRequest {
-        @SuppressWarnings("unused")
         @JsonProperty("project")
         private String projectId;
-        @SuppressWarnings("unused")
         @JsonProperty
         private Map<String, String> properties;
 
@@ -701,7 +684,6 @@ public abstract class DXDataObject extends DXObject {
 
     @JsonInclude(Include.NON_NULL)
     private static class SetVisibilityRequest {
-        @SuppressWarnings("unused")
         @JsonProperty
         private boolean hidden;
 
@@ -736,7 +718,6 @@ public abstract class DXDataObject extends DXObject {
      *
      * @return data object
      */
-    @SuppressWarnings("unused")
     @JsonCreator
     private static DXDataObject create(Map<String, Object> value) {
         checkDXLinkFormat(value);
@@ -1080,7 +1061,6 @@ public abstract class DXDataObject extends DXObject {
      *
      * @return a DNAnexus link
      */
-    @SuppressWarnings("unused")
     @JsonValue
     private JsonNode getDXLink() {
         return DXJSON.getObjectBuilder().put("$dnanexus_link", this.getId()).build();

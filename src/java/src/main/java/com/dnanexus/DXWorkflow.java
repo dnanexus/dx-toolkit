@@ -107,7 +107,6 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
      *
      * @return data object
      */
-    @SuppressWarnings("unused")
     @JsonCreator
     private static DXWorkflow create(Map<String, Object> value) {
         checkDXLinkFormat(value);

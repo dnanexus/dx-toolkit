@@ -48,25 +48,18 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
 
     @JsonInclude(Include.NON_NULL)
     private static class AppletNewRequest extends DataObjectNewRequest {
-        @SuppressWarnings("unused")
         @JsonProperty
         private final String title;
-        @SuppressWarnings("unused")
         @JsonProperty
         private final String summary;
-        @SuppressWarnings("unused")
         @JsonProperty
         private final String description;
-        @SuppressWarnings("unused")
         @JsonProperty
         private final List<InputParameter> inputSpec;
-        @SuppressWarnings("unused")
         @JsonProperty
         private final List<OutputParameter> outputSpec;
-        @SuppressWarnings("unused")
         @JsonProperty
         private final RunSpecification runSpec;
-        @SuppressWarnings("unused")
         @JsonProperty
         private final String dxapi;
 
@@ -351,7 +344,6 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
      *
      * @return data object
      */
-    @SuppressWarnings("unused")
     @JsonCreator
     private static DXApplet create(Map<String, Object> value) {
         checkDXLinkFormat(value);

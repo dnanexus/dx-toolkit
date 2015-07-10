@@ -63,7 +63,6 @@ public enum AccessLevel {
         createMap = ImmutableMap.copyOf(result);
     }
 
-    @SuppressWarnings("unused")
     @JsonCreator
     private static AccessLevel create(String value) {
         if (value == null) {

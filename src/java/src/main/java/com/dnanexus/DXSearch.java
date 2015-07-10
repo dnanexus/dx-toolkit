@@ -57,7 +57,6 @@ public final class DXSearch {
             this.describeOptions = describeOptions;
         }
 
-        @SuppressWarnings("unused")
         @JsonValue
         private Object getValue() {
             if (describeOptions == null) {
@@ -75,13 +74,10 @@ public final class DXSearch {
 
         @JsonInclude(Include.NON_NULL)
         private static class ScopeQuery {
-            @SuppressWarnings("unused")
             @JsonProperty
             private final String project;
-            @SuppressWarnings("unused")
             @JsonProperty
             private final String folder;
-            @SuppressWarnings("unused")
             @JsonProperty
             private final Boolean recurse;
 
@@ -130,10 +126,8 @@ public final class DXSearch {
         @JsonProperty
         private final DescribeParameters describe;
 
-        @SuppressWarnings("unused")
         @JsonProperty
         private final JsonNode starting;
-        @SuppressWarnings("unused")
         @JsonProperty
         private final Integer limit;
 
@@ -163,7 +157,7 @@ public final class DXSearch {
             this.created = previousQuery.created;
             this.describe = previousQuery.describe;
 
-            this.starting = next;
+            this.starting = next.isNull() ? null : next;
             this.limit = limit;
         }
 
@@ -893,7 +887,7 @@ public final class DXSearch {
 
             @Override
             public boolean hasNextPage() {
-                return response.next != null;
+                return response.next != null && !response.next.isNull();
             }
 
             @Override
@@ -1035,10 +1029,8 @@ public final class DXSearch {
         @JsonProperty
         private final DescribeParameters describe;
 
-        @SuppressWarnings("unused")
         @JsonProperty
         private final JsonNode starting;
-        @SuppressWarnings("unused")
         @JsonProperty
         private final Integer limit;
 
@@ -1071,7 +1063,7 @@ public final class DXSearch {
 
             this.describe = previousQuery.describe;
 
-            this.starting = next;
+            this.starting = next.isNull() ? null : next;
             this.limit = limit;
         }
 
@@ -1703,7 +1695,7 @@ public final class DXSearch {
 
             @Override
             public boolean hasNextPage() {
-                return response.next != null;
+                return response.next != null && !response.next.isNull();
             }
 
             @Override
@@ -1845,7 +1837,6 @@ public final class DXSearch {
                 this.nameExact = nameExact;
             }
 
-            @SuppressWarnings("unused")
             @JsonValue
             private Object getValue() {
                 return this.nameExact;
@@ -1862,7 +1853,6 @@ public final class DXSearch {
                 this.glob = glob;
             }
 
-            @SuppressWarnings("unused")
             @JsonValue
             private Map<String, String> getValue() {
                 return ImmutableMap.of("glob", this.glob);
@@ -1886,7 +1876,6 @@ public final class DXSearch {
                 this.flags = flags;
             }
 
-            @SuppressWarnings("unused")
             @JsonValue
             private Map<String, String> getValue() {
                 ImmutableMap.Builder<String, String> mapBuilder = ImmutableMap.builder();
@@ -2055,7 +2044,6 @@ public final class DXSearch {
                 this.propertyValue = Preconditions.checkNotNull(value);
             }
 
-            @SuppressWarnings("unused")
             @JsonValue
             protected Object getValue() {
                 if (propertyValue == null) {
@@ -2173,7 +2161,6 @@ public final class DXSearch {
                 this.tag = Preconditions.checkNotNull(tag);
             }
 
-            @SuppressWarnings("unused")
             @JsonValue
             protected String getValue() {
                 return this.tag;
@@ -2285,7 +2272,6 @@ public final class DXSearch {
             this.after = after;
         }
 
-        @SuppressWarnings("unused")
         @JsonProperty("after")
         private Long getAfter() {
             if (after == null) {
@@ -2294,7 +2280,6 @@ public final class DXSearch {
             return after.getTime();
         }
 
-        @SuppressWarnings("unused")
         @JsonProperty("before")
         private Long getBefore() {
             if (before == null) {
@@ -2452,7 +2437,6 @@ public final class DXSearch {
             this.value = value;
         }
 
-        @SuppressWarnings("unused")
         @JsonValue
         private String getValue() {
             return this.value;

@@ -48,7 +48,6 @@ public enum JobState {
         createMap = ImmutableMap.copyOf(result);
     }
 
-    @SuppressWarnings("unused")
     @JsonCreator
     private static JobState create(String value) {
         return createMap.get(value);

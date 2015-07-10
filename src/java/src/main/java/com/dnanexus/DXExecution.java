@@ -139,6 +139,10 @@ public abstract class DXExecution extends DXObject {
          * @return execution's input
          */
         public <T> T getInput(Class<T> inputClass) {
+            if (describeOutput.input == null) {
+                throw new IllegalStateException(
+                        "input is not available because it was not retrieved with the describe call");
+            }
             return DXJSON.safeTreeToValue(describeOutput.input, inputClass);
         }
 
@@ -184,6 +188,10 @@ public abstract class DXExecution extends DXObject {
          * @return execution's input with default values filled in
          */
         public <T> T getOriginalInput(Class<T> inputClass) {
+            if (describeOutput.originalInput == null) {
+                throw new IllegalStateException(
+                        "original input is not available because it was not retrieved with the describe call");
+            }
             return DXJSON.safeTreeToValue(describeOutput.originalInput, inputClass);
         }
 
@@ -197,7 +205,14 @@ public abstract class DXExecution extends DXObject {
          * @return output object or null
          */
         public <T> T getOutput(Class<T> outputClass) {
+            // TODO: the same treatment here with IllegalStateException should be given to all
+            // fields, although the bindings do not yet allow supplying describe options that would
+            // turn off those fields.
             if (describeOutput.output == null) {
+                throw new IllegalStateException(
+                        "output is not available because it was not retrieved with the describe call");
+            }
+            if (describeOutput.output.isNull()) {
                 return null;
             }
             return DXJSON.safeTreeToValue(describeOutput.output, outputClass);
@@ -272,6 +287,10 @@ public abstract class DXExecution extends DXObject {
          * @return execution's input as supplied to the "run" call
          */
         public <T> T getRunInput(Class<T> inputClass) {
+            if (describeOutput.runInput == null) {
+                throw new IllegalStateException(
+                        "run input is not available because it was not retrieved with the describe call");
+            }
             return DXJSON.safeTreeToValue(describeOutput.runInput, inputClass);
         }
 

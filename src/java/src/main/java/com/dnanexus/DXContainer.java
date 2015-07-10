@@ -91,13 +91,10 @@ public class DXContainer extends DXObject {
      */
     @JsonInclude(Include.NON_NULL)
     private static class ContainerMoveRequest {
-        @SuppressWarnings("unused")
         @JsonProperty
         private final List<String> objects;
-        @SuppressWarnings("unused")
         @JsonProperty
         private final List<String> folders;
-        @SuppressWarnings("unused")
         @JsonProperty
         private final String destination;
 
@@ -159,11 +156,9 @@ public class DXContainer extends DXObject {
      */
     @JsonInclude(Include.NON_NULL)
     private static class ContainerNewFolderRequest {
-        @SuppressWarnings("unused")
         @JsonProperty
         private final String folder;
         @JsonProperty
-        @SuppressWarnings("unused")
         private final Boolean parents;
 
         private ContainerNewFolderRequest(String folder) {
@@ -209,11 +204,9 @@ public class DXContainer extends DXObject {
      */
     @JsonInclude(Include.NON_NULL)
     private static class ContainerRenameFolderRequest {
-        @SuppressWarnings("unused")
         @JsonProperty
         private final String folder;
         @JsonProperty
-        @SuppressWarnings("unused")
         private final String name;
 
         private ContainerRenameFolderRequest(String folder, String name) {
@@ -251,11 +244,9 @@ public class DXContainer extends DXObject {
      */
     @JsonInclude(Include.NON_NULL)
     private static class ContainerRemoveFolderRequest {
-        @SuppressWarnings("unused")
         @JsonProperty
         private final String folder;
         @JsonProperty
-        @SuppressWarnings("unused")
         private final Boolean recurse;
 
         private ContainerRemoveFolderRequest(String folder) {
@@ -301,7 +292,6 @@ public class DXContainer extends DXObject {
      */
     @JsonInclude(Include.NON_NULL)
     private static class ContainerRemoveObjectsRequest {
-        @SuppressWarnings("unused")
         @JsonProperty
         private final List<String> objects;
 
@@ -337,7 +327,6 @@ public class DXContainer extends DXObject {
 
     @JsonInclude(Include.NON_NULL)
     private static class ContainerListFolderRequest {
-        @SuppressWarnings("unused")
         @JsonProperty
         private final String folder;
 

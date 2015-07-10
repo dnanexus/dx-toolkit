@@ -44,7 +44,6 @@ public enum AnalysisState {
         createMap = ImmutableMap.copyOf(result);
     }
 
-    @SuppressWarnings("unused")
     @JsonCreator
     private static AnalysisState create(String value) {
         return createMap.get(value);

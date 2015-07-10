@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 import com.dnanexus.DXHTTPRequest.RetryStrategy;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 
 /**
@@ -153,7 +153,7 @@ public abstract class DXObject {
      */
     @Override
     public String toString() {
-        return Objects.toStringHelper(this).add("id", this.dxId).toString();
+        return MoreObjects.toStringHelper(this).add("id", this.dxId).toString();
     }
 
 }

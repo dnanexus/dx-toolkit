@@ -3,7 +3,7 @@ Maintainer: Phil Sung <psung@dnanexus.com>
 Section: science
 Priority: optional
 Standards-Version: 3.9.3
-Build-Depends: debhelper (>= 8), python-virtualenv, libboost1.55-all-dev | libboost1.48-all-dev, r-base-core, libdist-zilla-perl, openjdk-6-jdk | openjdk-7-jdk, maven2
+Build-Depends: debhelper (>= 8), python-virtualenv, libboost1.55-all-dev | libboost1.48-all-dev, r-base-core, libdist-zilla-perl, openjdk-7-jdk, maven2
 
 Package: dx-toolkit
 Architecture: any

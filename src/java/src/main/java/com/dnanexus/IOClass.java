@@ -60,7 +60,6 @@ public enum IOClass {
         createMap = ImmutableMap.copyOf(result);
     }
 
-    @SuppressWarnings("unused")
     @JsonCreator
     private static IOClass create(String value) {
         return createMap.get(value);

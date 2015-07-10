@@ -23,10 +23,10 @@ import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.CoreProtocolPNames;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 
 import com.dnanexus.exceptions.DXAPIException;
@@ -102,7 +102,7 @@ public class DXHTTPRequest {
 
     private final String apiserver;
 
-    private final DefaultHttpClient httpclient;
+    private final HttpClient httpclient;
 
     private static final int NUM_RETRIES = 6;
 
@@ -133,8 +133,7 @@ public class DXHTTPRequest {
     public DXHTTPRequest(DXEnvironment env) {
         this.securityContext = env.getSecurityContextJson();
         this.apiserver = env.getApiserverPath();
-        this.httpclient = new DefaultHttpClient();
-        httpclient.getParams().setParameter(CoreProtocolPNames.USER_AGENT, USER_AGENT);
+        this.httpclient = HttpClientBuilder.create().setUserAgent(USER_AGENT).build();
     }
 
     /**
@@ -221,7 +220,7 @@ public class DXHTTPRequest {
             RetryStrategy retryStrategy) {
         HttpPost request = new HttpPost(apiserver + resource);
 
-        if (securityContext == null) {
+        if (securityContext == null || securityContext.isNull()) {
             throw new DXHTTPException(new IOException("No security context was set"));
         }
 

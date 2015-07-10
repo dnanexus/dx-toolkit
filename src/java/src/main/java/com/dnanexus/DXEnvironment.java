@@ -124,8 +124,8 @@ public class DXEnvironment {
             // (2) JSON file
             if (jsonConfigFile.exists()) {
                 try {
-                    JsonNode jsonConfig =
-                            jsonFactory.createJsonParser(jsonConfigFile).readValueAsTree();
+                    JsonNode jsonConfig = jsonFactory.createParser(jsonConfigFile)
+                            .readValueAsTree();
                     if (getTextValue(jsonConfig, "DX_APISERVER_HOST") != null) {
                         apiserverHost = getTextValue(jsonConfig, "DX_APISERVER_HOST");
                     }
@@ -180,8 +180,8 @@ public class DXEnvironment {
 
             try {
                 if (securityContextTxt != null) {
-                    securityContext =
-                            jsonFactory.createJsonParser(securityContextTxt).readValueAsTree();
+                    securityContext = jsonFactory.createParser(securityContextTxt)
+                            .readValueAsTree();
                 } else {
                     securityContext = null;
                 }
@@ -327,7 +327,7 @@ public class DXEnvironment {
 
     private static String getTextValue(JsonNode jsonNode, String key) {
         JsonNode value = jsonNode.get(key);
-        if (value == null) {
+        if (value == null || value.isNull()) {
             return null;
         }
         return value.asText();
