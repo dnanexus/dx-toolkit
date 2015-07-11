@@ -67,7 +67,7 @@ public class DXAPITest {
     public void testDXAPICustomEnvironment() throws IOException {
         DXEnvironment env = DXEnvironment.Builder.fromDefaults().build();
         JsonNode input =
-                (JsonNode) (new MappingJsonFactory().createJsonParser("{}").readValueAsTree());
+                (JsonNode) (new MappingJsonFactory().createParser("{}").readValueAsTree());
         JsonNode responseJson = DXAPI.systemFindDataObjects(input, JsonNode.class, env);
         Assert.assertEquals(responseJson.isObject(), true);
 

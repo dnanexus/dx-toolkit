@@ -34,13 +34,13 @@ public class DXJSONTest {
     @Test
     public void testJsonObjects() throws IOException {
         ObjectNode actual1 = DXJSON.getObjectBuilder().build();
-        ObjectNode expected1 = new MappingJsonFactory().createJsonParser("{}").readValueAsTree();
+        ObjectNode expected1 = new MappingJsonFactory().createParser("{}").readValueAsTree();
 
         Assert.assertEquals(expected1, actual1);
         Assert.assertEquals(expected1.toString(), "{}");
 
         ObjectNode actual2 = DXJSON.getObjectBuilder().put("key1", "a-string").put("key2", 12321).build();
-        ObjectNode expected2 = new MappingJsonFactory().createJsonParser("{\"key1\": \"a-string\", \"key2\": 12321}")
+        ObjectNode expected2 = new MappingJsonFactory().createParser("{\"key1\": \"a-string\", \"key2\": 12321}")
                 .readValueAsTree();
 
         Assert.assertEquals(expected2, actual2);
