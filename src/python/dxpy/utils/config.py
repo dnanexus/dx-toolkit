@@ -280,7 +280,11 @@ class DXConfig(MutableMapping):
         try:
             os.makedirs(conf_dir, 0o700)
         except OSError:
-            os.chmod(conf_dir, 0o700)
+            try:
+                os.chmod(conf_dir, 0o700)
+            except OSError as e:
+                warn(fill("Error while writing configuration data: " + format_exception(e)))
+                return
 
         env_jsonfile_path = os.path.join(conf_dir, "environment.json")
         # Make sure the file has 600 permissions
