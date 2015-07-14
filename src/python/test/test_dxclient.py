@@ -31,6 +31,7 @@ from dxpy_testutil import DXTestCase, check_output, temporary_project, select_pr
 import dxpy_testutil as testutil
 from dxpy.exceptions import DXAPIError, DXSearchError, EXPECTED_ERR_EXIT_STATUS
 from dxpy.compat import str, sys_encoding
+from dxpy.utils.resolver import ResolutionError, resolve_existing_path, _check_resolution_needed as check_resolution
 
 @contextmanager
 def chdir(dirname=None):
@@ -1271,6 +1272,61 @@ class TestDXClientRun(DXTestCase):
     def tearDown(self):
         dxpy.api.project_destroy(self.other_proj_id, {'terminateJobs': True})
         super(TestDXClientRun, self).tearDown()
+
+    def test_dx_resolve_check_resolution_needed(self):
+        # If no entity_name is given, no entity_name should be returned
+        self.assertEquals(check_resolution("some_path", "project_id", "/", None), (False, "project_id", "/", None))
+        self.assertEquals(check_resolution("some_path", self.project, "/", None), (False, self.project, "/", None))
+
+        record_id = dxpy.api.record_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "name": "myrecord"})['id']
+
+        self.assertEquals(check_resolution("some_path", self.project, "/", "myrecord"),
+                          (True, self.project, "/", "myrecord"))
+
+        self.assertEquals(check_resolution("some_path", "not_a_real_project_id", "/", "notarealrecord"),
+                          (True, "not_a_real_project_id", "/", "notarealrecord"))
+
+        # If the entity is a DX ID, but not an expected class, the result should be False, None, None, None
+        result = check_resolution("some_path", self.project, "/", record_id, expected_classes=["file"])
+        self.assertEquals(result, (False, None, None, None))
+
+        # If entity_id is a hash, there is no need to resolve, and the describe
+        # output is returned (should work no matter what project is given)
+        result = check_resolution("some_path", self.project, "/", record_id, expected_classes=["record"])
+        self.assertEquals(result[:3], (False, self.project, "/"))
+        desc_output = result[3]
+        self.assertEquals(desc_output["describe"]["project"], self.project)
+        self.assertEquals(desc_output["describe"]["name"], "myrecord")
+        self.assertEquals(desc_output["id"], record_id)
+        desc_output = check_resolution("some_path", None, "/", record_id, enclose_in_list=True)[3][0]
+        self.assertEquals(desc_output["describe"]["project"], self.project)
+        self.assertEquals(desc_output["describe"]["name"], "myrecord")
+        self.assertEquals(desc_output["id"], record_id)
+
+        # Describing entity_id should work even if the project hint is wrong
+        result = check_resolution("some_path", self.project, "/", record_id, describe={"project": self.other_proj_id,
+                                                                                       "fields": {"sponsored": True}})
+        self.assertEquals(result[:3], (False, self.project, "/"))
+        desc_output = result[3]
+        self.assertEquals(desc_output["describe"]["sponsored"], False)
+        self.assertEquals(desc_output["id"], record_id)
+
+        # Even if the given project is not a real project ID, the correct project ID
+        # should be in the describe output
+        desc_output = check_resolution("some_path", "not_a_real_project_id", "/", record_id)[3]
+        self.assertEquals(desc_output["describe"]["project"], self.project)
+        self.assertEquals(desc_output["describe"]["name"], "myrecord")
+        self.assertEquals(desc_output["id"], record_id)
+
+        # If no project is specified and entity_name is not a hash, then a ResolutionError
+        # should be raised
+        with self.assertRaisesRegexp(ResolutionError, 'Could not resolve "some_path"'):
+            check_resolution("some_path", None, "/", "myrecord")
+        # ResolutionError also raised if describing an entity ID fails
+        with self.assertRaisesRegexp(ResolutionError, "The entity record-\d+ could not be found"):
+            check_resolution("some_path", self.project, "/", "record-123456789012345678901234")
 
     def test_dx_run_depends_on_success(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
