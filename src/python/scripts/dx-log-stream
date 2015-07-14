@@ -18,6 +18,19 @@
 
 '''
 Redirects stdin to a DNAnexus log socket in the execution environment.
+
+Valid logging levels:
+
+--source                | --level        | Appears as
+------------------------|----------------|-----------
+DX_APP_STREAM (default) | info (default) | STDOUT
+DX_APP_STREAM (default) | error          | STDERR
+------------------------|----------------|-----------
+DX_APP                  | debug          | DEBUG
+DX_APP                  | info (default) | INFO
+DX_APP                  | warning        | WARNING
+DX_APP                  | error          | ERROR
+DX_APP                  | critical       | CRITICAL
 '''
 
 from __future__ import print_function
@@ -28,8 +41,10 @@ USING_PYTHON2 = True if sys.version_info < (3, 0) else False
 
 logging.basicConfig(level=logging.DEBUG, format="%(message)s")
 
-parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument("-l", "--level", help="Logging level to use", default='info')
+parser = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+parser.add_argument("-l", "--level", help="Logging level to use", default='info',
+                    choices=['critical', 'error', 'warning', 'info', 'debug'])
 parser.add_argument("-s", "--source", help="Source ID to use", default='DX_APP_STREAM',
                     choices=['DX_APP', 'DX_APP_STREAM'])
 args = parser.parse_args()
