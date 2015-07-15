@@ -25,37 +25,6 @@ import collections
 import concurrent.futures
 import threading
 
-
-# Monkeypatch ThreadPoolExecutor with relevant logic from the patch for
-# Python issue 16284. See:
-#
-#   <http://bugs.python.org/issue16284>
-#   <http://hg.python.org/cpython/rev/70cef0a160cf/>
-#
-# We may need to apply the relevant parts of the patches to
-# ProcessPoolExecutor and multiprocessing.Queue if we ever start using
-# those, too.
-def _non_leaky_worker(executor_reference, work_queue):
-    try:
-        while True:
-            work_item = work_queue.get(block=True)
-            if work_item is not None:
-                work_item.run()
-                del work_item
-                continue
-            executor = executor_reference()
-            # Exit if:
-            #   - The interpreter is shutting down OR
-            #   - The executor that owns the worker has been collected OR
-            #   - The executor that owns the worker has been shutdown.
-            if concurrent.futures.thread._shutdown or executor is None or executor._shutdown:
-                # Notice other workers
-                work_queue.put(None)
-                return
-            del executor
-    except BaseException:
-        concurrent.futures.thread._base.LOGGER.critical('Exception in worker', exc_info=True)
-
 def _chain_result(outer_future):
     """Returns a callable that can be supplied to Future.add_done_callback
     to propagate a future's result to outer_future.
@@ -69,9 +38,6 @@ def _chain_result(outer_future):
         else:
             outer_future.set_result(result)
     return f
-
-concurrent.futures.thread._worker = _non_leaky_worker
-
 
 def _run_callable_with_postamble(postamble, callable_, *args, **kwargs):
     """Returns a callable of no args that invokes callable_ (with the
