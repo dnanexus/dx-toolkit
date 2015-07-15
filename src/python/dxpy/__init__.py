@@ -134,6 +134,9 @@ from requests.exceptions import ConnectionError, HTTPError, Timeout
 from requests.auth import AuthBase
 from .compat import USING_PYTHON2, expanduser
 
+from requests.packages import urllib3
+urllib3.disable_warnings(category=urllib3.exceptions.InsecurePlatformWarning)
+
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 logging.getLogger('dxpy.packages.requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
