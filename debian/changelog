@@ -1,3 +1,9 @@
+dx-toolkit (0.153.0) precise; urgency=low
+
+  * Require Java 7 for Java bindings
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 15 Jul 2015 21:27:30 +0000
+
 dx-toolkit (0.152.0) precise; urgency=low
 
   * Java bindings support for dataobj describe "fields" API
