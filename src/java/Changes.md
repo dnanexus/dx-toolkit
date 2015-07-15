@@ -1,5 +1,21 @@
 # Java API Bindings Changelog
 
+## 0.153.0
+
+* Raise Java compatibility level from 6 to 7
+
+## 0.152.0
+
+* DescribeOptions.withCustomFields allows the client to specify a
+  smaller set of fields to retrieve when describing a data object.
+* DataObjectState may now additionally have the value ABANDONED (applies
+  to files only).
+
+## 0.126.0
+
+* FindDataObjectsRequestBuilder.withTypes allows constructing complex
+  (and/or) queries on object types
+
 ## 0.100.0
 
 * Retry logic is now consistent with that of Python bindings, including support
