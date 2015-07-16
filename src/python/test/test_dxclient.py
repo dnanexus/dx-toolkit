@@ -4745,8 +4745,8 @@ class TestDXCp(DXTestCase):
 
         # The file {p1}:/{f} exists, however, {p1}/{f} does not. We
         # want to see an error message that reflects this.
-        expected_err_msg = "ResolutionError: The folder /{f} could not be found in {p2}".format(
-            p2=self.project, f=fname1)
+        expected_err_msg = "ResolutionError: The folder /{p1} could not be found in {p2}".format(
+            p1=self.proj_id1, p2=self.project)
         with self.assertSubprocessFailure(stderr_regexp=expected_err_msg, exit_code=3):
             run("dx cp {p1}/{f} {p2}:/".format(p1=self.proj_id1, f=fname1, p2=self.proj_id2))
 
