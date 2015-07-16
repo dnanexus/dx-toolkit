@@ -15,7 +15,7 @@
     "interpreter": "bash",
     "execDepends": [
       {"name": "dx-java-bindings"},
-      {"name": "openjdk-6-jre-headless"}
+      {"name": "openjdk-7-jre-headless"}
     ]
   },
   "version": "0.0.1"
