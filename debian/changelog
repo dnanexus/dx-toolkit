@@ -1,3 +1,9 @@
+dx-toolkit (0.154.0) precise; urgency=low
+
+  * Documentation and test fixes
+
+ -- Phil Sung <psung@dnanexus.com>  Thu, 23 Jul 2015 04:54:51 +0000
+
 dx-toolkit (0.153.0) precise; urgency=low
 
   * Require Java 7 for Java bindings
