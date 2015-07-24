@@ -567,7 +567,13 @@ class ExecutableInputs(object):
                         self.inputs[input_name] = input_value
                 else:
                     # TODO: Consolidate the following checks with exec_io.parse_input_or_jbor
-                    if input_class == 'string':
+                    # `parse_bool()` can throw DXCLIError, which will be
+                    # propagated directly to the caller.
+                    if input_class == 'boolean':
+                        self.inputs[input_name] = parse_bool(input_value)
+                    elif input_class == 'array:boolean':
+                        self.inputs[input_name].append(parse_bool(input_value))
+                    elif input_class == 'string':
                         self.inputs[input_name] = input_value
                     elif input_class == 'array:string':
                         self.inputs[input_name].append(input_value)
