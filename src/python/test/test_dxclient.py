@@ -1355,7 +1355,8 @@ class TestDXClientRun(DXTestCase):
                                             {"name": "input0", "class": "record"},
                                             {"name": "input1", "class": "array:record", "optional": True},
                                             {"name": "int0", "class": "int"},
-                                            {"name": "int1", "class": "array:int", "optional": True}
+                                            {"name": "int1", "class": "array:int", "optional": True},
+                                            {"name": "bool0", "class": "array:boolean", "optional": True}
                                          ],
                                          "outputSpec": [],
                                          "runSpec": {"interpreter": "bash",
@@ -1364,16 +1365,16 @@ class TestDXClientRun(DXTestCase):
 
         # Try with applet that has an input spec
         job_id = run("dx run " + applet_id + " --brief -y -iinput0=resolve_record1 -iint0=10 " +
-                     "-iinput1=resolve_record2 -iinput1=resolve_record1 -iint1=0 -iint1=1 -iint1=2").strip()
+                     "-iinput1=resolve_record2 -iinput1=resolve_record1 -iint1=0 -iint1=1 -iint1=2 " +
+                     "-ibool0=true -ibool0=0").strip()
         job_desc = dxpy.describe(job_id)
 
         self.assertEquals(job_desc['input']['input0']['$dnanexus_link']['id'], record_id1)
         self.assertEquals(job_desc['input']['input1'][0]['$dnanexus_link']['id'], record_id2)
         self.assertEquals(job_desc['input']['input1'][1]['$dnanexus_link']['id'], record_id1)
         self.assertEquals(job_desc['input']['int0'], 10)
-        self.assertEquals(job_desc['input']['int1'][0], 0)
-        self.assertEquals(job_desc['input']['int1'][1], 1)
-        self.assertEquals(job_desc['input']['int1'][2], 2)
+        self.assertEquals(job_desc['input']['int1'], [0, 1, 2])
+        self.assertEquals(job_desc['input']['bool0'], [True, False])
 
         # Workflows should show same behavior as applets
         workflow_id = run("dx new workflow myworkflow --output-folder /foo --brief").strip()
