@@ -27,7 +27,7 @@ Description: Transitional package for DNAnexus client tools
 
 Package: dx-java-bindings
 Architecture: any
-Depends: ${misc:Depends}, openjdk-6-jre-headless | openjdk-7-jre-headless, dx-toolkit
+Depends: ${misc:Depends}, openjdk-7-jre-headless | openjdk-8-jre-headless, dx-toolkit
 Description: Java bindings to DNAnexus Platform
  Bindings for interacting with the DNAnexus platform from Java.
 
