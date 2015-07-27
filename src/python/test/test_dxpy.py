@@ -1220,6 +1220,22 @@ def main(number):
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
     def test_run_workflow_with_instance_type(self):
+
+        # Waits for the job to exist (see PTFM-14462)
+        #
+        # Another approach would be to wait for the analysis describe to
+        # converge
+        def describe_job_with_retry(job_id):
+            while True:
+                try:
+                    return dxpy.DXJob(job_id).describe()
+                except dxpy.DXAPIError as e:
+                    if e.name == 'ResourceNotFound':
+                        time.sleep(1.0)
+                        continue
+                    # Surface all errors other than ResourceNotFound
+                    raise
+
         dxworkflow = dxpy.DXWorkflow(dxpy.api.workflow_new({"project": self.proj_id})['id'])
         dxapplet = dxpy.DXApplet()
         dxapplet.new(name="test_applet",
@@ -1235,32 +1251,32 @@ def main(number):
         # control (no request)
         dxanalysis = dxworkflow.run({})
         time.sleep(2)
-        dxjob = dxpy.DXJob(dxanalysis.describe()['stages'][0]['execution']['id'])
-        self.assertEqual(dxjob.describe()['instanceType'], self.default_inst_type)
+        job_describe = describe_job_with_retry(dxanalysis.describe()['stages'][0]['execution']['id'])
+        self.assertEqual(job_describe['instanceType'], self.default_inst_type)
 
         # request for all stages and all entry points
         dxanalysis = dxworkflow.run({}, instance_type="mem2_hdd2_x1")
         time.sleep(2)
-        dxjob = dxpy.DXJob(dxanalysis.describe()['stages'][0]['execution']['id'])
-        self.assertEqual(dxjob.describe()['instanceType'], 'mem2_hdd2_x1')
+        job_describe = describe_job_with_retry(dxanalysis.describe()['stages'][0]['execution']['id'])
+        self.assertEqual(job_describe['instanceType'], 'mem2_hdd2_x1')
 
         # request for all stages, overriding some entry points
         dxanalysis = dxworkflow.run({}, instance_type={"*": "mem2_hdd2_x1", "foo": "mem2_hdd2_x2"})
         time.sleep(2)
-        dxjob = dxpy.DXJob(dxanalysis.describe()['stages'][0]['execution']['id'])
-        self.assertEqual(dxjob.describe()['instanceType'], 'mem2_hdd2_x1')
+        job_describe = describe_job_with_retry(dxanalysis.describe()['stages'][0]['execution']['id'])
+        self.assertEqual(job_describe['instanceType'], 'mem2_hdd2_x1')
 
         # request for the stage specifically, for all entry points
         dxanalysis = dxworkflow.run({}, stage_instance_types={stage_id: "mem2_hdd2_x2"})
         time.sleep(2)
-        dxjob = dxpy.DXJob(dxanalysis.describe()['stages'][0]['execution']['id'])
-        self.assertEqual(dxjob.describe()['instanceType'], 'mem2_hdd2_x2')
+        job_describe = describe_job_with_retry(dxanalysis.describe()['stages'][0]['execution']['id'])
+        self.assertEqual(job_describe['instanceType'], 'mem2_hdd2_x2')
 
         # request for the stage specifically, overriding some entry points
         dxanalysis = dxworkflow.run({}, stage_instance_types={stage_id: {"*": "mem2_hdd2_x2", "foo": "mem2_hdd2_x1"}})
         time.sleep(2)
-        dxjob = dxpy.DXJob(dxanalysis.describe()['stages'][0]['execution']['id'])
-        self.assertEqual(dxjob.describe()['instanceType'], 'mem2_hdd2_x2')
+        job_describe = describe_job_with_retry(dxanalysis.describe()['stages'][0]['execution']['id'])
+        self.assertEqual(job_describe['instanceType'], 'mem2_hdd2_x2')
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
     def test_run_workflow_with_stage_folders(self):
