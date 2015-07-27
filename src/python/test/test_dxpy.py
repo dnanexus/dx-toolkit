@@ -1301,7 +1301,13 @@ def main(number):
         desc = override_folders_dxanalysis.describe()
         self.assertEqual(desc['stages'][0]['execution']['folder'], '/foo')
         self.assertEqual(desc['stages'][1]['execution']['folder'], '/output/bar')
-        desc = use_default_folder_dxanalysis.describe()
+        # All the describe fields may not be available immediately. Wait
+        # until they have been populated.
+        for i in range(100):  # Don't wait an unbounded amount of time
+            desc = use_default_folder_dxanalysis.describe()
+            if 'folder' in desc['stages'][0]['execution']:
+                break
+            time.sleep(2.0)
         self.assertEqual(desc['stages'][0]['execution']['folder'], '/output/baz')
         self.assertEqual(desc['stages'][1]['execution']['folder'], '/output/quux')
 
