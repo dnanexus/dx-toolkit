@@ -19,6 +19,8 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import os, sys, unittest, subprocess, re, platform
+import time
+
 from contextlib import contextmanager
 
 import dxpy
@@ -162,6 +164,24 @@ def cd(directory):
     output = check_output(['dx', 'cd', directory], shell=False)
     print(output)
     return output
+
+
+# Wait for all jobs in analysis to be created (see PTFM-14462)
+def analysis_describe_with_retry(analysis_id_or_handler):
+    if isinstance(analysis_id_or_handler, basestring):
+        handler = dxpy.get_handler(analysis_id_or_handler)
+    else:
+        handler = analysis_id_or_handler
+    # All the describe fields may not be available immediately. Wait
+    # until they have been populated.
+    for i in range(200):  # Don't wait an unbounded amount of time
+        desc = handler.describe()
+        # Sufficient to look for any field, other than 'id', that is
+        # present in all job describe hashes
+        if all('executable' in stage['execution'] for stage in desc['stages']):
+            return desc
+        time.sleep(0.5)
+    raise IOError('Timed out while waiting for ' + analysis_id_or_handler.get_id() + ' to have all jobs populated')
 
 
 class DXTestCase(unittest.TestCase):
