@@ -8,6 +8,10 @@
         "(^E)": "warning",
         "(^W)": "advice"
       }
+    },
+    "pyflakes": {
+      "type": "pyflakes",
+      "include": "(\\.py$)"
     }
   }
 }
