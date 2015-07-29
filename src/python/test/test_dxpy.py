@@ -2086,7 +2086,8 @@ class TestDataobjectFunctions(unittest.TestCase):
         self.assertEqual(handler.get_proj_id(), self.proj_id)
 
         # Handle project IDs
-        dxproject = dxpy.get_handler(self.proj_id)
+        handler = dxpy.get_handler(self.proj_id)
+        self.assertEqual(handler._dxid, self.proj_id)
 
         # Handle apps
         handler = dxpy.get_handler("app-foo")
@@ -2104,6 +2105,20 @@ class TestDataobjectFunctions(unittest.TestCase):
         self.assertEqual(handler._dxid, app_id)
         self.assertIsNone(handler._name)
         self.assertIsNone(handler._alias)
+
+        # Test that we parse the "app" part out correctly when the app
+        # name itself has a hyphen in it
+        app_with_hyphen_in_name = "app-swiss-army-knife"
+        handler = dxpy.get_handler(app_with_hyphen_in_name)
+        self.assertIsNone(handler._dxid)
+        self.assertEqual(handler._name, "swiss-army-knife")
+        self.assertEqual(handler._alias, "default")
+
+        handler = dxpy.get_handler(app_with_hyphen_in_name + "/1.0.0")
+        self.assertIsNone(handler._dxid)
+        self.assertEqual(handler._name, "swiss-army-knife")
+        self.assertEqual(handler._alias, "1.0.0")
+
 
 class TestResolver(unittest.TestCase):
     def setUp(self):

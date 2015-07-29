@@ -97,7 +97,7 @@ def _guess_link_target_type(link):
             link = link['$dnanexus_link']
         else:
             link = link['$dnanexus_link']['id']
-    class_name, _id = link.split("-")
+    class_name, _id = link.split("-", 1)
     class_name = 'DX'+class_name.capitalize()
     if class_name == 'DXGtable':
         class_name = 'DXGTable'
