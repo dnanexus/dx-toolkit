@@ -5,6 +5,19 @@ The Python library is called ```dxpy```.
 
 Documentation is available at http://autodoc.dnanexus.com/bindings/python/current/.
 
+## Debugging
+
+Set the `_DX_DEBUG` environment variable to a positive integer before
+running a dxpy-based program (such as `dx`) to display the input and
+output of each API call. Supported values are 1, 2, and 3 with
+increasing numbers producing successively more verbose output.
+
+Example:
+
+```
+$ _DX_DEBUG=1 dx ls
+```
+
 ## Python coding style
 * Conform to [PEP-8](http://legacy.python.org/dev/peps/pep-0008/).
     * Relax the line length requirement to 120 characters per line, where you judge readability not to be compromised.
