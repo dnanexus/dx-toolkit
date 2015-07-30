@@ -1,3 +1,9 @@
+dx-toolkit (0.155.0) precise; urgency=low
+
+  * Integrate resolveDataObjects into "dx run"
+
+ -- Phil Sung <psung@dnanexus.com>  Thu, 30 Jul 2015 03:47:23 +0000
+
 dx-toolkit (0.154.0) precise; urgency=low
 
   * Documentation and test fixes
