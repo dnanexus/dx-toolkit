@@ -259,6 +259,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
 
     return _find(dxpy.api.system_find_data_objects, query, limit, return_handler, first_page_size, **kwargs)
 
+
 def find_executions(classname=None, launched_by=None, executable=None, project=None,
                     state=None, origin_job=None, parent_job=None, no_parent_job=False,
                     parent_analysis=None, no_parent_analysis=False, root_execution=None,
@@ -267,6 +268,10 @@ def find_executions(classname=None, launched_by=None, executable=None, project=N
                     first_page_size=100, return_handler=False, include_subjobs=True,
                     **kwargs):
     '''
+    :param classname:
+        Class with which to restrict the search, i.e. one of "job",
+        "analysis"
+    :type classname: string
     :param launched_by: User ID of the user who launched the execution's origin execution
     :type launched_by: string
     :param executable: ID of the applet or app that spawned this execution, or a corresponding remote object handler
