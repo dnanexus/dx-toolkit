@@ -1728,7 +1728,7 @@ def project_decrease_permissions(object_id, input_params={}, always_retry=True, 
     """
     Invokes the /project-xxxx/decreasePermissions API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FdecreasePermissions
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method%3A-%2Fproject-xxxx%2FdecreasePermissions
     """
     return DXHTTPRequest('/%s/decreasePermissions' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1800,7 +1800,7 @@ def project_leave(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /project-xxxx/leave API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fleave
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method%3A-%2Fproject-xxxx%2Fleave
     """
     return DXHTTPRequest('/%s/leave' % object_id, input_params, always_retry=always_retry, **kwargs)
 

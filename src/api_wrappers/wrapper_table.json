@@ -851,7 +851,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Project%20Permissions%20and%20Sharing#API-method%3A-%2Fproject-xxxx%2FdecreasePermissions"
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method%3A-%2Fproject-xxxx%2FdecreasePermissions"
         }
     ],
     [
@@ -887,7 +887,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Project%20Permissions%20and%20Sharing#API-method:-/project-xxxx/leave"
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method%3A-%2Fproject-xxxx%2Fleave"
         }
     ],
     [

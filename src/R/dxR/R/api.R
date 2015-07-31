@@ -3227,7 +3227,7 @@ projectClone <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method\%3A-\%2Fproject-xxxx\%2FdecreasePermissions}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method\%3A-\%2Fproject-xxxx\%2FdecreasePermissions}
 projectDecreasePermissions <- function(objectID,
                                        inputParams=emptyNamedList,
                                        jsonifyData=TRUE,
@@ -3359,7 +3359,7 @@ projectInvite <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method\%3A-\%2Fproject-xxxx\%2Fleave}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method\%3A-\%2Fproject-xxxx\%2Fleave}
 projectLeave <- function(objectID,
                          inputParams=emptyNamedList,
                          jsonifyData=TRUE,

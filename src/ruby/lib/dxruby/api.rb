@@ -774,7 +774,7 @@ module DX
 
     # Invokes the /project-xxxx/decreasePermissions API method.
     #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FdecreasePermissions
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method%3A-%2Fproject-xxxx%2FdecreasePermissions
     def self.project_decrease_permissions(object_id, input_params={}, opts={})
       opts = { "always_retry" => true }.merge(opts)
       return DX::http_request("/#{object_id}/decreasePermissions", input_params, opts)
@@ -806,7 +806,7 @@ module DX
 
     # Invokes the /project-xxxx/leave API method.
     #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fleave
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method%3A-%2Fproject-xxxx%2Fleave
     def self.project_leave(object_id, input_params={}, opts={})
       opts = { "always_retry" => true }.merge(opts)
       return DX::http_request("/#{object_id}/leave", input_params, opts)
