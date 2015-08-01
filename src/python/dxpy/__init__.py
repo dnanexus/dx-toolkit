@@ -134,12 +134,27 @@ from requests.exceptions import ConnectionError, HTTPError, Timeout
 from requests.auth import AuthBase
 from .compat import USING_PYTHON2, expanduser
 
-from requests.packages import urllib3
-urllib3.disable_warnings(category=urllib3.exceptions.InsecurePlatformWarning)
-
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
-logging.getLogger('dxpy.packages.requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
+
+
+def configure_urllib3():
+    from requests.packages import urllib3
+    from requests.packages.urllib3.packages.ssl_match_hostname import match_hostname
+
+    # Disable verbose urllib3 warnings and log messages
+    urllib3.disable_warnings(category=urllib3.exceptions.InsecurePlatformWarning)
+    logging.getLogger('dxpy.packages.requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
+
+    # Trust DNAnexus S3 upload tunnel
+    def _match_hostname(cert, hostname):
+        if hostname == "ul.cn.dnanexus.com":
+            hostname = "s3.amazonaws.com"
+        match_hostname(cert, hostname)
+
+    urllib3.connection.match_hostname = _match_hostname
+
+configure_urllib3()
 
 from . import exceptions
 from .toolkit_version import version as TOOLKIT_VERSION
