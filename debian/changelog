@@ -1,3 +1,9 @@
+dx-toolkit (0.155.1) precise; urgency=low
+
+  * dxpy: Add support for global CDN S3 tunnel
+
+ -- Andrey Kislyuk <akislyuk@dnanexus.com>  Sun, 02 Aug 2015 01:22:47 +0000
+
 dx-toolkit (0.155.0) precise; urgency=low
 
   * Integrate resolveDataObjects into "dx run"
