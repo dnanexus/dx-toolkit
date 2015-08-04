@@ -31,7 +31,7 @@ from dxpy_testutil import DXTestCase, check_output, temporary_project, select_pr
 import dxpy_testutil as testutil
 from dxpy.exceptions import DXAPIError, DXSearchError, EXPECTED_ERR_EXIT_STATUS
 from dxpy.compat import str, sys_encoding
-from dxpy.utils.resolver import ResolutionError, resolve_existing_path, _check_resolution_needed as check_resolution
+from dxpy.utils.resolver import ResolutionError, _check_resolution_needed as check_resolution
 
 @contextmanager
 def chdir(dirname=None):
