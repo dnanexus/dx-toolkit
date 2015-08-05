@@ -1,3 +1,13 @@
+dx-toolkit (0.156.0) precise; urgency=low
+
+  * Remove unused import
+  * PTFM-15822 dxpy ul tunnel support
+  * PTFM-15712 Apply consistent URL encoding to links
+  * Document classname parameter to find_executions
+  * Fix flaky test: obtain analysis via API instead of "dx find" 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 05 Aug 2015 19:56:23 +0000
+
 dx-toolkit (0.155.0) precise; urgency=low
 
   * Integrate resolveDataObjects into "dx run"
