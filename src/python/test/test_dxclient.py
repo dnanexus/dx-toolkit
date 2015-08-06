@@ -1273,6 +1273,125 @@ class TestDXClientRun(DXTestCase):
         dxpy.api.project_destroy(self.other_proj_id, {'terminateJobs': True})
         super(TestDXClientRun, self).tearDown()
 
+    def test_dx_resolve(self):
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "runSpec": {"interpreter": "bash",
+                                                     "code": "echo 'hello'"}
+                                         })['id']
+        record_id0 = dxpy.api.record_new({"project": self.project,
+                                          "dxapi": "1.0.0",
+                                          "name": "resolve_record0"})['id']
+        record_id1 = dxpy.api.record_new({"project": self.project,
+                                          "dxapi": "1.0.0",
+                                          "name": "resolve_record1"})['id']
+        record_id2 = dxpy.api.record_new({"project": self.project,
+                                          "dxapi": "1.0.0",
+                                          "name": "resolve_record2"})['id']
+        glob_id = dxpy.api.record_new({"project": self.project,
+                                       "dxapi": "1.0.0",
+                                       "name": "glob_resolve_record"})['id']
+
+        job_id = run("dx run " + applet_id + " -iinput0=resolve_record0 -iinput1=resolve_record1 " +
+                     "-iinput2=glob_resolve* -iint0=5 -iint1=15 --brief -y").strip()
+        job_desc = dxpy.describe(job_id)
+
+        self.assertEquals(job_desc['input']['input0']['$dnanexus_link']['id'], record_id0)
+        self.assertEquals(job_desc['input']['input1']['$dnanexus_link']['id'], record_id1)
+        self.assertEquals(job_desc['input']['input2']['$dnanexus_link']['id'], glob_id)
+        self.assertEquals(job_desc['input']['int0'], 5)
+        self.assertEquals(job_desc['input']['int1'], 15)
+
+        # If multiple entities are provided with the same input name, then their resolved result should
+        # appear in a list, in the order in which they were provided, no matter the method of resolution
+        job_id = run("dx run " + applet_id + " -iinput0=resolve_record0 -iinput0=25 -iinput0=glob_resolve* " +
+                     "-iinput0=resolve_record1 -iinput1=" + record_id0 + " -iinput1=50 -iinput1=resolve_record1 " +
+                     "--brief -y").strip()
+        job_desc = dxpy.describe(job_id)
+
+        self.assertEquals(len(job_desc['input']['input0']), 4)
+        self.assertEquals(job_desc['input']['input0'][0]['$dnanexus_link']['id'], record_id0)
+        self.assertEquals(job_desc['input']['input0'][1], 25)
+        self.assertEquals(job_desc['input']['input0'][2]['$dnanexus_link']['id'], glob_id)
+        self.assertEquals(job_desc['input']['input0'][3]['$dnanexus_link']['id'], record_id1)
+        self.assertEquals(len(job_desc['input']['input1']), 3)
+        self.assertEquals(job_desc['input']['input1'][0]['$dnanexus_link'], record_id0)
+        self.assertEquals(job_desc['input']['input1'][1], 50)
+        self.assertEquals(job_desc['input']['input1'][2]['$dnanexus_link']['id'], record_id1)
+
+        # If a record cannot be resolved, then the return value should just be the record name passed in
+        job_id = run("dx run " + applet_id + " --brief -y -iinput0=cannot_resolve " +
+                     "-iinput1=resolve_record0 -iint0=10").strip()
+        job_desc = dxpy.describe(job_id)
+
+        self.assertEquals(job_desc['input']['input0'], "cannot_resolve")
+        self.assertEquals(job_desc['input']['input1']['$dnanexus_link']['id'], record_id0)
+        self.assertEquals(job_desc['input']['int0'], 10)
+
+        job_id = run("dx run " + applet_id + " --brief -y -iinput0=glob_cannot_resolve*").strip()
+        job_desc = dxpy.describe(job_id)
+
+        self.assertEquals(job_desc['input']['input0'], "glob_cannot_resolve*")
+
+        # Should simply use given name if it corresponds to multiple records (glob or not);
+        # length validation errors out, but exec_io catches it
+        dup_record_id = dxpy.api.record_new({"project": self.project,
+                                             "dxapi": "1.0.0",
+                                             "name": "resolve_record0"})['id']
+
+        job_id = run("dx run " + applet_id + " --brief -y -iinput0=resolve_record0").strip()
+        job_desc = dxpy.describe(job_id)
+
+        self.assertEquals(job_desc['input']['input0'], "resolve_record0")
+
+        job_id = run("dx run " + applet_id + " --brief -y -iinput0=resolve_record*").strip()
+        job_desc = dxpy.describe(job_id)
+
+        self.assertEquals(job_desc['input']['input0'], "resolve_record*")
+
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "inputSpec": [
+                                            {"name": "input0", "class": "record"},
+                                            {"name": "input1", "class": "array:record", "optional": True},
+                                            {"name": "int0", "class": "int"},
+                                            {"name": "int1", "class": "array:int", "optional": True},
+                                            {"name": "bool0", "class": "array:boolean", "optional": True}
+                                         ],
+                                         "outputSpec": [],
+                                         "runSpec": {"interpreter": "bash",
+                                                     "code": "echo 'hello'"}
+                                         })['id']
+
+        # Try with applet that has an input spec
+        job_id = run("dx run " + applet_id + " --brief -y -iinput0=resolve_record1 -iint0=10 " +
+                     "-iinput1=resolve_record2 -iinput1=resolve_record1 -iint1=0 -iint1=1 -iint1=2 " +
+                     "-ibool0=true -ibool0=0").strip()
+        job_desc = dxpy.describe(job_id)
+
+        self.assertEquals(job_desc['input']['input0']['$dnanexus_link']['id'], record_id1)
+        self.assertEquals(job_desc['input']['input1'][0]['$dnanexus_link']['id'], record_id2)
+        self.assertEquals(job_desc['input']['input1'][1]['$dnanexus_link']['id'], record_id1)
+        self.assertEquals(job_desc['input']['int0'], 10)
+        self.assertEquals(job_desc['input']['int1'], [0, 1, 2])
+        self.assertEquals(job_desc['input']['bool0'], [True, False])
+
+        # Workflows should show same behavior as applets
+        workflow_id = run("dx new workflow myworkflow --output-folder /foo --brief").strip()
+        stage_id = dxpy.api.workflow_add_stage(workflow_id,
+                                               {"editVersion": 0, "executable": applet_id})['stage']
+
+        record_id = dxpy.api.record_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "name": "myrecord"})['id']
+
+        analysis_id = run("dx run " + workflow_id + " -i" + stage_id + ".input0=myrecord -i" +
+                          stage_id + ".int0=77 -y --brief").strip()
+        analysis_desc = dxpy.describe(analysis_id)
+
+        self.assertEquals(analysis_desc['input'][stage_id + '.input0']['$dnanexus_link']['id'], record_id)
+        self.assertEquals(analysis_desc['input'][stage_id + '.int0'], 77)
+
     def test_dx_resolve_check_resolution_needed(self):
         # If no entity_name is given, no entity_name should be returned
         self.assertEquals(check_resolution("some_path", "project_id", "/", None), (False, "project_id", "/", None))

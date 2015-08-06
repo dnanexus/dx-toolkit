@@ -23,14 +23,15 @@ from __future__ import (print_function, unicode_literals)
 # TODO: refactor all dx run helper functions here
 
 import os, sys, json, collections, pipes
+import re
 
 import dxpy
 from . import INTERACTIVE_CLI
-from ..exceptions import DXCLIError
+from ..exceptions import DXCLIError, DXError
 from ..utils.printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC, DELIMITER, UNDERLINE, get_delimiter, fill)
 from ..utils.describe import (get_find_executions_string, get_ls_l_desc, parse_typespec)
 from ..utils.resolver import (get_first_pos_of_char, is_hashid, is_job_id, is_localjob_id, paginate_and_pick, pick,
-                              resolve_existing_path, split_unescaped)
+                              resolve_existing_path, resolve_multiple_existing_paths, split_unescaped)
 from ..utils import OrderedDefaultdict
 from ..compat import input, str, shlex
 
@@ -414,6 +415,14 @@ class ExecutableInputs(object):
         self.required_inputs, self.optional_inputs, self.array_inputs = [], [], set()
         self.input_name_prefix = input_name_prefix
 
+        # List of tuples (input name, input value, input class, index), where input name and input value are
+        # propagated from command-line (input class is propagated from the input spec, and may be None if no input
+        # spec is provided). index is the order in which this particular input value is specified on the command-line
+        # relative to other input values of the same name (as multiple input values may be specified for the same
+        # input name). If input class is truthy, then the index is 0. Otherwise, if input name will have only a
+        # single input value instead of a list of input values, then index is -1.
+        self.requires_resolution = []
+
         if input_spec is None:
             input_spec = self._desc.get('inputSpec', [])
 
@@ -441,6 +450,60 @@ class ExecutableInputs(object):
                     self.inputs[i[len(self.input_name_prefix):]] = new_inputs[i]
         else:
             self.inputs.update(new_inputs)
+
+    def _update_requires_resolution_inputs(self):
+        input_paths = [quad[1] for quad in self.requires_resolution]
+        results = resolve_multiple_existing_paths(input_paths)
+        for input_name, input_value, input_class, input_index in self.requires_resolution:
+            project = results[input_value]['project']
+            folderpath = results[input_value]['folder']
+            entity_result = results[input_value]['name']
+            if input_class is None:
+                if entity_result is not None:
+                    if is_hashid(input_value):
+                        input_value = {'$dnanexus_link': entity_result['id']}
+                    elif 'describe' in entity_result:
+                        # Then findDataObjects was called (returned describe hash)
+                        input_value = {"$dnanexus_link": {"project": entity_result['describe']['project'],
+                                                          "id": entity_result['id']}}
+                    else:
+                        # Then resolveDataObjects was called in a batch (no describe hash)
+                        input_value = {"$dnanexus_link": {"project": entity_result['project'],
+                                                          "id": entity_result['id']}}
+                if input_index >= 0:
+                    if self.inputs[input_name][input_index] is not None:
+                        raise AssertionError("Expected 'self.inputs' to have saved a spot for 'input_value'.")
+                    self.inputs[input_name][input_index] = input_value
+                else:
+                    if self.inputs[input_name] is not None:
+                        raise AssertionError("Expected 'self.inputs' to have saved a spot for 'input_value'.")
+                    self.inputs[input_name] = input_value
+            else:
+                msg = 'Value provided for input field "' + input_name + '" could not be parsed as ' + \
+                      input_class + ': '
+                if input_value == '':
+                    raise DXCLIError(msg + 'empty string cannot be resolved')
+                if entity_result is None:
+                    raise DXCLIError(msg + 'could not resolve \"' + input_value + '\" to a name or ID')
+                try:
+                    dxpy.bindings.verify_string_dxid(entity_result['id'], input_class)
+                except DXError as details:
+                    raise DXCLIError(msg + str(details))
+                if is_hashid(input_value):
+                    input_value = {'$dnanexus_link': entity_result['id']}
+                elif 'describe' in entity_result:
+                    # Then findDataObjects was called (returned describe hash)
+                    input_value = {'$dnanexus_link': {"project": entity_result['describe']['project'],
+                                                      "id": entity_result['id']}}
+                else:
+                    # Then resolveDataObjects was called in a batch (no describe hash)
+                    input_value = {"$dnanexus_link": {"project": entity_result['project'],
+                                                      "id": entity_result['id']}}
+                if input_index != -1:
+                    # The class is an array, so append the resolved value
+                    self.inputs[input_name].append(input_value)
+                else:
+                    self.inputs[input_name] = input_value
 
     def add(self, input_name, input_value):
         if self.input_name_prefix is not None:
@@ -474,41 +537,73 @@ class ExecutableInputs(object):
             if not done:
                 try:
                     parsed_input_value = json.loads(input_value, object_pairs_hook=collections.OrderedDict)
-                    if type(parsed_input_value) in (collections.OrderedDict, list, int, long, float):
-                        input_value = parsed_input_value
-                    else:
+                    if type(parsed_input_value) not in (collections.OrderedDict, list, int, long, float):
                         raise Exception()
                 except:
                     # Not recognized JSON (list or dict), so resolve it as a name
-                    try:
-                        project, folderpath, entity_result = resolve_existing_path(input_value,
-                                                                                   expected='entity')
-                    except:
-                        # If not possible, then leave it as a string
-                        project, folderpath, entity_result = None, None, None
-                    if entity_result is not None:
-                        if is_hashid(input_value):
-                            input_value = {'$dnanexus_link': entity_result['id']}
-                        else:
-                            input_value = {"$dnanexus_link": {"project": entity_result['describe']['project'],
-                                                              "id": entity_result['id']}}
-            if isinstance(self.inputs[input_name], list) and \
-               not isinstance(self.inputs[input_name], basestring):
-                self.inputs[input_name].append(input_value)
-            else:
-                self.inputs[input_name] = input_value
+                    # Add to self.requires_resolution, and insert None as a placeholder in self.inputs;
+                    # self.requires_resolution will also store the location of the corresponding placeholder
+                    if isinstance(self.inputs[input_name], list):
+                        self.requires_resolution.append((input_name, input_value, None, len(self.inputs[input_name])))
+                        self.inputs[input_name].append(None)
+                    else:
+                        # If the input is to only have a single value, then the index will be -1
+                        self.requires_resolution.append((input_name, input_value, None, -1))
+                        self.inputs[input_name] = None
+                else:
+                    if isinstance(self.inputs[input_name], list):
+                        self.inputs[input_name].append(parsed_input_value)
+                    else:
+                        self.inputs[input_name] = parsed_input_value
         else:
             # Input class is known.  Respect the "array" class.
-
+            val_substrings = split_unescaped(':', input_value)
             try:
-                input_value = parse_input_or_jbor(input_class, input_value)
-            except Exception as details:
-                raise DXCLIError('Value provided for input field "' + input_name + '" could not be parsed as ' + input_class + ': ' + str(details))
-
-            if input_class.startswith('array:'):
-                self.inputs[input_name].append(input_value)
-            else:
-                self.inputs[input_name] = input_value
+                if len(val_substrings) == 2 and (is_job_id(val_substrings[0]) or is_localjob_id(val_substrings[0])):
+                    input_value = _construct_jbor(val_substrings[0], val_substrings[1])
+                    if input_class.startswith('array:'):
+                        self.inputs[input_name].append(input_value)
+                    else:
+                        self.inputs[input_name] = input_value
+                else:
+                    # TODO: Consolidate the following checks with exec_io.parse_input_or_jbor
+                    # `parse_bool()` can throw DXCLIError, which will be
+                    # propagated directly to the caller.
+                    if input_class == 'boolean':
+                        self.inputs[input_name] = parse_bool(input_value)
+                    elif input_class == 'array:boolean':
+                        self.inputs[input_name].append(parse_bool(input_value))
+                    elif input_class == 'string':
+                        self.inputs[input_name] = input_value
+                    elif input_class == 'array:string':
+                        self.inputs[input_name].append(input_value)
+                    elif input_class == 'float':
+                        self.inputs[input_name] = float(input_value)
+                    elif input_class == 'array:float':
+                        self.inputs[input_name].append(float(input_value))
+                    elif input_class == 'int':
+                        self.inputs[input_name] = int(input_value)
+                    elif input_class == 'array:int':
+                        self.inputs[input_name].append(int(input_value))
+                    elif input_class == 'hash':
+                        self.inputs[input_name] = json.loads(input_value)
+                    elif input_class == 'array:hash':
+                        self.inputs[input_name].append(json.loads(input_value))
+                    elif input_class == 'job' or input_class == 'app':
+                        self.inputs[input_name] = {'$dnanexus_link': input_value}
+                    elif input_class == 'array:job' or input_class == 'array:app':
+                        self.inputs[input_name].append({'$dnanexus_link': input_value})
+                    else:
+                        # Add to self.requires_resolution
+                        if input_class.startswith('array:'):
+                            # No placeholders needed; just pass in input_index that is not -1 to append a result
+                            self.requires_resolution.append((input_name, input_value, input_class[6:], 0))
+                        else:
+                            # input_name is to only have a single value, set index to -1
+                            self.requires_resolution.append((input_name, input_value, input_class, -1))
+            except (ValueError, TypeError) as details:
+                raise DXCLIError('Value provided for input field "' + input_name + '" could not be parsed as ' +
+                                 input_class + ': ' + str(details))
 
     def init_completer(self):
         try:
@@ -621,6 +716,7 @@ class ExecutableInputs(object):
                     raise DXCLIError('An input was found that did not conform to the syntax: -i<input name>=<input value>')
                 self.add(self.executable._get_input_name(name) if \
                          self._desc.get('class') == 'workflow' else name, value)
+            self._update_requires_resolution_inputs()
 
         if self.input_spec is None:
             for i in self.inputs:
