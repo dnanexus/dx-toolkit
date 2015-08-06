@@ -2135,6 +2135,33 @@ class TestResolver(unittest.TestCase):
         proj_id, path, entity_id = resolve_existing_path(':')
         self.assertEqual(proj_id, dxpy.WORKSPACE_ID)
 
+    def test_resolution_batching(self):
+        from dxpy.bindings.search import resolve_data_objects
+        record_id0 = dxpy.api.record_new({"project": self.proj_id,
+                                          "dxapi": "1.0.0",
+                                          "name": "resolve_record0"})['id']
+        record_id1 = dxpy.api.record_new({"project": self.proj_id,
+                                          "dxapi": "1.0.0",
+                                          "name": "resolve_record1"})['id']
+        record_id2 = dxpy.api.record_new({"project": self.proj_id,
+                                          "dxapi": "1.0.0",
+                                          "name": "resolve_record2"})['id']
+        results = resolve_data_objects([{"name": "resolve_record0"},
+                                        {"name": "resolve_record1"},
+                                        {"name": "resolve_record2"}],
+                                       self.proj_id, "/", batchsize=2)
+        self.assertEqual(results[0][0]["id"], record_id0)
+        self.assertEqual(results[1][0]["id"], record_id1)
+        self.assertEqual(results[2][0]["id"], record_id2)
+
+        results = resolve_data_objects([{"name": "resolve_record0"},
+                                        {"name": "resolve_record1"},
+                                        {"name": "resolve_record2"}],
+                                       self.proj_id, "/", batchsize=4)
+        self.assertEqual(results[0][0]["id"], record_id0)
+        self.assertEqual(results[1][0]["id"], record_id1)
+        self.assertEqual(results[2][0]["id"], record_id2)
+
 if __name__ == '__main__':
     if dxpy.AUTH_HELPER is None:
         sys.exit(1, 'Error: Need to be logged in to run these tests')
