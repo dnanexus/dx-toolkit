@@ -250,7 +250,7 @@ namespace dx {
      * Invites another person (or PUBLIC) to the remote project. If the invitee is another person,
      * they will receive the specified permission when they accept the invitation.
      *
-     * See the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Invitations%20and%20Join%20Requests#API-method%3A-%2Fproject-xxxx%2Finvite">/project-xxxx/invite</a> API method for more info.
+     * See the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method%3A-%2Fproject-xxxx%2Finvite">/project-xxxx/invite</a> API method for more info.
      *
      * @param invitee Username (of the form "user-USERNAME") or email of the
      * person to be invited to the project. Use "PUBLIC" to make the project
@@ -262,7 +262,7 @@ namespace dx {
     /**
      * Decreases the permissions of the specified user in the remote project.
      *
-     * See the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FdecreasePermissions">/project-xxxx/decreasePermissions</a> API method for more info.
+     * See the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method%3A-%2Fproject-xxxx%2FdecreasePermissions">/project-xxxx/decreasePermissions</a> API method for more info.
      *
      * @param member Username (of the form "user-USERNAME") of the project member
      * whose permissions will be decreased.

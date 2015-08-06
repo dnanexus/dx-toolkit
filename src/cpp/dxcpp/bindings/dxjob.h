@@ -55,7 +55,7 @@ namespace dx {
      * Returns a description of the job.
      *
      * @return JSON hash describing the job, as given by the <a
-     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Job-Execution#API-method%3A-%2Fjob-xxxx%2Fdescribe">/job-xxxx/describe</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fjob-xxxx%2Fdescribe">/job-xxxx/describe</a>
      * API method.
      */
     dx::JSON describe() const;
@@ -71,7 +71,7 @@ namespace dx {
      * Returns the current remote job state.
      *
      * @return A string containing the current state of the job. Possible values are listed in the <a
-     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Job-Execution#Job-states">API
+     * href="https://wiki.dnanexus.com/Job-Lifecycle">API
      * specification</a>.
      */
     std::string getState() const { return describe()["state"].get<std::string>(); }

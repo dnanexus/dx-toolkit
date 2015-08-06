@@ -231,7 +231,7 @@ namespace dx {
      * Creates a %DXFile handler for the specified File object.
      *
      * @param dxlink A JSON representing a <a
-     * href="https://wiki.dnanexus.com/API-Specification-v1.1.0/Details-and-Links#Linking">DNAnexus link</a>.
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#Linking">DNAnexus link</a>.
      *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": obj-id}}.
      */
     DXFile(const dx::JSON &dxlink): DXDataObject() {
@@ -283,7 +283,7 @@ namespace dx {
      * its internal buffer to be written to the remote file, that data will be flushed.
      *
      * @param dxlink A JSON representing a <a
-     * href="https://wiki.dnanexus.com/API-Specification-v1.1.0/Details-and-Links#Linking">DNAnexus link</a>.
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#Linking">DNAnexus link</a>.
      *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": obj-id}}.
      */
     void setIDs(const dx::JSON &dxlink);

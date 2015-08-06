@@ -192,7 +192,7 @@ namespace dx {
      * Creates a %DXGTable handler for the specified remote GTable.
      *
      * @param dxlink A JSON representing a <a
-     * href="https://wiki.dnanexus.com/API-Specification-v1.1.0/Details-and-Links#Linking">DNAnexus link</a>.
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#Linking">DNAnexus link</a>.
      *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": obj-id}}.
      */
     DXGTable(const dx::JSON &dxlink)
@@ -280,7 +280,7 @@ namespace dx {
      * queued up in the internal buffer, they are flushed.
      *
      * @param dxlink A JSON representing a <a
-     * href="https://wiki.dnanexus.com/API-Specification-v1.1.0/Details-and-Links#Linking">DNAnexus link</a>.
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#Linking">DNAnexus link</a>.
      *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": obj-id}}.
      */
     void setIDs(const dx::JSON &dxlink);
