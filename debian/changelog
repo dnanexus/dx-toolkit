@@ -1,3 +1,9 @@
+dx-toolkit (0.155.2) precise; urgency=low
+
+  * Roll back rDO integration
+
+ -- Phil Sung <psung@dnanexus.com>  Thu, 06 Aug 2015 06:37:06 +0000
+
 dx-toolkit (0.155.1) precise; urgency=low
 
   * dxpy: Add support for global CDN S3 tunnel
