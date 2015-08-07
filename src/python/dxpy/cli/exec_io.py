@@ -525,17 +525,18 @@ class ExecutableInputs(object):
                 input_class = self.input_spec[input_name]['class']
 
         if input_class is None:
-            done = False
+            resolved_input_as_jbor = False
             try:
                 # Resolve "job-xxxx:output-name" syntax into a canonical job ref
                 job_id, field = split_unescaped(':', input_value)
-                if is_job_id(job_id) or is_localjob_id(job_id):
-                    input_value = _construct_jbor(job_id, field)
-                    done = True
             except:
                 pass
+            else:
+                if is_job_id(job_id) or is_localjob_id(job_id):
+                    input_value = _construct_jbor(job_id, field)
+                    resolved_input_as_jbor = True
 
-            if done:
+            if resolved_input_as_jbor:
                 if isinstance(self.inputs[input_name], list):
                     self.inputs[input_name].append(input_value)
                 else:
