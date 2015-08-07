@@ -1273,6 +1273,25 @@ class TestDXClientRun(DXTestCase):
         dxpy.api.project_destroy(self.other_proj_id, {'terminateJobs': True})
         super(TestDXClientRun, self).tearDown()
 
+    def test_dx_run_resolves_optional_jbor(self):
+        # No input spec.
+        applet_id = dxpy.api.applet_new({
+            "project": self.project,
+            "dxapi": "0.0.1",
+            "outputSpec": [{"name": "outint", "class": "int"}],
+            "runSpec": {"interpreter": "bash",
+                        "code": "dx-jobutil-add-output outint 32"}
+        })["id"]
+
+        job_id = run("dx run {applet} --brief".format(applet=applet_id)).strip()
+
+        job_with_jbor_id = run("dx run {applet} -iint0={job}:{o} -iint1=64 --brief".format(applet=applet_id, job=job_id, o="outnum")).strip()
+        job_with_jbor_desc = dxpy.describe(job_with_jbor_id)
+        self.assertEquals(job_with_jbor_desc["input"]["int0"],
+                          {"$dnanexus_link":
+                              {"field": "outnum", "job": job_id}})
+        self.assertEquals(job_with_jbor_desc["input"]["int1"], 64)
+
     def test_dx_resolve(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",

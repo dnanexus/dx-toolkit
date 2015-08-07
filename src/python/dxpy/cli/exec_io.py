@@ -534,6 +534,12 @@ class ExecutableInputs(object):
                     done = True
             except:
                 pass
+            else:
+                if done:
+                    if isinstance(self.inputs[input_name], list):
+                        self.inputs[input_name].append(input_value)
+                    else:
+                        self.inputs[input_name] = input_value
             if not done:
                 try:
                     parsed_input_value = json.loads(input_value, object_pairs_hook=collections.OrderedDict)
