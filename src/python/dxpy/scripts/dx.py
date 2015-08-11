@@ -3514,7 +3514,7 @@ select_project_action = parser_select.add_argument('project', help='Name or ID o
                                                    nargs='?', default=None)
 select_project_action.completer = DXPathCompleter(expected='project', include_current_proj=False)
 parser_select.add_argument('--name', help='Name of the project (wildcard patterns supported)')
-parser_select.add_argument('--level', choices=['LIST', 'VIEW', 'UPLOAD', 'CONTRIBUTE', 'ADMINISTER'],
+parser_select.add_argument('--level', choices=['VIEW', 'UPLOAD', 'CONTRIBUTE', 'ADMINISTER'],
                            help='Minimum level of permissions expected', default='CONTRIBUTE')
 parser_select.add_argument('--public', help='Include ONLY public projects (will automatically set --level to VIEW)',
                            action='store_true')
@@ -4347,7 +4347,7 @@ parser_find_projects = subparsers_find.add_parser('projects', help='Find project
                                                   parents=[stdout_args, json_arg, delim_arg, env_args, find_by_properties_and_tags_args],
                                                   prog='dx find projects')
 parser_find_projects.add_argument('--name', help='Name of the project')
-parser_find_projects.add_argument('--level', choices=['LIST', 'VIEW', 'UPLOAD', 'CONTRIBUTE', 'ADMINISTER'],
+parser_find_projects.add_argument('--level', choices=['VIEW', 'UPLOAD', 'CONTRIBUTE', 'ADMINISTER'],
                                   help='Minimum level of permissions expected')
 parser_find_projects.add_argument('--public',
                                   help='Include ONLY public projects (will automatically set --level to VIEW)',
