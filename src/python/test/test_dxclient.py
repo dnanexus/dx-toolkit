@@ -3355,6 +3355,224 @@ class TestDXClientFind(DXTestCase):
         assert_cmd_gives_ids("dx find jobs "+options3, [job_id])
         assert_cmd_gives_ids("dx find analyses "+options3, [])
 
+
+class TestDXClientNewUser(DXTestCase):
+
+    def _now(self):
+        return str(int(time.time()))
+
+    def _generate_unique_username_email(self):
+        r = random.randint(0, 255)
+        username = "asset_" + self._now() + "_" + str(r)
+        email = username + "@example.com"
+        return username, email
+
+    def _assert_user_desc(self, user_id, exp_user_desc):
+        user_desc = dxpy.api.user_describe(user_id)
+        for field in exp_user_desc:
+            self.assertEqual(user_desc[field], exp_user_desc[field])
+
+    def setUp(self):
+        org_handle = "dx_new_user_org_{t}".format(t=self._now())
+        self.org_id = dxpy.api.org_new({"handle": org_handle,
+                                        "name": "Org to invite to"})["id"]
+        super(TestDXClientNewUser, self).setUp()
+
+    def tearDown(self):
+        super(TestDXClientNewUser, self).tearDown()
+
+    def test_create_user_account_and_set_bill_to_negative(self):
+        username, email = self._generate_unique_username_email()
+        first = "Asset"
+        cmd = "dx new user"
+
+        called_process_error_opts = [
+            "",
+            "--username {u}".format(u=username),
+            "--email {e}".format(e=email),
+            "--username {u} --email {e} --first {f} \
+                --token-duration {t}".format(u=username, e=email, f=first,
+                                             t="not_an_int"),
+        ]
+        for invalid_opts in called_process_error_opts:
+            with self.assertRaises(subprocess.CalledProcessError):
+                run(" ".join([cmd, invalid_opts]))
+
+        dx_api_error_opts = [
+            "--username {u} --email {e}".format(u=username, e=email),
+            "--username {u} --email bad_email".format(u=username),
+            "--username bu --email {e}".format(e=email),
+            "--username {u} --email {e} --first {f} --org does_not_exist --set-bill-to".format(
+                u=username, e=email, f=first),
+        ]
+        for invalid_opts in dx_api_error_opts:
+            with self.assertRaisesRegexp(subprocess.CalledProcessError,
+                                         "DXAPIError"):
+                run(" ".join([cmd, invalid_opts]))
+
+        resource_not_found_opts = [
+            "--username {u} --email {e} --first {f} --org does_not_exist".format(
+                u=username, e=email, f=first),
+        ]
+        for invalid_opts in resource_not_found_opts:
+            with self.assertRaisesRegexp(subprocess.CalledProcessError,
+                                         "ResourceNotFound"):
+                run(" ".join([cmd, invalid_opts]))
+
+        dx_cli_error_opts = [
+            "--username {u} --email {e} --first {f} --level MEMBER".format(
+                u=username, e=email, f=first),
+            "--username {u} --email {e} --first {f} --set-bill-to".format(
+                u=username, e=email, f=first),
+            "--username {u} --email {e} --first {f} --allow-billable-activities".format(
+                u=username, e=email, f=first),
+            "--username {u} --email {e} --first {f} --no-app-access".format(
+                u=username, e=email, f=first),
+            "--username {u} --email {e} --first {f} --project-access VIEW".format(
+                u=username, e=email, f=first),
+            "--username {u} --email {e} --first {f} --no-email".format(
+                u=username, e=email, f=first),
+        ]
+        for invalid_opts in dx_cli_error_opts:
+            with self.assertRaisesRegexp(subprocess.CalledProcessError,
+                                         "DXCLIError"):
+                run(" ".join([cmd, invalid_opts]))
+
+
+    def test_self_signup_negative(self):
+        # How to unset context?
+        pass
+
+    def test_create_user_account_only(self):
+        first = "Asset"
+        last = "The"
+        middle = "T."
+        cmd = "dx new user"
+
+        # Basic with first name only.
+        username, email = self._generate_unique_username_email()
+        user_id = run("{cmd} --username {u} --email {e} --first {f} --brief".format(
+                      cmd=cmd, u=username, e=email, f=first)).strip()
+        self._assert_user_desc(user_id, {"first": first})
+
+        # Basic with last name only.
+        username, email = self._generate_unique_username_email()
+        user_id = run("{cmd} --username {u} --email {e} --last {l} --brief".format(
+                      cmd=cmd, u=username, e=email, l=last)).strip()
+        self._assert_user_desc(user_id, {"last": last})
+
+        # Basic with all options we can verify.
+        # TODO: Test --token-duration and --occupation.
+        username, email = self._generate_unique_username_email()
+        user_id = run("{cmd} --username {u} --email {e} --first {f} --middle {m} --last {l} --brief".format(
+                      cmd=cmd, u=username, e=email, f=first, m=middle,
+                      l=last)).strip()
+        self._assert_user_desc(user_id, {"first": first,
+                                         "last": last,
+                                         "middle": middle})
+
+    def test_create_user_account_and_invite_to_org(self):
+        # TODO: Test --no-email flag.
+
+        first = "Asset"
+        cmd = "dx new user"
+
+        # Grant default org membership level and permission flags.
+        username, email = self._generate_unique_username_email()
+        user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --brief".format(
+                      cmd=cmd, u=username, e=email, f=first,
+                      o=self.org_id)).strip()
+        self._assert_user_desc(user_id, {"first": first})
+        exp = {
+            "level": "MEMBER",
+            "createProjectsAndApps": False,
+            "appAccess": True,
+            "projectAccess": "CONTRIBUTE",
+            "user": user_id
+        }
+        res = dxpy.api.org_get_member_access(self.org_id, {"user": user_id})
+        self.assertEqual(exp, res)
+
+        # Grant custom org membership level and permission flags.
+        username, email = self._generate_unique_username_email()
+        user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --level {l} --allow-billable-activities --no-app-access --project-access {pa} --brief".format(
+                      cmd=cmd, u=username, e=email, f=first,
+                      o=self.org_id, l="MEMBER", pa="VIEW")).strip()
+        self._assert_user_desc(user_id, {"first": first})
+        exp = {
+            "level": "MEMBER",
+            "createProjectsAndApps": True,
+            "appAccess": False,
+            "projectAccess": "VIEW",
+            "user": user_id
+        }
+        res = dxpy.api.org_get_member_access(self.org_id, {"user": user_id})
+        self.assertEqual(exp, res)
+
+        # Grant ADMIN org membership level; ignore all other org permission
+        # options.
+        username, email = self._generate_unique_username_email()
+        user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --level {l} --no-app-access --project-access {pa} --brief".format(
+                      cmd=cmd, u=username, e=email, f=first,
+                      o=self.org_id, l="ADMIN", pa="VIEW")).strip()
+        self._assert_user_desc(user_id, {"first": first})
+        exp = {
+            "level": "ADMIN",
+            "user": user_id
+        }
+        res = dxpy.api.org_get_member_access(self.org_id, {"user": user_id})
+        self.assertEqual(exp, res)
+
+    def test_create_user_account_and_set_bill_to(self):
+        first = "Asset"
+        cmd = "dx new user --set-bill-to"  # Set --set-bill-to option.
+
+        # --allow-billable-activities is implied; grant custom org membership
+        # level and other permission flags.
+        username, email = self._generate_unique_username_email()
+        user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --level {l} --project-access {pa} --brief".format(
+                      cmd=cmd, u=username, e=email, f=first,
+                      o=self.org_id, l="MEMBER", pa="VIEW")).strip()
+        self._assert_user_desc(user_id, {"first": first})
+        exp = {
+            "level": "MEMBER",
+            "createProjectsAndApps": True,
+            "appAccess": True,
+            "projectAccess": "VIEW",
+            "user": user_id
+        }
+        res = dxpy.api.org_get_member_access(self.org_id, {"user": user_id})
+        self.assertEqual(exp, res)
+
+        username, email = self._generate_unique_username_email()
+        user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --level {l} --project-access {pa} --brief".format(
+                      cmd=cmd, u=username, e=email, f=first,
+                      o=self.org_id, l="MEMBER", pa="VIEW")).strip()
+        self._assert_user_desc(user_id, {"first": first})
+        exp = {
+            "level": "MEMBER",
+            "createProjectsAndApps": True,
+            "appAccess": True,
+            "projectAccess": "VIEW",
+            "user": user_id
+        }
+        res = dxpy.api.org_get_member_access(self.org_id, {"user": user_id})
+        self.assertEqual(exp, res)
+
+        # Grant ADMIN org membership level.
+        username, email = self._generate_unique_username_email()
+        user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --level ADMIN --brief".format(
+                      cmd=cmd, u=username, e=email, f=first,
+                      o=self.org_id)).strip()
+        self._assert_user_desc(user_id, {"first": first})
+        exp = {
+            "level": "ADMIN",
+            "user": user_id
+        }
+        res = dxpy.api.org_get_member_access(self.org_id, {"user": user_id})
+        self.assertEqual(exp, res)
+
+
 @unittest.skipUnless(testutil.TEST_HTTP_PROXY,
                      'skipping HTTP Proxy support test that needs squid3')
 class TestHTTPProxySupport(DXTestCase):

@@ -1235,6 +1235,81 @@ def describe(args):
     except:
         err_exit()
 
+
+def _validate_new_user_input(args):
+    # TODO: Support interactive specification of `args.username`.
+    # TODO: Support interactive specification of `args.email`.
+
+    if args.org is None and len(DXNewUserOrgArgsAction.user_specified_opts) > 0:
+        raise DXCLIError("Cannot specify {opts} without specifying --org".format(
+            opts=DXNewUserOrgArgsAction.user_specified_opts
+        ))
+
+
+def _get_user_new_args(args):
+    """
+    PRECONDITION: `_validate_new_user_input()` has been called on `args`.
+    """
+    user_new_args = {"username": args.username,
+                     "email": args.email}
+    if args.first is not None:
+        user_new_args["first"] = args.first
+    if args.last is not None:
+        user_new_args["last"] = args.last
+    if args.middle is not None:
+        user_new_args["middle"] = args.middle
+    if args.token_duration is not None:
+        user_new_args["tokenDuration"] = args.token_duration
+    if args.occupation is not None:
+        user_new_args["occupation"] = args.occupation
+    if args.set_bill_to is True:
+        user_new_args["billTo"] = args.org
+    return user_new_args
+
+
+def _get_org_invite_args(args):
+    """
+    PRECONDITION: `_validate_new_user_input()` has been called on `args`, and
+    `args.username` is a well-formed and valid username.
+    """
+    org_invite_args = {"invitee": "user-" + args.username}
+    org_invite_args["level"] = args.level
+    if args.set_bill_to is True:
+        org_invite_args["createProjectsAndApps"] = True
+    else:
+        org_invite_args["createProjectsAndApps"] = args.allow_billable_activities
+    org_invite_args["appAccess"] = args.app_access
+    org_invite_args["projectAccess"] = args.project_access
+    org_invite_args["suppressEmailNotification"] = args.no_email
+    return org_invite_args
+
+
+def new_user(args):
+    _validate_new_user_input(args)
+
+    # Create user account.
+    #
+    # We prevent retries here because authserver is closing the server-side
+    # connection in certain situations. We cannot simply set `always_retry` to
+    # False here because we receive a 504 error code from the server.
+    # TODO: Allow retries when authserver issue is resolved.
+    dxpy.DXHTTPRequest(dxpy.get_auth_server_name() + "/user/new",
+                       _get_user_new_args(args),
+                       prepend_srv=False,
+                       max_retries=0)
+
+    if args.org is not None:
+        # Invite new user to org.
+        dxpy.api.org_invite(args.org, _get_org_invite_args(args))
+
+    if args.brief:
+        print("user-" + args.username)
+    else:
+        print(fill("Created new user account (user-{u})".format(
+            u=args.username
+        )))
+
+
 def new_project(args):
     if args.name == None:
         if INTERACTIVE_CLI:
@@ -3196,6 +3271,37 @@ class PrintCategoryHelp(argparse.Action):
         print('  ' + '\n  '.join(sorted(APP_CATEGORIES)))
         parser.exit(0)
 
+
+# Callable "action" class used by the "dx new user" parser for org-related
+# arguments to allow us to distinguish between user-specified arguments and
+# default arguments. If an argument has a `default` that is a bool, then its
+# `nargs` will be 0.
+#
+# PRECONDITION: If an argument has a `default` that is a bool, then specifying
+# that argument on the command-line must imply the logical opposite of its
+# `default`.
+class DXNewUserOrgArgsAction(argparse.Action):
+    user_specified_opts = []
+
+    def __init__(self, option_strings, dest, required=False, default=None,
+                 nargs=None, **kwargs):
+        if isinstance(default, bool):
+            nargs = 0
+        super(DXNewUserOrgArgsAction, self).__init__(
+            option_strings=option_strings, dest=dest, required=required,
+            default=default, nargs=nargs, **kwargs
+        )
+
+    # __call__ is only invoked when the user specifies this `option_string` on
+    # the command-line.
+    def __call__(self, parser, namespace, values, option_string):
+        DXNewUserOrgArgsAction.user_specified_opts.append(option_string)
+        if isinstance(self.default, bool):
+            setattr(namespace, self.dest, not self.default)
+        else:
+            setattr(namespace, self.dest, values)
+
+
 class DXArgumentParser(argparse.ArgumentParser):
     def _print_message(self, message, file=None):
         if message:
@@ -3938,6 +4044,27 @@ parser_new = subparsers.add_parser('new', help='Create a new project or data obj
 subparsers_new = parser_new.add_subparsers(parser_class=DXArgumentParser)
 subparsers_new.metavar = 'class'
 register_subparser(parser_new, categories='data')
+
+parser_new_user = subparsers_new.add_parser("user", help="Create a new user account", description="Create a new user account", parents=[stdout_args, env_args], prog="dx new user")
+parser_new_user_user_opts = parser_new_user.add_argument_group("User options")
+parser_new_user_user_opts.add_argument("-u", "--username", required=True, help="Username")
+parser_new_user_user_opts.add_argument("--email", required=True, help="Email address")
+parser_new_user_user_opts.add_argument("--first", help="First name")
+parser_new_user_user_opts.add_argument("--middle", help="Middle name")
+parser_new_user_user_opts.add_argument("--last", help="Last name")
+parser_new_user_user_opts.add_argument("--token-duration", type=int, help="Time duration (ms) for which the newly generated auth token for the new user will be valid")
+parser_new_user_user_opts.add_argument("--occupation", help="Occupation")
+parser_new_user_org_opts = parser_new_user.add_argument_group("Org options", "Optionally invite the new user to an org with the specified parameters")
+parser_new_user_org_opts.add_argument("--org", help="ID of the org")
+parser_new_user_org_opts.add_argument("--level", choices=["ADMIN", "MEMBER"], default="MEMBER", action=DXNewUserOrgArgsAction, help="Org membership level that will be granted to the new user; default MEMBER")
+parser_new_user_org_opts.add_argument("--set-bill-to", default=False, action=DXNewUserOrgArgsAction, help='Set the default "billTo" field of the new user to the org; implies --create-permission')
+parser_new_user_org_opts.add_argument("--allow-billable-activities", default=False, action=DXNewUserOrgArgsAction, help='Grant the new user "createProjectsAndApps" in the org')
+parser_new_user_org_opts.add_argument("--no-app-access", default=True, action=DXNewUserOrgArgsAction, dest="app_access", help='Disable "appAccess" for the new user in the org')
+parser_new_user_org_opts.add_argument("--project-access", choices=["ADMINISTER", "CONTRIBUTE", "UPLOAD", "VIEW", "NONE"], default="CONTRIBUTE", action=DXNewUserOrgArgsAction, help='The "projectAccess" to grant the new user in the org; default CONTRIBUTE')
+parser_new_user_org_opts.add_argument("--no-email", default=False, action=DXNewUserOrgArgsAction, help="Disable org invitation email notification to the new user")
+parser_new_user.set_defaults(func=new_user)
+register_subparser(parser_new_user, subparsers_action=subparsers_new,
+                   categories="other")
 
 parser_new_project = subparsers_new.add_parser('project', help='Create a new project',
                                                description='Create a new project',
