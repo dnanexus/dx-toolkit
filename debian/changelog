@@ -1,3 +1,10 @@
+dx-toolkit (0.156.2) precise; urgency=low
+
+  * Revert "PTFM-15273 Integrate /system/resolveDataObjects into "dx run""
+  * PTFM-15273 Integrate /system/resolveDataObjects into "dx run" 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 12 Aug 2015 20:43:36 +0000
+
 dx-toolkit (0.156.1) precise; urgency=low
 
   * Roll back rDO integration
