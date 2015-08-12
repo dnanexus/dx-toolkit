@@ -1,3 +1,20 @@
+dx-toolkit (0.157.0) precise; urgency=low
+
+  * dx: Make dx run sub-page help more prominent; omit ENDC
+  * PTFM-15375 LIST has been deprecated therefore removing it
+  * PTFM-15765 Create "dx new user" CLI binding
+  * Add code review fix and refactoring for b6df4a9d
+  * Add code review fix for e0706ac
+  * Add code review fixes for 18ed505
+  * Add more tests for "dx run"
+  * Add --test option to dx-jobutil-new-job
+  * Ingest inputs to "dx run" when executable does not have input spec
+  * PTFM-15273 Integrate /system/resolveDataObjects into "dx run"
+  * PTFM-15920 Fix bad links/unencoded spaces in docs
+  * Revert "PTFM-15273 Integrate /system/resolveDataObjects into "dx run"" 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 12 Aug 2015 20:40:20 +0000
+
 dx-toolkit (0.156.0) precise; urgency=low
 
   * Remove unused import
