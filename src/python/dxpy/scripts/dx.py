@@ -743,8 +743,8 @@ def ls(args):
             # Listing the folder was successful
 
             if args.verbose:
-                print(UNDERLINE() + 'Project:' + ENDC() + ' ' + dxproj.describe()['name'] + ' (' + project + ')')
-                print(UNDERLINE() + 'Folder :' + ENDC() + ' ' + folderpath)
+                print(UNDERLINE('Project:') + ' ' + dxproj.describe()['name'] + ' (' + project + ')')
+                print(UNDERLINE('Folder :') + ' ' + folderpath)
 
             if not args.obj:
                 folders_to_print = ['/.', '/..'] if args.all else []
@@ -2529,8 +2529,8 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
         else:
             check_for_special_access(executable_desc.get('access'))
         if special_access:
-            print(fill(BOLD() + "WARNING" + ENDC() + ": You have requested that jobs be run under " +
-                       BOLD() + "normal" + ENDC() +
+            print(fill(BOLD("WARNING") + ": You have requested that jobs be run under " +
+                       BOLD("normal") +
                        " priority, which may cause them to be restarted at any point, but " +
                        "the executable you are trying to run has " +
                        "requested extra permissions (" + ", ".join(sorted(special_access)) + ").  " +
@@ -2680,18 +2680,18 @@ def print_run_input_help():
       -f/--input-json-file are provided)
   6) default values set in a workflow or an executable's input spec
 ''')
-    print('SPECIFYING INPUTS BY NAME\n\n' + fill('Use the -i/--input flag to specify each input field by ' + BOLD() + 'name' + ENDC() + ' and ' + BOLD() + 'value' + ENDC() + '.', initial_indent='  ', subsequent_indent='  '))
+    print('SPECIFYING INPUTS BY NAME\n\n' + fill('Use the -i/--input flag to specify each input field by ' + BOLD('name') + ' and ' + BOLD('value') + '.', initial_indent='  ', subsequent_indent='  '))
     print('''
     Syntax :  -i<input name>=<input value>
     Example:  dx run myApp -inum=34 -istr=ABC -igtables=reads1 -igtables=reads2
 ''')
     print(fill('The example above runs an app called "myApp" with 3 inputs called num (class int), str (class string), and gtables (class array:gtable).  (For this method to work, the app must have an input spec so inputs can be interpreted correctly.)  The same input field can be used multiple times if the input class is an array.', initial_indent='  ', subsequent_indent='  '))
-    print('\n' + fill(BOLD() + 'Job-based object references' + ENDC() + ' can also be provided using the <job id>:<output name> syntax:', initial_indent='  ', subsequent_indent='  '))
+    print('\n' + fill(BOLD('Job-based object references') + ' can also be provided using the <job id>:<output name> syntax:', initial_indent='  ', subsequent_indent='  '))
     print('''
     Syntax :  -i<input name>=<job id>:<output name>
     Example:  dx run mapper -ireads=job-B0fbxvGY00j9jqGQvj8Q0001:reads
 ''')
-    print(fill('You can ' + BOLD() + 'extract an element of an array output' + ENDC() +
+    print(fill('You can ' + BOLD('extract an element of an array output') +
                ' using the <job id>:<output name>.<element> syntax:',
                initial_indent='  ', subsequent_indent='  '))
     print('''
@@ -2699,14 +2699,14 @@ def print_run_input_help():
     Example:  dx run mapper -ireadsfile=job-B0fbxvGY00j9jqGQvj8Q0001:reads.1
               # Extracts second element of array output
 ''')
-    print(fill('When executing ' + BOLD() + 'workflows' + ENDC() + ', stage inputs can be specified using the <stage key>.<input name>=<value> syntax:', initial_indent='  ', subsequent_indent='  '))
+    print(fill('When executing ' + BOLD('workflows') + ', stage inputs can be specified using the <stage key>.<input name>=<value> syntax:', initial_indent='  ', subsequent_indent='  '))
     print('''
     Syntax :  -i<stage key>.<input name>=<input value>
     Example:  dx run my_workflow -i1.reads="My reads file"
 
 SPECIFYING JSON INPUT
 ''')
-    print(fill('JSON input can be used directly using the -j/--input-json or -f/--input-json-file flags.  When running an ' + BOLD() + 'app' + ENDC() + ' or ' + BOLD() + 'applet' + ENDC() + ', the keys should be the input field names for the app or applet.  When running a ' + BOLD() + 'workflow' + ENDC() + ', the keys should be the input field names for each stage, prefixed by the stage key and a period, e.g. "1.reads" for the "reads" input of stage "1".', initial_indent='  ', subsequent_indent='  ') + '\n')
+    print(fill('JSON input can be used directly using the -j/--input-json or -f/--input-json-file flags.  When running an ' + BOLD('app') + ' or ' + BOLD('applet') + ', the keys should be the input field names for the app or applet.  When running a ' + BOLD('workflow') + ', the keys should be the input field names for each stage, prefixed by the stage key and a period, e.g. "1.reads" for the "reads" input of stage "1".', initial_indent='  ', subsequent_indent='  ') + '\n')
     parser.exit(0)
 
 def run(args):
@@ -2977,9 +2977,9 @@ def watch(args):
         args.job_info = False
     elif args.format is None:
         if args.job_ids:
-            args.format = BLUE() + u"{job_name} ({job})" + ENDC() + " {level_color}{level}" + ENDC() + " {msg}"
+            args.format = BLUE("{job_name} ({job})") + " {level_color}{level}" + ENDC() + " {msg}"
         else:
-            args.format = BLUE() + u"{job_name}" + ENDC() + " {level_color}{level}" + ENDC() + " {msg}"
+            args.format = BLUE("{job_name}") + " {level_color}{level}" + ENDC() + " {msg}"
         if args.timestamps:
             args.format = u"{timestamp} " + args.format
 
@@ -3875,7 +3875,7 @@ parser_update_stage.set_defaults(func=workflow_cli.update_stage)
 register_subparser(parser_update_stage, subparsers_action=subparsers_update, categories='workflow')
 
 parser_install = subparsers.add_parser('install', help='Install an app',
-                                       description='Install an app by name.  To see a list of apps you can install, hit <TAB> twice after "dx install" or run "' + BOLD() + 'dx find apps' + ENDC() + '" to see a list of available apps.', prog='dx install',
+                                       description='Install an app by name.  To see a list of apps you can install, hit <TAB> twice after "dx install" or run "' + BOLD('dx find apps') + '" to see a list of available apps.', prog='dx install',
                                        parents=[env_args])
 install_app_action = parser_install.add_argument('app', help='ID or name of app to install')
 install_app_action.completer = DXAppCompleter(installed=False)
@@ -3891,7 +3891,7 @@ parser_uninstall.set_defaults(func=uninstall)
 register_subparser(parser_uninstall, categories='exec')
 
 parser_run = subparsers.add_parser('run', help='Run an applet, app, or workflow', add_help=False,
-                                   description=(fill('Run an applet, app, or workflow.  To see a list of executables you can run, hit <TAB> twice after "dx run" or run "' + BOLD() + 'dx find apps' + ENDC() + '" to see a list of available apps.') + '\n\n' + fill('If any inputs are required but not specified, an interactive mode for selecting inputs will be launched.  Inputs can be set in multiple ways.  Run "dx run --input-help" for more details.')),
+                                   description=(fill('Run an applet, app, or workflow.  To see a list of executables you can run, hit <TAB> twice after "dx run" or run "' + BOLD('dx find apps') + '" to see a list of available apps.') + '\n\n' + fill('If any inputs are required but not specified, an interactive mode for selecting inputs will be launched.  Inputs can be set in multiple ways.  Run "' + BOLD('dx run --input-help') + '" for more details.') + '\n\n' + fill('Run "' + BOLD('dx run --instance-type-help') + '" to see a list of specifications for computers available to run executables.')),
                                    prog='dx run',
                                    formatter_class=argparse.RawTextHelpFormatter,
                                    parents=[exec_input_args, stdout_args, env_args, extra_args,
