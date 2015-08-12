@@ -3356,6 +3356,8 @@ class TestDXClientFind(DXTestCase):
         assert_cmd_gives_ids("dx find analyses "+options3, [])
 
 
+@unittest.skipUnless(testutil.TEST_WITH_AUTHSERVER,
+                     'skipping tests that require a running authserver')
 class TestDXClientNewUser(DXTestCase):
 
     def _now(self):
