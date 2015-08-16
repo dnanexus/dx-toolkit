@@ -415,5 +415,95 @@ class TestDXBashHelpersBenchmark(DXTestCase):
         self.run_applet_with_flags(["-iparallel=true"], 10, 1024 * 1024 * 1024)
 
 
+class TestDXJobutilAddOutput(DXTestCase):
+    dummy_hash = "123456789012345678901234"
+    data_obj_classes = ['file', 'record', 'gtable', 'applet', 'workflow']
+    dummy_ids = [obj_class + '-' + dummy_hash for obj_class in data_obj_classes]
+    dummy_job_id = "job-" + dummy_hash
+    dummy_analysis_id = "analysis-123456789012345678901234"
+    test_cases = ([["32", 32],
+                   ["3.4", 3.4],
+                   ["true", True],
+                   ["'32 tables'", "32 tables"],
+                   ['\'{"foo": "bar"}\'', {"foo": "bar"}],
+                   [dummy_job_id + ":foo", {"job": dummy_job_id,
+                                            "field": "foo"}],
+                   [dummy_analysis_id + ":bar",
+                    {"$dnanexus_link": {"analysis": dummy_analysis_id,
+                                        "field": "bar"}}]] +
+                  [[dummy_id, {"$dnanexus_link": dummy_id}] for dummy_id in dummy_ids] +
+                  [["'" + json.dumps({"$dnanexus_link": dummy_id}) + "'",
+                    {"$dnanexus_link": dummy_id}] for dummy_id in dummy_ids])
+
+    def test_auto(self):
+        with tempfile.NamedTemporaryFile() as f:
+            # initialize the file with valid JSON
+            f.write('{}')
+            f.flush()
+            local_filename = f.name
+            cmd_prefix = "dx-jobutil-add-output -o " + local_filename + " "
+            for i, tc in enumerate(self.test_cases):
+                run(cmd_prefix + str(i) + " " + tc[0])
+            f.seek(0)
+            result = json.load(f)
+            for i, tc in enumerate(self.test_cases):
+                self.assertEqual(result[str(i)], tc[1])
+
+    def test_auto_array(self):
+        with tempfile.NamedTemporaryFile() as f:
+            # initialize the file with valid JSON
+            f.write('{}')
+            f.flush()
+            local_filename = f.name
+            cmd_prefix = "dx-jobutil-add-output --array -o " + local_filename + " "
+            for i, tc in enumerate(self.test_cases):
+                run(cmd_prefix + str(i) + " " + tc[0])
+                run(cmd_prefix + str(i) + " " + tc[0])
+            f.seek(0)
+            result = json.load(f)
+            for i, tc in enumerate(self.test_cases):
+                self.assertEqual(result[str(i)], [tc[1], tc[1]])
+
+    def test_class_specific(self):
+        with tempfile.NamedTemporaryFile() as f:
+            # initialize the file with valid JSON
+            f.write('{}')
+            f.flush()
+            local_filename = f.name
+            cmd_prefix = "dx-jobutil-add-output -o " + local_filename + " "
+            class_test_cases = [["boolean", "t", True],
+                                ["boolean", "1", True],
+                                ["boolean", "0", False]]
+            for i, tc in enumerate(class_test_cases):
+                run(cmd_prefix + " ".join([str(i), "--class " + tc[0], tc[1]]))
+            f.seek(0)
+            result = json.load(f)
+            for i, tc in enumerate(class_test_cases):
+                self.assertEqual(result[str(i)], tc[2])
+
+    def test_class_parsing_errors(self):
+        with tempfile.NamedTemporaryFile() as f:
+            # initialize the file with valid JSON
+            f.write('{}')
+            f.flush()
+            local_filename = f.name
+            cmd_prefix = "dx-jobutil-add-output -o " + local_filename + " "
+            error_test_cases = ([["int", "3.4"],
+                                 ["int", "foo"],
+                                 ["float", "foo"],
+                                 ["boolean", "something"],
+                                 ["hash", "{]"],
+                                 ["jobref", "thing"],
+                                 ["analysisref", "thing"]] +
+                                [[classname,
+                                  "'" +
+                                  json.dumps({"dnanexus_link": classname + "-" + self.dummy_hash}) +
+                                  "'"] for classname in self.data_obj_classes])
+            for i, tc in enumerate(error_test_cases):
+                with self.assertSubprocessFailure(stderr_regexp='Value could not be parsed',
+                                                  exit_code=3):
+                    run(cmd_prefix + " ".join([str(i), "--class " + tc[0], tc[1]]))
+
+
 if __name__ == '__main__':
     unittest.main()
