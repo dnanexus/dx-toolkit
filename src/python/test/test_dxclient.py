@@ -27,7 +27,8 @@ import requests
 
 import dxpy
 from dxpy.scripts import dx_build_app
-from dxpy_testutil import DXTestCase, check_output, temporary_project, select_project, cd
+from dxpy_testutil import (DXTestCase, check_output, temporary_project, select_project, cd,
+                           override_environment)
 import dxpy_testutil as testutil
 from dxpy.exceptions import DXAPIError, DXSearchError, EXPECTED_ERR_EXIT_STATUS
 from dxpy.compat import str, sys_encoding
@@ -48,16 +49,6 @@ def run(command, **kwargs):
     output = check_output(command, shell=True, **kwargs)
     print(output)
     return output
-
-def overrideEnvironment(**kwargs):
-    env = os.environ.copy()
-    for key in kwargs:
-        if kwargs[key] is None:
-            if key in env:
-                del env[key]
-        else:
-            env[key] = kwargs[key]
-    return env
 
 
 def create_file_in_project(fname, trg_proj_id, folder=None):
@@ -690,7 +681,7 @@ class TestDXClient(DXTestCase):
             wd = tempfile.mkdtemp()
 
             def get_dx_ssh_config():
-                dx_ssh_config = pexpect.spawn("dx ssh_config", env=overrideEnvironment(HOME=wd))
+                dx_ssh_config = pexpect.spawn("dx ssh_config", env=override_environment(HOME=wd))
                 dx_ssh_config.logfile = sys.stdout
                 dx_ssh_config.setwinsize(20, 90)
                 return dx_ssh_config
@@ -762,7 +753,7 @@ class TestDXClient(DXTestCase):
             wd = tempfile.mkdtemp()
             os.mkdir(os.path.join(wd, ".dnanexus_config"))
 
-            dx_ssh_config = pexpect.spawn("dx ssh_config", env=overrideEnvironment(HOME=wd))
+            dx_ssh_config = pexpect.spawn("dx ssh_config", env=override_environment(HOME=wd))
             dx_ssh_config.logfile = sys.stdout
             dx_ssh_config.setwinsize(20, 90)
             dx_ssh_config.expect("Select an SSH key pair")
@@ -789,7 +780,7 @@ class TestDXClient(DXTestCase):
                                                     project=self.project))["id"]
 
             dx = pexpect.spawn("dx run {} --yes --ssh".format(sleep_applet),
-                               env=overrideEnvironment(HOME=wd))
+                               env=override_environment(HOME=wd))
             dx.logfile = sys.stdout
             dx.setwinsize(20, 90)
             dx.expect("Waiting for job")
@@ -812,7 +803,7 @@ class TestDXClient(DXTestCase):
             dx.expect(("dnanexus@%s" % job_id), timeout=10)
 
             # Make sure the job can be connected to using 'dx ssh <job id>'
-            dx2 = pexpect.spawn("dx ssh " + job_id, env=overrideEnvironment(HOME=wd))
+            dx2 = pexpect.spawn("dx ssh " + job_id, env=override_environment(HOME=wd))
             dx2.logfile = sys.stdout
             dx2.setwinsize(20, 90)
             dx2.expect("Waiting for job")
@@ -842,7 +833,7 @@ class TestDXClient(DXTestCase):
                                                     project=self.project))["id"]
 
             job_id = run("dx run {} --yes --brief --debug-on AppInternalError".format(crash_applet),
-                         env=overrideEnvironment(HOME=wd)).strip()
+                         env=override_environment(HOME=wd)).strip()
             elapsed = 0
             while True:
                 job_desc = dxpy.describe(job_id)
@@ -853,7 +844,7 @@ class TestDXClient(DXTestCase):
                 if elapsed > 1200:
                     raise Exception("Timeout while waiting for job to enter debug hold")
 
-            dx = pexpect.spawn("dx ssh " + job_id, env=overrideEnvironment(HOME=wd))
+            dx = pexpect.spawn("dx ssh " + job_id, env=override_environment(HOME=wd))
             dx.logfile = sys.stdout
             dx.setwinsize(20, 90)
             dx.expect("dnanexus@", timeout=1200)
@@ -867,7 +858,7 @@ class TestDXClient(DXTestCase):
         username = dxpy.user_info()['username']
 
         def get_dx_login(opts=""):
-            dx_login = pexpect.spawn("dx login" + opts, env=overrideEnvironment(HOME=wd))
+            dx_login = pexpect.spawn("dx login" + opts, env=override_environment(HOME=wd))
             dx_login.logfile = sys.stdout
             dx_login.setwinsize(20, 90)
             return dx_login
@@ -903,7 +894,7 @@ class TestDXClient(DXTestCase):
         self.assertEqual(dx_login.exitstatus, EXPECTED_ERR_EXIT_STATUS)
 
     def test_dx_with_bad_job_id_env(self):
-        env = overrideEnvironment(DX_JOB_ID="foobar")
+        env = override_environment(DX_JOB_ID="foobar")
         run("dx env", env=env)
 
 class TestDXWhoami(DXTestCase):
@@ -3650,7 +3641,7 @@ class TestDXBuildApp(DXTestCase):
         return os.path.join(self.temp_file_path, app_name)
 
     def test_help_without_security_context(self):
-        env = overrideEnvironment(DX_SECURITY_CONTEXT=None, DX_APISERVER_HOST=None,
+        env = override_environment(DX_SECURITY_CONTEXT=None, DX_APISERVER_HOST=None,
                                   DX_APISERVER_PORT=None, DX_APISERVER_PROTOCOL=None)
         run("dx build -h", env=env)
 
@@ -4173,7 +4164,7 @@ class TestDXBuildApp(DXTestCase):
         # Set the project context to a nonexistent project. This
         # shouldn't have any effect since building an app is supposed to
         # be hygienic.
-        env = overrideEnvironment(DX_PROJECT_CONTEXT_ID='project-B00000000000000000000000')
+        env = override_environment(DX_PROJECT_CONTEXT_ID='project-B00000000000000000000000')
         run("dx build --create-app --json " + app_dir, env=env)
 
     def test_invalid_execdepends(self):

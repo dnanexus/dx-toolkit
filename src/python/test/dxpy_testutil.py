@@ -185,6 +185,22 @@ def analysis_describe_with_retry(analysis_id_or_handler):
     raise IOError('Timed out while waiting for ' + analysis_id_or_handler.get_id() + ' to have all jobs populated')
 
 
+def override_environment(**kwargs):
+    """Returns a copy of the current environment, with variables overridden
+    as specified in the arguments. Each key represents a variable name
+    and each value must be a string (to set the specified key to that
+    value) or None (to unset the specified key).
+    """
+    env = os.environ.copy()
+    for key in kwargs:
+        if kwargs[key] is None:
+            if key in env:
+                del env[key]
+        else:
+            env[key] = kwargs[key]
+    return env
+
+
 class DXTestCase(unittest.TestCase):
     def setUp(self):
         proj_name = u"dxclient_test_pröject"
