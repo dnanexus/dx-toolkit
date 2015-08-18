@@ -3959,10 +3959,16 @@ parser_run.add_argument('--watch', help="Watch the job after launching it; sets 
 parser_run.add_argument('--allow-ssh', action='append', nargs='?', metavar='ADDRESS',
                         help=fill('Configure the job to allow SSH access; sets --priority high. If an argument is ' +
                                   'supplied, it is interpreted as an IP or hostname mask to allow connections from, ' +
-                                  'e.g. "--allow-ssh 1.2.3.4 --allow-ssh berkeley.edu"'))
-parser_run.add_argument('--ssh', help="Configure the job to allow SSH access and connect to it after launching; sets --priority high", action='store_true')
+                                  'e.g. "--allow-ssh 1.2.3.4 --allow-ssh berkeley.edu"',
+                                  width_adjustment=-24))
+parser_run.add_argument('--ssh',
+                        help=fill("Configure the job to allow SSH access and connect to it after launching; " +
+                                  "sets --priority high",
+                                  width_adjustment=-24),
+                        action='store_true')
 parser_run.add_argument('--debug-on', action='append', choices=['AppError', 'AppInternalError', 'ExecutionError'],
-                        help="Configure the job to hold for debugging when any of the listed errors occur")
+                        help=fill("Configure the job to hold for debugging when any of the listed errors occur",
+                                  width_adjustment=-24))
 parser_run.add_argument('--input-help',
                         help=fill('Print help and examples for how to specify inputs',
                                   width_adjustment=-24),
