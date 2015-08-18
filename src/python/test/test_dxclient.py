@@ -1253,8 +1253,7 @@ class TestDXClientDescribe(DXTestCase):
 
         run("dx describe " + app_new_output2["id"])
 
-@unittest.skipUnless(testutil.TEST_RUN_JOBS,
-                     'skipping tests that would run jobs')
+
 class TestDXClientRun(DXTestCase):
     def setUp(self):
         self.other_proj_id = run("dx new project other --brief").strip()
@@ -1300,60 +1299,41 @@ dx-jobutil-add-output outrecord $record0
         job = applet.run({"int0": 16, "string0": "input_string",
                           "record0": {"$dnanexus_link": record.get_id()}})
         job_desc = job.describe()
-        self.assertEquals(job_desc["input"]["int0"], 16)
-        self.assertEquals(job_desc["input"]["string0"], "input_string")
-        self.assertEquals(job_desc["input"]["record0"],
-                          {"$dnanexus_link": record.get_id()})
-        self.assertNotIn("int1", job_desc["input"])
-        self.assertNotIn("string1", job_desc["input"])
-        self.assertNotIn("record1", job_desc["input"])
+        exp = {"int0": 16, "string0": "input_string",
+               "record0": {"$dnanexus_link": record.get_id()}}
+        self.assertEquals(job_desc["input"], exp)
 
         # Run with "dx run".
         job_id = run("dx run {applet_id} -iint0=16 -istring0=input_string -irecord0={record_id} --brief".format(
             applet_id=applet_id, record_id=record.get_id())).strip()
         job_desc = dxpy.describe(job_id)
-        self.assertEquals(job_desc["input"]["int0"], 16)
-        self.assertEquals(job_desc["input"]["string0"], "input_string")
-        self.assertEquals(job_desc["input"]["record0"],
-                          {"$dnanexus_link": record.get_id()})
-        self.assertNotIn("int1", job_desc["input"])
-        self.assertNotIn("string1", job_desc["input"])
-        self.assertNotIn("record1", job_desc["input"])
+        self.assertEquals(job_desc["input"], exp)
 
         job_id = run("dx run {applet_id} -iint0:int=16 -istring0:string=input_string -irecord0:record={record_id} --brief".format(
             applet_id=applet_id, record_id=record.get_id())).strip()
         job_desc = dxpy.describe(job_id)
-        self.assertEquals(job_desc["input"]["int0"], 16)
-        self.assertEquals(job_desc["input"]["string0"], "input_string")
-        self.assertEquals(job_desc["input"]["record0"],
-                          {"$dnanexus_link": record.get_id()})
-        self.assertNotIn("int1", job_desc["input"])
-        self.assertNotIn("string1", job_desc["input"])
-        self.assertNotIn("record1", job_desc["input"])
+        self.assertEquals(job_desc["input"], exp)
 
         # Run with "dx run" with JBORs.
         other_job_id = run("dx run {applet_id} -iint0={job_id}:outint -istring0={job_id}:outstring -irecord0={job_id}:outrecord --brief".format(
             applet_id=applet_id, job_id=job_id)).strip()
         job_desc = dxpy.describe(other_job_id)
-        self.assertEquals(job_desc["input"]["int0"],
-                          {"$dnanexus_link": {"field": "outint",
-                                              "job": job_id}})
-        self.assertEquals(job_desc["input"]["string0"],
-                          {"$dnanexus_link": {"field": "outstring",
-                                              "job": job_id}})
-        self.assertEquals(job_desc["input"]["record0"],
-                          {"$dnanexus_link": {"field": "outrecord",
-                                              "job": job_id}})
+        exp = {"int0": {"$dnanexus_link": {"field": "outint",
+                                           "job": job_id}},
+               "string0": {"$dnanexus_link": {"field": "outstring",
+                                              "job": job_id}},
+               "record0": {"$dnanexus_link": {"field": "outrecord",
+                                              "job": job_id}}}
+        self.assertEquals(job_desc["input"], exp)
 
         # Run with "dx run" with input name mapped to data object name.
         job_id = run("dx run {applet_id} -iint0=16 -istring0=input_string -irecord0=my_record --brief".format(
             applet_id=applet_id)).strip()
         job_desc = dxpy.describe(job_id)
-        self.assertEquals(job_desc["input"]["int0"], 16)
-        self.assertEquals(job_desc["input"]["string0"], "input_string")
-        self.assertEquals(job_desc["input"]["record0"],
-                          {"$dnanexus_link": {"project": self.project,
-                                              "id": record.get_id()}})
+        exp = {"int0": 16, "string0": "input_string",
+               "record0": {"$dnanexus_link": {"project": self.project,
+                                              "id": record.get_id()}}}
+        self.assertEquals(job_desc["input"], exp)
 
         #####################################
         # With required and optional inputs #
@@ -1367,47 +1347,34 @@ dx-jobutil-add-output outrecord $record0
                           "int1": 32, "string1": "second_input_string",
                           "record1": {"$dnanexus_link": second_record.get_id()}})
         job_desc = job.describe()
-        self.assertEquals(job_desc["input"]["int0"], 16)
-        self.assertEquals(job_desc["input"]["int1"], 32)
-        self.assertEquals(job_desc["input"]["string0"], "input_string")
-        self.assertEquals(job_desc["input"]["string1"], "second_input_string")
-        self.assertEquals(job_desc["input"]["record0"],
-                          {"$dnanexus_link": record.get_id()})
-        self.assertEquals(job_desc["input"]["record1"],
-                          {"$dnanexus_link": second_record.get_id()})
+        exp = {"int0": 16, "int1": 32, "string0": "input_string",
+               "string1": "second_input_string",
+               "record0": {"$dnanexus_link": record.get_id()},
+               "record1": {"$dnanexus_link": second_record.get_id()}}
+        self.assertEquals(job_desc["input"], exp)
 
         # Run with "dx run".
         job_id = run("dx run {applet_id} -iint0=16 -istring0=input_string -irecord0={record_id} -iint1=32 -istring1=second_input_string -irecord1={second_record_id} --brief".format(
             applet_id=applet_id, record_id=record.get_id(),
             second_record_id=second_record.get_id())).strip()
         job_desc = dxpy.describe(job_id)
-        self.assertEquals(job_desc["input"]["int0"], 16)
-        self.assertEquals(job_desc["input"]["int1"], 32)
-        self.assertEquals(job_desc["input"]["string0"], "input_string")
-        self.assertEquals(job_desc["input"]["string1"], "second_input_string")
-        self.assertEquals(job_desc["input"]["record0"],
-                          {"$dnanexus_link": record.get_id()})
-        self.assertEquals(job_desc["input"]["record1"],
-                          {"$dnanexus_link": second_record.get_id()})
+        self.assertEquals(job_desc["input"], exp)
 
         # Run with "dx run" with JBORs.
         other_job_id = run("dx run {applet_id} -iint0=32 -iint1={job_id}:outint -istring0=second_input_string -istring1={job_id}:outstring -irecord0={second_record_id} -irecord1={job_id}:outrecord --brief".format(
             applet_id=applet_id, job_id=job_id,
             second_record_id=second_record.get_id())).strip()
         job_desc = dxpy.describe(other_job_id)
-        self.assertEquals(job_desc["input"]["int0"], 32)
-        self.assertEquals(job_desc["input"]["string0"], "second_input_string")
-        self.assertEquals(job_desc["input"]["record0"],
-                          {"$dnanexus_link": second_record.get_id()})
-        self.assertEquals(job_desc["input"]["int1"],
-                          {"$dnanexus_link": {"field": "outint",
-                                              "job": job_id}})
-        self.assertEquals(job_desc["input"]["string1"],
-                          {"$dnanexus_link": {"field": "outstring",
-                                              "job": job_id}})
-        self.assertEquals(job_desc["input"]["record1"],
-                          {"$dnanexus_link": {"field": "outrecord",
-                                              "job": job_id}})
+        exp = {"int0": 32,
+               "int1": {"$dnanexus_link": {"field": "outint",
+                                           "job": job_id}},
+               "string0": "second_input_string",
+               "string1": {"$dnanexus_link": {"field": "outstring",
+                                              "job": job_id}},
+               "record0": {"$dnanexus_link": second_record.get_id()},
+               "record1": {"$dnanexus_link": {"field": "outrecord",
+                                              "job": job_id}}}
+        self.assertEquals(job_desc["input"], exp)
 
     def test_dx_run_applet_without_input_spec(self):
         record = dxpy.new_dxrecord(name="my_record")
@@ -1434,48 +1401,38 @@ dx-jobutil-add-output outrecord $record_id
         job = applet.run({"int0": 16, "string0": "input_string",
                           "record0": {"$dnanexus_link": record.get_id()}})
         job_desc = job.describe()
-        self.assertEquals(job_desc["input"]["int0"], 16)
-        self.assertEquals(job_desc["input"]["string0"], "input_string")
-        self.assertEquals(job_desc["input"]["record0"],
-                          {"$dnanexus_link": record.get_id()})
+        exp = {"int0": 16, "string0": "input_string",
+               "record0": {"$dnanexus_link": record.get_id()}}
+        self.assertEquals(job_desc["input"], exp)
 
         # Run with "dx run".
         job_id = run("dx run {applet_id} -iint0=16 -istring0=input_string -irecord0={record_id} --brief".format(applet_id=applet_id, record_id=record.get_id())).strip()
         job_desc = dxpy.describe(job_id)
-        self.assertEquals(job_desc["input"]["int0"], 16)
-        self.assertEquals(job_desc["input"]["string0"], "input_string")
-        self.assertEquals(job_desc["input"]["record0"],
-                          {"$dnanexus_link": record.get_id()})
+        self.assertEquals(job_desc["input"], exp)
 
         job_id = run("dx run {applet_id} -iint0:int=16 -istring0:string=input_string -irecord0:record={record_id} --brief".format(applet_id=applet_id, record_id=record.get_id())).strip()
         job_desc = dxpy.describe(job_id)
-        self.assertEquals(job_desc["input"]["int0"], 16)
-        self.assertEquals(job_desc["input"]["string0"], "input_string")
-        self.assertEquals(job_desc["input"]["record0"],
-                          {"$dnanexus_link": record.get_id()})
+        self.assertEquals(job_desc["input"], exp)
 
         # Run with "dx run" with JBORs.
         other_job_id = run("dx run {applet_id} -iint0={job_id}:outint -istring0={job_id}:outstring -irecord0={job_id}:outrecord --brief".format(applet_id=applet_id, job_id=job_id)).strip()
         job_desc = dxpy.describe(other_job_id)
-        self.assertEquals(job_desc["input"]["int0"],
-                          {"$dnanexus_link": {"field": "outint",
-                                              "job": job_id}})
-        self.assertEquals(job_desc["input"]["string0"],
-                          {"$dnanexus_link": {"field": "outstring",
-                                              "job": job_id}})
-        self.assertEquals(job_desc["input"]["record0"],
-                          {"$dnanexus_link": {"field": "outrecord",
-                                              "job": job_id}})
+        exp = {"int0": {"$dnanexus_link": {"field": "outint",
+                                           "job": job_id}},
+               "string0": {"$dnanexus_link": {"field": "outstring",
+                                              "job": job_id}},
+               "record0": {"$dnanexus_link": {"field": "outrecord",
+                                              "job": job_id}}}
+        self.assertEquals(job_desc["input"], exp)
 
         other_job_id = run("dx run {applet_id} -irecord0={record_id} -irecord1={job_id}:outrecord --brief".format(
             applet_id=applet_id, job_id=job_id, record_id=record.get_id()
         )).strip()
         job_desc = dxpy.describe(other_job_id)
-        self.assertEquals(job_desc["input"]["record0"],
-                          {"$dnanexus_link": record.get_id()})
-        self.assertEquals(job_desc["input"]["record1"],
-                          {"$dnanexus_link": {"field": "outrecord",
-                                              "job": job_id}})
+        exp = {"record0": {"$dnanexus_link": record.get_id()},
+               "record1": {"$dnanexus_link": {"field": "outrecord",
+                                              "job": job_id}}}
+        self.assertEquals(job_desc["input"], exp)
 
         # Run with "dx run" with repeated input names: order of input values
         # preserved.
@@ -1483,28 +1440,26 @@ dx-jobutil-add-output outrecord $record_id
             applet_id=applet_id, job_id=job_id, record_id=record.get_id()
         )).strip()
         job_desc = dxpy.describe(other_job_id)
-        self.assertEquals(job_desc["input"]["record0"][0],
-                          {"$dnanexus_link": record.get_id()})
-        self.assertEquals(job_desc["input"]["record0"][1],
-                          {"$dnanexus_link": {"field": "outrecord",
-                                              "job": job_id}})
+        exp = {"record0": [{"$dnanexus_link": record.get_id()},
+                           {"$dnanexus_link": {"field": "outrecord",
+                                               "job": job_id}}]}
+        self.assertEquals(job_desc["input"], exp)
 
         other_job_id = run("dx run {applet_id} -irecord0={job_id}:outrecord -irecord0={record_id} --brief".format(
             applet_id=applet_id, job_id=job_id, record_id=record.get_id()
         )).strip()
         job_desc = dxpy.describe(other_job_id)
-        self.assertEquals(job_desc["input"]["record0"][0],
-                          {"$dnanexus_link": {"field": "outrecord",
-                                              "job": job_id}})
-        self.assertEquals(job_desc["input"]["record0"][1],
-                          {"$dnanexus_link": record.get_id()})
+        exp = {"record0": [{"$dnanexus_link": {"field": "outrecord",
+                                               "job": job_id}},
+                           {"$dnanexus_link": record.get_id()}]}
+        self.assertEquals(job_desc["input"], exp)
 
         # Run with "dx run" with input name mapped to data object name.
         job_id = run("dx run {applet_id} -irecord0=my_record --brief".format(applet_id=applet_id)).strip()
         job_desc = dxpy.describe(job_id)
-        self.assertEquals(job_desc["input"]["record0"],
-                          {"$dnanexus_link": {"project": self.project,
-                                              "id": record.get_id()}})
+        exp = {"record0": {"$dnanexus_link": {"project": self.project,
+                                              "id": record.get_id()}}}
+        self.assertEquals(job_desc["input"], exp)
 
     def test_dx_resolve(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
@@ -1769,6 +1724,8 @@ dx-jobutil-add-output outrecord $record_id
         # by ID will still work
         run("dx run " + dxworkflow.get_id() + " -y")
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping tests that would run jobs')
     def test_dx_run_jbor_array_ref(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "name": "myapplet",
@@ -1828,6 +1785,8 @@ dx-jobutil-add-output record_array $second_record --array
         self.assertIn(remote_job_output[1]["$dnanexus_link"], local_output)
         self.assertNotIn(remote_job_output[0]["$dnanexus_link"], local_output)
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping tests that would run jobs')
     def test_dx_run_priority(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "name": "myapplet",
@@ -2174,6 +2133,8 @@ dx-jobutil-add-output record_array $second_record --array
                          {'some_ep': {'instanceType': 'mem2_hdd2_x2'}})
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping tests that would run jobs')
     def test_dx_describe_job_with_resolved_jbors(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
