@@ -427,7 +427,8 @@ def find_analyses(*args, **kwargs):
 
 def find_projects(name=None, name_mode='exact', properties=None, tags=None,
                   level=None, describe=False, explicit_perms=None,
-                  public=None, billed_to=None, limit=None, return_handler=False, first_page_size=100, **kwargs):
+                  public=None, created_after=None, created_before=None, billed_to=None,
+                  limit=None, return_handler=False, first_page_size=100, **kwargs):
     """
     :param name: Name of the project (also see *name_mode*)
     :type name: string
@@ -449,6 +450,12 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
     :type explicit_perms: boolean or None
     :param public: Filter on the project being public. If True, matching projects must be public. If False, matching projects must not be public. (default is None, for no filter)
     :type public: boolean or None
+    :param created_after: Timestamp after which each result was created
+        (see note accompanying :meth:`find_data_objects()` for interpretation)
+    :type created_after: int or string
+    :param created_before: Timestamp before which each result was created
+        (see note accompanying :meth:`find_data_objects()` for interpretation)
+    :type created_before: int or string
     :param billed_to: Entity ID (user or organization) that pays for the project's storage costs
     :type billed_to: string
     :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
@@ -490,6 +497,12 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
         query['explicitPermission'] = explicit_perms
     if public is not None:
         query['public'] = public
+    if created_after is not None or created_before is not None:
+        query["created"] = {}
+        if created_after is not None:
+            query["created"]["after"] = dxpy.utils.normalize_time_input(created_after)
+        if created_before is not None:
+            query["created"]["before"] = dxpy.utils.normalize_time_input(created_before)
     if billed_to is not None:
         query['billTo'] = billed_to
     if limit is not None:

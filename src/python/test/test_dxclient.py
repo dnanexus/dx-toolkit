@@ -3087,6 +3087,20 @@ class TestDXClientFind(DXTestCase):
             self.assertEqual(len(json_output), 1)
             self.assertEqual(json_output[0]['id'], unique_project.get_id())
 
+    def test_dx_find_projects_by_created(self):
+        created_project_name = 'dx find projects test ' + str(time.time())
+        with temporary_project(created_project_name) as unique_project:
+            self.assertEqual(run("dx find projects --created-after=-1d --brief --name " +
+                             pipes.quote(created_project_name)), unique_project.get_id() + '\n')
+            self.assertEqual(run("dx find projects --created-before=" + str(int(time.time()+1000)) +
+                             " --brief --name " + pipes.quote(created_project_name)),
+                             unique_project.get_id() + '\n')
+            self.assertEqual(run("dx find projects --created-after=-1d --created-before=" +
+                             str(int(time.time()+1000)) + " --brief --name " +
+                             pipes.quote(created_project_name)), unique_project.get_id() + '\n')
+            self.assertEqual(run("dx find projects --created-after=" + str(int(time.time()+1000)) + " --name " +
+                             pipes.quote(created_project_name)), "")
+
     def test_dx_find_projects_by_tag(self):
         other_project_id = run("dx new project other --brief").strip()
         try:

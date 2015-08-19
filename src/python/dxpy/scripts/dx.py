@@ -2224,7 +2224,9 @@ def find_projects(args):
                                      level=('VIEW' if args.public else args.level),
                                      describe=(not args.brief),
                                      explicit_perms=(not args.public if not args.public else None),
-                                     public=(args.public if args.public else None))
+                                     public=(args.public if args.public else None),
+                                     created_after=args.created_after,
+                                     created_before=args.created_before)
         if args.json:
             print(json.dumps(list(results), indent=4))
             return
@@ -4358,6 +4360,12 @@ parser_find_projects.add_argument('--level', choices=['VIEW', 'UPLOAD', 'CONTRIB
 parser_find_projects.add_argument('--public',
                                   help='Include ONLY public projects (will automatically set --level to VIEW)',
                                   action='store_true')
+parser_find_projects.add_argument('--created-after',
+                                  help='Date (e.g. 2012-01-01) or integer timestamp after which the project was ' +
+                                  'created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_projects.add_argument('--created-before',
+                                  help='Date (e.g. 2012-01-01) or integer timestamp after which the project was ' +
+                                  'created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
 parser_find_projects.set_defaults(func=find_projects)
 register_subparser(parser_find_projects, subparsers_action=subparsers_find, categories='data')
 

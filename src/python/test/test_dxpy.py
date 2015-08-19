@@ -1875,6 +1875,20 @@ class TestDXSearch(unittest.TestCase):
                 break
         self.assertTrue(found_proj)
 
+        created = dxproject.created
+        matching_ids = (result["id"] for result in dxpy.find_projects(created_before=created + 1000))
+        self.assertIn(dxproject.id, matching_ids)
+
+        matching_ids = (result["id"] for result in dxpy.find_projects(created_after=created - 1000))
+        self.assertIn(dxproject.id, matching_ids)
+
+        matching_ids = (result["id"] for result in
+                        dxpy.find_projects(created_before=created + 1000, created_after=created - 1000))
+        self.assertIn(dxproject.id, matching_ids)
+
+        matching_ids = (result["id"] for result in dxpy.find_projects(created_before=created - 1000))
+        self.assertNotIn(dxproject.id, matching_ids)
+
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
     def test_find_executions(self):
         dxapplet = dxpy.DXApplet()
