@@ -3347,19 +3347,27 @@ class DXArgumentParser(argparse.ArgumentParser):
                                                              msg=message))
 
 def register_subparser(subparser, subparsers_action=None, categories=('other', )):
+    name = re.sub('^dx ', '', subparser.prog)
     if subparsers_action is None:
         subparsers_action = subparsers
     if isinstance(categories, basestring):
         categories = (categories, )
     if subparsers_action == subparsers:
-        name = subparsers_action._choices_actions[-1].dest
+        subparsers_action_name = subparsers_action._choices_actions[-1].dest
     else:
-        name = subparsers._choices_actions[-1].dest + ' ' + subparsers_action._choices_actions[-1].dest
-    _help = subparsers_action._choices_actions[-1].help
+        subparsers_action_name = subparsers._choices_actions[-1].dest + ' ' + subparsers_action._choices_actions[-1].dest
+
     parser_map[name] = subparser
-    parser_categories['all']['cmds'].append((name, _help))
-    for category in categories:
-        parser_categories[category]['cmds'].append((name, _help))
+    # Some subparsers may not have help associated with them.  Those that lack
+    # help, will not have an item in the _choices_actions list.  So, to determine
+    # if the present subparser has a help, we'll get the name for this subparser,
+    # compare it to the name in the last _choices_actions list, and only if
+    # they match can we be confident that it has a help.
+    if subparsers_action_name == name:
+        _help = subparsers_action._choices_actions[-1].help
+        parser_categories['all']['cmds'].append((name, _help))
+        for category in categories:
+            parser_categories[category]['cmds'].append((name, _help))
 
 
 parser = DXArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v%s, client v%s' % (dxpy.API_VERSION, dxpy.TOOLKIT_VERSION) + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, navigate, upload, organize and share your data, launch analyses, and more.  For a quick tour of what the tool can do, see') + '\n\n  https://wiki.dnanexus.com/Command-Line-Client/Quickstart\n\n' + fill('For a breakdown of dx commands by category, run "dx help".') + '\n\n' + fill('dx exits with exit code 3 if invalid input is provided or an invalid operation is requested, and exit code 1 if an internal error is encountered.  The latter usually indicate bugs in dx; please report them at') + "\n\n  https://github.com/dnanexus/dx-toolkit/issues",
@@ -3644,7 +3652,8 @@ parser_download.set_defaults(func=download_or_cat)
 register_subparser(parser_download, categories='data')
 
 parser_make_download_url = subparsers.add_parser('make_download_url', help='Create a file download link for sharing',
-                                                 description='Creates a pre-authenticated link that can be used to download a file without logging in.')
+                                                 description='Creates a pre-authenticated link that can be used to download a file without logging in.',
+                                                 prog='dx make_download_url')
 path_action = parser_make_download_url.add_argument('path', help='Data object ID or name to access')
 path_action.completer = DXPathCompleter(classes=['file'])
 parser_make_download_url.add_argument('--duration', help='Time for which the URL will remain valid (in seconds, or use suffix s, m, h, d, w, M, y). Default: 1 day')
@@ -4396,7 +4405,8 @@ parser_api.set_defaults(func=api)
 register_subparser(parser_api)
 
 parser_upgrade = subparsers.add_parser('upgrade', help='Upgrade dx-toolkit (the DNAnexus SDK and this program)',
-                                       description='Upgrades dx-toolkit (the DNAnexus SDK and this program) to the latest recommended version, or to a specified version and platform.')
+                                       description='Upgrades dx-toolkit (the DNAnexus SDK and this program) to the latest recommended version, or to a specified version and platform.',
+                                       prog='dx upgrade')
 parser_upgrade.add_argument('args', nargs='*')
 parser_upgrade.set_defaults(func=upgrade)
 register_subparser(parser_upgrade)
