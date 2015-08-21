@@ -272,6 +272,7 @@ def split_unescaped(char, string, include_empty_strings=False):
     words.reverse()
     return words
 
+
 def clean_folder_path(path, expected=None):
     '''
     :param path: A folder path to sanitize and parse
@@ -296,8 +297,7 @@ def clean_folder_path(path, expected=None):
     if expected == 'folder' or folders[-1] == '.' or folders[-1] == '..' or get_last_pos_of_char('/', path) == len(path) - 1:
         entity_name = None
     else:
-        entity_name = unescape_name_str(folders[-1])
-        folders = folders[:-1]
+        entity_name = unescape_name_str(folders.pop())
 
     sanitized_folders = []
 
@@ -310,14 +310,8 @@ def clean_folder_path(path, expected=None):
         else:
             sanitized_folders.append(unescape_folder_str(folder))
 
-    if len(sanitized_folders) == 0:
-        newpath = '/'
-    else:
-        newpath = ""
-        for folder in sanitized_folders:
-            newpath += '/' + folder
+    return ('/' + '/'.join(sanitized_folders)), entity_name
 
-    return newpath, entity_name
 
 def resolve_container_id_or_name(raw_string, is_error=False, unescape=True, multi=False):
     '''

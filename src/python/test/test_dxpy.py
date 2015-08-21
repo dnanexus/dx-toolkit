@@ -2149,6 +2149,29 @@ class TestResolver(unittest.TestCase):
         proj_id, path, entity_id = resolve_existing_path(':')
         self.assertEqual(proj_id, dxpy.WORKSPACE_ID)
 
+    def test_clean_folder_path(self):
+        from dxpy.utils.resolver import clean_folder_path as clean
+        self.assertEqual(clean(""), ("/", None))
+        self.assertEqual(clean("/foo"), ("/", "foo"))
+        self.assertEqual(clean("/foo/bar/baz"), ("/foo/bar", "baz"))
+        self.assertEqual(clean("/foo/bar////baz"), ("/foo/bar", "baz"))
+        self.assertEqual(clean("/foo/bar/baz/"), ("/foo/bar/baz", None))
+        self.assertEqual(clean("/foo/bar/baz///"), ("/foo/bar/baz", None))
+        self.assertEqual(clean("/foo/bar/baz", expected="folder"), ("/foo/bar/baz", None))
+        self.assertEqual(clean("/foo/bar/baz/."), ("/foo/bar/baz", None))
+        self.assertEqual(clean("/foo/bar/baz/.."), ("/foo/bar", None))
+        self.assertEqual(clean("/foo/bar/../.."), ("/", None))
+        self.assertEqual(clean("/foo/bar/../../.."), ("/", None))
+        self.assertEqual(clean("/foo/bar/../../../"), ("/", None))
+        self.assertEqual(clean("/foo/\\/bar/\\/"), ("/foo/\\/bar", "/"))
+        self.assertEqual(clean("/foo/\\//bar/\\/"), ("/foo/\\//bar", "/"))
+        self.assertEqual(clean("/foo/bar/\\]/\\["), ("/foo/bar/\\]", "["))
+        self.assertEqual(clean("/foo/bar/baz/../quux"), ("/foo/bar", "quux"))
+        self.assertEqual(clean("/foo/bar/../baz/../quux"), ("/foo", "quux"))
+        self.assertEqual(clean("/foo/././bar/../baz/../quux"), ("/foo", "quux"))
+        self.assertEqual(clean("/foo/bar/../baz/../../quux"), ("/", "quux"))
+        self.assertEqual(clean("/foo/bar/../../baz/../../quux"), ("/", "quux"))
+
     def test_resolution_batching(self):
         from dxpy.bindings.search import resolve_data_objects
         record_id0 = dxpy.api.record_new({"project": self.proj_id,
