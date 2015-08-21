@@ -313,23 +313,23 @@ def clean_folder_path(path, expected=None):
     return ('/' + '/'.join(sanitized_folders)), entity_name
 
 
-def resolve_container_id_or_name(raw_string, is_error=False, unescape=True, multi=False):
+def resolve_container_id_or_name(raw_string, is_error=False, multi=False):
     '''
     :param raw_string: A potential project or container ID or name
     :type raw_string: string
-    :param is_error: Whether to raise an exception if the project or container ID cannot be resolved
+    :param is_error: Whether to raise an exception if the project or
+            container ID cannot be resolved
     :type is_error: boolean
-    :param unescape: Whether to unescaping the string is required (TODO: External link to section on escaping characters.)
-    :type unescape: boolean
     :returns: Project or container ID if found or else None
     :rtype: string or None
-    :raises: :exc:`ResolutionError` if *is_error* is True and the project or container could not be resolved
+    :raises: :exc:`ResolutionError` if *is_error* is True and the
+            project or container could not be resolved
 
-    Attempt to resolve *raw_string* to a project or container ID.
+    Unescapes and attempts to resolve *raw_string* to a project or
+    container ID.
 
     '''
-    if unescape:
-        string = unescape_name_str(raw_string)
+    string = unescape_name_str(raw_string)
     if is_container_id(string):
         return ([string] if multi else string)
 
