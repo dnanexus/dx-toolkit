@@ -80,6 +80,8 @@ will download into the execution environment:
 
 '''
 
+from __future__ import print_function, unicode_literals, division, absolute_import
+
 import json
 import pipes
 import os
@@ -87,7 +89,7 @@ import fnmatch
 import sys
 import collections
 import dxpy
-from dxpy.compat import environ
+from dxpy.compat import environ, open
 from ..exceptions import DXError
 
 
@@ -102,7 +104,7 @@ def get_input_dir(job_homedir=None):
     if job_homedir is not None:
         home_dir = job_homedir
     else:
-        home_dir = os.environ.get('HOME')
+        home_dir = environ.get('HOME')
     idir = os.path.join(home_dir, 'in')
     return idir
 
@@ -119,7 +121,7 @@ def get_output_dir(job_homedir=None):
     if job_homedir is not None:
         home_dir = job_homedir
     else:
-        home_dir = os.environ.get('HOME')
+        home_dir = environ.get('HOME')
     odir = os.path.join(home_dir, 'out')
     return odir
 
@@ -129,7 +131,7 @@ def get_input_json_file():
     :rtype: string
     :returns: path to input JSON file
     """
-    home_dir = os.environ.get('HOME')
+    home_dir = environ.get('HOME')
     return os.path.join(home_dir, "job_input.json")
 
 
@@ -138,7 +140,7 @@ def get_output_json_file():
     :rtype: string
     :returns: Path to output JSON file
     """
-    home_dir = os.environ.get('HOME')
+    home_dir = environ.get('HOME')
     return os.path.join(home_dir, "job_output.json")
 
 
@@ -274,7 +276,7 @@ def get_input_spec_patterns():
     input parameter names.
     '''
     input_spec = None
-    if 'DX_JOB_ID' in os.environ:
+    if 'DX_JOB_ID' in environ:
         # works in the cloud, not locally
         job_desc = dxpy.describe(dxpy.JOB_ID)
         if job_desc["function"] == "main":
@@ -282,10 +284,10 @@ def get_input_spec_patterns():
             desc = dxpy.describe(job_desc.get("app", job_desc.get("applet")))
             if "inputSpec" in desc:
                 input_spec = desc["inputSpec"]
-    elif 'DX_TEST_DXAPP_JSON' in os.environ:
+    elif 'DX_TEST_DXAPP_JSON' in environ:
         # works only locally
-        path_to_dxapp_json = os.environ['DX_TEST_DXAPP_JSON']
-        with open(path_to_dxapp_json, 'r') as fd:
+        path_to_dxapp_json = environ['DX_TEST_DXAPP_JSON']
+        with open(path_to_dxapp_json) as fd:
             dxapp_json = json.load(fd)
             input_spec = dxapp_json.get('inputSpec')
 
@@ -458,30 +460,3 @@ def gen_bash_vars(job_input_file, job_homedir=None, check_name_collision=True):
         gen_text_line_and_name_collision(file_key + "_path", string_of_value(desc['path']))
 
     return var_defs_hash
-
-
-def _gen_bash_vars_old(job_input_file):
-    """
-    Old code for generating bash variables from the input file. Previously used inside a script.
-    We use it to verify the new version of the code.
-    """
-    def old_string_of_elem(v):
-        """
-        :param v: a value read from a JSON file
-        :returns: string to be instantiated as a bash variable
-        :rtype: string
-        """
-        if isinstance(v, list):
-            return "( {} )".format(" ".join([pipes.quote(vitem if isinstance(vitem, basestring) else json.dumps(vitem)) for vitem in v]))
-        else:
-            return "{}".format(pipes.quote(v if isinstance(v, basestring) else json.dumps(v)))
-
-    key_val_map = {}
-    for k, v in json.load(open(job_input_file)).iteritems():
-        key_val_map[k] = old_string_of_elem(v)
-    return key_val_map
-
-
-def _gen_bash_var_lines_old(job_input_file):
-    ''' The original old code for generating bash variables. Used for comparison purposes. '''
-    return ["export {k}=( {vlist} )".format(k=k, vlist=" ".join([pipes.quote(vitem if isinstance(vitem, basestring) else json.dumps(vitem)) for vitem in v])) if isinstance(v, list) else "export {k}={v}".format(k=k, v=pipes.quote(v if isinstance(v, basestring) else json.dumps(v))) for k, v in json.load(open(job_input_file)).iteritems()]

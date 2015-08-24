@@ -16,6 +16,8 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+from __future__ import print_function, unicode_literals, division, absolute_import
+
 import sys, json, argparse
 import dxpy
 from dxpy.utils import file_load_utils
@@ -27,40 +29,10 @@ variables that would be available in the execution environment.'''
 
 parser = argparse.ArgumentParser(description=refill_paragraphs(description),
                                  formatter_class=argparse.RawTextHelpFormatter)
-parser.add_argument('--dbg-compare-old',
-                    help='Compare generated bash variables to old version.',
-                    action="store_true")
 args = parser.parse_args()
 
 job_input_file = file_load_utils.get_input_json_file()
 
-if args.dbg_compare_old:
-    # Debugging
-    #
-    # Compare with older version of the variable generation code
-    var_defs_hash = file_load_utils.gen_bash_vars(job_input_file, check_name_collision=False)
-    var_defs_hash_old = file_load_utils._gen_bash_vars_old(job_input_file)
-    for key, old_val in var_defs_hash_old.iteritems():
-        if key not in var_defs_hash:
-            print("Variable {} does not exist in the new version".format(key))
-        elif var_defs_hash[key] != old_val:
-            print("Bad generation of bash variable   new={} old={}".format(var_defs_hash[key], old_val))
-    print("")
-    print("old vars I:")
-    lines = file_load_utils._gen_bash_var_lines_old(job_input_file)
-    for ln in lines:
-        print("{}".format(ln))
-    print("")
-    print("old vars II:")
-    for key, old_val in var_defs_hash_old.iteritems():
-        print("export {}={}".format(key, old_val))
-    print("")
-    print("new vars:")
-    for key, val in var_defs_hash.iteritems():
-        print("export {}={}".format(key, val))
-
-else:
-    # Standard usage: print all variable definitions
-    var_defs_hash = file_load_utils.gen_bash_vars(job_input_file)
-    for key, val in var_defs_hash.iteritems():
-        print("export {}={}".format(key, val))
+var_defs_hash = file_load_utils.gen_bash_vars(job_input_file)
+for key, val in var_defs_hash.iteritems():
+    print("export {}={}".format(key, val))
