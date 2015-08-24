@@ -28,7 +28,7 @@ import requests
 import dxpy
 from dxpy.scripts import dx_build_app
 from dxpy_testutil import (DXTestCase, check_output, temporary_project, select_project, cd,
-                           override_environment)
+                           override_environment, generate_unique_username_email)
 import dxpy_testutil as testutil
 from dxpy.exceptions import DXAPIError, DXSearchError, EXPECTED_ERR_EXIT_STATUS
 from dxpy.compat import str, sys_encoding
@@ -3329,12 +3329,6 @@ class TestDXClientNewUser(DXTestCase):
     def _now(self):
         return str(int(time.time()))
 
-    def _generate_unique_username_email(self):
-        r = random.randint(0, 255)
-        username = "asset_" + self._now() + "_" + str(r)
-        email = username + "@example.com"
-        return username, email
-
     def _assert_user_desc(self, user_id, exp_user_desc):
         user_desc = dxpy.api.user_describe(user_id)
         for field in exp_user_desc:
@@ -3350,7 +3344,7 @@ class TestDXClientNewUser(DXTestCase):
         super(TestDXClientNewUser, self).tearDown()
 
     def test_create_user_account_and_set_bill_to_negative(self):
-        username, email = self._generate_unique_username_email()
+        username, email = generate_unique_username_email()
         first = "Asset"
         cmd = "dx new user"
 
@@ -3418,20 +3412,20 @@ class TestDXClientNewUser(DXTestCase):
         cmd = "dx new user"
 
         # Basic with first name only.
-        username, email = self._generate_unique_username_email()
+        username, email = generate_unique_username_email()
         user_id = run("{cmd} --username {u} --email {e} --first {f} --brief".format(
                       cmd=cmd, u=username, e=email, f=first)).strip()
         self._assert_user_desc(user_id, {"first": first})
 
         # Basic with last name only.
-        username, email = self._generate_unique_username_email()
+        username, email = generate_unique_username_email()
         user_id = run("{cmd} --username {u} --email {e} --last {l} --brief".format(
                       cmd=cmd, u=username, e=email, l=last)).strip()
         self._assert_user_desc(user_id, {"last": last})
 
         # Basic with all options we can verify.
         # TODO: Test --token-duration and --occupation.
-        username, email = self._generate_unique_username_email()
+        username, email = generate_unique_username_email()
         user_id = run("{cmd} --username {u} --email {e} --first {f} --middle {m} --last {l} --brief".format(
                       cmd=cmd, u=username, e=email, f=first, m=middle,
                       l=last)).strip()
@@ -3446,7 +3440,7 @@ class TestDXClientNewUser(DXTestCase):
         cmd = "dx new user"
 
         # Grant default org membership level and permission flags.
-        username, email = self._generate_unique_username_email()
+        username, email = generate_unique_username_email()
         user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --brief".format(
                       cmd=cmd, u=username, e=email, f=first,
                       o=self.org_id)).strip()
@@ -3462,7 +3456,7 @@ class TestDXClientNewUser(DXTestCase):
         self.assertEqual(exp, res)
 
         # Grant custom org membership level and permission flags.
-        username, email = self._generate_unique_username_email()
+        username, email = generate_unique_username_email()
         user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --level {l} --allow-billable-activities --no-app-access --project-access {pa} --brief".format(
                       cmd=cmd, u=username, e=email, f=first,
                       o=self.org_id, l="MEMBER", pa="VIEW")).strip()
@@ -3479,7 +3473,7 @@ class TestDXClientNewUser(DXTestCase):
 
         # Grant ADMIN org membership level; ignore all other org permission
         # options.
-        username, email = self._generate_unique_username_email()
+        username, email = generate_unique_username_email()
         user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --level {l} --no-app-access --project-access {pa} --brief".format(
                       cmd=cmd, u=username, e=email, f=first,
                       o=self.org_id, l="ADMIN", pa="VIEW")).strip()
@@ -3497,7 +3491,7 @@ class TestDXClientNewUser(DXTestCase):
 
         # --allow-billable-activities is implied; grant custom org membership
         # level and other permission flags.
-        username, email = self._generate_unique_username_email()
+        username, email = generate_unique_username_email()
         user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --level {l} --project-access {pa} --brief".format(
                       cmd=cmd, u=username, e=email, f=first,
                       o=self.org_id, l="MEMBER", pa="VIEW")).strip()
@@ -3512,7 +3506,7 @@ class TestDXClientNewUser(DXTestCase):
         res = dxpy.api.org_get_member_access(self.org_id, {"user": user_id})
         self.assertEqual(exp, res)
 
-        username, email = self._generate_unique_username_email()
+        username, email = generate_unique_username_email()
         user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --level {l} --project-access {pa} --brief".format(
                       cmd=cmd, u=username, e=email, f=first,
                       o=self.org_id, l="MEMBER", pa="VIEW")).strip()
@@ -3528,7 +3522,7 @@ class TestDXClientNewUser(DXTestCase):
         self.assertEqual(exp, res)
 
         # Grant ADMIN org membership level.
-        username, email = self._generate_unique_username_email()
+        username, email = generate_unique_username_email()
         user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --level ADMIN --brief".format(
                       cmd=cmd, u=username, e=email, f=first,
                       o=self.org_id)).strip()

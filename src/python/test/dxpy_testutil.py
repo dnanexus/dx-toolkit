@@ -20,6 +20,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os, sys, unittest, subprocess, re, platform
 import time
+import random
 
 from contextlib import contextmanager
 
@@ -199,6 +200,13 @@ def override_environment(**kwargs):
         else:
             env[key] = kwargs[key]
     return env
+
+
+def generate_unique_username_email():
+    r = random.randint(0, 255)
+    username = "asset_" + str(int(time.time())) + "_" + str(r)
+    email = username + "@example.com"
+    return username, email
 
 
 class DXTestCase(unittest.TestCase):
