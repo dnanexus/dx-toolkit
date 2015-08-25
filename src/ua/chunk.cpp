@@ -13,6 +13,7 @@
 //   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 //   License for the specific language governing permissions and limitations
 //   under the License.
+#include <memory.h>
 
 #include "chunk.h"
 
@@ -31,6 +32,11 @@ extern "C" {
 
 using namespace std;
 
+#define TCP_TUNNEL_HOSTNAME "ul.cn.dnanexus.com"
+#define AWS_HOSTNAME "s3.amazonaws.com"
+#define DEFAULT_AWS_PORT "443"
+
+
 /* Initialize the extern variables, decalred in chunk.h */
 queue<pair<time_t, int64_t> > instantaneousBytesAndTimestampQueue;
 int64_t sumOfInstantaneousBytes = 0;
@@ -40,6 +46,8 @@ boost::mutex instantaneousBytesMutex;
 // smaller than seconds, so we need to set it to some higher value
 // (like ~30sec) to mitigate rounding effect.
 const size_t MAX_QUEUE_SIZE = 5000;
+
+static string extractPortFromURL(const string &url);
 
 // Replace contents of "dest" with gzip of empty string
 void get_empty_string_gzip(vector<char> &dest) {
@@ -273,7 +281,7 @@ void Chunk::upload(Options &opt) {
   try {
     uploadOffset = 0;
     pair<string, dx::JSON> uploadResp = uploadURL(opt);
-    const string &url = uploadResp.first;
+    string &url = uploadResp.first;
     const dx::JSON &headersToSend = uploadResp.second;
 
     log("Upload URL: " + url);
@@ -291,11 +299,38 @@ void Chunk::upload(Options &opt) {
       log("Adding ip '" + resolvedIP + "' to resolve list for hostname '" + hostName + "'");
       slist_resolved_ip = curl_slist_append(slist_resolved_ip, (hostName + ":443:" + resolvedIP).c_str());
       slist_resolved_ip = curl_slist_append(slist_resolved_ip, (hostName + ":80:" + resolvedIP).c_str());
-      checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_RESOLVE, slist_resolved_ip), errorBuffer);
       // Note: We don't remove this extra host name resolution info by setting "-HOST:PORT:IP" at the end,
       // since we don't reuse the curl handle anyway
     } else {
       log("Not adding any explicit IP address using CURLOPT_RESOLVE. resolvedIP = '" + resolvedIP + "', hostName = '" + hostName + "'", dx::logWARNING);
+    }
+
+    // If we are using the TCP tunnel, then we'll be tunneling to the normal
+    // AWS IP, receiving that certificate, and then raise a warning because
+    // the TCP tunnel URL won't appear on the AWS certificate.  We'll resolve
+    // the IP of the TCP tunnel here, put an entry into the CURLOPT_RESOLVE list
+    // so that the normal AWS URL will map to the TCP tunnel IP, and then the
+    // certificate will match the given URL.
+    // Note, we are not using extracHostFromURL because we'll need the index
+    // anyway to replace the hostname in the url.
+    size_t index = url.find(TCP_TUNNEL_HOSTNAME);
+    if (index != string::npos ) {
+      string ipAddr = getRandomIP(string(TCP_TUNNEL_HOSTNAME));
+      string port = extractPortFromURL(url);
+      if(port == "") {
+        port = DEFAULT_AWS_PORT;
+      }
+
+      log(string("Substituting hostname ") + AWS_HOSTNAME + " for " + TCP_TUNNEL_HOSTNAME + ".");
+      log(string("Adding substitute ip '") + ipAddr + "' to resolve list for hostname '" + AWS_HOSTNAME + ":" + port + "'");
+      slist_resolved_ip = curl_slist_append(slist_resolved_ip, (string(AWS_HOSTNAME) + ":" + port + ":" + ipAddr).c_str());
+
+      url.replace(index, strlen(TCP_TUNNEL_HOSTNAME), AWS_HOSTNAME);
+    }
+
+    // Now, if we have added any URL's to the slist, call CURLOPT_RESOLVE.
+    if (slist_resolved_ip != NULL) {
+      checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_RESOLVE, slist_resolved_ip), errorBuffer);
     }
 
     // g_DX_CA_CERT is set by dxcpp (from environment variable DX_CA_CERT)
@@ -421,6 +456,24 @@ static string extractHostFromURL(const string &url) {
     return "";
   }
   return what[1];
+}
+
+// HACK! HACK! HACK!
+// Returns hostname from /UPLOAD urls
+// We use regexp (really!) to parse the URL & extract host name, so certainly
+// not a general enough function.
+//
+// Returns empty string if regexp fails to parse url string for some reason
+static string extractPortFromURL(const string &url) {
+  static const boost::regex expression("^http[s]{0,1}://([^/:]+):([0-9]+)/", boost::regex::perl);
+  boost::match_results<string::const_iterator> what;
+  if (!boost::regex_search(url.begin(), url.end(), what, expression, boost::match_default)) {
+    return "";
+  }
+  if (what.size() != 3) {
+    return "";
+  }
+  return what[2];
 }
 
 // This function looks at the hostname extracted from the url, and decides if we want to resolve the
