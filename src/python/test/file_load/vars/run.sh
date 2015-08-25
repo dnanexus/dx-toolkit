@@ -1,8 +1,7 @@
 main() {
     dx-download-all-inputs
 
-    # compare the bash variables to the old version of the code
-    dx-print-bash-vars --dbg-compare-old > BASH_VAR_ERRS
+    dx-print-bash-vars
 
     ## Checking file type
     check_var_is_defined "$seq1"
