@@ -360,18 +360,24 @@ def resolve_container_id_or_name(raw_string, is_error=False, multi=False):
         # len(results) > 1 and multi
         return [result['id'] for result in results]
 
-def resolve_path(path, expected=None, expected_classes=None, multi_projects=False, allow_empty_string=True):
+
+def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=True):
     '''
     :param path: A path to a data object to attempt to resolve
     :type path: string
-    :param expected: one of the following: "folder", "entity", or None to indicate whether the expected path is a folder, a data object, or either
+    :param expected: one of the following: "folder", "entity", or None
+            to indicate whether the expected path is a folder, a data
+            object, or either
     :type expected: string or None
-    :param expected_classes: a list of DNAnexus data object classes (if any) by which the search can be filtered
-    :type expected_classes: list of strings or None
     :returns: A tuple of 3 values: container_ID, folderpath, entity_name
     :rtype: string, string, string
-    :raises: exc:`ResolutionError` if 1) a colon is provided but no project can be resolved, or 2) *expected* was set to "folder" but no project can be resolved from which to establish context
-    :param allow_empty_string: If false, a ResolutionError will be raised if *path* is an empty string. Use this when resolving the empty string could result in unexpected behavior.
+    :raises: exc:`ResolutionError` if 1) a colon is provided but no
+            project can be resolved, or 2) *expected* was set to
+            "folder" but no project can be resolved from which to
+            establish context
+    :param allow_empty_string: If false, a ResolutionError will be
+            raised if *path* is an empty string. Use this when resolving
+            the empty string could result in unexpected behavior.
     :type allow_empty_string: boolean
 
     Attempts to resolve *path* to a project or container ID, a folder
@@ -406,7 +412,7 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
     if path == '':
         if dxpy.WORKSPACE_ID is None:
             raise ResolutionError('Expected a project name or ID to the left of a colon or for a current project to be set')
-        return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), os.environ.get('DX_CLI_WD', '/'), None
+        return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), dxpy.config.get('DX_CLI_WD', '/'), None
     # Third easy case: hash ID
     if is_container_id(path):
         return ([path] if multi_projects else path), '/', None
@@ -418,7 +424,7 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
     project = 0
     folderpath = None
     entity_name = None
-    wd = None
+    wd = dxpy.config.get('DX_CLI_WD', u'/')
 
     # Test for multiple colons
     last_colon = get_last_pos_of_char(':', path)
@@ -459,7 +465,6 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
         project = dxpy.WORKSPACE_ID
         if expected == 'folder' and project is None:
             raise ResolutionError('a project context was expected for a path, but a current project is not set, nor was one provided in the path (preceding a colon) in "' + path + '"')
-        wd = dxpy.config.get('DX_CLI_WD', u'/')
 
     # Determine folderpath and entity_name if necessary
     if folderpath is None:
