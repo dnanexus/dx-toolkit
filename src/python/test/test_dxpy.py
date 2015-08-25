@@ -28,6 +28,7 @@ import dxpy
 import dxpy_testutil as testutil
 from dxpy.exceptions import DXAPIError, DXFileError, DXError, DXJobFailureError, ServiceUnavailable, InvalidInput
 from dxpy.utils import pretty_print, warn
+from dxpy.utils.resolver import resolve_path, resolve_existing_path, ResolutionError
 
 def get_objects_from_listf(listf):
     objects = []
@@ -2134,15 +2135,111 @@ class TestDataobjectFunctions(unittest.TestCase):
         self.assertEqual(handler._alias, "1.0.0")
 
 
-class TestResolver(unittest.TestCase):
+class TestResolver(testutil.DXTestCase):
     def setUp(self):
+        super(TestResolver, self).setUp()
         setUpTempProjects(self)
 
     def tearDown(self):
         tearDownTempProjects(self)
+        super(TestResolver, self).tearDown()
 
-    def test_basic_ops(self):
-        from dxpy.utils.resolver import resolve_existing_path, ResolutionError
+    def test_resolve_path(self):
+        dxpy.WORKSPACE_ID = self.project
+        temp_proj_name = 'resolve_path_' + str(time.time())
+        not_a_project_name = 'doesnt_exist_' + str(time.time())
+        dxpy.config['DX_CLI_WD'] = '/a'
+        with testutil.temporary_project(name=temp_proj_name) as p:
+            self.assertEqual(resolve_path(""),
+                             (self.project, "/a", None))
+            with self.assertRaises(ResolutionError):
+                resolve_path("", allow_empty_string=False)
+            self.assertEqual(resolve_path(":"),
+                             (self.project, "/", None))
+
+            self.assertEqual(resolve_path("project-012301230123012301230123"),
+                             ("project-012301230123012301230123", "/", None))
+            self.assertEqual(resolve_path("file-111111111111111111111111"),
+                             (self.project, None, "file-111111111111111111111111"))
+
+            with self.assertRaises(ResolutionError):
+                resolve_path("project-012301230123012301230123:foo:bar")
+            with self.assertRaises(ResolutionError):
+                resolve_path(not_a_project_name + ":")
+            with self.assertRaises(ResolutionError):
+                resolve_path(not_a_project_name + ":foo")
+
+            self.assertEqual(resolve_path(":foo"),
+                             (self.project, "/", "foo"))
+            self.assertEqual(resolve_path(":foo/bar"),
+                             (self.project, "/foo", "bar"))
+            self.assertEqual(resolve_path(":/foo/bar"),
+                             (self.project, "/foo", "bar"))
+
+            self.assertEqual(resolve_path(temp_proj_name + ":"),
+                             (p.get_id(), "/", None))
+            self.assertEqual(resolve_path(temp_proj_name + ":foo"),
+                             (p.get_id(), "/", "foo"))
+            self.assertEqual(resolve_path(temp_proj_name + ":foo/bar"),
+                             (p.get_id(), "/foo", "bar"))
+            self.assertEqual(resolve_path(temp_proj_name + ":/foo/bar"),
+                             (p.get_id(), "/foo", "bar"))
+            self.assertEqual(resolve_path("job-111122223333111122223333:foo"),
+                             ("job-111122223333111122223333", None, "foo"))
+
+            self.assertEqual(resolve_path("foo"),
+                             (self.project, "/a", "foo"))
+            self.assertEqual(resolve_path("foo/bar"),
+                             (self.project, "/a/foo", "bar"))
+            self.assertEqual(resolve_path("../foo"),
+                             (self.project, "/", "foo"))
+            self.assertEqual(resolve_path("../../foo"),
+                             (self.project, "/", "foo"))
+            self.assertEqual(resolve_path("*foo"),
+                             (self.project, "/a", "*foo"))
+            self.assertEqual(resolve_path("/foo"),
+                             (self.project, "/", "foo"))
+            self.assertEqual(resolve_path("/foo/bar"),
+                             (self.project, "/foo", "bar"))
+
+            self.assertEqual(resolve_path("project-012301230123012301230123:foo"),
+                             ("project-012301230123012301230123", "/", "foo"))
+            self.assertEqual(resolve_path("project-012301230123012301230123:foo/bar"),
+                             ("project-012301230123012301230123", "/foo", "bar"))
+            self.assertEqual(resolve_path("project-012301230123012301230123:/foo"),
+                             ("project-012301230123012301230123", "/", "foo"))
+            self.assertEqual(resolve_path("project-012301230123012301230123:/foo/bar"),
+                             ("project-012301230123012301230123", "/foo", "bar"))
+            self.assertEqual(resolve_path("project-012301230123012301230123:file-000011112222333344445555"),
+                             ("project-012301230123012301230123", "/", "file-000011112222333344445555"))
+
+            # JSON
+            self.assertEqual(resolve_path(json.dumps({"$dnanexus_link": "file-111111111111111111111111"})),
+                             (self.project, None, "file-111111111111111111111111"))
+            self.assertEqual(
+                resolve_path(json.dumps({"$dnanexus_link": {"project": "project-012301230123012301230123",
+                                                            "id": "file-111111111111111111111111"}})),
+                ("project-012301230123012301230123", "/", "file-111111111111111111111111")
+            )
+
+            # --- test some behavior when workspace is not set ---
+            dxpy.WORKSPACE_ID = None
+            with self.assertRaises(ResolutionError):
+                resolve_path("")
+            with self.assertRaises(ResolutionError):
+                resolve_path(":")
+            with self.assertRaises(ResolutionError):
+                resolve_path(":foo")
+            with self.assertRaises(ResolutionError):
+                resolve_path("foo", expected="folder")
+            self.assertEqual(resolve_path(temp_proj_name + ":"),
+                             (p.get_id(), "/", None))
+
+            # TODO: test multi project. This may require us to find some
+            # way to disable or programmatically drive the interactive
+            # prompt
+
+    def test_resolve_existing_path(self):
         resolve_existing_path('')
         with self.assertRaises(ResolutionError):
             resolve_existing_path('', allow_empty_string=False)
