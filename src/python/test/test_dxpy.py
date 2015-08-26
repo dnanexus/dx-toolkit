@@ -2244,17 +2244,14 @@ class TestResolver(testutil.DXTestCase):
                 resolve_path("foo", expected="folder")
             self.assertEqual(resolve_path(temp_proj_name + ":"),
                              (p.get_id(), "/", None))
-
-            # TODO: why does this happen if no project context is
-            # available? Shouldn't these just fail?
-            self.assertEqual(resolve_path("foo"),
-                             (None, "/a", "foo"))
-            self.assertEqual(resolve_path("../foo"),
-                             (None, "/", "foo"))
-            self.assertEqual(resolve_path("../../foo"),
-                             (None, "/", "foo"))
-            self.assertEqual(resolve_path("/foo/bar"),
-                             (None, "/foo", "bar"))
+            with self.assertRaises(ResolutionError):
+                resolve_path("foo")
+            with self.assertRaises(ResolutionError):
+                resolve_path("../foo")
+            with self.assertRaises(ResolutionError):
+                resolve_path("../../foo")
+            with self.assertRaises(ResolutionError):
+                resolve_path("/foo/bar")
 
             self.assertEqual(resolve_path("file-111111111111111111111111"),
                              (None, None, "file-111111111111111111111111"))

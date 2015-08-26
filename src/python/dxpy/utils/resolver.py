@@ -371,10 +371,8 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
     :type expected: string or None
     :returns: A tuple of 3 values: container_ID, folderpath, entity_name
     :rtype: string, string, string
-    :raises: exc:`ResolutionError` if 1) a colon is provided but no
-            project can be resolved, or 2) *expected* was set to
-            "folder" but no project can be resolved from which to
-            establish context
+    :raises: exc:`ResolutionError` if the project cannot be resolved by
+            name or the path is malformed
     :param allow_empty_string: If false, a ResolutionError will be
             raised if *path* is an empty string. Use this when resolving
             the empty string could result in unexpected behavior.
@@ -463,8 +461,9 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
         # One nonempty string, no colon present, do NOT interpret as
         # project
         project = dxpy.WORKSPACE_ID
-        if expected == 'folder' and project is None:
-            raise ResolutionError('a project context was expected for a path, but a current project is not set, nor was one provided in the path (preceding a colon) in "' + path + '"')
+        if project is None:
+            raise ResolutionError('a project context was expected for a path, but a current project is not set, ' +
+                                  'nor was one provided in the path (preceding a colon) in "' + path + '"')
 
     # Determine folderpath and entity_name if necessary
     if folderpath is None:
@@ -563,8 +562,7 @@ def _check_resolution_needed(path, project, folderpath, entity_name, expected_cl
               general resolution method, the project, the folderpath, and the
               entity name
     :rtype: tuple of 4 elements
-    :raises: ResolutionError if the entity fails to be described, or if the
-             supplied project is None
+    :raises: ResolutionError if the entity fails to be described
 
     Attempts to resolve the entity to a folder or an object, and describes
     the entity iff it is a DX ID of an expected class in the list
@@ -632,10 +630,7 @@ def _check_resolution_needed(path, project, folderpath, entity_name, expected_cl
             return False, project, folderpath, [result]
         else:
             return False, project, folderpath, result
-    elif project is None:
-        raise ResolutionError('Could not resolve "' + path + '" to a project context.  Please either set a ' +
-                              'default project using dx select or cd, or add a colon (":") after your project ID ' +
-                              'or name')
+
     else:
         # Need to resolve later
         return True, project, folderpath, entity_name

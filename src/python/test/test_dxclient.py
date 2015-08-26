@@ -950,7 +950,7 @@ class TestDXNewRecord(DXTestCase):
         self.assertEqual("open", dxpy.describe(second_record_id)['state'])
 
     def test_new_record_without_context(self):
-        with self.assertSubprocessFailure(stderr_regexp='key "project".*nonempty string', exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=1):
             run("dx clearenv; dx new record foo",
                 env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None))
         run("dx clearenv; dx new record --brief " + self.project + ":foo",
