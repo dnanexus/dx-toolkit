@@ -894,10 +894,12 @@ def resolve_multiple_existing_paths(paths):
     to_resolve_in_batch_inputs = []  # Project, folderpath, and entity name
     for path in paths:
         project, folderpath, entity_name = resolve_path(path, expected='entity')
-        must_resolve, project, folderpath, entity_name = _check_resolution_needed(path,
-                                                                                  project,
-                                                                                  folderpath,
-                                                                                  entity_name)
+        try:
+            must_resolve, project, folderpath, entity_name = _check_resolution_needed(
+                path, project, folderpath, entity_name)
+        except:
+            must_resolve = False
+
         if must_resolve:
             if is_glob_pattern(entity_name):
                 # TODO: Must call findDataObjects because resolveDataObjects does not support glob patterns

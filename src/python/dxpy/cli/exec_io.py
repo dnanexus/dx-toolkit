@@ -31,7 +31,7 @@ from ..exceptions import DXCLIError, DXError
 from ..utils.printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC, DELIMITER, UNDERLINE, get_delimiter, fill)
 from ..utils.describe import (get_find_executions_string, get_ls_l_desc, parse_typespec)
 from ..utils.resolver import (get_first_pos_of_char, is_hashid, is_job_id, is_localjob_id, paginate_and_pick, pick,
-                              resolve_existing_path, resolve_multiple_existing_paths, split_unescaped)
+                              resolve_existing_path, resolve_multiple_existing_paths, split_unescaped, is_analysis_id)
 from ..utils import OrderedDefaultdict
 from ..compat import input, str, shlex
 
@@ -460,7 +460,13 @@ class ExecutableInputs(object):
             entity_result = results[input_value]['name']
             if input_class is None:
                 if entity_result is not None:
-                    if is_hashid(input_value):
+                    if isinstance(entity_result, basestring):
+                        # Case: -ifoo=job-012301230123012301230123
+                        # Case: -ifoo=analysis-012301230123012301230123
+                        assert(is_job_id(entity_result) or
+                               (is_analysis_id(entity_result)))
+                        input_value = entity_result
+                    elif is_hashid(input_value):
                         input_value = {'$dnanexus_link': entity_result['id']}
                     elif 'describe' in entity_result:
                         # Then findDataObjects was called (returned describe hash)
