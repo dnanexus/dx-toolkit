@@ -21,8 +21,6 @@ command-line client.
 
 from __future__ import (print_function, unicode_literals)
 
-import os, sys
-
 import dxpy
 import dxpy.utils.printing as printing
 from .parsers import (process_dataobject_args, process_single_dataobject_output_args,

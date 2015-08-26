@@ -22,7 +22,7 @@ those parsers.
 
 from __future__ import (print_function, unicode_literals)
 
-import argparse, json, os
+import argparse, json
 from .. import config
 from ..utils.printing import fill
 from ..utils.pretty_print import format_table

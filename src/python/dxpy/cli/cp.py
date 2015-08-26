@@ -25,11 +25,9 @@ from __future__ import (print_function, unicode_literals)
 
 import dxpy
 import requests
-import dxpy.utils.printing as printing
-from ..utils.resolver import (resolve_existing_path, resolve_path, is_analysis_id, is_hashid,
-                              get_last_pos_of_char, get_first_pos_of_char)
-from ..exceptions import (err_exit, DXCLIError, InvalidState)
-from . import (try_call, try_call_err_exit)
+from ..utils.resolver import (resolve_existing_path, resolve_path, is_hashid, get_last_pos_of_char)
+from ..exceptions import (err_exit, DXCLIError)
+from . import try_call
 from dxpy.utils.printing import (fill)
 
 

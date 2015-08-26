@@ -23,12 +23,11 @@ from __future__ import (print_function, unicode_literals)
 # TODO: refactor all dx run helper functions here
 
 import os, sys, json, collections, pipes
-import re
 
 import dxpy
 from . import INTERACTIVE_CLI
 from ..exceptions import DXCLIError, DXError
-from ..utils.printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC, DELIMITER, UNDERLINE, get_delimiter, fill)
+from ..utils.printing import (RED, GREEN, WHITE, BOLD, ENDC, UNDERLINE, fill)
 from ..utils.describe import (get_find_executions_string, get_ls_l_desc, parse_typespec)
 from ..utils.resolver import (get_first_pos_of_char, is_hashid, is_job_id, is_localjob_id, paginate_and_pick, pick,
                               resolve_existing_path, resolve_multiple_existing_paths, split_unescaped, is_analysis_id)
