@@ -407,7 +407,7 @@ def logout(args):
         try:
             token_sig = hashlib.sha256(token).hexdigest()
             response = dxpy.DXHTTPRequest(authserver + "/system/destroyAuthToken",
-                                          dict(token_signature=token_sig),
+                                          dict(tokenSignature=token_sig),
                                           prepend_srv=False,
                                           max_retries=1)
             print("Deleted token with signature", token_sig)
