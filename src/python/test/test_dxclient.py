@@ -162,6 +162,7 @@ class TestDXRemove(DXTestCase):
         with self.assertSubprocessFailure(exit_code=1):
             run("dx rm {f} {f2}".format(f=record_name, f2=record_name2))
 
+
 class TestDXClient(DXTestCase):
     def test_dx_version(self):
         version = run("dx --version")
@@ -219,32 +220,6 @@ class TestDXClient(DXTestCase):
         run("dx unset_properties '{n}' '{n}' '{n}2'".format(n=table_name))
         run("dx tag '{n}' '{n}'2".format(n=table_name))
         run("dx describe '{n}'".format(n=table_name))
-
-        run("dx new record -o :foo --verbose")
-        record_id = run("dx new record -o :foo2 --brief --visibility hidden --property foo=bar " +
-                        "--property baz=quux --tag onetag --tag twotag --type foo --type bar " +
-                        "--details '{\"hello\": \"world\"}'").strip()
-        self.assertEqual(record_id, run("dx ls :foo2 --brief").strip())
-        self.assertEqual({"hello": "world"}, json.loads(run("dx get -o - :foo2")))
-
-        second_record_id = run("dx new record :somenewfolder/foo --parents --brief").strip()
-        self.assertEqual(second_record_id, run("dx ls :somenewfolder/foo --brief").strip())
-
-        # describe
-        run("dx describe {record}".format(record=record_id))
-        desc = json.loads(run("dx describe {record} --details --json".format(record=record_id)))
-        self.assertEqual(desc['tags'], ['onetag', 'twotag'])
-        self.assertEqual(desc['types'], ['foo', 'bar'])
-        self.assertEqual(desc['properties'], {"foo": "bar", "baz": "quux"})
-        self.assertEqual(desc['details'], {"hello": "world"})
-        self.assertEqual(desc['hidden'], True)
-
-        desc = json.loads(run("dx describe {record} --json".format(record=second_record_id)))
-        self.assertEqual(desc['folder'], '/somenewfolder')
-
-        run("dx rm :foo")
-        run("dx rm :foo2")
-        run("dx rm -r :somenewfolder")
 
         # Path resolution is used
         run("dx find jobs --project :")
@@ -360,13 +335,6 @@ class TestDXClient(DXTestCase):
         shell.sendline("exit")
         shell.sendline("echo find projects | dx sh")
         shell.expect("project-")
-
-    def test_dx_new_record_with_close(self):
-        record_id = run("dx new record --close --brief").strip()
-        self.assertEqual("closed", dxpy.describe(record_id)['state'])
-
-        second_record_id = run("dx new record --brief").strip()
-        self.assertEqual("open", dxpy.describe(second_record_id)['state'])
 
     def test_dx_get_record(self):
         with chdir(tempfile.mkdtemp()):
@@ -944,6 +912,50 @@ class TestDXClient(DXTestCase):
     def test_dx_with_bad_job_id_env(self):
         env = override_environment(DX_JOB_ID="foobar")
         run("dx env", env=env)
+
+
+class TestDXNewRecord(DXTestCase):
+    def test_new_record_basic(self):
+        run("dx new record -o :foo --verbose")
+        record_id = run("dx new record -o :foo2 --brief --visibility hidden --property foo=bar " +
+                        "--property baz=quux --tag onetag --tag twotag --type foo --type bar " +
+                        "--details '{\"hello\": \"world\"}'").strip()
+        self.assertEqual(record_id, run("dx ls :foo2 --brief").strip())
+        self.assertEqual({"hello": "world"}, json.loads(run("dx get -o - :foo2")))
+
+        second_record_id = run("dx new record :somenewfolder/foo --parents --brief").strip()
+        self.assertEqual(second_record_id, run("dx ls :somenewfolder/foo --brief").strip())
+
+        # describe
+        run("dx describe {record}".format(record=record_id))
+        desc = json.loads(run("dx describe {record} --details --json".format(record=record_id)))
+        self.assertEqual(desc['tags'], ['onetag', 'twotag'])
+        self.assertEqual(desc['types'], ['foo', 'bar'])
+        self.assertEqual(desc['properties'], {"foo": "bar", "baz": "quux"})
+        self.assertEqual(desc['details'], {"hello": "world"})
+        self.assertEqual(desc['hidden'], True)
+
+        desc = json.loads(run("dx describe {record} --json".format(record=second_record_id)))
+        self.assertEqual(desc['folder'], '/somenewfolder')
+
+        run("dx rm :foo")
+        run("dx rm :foo2")
+        run("dx rm -r :somenewfolder")
+
+    def test_dx_new_record_with_close(self):
+        record_id = run("dx new record --close --brief").strip()
+        self.assertEqual("closed", dxpy.describe(record_id)['state'])
+
+        second_record_id = run("dx new record --brief").strip()
+        self.assertEqual("open", dxpy.describe(second_record_id)['state'])
+
+    def test_new_record_without_context(self):
+        with self.assertSubprocessFailure(stderr_regexp='key "project".*nonempty string', exit_code=3):
+            run("dx clearenv; dx new record foo",
+                env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None))
+        run("dx clearenv; dx new record --brief " + self.project + ":foo",
+            env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None))
+
 
 class TestDXWhoami(DXTestCase):
     def test_dx_whoami_name(self):
