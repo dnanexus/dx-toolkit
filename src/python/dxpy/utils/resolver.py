@@ -958,7 +958,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
     NOTE: if expected_classes is provided and conflicts with the class
     of the hash ID, it will return None for all fields.
     '''
-    project, folderpath, entity_name = resolve_path(path, expected, allow_empty_string=allow_empty_string)
+    project, folderpath, entity_name = resolve_path(path, expected=expected, allow_empty_string=allow_empty_string)
     must_resolve, project, folderpath, entity_name = _check_resolution_needed(path,
                                                                               project,
                                                                               folderpath,

@@ -939,8 +939,7 @@ def rmproject(args):
 
 # ONLY for within the SAME project.  Will exit fatally otherwise.
 def mv(args):
-    dest_proj, dest_path, _none = try_call(resolve_path,
-                                          args.destination, 'folder')
+    dest_proj, dest_path, _none = try_call(resolve_path, args.destination, expected='folder')
     try:
         if dest_path is None:
             raise ValueError()
@@ -2180,7 +2179,7 @@ def find_data(args):
                                               args.project, 'project')
 
     if args.folder is not None and not args.folder.startswith('/'):
-        args.project, args.folder, _none = try_call(resolve_path, args.folder, 'folder')
+        args.project, args.folder, _none = try_call(resolve_path, args.folder, expected='folder')
 
     try:
         results = dxpy.find_data_objects(classname=args.classname,

@@ -110,8 +110,7 @@ def cp_to_noexistent_destination(args, dest_path, dx_dest, dest_proj):
 
 
 def cp(args):
-    dest_proj, dest_path, _none = try_call(resolve_path,
-                                           args.destination, 'folder')
+    dest_proj, dest_path, _none = try_call(resolve_path, args.destination, expected='folder')
     if dest_path is None:
         raise DXCLIError('Cannot copy to a hash ID')
     dx_dest = dxpy.get_handler(dest_proj)
