@@ -2295,11 +2295,18 @@ class TestResolver(testutil.DXTestCase):
             # prompt
 
     def test_resolve_existing_path(self):
-        resolve_existing_path('')
+        self.assertEquals(resolve_existing_path(''),
+                          (dxpy.WORKSPACE_ID, "/", None))
         with self.assertRaises(ResolutionError):
             resolve_existing_path('', allow_empty_string=False)
-        proj_id, path, entity_id = resolve_existing_path(':')
-        self.assertEqual(proj_id, dxpy.WORKSPACE_ID)
+        self.assertEquals(resolve_existing_path(':'),
+                          (dxpy.WORKSPACE_ID, "/", None))
+
+        dxpy.WORKSPACE_ID = None
+        with self.assertRaises(ResolutionError):
+            resolve_existing_path("foo")
+        with self.assertRaises(ResolutionError):
+            resolve_existing_path("/foo/bar")
 
     def test_clean_folder_path(self):
         from dxpy.utils.resolver import clean_folder_path as clean
