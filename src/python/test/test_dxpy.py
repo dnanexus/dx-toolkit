@@ -2161,6 +2161,9 @@ class TestResolver(testutil.DXTestCase):
                              ("project-012301230123012301230123", "/", None))
             self.assertEqual(resolve_path("file-111111111111111111111111"),
                              (self.project, None, "file-111111111111111111111111"))
+            # TODO: this shouldn't be treated as a data object ID
+            self.assertEqual(resolve_path("job-111111111111111111111111"),
+                             (self.project, None, "job-111111111111111111111111"))
 
             with self.assertRaises(ResolutionError):
                 resolve_path("project-012301230123012301230123:foo:bar")
@@ -2184,6 +2187,11 @@ class TestResolver(testutil.DXTestCase):
                              (p.get_id(), "/foo", "bar"))
             self.assertEqual(resolve_path(temp_proj_name + ":/foo/bar"),
                              (p.get_id(), "/foo", "bar"))
+            # WD is ignored in project-qualified paths, even if the
+            # project is the project context
+            self.assertEqual(resolve_path(self.project + ":foo/bar"),
+                             (self.project, "/foo", "bar"))
+
             self.assertEqual(resolve_path("job-111122223333111122223333:foo"),
                              ("job-111122223333111122223333", None, "foo"))
 
@@ -2234,6 +2242,51 @@ class TestResolver(testutil.DXTestCase):
                 resolve_path("foo", expected="folder")
             self.assertEqual(resolve_path(temp_proj_name + ":"),
                              (p.get_id(), "/", None))
+
+            # TODO: why does this happen if no project context is
+            # available? Shouldn't these just fail?
+            self.assertEqual(resolve_path("foo"),
+                             (None, "/a", "foo"))
+            self.assertEqual(resolve_path("../foo"),
+                             (None, "/", "foo"))
+            self.assertEqual(resolve_path("../../foo"),
+                             (None, "/", "foo"))
+            self.assertEqual(resolve_path("/foo/bar"),
+                             (None, "/foo", "bar"))
+
+            self.assertEqual(resolve_path("file-111111111111111111111111"),
+                             (None, None, "file-111111111111111111111111"))
+            # TODO: this shouldn't be treated as a data object ID; it
+            # should be treated just like "foo" above
+            self.assertEqual(resolve_path("job-111111111111111111111111"),
+                             (None, None, "job-111111111111111111111111"))
+
+            self.assertEqual(resolve_path(temp_proj_name + ":"),
+                             (p.get_id(), "/", None))
+            self.assertEqual(resolve_path(temp_proj_name + ":foo"),
+                             (p.get_id(), "/", "foo"))
+            self.assertEqual(resolve_path(temp_proj_name + ":foo/bar"),
+                             (p.get_id(), "/foo", "bar"))
+
+            self.assertEqual(resolve_path("project-012301230123012301230123"),
+                             ("project-012301230123012301230123", "/", None))
+            self.assertEqual(resolve_path("project-012301230123012301230123:foo"),
+                             ("project-012301230123012301230123", "/", "foo"))
+            self.assertEqual(resolve_path("project-012301230123012301230123:foo/bar"),
+                             ("project-012301230123012301230123", "/foo", "bar"))
+            self.assertEqual(resolve_path("project-012301230123012301230123:file-000011112222333344445555"),
+                             ("project-012301230123012301230123", "/", "file-000011112222333344445555"))
+
+            self.assertEqual(resolve_path("job-111122223333111122223333:foo"),
+                             ("job-111122223333111122223333", None, "foo"))
+
+            self.assertEqual(resolve_path(json.dumps({"$dnanexus_link": "file-111111111111111111111111"})),
+                             (None, None, "file-111111111111111111111111"))
+            self.assertEqual(
+                resolve_path(json.dumps({"$dnanexus_link": {"project": "project-012301230123012301230123",
+                                                            "id": "file-111111111111111111111111"}})),
+                ("project-012301230123012301230123", "/", "file-111111111111111111111111")
+            )
 
             # TODO: test multi project. This may require us to find some
             # way to disable or programmatically drive the interactive
