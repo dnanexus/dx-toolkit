@@ -3017,58 +3017,62 @@ def watch(args):
 def ssh_config(args):
     user_id = try_call(dxpy.whoami)
 
-    dnanexus_conf_dir = dxpy.config.get_user_conf_dir()
-    if not os.path.exists(dnanexus_conf_dir):
-        msg = "The DNAnexus configuration directory {d} does not exist. Use {c} to create it."
-        err_exit(msg.format(d=dnanexus_conf_dir, c=BOLD("dx login")))
+    if args.revoke:
+        dxpy.api.user_update(user_id, {"sshPublicKey": None})
+        print(fill("SSH public key has been revoked"))
+    else:
+        dnanexus_conf_dir = dxpy.config.get_user_conf_dir()
+        if not os.path.exists(dnanexus_conf_dir):
+            msg = "The DNAnexus configuration directory {d} does not exist. Use {c} to create it."
+            err_exit(msg.format(d=dnanexus_conf_dir, c=BOLD("dx login")))
 
-    print(fill("Select an SSH key pair to use when connecting to DNAnexus jobs. The public key will be saved to your " +
-               "DNAnexus account (readable only by you). The private key will remain on this computer.") + "\n")
+        print(fill("Select an SSH key pair to use when connecting to DNAnexus jobs. The public key will be saved to your " +
+                   "DNAnexus account (readable only by you). The private key will remain on this computer.") + "\n")
 
-    key_dest = os.path.join(dnanexus_conf_dir, 'ssh_id')
-    pub_key_dest = key_dest + ".pub"
+        key_dest = os.path.join(dnanexus_conf_dir, 'ssh_id')
+        pub_key_dest = key_dest + ".pub"
 
-    if os.path.exists(os.path.realpath(key_dest)) and os.path.exists(os.path.realpath(pub_key_dest)):
-        print(BOLD("dx") + " is already configured to use the SSH key pair at:\n    {}\n    {}".format(key_dest,
-                                                                                                       pub_key_dest))
-        if pick(["Use this SSH key pair", "Select or create another SSH key pair..."]) == 1:
+        if os.path.exists(os.path.realpath(key_dest)) and os.path.exists(os.path.realpath(pub_key_dest)):
+            print(BOLD("dx") + " is already configured to use the SSH key pair at:\n    {}\n    {}".format(key_dest,
+                                                                                                           pub_key_dest))
+            if pick(["Use this SSH key pair", "Select or create another SSH key pair..."]) == 1:
+                os.remove(key_dest)
+                os.remove(pub_key_dest)
+            else:
+                update_pub_key(user_id, pub_key_dest)
+                return
+        elif os.path.exists(key_dest) or os.path.exists(pub_key_dest):
             os.remove(key_dest)
             os.remove(pub_key_dest)
+
+        keys = [k for k in glob.glob(os.path.join(os.path.expanduser("~/.ssh"), "*.pub")) if os.path.exists(k[:-4])]
+
+        choices = ['Generate a new SSH key pair using ssh-keygen'] + keys + ['Select another SSH key pair...']
+        choice = pick(choices, default=0)
+
+        if choice == 0:
+            try:
+                subprocess.check_call(['ssh-keygen', '-f', key_dest] + args.ssh_keygen_args)
+            except subprocess.CalledProcessError:
+                err_exit("Unable to generate a new SSH key pair", expected_exceptions=(subprocess.CalledProcessError, ))
         else:
-            update_pub_key(user_id, pub_key_dest)
-            return
-    elif os.path.exists(key_dest) or os.path.exists(pub_key_dest):
-        os.remove(key_dest)
-        os.remove(pub_key_dest)
-
-    keys = [k for k in glob.glob(os.path.join(os.path.expanduser("~/.ssh"), "*.pub")) if os.path.exists(k[:-4])]
-
-    choices = ['Generate a new SSH key pair using ssh-keygen'] + keys + ['Select another SSH key pair...']
-    choice = pick(choices, default=0)
-
-    if choice == 0:
-        try:
-            subprocess.check_call(['ssh-keygen', '-f', key_dest] + args.ssh_keygen_args)
-        except subprocess.CalledProcessError:
-            err_exit("Unable to generate a new SSH key pair", expected_exceptions=(subprocess.CalledProcessError, ))
-    else:
-        if choice == len(choices) - 1:
-            key_src = input('Enter the location of your SSH key: ')
-            pub_key_src = key_src + ".pub"
-            if os.path.exists(key_src) and os.path.exists(pub_key_src):
-                print("Using {} and {} as the key pair".format(key_src, pub_key_src))
-            elif key_src.endswith(".pub") and os.path.exists(key_src[:-4]) and os.path.exists(key_src):
-                key_src, pub_key_src = key_src[:-4], key_src
-                print("Using {} and {} as the key pair".format(key_src, pub_key_src))
+            if choice == len(choices) - 1:
+                key_src = input('Enter the location of your SSH key: ')
+                pub_key_src = key_src + ".pub"
+                if os.path.exists(key_src) and os.path.exists(pub_key_src):
+                    print("Using {} and {} as the key pair".format(key_src, pub_key_src))
+                elif key_src.endswith(".pub") and os.path.exists(key_src[:-4]) and os.path.exists(key_src):
+                    key_src, pub_key_src = key_src[:-4], key_src
+                    print("Using {} and {} as the key pair".format(key_src, pub_key_src))
+                else:
+                    err_exit("Unable to find {k} and {k}.pub".format(k=key_src))
             else:
-                err_exit("Unable to find {k} and {k}.pub".format(k=key_src))
-        else:
-            key_src, pub_key_src = choices[choice][:-4], choices[choice]
+                key_src, pub_key_src = choices[choice][:-4], choices[choice]
 
-        os.symlink(key_src, key_dest)
-        os.symlink(pub_key_src, pub_key_dest)
+            os.symlink(key_src, key_dest)
+            os.symlink(pub_key_src, pub_key_dest)
 
-    update_pub_key(user_id, pub_key_dest)
+        update_pub_key(user_id, pub_key_dest)
 
 def update_pub_key(user_id, pub_key_file):
     with open(pub_key_file) as fh:
@@ -4018,6 +4022,7 @@ parser_ssh_config = subparsers.add_parser('ssh_config', help='Configure SSH keys
                                    parents=[env_args])
 parser_ssh_config.add_argument('ssh_keygen_args', help='Command-line arguments to pass to ssh-keygen',
                                nargs=argparse.REMAINDER)
+parser_ssh_config.add_argument('--revoke', help='Revoke SSH public key associated with your DNAnexus account; you will no longer be able to SSH into any jobs.', action='store_true')
 parser_ssh_config.set_defaults(func=ssh_config)
 register_subparser(parser_ssh_config, categories='exec')
 

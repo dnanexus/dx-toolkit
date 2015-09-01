@@ -673,6 +673,54 @@ class TestDXClient(DXTestCase):
         except:
             print("*** TODO: FIXME: Unable to verify that grandchild subprocess inherited session")
 
+    def test_dx_ssh_config_revoke(self):
+        original_ssh_public_key = None
+
+        user_id = dxpy.whoami()
+        original_ssh_public_key = dxpy.api.user_describe(user_id).get("sshPublicKey")
+        wd = tempfile.mkdtemp()
+        os.mkdir(os.path.join(wd, ".dnanexus_config"))
+
+        def revoke_ssh_public_key(args=["ssh_config", "--revoke"]):
+            dx_ssh_config_revoke = pexpect.spawn("dx", args=args)
+            dx_ssh_config_revoke.expect("revoked")
+
+        def set_ssh_public_key():
+            dx_ssh_config = pexpect.spawn("dx ssh_config", env=override_environment(HOME=wd))
+            dx_ssh_config.logfile = sys.stdout
+            dx_ssh_config.expect("Select an SSH key pair")
+            dx_ssh_config.sendline("0")
+            dx_ssh_config.expect("Enter passphrase")
+            dx_ssh_config.sendline()
+            dx_ssh_config.expect("again")
+            dx_ssh_config.sendline()
+            dx_ssh_config.expect("Your account has been configured for use with SSH")
+
+        def assert_same_ssh_pub_key():
+            self.assertTrue(os.path.exists(os.path.join(wd, ".dnanexus_config/ssh_id")))
+
+            with open(os.path.join(wd, ".dnanexus_config/ssh_id.pub")) as fh:
+                self.assertEquals(fh.read(), dxpy.api.user_describe(user_id).get('sshPublicKey'))
+
+        try:
+            # public key exists
+            set_ssh_public_key()
+            assert_same_ssh_pub_key()
+            revoke_ssh_public_key()
+            self.assertNotIn("sshPublicKey", dxpy.api.user_describe(user_id))
+
+            # public key does not exist
+            revoke_ssh_public_key()
+            self.assertNotIn("sshPublicKey", dxpy.api.user_describe(user_id))
+
+            # random input after '--revoke'
+            revoke_ssh_public_key(args=["ssh_config", '--revoke', 'asdf'])
+            self.assertNotIn("sshPublicKey", dxpy.api.user_describe(user_id))
+
+        finally:
+            if original_ssh_public_key:
+                dxpy.api.user_update(user_id, {"sshPublicKey": original_ssh_public_key})
+
     def test_dx_ssh_config(self):
         original_ssh_public_key = None
         try:
