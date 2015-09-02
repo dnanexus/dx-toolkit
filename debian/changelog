@@ -1,3 +1,13 @@
+dx-toolkit (0.160.0) precise; urgency=low
+
+  * PTFM-16094 Avoid infinite recursion in DXObject.__getattr__
+  * Auth API: use new route name /system/getUserInfo
+  * PTFM-15060 Add ability to remove the SSH key from DNAnexus user
+  * Remove unused imports from cli module
+  * Add more resolve_path tests 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 02 Sep 2015 20:08:20 +0000
+
 dx-toolkit (0.159.0) precise; urgency=low
 
   * Bug fixes and cleanups
