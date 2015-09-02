@@ -97,6 +97,12 @@ class DXObject(object):
         except:
             raise AttributeError()
 
+    def describe(self, *args, **kwargs):
+        '''
+        Avoid infinite recursion in __getattr__ if describe is not defined.
+        '''
+        raise NotImplementedError()
+
     def set_id(self, dxid):
         '''
         :param dxid: New ID to be associated with the handler
