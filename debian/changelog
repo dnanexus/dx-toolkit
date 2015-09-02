@@ -1,3 +1,9 @@
+dx-toolkit (0.159.1) precise; urgency=low
+
+  * Auth API: use new route name /system/getUserInfo 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 02 Sep 2015 20:10:36 +0000
+
 dx-toolkit (0.159.0) precise; urgency=low
 
   * Bug fixes and cleanups
