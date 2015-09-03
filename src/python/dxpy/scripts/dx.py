@@ -44,6 +44,8 @@ from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_a
                            set_env_from_args, extra_args, process_extra_args, DXParserError, exec_input_args,
                            instance_type_arg, process_instance_type_arg)
 from ..cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
+from ..cli.org import (get_org_invite_args, add_membership, remove_membership,
+                       update_membership)
 from ..exceptions import (err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions,
                           format_exception)
 from ..utils import warn, group_array_by_field, normalize_timedelta, normalize_time_input
@@ -1266,23 +1268,6 @@ def _get_user_new_args(args):
     return user_new_args
 
 
-def _get_org_invite_args(args):
-    """
-    PRECONDITION: `_validate_new_user_input()` has been called on `args`, and
-    `args.username` is a well-formed and valid username.
-    """
-    org_invite_args = {"invitee": "user-" + args.username}
-    org_invite_args["level"] = args.level
-    if args.set_bill_to is True:
-        org_invite_args["createProjectsAndApps"] = True
-    else:
-        org_invite_args["createProjectsAndApps"] = args.allow_billable_activities
-    org_invite_args["appAccess"] = args.app_access
-    org_invite_args["projectAccess"] = args.project_access
-    org_invite_args["suppressEmailNotification"] = args.no_email
-    return org_invite_args
-
-
 def new_user(args):
     _validate_new_user_input(args)
 
@@ -1299,7 +1284,7 @@ def new_user(args):
 
     if args.org is not None:
         # Invite new user to org.
-        dxpy.api.org_invite(args.org, _get_org_invite_args(args))
+        dxpy.api.org_invite(args.org, get_org_invite_args(args))
 
     if args.brief:
         print("user-" + args.username)
@@ -2415,6 +2400,7 @@ def remove_developers(args):
         dxpy.api.app_remove_developers(app_desc['id'], input_params={"developers": args.developers})
     except:
         err_exit()
+
 
 def install(args):
     app_desc = try_call(resolve_app, args.app)
@@ -3775,6 +3761,17 @@ add_stage_folder_args.add_argument('--relative-output-folder', help='A relative 
 parser_add_stage.set_defaults(func=workflow_cli.add_stage)
 register_subparser(parser_add_stage, subparsers_action=subparsers_add, categories='workflow')
 
+parser_add_member = subparsers_add.add_parser("member", help="Grant a user membership to an org", description="Grant a user membership to an org", prog="dx add member", parents=[stdout_args, env_args])
+parser_add_member.add_argument("org_id", help="ID of the org")
+parser_add_member.add_argument("username", help="Username")
+parser_add_member.add_argument("--level", required=True, choices=["ADMIN", "MEMBER"], help="Org membership level that will be granted to the specified user")
+parser_add_member.add_argument("--allow-billable-activities", default=False, action="store_true", help='Grant the specified user "createProjectsAndApps" in the org')
+parser_add_member.add_argument("--no-app-access", default=True, action="store_false", dest="app_access", help='Disable "appAccess" for the specified user in the org')
+parser_add_member.add_argument("--project-access", choices=["ADMINISTER", "CONTRIBUTE", "UPLOAD", "VIEW", "NONE"], default="CONTRIBUTE", help='The default implicit maximum permission the specified user will receive to projects explicitly shared with the org; default CONTRIBUTE')
+parser_add_member.add_argument("--no-email", default=False, action="store_true", help="Disable org invitation email notification to the specified user")
+parser_add_member.set_defaults(func=add_membership)
+register_subparser(parser_add_member, subparsers_action=subparsers_add, categories="other")
+
 parser_list = subparsers.add_parser('list', help='Print the members of a list',
                                    description='Use this command with one of the availabile subcommands to perform various actions such as printing the list of developers or authorized users of an app.',
                                    prog='dx list')
@@ -3839,6 +3836,14 @@ parser_remove_stage.add_argument('stage', help='Stage (index or ID) of the workf
 parser_remove_stage.set_defaults(func=workflow_cli.remove_stage)
 register_subparser(parser_remove_stage, subparsers_action=subparsers_remove, categories='workflow')
 
+parser_remove_member = subparsers_remove.add_parser("member", help="Revoke the org membership of a user", description="Revoke the org membership of a user", prog="dx remove member", parents=[stdout_args, env_args])
+parser_remove_member.add_argument("org_id", help="ID of the org")
+parser_remove_member.add_argument("username", help="Username")
+parser_remove_member.add_argument("--keep-explicit-project-permissions", default=True, action="store_false", dest="revoke_project_permissions", help="Disable revocation of explicit project permissions of the specified user to projects billed to the org; implicit project permissions (i.e. those granted to the specified user via his membership in this org) will always be revoked")
+parser_remove_member.add_argument("--keep-explicit-app-permissions", default=True, action="store_false", dest="revoke_app_permissions", help="Disable revocation of explicit app developer and user permissions of the specified user to apps billed to the org; implicit app permissions (i.e. those granted to the specified user via his membership in this org) will always be revoked")
+parser_remove_member.set_defaults(func=remove_membership)
+register_subparser(parser_remove_member, subparsers_action=subparsers_remove, categories="other")
+
 parser_update = subparsers.add_parser('update', help='Update certain types of metadata',
                                       description='''
 Use this command with one of the available targets listed below to update
@@ -3887,6 +3892,16 @@ update_stage_folder_args.add_argument('--output-folder', help='Path to the outpu
 update_stage_folder_args.add_argument('--relative-output-folder', help='A relative folder path for the stage (interpreted as relative to the workflow\'s output folder)')
 parser_update_stage.set_defaults(func=workflow_cli.update_stage)
 register_subparser(parser_update_stage, subparsers_action=subparsers_update, categories='workflow')
+
+parser_update_member = subparsers_update.add_parser("member", help="Update the membership of a user in an org", description="Update the membership of a user in an org", prog="dx update member", parents=[stdout_args, env_args])
+parser_update_member.add_argument("org_id", help="ID of the org")
+parser_update_member.add_argument("username", help="Username")
+parser_update_member.add_argument("--level", required=True, choices=["ADMIN", "MEMBER"], help="The new org membership level of the specified user")
+parser_update_member.add_argument("--allow-billable-activities", choices=["true", "false"], help='The new "createProjectsAndApps" membership permission of the specified user in the org')
+parser_update_member.add_argument("--app-access", choices=["true", "false"], help='The new "appAccess" membership permission of the specified user in the org')
+parser_update_member.add_argument("--project-access", choices=["ADMINISTER", "CONTRIBUTE", "UPLOAD", "VIEW", "NONE"], help='The new default implicit maximum permission the specified user will receive to projects explicitly shared with the org')
+parser_update_member.set_defaults(func=update_membership)
+register_subparser(parser_update_member, subparsers_action=subparsers_update, categories="other")
 
 parser_install = subparsers.add_parser('install', help='Install an app',
                                        description='Install an app by name.  To see a list of apps you can install, hit <TAB> twice after "dx install" or run "' + BOLD('dx find apps') + '" to see a list of available apps.', prog='dx install',
