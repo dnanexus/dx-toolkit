@@ -1020,20 +1020,27 @@ class TestDXClientUploadDownload(DXTestCase):
                 run(cmd.format(d=os.path.join("/super", os.path.basename(wd), "a", "б"),
                                f=os.path.basename(fd.name)))
 
+    @unittest.skipUnless(testutil.TEST_WITH_AUTHSERVER,
+                         'skipping tests that require a running authserver')
     def test_dx_upload_with_upload_perm(self):
         with temporary_project('test proj with UPLOAD perms', reclaim_permissions=True) as temp_project:
-            temp_project.decrease_perms(dxpy.whoami(), 'UPLOAD')
+            data = {"scope": {"projects": {"*": "UPLOAD"}}}
+            upload_only_auth_token = dxpy.DXHTTPRequest(dxpy.get_auth_server_name() + '/system/newAuthToken', data,
+                                                        prepend_srv=False, always_retry=True)
+            token_callable = dxpy.DXHTTPOAuth2({"auth_token": upload_only_auth_token["access_token"],
+                                                "auth_token_type": upload_only_auth_token["token_type"],
+                                                "auth_token_signature": upload_only_auth_token["token_signature"]})
             testdir = tempfile.mkdtemp()
             try:
                 # Filename provided with path
                 with open(os.path.join(testdir, 'myfilename'), 'w') as f:
                     f.write('foo')
                 remote_file = dxpy.upload_local_file(filename=os.path.join(testdir, 'myfilename'),
-                                                     project=temp_project.get_id(), folder='/')
+                                                     project=temp_project.get_id(), folder='/', auth=token_callable)
                 self.assertEqual(remote_file.name, 'myfilename')
                 # Filename provided with file handle
                 remote_file2 = dxpy.upload_local_file(file=open(os.path.join(testdir, 'myfilename')),
-                                                      project=temp_project.get_id(), folder='/')
+                                                      project=temp_project.get_id(), folder='/', auth=token_callable)
                 self.assertEqual(remote_file2.name, 'myfilename')
             finally:
                 shutil.rmtree(testdir)
