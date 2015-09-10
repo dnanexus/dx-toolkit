@@ -32,9 +32,6 @@ from ..exceptions import DXFileError
 from ..utils import warn
 from ..compat import BytesIO
 
-if dxpy.snappy_available:
-    import snappy
-
 # TODO: adaptive buffer size
 DXFILE_HTTP_THREADS = 8
 DEFAULT_BUFFER_SIZE = 1024*1024*16

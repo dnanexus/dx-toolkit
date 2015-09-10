@@ -160,15 +160,6 @@ from . import exceptions
 from .toolkit_version import version as TOOLKIT_VERSION
 __version__ = TOOLKIT_VERSION
 
-snappy_available = True
-if sys.version_info < (3, 0):
-    try:
-        import snappy
-    except ImportError:
-        snappy_available = False
-else:
-    snappy_available = False
-
 API_VERSION = '1.0.0'
 AUTH_HELPER, SECURITY_CONTEXT = None, None
 JOB_ID, WORKSPACE_ID, PROJECT_CONTEXT_ID = None, None, None
@@ -293,7 +284,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
     :type timeout: float
     :param config: *config* value to pass through to :meth:`requests.request`
     :type config: dict
-    :param use_compression: "snappy" to use Snappy compression, or None
+    :param use_compression: Deprecated
     :type use_compression: string or None
     :param jsonify_data: If True, *data* is converted from a Python list or dict to a JSON string
     :type jsonify_data: boolean
@@ -364,11 +355,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
     headers['DNAnexus-API'] = API_VERSION
     headers['User-Agent'] = USER_AGENT
 
-    if use_compression == 'snappy':
-        if not snappy_available:
-            raise exceptions.DXError("Snappy compression requested, but the snappy module is unavailable")
-        headers['accept-encoding'] = 'snappy'
-
     # If the input is a buffer, its data gets consumed by
     # requests.request (moving the read position). Record the initial
     # buffer position so that we can return to it if the request fails
@@ -416,11 +402,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                             (response.headers['content-length'], len(response.content), range_str)
                         )
 
-                if use_compression and response.headers.get('content-encoding', '') == 'snappy':
-                    # TODO: check if snappy raises any exceptions on truncated response content
-                    content = snappy.uncompress(response.content)
-                else:
-                    content = response.content
+                content = response.content
 
                 if decode_response_body:
                     content = content.decode('utf-8')
@@ -437,7 +419,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                             elif _DEBUG > 0:
                                 print(method, url, "<=", response.status_code, "(%dms)" % t, Repr().repr(content),
                                       file=sys.stderr)
-                            return content
                         except ValueError:
                             # If a streaming API call (no content-length
                             # set) encounters an error it may just halt the
