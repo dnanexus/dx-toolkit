@@ -1,3 +1,13 @@
+dx-toolkit (0.161.0) precise; urgency=low
+
+  * Remove snappy compression support
+  * PTFM-15388 fixing failing upload test
+  * PTFM-15281 Revert "Temporarily disable test relying on debug hold"
+  * dxlog: Don't crash on exit if socket path was not found
+  * PTFM-15986 Add CLI commands for managing org memberships 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 10 Sep 2015 20:56:19 +0000
+
 dx-toolkit (0.160.0) precise; urgency=low
 
   * PTFM-16094 Avoid infinite recursion in DXObject.__getattr__
