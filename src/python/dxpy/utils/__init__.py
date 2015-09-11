@@ -86,18 +86,7 @@ def wait_for_all_futures(futures, print_traceback=False):
             print('')
         os._exit(os.EX_IOERR)
 
-_bypass_thread_pool = None
-
-def _using_non_1204_xen_pv_linux():
-    try:
-        with open("/sys/hypervisor/properties/features") as hypervisor_info:
-            if hypervisor_info.read() == "000000f0\n": # paravirtualized (PV)
-                with open("/proc/version_signature") as sys_info:
-                    if not sys_info.read().startswith("Ubuntu 3.2.0"):
-                        return True
-    except Exception:
-        pass
-    return False
+_bypass_thread_pool = False
 
 def response_iterator(request_iterator, thread_pool, max_active_tasks=4, num_retries=0, retry_after=90, queue_id=''):
     """
@@ -125,10 +114,6 @@ def response_iterator(request_iterator, thread_pool, max_active_tasks=4, num_ret
     If retries are used, tasks should be idempotent.
     """
 
-    # Don't use the threadpool on 14.04 PV workers due to multithreading memory issues.
-    global _bypass_thread_pool
-    if _bypass_thread_pool is None:
-        _bypass_thread_pool = _using_non_1204_xen_pv_linux()
     if _bypass_thread_pool:
         for _callable, args, kwargs in request_iterator:
             yield _callable(*args, **kwargs)
