@@ -84,8 +84,9 @@ def remove_membership(args):
     if args.brief:
         print(result["id"])
     else:
-        print(fill("Removed user-{u} from {o}".format(u=args.username,
-                                                      o=args.org_id)))
+        print(fill("Removed user-{u} from {o}. user-{u} has been removed from the following projects {p}. user-{u} has been removed from the following apps {a}.".format(
+          u=args.username, o=args.org_id, p=result["projects"].keys(),
+          a=result["apps"].keys())))
 
 
 def _get_org_set_member_access_args(args):
