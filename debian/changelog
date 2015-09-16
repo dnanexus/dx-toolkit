@@ -1,3 +1,11 @@
+dx-toolkit (0.162.0) precise; urgency=low
+
+  * Be more descriptive in the output of "dx remove member"
+  * Remove download threadpool bypass conditional on 14.04 PV
+  * PTFM-16030 Support proxy S3 API endpoints in UA 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 16 Sep 2015 20:11:24 +0000
+
 dx-toolkit (0.161.0) precise; urgency=low
 
   * Remove snappy compression support
