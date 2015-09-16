@@ -77,7 +77,7 @@ public class DXWorkflowTest {
     @After
     public void tearDown() {
         if (testProject != null) {
-            testProject.destroy();
+            testProject.destroy(true);
         }
     }
 
