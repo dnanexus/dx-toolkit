@@ -5083,6 +5083,7 @@ class TestDXBuildReportHtml(unittest.TestCase):
         run("dx rm {record} {file}".format(record=report["recordId"], file=fileId))
 
 
+@unittest.skipUnless(testutil.TEST_GTABLE, 'skipping test that would create a GTable')
 class TestDXBedToSpans(DXTestCase):
     def setUp(self):
         super(TestDXBedToSpans, self).setUp()
@@ -5126,6 +5127,7 @@ chr1\t127471196\t127472363\tPos1\t0\t+\t127471196\t127472363\t255,0,0\r
         self.assertEquals(open(os.path.join(self.tempdir, 'roundtrip.bed')).read(), round_tripped_bed)
 
 
+@unittest.skipUnless(testutil.TEST_GTABLE, 'skipping test that would create a GTable')
 class TestDXBedToGenes(DXTestCase):
     def setUp(self):
         super(TestDXBedToGenes, self).setUp()
@@ -5154,6 +5156,7 @@ chr1\t67098752\t67098777\tNM_032291\t4\tCDS\t+\tTrue\t0\t-1\t\r
         self.assertEquals(run('dx export tsv -o - {g}'.format(g=table_id)), self.expected_tsv)
 
 
+@unittest.skipUnless(testutil.TEST_GTABLE, 'skipping test that would create a GTable')
 class TestDXFastQToReads(DXTestCase):
     def setUp(self):
         super(TestDXFastQToReads, self).setUp()
@@ -5205,6 +5208,7 @@ NGTAACTCCTCTTTGCAACACCACAGCCATCGCCCCCTACCTCCTTGCCAATCCCAGGCTCCTCTCCTGATGGTAACATT
         self.assertEquals(open(os.path.join(self.tempdir, 'roundtrip.fq')).read(), round_tripped_fastq)
 
 
+@unittest.skipUnless(testutil.TEST_GTABLE, 'skipping test that would create a GTable')
 class TestDXGtfToGenes(DXTestCase):
     def setUp(self):
         super(TestDXGtfToGenes, self).setUp()
@@ -5246,6 +5250,7 @@ chr1\t.\tCDS\t151\t200\t.\t+\t0\tgene_id "mygene-coding"; transcript_id "mytrans
                           self.expected_gtf)
 
 
+@unittest.skipUnless(testutil.TEST_GTABLE, 'skipping test that would create a GTable')
 class TestDXSamToMappings(DXTestCase):
     def setUp(self):
         super(TestDXSamToMappings, self).setUp()

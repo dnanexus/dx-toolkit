@@ -428,6 +428,8 @@ class TestDXFile(unittest.TestCase):
             url4 = dxfile.get_download_url(**opts)
             self.assertNotEqual(url3, url4)
 
+
+@unittest.skipUnless(testutil.TEST_GTABLE, 'skipping test that would create a GTable')
 class TestDXGTable(unittest.TestCase):
     """
     TODO: Test iterators, gri, and other queries

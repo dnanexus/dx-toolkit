@@ -31,6 +31,7 @@ _run_all_tests = 'DXTEST_FULL' in os.environ
 TEST_CREATE_APPS = _run_all_tests or 'DXTEST_CREATE_APPS' in os.environ
 TEST_ENV = _run_all_tests or 'DXTEST_ENV' in os.environ
 TEST_FUSE = _run_all_tests or 'DXTEST_FUSE' in os.environ
+TEST_GTABLE = _run_all_tests or 'DXTEST_GTABLE' in os.environ
 TEST_HTTP_PROXY = _run_all_tests or 'DXTEST_HTTP_PROXY' in os.environ
 TEST_NO_RATE_LIMITS = _run_all_tests or 'DXTEST_NO_RATE_LIMITS' in os.environ
 TEST_RUN_JOBS = _run_all_tests or 'DXTEST_RUN_JOBS' in os.environ
