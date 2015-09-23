@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2011, 2013-2014 DNAnexus, Inc.
+// Copyright (C) 2009-2011, 2013-2015 DNAnexus, Inc.
 //
 // This file is part of wig_importer.
 //
