@@ -1,8 +1,14 @@
+dx-toolkit (0.162.1) precise; urgency=low
+
+  * Test fixes
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 23 Sep 2015 21:14:39 +0000
+
 dx-toolkit (0.162.0) precise; urgency=low
 
   * Be more descriptive in the output of "dx remove member"
   * Remove download threadpool bypass conditional on 14.04 PV
-  * PTFM-16030 Support proxy S3 API endpoints in UA 
+  * PTFM-16030 Support proxy S3 API endpoints in UA
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 16 Sep 2015 20:11:24 +0000
 
@@ -12,7 +18,7 @@ dx-toolkit (0.161.0) precise; urgency=low
   * PTFM-15388 fixing failing upload test
   * PTFM-15281 Revert "Temporarily disable test relying on debug hold"
   * dxlog: Don't crash on exit if socket path was not found
-  * PTFM-15986 Add CLI commands for managing org memberships 
+  * PTFM-15986 Add CLI commands for managing org memberships
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 10 Sep 2015 20:56:19 +0000
 
@@ -22,7 +28,7 @@ dx-toolkit (0.160.0) precise; urgency=low
   * Auth API: use new route name /system/getUserInfo
   * PTFM-15060 Add ability to remove the SSH key from DNAnexus user
   * Remove unused imports from cli module
-  * Add more resolve_path tests 
+  * Add more resolve_path tests
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 02 Sep 2015 20:08:20 +0000
 
@@ -57,7 +63,7 @@ dx-toolkit (0.157.0) precise; urgency=low
   * Ingest inputs to "dx run" when executable does not have input spec
   * PTFM-15273 Integrate /system/resolveDataObjects into "dx run"
   * PTFM-15920 Fix bad links/unencoded spaces in docs
-  * Revert "PTFM-15273 Integrate /system/resolveDataObjects into "dx run"" 
+  * Revert "PTFM-15273 Integrate /system/resolveDataObjects into "dx run""
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 12 Aug 2015 20:40:20 +0000
 
@@ -67,7 +73,7 @@ dx-toolkit (0.156.0) precise; urgency=low
   * PTFM-15822 dxpy ul tunnel support
   * PTFM-15712 Apply consistent URL encoding to links
   * Document classname parameter to find_executions
-  * Fix flaky test: obtain analysis via API instead of "dx find" 
+  * Fix flaky test: obtain analysis via API instead of "dx find"
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 05 Aug 2015 19:56:23 +0000
 
