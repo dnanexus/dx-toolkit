@@ -387,11 +387,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 # response.headers key lookup is case-insensitive
                 if response.headers.get('content-type', '').startswith('application/json'):
                     content = json.loads(response.content.decode('utf-8'))
-                    try:
-                        error_class = getattr(exceptions, content["error"]["type"], exceptions.DXAPIError)
-                    except Exception:
-                        logger.error("Error while parsing content['error']['type']...")
-                        logger.error(content)
+                    error_class = getattr(exceptions, content["error"]["type"], exceptions.DXAPIError)
                     raise error_class(content, response.status_code)
                 response.raise_for_status()
 
