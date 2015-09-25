@@ -543,59 +543,6 @@ class TestDXClient(DXTestCase):
         finally:
             run("dx rmproject -y {p}".format(p=dest_project_id))
 
-    def test_dx_gtables(self):
-        # new gtable
-        gri_gtable_id = run("dx new gtable --gri mychr mylo myhi " +
-                            "--columns mychr,mylo:int32,myhi:int32 --brief --property hello=world " +
-                            "--details '{\"hello\":\"world\"}' --visibility visible").strip()
-        # Add rows to it (?)
-        # TODO: make this better.
-        add_rows_input = {"data": [["chr", 1, 10], ["chr2", 3, 13], ["chr1", 3, 10], ["chr1", 11, 13],
-                                   ["chr1", 5, 12]]}
-        run("dx api {gt} addRows '{rows}'".format(gt=gri_gtable_id, rows=json.dumps(add_rows_input)))
-        # close
-        run("dx close {gt} --wait".format(gt=gri_gtable_id))
-
-        # describe
-        desc = json.loads(run("dx describe {gt} --details --json".format(gt=gri_gtable_id)))
-        self.assertEqual(desc['types'], ['gri'])
-        self.assertEqual(desc['indices'],
-                         [{"type":"genomic", "name":"gri", "chr":"mychr", "lo":"mylo", "hi":"myhi"}])
-        self.assertEqual(desc['properties'], {"hello": "world"})
-        self.assertEqual(desc['details'], {"hello": "world"})
-        self.assertEqual(desc['hidden'], False)
-
-        # gri query
-        self.assertEqual(run("dx export tsv {gt} --gri chr1 1 10 -o -".format(gt=gri_gtable_id)),
-                         '\r\n'.join(['mychr:string\tmylo:int32\tmyhi:int32', 'chr1\t3\t10',
-                                      'chr1\t5\t12', '']))
-
-        # "get" is not supported on gtables
-        with self.assertSubprocessFailure(stderr_regexp='given object is of class gtable', exit_code=3):
-            run("dx get {gt}".format(gt=gri_gtable_id))
-
-        # Download and re-import with gri
-        with tempfile.NamedTemporaryFile(suffix='.csv') as fd:
-            run("dx export tsv {gt} -o {fd} -f".format(gt=gri_gtable_id, fd=fd.name))
-            fd.flush()
-            run("dx import tsv {fd} -o gritableimport --gri mychr mylo myhi --wait".format(fd=fd.name))
-
-            # Also, upload and download the file just to test out upload/download
-            run("dx upload {fd} -o uploadedfile --wait".format(fd=fd.name))
-            run("dx download uploadedfile -f")
-            run("dx download uploadedfile -o -")
-        try:
-            os.remove("uploadedfile")
-        except IOError:
-            pass
-
-        second_desc = json.loads(run("dx describe gritableimport --json"))
-        self.assertEqual(second_desc['types'], ['gri'])
-        self.assertEqual(second_desc['indices'],
-                         [{"type":"genomic", "name":"gri", "chr":"mychr", "lo":"mylo", "hi":"myhi"}])
-        self.assertEqual(desc['size'], second_desc['size'])
-        self.assertEqual(desc['length'], second_desc['length'])
-
     def test_dx_mkdir(self):
         with self.assertRaises(subprocess.CalledProcessError):
             run("dx mkdir mkdirtest/b/c")
@@ -949,12 +896,85 @@ class TestDXNewRecord(DXTestCase):
         second_record_id = run("dx new record --brief").strip()
         self.assertEqual("open", dxpy.describe(second_record_id)['state'])
 
+    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
     def test_new_record_without_context(self):
+        # Without project context, cannot create new object without
+        # project qualified path
         with self.assertSubprocessFailure(stderr_regexp='key "project".*nonempty string', exit_code=3):
             run("dx clearenv; dx new record foo",
                 env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None))
-        run("dx clearenv; dx new record --brief " + self.project + ":foo",
-            env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None))
+        # Can create object with explicit project qualifier
+        record_id = run("dx clearenv; dx new record --brief " + self.project + ":foo",
+                        env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None)).strip()
+        self.assertEqual(dxpy.DXRecord(record_id).name, "foo")
+
+
+class TestGTables(DXTestCase):
+    def test_dx_gtables(self):
+        # new gtable
+        gri_gtable_id = run("dx new gtable --gri mychr mylo myhi " +
+                            "--columns mychr,mylo:int32,myhi:int32 --brief --property hello=world " +
+                            "--details '{\"hello\":\"world\"}' --visibility visible").strip()
+        # Add rows to it (?)
+        # TODO: make this better.
+        add_rows_input = {"data": [["chr", 1, 10], ["chr2", 3, 13], ["chr1", 3, 10], ["chr1", 11, 13],
+                                   ["chr1", 5, 12]]}
+        run("dx api {gt} addRows '{rows}'".format(gt=gri_gtable_id, rows=json.dumps(add_rows_input)))
+        # close
+        run("dx close {gt} --wait".format(gt=gri_gtable_id))
+
+        # describe
+        desc = json.loads(run("dx describe {gt} --details --json".format(gt=gri_gtable_id)))
+        self.assertEqual(desc['types'], ['gri'])
+        self.assertEqual(desc['indices'],
+                         [{"type":"genomic", "name":"gri", "chr":"mychr", "lo":"mylo", "hi":"myhi"}])
+        self.assertEqual(desc['properties'], {"hello": "world"})
+        self.assertEqual(desc['details'], {"hello": "world"})
+        self.assertEqual(desc['hidden'], False)
+
+        # gri query
+        self.assertEqual(run("dx export tsv {gt} --gri chr1 1 10 -o -".format(gt=gri_gtable_id)),
+                         '\r\n'.join(['mychr:string\tmylo:int32\tmyhi:int32', 'chr1\t3\t10',
+                                      'chr1\t5\t12', '']))
+
+        # "get" is not supported on gtables
+        with self.assertSubprocessFailure(stderr_regexp='given object is of class gtable', exit_code=3):
+            run("dx get {gt}".format(gt=gri_gtable_id))
+
+        # Download and re-import with gri
+        with tempfile.NamedTemporaryFile(suffix='.csv') as fd:
+            run("dx export tsv {gt} -o {fd} -f".format(gt=gri_gtable_id, fd=fd.name))
+            fd.flush()
+            run("dx import tsv {fd} -o gritableimport --gri mychr mylo myhi --wait".format(fd=fd.name))
+
+            # Also, upload and download the file just to test out upload/download
+            run("dx upload {fd} -o uploadedfile --wait".format(fd=fd.name))
+            run("dx download uploadedfile -f")
+            run("dx download uploadedfile -o -")
+        try:
+            os.remove("uploadedfile")
+        except IOError:
+            pass
+
+        second_desc = json.loads(run("dx describe gritableimport --json"))
+        self.assertEqual(second_desc['types'], ['gri'])
+        self.assertEqual(second_desc['indices'],
+                         [{"type":"genomic", "name":"gri", "chr":"mychr", "lo":"mylo", "hi":"myhi"}])
+        self.assertEqual(desc['size'], second_desc['size'])
+        self.assertEqual(desc['length'], second_desc['length'])
+
+    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
+    def test_dx_new_gtable_without_context(self):
+        # Without project context, cannot create new object without
+        # project qualified path
+        with self.assertSubprocessFailure(stderr_regexp='key "project".*nonempty string', exit_code=3):
+            run("dx clearenv; dx new gtable --columns mychr,mylo:int32,myhi:int32 foo",
+                env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None))
+        # Can create object with explicit project qualifier
+        gtable_id = run(
+            "dx clearenv; dx new gtable --brief --columns mychr,mylo:int32,myhi:int32 " + self.project + ":foo",
+            env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None)).strip()
+        self.assertEqual(dxpy.DXGTable(gtable_id).name, "foo")
 
 
 class TestDXWhoami(DXTestCase):
@@ -1076,6 +1096,19 @@ class TestDXClientUploadDownload(DXTestCase):
             output_path = os.path.join(testdir, 'output')
             run('dx download ' + file_id + ' -o ' + output_path)
             run('cmp ' + output_path + ' ' + fd.name)
+
+    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
+    def test_dx_upload_no_env(self):
+        # Without project context, cannot upload to a
+        # non-project-qualified destination
+        with self.assertSubprocessFailure(stderr_regexp='key "project".*nonempty string', exit_code=3):
+            run("dx clearenv; dx upload --path foo /dev/null",
+                env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None))
+        # Can upload to a path specified with explicit project qualifier
+        file_id = run(
+            "dx clearenv; dx upload --brief --path " + self.project + ":foo /dev/null",
+            env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None)).strip()
+        self.assertEqual(dxpy.DXFile(file_id).name, "foo")
 
     def test_dx_make_download_url(self):
         testdir = tempfile.mkdtemp()
@@ -2571,6 +2604,18 @@ class TestDXClientWorkflow(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp='following inaccessible stage\(s\)',
                                           exit_code=3):
             run("dx run myworkflow")
+
+    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
+    def test_dx_new_workflow_without_context(self):
+        # Without project context, cannot create new object without
+        # project qualified path
+        with self.assertSubprocessFailure(stderr_regexp='key "project".*nonempty string', exit_code=3):
+            run("dx clearenv; dx new workflow foo",
+                env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None))
+        # Can create object with explicit project qualifier
+        workflow_id = run("dx clearenv; dx new workflow --brief " + self.project + ":foo",
+                          env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None)).strip()
+        self.assertEqual(dxpy.DXWorkflow(workflow_id).name, "foo")
 
     def test_dx_new_workflow(self):
         workflow_id = run("dx new workflow --title=тitle --summary=SΨmmary --brief " +
@@ -5021,6 +5066,29 @@ def main(in1):
         # ...and that the first applet has been removed
         with self.assertSubprocessFailure(exit_code=3):
             run("dx describe " + first_applet)
+
+    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
+    def test_build_without_context(self):
+        app_spec = {
+            "name": "applet_without_context",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("applet_without_context", json.dumps(app_spec), "code.py")
+
+        # Without project context, cannot create new object without
+        # project qualified path
+        with self.assertSubprocessFailure(stderr_regexp='without specifying a destination project', exit_code=2):
+            run("dx clearenv; dx build --json --destination foo " + app_dir,
+                env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None))
+        # Can create object with explicit project qualifier
+        applet_describe = json.loads(run(
+            "dx clearenv; dx build --json --destination " + self.project + ":foo " + app_dir,
+            env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None)))
+        self.assertEqual(applet_describe["name"], "foo")
 
 
 class TestDXBuildReportHtml(unittest.TestCase):
