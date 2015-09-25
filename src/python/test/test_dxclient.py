@@ -55,6 +55,9 @@ def run(command, **kwargs):
 # Note: clobbers the local environment! All tests that use this should
 # be marked as such with TEST_ENV
 def run_without_project_context(command, **kwargs):
+    """Like 'run', but ensures that the process that is invoked sees none
+    of the project context configuration variables.
+    """
     if 'env' in kwargs:
         raise ValueError('Cannot specify env in run_without_project_context')
     return run("dx clearenv; " + command,
