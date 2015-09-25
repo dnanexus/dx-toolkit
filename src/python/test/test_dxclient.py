@@ -1058,11 +1058,14 @@ class TestDXClientUploadDownload(DXTestCase):
             # unset environment
             del dxpy.config['DX_PROJECT_CONTEXT_ID']
             dxpy.config.save()
-            self.assertNotIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
+            self.assertNotIn('DX_PROJECT_CONTEXT_ID',
+                             run('dx clearenv; dx env --bash',
+                                 env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None)))
 
             # download file
             output_path = os.path.join(testdir, 'output')
-            run('dx download ' + file_id + ' -o ' + output_path)
+            run('dx clearenv; dx download ' + file_id + ' -o ' + output_path,
+                env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None))
             run('cmp ' + output_path + ' ' + fd.name)
 
     def test_dx_make_download_url(self):
@@ -5514,14 +5517,17 @@ class TestDXCp(DXTestCase):
         # Unset environment
         del dxpy.config['DX_PROJECT_CONTEXT_ID']
         dxpy.config.save()
-        self.assertNotIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
+        self.assertNotIn('DX_PROJECT_CONTEXT_ID',
+                         run('dx clearenv; dx env --bash',
+                             env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None)))
 
         # Copy the file to a new project.
         # This does not currently work, because the context is not set.
         proj_id = create_project()
         with self.assertSubprocessFailure(stderr_regexp='project must be specified or a current project set',
-                                          exit_code=1):
-            run('dx cp ' + file_id + ' ' + proj_id)
+                                          exit_code=3):
+            run('dx clearenv; dx cp ' + file_id + ' ' + proj_id,
+                env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None))
 
         #cleanup
         rm_project(proj_id)
