@@ -44,11 +44,25 @@ def chdir(dirname=None):
     finally:
         os.chdir(curdir)
 
+
 def run(command, **kwargs):
     print("$ %s" % (command,))
     output = check_output(command, shell=True, **kwargs)
     print(output)
     return output
+
+
+# Note: clobbers the local environment! All tests that use this should
+# be marked as such with TEST_ENV
+def run_without_project_context(command, **kwargs):
+    """Like 'run', but ensures that the process that is invoked sees none
+    of the project context configuration variables.
+    """
+    if 'env' in kwargs:
+        raise ValueError('Cannot specify env in run_without_project_context')
+    return run("dx clearenv; " + command,
+               env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None),
+               **kwargs)
 
 
 def create_file_in_project(fname, trg_proj_id, folder=None):
@@ -121,6 +135,11 @@ class TestDXTestUtils(DXTestCase):
                 # This would fail if the project context hadn't been
                 # successfully changed by select_project
                 run('dx cd {dirname}'.format(dirname=test_dirname))
+
+    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
+    def test_run_without_project_context(self):
+        self.assertIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
+        self.assertNotIn('DX_PROJECT_CONTEXT_ID', run_without_project_context('dx env --bash'))
 
 
 # TODO: these 'dx rm' and related commands should really exit with code 3 to distinguish user and internal errors
@@ -1055,14 +1074,9 @@ class TestDXClientUploadDownload(DXTestCase):
             file_id = run("dx upload " + fd.name + " --brief --wait").strip()
             self.assertTrue(file_id.startswith('file-'))
 
-            # unset environment
-            del dxpy.config['DX_PROJECT_CONTEXT_ID']
-            dxpy.config.save()
-            self.assertNotIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
-
             # download file
             output_path = os.path.join(testdir, 'output')
-            run('dx download ' + file_id + ' -o ' + output_path)
+            run_without_project_context('dx download ' + file_id + ' -o ' + output_path)
             run('cmp ' + output_path + ' ' + fd.name)
 
     def test_dx_make_download_url(self):
@@ -5511,17 +5525,12 @@ class TestDXCp(DXTestCase):
         #  -- how do we get the current project id?
         file_id = create_file_in_project(self.gen_uniq_fname(), self.project)
 
-        # Unset environment
-        del dxpy.config['DX_PROJECT_CONTEXT_ID']
-        dxpy.config.save()
-        self.assertNotIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
-
         # Copy the file to a new project.
         # This does not currently work, because the context is not set.
         proj_id = create_project()
         with self.assertSubprocessFailure(stderr_regexp='project must be specified or a current project set',
-                                          exit_code=1):
-            run('dx cp ' + file_id + ' ' + proj_id)
+                                          exit_code=3):
+            run_without_project_context('dx clearenv; dx cp ' + file_id + ' ' + proj_id)
 
         #cleanup
         rm_project(proj_id)
