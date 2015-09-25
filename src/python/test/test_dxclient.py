@@ -138,6 +138,7 @@ class TestDXTestUtils(DXTestCase):
 
     @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
     def test_run_without_project_context(self):
+        self.assertIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
         self.assertNotIn('DX_PROJECT_CONTEXT_ID', run_without_project_context('dx env --bash'))
 
 
