@@ -920,11 +920,9 @@ class TestDXNewRecord(DXTestCase):
         # Without project context, cannot create new object without
         # project qualified path
         with self.assertSubprocessFailure(stderr_regexp='key "project".*nonempty string', exit_code=3):
-            run("dx clearenv; dx new record foo",
-                env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None))
+            run_without_project_context("dx new record foo")
         # Can create object with explicit project qualifier
-        record_id = run("dx clearenv; dx new record --brief " + self.project + ":foo",
-                        env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None)).strip()
+        record_id = run_without_project_context("dx new record --brief " + self.project + ":foo").strip()
         self.assertEqual(dxpy.DXRecord(record_id).name, "foo")
 
 
@@ -987,12 +985,10 @@ class TestGTables(DXTestCase):
         # Without project context, cannot create new object without
         # project qualified path
         with self.assertSubprocessFailure(stderr_regexp='key "project".*nonempty string', exit_code=3):
-            run("dx clearenv; dx new gtable --columns mychr,mylo:int32,myhi:int32 foo",
-                env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None))
+            run_without_project_context("dx new gtable --columns mychr,mylo:int32,myhi:int32 foo")
         # Can create object with explicit project qualifier
-        gtable_id = run(
-            "dx clearenv; dx new gtable --brief --columns mychr,mylo:int32,myhi:int32 " + self.project + ":foo",
-            env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None)).strip()
+        gtable_id = run_without_project_context(
+            "dx new gtable --brief --columns mychr,mylo:int32,myhi:int32 " + self.project + ":foo").strip()
         self.assertEqual(dxpy.DXGTable(gtable_id).name, "foo")
 
 
@@ -1116,12 +1112,10 @@ class TestDXClientUploadDownload(DXTestCase):
         # Without project context, cannot upload to a
         # non-project-qualified destination
         with self.assertSubprocessFailure(stderr_regexp='key "project".*nonempty string', exit_code=3):
-            run("dx clearenv; dx upload --path foo /dev/null",
-                env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None))
+            run_without_project_context("dx upload --path foo /dev/null")
         # Can upload to a path specified with explicit project qualifier
-        file_id = run(
-            "dx clearenv; dx upload --brief --path " + self.project + ":foo /dev/null",
-            env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None)).strip()
+        file_id = run_without_project_context(
+            "dx upload --brief --path " + self.project + ":foo /dev/null").strip()
         self.assertEqual(dxpy.DXFile(file_id).name, "foo")
 
     def test_dx_make_download_url(self):
@@ -2624,11 +2618,9 @@ class TestDXClientWorkflow(DXTestCase):
         # Without project context, cannot create new object without
         # project qualified path
         with self.assertSubprocessFailure(stderr_regexp='key "project".*nonempty string', exit_code=3):
-            run("dx clearenv; dx new workflow foo",
-                env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None))
+            run_without_project_context("dx new workflow foo")
         # Can create object with explicit project qualifier
-        workflow_id = run("dx clearenv; dx new workflow --brief " + self.project + ":foo",
-                          env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None)).strip()
+        workflow_id = run_without_project_context("dx new workflow --brief " + self.project + ":foo").strip()
         self.assertEqual(dxpy.DXWorkflow(workflow_id).name, "foo")
 
     def test_dx_new_workflow(self):
@@ -5096,12 +5088,10 @@ def main(in1):
         # Without project context, cannot create new object without
         # project qualified path
         with self.assertSubprocessFailure(stderr_regexp='without specifying a destination project', exit_code=2):
-            run("dx clearenv; dx build --json --destination foo " + app_dir,
-                env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None))
+            run_without_project_context("dx build --json --destination foo " + app_dir)
         # Can create object with explicit project qualifier
-        applet_describe = json.loads(run(
-            "dx clearenv; dx build --json --destination " + self.project + ":foo " + app_dir,
-            env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None)))
+        applet_describe = json.loads(run_without_project_context(
+            "dx build --json --destination " + self.project + ":foo " + app_dir))
         self.assertEqual(applet_describe["name"], "foo")
 
 
