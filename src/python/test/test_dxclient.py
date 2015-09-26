@@ -44,11 +44,25 @@ def chdir(dirname=None):
     finally:
         os.chdir(curdir)
 
+
 def run(command, **kwargs):
     print("$ %s" % (command,))
     output = check_output(command, shell=True, **kwargs)
     print(output)
     return output
+
+
+# Note: clobbers the local environment! All tests that use this should
+# be marked as such with TEST_ENV
+def run_without_project_context(command, **kwargs):
+    """Like 'run', but ensures that the process that is invoked sees none
+    of the project context configuration variables.
+    """
+    if 'env' in kwargs:
+        raise ValueError('Cannot specify env in run_without_project_context')
+    return run("dx clearenv; " + command,
+               env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None),
+               **kwargs)
 
 
 def create_file_in_project(fname, trg_proj_id, folder=None):
@@ -121,6 +135,11 @@ class TestDXTestUtils(DXTestCase):
                 # This would fail if the project context hadn't been
                 # successfully changed by select_project
                 run('dx cd {dirname}'.format(dirname=test_dirname))
+
+    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
+    def test_run_without_project_context(self):
+        self.assertIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
+        self.assertNotIn('DX_PROJECT_CONTEXT_ID', run_without_project_context('dx env --bash'))
 
 
 # TODO: these 'dx rm' and related commands should really exit with code 3 to distinguish user and internal errors
@@ -900,12 +919,10 @@ class TestDXNewRecord(DXTestCase):
     def test_new_record_without_context(self):
         # Without project context, cannot create new object without
         # project qualified path
-        with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=1):
-            run("dx clearenv; dx new record foo",
-                env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None))
+        with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=3):
+            run_without_project_context("dx new record foo")
         # Can create object with explicit project qualifier
-        record_id = run("dx clearenv; dx new record --brief " + self.project + ":foo",
-                        env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None)).strip()
+        record_id = run_without_project_context("dx new record --brief " + self.project + ":foo").strip()
         self.assertEqual(dxpy.DXRecord(record_id).name, "foo")
 
 
@@ -967,13 +984,11 @@ class TestGTables(DXTestCase):
     def test_dx_new_gtable_without_context(self):
         # Without project context, cannot create new object without
         # project qualified path
-        with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=1):
-            run("dx clearenv; dx new gtable --columns mychr,mylo:int32,myhi:int32 foo",
-                env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None))
+        with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=3):
+            run_without_project_context("dx new gtable --columns mychr,mylo:int32,myhi:int32 foo")
         # Can create object with explicit project qualifier
-        gtable_id = run(
-            "dx clearenv; dx new gtable --brief --columns mychr,mylo:int32,myhi:int32 " + self.project + ":foo",
-            env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None)).strip()
+        gtable_id = run_without_project_context(
+            "dx new gtable --brief --columns mychr,mylo:int32,myhi:int32 " + self.project + ":foo").strip()
         self.assertEqual(dxpy.DXGTable(gtable_id).name, "foo")
 
 
@@ -1087,27 +1102,20 @@ class TestDXClientUploadDownload(DXTestCase):
             file_id = run("dx upload " + fd.name + " --brief --wait").strip()
             self.assertTrue(file_id.startswith('file-'))
 
-            # unset environment
-            del dxpy.config['DX_PROJECT_CONTEXT_ID']
-            dxpy.config.save()
-            self.assertNotIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
-
             # download file
             output_path = os.path.join(testdir, 'output')
-            run('dx download ' + file_id + ' -o ' + output_path)
+            run_without_project_context('dx download ' + file_id + ' -o ' + output_path)
             run('cmp ' + output_path + ' ' + fd.name)
 
     @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
     def test_dx_upload_no_env(self):
         # Without project context, cannot upload to a
         # non-project-qualified destination
-        with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=1):
-            run("dx clearenv; dx upload --path foo /dev/null",
-                env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None))
+        with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=3):
+            run_without_project_context("dx upload --path foo /dev/null")
         # Can upload to a path specified with explicit project qualifier
-        file_id = run(
-            "dx clearenv; dx upload --brief --path " + self.project + ":foo /dev/null",
-            env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None)).strip()
+        file_id = run_without_project_context(
+            "dx upload --brief --path " + self.project + ":foo /dev/null").strip()
         self.assertEqual(dxpy.DXFile(file_id).name, "foo")
 
     def test_dx_make_download_url(self):
@@ -2609,12 +2617,10 @@ class TestDXClientWorkflow(DXTestCase):
     def test_dx_new_workflow_without_context(self):
         # Without project context, cannot create new object without
         # project qualified path
-        with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=1):
-            run("dx clearenv; dx new workflow foo",
-                env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None))
+        with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=3):
+            run_without_project_context("dx new workflow foo")
         # Can create object with explicit project qualifier
-        workflow_id = run("dx clearenv; dx new workflow --brief " + self.project + ":foo",
-                          env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None)).strip()
+        workflow_id = run_without_project_context("dx new workflow --brief " + self.project + ":foo").strip()
         self.assertEqual(dxpy.DXWorkflow(workflow_id).name, "foo")
 
     def test_dx_new_workflow(self):
@@ -5082,12 +5088,10 @@ def main(in1):
         # Without project context, cannot create new object without
         # project qualified path
         with self.assertSubprocessFailure(stderr_regexp='without specifying a destination project', exit_code=2):
-            run("dx clearenv; dx build --json --destination foo " + app_dir,
-                env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None))
+            run_without_project_context("dx build --json --destination foo " + app_dir)
         # Can create object with explicit project qualifier
-        applet_describe = json.loads(run(
-            "dx clearenv; dx build --json --destination " + self.project + ":foo " + app_dir,
-            env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None)))
+        applet_describe = json.loads(run_without_project_context(
+            "dx build --json --destination " + self.project + ":foo " + app_dir))
         self.assertEqual(applet_describe["name"], "foo")
 
 
@@ -5591,17 +5595,12 @@ class TestDXCp(DXTestCase):
         #  -- how do we get the current project id?
         file_id = create_file_in_project(self.gen_uniq_fname(), self.project)
 
-        # Unset environment
-        del dxpy.config['DX_PROJECT_CONTEXT_ID']
-        dxpy.config.save()
-        self.assertNotIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
-
         # Copy the file to a new project.
         # This does not currently work, because the context is not set.
         proj_id = create_project()
         with self.assertSubprocessFailure(stderr_regexp='project must be specified or a current project set',
-                                          exit_code=1):
-            run('dx cp ' + file_id + ' ' + proj_id)
+                                          exit_code=3):
+            run_without_project_context('dx clearenv; dx cp ' + file_id + ' ' + proj_id)
 
         #cleanup
         rm_project(proj_id)
