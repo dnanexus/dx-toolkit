@@ -3937,6 +3937,24 @@ class TestDXBuildApp(DXTestCase):
         self.assertEqual(applet_describe["id"], applet_describe["id"])
         self.assertEqual(applet_describe["name"], "minimal_applet")
 
+    def test_dx_build_applet_dxapp_json_created_with_makefile(self):
+        app_name = "nodxapp_applet"
+        app_dir = self.write_app_directory(app_name, None, "code.py")
+        app_spec = {
+            "name": app_name,
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        makefile_str = "dxapp.json:\n\tcp temp_dxapp.json dxapp.json\n"
+        with open(os.path.join(app_dir, 'temp_dxapp.json'), 'w') as manifest:
+            manifest.write(json.dumps(app_spec))
+        with open(os.path.join(app_dir, "Makefile"), 'w') as makefile:
+            makefile.write(makefile_str)
+        run("dx build " + app_dir)
+
     def test_dx_build_applet_no_app_linting(self):
         run("dx clearenv")
 
