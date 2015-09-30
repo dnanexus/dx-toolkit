@@ -20,7 +20,7 @@ Exceptions for the :mod:`dxpy` package.
 
 from __future__ import (print_function, unicode_literals)
 
-import os, sys, json, traceback, errno
+import sys, json, traceback, errno, socket
 import requests
 
 import dxpy
@@ -107,6 +107,12 @@ class ServiceUnavailable(DXAPIError):
 class DXFileError(DXError):
     '''Exception for :class:`dxpy.bindings.dxfile.DXFile`.'''
     pass
+
+class DXPartLengthMismatchError(DXFileError):
+    '''Exception raised by :class:`dxpy.bindings.dxfile.DXFile` on part length mismatch.'''
+
+class DXChecksumMismatchError(DXFileError):
+    '''Exception raised by :class:`dxpy.bindings.dxfile.DXFile` on checksum mismatch.'''
 
 class DXGTableError(DXError):
     '''Exception for :class:`dxpy.bindings.dxgtable.DXGTable`.'''
@@ -202,11 +208,11 @@ def exit_with_exc_info(code=1, message='', print_tb=False, exception=None):
         sys.stderr.write('\n')
     sys.exit(code)
 
-network_exceptions = (requests.ConnectionError,
-                      requests.exceptions.ChunkedEncodingError,
-                      requests.exceptions.ContentDecodingError,
-                      requests.HTTPError,
-                      requests.Timeout,
+network_exceptions = (requests.packages.urllib3.exceptions.ProtocolError,
+                      requests.packages.urllib3.exceptions.DecodeError,
+                      requests.packages.urllib3.exceptions.ReadTimeoutError,
+                      requests.packages.urllib3.exceptions.MaxRetryError,
+                      socket.error,
                       requests.packages.urllib3.connectionpool.HTTPException)
 
 default_expected_exceptions = network_exceptions + (DXAPIError,
