@@ -5534,7 +5534,7 @@ class TestDXCp(DXTestCase):
         # not. We want to see an error message that reflects this; it
         # should refer to the path /{proj_id1}, which has been perhaps
         # unintentionally interpreted as a folder.
-        expected_err_msg = "ResolutionError: The folder /{f} could not be found in {p}".format(
+        expected_err_msg = "ResolutionError: The folder could not be found in {p}".format(
             f=self.proj_id1, p=self.project)
         with self.assertSubprocessFailure(stderr_regexp=expected_err_msg, exit_code=3):
             run("dx cp {p1}/{f} {p2}:/".format(p1=self.proj_id1, f=fname1, p2=self.proj_id2))
