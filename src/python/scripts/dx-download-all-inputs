@@ -16,13 +16,8 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import concurrent.futures
-import os
-import sys
-import json
 import argparse
 import dxpy
-from dxpy.utils import file_load_utils
 from dxpy.utils.printing import fill, refill_paragraphs, BOLD, RED
 
 description = BOLD('Note') + ''': this is a utility for use by bash apps
@@ -80,78 +75,4 @@ parser.add_argument("--sequential", help="Download the files sequentially", acti
 args = parser.parse_args()
 max_num_parallel_downloads = 8
 
-def create_dirs(idir, dirs):
-    '''
-    Create a set of directories, so we could store the input files.
-    For example, seq1 could be stored under:
-        /in/seq1/NC_001122.fasta
-
-    TODO: this call could fail, we need to report a reasonable error code
-
-    Note that we create a directory for every file array, even if
-    it has zero inputs.
-    '''
-    # create the <idir> itself
-    file_load_utils.ensure_dir(idir)
-    # create each subdir
-    for d in dirs:
-        file_load_utils.ensure_dir(os.path.join(idir, d))
-
-def download_one_file(file_rec):
-    src_file = file_rec['src_file_id']
-    trg_file = os.path.join(idir, file_rec['trg_fname'])
-    print("downloading file: " + src_file + " to filesystem: " + trg_file)
-    dxpy.download_dxfile(src_file, trg_file)
-    return file_rec
-
-# Download the files sequentially
-#   to_download: list of tuples describing files to download
-def sequential_file_download(to_download):
-    for file_rec in to_download:
-        download_one_file(file_rec)
-
-# Download files in parallel
-#   to_download: list of tuples describing files to download
-def parallel_file_download(to_download):
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_num_parallel_downloads) as executor:
-       future_files = {executor.submit(download_one_file, file_rec): file_rec for file_rec in to_download}
-       for future in concurrent.futures.as_completed(future_files):
-           file_rec = future_files[future]
-           try:
-               future.result()
-           except Exception as exc:
-               sys.stderr.write('%r -> %s generated an exception' % (file_rec['src_file_id'], file_rec['trg_fname']))
-               raise
-           else:
-               pass
-
-
-# Input directory, where all inputs are downloaded
-idir = file_load_utils.get_input_dir()
-job_input_file = file_load_utils.get_input_json_file()
-dirs, inputs, rest = file_load_utils.get_job_input_filenames(job_input_file)
-
-# Exclude directories
-dirs_to_create = []
-for d in dirs:
-    if d not in args.exclude:
-        dirs_to_create.append(d)
-
-# Create the directory structure, in preparation for download.
-# Allows performing the download in parallel.
-create_dirs(idir, dirs_to_create)
-
-# Remove excluded inputs
-if len(args.exclude) > 0:
-    inputs = file_load_utils.filter_dict(inputs, args.exclude)
-
-# Convert to a flat list of elements to download
-to_download=[]
-for ival_list in inputs.values():
-    to_download.extend(ival_list)
-
-# Download the files
-if args.parallel:
-    parallel_file_download(to_download)
-else:
-    sequential_file_download(to_download)
+dxpy.download_all_inputs(exclude=args.exclude, parallel=args.parallel, maxThreads=max_num_parallel_downloads)
