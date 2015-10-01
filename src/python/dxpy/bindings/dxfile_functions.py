@@ -219,11 +219,11 @@ def download_dxfile(dxfile_or_id, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE
     def verify_part(part_id, got_bytes, hasher):
         if got_bytes is not None and got_bytes != parts[part_id]["size"]:
             msg = "Unexpected part data size in {} part {} (expected {}, got {})"
-            msg = msg.format(dxfile.get_id(), part_id, got_bytes, parts[part_id]["size"])
+            msg = msg.format(dxfile.get_id(), part_id, parts[part_id]["size"], got_bytes)
             raise DXPartLengthMismatchError(msg)
         if hasher is not None and hasher.hexdigest() != parts[part_id]["md5"]:
             msg = "Checksum mismatch in {} part {} (expected {}, got {})"
-            msg = msg.format(dxfile.get_id(), part_id, hasher.hexdigest(), parts[part_id]["md5"])
+            msg = msg.format(dxfile.get_id(), part_id, parts[part_id]["md5"], hasher.hexdigest())
             raise DXChecksumMismatchError(msg)
 
     try:
