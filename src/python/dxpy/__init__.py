@@ -442,6 +442,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 return content
             raise AssertionError('Should never reach this line: expected a result to have been returned by now')
         except Exception as e:
+            # Avoid reusing connections in the pool, since they may be
+            # in an inconsistent state (observed as "ResponseNotReady"
+            # errors).
+            _get_pool_manager(kwargs).clear()
             success = False
             exception_msg = _extract_msg_from_last_exception()
             if isinstance(e, _expected_exceptions):
