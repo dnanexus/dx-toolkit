@@ -86,6 +86,9 @@ def download_all_inputs(exclude=None, parallel=True, maxThreads=None):
     :param maxThreads: If parallel is True, how many threads should be used to download files? (default: number of cores)
     :type append: int
 
+    returns a : dict of lists of strings where each key is the input variable
+                and each list element is the full path to the file that has
+                been downloaded.
 
     This function downloads all files that were supplied as inputs to the app.
     By convention, if an input parameter "FOO" has value
