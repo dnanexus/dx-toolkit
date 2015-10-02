@@ -355,7 +355,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
     if auth is True:
         auth = AUTH_HELPER
 
-    if auth is not None:
+    if auth:
         auth(_RequestForAuth(method, url, headers))
 
     if jsonify_data:
