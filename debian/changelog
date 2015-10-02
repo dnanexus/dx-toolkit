@@ -1,3 +1,16 @@
+dx-toolkit (0.164.0) precise; urgency=low
+
+  * Fix connection state issue introduced by 384e8ef
+  * Fix typo in error message in 384e8ef
+  * Fix handling of DXHTTPRequest(verify=...) and DX_CA_CERT in 384e8ef
+  * Fix exception handling artifacts in 384e8ef
+  * PTFM-13671 dx download improvements
+  * PTFM-16136 - Run make steps before checking for dxapp.json
+  * Fix broken tests that depended on TEST_ENV
+  * PTFM-16270 dx-run-app-locally: exit on unknown interpreter 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 01 Oct 2015 18:29:39 +0000
+
 dx-toolkit (0.163.0) precise; urgency=low
 
   * Minor test fixes
