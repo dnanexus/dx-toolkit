@@ -3919,7 +3919,7 @@ class TestDXBuildApp(DXTestCase):
             if e.errno != 17: # directory already exists
                 raise e
         if dxapp_str is not None:
-            with open(os.path.join(self.temp_file_path, app_name, 'dxapp.json'), 'w') as manifest:
+            with open(os.path.join(self.temp_file_path, app_name, 'dxapp.json'), 'wb') as manifest:
                 manifest.write(dxapp_str)
         if code_filename:
             with open(os.path.join(self.temp_file_path, app_name, code_filename), 'w') as code_file:
@@ -5084,7 +5084,7 @@ class TestDXBuildReportHtml(unittest.TestCase):
     def setUp(self):
         self.temp_file_path = tempfile.mkdtemp()
         self.gif_base64 = "R0lGODdhAQABAIAAAAQCBAAAACwAAAAAAQABAAACAkQBADs="
-        gif_file = open("{}/img.gif".format(self.temp_file_path), "w")
+        gif_file = open("{}/img.gif".format(self.temp_file_path), "wb")
         gif_file.write(base64.b64decode(self.gif_base64))
         gif_file.close()
         wiki_logo = "http://upload.wikimedia.org/wikipedia/en/thumb/8/80/Wikipedia-logo-v2.svg/200px-Wikipedia-logo-v2.svg.png"
