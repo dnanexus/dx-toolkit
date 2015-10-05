@@ -59,7 +59,7 @@ with tempfile.TemporaryFile() as fd:
     build_error = None
     try:
         dx_build_app.build_and_upload_locally(args.path, 'app', dry_run=True)
-    except Exception as e:
+    except BaseException as e:
         build_error = e
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
