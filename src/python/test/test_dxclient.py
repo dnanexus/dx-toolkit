@@ -5535,12 +5535,8 @@ class TestDXCp(DXTestCase):
         fname1 = self.gen_uniq_fname()
         create_file_in_project(fname1, self.proj_id1)
 
-        # The file {proj_id1}:/{f} exists, however, {proj_id1}/{f} does
-        # not. We want to see an error message that reflects this; it
-        # should refer to the path /{proj_id1}, which has been perhaps
-        # unintentionally interpreted as a folder.
-        expected_err_msg = "ResolutionError: The folder could not be found in {p}".format(
-            f=self.proj_id1, p=self.project)
+        # The file {proj_id1}:/{f} exists, however, {proj_id1}/{f} does not
+        expected_err_msg = "ResolutionError: The folder could not be found in {p}".format(p=self.project)
         with self.assertSubprocessFailure(stderr_regexp=expected_err_msg, exit_code=3):
             run("dx cp {p1}/{f} {p2}:/".format(p1=self.proj_id1, f=fname1, p2=self.proj_id2))
 
