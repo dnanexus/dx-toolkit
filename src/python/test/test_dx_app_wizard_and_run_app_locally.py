@@ -368,7 +368,7 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
                 subprocess.check_output(['dx', 'build', appdir, '--destination', applet_name])
                 subprocess.check_output(['dx', 'run', applet_name, '-y', '--wait'] + cmdline_args)
 
-    # @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
+    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
     def test_dx_run_app_locally_without_auth(self):
         temp_file_path = tempfile.mkdtemp()
         app_spec = {
