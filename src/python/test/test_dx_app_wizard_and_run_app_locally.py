@@ -389,6 +389,25 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
             with self.assertSubprocessFailure(stderr_regexp="logged in", exit_code=3):
                 run("dx-run-app-locally " + pipes.quote(app_dir_path) + " -ifoo=nothing")
 
+    def test_dx_run_app_locally_invalid_interpreter(self):
+        temp_file_path = tempfile.mkdtemp()
+        app_spec = {
+            "name": "test_run_locally_invalid_interpreter",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir_path = os.path.join(temp_file_path, app_spec['name'])
+        os.mkdir(app_dir_path)
+        with open(os.path.join(app_dir_path, 'dxapp.json'), 'w') as manifest:
+            manifest.write(json.dumps(app_spec))
+        with open(os.path.join(app_dir_path, 'code.py'), 'w') as code_file:
+            code_file.write('')
+        with self.assertSubprocessFailure(stderr_regexp="Unknown interpreter python", exit_code=3):
+            run("dx-run-app-locally " + pipes.quote(app_dir_path))
+
 
 '''
 test the upload/download helpers by running them locally
