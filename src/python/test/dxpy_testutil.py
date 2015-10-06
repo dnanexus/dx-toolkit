@@ -210,6 +210,30 @@ def generate_unique_username_email():
     return username, email
 
 
+# Note: clobbers the local environment! All tests that use this should
+# be marked as such with TEST_ENV
+@contextmanager
+def without_project_context():
+    """Within the scope of the block, the project context and workspace
+    configuration variables (and possibly other variables) are unset.
+
+    """
+    prev_workspace_id = os.environ.get('DX_WORKSPACE_ID', None)
+    prev_proj_context_id = os.environ.get('DX_PROJECT_CONTEXT_ID', None)
+    if prev_workspace_id is not None:
+        del os.environ['DX_WORKSPACE_ID']
+    if prev_proj_context_id is not None:
+        del os.environ['DX_PROJECT_CONTEXT_ID']
+    subprocess.check_call("dx clearenv", shell=True)
+    try:
+        yield
+    finally:
+        if prev_workspace_id:
+            os.environ['DX_WORKSPACE_ID'] = prev_workspace_id
+        if prev_proj_context_id:
+            os.environ['DX_PROJECT_CONTEXT_ID'] = prev_proj_context_id
+
+
 class DXTestCase(unittest.TestCase):
     def setUp(self):
         proj_name = u"dxclient_test_pröject"

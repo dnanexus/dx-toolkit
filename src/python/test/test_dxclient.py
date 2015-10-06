@@ -28,8 +28,8 @@ import requests
 
 import dxpy
 from dxpy.scripts import dx_build_app
-from dxpy_testutil import (DXTestCase, check_output, temporary_project, select_project, cd,
-                           override_environment, generate_unique_username_email)
+from dxpy_testutil import (DXTestCase, check_output, temporary_project, select_project, cd, override_environment,
+                           generate_unique_username_email, without_project_context)
 import dxpy_testutil as testutil
 from dxpy.exceptions import DXAPIError, DXSearchError, EXPECTED_ERR_EXIT_STATUS
 from dxpy.compat import str, sys_encoding, open
@@ -51,19 +51,6 @@ def run(command, **kwargs):
     output = check_output(command, shell=True, **kwargs)
     print(output)
     return output
-
-
-# Note: clobbers the local environment! All tests that use this should
-# be marked as such with TEST_ENV
-def run_without_project_context(command, **kwargs):
-    """Like 'run', but ensures that the process that is invoked sees none
-    of the project context configuration variables.
-    """
-    if 'env' in kwargs:
-        raise ValueError('Cannot specify env in run_without_project_context')
-    return run("dx clearenv; " + command,
-               env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None),
-               **kwargs)
 
 
 def create_file_in_project(fname, trg_proj_id, folder=None):
@@ -138,9 +125,11 @@ class TestDXTestUtils(DXTestCase):
                 run('dx cd {dirname}'.format(dirname=test_dirname))
 
     @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
-    def test_run_without_project_context(self):
+    def test_without_project_context(self):
         self.assertIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
-        self.assertNotIn('DX_PROJECT_CONTEXT_ID', run_without_project_context('dx env --bash'))
+        with without_project_context():
+            self.assertNotIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
+        self.assertIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
 
 
 # TODO: these 'dx rm' and related commands should really exit with code 3 to distinguish user and internal errors
@@ -1077,7 +1066,8 @@ class TestDXClientUploadDownload(DXTestCase):
 
             # download file
             output_path = os.path.join(testdir, 'output')
-            run_without_project_context('dx download ' + file_id + ' -o ' + output_path)
+            with without_project_context():
+                run('dx download ' + file_id + ' -o ' + output_path)
             run('cmp ' + output_path + ' ' + fd.name)
 
     def test_dx_make_download_url(self):
@@ -5577,8 +5567,8 @@ class TestDXCp(DXTestCase):
         # This does not currently work, because the context is not set.
         proj_id = create_project()
         with self.assertSubprocessFailure(stderr_regexp='project must be specified or a current project set',
-                                          exit_code=3):
-            run_without_project_context('dx clearenv; dx cp ' + file_id + ' ' + proj_id)
+                                          exit_code=3), without_project_context():
+            run('dx cp ' + file_id + ' ' + proj_id)
 
         #cleanup
         rm_project(proj_id)
