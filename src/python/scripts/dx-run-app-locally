@@ -48,6 +48,9 @@ args = parser.parse_args()
 
 args.path = os.path.abspath(args.path)
 
+if dxpy.AUTH_HELPER is None:
+    err_exit("You must be logged in to the DNAnexus Platform to run this command; e.g. please run 'dx login'", code=3)
+
 # Do the equivalent of "dx build --dry-run" to do some basic checking
 with tempfile.TemporaryFile() as fd:
     print("About to run 'dx build --dry-run " + args.path + "'")

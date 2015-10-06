@@ -29,7 +29,7 @@ import requests
 import dxpy
 from dxpy.scripts import dx_build_app
 from dxpy_testutil import (DXTestCase, check_output, temporary_project, select_project, cd, override_environment,
-                           generate_unique_username_email, without_project_context)
+                           generate_unique_username_email, without_project_context, without_auth)
 import dxpy_testutil as testutil
 from dxpy.exceptions import DXAPIError, DXSearchError, EXPECTED_ERR_EXIT_STATUS
 from dxpy.compat import str, sys_encoding, open
@@ -130,6 +130,13 @@ class TestDXTestUtils(DXTestCase):
         with without_project_context():
             self.assertNotIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
         self.assertIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
+
+    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
+    def test_without_auth(self):
+        self.assertIn('DX_SECURITY_CONTEXT', run('dx env --bash'))
+        with without_auth():
+            self.assertNotIn('DX_SECURITY_CONTEXT', run('dx env --bash'))
+        self.assertIn('DX_SECURITY_CONTEXT', run('dx env --bash'))
 
 
 # TODO: these 'dx rm' and related commands should really exit with code 3 to distinguish user and internal errors

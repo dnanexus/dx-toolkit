@@ -21,13 +21,21 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os, sys, unittest, json, tempfile, subprocess
 import pexpect
+import pipes
 
 from dxpy_testutil import DXTestCase, check_output
 import dxpy_testutil as testutil
 
 import dxpy
 from dxpy.scripts import dx_build_app
-from dxpy.exceptions import DXCLIError
+
+
+def run(command, **kwargs):
+    print("$ %s" % (command,))
+    output = check_output(command, shell=True, **kwargs)
+    print(output)
+    return output
+
 
 supported_languages = ['Python', 'C++', 'bash']
 
@@ -359,6 +367,28 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
                 applet_name = dxapp_json['name'] + '-' + lang
                 subprocess.check_output(['dx', 'build', appdir, '--destination', applet_name])
                 subprocess.check_output(['dx', 'run', applet_name, '-y', '--wait'] + cmdline_args)
+
+    # @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
+    def test_dx_run_app_locally_without_auth(self):
+        temp_file_path = tempfile.mkdtemp()
+        app_spec = {
+            "name": "test_run_locally_without_auth",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [{"name": "foo", "class": "file"}],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir_path = os.path.join(temp_file_path, app_spec['name'])
+        os.mkdir(app_dir_path)
+        with open(os.path.join(app_dir_path, 'dxapp.json'), 'w') as manifest:
+            manifest.write(json.dumps(app_spec))
+        with open(os.path.join(app_dir_path, 'code.py'), 'w') as code_file:
+            code_file.write('')
+        with testutil.without_auth(), testutil.without_project_context():
+            with self.assertSubprocessFailure(stderr_regexp="logged in", exit_code=3):
+                run("dx-run-app-locally " + pipes.quote(app_dir_path) + " -ifoo=nothing")
+
 
 '''
 test the upload/download helpers by running them locally

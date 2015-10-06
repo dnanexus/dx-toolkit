@@ -234,6 +234,25 @@ def without_project_context():
             os.environ['DX_PROJECT_CONTEXT_ID'] = prev_proj_context_id
 
 
+# Note: clobbers the local environment! All tests that use this should
+# be marked as such with TEST_ENV
+@contextmanager
+def without_auth():
+    """Within the scope of the block, the auth configuration variable (and
+    possibly other variables) are unset.
+
+    """
+    prev_security_context = os.environ.get('DX_SECURITY_CONTEXT', None)
+    if prev_security_context is not None:
+        del os.environ['DX_SECURITY_CONTEXT']
+    subprocess.check_call("dx clearenv", shell=True)
+    try:
+        yield
+    finally:
+        if prev_security_context:
+            os.environ['DX_SECURITY_CONTEXT'] = prev_security_context
+
+
 class DXTestCase(unittest.TestCase):
     def setUp(self):
         proj_name = u"dxclient_test_pröject"
