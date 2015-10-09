@@ -239,6 +239,7 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
             if show_progress:
                 _bytes += len(chunk["data"])
                 print_progress(_bytes, file_size)
+            del chunk["data"]
         verify_part(cur_part, got_bytes, hasher)
         if show_progress:
             print_progress(_bytes, file_size, action="Completed")
