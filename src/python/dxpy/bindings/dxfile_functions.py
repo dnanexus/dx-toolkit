@@ -106,7 +106,7 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
     :param append: If True, appends to the local file (default is to truncate local file if it exists)
     :type append: boolean
 
-    Downloads the remote file referenced by *dxid* or *dxfile* and saves it to *filename*.
+    Downloads the remote file referenced by *dxid* and saves it to *filename*.
 
     Example::
 
