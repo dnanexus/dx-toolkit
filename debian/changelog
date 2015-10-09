@@ -1,3 +1,9 @@
+dx-toolkit (0.165.2) precise; urgency=low
+
+  * Bug fixes for download_dxfile
+
+ -- Phil Sung <psung@dnanexus.com>  Fri, 09 Oct 2015 20:48:26 +0000
+
 dx-toolkit (0.165.1) precise; urgency=low
 
   * Fix regression in download_dxfile
