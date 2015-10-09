@@ -1,3 +1,9 @@
+dx-toolkit (0.164.2) precise; urgency=low
+
+  * Fix regression in download_dxfile
+
+ -- Phil Sung <psung@dnanexus.com>  Fri, 09 Oct 2015 15:45:31 +0000
+
 dx-toolkit (0.164.1) precise; urgency=low
 
   * PTFM-16336 Fixup for 384e8ef: dxpy.DXHTTPRequest: HTTPError is retryable
