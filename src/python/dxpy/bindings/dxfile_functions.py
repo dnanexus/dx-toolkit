@@ -96,15 +96,13 @@ def _get_executor():
         _executor = ThreadPoolExecutor(max_workers=cpu_count())
     return _executor
 
-def download_dxfile(dxid, filename, dxfile=None, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False,
-                    show_progress=False, project=None, **kwargs):
+def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
+                    project=None, **kwargs):
     '''
-    :param dxid: DNAnexus file ID (either ``dxid`` or ``dxfile`` must be given)
-    :type dxid: string
+    :param dxid: DNAnexus file ID or DXFile (file handler) object
+    :type dxid: string or DXFile
     :param filename: Local filename
     :type filename: string
-    :param dxfile: DXFile (file handler) object (either ``dxid`` or ``dxfile`` must be given)
-    :type dxfile: DXFile
     :param append: If True, appends to the local file (default is to truncate local file if it exists)
     :type append: boolean
 
@@ -140,9 +138,9 @@ def download_dxfile(dxid, filename, dxfile=None, chunksize=dxfile.DEFAULT_BUFFER
 
     _bytes = 0
 
-    if dxid is not None and dxfile is not None:
-        raise DXError("Either dxid or dxfile must be specified, but not both")
-    if dxid is not None:
+    if isinstance(dxid, DXFile):
+        dxfile = dxid
+    else:
         dxfile = DXFile(dxid, mode="r", project=project)
 
     dxfile_desc = dxfile.describe(fields={"parts"}, default_fields=True, **kwargs)
@@ -251,7 +249,7 @@ def download_dxfile(dxid, filename, dxfile=None, chunksize=dxfile.DEFAULT_BUFFER
         if _download_retry_counter[part_gid] > 0:
             print("Retrying {} ({} tries remain)".format(dxfile.get_id(), _download_retry_counter[part_gid]),
                   file=sys.stderr)
-            return download_dxfile(filename=filename, dxfile=dxfile, chunksize=chunksize, append=append,
+            return download_dxfile(dxfile, filename, chunksize=chunksize, append=append,
                                    show_progress=show_progress, project=project, **kwargs)
         raise
     except KeyboardInterrupt:

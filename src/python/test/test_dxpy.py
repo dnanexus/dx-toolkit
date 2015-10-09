@@ -306,10 +306,10 @@ class TestDXFile(unittest.TestCase):
         dxpy.download_dxfile(filename=self.new_file.name, dxid=self.dxfile.get_id())
         self.assertTrue(filecmp.cmp(self.foo_file.name, self.new_file.name))
 
-        dxpy.download_dxfile(None, dxfile=self.dxfile, filename=self.new_file.name)
+        dxpy.download_dxfile(dxid=self.dxfile, filename=self.new_file.name)
         self.assertTrue(filecmp.cmp(self.foo_file.name, self.new_file.name))
 
-        dxpy.download_dxfile(dxfile=self.dxfile, filename=self.new_file.name, dxid=None)
+        dxpy.download_dxfile(self.dxfile, filename=self.new_file.name)
         self.assertTrue(filecmp.cmp(self.foo_file.name, self.new_file.name))
 
     def test_upload_string_dxfile(self):
