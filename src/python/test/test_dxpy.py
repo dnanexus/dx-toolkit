@@ -301,7 +301,15 @@ class TestDXFile(unittest.TestCase):
                          os.path.basename(self.foo_file.name))
 
         dxpy.download_dxfile(self.dxfile.get_id(), self.new_file.name)
+        self.assertTrue(filecmp.cmp(self.foo_file.name, self.new_file.name))
 
+        dxpy.download_dxfile(filename=self.new_file.name, dxid=self.dxfile.get_id())
+        self.assertTrue(filecmp.cmp(self.foo_file.name, self.new_file.name))
+
+        dxpy.download_dxfile(None, dxfile=self.dxfile, filename=self.new_file.name)
+        self.assertTrue(filecmp.cmp(self.foo_file.name, self.new_file.name))
+
+        dxpy.download_dxfile(dxfile=self.dxfile, filename=self.new_file.name, dxid=None)
         self.assertTrue(filecmp.cmp(self.foo_file.name, self.new_file.name))
 
     def test_upload_string_dxfile(self):

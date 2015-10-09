@@ -96,17 +96,19 @@ def _get_executor():
         _executor = ThreadPoolExecutor(max_workers=cpu_count())
     return _executor
 
-def download_dxfile(dxfile_or_id, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
-                    project=None, **kwargs):
+def download_dxfile(dxid, filename, dxfile=None, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False,
+                    show_progress=False, project=None, **kwargs):
     '''
-    :param dxfile_or_id: Remote file handler or ID
-    :type dxfile_or_id: DXFile or string
+    :param dxid: DNAnexus file ID (either ``dxid`` or ``dxfile`` must be given)
+    :type dxid: string
     :param filename: Local filename
     :type filename: string
+    :param dxfile: DXFile (file handler) object (either ``dxid`` or ``dxfile`` must be given)
+    :type dxfile: DXFile
     :param append: If True, appends to the local file (default is to truncate local file if it exists)
     :type append: boolean
 
-    Downloads the remote file referenced by *dxfile_or_id* and saves it to *filename*.
+    Downloads the remote file referenced by *dxid* or *dxfile* and saves it to *filename*.
 
     Example::
 
@@ -138,10 +140,10 @@ def download_dxfile(dxfile_or_id, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE
 
     _bytes = 0
 
-    if isinstance(dxfile_or_id, DXFile):
-        dxfile = dxfile_or_id
-    else:
-        dxfile = DXFile(dxfile_or_id, mode="r", project=project)
+    if dxid is not None and dxfile is not None:
+        raise DXError("Either dxid or dxfile must be specified, but not both")
+    if dxid is not None:
+        dxfile = DXFile(dxid, mode="r", project=project)
 
     dxfile_desc = dxfile.describe(fields={"parts"}, default_fields=True, **kwargs)
     parts = dxfile_desc["parts"]
@@ -249,7 +251,7 @@ def download_dxfile(dxfile_or_id, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE
         if _download_retry_counter[part_gid] > 0:
             print("Retrying {} ({} tries remain)".format(dxfile.get_id(), _download_retry_counter[part_gid]),
                   file=sys.stderr)
-            return download_dxfile(dxfile_or_id, filename, chunksize=chunksize, append=append,
+            return download_dxfile(filename=filename, dxfile=dxfile, chunksize=chunksize, append=append,
                                    show_progress=show_progress, project=project, **kwargs)
         raise
     except KeyboardInterrupt:
