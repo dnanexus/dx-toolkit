@@ -93,6 +93,20 @@ class TestDXProject(unittest.TestCase):
                 dxcontainer = dxpy.DXContainer()
                 dxcontainer.set_id(bad_value)
 
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS, 'skipping test that requires presence of test user')
+    def test_invite_without_email(self):
+        user_id = 'user-000000000000000000000001'
+        dxproject = dxpy.DXProject(self.proj_id)
+
+        # Check that user is not already invited to project
+        project_members = dxpy.api.project_describe(dxproject.get_id(),
+                                                    {'fields': {'permissions': True}})['permissions']
+        self.assertNotIn(user_id, project_members.keys())
+
+        dxproject.invite(user_id, 'VIEW', send_email=False)
+        res = dxpy.api.project_describe(dxproject.get_id(), {'fields': {'permissions': True}})['permissions']
+        self.assertEquals(res[user_id], 'VIEW')
+
     def test_update_describe(self):
         dxproject = dxpy.DXProject()
         dxproject.update(name="newprojname", protected=True, restricted=True, description="new description")

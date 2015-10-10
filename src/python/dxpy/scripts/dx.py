@@ -648,8 +648,11 @@ def invite(args):
                                      args.project, 'project')
     if args.invitee != 'PUBLIC' and not '-' in args.invitee and not '@' in args.invitee:
         args.invitee = 'user-' + args.invitee.lower()
+    project_invite_input = {"invitee": args.invitee, "level": args.level}
+    if not args.send_email:
+        project_invite_input["suppressEmailNotification"] = not args.send_email
     try:
-        resp = dxpy.api.project_invite(project, {"invitee": args.invitee, "level": args.level})
+        resp = dxpy.api.project_invite(project, project_invite_input)
     except:
         err_exit()
     print('Invited ' + args.invitee + ' to ' + project + ' (' + resp['state'] + ')')
@@ -3456,6 +3459,7 @@ parser_invite.add_argument('invitee', help='Entity to invite')
 parser_invite.add_argument('project', help='Project to invite the invitee to', default=':', nargs='?')
 parser_invite.add_argument('level', help='Permissions level the new member should have',
                            choices=['VIEW', 'UPLOAD', 'CONTRIBUTE', 'ADMINISTER'], default='VIEW', nargs='?')
+parser_invite.add_argument('--no-email', dest='send_email', action='store_false', help='Disable email notifications to invitee')
 parser_invite.set_defaults(func=invite)
 # parser_invite.completer = TODO
 register_subparser(parser_invite, categories='other')

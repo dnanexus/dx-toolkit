@@ -579,6 +579,25 @@ class TestDXClient(DXTestCase):
         run("dx rmproject -y {name}".format(name=project_name))
         self.assertEqual(run("dx find projects --brief --name {name}".format(name=project_name)), "")
 
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS, 'skipping test that requires presence of test user')
+    def test_dx_project_invite_without_email(self):
+        user_id = 'user-000000000000000000000001'
+        with temporary_project() as unique_project:
+            project_id = unique_project.get_id()
+
+            # Check that user is not already invited to project
+            project_members = dxpy.api.project_describe(project_id, {'fields': {'permissions': True}})['permissions']
+            self.assertNotIn(user_id, project_members.keys())
+
+            # Test --no-email flag
+            res = run("dx invite {user} {project} VIEW --no-email".format(user=user_id, project=project_id)).strip()
+            exp = "Invited {user} to {project} (accepted)".format(user=user_id, project=project_id)
+            self.assertEqual(res, exp)
+
+            # Confirm user in project
+            conf = dxpy.api.project_describe(project_id, {'fields': {'permissions': True}})['permissions']
+            self.assertEqual(conf[user_id], 'VIEW')
+
     def test_dx_cp(self):
         project_name = "test_dx_cp_" + str(random.randint(0, 1000000)) + "_" + str(int(time.time() * 1000))
         dest_project_id = run("dx new project {name} --brief".format(name=project_name)).strip()
