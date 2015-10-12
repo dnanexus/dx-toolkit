@@ -27,6 +27,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import os, sys, math, mmap, stat
 import hashlib
 import traceback
+import warnings
 from collections import defaultdict
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
@@ -223,7 +224,9 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
             msg = "Unexpected part data size in {} part {} (expected {}, got {})"
             msg = msg.format(dxfile.get_id(), part_id, parts[part_id]["size"], got_bytes)
             raise DXPartLengthMismatchError(msg)
-        if hasher is not None and "md5" in parts[part_id] and hasher.hexdigest() != parts[part_id]["md5"]:
+        if hasher is not None and "md5" not in parts[part_id]:
+            warnings.warn("Download of file {} is not being checked for integrity".format(dxfile.get_id()))
+        elif hasher is not None and hasher.hexdigest() != parts[part_id]["md5"]:
             msg = "Checksum mismatch in {} part {} (expected {}, got {})"
             msg = msg.format(dxfile.get_id(), part_id, parts[part_id]["md5"], hasher.hexdigest())
             raise DXChecksumMismatchError(msg)
