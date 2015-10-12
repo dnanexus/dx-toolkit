@@ -1,3 +1,9 @@
+dx-toolkit (0.165.3) precise; urgency=low
+
+  * Handle files with no part md5 metadata
+
+ -- Phil Sung <psung@dnanexus.com>  Mon, 12 Oct 2015 19:13:58 +0000
+
 dx-toolkit (0.165.2) precise; urgency=low
 
   * Bug fixes for download_dxfile
