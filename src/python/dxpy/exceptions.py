@@ -210,8 +210,8 @@ def exit_with_exc_info(code=1, message='', print_tb=False, exception=None):
 
 network_exceptions = (requests.packages.urllib3.exceptions.ProtocolError,
                       requests.packages.urllib3.exceptions.DecodeError,
-                      requests.packages.urllib3.exceptions.ConnectTimeoutError,
                       requests.packages.urllib3.exceptions.ReadTimeoutError,
+                      requests.packages.urllib3.exceptions.MaxRetryError,
                       socket.error,
                       requests.packages.urllib3.connectionpool.HTTPException)
 
