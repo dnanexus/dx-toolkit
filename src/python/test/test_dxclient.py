@@ -3451,7 +3451,7 @@ class TestDXClientFind(DXTestCase):
             inspected for correctness. This is used to reduce the run-time of
             this test at the cost of weakening its assertion, because there can
             be an unbounded number of items in *results*.
-            :type limit: int; default 16.
+            :type limit: int.
             """
 
             if assert_admin and with_billable_activities is False:
