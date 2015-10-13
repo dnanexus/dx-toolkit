@@ -45,7 +45,7 @@ from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_a
                            instance_type_arg, process_instance_type_arg)
 from ..cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
 from ..cli.org import (get_org_invite_args, add_membership, remove_membership,
-                       update_membership)
+                       update_membership, find_orgs)
 from ..exceptions import (err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions,
                           format_exception)
 from ..utils import warn, group_array_by_field, normalize_timedelta, normalize_time_input
@@ -4400,6 +4400,20 @@ parser_find_projects.add_argument('--created-before',
                                   'created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
 parser_find_projects.set_defaults(func=find_projects)
 register_subparser(parser_find_projects, subparsers_action=subparsers_find, categories='data')
+
+parser_find_orgs = subparsers_find.add_parser(
+    "orgs",
+    help="Find orgs",
+    description="Finds orgs subject to the specified search parameters.",
+    parents=[stdout_args, env_args, delim_arg, json_arg],
+    prog="dx find orgs"
+)
+parser_find_orgs.add_argument("--level", choices=["ADMIN", "MEMBER"], required=True, help="Restrict the result set to contain only orgs in which the requesting user has at least the specified membership level")
+parser_find_orgs_with_billable_activities = parser_find_orgs.add_mutually_exclusive_group()
+parser_find_orgs_with_billable_activities.add_argument("--with-billable-activities", action="store_true", help="Restrict the result set to contain only orgs in which the requesting user can perform billable activities; mutually exclusive with --without-billable-activities")
+parser_find_orgs_with_billable_activities.add_argument("--without-billable-activities", dest="with_billable_activities", action="store_false", help="Restrict the result set to contain only orgs in which the requesting user **cannot** perform billable activities; mutually exclusive with --with-billable-activities")
+parser_find_orgs.set_defaults(func=find_orgs, with_billable_activities=None)
+register_subparser(parser_find_orgs, subparsers_action=subparsers_find, categories="other")
 
 parser_api = subparsers.add_parser('api', help='Call an API method',
                                    formatter_class=argparse.RawTextHelpFormatter,

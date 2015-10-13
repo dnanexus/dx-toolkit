@@ -3440,6 +3440,132 @@ class TestDXClientFind(DXTestCase):
         assert_cmd_gives_ids("dx find jobs "+options3, [job_id])
         assert_cmd_gives_ids("dx find analyses "+options3, [])
 
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS,
+                         'skipping test that requires presence of test org')
+    def find_orgs(self):
+
+        def assert_find_orgs_results(results, assert_admin=False,
+                                     with_billable_activities=None, limit=16):
+            """
+            :param limit: The maximum number of items in *results* that will be
+            inspected for correctness. This is used to reduce the run-time of
+            this test at the cost of weakening its assertion, because there can
+            be an unbounded number of items in *results*.
+            :type limit: int; default 16.
+            """
+
+            if assert_admin and with_billable_activities is False:
+                # All ADMINs must have `createProjectsAndApps`.
+                self.assertEquals(results, [])
+                return
+
+            for result in results[:limit]:
+                # Will throw an error if requesting user is not a member.
+                member_access_res = dxpy.api.org_get_member_access(result["id"])
+
+                if assert_admin:
+                    self.assertEquals(member_access_res["level"], "ADMIN")
+
+                if with_billable_activities is False:
+                    self.assertEquals(member_access_res["level"], "MEMBER")
+                    self.assertFalse(member_access_res["createProjectsAndApps"])
+                else:
+                    self.assertTrue(
+                        member_access_res["level"] == "ADMIN" or
+                        (member_access_res["level"] == "MEMBER" and
+                         member_access_res["createProjectsAndApps"]))
+
+        # PRECONDITION: Assumes the presence of these orgs in the database.
+        # TODO: Execute this test only as part of the integration test suite.
+        org_with_billable_activities = "org-members_with_createprojectsandapps01"
+        self.assertTrue(dxpy.api.org_get_member_access(org_with_billable_activities)["createProjectsAndApps"])
+        org_without_billable_activities = "org-members_without_createprojectsandapps01"
+        self.assertFalse(dxpy.api.org_get_member_access(org_without_billable_activities)["createProjectsAndApps"])
+        org_with_admin = "org-dx_user_creation_org"
+        self.assertTrue(dxpy.api.org_get_member_access(org_with_admin)["level"] == "ADMIN")
+
+        cmd = "dx find orgs --level {l} {o} --json"
+
+        results = json.loads(run(cmd.format(l="MEMBER", o="")).strip())
+        assert_find_orgs_results(results)
+        self.assertIn(org_with_billable_activities,
+                      [result["id"] for result in results])
+        self.assertIn(org_without_billable_activities,
+                      [result["id"] for result in results])
+        self.assertIn(org_with_admin,
+                      [result["id"] for result in results])
+
+        results = json.loads(run(cmd.format(
+            l="MEMBER", o="--with-billable-activities")).strip())
+        assert_find_orgs_results(results, with_billable_activities=True)
+        self.assertIn(org_with_billable_activities,
+                      [result["id"] for result in results])
+        self.assertNotIn(org_without_billable_activities,
+                         [result["id"] for result in results])
+        self.assertIn(org_with_admin,
+                      [result["id"] for result in results])
+
+        results = json.loads(run(cmd.format(
+            l="MEMBER", o="--without-billable-activities")).strip())
+        assert_find_orgs_results(results, with_billable_activities=False)
+        self.assertNotIn(org_with_billable_activities,
+                         [result["id"] for result in results])
+        self.assertIn(org_without_billable_activities,
+                      [result["id"] for result in results])
+        self.assertNotIn(org_with_admin,
+                         [result["id"] for result in results])
+
+        results = json.loads(run(cmd.format(l="ADMIN", o="")).strip())
+        assert_find_orgs_results(results, assert_admin=True)
+        self.assertNotIn(org_with_billable_activities,
+                         [result["id"] for result in results])
+        self.assertNotIn(org_without_billable_activities,
+                         [result["id"] for result in results])
+        self.assertIn(org_with_admin,
+                      [result["id"] for result in results])
+
+        results = json.loads(run(cmd.format(
+            l="ADMIN", o="--with-billable-activities")).strip())
+        assert_find_orgs_results(results, assert_admin=True, with_billable_activities=True)
+        self.assertNotIn(org_with_billable_activities,
+                         [result["id"] for result in results])
+        self.assertNotIn(org_without_billable_activities,
+                         [result["id"] for result in results])
+        self.assertIn(org_with_admin,
+                      [result["id"] for result in results])
+
+        results = json.loads(run(cmd.format(
+            l="ADMIN", o="--without-billable-activities")).strip())
+        assert_find_orgs_results(results, assert_admin=True, with_billable_activities=False)
+        self.assertNotIn(org_with_billable_activities,
+                         [result["id"] for result in results])
+        self.assertNotIn(org_without_billable_activities,
+                         [result["id"] for result in results])
+        self.assertNotIn(org_with_admin,
+                         [result["id"] for result in results])
+
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS,
+                         'skipping test that requires presence of test org')
+    def find_orgs_format(self):
+        cmd = "dx find orgs --level MEMBER {o}"
+
+        # Assert that only org ids are returned, line-separated.
+        results = run(cmd.format(o="--brief")).strip().split("\n")
+        pattern = re.compile("^org-[a-zA-Z0-9_]*$")
+        for result in results:
+            self.assertTrue(pattern.match(result))
+
+        # Assert that the return format is like: "<org_id><delim><org_name>"
+        results = run(cmd.format(o="")).strip().split("\n")
+        pattern = re.compile("^org-[a-zA-Z0-9_]* : .*$")
+        for result in results:
+            self.assertTrue(pattern.match(result))
+
+        results = run(cmd.format(o="--delim ' @ '")).strip().split("\n")
+        pattern = re.compile("^org-[a-zA-Z0-9_]* @ .*$")
+        for result in results:
+            self.assertTrue(pattern.match(result))
+
 
 @unittest.skipUnless(testutil.TEST_WITH_AUTHSERVER,
                      'skipping tests that require a running authserver')
