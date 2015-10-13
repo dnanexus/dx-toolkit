@@ -443,7 +443,7 @@ class TestDXClient(DXTestCase):
 
         # Check that billTo of requesting user is the requesting user
         dxpy.api.user_update(dxpy.whoami(), {'billTo': dxpy.whoami()})
-        self.assertNotEqual(dxpy.api.user_describe(dxpy.whoami())['billTo'], dxpy.whoami())
+        self.assertEquals(dxpy.api.user_describe(dxpy.whoami())['billTo'], dxpy.whoami())
 
         # Create project billTo org
         project_id = run("dx new project {name} --bill-to {billTo} --brief".format(name=project_name,
@@ -461,7 +461,7 @@ class TestDXClient(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp='ResourceNotFound', exit_code=3):
             run("dx new project {name} --bill-to {billTo} --brief".format(name=project_name, billTo='org-invalid'))
 
-        # With org set to requesting user's billTo
+        # With user's billTo set to org
         dxpy.api.user_update(dxpy.whoami(), {'billTo': org_id})
         self.assertEqual(dxpy.api.user_describe(dxpy.whoami())['billTo'], org_id)
 
