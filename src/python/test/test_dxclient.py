@@ -431,6 +431,53 @@ class TestDXClient(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp='Unable to resolve', exit_code=3):
             run("dx untag nonexistent atag")
 
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS, 'skipping test that requires presence of test org')
+    def test_dx_create_new_project_with_bill_to(self):
+        curr_bill_to = dxpy.api.user_describe(dxpy.whoami())['billTo']
+        org_id = "org-infinite_spending_limit"  # user-jenkins is ADMIN
+        project_name = "test_dx_create_project"
+
+        # Check that requesting user has createProjectsAndApps permission in org
+        member_access = dxpy.api.org_get_member_access(org_id, {'user': dxpy.whoami()})
+        self.assertTrue(member_access['level'] == 'ADMIN' or member_access['createProjectsAndApps'])
+
+        # Check that billTo of requesting user is the requesting user
+        dxpy.api.user_update(dxpy.whoami(), {'billTo': dxpy.whoami()})
+        self.assertNotEqual(dxpy.api.user_describe(dxpy.whoami())['billTo'], dxpy.whoami())
+
+        # Create project billTo org
+        project_id = run("dx new project {name} --bill-to {billTo} --brief".format(name=project_name,
+                         billTo=org_id)).strip()
+        self.assertEquals(dxpy.api.project_describe(project_id, {'fields': {'billTo': True}})['billTo'], org_id)
+        dxpy.api.project_destroy(project_id)
+
+        # Create project billTo requesting user
+        project_id = run("dx new project {name} --bill-to {billTo} --brief".format(name=project_name,
+                         billTo=dxpy.whoami())).strip()
+        self.assertEquals(dxpy.api.project_describe(project_id, {'fields': {'billTo': True}})['billTo'], dxpy.whoami())
+        dxpy.api.project_destroy(project_id)
+
+        # Create project billTo invalid org
+        with self.assertSubprocessFailure(stderr_regexp='ResourceNotFound', exit_code=3):
+            run("dx new project {name} --bill-to {billTo} --brief".format(name=project_name, billTo='org-invalid'))
+
+        # With org set to requesting user's billTo
+        dxpy.api.user_update(dxpy.whoami(), {'billTo': org_id})
+        self.assertEqual(dxpy.api.user_describe(dxpy.whoami())['billTo'], org_id)
+
+        project_id = run("dx new project {name} --bill-to {billTo} --brief".format(name=project_name,
+                         billTo=dxpy.whoami())).strip()
+        self.assertEquals(dxpy.api.project_describe(project_id, {'fields': {'billTo': True}})['billTo'], dxpy.whoami())
+        dxpy.api.project_destroy(project_id)
+
+        project_id = run("dx new project {name} --bill-to {billTo} --brief".format(name=project_name,
+                         billTo=org_id)).strip()
+        self.assertEquals(dxpy.api.project_describe(project_id, {'fields': {'billTo': True}})['billTo'], org_id)
+        dxpy.api.project_destroy(project_id)
+
+        # reset original user settings
+        dxpy.api.user_update(dxpy.whoami(), {'billTo': curr_bill_to})
+
     def test_dx_project_tagging(self):
         the_tags = ["$my.tag", "secoиdtag", "тhird тagggg"]
         # tag

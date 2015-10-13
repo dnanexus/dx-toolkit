@@ -1304,8 +1304,12 @@ def new_project(args):
         else:
             parser.exit(1, parser_new_project.format_help() +
                            fill("No project name supplied, and input is not interactive") + '\n')
+    inputs = {"name": args.name}
+    if args.bill_to:
+        inputs["billTo"] = args.bill_to
+
     try:
-        resp = dxpy.api.project_new({"name": args.name})
+        resp = dxpy.api.project_new(inputs)
         if args.brief:
             print(resp['id'])
         else:
@@ -4113,6 +4117,7 @@ parser_new_project = subparsers_new.add_parser('project', help='Create a new pro
 parser_new_project.add_argument('name', help='Name of the new project', nargs='?')
 parser_new_project.add_argument('-s', '--select', help='Select the new project as current after creating',
                                 action='store_true')
+parser_new_project.add_argument('--bill-to', help='ID of the user or org to which the project will be billed. The default value is the billTo of the requesting user.')
 parser_new_project.set_defaults(func=new_project)
 register_subparser(parser_new_project, subparsers_action=subparsers_new, categories='fs')
 
