@@ -125,16 +125,13 @@ environment variables:
 
 from __future__ import (print_function, unicode_literals)
 
-import os, sys, json, time, logging, platform, ssl, traceback
+import os, sys, json, time, logging, platform, collections, ssl, traceback
 import errno
 import requests
 import socket
-from collections import namedtuple
 
-from requests.exceptions import HTTPError
+from requests.exceptions import ConnectionError, HTTPError, Timeout
 from requests.auth import AuthBase
-from requests.packages import urllib3
-from requests.packages.urllib3.packages.ssl_match_hostname import match_hostname
 from .compat import USING_PYTHON2, expanduser
 
 logger = logging.getLogger(__name__)
@@ -142,6 +139,9 @@ logger.addHandler(logging.NullHandler())
 
 
 def configure_urllib3():
+    from requests.packages import urllib3
+    from requests.packages.urllib3.packages.ssl_match_hostname import match_hostname
+
     # Disable verbose urllib3 warnings and log messages
     urllib3.disable_warnings(category=urllib3.exceptions.InsecurePlatformWarning)
     logging.getLogger('dxpy.packages.requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
@@ -172,6 +172,8 @@ APISERVER_PROTOCOL = DEFAULT_APISERVER_PROTOCOL
 APISERVER_HOST = DEFAULT_APISERVER_HOST
 APISERVER_PORT = DEFAULT_APISERVER_PORT
 
+SESSION_HANDLERS = collections.defaultdict(requests.session)
+
 DEFAULT_RETRIES = 6
 DEFAULT_TIMEOUT = 600
 DEFAULT_RETRY_AFTER_503_INTERVAL = 60
@@ -182,16 +184,7 @@ _UPGRADE_NOTIFY = True
 USER_AGENT = "{name}/{version} ({platform})".format(name=__name__,
                                                     version=TOOLKIT_VERSION,
                                                     platform=platform.platform())
-_default_headers = requests.utils.default_headers()
-_default_headers['DNAnexus-API'] = API_VERSION
-_default_headers['User-Agent'] = USER_AGENT
-_pool_manager = urllib3.PoolManager(maxsize=32,
-                                    cert_reqs=ssl.CERT_REQUIRED,
-                                    ca_certs=requests.certs.where(),
-                                    headers=_default_headers,
-                                    timeout=urllib3.util.timeout.Timeout(connect=DEFAULT_TIMEOUT,
-                                                                         read=DEFAULT_TIMEOUT))
-_RequestForAuth = namedtuple('_RequestForAuth', 'method url headers')
+
 _expected_exceptions = exceptions.network_exceptions + (exceptions.DXAPIError, )
 
 def _process_method_url_headers(method, url, headers):
@@ -232,13 +225,19 @@ def _is_retryable_exception(e):
     have been established, we return False.
 
     """
-    if isinstance(e, urllib3.exceptions.MaxRetryError):
-        e = e.reason
-    if isinstance(e, (socket.gaierror, socket.herror)):
-        return True
-    if isinstance(e, socket.error) and e.errno in _RETRYABLE_SOCKET_ERRORS:
-        return True
-    return False
+    try:
+        if isinstance(e, ConnectionError):
+            # Unfortunately requests doesn't seem to provide a sensible
+            # API to retrieve the cause
+            cause = e.args[0].args[1]
+            if isinstance(cause, (socket.gaierror, socket.herror)):
+                return True
+            if isinstance(cause, socket.error) and cause.errno in _RETRYABLE_SOCKET_ERRORS:
+                return True
+        return False
+    except (AttributeError, TypeError, IndexError):
+        return False
+
 
 def _extract_msg_from_last_exception():
     ''' Extract a useful error message from the last thrown exception '''
@@ -295,7 +294,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
     :type decode_response_body: boolean
     :param prepend_srv: If True, prepends the API server location to the URL
     :type prepend_srv: boolean
-    :param session_handler: Deprecated.
     :param max_retries: Maximum number of retries to perform for a request. A "failed" request is retried if any of the following is true:
 
                         - A response is received from the server, and the content length received does not match the "Content-Length" header.
@@ -322,6 +320,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
        through to :func:`DXHTTPRequest`.
 
     '''
+    if session_handler is None:
+        session_handler = SESSION_HANDLERS[os.getpid()]
     if headers is None:
         headers = {}
 
@@ -340,19 +340,20 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
     if auth is True:
         auth = AUTH_HELPER
 
-    if auth is not None:
-        auth(_RequestForAuth(method, url, headers))
-
     if 'verify' not in kwargs and 'DX_CA_CERT' in os.environ:
         kwargs['verify'] = os.environ['DX_CA_CERT']
         if os.environ['DX_CA_CERT'] == 'NOVERIFY':
             kwargs['verify'] = False
+            from requests.packages import urllib3
             urllib3.disable_warnings()
 
     if jsonify_data:
         data = json.dumps(data)
         if 'Content-Type' not in headers and method == 'POST':
             headers['Content-Type'] = 'application/json'
+
+    headers['DNAnexus-API'] = API_VERSION
+    headers['User-Agent'] = USER_AGENT
 
     # If the input is a buffer, its data gets consumed by
     # requests.request (moving the read position). Record the initial
@@ -364,14 +365,12 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
     try_index = 0
     while True:
-        success, streaming_response_truncated, time_started = True, False, None
+        success, streaming_response_truncated = True, False
         response = None
         try:
-            if _DEBUG > 0:
-                time_started = time.time()
             _method, _url, _headers = _process_method_url_headers(method, url, headers)
-            response = _pool_manager.request(_method, _url, headers=_headers, body=data,
-                                             timeout=timeout, **kwargs)
+            response = session_handler.request(_method, _url, headers=_headers, data=data,
+                                               timeout=timeout, auth=auth, **kwargs)
 
             if _UPGRADE_NOTIFY and response.headers.get('x-upgrade-info', '').startswith('A recommended update is available') and not os.environ.has_key('_ARGCOMPLETE'):
                 logger.info(response.headers['x-upgrade-info'])
@@ -384,42 +383,45 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
             # If an HTTP code that is not in the 200 series is received and the content is JSON, parse it and throw the
             # appropriate error.  Otherwise, raise the usual exception.
-            if response.status // 100 != 2:
+            if response.status_code // 100 != 2:
                 # response.headers key lookup is case-insensitive
                 if response.headers.get('content-type', '').startswith('application/json'):
-                    content = json.loads(response.data.decode('utf-8'))
-                    error_class = getattr(exceptions, content["error"]["type"], exceptions.DXAPIError)
-                    raise error_class(content, response.status)
-                raise HTTPError("{} {}".format(response.status, response.reason))
+                    content = json.loads(response.content.decode('utf-8'))
+                    try:
+                        error_class = getattr(exceptions, content["error"]["type"], exceptions.DXAPIError)
+                    except Exception:
+                        logger.error("Error while parsing content['error']['type']...")
+                        logger.error(content)
+                    raise error_class(content, response.status_code)
+                response.raise_for_status()
 
             if want_full_response:
                 return response
             else:
                 if 'content-length' in response.headers:
-                    if int(response.headers['content-length']) != len(response.data):
+                    if int(response.headers['content-length']) != len(response.content):
                         range_str = (' (%s)' % (headers['Range'],)) if 'Range' in headers else ''
                         raise exceptions.ContentLengthError(
                             "Received response with content-length header set to %s but content length is %d%s" %
-                            (response.headers['content-length'], len(response.data), range_str)
+                            (response.headers['content-length'], len(response.content), range_str)
                         )
 
-                content = response.data
+                content = response.content
 
                 if decode_response_body:
                     content = content.decode('utf-8')
                     if response.headers.get('content-type', '').startswith('application/json'):
                         try:
                             content = json.loads(content)
-                            if _DEBUG > 0:
-                                t = int((time.time() - time_started) * 1000)
+                            t = int(response.elapsed.total_seconds() * 1000)
                             if _DEBUG >= 3:
-                                print(method, url, "<=", response.status, "(%dms)" % t,
+                                print(method, url, "<=", response.status_code, "(%dms)" % t,
                                       "\n" + json.dumps(content, indent=2), file=sys.stderr)
                             elif _DEBUG == 2:
-                                print(method, url, "<=", response.status, "(%dms)" % t, json.dumps(content),
+                                print(method, url, "<=", response.status_code, "(%dms)" % t, json.dumps(content),
                                       file=sys.stderr)
                             elif _DEBUG > 0:
-                                print(method, url, "<=", response.status, "(%dms)" % t, Repr().repr(content),
+                                print(method, url, "<=", response.status_code, "(%dms)" % t, Repr().repr(content),
                                       file=sys.stderr)
                         except ValueError:
                             # If a streaming API call (no content-length
@@ -436,7 +438,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             success = False
             exception_msg = _extract_msg_from_last_exception()
             if isinstance(e, _expected_exceptions):
-                if response is not None and response.status == 503:
+                if response is not None and response.status_code == 503:
                     seconds_to_wait = _extract_retry_after_timeout(response)
                     logger.warn("%s %s: %s. Waiting %d seconds due to server unavailability...",
                                 method, url, exception_msg, seconds_to_wait)
@@ -460,7 +462,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                        streaming_response_truncated:
                         ok_to_retry = always_retry or (method == 'GET') or _is_retryable_exception(e)
                     else:
-                        ok_to_retry = 500 <= response.status < 600
+                        ok_to_retry = 500 <= response.status_code < 600
 
                 if ok_to_retry:
                     if rewind_input_buffer_offset is not None:

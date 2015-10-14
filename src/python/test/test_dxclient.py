@@ -21,7 +21,6 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re, base64, random, time
 import pipes
-import hashlib
 from contextlib import contextmanager
 import pexpect
 import requests
@@ -1248,34 +1247,6 @@ dxpy.run()
             gen_file("X.txt", proj_id)
             buf = run("dx download -o - X.txt")
             self.assertEqual(buf, data)
-
-    def test_dx_download_resume_and_checksum(self):
-        def assert_md5_checksum(filename, hasher):
-            with open(filename) as fh:
-                self.assertEqual(hashlib.md5(fh.read()).hexdigest(), hasher.hexdigest())
-
-        # Manually upload 2 parts
-        part1, part2 = b"0123456789ABCDEF"*1024*64*5, b"0"
-        dxfile = dxpy.new_dxfile(name="test")
-        dxfile.upload_part(part1, index=1)
-        dxfile.upload_part(part2, index=2)
-        dxfile.close(block=True)
-
-        wd = tempfile.mkdtemp()
-        run("cd {wd}; dx download test; ls -la".format(wd=wd))
-        assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
-        run("cd {wd}; truncate -s $((1024*1024*5)) test".format(wd=wd))
-        run("cd {wd}; dx download -f test".format(wd=wd))
-        assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
-        run("cd {wd}; truncate -s $((1024*1024*5 - 1)) test".format(wd=wd))
-        run("cd {wd}; dx download -f test".format(wd=wd))
-        assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
-        run("cd {wd}; truncate -s 1 test".format(wd=wd))
-        run("cd {wd}; dx download -f test".format(wd=wd))
-        assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
-        run("cd {wd}; rm test; touch test".format(wd=wd))
-        run("cd {wd}; dx download -f test".format(wd=wd))
-        assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
 
 
 class TestDXClientDescribe(DXTestCase):
