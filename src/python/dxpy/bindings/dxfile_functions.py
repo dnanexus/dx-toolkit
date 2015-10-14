@@ -247,8 +247,7 @@ def download_dxfile(dxfile_or_id, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE
         print(traceback.format_exc(), file=sys.stderr)
         _download_retry_counter[part_gid] -= 1
         if _download_retry_counter[part_gid] > 0:
-            print("Retrying {} ({} tries remain)".format(dxfile.get_id(), _download_retry_counter[part_gid]),
-                  file=sys.stderr)
+            print("Retrying {} ({} tries remain)".format(dxfile.get_id(), _download_retry_counter[part_gid]))
             return download_dxfile(dxfile_or_id, filename, chunksize=chunksize, append=append,
                                    show_progress=show_progress, project=project, **kwargs)
         raise
