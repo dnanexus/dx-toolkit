@@ -431,7 +431,9 @@ class TestDXClient(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp='Unable to resolve', exit_code=3):
             run("dx untag nonexistent atag")
 
-    @unittest.skipUnless(testutil.TEST_CREATE_APPS, 'skipping test that requires presence of test org')
+    # @unittest.skipUnless(testutil.TEST_CREATE_APPS,
+    #                      'skipping test that requires presence of test org')
+    @unittest.skip("skipping test that depends on PTFM-16342")
     def test_dx_create_new_project_with_bill_to(self):
         curr_bill_to = dxpy.api.user_describe(dxpy.whoami())['billTo']
         org_id = "org-infinite_spending_limit"  # user-jenkins is ADMIN
