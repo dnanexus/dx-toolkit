@@ -232,8 +232,8 @@ def _is_retryable_exception(e):
     have been established, we return False.
 
     """
-    if isinstance(e, urllib3.exceptions.ProtocolError):
-        e = e.args[1]
+    if isinstance(e, urllib3.exceptions.MaxRetryError):
+        e = e.reason
     if isinstance(e, (socket.gaierror, socket.herror)):
         return True
     if isinstance(e, socket.error) and e.errno in _RETRYABLE_SOCKET_ERRORS:
@@ -371,7 +371,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 time_started = time.time()
             _method, _url, _headers = _process_method_url_headers(method, url, headers)
             response = _pool_manager.request(_method, _url, headers=_headers, body=data,
-                                             timeout=timeout, retries=False, **kwargs)
+                                             timeout=timeout, **kwargs)
 
             if _UPGRADE_NOTIFY and response.headers.get('x-upgrade-info', '').startswith('A recommended update is available') and not os.environ.has_key('_ARGCOMPLETE'):
                 logger.info(response.headers['x-upgrade-info'])
