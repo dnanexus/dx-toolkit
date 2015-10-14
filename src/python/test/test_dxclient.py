@@ -3489,7 +3489,7 @@ class TestDXClientFind(DXTestCase):
 
     @unittest.skipUnless(testutil.TEST_CREATE_APPS,
                          'skipping test that requires presence of test org')
-    def find_orgs(self):
+    def test_find_orgs(self):
 
         def assert_find_orgs_results(results, assert_admin=False,
                                      with_billable_activities=None, limit=16):
@@ -3593,7 +3593,7 @@ class TestDXClientFind(DXTestCase):
 
     @unittest.skipUnless(testutil.TEST_CREATE_APPS,
                          'skipping test that requires presence of test org')
-    def find_orgs_format(self):
+    def test_find_orgs_format(self):
         cmd = "dx find orgs --level MEMBER {o}"
 
         # Assert that only org ids are returned, line-separated.
