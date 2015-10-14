@@ -719,6 +719,7 @@ class TestDXClient(DXTestCase):
         run("dx mkdir -p mkdirtest/b/c")
         run("dx rm -r mkdirtest")
 
+    @unittest.skip('PTFM-16383 Disable flaky test')
     def test_dxpy_session_isolation(self):
         for var in 'DX_PROJECT_CONTEXT_ID', 'DX_PROJECT_CONTEXT_NAME', 'DX_CLI_WD':
             if var in os.environ:
