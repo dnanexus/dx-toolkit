@@ -184,8 +184,6 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
         try:
             for part_id in parts_to_get:
                 part_info = parts[part_id]
-                if "md5" not in part_info:
-                    raise DXFileError("File {} does not contain part md5 checksums".format(dxfile.get_id()))
                 bytes_to_read = part_info["size"]
                 hasher = hashlib.md5()
                 while bytes_to_read > 0:
@@ -223,7 +221,7 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
             msg = "Unexpected part data size in {} part {} (expected {}, got {})"
             msg = msg.format(dxfile.get_id(), part_id, parts[part_id]["size"], got_bytes)
             raise DXPartLengthMismatchError(msg)
-        if hasher is not None and "md5" in parts[part_id] and hasher.hexdigest() != parts[part_id]["md5"]:
+        if hasher is not None and hasher.hexdigest() != parts[part_id]["md5"]:
             msg = "Checksum mismatch in {} part {} (expected {}, got {})"
             msg = msg.format(dxfile.get_id(), part_id, parts[part_id]["md5"], hasher.hexdigest())
             raise DXChecksumMismatchError(msg)
