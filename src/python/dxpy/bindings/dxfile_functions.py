@@ -96,17 +96,17 @@ def _get_executor():
         _executor = ThreadPoolExecutor(max_workers=cpu_count())
     return _executor
 
-def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
+def download_dxfile(dxfile_or_id, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
                     project=None, **kwargs):
     '''
-    :param dxid: DNAnexus file ID or DXFile (file handler) object
-    :type dxid: string or DXFile
+    :param dxfile_or_id: Remote file handler or ID
+    :type dxfile_or_id: DXFile or string
     :param filename: Local filename
     :type filename: string
     :param append: If True, appends to the local file (default is to truncate local file if it exists)
     :type append: boolean
 
-    Downloads the remote file referenced by *dxid* and saves it to *filename*.
+    Downloads the remote file referenced by *dxfile_or_id* and saves it to *filename*.
 
     Example::
 
@@ -138,10 +138,10 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
 
     _bytes = 0
 
-    if isinstance(dxid, DXFile):
-        dxfile = dxid
+    if isinstance(dxfile_or_id, DXFile):
+        dxfile = dxfile_or_id
     else:
-        dxfile = DXFile(dxid, mode="r", project=project)
+        dxfile = DXFile(dxfile_or_id, mode="r", project=project)
 
     dxfile_desc = dxfile.describe(fields={"parts"}, default_fields=True, **kwargs)
     parts = dxfile_desc["parts"]
@@ -249,7 +249,7 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
         if _download_retry_counter[part_gid] > 0:
             print("Retrying {} ({} tries remain)".format(dxfile.get_id(), _download_retry_counter[part_gid]),
                   file=sys.stderr)
-            return download_dxfile(dxfile, filename, chunksize=chunksize, append=append,
+            return download_dxfile(dxfile_or_id, filename, chunksize=chunksize, append=append,
                                    show_progress=show_progress, project=project, **kwargs)
         raise
     except KeyboardInterrupt:
