@@ -212,9 +212,8 @@ network_exceptions = (requests.packages.urllib3.exceptions.ProtocolError,
                       requests.packages.urllib3.exceptions.DecodeError,
                       requests.packages.urllib3.exceptions.ConnectTimeoutError,
                       requests.packages.urllib3.exceptions.ReadTimeoutError,
-                      requests.packages.urllib3.connectionpool.HTTPException,
-                      requests.exceptions.HTTPError,
-                      socket.error)
+                      socket.error,
+                      requests.packages.urllib3.connectionpool.HTTPException)
 
 default_expected_exceptions = network_exceptions + (DXAPIError,
                                                     DXCLIError,
