@@ -3917,7 +3917,7 @@ class TestDXBuildApp(DXTestCase):
                 raise e
         if dxapp_str is not None:
             with open(os.path.join(self.temp_file_path, app_name, 'dxapp.json'), 'wb') as manifest:
-                manifest.write(dxapp_str.encode())
+                manifest.write(dxapp_str)
         if code_filename:
             with open(os.path.join(self.temp_file_path, app_name, code_filename), 'w') as code_file:
                 code_file.write(code_content)
@@ -3980,8 +3980,8 @@ class TestDXBuildApp(DXTestCase):
             "version": "1.0.0"
             }
         makefile_str = "dxapp.json:\n\tcp temp_dxapp.json dxapp.json\n"
-        with open(os.path.join(app_dir, 'temp_dxapp.json'), 'wb') as manifest:
-            manifest.write(json.dumps(app_spec).encode())
+        with open(os.path.join(app_dir, 'temp_dxapp.json'), 'w') as manifest:
+            manifest.write(json.dumps(app_spec))
         with open(os.path.join(app_dir, "Makefile"), 'w') as makefile:
             makefile.write(makefile_str)
         run("dx build " + app_dir)
