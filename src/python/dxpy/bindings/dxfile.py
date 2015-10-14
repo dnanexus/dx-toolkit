@@ -646,8 +646,8 @@ class DXFile(DXDataObject):
                     # _next_response_content in the alternative block
                     # below. This starts the threadpool going for the
                     # second and all subsequent chunks.
-                    _callable, _args, _kwargs = next(self._request_iterator)
-                    content = _callable(*_args, **_kwargs)
+                    callable_, args, kwargs = next(self._request_iterator)
+                    content = callable_(*args, **kwargs)
                     get_first_chunk_sequentially = False
                 else:
                     content = self._next_response_content()
