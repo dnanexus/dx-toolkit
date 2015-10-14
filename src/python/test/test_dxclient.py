@@ -32,7 +32,7 @@ from dxpy_testutil import (DXTestCase, check_output, temporary_project, select_p
                            generate_unique_username_email, without_project_context, without_auth)
 import dxpy_testutil as testutil
 from dxpy.exceptions import DXAPIError, DXSearchError, EXPECTED_ERR_EXIT_STATUS
-from dxpy.compat import str, sys_encoding, open
+from dxpy.compat import str, sys_encoding
 from dxpy.utils.resolver import ResolutionError, _check_resolution_needed as check_resolution
 
 @contextmanager
@@ -1320,13 +1320,8 @@ dxpy.run()
 
     def test_dx_download_resume_and_checksum(self):
         def assert_md5_checksum(filename, hasher):
-            with open(filename, "rb") as fh:
+            with open(filename) as fh:
                 self.assertEqual(hashlib.md5(fh.read()).hexdigest(), hasher.hexdigest())
-
-        def truncate(filename, size):
-            with open(filename, "rb+") as fh:
-                fh.seek(size)
-                fh.truncate()
 
         # Manually upload 2 parts
         part1, part2 = b"0123456789ABCDEF"*1024*64*5, b"0"
@@ -1338,13 +1333,13 @@ dxpy.run()
         wd = tempfile.mkdtemp()
         run("cd {wd}; dx download test; ls -la".format(wd=wd))
         assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
-        truncate(os.path.join(wd, "test"), 1024*1024*5)
+        run("cd {wd}; truncate -s $((1024*1024*5)) test".format(wd=wd))
         run("cd {wd}; dx download -f test".format(wd=wd))
         assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
-        truncate(os.path.join(wd, "test"), 1024*1024*5 - 1)
+        run("cd {wd}; truncate -s $((1024*1024*5 - 1)) test".format(wd=wd))
         run("cd {wd}; dx download -f test".format(wd=wd))
         assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
-        truncate(os.path.join(wd, "test"), 1)
+        run("cd {wd}; truncate -s 1 test".format(wd=wd))
         run("cd {wd}; dx download -f test".format(wd=wd))
         assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
         run("cd {wd}; rm test; touch test".format(wd=wd))
