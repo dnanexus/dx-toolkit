@@ -3520,7 +3520,7 @@ class TestDXClientFind(DXTestCase):
                 if with_billable_activities is False:
                     self.assertEquals(member_access_res["level"], "MEMBER")
                     self.assertFalse(member_access_res["createProjectsAndApps"])
-                else:
+                elif with_billable_activities:
                     self.assertTrue(
                         member_access_res["level"] == "ADMIN" or
                         (member_access_res["level"] == "MEMBER" and
