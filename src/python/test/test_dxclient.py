@@ -3490,8 +3490,9 @@ class TestDXClientFind(DXTestCase):
         assert_cmd_gives_ids("dx find jobs "+options3, [job_id])
         assert_cmd_gives_ids("dx find analyses "+options3, [])
 
-    @unittest.skipUnless(testutil.TEST_CREATE_APPS,
-                         'skipping test that requires presence of test org')
+    # @unittest.skipUnless(testutil.TEST_CREATE_APPS,
+    #                      'skipping test that requires presence of test org')
+    @unittest.skip("skipping test that depends on PTFM-16342")
     def test_find_orgs(self):
 
         def assert_find_orgs_results(results, assert_admin=False,
