@@ -1,3 +1,23 @@
+dx-toolkit (0.165.4) precise; urgency=low
+
+  * Revert "PTFM-13671 dx download improvements"
+  * Revert "Fix exception handling artifacts in 384e8ef"
+  * Revert "Fix handling of DXHTTPRequest(verify=...) and DX_CA_CERT in 384e8ef"
+  * Revert "Fix typo in error message in 384e8ef"
+  * Revert "Fix connection state issue introduced by 384e8ef"
+  * Revert "Fix dx download truncation test on OS X"
+  * Revert "Fixup for dedcca5: Open files in binary mode where appropriate"
+  * Revert "Fixup for dedcca5: Encode json.dumps output where appropriate"
+  * Revert "Fix handling of DXHTTPRequest(auth=False) in 384e8ef"
+  * Revert "PTFM-16336 Fixup for 384e8ef: dxpy.DXHTTPRequest: HTTPError is retryable"
+  * Revert "Update docstring for dxpy.DXHTTPRequest(auth=...)"
+  * Revert "dxpy.download_dxfile: restore positional args compatibility"
+  * Revert "dxpy.DXFile: fix request config logic error in read()"
+  * Revert "dxpy.download_dxfile(): avoid memory leak in chunk iterator"
+  * Revert "dxpy.download_dxfile: handle files with no part md5 metadata"
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 15 Oct 2015 00:04:34 +0000
+
 dx-toolkit (0.165.3) precise; urgency=low
 
   * Handle files with no part md5 metadata
