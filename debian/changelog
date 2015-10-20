@@ -1,3 +1,28 @@
+dx-toolkit (0.166.0) precise; urgency=low
+
+  * PTFM-16383 disable flaky test until it can be fixed
+  * Disable test that depends on PTFM-16342
+  * Rename tests from fe761bd
+  * Simplify rate-limited concurrent executor; use it in dx download
+  * Add code review fix for 2f38a94
+  * PTFM-16219 Allow alternative billTo selection upon project creation
+  * Remove "default" from docstring (code review fix for fe761bd)
+  * dx download: warn when unable to checksum part with missing MD5
+  * PTFM-16218 Add `dx find orgs`
+  * dxpy.download_dxfile: handle files with no part md5 metadata
+  * PTFM-15334 Add --no-email tag to dx invite {user} {project}
+  * dxpy.download_dxfile(): avoid memory leak in chunk iterator
+  * dxpy.DXFile: fix request config logic error in read()
+  * dxpy.download_dxfile: restore positional args compatibility 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 15 Oct 2015 00:01:02 +0000
+
+dx-toolkit (0.165.0) precise; urgency=low
+
+  * Bug fixes
+
+ -- Phil Sung <psung@dnanexus.com>  Thu, 08 Oct 2015 18:14:18 +0000
+
 dx-toolkit (0.164.0) precise; urgency=low
 
   * Fix connection state issue introduced by 384e8ef
@@ -7,7 +32,7 @@ dx-toolkit (0.164.0) precise; urgency=low
   * PTFM-13671 dx download improvements
   * PTFM-16136 - Run make steps before checking for dxapp.json
   * Fix broken tests that depended on TEST_ENV
-  * PTFM-16270 dx-run-app-locally: exit on unknown interpreter 
+  * PTFM-16270 dx-run-app-locally: exit on unknown interpreter
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 01 Oct 2015 18:29:39 +0000
 

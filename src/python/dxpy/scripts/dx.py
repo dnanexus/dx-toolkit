@@ -45,7 +45,7 @@ from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_a
                            instance_type_arg, process_instance_type_arg)
 from ..cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
 from ..cli.org import (get_org_invite_args, add_membership, remove_membership,
-                       update_membership)
+                       update_membership, find_orgs)
 from ..exceptions import (err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions,
                           format_exception)
 from ..utils import warn, group_array_by_field, normalize_timedelta, normalize_time_input
@@ -648,8 +648,11 @@ def invite(args):
                                      args.project, 'project')
     if args.invitee != 'PUBLIC' and not '-' in args.invitee and not '@' in args.invitee:
         args.invitee = 'user-' + args.invitee.lower()
+    project_invite_input = {"invitee": args.invitee, "level": args.level}
+    if not args.send_email:
+        project_invite_input["suppressEmailNotification"] = not args.send_email
     try:
-        resp = dxpy.api.project_invite(project, {"invitee": args.invitee, "level": args.level})
+        resp = dxpy.api.project_invite(project, project_invite_input)
     except:
         err_exit()
     print('Invited ' + args.invitee + ' to ' + project + ' (' + resp['state'] + ')')
@@ -1301,8 +1304,12 @@ def new_project(args):
         else:
             parser.exit(1, parser_new_project.format_help() +
                            fill("No project name supplied, and input is not interactive") + '\n')
+    inputs = {"name": args.name}
+    if args.bill_to:
+        inputs["billTo"] = args.bill_to
+
     try:
-        resp = dxpy.api.project_new({"name": args.name})
+        resp = dxpy.api.project_new(inputs)
         if args.brief:
             print(resp['id'])
         else:
@@ -3456,6 +3463,7 @@ parser_invite.add_argument('invitee', help='Entity to invite')
 parser_invite.add_argument('project', help='Project to invite the invitee to', default=':', nargs='?')
 parser_invite.add_argument('level', help='Permissions level the new member should have',
                            choices=['VIEW', 'UPLOAD', 'CONTRIBUTE', 'ADMINISTER'], default='VIEW', nargs='?')
+parser_invite.add_argument('--no-email', dest='send_email', action='store_false', help='Disable email notifications to invitee')
 parser_invite.set_defaults(func=invite)
 # parser_invite.completer = TODO
 register_subparser(parser_invite, categories='other')
@@ -4109,6 +4117,7 @@ parser_new_project = subparsers_new.add_parser('project', help='Create a new pro
 parser_new_project.add_argument('name', help='Name of the new project', nargs='?')
 parser_new_project.add_argument('-s', '--select', help='Select the new project as current after creating',
                                 action='store_true')
+parser_new_project.add_argument('--bill-to', help='ID of the user or org to which the project will be billed. The default value is the billTo of the requesting user.')
 parser_new_project.set_defaults(func=new_project)
 register_subparser(parser_new_project, subparsers_action=subparsers_new, categories='fs')
 
@@ -4396,6 +4405,20 @@ parser_find_projects.add_argument('--created-before',
                                   'created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
 parser_find_projects.set_defaults(func=find_projects)
 register_subparser(parser_find_projects, subparsers_action=subparsers_find, categories='data')
+
+parser_find_orgs = subparsers_find.add_parser(
+    "orgs",
+    help="Find orgs",
+    description="Finds orgs subject to the specified search parameters.",
+    parents=[stdout_args, env_args, delim_arg, json_arg],
+    prog="dx find orgs"
+)
+parser_find_orgs.add_argument("--level", choices=["ADMIN", "MEMBER"], required=True, help="Restrict the result set to contain only orgs in which the requesting user has at least the specified membership level")
+parser_find_orgs_with_billable_activities = parser_find_orgs.add_mutually_exclusive_group()
+parser_find_orgs_with_billable_activities.add_argument("--with-billable-activities", action="store_true", help="Restrict the result set to contain only orgs in which the requesting user can perform billable activities; mutually exclusive with --without-billable-activities")
+parser_find_orgs_with_billable_activities.add_argument("--without-billable-activities", dest="with_billable_activities", action="store_false", help="Restrict the result set to contain only orgs in which the requesting user **cannot** perform billable activities; mutually exclusive with --with-billable-activities")
+parser_find_orgs.set_defaults(func=find_orgs, with_billable_activities=None)
+register_subparser(parser_find_orgs, subparsers_action=subparsers_find, categories="other")
 
 parser_api = subparsers.add_parser('api', help='Call an API method',
                                    formatter_class=argparse.RawTextHelpFormatter,

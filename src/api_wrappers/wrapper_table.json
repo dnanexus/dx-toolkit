@@ -1206,6 +1206,15 @@
         }
     ],
     [
+        "/system/findOrgs",
+        "systemFindOrgs(req)",
+        {
+            "objectMethod": false,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/findOrgs"
+        }
+    ],
+    [
         "/system/globalSearch",
         "systemGlobalSearch(req)",
         {

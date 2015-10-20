@@ -24,6 +24,7 @@ from __future__ import print_function, unicode_literals
 import argparse
 import os
 import subprocess
+import sys
 
 parser = argparse.ArgumentParser(usage=__doc__)
 parser.add_argument(
@@ -62,9 +63,17 @@ def run():
                 os.environ,
                 COVERAGE_PROCESS_START = os.path.join(PYTHON_DIR, '.coveragerc'),
                 COVERAGE_FILE = os.path.join(PYTHON_DIR, '.coverage'))
-        subprocess.check_call(cmd, cwd=PYTHON_TEST_DIR, env=subproc_env)
+        try:
+            subprocess.check_call(cmd, cwd=PYTHON_TEST_DIR, env=subproc_env)
+        except subprocess.CalledProcessError as e:
+            print('*** unittest invocation failed with code %d' % (e.returncode,), file=sys.stderr)
+            sys.exit(1)
 
-        subprocess.check_call(["coverage", "combine"], cwd=PYTHON_DIR)
+        try:
+            subprocess.check_call(["coverage", "combine"], cwd=PYTHON_DIR)
+        except subprocess.CalledProcessError as e:
+            print('*** coverage invocation failed with code %d' % (e.returncode,), file=sys.stderr)
+            sys.exit(1)
     finally:
         os.unlink(site_customize_filename)
 

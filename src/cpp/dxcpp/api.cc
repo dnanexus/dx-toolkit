@@ -1230,6 +1230,14 @@ namespace dx {
     return systemFindProjectMembers(input_params.toString(), safe_to_retry);
   }
 
+  JSON systemFindOrgs(const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest("/system/findOrgs", input_params, safe_to_retry);
+  }
+
+  JSON systemFindOrgs(const JSON &input_params, const bool safe_to_retry) {
+    return systemFindOrgs(input_params.toString(), safe_to_retry);
+  }
+
   JSON systemGlobalSearch(const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest("/system/globalSearch", input_params, safe_to_retry);
   }
