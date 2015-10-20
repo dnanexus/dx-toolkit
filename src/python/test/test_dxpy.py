@@ -93,6 +93,20 @@ class TestDXProject(unittest.TestCase):
                 dxcontainer = dxpy.DXContainer()
                 dxcontainer.set_id(bad_value)
 
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS, 'skipping test that requires presence of test user')
+    def test_invite_without_email(self):
+        user_id = 'user-000000000000000000000001'
+        dxproject = dxpy.DXProject(self.proj_id)
+
+        # Check that user is not already invited to project
+        project_members = dxpy.api.project_describe(dxproject.get_id(),
+                                                    {'fields': {'permissions': True}})['permissions']
+        self.assertNotIn(user_id, project_members.keys())
+
+        dxproject.invite(user_id, 'VIEW', send_email=False)
+        res = dxpy.api.project_describe(dxproject.get_id(), {'fields': {'permissions': True}})['permissions']
+        self.assertEquals(res[user_id], 'VIEW')
+
     def test_update_describe(self):
         dxproject = dxpy.DXProject()
         dxproject.update(name="newprojname", protected=True, restricted=True, description="new description")
@@ -301,7 +315,15 @@ class TestDXFile(unittest.TestCase):
                          os.path.basename(self.foo_file.name))
 
         dxpy.download_dxfile(self.dxfile.get_id(), self.new_file.name)
+        self.assertTrue(filecmp.cmp(self.foo_file.name, self.new_file.name))
 
+        dxpy.download_dxfile(filename=self.new_file.name, dxid=self.dxfile.get_id())
+        self.assertTrue(filecmp.cmp(self.foo_file.name, self.new_file.name))
+
+        dxpy.download_dxfile(dxid=self.dxfile, filename=self.new_file.name)
+        self.assertTrue(filecmp.cmp(self.foo_file.name, self.new_file.name))
+
+        dxpy.download_dxfile(self.dxfile, filename=self.new_file.name)
         self.assertTrue(filecmp.cmp(self.foo_file.name, self.new_file.name))
 
     def test_upload_string_dxfile(self):
@@ -2037,7 +2059,7 @@ class TestHTTPResponses(unittest.TestCase):
     def test_bad_host(self):
         # Verify that the exception raised is one that dxpy would
         # consider to be retryable, but truncate the actual retry loop
-        with self.assertRaises(requests.exceptions.ConnectionError) as exception_cm:
+        with self.assertRaises(requests.packages.urllib3.exceptions.ProtocolError) as exception_cm:
             dxpy.DXHTTPRequest('http://doesnotresolve.dnanexus.com/', {}, prepend_srv=False, always_retry=False,
                                max_retries=1)
         self.assertTrue(dxpy._is_retryable_exception(exception_cm.exception))
@@ -2045,7 +2067,7 @@ class TestHTTPResponses(unittest.TestCase):
     def test_connection_refused(self):
         # Verify that the exception raised is one that dxpy would
         # consider to be retryable, but truncate the actual retry loop
-        with self.assertRaises(requests.exceptions.ConnectionError) as exception_cm:
+        with self.assertRaises(requests.packages.urllib3.exceptions.ProtocolError) as exception_cm:
             # Connecting to a port on which there is no server running
             dxpy.DXHTTPRequest('http://localhost:20406', {}, prepend_srv=False, always_retry=False, max_retries=1)
         self.assertTrue(dxpy._is_retryable_exception(exception_cm.exception))

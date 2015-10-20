@@ -21,17 +21,18 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re, base64, random, time
 import pipes
+import hashlib
 from contextlib import contextmanager
 import pexpect
 import requests
 
 import dxpy
 from dxpy.scripts import dx_build_app
-from dxpy_testutil import (DXTestCase, check_output, temporary_project, select_project, cd,
-                           override_environment, generate_unique_username_email)
+from dxpy_testutil import (DXTestCase, check_output, temporary_project, select_project, cd, override_environment,
+                           generate_unique_username_email, without_project_context, without_auth)
 import dxpy_testutil as testutil
 from dxpy.exceptions import DXAPIError, DXSearchError, EXPECTED_ERR_EXIT_STATUS
-from dxpy.compat import str, sys_encoding
+from dxpy.compat import str, sys_encoding, open
 from dxpy.utils.resolver import ResolutionError, _check_resolution_needed as check_resolution
 
 @contextmanager
@@ -50,19 +51,6 @@ def run(command, **kwargs):
     output = check_output(command, shell=True, **kwargs)
     print(output)
     return output
-
-
-# Note: clobbers the local environment! All tests that use this should
-# be marked as such with TEST_ENV
-def run_without_project_context(command, **kwargs):
-    """Like 'run', but ensures that the process that is invoked sees none
-    of the project context configuration variables.
-    """
-    if 'env' in kwargs:
-        raise ValueError('Cannot specify env in run_without_project_context')
-    return run("dx clearenv; " + command,
-               env=override_environment(DX_WORKSPACE_ID=None, DX_PROJECT_CONTEXT_ID=None),
-               **kwargs)
 
 
 def create_file_in_project(fname, trg_proj_id, folder=None):
@@ -137,9 +125,18 @@ class TestDXTestUtils(DXTestCase):
                 run('dx cd {dirname}'.format(dirname=test_dirname))
 
     @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
-    def test_run_without_project_context(self):
+    def test_without_project_context(self):
         self.assertIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
-        self.assertNotIn('DX_PROJECT_CONTEXT_ID', run_without_project_context('dx env --bash'))
+        with without_project_context():
+            self.assertNotIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
+        self.assertIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
+
+    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
+    def test_without_auth(self):
+        self.assertIn('DX_SECURITY_CONTEXT', run('dx env --bash'))
+        with without_auth():
+            self.assertNotIn('DX_SECURITY_CONTEXT', run('dx env --bash'))
+        self.assertIn('DX_SECURITY_CONTEXT', run('dx env --bash'))
 
 
 # TODO: these 'dx rm' and related commands should really exit with code 3 to distinguish user and internal errors
@@ -402,6 +399,55 @@ class TestDXClient(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp='Unable to resolve', exit_code=3):
             run("dx untag nonexistent atag")
 
+    # @unittest.skipUnless(testutil.TEST_CREATE_APPS,
+    #                      'skipping test that requires presence of test org')
+    @unittest.skip("skipping test that depends on PTFM-16342")
+    def test_dx_create_new_project_with_bill_to(self):
+        curr_bill_to = dxpy.api.user_describe(dxpy.whoami())['billTo']
+        org_id = "org-infinite_spending_limit"  # user-jenkins is ADMIN
+        project_name = "test_dx_create_project"
+
+        # Check that requesting user has createProjectsAndApps permission in org
+        member_access = dxpy.api.org_get_member_access(org_id, {'user': dxpy.whoami()})
+        self.assertTrue(member_access['level'] == 'ADMIN' or member_access['createProjectsAndApps'])
+
+        # Check that billTo of requesting user is the requesting user
+        dxpy.api.user_update(dxpy.whoami(), {'billTo': dxpy.whoami()})
+        self.assertEquals(dxpy.api.user_describe(dxpy.whoami())['billTo'], dxpy.whoami())
+
+        # Create project billTo org
+        project_id = run("dx new project {name} --bill-to {billTo} --brief".format(name=project_name,
+                         billTo=org_id)).strip()
+        self.assertEquals(dxpy.api.project_describe(project_id, {'fields': {'billTo': True}})['billTo'], org_id)
+        dxpy.api.project_destroy(project_id)
+
+        # Create project billTo requesting user
+        project_id = run("dx new project {name} --bill-to {billTo} --brief".format(name=project_name,
+                         billTo=dxpy.whoami())).strip()
+        self.assertEquals(dxpy.api.project_describe(project_id, {'fields': {'billTo': True}})['billTo'], dxpy.whoami())
+        dxpy.api.project_destroy(project_id)
+
+        # Create project billTo invalid org
+        with self.assertSubprocessFailure(stderr_regexp='ResourceNotFound', exit_code=3):
+            run("dx new project {name} --bill-to {billTo} --brief".format(name=project_name, billTo='org-invalid'))
+
+        # With user's billTo set to org
+        dxpy.api.user_update(dxpy.whoami(), {'billTo': org_id})
+        self.assertEqual(dxpy.api.user_describe(dxpy.whoami())['billTo'], org_id)
+
+        project_id = run("dx new project {name} --bill-to {billTo} --brief".format(name=project_name,
+                         billTo=dxpy.whoami())).strip()
+        self.assertEquals(dxpy.api.project_describe(project_id, {'fields': {'billTo': True}})['billTo'], dxpy.whoami())
+        dxpy.api.project_destroy(project_id)
+
+        project_id = run("dx new project {name} --bill-to {billTo} --brief".format(name=project_name,
+                         billTo=org_id)).strip()
+        self.assertEquals(dxpy.api.project_describe(project_id, {'fields': {'billTo': True}})['billTo'], org_id)
+        dxpy.api.project_destroy(project_id)
+
+        # reset original user settings
+        dxpy.api.user_update(dxpy.whoami(), {'billTo': curr_bill_to})
+
     def test_dx_project_tagging(self):
         the_tags = ["$my.tag", "secoиdtag", "тhird тagggg"]
         # tag
@@ -550,6 +596,25 @@ class TestDXClient(DXTestCase):
         run("dx rmproject -y {name}".format(name=project_name))
         self.assertEqual(run("dx find projects --brief --name {name}".format(name=project_name)), "")
 
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS, 'skipping test that requires presence of test user')
+    def test_dx_project_invite_without_email(self):
+        user_id = 'user-000000000000000000000001'
+        with temporary_project() as unique_project:
+            project_id = unique_project.get_id()
+
+            # Check that user is not already invited to project
+            project_members = dxpy.api.project_describe(project_id, {'fields': {'permissions': True}})['permissions']
+            self.assertNotIn(user_id, project_members.keys())
+
+            # Test --no-email flag
+            res = run("dx invite {user} {project} VIEW --no-email".format(user=user_id, project=project_id)).strip()
+            exp = "Invited {user} to {project} (accepted)".format(user=user_id, project=project_id)
+            self.assertEqual(res, exp)
+
+            # Confirm user in project
+            conf = dxpy.api.project_describe(project_id, {'fields': {'permissions': True}})['permissions']
+            self.assertEqual(conf[user_id], 'VIEW')
+
     def test_dx_cp(self):
         project_name = "test_dx_cp_" + str(random.randint(0, 1000000)) + "_" + str(int(time.time() * 1000))
         dest_project_id = run("dx new project {name} --brief".format(name=project_name)).strip()
@@ -569,6 +634,7 @@ class TestDXClient(DXTestCase):
         run("dx mkdir -p mkdirtest/b/c")
         run("dx rm -r mkdirtest")
 
+    @unittest.skip('PTFM-16383 Disable flaky test')
     def test_dxpy_session_isolation(self):
         for var in 'DX_PROJECT_CONTEXT_ID', 'DX_PROJECT_CONTEXT_NAME', 'DX_CLI_WD':
             if var in os.environ:
@@ -919,11 +985,12 @@ class TestDXNewRecord(DXTestCase):
     def test_new_record_without_context(self):
         # Without project context, cannot create new object without
         # project qualified path
-        with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=3):
-            run_without_project_context("dx new record foo")
-        # Can create object with explicit project qualifier
-        record_id = run_without_project_context("dx new record --brief " + self.project + ":foo").strip()
-        self.assertEqual(dxpy.DXRecord(record_id).name, "foo")
+        with without_project_context():
+            with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=3):
+                run("dx new record foo")
+            # Can create object with explicit project qualifier
+            record_id = run("dx new record --brief " + self.project + ":foo").strip()
+            self.assertEqual(dxpy.DXRecord(record_id).name, "foo")
 
 
 class TestGTables(DXTestCase):
@@ -944,7 +1011,7 @@ class TestGTables(DXTestCase):
         desc = json.loads(run("dx describe {gt} --details --json".format(gt=gri_gtable_id)))
         self.assertEqual(desc['types'], ['gri'])
         self.assertEqual(desc['indices'],
-                         [{"type":"genomic", "name":"gri", "chr":"mychr", "lo":"mylo", "hi":"myhi"}])
+                         [{"type": "genomic", "name": "gri", "chr": "mychr", "lo": "mylo", "hi": "myhi"}])
         self.assertEqual(desc['properties'], {"hello": "world"})
         self.assertEqual(desc['details'], {"hello": "world"})
         self.assertEqual(desc['hidden'], False)
@@ -976,7 +1043,7 @@ class TestGTables(DXTestCase):
         second_desc = json.loads(run("dx describe gritableimport --json"))
         self.assertEqual(second_desc['types'], ['gri'])
         self.assertEqual(second_desc['indices'],
-                         [{"type":"genomic", "name":"gri", "chr":"mychr", "lo":"mylo", "hi":"myhi"}])
+                         [{"type": "genomic", "name": "gri", "chr": "mychr", "lo": "mylo", "hi": "myhi"}])
         self.assertEqual(desc['size'], second_desc['size'])
         self.assertEqual(desc['length'], second_desc['length'])
 
@@ -984,12 +1051,13 @@ class TestGTables(DXTestCase):
     def test_dx_new_gtable_without_context(self):
         # Without project context, cannot create new object without
         # project qualified path
-        with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=3):
-            run_without_project_context("dx new gtable --columns mychr,mylo:int32,myhi:int32 foo")
-        # Can create object with explicit project qualifier
-        gtable_id = run_without_project_context(
-            "dx new gtable --brief --columns mychr,mylo:int32,myhi:int32 " + self.project + ":foo").strip()
-        self.assertEqual(dxpy.DXGTable(gtable_id).name, "foo")
+        with without_project_context():
+            with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=3):
+                run("dx new gtable --columns mychr,mylo:int32,myhi:int32 foo")
+            # Can create object with explicit project qualifier
+            gtable_id = run(
+                "dx new gtable --brief --columns mychr,mylo:int32,myhi:int32 " + self.project + ":foo").strip()
+            self.assertEqual(dxpy.DXGTable(gtable_id).name, "foo")
 
 
 class TestDXWhoami(DXTestCase):
@@ -1104,19 +1172,20 @@ class TestDXClientUploadDownload(DXTestCase):
 
             # download file
             output_path = os.path.join(testdir, 'output')
-            run_without_project_context('dx download ' + file_id + ' -o ' + output_path)
+            with without_project_context():
+                run('dx download ' + file_id + ' -o ' + output_path)
             run('cmp ' + output_path + ' ' + fd.name)
 
     @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
     def test_dx_upload_no_env(self):
         # Without project context, cannot upload to a
         # non-project-qualified destination
-        with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=3):
-            run_without_project_context("dx upload --path foo /dev/null")
-        # Can upload to a path specified with explicit project qualifier
-        file_id = run_without_project_context(
-            "dx upload --brief --path " + self.project + ":foo /dev/null").strip()
-        self.assertEqual(dxpy.DXFile(file_id).name, "foo")
+        with without_project_context():
+            with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=3):
+                run("dx upload --path foo /dev/null")
+            # Can upload to a path specified with explicit project qualifier
+            file_id = run("dx upload --brief --path " + self.project + ":foo /dev/null").strip()
+            self.assertEqual(dxpy.DXFile(file_id).name, "foo")
 
     def test_dx_make_download_url(self):
         testdir = tempfile.mkdtemp()
@@ -1289,6 +1358,39 @@ dxpy.run()
             gen_file("X.txt", proj_id)
             buf = run("dx download -o - X.txt")
             self.assertEqual(buf, data)
+
+    def test_dx_download_resume_and_checksum(self):
+        def assert_md5_checksum(filename, hasher):
+            with open(filename, "rb") as fh:
+                self.assertEqual(hashlib.md5(fh.read()).hexdigest(), hasher.hexdigest())
+
+        def truncate(filename, size):
+            with open(filename, "rb+") as fh:
+                fh.seek(size)
+                fh.truncate()
+
+        # Manually upload 2 parts
+        part1, part2 = b"0123456789ABCDEF"*1024*64*5, b"0"
+        dxfile = dxpy.new_dxfile(name="test")
+        dxfile.upload_part(part1, index=1)
+        dxfile.upload_part(part2, index=2)
+        dxfile.close(block=True)
+
+        wd = tempfile.mkdtemp()
+        run("cd {wd}; dx download test; ls -la".format(wd=wd))
+        assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
+        truncate(os.path.join(wd, "test"), 1024*1024*5)
+        run("cd {wd}; dx download -f test".format(wd=wd))
+        assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
+        truncate(os.path.join(wd, "test"), 1024*1024*5 - 1)
+        run("cd {wd}; dx download -f test".format(wd=wd))
+        assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
+        truncate(os.path.join(wd, "test"), 1)
+        run("cd {wd}; dx download -f test".format(wd=wd))
+        assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
+        run("cd {wd}; rm test; touch test".format(wd=wd))
+        run("cd {wd}; dx download -f test".format(wd=wd))
+        assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
 
 
 class TestDXClientDescribe(DXTestCase):
@@ -2617,11 +2719,12 @@ class TestDXClientWorkflow(DXTestCase):
     def test_dx_new_workflow_without_context(self):
         # Without project context, cannot create new object without
         # project qualified path
-        with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=3):
-            run_without_project_context("dx new workflow foo")
-        # Can create object with explicit project qualifier
-        workflow_id = run_without_project_context("dx new workflow --brief " + self.project + ":foo").strip()
-        self.assertEqual(dxpy.DXWorkflow(workflow_id).name, "foo")
+        with without_project_context():
+            with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=3):
+                run("dx new workflow foo")
+            # Can create object with explicit project qualifier
+            workflow_id = run("dx new workflow --brief " + self.project + ":foo").strip()
+            self.assertEqual(dxpy.DXWorkflow(workflow_id).name, "foo")
 
     def test_dx_new_workflow(self):
         workflow_id = run("dx new workflow --title=тitle --summary=SΨmmary --brief " +
@@ -3439,6 +3542,133 @@ class TestDXClientFind(DXTestCase):
         assert_cmd_gives_ids("dx find jobs "+options3, [job_id])
         assert_cmd_gives_ids("dx find analyses "+options3, [])
 
+    # @unittest.skipUnless(testutil.TEST_CREATE_APPS,
+    #                      'skipping test that requires presence of test org')
+    @unittest.skip("skipping test that depends on PTFM-16342")
+    def test_find_orgs(self):
+
+        def assert_find_orgs_results(results, assert_admin=False,
+                                     with_billable_activities=None, limit=16):
+            """
+            :param limit: The maximum number of items in *results* that will be
+            inspected for correctness. This is used to reduce the run-time of
+            this test at the cost of weakening its assertion, because there can
+            be an unbounded number of items in *results*.
+            :type limit: int.
+            """
+
+            if assert_admin and with_billable_activities is False:
+                # All ADMINs must have `createProjectsAndApps`.
+                self.assertEquals(results, [])
+                return
+
+            for result in results[:limit]:
+                # Will throw an error if requesting user is not a member.
+                member_access_res = dxpy.api.org_get_member_access(result["id"])
+
+                if assert_admin:
+                    self.assertEquals(member_access_res["level"], "ADMIN")
+
+                if with_billable_activities is False:
+                    self.assertEquals(member_access_res["level"], "MEMBER")
+                    self.assertFalse(member_access_res["createProjectsAndApps"])
+                elif with_billable_activities:
+                    self.assertTrue(
+                        member_access_res["level"] == "ADMIN" or
+                        (member_access_res["level"] == "MEMBER" and
+                         member_access_res["createProjectsAndApps"]))
+
+        # PRECONDITION: Assumes the presence of these orgs in the database.
+        # TODO: Execute this test only as part of the integration test suite.
+        org_with_billable_activities = "org-members_with_createprojectsandapps01"
+        self.assertTrue(dxpy.api.org_get_member_access(org_with_billable_activities)["createProjectsAndApps"])
+        org_without_billable_activities = "org-members_without_createprojectsandapps01"
+        self.assertFalse(dxpy.api.org_get_member_access(org_without_billable_activities)["createProjectsAndApps"])
+        org_with_admin = "org-dx_user_creation_org"
+        self.assertTrue(dxpy.api.org_get_member_access(org_with_admin)["level"] == "ADMIN")
+
+        cmd = "dx find orgs --level {l} {o} --json"
+
+        results = json.loads(run(cmd.format(l="MEMBER", o="")).strip())
+        assert_find_orgs_results(results)
+        self.assertIn(org_with_billable_activities,
+                      [result["id"] for result in results])
+        self.assertIn(org_without_billable_activities,
+                      [result["id"] for result in results])
+        self.assertIn(org_with_admin,
+                      [result["id"] for result in results])
+
+        results = json.loads(run(cmd.format(
+            l="MEMBER", o="--with-billable-activities")).strip())
+        assert_find_orgs_results(results, with_billable_activities=True)
+        self.assertIn(org_with_billable_activities,
+                      [result["id"] for result in results])
+        self.assertNotIn(org_without_billable_activities,
+                         [result["id"] for result in results])
+        self.assertIn(org_with_admin,
+                      [result["id"] for result in results])
+
+        results = json.loads(run(cmd.format(
+            l="MEMBER", o="--without-billable-activities")).strip())
+        assert_find_orgs_results(results, with_billable_activities=False)
+        self.assertNotIn(org_with_billable_activities,
+                         [result["id"] for result in results])
+        self.assertIn(org_without_billable_activities,
+                      [result["id"] for result in results])
+        self.assertNotIn(org_with_admin,
+                         [result["id"] for result in results])
+
+        results = json.loads(run(cmd.format(l="ADMIN", o="")).strip())
+        assert_find_orgs_results(results, assert_admin=True)
+        self.assertNotIn(org_with_billable_activities,
+                         [result["id"] for result in results])
+        self.assertNotIn(org_without_billable_activities,
+                         [result["id"] for result in results])
+        self.assertIn(org_with_admin,
+                      [result["id"] for result in results])
+
+        results = json.loads(run(cmd.format(
+            l="ADMIN", o="--with-billable-activities")).strip())
+        assert_find_orgs_results(results, assert_admin=True, with_billable_activities=True)
+        self.assertNotIn(org_with_billable_activities,
+                         [result["id"] for result in results])
+        self.assertNotIn(org_without_billable_activities,
+                         [result["id"] for result in results])
+        self.assertIn(org_with_admin,
+                      [result["id"] for result in results])
+
+        results = json.loads(run(cmd.format(
+            l="ADMIN", o="--without-billable-activities")).strip())
+        assert_find_orgs_results(results, assert_admin=True, with_billable_activities=False)
+        self.assertNotIn(org_with_billable_activities,
+                         [result["id"] for result in results])
+        self.assertNotIn(org_without_billable_activities,
+                         [result["id"] for result in results])
+        self.assertNotIn(org_with_admin,
+                         [result["id"] for result in results])
+
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS,
+                         'skipping test that requires presence of test org')
+    def test_find_orgs_format(self):
+        cmd = "dx find orgs --level MEMBER {o}"
+
+        # Assert that only org ids are returned, line-separated.
+        results = run(cmd.format(o="--brief")).strip().split("\n")
+        pattern = re.compile("^org-[a-zA-Z0-9_]*$")
+        for result in results:
+            self.assertTrue(pattern.match(result))
+
+        # Assert that the return format is like: "<org_id><delim><org_name>"
+        results = run(cmd.format(o="")).strip().split("\n")
+        pattern = re.compile("^org-[a-zA-Z0-9_]* : .*$")
+        for result in results:
+            self.assertTrue(pattern.match(result))
+
+        results = run(cmd.format(o="--delim ' @ '")).strip().split("\n")
+        pattern = re.compile("^org-[a-zA-Z0-9_]* @ .*$")
+        for result in results:
+            self.assertTrue(pattern.match(result))
+
 
 @unittest.skipUnless(testutil.TEST_WITH_AUTHSERVER,
                      'skipping tests that require a running authserver')
@@ -3934,8 +4164,8 @@ class TestDXBuildApp(DXTestCase):
             if e.errno != 17: # directory already exists
                 raise e
         if dxapp_str is not None:
-            with open(os.path.join(self.temp_file_path, app_name, 'dxapp.json'), 'w') as manifest:
-                manifest.write(dxapp_str)
+            with open(os.path.join(self.temp_file_path, app_name, 'dxapp.json'), 'wb') as manifest:
+                manifest.write(dxapp_str.encode())
         if code_filename:
             with open(os.path.join(self.temp_file_path, app_name, code_filename), 'w') as code_file:
                 code_file.write(code_content)
@@ -3985,6 +4215,24 @@ class TestDXBuildApp(DXTestCase):
         self.assertEqual(applet_describe["class"], "applet")
         self.assertEqual(applet_describe["id"], applet_describe["id"])
         self.assertEqual(applet_describe["name"], "minimal_applet")
+
+    def test_dx_build_applet_dxapp_json_created_with_makefile(self):
+        app_name = "nodxapp_applet"
+        app_dir = self.write_app_directory(app_name, None, "code.py")
+        app_spec = {
+            "name": app_name,
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        makefile_str = "dxapp.json:\n\tcp temp_dxapp.json dxapp.json\n"
+        with open(os.path.join(app_dir, 'temp_dxapp.json'), 'wb') as manifest:
+            manifest.write(json.dumps(app_spec).encode())
+        with open(os.path.join(app_dir, "Makefile"), 'w') as makefile:
+            makefile.write(makefile_str)
+        run("dx build " + app_dir)
 
     def test_dx_build_applet_no_app_linting(self):
         run("dx clearenv")
@@ -5087,12 +5335,12 @@ def main(in1):
 
         # Without project context, cannot create new object without
         # project qualified path
-        with self.assertSubprocessFailure(stderr_regexp='without specifying a destination project', exit_code=2):
-            run_without_project_context("dx build --json --destination foo " + app_dir)
-        # Can create object with explicit project qualifier
-        applet_describe = json.loads(run_without_project_context(
-            "dx build --json --destination " + self.project + ":foo " + app_dir))
-        self.assertEqual(applet_describe["name"], "foo")
+        with without_project_context():
+            with self.assertSubprocessFailure(stderr_regexp='without specifying a destination project', exit_code=2):
+                run("dx build --json --destination foo " + app_dir)
+            # Can create object with explicit project qualifier
+            applet_describe = json.loads(run("dx build --json --destination " + self.project + ":foo " + app_dir))
+            self.assertEqual(applet_describe["name"], "foo")
 
 
 class TestDXBuildReportHtml(unittest.TestCase):
@@ -5102,7 +5350,7 @@ class TestDXBuildReportHtml(unittest.TestCase):
     def setUp(self):
         self.temp_file_path = tempfile.mkdtemp()
         self.gif_base64 = "R0lGODdhAQABAIAAAAQCBAAAACwAAAAAAQABAAACAkQBADs="
-        gif_file = open("{}/img.gif".format(self.temp_file_path), "w")
+        gif_file = open("{}/img.gif".format(self.temp_file_path), "wb")
         gif_file.write(base64.b64decode(self.gif_base64))
         gif_file.close()
         wiki_logo = "http://upload.wikimedia.org/wikipedia/en/thumb/8/80/Wikipedia-logo-v2.svg/200px-Wikipedia-logo-v2.svg.png"
@@ -5553,12 +5801,8 @@ class TestDXCp(DXTestCase):
         fname1 = self.gen_uniq_fname()
         create_file_in_project(fname1, self.proj_id1)
 
-        # The file {proj_id1}:/{f} exists, however, {proj_id1}/{f} does
-        # not. We want to see an error message that reflects this; it
-        # should refer to the path /{proj_id1}, which has been perhaps
-        # unintentionally interpreted as a folder.
-        expected_err_msg = "ResolutionError: The folder /{f} could not be found in {p}".format(
-            f=self.proj_id1, p=self.project)
+        # The file {proj_id1}:/{f} exists, however, {proj_id1}/{f} does not
+        expected_err_msg = "ResolutionError: The specified folder could not be found in {p}".format(p=self.project)
         with self.assertSubprocessFailure(stderr_regexp=expected_err_msg, exit_code=3):
             run("dx cp {p1}/{f} {p2}:/".format(p1=self.proj_id1, f=fname1, p2=self.proj_id2))
 
@@ -5599,8 +5843,8 @@ class TestDXCp(DXTestCase):
         # This does not currently work, because the context is not set.
         proj_id = create_project()
         with self.assertSubprocessFailure(stderr_regexp='project must be specified or a current project set',
-                                          exit_code=3):
-            run_without_project_context('dx clearenv; dx cp ' + file_id + ' ' + proj_id)
+                                          exit_code=3), without_project_context():
+            run('dx cp ' + file_id + ' ' + proj_id)
 
         #cleanup
         rm_project(proj_id)
