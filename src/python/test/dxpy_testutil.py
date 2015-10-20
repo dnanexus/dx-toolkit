@@ -28,7 +28,7 @@ import dxpy
 from dxpy.compat import str
 
 _run_all_tests = 'DXTEST_FULL' in os.environ
-TEST_CREATE_APPS = _run_all_tests or 'DXTEST_CREATE_APPS' in os.environ
+TEST_ISOLATED_ENV = _run_all_tests or 'DXTEST_ISOLATED_ENV' in os.environ
 TEST_ENV = _run_all_tests or 'DXTEST_ENV' in os.environ
 TEST_FUSE = _run_all_tests or 'DXTEST_FUSE' in os.environ
 TEST_GTABLE = _run_all_tests or 'DXTEST_GTABLE' in os.environ

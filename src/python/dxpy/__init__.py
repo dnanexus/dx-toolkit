@@ -615,6 +615,12 @@ def get_auth_server_name(host_override=None, port_override=None):
         return 'https://stagingauth.dnanexus.com'
     elif APISERVER_HOST == 'api.dnanexus.com':
         return 'https://auth.dnanexus.com'
+    elif APISERVER_HOST == "localhost" or APISERVER_HOST == "127.0.0.1":
+        if "DX_AUTHSERVER_HOST" not in os.environ or "DX_AUTHSERVER_PORT" not in os.environ:
+            err_msg = "Must set authserver env vars (DX_AUTHSERVER_HOST, DX_AUTHSERVER_PORT) if apiserver is {apiserver}."
+            raise exceptions.DXError(err_msg.format(apiserver=APISERVER_HOST))
+        else:
+            return os.environ["DX_AUTHSERVER_HOST"] + ":" + os.environ["DX_AUTHSERVER_PORT"]
     else:
         err_msg = "Could not determine which auth server is associated with {apiserver}."
         raise exceptions.DXError(err_msg.format(apiserver=APISERVER_HOST))

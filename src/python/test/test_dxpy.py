@@ -93,7 +93,7 @@ class TestDXProject(unittest.TestCase):
                 dxcontainer = dxpy.DXContainer()
                 dxcontainer.set_id(bad_value)
 
-    @unittest.skipUnless(testutil.TEST_CREATE_APPS, 'skipping test that requires presence of test user')
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test user')
     def test_invite_without_email(self):
         user_id = 'user-000000000000000000000001'
         dxproject = dxpy.DXProject(self.proj_id)
@@ -1619,7 +1619,8 @@ def main(number):
         self.assertEqual(dxworkflow.stages[0]["executable"], second_applet.get_id())
         self.assertNotIn("my_input", dxworkflow.stages[0]["input"])
 
-@unittest.skipUnless(testutil.TEST_CREATE_APPS,
+
+@unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                      'skipping test that would create an app')
 class TestDXApp(unittest.TestCase):
     def setUp(self):
@@ -2377,8 +2378,8 @@ if __name__ == '__main__':
     if dxpy.AUTH_HELPER is None:
         sys.exit(1, 'Error: Need to be logged in to run these tests')
     if 'DXTEST_FULL' not in os.environ:
-        if 'DXTEST_CREATE_APPS' not in os.environ:
-            sys.stderr.write('WARNING: neither env var DXTEST_FULL nor DXTEST_CREATE_APPS are set; tests that create apps will not be run\n')
+        if 'DXTEST_ISOLATED_ENV' not in os.environ:
+            sys.stderr.write('WARNING: neither env var DXTEST_FULL nor DXTEST_ISOLATED_ENV are set; tests that create apps will not be run\n')
         if 'DXTEST_RUN_JOBS' not in os.environ:
             sys.stderr.write('WARNING: neither env var DXTEST_FULL nor DXTEST_RUN_JOBS are set; tests that run jobs will not be run\n')
     unittest.main()
