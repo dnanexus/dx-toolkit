@@ -225,6 +225,7 @@ public class DXHTTPRequest {
         }
 
         request.setHeader("Content-Type", "application/json");
+        request.setHeader("Connection", "close");
         request.setHeader("Authorization", securityContext.get("auth_token_type").textValue() + " "
                 + securityContext.get("auth_token").textValue());
         request.setEntity(new StringEntity(data, Charset.forName("UTF-8")));
