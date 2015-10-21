@@ -383,7 +383,37 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
     raise an exception if the specified folder or object does not
     exist.  This method is primarily for parsing purposes.
 
+    Returns one of the following:
+
+      (project, folder, maybe_name)
+      where
+        project is a project (non-null)
+        folder is a folder path
+        maybe_name is a string if the path could represent a folder or an object, or
+        maybe_name is None if the path could only represent a folder
+
+    OR
+
+      (maybe_project, None, object_id)
+      where
+        maybe_project is a project or None
+        object_id is a dataobject or execution (specified by ID, not name)
+
+    OR
+
+      (job_id, None, output_name)
+      where
+        job_id and output_name are both non-null
+
     '''
+    # TODO: callers that intend to obtain a data object probably won't be happy
+    # with an execution ID. Callers should probably have to specify whether
+    # they are okay with getting an execution ID or not.
+
+    # TODO: callers that are looking for a place to write data, rather than
+    # read it, probably won't be happy with receiving an object ID, or a
+    # JBOR. Callers should probably specify whether they are looking for an
+    # "LHS" expression or not.
 
     if '_DX_FUSE' in os.environ:
         from xattr import xattr
