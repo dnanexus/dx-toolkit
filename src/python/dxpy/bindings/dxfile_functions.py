@@ -29,6 +29,8 @@ import hashlib
 import traceback
 import warnings
 from collections import defaultdict
+from multiprocessing import cpu_count
+from concurrent.futures import ThreadPoolExecutor
 
 import dxpy
 from .. import logger, DXHTTPRequest
@@ -36,7 +38,6 @@ from . import dxfile, DXFile
 from .dxfile import FILE_REQUEST_TIMEOUT
 from ..compat import open
 from ..exceptions import DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError
-from ..utils import response_iterator
 
 def open_dxfile(dxid, project=None, read_buffer_size=dxfile.DEFAULT_BUFFER_SIZE):
     '''
@@ -89,6 +90,12 @@ def new_dxfile(mode=None, write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE, **kwargs
     return dx_file
 
 _download_retry_counter = defaultdict(lambda: 3)
+_executor = None
+def _get_executor():
+    global _executor
+    if _executor is None:
+        _executor = ThreadPoolExecutor(max_workers=cpu_count())
+    return _executor
 
 def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
                     project=None, **kwargs):
@@ -141,6 +148,7 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
     parts = dxfile_desc["parts"]
     parts_to_get = sorted(parts, key=int)
     file_size = dxfile_desc.get("size")
+    chunks_to_get = []
 
     # Warm up the download URL cache in the file handler, to avoid all worker threads trying to fetch it simultaneously
     dxfile.get_download_url(**kwargs)
@@ -149,6 +157,17 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
     for part_id in parts_to_get:
         parts[part_id]["start"] = offset
         offset += parts[part_id]["size"]
+
+    def get_chunk(chunk_info):
+        url, headers = dxfile.get_download_url(**kwargs)
+        # If we're fetching the whole object in one shot, avoid setting the Range header to take advantage of gzip
+        # transfer compression
+        if len(parts) > 1 or len(chunks_to_get) > 1:
+            headers["Range"] = "bytes={}-{}".format(chunk_info["start"], chunk_info["end"])
+        chunk_info["data"] = DXHTTPRequest(url, b"", method="GET", headers=headers, auth=None, jsonify_data=False,
+                                           prepend_srv=False, always_retry=True, timeout=FILE_REQUEST_TIMEOUT,
+                                           decode_response_body=False)
+        return chunk_info
 
     if append:
         fh = open(filename, "ab")
@@ -194,23 +213,11 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
             print_progress(last_verified_pos, file_size, action="Resuming at")
         logger.debug("Verified %s/%d downloaded parts", last_verified_part, len(parts_to_get))
 
-    def get_chunk(part_id, start, end):
-        url, headers = dxfile.get_download_url(**kwargs)
-        # If we're fetching the whole object in one shot, avoid setting the Range header to take advantage of gzip
-        # transfer compression
-        if len(parts) > 1 or end - start + 1 < parts[part_id]["size"]:
-            headers["Range"] = "bytes={}-{}".format(start, end)
-        data = DXHTTPRequest(url, b"", method="GET", headers=headers, auth=None, jsonify_data=False,
-                             prepend_srv=False, always_retry=True, timeout=FILE_REQUEST_TIMEOUT,
-                             decode_response_body=False)
-        return part_id, data
-
-    def chunk_requests():
-        for part_id in parts_to_get:
-            part_info = parts[part_id]
-            for chunk_start in range(part_info["start"], part_info["start"] + part_info["size"], chunksize):
-                chunk_end = min(chunk_start + chunksize, part_info["start"] + part_info["size"]) - 1
-                yield get_chunk, [part_id, chunk_start, chunk_end], {}
+    for part_id in parts_to_get:
+        part_info = parts[part_id]
+        for chunk_start in range(part_info["start"], part_info["start"] + part_info["size"], chunksize):
+            chunk_end = min(chunk_start + chunksize, part_info["start"] + part_info["size"]) - 1
+            chunks_to_get.append(dict(part=part_id, start=chunk_start, end=chunk_end))
 
     def verify_part(part_id, got_bytes, hasher):
         if got_bytes is not None and got_bytes != parts[part_id]["size"]:
@@ -226,17 +233,18 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
 
     try:
         cur_part, got_bytes, hasher = None, None, None
-        dxfile._ensure_http_threadpool()
-        for chunk_part, chunk_data in response_iterator(chunk_requests(), dxfile._http_threadpool):
-            if chunk_part != cur_part:
+        # Timeout is required for non-blocking join that can be interrupted by SIGINT (Ctrl+C)
+        for chunk in _get_executor().map(get_chunk, chunks_to_get, timeout=sys.maxint):
+            if chunk["part"] != cur_part:
                 verify_part(cur_part, got_bytes, hasher)
-                cur_part, got_bytes, hasher = chunk_part, 0, hashlib.md5()
-            got_bytes += len(chunk_data)
-            hasher.update(chunk_data)
-            fh.write(chunk_data)
+                cur_part, got_bytes, hasher = chunk["part"], 0, hashlib.md5()
+            got_bytes += len(chunk["data"])
+            hasher.update(chunk["data"])
+            fh.write(chunk["data"])
             if show_progress:
-                _bytes += len(chunk_data)
+                _bytes += len(chunk["data"])
                 print_progress(_bytes, file_size)
+            del chunk["data"]
         verify_part(cur_part, got_bytes, hasher)
         if show_progress:
             print_progress(_bytes, file_size, action="Completed")
@@ -250,6 +258,12 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
             return download_dxfile(dxfile, filename, chunksize=chunksize, append=append,
                                    show_progress=show_progress, project=project, **kwargs)
         raise
+    except KeyboardInterrupt:
+        # Call os._exit() in case of KeyboardInterrupt. Otherwise, the atexit registered handler in
+        # concurrent.futures.thread will run, and issue blocking join() on all worker threads, requiring us to
+        # listen to events in worker threads in order to enable timely exit in response to Ctrl-C.
+        print("", file=sys.stderr)
+        os._exit(os.EX_IOERR)
 
     if show_progress:
         sys.stderr.write("\n")

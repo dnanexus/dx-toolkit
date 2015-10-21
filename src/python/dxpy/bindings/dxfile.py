@@ -25,7 +25,6 @@ from __future__ import (print_function, unicode_literals)
 
 import os, sys, logging, traceback, hashlib, copy, time
 import concurrent.futures
-from multiprocessing import cpu_count
 
 import dxpy
 from . import DXDataObject
@@ -33,7 +32,8 @@ from ..exceptions import DXFileError
 from ..utils import warn
 from ..compat import BytesIO
 
-DXFILE_HTTP_THREADS = cpu_count()
+# TODO: adaptive buffer size
+DXFILE_HTTP_THREADS = 8
 DEFAULT_BUFFER_SIZE = 1024*1024*16
 if dxpy.JOB_ID:
     # Increase HTTP request buffer size when we are running within the
@@ -577,7 +577,9 @@ class DXFile(DXDataObject):
         if self._response_iterator is None:
             self._response_iterator = dxpy.utils.response_iterator(
                 self._request_iterator,
-                self._http_threadpool
+                self._http_threadpool,
+                max_active_tasks=self._http_threadpool_size,
+                queue_id=id(self)
             )
         return next(self._response_iterator)
 

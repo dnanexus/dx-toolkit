@@ -21,8 +21,8 @@ Utilities shared by dxpy modules.
 from __future__ import (print_function, unicode_literals)
 
 import os, json, collections, concurrent.futures, traceback, sys, time, gc
-from multiprocessing import cpu_count
 import dateutil.parser
+from .thread_pool import PrioritizingThreadPool
 from .. import logger
 from ..compat import basestring
 
@@ -30,9 +30,14 @@ from ..compat import basestring
 def _force_quit(signum, frame):
     # traceback.print_stack(frame)
     os._exit(os.EX_IOERR)
+    # os.abort()
 
 def get_futures_threadpool(max_workers):
-    return concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
+    #import signal
+    #if force_quit_on_sigint:
+    #    signal.signal(signal.SIGINT, _force_quit)
+    #return concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
+    return PrioritizingThreadPool(max_workers=max_workers)
 
 def wait_for_a_future(futures, print_traceback=False):
     """
@@ -42,7 +47,7 @@ def wait_for_a_future(futures, print_traceback=False):
     """
     while True:
         try:
-            future = next(concurrent.futures.as_completed(futures, timeout=sys.maxint))
+            future = next(concurrent.futures.as_completed(futures, timeout=10000000000))
             break
         except concurrent.futures.TimeoutError:
             pass
@@ -81,58 +86,117 @@ def wait_for_all_futures(futures, print_traceback=False):
             print('')
         os._exit(os.EX_IOERR)
 
+_bypass_thread_pool = False
 
-def response_iterator(request_iterator, thread_pool, max_active_tasks=None):
+def response_iterator(request_iterator, thread_pool, max_active_tasks=4, num_retries=0, retry_after=90, queue_id=''):
     """
-    :param request_iterator: An iterator producing inputs for consumption by the worker pool.
-    :type request_iterator: iterator of callable, args, kwargs
+    :param request_iterator: This is expected to be an iterator producing inputs for consumption by the worker pool.
+    :type request_iterator: iterator of callable_, args, kwargs
     :param thread_pool: thread pool to submit the requests to
-    :type thread_pool: concurrent.futures.thread.ThreadPoolExecutor
-    :param max_active_tasks:
-        The maximum number of tasks that may be either running or waiting for consumption of their result.
-        If not given, defaults to the number of CPU cores on the machine.
+    :type thread_pool: PrioritizingThreadPool
+    :param max_active_tasks: The maximum number of tasks that may be either running or waiting for consumption of their result.
     :type max_active_tasks: int
+    :param num_retries: The number of times to retry the request.
+    :type num_retries: int
+    :param retry_after: The number of seconds to wait before retrying the request.
+    :type retry_after: number
+    :param queue_id: hashable object to divide incoming requests into independent queues
+    :type queue_id: object
 
     Rate-limited asynchronous multithreaded task runner.
     Consumes tasks from *request_iterator*. Yields their results in order, while allowing up to *max_active_tasks* to run
     simultaneously. Unlike concurrent.futures.Executor.map, prevents new tasks from starting while there are
     *max_active_tasks* or more unconsumed results.
+
+    **Retry behavior**: If *num_retries* is positive, the task runner uses a simple heuristic to retry slow requests.
+    If there are 4 or more tasks in the queue, and all but the first one are done, the first task will be discarded
+    after *retry_after* seconds and resubmitted with the same parameters. This will be done up to *num_retries* times.
+    If retries are used, tasks should be idempotent.
     """
+
+    if _bypass_thread_pool:
+        for _callable, args, kwargs in request_iterator:
+            yield _callable(*args, **kwargs)
+        return
+
+    num_results_yielded = 0
+    next_request_index = 0
+
+    def make_priority_fn(request_index):
+        # The more pending requests are between the data that has been
+        # returned to the caller and this data, the less likely this
+        # data is to be needed soon. This results in a higher number
+        # here (and therefore a lower priority).
+        return lambda: request_index - num_results_yielded
+
+    def submit(callable_, args, kwargs, retries=num_retries):
+        """
+        Submit the task.
+
+        Return (future, (callable_, args, kwargs), retries)
+        """
+        future = thread_pool.submit_to_queue(queue_id, make_priority_fn(next_request_index), callable_, *args, **kwargs)
+        return (future, (callable_, args, kwargs), retries)
+
+    def resubmit(callable_, args, kwargs, retries):
+        """
+        Submit the task.
+
+        Return (future, (callable_, args, kwargs), retries)
+        """
+        logger.warn("{}: Retrying {} after timeout".format(__name__, callable_))
+        # TODO: resubmitted tasks should be prioritized higher
+        return submit(callable_, args, kwargs, retries=retries-1)
+
+    # Each item is (future, (callable_, args, kwargs), retries):
+    #
+    # future: Future for the task being performed
+    # callable_, args, kwargs: callable and args that were supplied
+    # retries: number of additional times they request may be retried
     tasks_in_progress = collections.deque()
-    if max_active_tasks is None:
-        max_active_tasks = cpu_count()
-
-    # The following two functions facilitate GC by not adding extra variables to the enclosing scope.
-    def submit_task(task_iterator, executor, futures_queue):
-        task_callable, task_args, task_kwargs = next(task_iterator)
-        task_future = executor.submit(task_callable, *task_args, **task_kwargs)
-        futures_queue.append(task_future)
-
-    def next_result(tasks_in_progress):
-        future = tasks_in_progress.popleft()
-        try:
-            result = future.result(timeout=sys.maxint)
-        except KeyboardInterrupt:
-            print('')
-            os._exit(os.EX_IOERR)
-        return result
 
     for _i in range(max_active_tasks):
         try:
-            submit_task(request_iterator, thread_pool, tasks_in_progress)
+            callable_, args, kwargs = next(request_iterator)
+            # print "Submitting (initial batch):", callable_, args, kwargs
+            tasks_in_progress.append(submit(callable_, args, kwargs))
+            next_request_index += 1
         except StopIteration:
             break
 
     while len(tasks_in_progress) > 0:
-        result = next_result(tasks_in_progress)
+        future, callable_and_args, retries = tasks_in_progress.popleft()
+        try:
+            result = future.result(timeout=retry_after)
+        except concurrent.futures.TimeoutError:
+            # print "Timeout while waiting for", f, "which has", f.retries, "retries left"
+            if retries > 0 and len(tasks_in_progress) > 2 and all(f.done() for (f, _callable, _retries) in tasks_in_progress):
+                # The stale future will continue to run and will reduce the effective size of the pool by 1. If too many
+                # futures are retried, the pool will block until one of the stale futures quits.
+                # f.cancel() doesn't work because there's no way to interrupt a thread.
+                prev_callable, prev_args, prev_kwargs = callable_and_args
+                future, callable_and_args, retries = resubmit(prev_callable, prev_args, prev_kwargs, retries)
+                next_request_index += 1
+            tasks_in_progress.appendleft((future, callable_and_args, retries))
+            continue
+        except KeyboardInterrupt:
+            print('')
+            os._exit(os.EX_IOERR)
+
+        del future # Free the future we just consumed now, instead of next
+                   # time around the loop
+        gc.collect()
 
         try:
-            submit_task(request_iterator, thread_pool, tasks_in_progress)
+            callable_, args, kwargs = next(request_iterator)
         except StopIteration:
             pass
-
+        else:
+            tasks_in_progress.append(submit(callable_, args, kwargs))
+            next_request_index += 1
         yield result
         del result
+        num_results_yielded += 1
 
 def string_buffer_length(buf):
     orig_pos = buf.tell()
