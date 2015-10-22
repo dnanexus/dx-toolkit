@@ -58,8 +58,8 @@ from ..utils.pretty_print import format_tree, format_table
 from ..utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id,
                               is_analysis_id, get_last_pos_of_char, resolve_container_id_or_name, resolve_path,
                               resolve_existing_path, get_app_from_path, resolve_app, get_exec_handler,
-                              split_unescaped, ResolutionError, get_first_pos_of_char,
-                              resolve_to_objects_or_project, is_project_explicit, is_file_in_project)
+                              split_unescaped, ResolutionError, resolve_to_objects_or_project, is_project_explicit,
+                              is_file_in_project)
 from ..utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, LocalCompleter,
                                ListCompleter, MultiCompleter)
 from ..utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_desc,

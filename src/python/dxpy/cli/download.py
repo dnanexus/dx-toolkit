@@ -27,9 +27,9 @@ from ..utils.resolver import (resolve_existing_path,
                               get_first_pos_of_char,
                               is_project_explicit,
                               is_file_in_project)
-from ..exceptions import (err_exit)
-from . import (try_call)
 from ..utils.resolver import (resolve_existing_path, get_first_pos_of_char)
+from ..exceptions import err_exit
+from . import try_call
 from dxpy.utils.printing import (fill)
 from dxpy.utils import pathmatch
 

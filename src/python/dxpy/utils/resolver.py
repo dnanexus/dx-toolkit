@@ -174,7 +174,7 @@ def is_glob_pattern(string):
 # quick logic borrowed from resolver.py to detect if project was explicitly specified
 # e.g. "project-name-or-id:/path/to/file"
 def is_project_explicit(string):
-    return (len(split_unescaped(':', string.strip())) == 2)
+    return len(split_unescaped(':', string.strip())) == 2
 
 
 # determine using 'dx describe' if any of a list of files are in a specified project
