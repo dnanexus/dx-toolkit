@@ -3789,8 +3789,8 @@ class TestDXClientNewUser(DXTestCase):
         self.assertEqual(exp, res)
 
 
-@unittest.skipUnless(testutil.TEST_WITH_AUTHSERVER,
-                     'skipping tests that require a running authserver')
+@unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                     'skipping tests that require presence of test user and org')
 class TestDXClientMembership(DXTestCase):
 
     def _add_user(self, user_id):
