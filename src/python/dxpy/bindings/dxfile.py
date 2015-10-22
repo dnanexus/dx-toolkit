@@ -524,6 +524,12 @@ class DXFile(DXDataObject):
         Obtains a URL that can be used to directly download the
         associated file.
         """
+        # Test hook to write 'project' argument passed to API call to a local file
+        if 'DX_DEBUG_FILE' in os.environ:
+            with open(os.environ['DX_DEBUG_FILE'], "w") as fd:
+                if project is not None:
+                    fd.write(project)
+
         args = {"duration": duration, "preauthenticated": preauthenticated}
         if filename is not None:
             args["filename"] = filename
@@ -586,7 +592,7 @@ class DXFile(DXDataObject):
             )
         return next(self._response_iterator)
 
-    def read(self, length=None, use_compression=None, **kwargs):
+    def read(self, length=None, use_compression=None, project=None, **kwargs):
         '''
         :param size: Maximum number of bytes to be read
         :type size: integer
@@ -640,7 +646,9 @@ class DXFile(DXDataObject):
                 remaining_len = orig_file_pos + length - self._pos
 
                 if self._response_iterator is None:
-                    self._request_iterator = self._generate_read_requests(start_pos=self._pos, **kwargs)
+                    self._request_iterator = self._generate_read_requests(start_pos=self._pos,
+                                                                          project=project,
+                                                                          **kwargs)
 
                 if get_first_chunk_sequentially:
                     # Make the first chunk request without using the

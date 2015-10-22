@@ -59,7 +59,7 @@ from ..utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id
                               is_analysis_id, get_last_pos_of_char, resolve_container_id_or_name, resolve_path,
                               resolve_existing_path, get_app_from_path, resolve_app, get_exec_handler,
                               split_unescaped, ResolutionError, get_first_pos_of_char,
-                              resolve_to_objects_or_project)
+                              resolve_to_objects_or_project, is_project_explicit, is_file_in_project)
 from ..utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, LocalCompleter,
                                ListCompleter, MultiCompleter)
 from ..utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_desc,
@@ -1743,6 +1743,9 @@ def get(args):
 
 def cat(args):
     for path in args.path:
+
+        # NOTE that because 'allow_mult' is not set when calling resolve_existing_path, entity_result
+        # will NOT be a list. The logic below assumes entity_result is a single dictionary object
         project, _folderpath, entity_result = try_call(resolve_existing_path, path)
 
         if entity_result is None:
@@ -1751,10 +1754,26 @@ def cat(args):
         if entity_result['describe']['class'] != 'file':
             parser.exit(1, fill('Error: expected a file object') + '\n')
 
+        # Determine if user passed in project explicitly and
+        # if specified project actually contains specified file
+        has_project_arg = is_project_explicit(path)
+        has_file_in_proj = is_file_in_project(project, [entity_result])
+
+        # If the user explicitly provided the project and it doesn't contain
+        # the file, don't allow the download.
+        #
+        # If the user did not explicitly provide the project, don't pass any
+        # project parameter to the API call but continue with download resolution
+        #
+        if has_project_arg and not has_file_in_proj:
+            parser.exit(1, fill('Error: project does not contain specified file object') + '\n')
+        if not has_project_arg and not has_file_in_proj:
+            project = None
+
         try:
             dxfile = dxpy.DXFile(entity_result['id'], project=project)
             while True:
-                chunk = dxfile.read(1024*1024)
+                chunk = dxfile.read(1024*1024, project=project)
                 if len(chunk) == 0:
                     break
                 sys.stdout.buffer.write(chunk)

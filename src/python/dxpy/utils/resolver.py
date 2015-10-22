@@ -31,7 +31,7 @@ import dxpy
 from .describe import get_ls_l_desc
 from ..exceptions import DXError
 from ..compat import str, input
-from ..cli import INTERACTIVE_CLI
+from ..cli import try_call, INTERACTIVE_CLI
 
 def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False, more_choices=False):
     '''
@@ -169,6 +169,45 @@ def is_nohash_id(string):
 
 def is_glob_pattern(string):
     return (get_last_pos_of_char('*', string) >= 0) or (get_last_pos_of_char('?', string) >= 0)
+
+
+# quick logic borrowed from resolver.py to detect if project was explicitly specified
+# e.g. "project-name-or-id:/path/to/file"
+def is_project_explicit(string):
+    return (len(split_unescaped(':', string.strip())) == 2)
+
+
+# determine using 'dx describe' if any of a list of files are in a specified project
+def is_file_in_project(project, entity_list):
+    '''
+    :param project: project id of the project being validated
+    :type project: string
+    :param entity_result: list of matching files that may belong in project
+    :type entity_result: list of strings
+    '''
+
+    # Call 'dx describe' with the project returned by
+    # resolve_existing_path as a hint.
+    #
+    # If the project in the hash returned by 'dx describe' fails
+    # to match the project provided in hint we know the project
+    # does not contain the specified file
+    #
+    describe = {'project': project}
+    resolver_kwargs = {}
+
+    for entity in entity_list:
+        desc = try_call(dxpy.DXHTTPRequest,
+                        '/' + entity['describe']['id'] + '/describe',
+                        describe,
+                        **resolver_kwargs)
+
+        # if output of 'dx describe' contains the requested file
+        # then we consider the project valid
+        if project == desc['project']:
+            return True
+
+    return False
 
 # Special characters in bash to be escaped: #?*: ;&`"'/!$({[<>|~
 def escaper(match):
