@@ -401,7 +401,11 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 # response.headers key lookup is case-insensitive
                 if response.headers.get('content-type', '').startswith('application/json'):
                     content = json.loads(response.data.decode('utf-8'))
-                    error_class = getattr(exceptions, content["error"]["type"], exceptions.DXAPIError)
+                    try:
+                        error_class = getattr(exceptions, content["error"]["type"], exceptions.DXAPIError)
+                    except (KeyError, AttributeError):
+                        error_class = exceptions.HTTPError(
+                            "Unable to extract error class from response")
                     raise error_class(content, response.status)
                 raise HTTPError("{} {}".format(response.status, response.reason))
 
