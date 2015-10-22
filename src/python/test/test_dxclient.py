@@ -3885,10 +3885,88 @@ class TestDXClientMembership(DXTestCase):
         membership = self._org_get_member_access(self.user_id)
         self.assertEqual(membership, exp_membership)
 
-        run("dx remove member {o} {u}".format(o=self.org_id, u=self.username))
+        run("dx remove member {o} {u} -y".format(o=self.org_id,
+                                                 u=self.username))
 
         with self.assertRaisesRegexp(DXAPIError, "404"):
             self._org_get_member_access(self.user_id)
+
+    def test_remove_membership_interactive_conf(self):
+        self._add_user(self.user_id)
+
+        exp_membership = {"user": self.user_id, "level": "ADMIN"}
+        membership = self._org_get_member_access(self.user_id)
+        self.assertEqual(membership, exp_membership)
+
+        dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(
+            o=self.org_id, u=self.username), logfile=sys.stderr)
+        dx_rm_member_int.expect("Please confirm")
+        dx_rm_member_int.sendline("")
+        dx_rm_member_int.expect("Please confirm")
+
+        membership = self._org_get_member_access(self.user_id)
+        self.assertEqual(membership, exp_membership)
+
+        dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(
+            o=self.org_id, u=self.username), logfile=sys.stderr)
+        dx_rm_member_int.expect("Please confirm")
+        dx_rm_member_int.sendintr()
+
+        membership = self._org_get_member_access(self.user_id)
+        self.assertEqual(membership, exp_membership)
+
+        dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(
+            o=self.org_id, u=self.username), logfile=sys.stderr)
+        dx_rm_member_int.expect("Please confirm")
+        dx_rm_member_int.sendline("n")
+        dx_rm_member_int.expect("Aborting removal")
+
+        membership = self._org_get_member_access(self.user_id)
+        self.assertEqual(membership, exp_membership)
+
+        dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(
+            o=self.org_id, u=self.username))
+        dx_rm_member_int.logfile = sys.stdout
+        dx_rm_member_int.expect("Please confirm")
+        dx_rm_member_int.sendline("y")
+        dx_rm_member_int.expect("Removed user-{u}".format(u=self.username))
+
+    def test_remove_membership_interactive_conf_format(self):
+        self._add_user(self.user_id)
+
+        exp_membership = {"user": self.user_id, "level": "ADMIN"}
+        membership = self._org_get_member_access(self.user_id)
+        self.assertEqual(membership, exp_membership)
+
+        project_id_1 = "project-000000000000000000000001"
+        prev_bill_to_1 = dxpy.api.project_describe(project_id_1, {"fields": {"billTo": True}})["billTo"]
+        dxpy.api.project_update(project_id_1, {"billTo": self.org_id})
+        project_permissions = dxpy.api.project_describe(project_id_1, {"fields": {"permissions": True}})["permissions"]
+        self.assertEqual(project_permissions[self.user_id], "VIEW")
+
+        project_id_2 = "project-000000000000000000000002"
+        prev_bill_to_2 = dxpy.api.project_describe(project_id_2, {"fields": {"billTo": True}})["billTo"]
+        dxpy.api.project_update(project_id_2, {"billTo": self.org_id})
+        dxpy.api.project_invite(project_id_2, {"invitee": self.user_id, "level": "ADMINISTER"})
+        project_permissions = dxpy.api.project_describe(project_id_2, {"fields": {"permissions": True}})["permissions"]
+        self.assertEqual(project_permissions[self.user_id], "ADMINISTER")
+
+        dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(
+            o=self.org_id, u=self.username))
+        dx_rm_member_int.logfile = sys.stdout
+        dx_rm_member_int.expect("Please confirm")
+        dx_rm_member_int.sendline("y")
+        dx_rm_member_int.expect("Removed user-{u}".format(u=self.username))
+        dx_rm_member_int.expect("Removed user-{u} from the following projects:".format(
+            u=self.username))
+        dx_rm_member_int.expect("\t" + project_id_1)
+        dx_rm_member_int.expect("\t" + project_id_2)
+        dx_rm_member_int.expect("Removed user-{u} from the following apps:".format(
+            u=self.username))
+        dx_rm_member_int.expect("None")
+
+        dxpy.api.project_update(project_id_1, {"billTo": prev_bill_to_1})
+        dxpy.api.project_update(project_id_2, {"billTo": prev_bill_to_2})
 
     def test_remove_membership_negative(self):
         cmd = "dx remove member"
@@ -3976,7 +4054,7 @@ class TestDXClientMembership(DXTestCase):
         membership = self._org_get_member_access(self.user_id)
         self.assertEqual(membership, exp_membership)
 
-        cmd = "dx remove member {o} {u}"
+        cmd = "dx remove member {o} {u} -y"
         run(cmd.format(o=self.org_id, u=self.username))
 
         with self.assertRaisesRegexp(DXAPIError, "404"):
