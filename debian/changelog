@@ -1,3 +1,9 @@
+dx-toolkit (0.167.0) precise; urgency=low
+
+  * Close connection to prevent running out of file handles in Java code
+
+ -- Phil Sung <psung@dnanexus.com>  Thu, 22 Oct 2015 22:04:46 +0000
+
 dx-toolkit (0.166.0) precise; urgency=low
 
   * PTFM-16383 disable flaky test until it can be fixed
