@@ -1090,6 +1090,14 @@ module DX
       return DX::http_request("/system/findProjectMembers", input_params, opts)
     end
 
+    # Invokes the /system/findOrgs API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/findOrgs
+    def self.system_find_orgs(input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/system/findOrgs", input_params, opts)
+    end
+
     # Invokes the /system/globalSearch API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/globalSearch

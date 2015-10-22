@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (C) 2013-2014 DNAnexus, Inc.
+# Copyright (C) 2013-2015 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #
@@ -670,6 +670,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                              do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
                              dx_toolkit_autodep="stable", do_check_syntax=True, dry_run=False,
                              return_object_dump=False, confirm=True, ensure_upload=False, **kwargs):
+
+    dxpy.app_builder.build(src_dir, parallel_build=do_parallel_build)
     app_json = _parse_app_spec(src_dir)
 
     _verify_app_source_dir(src_dir, mode, enforce=do_check_syntax)
@@ -716,8 +718,6 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 msg = "An applet already exists at {} (id {}) and neither".format(dest_path, result["id"])
                 msg += " -f/--overwrite nor -a/--archive were given."
                 raise dxpy.app_builder.AppBuilderException(msg)
-
-        dxpy.app_builder.build(src_dir, parallel_build=do_parallel_build)
 
         bundled_resources = dxpy.app_builder.upload_resources(src_dir,
                                                               project=working_project,

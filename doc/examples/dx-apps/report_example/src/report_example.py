@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (C) 2013-2014 DNAnexus, Inc.
+# Copyright (C) 2013-2015 DNAnexus, Inc.
 #
 # This file is part of a tutorial on integrating HTML-based reports into apps
 # to be run on the DNAnexus platform. Reproduction, modification, and distribution

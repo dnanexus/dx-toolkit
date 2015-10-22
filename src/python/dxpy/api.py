@@ -2432,6 +2432,24 @@ def system_find_project_members(input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/system/findProjectMembers', input_params, always_retry=always_retry, **kwargs)
 
+def systemFindOrgs(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`system_find_orgs()` instead.
+
+    """
+    print("dxpy.systemFindOrgs is deprecated; please use system_find_orgs instead.", file=sys.stderr)
+    return system_find_orgs(*args, **kwargs)
+
+def system_find_orgs(input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /system/findOrgs API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/findOrgs
+    """
+    return DXHTTPRequest('/system/findOrgs', input_params, always_retry=always_retry, **kwargs)
+
 def systemGlobalSearch(*args, **kwargs):
     """
 

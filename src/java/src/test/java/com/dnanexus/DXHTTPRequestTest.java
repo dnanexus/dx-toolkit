@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 DNAnexus, Inc.
+// Copyright (C) 2013-2015 DNAnexus, Inc.
 //
 // This file is part of dx-toolkit (DNAnexus platform client libraries).
 //
@@ -17,6 +17,13 @@
 package com.dnanexus;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -30,6 +37,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 
 /**
  * Tests for DXHTTPRequest and DXEnvironment.
@@ -63,6 +71,18 @@ public class DXHTTPRequestTest {
     private static class ComeBackLaterResponse {
         @JsonProperty
         private long currentTime;
+    }
+
+    @JsonInclude(Include.NON_NULL)
+    private static class WhoamiRequest {
+        @JsonProperty
+        private final boolean preauthenticated = true;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class WhoamiResponse {
+        @JsonProperty
+        private String id;
     }
 
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -167,6 +187,44 @@ public class DXHTTPRequestTest {
                         .put("auth_token", "abcdef").build(),
                 envWithDifferentToken.getSecurityContextJson());
 
+    }
+
+    /**
+     * Test that we don't exhaust file handles even when GC is slow to free up the DXHTTPRequest
+     * objects. That is, we must be responsible for closing the connections as soon as we are done
+     * with them.
+     *
+     * Note: this test doesn't seem to fail properly when the threads are unable to allocate more
+     * file handles. Instead, it hangs, so a reasonable timeout on the test at the top level may be
+     * sufficient to catch regressions. When the test passes, it takes about 13s on my machine.
+     */
+    @Test
+    public void testRequestResourceLeakage() throws InterruptedException, ExecutionException {
+        ExecutorService threadPool = Executors.newFixedThreadPool(200);
+
+        // Hang on to each DXHTTPRequest. This is our proxy to simulate a system where GC is not
+        // happening often enough to free up the file handles in a timely manner
+        List<DXHTTPRequest> requests = Lists.newArrayList();
+        List<Future<String>> futures = Lists.newArrayList();
+        for (int i = 0; i < 5000; ++i) {
+            final DXHTTPRequest req = new DXHTTPRequest();
+            requests.add(req);
+            Future<String> f = threadPool.submit(new Callable<String>() {
+                @Override
+                public String call() throws Exception {
+                    // Same as the implementation of DXAPI.systemWhoami, except allows us to hold on
+                    // to the DXHTTPRequest object being used.
+                    WhoamiResponse response = DXJSON.safeTreeToValue(req.request("/system/whoami",
+                            mapper.valueToTree(new WhoamiRequest()), RetryStrategy.SAFE_TO_RETRY),
+                            WhoamiResponse.class);
+                    return response.id;
+                }
+            });
+            futures.add(f);
+        }
+
+        threadPool.shutdown();
+        threadPool.awaitTermination(1000, TimeUnit.SECONDS);
     }
 
     /**

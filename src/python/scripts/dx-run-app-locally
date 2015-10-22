@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (C) 2013-2014 DNAnexus, Inc.
+# Copyright (C) 2013-2015 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #
@@ -28,6 +28,7 @@ from dxpy.utils.printing import *
 from dxpy.utils.describe import job_output_to_str, io_val_to_str
 from dxpy.cli import prompt_for_yn, INTERACTIVE_CLI
 from dxpy.cli.exec_io import *
+from dxpy.exceptions import err_exit
 from dxpy.scripts import dx_build_app
 import dxpy.utils.local_exec_utils as local_exec_utils
 from dxpy.compat import open, wrap_env_var_handlers
@@ -47,6 +48,9 @@ args = parser.parse_args()
 
 args.path = os.path.abspath(args.path)
 
+if dxpy.AUTH_HELPER is None:
+    err_exit("You must be logged in to the DNAnexus Platform to run this command; e.g. please run 'dx login'", code=3)
+
 # Do the equivalent of "dx build --dry-run" to do some basic checking
 with tempfile.TemporaryFile() as fd:
     print("About to run 'dx build --dry-run " + args.path + "'")
@@ -58,7 +62,7 @@ with tempfile.TemporaryFile() as fd:
     build_error = None
     try:
         dx_build_app.build_and_upload_locally(args.path, 'app', dry_run=True)
-    except Exception as e:
+    except BaseException as e:
         build_error = e
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
@@ -76,6 +80,9 @@ with open(path_to_dxapp_json, 'r') as fd:
     dxapp_json = json.load(fd)
 
 interpreter = dxapp_json['runSpec']['interpreter']
+
+if interpreter not in ('python2.7', 'bash'):
+    err_exit('Unknown interpreter {} in {}'.format(interpreter, path_to_dxapp_json), code=3)
 
 running_main = args.function == 'main'
 

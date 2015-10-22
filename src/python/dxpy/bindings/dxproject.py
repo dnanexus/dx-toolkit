@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2014 DNAnexus, Inc.
+# Copyright (C) 2013-2015 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #
@@ -314,19 +314,22 @@ class DXProject(DXContainer):
             update_hash["version"] = version
         dxpy.api.project_update(self._dxid, update_hash, **kwargs)
 
-    def invite(self, invitee, level, **kwargs):
+    def invite(self, invitee, level, send_email=True, **kwargs):
         """
         :param invitee: Username (of the form "user-USERNAME") or email address of person to be invited to the project; use "PUBLIC" to make the project publicly available (in which case level must be set to "VIEW").
         :type invitee: string
         :param level: Permissions level that the invitee would get ("VIEW", "UPLOAD", "CONTRIBUTE", or "ADMINISTER")
         :type level: string
+        :param send_email: Determines whether user receives email notifications regarding the project invitation
+        :type send_email: boolean
 
         Invites the specified user to have access to the project.
 
         """
 
         return dxpy.api.project_invite(self._dxid,
-                                       {"invitee": invitee, "level": level},
+                                       {"invitee": invitee, "level": level,
+                                        "suppressEmailNotification": not send_email},
                                        **kwargs)
 
     def decrease_perms(self, member, level, **kwargs):

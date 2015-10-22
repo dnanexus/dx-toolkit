@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2014 DNAnexus, Inc.
+# Copyright (C) 2013-2015 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #
@@ -663,4 +663,4 @@ from .dxworkflow import DXWorkflow, new_dxworkflow
 from .auth import user_info, whoami
 from .dxdataobject_functions import dxlink, is_dxlink, get_dxlink_ids, get_handler, describe, get_details, remove
 from .search import (find_data_objects, find_executions, find_jobs, find_analyses, find_projects, find_apps,
-                     find_one_data_object, find_one_project, find_one_app, resolve_data_objects)
+                     find_one_data_object, find_one_project, find_one_app, resolve_data_objects, find_orgs)

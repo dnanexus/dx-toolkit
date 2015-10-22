@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 DNAnexus, Inc.
+// Copyright (C) 2013-2015 DNAnexus, Inc.
 //
 // This file is part of dx-toolkit (DNAnexus platform client libraries).
 //
@@ -77,7 +77,7 @@ public class DXWorkflowTest {
     @After
     public void tearDown() {
         if (testProject != null) {
-            testProject.destroy();
+            testProject.destroy(true);
         }
     }
 

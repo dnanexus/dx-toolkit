@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 DNAnexus, Inc.
+// Copyright (C) 2013-2015 DNAnexus, Inc.
 //
 // This file is part of dx-toolkit (DNAnexus platform client libraries).
 //
@@ -225,6 +225,7 @@ public class DXHTTPRequest {
         }
 
         request.setHeader("Content-Type", "application/json");
+        request.setHeader("Connection", "close");
         request.setHeader("Authorization", securityContext.get("auth_token_type").textValue() + " "
                 + securityContext.get("auth_token").textValue());
         request.setEntity(new StringEntity(data, Charset.forName("UTF-8")));

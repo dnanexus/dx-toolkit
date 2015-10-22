@@ -1,3 +1,7 @@
+DNAnexus Upload Agent 1.5.11 <support@dnanexus.com>, 2015-Sep-16
+----------------------------------------------------------------
+  * PTFM-16030 Support proxy S3 API endpoints in UA
+
 DNAnexus Upload Agent 1.5.10 <support@dnanexus.com>, 2015-Jul-01
 ----------------------------------------------------------------
   * Use upload API v2

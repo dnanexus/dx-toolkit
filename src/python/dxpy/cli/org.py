@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2014 DNAnexus, Inc.
+# Copyright (C) 2013-2015 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #
@@ -22,7 +22,8 @@ from __future__ import (print_function, unicode_literals)
 
 import dxpy
 from ..exceptions import DXCLIError
-from dxpy.utils.printing import (fill)
+from dxpy.utils.printing import (fill, DELIMITER)
+import json
 
 
 def get_org_invite_args(args):
@@ -84,8 +85,9 @@ def remove_membership(args):
     if args.brief:
         print(result["id"])
     else:
-        print(fill("Removed user-{u} from {o}".format(u=args.username,
-                                                      o=args.org_id)))
+        print(fill("Removed user-{u} from {o}. user-{u} has been removed from the following projects {p}. user-{u} has been removed from the following apps {a}.".format(
+          u=args.username, o=args.org_id, p=result["projects"].keys(),
+          a=result["apps"].keys())))
 
 
 def _get_org_set_member_access_args(args):
@@ -112,3 +114,32 @@ def update_membership(args):
     else:
         print(fill("Updated membership of user-{u} in {o}".format(
             u=args.username, o=args.org_id)))
+
+
+def _get_find_orgs_args(args):
+    find_orgs_input = {"level": args.level}
+
+    if args.with_billable_activities is not None:
+        find_orgs_input["createProjectsAndApps"] = args.with_billable_activities
+
+    if not args.brief:
+        find_orgs_input["describe"] = True
+
+    return {"query": find_orgs_input}
+
+
+def find_orgs(args):
+    res_iter = dxpy.find_orgs(_get_find_orgs_args(args)["query"])
+
+    if args.json:
+        print(json.dumps(list(res_iter)))
+    elif args.brief:
+        for res in res_iter:
+            print(res["id"])
+    else:
+        for res in res_iter:
+            print("{o}{d1}{n}".format(
+                o=res["id"],
+                d1=(DELIMITER(args.delimiter) if args.delimiter else " : "),
+                n=res["describe"]["name"]
+            ))

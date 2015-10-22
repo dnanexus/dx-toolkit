@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2014 DNAnexus, Inc.
+# Copyright (C) 2013-2015 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #
@@ -41,20 +41,20 @@ class DXLogHandler(SysLogHandler):
     def __init__(self, priority_log_address="/opt/dnanexus/log/priority",
                  bulk_log_address="/opt/dnanexus/log/bulk",
                  source="DX_APP"):
+        logging.Handler.__init__(self)
+
+        self.priority_log_address = priority_log_address
+        self.priority_log_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+
+        self.bulk_log_address = bulk_log_address
+        self.bulk_log_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
 
         if not os.path.exists(priority_log_address):
             raise DXError("The path %s does not exist, but is required for application logging" % (priority_log_address))
         if not os.path.exists(bulk_log_address):
             raise DXError("The path %s does not exist, but is required for application logging" % (bulk_log_address))
 
-        logging.Handler.__init__(self)
-
-        self.priority_log_address = priority_log_address
-        self.priority_log_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         self.priority_log_socket.connect(priority_log_address)
-
-        self.bulk_log_address = bulk_log_address
-        self.bulk_log_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         self.bulk_log_socket.connect(bulk_log_address)
 
         self.source = source

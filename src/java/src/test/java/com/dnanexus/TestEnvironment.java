@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 DNAnexus, Inc.
+// Copyright (C) 2013-2015 DNAnexus, Inc.
 //
 // This file is part of dx-toolkit (DNAnexus platform client libraries).
 //
@@ -42,7 +42,7 @@ public class TestEnvironment {
          * initializable in an environment where no app of that name currently exists, so it must be
          * possible to clean the environment before the tests start.
          */
-        CREATE_APPS("DXTEST_CREATE_APPS"),
+        CREATE_APPS("DXTEST_ISOLATED_ENV"),
 
         /**
          * Run tests that use a FUSE filesystem.

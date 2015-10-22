@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2014 DNAnexus, Inc.
+# Copyright (C) 2013-2015 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #
@@ -22,12 +22,21 @@ The following helper functions are useful shortcuts for interacting with File ob
 
 '''
 
-from __future__ import (print_function, unicode_literals)
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import os, sys, math, mmap, stat
+import hashlib
+import traceback
+import warnings
+from collections import defaultdict
 
 import dxpy
+from .. import logger, DXHTTPRequest
 from . import dxfile, DXFile
+from .dxfile import FILE_REQUEST_TIMEOUT
+from ..compat import open
+from ..exceptions import DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError
+from ..utils import response_iterator
 
 def open_dxfile(dxid, project=None, read_buffer_size=dxfile.DEFAULT_BUFFER_SIZE):
     '''
@@ -79,18 +88,19 @@ def new_dxfile(mode=None, write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE, **kwargs
     dx_file.new(**kwargs)
     return dx_file
 
+_download_retry_counter = defaultdict(lambda: 3)
+
 def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
                     project=None, **kwargs):
     '''
-    :param dxid: Remote file ID
-    :type dxid: string
+    :param dxid: DNAnexus file ID or DXFile (file handler) object
+    :type dxid: string or DXFile
     :param filename: Local filename
     :type filename: string
     :param append: If True, appends to the local file (default is to truncate local file if it exists)
     :type append: boolean
 
-    Downloads the remote file with object ID *dxid* and saves it to
-    *filename*.
+    Downloads the remote file referenced by *dxid* and saves it to *filename*.
 
     Example::
 
@@ -98,7 +108,7 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
 
     '''
 
-    def print_progress(bytes_downloaded, file_size):
+    def print_progress(bytes_downloaded, file_size, action="Downloaded"):
         num_ticks = 60
 
         effective_file_size = file_size or 1
@@ -108,39 +118,145 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
         ticks = int(round((bytes_downloaded / float(effective_file_size)) * num_ticks))
         percent = int(round((bytes_downloaded / float(effective_file_size)) * 100))
 
-        fmt = "[{done}{pending}] Downloaded {done_bytes:,}{remaining} bytes ({percent}%) {name}"
-        sys.stderr.write(fmt.format(done=('=' * (ticks - 1) + '>') if ticks > 0 else '',
-                                    pending=' ' * (num_ticks - ticks),
+        fmt = "[{done}{pending}] {action} {done_bytes:,}{remaining} bytes ({percent}%) {name}"
+        sys.stderr.write(fmt.format(action=action,
+                                    done=("=" * (ticks - 1) + ">") if ticks > 0 else "",
+                                    pending=" " * (num_ticks - ticks),
                                     done_bytes=bytes_downloaded,
-                                    remaining=' of {size:,}'.format(size=file_size) if file_size else "",
+                                    remaining=" of {size:,}".format(size=file_size) if file_size else "",
                                     percent=percent,
                                     name=filename))
         sys.stderr.flush()
         sys.stderr.write("\r")
         sys.stderr.flush()
 
-    file_size = None
     _bytes = 0
 
-    mode = 'ab' if append else 'wb'
-    with DXFile(dxid, mode='r', project=project, read_buffer_size=chunksize) as dxfile, open(filename, mode) as fd:
-        if show_progress:
-            print_progress(0, None)
-        while True:
-            file_content = dxfile.read(chunksize, project=project, **kwargs)
-            if file_size is None:
-                file_size = dxfile._file_length
+    if isinstance(dxid, DXFile):
+        dxfile = dxid
+    else:
+        dxfile = DXFile(dxid, mode="r", project=project)
 
+    dxfile_desc = dxfile.describe(fields={"parts"}, default_fields=True, **kwargs)
+    parts = dxfile_desc["parts"]
+    parts_to_get = sorted(parts, key=int)
+    file_size = dxfile_desc.get("size")
+
+    # Warm up the download URL cache in the file handler, to avoid all
+    # worker threads trying to fetch it simultaneously
+    dxfile.get_download_url(project=project, **kwargs)
+
+    offset = 0
+    for part_id in parts_to_get:
+        parts[part_id]["start"] = offset
+        offset += parts[part_id]["size"]
+
+    if append:
+        fh = open(filename, "ab")
+    else:
+        try:
+            fh = open(filename, "rb+")
+        except IOError:
+            fh = open(filename, "wb")
+
+    if show_progress:
+        print_progress(0, None)
+
+    if fh.mode == "rb+":
+        last_verified_part, last_verified_pos, max_verify_chunk_size = None, 0, 1024*1024
+        try:
+            for part_id in parts_to_get:
+                part_info = parts[part_id]
+                if "md5" not in part_info:
+                    raise DXFileError("File {} does not contain part md5 checksums".format(dxfile.get_id()))
+                bytes_to_read = part_info["size"]
+                hasher = hashlib.md5()
+                while bytes_to_read > 0:
+                    chunk = fh.read(min(max_verify_chunk_size, bytes_to_read))
+                    if len(chunk) < min(max_verify_chunk_size, bytes_to_read):
+                        raise DXFileError("Local data for part {} is truncated".format(part_id))
+                    hasher.update(chunk)
+                    bytes_to_read -= max_verify_chunk_size
+                if hasher.hexdigest() != part_info["md5"]:
+                    raise DXFileError("Checksum mismatch when verifying downloaded part {}".format(part_id))
+                else:
+                    last_verified_part = part_id
+                    last_verified_pos = fh.tell()
+                    if show_progress:
+                        _bytes += part_info["size"]
+                        print_progress(_bytes, file_size, action="Verified")
+        except (IOError, DXFileError) as e:
+            logger.debug(e)
+        fh.seek(last_verified_pos)
+        fh.truncate()
+        if last_verified_part is not None:
+            del parts_to_get[:parts_to_get.index(last_verified_part)+1]
+        if show_progress and len(parts_to_get) < len(parts):
+            print_progress(last_verified_pos, file_size, action="Resuming at")
+        logger.debug("Verified %s/%d downloaded parts", last_verified_part, len(parts_to_get))
+
+    def get_chunk(part_id, start, end):
+        url, headers = dxfile.get_download_url(project=project, **kwargs)
+        # If we're fetching the whole object in one shot, avoid setting the Range header to take advantage of gzip
+        # transfer compression
+        if len(parts) > 1 or end - start + 1 < parts[part_id]["size"]:
+            headers["Range"] = "bytes={}-{}".format(start, end)
+        data = DXHTTPRequest(url, b"", method="GET", headers=headers, auth=None, jsonify_data=False,
+                             prepend_srv=False, always_retry=True, timeout=FILE_REQUEST_TIMEOUT,
+                             decode_response_body=False)
+        return part_id, data
+
+    def chunk_requests():
+        for part_id in parts_to_get:
+            part_info = parts[part_id]
+            for chunk_start in range(part_info["start"], part_info["start"] + part_info["size"], chunksize):
+                chunk_end = min(chunk_start + chunksize, part_info["start"] + part_info["size"]) - 1
+                yield get_chunk, [part_id, chunk_start, chunk_end], {}
+
+    def verify_part(part_id, got_bytes, hasher):
+        if got_bytes is not None and got_bytes != parts[part_id]["size"]:
+            msg = "Unexpected part data size in {} part {} (expected {}, got {})"
+            msg = msg.format(dxfile.get_id(), part_id, parts[part_id]["size"], got_bytes)
+            raise DXPartLengthMismatchError(msg)
+        if hasher is not None and "md5" not in parts[part_id]:
+            warnings.warn("Download of file {} is not being checked for integrity".format(dxfile.get_id()))
+        elif hasher is not None and hasher.hexdigest() != parts[part_id]["md5"]:
+            msg = "Checksum mismatch in {} part {} (expected {}, got {})"
+            msg = msg.format(dxfile.get_id(), part_id, parts[part_id]["md5"], hasher.hexdigest())
+            raise DXChecksumMismatchError(msg)
+
+    try:
+        cur_part, got_bytes, hasher = None, None, None
+        dxfile._ensure_http_threadpool()
+        for chunk_part, chunk_data in response_iterator(chunk_requests(), dxfile._http_threadpool):
+            if chunk_part != cur_part:
+                verify_part(cur_part, got_bytes, hasher)
+                cur_part, got_bytes, hasher = chunk_part, 0, hashlib.md5()
+            got_bytes += len(chunk_data)
+            hasher.update(chunk_data)
+            fh.write(chunk_data)
             if show_progress:
-                _bytes += len(file_content)
+                _bytes += len(chunk_data)
                 print_progress(_bytes, file_size)
+        verify_part(cur_part, got_bytes, hasher)
+        if show_progress:
+            print_progress(_bytes, file_size, action="Completed")
+    except DXFileError:
+        part_gid = dxfile.get_id() + str(cur_part)
+        print(traceback.format_exc(), file=sys.stderr)
+        _download_retry_counter[part_gid] -= 1
+        if _download_retry_counter[part_gid] > 0:
+            print("Retrying {} ({} tries remain)".format(dxfile.get_id(), _download_retry_counter[part_gid]),
+                  file=sys.stderr)
+            return download_dxfile(dxfile, filename, chunksize=chunksize, append=append,
+                                   show_progress=show_progress, project=project, **kwargs)
+        raise
 
-            if len(file_content) == 0:
-                if show_progress:
-                    sys.stderr.write("\n")
-                break
+    if show_progress:
+        sys.stderr.write("\n")
 
-            fd.write(file_content)
+    fh.close()
+
 
 def _get_buffer_size_for_file(file_size, file_is_mmapd=False):
     """Returns an upload buffer size that is appropriate to use for a file

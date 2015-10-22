@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2013-2014 DNAnexus, Inc.
+# Copyright (C) 2013-2015 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #
@@ -96,13 +96,6 @@ class TestResponseIterator(unittest.TestCase):
         for i, res in enumerate(response_iterator(tasks(), get_futures_threadpool(5), max_active_tasks=2)):
             self.assertEqual(i, res)
         for i, res in enumerate(response_iterator(tasks(), get_futures_threadpool(5), max_active_tasks=6)):
-            self.assertEqual(i, res)
-
-        def tasks2():
-            for i in range(8):
-                yield task, [i], {"sleep_for": (8-i)/8.0}
-
-        for i, res in enumerate(response_iterator(tasks2(), get_futures_threadpool(5), num_retries=2, retry_after=0.1)):
             self.assertEqual(i, res)
 
 class TestDXUtils(unittest.TestCase):
