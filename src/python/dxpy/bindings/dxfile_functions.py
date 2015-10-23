@@ -99,6 +99,11 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
     :type filename: string
     :param append: If True, appends to the local file (default is to truncate local file if it exists)
     :type append: boolean
+    :param project: project to use as context for this download (may affect
+            which billing account is billed for this download). If None, no
+            project hint is supplied to the API server.
+    :type project: str or None
+
 
     Downloads the remote file referenced by *dxid* and saves it to *filename*.
 
@@ -135,7 +140,7 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
     if isinstance(dxid, DXFile):
         dxfile = dxid
     else:
-        dxfile = DXFile(dxid, mode="r", project=project)
+        dxfile = DXFile(dxid, mode="r")
 
     dxfile_desc = dxfile.describe(fields={"parts"}, default_fields=True, **kwargs)
     parts = dxfile_desc["parts"]
