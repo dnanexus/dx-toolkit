@@ -550,6 +550,8 @@ class DXFile(DXDataObject):
         return self._download_url, self._download_url_headers
 
     def _generate_read_requests(self, start_pos=0, end_pos=None, project=None, **kwargs):
+        # project=None means no hint is to be supplied to the apiserver
+
         if self._file_length == None:
             desc = self.describe(**kwargs)
             self._file_length = int(desc["size"])
