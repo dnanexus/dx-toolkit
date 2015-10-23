@@ -1403,10 +1403,10 @@ class TestDXClientDownloadDataEgressBilling(DXTestCase):
     def setUp(self):
         self.temp_file_fd = tempfile.TemporaryFile()
         # set output file to verify api call is called with correct project
-        os.environ['DX_DEBUG_FILE'] = self.temp_file_fd.name
+        os.environ['_DX_DUMP_BILLED_PROJECT'] = self.temp_file_fd.name
 
     def tearDown(self):
-        del os.environ['DX_DEBUG_FILE']
+        del os.environ['_DX_DUMP_BILLED_PROJECT']
         self.temp_file_fd.close()
 
     @unittest.skipUnless(testutil.TEST_ENV,

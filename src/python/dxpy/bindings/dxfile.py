@@ -521,9 +521,10 @@ class DXFile(DXDataObject):
         Obtains a URL that can be used to directly download the
         associated file.
         """
-        # Test hook to write 'project' argument passed to API call to a local file
-        if 'DX_DEBUG_FILE' in os.environ:
-            with open(os.environ['DX_DEBUG_FILE'], "w") as fd:
+        # Test hook to write 'project' argument passed to API call to a
+        # local file
+        if '_DX_DUMP_BILLED_PROJECT' in os.environ:
+            with open(os.environ['_DX_DUMP_BILLED_PROJECT'], "w") as fd:
                 if project is not None:
                     fd.write(project)
 
