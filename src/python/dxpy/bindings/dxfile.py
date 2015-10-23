@@ -507,19 +507,25 @@ class DXFile(DXDataObject):
 
     def get_download_url(self, duration=24*3600, preauthenticated=False, filename=None, project=None, **kwargs):
         """
-        :param duration: number of seconds for which the generated URL will be valid
+        :param duration: number of seconds for which the generated URL will be
+                valid
         :type duration: int
-        :param preauthenticated: if True, generates a 'preauthenticated' download URL, which embeds authentication info in the URL and does not require additional headers
+        :param preauthenticated: if True, generates a 'preauthenticated'
+                download URL, which embeds authentication info in the URL and
+                does not require additional headers
         :type preauthenticated: bool
         :param filename: desired filename of the downloaded file
         :type filename: str
-        :param project: ID of a project containing the file (the download URL should be associated with this project)
-        :type project: str
-        :returns: download URL and dict containing HTTP headers to be supplied with the request
+        :param project: project to use as context for this download (may affect
+                which billing account is billed for this download). If None, no
+                hint is supplied to the API server.
+        :type project: str or None
+        :returns: download URL and dict containing HTTP headers to be supplied
+                with the request
         :rtype: tuple (str, dict)
 
-        Obtains a URL that can be used to directly download the
-        associated file.
+        Obtains a URL that can be used to directly download the associated
+        file.
         """
         # Test hook to write 'project' argument passed to API call to a
         # local file
