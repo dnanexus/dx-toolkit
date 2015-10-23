@@ -1175,6 +1175,224 @@ class TestDXClientUploadDownload(DXTestCase):
                 run('dx download ' + file_id + ' -o ' + output_path)
             run('cmp ' + output_path + ' ' + fd.name)
 
+    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
+    def test_dx_upload_no_env(self):
+        # Without project context, cannot upload to a
+        # non-project-qualified destination
+        with without_project_context():
+            with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=3):
+                run("dx upload --path foo /dev/null")
+            # Can upload to a path specified with explicit project qualifier
+            file_id = run("dx upload --brief --path " + self.project + ":foo /dev/null").strip()
+            self.assertEqual(dxpy.DXFile(file_id).name, "foo")
+
+    def test_dx_make_download_url(self):
+        testdir = tempfile.mkdtemp()
+        output_testdir = tempfile.mkdtemp()
+        with tempfile.NamedTemporaryFile(dir=testdir) as fd:
+            fd.write("foo")
+            fd.flush()
+            file_id = run("dx upload " + fd.name + " --brief --wait").strip()
+            self.assertTrue(file_id.startswith('file-'))
+
+            # download file
+            download_url = run("dx make_download_url " + file_id).strip()
+            run("wget -P " + output_testdir + " " + download_url)
+            run('cmp ' + os.path.join(output_testdir, os.path.basename(fd.name)) + ' ' + fd.name)
+
+            # download file with a different name
+            download_url = run("dx make_download_url " + file_id + " --filename foo")
+            run("wget -P " + output_testdir + " " + download_url)
+            run('cmp ' + os.path.join(output_testdir, "foo") + ' ' + fd.name)
+
+    def test_dx_upload_mult_paths(self):
+        testdir = tempfile.mkdtemp()
+        os.mkdir(os.path.join(testdir, 'a'))
+        with tempfile.NamedTemporaryFile(dir=testdir) as fd:
+            fd.write("root-file")
+            fd.flush()
+            with tempfile.NamedTemporaryFile(dir=os.path.join(testdir, "a")) as fd2:
+                fd2.write("a-file")
+                fd2.flush()
+
+                run(("dx upload -r {testdir}/{rootfile} {testdir}/a " +
+                     "--wait").format(testdir=testdir, rootfile=os.path.basename(fd.name)))
+                listing = run("dx ls").split("\n")
+                self.assertIn("a/", listing)
+                self.assertIn(os.path.basename(fd.name), listing)
+                listing = run("dx ls a").split("\n")
+                self.assertIn(os.path.basename(fd2.name), listing)
+
+    def test_dx_upload_mult_paths_with_dest(self):
+        testdir = tempfile.mkdtemp()
+        os.mkdir(os.path.join(testdir, 'a'))
+        with tempfile.NamedTemporaryFile(dir=testdir) as fd:
+            fd.write("root-file")
+            fd.flush()
+            with tempfile.NamedTemporaryFile(dir=os.path.join(testdir, "a")) as fd2:
+                fd2.write("a-file")
+                fd2.flush()
+
+                run("dx mkdir /destdir")
+                run(("dx upload -r {testdir}/{rootfile} {testdir}/a --destination /destdir " +
+                     "--wait").format(testdir=testdir, rootfile=os.path.basename(fd.name)))
+                listing = run("dx ls /destdir/").split("\n")
+                self.assertIn("a/", listing)
+                self.assertIn(os.path.basename(fd.name), listing)
+                listing = run("dx ls /destdir/a").split("\n")
+                self.assertIn(os.path.basename(fd2.name), listing)
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
+    def test_dx_download_by_job_id_and_output_field(self):
+        test_project_name = 'PTFM-13437'
+        test_file_name = 'test_file_01'
+        expected_result = 'asdf1234...'
+        with temporary_project(test_project_name, select=True) as temp_project:
+            temp_project_id = temp_project.get_id()
+
+            # Create and run minimal applet to generate output file.
+            code_str = """import dxpy
+@dxpy.entry_point('main')
+def main():
+    test_file_01 = dxpy.upload_string('{exp_res}', name='{filename}')
+    output = {{}}
+    output['{filename}'] = dxpy.dxlink(test_file_01)
+    return output
+dxpy.run()
+"""
+            code_str = code_str.format(exp_res=expected_result, filename=test_file_name)
+            app_spec = {"name": "test_applet_dx_download_by_jbor",
+                        "project": temp_project_id,
+                        "dxapi": "1.0.0",
+                        "inputSpec": [],
+                        "outputSpec": [{"name": test_file_name, "class": "file"}],
+                        "runSpec": {"code": code_str, "interpreter": "python2.7"},
+                        "version": "1.0.0"}
+            applet_id = dxpy.api.applet_new(app_spec)['id']
+            applet = dxpy.DXApplet(applet_id)
+            job = applet.run({}, project=temp_project_id)
+            job.wait_on_done()
+            job_id = job.get_id()
+
+            # Case: Correctly specify "<job_id>:<output_field>"; save to file.
+            with chdir(tempfile.mkdtemp()):
+                run("dx download " + job_id + ":" + test_file_name)
+                with open(test_file_name) as fh:
+                    result = fh.read()
+                    self.assertEqual(expected_result, result)
+
+            # Case: Correctly specify file id; print to stdout.
+            test_file_id = dxpy.DXFile(job.describe()['output'][test_file_name]).get_id()
+            result = run("dx download " + test_file_id + " -o -").strip()
+            self.assertEqual(expected_result, result)
+
+            # Case: Correctly specify file name; print to stdout.
+            result = run("dx download " + test_file_name + " -o -").strip()
+            self.assertEqual(expected_result, result)
+
+            # Case: Correctly specify "<job_id>:<output_field>"; print to stdout.
+            result = run("dx download " + job_id + ":" + test_file_name + " -o -").strip()
+            self.assertEqual(expected_result, result)
+
+            # Case: File does not exist.
+            with self.assertSubprocessFailure(stderr_regexp="Unable to resolve", exit_code=3):
+                run("dx download foo -o -")
+
+            # Case: Invalid output field name when specifying <job_id>:<output_field>.
+            with self.assertSubprocessFailure(stderr_regexp="Could not find", exit_code=3):
+                run("dx download " + job_id + ":foo -o -")
+
+    # In a directory structure like:
+    # ROOT/
+    #      X.txt
+    #      A/
+    #      B/
+    # Make sure that files/subdirs are not downloaded twice. This checks that we fixed
+    # PTFM-14106.
+    def test_dx_download_root_recursive(self):
+        data = "ABCD"
+
+        def gen_file(fname, proj_id):
+            dxfile = dxpy.upload_string(data, name=fname, project=proj_id, wait_on_close=True)
+            return dxfile
+
+        # Download the project recursively, with command [cmd_string].
+        # Compare the downloaded directory against the first download
+        # structure.
+        def test_download_cmd(org_dir, cmd_string):
+            testdir = tempfile.mkdtemp()
+            with chdir(testdir):
+                run(cmd_string)
+                run("diff -Naur {} {}".format(org_dir, testdir))
+                shutil.rmtree(testdir)
+
+        with temporary_project('test_proj', select=True) as temp_project:
+            proj_id = temp_project.get_id()
+            gen_file("X.txt", proj_id)
+            dxpy.api.project_new_folder(proj_id, {"folder": "/A"})
+            dxpy.api.project_new_folder(proj_id, {"folder": "/B"})
+
+            # Create an entire copy of the project directory structure,
+            # which will be compared to all other downloads.
+            orig_dir = tempfile.mkdtemp()
+            with chdir(orig_dir):
+                run("dx download -r {}:/".format(proj_id))
+
+            test_download_cmd(orig_dir, "dx download -r /")
+            test_download_cmd(orig_dir, "dx download -r {}:/*".format(proj_id))
+            test_download_cmd(orig_dir, "dx download -r *")
+
+            shutil.rmtree(orig_dir)
+
+    # Test download to stdout
+    def test_download_to_stdout(self):
+        data = "ABCD"
+
+        def gen_file(fname, proj_id):
+            dxfile = dxpy.upload_string(data, name=fname, project=proj_id, wait_on_close=True)
+            return dxfile
+
+        with temporary_project('test_proj', select=True) as temp_project:
+            proj_id = temp_project.get_id()
+            gen_file("X.txt", proj_id)
+            buf = run("dx download -o - X.txt")
+            self.assertEqual(buf, data)
+
+    def test_dx_download_resume_and_checksum(self):
+        def assert_md5_checksum(filename, hasher):
+            with open(filename, "rb") as fh:
+                self.assertEqual(hashlib.md5(fh.read()).hexdigest(), hasher.hexdigest())
+
+        def truncate(filename, size):
+            with open(filename, "rb+") as fh:
+                fh.seek(size)
+                fh.truncate()
+
+        # Manually upload 2 parts
+        part1, part2 = b"0123456789ABCDEF"*1024*64*5, b"0"
+        dxfile = dxpy.new_dxfile(name="test")
+        dxfile.upload_part(part1, index=1)
+        dxfile.upload_part(part2, index=2)
+        dxfile.close(block=True)
+
+        wd = tempfile.mkdtemp()
+        run("cd {wd}; dx download test; ls -la".format(wd=wd))
+        assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
+        truncate(os.path.join(wd, "test"), 1024*1024*5)
+        run("cd {wd}; dx download -f test".format(wd=wd))
+        assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
+        truncate(os.path.join(wd, "test"), 1024*1024*5 - 1)
+        run("cd {wd}; dx download -f test".format(wd=wd))
+        assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
+        truncate(os.path.join(wd, "test"), 1)
+        run("cd {wd}; dx download -f test".format(wd=wd))
+        assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
+        run("cd {wd}; rm test; touch test".format(wd=wd))
+        run("cd {wd}; dx download -f test".format(wd=wd))
+        assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
+
+
+class TestDXClientDownloadDataEgressBilling(DXTestCase):
     def test_dx_download_multiple_projects_same_name(self):
         def gen_file(fname, data, proj_id):
             dxfile = dxpy.upload_string(data, name=fname, project=proj_id, wait_on_close=True)
@@ -1428,222 +1646,6 @@ class TestDXClientUploadDownload(DXTestCase):
             # Failure: project specified by name does not contain file specifed by name
             with self.assertSubprocessFailure(stderr_regexp="Unable to resolve", exit_code=3):
                 run("dx download -f --no-progress {p}:{f}".format(p=proj1_name, f=file2_name), env=os.environ)
-
-    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
-    def test_dx_upload_no_env(self):
-        # Without project context, cannot upload to a
-        # non-project-qualified destination
-        with without_project_context():
-            with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=3):
-                run("dx upload --path foo /dev/null")
-            # Can upload to a path specified with explicit project qualifier
-            file_id = run("dx upload --brief --path " + self.project + ":foo /dev/null").strip()
-            self.assertEqual(dxpy.DXFile(file_id).name, "foo")
-
-    def test_dx_make_download_url(self):
-        testdir = tempfile.mkdtemp()
-        output_testdir = tempfile.mkdtemp()
-        with tempfile.NamedTemporaryFile(dir=testdir) as fd:
-            fd.write("foo")
-            fd.flush()
-            file_id = run("dx upload " + fd.name + " --brief --wait").strip()
-            self.assertTrue(file_id.startswith('file-'))
-
-            # download file
-            download_url = run("dx make_download_url " + file_id).strip()
-            run("wget -P " + output_testdir + " " + download_url)
-            run('cmp ' + os.path.join(output_testdir, os.path.basename(fd.name)) + ' ' + fd.name)
-
-            # download file with a different name
-            download_url = run("dx make_download_url " + file_id + " --filename foo")
-            run("wget -P " + output_testdir + " " + download_url)
-            run('cmp ' + os.path.join(output_testdir, "foo") + ' ' + fd.name)
-
-    def test_dx_upload_mult_paths(self):
-        testdir = tempfile.mkdtemp()
-        os.mkdir(os.path.join(testdir, 'a'))
-        with tempfile.NamedTemporaryFile(dir=testdir) as fd:
-            fd.write("root-file")
-            fd.flush()
-            with tempfile.NamedTemporaryFile(dir=os.path.join(testdir, "a")) as fd2:
-                fd2.write("a-file")
-                fd2.flush()
-
-                run(("dx upload -r {testdir}/{rootfile} {testdir}/a " +
-                     "--wait").format(testdir=testdir, rootfile=os.path.basename(fd.name)))
-                listing = run("dx ls").split("\n")
-                self.assertIn("a/", listing)
-                self.assertIn(os.path.basename(fd.name), listing)
-                listing = run("dx ls a").split("\n")
-                self.assertIn(os.path.basename(fd2.name), listing)
-
-    def test_dx_upload_mult_paths_with_dest(self):
-        testdir = tempfile.mkdtemp()
-        os.mkdir(os.path.join(testdir, 'a'))
-        with tempfile.NamedTemporaryFile(dir=testdir) as fd:
-            fd.write("root-file")
-            fd.flush()
-            with tempfile.NamedTemporaryFile(dir=os.path.join(testdir, "a")) as fd2:
-                fd2.write("a-file")
-                fd2.flush()
-
-                run("dx mkdir /destdir")
-                run(("dx upload -r {testdir}/{rootfile} {testdir}/a --destination /destdir " +
-                     "--wait").format(testdir=testdir, rootfile=os.path.basename(fd.name)))
-                listing = run("dx ls /destdir/").split("\n")
-                self.assertIn("a/", listing)
-                self.assertIn(os.path.basename(fd.name), listing)
-                listing = run("dx ls /destdir/a").split("\n")
-                self.assertIn(os.path.basename(fd2.name), listing)
-
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
-    def test_dx_download_by_job_id_and_output_field(self):
-        test_project_name = 'PTFM-13437'
-        test_file_name = 'test_file_01'
-        expected_result = 'asdf1234...'
-        with temporary_project(test_project_name, select=True) as temp_project:
-            temp_project_id = temp_project.get_id()
-
-            # Create and run minimal applet to generate output file.
-            code_str = """import dxpy
-@dxpy.entry_point('main')
-def main():
-    test_file_01 = dxpy.upload_string('{exp_res}', name='{filename}')
-    output = {{}}
-    output['{filename}'] = dxpy.dxlink(test_file_01)
-    return output
-dxpy.run()
-"""
-            code_str = code_str.format(exp_res=expected_result, filename=test_file_name)
-            app_spec = {"name": "test_applet_dx_download_by_jbor",
-                        "project": temp_project_id,
-                        "dxapi": "1.0.0",
-                        "inputSpec": [],
-                        "outputSpec": [{"name": test_file_name, "class": "file"}],
-                        "runSpec": {"code": code_str, "interpreter": "python2.7"},
-                        "version": "1.0.0"}
-            applet_id = dxpy.api.applet_new(app_spec)['id']
-            applet = dxpy.DXApplet(applet_id)
-            job = applet.run({}, project=temp_project_id)
-            job.wait_on_done()
-            job_id = job.get_id()
-
-            # Case: Correctly specify "<job_id>:<output_field>"; save to file.
-            with chdir(tempfile.mkdtemp()):
-                run("dx download " + job_id + ":" + test_file_name)
-                with open(test_file_name) as fh:
-                    result = fh.read()
-                    self.assertEqual(expected_result, result)
-
-            # Case: Correctly specify file id; print to stdout.
-            test_file_id = dxpy.DXFile(job.describe()['output'][test_file_name]).get_id()
-            result = run("dx download " + test_file_id + " -o -").strip()
-            self.assertEqual(expected_result, result)
-
-            # Case: Correctly specify file name; print to stdout.
-            result = run("dx download " + test_file_name + " -o -").strip()
-            self.assertEqual(expected_result, result)
-
-            # Case: Correctly specify "<job_id>:<output_field>"; print to stdout.
-            result = run("dx download " + job_id + ":" + test_file_name + " -o -").strip()
-            self.assertEqual(expected_result, result)
-
-            # Case: File does not exist.
-            with self.assertSubprocessFailure(stderr_regexp="Unable to resolve", exit_code=3):
-                run("dx download foo -o -")
-
-            # Case: Invalid output field name when specifying <job_id>:<output_field>.
-            with self.assertSubprocessFailure(stderr_regexp="Could not find", exit_code=3):
-                run("dx download " + job_id + ":foo -o -")
-
-    # In a directory structure like:
-    # ROOT/
-    #      X.txt
-    #      A/
-    #      B/
-    # Make sure that files/subdirs are not downloaded twice. This checks that we fixed
-    # PTFM-14106.
-    def test_dx_download_root_recursive(self):
-        data = "ABCD"
-
-        def gen_file(fname, proj_id):
-            dxfile = dxpy.upload_string(data, name=fname, project=proj_id, wait_on_close=True)
-            return dxfile
-
-        # Download the project recursively, with command [cmd_string].
-        # Compare the downloaded directory against the first download
-        # structure.
-        def test_download_cmd(org_dir, cmd_string):
-            testdir = tempfile.mkdtemp()
-            with chdir(testdir):
-                run(cmd_string)
-                run("diff -Naur {} {}".format(org_dir, testdir))
-                shutil.rmtree(testdir)
-
-        with temporary_project('test_proj', select=True) as temp_project:
-            proj_id = temp_project.get_id()
-            gen_file("X.txt", proj_id)
-            dxpy.api.project_new_folder(proj_id, {"folder": "/A"})
-            dxpy.api.project_new_folder(proj_id, {"folder": "/B"})
-
-            # Create an entire copy of the project directory structure,
-            # which will be compared to all other downloads.
-            orig_dir = tempfile.mkdtemp()
-            with chdir(orig_dir):
-                run("dx download -r {}:/".format(proj_id))
-
-            test_download_cmd(orig_dir, "dx download -r /")
-            test_download_cmd(orig_dir, "dx download -r {}:/*".format(proj_id))
-            test_download_cmd(orig_dir, "dx download -r *")
-
-            shutil.rmtree(orig_dir)
-
-    # Test download to stdout
-    def test_download_to_stdout(self):
-        data = "ABCD"
-
-        def gen_file(fname, proj_id):
-            dxfile = dxpy.upload_string(data, name=fname, project=proj_id, wait_on_close=True)
-            return dxfile
-
-        with temporary_project('test_proj', select=True) as temp_project:
-            proj_id = temp_project.get_id()
-            gen_file("X.txt", proj_id)
-            buf = run("dx download -o - X.txt")
-            self.assertEqual(buf, data)
-
-    def test_dx_download_resume_and_checksum(self):
-        def assert_md5_checksum(filename, hasher):
-            with open(filename, "rb") as fh:
-                self.assertEqual(hashlib.md5(fh.read()).hexdigest(), hasher.hexdigest())
-
-        def truncate(filename, size):
-            with open(filename, "rb+") as fh:
-                fh.seek(size)
-                fh.truncate()
-
-        # Manually upload 2 parts
-        part1, part2 = b"0123456789ABCDEF"*1024*64*5, b"0"
-        dxfile = dxpy.new_dxfile(name="test")
-        dxfile.upload_part(part1, index=1)
-        dxfile.upload_part(part2, index=2)
-        dxfile.close(block=True)
-
-        wd = tempfile.mkdtemp()
-        run("cd {wd}; dx download test; ls -la".format(wd=wd))
-        assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
-        truncate(os.path.join(wd, "test"), 1024*1024*5)
-        run("cd {wd}; dx download -f test".format(wd=wd))
-        assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
-        truncate(os.path.join(wd, "test"), 1024*1024*5 - 1)
-        run("cd {wd}; dx download -f test".format(wd=wd))
-        assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
-        truncate(os.path.join(wd, "test"), 1)
-        run("cd {wd}; dx download -f test".format(wd=wd))
-        assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
-        run("cd {wd}; rm test; touch test".format(wd=wd))
-        run("cd {wd}; dx download -f test".format(wd=wd))
-        assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
 
 
 class TestDXClientDescribe(DXTestCase):
