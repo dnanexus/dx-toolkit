@@ -600,15 +600,20 @@ class DXFile(DXDataObject):
         '''
         :param size: Maximum number of bytes to be read
         :type size: integer
+        :param project: project to use as context for this download (may affect
+                which billing account is billed for this download). If None,
+                use the handler's project if specified, and if it isn't, supply
+                no hint to the apiserver.
+        :type project: str or None
         :rtype: string
 
         Returns the next *size* bytes, or all the bytes until the end of
         file (if no *size* is given or there are fewer than *size* bytes
         left in the file).
 
-        .. note:: After the first call to read(), passthrough kwargs are
-           not respected while using the same response iterator (i.e.
-           until next seek).
+        .. note:: After the first call to read(), the project arg and
+           passthrough kwargs are not respected while using the same
+           response iterator (i.e.  until next seek).
 
         '''
         if self._file_length == None:
@@ -636,6 +641,8 @@ class DXFile(DXDataObject):
         if length == None or length > self._file_length - self._pos:
             length = self._file_length - self._pos
 
+        effective_project = project or dxpy.WORKSPACE_ID
+
         buf = self._read_buf
         buf_remaining_bytes = dxpy.utils.string_buffer_length(buf) - buf.tell()
         if length <= buf_remaining_bytes:
@@ -650,9 +657,8 @@ class DXFile(DXDataObject):
                 remaining_len = orig_file_pos + length - self._pos
 
                 if self._response_iterator is None:
-                    self._request_iterator = self._generate_read_requests(start_pos=self._pos,
-                                                                          project=project,
-                                                                          **kwargs)
+                    self._request_iterator = self._generate_read_requests(
+                        start_pos=self._pos, project=effective_project, **kwargs)
 
                 if get_first_chunk_sequentially:
                     # Make the first chunk request without using the
