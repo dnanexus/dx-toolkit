@@ -373,6 +373,49 @@ class TestDXFile(unittest.TestCase):
             buf = same_dxfile.read()
             self.assertEqual(self.foo_str[-1:], buf)
 
+    def test_download_project_selection(self):
+        with testutil.temporary_project() as p, testutil.temporary_project() as p2:
+            # Same file is available in both projects
+            f = dxpy.upload_string(self.foo_str, project=p.get_id(), wait_on_close=True)
+            dxpy.api.project_clone(p.get_id(), {"objects": [f.get_id()], "project": p2.get_id()})
+
+            # Project specified in handler: bill that project for download
+            tmp = tempfile.TemporaryFile()
+            os.environ['_DX_DUMP_BILLED_PROJECT'] = tmp.name
+            f1 = dxpy.DXFile(dxid=f.get_id(), project=p.get_id())
+            f1.read(4)
+            with open(tmp.name, "r") as fd:
+                self.assertEqual(fd.read(), p.get_id())
+            tmp.close()
+
+            # Project specified in read() call: overrides project specified in
+            # handler
+            tmp = tempfile.TemporaryFile()
+            os.environ['_DX_DUMP_BILLED_PROJECT'] = tmp.name
+            f2 = dxpy.DXFile(dxid=f.get_id(), project=p.get_id())
+            f2.read(4, project=p2.get_id())
+            with open(tmp.name, "r") as fd:
+                self.assertEqual(fd.read(), p2.get_id())
+            tmp.close()
+
+            # Project specified in neither handler nor read() call: set no hint
+            # when making API call
+            tmp = tempfile.TemporaryFile()
+            os.environ['_DX_DUMP_BILLED_PROJECT'] = tmp.name
+            f3 = dxpy.DXFile(dxid=f.get_id())  # project defaults to project context
+            f3.read(4)
+            with open(tmp.name, "r") as fd:
+                self.assertEqual(fd.read(), "")
+            tmp.close()
+
+            # Project specified that doesn't contain the file. The call should
+            # fail.
+            dxpy.api.project_remove_objects(p2.get_id(), {"objects": [f.get_id()]})
+            f3 = dxpy.DXFile(dxid=f.get_id(), project=p2.get_id())
+            f3.read(4)
+
+            del os.environ['_DX_DUMP_BILLED_PROJECT']
+
     def test_dxfile_sequential_optimization(self):
         # Make data longer than 128k to trigger the
         # first-sequential-read optimization

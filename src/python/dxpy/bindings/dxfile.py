@@ -641,7 +641,15 @@ class DXFile(DXDataObject):
         if length == None or length > self._file_length - self._pos:
             length = self._file_length - self._pos
 
-        effective_project = project or dxpy.WORKSPACE_ID
+        effective_project = project or self.get_proj_id()
+        # Verify that the file is in the specified project
+        #
+        # We probably have to keep this here for backwards
+        # compatibility. Callers may be relying on the fact that a project
+        file_exists_in_project \
+            = dxpy.api.file_describe(self.get_id(), {"project": effective_project})['project'] == effective_project
+        if not file_exists_in_project:
+            effective_project = None
 
         buf = self._read_buf
         buf_remaining_bytes = dxpy.utils.string_buffer_length(buf) - buf.tell()
