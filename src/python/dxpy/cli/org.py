@@ -24,6 +24,7 @@ import dxpy
 from ..exceptions import DXCLIError
 from dxpy.utils.printing import (fill, DELIMITER)
 import json
+from . import prompt_for_yn
 
 
 def get_org_invite_args(args):
@@ -80,14 +81,42 @@ def remove_membership(args):
     dxpy.api.org_get_member_access(args.org_id,
                                    {"user": "user-" + args.username})
 
-    result = dxpy.api.org_remove_member(args.org_id,
-                                        _get_org_remove_member_args(args))
-    if args.brief:
-        print(result["id"])
+    confirmed = not args.confirm
+    if not confirmed:
+        # Request interactive confirmation.
+        print(fill("WARNING: About to remove user-{u} from {o}; project permissions will{rpp} be removed and app permissions will{rap} be removed".format(
+            u=args.username, o=args.org_id,
+            rpp="" if args.revoke_project_permissions else " not",
+            rap="" if args.revoke_app_permissions else " not")))
+
+        if prompt_for_yn("Please confirm"):
+            confirmed = True
+
+    if confirmed:
+        result = dxpy.api.org_remove_member(args.org_id,
+                                            _get_org_remove_member_args(args))
+        if args.brief:
+            print(result["id"])
+        else:
+            print(fill("Removed user-{u} from {o}".format(u=args.username,
+                                                          o=args.org_id)))
+            print(fill("Removed user-{u} from the following projects:".format(
+                u=args.username)))
+            if len(result["projects"].keys()) != 0:
+                for project_id in result["projects"].keys():
+                    print("\t{p}".format(p=project_id))
+            else:
+                print("\tNone")
+            print(fill("Removed user-{u} from the following apps:".format(
+                u=args.username)))
+            if len(result["apps"].keys()) != 0:
+                for app_id in result["apps"].keys():
+                    print("\t{a}".format(a=app_id))
+            else:
+                print("\tNone")
     else:
-        print(fill("Removed user-{u} from {o}. user-{u} has been removed from the following projects {p}. user-{u} has been removed from the following apps {a}.".format(
-          u=args.username, o=args.org_id, p=result["projects"].keys(),
-          a=result["apps"].keys())))
+        print(fill("Aborting removal of user-{u} from {o}".format(
+            u=args.username, o=args.org_id)))
 
 
 def _get_org_set_member_access_args(args):

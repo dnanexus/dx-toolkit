@@ -2267,17 +2267,14 @@ class TestResolver(testutil.DXTestCase):
                 resolve_path("foo", expected="folder")
             self.assertEqual(resolve_path(temp_proj_name + ":"),
                              (p.get_id(), "/", None))
-
-            # TODO: why does this happen if no project context is
-            # available? Shouldn't these just fail?
-            self.assertEqual(resolve_path("foo"),
-                             (None, "/a", "foo"))
-            self.assertEqual(resolve_path("../foo"),
-                             (None, "/", "foo"))
-            self.assertEqual(resolve_path("../../foo"),
-                             (None, "/", "foo"))
-            self.assertEqual(resolve_path("/foo/bar"),
-                             (None, "/foo", "bar"))
+            with self.assertRaises(ResolutionError):
+                resolve_path("foo")
+            with self.assertRaises(ResolutionError):
+                resolve_path("../foo")
+            with self.assertRaises(ResolutionError):
+                resolve_path("../../foo")
+            with self.assertRaises(ResolutionError):
+                resolve_path("/foo/bar")
 
             self.assertEqual(resolve_path("file-111111111111111111111111"),
                              (None, None, "file-111111111111111111111111"))
@@ -2318,11 +2315,18 @@ class TestResolver(testutil.DXTestCase):
             # prompt
 
     def test_resolve_existing_path(self):
-        resolve_existing_path('')
+        self.assertEquals(resolve_existing_path(''),
+                          (dxpy.WORKSPACE_ID, "/", None))
         with self.assertRaises(ResolutionError):
             resolve_existing_path('', allow_empty_string=False)
-        proj_id, path, entity_id = resolve_existing_path(':')
-        self.assertEqual(proj_id, dxpy.WORKSPACE_ID)
+        self.assertEquals(resolve_existing_path(':'),
+                          (dxpy.WORKSPACE_ID, "/", None))
+
+        dxpy.WORKSPACE_ID = None
+        with self.assertRaises(ResolutionError):
+            resolve_existing_path("foo")
+        with self.assertRaises(ResolutionError):
+            resolve_existing_path("/foo/bar")
 
     def test_clean_folder_path(self):
         from dxpy.utils.resolver import clean_folder_path as clean

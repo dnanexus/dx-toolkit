@@ -3868,6 +3868,7 @@ parser_remove_member.add_argument("org_id", help="ID of the org")
 parser_remove_member.add_argument("username", help="Username")
 parser_remove_member.add_argument("--keep-explicit-project-permissions", default=True, action="store_false", dest="revoke_project_permissions", help="Disable revocation of explicit project permissions of the specified user to projects billed to the org; implicit project permissions (i.e. those granted to the specified user via his membership in this org) will always be revoked")
 parser_remove_member.add_argument("--keep-explicit-app-permissions", default=True, action="store_false", dest="revoke_app_permissions", help="Disable revocation of explicit app developer and user permissions of the specified user to apps billed to the org; implicit app permissions (i.e. those granted to the specified user via his membership in this org) will always be revoked")
+parser_remove_member.add_argument("-y", "--yes", action="store_false", dest="confirm", help="Do not ask for confirmation")
 parser_remove_member.set_defaults(func=remove_membership)
 register_subparser(parser_remove_member, subparsers_action=subparsers_remove, categories="other")
 

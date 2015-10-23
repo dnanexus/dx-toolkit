@@ -178,6 +178,7 @@ class TestDXRemove(DXTestCase):
         with self.assertSubprocessFailure(exit_code=1):
             run("dx rm {f} {f2}".format(f=record_name, f2=record_name2))
 
+
 class TestDXClient(DXTestCase):
     def test_dx_version(self):
         version = run("dx --version")
@@ -235,32 +236,6 @@ class TestDXClient(DXTestCase):
         run("dx unset_properties '{n}' '{n}' '{n}2'".format(n=table_name))
         run("dx tag '{n}' '{n}'2".format(n=table_name))
         run("dx describe '{n}'".format(n=table_name))
-
-        run("dx new record -o :foo --verbose")
-        record_id = run("dx new record -o :foo2 --brief --visibility hidden --property foo=bar " +
-                        "--property baz=quux --tag onetag --tag twotag --type foo --type bar " +
-                        "--details '{\"hello\": \"world\"}'").strip()
-        self.assertEqual(record_id, run("dx ls :foo2 --brief").strip())
-        self.assertEqual({"hello": "world"}, json.loads(run("dx get -o - :foo2")))
-
-        second_record_id = run("dx new record :somenewfolder/foo --parents --brief").strip()
-        self.assertEqual(second_record_id, run("dx ls :somenewfolder/foo --brief").strip())
-
-        # describe
-        run("dx describe {record}".format(record=record_id))
-        desc = json.loads(run("dx describe {record} --details --json".format(record=record_id)))
-        self.assertEqual(desc['tags'], ['onetag', 'twotag'])
-        self.assertEqual(desc['types'], ['foo', 'bar'])
-        self.assertEqual(desc['properties'], {"foo": "bar", "baz": "quux"})
-        self.assertEqual(desc['details'], {"hello": "world"})
-        self.assertEqual(desc['hidden'], True)
-
-        desc = json.loads(run("dx describe {record} --json".format(record=second_record_id)))
-        self.assertEqual(desc['folder'], '/somenewfolder')
-
-        run("dx rm :foo")
-        run("dx rm :foo2")
-        run("dx rm -r :somenewfolder")
 
         # Path resolution is used
         run("dx find jobs --project :")
@@ -376,13 +351,6 @@ class TestDXClient(DXTestCase):
         shell.sendline("exit")
         shell.sendline("echo find projects | dx sh")
         shell.expect("project-")
-
-    def test_dx_new_record_with_close(self):
-        record_id = run("dx new record --close --brief").strip()
-        self.assertEqual("closed", dxpy.describe(record_id)['state'])
-
-        second_record_id = run("dx new record --brief").strip()
-        self.assertEqual("open", dxpy.describe(second_record_id)['state'])
 
     def test_dx_get_record(self):
         with chdir(tempfile.mkdtemp()):
@@ -658,59 +626,6 @@ class TestDXClient(DXTestCase):
             self.assertEqual(run("dx ls --brief {p}".format(p=dest_project_id)).strip(), record_id)
         finally:
             run("dx rmproject -y {p}".format(p=dest_project_id))
-
-    def test_dx_gtables(self):
-        # new gtable
-        gri_gtable_id = run("dx new gtable --gri mychr mylo myhi " +
-                            "--columns mychr,mylo:int32,myhi:int32 --brief --property hello=world " +
-                            "--details '{\"hello\":\"world\"}' --visibility visible").strip()
-        # Add rows to it (?)
-        # TODO: make this better.
-        add_rows_input = {"data": [["chr", 1, 10], ["chr2", 3, 13], ["chr1", 3, 10], ["chr1", 11, 13],
-                                   ["chr1", 5, 12]]}
-        run("dx api {gt} addRows '{rows}'".format(gt=gri_gtable_id, rows=json.dumps(add_rows_input)))
-        # close
-        run("dx close {gt} --wait".format(gt=gri_gtable_id))
-
-        # describe
-        desc = json.loads(run("dx describe {gt} --details --json".format(gt=gri_gtable_id)))
-        self.assertEqual(desc['types'], ['gri'])
-        self.assertEqual(desc['indices'],
-                         [{"type":"genomic", "name":"gri", "chr":"mychr", "lo":"mylo", "hi":"myhi"}])
-        self.assertEqual(desc['properties'], {"hello": "world"})
-        self.assertEqual(desc['details'], {"hello": "world"})
-        self.assertEqual(desc['hidden'], False)
-
-        # gri query
-        self.assertEqual(run("dx export tsv {gt} --gri chr1 1 10 -o -".format(gt=gri_gtable_id)),
-                         '\r\n'.join(['mychr:string\tmylo:int32\tmyhi:int32', 'chr1\t3\t10',
-                                      'chr1\t5\t12', '']))
-
-        # "get" is not supported on gtables
-        with self.assertSubprocessFailure(stderr_regexp='given object is of class gtable', exit_code=3):
-            run("dx get {gt}".format(gt=gri_gtable_id))
-
-        # Download and re-import with gri
-        with tempfile.NamedTemporaryFile(suffix='.csv') as fd:
-            run("dx export tsv {gt} -o {fd} -f".format(gt=gri_gtable_id, fd=fd.name))
-            fd.flush()
-            run("dx import tsv {fd} -o gritableimport --gri mychr mylo myhi --wait".format(fd=fd.name))
-
-            # Also, upload and download the file just to test out upload/download
-            run("dx upload {fd} -o uploadedfile --wait".format(fd=fd.name))
-            run("dx download uploadedfile -f")
-            run("dx download uploadedfile -o -")
-        try:
-            os.remove("uploadedfile")
-        except IOError:
-            pass
-
-        second_desc = json.loads(run("dx describe gritableimport --json"))
-        self.assertEqual(second_desc['types'], ['gri'])
-        self.assertEqual(second_desc['indices'],
-                         [{"type":"genomic", "name":"gri", "chr":"mychr", "lo":"mylo", "hi":"myhi"}])
-        self.assertEqual(desc['size'], second_desc['size'])
-        self.assertEqual(desc['length'], second_desc['length'])
 
     def test_dx_mkdir(self):
         with self.assertRaises(subprocess.CalledProcessError):
@@ -1029,6 +944,121 @@ class TestDXClient(DXTestCase):
     def test_dx_with_bad_job_id_env(self):
         env = override_environment(DX_JOB_ID="foobar")
         run("dx env", env=env)
+
+
+class TestDXNewRecord(DXTestCase):
+    def test_new_record_basic(self):
+        run("dx new record -o :foo --verbose")
+        record_id = run("dx new record -o :foo2 --brief --visibility hidden --property foo=bar " +
+                        "--property baz=quux --tag onetag --tag twotag --type foo --type bar " +
+                        "--details '{\"hello\": \"world\"}'").strip()
+        self.assertEqual(record_id, run("dx ls :foo2 --brief").strip())
+        self.assertEqual({"hello": "world"}, json.loads(run("dx get -o - :foo2")))
+
+        second_record_id = run("dx new record :somenewfolder/foo --parents --brief").strip()
+        self.assertEqual(second_record_id, run("dx ls :somenewfolder/foo --brief").strip())
+
+        # describe
+        run("dx describe {record}".format(record=record_id))
+        desc = json.loads(run("dx describe {record} --details --json".format(record=record_id)))
+        self.assertEqual(desc['tags'], ['onetag', 'twotag'])
+        self.assertEqual(desc['types'], ['foo', 'bar'])
+        self.assertEqual(desc['properties'], {"foo": "bar", "baz": "quux"})
+        self.assertEqual(desc['details'], {"hello": "world"})
+        self.assertEqual(desc['hidden'], True)
+
+        desc = json.loads(run("dx describe {record} --json".format(record=second_record_id)))
+        self.assertEqual(desc['folder'], '/somenewfolder')
+
+        run("dx rm :foo")
+        run("dx rm :foo2")
+        run("dx rm -r :somenewfolder")
+
+    def test_dx_new_record_with_close(self):
+        record_id = run("dx new record --close --brief").strip()
+        self.assertEqual("closed", dxpy.describe(record_id)['state'])
+
+        second_record_id = run("dx new record --brief").strip()
+        self.assertEqual("open", dxpy.describe(second_record_id)['state'])
+
+    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
+    def test_new_record_without_context(self):
+        # Without project context, cannot create new object without
+        # project qualified path
+        with without_project_context():
+            with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=3):
+                run("dx new record foo")
+            # Can create object with explicit project qualifier
+            record_id = run("dx new record --brief " + self.project + ":foo").strip()
+            self.assertEqual(dxpy.DXRecord(record_id).name, "foo")
+
+
+class TestGTables(DXTestCase):
+    def test_dx_gtables(self):
+        # new gtable
+        gri_gtable_id = run("dx new gtable --gri mychr mylo myhi " +
+                            "--columns mychr,mylo:int32,myhi:int32 --brief --property hello=world " +
+                            "--details '{\"hello\":\"world\"}' --visibility visible").strip()
+        # Add rows to it (?)
+        # TODO: make this better.
+        add_rows_input = {"data": [["chr", 1, 10], ["chr2", 3, 13], ["chr1", 3, 10], ["chr1", 11, 13],
+                                   ["chr1", 5, 12]]}
+        run("dx api {gt} addRows '{rows}'".format(gt=gri_gtable_id, rows=json.dumps(add_rows_input)))
+        # close
+        run("dx close {gt} --wait".format(gt=gri_gtable_id))
+
+        # describe
+        desc = json.loads(run("dx describe {gt} --details --json".format(gt=gri_gtable_id)))
+        self.assertEqual(desc['types'], ['gri'])
+        self.assertEqual(desc['indices'],
+                         [{"type": "genomic", "name": "gri", "chr": "mychr", "lo": "mylo", "hi": "myhi"}])
+        self.assertEqual(desc['properties'], {"hello": "world"})
+        self.assertEqual(desc['details'], {"hello": "world"})
+        self.assertEqual(desc['hidden'], False)
+
+        # gri query
+        self.assertEqual(run("dx export tsv {gt} --gri chr1 1 10 -o -".format(gt=gri_gtable_id)),
+                         '\r\n'.join(['mychr:string\tmylo:int32\tmyhi:int32', 'chr1\t3\t10',
+                                      'chr1\t5\t12', '']))
+
+        # "get" is not supported on gtables
+        with self.assertSubprocessFailure(stderr_regexp='given object is of class gtable', exit_code=3):
+            run("dx get {gt}".format(gt=gri_gtable_id))
+
+        # Download and re-import with gri
+        with tempfile.NamedTemporaryFile(suffix='.csv') as fd:
+            run("dx export tsv {gt} -o {fd} -f".format(gt=gri_gtable_id, fd=fd.name))
+            fd.flush()
+            run("dx import tsv {fd} -o gritableimport --gri mychr mylo myhi --wait".format(fd=fd.name))
+
+            # Also, upload and download the file just to test out upload/download
+            run("dx upload {fd} -o uploadedfile --wait".format(fd=fd.name))
+            run("dx download uploadedfile -f")
+            run("dx download uploadedfile -o -")
+        try:
+            os.remove("uploadedfile")
+        except IOError:
+            pass
+
+        second_desc = json.loads(run("dx describe gritableimport --json"))
+        self.assertEqual(second_desc['types'], ['gri'])
+        self.assertEqual(second_desc['indices'],
+                         [{"type": "genomic", "name": "gri", "chr": "mychr", "lo": "mylo", "hi": "myhi"}])
+        self.assertEqual(desc['size'], second_desc['size'])
+        self.assertEqual(desc['length'], second_desc['length'])
+
+    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
+    def test_dx_new_gtable_without_context(self):
+        # Without project context, cannot create new object without
+        # project qualified path
+        with without_project_context():
+            with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=3):
+                run("dx new gtable --columns mychr,mylo:int32,myhi:int32 foo")
+            # Can create object with explicit project qualifier
+            gtable_id = run(
+                "dx new gtable --brief --columns mychr,mylo:int32,myhi:int32 " + self.project + ":foo").strip()
+            self.assertEqual(dxpy.DXGTable(gtable_id).name, "foo")
+
 
 class TestDXWhoami(DXTestCase):
     def test_dx_whoami_name(self):
@@ -1398,6 +1428,17 @@ class TestDXClientUploadDownload(DXTestCase):
             # Failure: project specified by name does not contain file specifed by name
             with self.assertSubprocessFailure(stderr_regexp="Unable to resolve", exit_code=3):
                 run("dx download -f --no-progress {p}:{f}".format(p=proj1_name, f=file2_name), env=os.environ)
+
+    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
+    def test_dx_upload_no_env(self):
+        # Without project context, cannot upload to a
+        # non-project-qualified destination
+        with without_project_context():
+            with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=3):
+                run("dx upload --path foo /dev/null")
+            # Can upload to a path specified with explicit project qualifier
+            file_id = run("dx upload --brief --path " + self.project + ":foo /dev/null").strip()
+            self.assertEqual(dxpy.DXFile(file_id).name, "foo")
 
     def test_dx_make_download_url(self):
         testdir = tempfile.mkdtemp()
@@ -2927,6 +2968,17 @@ class TestDXClientWorkflow(DXTestCase):
                                           exit_code=3):
             run("dx run myworkflow")
 
+    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
+    def test_dx_new_workflow_without_context(self):
+        # Without project context, cannot create new object without
+        # project qualified path
+        with without_project_context():
+            with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=3):
+                run("dx new workflow foo")
+            # Can create object with explicit project qualifier
+            workflow_id = run("dx new workflow --brief " + self.project + ":foo").strip()
+            self.assertEqual(dxpy.DXWorkflow(workflow_id).name, "foo")
+
     def test_dx_new_workflow(self):
         workflow_id = run("dx new workflow --title=тitle --summary=SΨmmary --brief " +
                           "--description=DΣsc wØrkflØwname --output-folder /wØrkflØwØutput").strip()
@@ -4138,10 +4190,88 @@ class TestDXClientMembership(DXTestCase):
         membership = self._org_get_member_access(self.user_id)
         self.assertEqual(membership, exp_membership)
 
-        run("dx remove member {o} {u}".format(o=self.org_id, u=self.username))
+        run("dx remove member {o} {u} -y".format(o=self.org_id,
+                                                 u=self.username))
 
         with self.assertRaisesRegexp(DXAPIError, "404"):
             self._org_get_member_access(self.user_id)
+
+    def test_remove_membership_interactive_conf(self):
+        self._add_user(self.user_id)
+
+        exp_membership = {"user": self.user_id, "level": "ADMIN"}
+        membership = self._org_get_member_access(self.user_id)
+        self.assertEqual(membership, exp_membership)
+
+        dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(
+            o=self.org_id, u=self.username), logfile=sys.stderr)
+        dx_rm_member_int.expect("Please confirm")
+        dx_rm_member_int.sendline("")
+        dx_rm_member_int.expect("Please confirm")
+
+        membership = self._org_get_member_access(self.user_id)
+        self.assertEqual(membership, exp_membership)
+
+        dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(
+            o=self.org_id, u=self.username), logfile=sys.stderr)
+        dx_rm_member_int.expect("Please confirm")
+        dx_rm_member_int.sendintr()
+
+        membership = self._org_get_member_access(self.user_id)
+        self.assertEqual(membership, exp_membership)
+
+        dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(
+            o=self.org_id, u=self.username), logfile=sys.stderr)
+        dx_rm_member_int.expect("Please confirm")
+        dx_rm_member_int.sendline("n")
+        dx_rm_member_int.expect("Aborting removal")
+
+        membership = self._org_get_member_access(self.user_id)
+        self.assertEqual(membership, exp_membership)
+
+        dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(
+            o=self.org_id, u=self.username))
+        dx_rm_member_int.logfile = sys.stdout
+        dx_rm_member_int.expect("Please confirm")
+        dx_rm_member_int.sendline("y")
+        dx_rm_member_int.expect("Removed user-{u}".format(u=self.username))
+
+    def test_remove_membership_interactive_conf_format(self):
+        self._add_user(self.user_id)
+
+        exp_membership = {"user": self.user_id, "level": "ADMIN"}
+        membership = self._org_get_member_access(self.user_id)
+        self.assertEqual(membership, exp_membership)
+
+        project_id_1 = "project-000000000000000000000001"
+        prev_bill_to_1 = dxpy.api.project_describe(project_id_1, {"fields": {"billTo": True}})["billTo"]
+        dxpy.api.project_update(project_id_1, {"billTo": self.org_id})
+        project_permissions = dxpy.api.project_describe(project_id_1, {"fields": {"permissions": True}})["permissions"]
+        self.assertEqual(project_permissions[self.user_id], "VIEW")
+
+        project_id_2 = "project-000000000000000000000002"
+        prev_bill_to_2 = dxpy.api.project_describe(project_id_2, {"fields": {"billTo": True}})["billTo"]
+        dxpy.api.project_update(project_id_2, {"billTo": self.org_id})
+        dxpy.api.project_invite(project_id_2, {"invitee": self.user_id, "level": "ADMINISTER"})
+        project_permissions = dxpy.api.project_describe(project_id_2, {"fields": {"permissions": True}})["permissions"]
+        self.assertEqual(project_permissions[self.user_id], "ADMINISTER")
+
+        dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(
+            o=self.org_id, u=self.username))
+        dx_rm_member_int.logfile = sys.stdout
+        dx_rm_member_int.expect("Please confirm")
+        dx_rm_member_int.sendline("y")
+        dx_rm_member_int.expect("Removed user-{u}".format(u=self.username))
+        dx_rm_member_int.expect("Removed user-{u} from the following projects:".format(
+            u=self.username))
+        dx_rm_member_int.expect("\t" + project_id_1)
+        dx_rm_member_int.expect("\t" + project_id_2)
+        dx_rm_member_int.expect("Removed user-{u} from the following apps:".format(
+            u=self.username))
+        dx_rm_member_int.expect("None")
+
+        dxpy.api.project_update(project_id_1, {"billTo": prev_bill_to_1})
+        dxpy.api.project_update(project_id_2, {"billTo": prev_bill_to_2})
 
     def test_remove_membership_negative(self):
         cmd = "dx remove member"
@@ -4229,7 +4359,7 @@ class TestDXClientMembership(DXTestCase):
         membership = self._org_get_member_access(self.user_id)
         self.assertEqual(membership, exp_membership)
 
-        cmd = "dx remove member {o} {u}"
+        cmd = "dx remove member {o} {u} -y"
         run(cmd.format(o=self.org_id, u=self.username))
 
         with self.assertRaisesRegexp(DXAPIError, "404"):
@@ -5459,6 +5589,27 @@ def main(in1):
         # ...and that the first applet has been removed
         with self.assertSubprocessFailure(exit_code=3):
             run("dx describe " + first_applet)
+
+    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
+    def test_build_without_context(self):
+        app_spec = {
+            "name": "applet_without_context",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("applet_without_context", json.dumps(app_spec), "code.py")
+
+        # Without project context, cannot create new object without
+        # project qualified path
+        with without_project_context():
+            with self.assertSubprocessFailure(stderr_regexp='without specifying a destination project', exit_code=2):
+                run("dx build --json --destination foo " + app_dir)
+            # Can create object with explicit project qualifier
+            applet_describe = json.loads(run("dx build --json --destination " + self.project + ":foo " + app_dir))
+            self.assertEqual(applet_describe["name"], "foo")
 
 
 class TestDXBuildReportHtml(unittest.TestCase):
