@@ -23,11 +23,7 @@ import os
 import sys
 import collections
 import dxpy
-from ..utils.resolver import (resolve_existing_path,
-                              get_first_pos_of_char,
-                              is_project_explicit,
-                              is_file_in_project)
-from ..utils.resolver import (resolve_existing_path, get_first_pos_of_char)
+from ..utils.resolver import resolve_existing_path, get_first_pos_of_char, is_project_explicit, is_file_in_project
 from ..exceptions import err_exit
 from . import try_call
 from dxpy.utils.printing import (fill)

@@ -28,7 +28,7 @@ import dxpy
 import dxpy_testutil as testutil
 from dxpy.exceptions import DXAPIError, DXFileError, DXError, DXJobFailureError, ServiceUnavailable, InvalidInput
 from dxpy.utils import pretty_print, warn
-from dxpy.utils.resolver import resolve_path, resolve_existing_path, ResolutionError
+from dxpy.utils.resolver import resolve_path, resolve_existing_path, ResolutionError, is_project_explicit
 
 def get_objects_from_listf(listf):
     objects = []
@@ -2420,6 +2420,14 @@ class TestResolver(testutil.DXTestCase):
         self.assertEqual(results[0][0]["id"], record_id0)
         self.assertEqual(results[1][0]["id"], record_id1)
         self.assertEqual(results[2][0]["id"], record_id2)
+
+    def test_is_project_explicit(self):
+        self.assertTrue(is_project_explicit("projectname:file-012301230123012301230123"))
+        self.assertTrue(is_project_explicit("project-012301230123012301230123:file-012301230123012301230123"))
+        self.assertFalse(is_project_explicit("file-012301230123012301230123"))
+        self.assertTrue(is_project_explicit("./path/to/my/file"))
+        self.assertTrue(is_project_explicit("project-012301230123012301230123:./path/to/my/file"))
+
 
 if __name__ == '__main__':
     if dxpy.AUTH_HELPER is None:
