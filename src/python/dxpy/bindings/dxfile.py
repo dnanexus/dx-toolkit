@@ -549,7 +549,7 @@ class DXFile(DXDataObject):
             self._download_url_expires = time.time() + duration - 60 # Try to account for drift
         return self._download_url, self._download_url_headers
 
-    def _generate_read_requests(self, start_pos=0, end_pos=None, **kwargs):
+    def _generate_read_requests(self, start_pos=0, end_pos=None, project=None, **kwargs):
         if self._file_length == None:
             desc = self.describe(**kwargs)
             self._file_length = int(desc["size"])
