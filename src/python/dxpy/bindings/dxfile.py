@@ -574,7 +574,7 @@ class DXFile(DXDataObject):
                 i += 1
 
         for chunk_start_pos, chunk_end_pos in chunk_ranges(start_pos, end_pos):
-            url, headers = self.get_download_url(**kwargs)
+            url, headers = self.get_download_url(project=project, **kwargs)
             headers = copy.copy(headers)
             headers['Range'] = "bytes=" + str(chunk_start_pos) + "-" + str(chunk_end_pos)
             yield dxpy.DXHTTPRequest, [url, ''], {'method': 'GET',
