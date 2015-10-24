@@ -172,7 +172,7 @@ def download(args):
         # If length of matching_files is 0 then we're only downloading folders
         # so skip this logic since the files will be verified in the API call.
         if len(matching_files) > 0 and path_has_explicit_proj and not \
-                any(object_exists_in_project(project, matching_file) for matching_file in matching_files):
+                any(object_exists_in_project(f['describe']['id'], project) for f in matching_files):
             err_exit(fill('Error: specified project does not contain specified file object'))
 
         files_to_get[project].extend(matching_files)
