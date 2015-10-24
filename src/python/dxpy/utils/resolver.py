@@ -387,7 +387,7 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
 
       (project, folder, maybe_name)
       where
-        project is a project (non-null)
+        project is a container ID (non-null)
         folder is a folder path
         maybe_name is a string if the path could represent a folder or an object, or
         maybe_name is None if the path could only represent a folder
@@ -396,8 +396,8 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
 
       (maybe_project, None, object_id)
       where
-        maybe_project is a project or None
-        object_id is a dataobject or execution (specified by ID, not name)
+        maybe_project is a container ID or None
+        object_id is a dataobject, app, or execution (specified by ID, not name)
 
     OR
 
@@ -407,8 +407,8 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
 
     '''
     # TODO: callers that intend to obtain a data object probably won't be happy
-    # with an execution ID. Callers should probably have to specify whether
-    # they are okay with getting an execution ID or not.
+    # with an app or execution ID. Callers should probably have to specify
+    # whether they are okay with getting an execution ID or not.
 
     # TODO: callers that are looking for a place to write data, rather than
     # read it, probably won't be happy with receiving an object ID, or a
