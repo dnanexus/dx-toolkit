@@ -1068,6 +1068,7 @@ class TestDXWhoami(DXTestCase):
         whoami_output = run("dx whoami --id").strip()
         self.assertEqual(whoami_output, dxpy.whoami())
 
+
 class TestDXClientUploadDownload(DXTestCase):
     def test_dx_upload_download(self):
         with self.assertSubprocessFailure(stderr_regexp='expected the path to be a non-empty string',
