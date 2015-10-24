@@ -518,7 +518,8 @@ class DXFile(DXDataObject):
         :type filename: str
         :param project: project to use as context for this download (may affect
                 which billing account is billed for this download). If None, no
-                hint is supplied to the API server.
+                hint is supplied to the API server. It is an error to supply a
+                project that does not contain this file.
         :type project: str or None
         :returns: download URL and dict containing HTTP headers to be supplied
                 with the request
@@ -550,7 +551,8 @@ class DXFile(DXDataObject):
         return self._download_url, self._download_url_headers
 
     def _generate_read_requests(self, start_pos=0, end_pos=None, project=None, **kwargs):
-        # project=None means no hint is to be supplied to the apiserver
+        # project=None means no hint is to be supplied to the apiserver. It is
+        # an error to supply a project that does not contain this file.
 
         if self._file_length == None:
             desc = self.describe(**kwargs)
@@ -601,9 +603,9 @@ class DXFile(DXDataObject):
         :param size: Maximum number of bytes to be read
         :type size: integer
         :param project: project to use as context for this download (may affect
-                which billing account is billed for this download). If None,
-                use the handler's project if specified, and if it isn't, supply
-                no hint to the apiserver.
+                which billing account is billed for this download). If None, or
+                if the project supplied does not contain this file, no hint is
+                supplied to the API server.
         :type project: str or None
         :rtype: string
 
@@ -641,15 +643,20 @@ class DXFile(DXDataObject):
         if length == None or length > self._file_length - self._pos:
             length = self._file_length - self._pos
 
-        effective_project = project or self.get_proj_id()
-        # Verify that the file is in the specified project
+        # Verify that the file is in the specified project. If it's not, do not
+        # supply a hint to the API server.
         #
-        # We probably have to keep this here for backwards
-        # compatibility. Callers may be relying on the fact that a project
-        file_exists_in_project \
-            = dxpy.api.file_describe(self.get_id(), {"project": effective_project})['project'] == effective_project
-        if not file_exists_in_project:
-            effective_project = None
+        # It would be nice to reject such requests with an error, but we
+        # probably have to keep this here for backwards compatibility. I am
+        # guessing that callers may be relying on the fact they may use a
+        # handler (without having explicitly specified a project) to download a
+        # file where the file is ONLY available through some OTHER project to
+        # which they also have access
+        if project:
+            file_exists_in_project \
+                = dxpy.api.file_describe(self.get_id(), {"project": project})['project'] == project
+            if not file_exists_in_project:
+                project = None
 
         buf = self._read_buf
         buf_remaining_bytes = dxpy.utils.string_buffer_length(buf) - buf.tell()
@@ -666,7 +673,7 @@ class DXFile(DXDataObject):
 
                 if self._response_iterator is None:
                     self._request_iterator = self._generate_read_requests(
-                        start_pos=self._pos, project=effective_project, **kwargs)
+                        start_pos=self._pos, project=project, **kwargs)
 
                 if get_first_chunk_sequentially:
                     # Make the first chunk request without using the

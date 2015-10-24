@@ -1761,9 +1761,9 @@ def cat(args):
         if entity_result['describe']['class'] != 'file':
             parser.exit(1, fill('Error: expected a file object') + '\n')
 
-        # Determine if user passed in project explicitly and
-        # if specified project actually contains specified file
-        has_project_arg = is_project_explicit(path)
+        # Determine if user passed in project explicitly and if specified
+        # project actually contains specified file
+        path_has_explicit_proj = is_project_explicit(path)
         has_file_in_proj = is_file_in_project(project, [entity_result])
 
         # If the user explicitly provided the project and it doesn't contain
@@ -1772,13 +1772,13 @@ def cat(args):
         # If the user did not explicitly provide the project, don't pass any
         # project parameter to the API call but continue with download resolution
         #
-        if has_project_arg and not has_file_in_proj:
-            parser.exit(1, fill('Error: project does not contain specified file object') + '\n')
-        if not has_project_arg and not has_file_in_proj:
+        if not path_has_explicit_proj:
             project = None
+        if path_has_explicit_proj and not has_file_in_proj:
+            parser.exit(1, fill('Error: project does not contain specified file object') + '\n')
 
         try:
-            dxfile = dxpy.DXFile(entity_result['id'], project=project)
+            dxfile = dxpy.DXFile(entity_result['id'])
             while True:
                 chunk = dxfile.read(1024*1024, project=project)
                 if len(chunk) == 0:

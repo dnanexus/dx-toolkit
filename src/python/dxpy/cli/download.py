@@ -133,17 +133,16 @@ def download(args):
         if args.all or _is_glob(path):
             resolver_kwargs.update({'allow_mult': True, 'all_mult': True})
 
-        # assume by default that project doesn't contain specified file
-        has_file_in_proj = False
-
-        # determine if user passed in project explicitly
-        has_proj_in_path = is_project_explicit(path)
-
         project, folderpath, matching_files = try_call(resolve_existing_path, path, **resolver_kwargs)
         if matching_files is None:
             matching_files = []
         elif not isinstance(matching_files, list):
             matching_files = [matching_files]
+
+        # TODO: this could also be returned as metadata by resolve_path since
+        # resolve_path knows these things in some circumstances
+        path_has_explicit_proj = is_project_explicit(path)
+        has_file_in_proj = is_file_in_project(project, matching_files)
 
         matching_folders = []
         # project may be none if path is an ID and there is no project context
@@ -163,28 +162,19 @@ def download(args):
         if len(matching_files) == 0 and len(matching_folders) == 0:
             err_exit(fill('Error: {path} is neither a file nor a folder name'.format(path=path)))
 
-        # For each matching file returned by resolve_existing_path
-        # call 'dx describe' with the returned project as a hint.
-        #
-        # If the project in the hash returned by 'dx describe' fails
-        # to match the project provided in hint we know the project
-        # does not contain the specified file
-        #
-        has_file_in_proj = is_file_in_project(project, matching_files)
-
         # If the user explicitly provided the project and it doesn't contain
         # the file, don't allow the download.
         #
         # If the user did not explicitly provide the project, don't pass any
-        # project parameter to the API call but continue with download resolution
+        # project parameter to the API call but continue with the download.
         #
-        # If length of matching_files is 0 then we're only downloading folders so skip this logic
-        # since the files will be verified in the API call
+        # If length of matching_files is 0 then we're only downloading folders
+        # so skip this logic since the files will be verified in the API call.
+        if not path_has_explicit_proj:
+            project = None
         if len(matching_files) > 0:
-            if has_proj_in_path and not has_file_in_proj:
+            if path_has_explicit_proj and not has_file_in_proj:
                 err_exit(fill('Error: specified project does not contain specified file object'))
-            if not has_proj_in_path and not has_file_in_proj:
-                project = None
 
         files_to_get[project].extend(matching_files)
         folders_to_get[project].extend(((f, strip_prefix) for f in matching_folders))

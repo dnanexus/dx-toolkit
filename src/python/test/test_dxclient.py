@@ -1429,7 +1429,10 @@ class TestDXClientDownloadDataEgressBilling(DXTestCase):
             # Success: project from context contains file specifed by ID
             buf = run("dx download -o - {f}".format(f=file1_id))
             self.assertEqual(buf, data1)
-            self.assertEqual(self.get_billed_project(), proj.get_id())
+            # Project context alone, when combined with file by ID, is
+            # not sufficient to indicate user's intent to use that
+            # project
+            self.assertEqual(self.get_billed_project(), "")
 
             # Success: project from context contains file specifed by name
             buf = run("dx download -o - {f}".format(f=file1_name))
@@ -1449,7 +1452,10 @@ class TestDXClientDownloadDataEgressBilling(DXTestCase):
 
             # Success: project from context contains file specifed by ID
             run("dx download -f --no-progress {f}".format(f=file1_id))
-            self.assertEqual(self.get_billed_project(), proj.get_id())
+            # Project context alone, when combined with file by ID, is
+            # not sufficient to indicate user's intent to use that
+            # project
+            self.assertEqual(self.get_billed_project(), "")
 
             # Success: project from context contains file specifed by name
             run("dx download -f --no-progress {f}".format(f=file1_name))
