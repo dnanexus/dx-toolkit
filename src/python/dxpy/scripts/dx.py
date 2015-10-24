@@ -1307,6 +1307,8 @@ def new_project(args):
     inputs = {"name": args.name}
     if args.bill_to:
         inputs["billTo"] = args.bill_to
+    if args.region:
+        inputs["region"] = args.region
 
     try:
         resp = dxpy.api.project_new(inputs)
@@ -4116,6 +4118,7 @@ parser_new_project = subparsers_new.add_parser('project', help='Create a new pro
                                                parents=[stdout_args, env_args],
                                                prog='dx new project')
 parser_new_project.add_argument('name', help='Name of the new project', nargs='?')
+parser_new_project.add_argument('--region', help='Region affinity of the new project')
 parser_new_project.add_argument('-s', '--select', help='Select the new project as current after creating',
                                 action='store_true')
 parser_new_project.add_argument('--bill-to', help='ID of the user or org to which the project will be billed. The default value is the billTo of the requesting user.')
