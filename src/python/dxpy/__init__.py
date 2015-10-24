@@ -349,9 +349,17 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
     url = APISERVER + resource if prepend_srv else resource
     method = method.upper() # Convert method name to uppercase, to ease string comparisons later
     if _DEBUG >= 3:
-        print(method, url, "=>\n" + json.dumps(data, indent=2), file=sys.stderr)
+        try:
+            formatted_data = json.dumps(data, indent=2)
+        except UnicodeDecodeError:
+            formatted_data = "<binary data>"
+        print(method, url, "=>\n" + formatted_data, file=sys.stderr)
     elif _DEBUG == 2:
-        print(method, url, "=>", json.dumps(data), file=sys.stderr)
+        try:
+            formatted_data = json.dumps(data)
+        except UnicodeDecodeError:
+            formatted_data = "<binary data>"
+        print(method, url, "=>", formatted_data, file=sys.stderr)
     elif _DEBUG > 0:
         from repr import Repr
         print(method, url, "=>", Repr().repr(data), file=sys.stderr)

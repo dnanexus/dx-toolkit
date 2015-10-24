@@ -1343,6 +1343,15 @@ dxpy.run()
         run("cd {wd}; dx download -f test".format(wd=wd))
         assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
 
+    def test_upload_binary_data_with_debugging_info(self):
+        # Really a test that the _DX_DEBUG output doesn't barf on binary data
+        with chdir(tempfile.mkdtemp()):
+            with open('binary', 'wb') as f:
+                f.write(b'\xee\xee\xee\xef')
+            run('_DX_DEBUG=1 dx upload binary')
+            run('_DX_DEBUG=2 dx upload binary')
+            run('_DX_DEBUG=3 dx upload binary')
+
 
 class TestDXClientDescribe(DXTestCase):
     def test_projects(self):
