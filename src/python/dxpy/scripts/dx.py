@@ -1751,9 +1751,6 @@ def get(args):
 
 def cat(args):
     for path in args.path:
-
-        # NOTE that because 'allow_mult' is not set when calling resolve_existing_path, entity_result
-        # will NOT be a list. The logic below assumes entity_result is a single dictionary object
         project, _folderpath, entity_result = try_call(resolve_existing_path, path)
 
         if entity_result is None:
