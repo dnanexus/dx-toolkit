@@ -31,7 +31,9 @@ import dxpy
 from . import DXDataObject
 from ..exceptions import DXFileError
 from ..utils import warn
+from ..utils.resolver import object_exists_in_project
 from ..compat import BytesIO
+
 
 DXFILE_HTTP_THREADS = cpu_count()
 DEFAULT_BUFFER_SIZE = 1024*1024*16
@@ -652,11 +654,8 @@ class DXFile(DXDataObject):
         # handler (without having explicitly specified a project) to download a
         # file where the file is ONLY available through some OTHER project to
         # which they also have access
-        if project:
-            file_exists_in_project \
-                = dxpy.api.file_describe(self.get_id(), {"project": project})['project'] == project
-            if not file_exists_in_project:
-                project = None
+        if project and not object_exists_in_project(self.get_id(), project):
+            project = None
 
         buf = self._read_buf
         buf_remaining_bytes = dxpy.utils.string_buffer_length(buf) - buf.tell()

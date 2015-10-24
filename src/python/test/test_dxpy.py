@@ -2422,11 +2422,26 @@ class TestResolver(testutil.DXTestCase):
         self.assertEqual(results[2][0]["id"], record_id2)
 
     def test_is_project_explicit(self):
+        # All files specified by path are understood as explicitly indicating a
+        # project, because (if they actually resolve to something) such paths
+        # can only ever be understood in the context of a single project.
+        self.assertTrue(is_project_explicit("./path/to/my/file"))
+        self.assertTrue(is_project_explicit("myproject:./path/to/my/file"))
+        self.assertTrue(is_project_explicit("project-012301230123012301230123:./path/to/my/file"))
+        # Paths that specity an explicit project with a colon are understood as
+        # explicitly indicating a project (even if the file is specified by ID)
         self.assertTrue(is_project_explicit("projectname:file-012301230123012301230123"))
         self.assertTrue(is_project_explicit("project-012301230123012301230123:file-012301230123012301230123"))
+        # A bare file ID is NOT treated as having an explicit project. Even if
+        # the user's configuration supplies a project context that contains
+        # this file, that's not clear enough.
         self.assertFalse(is_project_explicit("file-012301230123012301230123"))
-        self.assertTrue(is_project_explicit("./path/to/my/file"))
-        self.assertTrue(is_project_explicit("project-012301230123012301230123:./path/to/my/file"))
+        # Colon without project in front of it is understood to mean the
+        # current project
+        self.assertTrue(is_project_explicit(":file-012301230123012301230123"))
+        # Every job exists in a single project so we'll treat JBORs as being
+        # identified with a single project, too
+        self.assertTrue(is_project_explicit("job-012301230123012301230123:ofield"))
 
 
 if __name__ == '__main__':

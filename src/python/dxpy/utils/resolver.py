@@ -171,41 +171,31 @@ def is_glob_pattern(string):
     return (get_last_pos_of_char('*', string) >= 0) or (get_last_pos_of_char('?', string) >= 0)
 
 
-def is_project_explicit(string):
-    return not is_hashid(string)
+def is_project_explicit(path):
+    """
+    Returns True if the specified path explicitly specifies a project.
+    """
+    # This method encodes our rules for deciding when a path shows an explicit
+    # affinity to a particular project. This is a stronger notion than just
+    # saying that the path resolves to an object in that project.
+    #
+    # For an explanation of the rules, see the unit tests
+    # (test_dxpy.TestResolver.test_is_project_explicit).
+    return not is_hashid(path)
 
 
-# determine using 'dx describe' if any of a list of files are in a specified project
-def is_file_in_project(project, entity_list):
+def object_exists_in_project(obj_id, proj_id):
     '''
-    :param project: project id of the project being validated
+    :param obj_id: object ID
+    :type obj_id: str
+    :param project: project ID
     :type project: string
-    :param entity_result: list of matching files that may belong in project
-    :type entity_result: list of strings
+
+    Returns True if the specified data object can be found in the specified
+    project.
     '''
+    return try_call(dxpy.DXHTTPRequest, '/' + obj_id + '/describe', {'project': proj_id})['project'] == proj_id
 
-    # Call 'dx describe' with the project returned by
-    # resolve_existing_path as a hint.
-    #
-    # If the project in the hash returned by 'dx describe' fails
-    # to match the project provided in hint we know the project
-    # does not contain the specified file
-    #
-    describe = {'project': project}
-    resolver_kwargs = {}
-
-    for entity in entity_list:
-        desc = try_call(dxpy.DXHTTPRequest,
-                        '/' + entity['describe']['id'] + '/describe',
-                        describe,
-                        **resolver_kwargs)
-
-        # if output of 'dx describe' contains the requested file
-        # then we consider the project valid
-        if project == desc['project']:
-            return True
-
-    return False
 
 # Special characters in bash to be escaped: #?*: ;&`"'/!$({[<>|~
 def escaper(match):
