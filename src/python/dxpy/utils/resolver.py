@@ -416,7 +416,7 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
 
       (project, folder, maybe_name)
       where
-        project is a project (non-null)
+        project is a container ID (non-null)
         folder is a folder path
         maybe_name is a string if the path could represent a folder or an object, or
         maybe_name is None if the path could only represent a folder
@@ -425,8 +425,8 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
 
       (maybe_project, None, object_id)
       where
-        maybe_project is a project or None
-        object_id is a dataobject or execution (specified by ID, not name)
+        maybe_project is a container ID or None
+        object_id is a dataobject, app, or execution (specified by ID, not name)
 
     OR
 
@@ -436,8 +436,8 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
 
     '''
     # TODO: callers that intend to obtain a data object probably won't be happy
-    # with an execution ID. Callers should probably have to specify whether
-    # they are okay with getting an execution ID or not.
+    # with an app or execution ID. Callers should probably have to specify
+    # whether they are okay with getting an execution ID or not.
 
     # TODO: callers that are looking for a place to write data, rather than
     # read it, probably won't be happy with receiving an object ID, or a
@@ -463,12 +463,14 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
     # Easy case: ":"
     if path == ':':
         if dxpy.WORKSPACE_ID is None:
-            raise ResolutionError('Cannot parse ":"; expected a project name or ID to the left of a colon or for a current project to be set')
+            raise ResolutionError("Cannot resolve \":\": expected a project name or ID "
+                                  "to the left of the colon, or for a current project to be set")
         return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), '/', None
     # Second easy case: empty string
     if path == '':
         if dxpy.WORKSPACE_ID is None:
-            raise ResolutionError('Expected a project name or ID to the left of a colon or for a current project to be set')
+            raise ResolutionError('Expected a project name or ID to the left of a colon, '
+                                  'or for a current project to be set')
         return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), dxpy.config.get('DX_CLI_WD', '/'), None
     # Third easy case: hash ID
     if is_container_id(path):
@@ -510,7 +512,8 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
         wd = '/'
         if path.startswith(':'):
             if dxpy.WORKSPACE_ID is None:
-                raise ResolutionError('Cannot parse "' + path + '" as a path; expected a project name or ID to the left of a colon or for a current project to be set')
+                raise ResolutionError('Cannot resolve "%s": expected a project name or ID to the left of the '
+                                      'colon, or for a current project to be set' % (path,))
             project = dxpy.WORKSPACE_ID
         else:
             # One nonempty string to the left of a colon
@@ -521,8 +524,8 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
         # project
         project = dxpy.WORKSPACE_ID
         if project is None:
-            raise ResolutionError('a project context was expected for a path, but a current project is not set, ' +
-                                  'nor was one provided in the path (preceding a colon) in "' + path + '"')
+            raise ResolutionError('Cannot resolve "%s": expected the path to be qualified with a project name or ID, '
+                                  'and a colon; or for a current project to be set' % (path,))
 
     # Determine folderpath and entity_name if necessary
     if folderpath is None:

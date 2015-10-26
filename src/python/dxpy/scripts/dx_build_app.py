@@ -36,6 +36,7 @@ from dxpy.utils import json_load_raise_on_duplicates
 from dxpy.utils.resolver import resolve_path, is_container_id
 from dxpy.utils.completer import LocalCompleter
 from dxpy.app_categories import APP_CATEGORIES
+from dxpy.cli import try_call
 from dxpy.exceptions import err_exit, DXError
 from dxpy.utils.printing import BOLD
 from dxpy.compat import open, USING_PYTHON2, decode_command_line_args
@@ -195,7 +196,7 @@ def parse_destination(dest_str):
     # [PROJECT]:/FOLDER/
     # [PROJECT]:/ENTITYNAME
     # [PROJECT]:/FOLDER/ENTITYNAME
-    return resolve_path(dest_str)
+    return try_call(resolve_path, dest_str)
 
 
 def _lint(dxapp_json_filename, mode):
