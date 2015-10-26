@@ -1320,6 +1320,7 @@ def new_project(args):
     except:
         err_exit()
 
+
 def new_record(args):
     try_call(process_dataobject_args, args)
     try_call(process_single_dataobject_output_args, args)
@@ -1336,7 +1337,7 @@ def new_record(args):
         folder = dxpy.config.get('DX_CLI_WD', u'/')
         name = None
     else:
-        project, folder, name = resolve_path(args.output)
+        project, folder, name = try_call(resolve_path, args.output)
 
     dxrecord = None
     try:
@@ -1363,7 +1364,7 @@ def new_gtable(args):
         folder = dxpy.config.get('DX_CLI_WD', u'/')
         name = None
     else:
-        project, folder, name = resolve_path(args.output)
+        project, folder, name = try_call(resolve_path, args.output)
 
     args.columns = split_unescaped(',', args.columns)
     for i in range(len(args.columns)):
@@ -1865,7 +1866,7 @@ def upload_one(args):
         folder = dxpy.config.get('DX_CLI_WD', u'/')
         name = None if args.filename == '-' else os.path.basename(args.filename)
     else:
-        project, folder, name = resolve_path(args.path)
+        project, folder, name = try_call(resolve_path, args.path)
         if name is None and args.filename != '-':
             name = os.path.basename(args.filename)
 

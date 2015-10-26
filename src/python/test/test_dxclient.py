@@ -5356,7 +5356,8 @@ def main(in1):
         # Without project context, cannot create new object without
         # project qualified path
         with without_project_context():
-            with self.assertSubprocessFailure(stderr_regexp='without specifying a destination project', exit_code=2):
+            with self.assertSubprocessFailure(stderr_regexp='expected the path to be qualified with a project',
+                                              exit_code=3):
                 run("dx build --json --destination foo " + app_dir)
             # Can create object with explicit project qualifier
             applet_describe = json.loads(run("dx build --json --destination " + self.project + ":foo " + app_dir))
