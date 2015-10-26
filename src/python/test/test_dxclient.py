@@ -1840,11 +1840,8 @@ dx-jobutil-add-output outrecord $record_id
         self.assertEquals(desc_output["describe"]["name"], "myrecord")
         self.assertEquals(desc_output["id"], record_id)
 
-        # If no project is specified and entity_name is not a hash, then a ResolutionError
-        # should be raised
-        with self.assertRaisesRegexp(ResolutionError, 'Could not resolve "some_path"'):
-            check_resolution("some_path", None, "/", "myrecord")
-        # ResolutionError also raised if describing an entity ID fails
+        # If describing an entity ID fails, then a ResolutionError should be
+        # raised
         with self.assertRaisesRegexp(ResolutionError, "The entity record-\d+ could not be found"):
             check_resolution("some_path", self.project, "/", "record-123456789012345678901234")
 
