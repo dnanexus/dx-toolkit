@@ -937,7 +937,8 @@ class TestDXNewRecord(DXTestCase):
         # Without project context, cannot create new object without
         # project qualified path
         with without_project_context():
-            with self.assertSubprocessFailure(stderr_regexp='key "project".*nonempty string', exit_code=3):
+            with self.assertSubprocessFailure(stderr_regexp='expected the path to be qualified with a project',
+                                              exit_code=3):
                 run("dx new record foo")
             # Can create object with explicit project qualifier
             record_id = run("dx new record --brief " + self.project + ":foo").strip()
@@ -1003,7 +1004,8 @@ class TestGTables(DXTestCase):
         # Without project context, cannot create new object without
         # project qualified path
         with without_project_context():
-            with self.assertSubprocessFailure(stderr_regexp='key "project".*nonempty string', exit_code=3):
+            with self.assertSubprocessFailure(stderr_regexp='expected the path to be qualified with a project',
+                                              exit_code=3):
                 run("dx new gtable --columns mychr,mylo:int32,myhi:int32 foo")
             # Can create object with explicit project qualifier
             gtable_id = run(
@@ -1132,7 +1134,8 @@ class TestDXClientUploadDownload(DXTestCase):
         # Without project context, cannot upload to a
         # non-project-qualified destination
         with without_project_context():
-            with self.assertSubprocessFailure(stderr_regexp='key "project".*nonempty string', exit_code=3):
+            with self.assertSubprocessFailure(stderr_regexp='expected the path to be qualified with a project',
+                                              exit_code=3):
                 run("dx upload --path foo /dev/null")
             # Can upload to a path specified with explicit project qualifier
             file_id = run("dx upload --brief --path " + self.project + ":foo /dev/null").strip()
@@ -1797,11 +1800,8 @@ dx-jobutil-add-output outrecord $record_id
         self.assertEquals(desc_output["describe"]["name"], "myrecord")
         self.assertEquals(desc_output["id"], record_id)
 
-        # If no project is specified and entity_name is not a hash, then a ResolutionError
-        # should be raised
-        with self.assertRaisesRegexp(ResolutionError, 'Could not resolve "some_path"'):
-            check_resolution("some_path", None, "/", "myrecord")
-        # ResolutionError also raised if describing an entity ID fails
+        # If describing an entity ID fails, then a ResolutionError should be
+        # raised
         with self.assertRaisesRegexp(ResolutionError, "The entity record-\d+ could not be found"):
             check_resolution("some_path", self.project, "/", "record-123456789012345678901234")
 
@@ -2680,7 +2680,8 @@ class TestDXClientWorkflow(DXTestCase):
         # Without project context, cannot create new object without
         # project qualified path
         with without_project_context():
-            with self.assertSubprocessFailure(stderr_regexp='key "project".*nonempty string', exit_code=3):
+            with self.assertSubprocessFailure(stderr_regexp='expected the path to be qualified with a project',
+                                              exit_code=3):
                 run("dx new workflow foo")
             # Can create object with explicit project qualifier
             workflow_id = run("dx new workflow --brief " + self.project + ":foo").strip()
@@ -5371,7 +5372,8 @@ def main(in1):
         # Without project context, cannot create new object without
         # project qualified path
         with without_project_context():
-            with self.assertSubprocessFailure(stderr_regexp='without specifying a destination project', exit_code=2):
+            with self.assertSubprocessFailure(stderr_regexp='expected the path to be qualified with a project',
+                                              exit_code=3):
                 run("dx build --json --destination foo " + app_dir)
             # Can create object with explicit project qualifier
             applet_describe = json.loads(run("dx build --json --destination " + self.project + ":foo " + app_dir))
