@@ -31,7 +31,9 @@ import dxpy
 from . import DXDataObject
 from ..exceptions import DXFileError
 from ..utils import warn
+from ..utils.resolver import object_exists_in_project
 from ..compat import BytesIO
+
 
 DXFILE_HTTP_THREADS = cpu_count()
 DEFAULT_BUFFER_SIZE = 1024*1024*16
@@ -507,20 +509,34 @@ class DXFile(DXDataObject):
 
     def get_download_url(self, duration=24*3600, preauthenticated=False, filename=None, project=None, **kwargs):
         """
-        :param duration: number of seconds for which the generated URL will be valid
+        :param duration: number of seconds for which the generated URL will be
+                valid
         :type duration: int
-        :param preauthenticated: if True, generates a 'preauthenticated' download URL, which embeds authentication info in the URL and does not require additional headers
+        :param preauthenticated: if True, generates a 'preauthenticated'
+                download URL, which embeds authentication info in the URL and
+                does not require additional headers
         :type preauthenticated: bool
         :param filename: desired filename of the downloaded file
         :type filename: str
-        :param project: ID of a project containing the file (the download URL should be associated with this project)
-        :type project: str
-        :returns: download URL and dict containing HTTP headers to be supplied with the request
+        :param project: project to use as context for this download (may affect
+                which billing account is billed for this download). If None, no
+                hint is supplied to the API server. It is an error to supply a
+                project that does not contain this file.
+        :type project: str or None
+        :returns: download URL and dict containing HTTP headers to be supplied
+                with the request
         :rtype: tuple (str, dict)
 
-        Obtains a URL that can be used to directly download the
-        associated file.
+        Obtains a URL that can be used to directly download the associated
+        file.
         """
+        # Test hook to write 'project' argument passed to API call to a
+        # local file
+        if '_DX_DUMP_BILLED_PROJECT' in os.environ:
+            with open(os.environ['_DX_DUMP_BILLED_PROJECT'], "w") as fd:
+                if project is not None:
+                    fd.write(project)
+
         args = {"duration": duration, "preauthenticated": preauthenticated}
         if filename is not None:
             args["filename"] = filename
@@ -536,7 +552,10 @@ class DXFile(DXDataObject):
             self._download_url_expires = time.time() + duration - 60 # Try to account for drift
         return self._download_url, self._download_url_headers
 
-    def _generate_read_requests(self, start_pos=0, end_pos=None, **kwargs):
+    def _generate_read_requests(self, start_pos=0, end_pos=None, project=None, **kwargs):
+        # project=None means no hint is to be supplied to the apiserver. It is
+        # an error to supply a project that does not contain this file.
+
         if self._file_length == None:
             desc = self.describe(**kwargs)
             self._file_length = int(desc["size"])
@@ -559,7 +578,7 @@ class DXFile(DXDataObject):
                 i += 1
 
         for chunk_start_pos, chunk_end_pos in chunk_ranges(start_pos, end_pos):
-            url, headers = self.get_download_url(**kwargs)
+            url, headers = self.get_download_url(project=project, **kwargs)
             headers = copy.copy(headers)
             headers['Range'] = "bytes=" + str(chunk_start_pos) + "-" + str(chunk_end_pos)
             yield dxpy.DXHTTPRequest, [url, ''], {'method': 'GET',
@@ -581,19 +600,24 @@ class DXFile(DXDataObject):
             )
         return next(self._response_iterator)
 
-    def read(self, length=None, use_compression=None, **kwargs):
+    def read(self, length=None, use_compression=None, project=None, **kwargs):
         '''
         :param size: Maximum number of bytes to be read
         :type size: integer
+        :param project: project to use as context for this download (may affect
+                which billing account is billed for this download). If None, or
+                if the project supplied does not contain this file, no hint is
+                supplied to the API server.
+        :type project: str or None
         :rtype: string
 
         Returns the next *size* bytes, or all the bytes until the end of
         file (if no *size* is given or there are fewer than *size* bytes
         left in the file).
 
-        .. note:: After the first call to read(), passthrough kwargs are
-           not respected while using the same response iterator (i.e.
-           until next seek).
+        .. note:: After the first call to read(), the project arg and
+           passthrough kwargs are not respected while using the same
+           response iterator (i.e.  until next seek).
 
         '''
         if self._file_length == None:
@@ -621,6 +645,18 @@ class DXFile(DXDataObject):
         if length == None or length > self._file_length - self._pos:
             length = self._file_length - self._pos
 
+        # Verify that the file is in the specified project. If it's not, do not
+        # supply a hint to the API server.
+        #
+        # It would be nice to reject such requests with an error, but we
+        # probably have to keep this here for backwards compatibility. I am
+        # guessing that callers may be relying on the fact they may use a
+        # handler (without having explicitly specified a project) to download a
+        # file where the file is ONLY available through some OTHER project to
+        # which they also have access
+        if project and not object_exists_in_project(self.get_id(), project):
+            project = None
+
         buf = self._read_buf
         buf_remaining_bytes = dxpy.utils.string_buffer_length(buf) - buf.tell()
         if length <= buf_remaining_bytes:
@@ -635,7 +671,8 @@ class DXFile(DXDataObject):
                 remaining_len = orig_file_pos + length - self._pos
 
                 if self._response_iterator is None:
-                    self._request_iterator = self._generate_read_requests(start_pos=self._pos, **kwargs)
+                    self._request_iterator = self._generate_read_requests(
+                        start_pos=self._pos, project=project, **kwargs)
 
                 if get_first_chunk_sequentially:
                     # Make the first chunk request without using the
