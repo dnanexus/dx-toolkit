@@ -2170,6 +2170,10 @@ class TestResolver(testutil.DXTestCase):
         super(TestResolver, self).tearDown()
 
     def test_resolve_path(self):
+        need_project_context_to_resolve = ("^(Cannot resolve \".*\": e|E)xpected (a project name or ID to the left of "
+                                           "(a|the) colon,|the path to be qualified with a project name or ID, and a "
+                                           "colon;) or for a current project to be set$")
+
         dxpy.WORKSPACE_ID = self.project
         temp_proj_name = 'resolve_path_' + str(time.time())
         not_a_project_name = 'doesnt_exist_' + str(time.time())
@@ -2177,20 +2181,22 @@ class TestResolver(testutil.DXTestCase):
         with testutil.temporary_project(name=temp_proj_name) as p:
             self.assertEqual(resolve_path(""),
                              (self.project, "/a", None))
-            with self.assertRaises(ResolutionError):
+            with self.assertRaisesRegexp(ResolutionError, "expected the path to be a non-empty string"):
                 resolve_path("", allow_empty_string=False)
             self.assertEqual(resolve_path(":"),
                              (self.project, "/", None))
 
             self.assertEqual(resolve_path("project-012301230123012301230123"),
                              ("project-012301230123012301230123", "/", None))
+            self.assertEqual(resolve_path("container-012301230123012301230123"),
+                             ("container-012301230123012301230123", "/", None))
             self.assertEqual(resolve_path("file-111111111111111111111111"),
                              (self.project, None, "file-111111111111111111111111"))
             # TODO: this shouldn't be treated as a data object ID
             self.assertEqual(resolve_path("job-111111111111111111111111"),
                              (self.project, None, "job-111111111111111111111111"))
 
-            with self.assertRaises(ResolutionError):
+            with self.assertRaisesRegexp(ResolutionError, 'foo'):
                 resolve_path("project-012301230123012301230123:foo:bar")
             with self.assertRaises(ResolutionError):
                 resolve_path(not_a_project_name + ":")
@@ -2237,6 +2243,8 @@ class TestResolver(testutil.DXTestCase):
 
             self.assertEqual(resolve_path("project-012301230123012301230123:foo"),
                              ("project-012301230123012301230123", "/", "foo"))
+            self.assertEqual(resolve_path("container-012301230123012301230123:foo"),
+                             ("container-012301230123012301230123", "/", "foo"))
             self.assertEqual(resolve_path("project-012301230123012301230123:foo/bar"),
                              ("project-012301230123012301230123", "/foo", "bar"))
             self.assertEqual(resolve_path("project-012301230123012301230123:/foo"),
@@ -2257,23 +2265,23 @@ class TestResolver(testutil.DXTestCase):
 
             # --- test some behavior when workspace is not set ---
             dxpy.WORKSPACE_ID = None
-            with self.assertRaises(ResolutionError):
+            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
                 resolve_path("")
-            with self.assertRaises(ResolutionError):
+            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
                 resolve_path(":")
-            with self.assertRaises(ResolutionError):
+            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
                 resolve_path(":foo")
-            with self.assertRaises(ResolutionError):
+            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
                 resolve_path("foo", expected="folder")
             self.assertEqual(resolve_path(temp_proj_name + ":"),
                              (p.get_id(), "/", None))
-            with self.assertRaises(ResolutionError):
+            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
                 resolve_path("foo")
-            with self.assertRaises(ResolutionError):
+            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
                 resolve_path("../foo")
-            with self.assertRaises(ResolutionError):
+            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
                 resolve_path("../../foo")
-            with self.assertRaises(ResolutionError):
+            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
                 resolve_path("/foo/bar")
 
             self.assertEqual(resolve_path("file-111111111111111111111111"),
@@ -2292,8 +2300,12 @@ class TestResolver(testutil.DXTestCase):
 
             self.assertEqual(resolve_path("project-012301230123012301230123"),
                              ("project-012301230123012301230123", "/", None))
+            self.assertEqual(resolve_path("container-012301230123012301230123"),
+                             ("container-012301230123012301230123", "/", None))
             self.assertEqual(resolve_path("project-012301230123012301230123:foo"),
                              ("project-012301230123012301230123", "/", "foo"))
+            self.assertEqual(resolve_path("container-012301230123012301230123:foo"),
+                             ("container-012301230123012301230123", "/", "foo"))
             self.assertEqual(resolve_path("project-012301230123012301230123:foo/bar"),
                              ("project-012301230123012301230123", "/foo", "bar"))
             self.assertEqual(resolve_path("project-012301230123012301230123:file-000011112222333344445555"),

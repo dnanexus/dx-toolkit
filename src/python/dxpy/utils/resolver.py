@@ -434,12 +434,14 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
     # Easy case: ":"
     if path == ':':
         if dxpy.WORKSPACE_ID is None:
-            raise ResolutionError('Cannot parse ":"; expected a project name or ID to the left of a colon or for a current project to be set')
+            raise ResolutionError("Cannot resolve \":\": expected a project name or ID "
+                                  "to the left of the colon, or for a current project to be set")
         return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), '/', None
     # Second easy case: empty string
     if path == '':
         if dxpy.WORKSPACE_ID is None:
-            raise ResolutionError('Expected a project name or ID to the left of a colon or for a current project to be set')
+            raise ResolutionError('Expected a project name or ID to the left of a colon, '
+                                  'or for a current project to be set')
         return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), dxpy.config.get('DX_CLI_WD', '/'), None
     # Third easy case: hash ID
     if is_container_id(path):
@@ -481,7 +483,8 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
         wd = '/'
         if path.startswith(':'):
             if dxpy.WORKSPACE_ID is None:
-                raise ResolutionError('Cannot parse "' + path + '" as a path; expected a project name or ID to the left of a colon or for a current project to be set')
+                raise ResolutionError('Cannot resolve "%s": expected a project name or ID to the left of the '
+                                      'colon, or for a current project to be set' % (path,))
             project = dxpy.WORKSPACE_ID
         else:
             # One nonempty string to the left of a colon
@@ -492,8 +495,8 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
         # project
         project = dxpy.WORKSPACE_ID
         if project is None:
-            raise ResolutionError('a project context was expected for a path, but a current project is not set, ' +
-                                  'nor was one provided in the path (preceding a colon) in "' + path + '"')
+            raise ResolutionError('Cannot resolve "%s": expected the path to be qualified with a project name or ID, '
+                                  'and a colon; or for a current project to be set' % (path,))
 
     # Determine folderpath and entity_name if necessary
     if folderpath is None:

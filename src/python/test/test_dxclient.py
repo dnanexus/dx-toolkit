@@ -986,7 +986,8 @@ class TestDXNewRecord(DXTestCase):
         # Without project context, cannot create new object without
         # project qualified path
         with without_project_context():
-            with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=3):
+            with self.assertSubprocessFailure(stderr_regexp='expected the path to be qualified with a project',
+                                              exit_code=3):
                 run("dx new record foo")
             # Can create object with explicit project qualifier
             record_id = run("dx new record --brief " + self.project + ":foo").strip()
@@ -1052,7 +1053,8 @@ class TestGTables(DXTestCase):
         # Without project context, cannot create new object without
         # project qualified path
         with without_project_context():
-            with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=3):
+            with self.assertSubprocessFailure(stderr_regexp='expected the path to be qualified with a project',
+                                              exit_code=3):
                 run("dx new gtable --columns mychr,mylo:int32,myhi:int32 foo")
             # Can create object with explicit project qualifier
             gtable_id = run(
@@ -1181,7 +1183,8 @@ class TestDXClientUploadDownload(DXTestCase):
         # Without project context, cannot upload to a
         # non-project-qualified destination
         with without_project_context():
-            with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=3):
+            with self.assertSubprocessFailure(stderr_regexp='expected the path to be qualified with a project',
+                                              exit_code=3):
                 run("dx upload --path foo /dev/null")
             # Can upload to a path specified with explicit project qualifier
             file_id = run("dx upload --brief --path " + self.project + ":foo /dev/null").strip()
@@ -2720,7 +2723,8 @@ class TestDXClientWorkflow(DXTestCase):
         # Without project context, cannot create new object without
         # project qualified path
         with without_project_context():
-            with self.assertSubprocessFailure(stderr_regexp='project context was expected for a path', exit_code=3):
+            with self.assertSubprocessFailure(stderr_regexp='expected the path to be qualified with a project',
+                                              exit_code=3):
                 run("dx new workflow foo")
             # Can create object with explicit project qualifier
             workflow_id = run("dx new workflow --brief " + self.project + ":foo").strip()
