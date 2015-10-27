@@ -434,7 +434,7 @@ public final class DXJob extends DXExecution {
 
     @Override
     public void terminate() {
-        DXAPI.jobTerminate(this.getId(), JobTerminateResponse.class);
+        DXAPI.jobTerminate(this.getId(), JobTerminateResponse.class, this.env);
     }
 
     /**
