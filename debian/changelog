@@ -1,3 +1,22 @@
+dx-toolkit (0.168.0) precise; urgency=low
+
+  * Code review fix for bb04657e1f
+  * Fix typos and misleading test
+  * Update docstring and error message from bb04657.
+  * TestDXFileFunctions doesn't generate temporary projs
+  * Document current behavior related to projects for file downloads
+  * PTFM-16403 --created integer time stamp bug
+  * PTFM-16498 Rename createProjectsAndApps to allowBillableActivities
+  * Propagate DXContainer's env into all folder operations
+  * Fail faster when user supplies path without project context
+  * _DX_DEBUG modes: don't barf when input or output data is not UTF-8
+  * New option for projects: dx new project --region
+  * Throw HTTPError if error type cannot be extracted from DXAPIError.
+  * Add/reorganize unit and integration tests for path resolution
+  * PTFM-16295 Support confirmation flow in `dx remove member`.
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 28 Oct 2015 22:17:05 +0000
+
 dx-toolkit (0.167.0) precise; urgency=low
 
   * Close connection to prevent running out of file handles in Java code
