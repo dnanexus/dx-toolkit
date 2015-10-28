@@ -315,7 +315,7 @@ def login(args):
         while attempt <= 3:
             try:
                 credentials = get_credentials(reuse=reuse, get_otp=using_otp)
-                token_res = get_token(expires=normalize_time_input(args.timeout, future=True, input_units='s'),
+                token_res = get_token(expires=normalize_time_input(args.timeout, future=True, default_unit='s'),
                                       **credentials)
                 break
             except (KeyboardInterrupt, EOFError):
@@ -399,7 +399,7 @@ def login(args):
         tip = "Use " + BOLD("dx login --timeout") + " to control the expiration date, or " + BOLD("dx logout") + \
               " to end this session."
         print(fill(msg.format(conf_dir=dxpy.config.get_user_conf_dir(),
-              timeout=datetime.timedelta(seconds=normalize_time_input(args.timeout, input_units='s')/1000), tip=tip)))
+              timeout=datetime.timedelta(seconds=normalize_time_input(args.timeout, default_unit='s')/1000), tip=tip)))
 
 def logout(args):
     if dxpy.AUTH_HELPER is not None:

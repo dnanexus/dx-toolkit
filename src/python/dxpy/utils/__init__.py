@@ -142,12 +142,12 @@ def string_buffer_length(buf):
     return buf_len
 
 
-def normalize_time_input(t, future=False, input_units='ms'):
+def normalize_time_input(t, future=False, default_unit='ms'):
     """
-    :param input_units: units of the input time *t*; must be one of "s" or
+    :param default_unit: units of the input time *t*; must be one of "s" or
         "ms". This param is only respected if *t* looks like an int (e.g.
         "12345", 12345).
-    :type input_units: string
+    :type default_unit: string
 
     Converts inputs such as:
        "2012-05-01"
@@ -170,9 +170,9 @@ def normalize_time_input(t, future=False, input_units='ms'):
                 raise ValueError(error_msg.format(t=t))
     elif isinstance(t, int):
         units_multipliers = {'ms': 1, 's': 1000}
-        if input_units not in units_multipliers:
-            raise ValueError("Expected input_units to be one of 's' or 'ms'")
-        t = t * units_multipliers[input_units]
+        if default_unit not in units_multipliers:
+            raise ValueError("Expected default_unit to be one of 's' or 'ms'")
+        t = t * units_multipliers[default_unit]
     else:
         raise ValueError(error_msg.format(t=t))
     now = int(time.time()*1000)
