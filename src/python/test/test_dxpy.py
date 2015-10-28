@@ -26,7 +26,8 @@ import subprocess
 
 import dxpy
 import dxpy_testutil as testutil
-from dxpy.exceptions import DXAPIError, DXFileError, DXError, DXJobFailureError, ServiceUnavailable, InvalidInput
+from dxpy.exceptions import (DXAPIError, DXFileError, DXError, DXJobFailureError, ServiceUnavailable, InvalidInput,
+                             ResourceNotFound)
 from dxpy.utils import pretty_print, warn
 from dxpy.utils.resolver import resolve_path, resolve_existing_path, ResolutionError
 
@@ -234,6 +235,15 @@ class TestDXFileFunctions(unittest.TestCase):
             "python -c 'import dxpy; print dxpy.bindings.dxfile.DEFAULT_BUFFER_SIZE'", shell=True, env=env)
         self.assertEqual(int(buffer_size), 16 * 1024 * 1024)
 
+    def test_generate_read_requests(self):
+        dxfile = dxpy.upload_string("foo", wait_on_close=True)
+        with testutil.temporary_project() as p, self.assertRaises(TypeError):
+            # The file doesn't exist in this project
+            list(dxfile._generate_read_requests(project=p.get_id()))
+        with self.assertRaises(TypeError):
+            # This project doesn't even exist
+            list(dxfile._generate_read_requests(project="project-012301230123012301230123"))
+
 
 class TestDXFile(unittest.TestCase):
 
@@ -373,6 +383,15 @@ class TestDXFile(unittest.TestCase):
             buf = same_dxfile.read()
             self.assertEqual(self.foo_str[-1:], buf)
 
+    def test_read_with_project(self):
+        dxfile = dxpy.upload_string(self.foo_str, wait_on_close=True)
+        with testutil.temporary_project() as p, self.assertRaises(TypeError):
+            # The file doesn't exist in this project
+            dxfile.read(project=p.get_id())
+        with self.assertRaises(TypeError):
+            # This project doesn't even exist
+            dxfile.read(project="project-012301230123012301230123")
+
     def test_dxfile_sequential_optimization(self):
         # Make data longer than 128k to trigger the
         # first-sequential-read optimization
@@ -449,6 +468,15 @@ class TestDXFile(unittest.TestCase):
             url3 = dxfile.get_download_url(duration=60, **opts)
             url4 = dxfile.get_download_url(**opts)
             self.assertNotEqual(url3, url4)
+
+    def test_download_url_rejects_invalid_project(self):
+        dxfile = dxpy.upload_string(self.foo_str, wait_on_close=True)
+        with testutil.temporary_project() as p, self.assertRaises(ResourceNotFound):
+            # The file doesn't exist in this project
+            dxfile.get_download_url(project=p.get_id())
+        with self.assertRaises(ResourceNotFound):
+            # This project doesn't even exist
+            dxfile.get_download_url(project="project-012301230123012301230123")
 
 
 @unittest.skipUnless(testutil.TEST_GTABLE, 'skipping test that would create a GTable')
