@@ -40,9 +40,9 @@ def get_org_invite_args(args):
     org_invite_args["level"] = args.level
     if "set_bill_to" in args and args.set_bill_to is True:
         # /org-x/invite is called in conjunction with /user/new.
-        org_invite_args["createProjectsAndApps"] = True
+        org_invite_args["allowBillableActivities"] = True
     else:
-        org_invite_args["createProjectsAndApps"] = args.allow_billable_activities
+        org_invite_args["allowBillableActivities"] = args.allow_billable_activities
     org_invite_args["appAccess"] = args.app_access
     org_invite_args["projectAccess"] = args.project_access
     org_invite_args["suppressEmailNotification"] = args.no_email
@@ -123,7 +123,7 @@ def _get_org_set_member_access_args(args):
     user_id = "user-" + args.username
     org_set_member_access_input = {user_id: {"level": args.level}}
     if args.allow_billable_activities is not None:
-        org_set_member_access_input[user_id]["createProjectsAndApps"] = (True if args.allow_billable_activities == "true" else False)
+        org_set_member_access_input[user_id]["allowBillableActivities"] = (True if args.allow_billable_activities == "true" else False)
     if args.app_access is not None:
         org_set_member_access_input[user_id]["appAccess"] = (True if args.app_access == "true" else False)
     if args.project_access is not None:
@@ -149,7 +149,7 @@ def _get_find_orgs_args(args):
     find_orgs_input = {"level": args.level}
 
     if args.with_billable_activities is not None:
-        find_orgs_input["createProjectsAndApps"] = args.with_billable_activities
+        find_orgs_input["allowBillableActivities"] = args.with_billable_activities
 
     if not args.brief:
         find_orgs_input["describe"] = True
