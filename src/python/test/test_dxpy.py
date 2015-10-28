@@ -236,13 +236,14 @@ class TestDXFileFunctions(unittest.TestCase):
         self.assertEqual(int(buffer_size), 16 * 1024 * 1024)
 
     def test_generate_read_requests(self):
-        dxfile = dxpy.upload_string("foo", wait_on_close=True)
-        with testutil.temporary_project() as p, self.assertRaises(TypeError):
-            # The file doesn't exist in this project
-            list(dxfile._generate_read_requests(project=p.get_id()))
-        with self.assertRaises(TypeError):
-            # This project doesn't even exist
-            list(dxfile._generate_read_requests(project="project-012301230123012301230123"))
+        with testutil.temporary_project() as host:
+            dxfile = dxpy.upload_string("foo", project=host.get_id(), wait_on_close=True)
+            with testutil.temporary_project() as p, self.assertRaises(TypeError):
+                # The file doesn't exist in this project
+                list(dxfile._generate_read_requests(project=p.get_id()))
+            with self.assertRaises(TypeError):
+                # This project doesn't even exist
+                list(dxfile._generate_read_requests(project="project-012301230123012301230123"))
 
 
 class TestDXFile(unittest.TestCase):
