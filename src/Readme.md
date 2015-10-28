@@ -22,3 +22,18 @@ Environment Variable         | Tests included
 
 Python and Java tests recognize these environment variables and enable or
 disable tests accordingly.
+
+#### DXTEST_ENV
+
+The DXTEST_ENV test flag is meant to protect tests that actually make changes
+to the on-disk serialized config settings (`~/.dnanexus_config`), since that
+would erase whatever token the calling user had set there from dx login,
+etc. and we don't want to do that by default when a user runs tests.
+
+Since the environment variables override the on-disk settings, setting
+environment variables is usually sufficient for most tests where we'd like to
+apply a particular project context or auth context. The notable exception is if
+we want to test the behavior of some dx command in the *absence* of any project
+context or auth context. In that case, unsetting the environment variable would
+only allow the on-disk setting to be effective, so for such tests we have to
+blow away the on-disk setting, too.
