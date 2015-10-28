@@ -141,15 +141,23 @@ def string_buffer_length(buf):
     buf.seek(orig_pos)
     return buf_len
 
-def normalize_time_input(t, future=False):
+
+def normalize_time_input(t, future=False, input_units='ms'):
     """
+    :param input_units: units of the input time ('s', 'ms'). Param is used only when input `t` looks like an int or is
+        an integer timestamp.
+
     Converts inputs such as:
        "2012-05-01"
        "-5d"
        1352863174
+       "1352863174"
     to milliseconds since epoch. See http://labix.org/python-dateutil and :meth:`normalize_timedelta`.
     """
-    error_msg = 'Error: Could not parse {t} as a timestamp or timedelta.  Expected a date format or an integer with a single-letter suffix: s=seconds, m=minutes, h=hours, d=days, w=weeks, M=months, y=years, e.g. "-10d" indicates 10 days ago'
+    error_msg = 'Error: Could not parse {t} as a timestamp or timedelta.  Expected an integer timestamp, date format, or an integer with a single-letter suffix: s=seconds, m=minutes, h=hours, d=days, w=weeks, M=months, y=years, e.g. "-10d" indicates 10 days ago'
+    if isinstance(t, basestring) and t.isdigit():
+        t = int(t)
+
     if isinstance(t, basestring):
         try:
             t = normalize_timedelta(t)
@@ -158,6 +166,13 @@ def normalize_time_input(t, future=False):
                 t = int(time.mktime(dateutil.parser.parse(t).timetuple())*1000)
             except ValueError:
                 raise ValueError(error_msg.format(t=t))
+    elif isinstance(t, int):
+        units_multipliers = {'ms': 1, 's': 1000}
+        if input_units not in units_multipliers:
+            raise ValueError("Expected input_units to be one of 's' or 'ms'")
+        t = t * units_multipliers[input_units]
+    else:
+        raise ValueError(error_msg.format(t=t))
     now = int(time.time()*1000)
     if t < 0 or (future and t < now):
         t += now
