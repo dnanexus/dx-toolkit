@@ -1116,6 +1116,24 @@
         }
     ],
     [
+        "/system/describeDataObjects",
+        "systemDescribeDataObjects(req)",
+        {
+            "objectMethod": false,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/describeDataObjects"
+        }
+    ],
+    [
+        "/system/describeProjects",
+        "systemDescribeProjects(req)",
+        {
+            "objectMethod": false,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/describeProjects"
+        }
+    ],
+    [
         "/system/findAffiliates",
         "systemFindAffiliates(req)",
         {

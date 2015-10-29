@@ -1012,6 +1012,22 @@ module DX
       return DX::http_request("/record/new", input_params, opts)
     end
 
+    # Invokes the /system/describeDataObjects API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/describeDataObjects
+    def self.system_describe_data_objects(input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/system/describeDataObjects", input_params, opts)
+    end
+
+    # Invokes the /system/describeProjects API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/describeProjects
+    def self.system_describe_projects(input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/system/describeProjects", input_params, opts)
+    end
+
     # Invokes the /system/findAffiliates API method.
     def self.system_find_affiliates(input_params={}, opts={})
       opts = { "always_retry" => true }.merge(opts)

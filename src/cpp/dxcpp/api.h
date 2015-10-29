@@ -436,6 +436,12 @@ namespace dx {
   JSON recordNew(const std::string &input_params="{}", const bool safe_to_retry=false);
   JSON recordNew(const dx::JSON &input_params, const bool safe_to_retry=false);
 
+  JSON systemDescribeDataObjects(const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON systemDescribeDataObjects(const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON systemDescribeProjects(const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON systemDescribeProjects(const dx::JSON &input_params, const bool safe_to_retry=true);
+
   JSON systemFindAffiliates(const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON systemFindAffiliates(const dx::JSON &input_params, const bool safe_to_retry=true);
 

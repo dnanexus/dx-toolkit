@@ -1150,6 +1150,22 @@ namespace dx {
     return recordNew(input_params.toString(), safe_to_retry);
   }
 
+  JSON systemDescribeDataObjects(const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest("/system/describeDataObjects", input_params, safe_to_retry);
+  }
+
+  JSON systemDescribeDataObjects(const JSON &input_params, const bool safe_to_retry) {
+    return systemDescribeDataObjects(input_params.toString(), safe_to_retry);
+  }
+
+  JSON systemDescribeProjects(const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest("/system/describeProjects", input_params, safe_to_retry);
+  }
+
+  JSON systemDescribeProjects(const JSON &input_params, const bool safe_to_retry) {
+    return systemDescribeProjects(input_params.toString(), safe_to_retry);
+  }
+
   JSON systemFindAffiliates(const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest("/system/findAffiliates", input_params, safe_to_retry);
   }
