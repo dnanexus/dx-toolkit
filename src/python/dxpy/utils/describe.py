@@ -341,14 +341,24 @@ def render_short_timestamp(timestamp):
 def render_timestamp(timestamp):
     return datetime.datetime.fromtimestamp(timestamp/1000).ctime()
 
+
+FIELD_NAME_WIDTH = 20
+
+
 def print_field(label, value):
     if get_delimiter() is not None:
         sys.stdout.write(label + get_delimiter() + value + '\n')
     else:
-        sys.stdout.write(label + " " * (16-len(label)) + fill(value, subsequent_indent=' '*16, width_adjustment=-16) + '\n')
+        sys.stdout.write(
+            label + " " * (FIELD_NAME_WIDTH-len(label)) + fill(value,
+                                                               subsequent_indent=' '*FIELD_NAME_WIDTH,
+                                                               width_adjustment=-FIELD_NAME_WIDTH) +
+            '\n')
+
 
 def print_nofill_field(label, value):
-    sys.stdout.write(label + DELIMITER(" " * (16-len(label))) + value + '\n')
+    sys.stdout.write(label + DELIMITER(" " * (FIELD_NAME_WIDTH - len(label))) + value + '\n')
+
 
 def print_list_field(label, values):
     print_field(label, ('-' if len(values) == 0 else DELIMITER(', ').join(values)))
@@ -356,11 +366,19 @@ def print_list_field(label, values):
 def print_json_field(label, json_value):
     print_field(label, json.dumps(json_value, ensure_ascii=False))
 
-def print_project_desc(desc, verbose=False):
-    recognized_fields = ['id', 'class', 'name', 'summary', 'description', 'protected', 'restricted', 'created', 'modified', 'dataUsage', 'sponsoredDataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'properties', 'appCaches', 'billTo', 'version', 'createdBy',
-                         # Following are app container-specific
-                         'destroyAt', 'project', 'type', 'app', 'appName']
 
+def print_project_desc(desc, verbose=False):
+    recognized_fields = [
+        'id', 'class', 'name', 'summary', 'description', 'protected', 'restricted', 'created', 'modified',
+        'dataUsage', 'sponsoredDataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'properties',
+        'appCaches', 'billTo', 'version', 'createdBy', 'totalSponsoredEgressBytes', 'consumedSponsoredEgressBytes',
+        'containsPHI', 'region', 'storageCost', 'pendingTransfer', 'archivalState', 'atSpendingLimit',
+        'archivalProgress',
+        # Following are app container-specific
+        'destroyAt', 'project', 'type', 'app', 'appName'
+    ]
+
+    # Basic metadata
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
     if "name" in desc:
@@ -371,12 +389,30 @@ def print_project_desc(desc, verbose=False):
         print_field("Description", desc['description'])
     if 'version' in desc and verbose:
         print_field("Version", str(desc['version']))
+
+    # Ownership and permissions
     if 'billTo' in desc:
         print_field("Billed to",  desc['billTo'][5 if desc['billTo'].startswith('user-') else 0:])
+    if 'pendingTransfer' in desc and (verbose or desc['pendingTransfer'] is not None):
+        print_json_field('Pending transfer to', desc['pendingTransfer'])
+    if "level" in desc:
+        print_field("Access level", desc["level"])
+    if 'region' in desc:
+        print_field('Region', desc['region'])
+
+    # Project settings
     if 'protected' in desc:
         print_json_field("Protected", desc["protected"])
     if 'restricted' in desc:
         print_json_field("Restricted", desc["restricted"])
+    if 'containsPHI' in desc:
+        print_json_field('Contains PHI', desc['containsPHI'])
+    if 'archivalState' in desc and verbose:
+        print_json_field('Archival state', desc['archivalState'])
+    if 'archivalProgress' in desc and verbose:
+        print_json_field('Archival progress', desc['archivalProgress'])
+
+    # Usage
     print_field("Created", render_timestamp(desc['created']))
     if 'createdBy' in desc:
         print_field("Created by", desc['createdBy']['user'][desc['createdBy']['user'].find('-') + 1:])
@@ -384,34 +420,52 @@ def print_project_desc(desc, verbose=False):
     print_field("Data usage", ('%.2f' % desc["dataUsage"]) + ' GB')
     if 'sponsoredDataUsage' in desc:
         print_field("Sponsored data", ('%.2f' % desc["sponsoredDataUsage"]) + ' GB')
+    if 'storageCost' in desc:
+        print_field("Storage cost", "$%.3f/month" % desc["storageCost"])
+    if 'totalSponsoredEgressBytes' in desc or 'consumedSponsoredEgressBytes' in desc:
+        total_egress_str = '%.2f GB' % (desc['totalSponsoredEgressBytes'] / 1073741824.,) \
+                           if 'totalSponsoredEgressBytes' in desc else '??'
+        consumed_egress_str = '%.2f GB' % (desc['consumedSponsoredEgressBytes'] / 1073741824.,) \
+                              if 'consumedSponsoredEgressBytes' in desc else '??'
+        print_field('Sponsored egress',
+                    ('%s used of %s total' % (consumed_egress_str, total_egress_str)))
+    if 'atSpendingLimit' in desc:
+        print_json_field("At spending limit?", desc['atSpendingLimit'])
+
+    # Misc metadata
     if "objects" in desc:
         print_field("# Files", str(desc["objects"]))
-    if 'tags' in desc:
-        print_list_field("Tags", desc["tags"])
-    if "level" in desc:
-        print_field("Access level", desc["level"])
     if "folders" in desc:
         print_list_field("Folders", desc["folders"])
     if "permissions" in desc:
-        print_list_field("Permissions", [key[5 if key.startswith('user-') else 0:] + ':' + value for key, value in desc["permissions"].items()])
+        print_list_field(
+            "Permissions",
+            [key[5 if key.startswith('user-') else 0:] + ':' + value for key, value in desc["permissions"].items()]
+        )
+    if 'tags' in desc:
+        print_list_field("Tags", desc["tags"])
     if "properties" in desc:
         print_list_field("Properties", [key + '=' + value for key, value in desc["properties"].items()])
+
     if "appCaches" in desc:
         print_json_field("App caches", desc["appCaches"])
+
+    # Container-specific
     if 'type' in desc:
         print_field("Container type", desc["type"])
     if 'project' in desc:
-        print_field("Assoc. project", desc["project"])
+        print_field("Associated project", desc["project"])
     if 'destroyAt' in desc:
         print_field("To be destroyed", render_timestamp(desc['modified']))
     if 'app' in desc:
-        print_field("Assoc. App ID", desc["app"])
+        print_field("Associated App ID", desc["app"])
     if 'appName' in desc:
-        print_field("Assoc. App", desc["appName"])
+        print_field("Associated App", desc["appName"])
 
     for field in desc:
         if field not in recognized_fields:
             print_json_field(field, desc[field])
+
 
 def print_app_desc(desc, verbose=False):
     recognized_fields = ['id', 'class', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'resources', 'billTo', 'installed', 'openSource', 'summary', 'applet', 'installs', 'billing', 'details', 'developerNotes',

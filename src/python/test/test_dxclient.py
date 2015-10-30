@@ -530,11 +530,26 @@ class TestDXClient(DXTestCase):
         self.assertEqual(my_properties["bar"], "")
 
     def test_dx_describe_project(self):
-        describe_output = run("dx describe :").strip()
-        print(describe_output)
-        self.assertTrue(re.search(r'ID\s+%s.*\n.*\nName\s+dxclient_test_pröject' % (self.project,),
-                                  describe_output))
-        self.assertIn('Properties', describe_output)
+        # Look for field name, some number of spaces, and then the value
+        field_regexp = lambda fieldname, value: \
+            "(^|\n)" + re.escape(fieldname) + " +" + re.escape(value) + "(\n|$)"
+
+        desc_output = run("dx describe :").strip()
+        self.assertRegexpMatches(desc_output, field_regexp("ID", self.project))
+        self.assertRegexpMatches(desc_output, field_regexp("Name", "dxclient_test_pröject"))
+        self.assertRegexpMatches(desc_output, field_regexp("Region", "aws:us-east-1"))
+        self.assertRegexpMatches(desc_output, field_regexp("Contains PHI", "false"))
+        self.assertNotRegexpMatches(desc_output, field_regexp("Archival state", "null"))
+        self.assertNotRegexpMatches(desc_output, field_regexp("Archival progress", "null"))
+        self.assertRegexpMatches(desc_output, field_regexp("Data usage", "0.00 GB"))
+        self.assertRegexpMatches(desc_output, field_regexp("Storage cost", "$0.000/month"))
+        self.assertRegexpMatches(desc_output, field_regexp("Sponsored egress", "0.00 GB used of 0.00 GB total"))
+        self.assertRegexpMatches(desc_output, field_regexp("At spending limit?", "false"))
+        self.assertRegexpMatches(desc_output, field_regexp("Properties", "-"))
+
+        desc_output = run("dx describe --verbose :").strip()
+        self.assertRegexpMatches(desc_output, field_regexp("Archival state", "null"))
+        self.assertRegexpMatches(desc_output, field_regexp("Archival progress", "null"))
 
     def test_dx_remove_project_by_name(self):
         # TODO: this test makes no use of the DXTestCase-provided
