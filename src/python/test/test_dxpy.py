@@ -2102,6 +2102,10 @@ class TestHTTPResponses(unittest.TestCase):
             dxpy.DXHTTPRequest('http://localhost:20406', {}, prepend_srv=False, always_retry=False, max_retries=1)
         self.assertTrue(dxpy._is_retryable_exception(exception_cm.exception))
 
+    def test_case_insensitive_response_headers(self):
+        # Verify that response headers support case-insensitive lookup.
+        res = dxpy.DXHTTPRequest("/system/whoami", {}, want_full_response=True)
+        self.assertTrue("CONTENT-type" in res.headers)
 
 class TestDataobjectFunctions(unittest.TestCase):
     def setUp(self):
