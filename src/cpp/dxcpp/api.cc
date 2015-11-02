@@ -838,6 +838,14 @@ namespace dx {
     return orgDescribe(object_id, input_params.toString(), safe_to_retry);
   }
 
+  JSON orgFindMembers(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/findMembers"), input_params, safe_to_retry);
+  }
+
+  JSON orgFindMembers(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return orgFindMembers(object_id, input_params.toString(), safe_to_retry);
+  }
+
   JSON orgFindProjects(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest(std::string("/") + object_id + std::string("/findProjects"), input_params, safe_to_retry);
   }

@@ -765,6 +765,15 @@
         }
     ],
     [
+        "/org-xxxx/findMembers",
+        "orgFindMembers(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FfindMembers"
+        }
+    ],
+    [
         "/org-xxxx/findProjects",
         "orgFindProjects(req, objectId)",
         {
