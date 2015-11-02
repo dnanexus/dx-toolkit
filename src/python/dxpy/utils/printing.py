@@ -19,6 +19,7 @@ This submodule gives basic utilities for printing to the terminal.
 '''
 
 import textwrap, subprocess, os, sys
+import json
 from ..compat import USING_PYTHON2, sys_encoding
 from ..exceptions import DXCLIError
 
@@ -155,3 +156,15 @@ def refill_paragraphs(string, ignored_prefix='    '):
     paragraphs = string.split('\n\n')
     refilled_paragraphs = [fill(paragraph) if not paragraph.startswith(ignored_prefix) else paragraph for paragraph in paragraphs]
     return '\n\n'.join(refilled_paragraphs).strip('\n')
+
+
+def format_find_projects_results(args, results):
+    if args.json:
+        print(json.dumps(list(results), indent=4))
+    elif args.brief:
+        for result in results:
+            print(result['id'])
+    else:
+        for result in results:
+            print(result["id"] + DELIMITER(" : ") + result['describe']['name'] +
+                  DELIMITER(' (') + result["level"] + DELIMITER(')'))

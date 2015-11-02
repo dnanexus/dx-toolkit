@@ -45,7 +45,7 @@ from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_a
                            instance_type_arg, process_instance_type_arg)
 from ..cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
 from ..cli.org import (get_org_invite_args, add_membership, remove_membership,
-                       update_membership, find_orgs)
+                       update_membership, find_orgs, org_find_projects)
 from ..exceptions import (err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions,
                           format_exception)
 from ..utils import warn, group_array_by_field, normalize_timedelta, normalize_time_input
@@ -53,7 +53,7 @@ from ..utils import warn, group_array_by_field, normalize_timedelta, normalize_t
 from ..app_categories import APP_CATEGORIES
 from ..utils.printing import (CYAN, BLUE, YELLOW, GREEN, RED, WHITE, UNDERLINE, BOLD, ENDC, DNANEXUS_LOGO,
                               DNANEXUS_X, set_colors, set_delimiter, get_delimiter, DELIMITER, fill,
-                              tty_rows, tty_cols, pager)
+                              tty_rows, tty_cols, pager, format_find_projects_results)
 from ..utils.pretty_print import format_tree, format_table
 from ..utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id,
                               is_analysis_id, get_last_pos_of_char, resolve_container_id_or_name, resolve_path,
@@ -165,7 +165,7 @@ else:
 # subcommand with further subcommands, then the second word must be an
 # appropriate sub-subcommand.
 class DXCLICompleter():
-    subcommands = {'find': ['data ', 'projects ', 'apps ', 'jobs ', 'executions ', 'analyses '],
+    subcommands = {'find': ['data ', 'projects ', 'apps ', 'jobs ', 'executions ', 'analyses ', 'org_projects '],
                    'new': ['record ', 'project ', 'workflow '],
                    'add': ['developers ', 'users ', 'stage '],
                    'remove': ['developers ', 'users ', 'stage '],
@@ -2221,16 +2221,7 @@ def find_projects(args):
                                      public=(args.public if args.public else None),
                                      created_after=args.created_after,
                                      created_before=args.created_before)
-        if args.json:
-            print(json.dumps(list(results), indent=4))
-            return
-        if args.brief:
-            for result in results:
-                print(result['id'])
-        else:
-            for result in results:
-                print(result["id"] + DELIMITER(" : ") + result['describe']['name'] +
-                      DELIMITER(' (') + result["level"] + DELIMITER(')'))
+        format_find_projects_results(args, results)
     except:
         err_exit()
 
@@ -4410,6 +4401,22 @@ parser_find_projects.add_argument('--created-before',
                                   'created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
 parser_find_projects.set_defaults(func=find_projects)
 register_subparser(parser_find_projects, subparsers_action=subparsers_find, categories='data')
+
+parser_find_org_projects = subparsers_find.add_parser('org_projects',
+                                                      help=fill('Finds projects billed to the specified org subject to the given search parameters.'),
+                                                      parents=[stdout_args, json_arg, delim_arg, env_args,
+                                                               find_by_properties_and_tags_args],
+                                                      prog='dx find org_projects')
+parser_find_org_projects.add_argument('org_id', help='Org ID')
+parser_find_org_projects.add_argument('--name', help='Name of the projects')
+parser_find_org_projects.add_argument('--ids', nargs='+', help='Possible project IDs. May be specified like "--ids project-1 project-2"')
+find_org_projects_public = parser_find_org_projects.add_mutually_exclusive_group()
+find_org_projects_public.add_argument('--public-only', dest='public', help='Include ONLY public projects', action='store_true', default=None)
+find_org_projects_public.add_argument('--private-only', dest='public', help='Include ONLY private projects (i.e. those in which the PUBLIC entity does not have any permission)', action='store_false', default=None)
+parser_find_org_projects.add_argument('--created-after', help='Date (e.g. 2012-01-31) or integer timestamp after which the project was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y). Integer timestamps will be parsed as milliseconds since epoch.')
+parser_find_org_projects.add_argument('--created-before', help='Date (e.g. 2012-01-31) or integer timestamp before which the project was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y). Integer timestamps will be parsed as milliseconds since epoch.')
+parser_find_org_projects.set_defaults(func=org_find_projects)
+register_subparser(parser_find_org_projects, subparsers_action=subparsers_find, categories='data')
 
 parser_find_orgs = subparsers_find.add_parser(
     "orgs",

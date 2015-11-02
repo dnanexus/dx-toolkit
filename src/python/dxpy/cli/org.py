@@ -21,8 +21,10 @@ the org-based commands of the dx command-line client.
 from __future__ import (print_function, unicode_literals)
 
 import dxpy
-from ..exceptions import DXCLIError
-from dxpy.utils.printing import (fill, DELIMITER)
+from ..cli import try_call
+from ..cli.parsers import process_find_by_property_args
+from ..exceptions import (DXCLIError, err_exit)
+from dxpy.utils.printing import (fill, DELIMITER, format_find_projects_results)
 import json
 from . import prompt_for_yn
 
@@ -172,3 +174,17 @@ def find_orgs(args):
                 d1=(DELIMITER(args.delimiter) if args.delimiter else " : "),
                 n=res["describe"]["name"]
             ))
+
+
+def org_find_projects(args):
+    try_call(process_find_by_property_args, args)
+    try:
+        results = dxpy.org_find_projects(org_id=args.org_id, name=args.name, name_mode='glob',
+                                         ids=args.ids, properties=args.properties, tags=args.tag,
+                                         describe=(not args.brief),
+                                         public=args.public,
+                                         created_after=args.created_after,
+                                         created_before=args.created_before)
+        format_find_projects_results(args, results)
+    except:
+        err_exit()

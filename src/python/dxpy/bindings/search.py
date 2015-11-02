@@ -684,6 +684,103 @@ def find_one_app(zero_ok=False, more_ok=True, **kwargs):
     return _find_one(find_apps, zero_ok=zero_ok, more_ok=more_ok, **kwargs)
 
 
+def _org_find(api_method, org_id, query, first_page_size=100):
+    """
+    Takes an API method handler ``dxpy.api.org_find...`` and calls it with
+    *org_id* and *query*, then wraps a generator around its output. Used by
+    :meth:`org_find_members` and :meth:`org_find_projects` below.
+
+    :param first_page_size: The number of results that the initial API call will return.
+    :type first_page_size: int
+
+    """
+    if "limit" not in query:
+        query["limit"] = min(first_page_size, 1000)
+
+    while True:
+        resp = api_method(org_id, query)
+        for result in resp["results"]:
+            yield result
+
+        # set up next query
+        if resp["next"] is not None:
+            query["starting"] = resp["next"]
+            query["limit"] = min(query["limit"] * 2, 1000)
+        else:
+            break
+
+
+def org_find_projects(org_id=None, name=None, name_mode='exact', ids=None, properties=None, tags=None, describe=False,
+                      public=None, created_after=None, created_before=None):
+    """
+    :param org_id: ID of the organization
+    :type org_id: string
+    :param name: Name that each result must have (also see *name_mode* param)
+    :type name: string
+    :param name_mode: Method by which to interpret the *name* param ("exact": exact match,
+        "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
+    :type name_mode: string
+    :param ids: List of project IDs. Each result must have a project ID that was specified in this list.
+    :type ids: array of strings
+    :param properties: Properties (key-value pairs) that each result must have
+        (use value True to require the property key and allow any value)
+    :type properties: dict
+    :param tags: Tags that each result must have
+    :type tags: list of strings
+    :param describe: Whether or not to return the response of ``dxpy.api.project_describe`` for each result. False
+        omits the describe response; True includes it; a dict will be used as the input to
+        ``dxpy.api.project_describe`` (to customize the desired set of fields in the describe response).
+    :type describe: bool or dict
+    :param public: True indicates that each result must be public; False indicates that each result must be private;
+        None indicates that both public and private projects will be returned in the result set.
+    :type public: boolean or None
+    :param created_after: Timestamp after which each result was created
+        (see note accompanying :meth:`find_data_objects()` for interpretation)
+    :type created_after: int or string
+    :param created_before: Timestamp before which each result was created
+        (see note accompanying :meth:`find_data_objects()` for interpretation)
+    :type created_before: int or string
+    :rtype: generator
+
+    Returns a generator that yields all projects that match the query that was formed by intersecting all specified
+    constraints. The search is not restricted by any parameters that were unspecified.
+
+    """
+    query = {}
+    if name is not None:
+        if name_mode == 'exact':
+            query['name'] = name
+        elif name_mode == 'glob':
+            query['name'] = {'glob': name}
+        elif name_mode == 'regexp':
+            query['name'] = {'regexp': name}
+        else:
+            raise DXError('org_find_projects: Unexpected value found for argument name_mode')
+    if ids is not None:
+        query["id"] = ids
+    if properties is not None:
+        if len(properties.keys()) == 1:
+            query["properties"] = properties
+        else:
+            query["properties"] = {"$and": [{k: v} for (k, v) in properties.iteritems()]}
+    if tags is not None:
+        if len(tags) == 1:
+            query["tags"] = tags[0]
+        else:
+            query["tags"] = {"$and": tags}
+    query["describe"] = describe
+    if public is not None:
+        query['public'] = public
+    if created_after is not None or created_before is not None:
+        query["created"] = {}
+        if created_after is not None:
+            query["created"]["after"] = dxpy.utils.normalize_time_input(created_after)
+        if created_before is not None:
+            query["created"]["before"] = dxpy.utils.normalize_time_input(created_before)
+
+    return _org_find(dxpy.api.org_find_projects, org_id, query)
+
+
 def find_orgs(query, first_page_size=10):
     """
     :param query: The input to the /system/findOrgs API method.
