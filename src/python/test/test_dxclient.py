@@ -3685,6 +3685,26 @@ class TestDXClientFind(DXTestCase):
         assert_cmd_gives_ids("dx find jobs "+options3, [job_id])
         assert_cmd_gives_ids("dx find analyses "+options3, [])
 
+    def test_dx_find_org_projects_invalid(self):
+        cmd = "dx find org_projects org-irrelevant {opts}"
+
+        # --ids must contain at least one id.
+        with self.assertSubprocessFailure(stderr_regexp='expected at least one argument', exit_code=2):
+            run(cmd.format(opts="--ids"))
+
+        # --tag must contain at least one tag.
+        with self.assertSubprocessFailure(stderr_regexp='expected one argument', exit_code=2):
+            run(cmd.format(opts="--tag"))
+
+        # --property must contain at least one property.
+        with self.assertSubprocessFailure(stderr_regexp='expected one argument', exit_code=2):
+            run(cmd.format(opts="--property"))
+
+        # Only one of --public-only and --private-only may be specified.
+        with self.assertSubprocessFailure(stderr_regexp='not allowed with argument', exit_code=2):
+            run(cmd.format(opts="--public-only --private-only"))
+
+
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test org and project')
     def test_dx_find_org_projects(self):
         org_id = "org-piratelabs"
@@ -3703,10 +3723,7 @@ class TestDXClientFind(DXTestCase):
             self.assertEqual(output, [result['id'] for result in dx_api_output['results']])
             self.assertItemsEqual(output, org_projects)
 
-            # With --id flag
-            with self.assertSubprocessFailure(stderr_regexp='expected at least one argument', exit_code=2):
-                run("dx find org_projects {o} --ids".format(o=org_id))
-
+            # With --ids flag
             output = run("dx find org_projects {o} --ids {p}".format(o=org_id, p=project2_id)).strip().split("\n")
             self.assertItemsEqual(output, [''])
 
@@ -3719,9 +3736,6 @@ class TestDXClientFind(DXTestCase):
             self.assertItemsEqual(output, [project1_id])
 
             # With --tag
-            with self.assertSubprocessFailure(stderr_regexp='expected one argument', exit_code=2):
-                run("dx find org_projects {o} --tag".format(o=org_id))
-
             dxpy.api.project_add_tags(project1_id, {'tags': ['tag-1', 'tag-2']})
             dxpy.api.project_add_tags(project2_id, {'tags': ['tag-1', 'tag-2']})
             output = run("dx find org_projects {o} --tag {t1} --brief".format(o=org_id,
@@ -3738,9 +3752,6 @@ class TestDXClientFind(DXTestCase):
             self.assertEqual(output, [""])
 
             # With --property
-            with self.assertSubprocessFailure(stderr_regexp='expected one argument', exit_code=2):
-                run("dx find org_projects {o} --property").format(o=org_id)
-
             dxpy.api.project_set_properties(project1_id, {'properties': {'property-1': 'value1', 'property-2':
                                                           'value2'}})
             dxpy.api.project_set_properties(project2_id, {'properties': {'property-1': 'value1', 'property-2':
@@ -3758,27 +3769,32 @@ class TestDXClientFind(DXTestCase):
                          p1='property-1', p2='property-3')).strip().split("\n")
             self.assertItemsEqual(output, [""])
 
-    @unittest.skip("Test is buggy and subject to change")
-    #@unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test org')
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that requires presence of test org')
     def test_dx_find_org_projects_public(self):
         org_id = "org-piratelabs"
-        project_ppb = "project-0000000000000000000000pb"  # public project in org-piratelabs
-        with temporary_project() as project_1, temporary_project() as project_2:
-            dxpy.api.project_update(project_1.get_id(), {"billTo": org_id})
 
-            output = run("dx find org_projects {o} --brief".format(o=org_id)).strip().split("\n")
-            self.assertItemsEqual(output, [project_1.get_id(), project_ppb])
-            self.assertNotIn(project_2.get_id(), output)
+        # Public project in `org_id`.
+        project_ppb_id = "project-0000000000000000000000pb"
 
-            output = run("dx find org_projects {o} --public-only --brief".format(o=org_id)).strip().split("\n")
-            self.assertItemsEqual(output, [project_ppb])
-            self.assertNotIn(project_1.get_id(), output)
-            self.assertNotIn(project_2.get_id(), output)
+        with temporary_project() as p1, temporary_project() as p2:
+            # Private project in `org_id`.
+            private_project_id = p1.get_id()
+            dxpy.api.project_update(private_project_id, {"billTo": org_id})
 
-            output = run("dx find org_projects {o} --private-only --brief".format(o=org_id)).strip().split("\n")
-            self.assertItemsEqual(output, [project_1.get_id()])
-            self.assertNotIn(project_ppb, output)
-            self.assertNotIn(project_2.get_id(), output)
+            # Assert that `p2` exists.
+            self.assertEqual(dxpy.api.project_describe(p2.get_id(), {})["level"], "ADMINISTER")
+
+            cmd = "dx find org_projects {o} {opts} --brief"
+
+            output = run(cmd.format(o=org_id, opts="")).strip().split("\n")
+            self.assertItemsEqual(output, [private_project_id, project_ppb_id])
+
+            output = run(cmd.format(o=org_id, opts="--public-only")).strip().split("\n")
+            self.assertItemsEqual(output, [project_ppb_id])
+
+            output = run(cmd.format(o=org_id, opts="--private-only")).strip().split("\n")
+            self.assertItemsEqual(output, [private_project_id])
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test org')
     def test_dx_find_org_projects_created(self):
