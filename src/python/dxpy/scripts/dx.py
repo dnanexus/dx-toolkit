@@ -4286,10 +4286,14 @@ subparsers_find = parser_find.add_subparsers(parser_class=DXArgumentParser)
 subparsers_find.metavar = 'category'
 register_subparser(parser_find, categories=())
 
-parser_find_apps = subparsers_find.add_parser('apps', help='List available apps',
-                                              description='Finds apps with the given search parameters.  Use --category to restrict by a category; common categories are available as tab completions and can be listed with --category-help.',
-                                              parents=[stdout_args, json_arg, delim_arg, env_args],
-                                              prog='dx find apps')
+parser_find_apps = subparsers_find.add_parser(
+    'apps',
+    help='List available apps',
+    description=fill('Finds apps subject to the given search parameters. Use --category to restrict by a category; '
+                     'common categories are available as tab completions and can be listed with --category-help.'),
+    parents=[stdout_args, json_arg, delim_arg, env_args],
+    prog='dx find apps'
+)
 parser_find_apps.add_argument('--name', help='Name of the app')
 parser_find_apps.add_argument('--category', help='Category of the app').completer = ListCompleter(APP_CATEGORIES)
 parser_find_apps.add_argument('--category-help',
@@ -4309,61 +4313,63 @@ parser_find_apps.add_argument('--mod-before', help='Date (e.g. 2012-01-01) or in
 parser_find_apps.set_defaults(func=find_apps)
 register_subparser(parser_find_apps, subparsers_action=subparsers_find, categories='exec')
 
-parser_find_jobs = subparsers_find.add_parser('jobs', help='List jobs in your project',
-                                              description=fill('Finds jobs with the given search parameters.  By default, output is formatted to show the last several job trees that you\'ve run in the current project.') + '''
-
-EXAMPLES
-
-  ''' + fill('The following will show the full job tree containing the job ID given (it does not have to be the origin job).', subsequent_indent='  ') + '''
-
-  $ dx find jobs --id job-B13f83KgpqG0PB8P0xkQ000X
-
-  ''' + fill('The following will find all jobs that start with the string "bwa"', subsequent_indent='  ') + '''
-
-  $ dx find jobs --name bwa*
-''',
-                                              parents=[find_executions_args, stdout_args, json_arg, no_color_arg,
-                                                       delim_arg, env_args, find_by_properties_and_tags_args],
-                                              formatter_class=argparse.RawTextHelpFormatter,
-                                              conflict_handler='resolve',
-                                              prog='dx find jobs')
+parser_find_jobs = subparsers_find.add_parser(
+    'jobs',
+    help='List jobs in the current project',
+    description=fill('Finds jobs subject to the given search parameters. By default, output is formatted to show the '
+                     'last several job trees that you\'ve run in the current project.'),
+    parents=[find_executions_args, stdout_args, json_arg, no_color_arg, delim_arg, env_args,
+             find_by_properties_and_tags_args],
+    formatter_class=argparse.RawTextHelpFormatter,
+    conflict_handler='resolve',
+    prog='dx find jobs'
+)
 add_find_executions_search_gp(parser_find_jobs)
 parser_find_jobs.set_defaults(func=find_executions, classname='job')
 parser_find_jobs.completer = DXPathCompleter(expected='project')
 register_subparser(parser_find_jobs, subparsers_action=subparsers_find, categories='exec')
 
-parser_find_analyses = subparsers_find.add_parser('analyses', help='List analyses in your project',
-                                                  description=fill('Finds analyses with the given search parameters.  By default, output is formatted to show the last several job trees that you\'ve run in the current project.'),
-                                                  parents=[find_executions_args, stdout_args, json_arg, no_color_arg,
-                                                           delim_arg, env_args, find_by_properties_and_tags_args],
-                                                  formatter_class=argparse.RawTextHelpFormatter,
-                                                  conflict_handler='resolve',
-                                                  prog='dx find analyses')
+parser_find_analyses = subparsers_find.add_parser(
+    'analyses',
+    help='List analyses in the current project',
+    description=fill('Finds analyses subject to the given search parameters. By default, output is formatted to show '
+                     'the last several job trees that you\'ve run in the current project.'),
+    parents=[find_executions_args, stdout_args, json_arg, no_color_arg, delim_arg, env_args,
+             find_by_properties_and_tags_args],
+    formatter_class=argparse.RawTextHelpFormatter,
+    conflict_handler='resolve',
+    prog='dx find analyses'
+)
 add_find_executions_search_gp(parser_find_analyses)
 parser_find_analyses.set_defaults(func=find_executions, classname='analysis')
 parser_find_analyses.completer = DXPathCompleter(expected='project')
 register_subparser(parser_find_analyses, subparsers_action=subparsers_find, categories='exec')
 
-parser_find_executions = subparsers_find.add_parser('executions', help='List executions (jobs and analyses) in your project',
-                                                    description=fill('Finds executions (jobs and analyses) with the given search parameters.  By default, output is formatted to show the last several job trees that you\'ve run in the current project.'),
-                                                    parents=[find_executions_args, stdout_args, json_arg, no_color_arg,
-                                                             delim_arg, env_args, find_by_properties_and_tags_args],
-                                                    formatter_class=argparse.RawTextHelpFormatter,
-                                                    conflict_handler='resolve',
-                                                    prog='dx find executions')
+parser_find_executions = subparsers_find.add_parser(
+    'executions',
+    help='List executions (jobs and analyses) in the current project',
+    description=fill('Finds executions (jobs and analyses) subject to the given search parameters. By default, output '
+                     'is formatted to show the last several job trees that you\'ve run in the current project.'),
+    parents=[find_executions_args, stdout_args, json_arg, no_color_arg, delim_arg, env_args,
+             find_by_properties_and_tags_args],
+    formatter_class=argparse.RawTextHelpFormatter,
+    conflict_handler='resolve',
+    prog='dx find executions'
+)
 add_find_executions_search_gp(parser_find_executions)
 parser_find_executions.set_defaults(func=find_executions, classname=None)
 parser_find_executions.completer = DXPathCompleter(expected='project')
 register_subparser(parser_find_executions, subparsers_action=subparsers_find, categories='exec')
 
-parser_find_data = subparsers_find.add_parser('data', help='Find data objects',
-                                              description='Finds data objects with the given search parameters.  By' +
-                                              ' default, restricts the search to the current project if set.  To ' +
-                                              'search over all projects (excludes public projects), use ' +
-                                              '--all-projects (overrides --path and --norecurse).',
-                                              parents=[stdout_args, json_arg, no_color_arg, delim_arg, env_args,
-                                                       find_by_properties_and_tags_args],
-                                              prog='dx find data')
+parser_find_data = subparsers_find.add_parser(
+    'data',
+    help='List data objects in the current project',
+    description=fill('Finds data objects subject to the given search parameters. By default, restricts the search to '
+                     'the current project if set. To search over all projects (excluding public projects), use '
+                     '--all-projects (overrides --path and --norecurse).'),
+    parents=[stdout_args, json_arg, no_color_arg, delim_arg, env_args, find_by_properties_and_tags_args],
+    prog='dx find data'
+)
 parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'gtable', 'applet', 'workflow'], help='Data object class')
 parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
 parser_find_data.add_argument('--visibility', choices=['hidden', 'visible', 'either'], default='visible', help='Whether the object is hidden or not')
@@ -4383,10 +4389,14 @@ parser_find_data.add_argument('--created-before', help='Date (e.g. 2012-01-01) o
 parser_find_data.set_defaults(func=find_data)
 register_subparser(parser_find_data, subparsers_action=subparsers_find, categories=('data', 'metadata'))
 
-parser_find_projects = subparsers_find.add_parser('projects', help='Find projects',
-                                                  description='Finds projects with the given search parameters.  Use the --public flag to list all public projects.',
-                                                  parents=[stdout_args, json_arg, delim_arg, env_args, find_by_properties_and_tags_args],
-                                                  prog='dx find projects')
+parser_find_projects = subparsers_find.add_parser(
+    'projects',
+    help='List projects',
+    description=fill('Finds projects subject to the given search parameters. Use the --public flag to list all public '
+                     'projects.'),
+    parents=[stdout_args, json_arg, delim_arg, env_args, find_by_properties_and_tags_args],
+    prog='dx find projects'
+)
 parser_find_projects.add_argument('--name', help='Name of the project')
 parser_find_projects.add_argument('--level', choices=['VIEW', 'UPLOAD', 'CONTRIBUTE', 'ADMINISTER'],
                                   help='Minimum level of permissions expected')
@@ -4402,11 +4412,15 @@ parser_find_projects.add_argument('--created-before',
 parser_find_projects.set_defaults(func=find_projects)
 register_subparser(parser_find_projects, subparsers_action=subparsers_find, categories='data')
 
-parser_find_org_projects = subparsers_find.add_parser('org_projects',
-                                                      help=fill('Finds projects billed to the specified org subject to the given search parameters.'),
-                                                      parents=[stdout_args, json_arg, delim_arg, env_args,
-                                                               find_by_properties_and_tags_args],
-                                                      prog='dx find org_projects')
+parser_find_org_projects = subparsers_find.add_parser(
+    'org_projects',
+    help='List projects billed to a particular org',
+    description=fill('Finds projects billed to the specified org, subject to the given search parameters. You must '
+                     'be an ADMIN of the specified org to use this command. It allows you to identify projects billed '
+                     'to the org that have not been shared with you explicitly.'),
+    parents=[stdout_args, json_arg, delim_arg, env_args, find_by_properties_and_tags_args],
+    prog='dx find org_projects'
+)
 parser_find_org_projects.add_argument('org_id', help='Org ID')
 parser_find_org_projects.add_argument('--name', help='Name of the projects')
 parser_find_org_projects.add_argument('--ids', nargs='+', help='Possible project IDs. May be specified like "--ids project-1 project-2"')
@@ -4420,8 +4434,8 @@ register_subparser(parser_find_org_projects, subparsers_action=subparsers_find, 
 
 parser_find_orgs = subparsers_find.add_parser(
     "orgs",
-    help="Find orgs",
-    description="Finds orgs subject to the specified search parameters.",
+    help="List orgs",
+    description="Finds orgs subject to the given search parameters.",
     parents=[stdout_args, env_args, delim_arg, json_arg],
     prog="dx find orgs"
 )
