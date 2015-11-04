@@ -1,3 +1,16 @@
+dx-toolkit (0.169.0) precise; urgency=low
+
+  * Consistent help strings for all "dx find" commands
+  * PTFM-16470 Add test for `dx find org_projects`
+  * Add API wrappers for orgFindMembers
+  * PTFM-16213 Find all projects billed to an org
+  * dxpy: Add test for case-insensitive response header lookup
+  * Project describe pretty-prints all the default fields
+  * Add API bindings to /system/describe{DataObjects,Projects}
+  * Document the reason for the DXTEST_ENV flag
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 04 Nov 2015 18:32:39 +0000
+
 dx-toolkit (0.168.0) precise; urgency=low
 
   * Code review fix for bb04657e1f
