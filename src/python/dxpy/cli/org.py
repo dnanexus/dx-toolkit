@@ -20,13 +20,13 @@ the org-based commands of the dx command-line client.
 '''
 from __future__ import (print_function, unicode_literals)
 
+from ..compat import input
 import dxpy
-from ..cli import try_call
-from ..cli.parsers import process_find_by_property_args
+from . import try_call, prompt_for_yn, INTERACTIVE_CLI
+from .parsers import process_find_by_property_args
 from ..exceptions import (DXCLIError, err_exit)
 from dxpy.utils.printing import (fill, DELIMITER, format_find_projects_results)
 import json
-from . import prompt_for_yn
 
 
 def get_org_invite_args(args):
@@ -174,6 +174,24 @@ def find_orgs(args):
                 d1=(DELIMITER(args.delimiter) if args.delimiter else " : "),
                 n=res["describe"]["name"]
             ))
+
+
+def new_org(args):
+    if args.name is None and INTERACTIVE_CLI:
+        args.name = input("Enter descriptive name for new org: ")
+
+    if args.name is None:
+        err_exit("No org name supplied and input is not interactive.")
+
+    org_new_input = {"handle": args.handle, "name": args.name,
+                     "policies": {"memberListVisibility": args.member_list_visibility,
+                                  "restrictProjectTransfer": args.project_transfer_ability}}
+
+    resp = try_call(dxpy.api.org_new, org_new_input)
+    if args.brief:
+        print(resp['id'])
+    else:
+        print('Created new org called "' + args.name + '" (' + resp['id'] + ')')
 
 
 def org_find_projects(args):

@@ -44,8 +44,8 @@ from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_a
                            set_env_from_args, extra_args, process_extra_args, DXParserError, exec_input_args,
                            instance_type_arg, process_instance_type_arg)
 from ..cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
-from ..cli.org import (get_org_invite_args, add_membership, remove_membership,
-                       update_membership, find_orgs, org_find_projects)
+from ..cli.org import (get_org_invite_args, add_membership, remove_membership, update_membership, new_org,
+                       find_orgs, org_find_projects)
 from ..exceptions import (err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions,
                           format_exception)
 from ..utils import warn, group_array_by_field, normalize_timedelta, normalize_time_input
@@ -166,7 +166,7 @@ else:
 # appropriate sub-subcommand.
 class DXCLICompleter():
     subcommands = {'find': ['data ', 'projects ', 'apps ', 'jobs ', 'executions ', 'analyses ', 'org_projects '],
-                   'new': ['record ', 'project ', 'workflow '],
+                   'new': ['record ', 'project ', 'workflow ', 'org '],
                    'add': ['developers ', 'users ', 'stage '],
                    'remove': ['developers ', 'users ', 'stage '],
                    'update': ['stage ', 'workflow ']}
@@ -4104,6 +4104,17 @@ parser_new_user_org_opts.add_argument("--no-email", default=False, action=DXNewU
 parser_new_user.set_defaults(func=new_user)
 register_subparser(parser_new_user, subparsers_action=subparsers_new,
                    categories="other")
+
+parser_new_org = subparsers_new.add_parser('org', help='Create new org',
+                                           description='Create a new org',
+                                           parents=[stdout_args, env_args],
+                                           prog='dx new org')
+parser_new_org.add_argument('name', help='Descriptive name of the org', nargs='?')
+parser_new_org.add_argument('--handle', required=True, help='Unique handle for the org. The specified handle will be converted to lowercase and appended to "org-" to form the org ID')
+parser_new_org.add_argument('--member-list-visibility', default="ADMIN", help='Org membership level required to be able to list the members of the org, or to view the membership level or permissions of any other member of the org; default ADMIN', choices=["ADMIN", "MEMBER"])
+parser_new_org.add_argument('--project-transfer-ability', default="ADMIN", help='Org membership level required to be able to change the billing account of an org-billed project to any other entity; default ADMIN', choices=["ADMIN", "MEMBER"])
+parser_new_org.set_defaults(func=new_org)
+register_subparser(parser_new_org, subparsers_action=subparsers_new, categories='other')
 
 parser_new_project = subparsers_new.add_parser('project', help='Create a new project',
                                                description='Create a new project',
