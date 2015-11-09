@@ -4011,6 +4011,16 @@ class TestDXClientOrg(DXTestCase):
         self.assertEqual(res['policies']['memberListVisibility'], policy_mlv)
         self.assertEqual(res['policies']['restrictProjectTransfer'], "ADMIN")
 
+        org_handle = self._get_unique_org_handle()
+        policy_mlv = "PUBLIC"
+        org_id = run('dx new org "Test New Org" --handle {h} --member-list-visibility {mlv} --brief'
+                     .format(h=org_handle, mlv=policy_mlv)).strip()
+        res = dxpy.api.org_describe(org_id)
+        self.assertEqual(res['handle'], org_handle)
+        self.assertEqual(res['name'], "Test New Org")
+        self.assertEqual(res['policies']['memberListVisibility'], policy_mlv)
+        self.assertEqual(res['policies']['restrictProjectTransfer'], "ADMIN")
+
         # Test --project-transfer-ability flag
         org_handle = self._get_unique_org_handle()
         policy_pta = "MEMBER"
@@ -4042,6 +4052,19 @@ class TestDXClientOrg(DXTestCase):
         self.assertEqual(res['policies']["restrictProjectTransfer"], "ADMIN")
 
         # Prompt with "--member-list-visibility" & "--handle"
+        org_handle = self._get_unique_org_handle()
+        dx_new_org = pexpect.spawn('dx new org --handle {h} --member-list-visibility {mlv}'.format(h=org_handle,
+                                   mlv="PUBLIC"), logfile=sys.stderr)
+        dx_new_org.expect('Enter descriptive name')
+        dx_new_org.sendline("Test New Org Prompt")
+        dx_new_org.expect('Created new org')
+        org_id = "org-" + org_handle
+        res = dxpy.api.org_describe(org_id)
+        self.assertEqual(res['handle'], org_handle)
+        self.assertEqual(res['name'], "Test New Org Prompt")
+        self.assertEqual(res['policies']["memberListVisibility"], "PUBLIC")
+        self.assertEqual(res['policies']["restrictProjectTransfer"], "ADMIN")
+
         org_handle = self._get_unique_org_handle()
         dx_new_org = pexpect.spawn('dx new org --handle {h} --member-list-visibility {mlv}'.format(h=org_handle,
                                    mlv="MEMBER"), logfile=sys.stderr)
