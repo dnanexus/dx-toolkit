@@ -1,3 +1,9 @@
+dx-toolkit (0.169.1) precise; urgency=low
+
+  * Force noninteractive frontend in apt-get
+
+ -- Phil Sung <psung@dnanexus.com>  Mon, 09 Nov 2015 21:31:26 +0000
+
 dx-toolkit (0.169.0) precise; urgency=low
 
   * Consistent help strings for all "dx find" commands
