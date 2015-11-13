@@ -1,3 +1,9 @@
+dx-toolkit (0.170.0) precise; urgency=low
+
+  * Force noninteractive frontend in apt-get
+
+ -- Phil Sung <psung@dnanexus.com>  Fri, 13 Nov 2015 01:24:32 +0000
+
 dx-toolkit (0.169.0) precise; urgency=low
 
   * Consistent help strings for all "dx find" commands
@@ -51,7 +57,7 @@ dx-toolkit (0.166.0) precise; urgency=low
   * PTFM-15334 Add --no-email tag to dx invite {user} {project}
   * dxpy.download_dxfile(): avoid memory leak in chunk iterator
   * dxpy.DXFile: fix request config logic error in read()
-  * dxpy.download_dxfile: restore positional args compatibility 
+  * dxpy.download_dxfile: restore positional args compatibility
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 15 Oct 2015 00:01:02 +0000
 
