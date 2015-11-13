@@ -16,6 +16,7 @@
 
 package com.dnanexus;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -24,6 +25,7 @@ import com.google.common.base.Preconditions;
 /**
  * An output parameter for an executable.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(Include.NON_NULL)
 public class OutputParameter {
 
@@ -77,11 +79,12 @@ public class OutputParameter {
     @JsonProperty
     private String name;
 
-    // TODO: type, patterns, label, group, help
+    // TODO: type, patterns, group, help
 
     @JsonProperty("class")
     private IOClass ioClass;
-
+    @JsonProperty
+    private String label;  // TODO: needs getters/setters
     @JsonProperty
     private Boolean optional;
 
