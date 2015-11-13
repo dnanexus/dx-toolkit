@@ -504,6 +504,23 @@ class TestDXJobutilAddOutput(DXTestCase):
                                                   exit_code=3):
                     run(cmd_prefix + " ".join([str(i), "--class " + tc[0], tc[1]]))
 
+    def test_parallel_add(self):
+        temp_dir = tempfile.mkdtemp()
+        job_output_filename = os.path.join(temp_dir, 'job_output.json')
+
+        count = 200
+
+        shell_code = "\n".join("dx-jobutil-add-output myarray %d --class array:string --output %s &" %
+                               (i, pipes.quote(job_output_filename)) for i in range(count)) + \
+                     "\nwait"
+
+        run("/bin/bash -c \"" + shell_code + "\"", cwd=temp_dir)
+
+        with open(job_output_filename) as outputs:
+            output_spec = json.loads(outputs.read())
+            self.assertEquals(len(output_spec["myarray"]), count)
+            self.assertEquals(sorted(output_spec["myarray"]), sorted(str(i) for i in range(count)))
+
 
 class TestDXJobutilNewJob(DXTestCase):
     @classmethod
