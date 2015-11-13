@@ -19,8 +19,11 @@
 import json
 import argparse
 import os
+import fcntl
 from dxpy.utils.resolver import *
 from dxpy.utils.printing import *
+
+from contextlib import contextmanager
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
                                  description=fill('Reads and modifies job_output.json in your home directory to be a JSON hash with key *name* and value  *value*.') + '\n\n' + fill('If --class is not provided or is set to "auto", auto-detection of the output format will occur.  In particular, it will treat it as a number, hash, or boolean if it can be successfully parsed as such.  If it is a string which matches the pattern for a data object ID, it will encapsulate it in a DNAnexus link hash; otherwise it is treated as a simple string.') + '\n\n' + fill('Use --array to append to an array of values or prepend "array:" to the --class argument.') + '\n\n' + fill('To use the output of another job as part of your output, use --class=jobref (which will throw an error if it is not formatted correctly), or use the automatic parsing which will recognize anything starting with a job ID as a job-based object reference.  You should format the value as follows:') + '''
@@ -136,21 +139,49 @@ elif args.classname == 'analysisref':
     else:
         parser.exit(3, fill('Value could not be parsed as an analysis reference with format <analysis ID>:<analysis output field name>') + '\n')
 
-output_json = {}
-if os.path.exists(args.output):
-    with open(args.output, 'r') as output_json_file:
-        output_json = json.loads(output_json_file.read())
 
-if args.array:
-    if args.name in output_json:
-        if isinstance(output_json[args.name], list):
-            output_json[args.name].append(value)
+
+@contextmanager
+def flock(fd):
+    fcntl.flock(fd, fcntl.LOCK_EX)
+    try:
+        yield
+    finally:
+        fcntl.flock(fd, fcntl.LOCK_UN)
+
+
+def update_output_json(output_json):
+    output_spec = json.loads(output_json)
+    if args.array:
+        if args.name in output_spec:
+            if isinstance(output_spec[args.name], list):
+                output_spec[args.name].append(value)
+            else:
+                parser.exit(3, 'Key ' + args.name + ' was found in existing output but was not an array\n')
         else:
-            parser.exit(3, 'Key ' + args.name + ' was found in existing output but was not an array\n')
+            output_spec[args.name] = [value]
     else:
-        output_json[args.name] = [value]
-else:
-    output_json[args.name] = value
+        output_spec[args.name] = value
+    return json.dumps(output_spec, indent=4) + "\n"
 
-with open(args.output, 'w') as output_json_file:
-    output_json_file.write(json.dumps(output_json, indent=4) + '\n')
+
+try:
+    # Atomically test for file existence and create it if it doesn't
+    # exist. Below we branch on whether the file existed or not at the time
+    # that this was tried.
+    output_fd = os.open(args.output, os.O_WRONLY | os.O_CREAT | os.O_EXCL)
+except OSError as e:
+    # File exists, but we don't have a handle to it yet. Open it and lock for
+    # exclusive use
+    with open(args.output, 'r+') as output_file:
+        with flock(output_file):
+            output_json = output_file.read()
+            output_file.seek(0)
+            output_file.write(update_output_json(output_json))
+            output_file.truncate()
+else:
+    # File didn't exist before; we now have an FD on it. Lock it for exclusive
+    # use
+    with os.fdopen(output_fd, 'w') as output_file:
+        with flock(output_file):
+            output_file.write(update_output_json("{}"))
