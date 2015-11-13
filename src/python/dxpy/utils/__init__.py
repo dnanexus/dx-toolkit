@@ -156,7 +156,7 @@ def normalize_time_input(t, future=False, default_unit='ms'):
        "1352863174"
     to milliseconds since epoch. See http://labix.org/python-dateutil and :meth:`normalize_timedelta`.
     """
-    error_msg = 'Error: Expected an int timestamp (in ms), a date format (e.g. YYYY-MM-DD), or an int with a single-letter suffix (s=seconds, m=minutes, h=hours, d=days, w=weeks, M=months, y=years; e.g. "-10d" indicates 10 days ago); but got {t}'
+    error_msg = 'Error: Expected an int timestamp, a date format (e.g. YYYY-MM-DD), or an int with a single-letter suffix (s=seconds, m=minutes, h=hours, d=days, w=weeks, M=months, y=years; e.g. "-10d" indicates 10 days ago); but got {t}'
     if isinstance(t, basestring) and t.isdigit():
         t = int(t)
 
