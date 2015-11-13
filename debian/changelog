@@ -1,3 +1,9 @@
+dx-toolkit (0.170.1) precise; urgency=low
+
+  * Use flock to make dx-jobutil-add-output concurrency safe
+
+ -- Phil Sung <psung@dnanexus.com>  Fri, 13 Nov 2015 21:41:15 +0000
+
 dx-toolkit (0.170.0) precise; urgency=low
 
   * Force noninteractive frontend in apt-get
