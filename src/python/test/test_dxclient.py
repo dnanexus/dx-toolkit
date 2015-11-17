@@ -3790,16 +3790,17 @@ class TestDXClientFind(DXTestCase):
 
 @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test org, project, and user')
 class TestDXClientFindInOrg(DXTestCase):
-    def setUp(self):
+    @classmethod
+    def setUpClass(self):
         self.org_id = "org-piratelabs"
         self.user_alice = "user-000000000000000000000000"  # ADMIN
         self.user_bob = "user-000000000000000000000001"
+        dxpy.api.org_invite(self.org_id, {"invitee": self.user_bob})  # Invite user_bob as MEMEBER of org-piratelabs
         self.project_ppb = "project-0000000000000000000000pb"  # public project in "org-piratelabs"
-        super(TestDXClientFindInOrg, self).setUp()
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(self):
         dxpy.api.org_remove_member(self.org_id, {"user": self.user_bob})
-        super(TestDXClientFindInOrg, self).tearDown()
 
     def test_dx_find_org_members_negative(self):
         # No org id
@@ -3811,7 +3812,6 @@ class TestDXClientFindInOrg(DXTestCase):
             run("dx find org_members org-piratelabs --level")
 
     def test_dx_find_org_members(self):
-        dxpy.api.org_invite(self.org_id, {"invitee": self.user_bob})  # Invite user_bob as MEMEBER of org-piratelabs
         org_members = [self.user_alice, self.user_bob]  # sorted ascending by user ID
         org_members.sort()
 
@@ -3829,8 +3829,6 @@ class TestDXClientFindInOrg(DXTestCase):
         self.assertItemsEqual(output, [self.user_bob])
 
     def test_dx_find_org_members_format(self):
-        dxpy.api.org_invite(self.org_id, {"invitee": self.user_bob})  # Invite user_bob as MEMEBER of org-piratelabs
-
         cmd = "dx find org_members org-piratelabs {opts}"
 
         # Assert that only member ids are returned, line-separated
