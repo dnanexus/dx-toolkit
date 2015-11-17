@@ -3791,16 +3791,16 @@ class TestDXClientFind(DXTestCase):
 @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test org, project, and user')
 class TestDXClientFindInOrg(DXTestCase):
     @classmethod
-    def setUpClass(self):
-        self.org_id = "org-piratelabs"
-        self.user_alice = "user-000000000000000000000000"  # ADMIN
-        self.user_bob = "user-000000000000000000000001"
-        dxpy.api.org_invite(self.org_id, {"invitee": self.user_bob})  # Invite user_bob as MEMEBER of org-piratelabs
-        self.project_ppb = "project-0000000000000000000000pb"  # public project in "org-piratelabs"
+    def setUpClass(cls):
+        cls.org_id = "org-piratelabs"
+        cls.user_alice = "user-000000000000000000000000"  # ADMIN
+        cls.user_bob = "user-000000000000000000000001"
+        dxpy.api.org_invite(cls.org_id, {"invitee": cls.user_bob})  # Invite user_bob as MEMEBER of org-piratelabs
+        cls.project_ppb = "project-0000000000000000000000pb"  # public project in "org-piratelabs"
 
     @classmethod
-    def tearDownClass(self):
-        dxpy.api.org_remove_member(self.org_id, {"user": self.user_bob})
+    def tearDownClass(cls):
+        dxpy.api.org_remove_member(cls.org_id, {"user": cls.user_bob})
 
     def test_dx_find_org_members_negative(self):
         # No org id
