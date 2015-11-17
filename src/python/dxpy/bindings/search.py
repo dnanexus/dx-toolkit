@@ -710,6 +710,29 @@ def _org_find(api_method, org_id, query, first_page_size=100):
             break
 
 
+def org_find_members(org_id=None, level=None, describe=False):
+    """
+    :param org_id: ID of the organization
+    :type org_id: string
+    :param level: The membership level in the org that each member in the result set must have (one of "MEMBER" or
+        "ADMIN")
+    :type level: string
+    :param describe: Whether or not to return the response of ``dxpy.api.user_describe`` for each result. False omits
+        the describe response; True includes it; a dict will be used as the input to ``dxpy.api.user_describe`` (to
+        customize the desired set of fields in the describe response).
+    :type describe: bool or dict
+
+    Returns a generator that yields all org members that match the query formed by intersecting all specified
+    constraints. The search is not restricted by any parameters that were unspecified.
+    """
+    query = {}
+    if level is not None:
+        query["level"] = level
+    query["describe"] = describe
+
+    return _org_find(dxpy.api.org_find_members, org_id, query)
+
+
 def org_find_projects(org_id=None, name=None, name_mode='exact', ids=None, properties=None, tags=None, describe=False,
                       public=None, created_after=None, created_before=None):
     """
@@ -742,7 +765,7 @@ def org_find_projects(org_id=None, name=None, name_mode='exact', ids=None, prope
     :type created_before: int or string
     :rtype: generator
 
-    Returns a generator that yields all projects that match the query that was formed by intersecting all specified
+    Returns a generator that yields all projects that match the query formed by intersecting all specified
     constraints. The search is not restricted by any parameters that were unspecified.
 
     """

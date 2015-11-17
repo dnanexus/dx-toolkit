@@ -25,7 +25,7 @@ import dxpy
 from . import try_call, prompt_for_yn, INTERACTIVE_CLI
 from .parsers import process_find_by_property_args
 from ..exceptions import (DXCLIError, err_exit)
-from dxpy.utils.printing import (fill, DELIMITER, format_find_projects_results)
+from dxpy.utils.printing import (fill, DELIMITER, format_find_results)
 import json
 
 
@@ -176,6 +176,11 @@ def find_orgs(args):
             ))
 
 
+def org_find_members(args):
+    results = try_call(dxpy.org_find_members, org_id=args.org_id, level=args.level, describe=(not args.brief))
+    format_find_results(args, results)
+
+
 def new_org(args):
     if args.name is None and INTERACTIVE_CLI:
         args.name = input("Enter descriptive name for new org: ")
@@ -203,6 +208,6 @@ def org_find_projects(args):
                                          public=args.public,
                                          created_after=args.created_after,
                                          created_before=args.created_before)
-        format_find_projects_results(args, results)
     except:
         err_exit()
+    format_find_results(args, results)

@@ -158,13 +158,32 @@ def refill_paragraphs(string, ignored_prefix='    '):
     return '\n\n'.join(refilled_paragraphs).strip('\n')
 
 
-def format_find_projects_results(args, results):
+def _format_find_projects_results(results):
+    for result in results:
+        print(result["id"] + DELIMITER(" : ") + result['describe']['name'] +
+              DELIMITER(' (') + result["level"] + DELIMITER(')'))
+
+
+def _format_find_org_members_results(results):
+    for result in results:
+        print(result["id"] + DELIMITER(" : ") + result['describe']['first'] + DELIMITER(' ') +
+              result['describe']['last'] + DELIMITER(' ') + DELIMITER(' (') + result["level"] +
+              DELIMITER(')'))
+
+
+def format_find_results(args, results):
+    """
+    Formats the output of ``dx find ...`` commands for `--json` and `--brief` arguments; also formats if no formatting
+    arguments are given.
+    Currently used for ``dx find projects``, ``dx find org_projects``, and ``dx find org_members``
+    """
     if args.json:
         print(json.dumps(list(results), indent=4))
     elif args.brief:
         for result in results:
             print(result['id'])
     else:
-        for result in results:
-            print(result["id"] + DELIMITER(" : ") + result['describe']['name'] +
-                  DELIMITER(' (') + result["level"] + DELIMITER(')'))
+        if args.func.__name__ in ("find_projects", "org_find_projects"):
+            _format_find_projects_results(results)
+        if args.func.__name__ in ("org_find_members"):
+            _format_find_org_members_results(results)

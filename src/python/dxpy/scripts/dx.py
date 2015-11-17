@@ -45,7 +45,7 @@ from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_a
                            instance_type_arg, process_instance_type_arg)
 from ..cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
 from ..cli.org import (get_org_invite_args, add_membership, remove_membership, update_membership, new_org,
-                       find_orgs, org_find_projects)
+                       find_orgs, org_find_members, org_find_projects)
 from ..exceptions import (err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions,
                           format_exception)
 from ..utils import warn, group_array_by_field, normalize_timedelta, normalize_time_input
@@ -53,7 +53,7 @@ from ..utils import warn, group_array_by_field, normalize_timedelta, normalize_t
 from ..app_categories import APP_CATEGORIES
 from ..utils.printing import (CYAN, BLUE, YELLOW, GREEN, RED, WHITE, UNDERLINE, BOLD, ENDC, DNANEXUS_LOGO,
                               DNANEXUS_X, set_colors, set_delimiter, get_delimiter, DELIMITER, fill,
-                              tty_rows, tty_cols, pager, format_find_projects_results)
+                              tty_rows, tty_cols, pager, format_find_results)
 from ..utils.pretty_print import format_tree, format_table
 from ..utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id,
                               is_analysis_id, get_last_pos_of_char, resolve_container_id_or_name, resolve_path,
@@ -165,7 +165,8 @@ else:
 # subcommand with further subcommands, then the second word must be an
 # appropriate sub-subcommand.
 class DXCLICompleter():
-    subcommands = {'find': ['data ', 'projects ', 'apps ', 'jobs ', 'executions ', 'analyses ', 'org_projects '],
+    subcommands = {'find': ['data ', 'projects ', 'apps ', 'jobs ', 'executions ', 'analyses ', 'org_members ',
+                            'org_projects '],
                    'new': ['record ', 'project ', 'workflow ', 'org '],
                    'add': ['developers ', 'users ', 'stage '],
                    'remove': ['developers ', 'users ', 'stage '],
@@ -2221,9 +2222,9 @@ def find_projects(args):
                                      public=(args.public if args.public else None),
                                      created_after=args.created_after,
                                      created_before=args.created_before)
-        format_find_projects_results(args, results)
     except:
         err_exit()
+    format_find_results(args, results)
 
 
 def find_apps(args):
@@ -4423,10 +4424,22 @@ parser_find_projects.add_argument('--created-before',
 parser_find_projects.set_defaults(func=find_projects)
 register_subparser(parser_find_projects, subparsers_action=subparsers_find, categories='data')
 
+parser_find_org_members = subparsers_find.add_parser(
+    'org_members',
+    help='List members in the specified org',
+    description=fill('Finds members in the specified org subject to the given search parameters'),
+    parents=[stdout_args, json_arg, delim_arg, env_args],
+    prog='dx find org_members'
+)
+parser_find_org_members.add_argument('org_id', help='Org ID')
+parser_find_org_members.add_argument('--level', choices=["ADMIN", "MEMBER"], help='Restrict the result set to contain only members at the specified membership level.')
+parser_find_org_members.set_defaults(func=org_find_members)
+register_subparser(parser_find_org_members, subparsers_action=subparsers_find, categories='other')
+
 parser_find_org_projects = subparsers_find.add_parser(
     'org_projects',
-    help='List projects billed to a particular org',
-    description=fill('Finds projects billed to the specified org, subject to the given search parameters. You must '
+    help='List projects billed to the specified org',
+    description=fill('Finds projects billed to the specified org subject to the given search parameters. You must '
                      'be an ADMIN of the specified org to use this command. It allows you to identify projects billed '
                      'to the org that have not been shared with you explicitly.'),
     parents=[stdout_args, json_arg, delim_arg, env_args, find_by_properties_and_tags_args],
