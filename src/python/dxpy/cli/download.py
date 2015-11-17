@@ -23,7 +23,8 @@ import os
 import sys
 import collections
 import dxpy
-from ..utils.resolver import (resolve_existing_path, get_first_pos_of_char)
+from ..utils.resolver import (resolve_existing_path, get_first_pos_of_char, is_project_explicit,
+                              object_exists_in_project)
 from ..exceptions import err_exit
 from . import try_call
 from dxpy.utils.printing import (fill)
@@ -132,15 +133,23 @@ def download(args):
         resolver_kwargs = {'allow_empty_string': False}
         if args.all or _is_glob(path):
             resolver_kwargs.update({'allow_mult': True, 'all_mult': True})
+
         project, folderpath, matching_files = try_call(resolve_existing_path, path, **resolver_kwargs)
         if matching_files is None:
             matching_files = []
         elif not isinstance(matching_files, list):
             matching_files = [matching_files]
 
+        # TODO: this could also be returned as metadata by resolve_path since
+        # resolve_path knows these things in some circumstances
+        #
+        # May have (is_project_explicit and (project is None)) if the input is
+        # a JBOR
+        path_has_explicit_proj = is_project_explicit(path) and project is not None
+
         matching_folders = []
+        # project may be none if path is an ID and there is no project context
         if project is not None:
-            # project may be none if path is an ID and there is no project context
             colon_pos = get_first_pos_of_char(":", path)
             if colon_pos >= 0:
                 path = path[colon_pos + 1:]
@@ -155,6 +164,21 @@ def download(args):
 
         if len(matching_files) == 0 and len(matching_folders) == 0:
             err_exit(fill('Error: {path} is neither a file nor a folder name'.format(path=path)))
+
+        # If the user did not explicitly provide the project, don't pass any
+        # project parameter to the API call but continue with the download.
+        if not path_has_explicit_proj:
+            project = None
+
+        # If the user explicitly provided the project and it doesn't contain
+        # the files, don't allow the download.
+        #
+        # If length of matching_files is 0 then we're only downloading folders
+        # so skip this logic since the files will be verified in the API call.
+        if len(matching_files) > 0 and path_has_explicit_proj and not \
+                any(object_exists_in_project(f['describe']['id'], project) for f in matching_files):
+            err_exit(fill('Error: specified project does not contain specified file object'))
+
         files_to_get[project].extend(matching_files)
         folders_to_get[project].extend(((f, strip_prefix) for f in matching_folders))
         count += len(matching_files) + len(matching_folders)

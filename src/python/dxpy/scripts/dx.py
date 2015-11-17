@@ -58,8 +58,8 @@ from ..utils.pretty_print import format_tree, format_table
 from ..utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id,
                               is_analysis_id, get_last_pos_of_char, resolve_container_id_or_name, resolve_path,
                               resolve_existing_path, get_app_from_path, resolve_app, get_exec_handler,
-                              split_unescaped, ResolutionError, get_first_pos_of_char,
-                              resolve_to_objects_or_project)
+                              split_unescaped, ResolutionError, resolve_to_objects_or_project, is_project_explicit,
+                              object_exists_in_project)
 from ..utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, LocalCompleter,
                                ListCompleter, MultiCompleter)
 from ..utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_desc,
@@ -1752,6 +1752,7 @@ def get(args):
     if fd is not None and args.output != '-':
         fd.close()
 
+
 def cat(args):
     for path in args.path:
         project, _folderpath, entity_result = try_call(resolve_existing_path, path)
@@ -1762,10 +1763,22 @@ def cat(args):
         if entity_result['describe']['class'] != 'file':
             parser.exit(1, fill('Error: expected a file object') + '\n')
 
+        # If the user did not explicitly provide the project, don't pass any
+        # project parameter to the API call but continue with download resolution
+        if not is_project_explicit(path):
+            project = None
+        # If the user explicitly provided the project and it doesn't contain
+        # the file, don't allow the download.
+        if is_project_explicit(path) and project is not None and \
+           not object_exists_in_project(entity_result['describe']['id'], project):
+            parser.exit(1, fill('Error: project does not contain specified file object') + '\n')
+
         try:
-            dxfile = dxpy.DXFile(entity_result['id'], project=project)
+            dxfile = dxpy.DXFile(entity_result['id'])
             while True:
-                chunk = dxfile.read(1024*1024)
+                # If we decided the project specification was not explicit, do
+                # not allow the workspace setting to bleed through
+                chunk = dxfile.read(1024*1024, project=project or dxpy.DXFile.NO_PROJECT_HINT)
                 if len(chunk) == 0:
                     break
                 sys.stdout.buffer.write(chunk)

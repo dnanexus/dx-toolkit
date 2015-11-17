@@ -31,7 +31,9 @@ import dxpy
 from . import DXDataObject
 from ..exceptions import DXFileError
 from ..utils import warn
+from ..utils.resolver import object_exists_in_project
 from ..compat import BytesIO
+
 
 DXFILE_HTTP_THREADS = cpu_count()
 DEFAULT_BUFFER_SIZE = 1024*1024*16
@@ -85,6 +87,8 @@ class DXFile(DXDataObject):
 
     _http_threadpool = None
     _http_threadpool_size = DXFILE_HTTP_THREADS
+
+    NO_PROJECT_HINT = 'NO_PROJECT_HINT'
 
     @classmethod
     def set_http_threadpool_size(cls, num_threads):
@@ -517,7 +521,9 @@ class DXFile(DXDataObject):
         :param filename: desired filename of the downloaded file
         :type filename: str
         :param project: ID of a project containing the file (the download URL
-            will be associated with this project)
+            will be associated with this project, and this may affect which
+            billing account is billed for this download). If None, no hint is
+            supplied to the API server.
         :type project: str
         :returns: download URL and dict containing HTTP headers to be supplied
             with the request
@@ -529,6 +535,13 @@ class DXFile(DXDataObject):
         file.
 
         """
+        # Test hook to write 'project' argument passed to API call to a
+        # local file
+        if '_DX_DUMP_BILLED_PROJECT' in os.environ:
+            with open(os.environ['_DX_DUMP_BILLED_PROJECT'], "w") as fd:
+                if project is not None:
+                    fd.write(project)
+
         args = {"duration": duration, "preauthenticated": preauthenticated}
         if filename is not None:
             args["filename"] = filename
@@ -544,7 +557,10 @@ class DXFile(DXDataObject):
             self._download_url_expires = time.time() + duration - 60 # Try to account for drift
         return self._download_url, self._download_url_headers
 
-    def _generate_read_requests(self, start_pos=0, end_pos=None, **kwargs):
+    def _generate_read_requests(self, start_pos=0, end_pos=None, project=None, **kwargs):
+        # project=None means no hint is to be supplied to the apiserver. It is
+        # an error to supply a project that does not contain this file.
+
         if self._file_length == None:
             desc = self.describe(**kwargs)
             self._file_length = int(desc["size"])
@@ -567,7 +583,7 @@ class DXFile(DXDataObject):
                 i += 1
 
         for chunk_start_pos, chunk_end_pos in chunk_ranges(start_pos, end_pos):
-            url, headers = self.get_download_url(**kwargs)
+            url, headers = self.get_download_url(project=project, **kwargs)
             headers = copy.copy(headers)
             headers['Range'] = "bytes=" + str(chunk_start_pos) + "-" + str(chunk_end_pos)
             yield dxpy.DXHTTPRequest, [url, ''], {'method': 'GET',
@@ -587,21 +603,39 @@ class DXFile(DXDataObject):
                 self._request_iterator,
                 self._http_threadpool
             )
-        return next(self._response_iterator)
+        try:
+            return next(self._response_iterator)
+        except:
+            # If an exception is raised, the iterator is unusable for
+            # retrieving any more items. Destroy it so we'll reinitialize it
+            # next time.
+            self._response_iterator = None
+            self._request_iterator = None
+            raise
 
-    def read(self, length=None, use_compression=None, **kwargs):
+    def read(self, length=None, use_compression=None, project=None, **kwargs):
         '''
-        :param size: Maximum number of bytes to be read
-        :type size: integer
+        :param length: Maximum number of bytes to be read
+        :type length: integer
+        :param project: project to use as context for this download (may affect
+            which billing account is billed for this download). If specified,
+            must be a project in which this file exists. If not specified, the
+            project ID specified in the handler is used for the download, IF it
+            contains this file. If set to DXFile.NO_PROJECT_HINT, no project ID
+            is supplied for the download, even if the handler specifies a
+            project ID.
+        :type project: str or None
         :rtype: string
+        :raises: :exc:`~dxpy.exceptions.ResourceNotFound` if *project* is
+            supplied and it does not contain this file
 
-        Returns the next *size* bytes, or all the bytes until the end of
-        file (if no *size* is given or there are fewer than *size* bytes
-        left in the file).
+        Returns the next *length* bytes, or all the bytes until the end of file
+        (if no *length* is given or there are fewer than *length* bytes left in
+        the file).
 
-        .. note:: After the first call to read(), passthrough kwargs are
-           not respected while using the same response iterator (i.e.
-           until next seek).
+        .. note:: After the first call to read(), the project arg and
+           passthrough kwargs are not respected while using the same response
+           iterator (i.e. until next seek).
 
         '''
         if self._file_length == None:
@@ -629,6 +663,26 @@ class DXFile(DXDataObject):
         if length == None or length > self._file_length - self._pos:
             length = self._file_length - self._pos
 
+        # Project specified explicitly to this method read(project=...) is
+        # treated strictly. If supplied, it must be a project in which this
+        # file exists. Otherwise, it's an error.
+        #
+        # If project=None, we fall back to the project attached to this handler
+        # (if any). If this is supplied, it's treated as a hint: if it's a
+        # project in which this file exists, it's passed on to the
+        # apiserver. Otherwise, NO hint is supplied. In principle supplying a
+        # project in the handler that doesn't contain this file ought to be an
+        # error, but it's this way for backwards compatibility. We don't know
+        # who might be doing downloads and creating handlers without being
+        # careful that the project encoded in the handler contains the file
+        # being downloaded. They may now rely on such behavior.
+        if project is None:
+            project_from_handler = self.get_proj_id()
+            if project_from_handler and object_exists_in_project(self.get_id(), project_from_handler):
+                project = project_from_handler
+        elif project == DXFile.NO_PROJECT_HINT:
+            project = None
+
         buf = self._read_buf
         buf_remaining_bytes = dxpy.utils.string_buffer_length(buf) - buf.tell()
         if length <= buf_remaining_bytes:
@@ -643,7 +697,8 @@ class DXFile(DXDataObject):
                 remaining_len = orig_file_pos + length - self._pos
 
                 if self._response_iterator is None:
-                    self._request_iterator = self._generate_read_requests(start_pos=self._pos, **kwargs)
+                    self._request_iterator = self._generate_read_requests(
+                        start_pos=self._pos, project=project, **kwargs)
 
                 if get_first_chunk_sequentially:
                     # Make the first chunk request without using the

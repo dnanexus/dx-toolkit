@@ -99,6 +99,11 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
     :type filename: string
     :param append: If True, appends to the local file (default is to truncate local file if it exists)
     :type append: boolean
+    :param project: project to use as context for this download (may affect
+            which billing account is billed for this download). If None, no
+            project hint is supplied to the API server.
+    :type project: str or None
+
 
     Downloads the remote file referenced by *dxid* and saves it to *filename*.
 
@@ -135,15 +140,16 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
     if isinstance(dxid, DXFile):
         dxfile = dxid
     else:
-        dxfile = DXFile(dxid, mode="r", project=project)
+        dxfile = DXFile(dxid, mode="r")
 
     dxfile_desc = dxfile.describe(fields={"parts"}, default_fields=True, **kwargs)
     parts = dxfile_desc["parts"]
     parts_to_get = sorted(parts, key=int)
     file_size = dxfile_desc.get("size")
 
-    # Warm up the download URL cache in the file handler, to avoid all worker threads trying to fetch it simultaneously
-    dxfile.get_download_url(**kwargs)
+    # Warm up the download URL cache in the file handler, to avoid all
+    # worker threads trying to fetch it simultaneously
+    dxfile.get_download_url(project=project, **kwargs)
 
     offset = 0
     for part_id in parts_to_get:
@@ -195,7 +201,7 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
         logger.debug("Verified %s/%d downloaded parts", last_verified_part, len(parts_to_get))
 
     def get_chunk(part_id, start, end):
-        url, headers = dxfile.get_download_url(**kwargs)
+        url, headers = dxfile.get_download_url(project=project, **kwargs)
         # If we're fetching the whole object in one shot, avoid setting the Range header to take advantage of gzip
         # transfer compression
         if len(parts) > 1 or end - start + 1 < parts[part_id]["size"]:
