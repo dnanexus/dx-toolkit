@@ -144,6 +144,10 @@ parser.add_argument("--no-json", help=argparse.SUPPRESS, action="store_false", d
 parser.add_argument("--extra-args", help="Arguments (in JSON format) to pass to the /applet/new API method, overriding all other settings")
 parser.add_argument("--run", help="Run the app or applet after building it (options following this are passed to "+BOLD("dx run")+"; run at high priority by default)", nargs=argparse.REMAINDER)
 
+# --region
+app_options.add_argument("--region", help="The region this app will be created in")
+
+
 class DXSyntaxError(Exception):
     def __init__(self, message):
         self.message = message
@@ -490,7 +494,7 @@ def _parse_app_spec(src_dir):
 def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
                       version_override=None, bill_to_override=None, dx_toolkit_autodep="stable",
                       do_version_autonumbering=True, do_try_update=True, do_parallel_build=True,
-                      do_check_syntax=True):
+                      do_check_syntax=True, region=None):
     if mode == 'app':
         builder_app = 'app-tarball_app_builder'
     else:
@@ -566,7 +570,14 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
 
     elif mode == "app":
         using_temp_project_for_remote_build = True
-        build_project_id = dxpy.api.project_new({"name": "dx-build-app --remote temporary project"})["id"]
+        try:
+            if region:
+                build_project_id = dxpy.api.project_new({"name": "dx-build-app --remote temporary project",
+                                                         "region": region})["id"]
+            else:
+                build_project_id = dxpy.api.project_new({"name": "dx-build-app --remote temporary project"})["id"]
+        except:
+            err_exit()
 
     try:
         # Resolve relative paths and symlinks here so we have something
@@ -670,7 +681,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                              version_override=None, bill_to_override=None, use_temp_build_project=True,
                              do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
                              dx_toolkit_autodep="stable", do_check_syntax=True, dry_run=False,
-                             return_object_dump=False, confirm=True, ensure_upload=False, **kwargs):
+                             return_object_dump=False, confirm=True, ensure_upload=False, region=None, **kwargs):
 
     dxpy.app_builder.build(src_dir, parallel_build=do_parallel_build)
     app_json = _parse_app_spec(src_dir)
@@ -688,7 +699,14 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
         working_project, override_folder, override_applet_name = parse_destination(destination_override)
     elif mode == "app" and use_temp_build_project and not dry_run:
         # Create a temp project
-        working_project = dxpy.api.project_new({"name": "Temporary build project for dx-build-app"})["id"]
+        try:
+            if region:
+                working_project = dxpy.api.project_new({"name": "Temporary build project for dx-build-app",
+                                                        "region": region})["id"]
+            else:
+                working_project = dxpy.api.project_new({"name": "Temporary build project for dx-build-app"})["id"]
+        except:
+            err_exit()
         logger.debug("Created temporary project %s to build in" % (working_project,))
         using_temp_project = True
 
@@ -830,6 +848,7 @@ def _build_app(args, extra_args):
                 dry_run=args.dry_run,
                 confirm=args.confirm,
                 return_object_dump=args.json,
+                region=args.region,
                 **extra_args
                 )
 
@@ -892,7 +911,9 @@ def _build_app(args, extra_args):
         if not args.check_syntax:
             more_kwargs['do_check_syntax'] = False
 
-        return _build_app_remote(args.mode, args.src_dir, destination_override=args.destination, publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep, **more_kwargs)
+        return _build_app_remote(args.mode, args.src_dir, destination_override=args.destination,
+                                 publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep,
+                                 region=args.region, **more_kwargs)
 
 
 def main(**kwargs):
@@ -927,6 +948,9 @@ def main(**kwargs):
 
     if args.mode == "app" and args.destination != '.':
         parser.error("--destination cannot be used when creating an app (only an applet)")
+
+    if args.mode == "applet" and args.region:
+        parser.error("--region cannot be used when creating an applet (only an app)")
 
     if args.dx_toolkit_autodep in ['beta', 'unstable']:
         logging.warn('The --dx-toolkit-beta-autodep and --dx-toolkit-unstable-autodep flags have no effect and will be removed at some date in the future.')

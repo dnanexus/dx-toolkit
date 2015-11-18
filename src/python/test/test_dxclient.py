@@ -5345,6 +5345,25 @@ class TestDXBuildApp(DXTestCase):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
+    def test_build_app_with_region(self):
+        app_spec = {
+            "name": "minimal_app_regions",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("minimal_app_regions", json.dumps(app_spec), "code.py")
+        new_app = json.loads(run("dx build --create-app --region aws:us-east-1 --json " + app_dir))
+        app_describe = json.loads(run("dx describe --json " + new_app["id"]))
+        self.assertEqual(app_describe["region"], "aws:us-east-1")
+
+        with self.assertRaisesRegexp(subprocess.CalledProcessError, "InvalidInput"):
+            run("dx build --create-app --region aws:not-a-region --json " + app_dir)
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create apps')
     def test_invalid_project_context(self):
         app_spec = {
             "name": "invalid_project_context",
