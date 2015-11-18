@@ -1,3 +1,16 @@
+dx-toolkit (0.171.0) precise; urgency=low
+
+  * PTFM-16643 "dx build --app" takes a --region arg
+  * PTFM-15570 dxpy supplies "project" to file download API calls
+  * Code review fix for 26ffeb2
+  * Change setUp in test from 26ffeb2
+  * PTFM-16144 Find org members DX command
+  * I/O params gracefully handle unknown fields during deserialization
+  * PTFM-16656 Use flock to make dx-jobutil-add-output concurrency safe
+  * Add code review fix for 18c26a3 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 18 Nov 2015 19:35:34 +0000
+
 dx-toolkit (0.170.0) precise; urgency=low
 
   * Force noninteractive frontend in apt-get
