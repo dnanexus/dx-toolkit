@@ -3719,38 +3719,6 @@ class TestDXClientFind(DXTestCase):
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that requires presence of test org')
     def test_find_orgs(self):
-
-        def assert_find_orgs_results(results, assert_admin=False,
-                                     with_billable_activities=None, limit=16):
-            """
-            :param limit: The maximum number of items in *results* that will be
-            inspected for correctness. This is used to reduce the run-time of
-            this test at the cost of weakening its assertion, because there can
-            be an unbounded number of items in *results*.
-            :type limit: int.
-            """
-
-            if assert_admin and with_billable_activities is False:
-                # All ADMINs must have `allowBillableActivities`.
-                self.assertEquals(results, [])
-                return
-
-            for result in results[:limit]:
-                # Will throw an error if requesting user is not a member.
-                member_access_res = dxpy.api.org_get_member_access(result["id"])
-
-                if assert_admin:
-                    self.assertEquals(member_access_res["level"], "ADMIN")
-
-                if with_billable_activities is False:
-                    self.assertEquals(member_access_res["level"], "MEMBER")
-                    self.assertFalse(member_access_res["allowBillableActivities"])
-                elif with_billable_activities:
-                    self.assertTrue(
-                        member_access_res["level"] == "ADMIN" or
-                        (member_access_res["level"] == "MEMBER" and
-                         member_access_res["allowBillableActivities"]))
-
         org_with_billable_activities = "org-members_with_billing_rights"
         self.assertTrue(dxpy.api.org_get_member_access(org_with_billable_activities)["allowBillableActivities"])
         org_without_billable_activities = "org-members_without_billing_rights"
@@ -3761,7 +3729,6 @@ class TestDXClientFind(DXTestCase):
         cmd = "dx find orgs --level {l} {o} --json"
 
         results = json.loads(run(cmd.format(l="MEMBER", o="")).strip())
-        assert_find_orgs_results(results)
         self.assertItemsEqual([org_with_billable_activities,
                                org_without_billable_activities,
                                org_with_admin],
@@ -3769,31 +3736,26 @@ class TestDXClientFind(DXTestCase):
 
         results = json.loads(run(cmd.format(
             l="MEMBER", o="--with-billable-activities")).strip())
-        assert_find_orgs_results(results, with_billable_activities=True)
         self.assertItemsEqual([org_with_billable_activities,
                                org_with_admin],
                               [result["id"] for result in results])
 
         results = json.loads(run(cmd.format(
             l="MEMBER", o="--without-billable-activities")).strip())
-        assert_find_orgs_results(results, with_billable_activities=False)
         self.assertItemsEqual([org_without_billable_activities],
                               [result["id"] for result in results])
 
         results = json.loads(run(cmd.format(l="ADMIN", o="")).strip())
-        assert_find_orgs_results(results, assert_admin=True)
         self.assertItemsEqual([org_with_admin],
                               [result["id"] for result in results])
 
         results = json.loads(run(cmd.format(
             l="ADMIN", o="--with-billable-activities")).strip())
-        assert_find_orgs_results(results, assert_admin=True, with_billable_activities=True)
         self.assertItemsEqual([org_with_admin],
                               [result["id"] for result in results])
 
         results = json.loads(run(cmd.format(
             l="ADMIN", o="--without-billable-activities")).strip())
-        assert_find_orgs_results(results, assert_admin=True, with_billable_activities=False)
         self.assertItemsEqual([], [result["id"] for result in results])
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
