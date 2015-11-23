@@ -1449,8 +1449,8 @@ class TestDXClientDownloadDataEgressBilling(DXTestCase):
                 run("dx download -f --no-progress {f}".format(f=file2_name))
 
     def test_dx_download_project_explicit(self):
-        proj1_name = 'test_proj1'
-        proj2_name = 'test_proj2'
+        proj1_name = 'test_proj1_' + str(time.time())
+        proj2_name = 'test_proj2_' + str(time.time())
 
         with temporary_project(proj1_name, select=True) as proj, \
                 temporary_project(proj2_name) as proj2, \
