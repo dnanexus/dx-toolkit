@@ -184,6 +184,7 @@ def is_project_explicit(path):
     #
     # Note, this method need not validate that the path can otherwise be
     # resolved; it can assume this as a precondition.
+    path = _maybe_convert_stringified_dxlink(path)
     return not is_hashid(path)
 
 
@@ -397,6 +398,21 @@ def resolve_container_id_or_name(raw_string, is_error=False, multi=False):
         return [result['id'] for result in results]
 
 
+def _maybe_convert_stringified_dxlink(path):
+    try:
+        possible_hash = json.loads(path)
+        if isinstance(possible_hash, dict) and '$dnanexus_link' in possible_hash:
+            if isinstance(possible_hash['$dnanexus_link'], basestring):
+                return possible_hash['$dnanexus_link']
+            elif (isinstance(possible_hash['$dnanexus_link'], dict) and
+                  isinstance(possible_hash['$dnanexus_link'].get('project', None), basestring) and
+                  isinstance(possible_hash['$dnanexus_link'].get('id', None), basestring)):
+                return possible_hash['$dnanexus_link']['project'] + ':' + possible_hash['$dnanexus_link']['id']
+    except:
+        pass
+    return path
+
+
 def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=True):
     '''
     :param path: A path to a data object to attempt to resolve
@@ -457,15 +473,7 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
 
     if path == '' and not allow_empty_string:
         raise ResolutionError('Cannot parse ""; expected the path to be a non-empty string')
-    try:
-        possible_hash = json.loads(path)
-        if isinstance(possible_hash, dict) and '$dnanexus_link' in possible_hash:
-            if isinstance(possible_hash['$dnanexus_link'], basestring):
-                path = possible_hash['$dnanexus_link']
-            elif isinstance(possible_hash['$dnanexus_link'], dict) and isinstance(possible_hash['$dnanexus_link'].get('project', None), basestring) and isinstance(possible_hash['$dnanexus_link'].get('id', None), basestring):
-                path = possible_hash['$dnanexus_link']['project'] + ':' + possible_hash['$dnanexus_link']['id']
-    except:
-        pass
+    path = _maybe_convert_stringified_dxlink(path)
 
     # Easy case: ":"
     if path == ':':

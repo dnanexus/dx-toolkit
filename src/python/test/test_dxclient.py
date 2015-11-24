@@ -1390,7 +1390,7 @@ class TestDXClientDownloadDataEgressBilling(DXTestCase):
 
     @unittest.skipUnless(testutil.TEST_ENV,
                          'skipping test that would clobber your local environment')
-    def test_dx_download_project_context(self):
+    def test_dx_cat_project_context(self):
         proj1_name = 'test_proj1'
         proj2_name = 'test_proj2'
 
@@ -1413,6 +1413,11 @@ class TestDXClientDownloadDataEgressBilling(DXTestCase):
             # project
             self.assertEqual(self.get_billed_project(), "")
 
+            # Success: project from context contains file specified by dxlink
+            buf = run("dx download -o - '{{\"$dnanexus_link\": \"{f}\"}}'".format(f=file1_id))
+            self.assertEqual(buf, data1)
+            self.assertEqual(self.get_billed_project(), "")
+
             # Success: project from context contains file specified by name
             buf = run("dx download -o - {f}".format(f=file1_name))
             self.assertEqual(buf, data1)
@@ -1423,11 +1428,31 @@ class TestDXClientDownloadDataEgressBilling(DXTestCase):
             self.assertEqual(buf, data2)
             self.assertEqual(self.get_billed_project(), "")
 
+            # Success: project specified by context does not contains file specified by dxlink
+            buf = run("dx download -o - '{{\"$dnanexus_link\": \"{f}\"}}'".format(f=file2_id))
+            self.assertEqual(buf, data2)
+            self.assertEqual(self.get_billed_project(), "")
+
             # Failure: project specified by context does not contains file specified by name
             with self.assertSubprocessFailure(stderr_regexp="Unable to resolve", exit_code=3):
                 run("dx download -o - {f}".format(f=file2_name))
 
-            # Test api call parameters when downloading to local file instead of cat to std out
+    @unittest.skipUnless(testutil.TEST_ENV,
+                         'skipping test that would clobber your local environment')
+    def test_dx_download_project_context(self):
+        proj1_name = 'test_proj1'
+        proj2_name = 'test_proj2'
+
+        with temporary_project(proj1_name, select=True) as proj, \
+                temporary_project(proj2_name) as proj2, \
+                chdir(tempfile.mkdtemp()):
+            data1 = 'ABCD'
+            file1_name = "file1"
+            file1_id = self.gen_file(file1_name, data1, proj.get_id()).get_id()
+
+            data2 = '1234'
+            file2_name = "file2"
+            file2_id = self.gen_file(file2_name, data2, proj2.get_id()).get_id()
 
             # Success: project from context contains file specified by ID
             run("dx download -f --no-progress {f}".format(f=file1_id))
@@ -1436,12 +1461,20 @@ class TestDXClientDownloadDataEgressBilling(DXTestCase):
             # project
             self.assertEqual(self.get_billed_project(), "")
 
+            # Success: project from context contains file specified by dxlink
+            run("dx download -f --no-progress '{{\"$dnanexus_link\": \"{f}\"}}'".format(f=file1_id))
+            self.assertEqual(self.get_billed_project(), "")
+
             # Success: project from context contains file specified by name
             run("dx download -f --no-progress {f}".format(f=file1_name))
             self.assertEqual(self.get_billed_project(), proj.get_id())
 
             # Success: project specified by context does not contains file specified by ID
-            buf = run("dx download -f --no-progress {f}".format(f=file2_id))
+            run("dx download -f --no-progress {f}".format(f=file2_id))
+            self.assertEqual(self.get_billed_project(), "")
+
+            # Success: project specified by context does not contains file specified by dxlink
+            run("dx download -f --no-progress '{{\"$dnanexus_link\": \"{f}\"}}'".format(f=file2_id))
             self.assertEqual(self.get_billed_project(), "")
 
             # Failure: project specified by context does not contains file specified by name

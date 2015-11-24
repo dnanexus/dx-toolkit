@@ -2516,10 +2516,14 @@ class TestResolver(testutil.DXTestCase):
         # explicitly indicating a project (even if the file is specified by ID)
         self.assertTrue(is_project_explicit("projectname:file-012301230123012301230123"))
         self.assertTrue(is_project_explicit("project-012301230123012301230123:file-012301230123012301230123"))
+        self.assertTrue(is_project_explicit(
+            '{"$dnanexus_link": {"project": "project-012301230123012301230123", "id": "file-012301230123012301230123"}'
+        ))
         # A bare file ID is NOT treated as having an explicit project. Even if
         # the user's configuration supplies a project context that contains
         # this file, that's not clear enough.
         self.assertFalse(is_project_explicit("file-012301230123012301230123"))
+        self.assertFalse(is_project_explicit('{"$dnanexus_link": "file-012301230123012301230123"}'))
         # Colon without project in front of it is understood to mean the
         # current project
         self.assertTrue(is_project_explicit(":file-012301230123012301230123"))
