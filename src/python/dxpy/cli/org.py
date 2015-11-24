@@ -199,6 +199,31 @@ def new_org(args):
         print('Created new org called "' + args.name + '" (' + resp['id'] + ')')
 
 
+def _get_org_update_args(args):
+    org_update_inputs = {}
+
+    if args.name is not None:
+        org_update_inputs["name"] = args.name
+
+    if args.member_list_visibility is not None or args.project_transfer_ability is not None:
+        org_update_inputs["policies"] = {}
+    if args.member_list_visibility is not None:
+        org_update_inputs["policies"]["memberListVisibility"] = args.member_list_visibility
+    if args.project_transfer_ability is not None:
+        org_update_inputs["policies"]["restrictProjectTransfer"] = args.project_transfer_ability
+
+    return org_update_inputs
+
+
+def update_org(args):
+    org_update_inputs = _get_org_update_args(args)
+    res = try_call(dxpy.api.org_update, args.org_id, org_update_inputs)
+    if args.brief:
+        print(res["id"])
+    else:
+        print(fill("Updated {o}".format(o=res["id"])))
+
+
 def org_find_projects(args):
     try_call(process_find_by_property_args, args)
     try:

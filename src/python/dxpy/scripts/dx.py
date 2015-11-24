@@ -44,7 +44,7 @@ from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_a
                            set_env_from_args, extra_args, process_extra_args, DXParserError, exec_input_args,
                            instance_type_arg, process_instance_type_arg)
 from ..cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
-from ..cli.org import (get_org_invite_args, add_membership, remove_membership, update_membership, new_org,
+from ..cli.org import (get_org_invite_args, add_membership, remove_membership, update_membership, new_org, update_org,
                        find_orgs, org_find_members, org_find_projects)
 from ..exceptions import (err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions,
                           format_exception)
@@ -170,7 +170,7 @@ class DXCLICompleter():
                    'new': ['record ', 'project ', 'workflow ', 'org '],
                    'add': ['developers ', 'users ', 'stage '],
                    'remove': ['developers ', 'users ', 'stage '],
-                   'update': ['stage ', 'workflow ']}
+                   'update': ['stage ', 'workflow ', 'org ']}
 
     silent_commands = set(['import'])
 
@@ -3870,6 +3870,19 @@ subcommands.''',
 subparsers_update = parser_update.add_subparsers(parser_class=DXArgumentParser)
 subparsers_update.metavar = 'target'
 register_subparser(parser_update, categories=())
+
+parser_update_org = subparsers_update.add_parser('org',
+                                                 help='Update information about an org',
+                                                 description='Update information about an org',
+                                                 parents=[stdout_args, env_args],
+                                                 prog='dx update org')
+parser_update_org.add_argument('org_id', help='ID of the org')
+parser_update_org.add_argument('--name', help='New name of the org')
+parser_update_org.add_argument('--member-list-visibility', help='New org membership level that is required to be able to view the membership level and/or permissions of any other member in the specified org (corresponds to the memberListVisibility org policy)', choices=['ADMIN', 'MEMBER', 'PUBLIC'])
+parser_update_org.add_argument('--project-transfer-ability', help='New org membership level that is required to be able to change the billing account of a project that is billed to the specified org, to some other entity (corresponds to the restrictProjectTransfer org policy)', choices=['ADMIN', 'MEMBER'])
+parser_update_org.set_defaults(func=update_org)
+register_subparser(parser_update_org, subparsers_action=subparsers_update, categories=('other'))
+
 
 parser_update_workflow = subparsers_update.add_parser('workflow', help='Update the metadata for a workflow',
                                                       description='Update the metadata for an existing workflow',
