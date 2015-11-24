@@ -30,7 +30,7 @@ from ..exceptions import DXError
 from ..compat import StringIO
 from ..utils import warn
 
-DXGTABLE_HTTP_THREADS = 4
+DXGTABLE_HTTP_THREADS = 1
 
 # Number of rows to request at a time when reading.
 #
