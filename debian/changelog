@@ -1,3 +1,9 @@
+dx-toolkit (0.171.1) precise; urgency=low
+
+  * Bug fixes for GTable reads and parsing of dxlinks
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 24 Nov 2015 21:26:09 +0000
+
 dx-toolkit (0.171.0) precise; urgency=low
 
   * PTFM-16643 "dx build --app" takes a --region arg
