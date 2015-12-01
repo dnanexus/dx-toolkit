@@ -1601,8 +1601,8 @@ class TestDXClientDownloadDataEgressBilling(DXTestCase):
             with self.assertSubprocessFailure(stderr_regexp="ResolutionError: Found multiple projects", exit_code=3):
                 run("dx download -f --no-progress {pname}:{f}".format(pname=proj_name, f=file2_id))
 
-    @unittest.skipUnless(testutil.TEST_ENV,
-                         'skipping test that would clobber your local environment')
+    @unittest.skipUnless(testutil.TEST_ENV and testutil.TEST_RUN_JOBS,
+                         'skipping test that would clobber your local environment and run jobs')
     def test_dx_download_jbors(self):
         proj1_name = 'test_proj1'
         proj2_name = 'test_proj2'
