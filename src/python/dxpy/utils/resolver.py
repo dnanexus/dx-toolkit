@@ -145,6 +145,7 @@ class ResolutionError(DXError):
 data_obj_pattern = re.compile('^(record|gtable|applet|file|workflow)-[0-9A-Za-z]{24}$')
 hash_pattern = re.compile('^(record|gtable|app|applet|workflow|job|analysis|project|container|file)-[0-9A-Za-z]{24}$')
 nohash_pattern = re.compile('^(user|org|app|team)-')
+jbor_pattern = re.compile('^(job|analysis)-[0-9A-Za-z]{24}:[a-zA-Z_][0-9a-zA-Z_]*$')
 
 def is_hashid(string):
     return hash_pattern.match(string) is not None
@@ -169,6 +170,10 @@ def is_nohash_id(string):
 
 def is_glob_pattern(string):
     return (get_last_pos_of_char('*', string) >= 0) or (get_last_pos_of_char('?', string) >= 0)
+
+
+def is_jbor_str(string):
+    return jbor_pattern.match(string) is not None
 
 
 def is_project_explicit(path):

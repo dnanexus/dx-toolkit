@@ -24,7 +24,7 @@ import sys
 import collections
 import dxpy
 from ..utils.resolver import (resolve_existing_path, get_first_pos_of_char, is_project_explicit,
-                              object_exists_in_project)
+                              object_exists_in_project, is_jbor_str)
 from ..exceptions import err_exit
 from . import try_call
 from dxpy.utils.printing import (fill)
@@ -142,10 +142,11 @@ def download(args):
 
         # TODO: this could also be returned as metadata by resolve_path since
         # resolve_path knows these things in some circumstances
-        #
-        # May have (is_project_explicit and (project is None)) if the input is
-        # a JBOR
-        path_has_explicit_proj = is_project_explicit(path) and project is not None
+        path_has_explicit_proj = is_project_explicit(path) or is_jbor_str(path)
+
+        if is_jbor_str(path):
+            assert len(matching_files) == 1
+            project = matching_files[0]["describe"]["project"]
 
         matching_folders = []
         # project may be none if path is an ID and there is no project context

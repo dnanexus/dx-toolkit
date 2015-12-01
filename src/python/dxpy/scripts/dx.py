@@ -59,7 +59,7 @@ from ..utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id
                               is_analysis_id, get_last_pos_of_char, resolve_container_id_or_name, resolve_path,
                               resolve_existing_path, get_app_from_path, resolve_app, get_exec_handler,
                               split_unescaped, ResolutionError, resolve_to_objects_or_project, is_project_explicit,
-                              object_exists_in_project)
+                              object_exists_in_project, is_jbor_str)
 from ..utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, LocalCompleter,
                                ListCompleter, MultiCompleter)
 from ..utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_desc,
@@ -1765,11 +1765,14 @@ def cat(args):
 
         # If the user did not explicitly provide the project, don't pass any
         # project parameter to the API call but continue with download resolution
-        if not is_project_explicit(path):
+        path_has_explicit_proj = is_project_explicit(path) or is_jbor_str(path)
+        if not path_has_explicit_proj:
             project = None
+        elif is_jbor_str(path):
+            project = entity_result['describe']['project']
         # If the user explicitly provided the project and it doesn't contain
         # the file, don't allow the download.
-        if is_project_explicit(path) and project is not None and \
+        if path_has_explicit_proj and project is not None and \
            not object_exists_in_project(entity_result['describe']['id'], project):
             parser.exit(1, fill('Error: project does not contain specified file object') + '\n')
 

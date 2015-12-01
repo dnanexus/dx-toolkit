@@ -1601,6 +1601,48 @@ class TestDXClientDownloadDataEgressBilling(DXTestCase):
             with self.assertSubprocessFailure(stderr_regexp="ResolutionError: Found multiple projects", exit_code=3):
                 run("dx download -f --no-progress {pname}:{f}".format(pname=proj_name, f=file2_id))
 
+    @unittest.skipUnless(testutil.TEST_ENV,
+                         'skipping test that would clobber your local environment')
+    def test_dx_download_jbors(self):
+        proj1_name = 'test_proj1'
+        proj2_name = 'test_proj2'
+
+        with temporary_project(proj1_name, select=True) as proj1, \
+                temporary_project(proj2_name) as proj2, \
+                chdir(tempfile.mkdtemp()):
+            dxfile = dxpy.upload_string("foo", project=proj1.get_id(), wait_on_close=True)
+            applet_id = dxpy.api.applet_new({
+                "project": proj1.get_id(),
+                "dxapi": "0.0.1",
+                "inputSpec": [{"name": "infile", "class": "file"}],
+                "outputSpec": [{"name": "outfile", "class": "file"}],
+                "runSpec": {"interpreter": "bash",
+                            "code": """
+dx-jobutil-add-output outfile `dx-jobutil-parse-link "$infile"`
+"""
+                            }})["id"]
+            applet = dxpy.DXApplet(applet_id)
+            dxjob1 = applet.run({"infile": {"$dnanexus_link": dxfile.get_id()}}, project=proj1.get_id())
+            dxjob2 = applet.run({"infile": {"$dnanexus_link": dxfile.get_id()}}, project=proj2.get_id())
+            dxjob1.wait_on_done()
+            dxjob2.wait_on_done()
+
+            # Test downloading from jobs running in the current project
+            # context, and outside of the current project context
+            run("dx download -f --no-progress {job1}:outfile".format(job1=dxjob1.get_id()))
+            self.assertEqual(self.get_billed_project(), proj1.get_id())
+            run("dx download --no-progress -o - {job1}:outfile".format(job1=dxjob1.get_id()))
+            self.assertEqual(self.get_billed_project(), proj1.get_id())
+            run("dx download -f --no-progress {job2}:outfile".format(job2=dxjob2.get_id()))
+            self.assertEqual(self.get_billed_project(), proj2.get_id())
+            run("dx download --no-progress -o - {job2}:outfile".format(job2=dxjob2.get_id()))
+            self.assertEqual(self.get_billed_project(), proj2.get_id())
+
+            # Test downloading without a project context set
+            with without_project_context():
+                run("dx download -f --no-progress {job1}:outfile".format(job1=dxjob1.get_id()))
+                self.assertEqual(self.get_billed_project(), proj1.get_id())
+
 
 class TestDXClientDescribe(DXTestCase):
     def test_projects(self):
