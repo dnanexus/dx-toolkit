@@ -35,7 +35,7 @@ from ..utils.resolver import object_exists_in_project
 from ..compat import BytesIO
 
 
-DXFILE_HTTP_THREADS = cpu_count()
+DXFILE_HTTP_THREADS = min(cpu_count(), 8)
 DEFAULT_BUFFER_SIZE = 1024*1024*16
 if dxpy.JOB_ID:
     # Increase HTTP request buffer size when we are running within the
