@@ -1,3 +1,9 @@
+dx-toolkit (0.173.0) precise; urgency=low
+
+  * Fixes for dxpy concurrency and for data egress
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 02 Dec 2015 18:29:29 +0000
+
 dx-toolkit (0.172.0) precise; urgency=low
 
   * Org administration commands
@@ -13,7 +19,7 @@ dx-toolkit (0.171.0) precise; urgency=low
   * PTFM-16144 Find org members DX command
   * I/O params gracefully handle unknown fields during deserialization
   * PTFM-16656 Use flock to make dx-jobutil-add-output concurrency safe
-  * Add code review fix for 18c26a3 
+  * Add code review fix for 18c26a3
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 18 Nov 2015 19:35:34 +0000
 
