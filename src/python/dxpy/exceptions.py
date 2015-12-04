@@ -22,6 +22,7 @@ from __future__ import (print_function, unicode_literals)
 
 import sys, json, traceback, errno, socket
 import requests
+from requests.exceptions import HTTPError
 
 import dxpy
 
@@ -166,8 +167,12 @@ class DXCLIError(DXError):
     '''
     pass
 
-class ContentLengthError(requests.HTTPError):
-    '''Will be raised when actual content length received from server does not match the "Content-Length" header'''
+
+class ContentLengthError(HTTPError):
+    '''
+    Will be raised when actual content length received from server does not
+    match the "Content-Length" header
+    '''
     pass
 
 
@@ -213,7 +218,7 @@ network_exceptions = (requests.packages.urllib3.exceptions.ProtocolError,
                       requests.packages.urllib3.exceptions.ConnectTimeoutError,
                       requests.packages.urllib3.exceptions.ReadTimeoutError,
                       requests.packages.urllib3.connectionpool.HTTPException,
-                      requests.exceptions.HTTPError,
+                      HTTPError,
                       socket.error)
 
 default_expected_exceptions = network_exceptions + (DXAPIError,

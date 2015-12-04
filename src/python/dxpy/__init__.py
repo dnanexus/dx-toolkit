@@ -130,8 +130,7 @@ import errno
 import requests
 import socket
 from collections import namedtuple
-
-from requests.exceptions import HTTPError
+from . import exceptions
 from requests.auth import AuthBase
 from requests.packages import urllib3
 from requests.packages.urllib3.packages.ssl_match_hostname import match_hostname
@@ -156,7 +155,6 @@ def configure_urllib3():
 
 configure_urllib3()
 
-from . import exceptions
 from .toolkit_version import version as TOOLKIT_VERSION
 __version__ = TOOLKIT_VERSION
 
@@ -411,11 +409,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     content = json.loads(response.data.decode('utf-8'))
                     try:
                         error_class = getattr(exceptions, content["error"]["type"], exceptions.DXAPIError)
-                    except (KeyError, AttributeError):
-                        error_class = exceptions.HTTPError(
-                            "Unable to extract error class from response")
+                    except (KeyError, AttributeError, TypeError):
+                        error_class = exceptions.HTTPError
                     raise error_class(content, response.status)
-                raise HTTPError("{} {}".format(response.status, response.reason))
+                raise exceptions.HTTPError("{} {}".format(response.status, response.reason))
 
             if want_full_response:
                 return response
@@ -454,7 +451,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                             # the client sees unparseable JSON, and we
                             # should be able to recover.
                             streaming_response_truncated = 'content-length' not in response.headers
-                            raise HTTPError("Invalid JSON received from server")
+                            raise exceptions.HTTPError("Invalid JSON received from server")
                 return content
             raise AssertionError('Should never reach this line: expected a result to have been returned by now')
         except Exception as e:

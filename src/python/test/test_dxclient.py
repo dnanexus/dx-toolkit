@@ -31,7 +31,7 @@ from dxpy.scripts import dx_build_app
 from dxpy_testutil import (DXTestCase, check_output, temporary_project, select_project, cd, override_environment,
                            generate_unique_username_email, without_project_context, without_auth)
 import dxpy_testutil as testutil
-from dxpy.exceptions import DXAPIError, DXSearchError, EXPECTED_ERR_EXIT_STATUS
+from dxpy.exceptions import DXAPIError, DXSearchError, EXPECTED_ERR_EXIT_STATUS, HTTPError
 from dxpy.compat import str, sys_encoding, open
 from dxpy.utils.resolver import ResolutionError, _check_resolution_needed as check_resolution
 
@@ -910,6 +910,16 @@ class TestDXClient(DXTestCase):
     def test_dx_with_bad_job_id_env(self):
         env = override_environment(DX_JOB_ID="foobar")
         run("dx env", env=env)
+
+    def test_dx_http_request_handles_auth_errors(self):
+        # The JSON content cannot be processed.
+        with self.assertRaises(HTTPError):
+            dxpy.DXHTTPRequest(dxpy.get_auth_server_name() + "/oauth2/token",
+                               {"grant_type": "authorization_code",
+                                "redirect_uri": "/",
+                                "client_id": "apiserver"},
+                               prepend_srv=False,
+                               max_retries=0)
 
 
 class TestDXNewRecord(DXTestCase):
