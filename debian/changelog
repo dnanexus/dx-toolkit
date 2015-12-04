@@ -1,3 +1,9 @@
+dx-toolkit (0.172.1) precise; urgency=low
+
+  * Improve download reliability
+
+ -- Phil Sung <psung@dnanexus.com>  Fri, 04 Dec 2015 18:52:50 +0000
+
 dx-toolkit (0.172.0) precise; urgency=low
 
   * Org administration commands
