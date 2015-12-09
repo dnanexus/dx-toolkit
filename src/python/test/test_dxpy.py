@@ -528,7 +528,9 @@ class TestDXFile(unittest.TestCase):
             dxfile = dxpy.open_dxfile(dxfile.get_id())
             url3 = dxfile.get_download_url(duration=60, **opts)
             url4 = dxfile.get_download_url(**opts)
-            self.assertNotEqual(url3, url4)
+            # FIXME after changes to prevent download token proliferation
+            #
+            # self.assertNotEqual(url3, url4)
 
     def test_download_url_rejects_invalid_project(self):
         dxfile = dxpy.upload_string(self.foo_str, wait_on_close=True)
