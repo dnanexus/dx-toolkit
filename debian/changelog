@@ -1,3 +1,10 @@
+dx-toolkit (0.174.0) precise; urgency=low
+
+  * Temporarily disable failing test after server-side changes
+  * Fix DXHTTPRequest error handling and add regression test 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 09 Dec 2015 23:26:55 +0000
+
 dx-toolkit (0.173.0) precise; urgency=low
 
   * Fixes for dxpy concurrency and for data egress
