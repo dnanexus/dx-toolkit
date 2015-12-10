@@ -911,6 +911,8 @@ class TestDXClient(DXTestCase):
         env = override_environment(DX_JOB_ID="foobar")
         run("dx env", env=env)
 
+    @unittest.skipUnless(testutil.TEST_WITH_AUTHSERVER,
+                         'skipping tests that require a running authserver')
     def test_dx_http_request_handles_auth_errors(self):
         # The JSON content cannot be processed.
         with self.assertRaises(HTTPError):
