@@ -20,12 +20,12 @@ import os, sys, json, subprocess, pipes
 import collections, datetime
 
 import dxpy
-from dxpy.utils.describe import (get_field_from_jbor, get_job_from_jbor, get_index_from_jbor,
-                                 is_job_ref, job_output_to_str, JOB_STATES)
-from dxpy.utils.printing import (GREEN, BLUE, BOLD, ENDC, fill)
-from dxpy.utils.resolver import is_localjob_id
-from dxpy.compat import open, str, environ, USING_PYTHON2
-from dxpy.utils import file_load_utils
+from .describe import (get_field_from_jbor, get_job_from_jbor, get_index_from_jbor,
+                       is_job_ref, job_output_to_str, JOB_STATES)
+from .printing import (GREEN, BLUE, BOLD, ENDC, fill)
+from .resolver import is_localjob_id
+from ..compat import open, str, environ, USING_PYTHON2, basestring
+from . import file_load_utils
 
 def exit_with_error(msg):
     '''

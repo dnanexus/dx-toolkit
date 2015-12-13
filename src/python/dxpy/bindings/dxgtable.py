@@ -27,7 +27,7 @@ import concurrent.futures
 import dxpy
 from . import DXDataObject
 from ..exceptions import DXError
-from ..compat import StringIO
+from ..compat import StringIO, basestring
 from ..utils import warn
 
 DXGTABLE_HTTP_THREADS = 1

@@ -30,16 +30,16 @@ import tempfile
 import time
 from datetime import datetime
 import dxpy, dxpy.app_builder
-from dxpy import logger
+from .. import logger
 
-from dxpy.utils import json_load_raise_on_duplicates
-from dxpy.utils.resolver import resolve_path, is_container_id
-from dxpy.utils.completer import LocalCompleter
-from dxpy.app_categories import APP_CATEGORIES
-from dxpy.cli import try_call
-from dxpy.exceptions import err_exit, DXError
-from dxpy.utils.printing import BOLD
-from dxpy.compat import open, USING_PYTHON2, decode_command_line_args
+from ..utils import json_load_raise_on_duplicates
+from ..utils.resolver import resolve_path, is_container_id
+from ..utils.completer import LocalCompleter
+from ..app_categories import APP_CATEGORIES
+from ..cli import try_call
+from ..exceptions import err_exit, DXError
+from ..utils.printing import BOLD
+from ..compat import open, USING_PYTHON2, decode_command_line_args, basestring
 
 decode_command_line_args()
 

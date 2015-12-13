@@ -32,6 +32,7 @@ import dxpy
 from . import DXDataObject
 from . import __dict__ as all_bindings
 from ..exceptions import DXError
+from ..compat import basestring
 
 def dxlink(object_id, project_id=None):
     '''

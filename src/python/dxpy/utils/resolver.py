@@ -30,7 +30,7 @@ import os, sys, json, re
 import dxpy
 from .describe import get_ls_l_desc
 from ..exceptions import DXError
-from ..compat import str, input
+from ..compat import str, input, basestring
 from ..cli import try_call, INTERACTIVE_CLI
 
 def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False, more_choices=False):

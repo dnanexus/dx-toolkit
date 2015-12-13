@@ -10,6 +10,7 @@
 import os.path
 import sys
 from collections import deque
+from ..compat import basestring
 
 try:
     from cStringIO import StringIO

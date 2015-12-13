@@ -89,7 +89,7 @@ import fnmatch
 import sys
 import collections
 import dxpy
-from dxpy.compat import environ, open
+from ..compat import environ, open, basestring
 from ..exceptions import DXError
 
 

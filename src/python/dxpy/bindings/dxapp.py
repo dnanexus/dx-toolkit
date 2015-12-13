@@ -50,6 +50,7 @@ from __future__ import (print_function, unicode_literals)
 import dxpy
 from . import DXObject, DXExecutable, DXJob, verify_string_dxid
 from ..exceptions import DXError
+from ..compat import basestring
 
 #########
 # DXApp #

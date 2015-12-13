@@ -30,6 +30,7 @@ import dxpy
 from . import DXDataObject, DXJob
 from ..utils import merge
 from ..exceptions import DXError
+from ..compat import basestring
 
 class DXExecutable:
     '''Methods in :class:`!DXExecutable` are used by

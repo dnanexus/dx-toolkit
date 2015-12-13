@@ -28,8 +28,9 @@ from __future__ import (print_function, unicode_literals)
 
 import re
 import dxpy
-from dxpy.bindings import DXDataObject, DXExecutable, DXAnalysis
-from dxpy.exceptions import DXError
+from ..bindings import DXDataObject, DXExecutable, DXAnalysis
+from ..exceptions import DXError
+from ..compat import basestring
 
 ##############
 # DXWorkflow #
