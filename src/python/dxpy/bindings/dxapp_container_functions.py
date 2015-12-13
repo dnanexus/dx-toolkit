@@ -23,7 +23,7 @@ To easily access these, the following utility functions are provided.
 These functions are meant to be called only by a job.
 '''
 
-from __future__ import (print_function, unicode_literals)
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import os
 

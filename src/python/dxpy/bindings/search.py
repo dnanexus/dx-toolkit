@@ -22,7 +22,7 @@ provides search functionality over all data objects in the system. The
 (whether they are running, failed, or done).
 '''
 
-from __future__ import (print_function, unicode_literals)
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import dxpy
 from . import DXApplet, DXApp, DXWorkflow, DXProject, DXJob, DXAnalysis

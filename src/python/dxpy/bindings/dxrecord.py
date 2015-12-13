@@ -19,7 +19,7 @@ Records are the most basic data object and do not store additional data beyond t
 all data objects (details, properties, etc.).
 """
 
-from __future__ import (print_function, unicode_literals)
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import dxpy
 from . import DXDataObject

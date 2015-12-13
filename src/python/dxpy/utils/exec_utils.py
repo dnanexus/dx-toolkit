@@ -18,7 +18,7 @@
 Utilities used in the DNAnexus execution environment and test harness.
 """
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import os, sys, json, re, collections, logging, argparse, string, itertools, subprocess, tempfile
 from functools import wraps

@@ -45,7 +45,7 @@ becomes the sole developer of the app.
 
 """
 
-from __future__ import (print_function, unicode_literals)
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import dxpy
 from . import DXObject, DXExecutable, DXJob, verify_string_dxid

@@ -18,7 +18,7 @@
 Functions and classes used when launching platform executables from the CLI.
 '''
 
-from __future__ import (print_function, unicode_literals)
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 # TODO: refactor all dx run helper functions here
 

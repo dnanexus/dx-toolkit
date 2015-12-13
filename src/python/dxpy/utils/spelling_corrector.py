@@ -18,7 +18,7 @@
 Adapted from http://norvig.com/spell-correct.html.
 """
 
-from __future__ import (print_function, unicode_literals)
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import re, collections
 

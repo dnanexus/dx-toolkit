@@ -22,7 +22,7 @@ contents of describe hashes for various DNAnexus entities (projects,
 containers, dataobjects, apps, and jobs).
 '''
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import datetime, time, json, math, sys, copy
 from collections import defaultdict

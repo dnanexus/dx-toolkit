@@ -19,7 +19,7 @@ Utilities for client-side usage of the streaming log API
 (https://wiki.dnanexus.com/API-Specification-v1.0.0/Logging#API-method%3A-%2Fjob-xxxx%2FgetLog).
 '''
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import json, logging, time
 

@@ -19,7 +19,7 @@ This file contains utility functions for interactive scripts such as
 dx for tab-completion, resolving naming conflicts, etc.
 '''
 
-from __future__ import (print_function, unicode_literals)
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import sys
 

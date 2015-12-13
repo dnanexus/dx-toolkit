@@ -24,7 +24,7 @@ these methods return a remote table handler.
 
 """
 
-from __future__ import (print_function, unicode_literals)
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 from . import DXGTable
 

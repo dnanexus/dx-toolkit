@@ -25,7 +25,7 @@ existing analysis ID.
 
 """
 
-from __future__ import (print_function, unicode_literals)
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import time
 import dxpy

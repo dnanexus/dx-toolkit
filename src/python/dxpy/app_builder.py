@@ -34,7 +34,7 @@ the effective destination project.
 
 '''
 
-from __future__ import (print_function, unicode_literals)
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import os, sys, json, subprocess, tempfile, multiprocessing
 import datetime

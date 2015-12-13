@@ -20,7 +20,7 @@ object handlers, and its subclass :class:`DXDataObject` is the abstract
 base class for all remote data object handlers.
 """
 
-from __future__ import (print_function, unicode_literals)
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import time, copy, re
 

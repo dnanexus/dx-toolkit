@@ -21,7 +21,7 @@ command-line client.
 'dx cp' works only between DIFFERENT projects. It will exit fatally otherwise.
 '''
 
-from __future__ import (print_function, unicode_literals)
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import dxpy
 import requests

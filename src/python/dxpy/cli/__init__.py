@@ -19,7 +19,7 @@ This submodule contains various parsers and other utilities used
 almost exclusively by command-line tools such as dx.
 '''
 
-from __future__ import (print_function, unicode_literals)
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import sys
 

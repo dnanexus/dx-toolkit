@@ -23,7 +23,7 @@ and generating an equivalent applet source directory.
 
 '''
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import collections
 import json

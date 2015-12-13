@@ -17,7 +17,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, io, time, subprocess, glob, logging
 import shlex # respects quoted substrings when splitting
@@ -375,7 +375,7 @@ def login(args):
             if greeting.get('messages'):
                 print(BOLD("New messages from ") + DNANEXUS_LOGO())
                 for message in greeting['messages']:
-                    print(BOLD("Date:    ") + datetime.datetime.fromtimestamp(message['date']/1000).ctime())
+                    print(BOLD("Date:    ") + datetime.datetime.fromtimestamp(message['date']//1000).ctime())
                     print(BOLD("Subject: ") + fill(message['title'], subsequent_indent=' '*9))
                     body = message['body'].splitlines()
                     if len(body) > 0:
@@ -400,7 +400,7 @@ def login(args):
         tip = "Use " + BOLD("dx login --timeout") + " to control the expiration date, or " + BOLD("dx logout") + \
               " to end this session."
         print(fill(msg.format(conf_dir=dxpy.config.get_user_conf_dir(),
-              timeout=datetime.timedelta(seconds=normalize_time_input(args.timeout, default_unit='s')/1000), tip=tip)))
+              timeout=datetime.timedelta(seconds=normalize_time_input(args.timeout, default_unit='s')//1000), tip=tip)))
 
 def logout(args):
     if dxpy.AUTH_HELPER is not None:
@@ -1675,7 +1675,7 @@ def make_download_url(args):
     try:
         dxfile = dxpy.DXFile(entity_result['id'], project=project)
         url, _headers = dxfile.get_download_url(preauthenticated=True,
-                                                duration=normalize_timedelta(args.duration)/1000 if args.duration else 24*3600,
+                                                duration=normalize_timedelta(args.duration)//1000 if args.duration else 24*3600,
                                                 filename=args.filename,
                                                 project=project)
         print(url)
@@ -2989,7 +2989,7 @@ def watch(args):
             args.format = u"{timestamp} " + args.format
 
         def msg_callback(message):
-            message['timestamp'] = str(datetime.datetime.fromtimestamp(message.get('timestamp', 0)/1000))
+            message['timestamp'] = str(datetime.datetime.fromtimestamp(message.get('timestamp', 0)//1000))
             message['level_color'] = level_colors.get(message.get('level', ''), '')
             message['job_name'] = log_client.seen_jobs[message['job']]['name'] if message['job'] in log_client.seen_jobs else message['job']
             print(args.format.format(**message))

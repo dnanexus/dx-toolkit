@@ -24,7 +24,7 @@ signatures. They can be run by calling the :func:`DXApplet.run` method.
 
 """
 
-from __future__ import (print_function, unicode_literals)
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import dxpy
 from . import DXDataObject, DXJob

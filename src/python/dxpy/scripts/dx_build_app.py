@@ -16,7 +16,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import logging
 logging.basicConfig(level=logging.WARNING)
@@ -610,7 +610,7 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
                     if sys.stderr.isatty():
                         if last_console_update > 0:
                             sys.stderr.write("\r")
-                        sys.stderr.write("Compressing target directory {dir}... ({kb_so_far:,} kb)".format(dir=src_dir, kb_so_far=total_num_bytes / 1024))
+                        sys.stderr.write("Compressing target directory {dir}... ({kb_so_far:,} kb)".format(dir=src_dir, kb_so_far=total_num_bytes // 1024))
                         sys.stderr.flush()
                         last_console_update = current_time
                     elif not printed_static_message:

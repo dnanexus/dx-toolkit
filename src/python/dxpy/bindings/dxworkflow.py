@@ -24,7 +24,7 @@ be run together.  They can be run by calling the
 
 """
 
-from __future__ import (print_function, unicode_literals)
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import re
 import dxpy
