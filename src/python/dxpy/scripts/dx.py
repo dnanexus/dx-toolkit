@@ -1663,6 +1663,7 @@ def unset_properties(args):
         except:
             err_exit()
 
+
 def make_download_url(args):
     project, _folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
     if entity_result is None:
@@ -1674,12 +1675,13 @@ def make_download_url(args):
     if args.filename is None:
         args.filename = entity_result['describe']['name']
 
+    # TODO: how to do data egress billing for make_download_url?
     try:
         dxfile = dxpy.DXFile(entity_result['id'], project=project)
         url, _headers = dxfile.get_download_url(preauthenticated=True,
                                                 duration=normalize_timedelta(args.duration)//1000 if args.duration else 24*3600,
                                                 filename=args.filename,
-                                                project=project)
+                                                project=None)
         print(url)
     except:
         err_exit()

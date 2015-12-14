@@ -523,7 +523,9 @@ class DXFile(DXDataObject):
         :param project: ID of a project containing the file (the download URL
             will be associated with this project, and this may affect which
             billing account is billed for this download). If None, no hint is
-            supplied to the API server.
+            supplied to the API server. If set to a project, the URL is only
+            valid so long as the user has access to that project and the
+            project contains that file.
         :type project: str
         :returns: download URL and dict containing HTTP headers to be supplied
             with the request

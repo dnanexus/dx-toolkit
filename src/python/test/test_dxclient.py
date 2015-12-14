@@ -1187,6 +1187,21 @@ class TestDXClientUploadDownload(DXTestCase):
             run("wget -P " + output_testdir + " " + download_url)
             run('cmp ' + os.path.join(output_testdir, "foo") + ' ' + fd.name)
 
+    def test_dx_make_download_url_project_affinity(self):
+        # Ensure that URLs created with make_download_url never have project
+        # affinity. In particular, ensures that download URLs created in a job
+        # (when the workspace is set to a container) continue to work after the
+        # job has terminated
+        with temporary_project("make_download_url test 2") as temp_project_2:
+            with temporary_project("make_download_url test 1", select=True) as temp_project_1:
+                fh = dxpy.upload_string("foo", project=temp_project_1.get_id(), wait_on_close=True)
+                # file now appears in both projects
+                temp_project_1.clone(temp_project_2.get_id(), objects=[fh.get_id()])
+                download_url = run("dx make_download_url " + fh.get_id()).strip()
+                run("wget -O /dev/null " + download_url)
+            # Even after project 1 is destroyed, the download URL should still work
+            run("wget -O /dev/null " + download_url)
+
     def test_dx_upload_mult_paths(self):
         testdir = tempfile.mkdtemp()
         os.mkdir(os.path.join(testdir, 'a'))
