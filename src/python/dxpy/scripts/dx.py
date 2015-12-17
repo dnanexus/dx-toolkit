@@ -1756,7 +1756,7 @@ def get(args):
         fd.write(json.dumps(details, indent=4))
     elif entity_result['describe']['class'] == 'applet':
         from dxpy.utils.app_unbuilder import dump_applet
-        dump_applet(dxpy.DXApplet(entity_result['id'], project=project), output_path)
+        dump_applet(dxpy.DXApplet(entity_result['id'], project=project), output_path, args.omit_resources)
     if fd is not None and args.output != '-':
         fd.close()
 
@@ -4324,6 +4324,7 @@ parser_get = subparsers.add_parser('get', help='Download records, applets, and f
 parser_get.add_argument('path', help='Data object ID or name to access').completer = DXPathCompleter(classes=['file', 'record', 'applet'])
 parser_get.add_argument('-o', '--output', help='local file path where the data is to be saved ("-" indicates stdout output for objects of class file and record). If not supplied, the object\'s name on the platform will be used, along with any applicable extensions. For applets, if OUTPUT does not exist, an applet source directory will be created there; if OUTPUT is an existing directory, a new directory with the applet\'s name will be created inside it.')
 parser_get.add_argument('--no-ext', help='If -o is not provided, do not add an extension to the filename', action='store_true')
+parser_get.add_argument('--omit-resources', help='When downloading an applet, omit fetching the resources associated with the applet.', action='store_true')
 parser_get.add_argument('-f', '--overwrite', help='Overwrite the local file if necessary', action='store_true')
 parser_get.set_defaults(func=get)
 register_subparser(parser_get, categories='data')

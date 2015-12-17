@@ -34,7 +34,7 @@ import sys
 from .. import get_handler, download_dxfile
 from ..compat import open
 
-def dump_applet(applet, destination_directory):
+def dump_applet(applet, destination_directory, omit_resources=False):
     """
     Reconstitutes applet into a directory that would create a
     functionally identical app if "dx build" were run on it.
@@ -84,17 +84,18 @@ def dump_applet(applet, destination_directory):
         # resources/ directory
         deps_to_remove = []
         created_resources_directory = False
-        for dep in info["runSpec"]["bundledDepends"]:
-            handler = get_handler(dep["id"])
-            if handler.__class__.__name__ == "DXFile":
-                if not created_resources_directory:
-                    os.mkdir("resources")
-                    created_resources_directory = True
-                fname = "resources/%s.tar.gz" % (handler.get_id())
-                download_dxfile(handler.get_id(), fname)
-                subprocess.check_call(["tar", "-C", "resources", "-zxvf", fname], shell=False)
-                os.unlink(fname)
-                deps_to_remove.append(dep)
+        if not omit_resources:
+            for dep in info["runSpec"]["bundledDepends"]:
+                handler = get_handler(dep["id"])
+                if handler.__class__.__name__ == "DXFile":
+                    if not created_resources_directory:
+                        os.mkdir("resources")
+                        created_resources_directory = True
+                    fname = "resources/%s.tar.gz" % (handler.get_id())
+                    download_dxfile(handler.get_id(), fname)
+                    subprocess.check_call(["tar", "-C", "resources", "-zxvf", fname], shell=False)
+                    os.unlink(fname)
+                    deps_to_remove.append(dep)
 
         # TODO: if output directory is not the same as applet name we
         # should print a warning and/or offer to rewrite the "name"
