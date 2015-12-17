@@ -1293,7 +1293,7 @@ def new_user(args):
         dxpy.api.org_invite(args.org, get_org_invite_args(args))
 
     if args.brief:
-        print("user-" + args.username)
+        print("user-" + args.username.lower())
     else:
         print(fill("Created new user account (user-{u})".format(
             u=args.username

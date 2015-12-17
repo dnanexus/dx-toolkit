@@ -4581,6 +4581,24 @@ class TestDXClientNewUser(DXTestCase):
         res = dxpy.api.org_get_member_access(self.org_id, {"user": user_id})
         self.assertDictContainsSubset(exp, res)
 
+        # Grant default org membership level and permission flags; `username`
+        # has uppercase chars.
+        username, email = generate_unique_username_email()
+        username = username.upper()
+        user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --brief".format(
+                      cmd=cmd, u=username, e=email, f=first,
+                      o=self.org_id)).strip()
+        self._assert_user_desc(user_id, {"first": first})
+        exp = {
+            "level": "MEMBER",
+            "allowBillableActivities": False,
+            "appAccess": True,
+            "projectAccess": "CONTRIBUTE",
+            "user": user_id
+        }
+        res = dxpy.api.org_get_member_access(self.org_id, {"user": user_id})
+        self.assertDictContainsSubset(exp, res)
+
         # Grant custom org membership level and permission flags.
         username, email = generate_unique_username_email()
         user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --level {l} --allow-billable-activities --no-app-access --project-access {pa} --brief".format(

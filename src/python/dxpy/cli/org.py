@@ -38,7 +38,7 @@ def get_org_invite_args(args):
         - `args.username` is well-formed and valid (e.g. it does not start with
           "user-").
     """
-    org_invite_args = {"invitee": "user-" + args.username}
+    org_invite_args = {"invitee": "user-" + args.username.lower()}
     org_invite_args["level"] = args.level
     if "set_bill_to" in args and args.set_bill_to is True:
         # /org-x/invite is called in conjunction with /user/new.
