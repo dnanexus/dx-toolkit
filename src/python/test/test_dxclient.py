@@ -4124,7 +4124,7 @@ class TestDXClientOrg(DXTestCase):
 
     @classmethod
     def get_unique_org_handle(cls):
-        return "dx_test_new_org_{t}_{r}".format(t=int(time.time()), r=random.randint(0, 255))
+        return "dx_test_new_org_{t}_{r}".format(t=int(time.time()), r=random.randint(0, 32768))
 
     def setUp(self):
         org_handle = TestDXClientOrg.get_unique_org_handle()
