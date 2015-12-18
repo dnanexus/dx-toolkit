@@ -121,9 +121,14 @@ def remove_membership(args):
             u=args.username, o=args.org_id)))
 
 
-def _get_org_set_member_access_args(args):
+def _get_org_set_member_access_args(args, default_level):
     user_id = "user-" + args.username
-    org_set_member_access_input = {user_id: {"level": args.level}}
+    org_set_member_access_input = {user_id: {}}
+    if args.level is not None:
+        org_set_member_access_input[user_id]["level"] = args.level
+    else:
+        org_set_member_access_input[user_id]["level"] = default_level
+
     if args.allow_billable_activities is not None:
         org_set_member_access_input[user_id]["allowBillableActivities"] = (True if args.allow_billable_activities == "true" else False)
     if args.app_access is not None:
@@ -136,10 +141,13 @@ def _get_org_set_member_access_args(args):
 def update_membership(args):
     # Will throw ResourceNotFound of the specified user is not currently a
     # member of the org.
-    dxpy.api.org_get_member_access(args.org_id,
-                                   {"user": "user-" + args.username})
+    member_access = dxpy.api.org_get_member_access(args.org_id,
+                                                   {"user": "user-" + args.username})
+    current_level = member_access["level"]
+
     result = dxpy.api.org_set_member_access(args.org_id,
-                                            _get_org_set_member_access_args(args))
+                                            _get_org_set_member_access_args(args,
+                                                                            current_level))
     if args.brief:
         print(result["id"])
     else:

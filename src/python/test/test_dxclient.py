@@ -4668,9 +4668,9 @@ class TestDXClientNewUser(DXTestCase):
                      'skipping tests that require presence of test user and org')
 class TestDXClientMembership(DXTestCase):
 
-    def _add_user(self, user_id):
+    def _add_user(self, user_id, level="ADMIN"):
         dxpy.api.org_invite(self.org_id,
-                            {"invitee": user_id, "level": "ADMIN"})
+                            {"invitee": user_id, "level": level})
 
     def _remove_user(self, user_id):
         dxpy.api.org_remove_member(self.org_id, {"user": user_id})
@@ -4858,19 +4858,38 @@ class TestDXClientMembership(DXTestCase):
             with self.assertRaises(subprocess.CalledProcessError):
                 run(" ".join([cmd, invalid_opts]))
 
-    def test_update_membership_default(self):
+    def test_update_membership_positive(self):
+        # default test
         self._add_user(self.user_id)
-
         exp_membership = {"user": self.user_id, "level": "ADMIN"}
         membership = self._org_get_member_access(self.user_id)
         self.assertEqual(membership, exp_membership)
 
         run("dx update member {o} {u} --level MEMBER --allow-billable-activities false --project-access VIEW --app-access true".format(
             o=self.org_id, u=self.username))
-        exp_membership = {"user": self.user_id, "level": "MEMBER",
-                          "allowBillableActivities": False,
-                          "projectAccess": "VIEW", "appAccess": True}
-        self.assertDictContainsSubset(exp_membership, self._org_get_member_access(self.user_id))
+        exp_membership = {
+            "user": self.user_id,
+            "level": "MEMBER",
+            "allowBillableActivities": False,
+            "projectAccess": "VIEW",
+            "appAccess": True,
+            "createProjectsAndApps": False
+        }
+        self.assertDictEqual(exp_membership,
+                             self._org_get_member_access(self.user_id))
+
+        run("dx update member {o} {u} --allow-billable-activities true --app-access false".format(
+            o=self.org_id, u=self.username))
+        expected_membership = {
+            "user": self.user_id,
+            "level": "MEMBER",
+            "allowBillableActivities": True,
+            "projectAccess": "VIEW",
+            "appAccess": False,
+            "createProjectsAndApps": True
+        }
+        self.assertDictEqual(expected_membership,
+                             self._org_get_member_access(self.user_id))
 
     def test_update_membership_negative(self):
         cmd = "dx update member"
@@ -4885,12 +4904,26 @@ class TestDXClientMembership(DXTestCase):
             "",
             "some_username --level ADMIN",
             "org-foo --level ADMIN",
-            "org-foo some_username",
             "org-foo some_username --level NONE",
         ]
+
         for invalid_opts in called_process_error_opts:
             with self.assertRaises(subprocess.CalledProcessError):
                 run(" ".join([cmd, invalid_opts]))
+
+        # We expect the following to fail as an API call, as ADMIN doesn't
+        # take options
+        self._add_user(self.user_id)
+
+        api_error_opts = [
+            "{} {} --allow-billable-activities true".format(self.org_id,
+                                                            self.username),
+        ]
+
+        for invalid_opt in api_error_opts:
+            with self.assertRaisesRegexp(subprocess.CalledProcessError,
+                                         "InvalidInput"):
+                run(' '.join([cmd, invalid_opt]))
 
     def test_add_update_remove_membership(self):
         cmd = "dx add member {o} {u} --level {l} --project-access UPLOAD"
