@@ -61,7 +61,7 @@ def get_size_str(size):
     else:
         magnitude = math.floor(math.log(size, 10))
         level = int(min(math.floor(magnitude // 3), 4))
-    return ('%d' if level == 0 else '%.2f') % (float(size) // 2**(level*10)) + ' ' + SIZE_LEVEL[level]
+    return ('%d' if level == 0 else '%.2f') % (float(size) / 2**(level*10)) + ' ' + SIZE_LEVEL[level]
 
 def parse_typespec(thing):
     if isinstance(thing, basestring):
@@ -423,9 +423,9 @@ def print_project_desc(desc, verbose=False):
     if 'storageCost' in desc:
         print_field("Storage cost", "$%.3f/month" % desc["storageCost"])
     if 'totalSponsoredEgressBytes' in desc or 'consumedSponsoredEgressBytes' in desc:
-        total_egress_str = '%.2f GB' % (desc['totalSponsoredEgressBytes'] // 1073741824.,) \
+        total_egress_str = '%.2f GB' % (desc['totalSponsoredEgressBytes'] / 1073741824.,) \
                            if 'totalSponsoredEgressBytes' in desc else '??'
-        consumed_egress_str = '%.2f GB' % (desc['consumedSponsoredEgressBytes'] // 1073741824.,) \
+        consumed_egress_str = '%.2f GB' % (desc['consumedSponsoredEgressBytes'] / 1073741824.,) \
                               if 'consumedSponsoredEgressBytes' in desc else '??'
         print_field('Sponsored egress',
                     ('%s used of %s total' % (consumed_egress_str, total_egress_str)))
