@@ -60,8 +60,8 @@ def get_size_str(size):
         level = 0
     else:
         magnitude = math.floor(math.log(size, 10))
-        level = int(min(math.floor(magnitude / 3), 4))
-    return ('%d' if level == 0 else '%.2f') % (float(size) / 2**(level*10)) + ' ' + SIZE_LEVEL[level]
+        level = int(min(math.floor(magnitude // 3), 4))
+    return ('%d' if level == 0 else '%.2f') % (float(size) // 2**(level*10)) + ' ' + SIZE_LEVEL[level]
 
 def parse_typespec(thing):
     if isinstance(thing, basestring):
@@ -336,10 +336,10 @@ def render_stage(title, stage, as_stage_of=None):
         print_field(line[0], line[1])
 
 def render_short_timestamp(timestamp):
-    return str(datetime.datetime.fromtimestamp(timestamp/1000))
+    return str(datetime.datetime.fromtimestamp(timestamp//1000))
 
 def render_timestamp(timestamp):
-    return datetime.datetime.fromtimestamp(timestamp/1000).ctime()
+    return datetime.datetime.fromtimestamp(timestamp//1000).ctime()
 
 
 FIELD_NAME_WIDTH = 20
@@ -423,9 +423,9 @@ def print_project_desc(desc, verbose=False):
     if 'storageCost' in desc:
         print_field("Storage cost", "$%.3f/month" % desc["storageCost"])
     if 'totalSponsoredEgressBytes' in desc or 'consumedSponsoredEgressBytes' in desc:
-        total_egress_str = '%.2f GB' % (desc['totalSponsoredEgressBytes'] / 1073741824.,) \
+        total_egress_str = '%.2f GB' % (desc['totalSponsoredEgressBytes'] // 1073741824.,) \
                            if 'totalSponsoredEgressBytes' in desc else '??'
-        consumed_egress_str = '%.2f GB' % (desc['consumedSponsoredEgressBytes'] / 1073741824.,) \
+        consumed_egress_str = '%.2f GB' % (desc['consumedSponsoredEgressBytes'] // 1073741824.,) \
                               if 'consumedSponsoredEgressBytes' in desc else '??'
         print_field('Sponsored egress',
                     ('%s used of %s total' % (consumed_egress_str, total_egress_str)))
@@ -725,17 +725,17 @@ def print_execution_desc(desc):
             print_field("Started running", render_timestamp(desc['startedRunning']))
         else:
             print_field("Started running", "{t} (running for {rt})".format(t=render_timestamp(desc['startedRunning']),
-                rt=datetime.timedelta(seconds=int(time.time())-desc['startedRunning']/1000)))
+                rt=datetime.timedelta(seconds=int(time.time())-desc['startedRunning']//1000)))
     if 'stoppedRunning' in desc:
         print_field("Stopped running", "{t} (Runtime: {rt})".format(
             t=render_timestamp(desc['stoppedRunning']),
-            rt=datetime.timedelta(seconds=(desc['stoppedRunning']-desc['startedRunning'])/1000)))
+            rt=datetime.timedelta(seconds=(desc['stoppedRunning']-desc['startedRunning'])//1000)))
     if desc.get('class') == 'analysis' and 'stateTransitions' in desc and desc['stateTransitions']:
         # Display finishing time of the analysis if available
         if desc['stateTransitions'][-1]['newState'] in ['done', 'failed', 'terminated']:
             print_field("Finished", "{t} (Wall-clock time: {wt})".format(
                 t=render_timestamp(desc['stateTransitions'][-1]['setAt']),
-                wt=datetime.timedelta(seconds=(desc['stateTransitions'][-1]['setAt']-desc['created'])/1000)))
+                wt=datetime.timedelta(seconds=(desc['stateTransitions'][-1]['setAt']-desc['created'])//1000)))
     print_field("Last modified", render_timestamp(desc['modified']))
     if 'waitingOnChildren' in desc:
         print_list_field('Pending subjobs', desc['waitingOnChildren'])
@@ -918,10 +918,10 @@ def get_find_executions_string(desc, has_children, single_result=False, show_out
         # Only print runtime if it ever started running
         if desc.get('startedRunning'):
             if desc['state'] in ['done', 'failed', 'terminated', 'waiting_on_output']:
-                runtime = datetime.timedelta(seconds=int(desc['stoppedRunning']-desc['startedRunning'])/1000)
+                runtime = datetime.timedelta(seconds=int(desc['stoppedRunning']-desc['startedRunning'])//1000)
                 cached_and_runtime_strs.append("runtime " + str(runtime))
             elif desc['state'] == 'running':
-                seconds_running = max(int(time.time()-desc['startedRunning']/1000), 0)
+                seconds_running = max(int(time.time()-desc['startedRunning']//1000), 0)
                 msg = "running for {rt}".format(rt=datetime.timedelta(seconds=seconds_running))
                 cached_and_runtime_strs.append(msg)
 
