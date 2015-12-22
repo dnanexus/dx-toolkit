@@ -716,14 +716,6 @@ module DX
       return DX::http_request("/#{object_id}/findProjects", input_params, opts)
     end
 
-    # Invokes the /org-xxxx/getMemberAccess API method.
-    #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FgetMemberAccess
-    def self.org_get_member_access(object_id, input_params={}, opts={})
-      opts = { "always_retry" => true }.merge(opts)
-      return DX::http_request("/#{object_id}/getMemberAccess", input_params, opts)
-    end
-
     # Invokes the /org-xxxx/invite API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2Finvite

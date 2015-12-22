@@ -53,8 +53,7 @@ def get_org_invite_args(args):
 
 def add_membership(args):
     try:
-        dxpy.api.org_get_member_access(args.org_id,
-                                       {"user": "user-" + args.username})
+        dxpy.api.org_find_members(args.org_id, {"id": ["user-" + args.username.lower()]})["results"][0]
     except:
         pass
     else:
@@ -65,29 +64,29 @@ def add_membership(args):
     if args.brief:
         print("org-" + args.org_id)
     else:
-        print(fill("Invited user-{u} to {o}".format(u=args.username,
+        print(fill("Invited user-{u} to {o}".format(u=args.username.lower(),
                                                     o=args.org_id)))
 
 
 def _get_org_remove_member_args(args):
     remove_member_args = {
-        "user": "user-" + args.username,
+        "user": "user-" + args.username.lower(),
         "revokeProjectPermissions": args.revoke_project_permissions,
         "revokeAppPermissions": args.revoke_app_permissions}
     return remove_member_args
 
 
 def remove_membership(args):
-    # Will throw ResourceNotFound of the specified user is not currently a
-    # member of the org.
-    dxpy.api.org_get_member_access(args.org_id,
-                                   {"user": "user-" + args.username})
+    try:
+        dxpy.api.org_find_members(args.org_id, {"id": ["user-" + args.username.lower()]})["results"][0]
+    except IndexError:
+        raise DXCLIError("Cannot remove a user who is not a member of the org")
 
     confirmed = not args.confirm
     if not confirmed:
         # Request interactive confirmation.
         print(fill("WARNING: About to remove user-{u} from {o}; project permissions will{rpp} be removed and app permissions will{rap} be removed".format(
-            u=args.username, o=args.org_id,
+            u=args.username.lower(), o=args.org_id,
             rpp="" if args.revoke_project_permissions else " not",
             rap="" if args.revoke_app_permissions else " not")))
 
@@ -100,17 +99,17 @@ def remove_membership(args):
         if args.brief:
             print(result["id"])
         else:
-            print(fill("Removed user-{u} from {o}".format(u=args.username,
+            print(fill("Removed user-{u} from {o}".format(u=args.username.lower(),
                                                           o=args.org_id)))
             print(fill("Removed user-{u} from the following projects:".format(
-                u=args.username)))
+                u=args.username.lower())))
             if len(result["projects"].keys()) != 0:
                 for project_id in result["projects"].keys():
                     print("\t{p}".format(p=project_id))
             else:
                 print("\tNone")
             print(fill("Removed user-{u} from the following apps:".format(
-                u=args.username)))
+                u=args.username.lower())))
             if len(result["apps"].keys()) != 0:
                 for app_id in result["apps"].keys():
                     print("\t{a}".format(a=app_id))
@@ -118,11 +117,11 @@ def remove_membership(args):
                 print("\tNone")
     else:
         print(fill("Aborting removal of user-{u} from {o}".format(
-            u=args.username, o=args.org_id)))
+            u=args.username.lower(), o=args.org_id)))
 
 
 def _get_org_set_member_access_args(args, default_level):
-    user_id = "user-" + args.username
+    user_id = "user-" + args.username.lower()
     org_set_member_access_input = {user_id: {}}
     if args.level is not None:
         org_set_member_access_input[user_id]["level"] = args.level
@@ -139,10 +138,11 @@ def _get_org_set_member_access_args(args, default_level):
 
 
 def update_membership(args):
-    # Will throw ResourceNotFound of the specified user is not currently a
-    # member of the org.
-    member_access = dxpy.api.org_get_member_access(args.org_id,
-                                                   {"user": "user-" + args.username})
+    try:
+        member_access = dxpy.api.org_find_members(args.org_id, {"id": ["user-" + args.username.lower()]})["results"][0]
+    except IndexError:
+        raise DXCLIError("Cannot update a user who is not a member of the org")
+
     current_level = member_access["level"]
 
     result = dxpy.api.org_set_member_access(args.org_id,
@@ -152,7 +152,7 @@ def update_membership(args):
         print(result["id"])
     else:
         print(fill("Updated membership of user-{u} in {o}".format(
-            u=args.username, o=args.org_id)))
+            u=args.username.lower(), o=args.org_id)))
 
 
 def _get_find_orgs_args(args):

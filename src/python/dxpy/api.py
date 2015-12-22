@@ -1588,24 +1588,6 @@ def org_find_projects(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/findProjects' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def orgGetMemberAccess(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`org_get_member_access()` instead.
-
-    """
-    print("dxpy.orgGetMemberAccess is deprecated; please use org_get_member_access instead.", file=sys.stderr)
-    return org_get_member_access(*args, **kwargs)
-
-def org_get_member_access(object_id, input_params={}, always_retry=True, **kwargs):
-    """
-    Invokes the /org-xxxx/getMemberAccess API method.
-
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FgetMemberAccess
-    """
-    return DXHTTPRequest('/%s/getMemberAccess' % object_id, input_params, always_retry=always_retry, **kwargs)
-
 def orgInvite(*args, **kwargs):
     """
 
