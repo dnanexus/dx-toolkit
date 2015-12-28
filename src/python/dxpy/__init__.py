@@ -184,28 +184,28 @@ _default_headers = requests.utils.default_headers()
 _default_headers['DNAnexus-API'] = API_VERSION
 _default_headers['User-Agent'] = USER_AGENT
 _default_timeout = urllib3.util.timeout.Timeout(connect=DEFAULT_TIMEOUT, read=DEFAULT_TIMEOUT)
-_pool_manager = urllib3.PoolManager(maxsize=32,
-                                    cert_reqs=ssl.CERT_REQUIRED,
-                                    ca_certs=requests.certs.where(),
-                                    headers=_default_headers,
-                                    timeout=_default_timeout)
+_pool_manager = None
 _RequestForAuth = namedtuple('_RequestForAuth', 'method url headers')
 _expected_exceptions = exceptions.network_exceptions + (exceptions.DXAPIError, )
 
-def _get_pool_manager(request_kwargs):
-    if 'verify' in request_kwargs or 'DX_CA_CERT' in os.environ:
-        cert_reqs = ssl.CERT_REQUIRED
-        ca_certs = request_kwargs.get('verify', os.environ.get('DX_CA_CERT'))
-        if request_kwargs.get('verify') is False or os.environ.get('DX_CA_CERT') == 'NOVERIFY':
-            cert_reqs, ca_certs = ssl.CERT_NONE, None
-            urllib3.disable_warnings()
-        return urllib3.PoolManager(cert_reqs=cert_reqs,
-                                   ca_certs=ca_certs,
-                                   headers=_default_headers,
-                                   timeout=_default_timeout)
-    else:
+def _get_pool_manager(verify, cert_file, key_file):
+    global _pool_manager
+    default_pool_args = dict(maxsize=32,
+                             cert_reqs=ssl.CERT_REQUIRED,
+                             ca_certs=requests.certs.where(),
+                             headers=_default_headers,
+                             timeout=_default_timeout)
+    if cert_file is None and verify is None and 'DX_CA_CERT' not in os.environ:
+        if _pool_manager is None:
+            _pool_manager = urllib3.PoolManager(**default_pool_args)
         return _pool_manager
-
+    else:
+        pool_args = dict(default_pool_args,
+                         ca_certs=verify or os.environ.get('DX_CA_CERT') or requests.certs.where())
+        if verify is False or os.environ.get('DX_CA_CERT') == 'NOVERIFY':
+            pool_args.update(cert_reqs=ssl.CERT_NONE, ca_certs=None)
+            urllib3.disable_warnings()
+        return urllib3.PoolManager(**pool_args)
 
 def _process_method_url_headers(method, url, headers):
     if callable(url):
@@ -368,6 +368,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
     if auth:
         auth(_RequestForAuth(method, url, headers))
 
+    pool_args = {arg: kwargs.pop(arg, None) for arg in ("verify", "cert_file", "key_file")}
+
     if jsonify_data:
         data = json.dumps(data)
         if 'Content-Type' not in headers and method == 'POST':
@@ -389,8 +391,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             if _DEBUG > 0:
                 time_started = time.time()
             _method, _url, _headers = _process_method_url_headers(method, url, headers)
-            response = _get_pool_manager(kwargs).request(_method, _url, headers=_headers, body=data,
-                                                         timeout=timeout, retries=False, **kwargs)
+            response = _get_pool_manager(**pool_args).request(_method, _url, headers=_headers, body=data,
+                                                              timeout=timeout, retries=False, **kwargs)
 
             if _UPGRADE_NOTIFY and response.headers.get('x-upgrade-info', '').startswith('A recommended update is available') and not os.environ.has_key('_ARGCOMPLETE'):
                 logger.info(response.headers['x-upgrade-info'])
@@ -458,7 +460,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             # Avoid reusing connections in the pool, since they may be
             # in an inconsistent state (observed as "ResponseNotReady"
             # errors).
-            _get_pool_manager(kwargs).clear()
+            _get_pool_manager(**pool_args).clear()
             success = False
             exception_msg = _extract_msg_from_last_exception()
             if isinstance(e, _expected_exceptions):

@@ -20,9 +20,11 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import os, unittest, tempfile, filecmp, time, json, sys
-import requests
 import string
 import subprocess
+
+import requests
+from requests.packages.urllib3.exceptions import SSLError
 
 import dxpy
 import dxpy_testutil as testutil
@@ -2188,6 +2190,17 @@ class TestHTTPResponses(unittest.TestCase):
         # Verify that response headers support case-insensitive lookup.
         res = dxpy.DXHTTPRequest("/system/whoami", {}, want_full_response=True)
         self.assertTrue("CONTENT-type" in res.headers)
+
+    def test_ssl_options(self):
+        dxpy.DXHTTPRequest("/system/whoami", {}, verify=False)
+        dxpy.DXHTTPRequest("/system/whoami", {}, verify=requests.certs.where())
+        dxpy.DXHTTPRequest("/system/whoami", {}, verify=requests.certs.where(), cert_file=None, key_file=None)
+        with self.assertRaisesRegexp(SSLError, "No such file or directory"):
+            dxpy.DXHTTPRequest("/system/whoami", {}, verify="f")
+        with self.assertRaisesRegexp(IOError, "No such file or directory"):
+            dxpy.DXHTTPRequest("/system/whoami", {}, cert_file="c")
+        with self.assertRaises(TypeError):
+            dxpy.DXHTTPRequest("/system/whoami", {}, cert="f")
 
 class TestDataobjectFunctions(unittest.TestCase):
     def setUp(self):
