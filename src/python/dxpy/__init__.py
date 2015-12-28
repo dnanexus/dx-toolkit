@@ -180,6 +180,7 @@ _UPGRADE_NOTIFY = True
 USER_AGENT = "{name}/{version} ({platform})".format(name=__name__,
                                                     version=TOOLKIT_VERSION,
                                                     platform=platform.platform())
+_default_certs = requests.certs.where()
 _default_headers = requests.utils.default_headers()
 _default_headers['DNAnexus-API'] = API_VERSION
 _default_headers['User-Agent'] = USER_AGENT
@@ -192,7 +193,7 @@ def _get_pool_manager(verify, cert_file, key_file):
     global _pool_manager
     default_pool_args = dict(maxsize=32,
                              cert_reqs=ssl.CERT_REQUIRED,
-                             ca_certs=requests.certs.where(),
+                             ca_certs=_default_certs,
                              headers=_default_headers,
                              timeout=_default_timeout)
     if cert_file is None and verify is None and 'DX_CA_CERT' not in os.environ:
