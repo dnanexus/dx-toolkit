@@ -2195,12 +2195,13 @@ class TestHTTPResponses(unittest.TestCase):
         dxpy.DXHTTPRequest("/system/whoami", {}, verify=False)
         dxpy.DXHTTPRequest("/system/whoami", {}, verify=requests.certs.where())
         dxpy.DXHTTPRequest("/system/whoami", {}, verify=requests.certs.where(), cert_file=None, key_file=None)
-        with self.assertRaisesRegexp(SSLError, "file"):
-            dxpy.DXHTTPRequest("/system/whoami", {}, verify="nonexistent")
-        with self.assertRaisesRegexp((SSLError, IOError), "file"):
-            dxpy.DXHTTPRequest("/system/whoami", {}, cert_file="nonexistent")
         with self.assertRaises(TypeError):
             dxpy.DXHTTPRequest("/system/whoami", {}, cert="nonexistent")
+        if dxpy.APISERVER_PROTOCOL == "https":
+            with self.assertRaisesRegexp(SSLError, "file"):
+                dxpy.DXHTTPRequest("/system/whoami", {}, verify="nonexistent")
+            with self.assertRaisesRegexp((SSLError, IOError), "file"):
+                dxpy.DXHTTPRequest("/system/whoami", {}, cert_file="nonexistent")
 
 class TestDataobjectFunctions(unittest.TestCase):
     def setUp(self):
