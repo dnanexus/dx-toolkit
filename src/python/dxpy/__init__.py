@@ -202,6 +202,8 @@ def _get_pool_manager(verify, cert_file, key_file):
         return _pool_manager
     else:
         pool_args = dict(default_pool_args,
+                         cert_file=cert_file,
+                         key_file=key_file,
                          ca_certs=verify or os.environ.get('DX_CA_CERT') or requests.certs.where())
         if verify is False or os.environ.get('DX_CA_CERT') == 'NOVERIFY':
             pool_args.update(cert_reqs=ssl.CERT_NONE, ca_certs=None)
