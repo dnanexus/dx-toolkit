@@ -4550,7 +4550,7 @@ class TestDXClientNewUser(DXTestCase):
         self._assert_user_desc(user_id, {"last": last})
 
         # Basic with all options we can verify.
-        # TODO: Test --token-duration and --occupation.
+        # TODO: Test --occupation.
         username, email = generate_unique_username_email()
         user_id = run("{cmd} --username {u} --email {e} --first {f} --middle {m} --last {l} --brief".format(
                       cmd=cmd, u=username, e=email, f=first, m=middle,
@@ -4674,6 +4674,34 @@ class TestDXClientNewUser(DXTestCase):
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
         self.assertEqual(res, exp)
+
+    def test_create_user_account_and_set_token_duration_negative(self):
+        first = "Asset"
+        username, email = "token_duration_neg", "token_duration_neg@example.com"
+        cmd = "dx new user --username {u} --email {e} --first {f} --token-duration {td}"
+
+        invalid_token_durations = [
+            "8md",  # "md" is an invalid unit
+            "8.5",  # float is an invalid input
+            "8.5d",  # float with unit is an invalid input
+            "31d"  # longer than 30 days
+        ]
+
+        # test invalid inputs for token duration
+        for invalid_token_duration in invalid_token_durations:
+            with self.assertRaisesRegexp(subprocess.CalledProcessError, "ValueError"):
+                run(cmd.format(u=username.lower(), e=email, f=first, td=invalid_token_duration))
+
+    def test_create_user_account_and_set_token_duration(self):
+        first = "Asset"
+        cmd = "dx new user --username {u} --email {e} --first {f} --token-duration={td} --brief"
+
+        token_durations = ["10000", "10d", "-10000", "-10d"]
+
+        for token_duration in token_durations:
+            username, email = generate_unique_username_email()
+            user_id = run(cmd.format(u=username, e=email, f=first, td=token_duration)).strip()
+            self.assertEqual(user_id, "user-" + username.lower())
 
 
 @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,

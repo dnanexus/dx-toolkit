@@ -165,9 +165,10 @@ else:
 # subcommand with further subcommands, then the second word must be an
 # appropriate sub-subcommand.
 class DXCLICompleter():
+    # TODO add missing subcommands
     subcommands = {'find': ['data ', 'projects ', 'apps ', 'jobs ', 'executions ', 'analyses ', 'org_members ',
                             'org_projects '],
-                   'new': ['record ', 'project ', 'workflow ', 'org '],
+                   'new': ['record ', 'project ', 'workflow ', 'org ', 'user '],
                    'add': ['developers ', 'users ', 'stage '],
                    'remove': ['developers ', 'users ', 'stage '],
                    'update': ['stage ', 'workflow ', 'org ']}
@@ -1266,7 +1267,11 @@ def _get_user_new_args(args):
     if args.middle is not None:
         user_new_args["middle"] = args.middle
     if args.token_duration is not None:
-        user_new_args["tokenDuration"] = args.token_duration
+        token_duration_ms = normalize_timedelta(args.token_duration)
+        if token_duration_ms > 30 * 24 * 60 * 60 * 1000:
+            raise ValueError("--token-duration must be 30 days or less")
+        else:
+            user_new_args["tokenDuration"] = token_duration_ms
     if args.occupation is not None:
         user_new_args["occupation"] = args.occupation
     if args.set_bill_to is True:
@@ -4124,7 +4129,7 @@ parser_new_user_user_opts.add_argument("--email", required=True, help="Email add
 parser_new_user_user_opts.add_argument("--first", help="First name")
 parser_new_user_user_opts.add_argument("--middle", help="Middle name")
 parser_new_user_user_opts.add_argument("--last", help="Last name")
-parser_new_user_user_opts.add_argument("--token-duration", type=int, help="Time duration (ms) for which the newly generated auth token for the new user will be valid")
+parser_new_user_user_opts.add_argument("--token-duration", help='Time duration for which the newly generated auth token for the new user will be valid (default 30 days; max 30 days). An integer will be interpreted as seconds; you can append a suffix (s, m, h, d) to indicate different units (e.g. "--token-duration 10m" to indicate 10 minutes).')
 parser_new_user_user_opts.add_argument("--occupation", help="Occupation")
 parser_new_user_org_opts = parser_new_user.add_argument_group("Org options", "Optionally invite the new user to an org with the specified parameters")
 parser_new_user_org_opts.add_argument("--org", help="ID of the org")
