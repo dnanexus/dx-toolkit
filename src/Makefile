@@ -395,9 +395,15 @@ boost_build:
 
 curl: c-ares/stage/lib/libcares.la curl/stage/lib/libcurl.la
 
-CURL_PV=7.35.0
-CURL_SHA=35c2b1f8c56912ab7bebaa61cf4494c94a0ed0d1
+CURL_PV=7.45.0
+CURL_SHA=e44fc290844c1e3c9b7f6ef9926d4366d0600514
 ifeq ($(OS), Windows_NT)
+# To build libcurl on Windows, setting a minimum Windows version is required,
+# and one way to do that is to define it in the CPPFLAGS env var. To be safe,
+# only export CPPFLAGS for the libcurl target:
+ifndef CPPFLAGS
+curl/stage/lib/libcurl.la: export CPPFLAGS=-DWINVER=0x0501
+endif
 	CURL_WITH_SSL=--with-winssl
 	CURL_SHARED_LIBS=--enable-shared=yes
 else ifeq ($(UNAME), Darwin)
