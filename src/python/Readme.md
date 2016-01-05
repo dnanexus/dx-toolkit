@@ -40,6 +40,10 @@ $ _DX_DEBUG=1 dx ls
           return _foo
       ```
 
+Other useful resources:
+
+* [Google Python style guide](http://google.github.io/styleguide/pyguide.html)
+
 ## Python version compatibility
 Code going into the Python codebase should be written in Python 3.3 style, and should be compatible with Python 3.3, 3.4,
 and 2.7. To facilitate Python 2 compatibility, we have the compat module in https://github.com/dnanexus/dx-toolkit/blob/master/src/python/dxpy/compat.py. Also, the following boilerplate should be
