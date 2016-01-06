@@ -151,6 +151,8 @@ def create_app_dir_with_dxapp_json(dxapp_json, language):
         wizard.sendline()
         wizard.expect("Will this app need access to the parent project?")
         wizard.sendline()
+        wizard.expect("Choose an instance type for your app")
+        wizard.sendline()
         wizard.expect("App directory created")
         wizard.close()
 
