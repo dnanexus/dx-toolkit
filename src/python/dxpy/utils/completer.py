@@ -417,23 +417,16 @@ class MultiCompleter():
 
 class InstanceTypesCompleter():
     InstanceTypeSpec = namedtuple('InstanceTypeSpec', ('Name', 'Memory_GB', 'Storage_GB', 'CPU_Cores'))
-    instance_types = OrderedDict()
+    preferred_instance_types = OrderedDict()
     for i in (InstanceTypeSpec('mem1_ssd1_x2', 3.8, 32, 2),
               InstanceTypeSpec('mem1_ssd1_x4', 7.5, 80, 4),
               InstanceTypeSpec('mem1_ssd1_x8', 15.0, 160, 8),
               InstanceTypeSpec('mem1_ssd1_x16', 30.0, 320, 16),
               InstanceTypeSpec('mem1_ssd1_x32', 60.0, 640, 32),
 
-              InstanceTypeSpec('mem1_hdd2_x8', 7.0, 1680, 8),
-              InstanceTypeSpec('mem1_hdd2_x32', 60.5, 3360, 32),
-
               InstanceTypeSpec('mem2_ssd1_x2', 7.5, 32, 2),
               InstanceTypeSpec('mem2_ssd1_x4', 15.0, 80, 4),
               InstanceTypeSpec('mem2_ssd1_x8', 30.0, 160, 8),
-
-              InstanceTypeSpec('mem2_hdd2_x1', 3.8, 410, 1),
-              InstanceTypeSpec('mem2_hdd2_x2', 7.5, 840, 2),
-              InstanceTypeSpec('mem2_hdd2_x4', 15.0, 1680, 4),
 
               InstanceTypeSpec('mem3_ssd1_x2', 15.0, 32, 2),
               InstanceTypeSpec('mem3_ssd1_x4', 30.5, 80, 4),
@@ -445,12 +438,21 @@ class InstanceTypesCompleter():
               InstanceTypeSpec('mem1_ssd2_x4', 7.5, 320, 4),
               InstanceTypeSpec('mem1_ssd2_x8', 15, 640, 8),
               InstanceTypeSpec('mem1_ssd2_x16', 30, 1280, 16),
-              InstanceTypeSpec('mem1_ssd2_x36', 60, 2880, 36),
+              InstanceTypeSpec('mem1_ssd2_x36', 60, 2880, 36)):
+        preferred_instance_types[i.Name] = i
+    instance_types = OrderedDict(preferred_instance_types)
+    for i in (InstanceTypeSpec('mem1_hdd2_x8', 7.0, 1680, 8),
+              InstanceTypeSpec('mem1_hdd2_x32', 60.5, 3360, 32),
+
+              InstanceTypeSpec('mem2_hdd2_x1', 3.8, 410, 1),
+              InstanceTypeSpec('mem2_hdd2_x2', 7.5, 840, 2),
+              InstanceTypeSpec('mem2_hdd2_x4', 15.0, 1680, 4),
 
               InstanceTypeSpec('mem3_hdd2_x2', 17.1, 420, 2),
               InstanceTypeSpec('mem3_hdd2_x4', 34.2, 850, 4),
               InstanceTypeSpec('mem3_hdd2_x8', 68.4, 1680, 8)):
         instance_types[i.Name] = i
+    default_instance_type = instance_types['mem1_ssd1_x4']
     instance_type_names = instance_types.keys()
 
     def complete(self, text, state):

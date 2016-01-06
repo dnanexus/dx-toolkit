@@ -22,6 +22,7 @@ import sys, os
 import json
 import argparse
 import re
+from collections import OrderedDict
 import dxpy
 from dxpy.templating.utils import (print_intro, get_name, get_version, get_metadata, Completer, get_ordinal_str,
                                    prompt_for_var, prompt_for_yn, use_completer, get_language, language_options,
@@ -29,9 +30,10 @@ from dxpy.templating.utils import (print_intro, get_name, get_version, get_metad
                                    create_files_from_templates)
 from dxpy.utils.printing import fill, BOLD, UNDERLINE, DNANEXUS_LOGO, ENDC
 from dxpy.app_categories import APP_CATEGORIES
+from dxpy.utils.completer import InstanceTypesCompleter
+from dxpy.utils.pretty_print import format_table
 from dxpy.compat import wrap_stdio_in_codecs
 wrap_stdio_in_codecs()
-from collections import OrderedDict
 
 IO_NAME_PATTERN = re.compile('^[a-zA-Z_][0-9a-zA-Z_]*$')
 
@@ -351,8 +353,44 @@ if prompt_for_yn("Will this app need access to the parent project?", default=Fal
                'other projects, edit the ' + UNDERLINE('access.project') + ' and ' + UNDERLINE('access.allProjects') +
                ' fields of dxapp.json once we generate the app.'))
 
+#######################
+# SYSTEM REQUIREMENTS #
+#######################
+
+print('')
+print(BOLD('System Requirements'))
+print('')
+print(BOLD('Common instance types:'))
+print(format_table(InstanceTypesCompleter.preferred_instance_types.values(),
+                   column_names=InstanceTypesCompleter.instance_types.values()[0]._fields))
+print(fill(BOLD('Default instance type:') + ' The instance type you select here will apply to all entry points in ' +
+           'your app unless you override it. See ' +
+           BOLD('https://wiki.dnanexus.com/API-Specification-v1.0.0/Instance-Types') + ' for more information.'))
+use_completer(InstanceTypesCompleter())
+instance_type = prompt_for_var('Choose an instance type for your app',
+                               default=InstanceTypesCompleter.default_instance_type.Name,
+                               choices=list(InstanceTypesCompleter.instance_types))
+app_json['runSpec'].setdefault('systemRequirements', {})
+app_json['runSpec']['systemRequirements'].setdefault('*', {})
+app_json['runSpec']['systemRequirements']['*']['instanceType'] = instance_type
+
+######################
+# HARDCODED DEFAULTS #
+######################
+
 # Default of no other authorizedUsers
 app_json['authorizedUsers'] = []
+
+print('\n' + BOLD('Linux version: '))
+app_json['runSpec']['distribution'] = 'Ubuntu'
+if any(instance_type.startswith(prefix) for prefix in ('mem1_hdd2', 'mem2_hdd2', 'mem3_hdd2')):
+    print(fill('Your app will run on Ubuntu 12.04. To use Ubuntu 14.04, select from the list of common instance ' +
+               'types above.'))
+    app_json['runSpec']['release'] = '12.04'
+else:
+    app_json['runSpec']['release'] = '14.04'
+    print(fill('Your app has been configured to run on Ubuntu 14.04. To use Ubuntu 12.04, edit the ' +
+               BOLD('runSpec.release') + ' field of your dxapp.json.'))
 
 #################
 # WRITING FILES #

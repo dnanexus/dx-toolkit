@@ -28,6 +28,7 @@ import dxpy_testutil as testutil
 
 import dxpy
 from dxpy.scripts import dx_build_app
+from dxpy.utils.completer import InstanceTypesCompleter
 
 
 def run(command, **kwargs):
@@ -97,6 +98,11 @@ def run_dx_app_wizard():
         wizard.sendline("y")
         wizard.expect("Will this app need access to the parent project?")
         wizard.sendline("y")
+        wizard.expect("Choose an instance type for your app")
+        wizard.sendline("t1.микро")
+        wizard.expect("Error: unrecognized response, expected one of")
+        wizard.expect("Choose an instance type for your app")
+        wizard.sendline()
         wizard.expect("App directory created")
         wizard.close()
 
@@ -158,6 +164,10 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
         appdir = run_dx_app_wizard()
         dxapp_json = json.load(open(os.path.join(appdir, 'dxapp.json')))
         self.assertEqual(dxapp_json.get('authorizedUsers'), [])
+        self.assertEqual(dxapp_json['runSpec']['systemRequirements']['*']['instanceType'],
+                         InstanceTypesCompleter.default_instance_type.Name)
+        self.assertEqual(dxapp_json['runSpec']['distribution'], 'Ubuntu')
+        self.assertEqual(dxapp_json['runSpec']['release'], '14.04')
 
     def test_dx_run_app_locally_interactively(self):
         appdir = create_app_dir()
