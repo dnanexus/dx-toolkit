@@ -381,7 +381,7 @@ app_json['runSpec']['systemRequirements']['*']['instanceType'] = instance_type
 # Default of no other authorizedUsers
 app_json['authorizedUsers'] = []
 
-print('\n' + BOLD('Linux version: '))
+# print('\n' + BOLD('Linux version: '))
 app_json['runSpec']['distribution'] = 'Ubuntu'
 app_json['runSpec']['release'] = '12.04'
 #if any(instance_type.startswith(prefix) for prefix in ('mem1_hdd2', 'mem2_hdd2', 'mem3_hdd2')):
