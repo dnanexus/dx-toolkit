@@ -3938,9 +3938,9 @@ parser_update_member = subparsers_update.add_parser("member", help="Update the m
 parser_update_member.add_argument("org_id", help="ID of the org")
 parser_update_member.add_argument("username", help="Username")
 parser_update_member.add_argument("--level", choices=["ADMIN", "MEMBER"], help="The new org membership level of the specified user")
-parser_update_member.add_argument("--allow-billable-activities", choices=["true", "false"], help='The new "allowBillableActivities" membership permission of the specified user in the org')
-parser_update_member.add_argument("--app-access", choices=["true", "false"], help='The new "appAccess" membership permission of the specified user in the org')
-parser_update_member.add_argument("--project-access", choices=["ADMINISTER", "CONTRIBUTE", "UPLOAD", "VIEW", "NONE"], help='The new default implicit maximum permission the specified user will receive to projects explicitly shared with the org')
+parser_update_member.add_argument("--allow-billable-activities", choices=["true", "false"], help='The new "allowBillableActivities" membership permission of the specified user in the org; default false if demoting the specified user from ADMIN to MEMBER')
+parser_update_member.add_argument("--app-access", choices=["true", "false"], help='The new "appAccess" membership permission of the specified user in the org; default true if demoting the specified user from ADMIN to MEMBER')
+parser_update_member.add_argument("--project-access", choices=["ADMINISTER", "CONTRIBUTE", "UPLOAD", "VIEW", "NONE"], help='The new default implicit maximum permission the specified user will receive to projects explicitly shared with the org; default CONTRIBUTE if demoting the specified user from ADMIN to MEMBER')
 parser_update_member.set_defaults(func=update_membership)
 register_subparser(parser_update_member, subparsers_action=subparsers_update, categories="other")
 

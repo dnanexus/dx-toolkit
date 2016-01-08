@@ -4962,6 +4962,45 @@ class TestDXClientMembership(DXTestCase):
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
+    def test_update_membership_to_member_without_membership_flags(self):
+        cmd = "dx update member {o} {u} --level MEMBER".format(o=self.org_id, u=self.username)
+
+        # ADMIN to MEMBER.
+        self._add_user(self.user_id)
+        exp = {"id": self.user_id,
+               "level": "ADMIN",
+               "allowBillableActivities": True,
+               "createProjectsAndApps": True,
+               "projectAccess": "ADMINISTER",
+               "appAccess": True}
+        membership_response = self._org_find_members(self.user_id)
+        self.assertEqual(membership_response, exp)
+
+        run(cmd)
+        exp = {"id": self.user_id,
+               "level": "MEMBER",
+               "allowBillableActivities": False,
+               "createProjectsAndApps": False,
+               "projectAccess": "CONTRIBUTE",
+               "appAccess": True}
+        membership_response = self._org_find_members(self.user_id)
+        self.assertEqual(membership_response, exp)
+
+        # MEMBER to MEMBER.
+        run(cmd + " --allow-billable-activities true")
+        exp = {"id": self.user_id,
+               "level": "MEMBER",
+               "allowBillableActivities": True,
+               "createProjectsAndApps": True,
+               "projectAccess": "CONTRIBUTE",
+               "appAccess": True}
+        membership_response = self._org_find_members(self.user_id)
+        self.assertEqual(membership_response, exp)
+
+        run(cmd)
+        membership_response = self._org_find_members(self.user_id)
+        self.assertEqual(membership_response, exp)
+
     def test_update_membership_negative(self):
         cmd = "dx update member"
 
