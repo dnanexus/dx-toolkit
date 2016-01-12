@@ -200,34 +200,34 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
             print_progress(last_verified_pos, file_size, action="Resuming at")
         logger.debug("Verified %s/%d downloaded parts", last_verified_part, len(parts_to_get))
 
-    def get_chunk(part_id, start, end):
+    def get_chunk(part_id_to_get, start, end):
         url, headers = dxfile.get_download_url(project=project, **kwargs)
         # If we're fetching the whole object in one shot, avoid setting the Range header to take advantage of gzip
         # transfer compression
-        if len(parts) > 1 or end - start + 1 < parts[part_id]["size"]:
+        if len(parts) > 1 or end - start + 1 < parts[part_id_to_get]["size"]:
             headers["Range"] = "bytes={}-{}".format(start, end)
         data = DXHTTPRequest(url, b"", method="GET", headers=headers, auth=None, jsonify_data=False,
                              prepend_srv=False, always_retry=True, timeout=FILE_REQUEST_TIMEOUT,
                              decode_response_body=False)
-        return part_id, data
+        return part_id_to_get, data
 
     def chunk_requests():
-        for part_id in parts_to_get:
-            part_info = parts[part_id]
+        for part_id_to_chunk in parts_to_get:
+            part_info = parts[part_id_to_chunk]
             for chunk_start in range(part_info["start"], part_info["start"] + part_info["size"], chunksize):
                 chunk_end = min(chunk_start + chunksize, part_info["start"] + part_info["size"]) - 1
-                yield get_chunk, [part_id, chunk_start, chunk_end], {}
+                yield get_chunk, [part_id_to_chunk, chunk_start, chunk_end], {}
 
-    def verify_part(part_id, got_bytes, hasher):
-        if got_bytes is not None and got_bytes != parts[part_id]["size"]:
+    def verify_part(_part_id, got_bytes, hasher):
+        if got_bytes is not None and got_bytes != parts[_part_id]["size"]:
             msg = "Unexpected part data size in {} part {} (expected {}, got {})"
-            msg = msg.format(dxfile.get_id(), part_id, parts[part_id]["size"], got_bytes)
+            msg = msg.format(dxfile.get_id(), _part_id, parts[_part_id]["size"], got_bytes)
             raise DXPartLengthMismatchError(msg)
-        if hasher is not None and "md5" not in parts[part_id]:
+        if hasher is not None and "md5" not in parts[_part_id]:
             warnings.warn("Download of file {} is not being checked for integrity".format(dxfile.get_id()))
-        elif hasher is not None and hasher.hexdigest() != parts[part_id]["md5"]:
+        elif hasher is not None and hasher.hexdigest() != parts[_part_id]["md5"]:
             msg = "Checksum mismatch in {} part {} (expected {}, got {})"
-            msg = msg.format(dxfile.get_id(), part_id, parts[part_id]["md5"], hasher.hexdigest())
+            msg = msg.format(dxfile.get_id(), _part_id, parts[_part_id]["md5"], hasher.hexdigest())
             raise DXChecksumMismatchError(msg)
 
     try:
