@@ -20,6 +20,19 @@
 #
 # <Tested on CentOS 6.2>
 
+# Allow the user to download tarballs without certificate checking
+MAYBE_INSECURE=''
+while :; do
+  case $1 in
+    -k|--insecure)
+        MAYBE_INSECURE='--insecure'
+        ;;
+    *)
+      break
+  esac
+  shift
+done
+
 # Short-circuit sudo when running as root. In a chrooted environment we are
 # likely to be running as root already, and sudo may not be present on minimal
 # installations.
@@ -38,7 +51,7 @@ $MAYBE_SUDO yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel re
 TEMPDIR=$(mktemp -d)
 
 pushd $TEMPDIR
-curl -L -O https://www.python.org/ftp/python/2.7.9/Python-2.7.9.tar.xz
+curl $MAYBE_INSECURE -L -O https://www.python.org/ftp/python/2.7.9/Python-2.7.9.tar.xz
 tar -xf Python-2.7.9.tar.xz
 cd Python-2.7.9
 ./configure --prefix=/usr/local
@@ -49,11 +62,11 @@ PYTHON=/usr/local/bin/python2.7
 
 cd ..
 
-curl -O https://pypi.python.org/packages/source/s/setuptools/setuptools-1.1.6.tar.gz
+curl $MAYBE_INSECURE -O https://pypi.python.org/packages/source/s/setuptools/setuptools-1.1.6.tar.gz
 tar -xzf setuptools-1.1.6.tar.gz
 (cd setuptools-1.1.6; $MAYBE_SUDO $PYTHON setup.py install)
 
-curl -O https://pypi.python.org/packages/source/p/pip/pip-1.4.1.tar.gz
+curl $MAYBE_INSECURE -O https://pypi.python.org/packages/source/p/pip/pip-1.4.1.tar.gz
 tar -xzf pip-1.4.1.tar.gz
 (cd pip-1.4.1; $MAYBE_SUDO $PYTHON setup.py install)
 
