@@ -1,3 +1,4 @@
 [submodule "src/jq"]
-	path = src/jq
-	url = https://github.com/stedolan/jq.git
+  path = src/jq
+  url = https://github.com/stedolan/jq.git
+  ignore = dirty
