@@ -29,16 +29,27 @@ from dxpy.utils.printing import (fill, DELIMITER, format_find_results)
 import json
 
 
+def get_user_id(user_id_or_username):
+    """Gets the user ID based on the value `user_id_or_username` specified on
+    the command-line, being extra lenient and lowercasing the value in all
+    cases.
+    """
+    user_id_or_username = user_id_or_username.lower()
+    if not user_id_or_username.startswith("user-"):
+        user_id = "user-" + user_id_or_username.lower()
+    else:
+        user_id = user_id_or_username
+    return user_id
+
+
 def get_org_invite_args(args):
     """
     PRECONDITION:
         - If /org-x/invite is being called in conjunction with /user/new, then
           `_validate_new_user_input()` has been called on `args`; otherwise,
           the parser must perform all the basic input validation.
-        - `args.username` is well-formed and valid (e.g. it does not start with
-          "user-").
     """
-    org_invite_args = {"invitee": "user-" + args.username.lower()}
+    org_invite_args = {"invitee": get_user_id(args.username_or_user_id)}
     org_invite_args["level"] = args.level
     if "set_bill_to" in args and args.set_bill_to is True:
         # /org-x/invite is called in conjunction with /user/new.
@@ -52,8 +63,10 @@ def get_org_invite_args(args):
 
 
 def add_membership(args):
+    user_id = get_user_id(args.username_or_user_id)
+
     try:
-        dxpy.api.org_find_members(args.org_id, {"id": ["user-" + args.username.lower()]})["results"][0]
+        dxpy.api.org_find_members(args.org_id, {"id": [user_id]})["results"][0]
     except:
         pass
     else:
@@ -64,29 +77,30 @@ def add_membership(args):
     if args.brief:
         print("org-" + args.org_id)
     else:
-        print(fill("Invited user-{u} to {o}".format(u=args.username.lower(),
-                                                    o=args.org_id)))
+        print(fill("Invited {u} to {o}".format(u=user_id, o=args.org_id)))
 
 
 def _get_org_remove_member_args(args):
     remove_member_args = {
-        "user": "user-" + args.username.lower(),
+        "user": get_user_id(args.username_or_user_id),
         "revokeProjectPermissions": args.revoke_project_permissions,
         "revokeAppPermissions": args.revoke_app_permissions}
     return remove_member_args
 
 
 def remove_membership(args):
+    user_id = get_user_id(args.username_or_user_id)
+
     try:
-        dxpy.api.org_find_members(args.org_id, {"id": ["user-" + args.username.lower()]})["results"][0]
+        dxpy.api.org_find_members(args.org_id, {"id": [user_id]})["results"][0]
     except IndexError:
         raise DXCLIError("Cannot remove a user who is not a member of the org")
 
     confirmed = not args.confirm
     if not confirmed:
         # Request interactive confirmation.
-        print(fill("WARNING: About to remove user-{u} from {o}; project permissions will{rpp} be removed and app permissions will{rap} be removed".format(
-            u=args.username.lower(), o=args.org_id,
+        print(fill("WARNING: About to remove {u} from {o}; project permissions will{rpp} be removed and app permissions will{rap} be removed".format(
+            u=user_id, o=args.org_id,
             rpp="" if args.revoke_project_permissions else " not",
             rap="" if args.revoke_app_permissions else " not")))
 
@@ -99,29 +113,25 @@ def remove_membership(args):
         if args.brief:
             print(result["id"])
         else:
-            print(fill("Removed user-{u} from {o}".format(u=args.username.lower(),
-                                                          o=args.org_id)))
-            print(fill("Removed user-{u} from the following projects:".format(
-                u=args.username.lower())))
+            print(fill("Removed {u} from {o}".format(u=user_id, o=args.org_id)))
+            print(fill("Removed {u} from the following projects:".format(u=user_id)))
             if len(result["projects"].keys()) != 0:
                 for project_id in result["projects"].keys():
                     print("\t{p}".format(p=project_id))
             else:
                 print("\tNone")
-            print(fill("Removed user-{u} from the following apps:".format(
-                u=args.username.lower())))
+            print(fill("Removed {u} from the following apps:".format(u=user_id)))
             if len(result["apps"].keys()) != 0:
                 for app_id in result["apps"].keys():
                     print("\t{a}".format(a=app_id))
             else:
                 print("\tNone")
     else:
-        print(fill("Aborting removal of user-{u} from {o}".format(
-            u=args.username.lower(), o=args.org_id)))
+        print(fill("Aborting removal of {u} from {o}".format(u=user_id, o=args.org_id)))
 
 
 def _get_org_set_member_access_args(args, current_level):
-    user_id = "user-" + args.username.lower()
+    user_id = get_user_id(args.username_or_user_id)
     org_set_member_access_input = {user_id: {}}
 
     if args.level is not None:
@@ -150,8 +160,10 @@ def _get_org_set_member_access_args(args, current_level):
 
 
 def update_membership(args):
+    user_id = get_user_id(args.username_or_user_id)
+
     try:
-        member_access = dxpy.api.org_find_members(args.org_id, {"id": ["user-" + args.username.lower()]})["results"][0]
+        member_access = dxpy.api.org_find_members(args.org_id, {"id": [user_id]})["results"][0]
     except IndexError:
         raise DXCLIError("Cannot update a user who is not a member of the org")
 
@@ -163,8 +175,7 @@ def update_membership(args):
     if args.brief:
         print(result["id"])
     else:
-        print(fill("Updated membership of user-{u} in {o}".format(
-            u=args.username.lower(), o=args.org_id)))
+        print(fill("Updated membership of {u} in {o}".format(u=user_id, o=args.org_id)))
 
 
 def _get_find_orgs_args(args):

@@ -3790,7 +3790,7 @@ register_subparser(parser_add_stage, subparsers_action=subparsers_add, categorie
 
 parser_add_member = subparsers_add.add_parser("member", help="Grant a user membership to an org", description="Grant a user membership to an org", prog="dx add member", parents=[stdout_args, env_args])
 parser_add_member.add_argument("org_id", help="ID of the org")
-parser_add_member.add_argument("username", help="Username")
+parser_add_member.add_argument("username_or_user_id", help="Username or ID of user")
 parser_add_member.add_argument("--level", required=True, choices=["ADMIN", "MEMBER"], help="Org membership level that will be granted to the specified user")
 parser_add_member.add_argument("--allow-billable-activities", default=False, action="store_true", help='Grant the specified user "allowBillableActivities" in the org')
 parser_add_member.add_argument("--no-app-access", default=True, action="store_false", dest="app_access", help='Disable "appAccess" for the specified user in the org')
@@ -3865,7 +3865,7 @@ register_subparser(parser_remove_stage, subparsers_action=subparsers_remove, cat
 
 parser_remove_member = subparsers_remove.add_parser("member", help="Revoke the org membership of a user", description="Revoke the org membership of a user", prog="dx remove member", parents=[stdout_args, env_args])
 parser_remove_member.add_argument("org_id", help="ID of the org")
-parser_remove_member.add_argument("username", help="Username")
+parser_remove_member.add_argument("username_or_user_id", help="Username or ID of user")
 parser_remove_member.add_argument("--keep-explicit-project-permissions", default=True, action="store_false", dest="revoke_project_permissions", help="Disable revocation of explicit project permissions of the specified user to projects billed to the org; implicit project permissions (i.e. those granted to the specified user via his membership in this org) will always be revoked")
 parser_remove_member.add_argument("--keep-explicit-app-permissions", default=True, action="store_false", dest="revoke_app_permissions", help="Disable revocation of explicit app developer and user permissions of the specified user to apps billed to the org; implicit app permissions (i.e. those granted to the specified user via his membership in this org) will always be revoked")
 parser_remove_member.add_argument("-y", "--yes", action="store_false", dest="confirm", help="Do not ask for confirmation")
@@ -3936,7 +3936,7 @@ register_subparser(parser_update_stage, subparsers_action=subparsers_update, cat
 
 parser_update_member = subparsers_update.add_parser("member", help="Update the membership of a user in an org", description="Update the membership of a user in an org", prog="dx update member", parents=[stdout_args, env_args])
 parser_update_member.add_argument("org_id", help="ID of the org")
-parser_update_member.add_argument("username", help="Username")
+parser_update_member.add_argument("username_or_user_id", help="Username or ID of user")
 parser_update_member.add_argument("--level", choices=["ADMIN", "MEMBER"], help="The new org membership level of the specified user")
 parser_update_member.add_argument("--allow-billable-activities", choices=["true", "false"], help='The new "allowBillableActivities" membership permission of the specified user in the org; default false if demoting the specified user from ADMIN to MEMBER')
 parser_update_member.add_argument("--app-access", choices=["true", "false"], help='The new "appAccess" membership permission of the specified user in the org; default true if demoting the specified user from ADMIN to MEMBER')
