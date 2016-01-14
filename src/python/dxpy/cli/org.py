@@ -42,14 +42,18 @@ def get_user_id(user_id_or_username):
     return user_id
 
 
-def get_org_invite_args(args):
+def get_org_invite_args(user_id, args):
     """
+    Used by:
+        - `dx new user`
+        - `dx add member`
+
     PRECONDITION:
         - If /org-x/invite is being called in conjunction with /user/new, then
           `_validate_new_user_input()` has been called on `args`; otherwise,
           the parser must perform all the basic input validation.
     """
-    org_invite_args = {"invitee": get_user_id(args.username_or_user_id)}
+    org_invite_args = {"invitee": user_id}
     org_invite_args["level"] = args.level
     if "set_bill_to" in args and args.set_bill_to is True:
         # /org-x/invite is called in conjunction with /user/new.
@@ -72,7 +76,7 @@ def add_membership(args):
     else:
         raise DXCLIError("Cannot add a user who is already a member of the org")
 
-    dxpy.api.org_invite(args.org_id, get_org_invite_args(args))
+    dxpy.api.org_invite(args.org_id, get_org_invite_args(user_id, args))
 
     if args.brief:
         print("org-" + args.org_id)

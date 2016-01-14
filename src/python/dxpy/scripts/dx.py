@@ -1296,7 +1296,7 @@ def new_user(args):
     user_id = "user-" + args.username.lower()
     if args.org is not None:
         # Invite new user to org.
-        dxpy.api.org_invite(args.org, get_org_invite_args(args))
+        dxpy.api.org_invite(args.org, get_org_invite_args(user_id, args))
 
     if args.brief:
         print(user_id)
