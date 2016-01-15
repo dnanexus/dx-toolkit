@@ -1,3 +1,9 @@
+dx-toolkit (0.175.1) precise; urgency=low
+
+  * Use integer division in describe.py (fixup for 84f2346)
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Fri, 15 Jan 2016 00:06:17 +0000
+
 dx-toolkit (0.175.0) precise; urgency=low
 
   * Bug fixes
