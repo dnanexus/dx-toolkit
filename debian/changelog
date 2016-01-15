@@ -15,7 +15,7 @@ dx-toolkit (0.176.0) precise; urgency=low
   * Add omit-resources feature
   * Fix tests for 571ce5c
   * dxpy: Memoize CA certs location
-  * PTFM-16917 dxpy: Fix handling of SSL certificate options 
+  * PTFM-16917 dxpy: Fix handling of SSL certificate options
   * PTFM-16667 Remove /org-xxxx/getMemberAccess invocations from client
   * Fix `dx new user` printing
   * Update __future__ imports in Python API wrappers generator
@@ -25,7 +25,7 @@ dx-toolkit (0.176.0) precise; urgency=low
   * Fix bug in `dx new user` with uppercase username args
   * Fix copyright date in Sphinx docs
 
-  -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 14 Jan 2016 23:58:53 +0000
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 14 Jan 2016 23:58:53 +0000
 
 dx-toolkit (0.175.0) precise; urgency=low
 
