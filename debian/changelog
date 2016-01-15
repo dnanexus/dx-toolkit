@@ -1,3 +1,9 @@
+dx-toolkit (0.176.1) precise; urgency=medium
+
+  * Fix changelog
+
+ -- Phil Sung <psung@dnanexus.com>  Thu, 14 Jan 2016 17:34:36 -0800
+
 dx-toolkit (0.176.0) precise; urgency=low
 
   * PTFM-17107 Modify I/Os of "dx {add,remove,update} member"
