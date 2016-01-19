@@ -160,18 +160,17 @@ if "LESS" in os.environ:
 else:
     os.environ["LESS"] = "-RS"
 
-# This completer is for the command-line in the shell.  It assumes the
-# first word is always a subcommand and that if the first word is a
+# This completer is for the command line in the shell (i.e., `dx sh`). It
+# assumes the first word is always a subcommand and that if the first word is a
 # subcommand with further subcommands, then the second word must be an
 # appropriate sub-subcommand.
 class DXCLICompleter():
-    # TODO add missing subcommands
     subcommands = {'find': ['data ', 'projects ', 'apps ', 'jobs ', 'executions ', 'analyses ', 'org_members ',
-                            'org_projects '],
+                            'org_projects ', 'orgs '],
                    'new': ['record ', 'project ', 'workflow ', 'org ', 'user '],
-                   'add': ['developers ', 'users ', 'stage '],
-                   'remove': ['developers ', 'users ', 'stage '],
-                   'update': ['stage ', 'workflow ', 'org ']}
+                   'add': ['developers ', 'users ', 'stage ', 'member '],
+                   'remove': ['developers ', 'users ', 'stage ', 'member '],
+                   'update': ['stage ', 'workflow ', 'org ', 'member ']}
 
     silent_commands = set(['import'])
 
