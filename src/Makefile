@@ -118,16 +118,6 @@ src_libs: api_wrappers
 	mkdir -p "$(DNANEXUS_HOME)/lib/perl5"
 	cp -R -v perl/lib/* "$(DNANEXUS_HOME)/lib/perl5/"
 
-python_wheels: ../build/wheels
-
-../build/wheels: python/requirements*.txt
-	pip wheel -r python/requirements.txt -r python/requirements_test.txt -r python/requirements_setuptools.txt --wheel-dir ../build/wheels
-# xattr < 0.7 fails to install using Python 3; that's OK since it's only needed for dxfs, which doesn't work on Python 3 either.
-	-pip wheel -r python/requirements_dxfs.txt --wheel-dir ../build/wheels
-ifeq ($(UNAME), Darwin)
-	pip wheel -r python/requirements_readline.txt
-endif
-
 python_deps: $(DX_PY_ENV)/lib
 
 $(DX_PY_ENV)/lib: python/requirements*.txt
@@ -135,13 +125,13 @@ $(DX_PY_ENV)/lib: python/requirements*.txt
 	rm -rf "$(DX_PY_ENV)"
 	virtualenv --python=python "$(DX_PY_ENV)"
 	virtualenv --relocatable "$(DX_PY_ENV)"
-	(unset PYTHONPATH; source "$(DX_PY_ENV)/bin/activate"; pip install --upgrade --find-links="file://$(DNANEXUS_HOME)/build/wheels" --install-option="--install-lib=$(DX_PY_ENV)/lib/python2.7/site-packages" -r python/requirements_setuptools.txt)
-	(unset PYTHONPATH; source "$(DX_PY_ENV)/bin/activate"; pip install --ignore-installed --use-wheel --find-links="file://$(DNANEXUS_HOME)/build/wheels" --install-option="--install-lib=$(DX_PY_ENV)/lib/python2.7/site-packages" -r python/requirements.txt -r python/requirements_dxfs.txt)
+	(unset PYTHONPATH; source "$(DX_PY_ENV)/bin/activate"; pip install --upgrade --install-option="--install-lib=$(DX_PY_ENV)/lib/python2.7/site-packages" -r python/requirements_setuptools.txt)
+	(unset PYTHONPATH; source "$(DX_PY_ENV)/bin/activate"; pip install --ignore-installed --install-option="--install-lib=$(DX_PY_ENV)/lib/python2.7/site-packages" -r python/requirements.txt -r python/requirements_dxfs.txt)
 ifeq ($(UNAME), Darwin)
-	(unset PYTHONPATH; source "$(DX_PY_ENV)/bin/activate"; pip install --ignore-installed --use-wheel --find-links="file://$(DNANEXUS_HOME)/build/wheels" --install-option="--install-lib=$(DX_PY_ENV)/lib/python2.7/site-packages" -r python/requirements_readline.txt)
+	(unset PYTHONPATH; source "$(DX_PY_ENV)/bin/activate"; pip install --ignore-installed --install-option="--install-lib=$(DX_PY_ENV)/lib/python2.7/site-packages" -r python/requirements_readline.txt)
 endif
 ifdef DNANEXUS_INSTALL_PYTHON_TEST_DEPS
-	(unset PYTHONPATH; source "$(DX_PY_ENV)/bin/activate"; pip install --ignore-installed --use-wheel --find-links="file://$(DNANEXUS_HOME)/build/wheels" --install-option="--install-lib=$(DX_PY_ENV)/lib/python2.7/site-packages" -r python/requirements_test.txt)
+	(unset PYTHONPATH; source "$(DX_PY_ENV)/bin/activate"; pip install --ignore-installed --install-option="--install-lib=$(DX_PY_ENV)/lib/python2.7/site-packages" -r python/requirements_test.txt)
 endif
 
 # We are going to install libraries to lib/python2.7 and then move them
