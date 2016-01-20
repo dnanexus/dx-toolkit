@@ -176,6 +176,14 @@ class ContentLengthError(HTTPError):
     pass
 
 
+class BadJSONInReply(ValueError):
+    '''Special exception describing an error case where the server returns
+    a bad JSON. Common reasons for this are the network connection
+    breaking, or overload on the server.
+    '''
+    pass
+
+
 def format_exception(e):
     """Returns a string containing the type and text of the exception.
 

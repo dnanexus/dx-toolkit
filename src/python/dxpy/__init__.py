@@ -179,13 +179,6 @@ _DEBUG = 0  # debug verbosity level
 _UPGRADE_NOTIFY = True
 
 
-class BadJSONInReply(ValueError):
-    '''Special exception describing an error case where the server returns
-    a bad JSON. Common reasons for this are the network connection
-    breaking, or overload on the server.
-    '''
-    pass
-
 USER_AGENT = "{name}/{version} ({platform})".format(name=__name__,
                                                     version=TOOLKIT_VERSION,
                                                     platform=platform.platform())
@@ -196,7 +189,8 @@ _default_headers['User-Agent'] = USER_AGENT
 _default_timeout = urllib3.util.timeout.Timeout(connect=DEFAULT_TIMEOUT, read=DEFAULT_TIMEOUT)
 _pool_manager = None
 _RequestForAuth = namedtuple('_RequestForAuth', 'method url headers')
-_expected_exceptions = exceptions.network_exceptions + (exceptions.DXAPIError, BadStatusLine, BadJSONInReply)
+_expected_exceptions = exceptions.network_exceptions + \
+                       (exceptions.DXAPIError, BadStatusLine, exceptions.BadJSONInReply)
 
 def _get_pool_manager(verify, cert_file, key_file):
     global _pool_manager
@@ -427,7 +421,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                         content = json.loads(content)
                     except ValueError:
                         # The JSON is not parsable, but we should be able to retry.
-                        raise BadJSONInReply("Invalid JSON received from server", response.status)
+                        raise exceptions.BadJSONInReply("Invalid JSON received from server", response.status)
                     try:
                         error_class = getattr(exceptions, content["error"]["type"], exceptions.DXAPIError)
                     except (KeyError, AttributeError, TypeError):
@@ -455,7 +449,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                             content = json.loads(content)
                         except ValueError:
                             # The JSON is not parsable, but we should be able to retry.
-                            raise BadJSONInReply("Invalid JSON received from server", response.status)
+                            raise exceptions.BadJSONInReply("Invalid JSON received from server", response.status)
                         if _DEBUG > 0:
                             t = int((time.time() - time_started) * 1000)
                         if _DEBUG >= 3:
@@ -501,9 +495,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 # BadJSONInReply --- server returned JSON that didn't parse properly
                 if try_index + 1 < total_allowed_tries:
                     if response is None or \
-                       isinstance(e, exceptions.ContentLengthError) or \
-                       isinstance(e, BadStatusLine) or \
-                       isinstance(e, BadJSONInReply):
+                       isinstance(e, (exceptions.ContentLengthError, BadStatusLine, exceptions.BadJSONInReply)):
                         ok_to_retry = always_retry or (method == 'GET') or _is_retryable_exception(e)
                     else:
                         ok_to_retry = 500 <= response.status < 600
