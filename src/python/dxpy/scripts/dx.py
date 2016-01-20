@@ -4332,6 +4332,7 @@ register_parser(parser_get, categories='data')
 
 parser_find = subparsers.add_parser('find', help='Search functionality over various DNAnexus entities',
                                     description='Search functionality over various DNAnexus entities.',
+                                    formatter_class=argparse.RawTextHelpFormatter,
                                     prog='dx find')
 subparsers_find = parser_find.add_subparsers(parser_class=DXArgumentParser)
 subparsers_find.metavar = 'category'
@@ -4339,7 +4340,7 @@ register_parser(parser_find, categories=())
 
 parser_find_apps = subparsers_find.add_parser(
     'apps',
-    help='List available apps',
+    help=fill('List available apps'),
     description=fill('Finds apps subject to the given search parameters. Use --category to restrict by a category; '
                      'common categories are available as tab completions and can be listed with --category-help.'),
     parents=[stdout_args, json_arg, delim_arg, env_args],
@@ -4366,7 +4367,7 @@ register_parser(parser_find_apps, subparsers_action=subparsers_find, categories=
 
 parser_find_jobs = subparsers_find.add_parser(
     'jobs',
-    help='List jobs in the current project',
+    help=fill('List jobs in the current project'),
     description=fill('Finds jobs subject to the given search parameters. By default, output is formatted to show the '
                      'last several job trees that you\'ve run in the current project.'),
     parents=[find_executions_args, stdout_args, json_arg, no_color_arg, delim_arg, env_args,
@@ -4382,7 +4383,7 @@ register_parser(parser_find_jobs, subparsers_action=subparsers_find, categories=
 
 parser_find_analyses = subparsers_find.add_parser(
     'analyses',
-    help='List analyses in the current project',
+    help=fill('List analyses in the current project'),
     description=fill('Finds analyses subject to the given search parameters. By default, output is formatted to show '
                      'the last several job trees that you\'ve run in the current project.'),
     parents=[find_executions_args, stdout_args, json_arg, no_color_arg, delim_arg, env_args,
@@ -4398,7 +4399,7 @@ register_parser(parser_find_analyses, subparsers_action=subparsers_find, categor
 
 parser_find_executions = subparsers_find.add_parser(
     'executions',
-    help='List executions (jobs and analyses) in the current project',
+    help=fill('List executions (jobs and analyses) in the current project'),
     description=fill('Finds executions (jobs and analyses) subject to the given search parameters. By default, output '
                      'is formatted to show the last several job trees that you\'ve run in the current project.'),
     parents=[find_executions_args, stdout_args, json_arg, no_color_arg, delim_arg, env_args,
@@ -4414,7 +4415,7 @@ register_parser(parser_find_executions, subparsers_action=subparsers_find, categ
 
 parser_find_data = subparsers_find.add_parser(
     'data',
-    help='List data objects in the current project',
+    help=fill('List data objects in the current project'),
     description=fill('Finds data objects subject to the given search parameters. By default, restricts the search to '
                      'the current project if set. To search over all projects (excluding public projects), use '
                      '--all-projects (overrides --path and --norecurse).'),
@@ -4442,7 +4443,7 @@ register_parser(parser_find_data, subparsers_action=subparsers_find, categories=
 
 parser_find_projects = subparsers_find.add_parser(
     'projects',
-    help='List projects',
+    help=fill('List projects'),
     description=fill('Finds projects subject to the given search parameters. Use the --public flag to list all public '
                      'projects.'),
     parents=[stdout_args, json_arg, delim_arg, env_args, find_by_properties_and_tags_args],
@@ -4465,7 +4466,7 @@ register_parser(parser_find_projects, subparsers_action=subparsers_find, categor
 
 parser_find_org = subparsers_find.add_parser(
     "org",
-    help="List entities within a specific org",
+    help=fill("List entities within a specific org.") + "\n\n\t" + fill('"dx find org members" lists members in the specified org') + "\n\n\t" + fill('"dx find org projects" lists projects billed to the specified org') + "\n\n" + fill('Please execute "dx find org -h" for more information.'),
     description=fill("List entities within a specific org."),
     prog="dx find org",
 )
@@ -4508,7 +4509,7 @@ register_parser(parser_find_org_projects, subparsers_action=subparsers_find_org,
 
 parser_find_orgs = subparsers_find.add_parser(
     "orgs",
-    help="List orgs",
+    help=fill("List orgs"),
     description="Finds orgs subject to the given search parameters.",
     parents=[stdout_args, env_args, delim_arg, json_arg],
     prog="dx find orgs"
