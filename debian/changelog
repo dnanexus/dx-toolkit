@@ -1,3 +1,14 @@
+dx-toolkit (0.177.0) precise; urgency=low
+
+  * make python: don't instruct pip on how to use wheels
+  * dxpy: clean up and normalize exception descriptions
+  * Cleanup of exception handling for http errors
+  * Add missing subcommands to `dx sh` completer class
+  * Allow insecure download of Python on CentOS
+  * Fix changelog
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 21 Jan 2016 20:20:22 +0000
+
 dx-toolkit (0.176.0) precise; urgency=low
 
   * PTFM-17107 Modify I/Os of "dx {add,remove,update} member"
