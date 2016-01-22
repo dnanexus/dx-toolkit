@@ -42,6 +42,7 @@ dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__fi
 test_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_test.txt"))]
 dxfs_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_dxfs.txt"))]
 readline_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_readline.txt"))]
+backports_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_backports.txt"))]
 
 # If on Windows, also depend on colorama, which translates ANSI terminal color control sequences into whatever cmd.exe uses.
 if platform.system() == 'Windows':
@@ -59,9 +60,11 @@ if platform.system() == 'Darwin':
     except ImportError:
         dependencies.extend(readline_dependencies)
 
-# dxfs is not compatible with Windows, and is currently disabled on Python 3
-if platform.system() != 'Windows' and sys.version_info[0] < 3:
-    dependencies.extend(dxfs_dependencies)
+if sys.version_info[0] < 3:
+    dependencies.extend(backports_dependencies)
+    # dxfs is not compatible with Windows, and is currently disabled on Python 3
+    if platform.system() != 'Windows':
+        dependencies.extend(dxfs_dependencies)
 
 template_files = []
 
