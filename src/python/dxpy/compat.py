@@ -32,6 +32,7 @@ _stdio_wrapped = False
 
 if USING_PYTHON2:
     from cStringIO import StringIO
+    from httplib import BadStatusLine
     BytesIO = StringIO
     builtin_str = str
     bytes = str
@@ -80,6 +81,7 @@ if USING_PYTHON2:
         import shlex
 else:
     from io import StringIO, BytesIO
+    from http.client import BadStatusLine
     import shlex
     builtin_str = str
     str = str

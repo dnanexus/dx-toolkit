@@ -134,8 +134,7 @@ from . import exceptions
 from requests.auth import AuthBase
 from requests.packages import urllib3
 from requests.packages.urllib3.packages.ssl_match_hostname import match_hostname
-from .compat import USING_PYTHON2, expanduser
-from httplib import BadStatusLine
+from .compat import USING_PYTHON2, expanduser, BadStatusLine
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
