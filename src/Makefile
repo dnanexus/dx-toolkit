@@ -129,7 +129,7 @@ $(DNANEXUS_HOME)/bin/dx: $(shell find python/{dxpy,scripts,requirements*,setup*}
 	(unset PYTHONPATH; source "$(DX_PY_ENV)/bin/activate"; pip install --upgrade -r python/requirements_setuptools.txt)
 	(unset PYTHONPATH; source "$(DX_PY_ENV)/bin/activate"; cd python; pip install --ignore-installed --prefix="$(DNANEXUS_HOME)" .)
 	mkdir -p "$$(dirname '$(PYTHON_LIBDIR)')"
-	mv "$(DNANEXUS_HOME)"/lib/python?.?/site-packages "$(PYTHON_LIBDIR)"
+	mv "$(DNANEXUS_HOME)"/lib/python?.?/site-packages "$(PYTHON_LIBDIR)" || mv "$(DNANEXUS_HOME)"/site-packages "$(PYTHON_LIBDIR)"
 	rm -f "$(DNANEXUS_HOME)/bin/xattr"
 
 # TODO: fix up perl and java targets
