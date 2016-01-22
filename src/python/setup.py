@@ -66,6 +66,9 @@ if sys.version_info[0] < 3:
     if platform.system() != 'Windows':
         dependencies.extend(dxfs_dependencies)
 
+if 'DNANEXUS_INSTALL_PYTHON_TEST_DEPS' in os.environ:
+    dependencies.extend(test_dependencies)
+
 template_files = []
 
 for directory, subdirectories, files in os.walk("dxpy/templating/templates"):
