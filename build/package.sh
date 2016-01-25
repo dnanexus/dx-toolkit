@@ -81,7 +81,7 @@ elif [[ "$ostype" == 'Darwin' ]]; then # Mac OS
   for readline_egg in readline-*; do
     mv $readline_egg ${readline_egg/-macosx-10.*-intel/} || true
   done
-  sed -i -e 's/-py2.7-macosx-10\.[0-9]+-intel.egg/-py2.7.egg/' easy-install.pth
+  sed -i -e 's/-py2.7-macosx-10\.[0-9]+-intel.egg/-py2.7.egg/' easy-install.pth || true
 
   cd $tempdir
   rm -rf dx-toolkit/.git
