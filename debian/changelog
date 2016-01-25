@@ -1,3 +1,10 @@
+dx-toolkit (0.177.1) precise; urgency=low
+
+  * Refactor Python build infrastructure to avoid distributing packaging tools
+  * Python 3 compatibility fix
+
+ -- Andrey Kislyuk <akislyuk@home.vdev.dnanexus.com>  Mon, 25 Jan 2016 00:19:03 +0000
+
 dx-toolkit (0.177.0) precise; urgency=low
 
   * make python: don't instruct pip on how to use wheels
