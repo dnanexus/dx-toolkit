@@ -368,7 +368,13 @@ boost_build:
 
 curl: c-ares/stage/lib/libcares.la curl/stage/lib/libcurl.la
 
-CURL_PV=7.45.0
+CURL_MAJOR=7
+CURL_MINOR=45
+CURL_MICRO=0
+CURL_PV=$(CURL_MAJOR).$(CURL_MINOR).$(CURL_MICRO)
+CURL_PV_UNDERSCORES=$(CURL_MAJOR)_$(CURL_MINOR)_$(CURL_MICRO)
+CURL_MIRROR=https://github.com/bagder/curl/releases/download
+CURL_URL=$(CURL_MIRROR)/curl-$(CURL_PV_UNDERSCORES)/curl-$(CURL_PV).tar.gz
 CURL_SHA=e44fc290844c1e3c9b7f6ef9926d4366d0600514
 ifeq ($(OS), Windows_NT)
 # To build libcurl on Windows, setting a minimum Windows version is required,
@@ -391,9 +397,9 @@ else
 endif
 curl/stage/lib/libcurl.la: shasum openssl
 	mkdir -p curl
-	curl ${UBUNTU_MIRROR}/pool/main/c/curl/curl_${CURL_PV}.orig.tar.gz > curl-${CURL_PV}.tar.gz
-	[[ $$(shasum curl-${CURL_PV}.tar.gz|cut -f 1 -d ' ') == $(CURL_SHA) ]]
-	tar -xzf curl-${CURL_PV}.tar.gz -C curl --strip-components=1
+	curl -L $(CURL_URL) > curl-$(CURL_PV).tar.gz
+	[[ $$(shasum curl-$(CURL_PV).tar.gz|cut -f 1 -d ' ') == $(CURL_SHA) ]]
+	tar -xzf curl-$(CURL_PV).tar.gz -C curl --strip-components=1
 	cd curl; ./configure --disable-ldap --disable-ldaps \
 	    --disable-rtsp --disable-dict --disable-telnet --disable-tftp --disable-pop3 \
 	    --disable-imap --disable-smtp --disable-gopher --disable-sspi --disable-ntlm-wb \
