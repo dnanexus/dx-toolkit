@@ -649,7 +649,7 @@ def invite(args):
         args.project += ':'
     project, _none, _none = try_call(resolve_existing_path,
                                      args.project, 'project')
-    if args.invitee != 'PUBLIC' and not '-' in args.invitee and not '@' in args.invitee:
+    if args.invitee != 'PUBLIC' and '-' not in args.invitee and '@' not in args.invitee:
         args.invitee = 'user-' + args.invitee.lower()
     project_invite_input = {"invitee": args.invitee, "level": args.level}
     if not args.send_email:
@@ -667,7 +667,7 @@ def uninvite(args):
         args.project += ':'
     project, _none, _none = try_call(resolve_existing_path,
                                      args.project, 'project')
-    if args.entity != 'PUBLIC' and not '-' in args.entity:
+    if args.entity != 'PUBLIC' and '-' not in args.entity:
         args.entity = 'user-' + args.entity.lower()
     try:
         dxpy.api.project_decrease_permissions(project, {args.entity: None})

@@ -88,6 +88,8 @@ import os
 import fnmatch
 import sys
 import collections
+import errno
+
 import dxpy
 from ..compat import environ, open, basestring
 from ..exceptions import DXError
@@ -444,8 +446,8 @@ def gen_bash_vars(job_input_file, job_homedir=None, check_name_collision=True):
                 var_defs_hash[key] = val
             else:
                 sys.stderr.write(dxpy.utils.printing.fill(
-                    "Creating environment variable ({}) would cause a name collision".format(key))
-                    + "\n")
+                    "Creating environment variable ({}) would cause a name collision".format(key)
+                ) + "\n")
         else:
             var_defs_hash[key] = val
 

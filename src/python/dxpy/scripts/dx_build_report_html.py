@@ -47,7 +47,7 @@ def _image_to_data(img):
     Does the work of encoding an image into Base64
     """
     # If the image is already encoded in Base64, we have nothing to do here
-    if not "src" in img.attrs or img["src"].startswith("data:"):
+    if "src" not in img.attrs or img["src"].startswith("data:"):
         return
     elif re.match("https?://", img["src"]):
         img_data = _load_url(img["src"]).read()

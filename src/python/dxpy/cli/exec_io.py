@@ -397,8 +397,8 @@ def get_input_single(param_desc):
                 print(fill('Error occurred when parsing for class ' + in_class + ': ' + str(details)))
                 continue
             if 'choices' in param_desc and value not in param_desc['choices']:
-                print(fill(RED() + BOLD() + 'Warning:' + ENDC() + ' value "' + str(value) + '" for input ' + WHITE()
-                           + BOLD() + param_desc['name'] + ENDC() + ' is not in the list of choices for that input'))
+                print(fill(RED() + BOLD() + 'Warning:' + ENDC() + ' value "' + str(value) + '" for input ' + WHITE() +
+                           BOLD() + param_desc['name'] + ENDC() + ' is not in the list of choices for that input'))
             return value
     except EOFError:
         raise DXCLIError('Unexpected end of input')
@@ -633,6 +633,7 @@ class ExecutableInputs(object):
 
     def uninit_completer(self):
         try:
+            import readline
             readline.set_completer()
             readline.clear_history()
         except:

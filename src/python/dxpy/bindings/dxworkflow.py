@@ -452,8 +452,8 @@ class DXWorkflow(DXDataObject, DXExecutable):
 
         if kwargs.get('rerun_stages') is not None:
             run_input['rerunStages'] = [
-                stage if stage == '*' else self._get_stage_id(stage)
-                for stage in kwargs['rerun_stages']
+                _stage if _stage == '*' else self._get_stage_id(_stage)
+                for _stage in kwargs['rerun_stages']
             ]
 
         return run_input

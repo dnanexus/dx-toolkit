@@ -401,7 +401,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             response = _get_pool_manager(**pool_args).request(_method, _url, headers=_headers, body=data,
                                                               timeout=timeout, retries=False, **kwargs)
 
-            if _UPGRADE_NOTIFY and response.headers.get('x-upgrade-info', '').startswith('A recommended update is available') and not os.environ.has_key('_ARGCOMPLETE'):
+            if _UPGRADE_NOTIFY and response.headers.get('x-upgrade-info', '').startswith('A recommended update is available') and '_ARGCOMPLETE' not in os.environ:
                 logger.info(response.headers['x-upgrade-info'])
                 try:
                     with file(_UPGRADE_NOTIFY, 'a'):

@@ -224,9 +224,9 @@ def writeEntry(spansTable, spanId, exonInfo, additionalColumns, chromosome, lo, 
             entry[1] = checkOverlap["lo"]
             entry[2] = checkOverlap["hi"]
             if entry[6] == "-":
-                entry[10] = int(entry[10]) + checkOverlap["hiChange"]%3
+                entry[10] = int(entry[10]) + checkOverlap["hiChange"] % 3
             else:
-                entry[10] = int(entry[10]) + checkOverlap["loChange"]%3
+                entry[10] = int(entry[10]) + checkOverlap["loChange"] % 3
 
             exonInfo[chromosome].append([lo, hi])
             spanId += 1
