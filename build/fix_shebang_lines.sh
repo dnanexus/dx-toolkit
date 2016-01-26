@@ -58,7 +58,7 @@ sys.path.insert(1, os.path.join(os.path.dirname(__file__), '../share/dnanexus/li
 for f in "$dirname"/*; do
     if head -n 1 "$f" | egrep -iq "(python|pypy)"; then
         echo "Rewriting $f to use portable interpreter paths"
-        if grep -q 'WARNING: DNANEXUS_HOME' "$f"; then
+        if grep -q 'WARNING: DNANEXUS_HOME' "$f" || ! grep -q EASY-INSTALL-ENTRY-SCRIPT "$f"; then
             perl -i -pe 's|^#!/.+|'"#!$interpreter"'| if $. == 1' "$f"
         else
             perl -i -pe 's|^#!/.+|'"$py_header"'| if $. == 1' "$f"
