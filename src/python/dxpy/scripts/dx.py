@@ -3360,24 +3360,24 @@ class DXArgumentParser(argparse.ArgumentParser):
                                                              prog=self.prog,
                                                              msg=message))
 
-def register_subparser(subparser, subparsers_action=None, categories=('other', )):
-    name = re.sub('^dx ', '', subparser.prog)
+
+def register_parser(parser, subparsers_action=None, categories=('other', ), add_help=True):
+    """Attaches `parser` to the global ``parser_map``. If `add_help` is truthy,
+    then adds the helpstring of `parser` into the output of ``dx help...``, for
+    each category in `categories`.
+
+    :param subparsers_action: A special action object that is returned by
+    ``ArgumentParser.add_subparsers(...)``, or None.
+    :type subparsers_action: argparse._SubParsersAction, or None.
+    """
+    name = re.sub('^dx ', '', parser.prog)
     if subparsers_action is None:
         subparsers_action = subparsers
     if isinstance(categories, basestring):
         categories = (categories, )
-    if subparsers_action == subparsers:
-        subparsers_action_name = subparsers_action._choices_actions[-1].dest
-    else:
-        subparsers_action_name = subparsers._choices_actions[-1].dest + ' ' + subparsers_action._choices_actions[-1].dest
 
-    parser_map[name] = subparser
-    # Some subparsers may not have help associated with them.  Those that lack
-    # help, will not have an item in the _choices_actions list.  So, to determine
-    # if the present subparser has a help, we'll get the name for this subparser,
-    # compare it to the name in the last _choices_actions list, and only if
-    # they match can we be confident that it has a help.
-    if subparsers_action_name == name:
+    parser_map[name] = parser
+    if add_help:
         _help = subparsers_action._choices_actions[-1].help
         parser_categories['all']['cmds'].append((name, _help))
         for category in categories:
@@ -3408,7 +3408,7 @@ parser_login.add_argument('--timeout', default='30d',
                           help='Timeout for this login token (in seconds, or use suffix s, m, h, d, w, M, y)')
 parser_login.add_argument('--staging', nargs=0, help=argparse.SUPPRESS, action=SetStagingEnv)
 parser_login.set_defaults(staging=False, func=login)
-register_subparser(parser_login, categories='session')
+register_parser(parser_login, categories='session')
 
 parser_logout = subparsers.add_parser('logout',
                                       help='Log out and remove credentials',
@@ -3418,7 +3418,7 @@ parser_logout = subparsers.add_parser('logout',
 parser_logout.add_argument('--host', help='Log out of the given auth server host (port must also be given)')
 parser_logout.add_argument('--port', type=int, help='Log out of the given auth server port (host must also be given)')
 parser_logout.set_defaults(func=logout)
-register_subparser(parser_logout, categories='session')
+register_parser(parser_logout, categories='session')
 
 parser_shell = subparsers.add_parser('sh', help='dx shell interpreter',
                                      description='When run with no arguments, this command launches an interactive shell.  Otherwise, it will load the filename provided and interpret each nonempty line as a command to execute.  In both cases, the "dx" is expected to be omitted from the command or line.',
@@ -3426,12 +3426,12 @@ parser_shell = subparsers.add_parser('sh', help='dx shell interpreter',
                                      parents=[env_args])
 parser_shell.add_argument('filename', help='File of dx commands to execute', nargs='?', default=None)
 parser_shell.set_defaults(func=shell)
-register_subparser(parser_shell, categories='session')
+register_parser(parser_shell, categories='session')
 
 parser_exit = subparsers.add_parser('exit', help='Exit out of the interactive shell',
                                     description='Exit out of the interactive shell', prog='dx exit')
 parser_exit.set_defaults(func=exit_shell)
-register_subparser(parser_exit, categories='session')
+register_parser(parser_exit, categories='session')
 
 parser_whoami = subparsers.add_parser('whoami', help='Print the username of the current user',
                                       description='Print the username of the current user, ' +
@@ -3440,7 +3440,7 @@ parser_whoami = subparsers.add_parser('whoami', help='Print the username of the 
                                       parents=[env_args])
 parser_whoami.add_argument('--id', help='Print user ID instead of username', action='store_true', dest='user_id')
 parser_whoami.set_defaults(func=whoami)
-register_subparser(parser_whoami, categories='session')
+register_parser(parser_whoami, categories='session')
 
 parser_env = subparsers.add_parser('env', help='Print all environment variables in use',
                                    description=fill('Prints all environment variables in use as they have been resolved from environment variables and configuration files.  For more details, see') + '\n\nhttps://wiki.dnanexus.com/Command-Line-Client/Environment-Variables',
@@ -3451,7 +3451,7 @@ parser_env.add_argument('--bash', help=fill('Prints a list of bash commands to e
 parser_env.add_argument('--dx-flags', help=fill('Prints the dx options to override the environment variables', width_adjustment=-14),
                         action='store_true')
 parser_env.set_defaults(func=env)
-register_subparser(parser_env, categories='session')
+register_parser(parser_env, categories='session')
 
 parser_setenv = subparsers.add_parser('setenv',
                                       help='Sets environment variables for the session',
@@ -3463,14 +3463,14 @@ parser_setenv.add_argument('--save', help='Save settings for future sessions.  O
 parser_setenv.add_argument('--current', help='Do not prompt for new values and just save current settings for future sessions.  Overrides --save to be true.',
                            action='store_true')
 parser_setenv.set_defaults(func=setenv)
-register_subparser(parser_setenv, categories='other')
+register_parser(parser_setenv, categories='other')
 
 parser_clearenv = subparsers.add_parser('clearenv', help='Clears all environment variables set by dx',
                                         description='Clears all environment variables set by dx.  More specifically, it removes local state stored in ~/.dnanexus_config/environment.  Does not affect the environment variables currently set in your shell.', prog='dx clearenv')
 parser_clearenv.add_argument('--reset', help='Reset dx environment variables to empty values. Use this to avoid interference between multiple dx sessions when using shell environment variables.',
                              action='store_true')
 parser_clearenv.set_defaults(func=clearenv, interactive=False)
-register_subparser(parser_clearenv, categories='session')
+register_parser(parser_clearenv, categories='session')
 
 parser_invite = subparsers.add_parser('invite',
                                       help='Invite another user to a project or make it public',
@@ -3484,7 +3484,7 @@ parser_invite.add_argument('level', help='Permissions level the new member shoul
 parser_invite.add_argument('--no-email', dest='send_email', action='store_false', help='Disable email notifications to invitee')
 parser_invite.set_defaults(func=invite)
 # parser_invite.completer = TODO
-register_subparser(parser_invite, categories='other')
+register_parser(parser_invite, categories='other')
 
 parser_uninvite = subparsers.add_parser('uninvite',
                                         help='Revoke others\' permissions on a project you administer',
@@ -3494,7 +3494,7 @@ parser_uninvite = subparsers.add_parser('uninvite',
 parser_uninvite.add_argument('entity', help='Entity to uninvite')
 parser_uninvite.add_argument('project', help='Project to revoke permissions from', default=':', nargs='?')
 parser_uninvite.set_defaults(func=uninvite)
-register_subparser(parser_uninvite, categories='other')
+register_parser(parser_uninvite, categories='other')
 
 parser_ls = subparsers.add_parser('ls', help='List folders and/or objects in a folder',
                                   description='List folders and/or objects in a folder',
@@ -3510,7 +3510,7 @@ ls_path_action = parser_ls.add_argument('path', help='Folder (possibly in anothe
                                         nargs='?', default='.')
 ls_path_action.completer = DXPathCompleter()
 parser_ls.set_defaults(func=ls)
-register_subparser(parser_ls, categories='fs')
+register_parser(parser_ls, categories='fs')
 
 parser_tree = subparsers.add_parser('tree', help='List folders and objects in a tree',
                                     description='List folders and objects in a tree',
@@ -3522,14 +3522,14 @@ tree_path_action = parser_tree.add_argument('path', help='Folder (possibly in an
                                             nargs='?', default='.')
 tree_path_action.completer = DXPathCompleter(expected='folder')
 parser_tree.set_defaults(func=tree)
-register_subparser(parser_tree, categories='fs')
+register_parser(parser_tree, categories='fs')
 
 parser_pwd = subparsers.add_parser('pwd', help='Print current working directory',
                                    description='Print current working directory',
                                    prog='dx pwd',
                                    parents=[env_args])
 parser_pwd.set_defaults(func=pwd)
-register_subparser(parser_pwd, categories='fs')
+register_parser(parser_pwd, categories='fs')
 
 parser_select = subparsers.add_parser('select', help='List and select a project to switch to',
                                       description='Interactively list and select a project to switch to.  By default, only lists projects for which you have at least CONTRIBUTE permissions.  Use --public to see the list of public projects.',
@@ -3544,7 +3544,7 @@ parser_select.add_argument('--level', choices=['VIEW', 'UPLOAD', 'CONTRIBUTE', '
 parser_select.add_argument('--public', help='Include ONLY public projects (will automatically set --level to VIEW)',
                            action='store_true')
 parser_select.set_defaults(func=select, save=False)
-register_subparser(parser_select, categories='fs')
+register_parser(parser_select, categories='fs')
 
 parser_cd = subparsers.add_parser('cd', help='Change the current working directory',
                                   description='Change the current working directory', prog='dx cd',
@@ -3553,7 +3553,7 @@ cd_path_action = parser_cd.add_argument('path', nargs='?', default='/',
                                         help='Folder (possibly in another project) to which to change the current working directory, default is "/" in the current project')
 cd_path_action.completer = DXPathCompleter(expected='folder')
 parser_cd.set_defaults(func=cd)
-register_subparser(parser_cd, categories='fs')
+register_parser(parser_cd, categories='fs')
 
 parser_cp = subparsers.add_parser('cp', help='Copy objects and/or folders between different projects',
                                   formatter_class=argparse.RawTextHelpFormatter,
@@ -3573,7 +3573,7 @@ cp_sources_action = parser_cp.add_argument('sources', help='Objects and/or folde
 cp_sources_action.completer = DXPathCompleter()
 parser_cp.add_argument('destination', help=fill('Folder into which to copy the sources or new pathname (if only one source is provided).  Must be in a different project/container than all source paths.', width_adjustment=-15))
 parser_cp.set_defaults(func=cp)
-register_subparser(parser_cp, categories='fs')
+register_parser(parser_cp, categories='fs')
 
 parser_mv = subparsers.add_parser('mv', help='Move or rename objects and/or folders inside a project',
                                   formatter_class=argparse.RawTextHelpFormatter,
@@ -3585,7 +3585,7 @@ mv_sources_action = parser_mv.add_argument('sources', help='Objects and/or folde
 mv_sources_action.completer = DXPathCompleter()
 parser_mv.add_argument('destination', help=fill('Folder into which to move the sources or new pathname (if only one source is provided).  Must be in the same project/container as all source paths.', width_adjustment=-15))
 parser_mv.set_defaults(func=mv)
-register_subparser(parser_mv, categories='fs')
+register_parser(parser_mv, categories='fs')
 
 parser_mkdir = subparsers.add_parser('mkdir', help='Create a new folder',
                                      description='Create a new folder', prog='dx mkdir',
@@ -3595,7 +3595,7 @@ parser_mkdir.add_argument('-p', '--parents', help='no error if existing, create 
 mkdir_paths_action = parser_mkdir.add_argument('paths', help='Paths to folders to create', metavar='path', nargs='+')
 mkdir_paths_action.completer = DXPathCompleter(expected='folder')
 parser_mkdir.set_defaults(func=mkdir)
-register_subparser(parser_mkdir, categories='fs')
+register_parser(parser_mkdir, categories='fs')
 
 parser_rmdir = subparsers.add_parser('rmdir', help='Remove a folder',
                                      description='Remove a folder', prog='dx rmdir',
@@ -3603,7 +3603,7 @@ parser_rmdir = subparsers.add_parser('rmdir', help='Remove a folder',
 rmdir_paths_action = parser_rmdir.add_argument('paths', help='Paths to folders to remove', metavar='path', nargs='+')
 rmdir_paths_action.completer = DXPathCompleter(expected='folder')
 parser_rmdir.set_defaults(func=rmdir)
-register_subparser(parser_rmdir, categories='fs')
+register_parser(parser_rmdir, categories='fs')
 
 parser_rm = subparsers.add_parser('rm', help='Remove data objects and folders',
                                   description='Remove data objects and folders.', prog='dx rm',
@@ -3612,7 +3612,7 @@ rm_paths_action = parser_rm.add_argument('paths', help='Paths to remove', metava
 rm_paths_action.completer = DXPathCompleter()
 parser_rm.add_argument('-r', '--recursive', help='Recurse into a directory', action='store_true')
 parser_rm.set_defaults(func=rm)
-register_subparser(parser_rm, categories='fs')
+register_parser(parser_rm, categories='fs')
 
 # data
 
@@ -3629,7 +3629,7 @@ parser_describe.add_argument('--multi', help=fill('If the flag --json is also pr
 describe_path_action = parser_describe.add_argument('path', help=fill('Object ID or path to an object (possibly in another project) to describe.', width_adjustment=-24))
 describe_path_action.completer = DXPathCompleter()
 parser_describe.set_defaults(func=describe)
-register_subparser(parser_describe, categories=('data', 'metadata'))
+register_parser(parser_describe, categories=('data', 'metadata'))
 
 parser_upload = subparsers.add_parser('upload', help='Upload file(s) or directory',
                                       description='Upload local file(s) or directory.  If "-" is provided, stdin will be used instead.  By default, the filename will be used as its new name.  If --path/--destination is provided with a path ending in a slash, the filename will be used, and the folder path will be used as a destination.  If it does not end in a slash, then it will be used as the final name.',
@@ -3647,7 +3647,7 @@ parser_upload.add_argument('--wait', help='Wait until the file has finished clos
 parser_upload.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress',
                            action='store_false', default=sys.stderr.isatty())
 parser_upload.set_defaults(func=upload, mute=False)
-register_subparser(parser_upload, categories='data')
+register_parser(parser_upload, categories='data')
 
 parser_download = subparsers.add_parser('download', help='Download file(s)',
                                         description='Download the contents of a file object or multiple objects.  Use "-o -" to direct the output to stdout.',
@@ -3664,7 +3664,7 @@ parser_download.add_argument('-a', '--all', help='If multiple objects match the 
 parser_download.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress',
                              action='store_false', default=sys.stderr.isatty())
 parser_download.set_defaults(func=download_or_cat)
-register_subparser(parser_download, categories='data')
+register_parser(parser_download, categories='data')
 
 parser_make_download_url = subparsers.add_parser('make_download_url', help='Create a file download link for sharing',
                                                  description='Creates a pre-authenticated link that can be used to download a file without logging in.',
@@ -3674,14 +3674,14 @@ path_action.completer = DXPathCompleter(classes=['file'])
 parser_make_download_url.add_argument('--duration', help='Time for which the URL will remain valid (in seconds, or use suffix s, m, h, d, w, M, y). Default: 1 day')
 parser_make_download_url.add_argument('--filename', help='Name that the server will instruct the client to save the file as (default is the filename)')
 parser_make_download_url.set_defaults(func=make_download_url)
-register_subparser(parser_make_download_url, categories='data')
+register_parser(parser_make_download_url, categories='data')
 
 parser_cat = subparsers.add_parser('cat', help='Print file(s) to stdout', prog='dx cat',
                                    parents=[env_args])
 cat_path_action = parser_cat.add_argument('path', help='File ID or name(s) to print to stdout', nargs='+')
 cat_path_action.completer = DXPathCompleter(classes=['file'])
 parser_cat.set_defaults(func=cat)
-register_subparser(parser_cat, categories='data')
+register_parser(parser_cat, categories='data')
 
 parser_head = subparsers.add_parser('head',
                                     help='Print part of a file or gtable',
@@ -3704,7 +3704,7 @@ head_gtable_args.add_argument('--gri-name',
 head_path_action = parser_head.add_argument('path', help='File or gtable ID or name to access')
 head_path_action.completer = DXPathCompleter(classes=['file', 'gtable'])
 parser_head.set_defaults(func=head)
-register_subparser(parser_head, categories='data')
+register_parser(parser_head, categories='data')
 
 parser_import = subparsers.add_parser('import',
                                       help='Import (convert and upload) a local table or genomic file',
@@ -3717,7 +3717,7 @@ import_args_action = parser_import.add_argument('importer_args', help=fill('Argu
                                                 nargs=argparse.REMAINDER)
 import_args_action.completer = LocalCompleter()
 parser_import.set_defaults(func=dximport)
-register_subparser(parser_import, categories='data')
+register_parser(parser_import, categories='data')
 
 parser_export = subparsers.add_parser('export',
                                       help='Export (download and convert) a gtable into a local file',
@@ -3729,7 +3729,7 @@ parser_export.add_argument('format', help='Format to export to')
 parser_export.add_argument('exporter_args', help=fill('Arguments passed to the exporter', width_adjustment=-24),
                            nargs=argparse.REMAINDER)
 parser_export.set_defaults(func=export)
-register_subparser(parser_export, categories='data')
+register_parser(parser_export, categories='data')
 
 from dxpy.scripts.dx_build_app import parser as build_parser
 build_parser.prog = 'dx build'
@@ -3742,14 +3742,14 @@ parser_build = subparsers.add_parser('build', help='Upload and build a new apple
                                      parents=[build_parser, env_args]
 )
 parser_build.set_defaults(func=build)
-register_subparser(parser_build, categories='exec')
+register_parser(parser_build, categories='exec')
 
 parser_add = subparsers.add_parser('add', help='Add one or more items to a list',
                                    description='Use this command with one of the availabile subcommands to perform various actions such as adding other users to the list of developers or authorized users of an app',
                                    prog='dx add')
 subparsers_add = parser_add.add_subparsers(parser_class=DXArgumentParser)
 subparsers_add.metavar = 'list_type'
-register_subparser(parser_add, categories=())
+register_parser(parser_add, categories=())
 
 parser_add_users = subparsers_add.add_parser('users', help='Add authorized users for an app',
                                              description='Add users or orgs to the list of authorized users of an app.  Published versions of the app will only be accessible to users represented by this list and to developers of the app.  Unpublished versions are restricted to the developers.',
@@ -3759,7 +3759,7 @@ parser_add_users.add_argument('users', metavar='authorizedUser',
                               help='One or more users or orgs to add',
                               nargs='+')
 parser_add_users.set_defaults(func=add_users)
-register_subparser(parser_add_users, subparsers_action=subparsers_add, categories='exec')
+register_parser(parser_add_users, subparsers_action=subparsers_add, categories='exec')
 
 parser_add_developers = subparsers_add.add_parser('developers', help='Add developers for an app',
                                                   description='Add users to the list of developers for an app.  Developers are able to build and publish new versions of the app, and add or remove others from the list of developers and authorized users.',
@@ -3768,7 +3768,7 @@ parser_add_developers.add_argument('app', help='Name or ID of an app').completer
 parser_add_developers.add_argument('developers', metavar='developer', help='One or more users to add',
                               nargs='+')
 parser_add_developers.set_defaults(func=add_developers)
-register_subparser(parser_add_developers, subparsers_action=subparsers_add, categories='exec')
+register_parser(parser_add_developers, subparsers_action=subparsers_add, categories='exec')
 
 parser_add_stage = subparsers_add.add_parser('stage', help='Add a stage to a workflow',
                                              description='Add a stage to a workflow.  Default inputs for the stage can also be set at the same time.',
@@ -3785,7 +3785,7 @@ add_stage_folder_args = parser_add_stage.add_mutually_exclusive_group()
 add_stage_folder_args.add_argument('--output-folder', help='Path to the output folder for the stage (interpreted as an absolute path)')
 add_stage_folder_args.add_argument('--relative-output-folder', help='A relative folder path for the stage (interpreted as relative to the workflow\'s output folder)')
 parser_add_stage.set_defaults(func=workflow_cli.add_stage)
-register_subparser(parser_add_stage, subparsers_action=subparsers_add, categories='workflow')
+register_parser(parser_add_stage, subparsers_action=subparsers_add, categories='workflow')
 
 parser_add_member = subparsers_add.add_parser("member", help="Grant a user membership to an org", description="Grant a user membership to an org", prog="dx add member", parents=[stdout_args, env_args])
 parser_add_member.add_argument("org_id", help="ID of the org")
@@ -3796,28 +3796,28 @@ parser_add_member.add_argument("--no-app-access", default=True, action="store_fa
 parser_add_member.add_argument("--project-access", choices=["ADMINISTER", "CONTRIBUTE", "UPLOAD", "VIEW", "NONE"], default="CONTRIBUTE", help='The default implicit maximum permission the specified user will receive to projects explicitly shared with the org; default CONTRIBUTE')
 parser_add_member.add_argument("--no-email", default=False, action="store_true", help="Disable org invitation email notification to the specified user")
 parser_add_member.set_defaults(func=add_membership)
-register_subparser(parser_add_member, subparsers_action=subparsers_add, categories="other")
+register_parser(parser_add_member, subparsers_action=subparsers_add, categories="other")
 
 parser_list = subparsers.add_parser('list', help='Print the members of a list',
                                    description='Use this command with one of the availabile subcommands to perform various actions such as printing the list of developers or authorized users of an app.',
                                    prog='dx list')
 subparsers_list = parser_list.add_subparsers(parser_class=DXArgumentParser)
 subparsers_list.metavar = 'list_type'
-register_subparser(parser_list, categories=())
+register_parser(parser_list, categories=())
 
 parser_list_users = subparsers_list.add_parser('users', help='List authorized users for an app',
                                                description='List the authorized users of an app.  Published versions of the app will only be accessible to users represented by this list and to developers of the app.  Unpublished versions are restricted to the developers',
                                                prog='dx list users', parents=[env_args])
 parser_list_users.add_argument('app', help='Name or ID of an app').completer = DXAppCompleter(installed=True)
 parser_list_users.set_defaults(func=list_users)
-register_subparser(parser_list_users, subparsers_action=subparsers_list, categories='exec')
+register_parser(parser_list_users, subparsers_action=subparsers_list, categories='exec')
 
 parser_list_developers = subparsers_list.add_parser('developers', help='List developers for an app',
                                                     description='List the developers for an app.  Developers are able to build and publish new versions of the app, and add or remove others from the list of developers and authorized users.',
                                                     prog='dx list developers', parents=[env_args])
 parser_list_developers.add_argument('app', help='Name or ID of an app').completer = DXAppCompleter(installed=True)
 parser_list_developers.set_defaults(func=list_developers)
-register_subparser(parser_list_developers, subparsers_action=subparsers_list, categories='exec')
+register_parser(parser_list_developers, subparsers_action=subparsers_list, categories='exec')
 
 parser_list_stages = subparsers_list.add_parser('stages', help='List the stages in a workflow',
                                                 description='List the stages in a workflow.',
@@ -3825,14 +3825,14 @@ parser_list_stages = subparsers_list.add_parser('stages', help='List the stages 
                                                 prog='dx list stages')
 parser_list_stages.add_argument('workflow', help='Name or ID of a workflow').completer = DXPathCompleter(classes=['workflow'])
 parser_list_stages.set_defaults(func=workflow_cli.list_stages)
-register_subparser(parser_list_stages, subparsers_action=subparsers_list, categories='workflow')
+register_parser(parser_list_stages, subparsers_action=subparsers_list, categories='workflow')
 
 parser_remove = subparsers.add_parser('remove', help='Remove one or more items to a list',
                                       description='Use this command with one of the available subcommands to perform various actions such as removing other users from the list of developers or authorized users of an app.',
                                       prog='dx remove')
 subparsers_remove = parser_remove.add_subparsers(parser_class=DXArgumentParser)
 subparsers_remove.metavar = 'list_type'
-register_subparser(parser_remove, categories=())
+register_parser(parser_remove, categories=())
 
 parser_remove_users = subparsers_remove.add_parser('users', help='Remove authorized users for an app',
                                                    description='Remove users or orgs from the list of authorized users of an app.  Published versions of the app will only be accessible to users represented by this list and to developers of the app.  Unpublished versions are restricted to the developers',
@@ -3842,7 +3842,7 @@ parser_remove_users.add_argument('users', metavar='authorizedUser',
                                  help='One or more users or orgs to remove',
                                  nargs='+')
 parser_remove_users.set_defaults(func=remove_users)
-register_subparser(parser_remove_users, subparsers_action=subparsers_remove, categories='exec')
+register_parser(parser_remove_users, subparsers_action=subparsers_remove, categories='exec')
 
 parser_remove_developers = subparsers_remove.add_parser('developers', help='Remove developers for an app',
                                                         description='Remove users from the list of developers for an app.  Developers are able to build and publish new versions of the app, and add or remove others from the list of developers and authorized users.',
@@ -3851,7 +3851,7 @@ parser_remove_developers.add_argument('app', help='Name or ID of an app').comple
 parser_remove_developers.add_argument('developers', metavar='developer', help='One or more users to remove',
                                       nargs='+')
 parser_remove_developers.set_defaults(func=remove_developers)
-register_subparser(parser_remove_developers, subparsers_action=subparsers_remove, categories='exec')
+register_parser(parser_remove_developers, subparsers_action=subparsers_remove, categories='exec')
 
 parser_remove_stage = subparsers_remove.add_parser('stage', help='Remove a stage from a workflow',
                                                    description='Remove a stage from a workflow.  The stage should be indicated either by an integer (0-indexed, i.e. "0" for the first stage), or a stage ID.',
@@ -3860,7 +3860,7 @@ parser_remove_stage = subparsers_remove.add_parser('stage', help='Remove a stage
 parser_remove_stage.add_argument('workflow', help='Name or ID of a workflow').completer = DXPathCompleter(classes=['workflow'])
 parser_remove_stage.add_argument('stage', help='Stage (index or ID) of the workflow to remove')
 parser_remove_stage.set_defaults(func=workflow_cli.remove_stage)
-register_subparser(parser_remove_stage, subparsers_action=subparsers_remove, categories='workflow')
+register_parser(parser_remove_stage, subparsers_action=subparsers_remove, categories='workflow')
 
 parser_remove_member = subparsers_remove.add_parser("member", help="Revoke the org membership of a user", description="Revoke the org membership of a user", prog="dx remove member", parents=[stdout_args, env_args])
 parser_remove_member.add_argument("org_id", help="ID of the org")
@@ -3869,7 +3869,7 @@ parser_remove_member.add_argument("--keep-explicit-project-permissions", default
 parser_remove_member.add_argument("--keep-explicit-app-permissions", default=True, action="store_false", dest="revoke_app_permissions", help="Disable revocation of explicit app developer and user permissions of the specified user to apps billed to the org; implicit app permissions (i.e. those granted to the specified user via his membership in this org) will always be revoked")
 parser_remove_member.add_argument("-y", "--yes", action="store_false", dest="confirm", help="Do not ask for confirmation")
 parser_remove_member.set_defaults(func=remove_membership)
-register_subparser(parser_remove_member, subparsers_action=subparsers_remove, categories="other")
+register_parser(parser_remove_member, subparsers_action=subparsers_remove, categories="other")
 
 parser_update = subparsers.add_parser('update', help='Update certain types of metadata',
                                       description='''
@@ -3879,7 +3879,7 @@ subcommands.''',
                                       prog='dx update')
 subparsers_update = parser_update.add_subparsers(parser_class=DXArgumentParser)
 subparsers_update.metavar = 'target'
-register_subparser(parser_update, categories=())
+register_parser(parser_update, categories=())
 
 parser_update_org = subparsers_update.add_parser('org',
                                                  help='Update information about an org',
@@ -3891,7 +3891,7 @@ parser_update_org.add_argument('--name', help='New name of the org')
 parser_update_org.add_argument('--member-list-visibility', help='New org membership level that is required to be able to view the membership level and/or permissions of any other member in the specified org (corresponds to the memberListVisibility org policy)', choices=['ADMIN', 'MEMBER', 'PUBLIC'])
 parser_update_org.add_argument('--project-transfer-ability', help='New org membership level that is required to be able to change the billing account of a project that is billed to the specified org, to some other entity (corresponds to the restrictProjectTransfer org policy)', choices=['ADMIN', 'MEMBER'])
 parser_update_org.set_defaults(func=update_org)
-register_subparser(parser_update_org, subparsers_action=subparsers_update, categories=('other'))
+register_parser(parser_update_org, subparsers_action=subparsers_update, categories=('other'))
 
 
 parser_update_workflow = subparsers_update.add_parser('workflow', help='Update the metadata for a workflow',
@@ -3908,7 +3908,7 @@ update_workflow_output_folder_args = parser_update_workflow.add_mutually_exclusi
 update_workflow_output_folder_args.add_argument('--output-folder', help='Default output folder for the workflow')
 update_workflow_output_folder_args.add_argument('--no-output-folder', help='Unset the default output folder for the workflow', action='store_true')
 parser_update_workflow.set_defaults(func=workflow_cli.update_workflow)
-register_subparser(parser_update_workflow, subparsers_action=subparsers_update, categories='workflow')
+register_parser(parser_update_workflow, subparsers_action=subparsers_update, categories='workflow')
 
 parser_update_stage = subparsers_update.add_parser('stage', help='Update the metadata for a stage in a workflow',
                                                    description='Update the metadata for a stage in a workflow',
@@ -3931,7 +3931,7 @@ update_stage_folder_args = parser_update_stage.add_mutually_exclusive_group()
 update_stage_folder_args.add_argument('--output-folder', help='Path to the output folder for the stage (interpreted as an absolute path)')
 update_stage_folder_args.add_argument('--relative-output-folder', help='A relative folder path for the stage (interpreted as relative to the workflow\'s output folder)')
 parser_update_stage.set_defaults(func=workflow_cli.update_stage)
-register_subparser(parser_update_stage, subparsers_action=subparsers_update, categories='workflow')
+register_parser(parser_update_stage, subparsers_action=subparsers_update, categories='workflow')
 
 parser_update_member = subparsers_update.add_parser("member", help="Update the membership of a user in an org", description="Update the membership of a user in an org", prog="dx update member", parents=[stdout_args, env_args])
 parser_update_member.add_argument("org_id", help="ID of the org")
@@ -3941,7 +3941,7 @@ parser_update_member.add_argument("--allow-billable-activities", choices=["true"
 parser_update_member.add_argument("--app-access", choices=["true", "false"], help='The new "appAccess" membership permission of the specified user in the org; default true if demoting the specified user from ADMIN to MEMBER')
 parser_update_member.add_argument("--project-access", choices=["ADMINISTER", "CONTRIBUTE", "UPLOAD", "VIEW", "NONE"], help='The new default implicit maximum permission the specified user will receive to projects explicitly shared with the org; default CONTRIBUTE if demoting the specified user from ADMIN to MEMBER')
 parser_update_member.set_defaults(func=update_membership)
-register_subparser(parser_update_member, subparsers_action=subparsers_update, categories="other")
+register_parser(parser_update_member, subparsers_action=subparsers_update, categories="other")
 
 parser_install = subparsers.add_parser('install', help='Install an app',
                                        description='Install an app by name.  To see a list of apps you can install, hit <TAB> twice after "dx install" or run "' + BOLD('dx find apps') + '" to see a list of available apps.', prog='dx install',
@@ -3949,7 +3949,7 @@ parser_install = subparsers.add_parser('install', help='Install an app',
 install_app_action = parser_install.add_argument('app', help='ID or name of app to install')
 install_app_action.completer = DXAppCompleter(installed=False)
 parser_install.set_defaults(func=install)
-register_subparser(parser_install, categories='exec')
+register_parser(parser_install, categories='exec')
 
 parser_uninstall = subparsers.add_parser('uninstall', help='Uninstall an app',
                                          description='Uninstall an app by name.', prog='dx uninstall',
@@ -3957,7 +3957,7 @@ parser_uninstall = subparsers.add_parser('uninstall', help='Uninstall an app',
 uninstall_app_action = parser_uninstall.add_argument('app', help='ID or name of app to uninstall')
 uninstall_app_action.completer = DXAppCompleter(installed=True)
 parser_uninstall.set_defaults(func=uninstall)
-register_subparser(parser_uninstall, categories='exec')
+register_parser(parser_uninstall, categories='exec')
 
 parser_run = subparsers.add_parser('run', help='Run an applet, app, or workflow', add_help=False,
                                    description=(fill('Run an applet, app, or workflow.  To see a list of executables you can run, hit <TAB> twice after "dx run" or run "' + BOLD('dx find apps') + '" to see a list of available apps.') + '\n\n' + fill('If any inputs are required but not specified, an interactive mode for selecting inputs will be launched.  Inputs can be set in multiple ways.  Run "' + BOLD('dx run --input-help') + '" for more details.') + '\n\n' + fill('Run "' + BOLD('dx run --instance-type-help') + '" to see a list of specifications for computers available to run executables.')),
@@ -4044,7 +4044,7 @@ parser_run.add_argument('--input-help',
                         action=runInputHelp, nargs=0)
 parser_run.set_defaults(func=run, verbose=False, help=False, details=None,
                         stage_instance_types=None, stage_folders=None)
-register_subparser(parser_run, categories='exec')
+register_parser(parser_run, categories='exec')
 
 parser_watch = subparsers.add_parser('watch', help='Watch logs of a job and its subjobs', prog='dx watch',
                                      description='Monitors logging output from a running job',
@@ -4069,7 +4069,7 @@ parser_watch.add_argument('-f', '--format', help='Message format. Available fiel
 parser_watch.add_argument('--no-wait', '--no-follow', action='store_false', dest='tail',
                           help='Exit after the first new message is received, instead of waiting for all logs')
 parser_watch.set_defaults(func=watch)
-register_subparser(parser_watch, categories='exec')
+register_parser(parser_watch, categories='exec')
 
 parser_ssh_config = subparsers.add_parser('ssh_config', help='Configure SSH keys for your DNAnexus account',
                                    description='Configure SSH access credentials for your DNAnexus account',
@@ -4079,7 +4079,7 @@ parser_ssh_config.add_argument('ssh_keygen_args', help='Command-line arguments t
                                nargs=argparse.REMAINDER)
 parser_ssh_config.add_argument('--revoke', help='Revoke SSH public key associated with your DNAnexus account; you will no longer be able to SSH into any jobs.', action='store_true')
 parser_ssh_config.set_defaults(func=ssh_config)
-register_subparser(parser_ssh_config, categories='exec')
+register_parser(parser_ssh_config, categories='exec')
 
 parser_ssh = subparsers.add_parser('ssh', help='Connect to a running job via SSH',
                                    description='Use an SSH client to connect to a job being executed on the DNAnexus ' +
@@ -4091,7 +4091,7 @@ parser_ssh = subparsers.add_parser('ssh', help='Connect to a running job via SSH
 parser_ssh.add_argument('job_id', help='Name of job to connect to')
 parser_ssh.add_argument('ssh_args', help='Command-line arguments to pass to the SSH client', nargs=argparse.REMAINDER)
 parser_ssh.set_defaults(func=ssh)
-register_subparser(parser_ssh, categories='exec')
+register_parser(parser_ssh, categories='exec')
 
 parser_terminate = subparsers.add_parser('terminate', help='Terminate job(s)',
                                          description='Terminate a job or jobs that have not yet finished',
@@ -4112,14 +4112,14 @@ projects_action.completer = DXPathCompleter(expected='project', include_current_
 parser_rmproject.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
 parser_rmproject.add_argument('-q', '--quiet', help='Do not print purely informational messages', action='store_true')
 parser_rmproject.set_defaults(func=rmproject)
-register_subparser(parser_rmproject, categories='fs')
+register_parser(parser_rmproject, categories='fs')
 
 parser_new = subparsers.add_parser('new', help='Create a new project or data object',
                                    description='Use this command with one of the available subcommands (classes) to create a new project or data object from scratch.  Not all data types are supported.  See \'dx upload\' for files and \'dx build\' for applets.',
                                    prog="dx new")
 subparsers_new = parser_new.add_subparsers(parser_class=DXArgumentParser)
 subparsers_new.metavar = 'class'
-register_subparser(parser_new, categories='data')
+register_parser(parser_new, categories='data')
 
 parser_new_user = subparsers_new.add_parser("user", help="Create a new user account", description="Create a new user account", parents=[stdout_args, env_args], prog="dx new user")
 parser_new_user_user_opts = parser_new_user.add_argument_group("User options")
@@ -4139,7 +4139,7 @@ parser_new_user_org_opts.add_argument("--no-app-access", default=True, action=DX
 parser_new_user_org_opts.add_argument("--project-access", choices=["ADMINISTER", "CONTRIBUTE", "UPLOAD", "VIEW", "NONE"], default="CONTRIBUTE", action=DXNewUserOrgArgsAction, help='The "projectAccess" to grant the new user in the org; default CONTRIBUTE')
 parser_new_user_org_opts.add_argument("--no-email", default=False, action=DXNewUserOrgArgsAction, help="Disable org invitation email notification to the new user")
 parser_new_user.set_defaults(func=new_user)
-register_subparser(parser_new_user, subparsers_action=subparsers_new,
+register_parser(parser_new_user, subparsers_action=subparsers_new,
                    categories="other")
 
 parser_new_org = subparsers_new.add_parser('org', help='Create new org',
@@ -4151,7 +4151,7 @@ parser_new_org.add_argument('--handle', required=True, help='Unique handle for t
 parser_new_org.add_argument('--member-list-visibility', default="ADMIN", help='Org membership level required to be able to list the members of the org, or to view the membership level or permissions of any other member of the org; default ADMIN', choices=["ADMIN", "MEMBER", "PUBLIC"])
 parser_new_org.add_argument('--project-transfer-ability', default="ADMIN", help='Org membership level required to be able to change the billing account of an org-billed project to any other entity; default ADMIN', choices=["ADMIN", "MEMBER"])
 parser_new_org.set_defaults(func=new_org)
-register_subparser(parser_new_org, subparsers_action=subparsers_new, categories='other')
+register_parser(parser_new_org, subparsers_action=subparsers_new, categories='other')
 
 parser_new_project = subparsers_new.add_parser('project', help='Create a new project',
                                                description='Create a new project',
@@ -4163,7 +4163,7 @@ parser_new_project.add_argument('-s', '--select', help='Select the new project a
                                 action='store_true')
 parser_new_project.add_argument('--bill-to', help='ID of the user or org to which the project will be billed. The default value is the billTo of the requesting user.')
 parser_new_project.set_defaults(func=new_project)
-register_subparser(parser_new_project, subparsers_action=subparsers_new, categories='fs')
+register_parser(parser_new_project, subparsers_action=subparsers_new, categories='fs')
 
 parser_new_record = subparsers_new.add_parser('record', help='Create a new record',
                                               description='Create a new record',
@@ -4175,7 +4175,7 @@ init_action = parser_new_record.add_argument('--init', help='Path to record from
 parser_new_record.add_argument('--close', help='Close the record immediately after creating it', action='store_true')
 init_action.completer = DXPathCompleter(classes=['record'])
 parser_new_record.set_defaults(func=new_record)
-register_subparser(parser_new_record, subparsers_action=subparsers_new, categories='fs')
+register_parser(parser_new_record, subparsers_action=subparsers_new, categories='fs')
 
 parser_new_workflow = subparsers_new.add_parser('workflow', help='Create a new workflow',
                                                 description='Create a new workflow',
@@ -4190,7 +4190,7 @@ parser_new_workflow.add_argument('--output-folder', help='Default output folder 
 init_action = parser_new_workflow.add_argument('--init', help=fill('Path to workflow or an analysis ID from which to initialize all metadata', width_adjustment=-24))
 init_action.completer = DXPathCompleter(classes=['workflow'])
 parser_new_workflow.set_defaults(func=workflow_cli.new_workflow)
-register_subparser(parser_new_workflow, subparsers_action=subparsers_new, categories='workflow')
+register_parser(parser_new_workflow, subparsers_action=subparsers_new, categories='workflow')
 
 parser_new_gtable = subparsers_new.add_parser('gtable', add_help=False, #help='Create a new gtable',
                                               description='Create a new gtable from scratch.  See \'dx import\' for importing special file formats (e.g. csv, fastq) into GenomicTables.',
@@ -4207,14 +4207,14 @@ new_gtable_indices_args.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI
 new_gtable_indices_args.add_argument('--indices', help='JSON for specifying any other indices')
 parser_new_gtable.set_defaults(func=new_gtable)
 #parser_new_gtable.completer = DXPathCompleter(classes=['gtable'])
-register_subparser(parser_new_gtable, subparsers_action=subparsers_new, categories='fs')
+register_parser(parser_new_gtable, subparsers_action=subparsers_new, categories='fs', add_help=False)
 
 parser_get_details = subparsers.add_parser('get_details', help='Get details of a data object',
                                            description='Get the JSON details of a data object.', prog="dx get_details",
                                            parents=[env_args])
 parser_get_details.add_argument('path', help='ID or path to data object to get details for').completer = DXPathCompleter()
 parser_get_details.set_defaults(func=get_details)
-register_subparser(parser_get_details, categories='metadata')
+register_parser(parser_get_details, categories='metadata')
 
 parser_set_details = subparsers.add_parser('set_details', help='Set details on a data object',
                                            description='Set the JSON details of a data object.', prog="dx set_details",
@@ -4223,7 +4223,7 @@ parser_set_details.add_argument('path', help='ID or path to data object to modif
 parser_set_details.add_argument('details', help='JSON to store as details', nargs='?')
 parser_set_details.add_argument('-f', '--details-file', help='Path to local file containing JSON to store as details')
 parser_set_details.set_defaults(func=set_details)
-register_subparser(parser_set_details, categories='metadata')
+register_parser(parser_set_details, categories='metadata')
 
 parser_set_visibility = subparsers.add_parser('set_visibility', help='Set visibility on a data object',
                                               description='Set visibility on a data object.', prog='dx set_visibility',
@@ -4232,7 +4232,7 @@ parser_set_visibility.add_argument('path', help='ID or path to data object to mo
 parser_set_visibility.add_argument('visibility', choices=['hidden', 'visible'],
                                    help='Visibility that the object should have')
 parser_set_visibility.set_defaults(func=set_visibility)
-register_subparser(parser_set_visibility, categories='metadata')
+register_parser(parser_set_visibility, categories='metadata')
 
 parser_add_types = subparsers.add_parser('add_types', help='Add types to a data object',
                                          description='Add types to a data object.  See https://wiki.dnanexus.com/pages/Types/ for a list of DNAnexus types.',
@@ -4241,7 +4241,7 @@ parser_add_types = subparsers.add_parser('add_types', help='Add types to a data 
 parser_add_types.add_argument('path', help='ID or path to data object to modify').completer = DXPathCompleter()
 parser_add_types.add_argument('types', nargs='+', metavar='type', help='Types to add')
 parser_add_types.set_defaults(func=add_types)
-register_subparser(parser_add_types, categories='metadata')
+register_parser(parser_add_types, categories='metadata')
 
 parser_remove_types = subparsers.add_parser('remove_types', help='Remove types from a data object',
                                             description='Remove types from a data object.  See https://wiki.dnanexus.com/pages/Types/ for a list of DNAnexus types.',
@@ -4250,7 +4250,7 @@ parser_remove_types = subparsers.add_parser('remove_types', help='Remove types f
 parser_remove_types.add_argument('path', help='ID or path to data object to modify').completer = DXPathCompleter()
 parser_remove_types.add_argument('types', nargs='+', metavar='type', help='Types to remove')
 parser_remove_types.set_defaults(func=remove_types)
-register_subparser(parser_remove_types, categories='metadata')
+register_parser(parser_remove_types, categories='metadata')
 
 parser_tag = subparsers.add_parser('tag', help='Tag a project, data object, or execution', prog='dx tag',
                                    description='Tag a project, data object, or execution.  Note that a project context must be either set or specified for data object IDs or paths.',
@@ -4258,7 +4258,7 @@ parser_tag = subparsers.add_parser('tag', help='Tag a project, data object, or e
 parser_tag.add_argument('path', help='ID or path to project, data object, or execution to modify').completer = DXPathCompleter()
 parser_tag.add_argument('tags', nargs='+', metavar='tag', help='Tags to add')
 parser_tag.set_defaults(func=add_tags)
-register_subparser(parser_tag, categories='metadata')
+register_parser(parser_tag, categories='metadata')
 
 parser_untag = subparsers.add_parser('untag', help='Untag a project, data object, or execution', prog='dx untag',
                                      description='Untag a project, data object, or execution.  Note that a project context must be either set or specified for data object IDs or paths.',
@@ -4266,7 +4266,7 @@ parser_untag = subparsers.add_parser('untag', help='Untag a project, data object
 parser_untag.add_argument('path', help='ID or path to project, data object, or execution to modify').completer = DXPathCompleter()
 parser_untag.add_argument('tags', nargs='+', metavar='tag', help='Tags to remove')
 parser_untag.set_defaults(func=remove_tags)
-register_subparser(parser_untag, categories='metadata')
+register_parser(parser_untag, categories='metadata')
 
 parser_rename = subparsers.add_parser('rename',
                                       help='Rename a project or data object',
@@ -4277,7 +4277,7 @@ path_action = parser_rename.add_argument('path', help='Path to project or data o
 path_action.completer = DXPathCompleter(include_current_proj=True)
 parser_rename.add_argument('name', help='New name')
 parser_rename.set_defaults(func=rename)
-register_subparser(parser_rename, categories='metadata')
+register_parser(parser_rename, categories='metadata')
 
 parser_set_properties = subparsers.add_parser('set_properties', help='Set properties of a project, data object, or execution',
                                               description='Set properties of a project, data object, or execution.  Note that a project context must be either set or specified for data object IDs or paths.', prog='dx set_properties',
@@ -4286,7 +4286,7 @@ parser_set_properties.add_argument('path', help='ID or path to project, data obj
 parser_set_properties.add_argument('properties', nargs='+', metavar='propertyname=value',
                                    help='Key-value pairs of property names and their new values')
 parser_set_properties.set_defaults(func=set_properties)
-register_subparser(parser_set_properties, categories='metadata')
+register_parser(parser_set_properties, categories='metadata')
 
 parser_unset_properties = subparsers.add_parser('unset_properties', help='Unset properties of a project, data object, or execution',
                                                 description='Unset properties of a project, data object, or execution.  Note that a project context must be either set or specified for data object IDs or paths.',
@@ -4296,7 +4296,7 @@ path_action = parser_unset_properties.add_argument('path', help='ID or path to p
 path_action.completer = DXPathCompleter()
 parser_unset_properties.add_argument('properties', nargs='+', metavar='propertyname', help='Property names to unset')
 parser_unset_properties.set_defaults(func=unset_properties)
-register_subparser(parser_unset_properties, categories='metadata')
+register_parser(parser_unset_properties, categories='metadata')
 
 parser_close = subparsers.add_parser('close', help='Close data object(s)',
                                      description='Close a remote data object or set of objects.',
@@ -4305,7 +4305,7 @@ parser_close = subparsers.add_parser('close', help='Close data object(s)',
 parser_close.add_argument('path', help='Path to a data object to close', nargs='+').completer = DXPathCompleter()
 parser_close.add_argument('--wait', help='Wait for the object(s) to close', action='store_true')
 parser_close.set_defaults(func=close)
-register_subparser(parser_close, categories=('data', 'metadata'))
+register_parser(parser_close, categories=('data', 'metadata'))
 
 parser_wait = subparsers.add_parser('wait', help='Wait for data object(s) to close or job(s) to finish',
                                     description='Polls the state of specified data object(s) or job(s) until they are all in the desired state.  Waits until the "closed" state for a data object, and for any terminal state for a job ("terminated", "failed", or "done").  Exits with a non-zero code if a job reaches a terminal state that is not "done".',
@@ -4314,7 +4314,7 @@ parser_wait = subparsers.add_parser('wait', help='Wait for data object(s) to clo
 path_action = parser_wait.add_argument('path', help='Path to a data object or job ID to wait for', nargs='+')
 path_action.completer = DXPathCompleter()
 parser_wait.set_defaults(func=wait)
-register_subparser(parser_wait, categories=('data', 'metadata', 'exec'))
+register_parser(parser_wait, categories=('data', 'metadata', 'exec'))
 
 parser_get = subparsers.add_parser('get', help='Download records, applets, and files',
                                    description='Download the contents of some types of data (records, applets, and files).  For gtables, see "dx export".  Downloading an applet will attempt to reconstruct a source directory that can be used to rebuild the app with "dx build".  Use "-o -" to direct the output to stdout.',
@@ -4326,14 +4326,14 @@ parser_get.add_argument('--no-ext', help='If -o is not provided, do not add an e
 parser_get.add_argument('--omit-resources', help='When downloading an applet, omit fetching the resources associated with the applet.', action='store_true')
 parser_get.add_argument('-f', '--overwrite', help='Overwrite the local file if necessary', action='store_true')
 parser_get.set_defaults(func=get)
-register_subparser(parser_get, categories='data')
+register_parser(parser_get, categories='data')
 
 parser_find = subparsers.add_parser('find', help='Search functionality over various DNAnexus entities',
                                     description='Search functionality over various DNAnexus entities.',
                                     prog='dx find')
 subparsers_find = parser_find.add_subparsers(parser_class=DXArgumentParser)
 subparsers_find.metavar = 'category'
-register_subparser(parser_find, categories=())
+register_parser(parser_find, categories=())
 
 parser_find_apps = subparsers_find.add_parser(
     'apps',
@@ -4360,7 +4360,7 @@ parser_find_apps.add_argument('--created-before', help='Date (e.g. 2012-01-01) o
 parser_find_apps.add_argument('--mod-after', help='Date (e.g. 2012-01-01) or integer timestamp after which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
 parser_find_apps.add_argument('--mod-before', help='Date (e.g. 2012-01-01) or integer timestamp before which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
 parser_find_apps.set_defaults(func=find_apps)
-register_subparser(parser_find_apps, subparsers_action=subparsers_find, categories='exec')
+register_parser(parser_find_apps, subparsers_action=subparsers_find, categories='exec')
 
 parser_find_jobs = subparsers_find.add_parser(
     'jobs',
@@ -4376,7 +4376,7 @@ parser_find_jobs = subparsers_find.add_parser(
 add_find_executions_search_gp(parser_find_jobs)
 parser_find_jobs.set_defaults(func=find_executions, classname='job')
 parser_find_jobs.completer = DXPathCompleter(expected='project')
-register_subparser(parser_find_jobs, subparsers_action=subparsers_find, categories='exec')
+register_parser(parser_find_jobs, subparsers_action=subparsers_find, categories='exec')
 
 parser_find_analyses = subparsers_find.add_parser(
     'analyses',
@@ -4392,7 +4392,7 @@ parser_find_analyses = subparsers_find.add_parser(
 add_find_executions_search_gp(parser_find_analyses)
 parser_find_analyses.set_defaults(func=find_executions, classname='analysis')
 parser_find_analyses.completer = DXPathCompleter(expected='project')
-register_subparser(parser_find_analyses, subparsers_action=subparsers_find, categories='exec')
+register_parser(parser_find_analyses, subparsers_action=subparsers_find, categories='exec')
 
 parser_find_executions = subparsers_find.add_parser(
     'executions',
@@ -4408,7 +4408,7 @@ parser_find_executions = subparsers_find.add_parser(
 add_find_executions_search_gp(parser_find_executions)
 parser_find_executions.set_defaults(func=find_executions, classname=None)
 parser_find_executions.completer = DXPathCompleter(expected='project')
-register_subparser(parser_find_executions, subparsers_action=subparsers_find, categories='exec')
+register_parser(parser_find_executions, subparsers_action=subparsers_find, categories='exec')
 
 parser_find_data = subparsers_find.add_parser(
     'data',
@@ -4436,7 +4436,7 @@ parser_find_data.add_argument('--mod-before', help='Date (e.g. 2012-01-01) or in
 parser_find_data.add_argument('--created-after', help='Date (e.g. 2012-01-01) or integer timestamp after which the object was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
 parser_find_data.add_argument('--created-before', help='Date (e.g. 2012-01-01) or integer timestamp before which the object was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
 parser_find_data.set_defaults(func=find_data)
-register_subparser(parser_find_data, subparsers_action=subparsers_find, categories=('data', 'metadata'))
+register_parser(parser_find_data, subparsers_action=subparsers_find, categories=('data', 'metadata'))
 
 parser_find_projects = subparsers_find.add_parser(
     'projects',
@@ -4459,7 +4459,7 @@ parser_find_projects.add_argument('--created-before',
                                   help='Date (e.g. 2012-01-01) or integer timestamp after which the project was ' +
                                   'created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
 parser_find_projects.set_defaults(func=find_projects)
-register_subparser(parser_find_projects, subparsers_action=subparsers_find, categories='data')
+register_parser(parser_find_projects, subparsers_action=subparsers_find, categories='data')
 
 parser_find_org_members = subparsers_find.add_parser(
     'org_members',
@@ -4471,7 +4471,7 @@ parser_find_org_members = subparsers_find.add_parser(
 parser_find_org_members.add_argument('org_id', help='Org ID')
 parser_find_org_members.add_argument('--level', choices=["ADMIN", "MEMBER"], help='Restrict the result set to contain only members at the specified membership level.')
 parser_find_org_members.set_defaults(func=org_find_members)
-register_subparser(parser_find_org_members, subparsers_action=subparsers_find, categories='other')
+register_parser(parser_find_org_members, subparsers_action=subparsers_find, categories='other')
 
 parser_find_org_projects = subparsers_find.add_parser(
     'org_projects',
@@ -4491,7 +4491,7 @@ find_org_projects_public.add_argument('--private-only', dest='public', help='Inc
 parser_find_org_projects.add_argument('--created-after', help='Date (e.g. 2012-01-31) or integer timestamp after which the project was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y). Integer timestamps will be parsed as milliseconds since epoch.')
 parser_find_org_projects.add_argument('--created-before', help='Date (e.g. 2012-01-31) or integer timestamp before which the project was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y). Integer timestamps will be parsed as milliseconds since epoch.')
 parser_find_org_projects.set_defaults(func=org_find_projects)
-register_subparser(parser_find_org_projects, subparsers_action=subparsers_find, categories='data')
+register_parser(parser_find_org_projects, subparsers_action=subparsers_find, categories='data')
 
 parser_find_orgs = subparsers_find.add_parser(
     "orgs",
@@ -4505,7 +4505,7 @@ parser_find_orgs_with_billable_activities = parser_find_orgs.add_mutually_exclus
 parser_find_orgs_with_billable_activities.add_argument("--with-billable-activities", action="store_true", help="Restrict the result set to contain only orgs in which the requesting user can perform billable activities; mutually exclusive with --without-billable-activities")
 parser_find_orgs_with_billable_activities.add_argument("--without-billable-activities", dest="with_billable_activities", action="store_false", help="Restrict the result set to contain only orgs in which the requesting user **cannot** perform billable activities; mutually exclusive with --with-billable-activities")
 parser_find_orgs.set_defaults(func=find_orgs, with_billable_activities=None)
-register_subparser(parser_find_orgs, subparsers_action=subparsers_find, categories="other")
+register_parser(parser_find_orgs, subparsers_action=subparsers_find, categories="other")
 
 parser_api = subparsers.add_parser('api', help='Call an API method',
                                    formatter_class=argparse.RawTextHelpFormatter,
@@ -4531,14 +4531,14 @@ parser_api.add_argument('input_json', nargs='?', default="{}", help='JSON input 
 parser_api.add_argument('--input', help=fill('Load JSON input from FILENAME ("-" to use stdin)', width_adjustment=-17))
 parser_api.set_defaults(func=api)
 # parser_api.completer = TODO
-register_subparser(parser_api)
+register_parser(parser_api)
 
 parser_upgrade = subparsers.add_parser('upgrade', help='Upgrade dx-toolkit (the DNAnexus SDK and this program)',
                                        description='Upgrades dx-toolkit (the DNAnexus SDK and this program) to the latest recommended version, or to a specified version and platform.',
                                        prog='dx upgrade')
 parser_upgrade.add_argument('args', nargs='*')
 parser_upgrade.set_defaults(func=upgrade)
-register_subparser(parser_upgrade)
+register_parser(parser_upgrade)
 
 category_list = '\n  '.join([category + parser_categories[category]['desc'] for category in parser_categories_sorted])
 parser_help = subparsers.add_parser('help', help='Display help messages and dx commands by category',
