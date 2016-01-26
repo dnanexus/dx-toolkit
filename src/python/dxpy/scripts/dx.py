@@ -99,7 +99,7 @@ state = {"interactive": False,
          "delimiter": None,
          "currentproj": None}
 parser_map = {}
-parser_categories_sorted = ["all", "session", "fs", "data", "metadata", "workflow", "exec", "other"]
+parser_categories_sorted = ["all", "session", "fs", "data", "metadata", "workflow", "exec", "org", "other"]
 parser_categories = {"all": {"desc": "\t\tAll commands",
                              "cmds": []},
                      "session": {"desc": "\tManage your login session",
@@ -114,6 +114,8 @@ parser_categories = {"all": {"desc": "\t\tAll commands",
                                   "cmds": []},
                      "exec": {"desc": "\t\tManage and run apps, applets, and workflows",
                               "cmds": []},
+                     "org": {"desc": "\t\tAdminister and operate on orgs",
+                             "cmds": []},
                      "other": {"desc": "\t\tMiscellaneous advanced utilities",
                                "cmds": []}}
 
@@ -3796,7 +3798,7 @@ parser_add_member.add_argument("--no-app-access", default=True, action="store_fa
 parser_add_member.add_argument("--project-access", choices=["ADMINISTER", "CONTRIBUTE", "UPLOAD", "VIEW", "NONE"], default="CONTRIBUTE", help='The default implicit maximum permission the specified user will receive to projects explicitly shared with the org; default CONTRIBUTE')
 parser_add_member.add_argument("--no-email", default=False, action="store_true", help="Disable org invitation email notification to the specified user")
 parser_add_member.set_defaults(func=add_membership)
-register_parser(parser_add_member, subparsers_action=subparsers_add, categories="other")
+register_parser(parser_add_member, subparsers_action=subparsers_add, categories="org")
 
 parser_list = subparsers.add_parser('list', help='Print the members of a list',
                                    description='Use this command with one of the availabile subcommands to perform various actions such as printing the list of developers or authorized users of an app.',
@@ -3869,7 +3871,7 @@ parser_remove_member.add_argument("--keep-explicit-project-permissions", default
 parser_remove_member.add_argument("--keep-explicit-app-permissions", default=True, action="store_false", dest="revoke_app_permissions", help="Disable revocation of explicit app developer and user permissions of the specified user to apps billed to the org; implicit app permissions (i.e. those granted to the specified user via his membership in this org) will always be revoked")
 parser_remove_member.add_argument("-y", "--yes", action="store_false", dest="confirm", help="Do not ask for confirmation")
 parser_remove_member.set_defaults(func=remove_membership)
-register_parser(parser_remove_member, subparsers_action=subparsers_remove, categories="other")
+register_parser(parser_remove_member, subparsers_action=subparsers_remove, categories="org")
 
 parser_update = subparsers.add_parser('update', help='Update certain types of metadata',
                                       description='''
@@ -3891,7 +3893,7 @@ parser_update_org.add_argument('--name', help='New name of the org')
 parser_update_org.add_argument('--member-list-visibility', help='New org membership level that is required to be able to view the membership level and/or permissions of any other member in the specified org (corresponds to the memberListVisibility org policy)', choices=['ADMIN', 'MEMBER', 'PUBLIC'])
 parser_update_org.add_argument('--project-transfer-ability', help='New org membership level that is required to be able to change the billing account of a project that is billed to the specified org, to some other entity (corresponds to the restrictProjectTransfer org policy)', choices=['ADMIN', 'MEMBER'])
 parser_update_org.set_defaults(func=update_org)
-register_parser(parser_update_org, subparsers_action=subparsers_update, categories=('other'))
+register_parser(parser_update_org, subparsers_action=subparsers_update, categories='org')
 
 
 parser_update_workflow = subparsers_update.add_parser('workflow', help='Update the metadata for a workflow',
@@ -3941,7 +3943,7 @@ parser_update_member.add_argument("--allow-billable-activities", choices=["true"
 parser_update_member.add_argument("--app-access", choices=["true", "false"], help='The new "appAccess" membership permission of the specified user in the org; default true if demoting the specified user from ADMIN to MEMBER')
 parser_update_member.add_argument("--project-access", choices=["ADMINISTER", "CONTRIBUTE", "UPLOAD", "VIEW", "NONE"], help='The new default implicit maximum permission the specified user will receive to projects explicitly shared with the org; default CONTRIBUTE if demoting the specified user from ADMIN to MEMBER')
 parser_update_member.set_defaults(func=update_membership)
-register_parser(parser_update_member, subparsers_action=subparsers_update, categories="other")
+register_parser(parser_update_member, subparsers_action=subparsers_update, categories="org")
 
 parser_install = subparsers.add_parser('install', help='Install an app',
                                        description='Install an app by name.  To see a list of apps you can install, hit <TAB> twice after "dx install" or run "' + BOLD('dx find apps') + '" to see a list of available apps.', prog='dx install',
@@ -4151,7 +4153,7 @@ parser_new_org.add_argument('--handle', required=True, help='Unique handle for t
 parser_new_org.add_argument('--member-list-visibility', default="ADMIN", help='Org membership level required to be able to list the members of the org, or to view the membership level or permissions of any other member of the org; default ADMIN', choices=["ADMIN", "MEMBER", "PUBLIC"])
 parser_new_org.add_argument('--project-transfer-ability', default="ADMIN", help='Org membership level required to be able to change the billing account of an org-billed project to any other entity; default ADMIN', choices=["ADMIN", "MEMBER"])
 parser_new_org.set_defaults(func=new_org)
-register_parser(parser_new_org, subparsers_action=subparsers_new, categories='other')
+register_parser(parser_new_org, subparsers_action=subparsers_new, categories='org')
 
 parser_new_project = subparsers_new.add_parser('project', help='Create a new project',
                                                description='Create a new project',
@@ -4482,7 +4484,7 @@ parser_find_org_members = subparsers_find_org.add_parser(
 parser_find_org_members.add_argument('org_id', help='Org ID')
 parser_find_org_members.add_argument('--level', choices=["ADMIN", "MEMBER"], help='Restrict the result set to contain only members at the specified membership level.')
 parser_find_org_members.set_defaults(func=org_find_members)
-register_parser(parser_find_org_members, subparsers_action=subparsers_find_org, categories='other')
+register_parser(parser_find_org_members, subparsers_action=subparsers_find_org, categories='org')
 
 parser_find_org_projects = subparsers_find_org.add_parser(
     'projects',
@@ -4502,7 +4504,7 @@ find_org_projects_public.add_argument('--private-only', dest='public', help='Inc
 parser_find_org_projects.add_argument('--created-after', help='Date (e.g. 2012-01-31) or integer timestamp after which the project was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y). Integer timestamps will be parsed as milliseconds since epoch.')
 parser_find_org_projects.add_argument('--created-before', help='Date (e.g. 2012-01-31) or integer timestamp before which the project was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y). Integer timestamps will be parsed as milliseconds since epoch.')
 parser_find_org_projects.set_defaults(func=org_find_projects)
-register_parser(parser_find_org_projects, subparsers_action=subparsers_find_org, categories='data')
+register_parser(parser_find_org_projects, subparsers_action=subparsers_find_org, categories=('data', 'org'))
 
 parser_find_orgs = subparsers_find.add_parser(
     "orgs",
@@ -4516,7 +4518,7 @@ parser_find_orgs_with_billable_activities = parser_find_orgs.add_mutually_exclus
 parser_find_orgs_with_billable_activities.add_argument("--with-billable-activities", action="store_true", help="Restrict the result set to contain only orgs in which the requesting user can perform billable activities; mutually exclusive with --without-billable-activities")
 parser_find_orgs_with_billable_activities.add_argument("--without-billable-activities", dest="with_billable_activities", action="store_false", help="Restrict the result set to contain only orgs in which the requesting user **cannot** perform billable activities; mutually exclusive with --with-billable-activities")
 parser_find_orgs.set_defaults(func=find_orgs, with_billable_activities=None)
-register_parser(parser_find_orgs, subparsers_action=subparsers_find, categories="other")
+register_parser(parser_find_orgs, subparsers_action=subparsers_find, categories="org")
 
 parser_api = subparsers.add_parser('api', help='Call an API method',
                                    formatter_class=argparse.RawTextHelpFormatter,
