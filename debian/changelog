@@ -1,3 +1,9 @@
+dx-toolkit (0.177.3) precise; urgency=low
+
+  * Fix code injection for dxpy scripts
+
+ -- Andrey Kislyuk <akislyuk@home.vdev.dnanexus.com>  Tue, 26 Jan 2016 01:49:13 +0000
+
 dx-toolkit (0.177.2) precise; urgency=low
 
   * Declare encoding in dx-log-stream
