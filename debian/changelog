@@ -1,3 +1,9 @@
+dx-toolkit (0.177.4) precise; urgency=low
+
+  * Compile wheel during dxpy installation process to avoid depending on pkg_resources
+
+ -- Andrey Kislyuk <akislyuk@dnanexus.com>  Wed, 27 Jan 2016 04:55:00 +0000
+
 dx-toolkit (0.177.3) precise; urgency=low
 
   * Fix code injection for dxpy scripts
