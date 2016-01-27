@@ -124,10 +124,11 @@ python: api_wrappers toolkit_version $(DNANEXUS_HOME)/bin/dx
 
 $(DNANEXUS_HOME)/bin/dx: $(shell find python/{dxpy,scripts,requirements*,setup*} -not -name toolkit_version*)
 	python -c 'import sys; exit("dx-toolkit is not compatible with Python < 2.7" if sys.version_info < (2, 7) else 0)'
-	rm -rf "$(PYTHON_LIBDIR)" "$(DX_PY_ENV)"
+	rm -rf "$(PYTHON_LIBDIR)" "$(DX_PY_ENV)" python/dist
 	virtualenv --python=python "$(DX_PY_ENV)"
-	(unset PYTHONPATH; source "$(DX_PY_ENV)/bin/activate"; pip install --upgrade -r python/requirements_setuptools.txt)
-	(unset PYTHONPATH; source "$(DX_PY_ENV)/bin/activate"; cd python; pip install --ignore-installed --prefix="$(DNANEXUS_HOME)" .)
+	unset PYTHONPATH; source "$(DX_PY_ENV)/bin/activate"; pip install --upgrade -r python/requirements_setuptools.txt
+	unset PYTHONPATH; source "$(DX_PY_ENV)/bin/activate"; cd python; python setup.py bdist_wheel
+	unset PYTHONPATH; source "$(DX_PY_ENV)/bin/activate"; pip install --ignore-installed --prefix="$(DNANEXUS_HOME)" python/dist/*.whl
 	mkdir -p "$$(dirname '$(PYTHON_LIBDIR)')"
 	mv "$(DNANEXUS_HOME)"/lib/python?.?/site-packages "$(PYTHON_LIBDIR)" || mv "$(DNANEXUS_HOME)"/site-packages "$(PYTHON_LIBDIR)"
 	rm -f "$(DNANEXUS_HOME)/bin/xattr"
