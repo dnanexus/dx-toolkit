@@ -1,3 +1,25 @@
+dx-toolkit (0.178.0) precise; urgency=low
+
+  * Install dxpy via wheel to avoid using pkg_resources (fixup for 87d6040)
+  * PTFM-17116 Add `help` of `dx find org *` in `dx find -h`
+  * PTFM-17118 Add new category for org-related commands
+  * PTFM-17115 Create new subparser to encapsulate org CLI commands
+  * Refactor parser registration
+  * PTFM-17228 Download curl source from github
+  * Fix hardcoded installation path in test suite (fixup for 87d6040)
+  * flake8 lint fixes
+  * Only monkey-patch easy_install wrapper scripts (fixup for 87d6040)
+  * Declare encoding in source file (fixup for 87d6040)
+  * Don't crash if old build products are absent (fixup for 87d6040)
+  * Bump futures dependency from v3.0.3 to v3.0.4
+  * Install test deps from setup.py (fixup for 87d6040)
+  * PyPy compatibility fixup for 87d6040
+  * Don't install futures backport on Python 3
+  * Fix Python 3 regression introduced in fb3a8d6
+  * PTFM-17184 refactor make python 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 27 Jan 2016 22:53:14 +0000
+
 dx-toolkit (0.177.0) precise; urgency=low
 
   * make python: don't instruct pip on how to use wheels
