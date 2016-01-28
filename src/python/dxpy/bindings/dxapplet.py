@@ -135,6 +135,30 @@ class DXExecutable:
         """
         raise NotImplementedError('_get_run_input is not implemented')
 
+    def _get_required_keys(self):
+        """
+        Abstract method used in app_unbuilder.dump_executable
+        """
+        raise NotImplementedError('_get_required_keys is not implemented')
+
+    def _get_optional_keys(self):
+        """
+        Abstract method used in app_unbuilder.dump_executable
+        """
+        raise NotImplementedError('_get_optional_keys is not implemented')
+
+    def _get_describe_output_keys(self):
+        """
+        Abstract method used in app_unbuilder.dump_executable
+        """
+        raise NotImplementedError('_get_describe_output_keys is not implemented')
+
+    def _get_cleanup_keys(self):
+        """
+        Abstract method used in app_unbuilder.dump_executable
+        """
+        raise NotImplementedError('_get_cleanup_keys is not implemented')
+
     def run(self, executable_input, project=None, folder=None, name=None, tags=None, properties=None, details=None,
             instance_type=None, stage_instance_types=None, stage_folders=None, rerun_stages=None,
             depends_on=None, allow_ssh=None, debug=None, delay_workspace_destruction=None, priority=None,
@@ -203,6 +227,13 @@ class DXExecutable:
 ############
 # DXApplet #
 ############
+_applet_required_keys = ['name', 'title', 'summary', 'types', 'tags',
+                         'properties', 'dxapi', 'inputSpec', 'outputSpec',
+                         'runSpec', 'access', 'details']
+_applet_optional_keys = []
+_applet_describe_output_keys = ['properties', 'details']
+_applet_cleanup_keys = ['name', 'title', 'summary', 'types', 'tags',
+                        'properties', 'runSpec', 'access', 'details']
 
 def _makeNonexistentAPIWrapper(method):
     def nonexistentAPIWrapper(object_id, input_params=None, always_retry=None, **kwargs):
@@ -334,6 +365,18 @@ class DXApplet(DXDataObject, DXExecutable):
 
     def _get_run_input(self, executable_input, **kwargs):
         return DXExecutable._get_run_input_fields_for_applet(executable_input, **kwargs)
+
+    def _get_required_keys(self):
+        return _applet_required_keys
+
+    def _get_optional_keys(self):
+        return _applet_optional_keys
+
+    def _get_describe_output_keys(self):
+        return _applet_describe_output_keys
+
+    def _get_cleanup_keys(self):
+        return _applet_cleanup_keys
 
     def run(self, applet_input, *args, **kwargs):
         """

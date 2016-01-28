@@ -18,7 +18,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, unittest, subprocess, re, platform
+import os, sys, unittest, subprocess, re, json, platform
 import time
 import random
 
@@ -319,3 +319,38 @@ class DXTestCase(unittest.TestCase):
                     self.fail("Expected stderr to match '%s' but it didn't" % (stderr_regexp,))
             return
         self.assertFalse(True, "Expected command to fail with CalledProcessError but it succeeded")
+
+    def assertFileContentsEqualsString(self, path, s):
+        self.assertEqual(open(os.sep.join(path)).read(), s)
+
+    def _dictToPPJSON(self, d):
+        return json.dumps(d, sort_keys=True, indent=4, separators=(',', ': '))
+
+    def assertDictSubsetOf(self, subset_dict, containing_dict):
+        mm_items = []
+        mm_missing = []
+        for (key, value) in subset_dict.items():
+            if key in containing_dict:
+                if value != containing_dict[key]:
+                    mm_items.append(key)
+            else:
+                mm_missing.append(key)
+
+        err_items = len(mm_items) > 0
+        err_missing = len(mm_missing) > 0
+
+        if err_items or err_missing:
+            subset_json = self._dictToPPJSON(subset_dict)
+            containing_json = self._dictToPPJSON(containing_dict)
+            error_string = "Expected the following:\n"
+            error_string += "{}\n\nto be a subset of\n\n{}\n\n".format(subset_json,
+                                                                       containing_json)
+            if err_items:
+                m = ", ".join(map(lambda x: str(x), mm_items))
+                error_string += "Field value mismatch at keys: {}\n".format(m)
+
+            if err_missing:
+                m = ", ".join(map(lambda x: str(x), mm_missing))
+                error_string += "Keys missing from superset: {}\n".format(m)
+
+            self.assertFalse(True, error_string)

@@ -1692,75 +1692,128 @@ def make_download_url(args):
         err_exit()
 
 
-def get(args):
-    # Attempt to resolve name
-    project, _folderpath, entity_result = try_call(resolve_existing_path,
-                                                   args.path, expected='entity')
-
-    if entity_result is None:
-        parser.exit(3, fill('Could not resolve ' + args.path + ' to a data object') + '\n')
-
-    if entity_result['describe']['class'] == 'file':
-        download_one_file(project, entity_result['describe'], entity_result['describe']['name'], args)
-        return
-
-    if entity_result['describe']['class'] not in ['record', 'applet']:
-        parser.exit(3, 'Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class file, record, or applet was expected\n')
-
-    fd = None
-
-    if entity_result['describe']['class'] == 'applet':
-        if args.output == '-':
-            parser.exit(3, 'Error: An applet cannot be dumped to stdout, please specify a directory\n')
-        output_base = args.output or '.'
-        applet_name = entity_result['describe']['name'].replace('/', '%2F')
-        if os.path.isdir(output_base):
-            output_path = os.path.join(output_base, applet_name)
-        else:
-            output_path = output_base
-        if os.path.isfile(output_path):
-            if not args.overwrite:
-                parser.exit(3, fill('Error: path "' + output_path + '" already exists but -f/--overwrite was not set') + '\n')
-            os.unlink(output_path)
-        # Here, output_path either points to a directory or a nonexistent path
-        if not os.path.exists(output_path):
-            os.mkdir(output_path)
-        # Here, output_path points to a directory
-        if len(os.listdir(output_path)):
-            # For safety, refuse to remove an existing non-empty
-            # directory automatically.
-            parser.exit(3, fill('Error: path "' + output_path + '" is an existing directory. Please remove it and try again.') + '\n')
-        # Now output_path points to a empty directory, so we're ready to
-        # go.
-    elif args.output == '-':
+def get_record(entity_result, args):
+    if args.output == '-':
         fd = sys.stdout
     else:
         filename = args.output
         if filename is None:
             filename = entity_result['describe']['name'].replace('/', '%2F')
         if args.output is None and not args.no_ext:
-            if entity_result['describe']['class'] == 'record':
-                filename += '.json'
+            filename += '.json'
         if not args.overwrite and os.path.exists(filename):
-            parser.exit(1, fill('Error: path "' + filename + '" already exists but -f/--overwrite was not set') + '\n')
+            parser.exit(1, fill('Error: path "' +
+                                filename +
+                                '" already exists but -f/--overwrite was not set') + '\n')
         try:
             fd = open(filename, 'w')
         except:
             err_exit('Error opening destination file ' + filename)
 
-    if entity_result['describe']['class'] == 'record':
-        try:
-            details = dxpy.DXHTTPRequest('/' + entity_result['id'] + '/getDetails',
-                                         {})
-        except:
-            err_exit()
-        fd.write(json.dumps(details, indent=4))
-    elif entity_result['describe']['class'] == 'applet':
-        from dxpy.utils.app_unbuilder import dump_applet
-        dump_applet(dxpy.DXApplet(entity_result['id'], project=project), output_path, args.omit_resources)
-    if fd is not None and args.output != '-':
+    try:
+        details = dxpy.api.record_get_details(entity_result['id'])
+    except:
+        err_exit()
+
+    fd.write(json.dumps(details, indent=4))
+
+    if args.output != '-':
         fd.close()
 
+
+def get_output_path(obj_name, obj_class, args):
+    path_name = obj_name.replace('/', '%2F')
+    if args.output == '-':
+        parser.exit(3,
+                    'Error: An {} '.format(obj_class) +
+                    'cannot be dumped to stdout, please specify a directory\n')
+    output_base = args.output or '.'
+    if os.path.isdir(output_base):
+        output_path = os.path.join(output_base, path_name)
+    else:
+        output_path = output_base
+    if os.path.isfile(output_path):
+        if not args.overwrite:
+            parser.exit(3, fill('Error: path "' +
+                                output_path +
+                                '" already exists but -f/--overwrite was not set') +
+                        '\n')
+        os.unlink(output_path)
+    # Here, output_path either points to a directory or a nonexistent path
+    if not os.path.exists(output_path):
+        os.mkdir(output_path)
+    # Here, output_path points to a directory
+    if len(os.listdir(output_path)):
+        # For safety, refuse to remove an existing non-empty
+        # directory automatically.
+        parser.exit(3, fill('Error: path "' +
+                            output_path +
+                            '" already exists. Remove it and try again.') +
+                    '\n')
+    return output_path
+
+
+def get_applet(project, entity_result, args):
+    obj_name = entity_result['describe']['name']
+    obj_id = entity_result['id']
+    output_path = get_output_path(obj_name,
+                                  entity_result['describe']['class'],
+                                  args)
+    from dxpy.utils.app_unbuilder import dump_executable
+    dx_obj = dxpy.DXApplet(obj_id, project=project)
+    describe_output = dx_obj.describe(incl_properties=True,
+                                      incl_details=True)
+    dump_executable(dx_obj, output_path, describe_output=describe_output)
+
+
+def get_app(entity_result, args):
+    obj_name = None
+    if not entity_result['describe']['openSource']:
+        err_string = 'Error: can only call dx get on apps that have the openSource flag set to true'
+        parser.exit(3, err_string)
+
+    obj_name = entity_result['describe']['name']
+    obj_id = entity_result['id']
+    output_path = get_output_path(obj_name,
+                                  entity_result['describe']['class'],
+                                  args)
+    # Now output_path points to a empty directory, so we're ready to go.
+    from dxpy.utils.app_unbuilder import dump_executable
+    dx_obj = dxpy.DXApp(obj_id)
+    dump_executable(dx_obj, output_path)
+
+
+def get(args):
+    # Decide what to do based on entity's class
+    project, _folderpath, entity_result = try_call(resolve_existing_path,
+                                                   args.path,
+                                                   expected='entity')
+
+    if entity_result is None:
+        parser.exit(3,
+                    fill('Could not resolve ' +
+                         args.path +
+                         ' to a data object') + '\n')
+
+    entity_result_class = entity_result['describe']['class']
+
+    if entity_result_class == 'file':
+        download_one_file(project,
+                          entity_result['describe'],
+                          entity_result['describe']['name'],
+                          args)
+    elif entity_result_class == 'record':
+        get_record(entity_result, args)
+    elif entity_result_class == 'applet':
+        get_applet(project, entity_result, args)
+    elif entity_result_class == 'app':
+        get_app(entity_result, args)
+    else:
+        parser.exit(3,
+                    'Error: The given object is of class ' +
+                    entity_result['describe']['class'] +
+                    ' but an object of class file, record,' +
+                    ' applet or app was expected\n')
 
 def cat(args):
     for path in args.path:

@@ -34,45 +34,45 @@ import sys
 from .. import get_handler, download_dxfile
 from ..compat import open
 
-def dump_applet(applet, destination_directory, omit_resources=False):
+
+def _recursive_cleanup(foo):
     """
-    Reconstitutes applet into a directory that would create a
-    functionally identical app if "dx build" were run on it.
+    Aggressively cleans up things that look empty.
+    """
+    if isinstance(foo, dict):
+        for (key, val) in foo.items():
+            if isinstance(val, dict):
+                _recursive_cleanup(val)
+            if val == "" or val == [] or val == {}:
+                del foo[key]
+
+
+def dump_executable(executable, destination_directory, omit_resources=False, describe_output=[]):
+    """
+    Reconstitutes executable into a directory that would create a
+    functionally identical executable if "dx build" were run on it.
     destination_directory will be the root source directory for the
     applet.
 
-    :param applet: applet to be dumped
-    :type applet: DXApplet
+    :param executable: executable, i.e. app or applet,  to be dumped
+    :type executable: DXExecutable (only DXApp or DXApplet now)
     :param destination_directory: an existing, empty, and writable directory
     :type destination_directory: str
     """
-    def recursive_cleanup(foo):
-        """
-        Aggressively cleans up things that look empty.
-        """
-        if isinstance(foo, dict):
-            for (key, val) in foo.items():
-                if isinstance(val, dict):
-                    recursive_cleanup(val)
-                if val == "" or val == [] or val == {}:
-                    del foo[key]
 
     old_cwd = os.getcwd()
     os.chdir(destination_directory)
-    try:
-        info = applet.get()
 
-        # Used only to obtain properties and details for the applet--
-        # everything else comes from the result of the get() method
-        # above.
-        describe_output = applet.describe(incl_properties=True, incl_details=True)
+    try:
+        info = executable.get()
 
         if info["runSpec"]["interpreter"] == "bash":
             suffix = "sh"
         elif info["runSpec"]["interpreter"] == "python2.7":
             suffix = "py"
         else:
-            print('Sorry, I don\'t know how to get applets with interpreter ' + info["runSpec"]["interpreter"] + '\n', file=sys.stderr)
+            print('Sorry, I don\'t know how to get executables with interpreter ' +
+                  info["runSpec"]["interpreter"] + '\n', file=sys.stderr)
             sys.exit(1)
 
         # Entry point script
@@ -97,17 +97,19 @@ def dump_applet(applet, destination_directory, omit_resources=False):
                     os.unlink(fname)
                     deps_to_remove.append(dep)
 
-        # TODO: if output directory is not the same as applet name we
+        # TODO: if output directory is not the same as executable name we
         # should print a warning and/or offer to rewrite the "name"
-        # field in the dxapp.json.
+        # field in the 'dxapp.json'
         dxapp_json = collections.OrderedDict()
-        for key in ["name", "title", "summary", "types", "tags", "properties", "dxapi", "inputSpec", "outputSpec", "runSpec", "access", "details"]:
-            if key in ['properties', 'details']:
+        all_keys = executable._get_required_keys() + executable._get_optional_keys()
+        for key in all_keys:
+            if key in executable._get_describe_output_keys() and key in describe_output:
                 dxapp_json[key] = describe_output[key]
             if key in info:
                 dxapp_json[key] = info[key]
         if info.get("hidden", False):
             dxapp_json["hidden"] = True
+
         # TODO: inputSpec and outputSpec elements should have their keys
         # printed in a sensible (or at least consistent) order too
 
@@ -128,10 +130,12 @@ def dump_applet(applet, destination_directory, omit_resources=False):
         # introduce any semantic changes to the app specification. For
         # example, an empty input (output) spec is not equivalent to a
         # missing input (output) spec.
-        recursive_cleanup(dxapp_json['runSpec'])
-        recursive_cleanup(dxapp_json['access'])
-        for key in ['name', 'title', 'summary', 'types', 'tags', 'properties', 'runSpec', 'access', 'details']:
-            if not dxapp_json[key]:
+        if 'runSpec' in dxapp_json:
+            _recursive_cleanup(dxapp_json['runSpec'])
+        if 'access' in dxapp_json:
+            _recursive_cleanup(dxapp_json['access'])
+        for key in executable._get_cleanup_keys():
+            if key in dxapp_json and not dxapp_json[key]:
                 del dxapp_json[key]
 
         readme = info.get("description", "")

@@ -56,6 +56,19 @@ from ..compat import basestring
 # DXApp #
 #########
 
+_app_required_keys = ['name', 'title', 'summary', 'dxapi', 'openSource',
+                      'version', 'inputSpec', 'outputSpec', 'runSpec',
+                      'developers', 'authorizedUsers']
+
+# These are optional keys for apps, not sure what to do with them
+_app_optional_keys = ['description', 'developerNotes', 'details',
+                      'categories', 'resources', 'access']
+
+_app_describe_output_keys = []
+
+_app_cleanup_keys = ['name', 'title', 'summary', 'dxapi', 'openSource',
+                     'version', 'runSpec', 'developers', 'authorizedUsers']
+
 class DXApp(DXObject, DXExecutable):
     '''
     Remote app object handler.
@@ -352,6 +365,18 @@ class DXApp(DXObject, DXExecutable):
     def _get_run_input(self, executable_input, **kwargs):
         # May need to be changed when workflow apps are enabled
         return DXExecutable._get_run_input_fields_for_applet(executable_input, **kwargs)
+
+    def _get_required_keys(self):
+        return _app_required_keys
+
+    def _get_optional_keys(self):
+        return _app_optional_keys
+
+    def _get_describe_output_keys(self):
+        return _app_describe_output_keys
+
+    def _get_cleanup_keys(self):
+        return _app_cleanup_keys
 
     def run(self, app_input, *args, **kwargs):
         """
