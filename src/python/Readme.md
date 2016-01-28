@@ -1,11 +1,19 @@
-DNAnexus Python API
-===================
+dxpy: DNAnexus Python API
+=========================
 
-The Python library is called ```dxpy```.
+[API Documentation](http://autodoc.dnanexus.com/bindings/python/current/)
 
-Documentation is available at http://autodoc.dnanexus.com/bindings/python/current/.
+Building
+--------
 
-## Debugging
+From the dx-toolkit root directory:
+
+```
+make python
+```
+
+Debugging
+---------
 
 Set the `_DX_DEBUG` environment variable to a positive integer before
 running a dxpy-based program (such as `dx`) to display the input and
@@ -18,7 +26,9 @@ Example:
 $ _DX_DEBUG=1 dx ls
 ```
 
-## Python coding style
+Python coding style
+-------------------
+
 * Conform to [PEP-8](http://legacy.python.org/dev/peps/pep-0008/).
     * Relax the line length requirement to 120 characters per line, where you judge readability not to be compromised.
     * Relax other PEP-8 requirements at your discretion if it simplifies code or is needed to follow conventions
@@ -44,7 +54,9 @@ Other useful resources:
 
 * [Google Python style guide](http://google.github.io/styleguide/pyguide.html)
 
-## Python version compatibility
+Python version compatibility
+----------------------------
+
 Code going into the Python codebase should be written in Python 3.3 style, and should be compatible with Python 3.3, 3.4,
 and 2.7. To facilitate Python 2 compatibility, we have the compat module in https://github.com/dnanexus/dx-toolkit/blob/master/src/python/dxpy/compat.py. Also, the following boilerplate should be
 inserted into all Python source files:
@@ -67,7 +79,8 @@ Other useful resources:
 * [The Hitchhiker’s Guide to Python](http://docs.python-guide.org/en/latest/index.html)
 *  http://lucumr.pocoo.org/2013/5/21/porting-to-python-3-redux/
 
-## Convention for Python scripts that are also modules
+Convention for Python scripts that are also modules
+---------------------------------------------------
 
 Some scripts, such as format converters, are useful both as standalone executables and as importable modules.
 

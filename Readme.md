@@ -11,8 +11,8 @@ API language bindings and utilities for interacting with the DNAnexus platform.
 See https://wiki.dnanexus.com/ and http://autodoc.dnanexus.com/ for relevant
 documentation.
 
-Installing the toolkit
-----------------------
+Installing the toolkit from source
+----------------------------------
 
 First, see the section "Build dependencies" below and install the appropriate
 dependencies for your platform.
@@ -35,11 +35,11 @@ Supported languages
 
 The Platform SDK contains API language bindings for the following platforms:
 
-* Python (requires Python 2.7)
+* [Python](src/python/Readme.md) (requires Python 2.7)
 * C++
 * Perl
-* Java
-* R
+* [Java](src/java/Readme.md) (requires Java 7 or higher)
+* [R](src/R/Readme.md)
 
 Javascript support lives in a separate repo,
 [dnanexus/dx-javascript-toolkit.git](https://github.com/dnanexus/dx-javascript-toolkit).
@@ -186,89 +186,6 @@ Warning: Not all parts of the SDK are compatible with Windows. Install the follo
 
 * [MinGW](http://www.mingw.org/), including `mingw32-libz-dev`, `mingw-zip`, and [`mingw-regex`](http://sourceforge.net/projects/mingw/files/Other/UserContributed/regex/mingw-regex-2.5.1/).
 * [NSIS](http://nsis.sourceforge.net/)
-
-Java bindings
--------------
-
-The Java bindings are not built by default. See the [Java build
-documentation](src/java/Readme.md) for more info.
-
-[Javadocs](http://autodoc.dnanexus.com/bindings/java/current/) are available on
-autodoc.dnanexus.com.
-
-R bindings
-----------
-
-The R bindings (dxR) are not built by default.
-
-### Build dependencies
-
-* R (http://www.r-project.org/)
-* R Packages:
-    - RCurl
-    - RJSONIO
-
-### Building and Installing
-
-You should install the `RCurl` and `RJSONIO` packages if you have not
-already.  You can do so by running the following commands from within
-R.
-
-    > install.packages("RCurl")
-    > install.packages("RJSONIO")
-
-Next, run the following command from the command-line (outside of R)
-to install the package from source.
-
-    R CMD INSTALL dx-toolkit/src/R/dxR
-
-You can use the `-l` flag to specify a local directory in which to
-install the package if you do not have system permissions to install
-it for all users.  If taking such an approach, you should set your
-`R_LIBS` environment variable appropriately if you have not already.
-
-    export R_LIBS='/home/username/path/to/dest/library'
-    R CMD INSTALL dx-toolkit/src/R/dxR -l $R_LIBS
-
-### Using the package
-
-Once you have installed the library, you are ready to use it.  Inside
-R, just run:
-
-    library(dxR)
-
-Ruby bindings
-----------
-The Ruby package is called `dxruby`.
-
-### Build dependencies
-
-* Ruby 1.8+
-* rubygems
-* git
-
-#### Ubuntu
-Use `apt-get install rubygems git` to build with Ruby 1.8, or `apt-get install ruby1.9.3 git make` to build with Ruby 1.9.
-
-#### OS X
-On OS X, dependencies may fail to install using Apple Ruby and the XCode toolchain. Instead, use `brew install ruby` to
-install the [Homebrew](http://mxcl.github.com/homebrew/) Ruby 1.9.
-
-### Building
-
-    make ruby
-
-### Using the package
-
-The `environment` file will prepend to your `GEM_PATH` (see [Installing the toolkit](#installing-the-toolkit)). To use `dxruby`, run:
-
-```
-require 'rubygems'
-require 'dxruby'
-```
-
-In Ruby 1.9, `require 'rubygems'` is not necessary.
-
 
 Upload Agent
 ------------

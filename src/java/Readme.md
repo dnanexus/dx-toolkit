@@ -1,22 +1,14 @@
-# DNAnexus Java API
+DXJava: DNAnexus Java API
+=========================
 
-## Example:
+`DXJava` is compatible with Java 7 and higher.
 
-```java
-import com.fasterxml.jackson.core.*;
-import com.fasterxml.jackson.databind.*;
-import com.dnanexus.DXAPI;
+[API Documentation](http://autodoc.dnanexus.com/bindings/java/current/)
 
-JsonNode input = (JsonNode)(new MappingJsonFactory().createJsonParser("{}").readValueAsTree());
-JsonNode root = DXAPI.systemFindDataObjects(input);
-System.out.println(root);
-```
+[Examples of DNAnexus Platform apps written in Java](../../doc/examples/dx-java-apps)
 
-## Documentation
-
-[Javadocs](http://autodoc.dnanexus.com/bindings/java/current/)
-
-## Development
+Development
+-----------
 
 ### Build dependencies
 
@@ -28,9 +20,13 @@ From dx-toolkit, run:
 
     make && make java
 
+To create a project for Eclipse development:
+
+    cd src/java; mvn eclipse:eclipse
+
 ### Tests
 
-Ensure you  have logged  in to the  platform with a  valid token  (for example,
-using `dx login`). Then, from from dx-toolkit/src/java:
+Ensure you have logged in to the platform with a valid token (for example,
+using `dx login`). Then:
 
-    mvn test
+    cd src/java; mvn test
