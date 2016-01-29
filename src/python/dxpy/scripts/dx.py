@@ -1769,7 +1769,7 @@ def get_applet(project, entity_result, args):
 def get_app(entity_result, args):
     obj_name = None
     if not entity_result['describe']['openSource']:
-        err_string = 'Error: can only call dx get on apps that have the openSource flag set to true'
+        err_string = 'Error: can only call dx get on apps that have the openSource flag set to true\n'
         parser.exit(3, err_string)
 
     obj_name = entity_result['describe']['name']

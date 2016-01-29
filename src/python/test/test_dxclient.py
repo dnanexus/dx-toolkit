@@ -6495,7 +6495,7 @@ class TestDXGetExecutables(DXTestCase):
             # set openSource to false and now the app should not be gettable
             run("dx api {} update \'{}\'".format(new_app_id,
                                                  json.dumps({"openSource": False})))
-            with self.assertSubprocessFailure(stderr_regexp='can only call'):
+            with self.assertSubprocessFailure(stderr_regexp='can only call.*\n'):
                 run("dx get " + new_app_id)
 
 
