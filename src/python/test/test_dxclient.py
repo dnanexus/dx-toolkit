@@ -6353,7 +6353,8 @@ class TestDXGetExecutables(DXTestCase):
             os.mkdir(os.path.join('destdir_nonempty', 'get_applet'))
             with open(os.path.join('destdir_nonempty', 'get_applet', 'myfile'), 'w') as f:
                 f.write('content')
-            with self.assertSubprocessFailure(stderr_regexp='is an existing directory', exit_code=3):
+            get_applet_error = 'path "destdir_nonempty/get_applet" already exists'
+            with self.assertSubprocessFailure(stderr_regexp=get_applet_error, exit_code=3):
                 run("dx get -o destdir_nonempty get_applet")
 
             # -o dir (such that dir/applet_name is a file)
