@@ -44,7 +44,9 @@ script:
 #- test/test_dx_app_wizard_and_run_app_locally.py -v
 
 notifications:
-  email: false
+  email: true
+  flowdock:
+    secure: "YqJSb37MzklHGvHK7tQf4DL6QfgPlqQL4Dg+dEg6w+Jr4Co0bt/VpDcsiny6Bmdnyc8IAp5VZ7cAJ3XuAEyI1lOOjGCRuRjJ9rYhA3VgtH39/ZH+CYSa85h6VQ2W7aRIjAbIzw2JTba/W2PcL+34xw6OlDhQh+VC3nZW13FqmkY="
 
 env:
   global:
