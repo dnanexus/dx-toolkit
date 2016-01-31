@@ -1,4 +1,5 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+# coding: utf-8
 
 from __future__ import print_function, unicode_literals
 
@@ -6,8 +7,8 @@ import os, sys, random, hashlib, argparse, io, struct
 from flask import Flask, request, jsonify
 
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument("--host", help="Hostname to serve on", default="localhost")
-parser.add_argument("--port", help="TCP port to serve on", type=int, default=5000)
+parser.add_argument("--host", help="Hostname to serve on", default=os.environ.get("DX_APISERVER_HOST", "localhost"))
+parser.add_argument("--port", help="TCP port to serve on", type=int, default=os.environ.get("DX_APISERVER_PORT", 5000))
 args = parser.parse_args()
 
 app = Flask(__name__)
@@ -17,7 +18,7 @@ app = Flask(__name__)
 file_desc = {
     "id": "file-0123456789ABCDEF01234567",
     "class": "file",
-    "name": "test",
+    "name": "файл",
     "state": "closed"
 }
 
@@ -28,7 +29,13 @@ def set_payload():
     for i in range(1024):
         payload.write(struct.pack(b"L", random.getrandbits(64))*64*1024)
     app.payload = payload.getvalue()
-    file_desc["md5"] = hashlib.md5(app.payload).hexdigest()
+    file_desc["parts"] = {
+        "1": {
+            "state": "complete",
+            "md5": hashlib.md5(app.payload).hexdigest(),
+            "size": len(app.payload)
+        }
+    }
     file_desc["size"] = len(app.payload)
     return jsonify(dict())
 
@@ -37,7 +44,7 @@ def find_data_objects():
     results=[]
     results.append(dict(project=request.json["scope"]["project"],
                         id=file_desc["id"],
-                        describe=file_desc))
+                        describe=dict(file_desc, project=request.json["scope"]["project"])))
     return jsonify(dict(results=results, next=None))
 
 @app.route("/<resource>/listFolder", methods=["POST"])
@@ -49,9 +56,9 @@ def list_folder(resource):
 @app.route("/<resource>/describe", methods=["POST"])
 def describe(resource):
     if resource.startswith("project-") or resource.startswith("container-"):
-        return jsonify(dict(folders=[]))
+        return jsonify(dict(name="¶", folders=["/"]))
     elif resource.startswith("file-"):
-        return jsonify(file_desc)
+        return jsonify(dict(file_desc, project="project-0123456789ABCDEF01234567"))
     elif resource.startswith("job-"):
         return jsonify(dict(app="app-0123456789ABCDEF01234567"))
     else:
