@@ -26,9 +26,10 @@ import sys
 from argcomplete import warn
 from collections import namedtuple, OrderedDict
 import dxpy
-from dxpy.utils.resolver import (get_first_pos_of_char, get_last_pos_of_char, clean_folder_path, resolve_path,
-                                 split_unescaped, ResolutionError)
-from dxpy.utils.printing import fill
+from .resolver import (get_first_pos_of_char, get_last_pos_of_char, clean_folder_path, resolve_path,
+                       split_unescaped, ResolutionError)
+from .printing import fill
+from ..compat import str
 
 def startswith(text):
     return (lambda string: string.startswith(text))
@@ -231,7 +232,7 @@ def path_completer(text, expected=None, classes=None, perm_level=None,
         try:
             proj_ids, folderpath, entity_name = resolve_path(text, multi_projects=True)
         except ResolutionError as details:
-            sys.stderr.write("\n" + fill(unicode(details)))
+            sys.stderr.write("\n" + fill(str(details)))
             return matches
         for proj in proj_ids:
             # protects against dxpy.WORKSPACE_ID being garbage

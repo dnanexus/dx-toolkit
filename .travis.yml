@@ -1,29 +1,53 @@
 language: python
 
+cache:
+  directories:
+    - $HOME/.cache
+    - $HOME/.m2
+
 python:
-- '2.7'
-- '3.3'
-- '3.4'
-- pypy
-- pypy3
+  - 2.7
+  - 3.3
+  - 3.4
+  - 3.5
+  - pypy
+  - pypy3
+
+matrix:
+  include:
+    - language: generic
+      python: 2.7
+      os: osx
+
+# See https://github.com/travis-ci/travis-ci/issues/2839
+before_install:
+  - if [[ $TRAVIS_OS_NAME == osx ]]; then export JAVA_HOME=$(/usr/libexec/java_home); fi
 
 install:
-- source environment
-- make api_wrappers toolkit_version
-- pip install -r src/python/requirements_test.txt
-- cd src/python; ./setup.py install
+  - echo flake8 >> src/python/requirements_test.txt
+  - make python
+  - make java
 
 script:
-- test/test_dxpy_utils.py -v
-- test/test_dxpy.py -v
-- test/test_dxclient.py -v
-- test/test_dx_completion.py -v
-- test/test_dx_app_wizard_and_run_app_locally.py -v
-# build/run_python_integration_tests.py --tests test.test_dxpy_utils test.test_dxpy.TestDX{Project,File,Record} test.test_dxclient.TestDXClient
+  - (cd src/java; mvn -Dtest=DXJSONTest,InputAndOutputParameterTest test)
+  - source environment
+  - dx env
+  - dx help all > /dev/null
+  - dx-app-wizard --help > /dev/null
+  - dx-log-stream --help > /dev/null
+  - cd src/python
+  - test/test_dxpy_utils.py -v
+  - flake8 dxpy --exclude=templates,shlex.py,spelling_corrector.py,compat.py,pathmatch.py --ignore=E501,E302,E226,E703,E201,E202,E241,E203,E126,E123,E262,E116,E127,E261,E265,E111,E221,E402,E124,F841,E401,E231,W291,E251,E502,E301,W293,E225,E128,E303,E266,E711,E113,F401,E701,E712,E114,E702,E222,E131,E125,W391,E121,E115,F403
+#- test/test_dxpy.py -v
+#- test/test_dxclient.py -v
+#- test/test_dx_completion.py -v
+#- test/test_dx_app_wizard_and_run_app_locally.py -v
 
 notifications:
   email: false
 
 env:
   global:
-    secure: q8M16jIP5uoo9A+KFiKzPSzsHvO0SMey55upbd1v5YG3aNS3lN7Ix8qtPHbtev6uE7tW94Tn0tkIiMdVUhgfylC+nSwBAfNqEznZxq+FE3lBYnkHz5QPwEWe3DD3d8QrpknKZjc2jDWxDDELFotL5Ey7n9vSCdiE2HBQZFe7S60=
+    - DNANEXUS_INSTALL_PYTHON_TEST_DEPS=1
+
+sudo: false

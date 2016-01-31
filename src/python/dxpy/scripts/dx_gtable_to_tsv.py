@@ -18,8 +18,9 @@
 
 import os, sys, argparse, csv
 import dxpy
-from dxpy.utils.resolver import ResolutionError, resolve_existing_path
-from dxpy.utils.printing import fill
+from ..utils.resolver import ResolutionError, resolve_existing_path
+from ..utils.printing import fill
+from ..compat import str
 
 parser = argparse.ArgumentParser(description="Download a gtable into a tab-separated file.  Provide the --csv flag for commas instead of tabs.  Arbitrary gtable queries can also be provided to obtain a simple filtered subset of the gtable.")
 parser.add_argument("path", help="Path to the GTable object")
@@ -46,7 +47,7 @@ def main(**kwargs):
     try:
         project, folderpath, entity_result = resolve_existing_path(args.path, expected='entity')
     except ResolutionError as details:
-        parser.exit(1, fill(unicode(details)) + '\n')
+        parser.exit(1, fill(str(details)) + '\n')
 
     if entity_result is None:
         parser.exit(1, fill('Could not resolve ' + args.path + ' to a data object') + '\n')
@@ -86,7 +87,7 @@ def main(**kwargs):
     else:
         iterator = dxtable.iterate_rows(start=args.starting, end=(None if args.limit is None else args.starting + args.limit))
     for row in iterator:
-        writer.writerow([unicode(item).encode('utf-8') for item in row[0 if args.rowid else 1:]])
+        writer.writerow([str(item).encode('utf-8') for item in row[0 if args.rowid else 1:]])
 
 if __name__ == '__main__':
     main()

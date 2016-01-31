@@ -25,7 +25,7 @@ import random
 from contextlib import contextmanager
 
 import dxpy
-from dxpy.compat import str
+from dxpy.compat import str, USING_PYTHON2
 
 _run_all_tests = 'DXTEST_FULL' in os.environ
 TEST_ISOLATED_ENV = _run_all_tests or 'DXTEST_ISOLATED_ENV' in os.environ
@@ -254,6 +254,10 @@ def without_auth():
 
 
 class DXTestCase(unittest.TestCase):
+    if USING_PYTHON2:
+        assertRegex = unittest.TestCase.assertRegexpMatches
+        assertNotRegex = unittest.TestCase.assertNotRegexpMatches
+
     def setUp(self):
         proj_name = u"dxclient_test_pröject"
         self.project = dxpy.api.project_new({"name": proj_name})['id']

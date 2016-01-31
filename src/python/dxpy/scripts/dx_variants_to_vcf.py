@@ -19,8 +19,9 @@
 import os, sys, re, math, argparse, collections, tempfile
 
 import dxpy
-from dxpy.utils.resolver import ResolutionError, resolve_existing_path
-from dxpy.utils.printing import fill
+from ..utils.resolver import ResolutionError, resolve_existing_path
+from ..utils.printing import fill
+from ..compat import str
 
 parser = argparse.ArgumentParser(description='Export a Variants gtable into a VCF file.  WARNING: This can take a while because it downloads the entire reference genome.  It is recommended that this script only be called from within an application running on the cloud.')
 parser.add_argument("path", help="Path to the Variants gtable")
@@ -40,7 +41,7 @@ def main(**kwargs):
     try:
         project, folderpath, entity_result = resolve_existing_path(kwargs['path'], expected='entity')
     except ResolutionError as details:
-        parser.exit(1, fill(unicode(details)) + '\n')
+        parser.exit(1, fill(str(details)) + '\n')
 
     if entity_result is None:
         parser.exit(1, fill('Could not resolve ' + kwargs['path'] + ' to a data object') + '\n')
@@ -131,7 +132,7 @@ def main(**kwargs):
     for chromosome in chromosomeList:
         buff = []
         lastPosition = -1
-        query = variantsTable.genomic_range_query(chr=chromosome, lo=0, hi=sys.maxint)
+        query = variantsTable.genomic_range_query(chr=chromosome, lo=0, hi=sys.maxsize)
         for row in variantsTable.get_rows(query=query, limit=1)['data']:
             startRow =  row[0]
             for row in variantsTable.iterate_rows(start=startRow):

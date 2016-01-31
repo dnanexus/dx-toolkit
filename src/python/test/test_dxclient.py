@@ -536,21 +536,21 @@ class TestDXClient(DXTestCase):
             "(^|\n)" + re.escape(fieldname) + " +" + re.escape(value) + "(\n|$)"
 
         desc_output = run("dx describe :").strip()
-        self.assertRegexpMatches(desc_output, field_regexp("ID", self.project))
-        self.assertRegexpMatches(desc_output, field_regexp("Name", "dxclient_test_pröject"))
-        self.assertRegexpMatches(desc_output, field_regexp("Region", "aws:us-east-1"))
-        self.assertRegexpMatches(desc_output, field_regexp("Contains PHI", "false"))
-        self.assertNotRegexpMatches(desc_output, field_regexp("Archival state", "null"))
-        self.assertNotRegexpMatches(desc_output, field_regexp("Archival progress", "null"))
-        self.assertRegexpMatches(desc_output, field_regexp("Data usage", "0.00 GB"))
-        self.assertRegexpMatches(desc_output, field_regexp("Storage cost", "$0.000/month"))
-        self.assertRegexpMatches(desc_output, field_regexp("Sponsored egress", "0.00 GB used of 0.00 GB total"))
-        self.assertRegexpMatches(desc_output, field_regexp("At spending limit?", "false"))
-        self.assertRegexpMatches(desc_output, field_regexp("Properties", "-"))
+        self.assertRegex(desc_output, field_regexp("ID", self.project))
+        self.assertRegex(desc_output, field_regexp("Name", "dxclient_test_pröject"))
+        self.assertRegex(desc_output, field_regexp("Region", "aws:us-east-1"))
+        self.assertRegex(desc_output, field_regexp("Contains PHI", "false"))
+        self.assertNotRegex(desc_output, field_regexp("Archival state", "null"))
+        self.assertNotRegex(desc_output, field_regexp("Archival progress", "null"))
+        self.assertRegex(desc_output, field_regexp("Data usage", "0.00 GB"))
+        self.assertRegex(desc_output, field_regexp("Storage cost", "$0.000/month"))
+        self.assertRegex(desc_output, field_regexp("Sponsored egress", "0.00 GB used of 0.00 GB total"))
+        self.assertRegex(desc_output, field_regexp("At spending limit?", "false"))
+        self.assertRegex(desc_output, field_regexp("Properties", "-"))
 
         desc_output = run("dx describe --verbose :").strip()
-        self.assertRegexpMatches(desc_output, field_regexp("Archival state", "null"))
-        self.assertRegexpMatches(desc_output, field_regexp("Archival progress", "null"))
+        self.assertRegex(desc_output, field_regexp("Archival state", "null"))
+        self.assertRegex(desc_output, field_regexp("Archival progress", "null"))
 
     def test_dx_remove_project_by_name(self):
         # TODO: this test makes no use of the DXTestCase-provided
@@ -2339,7 +2339,7 @@ dx-jobutil-add-output record_array $second_record --array
 
         # no warning with --brief
         dx_run_output = run("dx run " + extra_perms_applet + " --priority normal --brief -y")
-        self.assertRegexpMatches(dx_run_output.strip(), '^job-[0-9a-zA-Z]{24}$')
+        self.assertRegex(dx_run_output.strip(), '^job-[0-9a-zA-Z]{24}$')
 
         # test with allProjects set but no explicit permissions to the
         # project context
@@ -3931,14 +3931,14 @@ class TestDXClientFindInOrg(DXTestCase):
         output = run(cmd.format(opts="--brief")).strip().split("\n")
         pattern = "^user-[a-zA-Z0-9]*$"
         for result in output:
-            self.assertRegexpMatches(result, pattern)
+            self.assertRegex(result, pattern)
 
         # Assert that return format is like: "<user_id> : <user_name> (<level>)"
         levels = "(?:ADMIN|MEMBER)"
         output = run(cmd.format(opts="")).strip().split("\n")
         pattern = "^user-[a-zA-Z0-9]* : .* \(" + levels + "\)$"
         for result in output:
-            self.assertRegexpMatches(result, pattern)
+            self.assertRegex(result, pattern)
 
         # Test --json output
         # TODO: Deprecate 'createProjectsAndApps'
@@ -4102,14 +4102,14 @@ class TestDXClientFindInOrg(DXTestCase):
         output = run(cmd.format(opts="--brief")).strip().split("\n")
         pattern = "^project-[a-zA-Z0-9]{24}$"
         for result in output:
-            self.assertRegexpMatches(result, pattern)
+            self.assertRegex(result, pattern)
 
         # Assert that return format is like: "<project_id><project_name><level>"
         levels = "(?:ADMINISTER|CONTRIBUTE|UPLOAD|VIEW|NONE)"
         output = run(cmd.format(opts="")).strip().split("\n")
         pattern = "^project-[a-zA-Z0-9]{24} : .* \(" + levels + "\)$"
         for result in output:
-            self.assertRegexpMatches(result, pattern)
+            self.assertRegex(result, pattern)
 
         # Test --json output
         output = json.loads(run(cmd.format(opts="--json")))
@@ -4386,7 +4386,7 @@ class TestDXClientOrg(DXTestCase):
 
     def test_org_update_format(self):
         res = run('dx update org {o}'.format(o=self.org_id)).strip()
-        self.assertRegexpMatches(res, "^Updated.*{o}$".format(o=self.org_id))
+        self.assertRegex(res, "^Updated.*{o}$".format(o=self.org_id))
 
         res = run('dx update org {o} --brief'.format(o=self.org_id)).strip()
         self.assertEqual(res, self.org_id)

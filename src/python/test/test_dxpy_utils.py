@@ -120,15 +120,19 @@ class TestEDI(DXExecDependencyInstaller):
         self.message_log.append(message)
 
 class TestDXExecDependsUtils(unittest.TestCase):
+    if USING_PYTHON2:
+        assertRegex = unittest.TestCase.assertRegexpMatches
+        assertNotRegex = unittest.TestCase.assertNotRegexpMatches
+
     def test_dx_execdepends_installer(self):
         def get_edi(run_spec, job_desc=None):
             return TestEDI(executable_desc={"runSpec": run_spec}, job_desc=job_desc if job_desc else {})
 
         def assert_cmd_ran(edi, regexp):
-            self.assertRegexpMatches("\n".join(edi.command_log), regexp)
+            self.assertRegex("\n".join(edi.command_log), regexp)
 
         def assert_log_contains(edi, regexp):
-            self.assertRegexpMatches("\n".join(edi.message_log), regexp)
+            self.assertRegex("\n".join(edi.message_log), regexp)
 
         with self.assertRaisesRegexp(AppInternalError, 'Expected field "runSpec" to be present'):
             DXExecDependencyInstaller({}, {})
@@ -188,7 +192,7 @@ class TestDXExecDependsUtils(unittest.TestCase):
         edi = get_edi({"execDepends": [{"name": "w00t", "stages": ["foo", "bar"]},
                                        {"name": "f1", "id": {"$dnanexus_link": "file-123"}, "stages": ["xyzzt"]}]})
         edi.install()
-        self.assertNotRegexpMatches("\n".join(edi.command_log), "w00t")
+        self.assertNotRegex("\n".join(edi.command_log), "w00t")
         for name in "w00t", "f1":
             assert_log_contains(edi,
                                 "Skipping dependency {} because it is inactive in stage \(function\) main".format(name))
@@ -277,7 +281,7 @@ class TestDXConfig(unittest.TestCase):
             self.assertIn("DXConfig object at", repr(c))
             c.update(c.defaults)
             self.assertEqual(len(c), len(list(c)))
-            del c[c.defaults.keys()[0]]
+            del c[list(c.defaults.keys())[0]]
             self.assertEqual(len(c), len(list(c)))
             dxpy.config["DX_PROJECT_CONTEXT_NAME"] = None
             self.assertEqual(os.environ["DX_PROJECT_CONTEXT_NAME"], "")

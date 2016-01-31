@@ -24,7 +24,7 @@ import os, json, collections, concurrent.futures, traceback, sys, time, gc
 from multiprocessing import cpu_count
 import dateutil.parser
 from .. import logger
-from ..compat import basestring
+from ..compat import basestring, THREAD_TIMEOUT_MAX
 
 
 def _force_quit(signum, frame):
@@ -42,7 +42,7 @@ def wait_for_a_future(futures, print_traceback=False):
     """
     while True:
         try:
-            future = next(concurrent.futures.as_completed(futures, timeout=sys.maxint))
+            future = next(concurrent.futures.as_completed(futures, timeout=THREAD_TIMEOUT_MAX))
             break
         except concurrent.futures.TimeoutError:
             pass
@@ -111,7 +111,7 @@ def response_iterator(request_iterator, thread_pool, max_active_tasks=None):
     def next_result(tasks_in_progress):
         future = tasks_in_progress.popleft()
         try:
-            result = future.result(timeout=sys.maxint)
+            result = future.result(timeout=THREAD_TIMEOUT_MAX)
         except KeyboardInterrupt:
             print('')
             os._exit(os.EX_IOERR)
@@ -166,7 +166,8 @@ def normalize_time_input(t, future=False, default_unit='ms'):
         except ValueError:
             try:
                 t = int(time.mktime(dateutil.parser.parse(t).timetuple())*1000)
-            except ValueError:
+                assert t > 0
+            except (ValueError, OverflowError, AssertionError):
                 raise ValueError(error_msg.format(t=t))
     elif isinstance(t, int):
         units_multipliers = {'ms': 1, 's': 1000}

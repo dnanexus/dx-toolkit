@@ -16,7 +16,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, io, locale
+import os, sys, io, locale, threading
 from io import TextIOWrapper
 from contextlib import contextmanager
 from collections import MutableMapping
@@ -41,6 +41,7 @@ if USING_PYTHON2:
     builtin_int = int
     int = long
     open = io.open
+    THREAD_TIMEOUT_MAX = sys.maxint
     def input(prompt=None):
         encoded_prompt = prompt.encode(sys_encoding)
         with unwrap_stream("stdin"), unwrap_stream("stdout"):
@@ -92,6 +93,7 @@ else:
     int = int
     open = open
     expanduser = os.path.expanduser
+    THREAD_TIMEOUT_MAX = threading.TIMEOUT_MAX
 
 def wrap_stdio_in_codecs():
     if USING_PYTHON2:
