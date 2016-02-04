@@ -81,6 +81,8 @@ elif [[ "$ostype" == 'Darwin' ]]; then # Mac OS
   for readline_egg in readline-*; do
     mv $readline_egg ${readline_egg/-macosx-10.*-intel/} || true
   done
+  # TODO: this could eventually be removed since we no longer have an
+  # easy-install.pth file
   sed -i -e 's/-py2.7-macosx-10\.[0-9]+-intel.egg/-py2.7.egg/' easy-install.pth || true
 
   cd $tempdir
