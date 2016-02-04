@@ -1,3 +1,9 @@
+dx-toolkit (0.178.1) precise; urgency=low
+
+  * dxpy: Eliminate possibility of header sharing among requests 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 04 Feb 2016 23:03:44 +0000
+
 dx-toolkit (0.178.0) precise; urgency=low
 
   * Install dxpy via wheel to avoid using pkg_resources (fixup for 87d6040)
