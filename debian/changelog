@@ -1,3 +1,22 @@
+dx-toolkit (0.179.0) precise; urgency=low
+
+  * Add a TODO to remove backwards compatibility code
+  * PTFM-15347 Native java bindings for uploading and downloading small files
+  * Travis: Enable basic tests with mock API server
+  * Travis: enable email and flowdock notifications
+  * Re-enable Travis CI in offline mode with flake8
+  * Fix fcea1ff
+  * Ensure dxpy version looks like v0.0.0 or v0.0.0+x
+  * Error about getting non-openSource apps should end in a newline
+  * dxpy: Eliminate possibility of header sharing among requests
+  * Fix test_get_applet error
+  * Remove all virtualenvs after build
+  * Move Readme content for language bindings to individual subdirectories
+  * PTFM-17064 make 'dx get' work with open source apps
+  * Java project configuration fixes
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 04 Feb 2016 22:59:37 +0000
+
 dx-toolkit (0.178.0) precise; urgency=low
 
   * Install dxpy via wheel to avoid using pkg_resources (fixup for 87d6040)
