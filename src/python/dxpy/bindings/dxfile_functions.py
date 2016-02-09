@@ -147,10 +147,6 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
     parts_to_get = sorted(parts, key=int)
     file_size = dxfile_desc.get("size")
 
-    # Warm up the download URL cache in the file handler, to avoid all
-    # worker threads trying to fetch it simultaneously
-    dxfile.get_download_url(project=project, **kwargs)
-
     offset = 0
     for part_id in parts_to_get:
         parts[part_id]["start"] = offset
@@ -202,7 +198,6 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
 
     def get_chunk(part_id_to_get, start, end):
         url, headers = dxfile.get_download_url(project=project, **kwargs)
-        headers = dict(headers)
         # If we're fetching the whole object in one shot, avoid setting the Range header to take advantage of gzip
         # transfer compression
         if len(parts) > 1 or end - start + 1 < parts[part_id_to_get]["size"]:
