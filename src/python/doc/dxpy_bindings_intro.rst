@@ -93,3 +93,10 @@ reading, writing, downloading, and uploading files.
 Though not explicitly documented in each method as such, all methods
 that interact with the API server may raise the exception
 :exc:`dxpy.exceptions.DXAPIError`.
+
+.. rubric:: Thread safety
+
+:mod:`dxpy.bindings` are designed for single threaded use, however, it
+is possible to use multiple threads on different bindings. For example,
+using two threads to modify an applet is not allowed, but using two
+threads to download two different files is allowed.
