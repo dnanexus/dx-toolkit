@@ -124,6 +124,9 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
         percent = int(round((bytes_downloaded / float(effective_file_size)) * 100))
 
         fmt = "[{done}{pending}] {action} {done_bytes:,}{remaining} bytes ({percent}%) {name}"
+        # Erase the line and return the cursor to the start of the line.
+        # The following VT100 escape sequence will erase the current line.
+        sys.stderr.write("\33[2K")
         sys.stderr.write(fmt.format(action=action,
                                     done=("=" * (ticks - 1) + ">") if ticks > 0 else "",
                                     pending=" " * (num_ticks - ticks),
