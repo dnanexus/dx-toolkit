@@ -2365,7 +2365,7 @@ def update_project(args):
     try:
         results = dxpy.api.project_update(object_id=project, input_params=input_params)
         if args.brief:
-            print (results['id'])
+            print(results['id'])
         else:
             print(results)
     except:
