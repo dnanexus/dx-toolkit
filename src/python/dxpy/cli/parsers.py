@@ -288,3 +288,22 @@ def process_instance_type_arg(args, for_workflow=False):
         else:
             # is a string
             args.instance_type = _parse_inst_type(args.instance_type)
+
+
+def get_update_project_args(args):
+    input_params = {}
+    if args.name is not None:
+        input_params["name"] = args.name
+    if args.summary is not None:
+        input_params["summary"] = args.summary
+    if args.description is not None:
+        input_params["description"] = args.description
+    if args.protected is not None:
+        input_params["protected"] = True if args.protected == 'true' else False
+    if args.restricted is not None:
+        input_params["restricted"] = True if args.restricted == 'true' else False
+    if args.containsPHI is not None:
+        input_params["containsPHI"] = True if args.containsPHI == 'true' else False
+    if args.bill_to is not None:
+        input_params["billTo"] = args.bill_to
+    return input_params

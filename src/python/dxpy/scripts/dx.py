@@ -42,7 +42,7 @@ from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_a
                            find_by_properties_and_tags_args, process_find_by_property_args, process_dataobject_args,
                            process_single_dataobject_output_args, find_executions_args, add_find_executions_search_gp,
                            set_env_from_args, extra_args, process_extra_args, DXParserError, exec_input_args,
-                           instance_type_arg, process_instance_type_arg)
+                           instance_type_arg, process_instance_type_arg, get_update_project_args)
 from ..cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
 from ..cli.org import (get_org_invite_args, add_membership, remove_membership, update_membership, new_org, update_org,
                        find_orgs, org_find_members, org_find_projects)
@@ -171,7 +171,7 @@ class DXCLICompleter():
                    'new': ['record ', 'project ', 'workflow ', 'org ', 'user '],
                    'add': ['developers ', 'users ', 'stage ', 'member '],
                    'remove': ['developers ', 'users ', 'stage ', 'member '],
-                   'update': ['stage ', 'workflow ', 'org ', 'member '],
+                   'update': ['stage ', 'workflow ', 'org ', 'member ', 'project '],
                    'org': ['projects ', 'members ']}
 
     silent_commands = set(['import'])
@@ -2352,6 +2352,25 @@ def find_apps(args):
     except:
         err_exit()
 
+
+def update_project(args):
+    input_params = get_update_project_args(args)
+
+    # The resolver expects a ':' to separate projects from folders.
+    if ':' not in args.project_id:
+        args.project_id += ':'
+
+    project, _none, _none = try_call(resolve_existing_path,
+                                     args.project_id, 'project')
+    try:
+        results = dxpy.api.project_update(object_id=project, input_params=input_params)
+        if args.brief:
+            print (results['id'])
+        else:
+            print(results)
+    except:
+        err_exit()
+
 def close(args):
     if '_DX_FUSE' in os.environ:
         from xattr import xattr
@@ -3997,6 +4016,24 @@ parser_update_member.add_argument("--app-access", choices=["true", "false"], hel
 parser_update_member.add_argument("--project-access", choices=["ADMINISTER", "CONTRIBUTE", "UPLOAD", "VIEW", "NONE"], help='The new default implicit maximum permission the specified user will receive to projects explicitly shared with the org; default CONTRIBUTE if demoting the specified user from ADMIN to MEMBER')
 parser_update_member.set_defaults(func=update_membership)
 register_parser(parser_update_member, subparsers_action=subparsers_update, categories="org")
+
+parser_update_project = subparsers_update.add_parser("project",
+                                                     help="Updates a specified project with the specified options",
+                                                     description="", prog="dx update project",
+                                                     parents=[stdout_args, env_args])
+parser_update_project.add_argument('project_id', help="Project Id or project Name")
+parser_update_project.add_argument('--name', help="New project name")
+parser_update_project.add_argument('--summary', help="Project summary")
+parser_update_project.add_argument('--description', help="Project description")
+parser_update_project.add_argument('--protected', choices=["true", "false"],
+                                   help="Whether the project should be PROTECTED")
+parser_update_project.add_argument('--restricted', choices=["true", "false"],
+                                   help="Whether the project should be RESTRICTED")
+parser_update_project.add_argument('--containsPHI', choices=["true", "false"],
+                                   help="Flag to tell if project contains PHI")
+parser_update_project.add_argument('--bill_to', help="Update the user or org ID of the billing account", type=str)
+parser_update_project.set_defaults(func=update_project)
+register_parser(parser_update_project, subparsers_action=subparsers_update, categories="metadata")
 
 parser_install = subparsers.add_parser('install', help='Install an app',
                                        description='Install an app by name.  To see a list of apps you can install, hit <TAB> twice after "dx install" or run "' + BOLD('dx find apps') + '" to see a list of available apps.', prog='dx install',
