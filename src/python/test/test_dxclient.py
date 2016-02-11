@@ -5147,6 +5147,16 @@ class TestDXClientMembership(DXTestCase):
 class TestDXClientUpdateProject(DXTestCase):
     cmd = "dx update project {pid} --{item} {n}"
 
+    def setUp(self):
+        proj_name = u"Project_name"
+        self.project = dxpy.api.project_new({"name": proj_name})['id']
+        dxpy.config["DX_PROJECT_CONTEXT_ID"] = self.project
+        cd(self.project + ":/")
+        dxpy.config.__init__(suppress_warning=True)
+        if 'DX_CLI_WD' in dxpy.config:
+            del dxpy.config['DX_CLI_WD']
+
+
     def removeQuotes(self, text):
         return text.replace("\"", "")
 
