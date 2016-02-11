@@ -1,3 +1,14 @@
+dx-toolkit (0.180.0) precise; urgency=low
+
+  * Removing a whitespace character causing flake8 to fail
+  * Fixing data egress test
+  * PTFM-16222 CLI support for updating project info
+  * Dead code removal, and multi-threading documentation
+  * Fix print_progress bug
+  * Making dxpy thread safe
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 11 Feb 2016 21:19:34 +0000
+
 dx-toolkit (0.179.0) precise; urgency=low
 
   * Add a TODO to remove backwards compatibility code
