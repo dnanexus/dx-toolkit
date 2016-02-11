@@ -30,6 +30,7 @@ from dxpy.compat import USING_PYTHON2
 
 # TODO: unit tests for dxpy.utils.get_field_from_jbor, get_job_from_jbor, is_job_ref
 
+
 class TestDescribe(unittest.TestCase):
     def test_is_job_ref(self):
         # Positive results
@@ -47,6 +48,15 @@ class TestDescribe(unittest.TestCase):
         self.assertFalse(describe.is_job_ref(jobref))
         jobref = {"$dnanexus_link": "job-B55ZF5kZKQGz1Xxyb5FQ0003"}
         self.assertFalse(describe.is_job_ref(jobref))
+
+    def test_short_timestamp(self):
+        self.assertEquals(describe.render_short_timestamp(1455225585010.046),
+                          "2016-02-11 13:19:45")
+
+    def test_timestamp(self):
+        self.assertEquals(describe.render_timestamp(1455225585010.046),
+                          "Thu Feb 11 13:19:45 2016")
+
 
 class TestErrorSanitizing(unittest.TestCase):
     def test_error_sanitizing(self):
