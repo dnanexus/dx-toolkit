@@ -135,6 +135,7 @@ from requests.auth import AuthBase
 from requests.packages import urllib3
 from requests.packages.urllib3.packages.ssl_match_hostname import match_hostname
 from .compat import USING_PYTHON2, expanduser, BadStatusLine
+from threading import Lock
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -186,10 +187,15 @@ _default_headers = requests.utils.default_headers()
 _default_headers['DNAnexus-API'] = API_VERSION
 _default_headers['User-Agent'] = USER_AGENT
 _default_timeout = urllib3.util.timeout.Timeout(connect=DEFAULT_TIMEOUT, read=DEFAULT_TIMEOUT)
-_pool_manager = None
 _RequestForAuth = namedtuple('_RequestForAuth', 'method url headers')
 _expected_exceptions = exceptions.network_exceptions + \
                        (exceptions.DXAPIError, BadStatusLine, exceptions.BadJSONInReply)
+
+# Multiple threads can ask for the pool, so we need to protect
+# access and make it thread safe.
+_pool_mutex = Lock()
+_pool_manager = None
+
 
 def _get_pool_manager(verify, cert_file, key_file):
     global _pool_manager
@@ -199,10 +205,13 @@ def _get_pool_manager(verify, cert_file, key_file):
                              headers=_default_headers,
                              timeout=_default_timeout)
     if cert_file is None and verify is None and 'DX_CA_CERT' not in os.environ:
-        if _pool_manager is None:
-            _pool_manager = urllib3.PoolManager(**default_pool_args)
-        return _pool_manager
+        with _pool_mutex:
+            if _pool_manager is None:
+                _pool_manager = urllib3.PoolManager(**default_pool_args)
+            return _pool_manager
     else:
+        # This is the uncommon case, normally, we want to cache the pool
+        # manager.
         pool_args = dict(default_pool_args,
                          cert_file=cert_file,
                          key_file=key_file,
@@ -211,6 +220,7 @@ def _get_pool_manager(verify, cert_file, key_file):
             pool_args.update(cert_reqs=ssl.CERT_NONE, ca_certs=None)
             urllib3.disable_warnings()
         return urllib3.PoolManager(**pool_args)
+
 
 def _process_method_url_headers(method, url, headers):
     if callable(url):

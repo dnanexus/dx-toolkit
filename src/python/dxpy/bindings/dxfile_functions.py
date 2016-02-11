@@ -124,6 +124,9 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
         percent = int(round((bytes_downloaded / float(effective_file_size)) * 100))
 
         fmt = "[{done}{pending}] {action} {done_bytes:,}{remaining} bytes ({percent}%) {name}"
+        # Erase the line and return the cursor to the start of the line.
+        # The following VT100 escape sequence will erase the current line.
+        sys.stderr.write("\33[2K")
         sys.stderr.write(fmt.format(action=action,
                                     done=("=" * (ticks - 1) + ">") if ticks > 0 else "",
                                     pending=" " * (num_ticks - ticks),
@@ -146,10 +149,6 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
     parts = dxfile_desc["parts"]
     parts_to_get = sorted(parts, key=int)
     file_size = dxfile_desc.get("size")
-
-    # Warm up the download URL cache in the file handler, to avoid all
-    # worker threads trying to fetch it simultaneously
-    dxfile.get_download_url(project=project, **kwargs)
 
     offset = 0
     for part_id in parts_to_get:
@@ -202,7 +201,6 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
 
     def get_chunk(part_id_to_get, start, end):
         url, headers = dxfile.get_download_url(project=project, **kwargs)
-        headers = dict(headers)
         # If we're fetching the whole object in one shot, avoid setting the Range header to take advantage of gzip
         # transfer compression
         if len(parts) > 1 or end - start + 1 < parts[part_id_to_get]["size"]:

@@ -1407,6 +1407,18 @@ class TestDXClientDownloadDataEgressBilling(DXTestCase):
         with open(self.temp_file_fd.name, "r") as fd:
             return fd.read()
 
+    # Clean testing state prior to running a download test.
+    #
+    # We need to remove the local file before downloading. The file
+    # has already been downloaded, and the 'dx download' code will
+    # skip re-downloading, causing test failure.
+    def prologue(self, file1, file2):
+        with open(self.temp_file_fd.name, "w") as fd:
+            fd.truncate()
+        for filename in [file1, file2]:
+            if os.path.exists(filename):
+                os.remove(filename)
+
     def setUp(self):
         self.temp_file_fd = tempfile.NamedTemporaryFile()
         # set output file to verify api call is called with correct project
@@ -1483,6 +1495,7 @@ class TestDXClientDownloadDataEgressBilling(DXTestCase):
             file2_id = self.gen_file(file2_name, data2, proj2.get_id()).get_id()
 
             # Success: project from context contains file specified by ID
+            self.prologue(file1_name, file2_name)
             run("dx download -f --no-progress {f}".format(f=file1_id))
             # Project context alone, when combined with file by ID, is
             # not sufficient to indicate user's intent to use that
@@ -1490,22 +1503,27 @@ class TestDXClientDownloadDataEgressBilling(DXTestCase):
             self.assertEqual(self.get_billed_project(), "")
 
             # Success: project from context contains file specified by dxlink
+            self.prologue(file1_name, file2_name)
             run("dx download -f --no-progress '{{\"$dnanexus_link\": \"{f}\"}}'".format(f=file1_id))
             self.assertEqual(self.get_billed_project(), "")
 
             # Success: project from context contains file specified by name
+            self.prologue(file1_name, file2_name)
             run("dx download -f --no-progress {f}".format(f=file1_name))
             self.assertEqual(self.get_billed_project(), proj.get_id())
 
             # Success: project specified by context does not contains file specified by ID
+            self.prologue(file1_name, file2_name)
             run("dx download -f --no-progress {f}".format(f=file2_id))
             self.assertEqual(self.get_billed_project(), "")
 
             # Success: project specified by context does not contains file specified by dxlink
+            self.prologue(file1_name, file2_name)
             run("dx download -f --no-progress '{{\"$dnanexus_link\": \"{f}\"}}'".format(f=file2_id))
             self.assertEqual(self.get_billed_project(), "")
 
             # Failure: project specified by context does not contains file specified by name
+            self.prologue(file1_name, file2_name)
             with self.assertSubprocessFailure(stderr_regexp="Unable to resolve", exit_code=3):
                 run("dx download -f --no-progress {f}".format(f=file2_name))
 
@@ -1565,18 +1583,22 @@ class TestDXClientDownloadDataEgressBilling(DXTestCase):
             # Test api call parameters when downloading to local file instead of cat to std out
 
             # Success: project specified by ID contains file specified by ID
+            self.prologue(file1_name, file2_name)
             run("dx download -f --no-progress {p}:{f}".format(p=proj2.get_id(), f=file2_id))
             self.assertEqual(self.get_billed_project(), proj2.get_id())
 
             # Success: project specified by ID contains file specified by name
+            self.prologue(file1_name, file2_name)
             run("dx download -f --no-progress {p}:{f}".format(p=proj.get_id(), f=file1_name))
             self.assertEqual(self.get_billed_project(), proj.get_id())
 
             # Success: project specified by name contains file specified by ID
+            self.prologue(file1_name, file2_name)
             run("dx download -f --no-progress {p}:{f}".format(p=proj2_name, f=file2_id))
             self.assertEqual(self.get_billed_project(), proj2.get_id())
 
             # Success: project specified by name contains file specified by name
+            self.prologue(file1_name, file2_name)
             run("dx download -f --no-progress {p}:{f}".format(p=proj1_name, f=file1_name))
             self.assertEqual(self.get_billed_project(), proj.get_id())
 
@@ -5120,6 +5142,82 @@ class TestDXClientMembership(DXTestCase):
 
         with self.assertRaises(IndexError):
             self._org_find_members(self.user_id)
+
+
+class TestDXClientUpdateProject(DXTestCase):
+    cmd = "dx update project {pid} --{item} {n}"
+
+    def removeQuotes(self, text):
+        return text.replace("\"", "")
+
+    def project_describe(self, input_params):
+        return dxpy.api.project_describe(self.project, input_params)
+
+    def test_update_strings(self):
+        update_items = {'name': 'NewProjectName',
+                        'summary': '"This is a summary"',
+                        'description': '"This is a description"'}
+
+        #Update items one by one.
+        for item in update_items:
+            run(self.cmd.format(pid=self.project, item=item, n=update_items[item]))
+            describe_input = {}
+            describe_input[item] = 'true'
+            self.assertEqual(self.project_describe(describe_input)[item],
+                             self.removeQuotes(update_items[item]))
+
+    def test_update_multiple_items(self):
+        #Test updating multiple items in a single api call
+        update_items = {'name': 'NewProjectName',
+                        'summary': '"This is new a summary"',
+                        'description': '"This is new a description"',
+                        'protected': 'false'}
+
+        cmd = "dx update project {pid} --name {name} --summary {summary} --description {desc} --protected {protect}"
+
+        run(cmd.format(pid=self.project, name=update_items['name'],
+                       summary=update_items['summary'], desc=update_items['description'],
+                       protect=update_items['protected']))
+
+        describe_input = {}
+        for item in update_items:
+            describe_input[item] = 'true'
+
+        result = self.project_describe(describe_input)
+
+        for item in update_items:
+            if item == 'protected':
+                self.assertFalse(result[item])
+            else:
+                self.assertEqual(result[item], self.removeQuotes(update_items[item]))
+
+    def test_update_project_by_name(self):
+        describe_input = {}
+        describe_input['name'] = 'true'
+
+        project_name = self.project_describe(describe_input)['name']
+        new_name = '"Another Project Name"'
+
+        run(self.cmd.format(pid=project_name, item='name', n=new_name))
+        result = self.project_describe(describe_input)
+        self.assertEqual(result['name'], self.removeQuotes(new_name))
+
+    def test_update_booleans(self):
+        update_items = {'protected': 'true',
+                        'restricted': 'true'}
+
+        for item in update_items:
+            run(self.cmd.format(pid=self.project, item=item, n=update_items[item]))
+            describe_input = {}
+            describe_input[item] = 'true'
+            self.assertTrue(self.project_describe(describe_input)[item])
+
+    def test_bill_non_existent_user(self):
+        # Test that the api returns an invalid input when giving a non existing user
+        cmd = "dx update project {pid} --bill_to user-wronguser"
+
+        with self.assertSubprocessFailure(stderr_text="InvalidInput"):
+            run(cmd.format(pid=self.project))
 
 
 @unittest.skipUnless(testutil.TEST_HTTP_PROXY,
