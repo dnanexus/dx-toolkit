@@ -669,19 +669,6 @@ class DXFile(DXDataObject):
                 raise DXFileError("Cannot read from file until it is in the closed state")
             self._file_length = int(desc["size"])
 
-        # If running on a worker, wait for the first file download chunk
-        # to come back before issuing any more requests. This ensures
-        # that all subsequent requests can take advantage of caching,
-        # rather than having all of the first DXFILE_HTTP_THREADS
-        # requests simultaneously hit a cold cache. Enforce a minimum
-        # size for this heuristic so we don't incur the overhead for
-        # tiny files (which wouldn't contribute as much to the load
-        # anyway).
-        if self._file_length > 128 * 1024 and self._pos == 0 and dxpy.JOB_ID:
-            get_first_chunk_sequentially = True
-        else:
-            get_first_chunk_sequentially = False
-
         if self._pos == self._file_length:
             return b""
 
@@ -725,18 +712,7 @@ class DXFile(DXDataObject):
                     self._request_iterator = self._generate_read_requests(
                         start_pos=self._pos, project=project, **kwargs)
 
-                if get_first_chunk_sequentially:
-                    # Make the first chunk request without using the
-                    # usual thread pool and block until it completes. On
-                    # the second chunk, we'll call
-                    # _next_response_content in the alternative block
-                    # below. This starts the threadpool going for the
-                    # second and all subsequent chunks.
-                    _callable, _args, _kwargs = next(self._request_iterator)
-                    content = _callable(*_args, **_kwargs)
-                    get_first_chunk_sequentially = False
-                else:
-                    content = self._next_response_content()
+                content = self._next_response_content()
 
                 if len(content) < remaining_len:
                     buf.write(content)
