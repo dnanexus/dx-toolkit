@@ -2769,9 +2769,9 @@ def print_run_input_help():
     print('SPECIFYING INPUTS BY NAME\n\n' + fill('Use the -i/--input flag to specify each input field by ' + BOLD('name') + ' and ' + BOLD('value') + '.', initial_indent='  ', subsequent_indent='  '))
     print('''
     Syntax :  -i<input name>=<input value>
-    Example:  dx run myApp -inum=34 -istr=ABC -igtables=reads1 -igtables=reads2
+    Example:  dx run myApp -inum=34 -istr=ABC -ifiles=reads1.fq.gz -ifiles=reads2.fq.gz
 ''')
-    print(fill('The example above runs an app called "myApp" with 3 inputs called num (class int), str (class string), and gtables (class array:gtable).  (For this method to work, the app must have an input spec so inputs can be interpreted correctly.)  The same input field can be used multiple times if the input class is an array.', initial_indent='  ', subsequent_indent='  '))
+    print(fill('The example above runs an app called "myApp" with 3 inputs called num (class int), str (class string), and files (class array:file).  (For this method to work, the app must have an input spec so inputs can be interpreted correctly.)  The same input field can be used multiple times if the input class is an array.', initial_indent='  ', subsequent_indent='  '))
     print('\n' + fill(BOLD('Job-based object references') + ' can also be provided using the <job id>:<output name> syntax:', initial_indent='  ', subsequent_indent='  '))
     print('''
     Syntax :  -i<input name>=<job id>:<output name>
@@ -3635,10 +3635,10 @@ parser_cp = subparsers.add_parser('cp', help='Copy objects and/or folders betwee
 
 EXAMPLES
 
-  ''' + fill('The first example copies a gtable in a project called "FirstProj" to the current directory of the current project.  The second example copies the object named "reads" in the current directory to the folder /folder/path in the project with ID "project-B0VK6F6gpqG6z7JGkbqQ000Q", and finally renaming it to "newname".', width_adjustment=-2, subsequent_indent='  ') + '''
+  ''' + fill('The first example copies a file in a project called "FirstProj" to the current directory of the current project.  The second example copies the object named "reads.fq.gz" in the current directory to the folder /folder/path in the project with ID "project-B0VK6F6gpqG6z7JGkbqQ000Q", and finally renaming it to "newname.fq.gz".', width_adjustment=-2, subsequent_indent='  ') + '''
 
-  $ dx cp FirstProj:gtable-B0XBQFygpqGK8ZPjbk0Q000q .
-  $ dx cp reads project-B0VK6F6gpqG6z7JGkbqQ000Q:/folder/path/newname
+  $ dx cp FirstProj:file-B0XBQFygpqGK8ZPjbk0Q000q .
+  $ dx cp reads.fq.gz project-B0VK6F6gpqG6z7JGkbqQ000Q:/folder/path/newname.fq.gz
 ''',
                                   prog='dx cp',
                                   parents=[env_args, all_arg])
@@ -3758,11 +3758,11 @@ parser_cat.set_defaults(func=cat)
 register_parser(parser_cat, categories='data')
 
 parser_head = subparsers.add_parser('head',
-                                    help='Print part of a file or gtable',
-                                    description='Print the first part of a file or a gtable.  By default, prints the first 10 lines or rows, respectively.  Additional query parameters can be provided in the case of gtables.  The output for gtables is formatted for human-readability; to print rows in a machine-readable format, see "dx export tsv".',
+                                    help='Print part of a file',
+                                    description='Print the first part of a file.  By default, prints the first 10 lines.',
                                     parents=[no_color_arg, env_args],
                                     prog='dx head')
-parser_head.add_argument('-n', '--lines', type=int, metavar='N', help='Print the first N lines or rows (default 10)',
+parser_head.add_argument('-n', '--lines', type=int, metavar='N', help='Print the first N lines (default 10)',
                          default=10)
 head_gtable_args = parser_head.add_argument_group(title='GTable-specific options')
 head_gtable_args.add_argument('-w', '--max-col-width', type=int, help='Maximum width of each column to display',
@@ -3775,7 +3775,7 @@ head_gtable_args.add_argument('--gri-mode',
 head_gtable_args.add_argument('--gri-name',
                               help='Override the default name of the Genomic Range Index (default: "gri"))',
                               default="gri")
-head_path_action = parser_head.add_argument('path', help='File or gtable ID or name to access')
+head_path_action = parser_head.add_argument('path', help='File ID or name to access')
 head_path_action.completer = DXPathCompleter(classes=['file', 'gtable'])
 parser_head.set_defaults(func=head)
 register_parser(parser_head, categories='data')
@@ -4409,7 +4409,7 @@ parser_wait.set_defaults(func=wait)
 register_parser(parser_wait, categories=('data', 'metadata', 'exec'))
 
 parser_get = subparsers.add_parser('get', help='Download records, applets, and files',
-                                   description='Download the contents of some types of data (records, applets, and files).  For gtables, see "dx export".  Downloading an applet will attempt to reconstruct a source directory that can be used to rebuild the app with "dx build".  Use "-o -" to direct the output to stdout.',
+                                   description='Download the contents of some types of data (records, applets, and files).  Downloading an applet will attempt to reconstruct a source directory that can be used to rebuild the app with "dx build".  Use "-o -" to direct the output to stdout.',
                                    prog='dx get',
                                    parents=[env_args])
 parser_get.add_argument('path', help='Data object ID or name to access').completer = DXPathCompleter(classes=['file', 'record', 'applet'])
