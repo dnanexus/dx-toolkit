@@ -3764,19 +3764,8 @@ parser_head = subparsers.add_parser('head',
                                     prog='dx head')
 parser_head.add_argument('-n', '--lines', type=int, metavar='N', help='Print the first N lines (default 10)',
                          default=10)
-head_gtable_args = parser_head.add_argument_group(title='GTable-specific options')
-head_gtable_args.add_argument('-w', '--max-col-width', type=int, help='Maximum width of each column to display',
-                              default=32)
-head_gtable_args.add_argument('--starting', type=int, help='Specify starting row ID', default=0)
-head_gtable_args.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help='Specify chromosome name, low coordinate, and high coordinate for Genomic Range Index')
-head_gtable_args.add_argument('--gri-mode',
-                              help='Specify the mode of the GRI query (\'overlap\' or \'enclose\'; default \'overlap\')',
-                              default="overlap")
-head_gtable_args.add_argument('--gri-name',
-                              help='Override the default name of the Genomic Range Index (default: "gri"))',
-                              default="gri")
 head_path_action = parser_head.add_argument('path', help='File ID or name to access')
-head_path_action.completer = DXPathCompleter(classes=['file', 'gtable'])
+head_path_action.completer = DXPathCompleter(classes=['file'])
 parser_head.set_defaults(func=head)
 register_parser(parser_head, categories='data')
 
