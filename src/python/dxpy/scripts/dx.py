@@ -174,7 +174,7 @@ class DXCLICompleter():
                    'update': ['stage ', 'workflow ', 'org ', 'member ', 'project '],
                    'org': ['projects ', 'members ']}
 
-    silent_commands = set(['import'])
+    silent_commands = set(['import', 'export'])
 
     def __init__(self):
         self.commands = [subcmd + ' ' for subcmd in subparsers.choices.keys() if subcmd not in self.silent_commands]
@@ -4679,7 +4679,7 @@ def main():
         import argcomplete
         argcomplete.autocomplete(parser,
                                  always_complete_options=False,
-                                 exclude=['import', 'gtable'],
+                                 exclude=['import', 'gtable', 'export'],
                                  output_stream=sys.stdout if '_DX_ARC_DEBUG' in os.environ else None)
 
     if len(args_list) > 0:
