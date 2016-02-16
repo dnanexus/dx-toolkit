@@ -4021,7 +4021,7 @@ parser_update_project = subparsers_update.add_parser("project",
                                                      help="Updates a specified project with the specified options",
                                                      description="", prog="dx update project",
                                                      parents=[stdout_args, env_args])
-parser_update_project.add_argument('project_id', help="Project Id or project Name")
+parser_update_project.add_argument('project_id', help="Project ID or project name")
 parser_update_project.add_argument('--name', help="New project name")
 parser_update_project.add_argument('--summary', help="Project summary")
 parser_update_project.add_argument('--description', help="Project description")
@@ -4029,9 +4029,9 @@ parser_update_project.add_argument('--protected', choices=["true", "false"],
                                    help="Whether the project should be PROTECTED")
 parser_update_project.add_argument('--restricted', choices=["true", "false"],
                                    help="Whether the project should be RESTRICTED")
-parser_update_project.add_argument('--containsPHI', choices=["true", "false"],
+parser_update_project.add_argument('--containsPHI', choices=["true"],
                                    help="Flag to tell if project contains PHI")
-parser_update_project.add_argument('--bill_to', help="Update the user or org ID of the billing account", type=str)
+parser_update_project.add_argument('--bill-to', help="Update the user or org ID of the billing account", type=str)
 parser_update_project.set_defaults(func=update_project)
 register_parser(parser_update_project, subparsers_action=subparsers_update, categories="metadata")
 
