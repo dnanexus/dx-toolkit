@@ -17,7 +17,9 @@
 package com.dnanexus;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -29,8 +31,10 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.dnanexus.DXHTTPRequest.RetryStrategy;
+import com.dnanexus.exceptions.InternalErrorException;
 import com.dnanexus.exceptions.InvalidAuthenticationException;
 import com.dnanexus.exceptions.InvalidInputException;
+import com.dnanexus.exceptions.ServiceUnavailableException;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -274,5 +278,95 @@ public class DXHTTPRequestTest {
         long timeElapsed = System.currentTimeMillis() - startTime;
         Assert.assertTrue(50000 <= timeElapsed);
         Assert.assertTrue(timeElapsed <= 70000);
+    }
+
+    /**
+     * Tests retry logic is disabled following 503 Service Unavailable error.
+     */
+    @Test
+    public void testRetryDisabledAfterServiceUnavailable() {
+        // Create environment that disables retry logic with 503
+        DXEnvironment env = DXEnvironment.Builder.fromDefaults().disableRetry().build();
+
+        // Check that retry really is disabled
+        Assert.assertTrue(env.isRetryDisabled());
+
+        boolean thrown = false;
+        long startTime = System.currentTimeMillis();
+        long serverTime = getServerTime();
+        try {
+            new DXHTTPRequest(env).request("/system/comeBackLater",
+                    mapper.valueToTree(new ComeBackLaterRequest(serverTime + 8000)),
+                    RetryStrategy.SAFE_TO_RETRY);
+        } catch (ServiceUnavailableException e) {
+            thrown = true;
+            long timeElapsed = System.currentTimeMillis() - startTime;
+            Assert.assertTrue(timeElapsed < 2500);
+        }
+
+        Assert.assertTrue(thrown);
+    }
+
+    /**
+     * Tests retry logic is disabled following a 5xx Internal Error.
+     */
+    @Test
+    public void testRetryDisabledAfterInternalError() {
+        // Create environment that disables retry logic with 5xx error
+        DXEnvironment env = DXEnvironment.Builder.fromDefaults().disableRetry().build();
+
+        // Check that retry really is disabled
+        Assert.assertTrue(env.isRetryDisabled());
+
+        boolean thrown = false;
+        long startTime = System.currentTimeMillis();
+        Map<String, String> errorType = new HashMap<String, String>();
+        errorType.put("errorType", "Error not decodeable");
+        JsonNode input = DXObject.MAPPER.valueToTree(errorType);
+        try {
+            new DXHTTPRequest(env).request("/system/fakeError", input, RetryStrategy.SAFE_TO_RETRY);
+        } catch (InternalErrorException e) {
+            thrown = true;
+            long timeElapsed = System.currentTimeMillis() - startTime;
+            Assert.assertTrue(timeElapsed < 2500);
+            Assert.assertEquals(501, e.getStatusCode());
+        }
+
+        Assert.assertTrue(thrown);
+    }
+
+    /**
+     * Tests that disabling the retry logic does not change the behavior of a 4xx error.
+     * @throws IOException
+     */
+    @Test
+    public void testRetryDisabledDoesNotAffectError() throws IOException {
+        // Create environment that disables retry logic with 4xx error
+        DXEnvironment env = DXEnvironment.Builder.fromDefaults().disableRetry().setBearerToken("BOGUS").build();
+
+        // Check that retry really is disabled
+        Assert.assertTrue(env.isRetryDisabled());
+
+        boolean thrown = false;
+        long startTime = System.currentTimeMillis();
+
+        // Tests deserialization of InvalidAuthentication
+        DXHTTPRequest c = new DXHTTPRequest(env);
+        try {
+            c.request("/system/findDataObjects", DXJSON.parseJson("{}"),
+                    RetryStrategy.SAFE_TO_RETRY);
+            Assert.fail("Expected findDataObjects to fail with InvalidAuthentication");
+        } catch (InvalidAuthenticationException e) {
+            thrown = true;
+            long timeElapsed = System.currentTimeMillis() - startTime;
+            Assert.assertTrue(timeElapsed < 2500);
+
+            // Error message should be something like
+            // "the token could not be found"
+            Assert.assertTrue(e.toString().contains("token"));
+            Assert.assertEquals(401, e.getStatusCode());
+        }
+
+        Assert.assertTrue(thrown);
     }
 }

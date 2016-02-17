@@ -31,6 +31,8 @@ import org.apache.http.util.EntityUtils;
 
 import com.dnanexus.exceptions.DXAPIException;
 import com.dnanexus.exceptions.DXHTTPException;
+import com.dnanexus.exceptions.InternalErrorException;
+import com.dnanexus.exceptions.ServiceUnavailableException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -73,19 +75,6 @@ public class DXHTTPRequest {
     }
 
     /**
-     * Internal exception used to indicate that the request yielded 503 Service Unavailable and
-     * suggested that we retry at some point in the future.
-     */
-    @SuppressWarnings("serial")
-    private static class ServiceUnavailableException extends Exception {
-        private final int secondsToWaitForRetry;
-
-        public ServiceUnavailableException(int secondsToWaitForRetry) {
-            this.secondsToWaitForRetry = secondsToWaitForRetry;
-        }
-    }
-
-    /**
      * Sleeps for the specified amount of time. Throws a {@link RuntimeException} if interrupted.
      *
      * @param seconds number of seconds to sleep for
@@ -103,6 +92,8 @@ public class DXHTTPRequest {
     private final String apiserver;
 
     private final HttpClient httpclient;
+
+    private final boolean disableRetry;
 
     private static final int NUM_RETRIES = 6;
 
@@ -133,6 +124,7 @@ public class DXHTTPRequest {
     public DXHTTPRequest(DXEnvironment env) {
         this.securityContext = env.getSecurityContextJson();
         this.apiserver = env.getApiserverPath();
+        this.disableRetry = env.isRetryDisabled();
         this.httpclient = HttpClientBuilder.create().setUserAgent(USER_AGENT).build();
     }
 
@@ -215,9 +207,15 @@ public class DXHTTPRequest {
      *         other than 200 (OK).
      * @throws DXHTTPException If an error occurs while making the HTTP request or obtaining the
      *         response (includes HTTP protocol errors).
+     * @throws InternalError If the server returns an HTTP status code 500 and the environment
+     *         specifies that retries are disabled.
+     * @throws ServiceUnavailableException If the server returns an HTTP status code 503 and
+     *         indicates that the client should retry the request at a later time, and the
+     *         environment specifies that retries are disabled.
      */
     private ParsedResponse requestImpl(String resource, String data, boolean parseResponse,
             RetryStrategy retryStrategy) {
+
         HttpPost request = new HttpPost(apiserver + resource);
 
         if (securityContext == null || securityContext.isNull()) {
@@ -235,6 +233,8 @@ public class DXHTTPRequest {
         int attempts = 0;
 
         while (true) {
+            Integer statusCode = null;
+
             // This guarantees that we get at least one iteration around this loop before running
             // out of retries, so we can check at the bottom of the loop instead of the top.
             assert NUM_RETRIES > 0;
@@ -243,6 +243,7 @@ public class DXHTTPRequest {
             // may update this to unconditionally retry if we can definitely determine that the
             // server never saw the request.
             boolean retryRequest = (retryStrategy == RetryStrategy.SAFE_TO_RETRY);
+            int retryAfterSeconds = 60;
 
             try {
                 // In this block, any IOException will cause the request to be retried (up to a
@@ -254,10 +255,12 @@ public class DXHTTPRequest {
                 // only be retried if the request is idempotent.
                 HttpResponse response = httpclient.execute(request);
 
-                int statusCode = response.getStatusLine().getStatusCode();
+                statusCode = response.getStatusLine().getStatusCode();
                 HttpEntity entity = response.getEntity();
 
-                if (statusCode == HttpStatus.SC_OK) {
+                if (statusCode == null) {
+                    throw new DXHTTPException();
+                } else if (statusCode == HttpStatus.SC_OK) {
                     // 200 OK
                     byte[] value = EntityUtils.toByteArray(entity);
                     int realLength = value.length;
@@ -320,10 +323,15 @@ public class DXHTTPRequest {
 
                     throw DXAPIException.getInstance(errorType, errorMessage, statusCode);
                 } else {
-                    // 500 InternalError should get retried unconditionally
+                    // Propagate 500 error to caller
+                    if (this.disableRetry && statusCode != 503) {
+                        System.err.println("POST " + resource + ": " + statusCode + " Internal Server Error, try "
+                                + String.valueOf(attempts + 1) + "/" + NUM_RETRIES);
+                        throw new InternalErrorException("Internal Server Error", statusCode);
+                    }
+                    // If retries enabled, 500 InternalError should get retried unconditionally
                     retryRequest = true;
                     if (statusCode == 503) {
-                        int retryAfterSeconds = 60;
                         Header retryAfterHeader = response.getFirstHeader("retry-after");
                         // Consume the response to avoid leaking resources
                         EntityUtils.consume(entity);
@@ -334,14 +342,21 @@ public class DXHTTPRequest {
                                 // Just fall back to the default
                             }
                         }
-                        throw new ServiceUnavailableException(retryAfterSeconds);
+                        throw new ServiceUnavailableException("503 Service Unavailable", statusCode, retryAfterSeconds);
                     }
                     throw new IOException(EntityUtils.toString(entity));
                 }
             } catch (ServiceUnavailableException e) {
+                int secondsToWait = retryAfterSeconds;
+
+                if (this.disableRetry) {
+                    System.err.println("POST " + resource + ": 503 Service Unavailable, suggested wait "
+                            + secondsToWait + " seconds");
+                    throw e;
+                }
+
                 // Retries due to 503 Service Unavailable and Retry-After do NOT count against the
                 // allowed number of retries.
-                int secondsToWait = e.secondsToWaitForRetry;
                 System.err.println("POST " + resource + ": 503 Service Unavailable, waiting for "
                         + Integer.toString(secondsToWait) + " seconds");
                 sleep(secondsToWait);
@@ -353,7 +368,11 @@ public class DXHTTPRequest {
                 System.err.println(errorMessage("POST", resource, e.toString(), timeoutSeconds,
                         attempts + 1, NUM_RETRIES));
                 if (attempts == NUM_RETRIES || !retryRequest) {
-                    throw new DXHTTPException(e);
+                    if (statusCode == null) {
+                        throw new DXHTTPException();
+                    }
+                    throw new InternalErrorException("Maximum number of retries reached, or unsafe to retry",
+                            statusCode);
                 }
             }
 

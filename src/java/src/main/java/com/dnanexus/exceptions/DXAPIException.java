@@ -27,6 +27,12 @@ import com.google.common.collect.Maps;
 public class DXAPIException extends RuntimeException {
 
     private static enum ApiExceptionClass {
+        InternalError("InternalError") {
+          @Override
+          DXAPIException generateException(String message, int statusCode) {
+              return new InternalErrorException(message, statusCode);
+          }
+        },
         InvalidAuthentication("InvalidAuthentication") {
             @Override
             DXAPIException generateException(String message, int statusCode) {
@@ -61,6 +67,12 @@ public class DXAPIException extends RuntimeException {
             @Override
             DXAPIException generateException(String message, int statusCode) {
                 return new ResourceNotFoundException(message, statusCode);
+            }
+        },
+        ServiceUnavailableException("ServiceUnavailable") {
+            @Override
+            DXAPIException generateException(String message, int statusCode) {
+                return new ServiceUnavailableException(message, statusCode);
             }
         },
         SpendingLimitExceeded("SpendingLimitExceeded") {

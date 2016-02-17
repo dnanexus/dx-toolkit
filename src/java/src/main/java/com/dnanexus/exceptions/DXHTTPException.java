@@ -32,6 +32,13 @@ public class DXHTTPException extends RuntimeException {
         super(cause);
     }
 
+    /**
+     * Initializes a new {@code DXHTTPException}.
+     */
+    public DXHTTPException() {
+        super("Error occurred while making HTTP request");
+    }
+
     private static final long serialVersionUID = -6944363469302926283L;
 
 }
