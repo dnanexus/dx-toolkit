@@ -1,3 +1,15 @@
+dx-toolkit (0.181.0) precise; urgency=low
+
+ * Unadvertised GTable features and updated helpstrings
+
+ * Allow disabling Retry Logic for all 5xx errors
+
+ * Generate source jar during the verify phase for easy publishing
+
+ * Thread safety improvements for dx
+
+ -- Phil Sung <psung@dnanexus.com>  Thu, 18 Feb 2016 19:30:03 +0000
+
 dx-toolkit (0.180.0) precise; urgency=low
 
   * Removing a whitespace character causing flake8 to fail
