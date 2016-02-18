@@ -104,7 +104,7 @@ if not os.path.isdir(args.workspace_path):
     parser.exit(1,
                 fill('Error: The path to be used for job home directories is not a directory') + '\n')
 
-job_homedirs = os.path.join(args.workspace_path, datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'))
+job_homedirs = os.path.join(args.workspace_path, datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S-%f'))
 os.mkdir(job_homedirs)
 all_job_outputs_path = os.path.join(job_homedirs, 'job_outputs.json')
 with open(all_job_outputs_path, 'w') as fd:
