@@ -1,3 +1,9 @@
+dx-toolkit (0.180.1) precise; urgency=low
+
+  * Fixes for PTFM-16222
+
+ -- Phil Sung <psung@dnanexus.com>  Thu, 18 Feb 2016 19:31:27 +0000
+
 dx-toolkit (0.180.0) precise; urgency=low
 
   * Removing a whitespace character causing flake8 to fail
