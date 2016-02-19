@@ -6491,6 +6491,46 @@ class TestDXGetExecutables(DXTestCase):
             self.assertTrue(os.path.exists("destfile"))
             self.assertTrue(os.path.exists(os.path.join("destfile", "dxapp.json")))
 
+    def test_get_applet_omit_resources(self):
+        # TODO: not sure why self.assertEqual doesn't consider
+        # assertEqual to pass unless the strings here are unicode strings
+        app_spec = {
+            "name": "get_applet",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [{"name": "in1", "class": "file"}],
+            "outputSpec": [{"name": "out1", "class": "file"}],
+            "description": "Description\n",
+            "developerNotes": "Developer notes\n",
+            "types": ["Foo"],
+            "tags": ["bar"],
+            "properties": {"sample_id": "123456"},
+            "details": {"key1": "value1"},
+            }
+        # description and developerNotes should be un-inlined back to files
+        output_app_spec = dict((k, v) for (k, v) in app_spec.iteritems() if k not in ('description',
+                                                                                      'developerNotes'))
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7"}
+
+        app_dir = self.write_app_directory("get_åpplet", json.dumps(app_spec), "code.py",
+                                           code_content="import os\n")
+        os.mkdir(os.path.join(app_dir, "resources"))
+        with open(os.path.join(app_dir, "resources", "resources_file"), 'w') as f:
+            f.write('content\n')
+        new_applet_id = json.loads(run("dx build --json " + app_dir))["id"]
+        with chdir(tempfile.mkdtemp()):
+            run("dx get --omit-resources " + new_applet_id)
+            self.assertFalse(os.path.exists(os.path.join("get_applet", "dxapp.json")))
+
+            output_json = json.load(open(os.path.join("get_applet", "dxapp.json")))
+            self.assertTrue("bundledDepends" in output_json["runSpec"])
+            seenResources = False
+            for bd in output_json["runSpec"]["bundledDepends"]:
+                if bd["name"] == "resources.tar.gz":
+                    seenResources = True
+                    break
+            self.assertTrue(seenResources)
+
     def test_get_applet_field_cleanup(self):
         # TODO: not sure why self.assertEqual doesn't consider
         # assertEqual to pass unless the strings here are unicode strings
