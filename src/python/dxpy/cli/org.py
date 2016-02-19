@@ -74,7 +74,7 @@ def add_membership(args):
     except:
         pass
     else:
-        raise DXCLIError("Cannot add a user who is already a member of the org")
+        raise DXCLIError("Cannot add a user who is already a member of the org. To update an existing member's permissions, use 'dx update member'")
 
     dxpy.api.org_invite(args.org_id, get_org_invite_args(user_id, args))
 
