@@ -67,43 +67,6 @@ toolkit that doesn't require them.
       autoconf
     sudo pip install --upgrade virtualenv
 
-### Ubuntu 10.04
-
-Install Python2.7. Python 2.7 is not available natively on Ubuntu 10.04, but
-Felix Krull maintains the [deadsnakes
-PPA](https://launchpad.net/~fkrull/+archive/deadsnakes), which includes a build
-for Ubuntu 10.04. You can install Python from there as follows (as root):
-
-    echo "deb http://ppa.launchpad.net/fkrull/deadsnakes/ubuntu lucid main" > /etc/apt/sources.list.d/deadsnakes.list
-    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5BB92C09DB82666C
-    apt-get install --yes python2.7 python-pip python-setuptools-deadsnakes
-    pip-2.7 install virtualenv
-
-Since this repo doesn't contain the Python C headers, you will need to remove
-the following compiled modules from the dependencies.
-
-    sed -i -e '/psutil/ d' src/python/requirements.txt
-    sed -i -e '/xattr/ d' src/python/requirements_dxfs.txt
-
-The `xattr` module in particular is needed for the FUSE module. To use the
-features provided by these modules on Ubuntu 10.04, you will need to arrange
-for one of the following:
-
-* Install the Python 2.7 C headers, and then skip the `sed` steps above to
-  allow the affected modules to be built from source.
-* Install the affected modules (`psutil` and `xattr`) in binary form.
-
-Install boost 1.48 or higher (at least the `filesystem`,
-`program_options`, `regex`, `system` and `thread` libraries). This
-version of boost is not available natively on Ubuntu 10.04. You can use
-the script `build/lucid_install_boost.sh`, which installs it into
-`/usr/local/lib`.
-
-The following additional dependencies are also needed:
-
-    sudo apt-get install make g++ cmake libcurl4-openssl-dev zlib1g-dev \
-      libbz2-dev flex bison autoconf
-
 ### Fedora
 
     yum install gcc gcc-c++ automake bison flex python python-pip \
