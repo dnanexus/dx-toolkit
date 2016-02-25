@@ -516,10 +516,10 @@ class DXFile(DXDataObject):
         if report_progress_fn is not None:
             report_progress_fn(self, len(data))
 
-    def get_download_url(self, duration=24*3600, preauthenticated=False, filename=None, project=None, **kwargs):
+    def get_download_url(self, duration=None, preauthenticated=False, filename=None, project=None, **kwargs):
         """
         :param duration: number of seconds for which the generated URL will be
-            valid
+            valid, should only be specified when preauthenticated is True
         :type duration: int
         :param preauthenticated: if True, generates a 'preauthenticated'
             download URL, which embeds authentication info in the URL and does
@@ -551,7 +551,10 @@ class DXFile(DXDataObject):
                 if project is not None:
                     fd.write(project)
 
-        args = {"duration": duration, "preauthenticated": preauthenticated}
+        args = {"preauthenticated": preauthenticated}
+
+        if duration is not None:
+            args["duration"] = duration
         if filename is not None:
             args["filename"] = filename
         if project is not None:
@@ -572,7 +575,10 @@ class DXFile(DXDataObject):
                 resp = dxpy.api.file_download(self._dxid, args, **kwargs)
                 self._download_url = resp["url"]
                 self._download_url_headers = resp.get("headers", {})
-                self._download_url_expires = time.time() + duration - 60   # Try to account for drift
+                if preauthenticated:
+                    self._download_url_expires = resp["expires"]/1000 - 60  # Try to account for drift
+                else:
+                    self._download_url_expires = time.mktime(time.strptime("3000", "%Y"))  # doesn't expire (year 3000)
 
             # Make a copy, ensuring each thread has its own mutable
             # version of the headers.  Note: python strings are
