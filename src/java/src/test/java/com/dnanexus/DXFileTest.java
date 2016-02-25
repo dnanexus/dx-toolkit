@@ -17,7 +17,6 @@
 package com.dnanexus;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Random;
@@ -237,7 +236,7 @@ public class DXFileTest {
     }
 
     @Test
-    public void testUploadDownloadEmpty() {
+    public void testUploadDownloadEmpty() throws IOException {
         // Upload bytes, download bytes
         byte[] uploadBytes = new byte[0];
 
@@ -254,8 +253,8 @@ public class DXFileTest {
         f = DXFile.newFile().setProject(testProject).build();
         f.upload(uploadStream);
         f.closeAndWait();
-        ByteArrayOutputStream baos = (ByteArrayOutputStream) f.downloadStream();
-        byte[] bytesFromDownloadStream = baos.toByteArray();
+
+        byte[] bytesFromDownloadStream = IOUtils.toByteArray(f.downloadStream());
 
         Assert.assertArrayEquals(uploadBytes, bytesFromDownloadStream);
     }
@@ -303,7 +302,7 @@ public class DXFileTest {
     }
 
     @Test
-    public void testUploadStreamDownloadStream() {
+    public void testUploadStreamDownloadStream() throws IOException {
         // With string data
         String uploadData = "Test";
         InputStream uploadStream = IOUtils.toInputStream(uploadData);
@@ -311,14 +310,12 @@ public class DXFileTest {
         DXFile f = DXFile.newFile().setProject(testProject).build();
         f.upload(uploadStream);
         f.closeAndWait();
-        ByteArrayOutputStream baos = (ByteArrayOutputStream) f.downloadStream();
-        byte[] bytesFromDownloadStream = baos.toByteArray();
+        byte[] bytesFromDownloadStream = IOUtils.toByteArray(f.downloadStream());
 
         Assert.assertArrayEquals(uploadData.getBytes(), bytesFromDownloadStream);
 
         // Download again
-        baos = (ByteArrayOutputStream) f.downloadStream();
-        bytesFromDownloadStream = baos.toByteArray();
+        bytesFromDownloadStream = IOUtils.toByteArray(f.downloadStream());
         Assert.assertArrayEquals(uploadData.getBytes(), bytesFromDownloadStream);
     }
 

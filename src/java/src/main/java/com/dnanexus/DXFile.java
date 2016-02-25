@@ -17,10 +17,8 @@
 package com.dnanexus;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Map;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -394,16 +392,8 @@ public class DXFile extends DXDataObject {
      *
      * @return stream containing file contents
      */
-    public OutputStream downloadStream() {
-        byte[] dataBytes = this.downloadBytes();
-        OutputStream data = new ByteArrayOutputStream(dataBytes.length);
-        try {
-            data.write(dataBytes, 0, dataBytes.length);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        return data;
+    public InputStream downloadStream() {
+        return new ByteArrayInputStream(this.downloadBytes());
     }
 
     @Override
