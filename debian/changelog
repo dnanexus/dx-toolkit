@@ -1,3 +1,11 @@
+dx-toolkit (0.182.0) precise; urgency=low
+
+  * Add more informative error message for `dx add member`
+  * Remove Ubuntu 10.04 support
+  * Adding the microseconds to the temporary directory used by dx-run-app-locally. This helps avoids race conditions 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 25 Feb 2016 00:16:26 +0000
+
 dx-toolkit (0.181.0) precise; urgency=low
 
  * Unadvertised GTable features and updated helpstrings
