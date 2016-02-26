@@ -532,7 +532,21 @@ class TestDXJobutilNewJob(DXTestCase):
     def tearDownClass(cls):
         dxpy.api.project_destroy(cls.aux_project.get_id(), {})
 
-    def test_dx_jobutil_new_job(self):
+    def assertNewJobInputHash(self, cmd_snippet, arguments_hash):
+        cmd = "dx-jobutil-new-job entrypointname " + cmd_snippet + " --test"
+        expected_job_input = {"function": "entrypointname", "input": {}}
+        env = override_environment(DX_JOB_ID="job-000000000000000000000001", DX_WORKSPACE_ID=self.project)
+        output = run(cmd, env=env)
+        expected_job_input.update(arguments_hash)
+        self.assertEqual(json.loads(output), expected_job_input)
+
+    def assertNewJobError(self, cmd_snippet, exit_code):
+        cmd = "dx-jobutil-new-job entrypointname " + cmd_snippet + " --test"
+        env = override_environment(DX_JOB_ID="job-000000000000000000000001", DX_WORKSPACE_ID=self.project)
+        with self.assertSubprocessFailure(exit_code=exit_code):
+            run(cmd, env=env)
+
+    def test_input(self):
         first_record = dxpy.new_dxrecord(name="first_record")
         second_record = dxpy.new_dxrecord(name="second_record")
         dxpy.new_dxrecord(name="duplicate_name_record")
@@ -589,9 +603,6 @@ class TestDXJobutilNewJob(DXTestCase):
             ("-ifoo:string=first_record", {"foo": "first_record"}),
             ('-ifoo:hash=\'{"a": "b"}\'', {"foo": {"a": "b"}}),
             ('-ifoo:hash=\'["a", "b"]\'', {"foo": ["a", "b"]}),
-            ("-ifoo:file=first_record", None),  # Error
-            ("-ifoo:int=foo", None),  # Error
-            ("-ifoo:int=24.5", None),  # Error
 
             # Array inputs
 
@@ -610,17 +621,56 @@ class TestDXJobutilNewJob(DXTestCase):
             ("-ifoo:array:int=24", {"foo": 24}),
             ("-ifoo:array:record=first_record", {"foo": dxpy.dxlink(first_record.get_id(), self.project)}),
         )
-        env = override_environment(DX_JOB_ID="job-000000000000000000000001",
-                                   DX_WORKSPACE_ID=self.project)
-        for cmd_snippet, expected_input_hash in test_cases:
-            cmd = "dx-jobutil-new-job " + cmd_snippet + " entrypointname --test"
-            if expected_input_hash is None:
-                with self.assertSubprocessFailure(exit_code=1):
-                    run(cmd, env=env)
-            else:
-                output = run(cmd, env=env)
-                self.assertEqual(json.loads(output), {"input": expected_input_hash, "function": "entrypointname"})
 
+        for cmd_snippet, expected_input_hash in test_cases:
+            arguments_hash = {"input": expected_input_hash}
+            self.assertNewJobInputHash(cmd_snippet, arguments_hash)
+
+    def test_bad_input(self):
+        # testing some erroneous input
+        self.assertNewJobError("-ifoo:file=first_record", 1)
+        self.assertNewJobError("-ifoo:int=foo", 1)
+        self.assertNewJobError("-ifoo:int=24.5", 1)
+
+    def test_job_arguments(self):
+        test_arguments = (
+            # name - string
+            ("--name JobName", {"name": "JobName"}),
+            # depends-on - array of strings
+            ("--depends-on foo bar baz", {"dependsOn": ["foo", "bar", "baz"]}),
+            # instance type: single instance - string
+            ("--instance-type foo_bar_baz", {"systemRequirements": "foo_bar_baz"}),
+            # instance type: mapping
+            ("--instance-type " +
+                pipes.quote(json.dumps({"main": "mem2_hdd2_x2", "other_function": "mem2_hdd2_x1"})),
+                {"systemRequirements": {"main": "mem2_hdd2_x2", "other_function": "mem2_hdd2_x1"}}),
+            # properties - mapping
+            ("--property foo=foo_value --property bar=bar_value",
+                {"properties": {"foo": "foo_value", "bar": "bar_value"}}),
+            # tags - array of strings
+            ("--tag foo --tag bar --tag baz", {"tags": ["foo", "bar", "baz"]}),
+        )
+        for cmd_snippet, arguments_hash in test_arguments:
+            self.assertNewJobInputHash(cmd_snippet, arguments_hash)
+
+    def test_extra_arguments(self):
+        cmd_snippet = "--extra-args " + pipes.quote(
+            json.dumps({"details": {"d1": "detail1", "d2": 1234}, "foo": "foo_value"}))
+        arguments_hash = {"details": {"d1": "detail1", "d2": 1234}, "foo": "foo_value"}
+        self.assertNewJobInputHash(cmd_snippet, arguments_hash)
+
+        # override previously specified args
+        cmd_snippet = "--name JobName --extra-args " + pipes.quote(json.dumps({"name": "FinalName"}))
+        arguments_hash = {"name": "FinalName"}
+        self.assertNewJobInputHash(cmd_snippet, arguments_hash)
+
+    def test_bad_arguments(self):
+        # empty name
+        self.assertNewJobError("--name", exit_code=2)
+        # property not in key=value format
+        self.assertNewJobError("--property foo", exit_code=3)
+        # extra-args not in key=value format
+        self.assertNewJobError("--extra-args argument", exit_code=3)
 
 if __name__ == '__main__':
     unittest.main()

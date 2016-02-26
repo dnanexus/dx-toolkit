@@ -260,6 +260,23 @@ instance_type_arg.add_argument('--instance-type-help',
                                help=fill('Print help for specifying instance types'),
                                action=PrintInstanceTypeHelp)
 
+property_args = argparse.ArgumentParser(add_help=False)
+property_args.add_argument('--property', dest='properties', metavar='KEY=VALUE',
+                           help=(fill('Key-value pair to add as a property; repeat as necessary,',
+                                      width_adjustment=-24) + '\n' +
+                                 fill('e.g. "--property key1=val1 --property key2=val2"',
+                                      width_adjustment=-24, initial_indent=' ', subsequent_indent=' ',
+                                      break_on_hyphens=False)),
+                           action='append')
+
+tag_args = argparse.ArgumentParser(add_help=False)
+tag_args.add_argument('--tag', metavar='TAG', dest='tags',
+                      help=fill('Tag for the resulting execution; repeat as necessary,', width_adjustment=-24) + '\n' +
+                      fill('e.g. "--tag tag1 --tag tag2"', width_adjustment=-24,
+                           break_on_hyphens=False, initial_indent=' ', subsequent_indent=' '),
+                      action='append')
+
+
 def _parse_inst_type(thing):
     if thing.strip().startswith('{'):
         try:
@@ -268,6 +285,7 @@ def _parse_inst_type(thing):
             raise DXCLIError("Error while parsing JSON value for --instance-type")
     else:
         return thing
+
 
 def process_instance_type_arg(args, for_workflow=False):
     if args.instance_type:

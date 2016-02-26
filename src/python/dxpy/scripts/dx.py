@@ -42,7 +42,8 @@ from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_a
                            find_by_properties_and_tags_args, process_find_by_property_args, process_dataobject_args,
                            process_single_dataobject_output_args, find_executions_args, add_find_executions_search_gp,
                            set_env_from_args, extra_args, process_extra_args, DXParserError, exec_input_args,
-                           instance_type_arg, process_instance_type_arg, get_update_project_args)
+                           instance_type_arg, process_instance_type_arg, get_update_project_args,
+                           property_args, tag_args)
 from ..cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
 from ..cli.org import (get_org_invite_args, add_membership, remove_membership, update_membership, new_org, update_org,
                        find_orgs, org_find_members, org_find_projects)
@@ -4060,7 +4061,7 @@ parser_run = subparsers.add_parser('run', help='Run an applet, app, or workflow'
                                    prog='dx run',
                                    formatter_class=argparse.RawTextHelpFormatter,
                                    parents=[exec_input_args, stdout_args, env_args, extra_args,
-                                            instance_type_arg])
+                                            instance_type_arg, property_args, tag_args])
 run_executable_action = parser_run.add_argument('executable',
                                                 help=fill('Name or ID of an applet, app, or workflow to run; must be provided if --clone is not set', width_adjustment=-24),
                                                 nargs="?", default="")
@@ -4104,14 +4105,6 @@ parser_run.add_argument('--rerun-stage', metavar='STAGE_ID', dest='rerun_stages'
                                   width_adjustment=-24),
                         action='append')
 parser_run.add_argument('--name', help=fill('Name for the job (default is the app or applet name)', width_adjustment=-24))
-parser_run.add_argument('--property', dest='properties', metavar='KEY=VALUE',
-                        help=(fill('Key-value pair to add as a property; repeat as necessary,',
-                                   width_adjustment=-24) + '\n' +
-                              fill('e.g. "--property key1=val1 --property key2=val2"',
-                                   width_adjustment=-24, initial_indent=' ', subsequent_indent=' ',
-                                   break_on_hyphens=False)),
-                        action='append')
-parser_run.add_argument('--tag', metavar='TAG', dest='tags', help=fill('Tag for the resulting execution; repeat as necessary,', width_adjustment=-24) + '\n' + fill('e.g. "--tag tag1 --tag tag2"', width_adjustment=-24, break_on_hyphens=False, initial_indent=' ', subsequent_indent=' '), action='append')
 parser_run.add_argument('--delay-workspace-destruction',
                         help=fill('Whether to keep the job\'s temporary workspace around for debugging purposes for 3 days after it succeeds or fails', width_adjustment=-24),
                         action='store_true')

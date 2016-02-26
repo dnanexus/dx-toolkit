@@ -21,11 +21,13 @@ import os
 import json
 import argparse
 from dxpy.utils.printing import *
+from dxpy.utils import merge
 from dxpy.cli.exec_io import *
-from dxpy.cli.parsers import exec_input_args
+from dxpy.cli import try_call
+from dxpy.cli.parsers import (exec_input_args, process_instance_type_arg, instance_type_arg, process_properties_args, property_args, tag_args, extra_args, process_extra_args)
 
 parser = argparse.ArgumentParser(description='Creates a new job to run the named function with the specified input.  If successful, prints the ID of the new job.',
-                                 parents=[exec_input_args])
+                                 parents=[exec_input_args, instance_type_arg, extra_args, property_args, tag_args])
 parser.add_argument('function', help='Name of the function to run')
 parser.add_argument('--name', help='Name for the new job (default is the current job name, plus ":<function>")')
 parser.add_argument('--depends-on', metavar='JOB_OR_OBJECT_ID', nargs='*', help='Job and/or data object IDs that must finish or close before the new job should be run.  WARNING: For proper parsing, do not use this flag directly before the *function* parameter.')
@@ -38,9 +40,7 @@ args = parser.parse_args()
 entry_point_inputs = ExecutableInputs()
 entry_point_inputs.update_from_args(args)
 
-if os.environ.get('DX_JOB_ID') is not None:
-    import dxpy.api
-
+def get_job_new_input(args):
     job_new_input = {"function": args.function}
 
     if args.name is not None:
@@ -49,7 +49,28 @@ if os.environ.get('DX_JOB_ID') is not None:
     if args.depends_on is not None:
         job_new_input["dependsOn"] = args.depends_on
 
+    if args.instance_type is not None:
+        try_call(process_instance_type_arg, args, False)
+        job_new_input["systemRequirements"] = args.instance_type
+
+    if args.properties is not None:
+        try_call(process_properties_args, args)
+        job_new_input["properties"] = args.properties
+
+    if args.tags is not None:
+        job_new_input["tags"] = args.tags
+
+    if args.extra_args is not None:
+        try_call(process_extra_args, args)
+        merge(job_new_input,args.extra_args)
+
     job_new_input["input"] = entry_point_inputs.inputs
+    return job_new_input
+
+if os.environ.get('DX_JOB_ID') is not None:
+    import dxpy.api
+
+    job_new_input = get_job_new_input(args)
 
     if args.test is True:
         print(json.dumps(job_new_input))
@@ -60,15 +81,8 @@ if os.environ.get('DX_JOB_ID') is not None:
     print resp["id"]
 else:
     from dxpy.utils.local_exec_utils import queue_entry_point
-
     if args.test is True:
-        job_new_input = {"function": args.function}
-        if args.name is not None:
-            job_new_input["name"] = args.name
-        if args.depends_on is not None:
-            job_new_input["dependsOn"] = args.depends_on
-        job_new_input["input"] = entry_point_inputs.inputs
-
+        job_new_input = get_job_new_input(args)
         print(json.dumps(job_new_input))
         sys.exit(0)
 
