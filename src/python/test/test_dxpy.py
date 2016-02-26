@@ -517,6 +517,8 @@ class TestDXFile(unittest.TestCase):
         dxfile.write("Haha")
         # No assertion here, but this should print an error
 
+    @unittest.skipUnless(testutil.TEST_ONLY_MASTER,
+                         'skipping test that would fail against staging')
     def test_download_url_helper(self):
         dxfile = dxpy.upload_string(self.foo_str, wait_on_close=True)
         opts = {"preauthenticated": True, "filename": "foo"}
