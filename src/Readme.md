@@ -19,6 +19,7 @@ Environment Variable         | Tests included
 `DXTEST_RUN_JOBS`            | Run tests that run jobs
 `DXTEST_TCSH`                | Run tests that require `tcsh` to be installed
 `DXTEST_WITH_AUTHSERVER`     | Run tests that require a running authserver
+`DX_RUN_NEXT_TESTS`          | Run tests that require synchronous updates to nucleus
 
 Python and Java tests recognize these environment variables and enable or
 disable tests accordingly.
