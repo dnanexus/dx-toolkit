@@ -88,8 +88,6 @@ def new_dxfile(mode=None, write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE, **kwargs
     dx_file.new(**kwargs)
     return dx_file
 
-_download_retry_counter = defaultdict(lambda: 3)
-
 def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
                     project=None, **kwargs):
     '''
@@ -112,7 +110,27 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
         download_dxfile("file-xxxx", "localfilename.fastq")
 
     '''
+    # retry the inner loop while there are retriable errors
+    part_retry_counter = defaultdict(lambda: 3)
+    success = False
+    while not success:
+        success = _download_dxfile(dxid, filename, part_retry_counter,
+                                   chunksize=chunksize, append=append,
+                                   show_progress=show_progress, project=project, **kwargs)
 
+
+def _download_dxfile(dxid, filename, part_retry_counter,
+                     chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
+                     project=None, **kwargs):
+    '''
+    Core of download logic. Download file-id *dxid* and store it in
+    a local file *filename*.
+
+    The return value is as follows:
+    - True means the download was successfully completed
+    - False means the download was stopped because of a retryable error
+    - Exception raised for other errors
+    '''
     def print_progress(bytes_downloaded, file_size, action="Downloaded"):
         num_ticks = 60
 
@@ -166,39 +184,6 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
     if show_progress:
         print_progress(0, None)
 
-    if fh.mode == "rb+":
-        last_verified_part, last_verified_pos, max_verify_chunk_size = None, 0, 1024*1024
-        try:
-            for part_id in parts_to_get:
-                part_info = parts[part_id]
-                if "md5" not in part_info:
-                    raise DXFileError("File {} does not contain part md5 checksums".format(dxfile.get_id()))
-                bytes_to_read = part_info["size"]
-                hasher = hashlib.md5()
-                while bytes_to_read > 0:
-                    chunk = fh.read(min(max_verify_chunk_size, bytes_to_read))
-                    if len(chunk) < min(max_verify_chunk_size, bytes_to_read):
-                        raise DXFileError("Local data for part {} is truncated".format(part_id))
-                    hasher.update(chunk)
-                    bytes_to_read -= max_verify_chunk_size
-                if hasher.hexdigest() != part_info["md5"]:
-                    raise DXFileError("Checksum mismatch when verifying downloaded part {}".format(part_id))
-                else:
-                    last_verified_part = part_id
-                    last_verified_pos = fh.tell()
-                    if show_progress:
-                        _bytes += part_info["size"]
-                        print_progress(_bytes, file_size, action="Verified")
-        except (IOError, DXFileError) as e:
-            logger.debug(e)
-        fh.seek(last_verified_pos)
-        fh.truncate()
-        if last_verified_part is not None:
-            del parts_to_get[:parts_to_get.index(last_verified_part)+1]
-        if show_progress and len(parts_to_get) < len(parts):
-            print_progress(last_verified_pos, file_size, action="Resuming at")
-        logger.debug("Verified %s/%d downloaded parts", last_verified_part, len(parts_to_get))
-
     def get_chunk(part_id_to_get, start, end):
         url, headers = dxfile.get_download_url(project=project, **kwargs)
         # If we're fetching the whole object in one shot, avoid setting the Range header to take advantage of gzip
@@ -229,38 +214,72 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
             msg = msg.format(dxfile.get_id(), _part_id, parts[_part_id]["md5"], hasher.hexdigest())
             raise DXChecksumMismatchError(msg)
 
-    try:
-        cur_part, got_bytes, hasher = None, None, None
-        dxfile._ensure_http_threadpool()
-        for chunk_part, chunk_data in response_iterator(chunk_requests(), dxfile._http_threadpool):
-            if chunk_part != cur_part:
-                verify_part(cur_part, got_bytes, hasher)
-                cur_part, got_bytes, hasher = chunk_part, 0, hashlib.md5()
-            got_bytes += len(chunk_data)
-            hasher.update(chunk_data)
-            fh.write(chunk_data)
+    with fh:
+        if fh.mode == "rb+":
+            # We already downloaded the beginning of the file, verify that the
+            # chunk checksums match the metadata.
+            last_verified_part, last_verified_pos, max_verify_chunk_size = None, 0, 1024*1024
+            try:
+                for part_id in parts_to_get:
+                    part_info = parts[part_id]
+                    if "md5" not in part_info:
+                        raise DXFileError("File {} does not contain part md5 checksums".format(dxfile.get_id()))
+                    bytes_to_read = part_info["size"]
+                    hasher = hashlib.md5()
+                    while bytes_to_read > 0:
+                        chunk = fh.read(min(max_verify_chunk_size, bytes_to_read))
+                        if len(chunk) < min(max_verify_chunk_size, bytes_to_read):
+                            raise DXFileError("Local data for part {} is truncated".format(part_id))
+                        hasher.update(chunk)
+                        bytes_to_read -= max_verify_chunk_size
+                    if hasher.hexdigest() != part_info["md5"]:
+                        raise DXFileError("Checksum mismatch when verifying downloaded part {}".format(part_id))
+                    else:
+                        last_verified_part = part_id
+                        last_verified_pos = fh.tell()
+                        if show_progress:
+                            _bytes += part_info["size"]
+                            print_progress(_bytes, file_size, action="Verified")
+            except (IOError, DXFileError) as e:
+                logger.debug(e)
+            fh.seek(last_verified_pos)
+            fh.truncate()
+            if last_verified_part is not None:
+                del parts_to_get[:parts_to_get.index(last_verified_part)+1]
+            if show_progress and len(parts_to_get) < len(parts):
+                print_progress(last_verified_pos, file_size, action="Resuming at")
+            logger.debug("Verified %s/%d downloaded parts", last_verified_part, len(parts_to_get))
+
+        try:
+            # Main loop. In parallel: download chunks, verify them, and write them to disk.
+            cur_part, got_bytes, hasher = None, None, None
+            dxfile._ensure_http_threadpool()
+            for chunk_part, chunk_data in response_iterator(chunk_requests(), dxfile._http_threadpool):
+                if chunk_part != cur_part:
+                    verify_part(cur_part, got_bytes, hasher)
+                    cur_part, got_bytes, hasher = chunk_part, 0, hashlib.md5()
+                got_bytes += len(chunk_data)
+                hasher.update(chunk_data)
+                fh.write(chunk_data)
+                if show_progress:
+                    _bytes += len(chunk_data)
+                    print_progress(_bytes, file_size)
+            verify_part(cur_part, got_bytes, hasher)
             if show_progress:
-                _bytes += len(chunk_data)
-                print_progress(_bytes, file_size)
-        verify_part(cur_part, got_bytes, hasher)
+                print_progress(_bytes, file_size, action="Completed")
+        except DXFileError:
+            print(traceback.format_exc(), file=sys.stderr)
+            part_retry_counter[cur_part] -= 1
+            if part_retry_counter[cur_part] > 0:
+                print("Retrying {} ({} tries remain)".format(dxfile.get_id(), part_retry_counter[cur_part]),
+                      file=sys.stderr)
+                return False
+            raise
+
         if show_progress:
-            print_progress(_bytes, file_size, action="Completed")
-    except DXFileError:
-        part_gid = dxfile.get_id() + str(cur_part)
-        print(traceback.format_exc(), file=sys.stderr)
-        _download_retry_counter[part_gid] -= 1
-        if _download_retry_counter[part_gid] > 0:
-            print("Retrying {} ({} tries remain)".format(dxfile.get_id(), _download_retry_counter[part_gid]),
-                  file=sys.stderr)
-            return download_dxfile(dxfile, filename, chunksize=chunksize, append=append,
-                                   show_progress=show_progress, project=project, **kwargs)
-        raise
+            sys.stderr.write("\n")
 
-    if show_progress:
-        sys.stderr.write("\n")
-
-    fh.close()
-
+        return True
 
 def _get_buffer_size_for_file(file_size, file_is_mmapd=False):
     """Returns an upload buffer size that is appropriate to use for a file
