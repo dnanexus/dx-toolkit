@@ -38,6 +38,7 @@ TEST_RUN_JOBS = _run_all_tests or 'DXTEST_RUN_JOBS' in os.environ
 TEST_TCSH = _run_all_tests or 'DXTEST_TCSH' in os.environ
 TEST_WITH_AUTHSERVER = _run_all_tests or 'DXTEST_WITH_AUTHSERVER' in os.environ
 TEST_ONLY_MASTER = 'DX_RUN_NEXT_TESTS' in os.environ
+TEST_MULTIPLE_USERS = _run_all_tests or 'DXTEST_SECOND_USER' in os.environ
 
 TEST_DX_LOGIN = 'DXTEST_LOGIN' in os.environ
 TEST_BENCHMARKS = 'DXTEST_BENCHMARKS' in os.environ   ## Used to exclude benchmarks from normal runs
@@ -203,6 +204,13 @@ def override_environment(**kwargs):
             env[key] = kwargs[key]
     return env
 
+
+def as_second_user():
+    second = json.loads(os.environ['DXTEST_SECOND_USER'])
+    context = {"auth_token": second['auth'], "auth_token_type": "Bearer"}
+    override = {"DX_SECURITY_CONTEXT": json.dumps(context),
+                "DX_USERNAME": second['user']}
+    return override_environment(**override)
 
 def generate_unique_username_email():
     r = random.randint(0, 255)
