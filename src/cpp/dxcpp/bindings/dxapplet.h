@@ -32,7 +32,7 @@
 /// To create a new applet object, consider using the <code>dx build</code> command-line
 /// tool in the DNAnexus SDK.
 ///
-/// See <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets">Applets</a> in the
+/// See <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points">Applets</a> in the
 /// API specification for more information.
 ///
 
