@@ -578,7 +578,7 @@ class DXFile(DXDataObject):
                 if preauthenticated:
                     self._download_url_expires = resp["expires"]/1000 - 60  # Try to account for drift
                 else:
-                    self._download_url_expires = time.mktime(time.strptime("3000", "%Y"))  # doesn't expire (year 3000)
+                    self._download_url_expires = 32503680000  # doesn't expire (year 3000)
 
             # Make a copy, ensuring each thread has its own mutable
             # version of the headers.  Note: python strings are
