@@ -294,7 +294,18 @@ def get_resolved_jbors(resolved_thing, orig_thing, resolved_jbors):
             get_resolved_jbors(resolved_thing[key], orig_thing[key], resolved_jbors)
 
 def render_bundleddepends(thing):
-    return [item["name"] + " (" + item["id"]["$dnanexus_link"] + ")" for item in thing]
+    from ..bindings.search import find_one_data_object
+    bundles = []
+    for item in thing:
+        # check if the id links to an asset
+        asset = find_one_data_object(zero_ok=True, classname="record", typename="AssetBundle",
+                                     link=item["id"]["$dnanexus_link"], describe=True)
+        if asset:
+            bundles.append(asset["describe"]["name"] + " (" + asset["id"] + ")")
+        else:
+            bundles.append(item["name"] + " (" + item["id"]["$dnanexus_link"] + ")")
+
+    return bundles
 
 def render_execdepends(thing):
     rendered = []

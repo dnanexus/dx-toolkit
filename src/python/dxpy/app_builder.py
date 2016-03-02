@@ -384,6 +384,51 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
         applet_spec["runSpec"].setdefault("bundledDepends", [])
         applet_spec["runSpec"]["bundledDepends"].extend(uploaded_resources)
 
+    if "runSpec" in applet_spec and "assetDepends" in applet_spec["runSpec"]:
+        # Check that the assetDepends is a list and contains a hash for each item in the list
+        asset_depends = applet_spec["runSpec"]["assetDepends"]
+        if type(asset_depends) is not list or any(type(dep) is not dict for dep in asset_depends):
+            raise AppBuilderException("Expected runSpec.assetDepends to be an array of objects")
+        for asset in asset_depends:
+            asset_project = asset.get("project", None)
+            asset_folder = asset.get("folder", '/')
+            if "id" in asset:
+                asset_record = dxpy.DXRecord(asset["id"]).describe(fields={'details'}, default_fields=True)
+            elif "name" in asset and asset_project is not None and "version" in asset:
+                asset_record = dxpy.find_one_data_object(zero_ok=True, classname="record", typename="AssetBundle",
+                                                         name=asset["name"], properties=dict(version=asset["version"]),
+                                                         project=asset_project, folder=asset_folder,
+                                                         describe={"defaultFields": True, "fields": {"details": True}},
+                                                         state="closed")
+            else:
+                raise AppBuilderException("Each runSpec.assetDepends element must have either {'id'} or "
+                                          "{'name', 'project' and 'version'} field(s).")
+
+            if asset_record:
+                if "id" in asset:
+                    asset_name = asset_record["name"]
+                    asset_details = asset_record["details"]
+                else:
+                    asset_name = asset_record["describe"]["name"]
+                    asset_details = asset_record["describe"]["details"]
+                if "archiveFileId" in asset_details:
+                    archive_file_id = asset_details["archiveFileId"]
+                else:
+                    raise AppBuilderException("The required field 'archiveFileId' was not found in "
+                                              "the details of the asset bundle %s " % asset_record["id"])
+
+                bundle_depends = {
+                    "name": asset_name,
+                    "id": archive_file_id
+                }
+                applet_spec["runSpec"]["bundledDepends"].append(bundle_depends)
+                # If the file is not found in the applet destination project, clone it from the asset project
+                if dxpy.DXRecord(dxid=asset_record["id"], project=dest_project).describe()["project"] != dest_project:
+                    dxpy.DXRecord(asset_record["id"], project=asset_record["project"]).clone(dest_project)
+            else:
+                raise AppBuilderException("No asset bundle was found that matched the specification %s"
+                                          % (json.dumps(asset)))
+
     # Include the DNAnexus client libraries as an execution dependency, if they are not already
     # there
     if dx_toolkit_autodep == "git":

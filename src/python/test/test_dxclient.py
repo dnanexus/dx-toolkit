@@ -6376,6 +6376,196 @@ def main(in1):
             applet_describe = json.loads(run("dx build --json --destination " + self.project + ":foo " + app_dir))
             self.assertEqual(applet_describe["name"], "foo")
 
+    def test_asset_depends_using_name(self):
+        # upload a tar.gz file and mark it hidden
+        asset_name = "test-asset.tar.gz"
+        asset_file = dxpy.upload_string("xxyyzz", project=self.project, hidden=True, wait_on_close=True,
+                                        name=asset_name)
+
+        # create a record with details to the hidden asset
+        record_name = "asset-record"
+        record_details = {"archiveFileId": {"$dnanexus_link": asset_file.get_id()}}
+        record_properties = {"version": "0.0.1"}
+        dxpy.new_dxrecord(project=self.project, types=["AssetBundle"], details=record_details, name=record_name,
+                          properties=record_properties, close=True)
+
+        app_spec = {
+            "name": "asset_depends",
+            "dxapi": "1.0.0",
+            "runSpec": {
+                "file": "code.py",
+                "interpreter": "python2.7",
+                "assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project}]
+            },
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
+        asset_applet = json.loads(run("dx build --json {app_dir}".format(app_dir=app_dir)))["id"]
+
+        self.assertEquals(
+            dxpy.DXApplet(asset_applet).describe()['runSpec']['bundledDepends'][0],
+            {'id': {'$dnanexus_link': asset_file.get_id()}, 'name': record_name}
+        )
+
+    def test_asset_depends_using_id(self):
+        # upload a tar.gz file and mark it hidden
+        asset_name = "test-asset.tar.gz"
+        asset_file = dxpy.upload_string("xxyyzz", project=self.project, hidden=True, wait_on_close=True,
+                                        name=asset_name)
+
+        # create a record with details to the hidden asset
+        record_name = "asset-record"
+        record_details = {"archiveFileId": {"$dnanexus_link": asset_file.get_id()}}
+        record_properties = {"version": "0.0.1"}
+        record = dxpy.new_dxrecord(project=self.project, types=["AssetBundle"], details=record_details,
+                                   name=record_name, properties=record_properties, close=True)
+
+        app_spec = {
+            "name": "asset_depends",
+            "dxapi": "1.0.0",
+            "runSpec": {
+                "file": "code.py",
+                "interpreter": "python2.7",
+                "assetDepends": [{"id": record.get_id()}]
+            },
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
+        asset_applet = json.loads(run("dx build --json {app_dir}".format(app_dir=app_dir)))["id"]
+        self.assertEquals(
+            dxpy.DXApplet(asset_applet).describe()['runSpec']['bundledDepends'][0],
+            {'id': {'$dnanexus_link': asset_file.get_id()}, 'name': record_name}
+        )
+
+    def test_asset_depends_failure(self):
+        # upload a tar.gz file and mark it hidden
+        asset_name = "test-asset.tar.gz"
+        asset_file = dxpy.upload_string("xxyyzz", project=self.project, hidden=True, wait_on_close=True,
+                                        name=asset_name)
+
+        # create a record with details to the hidden asset
+        record_name = "asset-record"
+        record_details = {"archiveFileId": {"$dnanexus_link": asset_file.get_id()}}
+        record_properties = {"version": "0.0.1"}
+        dxpy.new_dxrecord(project=self.project, types=["AssetBundle"], details=record_details, name=record_name,
+                          properties=record_properties, close=True)
+
+        app_spec = {
+            "name": "asset_depends",
+            "dxapi": "1.0.0",
+            "runSpec": {
+                "file": "code.py",
+                "interpreter": "python2.7",
+                "assetDepends": [{"name": record_name, "version": "0.1.1", "project": self.project}]
+            },
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
+        with self.assertSubprocessFailure(stderr_regexp="No asset bundle was found", exit_code=3):
+            run("dx build --json {app_dir}".format(app_dir=app_dir))
+
+    def test_asset_depends_malform_details(self):
+        # upload a tar.gz file and mark it hidden
+        asset_name = "test-asset.tar.gz"
+        asset_file = dxpy.upload_string("xxyyzz", project=self.project, hidden=True, wait_on_close=True,
+                                        name=asset_name)
+
+        # create a record with details to the hidden asset
+        record_name = "asset-record"
+        record_details = {"wrongField": {"$dnanexus_link": asset_file.get_id()}}
+        record_properties = {"version": "0.0.1"}
+        dxpy.new_dxrecord(project=self.project, types=["AssetBundle"], details=record_details, name=record_name,
+                          properties=record_properties, close=True)
+
+        app_spec = {
+            "name": "asset_depends",
+            "dxapi": "1.0.0",
+            "runSpec": {
+                "file": "code.py",
+                "interpreter": "python2.7",
+                "assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project}]
+            },
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
+        with self.assertSubprocessFailure(stderr_regexp="The required field 'archiveFileId'", exit_code=3):
+            run("dx build --json {app_dir}".format(app_dir=app_dir))
+
+    def test_asset_depends_clone(self):
+        # create an asset in this project
+        asset_name = "test-asset.tar.gz"
+        asset_file = dxpy.upload_string("xxyyzz", project=self.project, hidden=True, wait_on_close=True,
+                                        name=asset_name)
+
+        # create a record with details to the hidden asset
+        record_name = "asset-record"
+        record_details = {"archiveFileId": {"$dnanexus_link": asset_file.get_id()}}
+        record_properties = {"version": "0.0.1"}
+        record = dxpy.new_dxrecord(project=self.project, types=["AssetBundle"], details=record_details,
+                                   name=record_name, properties=record_properties, close=True)
+
+        # create an applet with assetDepends in a different project
+        with temporary_project('test_select_project', select=True):
+            app_spec = {
+                "name": "asset_depends",
+                "dxapi": "1.0.0",
+                "runSpec": {
+                    "file": "code.py",
+                    "interpreter": "python2.7",
+                    "assetDepends": [{"id": record.get_id()}]
+                },
+                "inputSpec": [],
+                "outputSpec": [],
+                "version": "1.0.0"
+                }
+            app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
+            run("dx build --json {app_dir}".format(app_dir=app_dir))
+            temp_record_id = run("dx ls {asset} --brief".format(asset=record_name)).strip()
+            self.assertEquals(temp_record_id, record.get_id())
+
+    def test_asset_depends_clone_app(self):
+        # upload a tar.gz file and mark it hidden
+        asset_name = "test-asset.tar.gz"
+        asset_file = dxpy.upload_string("xxyyzz", project=self.project, hidden=True, wait_on_close=True,
+                                        name=asset_name)
+
+        # create a record with details to the hidden asset
+        record_name = "asset-record"
+        record_details = {"archiveFileId": {"$dnanexus_link": asset_file.get_id()}}
+        record_properties = {"version": "0.0.1"}
+        dxpy.new_dxrecord(project=self.project, types=["AssetBundle"], details=record_details, name=record_name,
+                          properties=record_properties, close=True)
+
+        app_spec = {
+            "name": "asset_depends",
+            "dxapi": "1.0.0",
+            "runSpec": {
+                "file": "code.py",
+                "interpreter": "python2.7",
+                "assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project}]
+            },
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
+        asset_applet = json.loads(run("dx build --json {app_dir}".format(app_dir=app_dir)))["id"]
+
+        # clone the applet to a different project and test that the hidden file is also cloned
+        with temporary_project('test_select_project', select=True) as temp_project:
+            dxpy.DXApplet(asset_applet, project=self.project).clone(temp_project.get_id())
+            # check that asset_file is also cloned to this project
+            temp_asset_fid = run("dx ls {asset} --brief".format(asset=asset_name)).strip()
+            self.assertEquals(temp_asset_fid, asset_file.get_id())
+
 
 class TestDXGetExecutables(DXTestCase):
     def setUp(self):
