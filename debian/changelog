@@ -1,3 +1,20 @@
+dx-toolkit (0.183.0) precise; urgency=low
+
+  * SCI-424 "assetDepends" metadata to the dxapp.json
+  * Remove Ubuntu 10.04 instructions from Prebuilt readme too
+  * Use timestamp instead of time.strptime
+  * Fix broken link in dxcpp bindings comments
+  * Improve dxclient tests to use a second user account
+  * update Readme
+  * Document DX_RUN_NEXT_TESTS env var
+  * Skip dxpy tests that fail would fail on stg
+  * Refactoring 'dx download'
+  * PTFM-17353 Add options to dx-jobutil-new-job
+  * PTFM-17201 Remove default download duration
+  * Java: DXFile.downloadStream returns InputStream, not OutputStream 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 02 Mar 2016 19:54:53 +0000
+
 dx-toolkit (0.182.0) precise; urgency=low
 
   * Add more informative error message for `dx add member`
