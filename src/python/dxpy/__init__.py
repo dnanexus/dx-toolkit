@@ -436,7 +436,9 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     except (KeyError, AttributeError, TypeError):
                         error_class = exceptions.HTTPError
                     raise error_class(content, response.status)
-                raise exceptions.HTTPError("{} {}".format(response.status, response.reason))
+                else:
+                    content = response.data.decode('utf-8')
+                    raise exceptions.HTTPError("{} {}\n{}".format(response.status, response.reason, content))
 
             if want_full_response:
                 return response
