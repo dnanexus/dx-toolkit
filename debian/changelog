@@ -1,3 +1,9 @@
+dx-toolkit (0.183.1) precise; urgency=low
+
+  * output HTTP error for spot scale 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Fri, 04 Mar 2016 23:47:55 +0000
+
 dx-toolkit (0.183.0) precise; urgency=low
 
   * SCI-424 "assetDepends" metadata to the dxapp.json
