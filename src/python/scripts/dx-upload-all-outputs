@@ -295,14 +295,17 @@ def upload_one_file(entry, wait_on_close):
     local_path = os.path.join(entry['local_dir_path'], entry['fname'])
     if entry['target_dir_path'] is None:
         trg_path = "/{}".format(entry['fname'])
+        print("uploading file: {} -> {}".format(local_path, trg_path))
+        sys.stdout.flush()
         f_obj = dxpy.upload_local_file(local_path, wait_on_close=wait_on_close)
     else:
         trg_path = "/{}/{}".format(entry['target_dir_path'], entry['fname'])
+        print("uploading file: {} -> {}".format(local_path, trg_path))
+        sys.stdout.flush()
         f_obj = dxpy.upload_local_file(local_path,
                                        folder=("/" + entry['target_dir_path']),
                                        parents=True, wait_on_close=wait_on_close)
     entry['dxlink'] = dxpy.dxlink(f_obj)
-    print("uploaded file {} -> {}".format(local_path, trg_path))
 
 def sequential_file_upload(to_upload, wait_on_close):
     '''Sequentially upload everything that is in the output directory.
