@@ -194,6 +194,10 @@ class TestDXClient(DXTestCase):
         version = run("dx --version")
         self.assertIn("dx", version)
 
+    def test_dx_debug_request_id(self):
+        (stdout, stderr) = run("_DX_DEBUG=1 dx ls", also_return_stderr=True)
+        self.assertRegexpMatches(stderr, "POST \d{13}-\d{1,6} http", msg="stderr does not appear to contain request ID")
+
     def test_dx_actions(self):
         with self.assertRaises(subprocess.CalledProcessError):
             run("dx")

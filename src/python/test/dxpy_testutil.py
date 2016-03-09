@@ -69,6 +69,9 @@ def check_output(*popenargs, **kwargs):
     if the subprocess fails. (If the command succeeds, the contents of
     stderr are discarded.)
 
+    :param also_return_stderr: if True, return stderr along with the output of the command as such (output, stderr)
+    :type also_return_stderr: bool
+
     Unlike subprocess.check_output, unconditionally decodes the contents of the subprocess stdout and stderr using
     sys.stdin.encoding.
     """
@@ -76,6 +79,13 @@ def check_output(*popenargs, **kwargs):
         raise ValueError('stdout argument not allowed, it will be overridden.')
     if 'stderr' in kwargs:
         raise ValueError('stderr argument not allowed, it will be overridden.')
+
+    return_stderr = False
+    if 'also_return_stderr' in kwargs:
+        if kwargs['also_return_stderr']:
+            return_stderr = True
+        del kwargs['also_return_stderr']
+
     # Unplug stdin (if not already overridden) so that dx doesn't prompt
     # user for input at the tty
     process = subprocess.Popen(stdin=kwargs.get('stdin', subprocess.PIPE),
@@ -93,7 +103,11 @@ def check_output(*popenargs, **kwargs):
             cmd = popenargs[0]
         exc = DXCalledProcessError(retcode, cmd, output=output, stderr=err)
         raise exc
-    return output
+
+    if return_stderr:
+        return (output, err)
+    else:
+        return output
 
 @contextmanager
 def temporary_project(name='dx client tests temporary project', cleanup=True, reclaim_permissions=False, select=False):
