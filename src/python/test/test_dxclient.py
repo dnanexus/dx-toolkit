@@ -6428,6 +6428,7 @@ class TestDXGetExecutables(DXTestCase):
 
             output_json = json.load(open(os.path.join("get_applet", "dxapp.json")))
             self.assertEqual(output_app_spec, output_json)
+            self.assertNotIn("bundledDepends", output_json["runSpec"])
 
             self.assertEqual("Description\n", open(os.path.join("get_applet", "Readme.md")).read())
             self.assertEqual("Developer notes\n",
@@ -6523,7 +6524,7 @@ class TestDXGetExecutables(DXTestCase):
             self.assertFalse(os.path.exists(os.path.join("get_applet", "resources")))
 
             output_json = json.load(open(os.path.join("get_applet", "dxapp.json")))
-            self.assertTrue("bundledDepends" in output_json["runSpec"])
+            self.assertIn("bundledDepends", output_json["runSpec"])
             seenResources = False
             for bd in output_json["runSpec"]["bundledDepends"]:
                 if bd["name"] == "resources.tar.gz":
