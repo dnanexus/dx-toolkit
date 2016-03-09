@@ -11,18 +11,17 @@ Documentation on classes and methods:
    dxpy_dxproject
    dxpy_dxrecord
    dxpy_dxfile
-   dxpy_dxgtable
    dxpy_apps
    dxpy_search
 
 This module contains useful Python bindings for calling API methods on
-the DNAnexus Platform. Data objects (such as records, files,
-GenomicTables, and applets) are represented locally by a handler that
-inherits from the abstract class :class:`~dxpy.bindings.DXDataObject`.
-This abstract base class supports functionality common to all of the
-data object classes--for example, setting properties and types, as well
-as cloning the object to a different project, moving it to a different
-folder in the same project, or removing the object from a project.
+the DNAnexus Platform. Data objects (such as records, files, and
+applets) are represented locally by a handler that inherits from the
+abstract class :class:`~dxpy.bindings.DXDataObject`. This abstract base
+class supports functionality common to all of the data object
+classes--for example, setting properties and types, as well as cloning
+the object to a different project, moving it to a different folder in
+the same project, or removing the object from a project.
 
 .. note:: While this documentation will largely refer to data containers
    as simply "projects", both project and container IDs can generally be

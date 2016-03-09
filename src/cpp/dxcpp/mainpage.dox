@@ -23,7 +23,6 @@ useful as you develop your own scripts and apps:</p>
   <li>dx::DXApplet</li>
   <li>dx::DXContainer</li>
   <li>dx::DXFile</li>
-  <li>dx::DXGTable</li>
   <li>dx::DXJob</li>
   <li>dx::DXProject</li>
   <li>dx::DXRecord</li>
@@ -42,7 +41,6 @@ app(let) and the execution environment:</h4>
   <li>dx::DXAPIError</li>
   <li>dx::DXError</li>
   <li>dx::DXFileError</li>
-  <li>dx::DXGTableError</li>
   <li>dx::DXNotImplementedError</li>
 </ul>
 
