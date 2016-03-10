@@ -1764,7 +1764,7 @@ def get_applet(project, entity_result, args):
     dx_obj = dxpy.DXApplet(obj_id, project=project)
     describe_output = dx_obj.describe(incl_properties=True,
                                       incl_details=True)
-    dump_executable(dx_obj, output_path, describe_output=describe_output)
+    dump_executable(dx_obj, output_path, omit_resources=args.omit_resources, describe_output=describe_output)
 
 
 def get_app(entity_result, args):
@@ -1781,7 +1781,7 @@ def get_app(entity_result, args):
     # Now output_path points to a empty directory, so we're ready to go.
     from dxpy.utils.app_unbuilder import dump_executable
     dx_obj = dxpy.DXApp(obj_id)
-    dump_executable(dx_obj, output_path)
+    dump_executable(dx_obj, output_path, omit_resources=args.omit_resources)
 
 
 def get(args):

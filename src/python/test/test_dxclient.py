@@ -6631,6 +6631,7 @@ class TestDXGetExecutables(DXTestCase):
 
             output_json = json.load(open(os.path.join("get_applet", "dxapp.json")))
             self.assertEqual(output_app_spec, output_json)
+            self.assertNotIn("bundledDepends", output_json["runSpec"])
 
             self.assertEqual("Description\n", open(os.path.join("get_applet", "Readme.md")).read())
             self.assertEqual("Developer notes\n",
@@ -6693,6 +6694,46 @@ class TestDXGetExecutables(DXTestCase):
             run("dx get --overwrite -o destfile get_applet")
             self.assertTrue(os.path.exists("destfile"))
             self.assertTrue(os.path.exists(os.path.join("destfile", "dxapp.json")))
+
+    def test_get_applet_omit_resources(self):
+        # TODO: not sure why self.assertEqual doesn't consider
+        # assertEqual to pass unless the strings here are unicode strings
+        app_spec = {
+            "name": "get_applet",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [{"name": "in1", "class": "file"}],
+            "outputSpec": [{"name": "out1", "class": "file"}],
+            "description": "Description\n",
+            "developerNotes": "Developer notes\n",
+            "types": ["Foo"],
+            "tags": ["bar"],
+            "properties": {"sample_id": "123456"},
+            "details": {"key1": "value1"},
+            }
+        # description and developerNotes should be un-inlined back to files
+        output_app_spec = dict((k, v) for (k, v) in app_spec.iteritems() if k not in ('description',
+                                                                                      'developerNotes'))
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7"}
+
+        app_dir = self.write_app_directory("get_åpplet", json.dumps(app_spec), "code.py",
+                                           code_content="import os\n")
+        os.mkdir(os.path.join(app_dir, "resources"))
+        with open(os.path.join(app_dir, "resources", "resources_file"), 'w') as f:
+            f.write('content\n')
+        new_applet_id = json.loads(run("dx build --json " + app_dir))["id"]
+        with chdir(tempfile.mkdtemp()):
+            run("dx get --omit-resources " + new_applet_id)
+            self.assertFalse(os.path.exists(os.path.join("get_applet", "resources")))
+
+            output_json = json.load(open(os.path.join("get_applet", "dxapp.json")))
+            self.assertIn("bundledDepends", output_json["runSpec"])
+            seenResources = False
+            for bd in output_json["runSpec"]["bundledDepends"]:
+                if bd["name"] == "resources.tar.gz":
+                    seenResources = True
+                    break
+            self.assertTrue(seenResources)
 
     def test_get_applet_field_cleanup(self):
         # TODO: not sure why self.assertEqual doesn't consider
@@ -6808,6 +6849,59 @@ class TestDXGetExecutables(DXTestCase):
                                                  json.dumps({"openSource": False})))
             with self.assertSubprocessFailure(stderr_regexp='can only call.*\n'):
                 run("dx get " + new_app_id)
+
+    def test_get_app_omit_resources(self):
+        self.maxDiff = None
+        app_spec = {
+            "name": "get_app_open_source",
+            "title": "Sir",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [{"name": "in1", "class": "file"}],
+            "outputSpec": [{"name": "out1", "class": "file"}],
+            "description": "Description\n",
+            "developerNotes": "Developer notes\n",
+            "openSource": True,
+            "version": "0.0.1"
+            }
+        # description and developerNotes should be un-inlined back to files
+        output_app_spec = dict((k, v)
+                               for (k, v) in app_spec.iteritems()
+                               if k not in ('description', 'developerNotes'))
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7"}
+
+        app_dir = self.write_app_directory("get_app_open_source",
+                                           json.dumps(app_spec),
+                                           "code.py",
+                                           code_content="import os\n")
+        os.mkdir(os.path.join(app_dir, "resources"))
+        with open(os.path.join(app_dir, "resources", "resources_file"), 'w') as f:
+            f.write('content\n')
+        new_app_json = json.loads(run("dx build --create-app --json " + app_dir))
+        new_app_id = new_app_json["id"]
+        # app_describe = json.loads(run("dx describe --json " + new_app_json["id"]))
+        app_describe = dxpy.api.app_describe(new_app_json["id"])
+
+        self.assertEqual(app_describe["class"], "app")
+        self.assertEqual(app_describe["version"], "0.0.1")
+        self.assertEqual(app_describe["name"], "get_app_open_source")
+        self.assertFalse("published" in app_describe)
+        self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
+        self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
+
+        with chdir(tempfile.mkdtemp()):
+            run("dx get --omit-resources " + new_app_id)
+            self.assertFalse(os.path.exists(os.path.join("get_app_open_source", "resources")))
+
+            output_json = json.load(open(os.path.join("get_app_open_source", "dxapp.json")))
+            self.assertTrue("bundledDepends" in output_json["runSpec"])
+            seenResources = False
+            for bd in output_json["runSpec"]["bundledDepends"]:
+                if bd["name"] == "resources.tar.gz":
+                    seenResources = True
+                    break
+            self.assertTrue(seenResources)
+
 
 
 class TestDXBuildReportHtml(unittest.TestCase):
