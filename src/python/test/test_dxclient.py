@@ -6850,6 +6850,7 @@ class TestDXGetExecutables(DXTestCase):
             with self.assertSubprocessFailure(stderr_regexp='can only call.*\n'):
                 run("dx get " + new_app_id)
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
     def test_get_app_omit_resources(self):
         self.maxDiff = None
         app_spec = {
