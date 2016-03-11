@@ -809,7 +809,9 @@ int main(int argc, char * argv[]) {
       if (toCompress) {
         mimeType = "application/x-gzip";
       }
-      files.push_back(File(opt.files[i], opt.projects[i], opt.folders[i], opt.names[i], toCompress, !opt.doNotResume, mimeType, opt.chunkSize, i));
+      files.push_back(File(opt.files[i], opt.projects[i], opt.folders[i], opt.names[i], opt.visibility, 
+			   opt.properties, opt.type, opt.tags, opt.details,
+			   toCompress, !opt.doNotResume, mimeType, opt.chunkSize, i));
       totalChunks += files[i].createChunks(chunksToRead, opt.tries);
       cerr << endl;
     }

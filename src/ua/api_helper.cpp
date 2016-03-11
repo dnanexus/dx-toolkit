@@ -259,7 +259,7 @@ void createFolders(const vector<string> &projects, const vector<string> &folders
  * folder, and with the specified name. The folder and any parent folders
  * are created if they do not exist.
  */
-string createFileObject(const string &project, const string &folder, const string &name, const string &mimeType, const JSON &properties) {
+string createFileObject(const string &project, const string &folder, const string &name, const string &mimeType, const JSON &properties, const dx::JSON &type, const dx::JSON & tags, const std::string &visibility, const dx::JSON &details) {
   JSON params(JSON_OBJECT);
   params["project"] = project;
   params["folder"] = folder;
@@ -267,6 +267,22 @@ string createFileObject(const string &project, const string &folder, const strin
   params["parents"] = true;
   params["media"] = mimeType;
   params["properties"] = properties;
+
+  // optional arguments
+  if (type.size()) {
+    params["types"] = type;
+  }
+  if (tags.size()) {
+    params["tags"] = tags;
+  }
+  if (details.size()) {
+    params["details"] = details;
+  }
+  
+  // the hidden value is false by default
+  if (visibility == "hidden") {
+    params["hidden"] = true;
+  }
 
   DXLOG(logINFO) << "Creating new file with parameters " << params.toString();
 

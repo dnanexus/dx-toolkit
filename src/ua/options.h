@@ -24,6 +24,7 @@
 #include <boost/program_options.hpp>
 
 #include "SimpleHttp.h"
+#include "dxjson/dxjson.h"
 
 namespace po = boost::program_options;
 
@@ -51,7 +52,11 @@ public:
   std::vector<std::string> folders;
   std::vector<std::string> names;
   std::vector<std::string> files;
-
+  std::string visibility;
+  std::vector<std::string> propertiesInput;
+  std::vector<std::string> typeInput;
+  std::vector<std::string> tagsInput;
+    
   int readThreads;
   int compressThreads;
   int uploadThreads;
@@ -73,6 +78,12 @@ public:
   bool noRoundRobinDNS;
 
   int64_t throttle;
+  
+  std::string detailsInput;
+  dx::JSON properties;
+  dx::JSON type;
+  dx::JSON tags;
+  dx::JSON details;
 
 private:
 

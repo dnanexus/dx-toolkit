@@ -80,9 +80,12 @@ double percentageComplete(const dx::JSON &parts, const int64_t size, const int64
 }
 
 File::File(const string &localFile_, const string &projectSpec_, const string &folder_, const string &name_,
+	   const std::string &visibility_, const dx::JSON &properties_, 
+	   const dx::JSON &type_, const dx::JSON &tags_, const dx::JSON &details_,
            const bool toCompress_, const bool tryResuming, const string &mimeType_,
            const int64_t chunkSize_, const unsigned fileIndex_)
   : localFile(localFile_), projectSpec(projectSpec_), folder(folder_), name(name_),
+    visibility(visibility_), properties(properties_), type(type_), tags(tags_), details(details_),
     failed(false), waitOnClose(false), closed(false), toCompress(toCompress_), mimeType(mimeType_),
     chunkSize(chunkSize_), bytesUploaded(0), fileIndex(fileIndex_), atleastOnePartDone(false), jobID() {
 
@@ -112,7 +115,7 @@ void File::init(const bool tryResuming) {
     remoteFileName += ".gz";
 
   const int64_t modifiedTimestamp = static_cast<int64_t>(fs::last_write_time(p));
-  dx::JSON properties(dx::JSON_OBJECT);
+  //dx::JSON properties(dx::JSON_OBJECT);
 
   // Add property {FILE_SIGNATURE_PROPERTY: "<size> <modified time stamp> <toCompress> <chunkSize> <name of file>"
   properties[FILE_SIGNATURE_PROPERTY] = File::createResumeInfoString(size, modifiedTimestamp, toCompress, chunkSize, fs::canonical(p).string());
@@ -151,7 +154,7 @@ void File::init(const bool tryResuming) {
   }
   if (!tryResuming || (findResult.size() == 0)) {
     // Note: It's fine if mimeType is empty string "" (since default for /file/new is anyway empty media type)
-    fileID = createFileObject(projectID, folder, remoteFileName, mimeType, properties);
+    fileID = createFileObject(projectID, folder, remoteFileName, mimeType, properties, type, tags, visibility, details);
     isRemoteFileOpen = true;
     DXLOG(logINFO) << "fileID is " << fileID << endl;
 

@@ -22,10 +22,11 @@
 #include <boost/filesystem.hpp>
 #include <boost/thread.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
 #include <boost/regex.hpp>
 
 #include "dxcpp/dxlog.h"
-#include "dxjson/dxjson.h"
 #include "dxcpp/dxcpp.h"
 
 #if MAC_BUILD
@@ -49,7 +50,12 @@ const int DEFAULT_UPLOAD_THREADS = 8;
 
 const int DEFAULT_READ_THREADS = 2;
 
-Options::Options() {
+Options::Options():
+  properties(dx::JSON_OBJECT),
+  type(dx::JSON_ARRAY),
+  tags(dx::JSON_ARRAY),
+  details(dx::JSON_OBJECT)
+{
   int defaultCompressThreads = std::min(8, std::max(int(boost::thread::hardware_concurrency()) - 1, 1)); //don't use more than 8 cores for compression (by default)
 
   vector<string> defaultFolders;
@@ -75,6 +81,11 @@ Options::Options() {
     ("verbose,v", po::bool_switch(&verbose), "Verbose logging")
     ("wait-on-close", po::bool_switch(&waitOnClose), "Wait for file objects to be closed before exiting")
     ("do-not-resume", po::bool_switch(&doNotResume), "Do not attempt to resume any incomplete uploads")
+    ("visibility", po::value<string>(&visibility), "Whether the object is hidden or not")
+    ("property", po::value<vector<string> >(&propertiesInput), "Key-value pair to add as a property; repeat as necessary, e.g. \"--property key1=val1 --property key2=val2\"")
+    ("type", po::value<vector<string> >(&typeInput), "Type of the data object; repeat as necessary, e.g. \"--type type1 --type type2\"")
+    ("tag", po::value<vector<string> >(&tagsInput), "Tag of the data object; repeat as necessary, e.g. \"--tag tag1 --tag tag2\"") 
+    ("details", po::value<string>(&detailsInput), "JSON to store as details")
     ;
 
   hidden_opts = new po::options_description();
@@ -134,6 +145,25 @@ size_t parseSize(const string &sizeStr) {
   }
 }
 
+void parseKeyValuePairs(const vector<string> &items, dx::JSON &result) {
+  for (vector<string>::const_iterator it = items.begin(); it != items.end(); ++it) {
+    DXLOG(logINFO) << "Parsing property: " << *it;
+    vector<string> kv;
+    boost::split(kv, *it, boost::is_any_of("="));
+    if(kv.size() != 2 || kv[0].empty() || kv[1].empty()) {
+      throw runtime_error("Invalid property argument; provide properties in key=value format");
+    }
+    result[kv[0]] = kv[1];
+  }
+}
+
+void populateJsonArray(const vector<string> &items, dx::JSON &result) {
+  assert(result.type() == JSON_ARRAY);
+  for (vector<string>::const_iterator it = items.begin(); it != items.end(); ++it) {
+    result.push_back(*it);
+  }    
+}
+
 void Options::parse(int argc, char * argv[]) {
   po::store(po::command_line_parser(argc, argv).options(*command_line_opts).positional(*pos_opts).run(), vm);
   po::notify(vm);
@@ -161,6 +191,22 @@ void Options::parse(int argc, char * argv[]) {
     } else {
       DXLOG(logINFO) << "Number of upload threads is " << uploadThreads << "." << endl;
     }
+  }
+
+  try {
+    parseKeyValuePairs(propertiesInput, properties);  
+    populateJsonArray(typeInput, type);
+    populateJsonArray(tagsInput, tags); 
+    
+    if (!detailsInput.empty()) {
+      details = dx::JSON::parse(detailsInput);
+      if (!(details.type() == JSON_OBJECT || details.type() == JSON_ARRAY)) {
+	throw runtime_error("JSON Data must be a JSON object or JSON array");
+      }
+    }
+  }
+  catch (dx::JSONException &e) {
+    throw runtime_error("Error formating Json Data: " + string(e.what()));
   }
 }
 

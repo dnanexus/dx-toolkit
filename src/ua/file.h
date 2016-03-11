@@ -21,12 +21,15 @@
 
 #include "dxcpp/bqueue.h"
 #include "chunk.h"
+#include "dxjson/dxjson.h"
 
 class File {
 public:
 
   File(const std::string &localFile_,
        const std::string &projectSpec_, const std::string &folder_, const std::string &name_,
+       const std::string &visibility, const dx::JSON &properties_, const dx::JSON &type_,
+       const dx::JSON &tags_, const dx::JSON &details,
        const bool toCompress_, const bool tryResuming, const std::string &mimeType_, 
        const int64_t chunkSize, const unsigned int fileIndex_);
 
@@ -55,6 +58,21 @@ public:
 
   /* Destination file name. */
   std::string name;
+
+  /* Visibility */
+  std::string visibility;
+
+  /* JSON object containing the file's properties. */
+  dx::JSON properties;
+  
+  /* List of types specified for this file. */
+  dx::JSON type;
+
+  /* List of tags specified for this file. */
+  dx::JSON tags;
+
+  /* JSON object containing details specified for this file. */
+  dx::JSON details;
 
   /* Set to true if one or more chunks of the file fails to be uploaded. */
   bool failed;
