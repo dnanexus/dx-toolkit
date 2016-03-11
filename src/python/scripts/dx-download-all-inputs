@@ -101,6 +101,7 @@ def download_one_file(file_rec):
     src_file = file_rec['src_file_id']
     trg_file = os.path.join(idir, file_rec['trg_fname'])
     print("downloading file: " + src_file + " to filesystem: " + trg_file)
+    sys.stdout.flush()
     dxpy.download_dxfile(src_file, trg_file)
     return file_rec
 
