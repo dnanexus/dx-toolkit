@@ -43,7 +43,7 @@ from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_a
                            process_single_dataobject_output_args, find_executions_args, add_find_executions_search_gp,
                            set_env_from_args, extra_args, process_extra_args, DXParserError, exec_input_args,
                            instance_type_arg, process_instance_type_arg, get_update_project_args,
-                           property_args, tag_args)
+                           property_args, tag_args, contains_phi, process_phi_param)
 from ..cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
 from ..cli.org import (get_org_invite_args, add_membership, remove_membership, update_membership, new_org, update_org,
                        find_orgs, org_find_members, org_find_projects)
@@ -2292,6 +2292,7 @@ def find_data(args):
 
 def find_projects(args):
     try_call(process_find_by_property_args, args)
+    try_call(process_phi_param, args)
     try:
         results = dxpy.find_projects(name=args.name, name_mode='glob',
                                      properties=args.properties, tags=args.tag,
@@ -2300,7 +2301,8 @@ def find_projects(args):
                                      explicit_perms=(not args.public if not args.public else None),
                                      public=(args.public if args.public else None),
                                      created_after=args.created_after,
-                                     created_before=args.created_before)
+                                     created_before=args.created_before,
+                                     containsPHI=args.containsPHI)
     except:
         err_exit()
     format_find_results(args, results)
@@ -4533,7 +4535,7 @@ parser_find_projects = subparsers_find.add_parser(
     help=fill('List projects'),
     description=fill('Finds projects subject to the given search parameters. Use the --public flag to list all public '
                      'projects.'),
-    parents=[stdout_args, json_arg, delim_arg, env_args, find_by_properties_and_tags_args],
+    parents=[stdout_args, json_arg, delim_arg, env_args, find_by_properties_and_tags_args, contains_phi],
     prog='dx find projects'
 )
 parser_find_projects.add_argument('--name', help='Name of the project')
@@ -4580,7 +4582,7 @@ parser_find_org_projects = subparsers_find_org.add_parser(
     description=fill('Finds projects billed to the specified org subject to the given search parameters. You must '
                      'be an ADMIN of the specified org to use this command. It allows you to identify projects billed '
                      'to the org that have not been shared with you explicitly.'),
-    parents=[stdout_args, json_arg, delim_arg, env_args, find_by_properties_and_tags_args],
+    parents=[stdout_args, json_arg, delim_arg, env_args, find_by_properties_and_tags_args, contains_phi],
     prog='dx find org projects'
 )
 parser_find_org_projects.add_argument('org_id', help='Org ID')

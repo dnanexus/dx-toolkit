@@ -430,7 +430,7 @@ def find_analyses(*args, **kwargs):
 def find_projects(name=None, name_mode='exact', properties=None, tags=None,
                   level=None, describe=False, explicit_perms=None,
                   public=None, created_after=None, created_before=None, billed_to=None,
-                  limit=None, return_handler=False, first_page_size=100, **kwargs):
+                  limit=None, return_handler=False, first_page_size=100, containsPHI=None, **kwargs):
     """
     :param name: Name of the project (also see *name_mode*)
     :type name: string
@@ -466,6 +466,9 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
     :type first_page_size: int
     :param return_handler: If True, yields results as dxpy object handlers (otherwise, yields each result as a dict with keys "id" and "project")
     :type return_handler: boolean
+    :param containsPHI: If set to true, only returns projects that contain PHI.
+        If set to false, only returns projects that do not contain PHI.
+    :type containsPHI: boolean
     :rtype: generator
 
     Returns a generator that yields all projects that match the query.
@@ -509,6 +512,8 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
         query['billTo'] = billed_to
     if limit is not None:
         query["limit"] = limit
+    if containsPHI is not None:
+        query["containsPHI"] = containsPHI
 
     return _find(dxpy.api.system_find_projects, query, limit, return_handler, first_page_size, **kwargs)
 
@@ -734,7 +739,7 @@ def org_find_members(org_id=None, level=None, describe=False):
 
 
 def org_find_projects(org_id=None, name=None, name_mode='exact', ids=None, properties=None, tags=None, describe=False,
-                      public=None, created_after=None, created_before=None):
+                      public=None, created_after=None, created_before=None, containsPHI=None):
     """
     :param org_id: ID of the organization
     :type org_id: string
@@ -763,6 +768,9 @@ def org_find_projects(org_id=None, name=None, name_mode='exact', ids=None, prope
     :param created_before: Timestamp before which each result was created
         (see note accompanying :meth:`find_data_objects()` for interpretation)
     :type created_before: int or string
+    :param containsPHI: If set to true, only returns projects that contain PHI.
+        If set to false, only returns projects that do not contain PHI.
+    :type containsPHI: boolean
     :rtype: generator
 
     Returns a generator that yields all projects that match the query formed by intersecting all specified
@@ -800,6 +808,8 @@ def org_find_projects(org_id=None, name=None, name_mode='exact', ids=None, prope
             query["created"]["after"] = dxpy.utils.normalize_time_input(created_after)
         if created_before is not None:
             query["created"]["before"] = dxpy.utils.normalize_time_input(created_before)
+    if containsPHI is not None:
+        query["containsPHI"] = containsPHI
 
     return _org_find(dxpy.api.org_find_projects, org_id, query)
 

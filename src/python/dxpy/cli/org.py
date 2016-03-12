@@ -23,7 +23,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 from ..compat import input
 import dxpy
 from . import try_call, prompt_for_yn, INTERACTIVE_CLI
-from .parsers import process_find_by_property_args
+from .parsers import process_find_by_property_args, process_phi_param
 from ..exceptions import (DXCLIError, err_exit)
 from dxpy.utils.printing import (fill, DELIMITER, format_find_results)
 import json
@@ -261,13 +261,15 @@ def update_org(args):
 
 def org_find_projects(args):
     try_call(process_find_by_property_args, args)
+    try_call(process_phi_param, args)
     try:
         results = dxpy.org_find_projects(org_id=args.org_id, name=args.name, name_mode='glob',
                                          ids=args.ids, properties=args.properties, tags=args.tag,
                                          describe=(not args.brief),
                                          public=args.public,
                                          created_after=args.created_after,
-                                         created_before=args.created_before)
+                                         created_before=args.created_before,
+                                         containsPHI=args.containsPHI)
     except:
         err_exit()
     format_find_results(args, results)
