@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2013-2015 DNAnexus, Inc.
+# Copyright (C) 2013-2016 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #
@@ -59,7 +59,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'DNAnexus Python Bindings'
-copyright = u'2012-2015, DNAnexus'
+copyright = u'2012-2016, DNAnexus'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
