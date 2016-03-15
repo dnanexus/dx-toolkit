@@ -3549,7 +3549,7 @@ register_parser(parser_clearenv, categories='session')
 
 parser_invite = subparsers.add_parser('invite',
                                       help='Invite another user to a project or make it public',
-                                      description='Invite a DNAnexus entity to a project.  Use "PUBLIC" as the invitee and "VIEW" as the level to make the project public.  If the invitee is not recognized as a DNAnexus ID or is not "PUBLIC", it will be treated as a username, i.e. "dx invite alice : VIEW" is equivalent to inviting the user with user ID "user-alice" to view your current default project.',
+                                      description='Invite a DNAnexus entity to a project. If the invitee is not recognized as a DNAnexus ID, it will be treated as a username, i.e. "dx invite alice : VIEW" is equivalent to inviting the user with user ID "user-alice" to view your current default project.',
                                       prog='dx invite',
                                       parents=[env_args])
 parser_invite.add_argument('invitee', help='Entity to invite')
@@ -3563,7 +3563,7 @@ register_parser(parser_invite, categories='other')
 
 parser_uninvite = subparsers.add_parser('uninvite',
                                         help='Revoke others\' permissions on a project you administer',
-                                        description='Revoke others\' permissions on a project you administer.  Use "PUBLIC" as the entity to make the project no longer public.  If the entity is not recognized as a DNAnexus ID or is not "PUBLIC", it will be treated as a username, i.e. "dx uninvite alice :" is equivalent to revoking the permissions of the user with user ID "user-alice" to your current default project.',
+                                        description='Revoke others\' permissions on a project you administer. If the entity is not recognized as a DNAnexus ID, it will be treated as a username, i.e. "dx uninvite alice :" is equivalent to revoking the permissions of the user with user ID "user-alice" to your current default project.',
                                         prog='dx uninvite',
                                         parents=[env_args])
 parser_uninvite.add_argument('entity', help='Entity to uninvite')
