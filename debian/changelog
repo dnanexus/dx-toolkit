@@ -1,6 +1,12 @@
+dx-toolkit (0.183.2) precise; urgency=low
+
+  * Investigate issues with incomplete reads
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 15 Mar 2016 17:51:29 +0000
+
 dx-toolkit (0.183.1) precise; urgency=low
 
-  * output HTTP error for spot scale 
+  * output HTTP error for spot scale
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Fri, 04 Mar 2016 23:47:55 +0000
 
@@ -17,7 +23,7 @@ dx-toolkit (0.183.0) precise; urgency=low
   * Refactoring 'dx download'
   * PTFM-17353 Add options to dx-jobutil-new-job
   * PTFM-17201 Remove default download duration
-  * Java: DXFile.downloadStream returns InputStream, not OutputStream 
+  * Java: DXFile.downloadStream returns InputStream, not OutputStream
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 02 Mar 2016 19:54:53 +0000
 
@@ -25,19 +31,19 @@ dx-toolkit (0.182.0) precise; urgency=low
 
   * Add more informative error message for `dx add member`
   * Remove Ubuntu 10.04 support
-  * Adding the microseconds to the temporary directory used by dx-run-app-locally. This helps avoids race conditions 
+  * Adding the microseconds to the temporary directory used by dx-run-app-locally. This helps avoids race conditions
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 25 Feb 2016 00:16:26 +0000
 
 dx-toolkit (0.181.0) precise; urgency=low
 
- * Unadvertised GTable features and updated helpstrings
+  * Unadvertised GTable features and updated helpstrings
 
- * Allow disabling Retry Logic for all 5xx errors
+  * Allow disabling Retry Logic for all 5xx errors
 
- * Generate source jar during the verify phase for easy publishing
+  * Generate source jar during the verify phase for easy publishing
 
- * Thread safety improvements for dx
+  * Thread safety improvements for dx
 
  -- Phil Sung <psung@dnanexus.com>  Thu, 18 Feb 2016 19:30:03 +0000
 
@@ -89,7 +95,7 @@ dx-toolkit (0.178.0) precise; urgency=low
   * PyPy compatibility fixup for 87d6040
   * Don't install futures backport on Python 3
   * Fix Python 3 regression introduced in fb3a8d6
-  * PTFM-17184 refactor make python 
+  * PTFM-17184 refactor make python
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 27 Jan 2016 22:53:14 +0000
 
