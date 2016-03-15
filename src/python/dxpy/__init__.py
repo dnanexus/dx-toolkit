@@ -521,8 +521,9 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     if rewind_input_buffer_offset is not None:
                         data.seek(rewind_input_buffer_offset)
                     delay = min(2 ** try_index, DEFAULT_TIMEOUT)
-                    logger.warn("%s %s: %s. Waiting %d seconds before retry %d of %d...",
-                                method, url, exception_msg, delay, try_index + 1, max_retries)
+                    range_str = (' (range=%s)' % (headers['Range'],)) if 'Range' in headers else ''
+                    logger.warn("%s %s: %s. Waiting %d seconds before retry %d of %d... %s",
+                                method, url, exception_msg, delay, try_index + 1, max_retries, range_str)
                     time.sleep(delay)
                     try_index += 1
                     continue

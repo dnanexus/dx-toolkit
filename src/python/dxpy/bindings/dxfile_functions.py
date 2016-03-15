@@ -271,7 +271,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
             print(traceback.format_exc(), file=sys.stderr)
             part_retry_counter[cur_part] -= 1
             if part_retry_counter[cur_part] > 0:
-                print("Retrying {} ({} tries remain)".format(dxfile.get_id(), part_retry_counter[cur_part]),
+                print("Retrying {} ({} tries remain for part {})".format(dxfile.get_id(), part_retry_counter[cur_part], cur_part),
                       file=sys.stderr)
                 return False
             raise
