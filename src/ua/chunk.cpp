@@ -73,7 +73,7 @@ void get_empty_string_gzip(vector<char> &dest) {
 }
 
 void Chunk::read() {
-  const int64_t len = end - start;
+  const uint64_t len = end - start;
   data.clear();
   data.resize(len);
   if (len == 0) {

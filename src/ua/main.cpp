@@ -25,6 +25,13 @@
 #include <boost/version.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#ifdef WINDOWS_BUILD
+#include <windows.h>
+#include <psapi.h>
+#else
+#include <unistd.h>
+#endif
+
 #include "dxcpp/dxcpp.h"
 #include "dxcpp/bqueue.h"
 #include "api_helper.h"
@@ -136,10 +143,92 @@ void handle_bad_alloc(const std::bad_alloc &e) {
 // consumption of UA will roughly be the following:
 //
 // Memory footprint = [#read-threads + 2 * (#compress-threads + #upload-threads)] * chunk-size
+//
+// The approach to manage the memory usage is done is these steps:
+// 1. At the begining determine how much memeory is available in the system and set
+//    a resident set size (RSS) limit to 80% of that.
+// 2. Check the current RSS in the read threads before reading new data. If the RSS is larger
+//    than the limit, let the thread sleep for 2 seconds initially, and back-off exponentially
+//    up to a maximum of 16 seconds.
+
+long getAvailableSystemMemory()
+{
+#ifdef WINDOWS_BUILD
+  MEMORYSTATUSEX status;
+  status.dwLength = sizeof(status);
+  GlobalMemoryStatusEx(&status);
+  return status.ullTotalPhys;
+#else
+  long pages = sysconf(_SC_AVPHYS_PAGES);
+  long page_size = sysconf(_SC_PAGE_SIZE);
+  return pages * page_size;
+#endif
+}
+
+// rssLimit is the maximum amount of memory the program may use.
+// It is set to be 80% of the system's free memory at program startup.
+// If the limit is reached, the read threads are delayed
+static long rssLimit = 0;
+
+void initializeRSSLimit() {
+  long freeMemory = getAvailableSystemMemory();
+  rssLimit = freeMemory*8/10;
+  DXLOG(logINFO) << "Resident Set Size Limit (RSS): " << rssLimit;
+}
+
+// Get the current memory usage
+long getRSS() {
+#ifdef WINDOWS_BUILD
+  PROCESS_MEMORY_COUNTERS info;
+  GetProcessMemoryInfo( GetCurrentProcess( ), &info, sizeof(info) );
+  DWORD err = GetLastError();
+  if (err != 0 ) {
+    DXLOG(logWARNING) << "Unable to get process' memory usage, error code " << err;
+      return 0;
+  }    
+  return (long)info.WorkingSetSize;
+#else
+  ifstream statStream("/proc/self/statm",ios_base::in);
+  if (!statStream.good()) {
+    DXLOG(logWARNING) << "Unable to get process' memory usage";
+    return 0;
+  }
+
+  long s = 0;
+  long rss = 0;
+  statStream >> s >> rss;
+  statStream.close();
+  return rss * sysconf(_SC_PAGE_SIZE);
+#endif
+}
+
+bool isMemoryUseNormal() {
+  // if RSS limit is not set, don't check memory usage
+  if (rssLimit <= 0) {
+    return true;
+  }
+  
+  long residentSet = getRSS();
+  DXLOG(logINFO) << "Free Memory: " << getAvailableSystemMemory() << " rss " << residentSet ;
+
+  if (residentSet > rssLimit) {
+    return false;
+  }
+  return true;
+}
 
 void readChunks() {
   try {
+    int delay = 1;
     while (true) {
+      // If the upload  is using a lot of memory delay the read thread for a bit.
+      if (!isMemoryUseNormal()) {
+	delay = min(delay*2, 16);	
+	DXLOG(logWARNING) << "RSS larger than limit. Delaying read thread by " << delay << "secs";
+	boost::this_thread::sleep(boost::posix_time::seconds(delay));
+	continue;
+      }
+      delay = 1; //Reset the delay
       Chunk * c = chunksToRead.consume();
 
       c->log("Reading...");
@@ -711,6 +800,7 @@ int main(int argc, char * argv[]) {
 
     DXLOG(logINFO) << "Created " << totalChunks << " chunks.";
 
+    initializeRSSLimit();
     createWorkerThreads(files);
 
     DXLOG(logINFO) << "Creating monitor thread..";

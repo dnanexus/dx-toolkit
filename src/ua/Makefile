@@ -62,8 +62,8 @@ endif
 # We use the -std=gnu++0x flag instead of c++0x for Windows compilation, because
 # c++0x mode turns on the __STRICT_ANSI__ flag, which forbids functions such as fseeko64() (which we use)
 ifeq ($(OS), Windows_NT)
-	CXXFLAGS += -DWINDOWS_BUILD=1 -std=gnu++0x
-	LDFLAGS += -lws2_32 -lregex -lgnurx.dll -lshlwapi
+	CXXFLAGS += -DWINDOWS_BUILD=1 -DPSAPI_VERSION=1 -std=gnu++0x
+	LDFLAGS += -lws2_32 -lregex -lgnurx.dll -lshlwapi -lpsapi
 	LDFLAGS += -lcurl.dll -lcares.dll -lboost_program_options-mt.dll -lboost_filesystem-mt.dll -lboost_system-mt.dll -lboost_thread-mt.dll -lboost_regex-mt.dll
 else
 	LDFLAGS += -pthread -lcurl -lcares -lboost_program_options-mt -lboost_filesystem-mt -lboost_system-mt -lboost_thread-mt -lboost_regex-mt

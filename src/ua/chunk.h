@@ -82,16 +82,16 @@ public:
   // TODO: What is the proper type for offsets within a file?
 
   /* Offset of the beginning of this chunk within the file */
-  int64_t start;
+  uint64_t start;
 
   /* Offset of the end of this chunk within the file */
-  int64_t end;
+  uint64_t end;
 
   /* Chunk data -- the bytes to be uploaded */
   std::vector<char> data;
 
   /* While uploading, the offset of the next byte to give to libcurl */
-  int64_t uploadOffset;
+  uint64_t uploadOffset;
   
   /* If true, then the chunk will be compressed, else not */
   bool toCompress;

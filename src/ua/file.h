@@ -78,13 +78,13 @@ public:
   std::string mimeType;
 
   /* chunk size for this file*/
-  int64_t chunkSize;
+  uint64_t chunkSize;
 
   /* Size of the local file to be uploaded */
-  int64_t size;
+  uint64_t size;
 
   /* Number of bytes uploaded succesfuly so far from local file */
-  int64_t bytesUploaded;
+  uint64_t bytesUploaded;
   
   /* Index of this File object in the Files vector (in main.cpp) */
   unsigned int fileIndex;

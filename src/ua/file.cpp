@@ -29,6 +29,8 @@ namespace fs = boost::filesystem;
 using namespace std;
 using namespace dx;
 
+#define MAX_UPLOAD_CHUNKS 10000 // Maximum number of chunks that amazon can process for a single file
+
 string File::createResumeInfoString(const int64_t fileSize, const int64_t modifiedTimestamp, const bool toCompress, const int64_t chunkSize, const string &path) {
   using namespace boost;
   string toReturn;
@@ -98,6 +100,12 @@ void File::init(const bool tryResuming) {
     // Never try to compress empty file!
     toCompress = false;
   }
+
+  if ( chunkSize * MAX_UPLOAD_CHUNKS < size) {
+    chunkSize = size / MAX_UPLOAD_CHUNKS + ( (size % MAX_UPLOAD_CHUNKS) ? 1 : 0);
+    DXLOG(logWARNING) << "Chunk-size too small, will change to " << chunkSize;
+  }
+
   string remoteFileName = name;
 
   if (toCompress) 
