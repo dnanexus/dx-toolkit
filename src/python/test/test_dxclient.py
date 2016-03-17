@@ -3715,15 +3715,18 @@ class TestDXClientFind(DXTestCase):
         run("dx find projects --property bar=")
 
     def test_dx_find_projects_phi(self):
-        res = run('dx find projects --phi true --brief')
-        self.assertTrue(len(res) == 0, "Expected no PHI projects to be found")
+        projectName = "tempProject+{t}".format(t=time.time())
+        with temporary_project(name=projectName) as project_1:
+            res = run('dx find projects --phi true --brief --name ' + pipes.quote(projectName))
+            self.assertTrue(len(res) == 0, "Expected no PHI projects to be found")
 
-        res = run('dx find projects --phi false --brief')
-        self.assertTrue(res.strip() == self.project, "Expected to retrieve one project only")
+            res = run('dx find projects --phi false --brief --name ' + pipes.quote(projectName)).strip().split('\n')
+            self.assertTrue(len(res) == 1, "Expected to find one project")
+            self.assertTrue(res[0] == project_1.get_id())
 
-        # --phi must contain one argument.
-        with self.assertSubprocessFailure(stderr_regexp='expected one argument', exit_code=2):
-            run('dx find projects --phi')
+            # --phi must contain one argument.
+            with self.assertSubprocessFailure(stderr_regexp='expected one argument', exit_code=2):
+                run('dx find projects --phi')
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
@@ -4174,14 +4177,15 @@ class TestDXClientFindInOrg(DXTestCase):
         self.assertEqual(output, expected)
 
     def test_dx_find_org_projects_phi(self):
-        with temporary_project() as project_1:
+        projectName = "tempProject+{t}".format(t=time.time())
+        with temporary_project(name=projectName) as project_1:
             project1_id = project_1.get_id()
             dxpy.api.project_update(project1_id, {"billTo": self.org_id})
 
-            res = run('dx find org projects org-piratelabs --phi true --brief')
+            res = run('dx find org projects org-piratelabs --phi true --brief --name ' + pipes.quote(projectName))
             self.assertTrue(len(res) == 0, "Expected no PHI projects to be found")
 
-            res = run('dx find org projects org-piratelabs --phi false --brief').strip().split("\n")
+            res = run('dx find org projects org-piratelabs --phi false --brief --name ' + pipes.quote(projectName)).strip().split("\n")
 
             self.assertTrue(len(res) == 1, "Expected to find one project")
             self.assertEqual(res[0], project1_id)
