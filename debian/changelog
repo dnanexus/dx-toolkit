@@ -1,3 +1,19 @@
+dx-toolkit (0.184.0) precise; urgency=low
+
+  * PTFM-17496 Add dx toolkit option to filter PHI projects
+  * Updated helpstring for dx invite/uninvite
+  * Ouput more information when a request is retried
+  * Update copyright year
+  * dx-upload-all-outputs: flush log messages before starting upload
+  * dx-download-all-inputs: flush log message before starting download
+  * Followup to 36feeae: create app only conditionally
+  * Re-adding --omit-resources flag
+  * PTFM-17308 Hide GTable high-level classes from bindings documentation
+  * PTFM-16572 Adding request ID to verbose debug output
+  * output HTTP error for spot scale
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 17 Mar 2016 20:06:24 +0000
+
 dx-toolkit (0.183.0) precise; urgency=low
 
   * SCI-424 "assetDepends" metadata to the dxapp.json
