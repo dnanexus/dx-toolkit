@@ -33,7 +33,7 @@ from . import DXDataObject
 from ..exceptions import DXFileError
 from ..utils import warn
 from ..utils.resolver import object_exists_in_project
-from ..compat import BytesIO
+from ..compat import BytesIO, basestring
 
 
 DXFILE_HTTP_THREADS = min(cpu_count(), 8)
