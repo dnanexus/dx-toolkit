@@ -48,7 +48,7 @@ FILE_REQUEST_TIMEOUT = 60
 
 
 def _validate_headers(headers):
-    for key, value in headers.iteritems():
+    for key, value in headers.items():
         if not isinstance(key, basestring):
             raise ValueError("Expected key %r of headers to be a string" % (key,))
         if not isinstance(value, basestring):
