@@ -46,6 +46,17 @@ if dxpy.JOB_ID:
 MD5_READ_CHUNK_SIZE = 1024*1024*4
 FILE_REQUEST_TIMEOUT = 60
 
+
+def _validate_headers(headers):
+    for key, value in headers.iteritems():
+        if not isinstance(key, basestring):
+            raise ValueError("Expected key %r of headers to be a string" % (key,))
+        if not isinstance(value, basestring):
+            raise ValueError("Expected value %r of headers (associated with key %r) to be a string"
+                             % (value, key))
+    return headers
+
+
 class DXFile(DXDataObject):
     '''Remote file object handler.
 
@@ -494,7 +505,7 @@ class DXFile(DXDataObject):
 
             resp = dxpy.api.file_upload(self._dxid, req_input, **kwargs)
             url = resp["url"]
-            return url, resp.get("headers", {})
+            return url, _validate_headers(resp.get("headers", {}))
 
         # The file upload API requires us to get a pre-authenticated upload URL (and headers for it) every time we
         # attempt an upload. Because DXHTTPRequest will retry requests under retryable conditions, we give it a callback
@@ -574,7 +585,7 @@ class DXFile(DXDataObject):
                     kwargs["timeout"] = FILE_REQUEST_TIMEOUT
                 resp = dxpy.api.file_download(self._dxid, args, **kwargs)
                 self._download_url = resp["url"]
-                self._download_url_headers = resp.get("headers", {})
+                self._download_url_headers = _validate_headers(resp.get("headers", {}))
                 if preauthenticated:
                     self._download_url_expires = resp["expires"]/1000 - 60  # Try to account for drift
                 else:
