@@ -425,6 +425,9 @@ void Chunk::upload(Options &opt) {
   if ((responseCode < 200) || (responseCode >= 300)) {
     log("Response code not in 2xx range ... throwing runtime_error", dx::logERROR);
     ostringstream msg;
+    log("--- Server response body", dx::logERROR);
+    log(respData, dx::logERROR);
+    log("---", dx::logERROR);
     msg << "Request failed with HTTP status code " << responseCode << ", server Response: '" << respData << "'";
     throw runtime_error(msg.str());
   }
