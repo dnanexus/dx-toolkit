@@ -42,7 +42,7 @@ DEFAULT_BUFFER_SIZE = 1024*1024*16
 if dxpy.JOB_ID:
     # Increase HTTP request buffer size when we are running within the
     # platform.
-    DEFAULT_BUFFER_SIZE = 1024*1024*96
+    DEFAULT_BUFFER_SIZE = 1024*1024*4
 
 MD5_READ_CHUNK_SIZE = 1024*1024*4
 FILE_REQUEST_TIMEOUT = 60
@@ -125,8 +125,8 @@ class DXFile(DXDataObject):
         self._read_buf = BytesIO()
         self._write_buf = BytesIO()
 
-        if write_buffer_size < 5*1024*1024:
-            raise DXFileError("Write buffer size must be at least 5 MB")
+        if write_buffer_size > 4*1024*1024:
+            raise DXFileError("Write buffer size must be at most 4 MB")
 
         self._read_bufsize = read_buffer_size
         self._write_bufsize = write_buffer_size
