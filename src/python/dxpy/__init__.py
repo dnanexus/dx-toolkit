@@ -512,7 +512,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 # BadJSONInReply --- server returned JSON that didn't parse properly
                 if try_index + 1 < total_allowed_tries:
                     if response is None or \
-                       isinstance(e, (exceptions.ContentLengthError, BadStatusLine, exceptions.BadJSONInReply)):
+                       isinstance(e, (exceptions.ContentLengthError, BadStatusLine, exceptions.BadJSONInReply, \
+                                      urllib3.exceptions.ProtocolError)):
                         ok_to_retry = always_retry or (method == 'GET') or _is_retryable_exception(e)
                     else:
                         ok_to_retry = 500 <= response.status < 600
