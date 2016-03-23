@@ -207,7 +207,11 @@ def _get_pool_manager(verify, cert_file, key_file):
     if cert_file is None and verify is None and 'DX_CA_CERT' not in os.environ:
         with _pool_mutex:
             if _pool_manager is None:
-                _pool_manager = urllib3.PoolManager(**default_pool_args)
+                if 'HTTPS_PROXY' in os.environ:
+                    default_pool_args['proxy_url'] = os.environ['HTTPS_PROXY']
+                    _pool_manager = urllib3.ProxyManager(**default_pool_args)
+                else:
+                    _pool_manager = urllib3.PoolManager(**default_pool_args)
             return _pool_manager
     else:
         # This is the uncommon case, normally, we want to cache the pool
@@ -219,7 +223,11 @@ def _get_pool_manager(verify, cert_file, key_file):
         if verify is False or os.environ.get('DX_CA_CERT') == 'NOVERIFY':
             pool_args.update(cert_reqs=ssl.CERT_NONE, ca_certs=None)
             urllib3.disable_warnings()
-        return urllib3.PoolManager(**pool_args)
+        if 'HTTPS_PROXY' in os.environ:
+            pool_args['proxy_url'] = os.environ['HTTPS_PROXY']
+            return urllib3.ProxyManager(**pool_args)
+        else:
+            return urllib3.PoolManager(**pool_args)
 
 
 def _process_method_url_headers(method, url, headers):
