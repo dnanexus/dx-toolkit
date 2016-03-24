@@ -125,7 +125,7 @@ environment variables:
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, json, time, logging, platform, ssl, traceback, urlparse
+import os, sys, json, time, logging, platform, ssl, traceback
 import errno
 import requests
 import socket
@@ -136,6 +136,10 @@ from requests.packages import urllib3
 from requests.packages.urllib3.packages.ssl_match_hostname import match_hostname
 from .compat import USING_PYTHON2, expanduser, BadStatusLine
 from threading import Lock
+try:
+    from urllib.parse import urlsplit
+except ImportError:
+    from urlparse import urlsplit
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -200,7 +204,7 @@ _pool_manager = None
 def _get_proxy_info(url):
     proxy_info = {}
 
-    url_info = urlparse.urlsplit(url)
+    url_info = urlsplit(url)
     # If the url contains a username, need to separate the username/password
     # from the url
     if url_info.username:
