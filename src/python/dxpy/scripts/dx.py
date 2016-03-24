@@ -4184,8 +4184,8 @@ parser_ssh.add_argument('ssh_args', help='Command-line arguments to pass to the 
 parser_ssh.set_defaults(func=ssh)
 register_parser(parser_ssh, categories='exec')
 
-parser_terminate = subparsers.add_parser('terminate', help='Terminate job(s)',
-                                         description='Terminate a job or jobs that have not yet finished',
+parser_terminate = subparsers.add_parser('terminate', help='Terminate job(s) or analysis',
+                                         description='Terminate a job/jobs or analysis that has not yet finished',
                                          prog='dx terminate',
                                          parents=[env_args])
 parser_terminate.add_argument('jobid', help='ID of the job to terminate', nargs='+')
