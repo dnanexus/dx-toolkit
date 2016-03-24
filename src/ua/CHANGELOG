@@ -1,3 +1,8 @@
+DNAnexus Upload Agent 1.5.12 <support@dnanexus.com>, 2016-Mar-24
+----------------------------------------------------------------
+  * Better diagnostics when S3 errors are encountered
+  * Improvements to memory management
+
 DNAnexus Upload Agent 1.5.11 <support@dnanexus.com>, 2015-Sep-16
 ----------------------------------------------------------------
   * PTFM-16030 Support proxy S3 API endpoints in UA

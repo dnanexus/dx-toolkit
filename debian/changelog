@@ -1,3 +1,18 @@
+dx-toolkit (0.185.0) precise; urgency=low
+
+  * Upload Agent: Added a mutex to prevent simultaneous mem checks
+  * PTFM-17511 Java bindings for single-threaded streaming uploads
+  * Making the ProtocolError exception retryable
+  * PTFM-17684 Print entirety of error response so we can see S3 errors
+  * PTFM-16700 + PTFM-16705 Upload Agent memory management
+  * Another Python 3 fixup for preivous commit
+  * Python 3 fixup for preivous commit
+  * Add a sanity check on headers: ensure they're all strings
+  * PTFM-17512 Java bindings for single-threaded streaming downloads
+  * Fixed broken test - find phi projects 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 24 Mar 2016 20:03:59 +0000
+
 dx-toolkit (0.184.0) precise; urgency=low
 
   * PTFM-17496 Add dx toolkit option to filter PHI projects
