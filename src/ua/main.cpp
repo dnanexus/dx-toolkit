@@ -170,6 +170,9 @@ long getAvailableSystemMemory()
 // If the limit is reached, the read threads are delayed
 static long rssLimit = 0;
 
+// A mutex used to prevent the multiple read thread to check memory at the same time
+boost::mutex memCheckMutex;
+
 void initializeRSSLimit() {
   long freeMemory = getAvailableSystemMemory();
   rssLimit = freeMemory*8/10;
@@ -202,12 +205,16 @@ long getRSS() {
 #endif
 }
 
+
+
 bool isMemoryUseNormal() {
   // if RSS limit is not set, don't check memory usage
   if (rssLimit <= 0) {
     return true;
   }
-  
+
+  boost::mutex::scoped_lock lock(memCheckMutex);
+
   long residentSet = getRSS();
   DXLOG(logINFO) << "Free Memory: " << getAvailableSystemMemory() << " rss " << residentSet ;
 
