@@ -216,7 +216,14 @@ bool isMemoryUseNormal() {
   boost::mutex::scoped_lock lock(memCheckMutex);
 
   long residentSet = getRSS();
-  DXLOG(logINFO) << "Free Memory: " << getAvailableSystemMemory() << " rss " << residentSet ;
+  long freeMemory = getAvailableSystemMemory();
+  rssLimit = freeMemory*8/10;
+  DXLOG(logINFO) << "Free Memory: " << freeMemory << " rss " << residentSet ;
+
+  if(freeMemory*8/10 > rssLimit) {    
+    rssLimit = freeMemory*8/10;
+    DXLOG(logINFO) << "New RSS Limit: " << rssLimit;
+  }
 
   if (residentSet > rssLimit) {
     return false;
