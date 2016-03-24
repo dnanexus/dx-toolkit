@@ -31,7 +31,7 @@ using namespace dx;
 
 #define MAX_UPLOAD_CHUNKS 10000 // Maximum number of chunks that amazon can process for a single file
 
-string File::createResumeInfoString(const int64_t fileSize, const int64_t modifiedTimestamp, const bool toCompress, const int64_t chunkSize, const string &path) {
+string File::createResumeInfoString(const uint64_t fileSize, const int64_t modifiedTimestamp, const bool toCompress, const uint64_t chunkSize, const string &path) {
   using namespace boost;
   string toReturn;
   toReturn += lexical_cast<string>(fileSize) + " ";
@@ -188,9 +188,9 @@ unsigned int File::createChunks(dx::BlockingQueue<Chunk *> &queue, const int tri
   unsigned int countChunks = 0; // to iterate over chunks
   unsigned int actualChunksCreated = 0; // is not incremented for chunks which are already in "complete" state (when resuming)
 
-  for (int64_t start = 0; start < size; start += chunkSize) {
+  for (uint64_t start = 0; start < size; start += chunkSize) {
     string partIndex = boost::lexical_cast<string>(countChunks + 1); // minimum part index is 1
-    const int64_t end = min(start + chunkSize, size);
+    const uint64_t end = min(start + chunkSize, size);
     if (desc["parts"].has(partIndex) && desc["parts"][partIndex]["state"].get<string>() == "complete") {
       DXLOG(logINFO) << "Part index " << partIndex << " for fileID " << fileID << " is in complete state. Will not create an upload chunk for it.";
       bytesUploaded += (end - start);

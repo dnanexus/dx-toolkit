@@ -111,8 +111,8 @@ public:
    * (with space as delimiter). This string is used for identifying whether
    * an upload can be resumed or not.
    */
-  static std::string createResumeInfoString(const int64_t fileSize, const int64_t modifiedTimestamp,
-                                            const bool toCompress, const int64_t chunkSize, const std::string &path);
+  static std::string createResumeInfoString(const uint64_t fileSize, const int64_t modifiedTimestamp,
+                                            const bool toCompress, const uint64_t chunkSize, const std::string &path);
 
 };
 

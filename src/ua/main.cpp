@@ -31,6 +31,9 @@
 #else
 #include <unistd.h>
 #endif
+#ifdef MAC_BUILD
+#include <mach/mach.h>
+#endif
 
 #include "dxcpp/dxcpp.h"
 #include "dxcpp/bqueue.h"
@@ -158,6 +161,13 @@ long getAvailableSystemMemory()
   status.dwLength = sizeof(status);
   GlobalMemoryStatusEx(&status);
   return status.ullTotalPhys;
+#elif MAC_BUILD
+  struct mach_task_basic_info info;
+  mach_msg_type_number_t infoCount = MACH_TASK_BASIC_INFO_COUNT;
+  if ( task_info( mach_task_self( ), MACH_TASK_BASIC_INFO, (task_info_t)&info, &infoCount ) != KERN_SUCCESS ) {
+    return (long)0L;
+  }
+  return (long)info.virtual_size;
 #else
   long pages = sysconf(_SC_AVPHYS_PAGES);
   long page_size = sysconf(_SC_PAGE_SIZE);
@@ -190,6 +200,14 @@ long getRSS() {
       return 0;
   }    
   return (long)info.WorkingSetSize;
+#elif MAC_BUILD
+  struct mach_task_basic_info info;
+  mach_msg_type_number_t infoCount = MACH_TASK_BASIC_INFO_COUNT;
+  if ( task_info( mach_task_self( ), MACH_TASK_BASIC_INFO, (task_info_t)&info, &infoCount ) != KERN_SUCCESS ) {
+    DXLOG(logWARNING) << "Unable to get process' memory usage";
+    return (long)0L;
+  }
+  return (long)info.resident_size;
 #else
   ifstream statStream("/proc/self/statm",ios_base::in);
   if (!statStream.good()) {
@@ -206,7 +224,6 @@ long getRSS() {
 }
 
 
-
 bool isMemoryUseNormal() {
   // if RSS limit is not set, don't check memory usage
   if (rssLimit <= 0) {
@@ -217,10 +234,9 @@ bool isMemoryUseNormal() {
 
   long residentSet = getRSS();
   long freeMemory = getAvailableSystemMemory();
-  rssLimit = freeMemory*8/10;
   DXLOG(logINFO) << "Free Memory: " << freeMemory << " rss " << residentSet ;
 
-  if(freeMemory*8/10 > rssLimit) {    
+  if(freeMemory*8/10 > rssLimit) {
     rssLimit = freeMemory*8/10;
     DXLOG(logINFO) << "New RSS Limit: " << rssLimit;
   }
