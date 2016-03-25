@@ -136,6 +136,10 @@ from requests.packages import urllib3
 from requests.packages.urllib3.packages.ssl_match_hostname import match_hostname
 from .compat import USING_PYTHON2, expanduser, BadStatusLine
 from threading import Lock
+try:
+    from urllib.parse import urlsplit
+except ImportError:
+    from urlparse import urlsplit
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -197,6 +201,29 @@ _pool_mutex = Lock()
 _pool_manager = None
 
 
+def _get_proxy_info(url):
+    proxy_info = {}
+
+    url_info = urlsplit(url)
+    # If the url contains a username, need to separate the username/password
+    # from the url
+    if url_info.username:
+        # Strip the username/password out of the url
+        url = url_info.netloc[url_info.netloc.find('@')+1:]
+        # Now get the username and possibly password
+        proxy_info['proxy_url'] = '{0}://{1}'.format(url_info.scheme, url)
+        if url_info.password:
+            proxy_auth = '{0}:{1}'.format(url_info.username, url_info.password)
+        else:
+            proxy_auth = url_info.username
+        proxy_info['proxy_headers'] = urllib3.make_headers(proxy_basic_auth=proxy_auth)
+    else:
+        # No username was given, so just take the url as is.
+        proxy_info['proxy_url'] = url
+
+    return proxy_info
+
+
 def _get_pool_manager(verify, cert_file, key_file):
     global _pool_manager
     default_pool_args = dict(maxsize=32,
@@ -207,7 +234,12 @@ def _get_pool_manager(verify, cert_file, key_file):
     if cert_file is None and verify is None and 'DX_CA_CERT' not in os.environ:
         with _pool_mutex:
             if _pool_manager is None:
-                _pool_manager = urllib3.PoolManager(**default_pool_args)
+                if 'HTTPS_PROXY' in os.environ:
+                    proxy_params = _get_proxy_info(os.environ['HTTPS_PROXY'])
+                    default_pool_args.update(proxy_params)
+                    _pool_manager = urllib3.ProxyManager(**default_pool_args)
+                else:
+                    _pool_manager = urllib3.PoolManager(**default_pool_args)
             return _pool_manager
     else:
         # This is the uncommon case, normally, we want to cache the pool
@@ -219,7 +251,12 @@ def _get_pool_manager(verify, cert_file, key_file):
         if verify is False or os.environ.get('DX_CA_CERT') == 'NOVERIFY':
             pool_args.update(cert_reqs=ssl.CERT_NONE, ca_certs=None)
             urllib3.disable_warnings()
-        return urllib3.PoolManager(**pool_args)
+        if 'HTTPS_PROXY' in os.environ:
+            proxy_params = _get_proxy_info(os.environ['HTTPS_PROXY'])
+            pool_args.update(proxy_params)
+            return urllib3.ProxyManager(**pool_args)
+        else:
+            return urllib3.PoolManager(**pool_args)
 
 
 def _process_method_url_headers(method, url, headers):
