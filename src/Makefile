@@ -127,6 +127,9 @@ $(DNANEXUS_HOME)/bin/dx: $(shell find python/{dxpy,scripts,requirements*,setup*}
 	rm -rf "$(PYTHON_LIBDIR)" "$(DX_PY_ENV)" python/dist
 	virtualenv --python=python "$(DX_PY_ENV)"
 	unset PYTHONPATH; source "$(DX_PY_ENV)/bin/activate"; pip install --upgrade -r python/requirements_setuptools.txt
+ifeq ($(UNAME), Darwin)
+	unset PYTHONPATH; source "$(DX_PY_ENV)/bin/activate"; pip install --no-cache-dir --prefix="$(DNANEXUS_HOME)" -r python/requirements_readline.txt
+endif
 	unset PYTHONPATH; source "$(DX_PY_ENV)/bin/activate"; cd python; python setup.py bdist_wheel
 	unset PYTHONPATH; source "$(DX_PY_ENV)/bin/activate"; pip install --ignore-installed --prefix="$(DNANEXUS_HOME)" python/dist/*.whl
 	mkdir -p "$$(dirname '$(PYTHON_LIBDIR)')"
