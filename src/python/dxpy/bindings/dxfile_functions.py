@@ -35,7 +35,7 @@ from .. import logger, DXHTTPRequest
 from . import dxfile, DXFile
 from .dxfile import FILE_REQUEST_TIMEOUT
 from ..compat import open
-from ..exceptions import DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError
+from ..exceptions import DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, DXIncompleteReadsError
 from ..utils import response_iterator
 
 def open_dxfile(dxid, project=None, read_buffer_size=dxfile.DEFAULT_BUFFER_SIZE):
@@ -111,12 +111,21 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
 
     '''
     # retry the inner loop while there are retriable errors
-    part_retry_counter = defaultdict(lambda: 3)
-    success = False
-    while not success:
-        success = _download_dxfile(dxid, filename, part_retry_counter,
-                                   chunksize=chunksize, append=append,
-                                   show_progress=show_progress, project=project, **kwargs)
+    def download_with_chunksize(csize):
+        part_retry_counter = defaultdict(lambda: 3)
+        success = False
+        while not success:
+            success = _download_dxfile(dxid, filename, part_retry_counter,
+                                       chunksize=csize, append=append,
+                                       show_progress=show_progress, project=project, **kwargs)
+    try:
+        download_with_chunksize(chunksize)
+    except DXIncompleteReadsError:
+        # We were unable to read with large buffers, try again with a small buffer.
+        # This can happen if the data source is slow in sending data.
+        logger.info("Data source is slow, reducing maximal buffer size to %d, and trying again",
+                    dxfile.MIN_BUFFER_SIZE)
+        download_with_chunksize(dxfile.MIN_BUFFER_SIZE)
 
 
 def _download_dxfile(dxid, filename, part_retry_counter,
