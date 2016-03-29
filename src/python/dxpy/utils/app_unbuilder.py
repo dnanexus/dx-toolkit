@@ -33,7 +33,7 @@ import sys
 
 from .. import get_handler, download_dxfile
 from ..compat import open
-
+from ..exceptions import err_exit
 
 def _recursive_cleanup(foo):
     """
@@ -91,8 +91,9 @@ def dump_executable(executable, destination_directory, omit_resources=False, des
                     if not created_resources_directory:
                         os.mkdir("resources")
                         created_resources_directory = True
-                    fname = "resources/%s.tar.gz" % (handler.get_id())
-                    download_dxfile(handler.get_id(), fname)
+                    handler_id = handler.get_id()
+                    fname = "resources/%s.tar.gz" % (handler_id)
+                    download_dxfile(handler_id, fname)
                     subprocess.check_call(["tar", "-C", "resources", "-zxvf", fname], shell=False)
                     os.unlink(fname)
                     deps_to_remove.append(dep)
@@ -151,5 +152,7 @@ def dump_executable(executable, destination_directory, omit_resources=False, des
         if devnotes:
             with open("Readme.developer.md", "w") as f:
                 f.write(devnotes)
+    except:
+        err_exit()
     finally:
         os.chdir(old_cwd)

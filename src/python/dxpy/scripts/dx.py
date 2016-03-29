@@ -1764,25 +1764,21 @@ def get_applet(project, entity_result, args):
     dx_obj = dxpy.DXApplet(obj_id, project=project)
     describe_output = dx_obj.describe(incl_properties=True,
                                       incl_details=True)
-    dump_executable(dx_obj, output_path, omit_resources=args.omit_resources, describe_output=describe_output)
+    dump_executable(dx_obj,
+                    output_path,
+                    omit_resources=args.omit_resources,
+                    describe_output=describe_output)
 
 
 def get_app(entity_result, args):
-    obj_name = None
-    if not entity_result['describe']['openSource']:
-        err_string = 'Error: can only call dx get on apps that have the openSource flag set to true\n'
-        parser.exit(3, err_string)
-
     obj_name = entity_result['describe']['name']
     obj_id = entity_result['id']
     output_path = get_output_path(obj_name,
                                   entity_result['describe']['class'],
                                   args)
-    # Now output_path points to a empty directory, so we're ready to go.
     from dxpy.utils.app_unbuilder import dump_executable
     dx_obj = dxpy.DXApp(obj_id)
     dump_executable(dx_obj, output_path, omit_resources=args.omit_resources)
-
 
 def get(args):
     # Decide what to do based on entity's class

@@ -6799,11 +6799,9 @@ class TestDXGetExecutables(DXTestCase):
             self.assertFalse(os.path.exists(os.path.join("get_applet", "Readme.md")))
             self.assertFalse(os.path.exists(os.path.join("get_applet", "Readme.developer.md")))
 
-    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
-    def test_get_app(self):
-        self.maxDiff = None
+    def make_app(self, name, open_source=True, published=True, authorized_users=[]):
         app_spec = {
-            "name": "get_app_open_source",
+            "name": name,
             "title": "Sir",
             "dxapi": "1.0.0",
             "runSpec": {"file": "code.py", "interpreter": "python2.7"},
@@ -6811,7 +6809,8 @@ class TestDXGetExecutables(DXTestCase):
             "outputSpec": [{"name": "out1", "class": "file"}],
             "description": "Description\n",
             "developerNotes": "Developer notes\n",
-            "openSource": True,
+            "authorizedUsers": authorized_users,
+            "openSource": open_source,
             "version": "0.0.1"
             }
         # description and developerNotes should be un-inlined back to files
@@ -6820,67 +6819,122 @@ class TestDXGetExecutables(DXTestCase):
                                if k not in ('description', 'developerNotes'))
         output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7"}
 
-        app_dir = self.write_app_directory("get_app_open_source",
+        app_dir = self.write_app_directory(name,
                                            json.dumps(app_spec),
                                            "code.py",
                                            code_content="import os\n")
         os.mkdir(os.path.join(app_dir, "resources"))
         with open(os.path.join(app_dir, "resources", "resources_file"), 'w') as f:
             f.write('content\n')
-        new_app_json = json.loads(run("dx build --create-app --json " + app_dir))
-        new_app_id = new_app_json["id"]
-        # app_describe = json.loads(run("dx describe --json " + new_app_json["id"]))
-        app_describe = dxpy.api.app_describe(new_app_json["id"])
+        if published:
+            build_cmd = "dx build --create-app --json --publish "
+        else:
+            build_cmd = "dx build --create-app --json "
 
+        app_json = json.loads(run(build_cmd + app_dir))
+        app_id = app_json["id"]
+        app_describe = dxpy.api.app_describe(app_id)
         self.assertEqual(app_describe["class"], "app")
         self.assertEqual(app_describe["version"], "0.0.1")
-        self.assertEqual(app_describe["name"], "get_app_open_source")
-        self.assertFalse("published" in app_describe)
+        self.assertEqual(app_describe["name"], name)
+        if published:
+            self.assertTrue("published" in app_describe)
+        else:
+            self.assertFalse("published" in app_describe)
+
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
+        return [app_id, output_app_spec]
+
+    def assert_app_get_initialized(self, name, app_spec):
+        self.assertTrue(os.path.exists(name))
+        self.assertTrue(os.path.exists(os.path.join(name,
+                                                    "dxapp.json")))
+        output_json = json.load(open(os.path.join(name,
+                                                  "dxapp.json")),
+                                object_pairs_hook=collections.OrderedDict)
+
+        black_list = ['published']
+
+        if not app_spec['openSource']:
+            black_list.append('openSource')
+
+        if not app_spec['authorizedUsers']:
+            black_list.append('authorizedUsers')
+
+        filtered_app_spec = dict((k, v)
+                                 for (k, v) in app_spec.iteritems()
+                                 if k not in black_list)
+
+        self.assertDictSubsetOf(filtered_app_spec, output_json)
+
+        self.assertFileContentsEqualsString([name, "src",
+                                             "code.py"],
+                                            "import os\n")
+
+        self.assertFileContentsEqualsString([name,
+                                             "Readme.md"],
+                                            "Description\n")
+
+        self.assertFileContentsEqualsString([name, "Readme.developer.md"],
+                                            "Developer notes\n")
+
+        self.assertFileContentsEqualsString([name, "resources", "resources_file"],
+                                            "content\n")
+
+    def _test_cant_get_app(self, name, open_source, published, authorized_users):
+        [app_id, output_app_spec] = self.make_app(name,
+                                                  open_source,
+                                                  published,
+                                                  authorized_users)
 
         with chdir(tempfile.mkdtemp()):
-            run("dx get " + new_app_id)
-            self.assertTrue(os.path.exists("get_app_open_source"))
-            self.assertTrue(os.path.exists(os.path.join("get_app_open_source",
-                                                        "dxapp.json")))
-            output_json = json.load(open(os.path.join("get_app_open_source",
-                                                      "dxapp.json")),
-                                    object_pairs_hook=collections.OrderedDict)
-
-            self.assertDictSubsetOf(output_app_spec, output_json)
-
-            self.assertFileContentsEqualsString(["get_app_open_source",
-                                                 "src",
-                                                 "code.py"],
-                                                "import os\n")
-
-            self.assertFileContentsEqualsString(["get_app_open_source",
-                                                 "Readme.md"],
-                                                "Description\n")
-
-            self.assertFileContentsEqualsString(["get_app_open_source",
-                                                 "Readme.developer.md"],
-                                                "Developer notes\n")
-
-            self.assertFileContentsEqualsString(["get_app_open_source",
-                                                 "resources",
-                                                 "resources_file"],
-                                                "content\n")
-
             # -o -
             with self.assertSubprocessFailure(stderr_regexp='cannot be dumped to stdout', exit_code=3):
-                run("dx get -o - " + new_app_id)
+                run("dx get -o - " + app_id)
 
             # Target app does not exist
             with self.assertSubprocessFailure(stderr_regexp='Unable to resolve', exit_code=3):
                 run("dx get path_does_not_exist")
 
-            # set openSource to false and now the app should not be gettable
-            run("dx api {} update \'{}\'".format(new_app_id,
-                                                 json.dumps({"openSource": False})))
-            with self.assertSubprocessFailure(stderr_regexp='can only call.*\n'):
-                run("dx get " + new_app_id)
+    def _test_get_app(self, name, open_source, published, authorized_users):
+        second = json.loads(os.environ['DXTEST_SECOND_USER'])
+        second_user_id = second['user']
+        [app_id, output_app_spec] = self.make_app(name,
+                                                  open_source,
+                                                  published,
+                                                  authorized_users)
+
+        with chdir(tempfile.mkdtemp()):
+            run("dx get {}".format(app_id))
+            self.assert_app_get_initialized(name, output_app_spec)
+
+        # Second test app is openSource && published, second user is an authorized user, should succeed
+        with chdir(tempfile.mkdtemp()):
+            with without_project_context():
+                if second_user_id in authorized_users and open_source and published:
+                    run('dx get {}'.format(app_id), env=as_second_user())
+                    self.assert_app_get_initialized(name, output_app_spec)
+                else:
+                    with self.assertSubprocessFailure(stderr_regexp='code 401', exit_code=3):
+                        run('dx get {}'.format(app_id), env=as_second_user())
+
+    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
+    @unittest.skipUnless(testutil.TEST_MULTIPLE_USERS, 'skipping test that would require another user')
+    def test_get_app(self):
+        second = json.loads(os.environ['DXTEST_SECOND_USER'])
+        second_user_id = second['user']
+        authorized_users = [second_user_id]
+
+        self._test_cant_get_app("get_app_failure", True, True, authorized_users)
+        self._test_get_app("get_app_open_source_published", True, True, authorized_users)
+        self._test_get_app("get_app_open_source", True, False, authorized_users)
+        self._test_get_app("get_app_published", False, True, authorized_users)
+        self._test_get_app("get_app", False, False, authorized_users)
+
+        self._test_get_app("get_app_open_source_published_no_authusers", True, True, [])
+        self._test_get_app("get_app_published_no_authusers", False, True, [])
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
     def test_get_app_omit_resources(self):
@@ -6934,7 +6988,6 @@ class TestDXGetExecutables(DXTestCase):
                     seenResources = True
                     break
             self.assertTrue(seenResources)
-
 
 
 class TestDXBuildReportHtml(unittest.TestCase):
