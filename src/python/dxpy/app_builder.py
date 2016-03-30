@@ -406,19 +406,17 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
 
             if asset_record:
                 if "id" in asset:
-                    asset_name = asset_record["name"]
                     asset_details = asset_record["details"]
                 else:
-                    asset_name = asset_record["describe"]["name"]
                     asset_details = asset_record["describe"]["details"]
                 if "archiveFileId" in asset_details:
                     archive_file_id = asset_details["archiveFileId"]
                 else:
                     raise AppBuilderException("The required field 'archiveFileId' was not found in "
                                               "the details of the asset bundle %s " % asset_record["id"])
-
+                archive_file_name = dxpy.DXFile(archive_file_id).describe()["name"]
                 bundle_depends = {
-                    "name": asset_name,
+                    "name": archive_file_name,
                     "id": archive_file_id
                 }
                 applet_spec["runSpec"]["bundledDepends"].append(bundle_depends)
