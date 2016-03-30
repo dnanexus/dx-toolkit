@@ -6442,7 +6442,7 @@ def main(in1):
 
         self.assertEquals(
             dxpy.DXApplet(asset_applet).describe()['runSpec']['bundledDepends'][0],
-            {'id': {'$dnanexus_link': asset_file.get_id()}, 'name': record_name}
+            {'id': {'$dnanexus_link': asset_file.get_id()}, 'name': asset_name}
         )
 
     def test_asset_depends_using_id(self):
@@ -6474,7 +6474,7 @@ def main(in1):
         asset_applet = json.loads(run("dx build --json {app_dir}".format(app_dir=app_dir)))["id"]
         self.assertEquals(
             dxpy.DXApplet(asset_applet).describe()['runSpec']['bundledDepends'][0],
-            {'id': {'$dnanexus_link': asset_file.get_id()}, 'name': record_name}
+            {'id': {'$dnanexus_link': asset_file.get_id()}, 'name': asset_name}
         )
 
     def test_asset_depends_failure(self):
