@@ -540,6 +540,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 # (max_retries) subsequent retries.
                 total_allowed_tries = max_retries + 1
                 ok_to_retry = False
+                is_retryable = always_retry or (method == 'GET') or _is_retryable_exception(e)
                 # Because try_index is not incremented until we escape this
                 # iteration of the loop, try_index is equal to the number of
                 # tries that have failed so far, minus one. Test whether we
@@ -551,9 +552,18 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     if response is None or \
                        isinstance(e, (exceptions.ContentLengthError, BadStatusLine, exceptions.BadJSONInReply, \
                                       urllib3.exceptions.ProtocolError)):
-                        ok_to_retry = always_retry or (method == 'GET') or _is_retryable_exception(e)
+                        ok_to_retry = is_retryable
                     else:
                         ok_to_retry = 500 <= response.status < 600
+
+                    # The server has closed the connection prematurely
+                    if response is not None and \
+                       response.status == 400 and is_retryable and \
+                       isinstance(e, urllib3.exceptions.HTTPError) and \
+                       'Idle connections will be closed' in str(e):
+                        logger.info("Retrying 400 HTTP error, due to slow data transfer %s %s %s",
+                                    method, url, exception_msg)
+                        ok_to_retry = True
 
                 if ok_to_retry:
                     if rewind_input_buffer_offset is not None:
@@ -576,6 +586,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             if isinstance(e, urllib3.exceptions.ProtocolError) and \
                'Connection broken: IncompleteRead' in str(e):
                 raise DXIncompleteReadsError(exception_msg)
+
             raise
         finally:
             if success and try_index > 0:
