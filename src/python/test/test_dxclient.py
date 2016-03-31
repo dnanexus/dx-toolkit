@@ -543,6 +543,7 @@ class TestDXClient(DXTestCase):
         my_properties = dxpy.api.project_describe(self.project, {"properties": True})['properties']
         self.assertEqual(my_properties["bar"], "")
 
+    @unittest.skipUnless(testutil.TEST_ONLY_MASTER, 'skipping test that requires latest server version')
     def test_dx_describe_project(self):
         # Look for field name, some number of spaces, and then the value
         field_regexp = lambda fieldname, value: \
@@ -1182,8 +1183,6 @@ class TestDXClientUploadDownload(DXTestCase):
             file_id = run("dx upload --brief --path " + self.project + ":foo /dev/null").strip()
             self.assertEqual(dxpy.DXFile(file_id).name, "foo")
 
-    @unittest.skipUnless(testutil.TEST_ONLY_MASTER,
-                         'skipping test that would fail against staging')
     def test_dx_make_download_url(self):
         testdir = tempfile.mkdtemp()
         output_testdir = tempfile.mkdtemp()
@@ -1203,8 +1202,6 @@ class TestDXClientUploadDownload(DXTestCase):
             run("wget -P " + output_testdir + " " + download_url)
             run('cmp ' + os.path.join(output_testdir, "foo") + ' ' + fd.name)
 
-    @unittest.skipUnless(testutil.TEST_ONLY_MASTER,
-                         'skipping test that would fail against staging')
     def test_dx_make_download_url_project_affinity(self):
         # Ensure that URLs created with make_download_url never have project
         # affinity. In particular, ensures that download URLs created in a job
