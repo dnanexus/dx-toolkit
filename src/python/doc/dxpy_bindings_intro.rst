@@ -96,6 +96,10 @@ that interact with the API server may raise the exception
 .. rubric:: Thread safety
 
 :mod:`dxpy.bindings` are designed for single threaded use, however, it
-is possible to use multiple threads on different bindings. For example,
-using two threads to modify an applet is not allowed, but using two
-threads to download two different files is allowed.
+is possible to use multiple threads on different bindings. For
+example, using two threads to modify an applet is not allowed, but
+using two threads to download two different files is allowed. Note
+that the Python multiprocessing library, in its default process pool
+mode, is incompatible with dxpy. In order to use that library, please
+employ the thread pool instead.
+
