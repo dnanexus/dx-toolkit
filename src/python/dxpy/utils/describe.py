@@ -419,7 +419,7 @@ def print_project_desc(desc, verbose=False):
     if 'containsPHI' in desc:
         print_json_field('Contains PHI', desc['containsPHI'])
     if 'archivalState' in desc and verbose:
-        print_json_field('Archival state', desc['archivalState'])
+        print_field('Archival state', desc['archivalState'])
     if 'archivalProgress' in desc and verbose:
         print_json_field('Archival progress', desc['archivalProgress'])
 

@@ -562,7 +562,7 @@ class TestDXClient(DXTestCase):
         self.assertRegex(desc_output, field_regexp("Properties", "-"))
 
         desc_output = run("dx describe --verbose :").strip()
-        self.assertRegex(desc_output, field_regexp("Archival state", "null"))
+        self.assertRegex(desc_output, field_regexp("Archival state", "live"))
         self.assertRegex(desc_output, field_regexp("Archival progress", "null"))
 
     def test_dx_remove_project_by_name(self):
