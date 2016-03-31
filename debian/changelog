@@ -1,3 +1,22 @@
+dx-toolkit (0.186.0) precise; urgency=low
+
+  * Rename downloadStream to getDownloadStream
+  * Adding multi-threading documentation
+  * Retry slow requests closed by s3
+  * Merge pull request #134 from dnanexus/adas-assetbundle-name-fix
+  * runSpec.assetDepends translation to bundledDepends is updated to include archive file name
+  * Updated bundled depends name with the archive file name rather than record name
+  * PTFM-17250-generalize-dx-get-app
+  * Handle IncompleteReads error
+  * For test
+  * PTFM-17297 Restoring the gnureadline package
+  * Support for proxy configuration
+  * Clarifying help string for "dx terminate"
+  * UA: Fixing the mac build
+  * Upload Agent: another attempt to fix failing test 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 31 Mar 2016 21:49:09 +0000
+
 dx-toolkit (0.185.0) precise; urgency=low
 
   * Upload Agent: Added a mutex to prevent simultaneous mem checks
