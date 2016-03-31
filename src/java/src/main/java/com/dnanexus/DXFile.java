@@ -566,33 +566,9 @@ public class DXFile extends DXDataObject {
     public byte[] downloadBytes(long start, long end) throws IOException {
         Preconditions.checkState(end - start <= (long) 2 * 1024 * 1024 * 1024,
                 "Range of file larger than 2GB cannot be downloaded with downloadBytes");
-        InputStream is = downloadStream(start, end);
+        InputStream is = getDownloadStream(start, end);
 
         return IOUtils.toByteArray(is);
-    }
-
-    /**
-     * Downloads the entire file and returns a stream of its contents.
-     *
-     * @return stream containing file contents
-     */
-    public InputStream downloadStream() {
-        // -1 indicates the end of the file
-        return downloadStream(0, -1);
-    }
-
-    /**
-     * Downloads the specified byte range of the file and returns a stream of its contents.
-     *
-     * @param start first byte of the range within the file to be downloaded. The start byte is
-     *        inclusive in the range, and 0 is indexed as the first byte in the file.
-     * @param end last byte of the range within the file to be downloaded. The end byte is exclusive
-     *        (not included in the range). An input of -1 specifies the end of the file.
-     *
-     * @return stream containing file contents within range specified
-     */
-    public InputStream downloadStream(long start, long end) {
-        return new FileApiInputStream(start, end);
     }
 
     /**
@@ -617,7 +593,7 @@ public class DXFile extends DXDataObject {
      * @throws IOException
      */
     public void downloadToOutputStream(OutputStream os, long start, long end) throws IOException {
-        InputStream is = downloadStream(start, end);
+        InputStream is = getDownloadStream(start, end);
         IOUtils.copyLarge(is, os);
 
     }
@@ -626,6 +602,30 @@ public class DXFile extends DXDataObject {
     public Describe getCachedDescribe() {
         this.checkCachedDescribeAvailable();
         return DXJSON.safeTreeToValue(this.cachedDescribe, Describe.class);
+    }
+
+    /**
+     * Returns a stream of the file's contents.
+     *
+     * @return stream containing file contents
+     */
+    public InputStream getDownloadStream() {
+        // -1 indicates the end of the file
+        return getDownloadStream(0, -1);
+    }
+
+    /**
+     * Returns a stream of the specified byte range of the file's contents.
+     *
+     * @param start first byte of the range within the file to be downloaded. The start byte is
+     *        inclusive in the range, and 0 is indexed as the first byte in the file.
+     * @param end last byte of the range within the file to be downloaded. The end byte is exclusive
+     *        (not included in the range). An input of -1 specifies the end of the file.
+     *
+     * @return stream containing file contents within range specified
+     */
+    public InputStream getDownloadStream(long start, long end) {
+        return new FileApiInputStream(start, end);
     }
 
     /**

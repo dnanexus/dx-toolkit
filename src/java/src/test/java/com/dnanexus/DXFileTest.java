@@ -164,7 +164,7 @@ public class DXFileTest {
         f.closeAndWait();
 
         byte[] bytesFromDownloadStream = new byte[64 * 1024];
-        InputStream is = f.downloadStream();
+        InputStream is = f.getDownloadStream();
         // read => 65536 bytes
         is.read(bytesFromDownloadStream, 0, 64 * 1024);
 
@@ -178,7 +178,7 @@ public class DXFileTest {
         f.closeAndWait();
 
         bytesFromDownloadStream = new byte[64 * 1024 + 1];
-        is = f.downloadStream();
+        is = f.getDownloadStream();
         // read => 65536 bytes
         is.read(bytesFromDownloadStream, 0, 64 * 1024);
         // read again => 1 byte
@@ -194,7 +194,7 @@ public class DXFileTest {
         f.closeAndWait();
 
         bytesFromDownloadStream = new byte[393216];
-        is = f.downloadStream();
+        is = f.getDownloadStream();
         // read => 65536 bytes
         is.read(bytesFromDownloadStream, 0, 64 * 1024);
         // read again => 65536 bytes
@@ -218,7 +218,7 @@ public class DXFileTest {
         f.closeAndWait();
 
         byte[] bytesFromDownloadStream = new byte[64 * 1024];
-        InputStream is = f.downloadStream();
+        InputStream is = f.getDownloadStream();
         // read => 32 kb
         int bytesRead = is.read(bytesFromDownloadStream, 0, 32 * 1024);
         Assert.assertEquals(32 * 1024, bytesRead);
@@ -394,7 +394,7 @@ public class DXFileTest {
         f.upload(uploadStream);
         f.closeAndWait();
 
-        byte[] bytesFromDownloadStream = IOUtils.toByteArray(f.downloadStream());
+        byte[] bytesFromDownloadStream = IOUtils.toByteArray(f.getDownloadStream());
 
         Assert.assertArrayEquals(uploadBytes, bytesFromDownloadStream);
     }
@@ -451,7 +451,7 @@ public class DXFileTest {
         DXFile f = DXFile.newFile().setProject(testProject).build();
         f.upload(uploadStream);
         f.closeAndWait();
-        byte[] bytesFromDownloadStream = IOUtils.toByteArray(f.downloadStream());
+        byte[] bytesFromDownloadStream = IOUtils.toByteArray(f.getDownloadStream());
 
         Assert.assertArrayEquals(uploadData.getBytes(), bytesFromDownloadStream);
 
@@ -463,7 +463,7 @@ public class DXFileTest {
         f.uploadChunkSize = 7 * 1024 * 1024;
         f.upload(new ByteArrayInputStream(uploadBytes));
         f.closeAndWait();
-        bytesFromDownloadStream = IOUtils.toByteArray(f.downloadStream());
+        bytesFromDownloadStream = IOUtils.toByteArray(f.getDownloadStream());
 
         Assert.assertArrayEquals(uploadBytes, bytesFromDownloadStream);
     }
