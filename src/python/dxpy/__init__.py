@@ -585,7 +585,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             # buffer from the data source. Raise a special exception.
             if isinstance(e, urllib3.exceptions.ProtocolError) and \
                'Connection broken: IncompleteRead' in str(e):
-                raise DXIncompleteReadsError(exception_msg)
+                raise exceptions.DXIncompleteReadsError(exception_msg)
 
             raise
         finally:
