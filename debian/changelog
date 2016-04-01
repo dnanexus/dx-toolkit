@@ -1,3 +1,9 @@
+dx-toolkit (0.186.1) precise; urgency=low
+
+  * Fix typo in exception invocation
+
+ -- Phil Sung <psung@dnanexus.com>  Fri, 01 Apr 2016 19:43:32 +0000
+
 dx-toolkit (0.186.0) precise; urgency=low
 
   * Rename downloadStream to getDownloadStream
@@ -13,7 +19,7 @@ dx-toolkit (0.186.0) precise; urgency=low
   * Support for proxy configuration
   * Clarifying help string for "dx terminate"
   * UA: Fixing the mac build
-  * Upload Agent: another attempt to fix failing test 
+  * Upload Agent: another attempt to fix failing test
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 31 Mar 2016 21:49:09 +0000
 
@@ -28,7 +34,7 @@ dx-toolkit (0.185.0) precise; urgency=low
   * Python 3 fixup for preivous commit
   * Add a sanity check on headers: ensure they're all strings
   * PTFM-17512 Java bindings for single-threaded streaming downloads
-  * Fixed broken test - find phi projects 
+  * Fixed broken test - find phi projects
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 24 Mar 2016 20:03:59 +0000
 
@@ -61,7 +67,7 @@ dx-toolkit (0.183.0) precise; urgency=low
   * Refactoring 'dx download'
   * PTFM-17353 Add options to dx-jobutil-new-job
   * PTFM-17201 Remove default download duration
-  * Java: DXFile.downloadStream returns InputStream, not OutputStream 
+  * Java: DXFile.downloadStream returns InputStream, not OutputStream
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 02 Mar 2016 19:54:53 +0000
 
@@ -69,7 +75,7 @@ dx-toolkit (0.182.0) precise; urgency=low
 
   * Add more informative error message for `dx add member`
   * Remove Ubuntu 10.04 support
-  * Adding the microseconds to the temporary directory used by dx-run-app-locally. This helps avoids race conditions 
+  * Adding the microseconds to the temporary directory used by dx-run-app-locally. This helps avoids race conditions
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 25 Feb 2016 00:16:26 +0000
 
@@ -133,7 +139,7 @@ dx-toolkit (0.178.0) precise; urgency=low
   * PyPy compatibility fixup for 87d6040
   * Don't install futures backport on Python 3
   * Fix Python 3 regression introduced in fb3a8d6
-  * PTFM-17184 refactor make python 
+  * PTFM-17184 refactor make python
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Wed, 27 Jan 2016 22:53:14 +0000
 
