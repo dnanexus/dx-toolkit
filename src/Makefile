@@ -222,7 +222,7 @@ debian_install: base_install
 	../build/fix_shebang_lines.sh $(DESTDIR)/$(PREFIX)/bin --debian-system-install
 
 	mkdir -p $(DESTDIR)/etc/profile.d                                        # Install environment file into etc
-	install -v -m0644 $(DNANEXUS_HOME)/environment $(DESTDIR)/etc/profile.d/dnanexus.environment
+	install -v -m0644 $(DNANEXUS_HOME)/environment $(DESTDIR)/etc/profile.d/dnanexus.environment.sh
 	cp -a $(DNANEXUS_HOME)/share/dnanexus/lib/python2.7/site-packages/* $(DESTDIR)/$(PREFIX)/share/dnanexus/lib/python2.7/site-packages/
 	ls $(DNANEXUS_HOME)/share/dnanexus/lib/python2.7/site-packages | grep dxpy > $(DESTDIR)/$(PREFIX)/share/dnanexus/lib/python2.7/site-packages/dxpy.pth
 

@@ -26,7 +26,7 @@ fi
 
 msg="Please source the environment file at the root of dx-toolkit."
 if [[ $2 == "--debian-system-install" ]]; then
-    msg="Please source the environment file /etc/profile.d/dnanexus.environment."
+    msg="Please source the environment file /etc/profile.d/dnanexus.environment.sh."
     shift
 fi
 
