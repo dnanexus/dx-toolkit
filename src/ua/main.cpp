@@ -162,9 +162,9 @@ long getAvailableSystemMemory()
   GlobalMemoryStatusEx(&status);
   return status.ullTotalPhys;
 #elif MAC_BUILD
-  struct mach_task_basic_info info;
-  mach_msg_type_number_t infoCount = MACH_TASK_BASIC_INFO_COUNT;
-  if ( task_info( mach_task_self( ), MACH_TASK_BASIC_INFO, (task_info_t)&info, &infoCount ) != KERN_SUCCESS ) {
+  task_basic_info_data_t info;
+  mach_msg_type_number_t infoCount = TASK_BASIC_INFO_COUNT;
+  if ( task_info( mach_task_self( ), TASK_BASIC_INFO, (task_info_t)&info, &infoCount ) != KERN_SUCCESS ) {
     return (long)0L;
   }
   return (long)info.virtual_size;
@@ -201,9 +201,9 @@ long getRSS() {
   }    
   return (long)info.WorkingSetSize;
 #elif MAC_BUILD
-  struct mach_task_basic_info info;
-  mach_msg_type_number_t infoCount = MACH_TASK_BASIC_INFO_COUNT;
-  if ( task_info( mach_task_self( ), MACH_TASK_BASIC_INFO, (task_info_t)&info, &infoCount ) != KERN_SUCCESS ) {
+  task_basic_info_data_t info;
+  mach_msg_type_number_t infoCount = TASK_BASIC_INFO_COUNT;
+  if ( task_info( mach_task_self( ), TASK_BASIC_INFO, (task_info_t)&info, &infoCount ) != KERN_SUCCESS ) {
     DXLOG(logWARNING) << "Unable to get process' memory usage";
     return (long)0L;
   }
