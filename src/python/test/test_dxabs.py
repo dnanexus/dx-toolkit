@@ -38,36 +38,15 @@ def remove_all(proj_id, folder="/"):
 
 def setUpTempProjects(thing):
     thing.old_workspace_id = dxpy.WORKSPACE_ID
-    thing.proj_id = dxpy.api.project_new({'name': 'azure-test-project', 'region' : 'azure:westus'})['id']
+    thing.proj_id = dxpy.api.project_new({'name': 'test project 1'})['id']
+    thing.second_proj_id = dxpy.api.project_new({'name': 'test project 2'})['id']
+  #  thing.project = dxpy.api.project_new({'name': 'azure-test-project', 'region' : 'azure:westus'})
+  #  thing.proj_id = dxpy.api.project_new({'name': 'azure-test-project', 'region' : 'azure:westus'})['id']
     dxpy.set_workspace_id(thing.proj_id)
 
 def tearDownTempProjects(thing):
     dxpy.api.project_destroy(thing.proj_id, {'terminateJobs': True})
     dxpy.set_workspace_id(thing.old_workspace_id)
-
-class TestDXProject(unittest.TestCase):
-    # Also test DXContainer here
-    def setUp(self):
-        setUpTempProjects(self)
-
-    def tearDown(self):
-        tearDownTempProjects(self)
-
-    def test_init_and_set_id(self):
-        for good_value in ["project-aB3456789012345678901234", None]:
-            dxproject = dxpy.DXProject(good_value)
-            dxproject.set_id(good_value)
-        for bad_value in ["foo",
-                          "container-123456789012345678901234",
-                          3,
-                          {},
-                          "project-aB34567890123456789012345",
-                          "project-aB345678901234567890123"]:
-            with self.assertRaises(DXError):
-                dxpy.DXProject(bad_value)
-            with self.assertRaises(DXError):
-                dxproject = dxpy.DXProject()
-                dxproject.set_id(bad_value)
 
 class TestDXFile(unittest.TestCase):
 
@@ -97,17 +76,19 @@ class TestDXFile(unittest.TestCase):
         self.new_file = tempfile.NamedTemporaryFile(delete=False)
         self.new_file.close()
 
-        self.dxfile = dxpy.DXFile()
-
     def tearDown(self):
         os.remove(self.new_file.name)
         tearDownTempProjects(self)
 
-    def test_dx_upload_with_upload_perm(self):
-        self.dxfile = dxpy.upload_local_file(self.foo_file.name)
+    def test_upload_download_files_dxfile(self):
+        print(self.proj_id)
+        self.dxfile = dxpy.upload_local_file(self.foo_file.name, project=self.proj_id)
+        self.assertTrue(self.dxfile)
+      # print(self.dxfile)
+      #  self.dxfile.wait_on_close()
+      #  self.assertTrue(self.dxfile.closed())
 
-        self.dxfile.wait_on_close()
-        self.assertTrue(self.dxfile.closed())
+
 
 if __name__ == '__main__':
   if dxpy.AUTH_HELPER is None:
