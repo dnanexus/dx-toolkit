@@ -335,7 +335,7 @@ def _extract_retry_after_timeout(response):
 # Truncate the message, if the error injection flag is on, and other
 # conditions hold. This causes a BadRequest 400 HTTP code, which is
 # subsequentally retried.
-def _conditional_error_injection(url, try_index, data):
+def _maybe_trucate_request(url, try_index, data):
     if _INJECT_ERROR:
         if try_index == 0 and "upload" in url and len(data) > 10000:
             return data[0:10000]
@@ -453,7 +453,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             if _DEBUG > 0:
                 time_started = time.time()
             _method, _url, _headers = _process_method_url_headers(method, url, headers)
-            body = _conditional_error_injection(_url, try_index, data)
+            body = _maybe_trucate_request(_url, try_index, data)
 
             # throws BadStatusLine if the server returns nothing
             response = _get_pool_manager(**pool_args).request(_method, _url, headers=_headers, body=body,
