@@ -98,6 +98,11 @@ class DXConfig(MutableMapping):
             warn("WARNING: Expected _DX_DEBUG to be an integer, but got", environ["_DX_DEBUG"])
             dxpy._DEBUG = 0
 
+        try:
+            dxpy._INJECT_ERROR = bool(environ.get("_DX_INJECT_ERROR", 0))
+        except:
+            dxpy._INJECT_ERROR = False
+
         self._user_conf_dir = expanduser(environ.get("DX_USER_CONF_DIR", "~/.dnanexus_config"))
 
         dxpy._UPGRADE_NOTIFY = os.path.join(self._user_conf_dir, ".upgrade_notify")

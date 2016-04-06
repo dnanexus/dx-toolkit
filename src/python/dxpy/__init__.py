@@ -332,11 +332,21 @@ def _extract_retry_after_timeout(response):
     return max(1, seconds_to_wait)
 
 
+# Truncate the message, if the error injection flag is on, and other
+# conditions hold. This causes a BadRequest 400 HTTP code, which is
+# subsequentally retried.
+def _conditional_error_injection(url, try_index, data):
+    if _INJECT_ERROR:
+        if try_index == 0 and "upload" in url and len(data) > 10000:
+            return data[0:10000]
+    return data
+
 def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                   timeout=DEFAULT_TIMEOUT,
                   use_compression=None, jsonify_data=True, want_full_response=False,
                   decode_response_body=True, prepend_srv=True, session_handler=None,
-                  max_retries=DEFAULT_RETRIES, always_retry=False, **kwargs):
+                  max_retries=DEFAULT_RETRIES, always_retry=False,
+                  **kwargs):
     '''
     :param resource: API server route, e.g. "/record/new". If *prepend_srv* is False, a fully qualified URL is expected. If this argument is a callable, it will be called just before each request attempt, and expected to return a tuple (URL, headers). Headers returned by the callback are updated with *headers* (including headers set by this method).
     :type resource: string
@@ -443,9 +453,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             if _DEBUG > 0:
                 time_started = time.time()
             _method, _url, _headers = _process_method_url_headers(method, url, headers)
+            body = _conditional_error_injection(_url, try_index, data)
 
             # throws BadStatusLine if the server returns nothing
-            response = _get_pool_manager(**pool_args).request(_method, _url, headers=_headers, body=data,
+            response = _get_pool_manager(**pool_args).request(_method, _url, headers=_headers, body=body,
                                                               timeout=timeout, retries=False, **kwargs)
             req_id = response.headers.get("x-request-id", "unavailable")
 
@@ -559,8 +570,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     # The server has closed the connection prematurely
                     if response is not None and \
                        response.status == 400 and is_retryable and \
-                       isinstance(e, urllib3.exceptions.HTTPError) and \
-                       'Idle connections will be closed' in str(e):
+                       isinstance(e, requests.exceptions.HTTPError) and \
+                       '<Code>RequestTimeout</Code>' in str(e):
                         logger.info("Retrying 400 HTTP error, due to slow data transfer %s %s %s",
                                     method, url, exception_msg)
                         ok_to_retry = True
