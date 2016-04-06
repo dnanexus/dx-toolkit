@@ -30,7 +30,7 @@ from multiprocessing import cpu_count
 
 import dxpy
 from . import DXDataObject
-from ..exceptions import DXFileError
+from ..exceptions import DXFileError, DXIncompleteReadsError
 from ..utils import warn
 from ..utils.resolver import object_exists_in_project
 from ..compat import BytesIO, basestring
@@ -601,9 +601,12 @@ class DXFile(DXDataObject):
 
         return retval_download_url, retval_download_url_headers
 
-    def _generate_read_requests(self, start_pos=0, end_pos=None, project=None, **kwargs):
+    def _generate_read_requests(self, start_pos=0, end_pos=None, project=None,
+                                limit_chunk_size=None, **kwargs):
         # project=None means no hint is to be supplied to the apiserver. It is
         # an error to supply a project that does not contain this file.
+        if limit_chunk_size is None:
+            limit_chunk_size = self._read_bufsize
 
         if self._file_length == None:
             desc = self.describe(**kwargs)
@@ -614,7 +617,7 @@ class DXFile(DXDataObject):
         if end_pos > self._file_length:
             raise DXFileError("Invalid end_pos")
 
-        def chunk_ranges(start_pos, end_pos, init_chunk_size=1024*64, limit_chunk_size=self._read_bufsize, ramp=2, num_requests_between_ramp=4):
+        def chunk_ranges(start_pos, end_pos, init_chunk_size=1024*64, ramp=2, num_requests_between_ramp=4):
             cur_chunk_start = start_pos
             cur_chunk_size = min(init_chunk_size, limit_chunk_size)
             i = 0
@@ -730,7 +733,13 @@ class DXFile(DXDataObject):
                     self._request_iterator = self._generate_read_requests(
                         start_pos=self._pos, project=project, **kwargs)
 
-                content = self._next_response_content()
+                try:
+                    content = self._next_response_content()
+                except DXIncompleteReadsError:
+                    # Data source is slow, back off and use smaller buffers
+                    self._request_iterator = self._generate_read_requests(
+                        start_pos=self._pos, project=project, limit_chunk_size=MIN_BUFFER_SIZE, **kwargs)
+                    content = self._next_response_content()
 
                 if len(content) < remaining_len:
                     buf.write(content)
