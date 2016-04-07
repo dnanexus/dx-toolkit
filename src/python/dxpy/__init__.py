@@ -694,7 +694,7 @@ def set_project_context(dxid):
     global PROJECT_CONTEXT_ID
     PROJECT_CONTEXT_ID = dxid
 
-def get_auth_server_name(host_override=None, port_override=None):
+def get_auth_server_name(host_override=None, port_override=None, protocol='https'):
     """
     Chooses the auth server name from the currently configured API server name.
 
@@ -704,11 +704,13 @@ def get_auth_server_name(host_override=None, port_override=None):
     if host_override is not None or port_override is not None:
         if host_override is None or port_override is None:
             raise exceptions.DXError("Both host and port must be specified if either is specified")
-        return 'http://' + host_override + ':' + str(port_override)
+        return protocol + '://' + host_override + ':' + str(port_override)
     elif APISERVER_HOST == 'stagingapi.dnanexus.com':
         return 'https://stagingauth.dnanexus.com'
     elif APISERVER_HOST == 'api.dnanexus.com':
         return 'https://auth.dnanexus.com'
+    elif APISERVER_HOST == 'api.cn.vstg.dnanexus.com':
+        return 'https://auth.cn.dnanexus.com:7001'
     elif APISERVER_HOST == "localhost" or APISERVER_HOST == "127.0.0.1":
         if "DX_AUTHSERVER_HOST" not in os.environ or "DX_AUTHSERVER_PORT" not in os.environ:
             err_msg = "Must set authserver env vars (DX_AUTHSERVER_HOST, DX_AUTHSERVER_PORT) if apiserver is {apiserver}."
