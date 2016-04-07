@@ -1,3 +1,8 @@
+DNAnexus Upload Agent 1.5.13 <support@dnanexus.com>, 2016-Apr-07
+----------------------------------------------------------------
+  * fixing the mac build
+  * PTFM-16676 Allow upload agent to set file metadata
+
 DNAnexus Upload Agent 1.5.12 <support@dnanexus.com>, 2016-Mar-24
 ----------------------------------------------------------------
   * Better diagnostics when S3 errors are encountered

@@ -1,3 +1,17 @@
+dx-toolkit (0.187.0) precise; urgency=low
+
+  * dxfile.read: handling incomplete read error
+  * Renaming error injection function to be more informative
+  * Handling Idle connection timeouts from S3
+  * UA: fixing the mac build
+  * PTFM-16676 Allow upload agent to set file metadata
+  * Fixing a naming error for an exception
+  * '.sh' suffix has been added to the dx environment autoload file
+  * adjust tests with TEST_ONLY_MASTER flag
+  * fixing archivalState description error 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 07 Apr 2016 17:05:44 +0000
+
 dx-toolkit (0.186.0) precise; urgency=low
 
   * Rename downloadStream to getDownloadStream
