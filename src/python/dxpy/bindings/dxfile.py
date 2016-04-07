@@ -38,7 +38,7 @@ from ..compat import BytesIO, basestring
 
 DXFILE_HTTP_THREADS = min(cpu_count(), 8)
 MIN_BUFFER_SIZE = 1024*1024
-DEFAULT_BUFFER_SIZE = 1024*1024*16
+DEFAULT_BUFFER_SIZE = 1024*1024*4
 if dxpy.JOB_ID:
     # Increase HTTP request buffer size when we are running within the
     # platform.
@@ -59,12 +59,6 @@ def _validate_headers(headers):
             raise ValueError("Expected value %r of headers (associated with key %r) to be a string"
                              % (value, key))
     return headers
-
-def _set_file_limits(file_limits):
-    DEFAULT_BUFFER_SIZE = file_limits['minimumPartSize']
-    DEFAULT_MAXIMUM_PARTS = file_limits['maximumNumParts']
-    DEFAULT_MINIMUM_PART_SIZE = file_limits['minimumPartSize']
-    DEFAULT_MAXIMUM_PART_SIZE = file_limits['maximumPartSize']
 
 class DXFile(DXDataObject):
     '''Remote file object handler.
@@ -109,6 +103,11 @@ class DXFile(DXDataObject):
     _http_threadpool = None
     _http_threadpool_size = DXFILE_HTTP_THREADS
 
+    _buffer_size = DEFAULT_BUFFER_SIZE
+    _minimum_part_size = DEFAULT_MINIMUM_PART_SIZE
+    _maximum_part_size = DEFAULT_MAXIMUM_PART_SIZE
+    _maximum_parts = DEFAULT_MAXIMUM_PARTS
+
     NO_PROJECT_HINT = 'NO_PROJECT_HINT'
 
     @classmethod
@@ -120,8 +119,15 @@ class DXFile(DXDataObject):
         if cls._http_threadpool is None:
             cls._http_threadpool = dxpy.utils.get_futures_threadpool(max_workers=cls._http_threadpool_size)
 
+    @classmethod
+    def _set_file_limits(cls, file_limits):
+        cls._buffer_size = file_limits['minimumPartSize']
+        cls._maximum_parts = file_limits['maximumNumParts']
+        cls._minimum_part_size = file_limits['minimumPartSize']
+        cls._maximum_part_size = file_limits['maximumPartSize']
+
     def __init__(self, dxid=None, project=None, mode=None,
-                 read_buffer_size=DEFAULT_BUFFER_SIZE, write_buffer_size=DEFAULT_BUFFER_SIZE):
+                 read_buffer_size=DEFAULT_BUFFER_SIZE, write_buffer_size=DEFAULT_BUFFER_SIZE, file_size=0, file_is_mmpad=False):
         DXDataObject.__init__(self, dxid=dxid, project=project)
         if mode is None:
             self._close_on_exit = True
@@ -132,8 +138,8 @@ class DXFile(DXDataObject):
         self._read_buf = BytesIO()
         self._write_buf = BytesIO()
 
-        print('==== write buffer size =====')
-        print(write_buffer_size)
+        print('in __init__')
+
         #if write_buffer_size < 1:
         #    raise DXFileError("Write buffer size must be at least 5 MB")
 
@@ -169,6 +175,8 @@ class DXFile(DXDataObject):
         Creates a new remote file with media type *media_type*, if given.
 
         """
+        print('==== In _NEW =====')
+        print(kwargs)
 
         if media_type is not None:
             dx_hash["media"] = media_type
@@ -483,8 +491,9 @@ class DXFile(DXDataObject):
         only part to be uploaded.
         """
         # determine the limits of the file and reset
-        self.file_limits = dxpy.api.project_describe(self.project, {'fields': {'fileUploadParameters': True}})['fileUploadParameters']
-        _set_file_limits(self.file_limits)
+        # self.file_limits = dxpy.api.project_describe(self.project, {'fields': {'fileUploadParameters': True}})['fileUploadParameters']
+        #_set_file_limits(self.file_limits)
+        print('in upload_part')
 
         req_input = {}
         if index is not None:
