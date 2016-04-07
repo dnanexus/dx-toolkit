@@ -46,7 +46,10 @@ if dxpy.JOB_ID:
 
 MD5_READ_CHUNK_SIZE = 1024*1024*4
 FILE_REQUEST_TIMEOUT = 60
-
+DEFAULT_MAXIMIUM_PARTS = 10000
+DEFAULT_MINIMUM_PARTS = 1
+DEFAULT_MINIMUM_PART_SIZE = 1024*1024*5
+DEFAULT_MAXIMUM_PART_SIZE = 1024*1024*1024*5
 
 def _validate_headers(headers):
     for key, value in headers.items():
@@ -56,7 +59,6 @@ def _validate_headers(headers):
             raise ValueError("Expected value %r of headers (associated with key %r) to be a string"
                              % (value, key))
     return headers
-
 
 class DXFile(DXDataObject):
     '''Remote file object handler.
@@ -112,6 +114,15 @@ class DXFile(DXDataObject):
         if cls._http_threadpool is None:
             cls._http_threadpool = dxpy.utils.get_futures_threadpool(max_workers=cls._http_threadpool_size)
 
+    @classmethod
+    def _set_file_limits(file_limits):
+        DEFAULT_BUFFER_SIZE = file_limits.minimumPartSize
+        DEFAULT_MINIMUM_PARTS = file_limits.minimumNumParts
+        DEFAULT_MAXIMUM_PARTS = file_limits.maximumNumParts
+        DEFAULT_MINIMUM_PART_SIZE = file_limits.minimumPartSize
+        DEFAULT_MAXIMUM_PART_SIZE = file_limits.maximumPartSize
+
+
     def __init__(self, dxid=None, project=None, mode=None,
                  read_buffer_size=DEFAULT_BUFFER_SIZE, write_buffer_size=DEFAULT_BUFFER_SIZE):
         DXDataObject.__init__(self, dxid=dxid, project=project)
@@ -121,16 +132,17 @@ class DXFile(DXDataObject):
             if mode not in ['r', 'w', 'a']:
                 raise ValueError("mode must be one of 'r', 'w', or 'a'")
             self._close_on_exit = (mode == 'w')
-        print('=-=======')
-        print(project)
-        self.proj = dxpy.api.project_describe(project, {'fields': {'includeFileUploadParams': True}})['fileUploadParams']
-  #      self.file_limits = dxpy.api.project_describe(project, {'fields': {'includeFileUploadParams': True}})['fileUploadParams']
-
         self._read_buf = BytesIO()
         self._write_buf = BytesIO()
 
-        if write_buffer_size < 5*1024*1024:
+        print('default minimum part size')
+        print(DEFAULT_MINIMUM_PART_SIZE)
+
+        if write_buffer_size < DEFAULT_MINIMUM_PART_SIZE:
             raise DXFileError("Write buffer size must be at least 5 MB")
+
+        if write_buffer_size > DEFAULT_MAXIMUM_PART_SIZE:
+            raise DXFileError("Write buffer size must be at most 4 MB")
 
         self._read_bufsize = read_buffer_size
         self._write_bufsize = write_buffer_size
@@ -474,6 +486,15 @@ class DXFile(DXDataObject):
         defaults to 1. This probably only makes sense if this is the
         only part to be uploaded.
         """
+        print('+++++ UPLOAD PART ++++++')
+        # determine the limits of the file and reset
+        self.file_limits = dxpy.api.project_describe(self.project, {'fields': {'fileUploadParameters': True}})['fileUploadParameters']
+        print('file_limits')
+        print(self.file_limits)
+        self._set_file_limits(self.file_limits)
+
+        print('NEW BUFFER SIZE ===')
+        print(DEFAULT_BUFFER_SIZE)
 
         req_input = {}
         if index is not None:

@@ -38,10 +38,8 @@ def remove_all(proj_id, folder="/"):
 
 def setUpTempProjects(thing):
     thing.old_workspace_id = dxpy.WORKSPACE_ID
-    thing.proj_id = dxpy.api.project_new({'name': 'test project 1'})['id']
-    thing.second_proj_id = dxpy.api.project_new({'name': 'test project 2'})['id']
-  #  thing.project = dxpy.api.project_new({'name': 'azure-test-project', 'region' : 'azure:westus'})
-  #  thing.proj_id = dxpy.api.project_new({'name': 'azure-test-project', 'region' : 'azure:westus'})['id']
+    thing.proj_id = dxpy.api.project_new({'name': 'aws-test-project', 'region': 'aws:east-us'})['id']
+    #thing.proj_id = dxpy.api.project_new({'name': 'azure-test-project', 'region': 'azure:westus'})['id']
     dxpy.set_workspace_id(thing.proj_id)
 
 def tearDownTempProjects(thing):
@@ -81,13 +79,10 @@ class TestDXFile(unittest.TestCase):
         tearDownTempProjects(self)
 
     def test_upload_download_files_dxfile(self):
-        print(self.proj_id)
         self.dxfile = dxpy.upload_local_file(self.foo_file.name, project=self.proj_id)
         self.assertTrue(self.dxfile)
-      # print(self.dxfile)
-      #  self.dxfile.wait_on_close()
-      #  self.assertTrue(self.dxfile.closed())
-
+        self.dxfile.wait_on_close()
+        self.assertTrue(self.dxfile.closed())
 
 
 if __name__ == '__main__':
