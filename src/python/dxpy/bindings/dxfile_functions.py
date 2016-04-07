@@ -296,15 +296,19 @@ def _get_buffer_size_for_file(file_size, file_is_mmapd=False):
     constrained to be suitable for passing to mmap.
 
     """
+    print('_get_buffer_size_for_file')
+    print('dxfile._buffer_size')
+    print(dxfile.DEFAULT_BUFFER_SIZE)
+    #print(self._maximumNumParts)
     # Raise buffer size (for files exceeding DEFAULT_BUFFER_SIZE * 10k
     # bytes) in order to prevent us from exceeding 10k parts limit.
-    min_buffer_size = int(math.ceil(float(file_size) / dxfile.DEFAULT_MAXIMIUM_PARTS))
+    min_buffer_size = int(math.ceil(float(file_size) / 10000))
     buffer_size = max(dxfile.DEFAULT_BUFFER_SIZE, min_buffer_size)
     if file_size >= 0 and file_is_mmapd:
         # For mmap'd uploads the buffer size additionally must be a
         # multiple of the ALLOCATIONGRANULARITY.
         buffer_size = int(math.ceil(float(buffer_size) / mmap.ALLOCATIONGRANULARITY)) * mmap.ALLOCATIONGRANULARITY
-    if buffer_size * dxfile.DEFAULT_MAXIMIUM_PARTS < file_size:
+    if buffer_size * 10000 < file_size:
         raise AssertionError('part size is not large enough to complete upload')
     if file_is_mmapd and buffer_size % mmap.ALLOCATIONGRANULARITY != 0:
         raise AssertionError('part size will not be accepted by mmap')

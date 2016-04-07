@@ -38,8 +38,7 @@ def remove_all(proj_id, folder="/"):
 
 def setUpTempProjects(thing):
     thing.old_workspace_id = dxpy.WORKSPACE_ID
-    thing.proj_id = dxpy.api.project_new({'name': 'aws-test-project', 'region': 'aws:east-us'})['id']
-    #thing.proj_id = dxpy.api.project_new({'name': 'azure-test-project', 'region': 'azure:westus'})['id']
+    thing.proj_id = dxpy.api.project_new({'name': 'azure-test-project', 'region': 'azure:westus'})['id']
     dxpy.set_workspace_id(thing.proj_id)
 
 def tearDownTempProjects(thing):
