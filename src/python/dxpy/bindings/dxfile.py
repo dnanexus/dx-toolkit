@@ -38,7 +38,7 @@ from ..compat import BytesIO, basestring
 
 DXFILE_HTTP_THREADS = min(cpu_count(), 8)
 MIN_BUFFER_SIZE = 1024*1024
-DEFAULT_BUFFER_SIZE = 1024*1024*16
+DEFAULT_BUFFER_SIZE = 1024*1024*4
 if dxpy.JOB_ID:
     # Increase HTTP request buffer size when we are running within the
     # platform.
@@ -60,7 +60,6 @@ def _validate_headers(headers):
             raise ValueError("Expected value %r of headers (associated with key %r) to be a string"
                              % (value, key))
     return headers
-
 
 class DXFile(DXDataObject):
     '''Remote file object handler.
@@ -137,7 +136,6 @@ class DXFile(DXDataObject):
             if mode not in ['r', 'w', 'a']:
                 raise ValueError("mode must be one of 'r', 'w', or 'a'")
             self._close_on_exit = (mode == 'w')
-
         self._read_buf = BytesIO()
         self._write_buf = BytesIO()
 
@@ -536,6 +534,10 @@ class DXFile(DXDataObject):
         defaults to 1. This probably only makes sense if this is the
         only part to be uploaded.
         """
+        # determine the limits of the file and reset
+        # self.file_limits = dxpy.api.project_describe(self.project, {'fields': {'fileUploadParameters': True}})['fileUploadParameters']
+        #_set_file_limits(self.file_limits)
+        print('in upload_part')
 
         req_input = {}
         if index is not None:
