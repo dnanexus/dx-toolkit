@@ -464,7 +464,7 @@ class DXFile(DXDataObject):
         elif B <= MB < GB:
             return '{0:.2f} GB'.format(B/GB)
         elif B <= GB < TB:
-            return '{0:.2f} GB'.format(B/TB)
+            return '{0:.2f} TB'.format(B/TB)
 
     def closed(self, **kwargs):
         '''
