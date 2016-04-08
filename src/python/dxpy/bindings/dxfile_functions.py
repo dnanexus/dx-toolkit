@@ -84,7 +84,7 @@ def new_dxfile(mode=None, write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE, **kwargs
         dxFile.new(**kwargs)
 
     '''
-    dx_file = DXFile(mode=mode, write_buffer_size=write_buffer_size)
+    dx_file = DXFile(mode=mode, write_buffer_size=write_buffer_size, file_size=file_size, file_is_mmapd=file_is_mmapd)
     dx_file.new(**kwargs)
     return dx_file
 
@@ -290,26 +290,6 @@ def _download_dxfile(dxid, filename, part_retry_counter,
 
         return True
 
-def _get_buffer_size_for_file(file_size, file_is_mmapd=False):
-    """Returns an upload buffer size that is appropriate to use for a file
-    of size file_size. If file_is_mmapd is True, the size is further
-    constrained to be suitable for passing to mmap.
-
-    """
-    # Raise buffer size (for files exceeding DEFAULT_BUFFER_SIZE * 10k
-    # bytes) in order to prevent us from exceeding 10k parts limit.
-    min_buffer_size = int(math.ceil(float(file_size) / 10000))
-    buffer_size = max(dxfile.DEFAULT_BUFFER_SIZE, min_buffer_size)
-    if file_size >= 0 and file_is_mmapd:
-        # For mmap'd uploads the buffer size additionally must be a
-        # multiple of the ALLOCATIONGRANULARITY.
-        buffer_size = int(math.ceil(float(buffer_size) / mmap.ALLOCATIONGRANULARITY)) * mmap.ALLOCATIONGRANULARITY
-    if buffer_size * 10000 < file_size:
-        raise AssertionError('part size is not large enough to complete upload')
-    if file_is_mmapd and buffer_size % mmap.ALLOCATIONGRANULARITY != 0:
-        raise AssertionError('part size will not be accepted by mmap')
-    return buffer_size
-
 def upload_local_file(filename=None, file=None, media_type=None, keep_open=False,
                       wait_on_close=False, use_existing_dxfile=None, show_progress=False, **kwargs):
     '''
@@ -354,7 +334,8 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
         file_size = os.fstat(fd.fileno()).st_size
     except:
         file_size = 0
-    buffer_size = _get_buffer_size_for_file(file_size, file_is_mmapd=hasattr(fd, "fileno"))
+
+    file_is_mmapd = hasattr(fd, "fileno")
 
     if use_existing_dxfile:
         handler = use_existing_dxfile
@@ -376,7 +357,7 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
 
         # Use 'a' mode because we will be responsible for closing the file
         # ourselves later (if requested).
-        handler = new_dxfile(mode='a', media_type=media_type, write_buffer_size=buffer_size, **creation_kwargs)
+        handler = new_dxfile(mode='a', media_type=media_type, write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE, file_size=file_size, file_is_mmapd=file_is_mmapd, **creation_kwargs)
 
     # For subsequent API calls, don't supply the dataobject metadata
     # parameters that are only needed at creation time.

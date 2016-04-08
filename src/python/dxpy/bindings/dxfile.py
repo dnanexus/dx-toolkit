@@ -23,7 +23,7 @@ This remote file handler is a Python file-like object.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, logging, traceback, hashlib, copy, time
+import os, sys, logging, traceback, hashlib, copy, time, math, mmap
 from threading import Lock
 import concurrent.futures
 from multiprocessing import cpu_count
@@ -113,7 +113,7 @@ class DXFile(DXDataObject):
             cls._http_threadpool = dxpy.utils.get_futures_threadpool(max_workers=cls._http_threadpool_size)
 
     def __init__(self, dxid=None, project=None, mode=None,
-                 read_buffer_size=DEFAULT_BUFFER_SIZE, write_buffer_size=DEFAULT_BUFFER_SIZE):
+                 read_buffer_size=DEFAULT_BUFFER_SIZE, write_buffer_size=DEFAULT_BUFFER_SIZE, file_size=1, file_is_mmapd=False):
         DXDataObject.__init__(self, dxid=dxid, project=project)
         if mode is None:
             self._close_on_exit = True
@@ -125,11 +125,10 @@ class DXFile(DXDataObject):
         self._read_buf = BytesIO()
         self._write_buf = BytesIO()
 
-        if write_buffer_size < 5*1024*1024:
-            raise DXFileError("Write buffer size must be at least 5 MB")
-
         self._read_bufsize = read_buffer_size
         self._write_bufsize = write_buffer_size
+        self.file_size = file_size
+        self.file_is_mmapd = file_is_mmapd
 
         # These are cached once for all download threads. This saves calls to the apiserver.
         self._download_url, self._download_url_headers, self._download_url_expires = None, None, None
@@ -146,6 +145,26 @@ class DXFile(DXDataObject):
         self._file_length = None
         self._cur_part = 1
         self._num_uploaded_parts = 0
+
+    def _get_buffer_size_for_file(self, file_size, file_is_mmapd=False, **kwargs):
+        """Returns an upload buffer size that is appropriate to use for a file
+        of size file_size. If file_is_mmapd is True, the size is further
+        constrained to be suitable for passing to mmap.
+
+        """
+        # Raise buffer size (for files exceeding DEFAULT_BUFFER_SIZE * 10k
+        # bytes) in order to prevent us from exceeding 10k parts limit.
+        min_buffer_size = int(math.ceil(float(file_size) / self._maximum_parts))
+        buffer_size = max(self._buffer_size, min_buffer_size)
+        if file_size >= 0 and file_is_mmapd:
+            # For mmap'd uploads the buffer size additionally must be a
+            # multiple of the ALLOCATIONGRANULARITY.
+            buffer_size = int(math.ceil(float(buffer_size) / mmap.ALLOCATIONGRANULARITY)) * mmap.ALLOCATIONGRANULARITY
+        if buffer_size * self._maximum_parts < file_size:
+            raise AssertionError('part size is not large enough to complete upload')
+        if file_is_mmapd and buffer_size % mmap.ALLOCATIONGRANULARITY != 0:
+            raise AssertionError('part size will not be accepted by mmap')
+        return buffer_size
 
     def _new(self, dx_hash, media_type=None, **kwargs):
         """
@@ -363,6 +382,16 @@ class DXFile(DXDataObject):
             does not affect where the next :meth:`write` will occur.
 
         '''
+        self.file_limits = dxpy.api.project_describe(self.project, {'fields': {'fileUploadParameters': True}})['fileUploadParameters']
+        self._set_file_limits(self.file_limits)
+
+        self._write_buf_size = self._get_buffer_size_for_file(self.file_size, self.file_is_mmapd)
+
+        if self._write_buf_size < self._minimum_part_size:
+            raise DXFileError("Write buffer size must be at least {}".format(self._readable_part_size(self._minimum_part_size)))
+
+        if self._write_buf_size > self._maximum_part_size:
+            raise DXFileError("Write buffer size must be at most {}".format(self._readable_part_size(self._maximum_part_size)))
 
         def write_request(data_for_write_req):
             if multithread:
@@ -401,6 +430,27 @@ class DXFile(DXDataObject):
             # TODO: check if repeat string splitting is bad for
             # performance when len(data) >> _write_bufsize
             self.write(data[remaining_space:], **kwargs)
+
+    def _readable_part_size(bytes):
+        """
+            Returns the file size in readable form'
+        """
+        B = float(bytes)
+        KB = float(1024)
+        MB = float(KB * 1024)
+        GB = float(MB * 1024)
+        TB = float(GB * 1024)
+
+        if B < KB:
+            return '{0} {1}'.format(B, 'Bytes' if 0 == B > 1 else 'Byte')
+        elif B <= B < KB:
+            return '{0:.2f} KB'.format(B/KB)
+        elif B <= KB < MB:
+            return '{0:.2f} MB'.format(B/MB)
+        elif B <= MB < GB:
+            return '{0:.2f} GB'.format(B/GB)
+        elif B <= GB < TB:
+            return '{0:.2f} GB'.format(B/TB)
 
     def closed(self, **kwargs):
         '''
@@ -701,7 +751,7 @@ class DXFile(DXDataObject):
         # file exists. Otherwise, it's an error.
         #
         # If project=None, we fall back to the project attached to this handler
-        # (if any). If this is supplied, it's treated as a hint: if it's a
+        # (if any). If this is supplied, it's treated as a hint: if it's a/d
         # project in which this file exists, it's passed on to the
         # apiserver. Otherwise, NO hint is supplied. In principle supplying a
         # project in the handler that doesn't contain this file ought to be an
