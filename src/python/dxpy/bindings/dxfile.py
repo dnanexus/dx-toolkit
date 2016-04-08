@@ -47,6 +47,10 @@ if dxpy.JOB_ID:
 MD5_READ_CHUNK_SIZE = 1024*1024*4
 FILE_REQUEST_TIMEOUT = 60
 
+DEFAULT_MAXIMUM_PARTS = 10000
+DEFAULT_MINIMUM_PARTS = 1
+DEFAULT_MINIMUM_PART_SIZE = 1024*1024*5
+DEFAULT_MAXIMUM_PART_SIZE = 1024*1024*1024*5
 
 def _validate_headers(headers):
     for key, value in headers.items():
@@ -101,6 +105,11 @@ class DXFile(DXDataObject):
     _http_threadpool = None
     _http_threadpool_size = DXFILE_HTTP_THREADS
 
+    _buffer_size = DEFAULT_BUFFER_SIZE
+    _minimum_part_size = DEFAULT_MINIMUM_PART_SIZE
+    _maximum_part_size = DEFAULT_MAXIMUM_PART_SIZE
+    _maximum_parts = DEFAULT_MAXIMUM_PARTS
+
     NO_PROJECT_HINT = 'NO_PROJECT_HINT'
 
     @classmethod
@@ -111,6 +120,13 @@ class DXFile(DXDataObject):
     def _ensure_http_threadpool(cls):
         if cls._http_threadpool is None:
             cls._http_threadpool = dxpy.utils.get_futures_threadpool(max_workers=cls._http_threadpool_size)
+
+    @classmethod
+    def _set_file_limits(cls, file_limits):
+        cls._buffer_size = file_limits['minimumPartSize']
+        cls._maximum_parts = file_limits['maximumNumParts']
+        cls._minimum_part_size = file_limits['minimumPartSize']
+        cls._maximum_part_size = file_limits['maximumPartSize']
 
     def __init__(self, dxid=None, project=None, mode=None,
                  read_buffer_size=DEFAULT_BUFFER_SIZE, write_buffer_size=DEFAULT_BUFFER_SIZE, file_size=1, file_is_mmapd=False):

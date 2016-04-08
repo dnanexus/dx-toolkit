@@ -60,7 +60,7 @@ def open_dxfile(dxid, project=None, read_buffer_size=dxfile.DEFAULT_BUFFER_SIZE)
     '''
     return DXFile(dxid, project=project, read_buffer_size=read_buffer_size)
 
-def new_dxfile(mode=None, write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE, **kwargs):
+def new_dxfile(mode=None, write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE, file_size=1, file_is_mmapd=False, **kwargs):
     '''
     :param mode: One of "w" or "a" for write and append modes, respectively
     :type mode: string
