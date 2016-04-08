@@ -127,7 +127,11 @@ class DXFile(DXDataObject):
         cls._maximum_part_size = file_limits['maximumPartSize']
 
     def __init__(self, dxid=None, project=None, mode=None,
-                 read_buffer_size=DEFAULT_BUFFER_SIZE, write_buffer_size=DEFAULT_BUFFER_SIZE, file_size=0, file_is_mmpad=False):
+                 read_buffer_size=DEFAULT_BUFFER_SIZE, write_buffer_size=DEFAULT_BUFFER_SIZE, file_size=1, file_is_mmapd=False):
+        print('in __init__')
+        print('[file_size]')
+        print(file_size)
+        print(file_is_mmapd)
         DXDataObject.__init__(self, dxid=dxid, project=project)
         if mode is None:
             self._close_on_exit = True
@@ -138,13 +142,11 @@ class DXFile(DXDataObject):
         self._read_buf = BytesIO()
         self._write_buf = BytesIO()
 
-        print('in __init__')
+        if write_buffer_size < 1:
+            raise DXFileError("Write buffer size must be at least 5 MB")
 
-        #if write_buffer_size < 1:
-        #    raise DXFileError("Write buffer size must be at least 5 MB")
-
-        #if write_buffer_size > 4*1024*1024:
-        #    raise DXFileError("Write buffer size must be at most 4 MB")
+        if write_buffer_size > 4*1024*1024:
+            raise DXFileError("Write buffer size must be at most 4 MB")
 
         self._read_bufsize = read_buffer_size
         self._write_bufsize = write_buffer_size
@@ -175,8 +177,6 @@ class DXFile(DXDataObject):
         Creates a new remote file with media type *media_type*, if given.
 
         """
-        print('==== In _NEW =====')
-        print(kwargs)
 
         if media_type is not None:
             dx_hash["media"] = media_type
