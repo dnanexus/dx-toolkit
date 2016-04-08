@@ -85,9 +85,7 @@ def new_dxfile(mode=None, write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE, file_siz
 
     '''
     dx_file = DXFile(mode=mode, write_buffer_size=write_buffer_size, file_size=file_size, file_is_mmapd=file_is_mmapd)
-    print(dx_file)
     dx_file.new(**kwargs)
-    print('after dx_file.new')
     return dx_file
 
 def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,

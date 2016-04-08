@@ -534,10 +534,6 @@ class DXFile(DXDataObject):
         defaults to 1. This probably only makes sense if this is the
         only part to be uploaded.
         """
-        # determine the limits of the file and reset
-        # self.file_limits = dxpy.api.project_describe(self.project, {'fields': {'fileUploadParameters': True}})['fileUploadParameters']
-        #_set_file_limits(self.file_limits)
-        print('in upload_part')
 
         req_input = {}
         if index is not None:
