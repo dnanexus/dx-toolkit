@@ -129,6 +129,7 @@ import os, sys, json, time, logging, platform, ssl, traceback
 import errno
 import requests
 import socket
+import StringIO
 from collections import namedtuple
 from . import exceptions
 from requests.auth import AuthBase
@@ -140,6 +141,13 @@ try:
     from urllib.parse import urlsplit
 except ImportError:
     from urlparse import urlsplit
+
+
+class DXIncompleteReadsError(Exception):
+    '''Exception returned when read data is shorter than requested'''
+    def __init__(self, data):
+        self.data = data
+
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -199,7 +207,6 @@ _expected_exceptions = exceptions.network_exceptions + \
 # access and make it thread safe.
 _pool_mutex = Lock()
 _pool_manager = None
-
 
 def _get_proxy_info(url):
     proxy_info = {}
@@ -341,6 +348,18 @@ def _maybe_trucate_request(url, try_index, data):
             return data[0:10000]
     return data
 
+<<<<<<< HEAD
+
+# If error injection is turned on, possibly chop the response data,
+# and cause an incomplete read.
+def _maybe_trucate_response_data(method, try_index, response):
+    from random import randint
+    if _INJECT_ERROR:
+        if (method == 'GET') and randint(0, 9) == 0 and len(response.data) > 3:
+            raise DXIncompleteReadsError(response.data[0:3])
+
+=======
+>>>>>>> master
 def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                   timeout=DEFAULT_TIMEOUT,
                   use_compression=None, jsonify_data=True, want_full_response=False,
@@ -458,6 +477,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             # throws BadStatusLine if the server returns nothing
             response = _get_pool_manager(**pool_args).request(_method, _url, headers=_headers, body=body,
                                                               timeout=timeout, retries=False, **kwargs)
+            _maybe_trucate_response_data(_method, try_index, response)
             req_id = response.headers.get("x-request-id", "unavailable")
 
             if _UPGRADE_NOTIFY and response.headers.get('x-upgrade-info', '').startswith('A recommended update is available') and '_ARGCOMPLETE' not in os.environ:
@@ -571,10 +591,16 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     if response is not None and \
                        response.status == 400 and is_retryable and \
                        isinstance(e, requests.exceptions.HTTPError) and \
-                       '<Code>RequestTimeout</Code>' in str(e):
+                       '<Code>RequestTimeout</Code>' in exception_msg:
                         logger.info("Retrying 400 HTTP error, due to slow data transfer %s %s %s",
                                     method, url, exception_msg)
                         ok_to_retry = True
+
+                    # We received only a part of the data, due to a torn connection.
+                    # Harvest the data, and retry.
+                    if isinstance(e, urllib3.exceptions.ProtocolError) and \
+                       'Connection broken: IncompleteRead' in exception_msg:
+                        raise DXIncompleteReadsError(response.data)
 
                 if ok_to_retry:
                     if rewind_input_buffer_offset is not None:
@@ -591,13 +617,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             # retryable. Print the latest error and propagate it back to the caller.
             if not isinstance(e, exceptions.DXAPIError):
                 logger.error("%s %s: %s", method, url, exception_msg)
-
-            # Retries have been exhausted, and we are unable to get a full
-            # buffer from the data source. Raise a special exception.
-            if isinstance(e, urllib3.exceptions.ProtocolError) and \
-               'Connection broken: IncompleteRead' in str(e):
-                raise exceptions.DXIncompleteReadsError(exception_msg)
-
             raise
         finally:
             if success and try_index > 0:
@@ -605,6 +624,67 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
         raise AssertionError('Should never reach this line: should have attempted a retry or reraised by now')
     raise AssertionError('Should never reach this line: should never break out of loop')
+
+
+# Build a message from parts that are strings.
+# This helps efficiently keep track of range parts that are arriving.
+# We do not want to use the, possibly expensive, string append function.
+# It could also lead to quadratic behavior, if the number of pieces is large.
+#
+# Note: the range start and end could be None
+class BufferBuilder(object):
+    def __init__(self):
+        self._parts = []
+        self._tot_len = 0
+
+    def len(self):
+        return self._tot_len
+
+    def concat(self):
+        if len(self._parts) == 0:
+            return b""
+        if len(self._parts) == 1:
+            return self._parts[0]
+        # There are two parts or more, use StringIO to concatenate
+        # efficiently.
+        iobuf = StringIO.StringIO()
+        for p in self._parts:
+            iobuf.write(p)
+        retval = iobuf.getvalue()
+        iobuf.close()
+        return retval
+
+    def append(self, p):
+        self._parts.append(p)
+        self._tot_len += len(p)
+
+    def append_and_concat(self, p):
+        self.append(p)
+        return self.concat()
+
+
+# Read from [url] the range [start_pos, end_pos]. Handle partial
+# reads by harvesting the data, and building an entire data chunk.
+#
+# If we're fetching the whole object in one shot, avoid setting the
+# Range header to take advantage of gzip transfer compression
+def _dxhttp_read_range(url, headers, start_pos, end_pos, timeout, sub_range):
+    bb = BufferBuilder()
+    if sub_range:
+        headers['Range'] = "bytes={}-{}".format(start_pos, end_pos)
+    while True:
+        try:
+            data = DXHTTPRequest(url, '', method='GET',
+                                 headers=headers, auth=None,
+                                 jsonify_data=False, prepend_srv=False,
+                                 always_retry=True, timeout=timeout,
+                                 decode_response_body=False)
+            return bb.append_and_concat(data)
+        except DXIncompleteReadsError as e:
+            bb.append(e.data)
+            if _DEBUG > 0:
+                print("Caught incompleteReads error tot_len=", bb.len(), file=sys.stderr)
+            headers['Range'] = "bytes={}-{}".format(start_pos + bb.len(), end_pos)
 
 
 class DXHTTPOAuth2(AuthBase):
