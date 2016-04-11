@@ -242,9 +242,14 @@ class TestDXFileFunctions(unittest.TestCase):
             with testutil.temporary_project() as p, self.assertRaises(ResourceNotFound):
                 # The file doesn't exist in this project
                 list(dxfile._generate_read_requests(project=p.get_id()))
+
             with self.assertRaises(ResourceNotFound):
                 # This project doesn't even exist
                 list(dxfile._generate_read_requests(project="project-012301230123012301230123"))
+
+            # Without a project argument, the function call should succeed
+            l = list(dxfile._generate_read_requests())
+            self.assertTrue(type(l) == list and len(l) > 0)
 
 
 class TestDXFile(unittest.TestCase):
@@ -417,8 +422,8 @@ class TestDXFile(unittest.TestCase):
                 with open(tmp.name, "r") as fd:
                     self.assertEqual(fd.read(), "")
 
-            # Project specified in read() that doesn't contain the file. The
-            # call should fail.
+            # Project specified in read() that doesn't contain the file.
+            # The call should fail.
             dxpy.api.project_remove_objects(p2.get_id(), {"objects": [f.get_id()]})
             f4 = dxpy.DXFile(dxid=f.get_id())
             with self.assertRaises(ResourceNotFound):
@@ -454,6 +459,7 @@ class TestDXFile(unittest.TestCase):
             dxfile.read(project="project-012301230123012301230123")
         # Try the same thing again, now we should be able to succeed
         self.assertEqual(dxfile.read(), self.foo_str)
+
 
     def test_dxfile_sequential_optimization(self):
         # Make data longer than 128k to trigger the
@@ -541,6 +547,25 @@ class TestDXFile(unittest.TestCase):
             # This project doesn't even exist
             dxfile.get_download_url(project="project-012301230123012301230123")
 
+    def test_get_download_url_from_handler(self):
+        dxfile = dxpy.upload_string(self.foo_str, wait_on_close=True)
+        url = dxfile.get_download_url()
+
+        # Create a new DXFile handler with the correct project id.
+        dxfile1 = dxpy.DXFile(dxfile.get_id(), project=dxfile.get_proj_id())
+        url1 = dxfile1.get_download_url()
+        self.assertEqual(url, url1)
+
+        with testutil.temporary_project() as p:
+            # Create a new DXFile handler with a project that does not correspond to the file.
+            dxfile2 = dxpy.DXFile(dxfile.get_id(), project=p.get_id())
+            url1 = dxfile2.get_download_url()
+            # Verify that url1 is a tuple with a url and header
+            self.assertTrue(len(url1) == 2)
+            # Verify that the url contains the file id.
+            self.assertTrue(dxfile2.get_id() in url1[0])
+            # Verify that the url does not contain the project id from the wrong project.
+            self.assertFalse(p.get_id() in url1[0])
 
 @unittest.skipUnless(testutil.TEST_GTABLE, 'skipping test that would create a GTable')
 class TestDXGTable(unittest.TestCase):
