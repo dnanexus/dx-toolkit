@@ -631,15 +631,7 @@ class DXFile(DXDataObject):
 
         for chunk_start_pos, chunk_end_pos in chunk_ranges(start_pos, end_pos):
             url, headers = self.get_download_url(project=project, **kwargs)
-            headers['Range'] = "bytes=" + str(chunk_start_pos) + "-" + str(chunk_end_pos)
-            yield dxpy.DXHTTPRequest, [url, ''], {'method': 'GET',
-                                                  'headers': headers,
-                                                  'auth': None,
-                                                  'jsonify_data': False,
-                                                  'prepend_srv': False,
-                                                  'always_retry': True,
-                                                  'timeout': FILE_REQUEST_TIMEOUT,
-                                                  'decode_response_body': False}
+            yield dxpy._dxhttp_read_range, [url, headers, start_pos, end_pos, FILE_REQUEST_TIMEOUT, True], {}
 
     def _next_response_content(self):
         self._ensure_http_threadpool()
@@ -732,14 +724,7 @@ class DXFile(DXDataObject):
                 if self._response_iterator is None:
                     self._request_iterator = self._generate_read_requests(
                         start_pos=self._pos, project=project, **kwargs)
-
-                try:
-                    content = self._next_response_content()
-                except DXIncompleteReadsError:
-                    # Data source is slow, back off and use smaller buffers
-                    self._request_iterator = self._generate_read_requests(
-                        start_pos=self._pos, project=project, limit_chunk_size=MIN_BUFFER_SIZE, **kwargs)
-                    content = self._next_response_content()
+                content = self._next_response_content()
 
                 if len(content) < remaining_len:
                     buf.write(content)

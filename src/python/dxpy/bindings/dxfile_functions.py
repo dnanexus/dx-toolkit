@@ -31,11 +31,11 @@ import warnings
 from collections import defaultdict
 
 import dxpy
-from .. import logger, DXHTTPRequest
+from .. import logger, _dxhttp_read_range
 from . import dxfile, DXFile
 from .dxfile import FILE_REQUEST_TIMEOUT
 from ..compat import open
-from ..exceptions import DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, DXIncompleteReadsError
+from ..exceptions import DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError
 from ..utils import response_iterator
 
 def open_dxfile(dxid, project=None, read_buffer_size=dxfile.DEFAULT_BUFFER_SIZE):
@@ -111,21 +111,12 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
 
     '''
     # retry the inner loop while there are retriable errors
-    def download_with_chunksize(csize):
-        part_retry_counter = defaultdict(lambda: 3)
-        success = False
-        while not success:
-            success = _download_dxfile(dxid, filename, part_retry_counter,
-                                       chunksize=csize, append=append,
-                                       show_progress=show_progress, project=project, **kwargs)
-    try:
-        download_with_chunksize(chunksize)
-    except DXIncompleteReadsError:
-        # We were unable to read with large buffers, try again with a small buffer.
-        # This can happen if the data source is slow in sending data.
-        logger.info("Data source is slow, reducing maximal buffer size to %d, and trying again",
-                    dxfile.MIN_BUFFER_SIZE)
-        download_with_chunksize(dxfile.MIN_BUFFER_SIZE)
+    part_retry_counter = defaultdict(lambda: 3)
+    success = False
+    while not success:
+        success = _download_dxfile(dxid, filename, part_retry_counter,
+                                   chunksize=chunksize, append=append,
+                                   show_progress=show_progress, project=project, **kwargs)
 
 
 def _download_dxfile(dxid, filename, part_retry_counter,
@@ -195,13 +186,10 @@ def _download_dxfile(dxid, filename, part_retry_counter,
 
     def get_chunk(part_id_to_get, start, end):
         url, headers = dxfile.get_download_url(project=project, **kwargs)
-        # If we're fetching the whole object in one shot, avoid setting the Range header to take advantage of gzip
-        # transfer compression
-        if len(parts) > 1 or end - start + 1 < parts[part_id_to_get]["size"]:
-            headers["Range"] = "bytes={}-{}".format(start, end)
-        data = DXHTTPRequest(url, b"", method="GET", headers=headers, auth=None, jsonify_data=False,
-                             prepend_srv=False, always_retry=True, timeout=FILE_REQUEST_TIMEOUT,
-                             decode_response_body=False)
+        sub_range = False
+        if len(parts) > 1 or (start > 0) or (end - start + 1 < parts[part_id_to_get]["size"]):
+            sub_range = True
+        data = _dxhttp_read_range(url, headers, start, end, FILE_REQUEST_TIMEOUT, sub_range)
         return part_id_to_get, data
 
     def chunk_requests():
