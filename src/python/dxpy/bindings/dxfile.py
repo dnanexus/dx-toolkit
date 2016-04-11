@@ -541,16 +541,18 @@ class DXFile(DXDataObject):
         :type filename: str
         :param project: ID of a project containing the file (the download URL
             will be associated with this project, and this may affect which
-            billing account is billed for this download). If None, no hint is
-            supplied to the API server. If set to a project, the URL is only
-            valid so long as the user has access to that project and the
-            project contains that file.
+            billing account is billed for this download). If the project specified does
+            not contain the file, the request will be retried without a project.
+            If no project is specified it will fall back to the project used to create this
+            instance of DXFile, if that wasn't specified it will fall back to the DX_PROJECT_CONTEXT.
+            If set to a project, the URL is only valid as long as the user has
+            access to that project and the project contains that file.
         :type project: str
         :returns: download URL and dict containing HTTP headers to be supplied
             with the request
         :rtype: tuple (str, dict)
-        :raises: :exc:`~dxpy.exceptions.ResourceNotFound` if the project does
-            not contain this file.
+        :raises: :exc:`~dxpy.exceptions.ResourceNotFound` if the file was not found
+            in the given project context.
 
         Obtains a URL that can be used to directly download the associated
         file.
@@ -569,8 +571,13 @@ class DXFile(DXDataObject):
             args["duration"] = duration
         if filename is not None:
             args["filename"] = filename
+
+        using_dxfile_project = False
         if project is not None:
             args["project"] = project
+        elif self.get_proj_id() is not None:
+            args["project"] = self.get_proj_id()
+            using_dxfile_project = True
 
         with self._url_download_mutex:
             if self._download_url is None or self._download_url_expires < time.time():
@@ -584,7 +591,20 @@ class DXFile(DXDataObject):
                 # logging.debug("Download URL unset or expired, requesting a new one")
                 if "timeout" not in kwargs:
                     kwargs["timeout"] = FILE_REQUEST_TIMEOUT
-                resp = dxpy.api.file_download(self._dxid, args, **kwargs)
+
+                resp = {}
+                try:
+                    resp = dxpy.api.file_download(self._dxid, args, **kwargs)
+                except dxpy.exceptions.ResourceNotFound as e:
+                    if "project" in args and using_dxfile_project:
+                        warn("=== WARNING ===")
+                        warn(e)
+                        warn("Will try to find the file in other projects.")
+                        args.pop("project")
+                        resp = dxpy.api.file_download(self._dxid, args, **kwargs)
+                    else:
+                        raise e
+
                 self._download_url = resp["url"]
                 self._download_url_headers = _validate_headers(resp.get("headers", {}))
                 if preauthenticated:
@@ -664,8 +684,8 @@ class DXFile(DXDataObject):
             project ID.
         :type project: str or None
         :rtype: string
-        :raises: :exc:`~dxpy.exceptions.ResourceNotFound` if *project* is
-            supplied and it does not contain this file
+        :raises: :exc:`~dxpy.exceptions.ResourceNotFound` if *project* is supplied
+           and it does not contain this file
 
         Returns the next *length* bytes, or all the bytes until the end of file
         (if no *length* is given or there are fewer than *length* bytes left in
