@@ -31,26 +31,19 @@ export DX_JOB_ID=job-0123456789ABCDEF01234567
 export DX_PROJECT_CONTEXT_ID=project-0123456789ABCDEF01234567
 export DX_WORKSPACE_ID=container-0123456789ABCDEF01234567
 export DX_CLI_WD=/
-export _DX_DEBUG=1
+#export _DX_DEBUG=1
 
 echo "running loop"
 for i in {1..8}; do
-    echo "i=$i"
     dx api system setPayload >/dev/null
-    echo "A"
     dx download test --output ${SCRATCH_DIR}/$PORT -f 2>/dev/null
-    echo "B"
     wire_md5=$(md5sum ${SCRATCH_DIR}/$PORT | cut -f 1 -d " ")
-    echo "C"
     desc_md5=$(dx api file-test describe | jq --raw-output .md5)
-    echo "D"
     echo $wire_md5 $desc_md5
-    echo "E"
     if [[ $wire_md5 != $desc_md5 ]]; then
         echo $(date) $i $wire_md5 $desc_md5 >> ERR_LOG
         mv -f ${SCRATCH_DIR}/$PORT ${SCRATCH_DIR}/dl_check.${PORT}.$i
         dx download test --output ${SCRATCH_DIR}/dl_check.${PORT}.${i}.retry -f
         #cmp dl_check.${PORT}.$i dl_check.${PORT}.${i}.retry
     fi
-    echo "F"
 done
