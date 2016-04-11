@@ -23,6 +23,13 @@ ifndef MAKEOPTS
 endif
 MAKE:=$(MAKE) $(MAKEOPTS)
 
+# Set the minimum Windows version (required by the ua and libcurl.la targets).
+ifndef CPPFLAGS
+	ifeq ($(OS), Windows_NT)
+		export CPPFLAGS=-DWINVER=0x0501
+	endif
+endif
+
 UNAME := $(shell uname)
 
 CENTOS_MAJOR_VERSION := $(shell test -e /etc/issue && (grep -o "CentOS release [0-9]\+" /etc/issue | sed -e "s/CentOS release //"))
@@ -381,12 +388,6 @@ CURL_MIRROR=https://github.com/bagder/curl/releases/download
 CURL_URL=$(CURL_MIRROR)/curl-$(CURL_PV_UNDERSCORES)/curl-$(CURL_PV).tar.gz
 CURL_SHA=e44fc290844c1e3c9b7f6ef9926d4366d0600514
 ifeq ($(OS), Windows_NT)
-# To build libcurl on Windows, setting a minimum Windows version is required,
-# and one way to do that is to define it in the CPPFLAGS env var. To be safe,
-# only export CPPFLAGS for the libcurl target:
-ifndef CPPFLAGS
-curl/stage/lib/libcurl.la: export CPPFLAGS=-DWINVER=0x0501
-endif
 	CURL_WITH_SSL=--with-winssl
 	CURL_SHARED_LIBS=--enable-shared=yes
 else ifeq ($(UNAME), Darwin)
