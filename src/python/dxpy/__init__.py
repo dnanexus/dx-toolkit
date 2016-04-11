@@ -134,8 +134,7 @@ from . import exceptions
 from requests.auth import AuthBase
 from requests.packages import urllib3
 from requests.packages.urllib3.packages.ssl_match_hostname import match_hostname
-from .compat import USING_PYTHON2, expanduser, BadStatusLine
-import StringIO
+from .compat import USING_PYTHON2, expanduser, BadStatusLine, StringIO
 from threading import Lock
 try:
     from urllib.parse import urlsplit
