@@ -348,8 +348,6 @@ def _maybe_trucate_request(url, try_index, data):
             return data[0:10000]
     return data
 
-<<<<<<< HEAD
-
 # If error injection is turned on, possibly chop the response data,
 # and cause an incomplete read.
 def _maybe_trucate_response_data(method, try_index, response):
@@ -358,8 +356,6 @@ def _maybe_trucate_response_data(method, try_index, response):
         if (method == 'GET') and randint(0, 9) == 0 and len(response.data) > 3:
             raise DXIncompleteReadsError(response.data[0:3])
 
-=======
->>>>>>> master
 def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                   timeout=DEFAULT_TIMEOUT,
                   use_compression=None, jsonify_data=True, want_full_response=False,
