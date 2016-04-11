@@ -30,7 +30,7 @@ from multiprocessing import cpu_count
 
 import dxpy
 from . import DXDataObject
-from ..exceptions import DXFileError, DXIncompleteReadsError
+from ..exceptions import DXFileError
 from ..utils import warn
 from ..utils.resolver import object_exists_in_project
 from ..compat import BytesIO, basestring
