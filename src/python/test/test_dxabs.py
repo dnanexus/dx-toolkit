@@ -86,6 +86,9 @@ class TestDXFile(unittest.TestCase):
         self.assertEqual(self.dxfile.describe()["name"],
                          os.path.basename(self.foo_file.name))
 
+        dxpy.download_dxfile(self.dxfile.get_id(), self.new_file.name)
+        self.assertTrue(filecmp.cmp(self.foo_file.name, self.new_file.name))
+
 if __name__ == '__main__':
   if dxpy.AUTH_HELPER is None:
     sys.exit(1, 'Error: Need to be logged in to run these tests')
