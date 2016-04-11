@@ -129,6 +129,7 @@ import os, sys, json, time, logging, platform, ssl, traceback
 import errno
 import requests
 import socket
+import StringIO
 from collections import namedtuple
 from . import exceptions
 from requests.auth import AuthBase
