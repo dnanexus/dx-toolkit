@@ -89,7 +89,7 @@ if '_ARGCOMPLETE' not in os.environ:
         if old_term_setting:
             os.environ['TERM'] = old_term_setting
 
-        if 'libedit' in readline.__doc__:
+        if readline.__doc__ and 'libedit' in readline.__doc__:
             print('Warning: incompatible readline module detected (libedit), tab completion disabled', file=sys.stderr)
     except ImportError:
         if os.name != 'nt':
@@ -282,14 +282,9 @@ def login(args):
     # API server should have already been set up if --host or one of
     # the --special-host flags has been set.
     if args.token is None:
-        if args.host is not None or args.port is not None:
-            if args.host is None or args.port is None:
-                parser.exit(2, fill('Error: Only one of --host and --port were provided; provide either both or neither of the values') + '\n')
-            protocol = args.protocol or ("https" if (args.port == 443) else "http")
-            authserver = protocol + '://' + args.host
-            authserver += ':' + str(args.port)
-        else:
-            authserver = default_authserver
+        if (args.host is None) != (args.port is None):
+            parser.exit(2, fill('Error: Only one of --host and --port were provided; provide either both or neither of the values') + '\n')
+        authserver = dxpy.get_auth_server_name(args.host, args.port, args.protocol)
 
         using_default = authserver == default_authserver
 
@@ -409,7 +404,7 @@ def login(args):
 
 def logout(args):
     if dxpy.AUTH_HELPER is not None:
-        authserver = dxpy.get_auth_server_name(args.host, args.port)
+        authserver = dxpy.get_auth_server_name(args.host, args.port, args.protocol)
         print("Deleting credentials from {}...".format(authserver))
         token = dxpy.AUTH_HELPER.security_context["auth_token"]
         try:
@@ -3472,7 +3467,7 @@ parser_login = subparsers.add_parser('login', help='Log in (interactively or wit
 parser_login.add_argument('--token', help='Authentication token to use')
 host_action = parser_login.add_argument('--host', help='Log into the given auth server host (port must also be given)')
 port_action = parser_login.add_argument('--port', type=int, help='Log into the given auth server port (host must also be given)')
-protocol_action = parser_login.add_argument('--protocol', help='Use the given protocol to contact auth server (by default, the correct protocol is guessed based on --port)')
+protocol_action = parser_login.add_argument('--protocol', help='Used in conjunction with host and port arguments, gives the protocol to use when contacting auth server', default='https')
 host_action.help = port_action.help = protocol_action.help = argparse.SUPPRESS
 parser_login.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
 parser_login.add_argument('--save', help='Save token and other environment variables for future sessions',
@@ -3490,6 +3485,7 @@ parser_logout = subparsers.add_parser('logout',
                                       parents=[env_args])
 parser_logout.add_argument('--host', help='Log out of the given auth server host (port must also be given)')
 parser_logout.add_argument('--port', type=int, help='Log out of the given auth server port (host must also be given)')
+parser_logout.add_argument('--protocol', help='Used in conjunction with host and port arguments, gives the protocol to use when contacting auth server', default='https')
 parser_logout.set_defaults(func=logout)
 register_parser(parser_logout, categories='session')
 
