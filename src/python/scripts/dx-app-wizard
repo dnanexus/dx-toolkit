@@ -114,8 +114,8 @@ else:
 
     class_completer = Completer(['int', 'float', 'string', 'boolean', 'hash',
                                  'array:int', 'array:float', 'array:string', 'array:boolean',
-                                 'record', 'file', 'gtable', 'applet',
-                                 'array:record', 'array:file', 'array:gtable', 'array:applet'])
+                                 'record', 'file', 'applet',
+                                 'array:record', 'array:file', 'array:applet'])
     bool_completer = Completer(['true', 'false'])
 
     print('')
@@ -149,10 +149,9 @@ else:
             use_completer(class_completer)
             if not printed_classes:
                 print('Your input parameter must be of one of the following classes:')
-                print('''applet         array:float    array:string   gtable         string
-array:applet   array:gtable   boolean        hash           
-array:boolean  array:int      file           int            
-array:file     array:record   float          record
+                print('''applet         array:file     array:record   file           int
+array:applet   array:float    array:string   float          record         
+array:boolean  array:int      boolean        hash           string
 ''')
                 printed_classes = True
 
@@ -236,11 +235,9 @@ array:file     array:record   float          record
             use_completer(class_completer)
             if not printed_classes:
                 print('Your output parameter must be of one of the following classes:')
-                print('''applet         array:float    array:string   gtable         string
-array:applet   array:gtable   boolean        hash           
-array:boolean  array:int      file           int            
-array:file     array:record   float          record
-''')
+                print('''applet         array:file     array:record   file           int            
+array:applet   array:float    array:string   float          record         
+array:boolean  array:int      boolean        hash           string''')
                 printed_classes = True
             while True:
                 output_class = prompt_for_var('Choose a class (<TAB> twice for choices)')
