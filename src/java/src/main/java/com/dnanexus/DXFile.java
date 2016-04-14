@@ -27,10 +27,12 @@ import java.util.Map;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
+import org.apache.http.NoHttpResponseException;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 
@@ -275,8 +277,15 @@ public class DXFile extends DXDataObject {
     }
 
     private class FileApiOutputStream extends OutputStream {
-        private ByteArrayOutputStream unwrittenBytes = new ByteArrayOutputStream();
         private int index = 1;
+        private ByteArrayOutputStream unwrittenBytes = new ByteArrayOutputStream();
+
+        @Override
+        public void close() throws IOException {
+            // Flush out remaining bytes to upload
+            partUploadRequest(unwrittenBytes.toByteArray(), index);
+            unwrittenBytes = new ByteArrayOutputStream();
+        }
 
         @Override
         public void write(byte[] b) throws IOException {
@@ -305,13 +314,6 @@ public class DXFile extends DXDataObject {
             byte[] byteAsArray = new byte[1];
             byteAsArray[0] = (byte) b;
             write(byteAsArray);
-        }
-
-        @Override
-        public void close() throws IOException {
-            // Flush out remaining bytes to upload
-            partUploadRequest(unwrittenBytes.toByteArray(), index);
-            unwrittenBytes = new ByteArrayOutputStream();
         }
     }
     /**
@@ -392,6 +394,38 @@ public class DXFile extends DXDataObject {
         checkDXLinkFormat(value);
         // TODO: how to set the environment?
         return DXFile.getInstance((String) value.get("$dnanexus_link"));
+    }
+
+    /**
+     * Executes HTTP Request with retry logic
+     *
+     * @param httpclient
+     * @param request HttpGet, HttpPost, or HttpPut request
+     *
+     * @return response to the HTTP Request
+     *
+     * @throws IOException
+     */
+    private static HttpResponse executeRequestWithRetry(HttpClient httpclient, HttpRequestBase request) throws IOException {
+        HttpResponse response;
+        int RETRY_ATTEMPTS = 1;
+        int timeoutSeconds = 1;
+        while (true) {
+            try {
+                response = httpclient.execute(request);
+            } catch (NoHttpResponseException e) {
+                // Maximum 5 retries
+                RETRY_ATTEMPTS ++;
+                if (RETRY_ATTEMPTS > 5) {
+                    throw e;
+                }
+                System.out.println("Error downloading chunk. Waiting " + timeoutSeconds + " second(s) before retrying...");
+                sleep(timeoutSeconds);
+                timeoutSeconds *= 2;
+                continue;
+            }
+            return response;
+        }
     }
 
     /**
@@ -492,16 +526,30 @@ public class DXFile extends DXDataObject {
         // HTTP GET request with bytes/_ge range header
         HttpGet request = new HttpGet(url);
         request.addHeader("Range", "bytes=" + start + "-" + end);
-        HttpResponse response = httpclient.execute(request);
+
+        HttpResponse response = executeRequestWithRetry(httpclient, request);
         InputStream content = response.getEntity().getContent();
 
         return IOUtils.toByteArray(content);
     }
 
+    /**
+     * Sleeps for the specified amount of time. Throws a {@link RuntimeException} if interrupted.
+     *
+     * @param seconds number of seconds to sleep for
+     */
+    private static void sleep(int seconds) {
+        try {
+            Thread.sleep(seconds * 1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
     // Variables for download
     private final int maxDownloadChunkSize = 16 * 1024 * 1024;
     private final int minDownloadChunkSize = 64 * 1024;
     private final int numRequestsBetweenRamp = 4;
+
     // Ramp up factor for downloading by parts
     private final int ramp = 2;
 
@@ -595,7 +643,6 @@ public class DXFile extends DXDataObject {
     public void downloadToOutputStream(OutputStream os, long start, long end) throws IOException {
         InputStream is = getDownloadStream(start, end);
         IOUtils.copyLarge(is, os);
-
     }
 
     @Override
@@ -693,8 +740,7 @@ public class DXFile extends DXDataObject {
         }
 
         HttpClient httpclient = HttpClientBuilder.create().setUserAgent(USER_AGENT).build();
-        httpclient.execute(request);
-
+        executeRequestWithRetry(httpclient, request);
     }
 
     /**
