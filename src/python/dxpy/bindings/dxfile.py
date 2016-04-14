@@ -128,7 +128,7 @@ class DXFile(DXDataObject):
         cls._maximum_part_size = file_limits['maximumPartSize']
 
     def __init__(self, dxid=None, project=None, mode=None,
-                 read_buffer_size=DEFAULT_BUFFER_SIZE, write_buffer_size=DEFAULT_BUFFER_SIZE, file_size=1, file_is_mmapd=False):
+                read_buffer_size=DEFAULT_BUFFER_SIZE, write_buffer_size=DEFAULT_BUFFER_SIZE, expected_file_size=None, file_is_mmapd=False):
         DXDataObject.__init__(self, dxid=dxid, project=project)
         if mode is None:
             self._close_on_exit = True
@@ -141,7 +141,7 @@ class DXFile(DXDataObject):
 
         self._read_bufsize = read_buffer_size
         self._write_bufsize = write_buffer_size
-        self.file_size = file_size
+        self.expected_file_size = expected_file_size
         self.file_is_mmapd = file_is_mmapd
 
         # These are cached once for all download threads. This saves calls to the apiserver.
@@ -176,6 +176,53 @@ class DXFile(DXDataObject):
             buffer_size = int(math.ceil(float(buffer_size) / mmap.ALLOCATIONGRANULARITY)) * mmap.ALLOCATIONGRANULARITY
         if buffer_size * self._maximum_parts < file_size:
             raise AssertionError('part size is not large enough to complete upload')
+        if file_is_mmapd and buffer_size % mmap.ALLOCATIONGRANULARITY != 0:
+            raise AssertionError('part size will not be accepted by mmap')
+        return buffer_size
+
+||||||| merged common ancestors
+=======
+    def _set_file_limits(self, file_limits):
+        self._buffer_size = file_limits['minimumPartSize']
+        self._maximum_parts = file_limits['maximumNumParts']
+        self._minimum_part_size = file_limits['minimumPartSize']
+        self._maximum_part_size = file_limits['maximumPartSize']
+
+    def _readable_part_size(bytes):
+        """
+            Returns the file size in readable form'
+        """
+        B = float(bytes)
+        KB = float(1024)
+        MB = float(KB * 1024)
+        GB = float(MB * 1024)
+        TB = float(GB * 1024)
+
+        if B < KB:
+            return '{0} {1}'.format(B, 'Bytes' if B > 1 else 'Byte')
+        elif B <= B < KB:
+            return '{0:.2f} KB'.format(B/KB)
+        elif B <= KB < MB:
+            return '{0:.2f} MB'.format(B/MB)
+        elif B <= MB < GB:
+            return '{0:.2f} GB'.format(B/GB)
+        elif B <= GB < TB:
+            return '{0:.2f} TB'.format(B/TB)
+
+    def _get_buffer_size_for_file(self, expected_file_size, file_is_mmapd=False, **kwargs):
+        """Returns an upload buffer size that is appropriate to use for a file
+        of size file_size. If file_is_mmapd is True, the size is further
+        constrained to be suitable for passing to mmap.
+
+        """
+        # Raise buffer size (for files exceeding DEFAULT_BUFFER_SIZE * the maximium parts allowed
+        # bytes) in order to prevent us from exceeding the configured parts limit.
+        min_buffer_size = int(math.ceil(float(expected_file_size) / self._maximum_parts))
+        buffer_size = max(self._buffer_size, min_buffer_size)
+        if expected_file_size >= 0 and file_is_mmapd:
+            # For mmap'd uploads the buffer size additionally must be a
+            # multiple of the ALLOCATIONGRANULARITY.
+            buffer_size = int(math.ceil(float(buffer_size) / mmap.ALLOCATIONGRANULARITY)) * mmap.ALLOCATIONGRANULARITY
         if file_is_mmapd and buffer_size % mmap.ALLOCATIONGRANULARITY != 0:
             raise AssertionError('part size will not be accepted by mmap')
         return buffer_size
@@ -399,8 +446,10 @@ class DXFile(DXDataObject):
         self.file_limits = dxpy.api.project_describe(self.project, {'fields': {'fileUploadParameters': True}})['fileUploadParameters']
         self._set_file_limits(self.file_limits)
 
-        self._write_buf_size = self._get_buffer_size_for_file(self.file_size, self.file_is_mmapd)
+        self._write_buf_size = self._get_buffer_size_for_file(self.expected_file_size, self.file_is_mmapd)
+        self._write_bufsize = self._maximum_part_size
 
+        # Validate the part sizes are within the limits that have been defined.
         if self._write_buf_size < self._minimum_part_size:
             raise DXFileError("Write buffer size must be at least {}".format(self._readable_part_size(self._minimum_part_size)))
 

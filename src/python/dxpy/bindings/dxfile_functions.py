@@ -60,7 +60,7 @@ def open_dxfile(dxid, project=None, read_buffer_size=dxfile.DEFAULT_BUFFER_SIZE)
     '''
     return DXFile(dxid, project=project, read_buffer_size=read_buffer_size)
 
-def new_dxfile(mode=None, write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE, file_size=1, file_is_mmapd=False, **kwargs):
+def new_dxfile(mode=None, write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE, expected_file_size=None, file_is_mmapd=False, **kwargs):
     '''
     :param mode: One of "w" or "a" for write and append modes, respectively
     :type mode: string
@@ -84,7 +84,7 @@ def new_dxfile(mode=None, write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE, file_siz
         dxFile.new(**kwargs)
 
     '''
-    dx_file = DXFile(mode=mode, write_buffer_size=write_buffer_size, file_size=file_size, file_is_mmapd=file_is_mmapd)
+    dx_file = DXFile(mode=mode, write_buffer_size=write_buffer_size, expected_file_size=expected_file_size, file_is_mmapd=file_is_mmapd)
     dx_file.new(**kwargs)
     return dx_file
 
@@ -346,7 +346,7 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
 
         # Use 'a' mode because we will be responsible for closing the file
         # ourselves later (if requested).
-        handler = new_dxfile(mode='a', media_type=media_type, write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE, file_size=file_size, file_is_mmapd=file_is_mmapd, **creation_kwargs)
+        handler = new_dxfile(mode='a', media_type=media_type, write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE, expected_file_size=file_size, file_is_mmapd=file_is_mmapd, **creation_kwargs)
 
     # For subsequent API calls, don't supply the dataobject metadata
     # parameters that are only needed at creation time.
