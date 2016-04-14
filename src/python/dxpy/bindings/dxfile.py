@@ -465,27 +465,6 @@ class DXFile(DXDataObject):
             # performance when len(data) >> _write_bufsize
             self.write(data[remaining_space:], **kwargs)
 
-    def _readable_part_size(bytes):
-        """
-            Returns the file size in readable form'
-        """
-        B = float(bytes)
-        KB = float(1024)
-        MB = float(KB * 1024)
-        GB = float(MB * 1024)
-        TB = float(GB * 1024)
-
-        if B < KB:
-            return '{0} {1}'.format(B, 'Bytes' if 0 == B > 1 else 'Byte')
-        elif B <= B < KB:
-            return '{0:.2f} KB'.format(B/KB)
-        elif B <= KB < MB:
-            return '{0:.2f} MB'.format(B/MB)
-        elif B <= MB < GB:
-            return '{0:.2f} GB'.format(B/GB)
-        elif B <= GB < TB:
-            return '{0:.2f} TB'.format(B/TB)
-
     def closed(self, **kwargs):
         '''
         :returns: Whether the remote file is closed
