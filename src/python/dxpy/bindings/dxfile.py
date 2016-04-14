@@ -38,13 +38,13 @@ from ..compat import BytesIO, basestring
 
 DXFILE_HTTP_THREADS = min(cpu_count(), 8)
 MIN_BUFFER_SIZE = 1024*1024
-DEFAULT_BUFFER_SIZE = 1024*1024*4
+DEFAULT_BUFFER_SIZE = 1024*1024*16
 if dxpy.JOB_ID:
     # Increase HTTP request buffer size when we are running within the
     # platform.
     DEFAULT_BUFFER_SIZE = 1024*1024*96
 
-MD5_READ_CHUNK_SIZE = 1024*1024*16
+MD5_READ_CHUNK_SIZE = 1024*1024*4
 FILE_REQUEST_TIMEOUT = 60
 
 DEFAULT_MAXIMUM_PARTS = 10000
