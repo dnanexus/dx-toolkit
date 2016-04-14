@@ -2,6 +2,5 @@ ws4py==0.3.2
 python-dateutil==2.3
 python-magic==0.4.6
 beautifulsoup4==4.4.1
-argcomplete==0.8.1
 psutil==3.3.0
 requests==2.7.0

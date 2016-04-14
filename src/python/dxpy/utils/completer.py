@@ -23,7 +23,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import sys
 
-from argcomplete import warn
+from ..packages.argcomplete import warn
 from collections import namedtuple, OrderedDict
 import dxpy
 from .resolver import (get_first_pos_of_char, get_last_pos_of_char, clean_folder_path, resolve_path,
@@ -335,7 +335,7 @@ class LocalCompleter():
         self.matches = []
 
     def _populate_matches(self, prefix):
-        from argcomplete.completers import FilesCompleter
+        from ..packages.argcomplete.completers import FilesCompleter
         completer = FilesCompleter()
         self.matches = completer(prefix)
 
