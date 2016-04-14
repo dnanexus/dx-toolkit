@@ -180,6 +180,7 @@ class TestDXFile(unittest.TestCase):
         os.remove(self.new_file.name)
         tearDownTempProjects(self)
 
+
     def test_upload_download_files_dxfile(self):
         self.dxfile = dxpy.upload_local_file(self.foo_file.name, project=self.proj_id)
         self.assertTrue(self.dxfile)
@@ -191,6 +192,20 @@ class TestDXFile(unittest.TestCase):
 
         dxpy.download_dxfile(self.dxfile.get_id(), self.new_file.name)
         self.assertTrue(filecmp.cmp(self.foo_file.name, self.new_file.name))
+
+    def test_upload_download_large_file_size_dxfile(self):
+        with tempfile.NamedTemporaryFile(delete=False) as test_file:
+            test_file.write("0" * 8196384)
+
+        self.test_name = test_file.name
+        self.dxfile = dxpy.upload_local_file(test_file.name, project=self.proj_id)
+        self.assertTrue(self.dxfile)
+        self.dxfile.wait_on_close()
+        self.assertTrue(self.dxfile.closed())
+
+        self.assertEqual(self.dxfile.describe()["name"], os.path.basename(test_file.name))
+        dxpy.download_dxfile(self.dxfile.get_id(), test_file.name)
+        self.assertTrue(filecmp.cmp(self.test_name, test_file.name))
 
 if __name__ == '__main__':
   if dxpy.AUTH_HELPER is None:

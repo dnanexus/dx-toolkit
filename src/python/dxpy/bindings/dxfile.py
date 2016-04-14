@@ -583,7 +583,6 @@ class DXFile(DXDataObject):
         defaults to 1. This probably only makes sense if this is the
         only part to be uploaded.
         """
-
         req_input = {}
         if index is not None:
             req_input["index"] = int(index)
