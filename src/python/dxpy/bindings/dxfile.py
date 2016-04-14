@@ -160,28 +160,6 @@ class DXFile(DXDataObject):
         self._cur_part = 1
         self._num_uploaded_parts = 0
 
-    def _get_buffer_size_for_file(self, file_size, file_is_mmapd=False, **kwargs):
-        """Returns an upload buffer size that is appropriate to use for a file
-        of size file_size. If file_is_mmapd is True, the size is further
-        constrained to be suitable for passing to mmap.
-
-        """
-        # Raise buffer size (for files exceeding DEFAULT_BUFFER_SIZE * 10k
-        # bytes) in order to prevent us from exceeding 10k parts limit.
-        min_buffer_size = int(math.ceil(float(file_size) / self._maximum_parts))
-        buffer_size = max(self._buffer_size, min_buffer_size)
-        if file_size >= 0 and file_is_mmapd:
-            # For mmap'd uploads the buffer size additionally must be a
-            # multiple of the ALLOCATIONGRANULARITY.
-            buffer_size = int(math.ceil(float(buffer_size) / mmap.ALLOCATIONGRANULARITY)) * mmap.ALLOCATIONGRANULARITY
-        if buffer_size * self._maximum_parts < file_size:
-            raise AssertionError('part size is not large enough to complete upload')
-        if file_is_mmapd and buffer_size % mmap.ALLOCATIONGRANULARITY != 0:
-            raise AssertionError('part size will not be accepted by mmap')
-        return buffer_size
-
-||||||| merged common ancestors
-=======
     def _set_file_limits(self, file_limits):
         self._buffer_size = file_limits['minimumPartSize']
         self._maximum_parts = file_limits['maximumNumParts']
