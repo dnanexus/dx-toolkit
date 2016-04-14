@@ -245,8 +245,8 @@ class shlex:
                             self._pushback_chars.append(nextchar)
                         self.state = ' '
                         break
-                elif (nextchar in self.wordchars or nextchar in self.quotes
-                      or self.whitespace_split):
+                elif (nextchar in self.wordchars or nextchar in self.quotes or
+                        self.whitespace_split):
                     self.token += nextchar
                     if nextchar == ':':
                         self.first_colon_pos = len(self.token)-1
