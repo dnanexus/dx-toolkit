@@ -140,13 +140,14 @@ def remove_all(proj_id, folder="/"):
 
 def setUpTempProjects(thing):
     thing.old_workspace_id = dxpy.WORKSPACE_ID
-    thing.proj_id = dxpy.api.project_new({'name': 'azure-test-project', 'region': 'azure:eastus'})['id']
+    thing.proj_id = dxpy.api.project_new({'name': 'azure-test-project', 'region': testutil.TEST_AZURE})['id']
     dxpy.set_workspace_id(thing.proj_id)
 
 def tearDownTempProjects(thing):
     dxpy.api.project_destroy(thing.proj_id, {'terminateJobs': True})
     dxpy.set_workspace_id(thing.old_workspace_id)
 
+@unittest.skipUnless(testutil.TEST_AZURE, 'skipping tests for Azure regions')
 class TestDXFile(unittest.TestCase):
 
     '''
