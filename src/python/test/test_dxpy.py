@@ -214,17 +214,50 @@ class TestDXProject(unittest.TestCase):
         with self.assertRaises(DXAPIError):
             dxrecord.describe()
 
+
 class TestDXFileFunctions(unittest.TestCase):
+    def test_readable_part_size(self):
+        self.assertEqual(dxpy.dxfile._readable_part_size(0), "0 bytes")
+        self.assertEqual(dxpy.dxfile._readable_part_size(1), "1 byte")
+        self.assertEqual(dxpy.dxfile._readable_part_size(2), "2 bytes")
+        self.assertEqual(dxpy.dxfile._readable_part_size(2.5 * 1024), "2.50 KB")
+        self.assertEqual(dxpy.dxfile._readable_part_size(1024 * 1024), "1.00 MB")
+        self.assertEqual(dxpy.dxfile._readable_part_size(31415926535), "29.26 GB")
+
     def test_get_buffer_size(self):
-        for file_is_mmapd in (False, True):
-            # This method implements its own sanity checks, so just
-            # ensure that those pass for a variety of sizes.
-            dxpy.bindings.dxfile_functions._get_buffer_size_for_file(0, file_is_mmapd=file_is_mmapd)
-            dxpy.bindings.dxfile_functions._get_buffer_size_for_file(1, file_is_mmapd=file_is_mmapd)
-            dxpy.bindings.dxfile_functions._get_buffer_size_for_file(5 * 1024 * 1024, file_is_mmapd=file_is_mmapd)
-            dxpy.bindings.dxfile_functions._get_buffer_size_for_file(16 * 1024 * 1024, file_is_mmapd=file_is_mmapd)
-            dxpy.bindings.dxfile_functions._get_buffer_size_for_file(160 * 1024 * 1024 * 1024, file_is_mmapd=file_is_mmapd)
-            dxpy.bindings.dxfile_functions._get_buffer_size_for_file(290 * 1024 * 1024 * 1024, file_is_mmapd=file_is_mmapd)
+        amazon = {
+            "maximumPartSize": 5368709120,
+            "minimumPartSize": 5242880,
+            "maximumFileSize": 5497558138880,
+            "maximumNumParts": 10000,
+            "emptyLastPartAllowed": True
+        }
+
+        azure = {
+            "maximumPartSize": 4194304,
+            "minimumPartSize": 1,
+            "maximumFileSize": 209715200000,
+            "maximumNumParts": 50000,
+            "emptyLastPartAllowed": False
+        }
+
+        MB = 1024 * 1024
+        GB = 1024 * 1024 * 1024
+
+        self.assertEqual(dxpy.dxfile._get_write_buf_size(16 * MB, amazon, 1024 * MB), 16 * MB)
+        self.assertEqual(dxpy.dxfile._get_write_buf_size(1 * MB, amazon, 500 * MB), 5 * MB)
+        self.assertEqual(dxpy.dxfile._get_write_buf_size(16 * MB, amazon, 200000 * MB), 20 * MB)
+        self.assertEqual(dxpy.dxfile._get_write_buf_size(6 * GB, amazon, 200000 * MB), 5 * GB)
+
+        with self.assertRaises(DXFileError):
+            dxpy.dxfile._get_write_buf_size(16 * MB, amazon, 5121 * GB)
+
+        self.assertEqual(dxpy.dxfile._get_write_buf_size(5 * MB, azure, 35000 * MB), 4 * MB)
+        self.assertEqual(dxpy.dxfile._get_write_buf_size(1 * MB, azure, 500 * MB), 1 * MB)
+        self.assertEqual(dxpy.dxfile._get_write_buf_size(3 * MB, azure, 30000 * MB), 3 * MB)
+
+        with self.assertRaises(DXFileError):
+            dxpy.dxfile._get_write_buf_size(16 * MB, azure, 200001 * MB)
 
     def test_job_detection(self):
         env = dict(os.environ, DX_JOB_ID='job-00000000000000000000')
@@ -566,6 +599,18 @@ class TestDXFile(unittest.TestCase):
             self.assertTrue(dxfile2.get_id() in url1[0])
             # Verify that the url does not contain the project id from the wrong project.
             self.assertFalse(p.get_id() in url1[0])
+
+    def test_part_splitting(self):
+        with dxpy.new_dxfile(write_buffer_size=4 * 1024 * 1024, mode='w', project=self.proj_id) as myfile:
+            myfile.write("0" * 8195384)
+        myfile.wait_on_close()
+        self.assertTrue(myfile.closed())
+
+        # Check file was split up into parts appropriately
+        parts = myfile.describe(fields={"parts": True})['parts']
+        self.assertEquals(parts['1']['size'], 5242880)
+        self.assertEquals(parts['2']['size'], 2952504)
+
 
 @unittest.skipUnless(testutil.TEST_GTABLE, 'skipping test that would create a GTable')
 class TestDXGTable(unittest.TestCase):

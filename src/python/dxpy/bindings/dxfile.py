@@ -24,8 +24,9 @@ This remote file handler is a Python file-like object.
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import os, sys, logging, traceback, hashlib, copy, time
+import math
+import mmap
 from threading import Lock
-import concurrent.futures
 from multiprocessing import cpu_count
 
 import dxpy
@@ -56,6 +57,75 @@ def _validate_headers(headers):
             raise ValueError("Expected value %r of headers (associated with key %r) to be a string"
                              % (value, key))
     return headers
+
+
+def _readable_part_size(num_bytes):
+    "Returns the file size in readable form."
+    B = num_bytes
+    KB = float(1024)
+    MB = float(KB * 1024)
+    GB = float(MB * 1024)
+    TB = float(GB * 1024)
+
+    if B < KB:
+        return '{0} {1}'.format(B, 'bytes' if B != 1 else 'byte')
+    elif KB <= B < MB:
+        return '{0:.2f} KB'.format(B/KB)
+    elif MB <= B < GB:
+        return '{0:.2f} MB'.format(B/MB)
+    elif GB <= B < TB:
+        return '{0:.2f} GB'.format(B/GB)
+    elif TB <= B:
+        return '{0:.2f} TB'.format(B/TB)
+
+
+def _get_write_buf_size(buffer_size_hint, file_upload_params, expected_file_size, file_is_mmapd=False):
+    max_num_parts = file_upload_params['maximumNumParts']
+    min_part_size = file_upload_params['minimumPartSize']
+    max_part_size = file_upload_params['maximumPartSize']
+    max_file_size = file_upload_params['maximumFileSize']
+
+    if expected_file_size is not None and expected_file_size > max_file_size:
+        raise DXFileError("Size of file exceeds maximum of {}".format(_readable_part_size(max_file_size)))
+
+    min_buffer_size = min_part_size
+    if expected_file_size is not None:
+        # Raise buffer size (for files exceeding DEFAULT_BUFFER_SIZE
+        # * the maximium parts allowed bytes) in order to prevent us
+        # from exceeding the configured parts limit.
+        min_buffer_size = max(min_buffer_size, int(math.ceil(float(expected_file_size) / max_num_parts)))
+    max_buffer_size = max_part_size
+
+    assert min_buffer_size <= max_buffer_size
+
+    if file_is_mmapd:
+        # If file is mmapd, force the eventual result to be a
+        # multiple of the allocation granularity by rounding all of
+        # buffer_size, min_buffer_size, and max_buffer_size to a
+        # nearby multiple of the allocation granularity (below, the
+        # final buffer size will be one of these).
+        if min_buffer_size % mmap.ALLOCATIONGRANULARITY != 0:
+            min_buffer_size += mmap.ALLOCATIONGRANULARITY - min_buffer_size % mmap.ALLOCATIONGRANULARITY
+        if max_buffer_size % mmap.ALLOCATIONGRANULARITY != 0:
+            max_buffer_size -= max_buffer_size % mmap.ALLOCATIONGRANULARITY
+        buffer_size_hint = buffer_size_hint - buffer_size_hint % mmap.ALLOCATIONGRANULARITY
+    else:
+        buffer_size_hint = buffer_size_hint
+
+    # Use the user-specified hint if it is a permissible size
+    # (satisfies API and large enough to upload file of advertised
+    # size). Otherwise, select the closest size that is permissible.
+    buffer_size = buffer_size_hint
+    buffer_size = max(buffer_size, min_buffer_size)
+    buffer_size = min(buffer_size, max_buffer_size)
+
+    if expected_file_size is not None and (buffer_size * max_num_parts < expected_file_size):
+        raise AssertionError("part size would be too small to upload the requested number of bytes")
+
+    if file_is_mmapd and buffer_size % mmap.ALLOCATIONGRANULARITY != 0:
+        raise AssertionError('part size will not be accepted by mmap')
+
+    return buffer_size
 
 
 class DXFile(DXDataObject):
@@ -112,8 +182,30 @@ class DXFile(DXDataObject):
         if cls._http_threadpool is None:
             cls._http_threadpool = dxpy.utils.get_futures_threadpool(max_workers=cls._http_threadpool_size)
 
-    def __init__(self, dxid=None, project=None, mode=None,
-                 read_buffer_size=DEFAULT_BUFFER_SIZE, write_buffer_size=DEFAULT_BUFFER_SIZE):
+    def __init__(self, dxid=None, project=None, mode=None, read_buffer_size=DEFAULT_BUFFER_SIZE,
+                 write_buffer_size=DEFAULT_BUFFER_SIZE, expected_file_size=None, file_is_mmapd=False):
+        """
+        :param dxid: Object ID
+        :type dxid: string
+        :param project: Project ID
+        :type project: string
+        :param mode: One of "r", "w", or "a" for read, write, and append
+            modes, respectively
+        :type mode: string
+        :param read_buffer_size: size of read buffer in bytes
+        :type read_buffer_size: int
+        :param write_buffer_size: hint for size of write buffer in
+            bytes. A lower or higher value may be used depending on
+            region-specific parameters and on the expected file size.
+        :type write_buffer_size: int
+        :param expected_file_size: size of data that will be written, if
+            known
+        :type expected_file_size: int
+        :param file_is_mmapd: True if input file is mmap'd (if so, the
+            write buffer size will be constrained to be a multiple of
+            the allocation granularity)
+        :type file_is_mmapd: bool
+        """
         DXDataObject.__init__(self, dxid=dxid, project=project)
         if mode is None:
             self._close_on_exit = True
@@ -121,15 +213,20 @@ class DXFile(DXDataObject):
             if mode not in ['r', 'w', 'a']:
                 raise ValueError("mode must be one of 'r', 'w', or 'a'")
             self._close_on_exit = (mode == 'w')
-
         self._read_buf = BytesIO()
         self._write_buf = BytesIO()
 
-        if write_buffer_size < 5*1024*1024:
-            raise DXFileError("Write buffer size must be at least 5 MB")
-
         self._read_bufsize = read_buffer_size
-        self._write_bufsize = write_buffer_size
+
+        # Computed lazily later since this depends on the project, and
+        # we want to allow the project to be set as late as possible.
+        # Call _ensure_write_bufsize to ensure that this is set before
+        # trying to read it.
+        self._write_bufsize = None
+
+        self._write_buffer_size_hint = write_buffer_size
+        self._expected_file_size = expected_file_size
+        self._file_is_mmapd = file_is_mmapd
 
         # These are cached once for all download threads. This saves calls to the apiserver.
         self._download_url, self._download_url_headers, self._download_url_expires = None, None, None
@@ -350,6 +447,19 @@ class DXFile(DXDataObject):
         future = self._http_threadpool.submit(self.upload_part, *args, **kwargs)
         self._http_threadpool_futures.add(future)
 
+    def _ensure_write_bufsize(self):
+        if self._write_bufsize is not None:
+            return
+        file_upload_params = dxpy.api.project_describe(
+            self.project,
+            {'fields': {'fileUploadParameters': True}}
+        )['fileUploadParameters']
+        self._empty_last_part_allowed = file_upload_params['emptyLastPartAllowed']
+        self._write_bufsize = _get_write_buf_size(self._write_buffer_size_hint,
+                                                  file_upload_params,
+                                                  self._expected_file_size,
+                                                  self._file_is_mmapd)
+
     def write(self, data, multithread=True, **kwargs):
         '''
         :param data: Data to be written
@@ -363,6 +473,7 @@ class DXFile(DXDataObject):
             does not affect where the next :meth:`write` will occur.
 
         '''
+        self._ensure_write_bufsize()
 
         def write_request(data_for_write_req):
             if multithread:
@@ -427,6 +538,12 @@ class DXFile(DXDataObject):
         '''
         self.flush(**kwargs)
 
+        # Also populates emptyLastPartAllowed
+        #
+        # TODO: only upload a zero-length part condition on
+        # emptyLastPartAllowed
+        self._ensure_write_bufsize()
+
         if self._num_uploaded_parts == 0:
             # We haven't uploaded any parts in this session. In case no parts have been uploaded at all, try to upload
             # an empty part (files with 0 parts cannot be closed).
@@ -470,7 +587,6 @@ class DXFile(DXDataObject):
         defaults to 1. This probably only makes sense if this is the
         only part to be uploaded.
         """
-
         req_input = {}
         if index is not None:
             req_input["index"] = int(index)
