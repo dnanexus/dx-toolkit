@@ -4,12 +4,23 @@
 from __future__ import print_function, unicode_literals
 
 import os, sys, argparse, contextlib, subprocess, locale, re
+import io
 
 from . import my_shlex as shlex
 
 USING_PYTHON2 = True if sys.version_info < (3, 0) else False
 
-if not USING_PYTHON2:
+if USING_PYTHON2:
+    from cStringIO import StringIO
+    BytesIO = StringIO
+    builtin_str = str
+    bytes = str
+    str = unicode
+    basestring = basestring
+    builtin_int = int
+    int = long
+    open = io.open
+else:
     basestring = str
 
 sys_encoding = locale.getpreferredencoding()
