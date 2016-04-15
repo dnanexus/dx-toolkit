@@ -341,7 +341,7 @@ class CompletionFinder(object):
         # to implicitly decode string objects using ascii, and fail.
         if USING_PYTHON2:
             for i in range(len(completions)):
-                if not isinstance(completions[i], bytes):
+                if isinstance(completions[i], bytes):
                     completions[i] = completions[i].decode(sys_encoding)
 
         # De-duplicate completions and remove excluded ones
