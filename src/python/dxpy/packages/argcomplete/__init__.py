@@ -1,7 +1,7 @@
 # Copyright 2012-2013, Andrey Kislyuk and argcomplete contributors.
 # Licensed under the Apache License. See https://github.com/kislyuk/argcomplete for more info.
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import os, sys, argparse, contextlib, subprocess, locale, re
 import io
@@ -341,7 +341,7 @@ class CompletionFinder(object):
         # to implicitly decode string objects using ascii, and fail.
         if USING_PYTHON2:
             for i in range(len(completions)):
-                if type(completions[i]) != unicode:
+                if isinstance(completions[i], bytes):
                     completions[i] = completions[i].decode(sys_encoding)
 
         # De-duplicate completions and remove excluded ones
