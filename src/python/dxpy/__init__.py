@@ -151,7 +151,6 @@ class DXIncompleteReadsError(Exception):
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-
 def configure_urllib3():
     # Disable verbose urllib3 warnings and log messages
     urllib3.disable_warnings(category=urllib3.exceptions.InsecurePlatformWarning)
@@ -595,7 +594,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     # Harvest the data, and retry.
                     if isinstance(e, urllib3.exceptions.ProtocolError) and \
                        'Connection broken: IncompleteRead' in exception_msg:
-                        raise DXIncompleteReadsError(response.data)
+                        if "data" in response:
+                            raise DXIncompleteReadsError(response.data)
+                        else:
+                            raise DXIncompleteReadsError("")
 
                 if ok_to_retry:
                     if rewind_input_buffer_offset is not None:
@@ -642,7 +644,7 @@ class BufferBuilder(object):
             return self._parts[0]
         # There are two parts or more, use StringIO to concatenate
         # efficiently.
-        iobuf = StringIO.StringIO()
+        iobuf = StringIO()
         for p in self._parts:
             iobuf.write(p)
         retval = iobuf.getvalue()
