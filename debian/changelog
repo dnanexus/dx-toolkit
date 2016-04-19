@@ -1,3 +1,11 @@
+dx-toolkit (0.188.1) precise; urgency=low
+
+  * File download fixes
+
+  * File part parameterization
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 19 Apr 2016 23:10:34 +0000
+
 dx-toolkit (0.188.0) precise; urgency=low
 
   * Better recovery from partial reads
