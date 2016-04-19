@@ -81,7 +81,8 @@ class TestDXFile(unittest.TestCase):
     def test_upload_download_large_file_size_dxfile(self):
         test_file_name = os.path.join(self.tempdir, 'large_file')
         with open(test_file_name, 'w') as test_file:
-            test_file.write("0" * 8196384)
+            with open("/dev/urandom", 'r') as random_input:
+                test_file.write(random_input.read(8196384))
 
         myfile = dxpy.upload_local_file(test_file_name, project=self.proj_id, wait_on_close=True)
         self.assertTrue(myfile.closed())
