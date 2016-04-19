@@ -127,8 +127,10 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os, sys, json, time, logging, platform, ssl, traceback
 import errno
+import mmap
 import requests
 import socket
+
 from collections import namedtuple
 from . import exceptions
 from requests.auth import AuthBase
@@ -420,22 +422,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
     global _UPGRADE_NOTIFY
 
     url = APISERVER + resource if prepend_srv else resource
-    method = method.upper() # Convert method name to uppercase, to ease string comparisons later
-    if _DEBUG >= 3:
-        try:
-            formatted_data = json.dumps(data, indent=2)
-        except UnicodeDecodeError:
-            formatted_data = "<binary data>"
-        print(method, url, "=>\n" + formatted_data, file=sys.stderr)
-    elif _DEBUG == 2:
-        try:
-            formatted_data = json.dumps(data)
-        except UnicodeDecodeError:
-            formatted_data = "<binary data>"
-        print(method, url, "=>", formatted_data, file=sys.stderr)
-    elif _DEBUG > 0:
-        from repr import Repr
-        print(method, url, "=>", Repr().repr(data), file=sys.stderr)
+    method = method.upper()  # Convert method name to uppercase, to ease string comparisons later
 
     if auth is True:
         auth = AUTH_HELPER
@@ -444,6 +431,21 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
         auth(_RequestForAuth(method, url, headers))
 
     pool_args = {arg: kwargs.pop(arg, None) for arg in ("verify", "cert_file", "key_file")}
+
+    if _DEBUG >= 2:
+        if isinstance(data, basestring) or isinstance(data, mmap.mmap):
+            if len(data) == 0:
+                formatted_data = '""'
+            else:
+                formatted_data = "<file data>"
+        else:
+            try:
+                if _DEBUG >= 3:
+                    formatted_data = json.dumps(data, indent=2)
+                else:
+                    formatted_data = json.dumps(data)
+            except (UnicodeDecodeError, TypeError):
+                formatted_data = "<binary data>"
 
     if jsonify_data:
         data = json.dumps(data)
@@ -466,6 +468,16 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             if _DEBUG > 0:
                 time_started = time.time()
             _method, _url, _headers = _process_method_url_headers(method, url, headers)
+
+            if _DEBUG >= 2:
+                maybe_headers = ''
+                if 'Range' in _headers:
+                    maybe_headers = " " + json.dumps({"Range": _headers["Range"]})
+                print("%s %s%s => %s\n" % (method, _url, maybe_headers, formatted_data), file=sys.stderr, end="")
+            elif _DEBUG > 0:
+                from repr import Repr
+                print("%s %s => %s\n" % (method, _url, Repr().repr(data)), file=sys.stderr, end="")
+
             body = _maybe_trucate_request(_url, try_index, data)
 
             # throws BadStatusLine if the server returns nothing
