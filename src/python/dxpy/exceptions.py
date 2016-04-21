@@ -96,6 +96,9 @@ class ServiceUnavailable(DXAPIError):
 class DXFileError(DXError):
     '''Exception for :class:`dxpy.bindings.dxfile.DXFile`.'''
 
+class DXIncompleteReadsError(DXError):
+    '''Exception for :class:`dxpy.bindings.dxfile.DXFile` when returned read data is shorter than requested'''
+
 class DXPartLengthMismatchError(DXFileError):
     '''Exception raised by :class:`dxpy.bindings.dxfile.DXFile` on part length mismatch.'''
 
