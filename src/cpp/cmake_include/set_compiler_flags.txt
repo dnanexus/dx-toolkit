@@ -19,6 +19,12 @@ elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif()
 
+# Windows-only flags
+if (MINGW)
+  # See https://sourceforge.net/p/mingw/bugs/2250/
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__NO_INLINE__ -DWINDOWS_BUILD=1 -U__STRICT_ANSI__ -DCURL_STATICLIB")
+endif()
+
 # Set compiler flags & macros for different build types (which can be configured using CMAKE_BUILD_TYPE)
 
 # Additional flags to be set for RELEASE mode (cmake -DCMAKE_BUILD_TYPE=RELEASE)

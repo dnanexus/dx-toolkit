@@ -270,7 +270,11 @@ namespace dx {
 
     while (lq_results_.size() == 0 || (lq_results_.begin()->first != lq_next_result_)) {
       r_lock.unlock();
+#if !WINDOWS_BUILD
       usleep(100);
+#else
+      boost::this_thread::sleep(boost::posix_time::microseconds(100));
+#endif
       r_lock.lock();
     }
     chunk = lq_results_.begin()->second;
@@ -342,7 +346,11 @@ namespace dx {
     // particularly the case when produce() has been called, but thread is still waiting on consume()
     // we don't want to incorrectly issue interrupt() that time
     while (uploadPartRequestsQueue.size() != 0) {
+#if !WINDOWS_BUILD
       usleep(100);
+#else
+      boost::this_thread::sleep(boost::posix_time::microseconds(100));
+#endif
     }
 
     for (unsigned i = 0; i < writeThreads.size(); ++i)
@@ -358,7 +366,11 @@ namespace dx {
         break;
       }
       cl.unlock();
+#if !WINDOWS_BUILD
       usleep(100);
+#else
+      boost::this_thread::sleep(boost::posix_time::microseconds(100));
+#endif
     }
 
     for (unsigned i = 0; i < writeThreads.size(); ++i)
