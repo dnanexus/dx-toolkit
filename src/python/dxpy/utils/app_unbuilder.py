@@ -94,7 +94,8 @@ def dump_executable(executable, destination_directory, omit_resources=False, des
                     handler_id = handler.get_id()
                     fname = "resources/%s.tar.gz" % (handler_id)
                     download_dxfile(handler_id, fname)
-                    subprocess.check_call(["tar", "-C", "resources", "-zxvf", fname], shell=False)
+                    print("Unpacking resources")
+                    subprocess.check_call(["tar", "-C", "resources", "-zxvf", fname], stdout=subprocess.PIPE, shell=False)
                     os.unlink(fname)
                     deps_to_remove.append(dep)
 
