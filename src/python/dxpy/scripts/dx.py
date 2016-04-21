@@ -3726,7 +3726,7 @@ parser_download_paths_arg = parser_download.add_argument('paths', help='Data obj
                                                          nargs='+', metavar='path')
 parser_download_paths_arg.completer = DXPathCompleter(classes=['file'])
 parser_download.add_argument('-o', '--output', help='Local filename or directory to be used ("-" indicates stdout output); if not supplied or a directory is given, the object\'s name on the platform will be used, along with any applicable extensions')
-parser_download.add_argument('-f', '--overwrite', help='Overwrite the local file if necessary', action='store_true')
+parser_download.add_argument('-f', '--overwrite', help='Resume an interupted download if the local and remote file signatures match.  If the signatures do not match the local file will be overwritten.', action='store_true')
 parser_download.add_argument('-r', '--recursive', help='Download folders recursively', action='store_true')
 parser_download.add_argument('-a', '--all', help='If multiple objects match the input, download all of them',
                              action='store_true')
