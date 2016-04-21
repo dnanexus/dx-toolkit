@@ -1,3 +1,9 @@
+dx-toolkit (0.188.2) precise; urgency=low
+
+  * Recovery from partial reads by reducing buffer size 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 21 Apr 2016 16:57:31 +0000
+
 dx-toolkit (0.188.1) precise; urgency=low
 
   * File download fixes
