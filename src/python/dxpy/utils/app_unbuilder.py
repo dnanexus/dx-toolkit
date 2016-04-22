@@ -145,7 +145,7 @@ def dump_executable(executable, destination_directory, omit_resources=False, des
 
         # Write dxapp.json, Readme.md, and Readme.developer.md
         with open("dxapp.json", "w") as f:
-            f.write(json.dumps(dxapp_json, sort_keys=False, indent=2, separators=(',', ': ')))
+            f.write(json.dumps(dxapp_json, sort_keys=True, indent=2, separators=(',', ': ')))
             f.write('\n')
         if readme:
             with open("Readme.md", "w") as f:
