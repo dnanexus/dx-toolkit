@@ -78,7 +78,11 @@ namespace dx {
     do {
       if (getState() == "done")
         return;
+#if !WINDOWS_BUILD
       sleep(2);
+#else
+      boost::this_thread::sleep(boost::posix_time::milliseconds(2 * 1000));
+#endif
       elapsed += 2;
     } while (elapsed <= timeout);
   }

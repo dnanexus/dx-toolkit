@@ -24,7 +24,11 @@ UNAME := $(shell uname)
 
 all:
 	mkdir -pv build
+ifeq ($(OS), Windows_NT)
+	cd build && cmake -G "MSYS Makefiles" .. -DCMAKE_BUILD_TYPE:STRING=RELEASE -DSTATIC_BOOST=1
+else
 	cd build && cmake .. -DCMAKE_BUILD_TYPE:STRING=RELEASE -DSTATIC_BOOST=1
+endif
 	$(MAKE) -C build
 
 clean:
@@ -35,14 +39,14 @@ install: all
 
 build_static:
 	mkdir -pv build_static
-ifeq ($(UNAME), MINGW32_NT-6.1)
+ifeq ($(UNAME), MINGW32_NT-6.2)
 	make -C build_static -f ../Makefile.mw all
 else
 	make -C build_static -f ../Makefile.static all
 endif
 
 dist_static: build_static
-ifeq ($(UNAME), MINGW32_NT-6.1)
+ifeq ($(UNAME), MINGW32_NT-6.2)
 	make -C build_static -f ../Makefile.mw dist
 else
 	make -C build_static -f ../Makefile.static dist

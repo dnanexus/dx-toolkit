@@ -22,8 +22,8 @@
 # 	$(DNANEXUS_HOME)/src/dx-verify-file/build_curl.sh $(curl_build_dir)
 UNAME := $(shell uname)
 
-ifneq ($(UNAME), MINGW32_NT-6.1)
-	$(error This Makefile should be used only with MINGW32_NT-6.1)
+ifneq ($(UNAME), MINGW32_NT-6.2)
+	$(error This Makefile should be used only with MINGW32_NT-6.2)
 endif
 
 DXTOOLKIT_GITVERSION := $(shell git describe|sed 's/-/+/')
