@@ -30,6 +30,7 @@ import json
 import os
 import subprocess
 import sys
+import re
 
 from .. import get_handler, download_dxfile
 from ..compat import open
@@ -46,6 +47,21 @@ def _recursive_cleanup(foo):
             if val == "" or val == [] or val == {}:
                 del foo[key]
 
+def flatten_patterns(metadata):
+    """
+    Flattens string representations of 'inputSpec.patterns' and
+    'outputSpec.patterns' arrays using regular expressions.
+
+    :param metadata: Executable metadata
+    :type metadata: str
+    """
+
+    result = re.sub("\"patterns\": \\[\r?\n\\s*", "\"patterns\": [", metadata, flags=re.MULTILINE)
+    flatten_regexp = re.compile("\"patterns\": \\[(.*)(?<=,)\r?\n\\s*", flags=re.MULTILINE)
+    while flatten_regexp.search(result):
+        result = flatten_regexp.sub("\"patterns\": [\\1 ", result)
+    result = re.sub("\"patterns\": \\[(.*)\r?\n\\s*\\]", "\"patterns\": [\\1]", result, flags=re.MULTILINE)
+    return result
 
 def dump_executable(executable, destination_directory, omit_resources=False, describe_output=[]):
     """
@@ -145,7 +161,7 @@ def dump_executable(executable, destination_directory, omit_resources=False, des
 
         # Write dxapp.json, Readme.md, and Readme.developer.md
         with open("dxapp.json", "w") as f:
-            f.write(json.dumps(dxapp_json, sort_keys=True, indent=2, separators=(',', ': ')))
+            f.write(flatten_patterns(json.dumps(dxapp_json, sort_keys=True, indent=2, separators=(',', ': '))))
             f.write('\n')
         if readme:
             with open("Readme.md", "w") as f:
