@@ -85,11 +85,11 @@ toolkit_version:
 	    echo UNKNOWN_VERSION > "$(DNANEXUS_HOME)/build/info/version"; \
 	fi)
 	(if [ -d "$(DNANEXUS_HOME)/.git" ]; then \
-	    VERSION=$$((git describe --match 'v*.*.*' || git rev-parse --short HEAD) | sed -e 's/-[0-9]-/+/'); \
-	    echo "version = '$${VERSION/#v/}'" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; \
-	    echo $$VERSION | perl -ne '/^v(\d+.\d+.\d+)/ and print "module DX\n  VERSION = \"$$1\"\nend\n"' > "$(DNANEXUS_HOME)/src/ruby/lib/dxruby/version.rb"; \
-	    echo -e "package com.dnanexus;\nclass DXToolkitVersion {\n    public static final String TOOLKIT_VERSION = \"$$VERSION\";\n}" > "$(DNANEXUS_HOME)/src/java/src/main/java/com/dnanexus/DXToolkitVersion.java"; \
-	    echo $$VERSION > "$(DNANEXUS_HOME)/build/info/version"; \
+	    export GIT_TOOLKIT_VERSION=$$((git describe --match 'v*.*.*' || git rev-parse --short HEAD) | sed -e 's/-[0-9]-/+/'); \
+	    echo "version = '$${GIT_TOOLKIT_VERSION/#v/}'" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; \
+	    perl -e '$$ENV{GIT_TOOLKIT_VERSION} =~ /^v(\d+.\d+.\d+)/ and print "module DX\n  VERSION = \"$$1\"\nend\n"' > "$(DNANEXUS_HOME)/src/ruby/lib/dxruby/version.rb"; \
+	    echo -e "package com.dnanexus;\nclass DXToolkitVersion {\n    public static final String TOOLKIT_VERSION = \"$$GIT_TOOLKIT_VERSION\";\n}" > "$(DNANEXUS_HOME)/src/java/src/main/java/com/dnanexus/DXToolkitVersion.java"; \
+	    echo $$GIT_TOOLKIT_VERSION > "$(DNANEXUS_HOME)/build/info/version"; \
 	fi)
 
 python/dxpy/api.py: api_wrappers/wrapper_table.json api_wrappers/generatePythonAPIWrappers.py
