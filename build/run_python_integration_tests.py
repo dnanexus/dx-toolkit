@@ -23,6 +23,7 @@ from __future__ import print_function, unicode_literals
 
 import argparse
 import os
+import platform
 import subprocess
 import sys
 
@@ -57,12 +58,21 @@ def run():
         else:
             cmd += ['discover', '--start-directory', '.', '--verbose']
 
+        if platform.system() == 'Windows':
+            # Grab existing env vars with nt.environ, so that the SystemRoot var
+            # isn't uppercased - because that can cause _urandom() errors. See:
+            #   http://bugs.python.org/issue1384175#msg248951
+            import nt
+            subproc_env = dict(nt.environ)
+        else:
+            subproc_env = dict(os.environ)
+
         # Setting COVERAGE_PROCESS_START is required to collect coverage for
-        # subprocess calls to dx.py and friends:
-        subproc_env = dict(
-                os.environ,
-                COVERAGE_PROCESS_START = os.path.join(PYTHON_DIR, '.coveragerc'),
-                COVERAGE_FILE = os.path.join(PYTHON_DIR, '.coverage'))
+        # subprocess calls to dx.py and friends. Also, wrap values in str()
+        # to avoid "environment can only contain strings" error on Windows:
+        subproc_env[str('COVERAGE_PROCESS_START')] = str(os.path.join(PYTHON_DIR, '.coveragerc'))
+        subproc_env[str('COVERAGE_FILE')] = str(os.path.join(PYTHON_DIR, '.coverage'))
+
         try:
             subprocess.check_call(cmd, cwd=PYTHON_TEST_DIR, env=subproc_env)
         except subprocess.CalledProcessError as e:

@@ -85,11 +85,11 @@ toolkit_version:
 	    echo UNKNOWN_VERSION > "$(DNANEXUS_HOME)/build/info/version"; \
 	fi)
 	(if [ -d "$(DNANEXUS_HOME)/.git" ]; then \
-	    VERSION=$$((git describe --match 'v*.*.*' || git rev-parse --short HEAD) | sed -e 's/-[0-9]-/+/'); \
-	    echo "version = '$${VERSION/#v/}'" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; \
-	    echo $$VERSION | perl -ne '/^v(\d+.\d+.\d+)/ and print "module DX\n  VERSION = \"$$1\"\nend\n"' > "$(DNANEXUS_HOME)/src/ruby/lib/dxruby/version.rb"; \
-	    echo -e "package com.dnanexus;\nclass DXToolkitVersion {\n    public static final String TOOLKIT_VERSION = \"$$VERSION\";\n}" > "$(DNANEXUS_HOME)/src/java/src/main/java/com/dnanexus/DXToolkitVersion.java"; \
-	    echo $$VERSION > "$(DNANEXUS_HOME)/build/info/version"; \
+	    export GIT_TOOLKIT_VERSION=$$((git describe --match 'v*.*.*' || git rev-parse --short HEAD) | sed -e 's/-[0-9]-/+/'); \
+	    echo "version = '$${GIT_TOOLKIT_VERSION/#v/}'" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; \
+	    perl -e '$$ENV{GIT_TOOLKIT_VERSION} =~ /^v(\d+.\d+.\d+)/ and print "module DX\n  VERSION = \"$$1\"\nend\n"' > "$(DNANEXUS_HOME)/src/ruby/lib/dxruby/version.rb"; \
+	    echo -e "package com.dnanexus;\nclass DXToolkitVersion {\n    public static final String TOOLKIT_VERSION = \"$$GIT_TOOLKIT_VERSION\";\n}" > "$(DNANEXUS_HOME)/src/java/src/main/java/com/dnanexus/DXToolkitVersion.java"; \
+	    echo $$GIT_TOOLKIT_VERSION > "$(DNANEXUS_HOME)/build/info/version"; \
 	fi)
 
 python/dxpy/api.py: api_wrappers/wrapper_table.json api_wrappers/generatePythonAPIWrappers.py
@@ -129,18 +129,32 @@ PYTHON_LIBDIR := $(DNANEXUS_LIBDIR)/python2.7/site-packages
 
 python: api_wrappers toolkit_version $(DNANEXUS_HOME)/bin/dx
 
+ifeq ($(OS), Windows_NT)
+        ACTIVATE=Scripts/activate
+else
+        ACTIVATE=bin/activate
+endif
+
 $(DNANEXUS_HOME)/bin/dx: $(shell find python/{dxpy,scripts,requirements*,setup*} -not -name toolkit_version*)
 	python -c 'import sys; exit("dx-toolkit is not compatible with Python < 2.7" if sys.version_info < (2, 7) else 0)'
 	rm -rf "$(PYTHON_LIBDIR)" "$(DX_PY_ENV)" python/dist
-	virtualenv --python=python "$(DX_PY_ENV)"
-	unset PYTHONPATH; source "$(DX_PY_ENV)/bin/activate"; pip install --upgrade -r python/requirements_setuptools.txt
-ifeq ($(UNAME), Darwin)
-	unset PYTHONPATH; source "$(DX_PY_ENV)/bin/activate"; pip install --no-cache-dir --prefix="$(DNANEXUS_HOME)" -r python/requirements_readline.txt
-endif
-	unset PYTHONPATH; source "$(DX_PY_ENV)/bin/activate"; cd python; python setup.py bdist_wheel
-	unset PYTHONPATH; source "$(DX_PY_ENV)/bin/activate"; pip install --ignore-installed --prefix="$(DNANEXUS_HOME)" python/dist/*.whl
 	mkdir -p "$$(dirname '$(PYTHON_LIBDIR)')"
+	virtualenv --python=python "$(DX_PY_ENV)"
+ifeq ($(OS), Windows_NT)
+	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; python -m pip install --upgrade -r python/requirements_setuptools.txt
+	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; cd python; python setup.py bdist_wheel
+	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; python -m pip install --ignore-installed --prefix="wheel_tempdir" python/dist/*.whl
+	mv "$(DNANEXUS_HOME)"/src/wheel_tempdir/Lib/site-packages "$(PYTHON_LIBDIR)"
+	mv "$(DNANEXUS_HOME)"/src/wheel_tempdir/Scripts/* "$(DNANEXUS_HOME)"/bin
+else
+	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; pip install --upgrade -r python/requirements_setuptools.txt
+	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; cd python; python setup.py bdist_wheel
+	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; pip install --ignore-installed --prefix="$(DNANEXUS_HOME)" python/dist/*.whl
 	mv "$(DNANEXUS_HOME)"/lib/python?.?/site-packages "$(PYTHON_LIBDIR)" || mv "$(DNANEXUS_HOME)"/site-packages "$(PYTHON_LIBDIR)"
+endif
+ifeq ($(UNAME), Darwin)
+	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; pip install --no-cache-dir --prefix="$(DNANEXUS_HOME)" -r python/requirements_readline.txt
+endif
 	rm -f "$(DNANEXUS_HOME)/bin/xattr"
 
 # TODO: fix up perl and java targets
@@ -262,13 +276,13 @@ setup_doc_virtualenv: .setup_doc_virtualenv
 .setup_doc_virtualenv: ../build/doc_build_requirements.txt
 	@if ! which pip > /dev/null; then echo "pip not found, please run apt-get install python-pip"; exit 1; fi
 	@if ! which virtualenv > /dev/null; then echo "virtualenv not found, please run apt-get install python-virtualenv"; exit 1; fi
-	(unset PYTHONPATH; virtualenv ../build/doc_env; source ../build/doc_env/bin/activate; pip install --find-links=http://dnanexus-pypi2.s3.amazonaws.com/index.html --requirement=../build/doc_build_requirements.txt)
+	(unset PYTHONPATH; virtualenv ../build/doc_env; source ../build/doc_env/$(ACTIVATE); pip install --find-links=http://dnanexus-pypi2.s3.amazonaws.com/index.html --requirement=../build/doc_build_requirements.txt)
 	virtualenv --relocatable ../build/doc_env
 	touch .setup_doc_virtualenv
 
 doc_python: python setup_doc_virtualenv
 	rm -rf ../doc/python/*
-	source ../build/doc_env/bin/activate; source "../environment"; export PYTHONPATH="$${PYTHONPATH}:../lib"; $(MAKE) -C python/doc html
+	source ../build/doc_env/$(ACTIVATE); source "../environment"; export PYTHONPATH="$${PYTHONPATH}:../lib"; $(MAKE) -C python/doc html
 
 doc_dxcpp:
 	mkdir -p ../doc/cpp/dxcpp

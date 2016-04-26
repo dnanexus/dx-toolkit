@@ -70,6 +70,11 @@ Options::Options():
     ("project,p", po::value<vector<string> >(&projects), "Name or ID of the destination project")
     ("folder,f", po::value<vector<string> >(&folders)->default_value(defaultFolders, "/"), "Name of the destination folder")
     ("name,n", po::value<vector<string> >(&names), "Name of the remote file (Note: Extension \".gz\" will be appended if the file is compressed before uploading)")
+    ("visibility", po::value<string>(&visibility)->default_value("visible"), "Use \"--visibility hidden\" to set the file's visibility as hidden.")
+    ("property", po::value<vector<string> >(&propertiesInput), "Key-value pair to add as a property; repeat as necessary, e.g. \"--property key1=val1 --property key2=val2\"")
+    ("type", po::value<vector<string> >(&typeInput), "Type of the data object; repeat as necessary, e.g. \"--type type1 --type type2\"")
+    ("tag", po::value<vector<string> >(&tagsInput), "Tag of the data object; repeat as necessary, e.g. \"--tag tag1 --tag tag2\"")
+    ("details", po::value<string>(&detailsInput), "JSON to store as details")
     ("read-threads", po::value<int>(&readThreads)->default_value(DEFAULT_READ_THREADS), "Number of parallel disk read threads")
     ("compress-threads,c", po::value<int>(&compressThreads)->default_value(defaultCompressThreads), "Number of parallel compression threads")
     ("upload-threads,u", po::value<int>(&uploadThreads)->default_value(DEFAULT_UPLOAD_THREADS), "Number of parallel upload threads")
@@ -81,11 +86,6 @@ Options::Options():
     ("verbose,v", po::bool_switch(&verbose), "Verbose logging")
     ("wait-on-close", po::bool_switch(&waitOnClose), "Wait for file objects to be closed before exiting")
     ("do-not-resume", po::bool_switch(&doNotResume), "Do not attempt to resume any incomplete uploads")
-    ("visibility", po::value<string>(&visibility), "Whether the object is hidden or not")
-    ("property", po::value<vector<string> >(&propertiesInput), "Key-value pair to add as a property; repeat as necessary, e.g. \"--property key1=val1 --property key2=val2\"")
-    ("type", po::value<vector<string> >(&typeInput), "Type of the data object; repeat as necessary, e.g. \"--type type1 --type type2\"")
-    ("tag", po::value<vector<string> >(&tagsInput), "Tag of the data object; repeat as necessary, e.g. \"--tag tag1 --tag tag2\"") 
-    ("details", po::value<string>(&detailsInput), "JSON to store as details")
     ;
 
   hidden_opts = new po::options_description();
