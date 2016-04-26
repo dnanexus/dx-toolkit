@@ -36,7 +36,7 @@ the effective destination project.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, json, subprocess, tempfile, multiprocessing, gzip, io
+import os, sys, json, subprocess, tempfile, multiprocessing, gzip, io, tarfile
 import datetime
 import hashlib
 
@@ -130,6 +130,34 @@ def get_destination_project(src_dir, project=None):
     if project is not None:
         return project
     return _get_applet_spec(src_dir)['project']
+    
+def is_link_local(link_target):
+    """
+    :param link_target: The target of a symbolic link, as given by os.readlink()
+    :type link_target: string    
+    :returns: A boolean indicating the link is local to the current directory.
+              This is defined to mean that os.path.isabs(link_target) == False
+              and the link NEVER references the parent directory, so 
+              "./foo/../../curdir/foo" would return False.
+    :rtype: boolean
+    """
+    is_local=(not os.path.isabs(link_target))
+    
+    if is_local:
+        # make sure that the path NEVER extends outside the resources directory!
+        d,l = os.path.split(link_target)
+        link_parts = []
+        while l:
+            link_parts.append(l)
+            d,l = os.path.split(d)
+        curr_path = os.sep
+    
+        for p in reversed(link_parts):
+            is_local = (is_local and not (curr_path == os.sep and p == os.pardir) )
+            curr_path = os.path.abspath(os.path.join(curr_path, p))
+            
+    return is_local    
+    
 
 def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, force_symlinks=False):
     """
@@ -140,6 +168,12 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
                           if checksum is different from a previously uploaded
                           bundle's checksum.
     :type ensure_upload: boolean
+    :param force_symlinks: If true, will bypass the attempt to dereference any
+                           non-local symlinks and will unconditionally include
+                           the link as-is.  Note that this will almost certainly
+                           result in a broken link within the resource directory
+                           unless you really know what you're doing.
+    :type force_symlinks: boolean
     :returns: A list (possibly empty) of references to the generated archive(s)
     :rtype: list
 
@@ -161,14 +195,44 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
     if os.path.exists(resources_dir) and len(os.listdir(resources_dir)) > 0:
         target_folder = applet_spec['folder'] if 'folder' in applet_spec else folder
 
-        # Copy the code previously in _directory_checksum here and we will create
-        # the tar file while performing the checksum.  If the checksum matches 
-        # (and ensure_upload is False), then we will use the existing file,
+        # While creating the resource bundle, optimistically look for a 
+        # resource bundle with the same contents, and reuse it if possible. 
+        # The resource bundle carries a property 'resource_bundle_checksum' 
+        # that indicates the checksum; the way in which the checksum is 
+        # computed is given below.   If the checksum matches  (and 
+        # ensure_upload is False), then we will use the existing file,
         # otherwise, we will compress and upload the tarball.
         
-        with tempfile.NamedTemporaryFile(suffix=".tar") as tar_fh:
+        
+        # The input to the SHA1 contains entries of the form (whitespace
+        # only included here for readability):
+        #
+        # / \0 MODE \0 MTIME \0
+        # /foo \0 MODE \0 MTIME \0
+        # ...
+        #
+        # where there is one entry for each directory or file (order is
+        # specified below), followed by a numeric representation of the
+        # mode, and the mtime in milliseconds since the epoch.
+        #
+        # Note when looking at a link, unless --force-symlinks is specified, 
+        # and the link is to be dereferenced the mtime is taken to be the 
+        # maximum of the mtime of the link itself and of the link's target.  
+        # Additionally, the mode is the mode of the link's target.  
+        # If --force-symlinks is specified, or if the link is not to be 
+        # dereferenced, we'll only look at the link itself.
+        
+        # get the absolute resource directory, and go there
+        # this is the equivalent of "-C" in tar
+        abs_resources_dir = os.path.abspath(resources_dir)
+        old_curdir = os.getcwd()
+        os.chdir(abs_resources_dir)
+        
+        
+        with tempfile.NamedTemporaryFile(suffix=".tar") as tar_tmp_fh:
         
             output_sha1 = hashlib.sha1()
+            tar_fh = tarfile.open(fileobj=tar_tmp_fh, mode='w')        
         
             for dirname, subdirs, files in os.walk(resources_dir):
                 if not dirname.startswith(resources_dir):
@@ -185,7 +249,7 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
                 
                 # add an entry in the tar file for the current directory, but
                 # do not recurse!
-                subprocess.check_call(['tar', '-C', resources_dir, '-rf', tar_fh.name, '--no-recursion', '.' + relative_dirname])
+                tar_fh.add('.' + relative_dirname, recursive=False)
                 
                 # Canonicalize the order of subdirectories; this is the order in
                 # which they will be visited by os.walk
@@ -204,26 +268,13 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
                         # Let's get the pointed-to path to ensure that it is
                         # still in the directory
                         link_target = os.readlink(dir_path)
-                        is_local=(not os.path.isabs(link_target))
-                        
-                        dir_realpath=os.path.abspath(os.path.join(dirname, link_target))
-                        # make sure that the path NEVER extends outside the resources directory!
-                        d,l = os.path.split(link_target)
-                        link_parts = []
-                        while l:
-                            link_parts.append(l)
-                            d,l = os.path.split(d)
-                        curr_path = dirname
-                        for p in reversed(link_parts):
-                            curr_path = os.path.abspath(os.path.join(curr_path, p))
-                            is_local = (is_local and curr_path.startswith(resources_dir))
-                                               
-                        # If this is a local link, add it to the list of files (case Ib)
+                                                                       
+                        # If this is a local link, add it to the list of files (case 1)
                         # else raise an error
-                        if force_symlinks or is_local:
+                        if force_symlinks or is_link_local(link_target):
                             files.append(subdir_name)
                         else:
-                            raise AppBuilderException("Cannot include symlinks to directories outside of the resource directory.  %r points to directory %r" % (dir_path, dir_realpath))
+                            raise AppBuilderException("Cannot include symlinks to directories outside of the resource directory.  '%s' points to directory '%s'" % (dir_path, os.path.realpath(dir_path)))
                         
 
                 # Canonicalize the order of files so that we compute the
@@ -240,22 +291,8 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
 
                         # Get the pointed-to path
                         link_target = os.readlink(true_filename)
-                        is_local=(not os.path.isabs(link_target))
-                        
-                        linkpath_filename = os.path.abspath(os.path.join(dirname, link_target))
 
-                        # make sure that the path NEVER extends outside the resources directory!
-                        d,l = os.path.split(link_target)
-                        link_parts = []
-                        while l:
-                            link_parts.append(l)
-                            d,l = os.path.split(d)
-                        curr_path = dirname
-                        for p in reversed(link_parts):
-                            curr_path = os.path.abspath(os.path.join(curr_path, p))
-                            is_local = (is_local and curr_path.startswith(resources_dir))
-
-                        if not (force_symlinks or is_local):
+                        if not (force_symlinks or is_link_local(link_target)):
                             # if we are pointing outside of the directory, then:
                             # try to get the true stat of the file and make sure
                             # to dereference the link!
@@ -267,20 +304,24 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
                                 # since this is guaranteed to cause problems (and
                                 # we know we're not forcing symlinks here), we
                                 # should throw an error
-                                raise AppBuilderException("Broken symlink: Link '%r' points to '%r', which does not exist" % (true_filename, linkpath_filename) )
+                                raise AppBuilderException("Broken symlink: Link '%s' points to '%s', which does not exist" % (true_filename, os.path.realpath(true_filename)) )
                     
                     
                     fields = [relative_filename, str(file_stat.st_mode), str(int(file_stat.st_mtime * 1000))]
                     output_sha1.update(b''.join(s.encode('utf-8') + b'\0' for s in fields))
                     
-                    # add this file to the tar file
-                    subprocess.check_call(['tar', '-C', resources_dir, '-rhf' if deref_link else '-rf', tar_fh.name, '.' + relative_filename])
+                    # If we are to dereference, use the target fn
+                    if deref_link:
+                        true_filename = os.path.realpath(true_filename)
+                      
+                    tar_fh.add(true_filename, arcname='.' + relative_filename)
                     
                 # end for filename in sorted(files)
 
             # end for dirname, subdirs, files in os.walk(resources_dir):
         
-            # at this point, the tar is complete
+            # at this point, the tar is complete, so close the tar_fh
+            tar_fh.close()
         
             # Optimistically look for a resource bundle with the same
             # contents, and reuse it if possible. The resource bundle
@@ -321,11 +362,11 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
                 # it though a GzipFile object, writing the given 
                 # block size (by default 8192 bytes) at a time
                 targz_gzf = gzip.GzipFile(fileobj=targz_fh)
-                tar_fh.seek(0)
-                dat = tar_fh.read(io.DEFAULT_BUFFER_SIZE)
+                tar_tmp_fh.seek(0)
+                dat = tar_tmp_fh.read(io.DEFAULT_BUFFER_SIZE)
                 while dat:
                     targz_gzf.write(dat)
-                    dat = tar_fh.read(io.DEFAULT_BUFFER_SIZE)
+                    dat = tar_tmp_fh.read(io.DEFAULT_BUFFER_SIZE)
                 
                 targz_gzf.flush()
                 targz_gzf.close()
