@@ -6665,7 +6665,7 @@ class TestDXGetExecutables(DXTestCase):
 
             applet_metadata = open(os.path.join("get_applet", "dxapp.json")).read()
 
-            # Checking metadata keys alphabetical orderring
+            # Checking metadata keys alphabetical ordering
             self.assertTrue(applet_metadata.find('"details":') < applet_metadata.find('"dxapi":'))
             self.assertTrue(applet_metadata.find('"dxapi":') < applet_metadata.find('"inputSpec":'))
             self.assertTrue(applet_metadata.find('"inputSpec":') < applet_metadata.find('"name": "get_applet"'))
