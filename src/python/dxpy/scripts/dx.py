@@ -1777,9 +1777,13 @@ def get_app(entity_result, args):
 
 def get(args):
     # Decide what to do based on entity's class
-    project, _folderpath, entity_result = try_call(resolve_existing_path,
-                                                   args.path,
-                                                   expected='entity')
+    if not is_hashid(args.path) and ':' not in args.path and args.path.startswith('app-'):
+        desc = dxpy.api.app_describe(args.path)
+        entity_result = {"id": desc["id"], "describe": desc}
+    else:
+        project, _folderpath, entity_result = try_call(resolve_existing_path,
+                                                       args.path,
+                                                       expected='entity')
 
     if entity_result is None:
         parser.exit(3,

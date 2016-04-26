@@ -6934,9 +6934,26 @@ class TestDXGetExecutables(DXTestCase):
         self._test_get_app("get_app_open_source_published_no_authusers", True, True, [])
         self._test_get_app("get_app_published_no_authusers", False, True, [])
 
+    def test_get_app_by_name(self):
+        [app_id, output_app_spec] = self.make_app("cool_app_name", False, False, [])
+
+        with chdir(tempfile.mkdtemp()):
+            run("dx get app-cool_app_name")
+            self.assert_app_get_initialized("cool_app_name", output_app_spec)
+
+        with chdir(tempfile.mkdtemp()):
+            run("dx get app-cool_app_name/0.0.1")
+            self.assert_app_get_initialized("cool_app_name", output_app_spec)
+
+        with chdir(tempfile.mkdtemp()):
+            with self.assertSubprocessFailure(stderr_regexp="Could not find an app", exit_code=3):
+                run("dx get app-not_so_cool_app_name")
+
+            with self.assertSubprocessFailure(stderr_regexp="Could not find an app", exit_code=3):
+                run("dx get app-cool_app_name/1.0.0")
+
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
     def test_get_app_omit_resources(self):
-        self.maxDiff = None
         app_spec = {
             "name": "get_app_open_source",
             "title": "Sir",
