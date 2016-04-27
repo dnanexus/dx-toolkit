@@ -25,7 +25,7 @@ from multiprocessing import cpu_count
 import dateutil.parser
 from .. import logger
 from ..compat import basestring, THREAD_TIMEOUT_MAX
-
+import numbers
 
 def _force_quit(signum, frame):
     # traceback.print_stack(frame)
@@ -169,7 +169,7 @@ def normalize_time_input(t, future=False, default_unit='ms'):
                 assert t > 0
             except (ValueError, OverflowError, AssertionError):
                 raise ValueError(error_msg.format(t=t))
-    elif isinstance(t, int):
+    elif isinstance(t, numbers.Integral):
         units_multipliers = {'ms': 1, 's': 1000}
         if default_unit not in units_multipliers:
             raise ValueError("Expected default_unit to be one of 's' or 'ms'")
