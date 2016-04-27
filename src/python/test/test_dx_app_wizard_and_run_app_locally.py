@@ -61,10 +61,6 @@ def run_dx_app_wizard():
         wizard.sendline("Описание")
         wizard.expect("Version")
         wizard.sendline("1.2.3")
-        wizard.expect("Choose a category")
-        wizard.sendline("Assembly")
-        wizard.expect("Choose a category")
-        wizard.sendline()
         wizard.expect("1st input name")
         wizard.sendline("in1")
         wizard.expect("Label")
@@ -165,7 +161,6 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
     def test_dx_app_wizard(self):
         appdir = run_dx_app_wizard()
         dxapp_json = json.load(open(os.path.join(appdir, 'dxapp.json')))
-        self.assertEqual(dxapp_json.get('authorizedUsers'), [])
         self.assertEqual(dxapp_json['runSpec']['systemRequirements']['*']['instanceType'],
                          InstanceTypesCompleter.default_instance_type.Name)
         self.assertEqual(dxapp_json['runSpec']['distribution'], 'Ubuntu')
