@@ -22,6 +22,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import os, unittest, tempfile, filecmp, time, json, sys
 import string
 import subprocess
+import platform
 
 import requests
 from requests.packages.urllib3.exceptions import SSLError
@@ -260,7 +261,11 @@ class TestDXFileFunctions(unittest.TestCase):
             dxpy.dxfile._get_write_buf_size(16 * MB, azure, 200001 * MB)
 
     def test_job_detection(self):
-        env = dict(os.environ, DX_JOB_ID='job-00000000000000000000')
+        if platform.system()=='Windows':
+            import nt
+            env = dict(nt.environ, DX_JOB_ID=b'job-00000000000000000000')
+        else:
+            env = dict(os.environ, DX_JOB_ID=b'job-00000000000000000000')
         buffer_size = subprocess.check_output(
             "python -c 'import dxpy; print dxpy.bindings.dxfile.DEFAULT_BUFFER_SIZE'", shell=True, env=env)
         self.assertEqual(int(buffer_size), 96 * 1024 * 1024)
