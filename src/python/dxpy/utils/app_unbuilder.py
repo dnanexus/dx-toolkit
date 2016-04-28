@@ -126,7 +126,7 @@ def dump_executable(executable, destination_directory, omit_resources=False, des
         # Ordering input/output spec keys
         ordered_spec_keys = "name", "label", "help", "class", "type", "patterns", "optional", "default", "choices", "suggestions", "group"
         for spec_key in "inputSpec", "outputSpec":
-            if not spec_key in dxapp_json.keys():
+            if spec_key not in dxapp_json.keys():
                 continue
             for i, spec in enumerate(dxapp_json[spec_key]):
                 ordered_spec = collections.OrderedDict()
@@ -136,7 +136,7 @@ def dump_executable(executable, destination_directory, omit_resources=False, des
                         ordered_spec[key] = spec[key]
                 # Adding the rest of the keys
                 for key in spec.keys():
-                    if not key in ordered_spec_keys:
+                    if key not in ordered_spec_keys:
                         ordered_spec[key] = spec[key]
                 dxapp_json[spec_key][i] = ordered_spec
 
