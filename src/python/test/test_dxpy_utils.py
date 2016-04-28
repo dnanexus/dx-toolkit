@@ -26,6 +26,7 @@ from dxpy import AppError, AppInternalError, DXFile, DXRecord
 from dxpy.utils import (describe, exec_utils, genomic_utils, response_iterator, get_futures_threadpool, DXJSONEncoder,
                         normalize_timedelta, normalize_time_input, config)
 from dxpy.utils.exec_utils import DXExecDependencyInstaller
+from dxpy.utils.pretty_print import flatten_json_array
 from dxpy.compat import USING_PYTHON2
 
 # TODO: unit tests for dxpy.utils.get_field_from_jbor, get_job_from_jbor, is_job_ref
@@ -288,6 +289,37 @@ class TestDXConfig(unittest.TestCase):
         finally:
             os.environ.update(environ_backup)
             dxpy.config.__init__(suppress_warning=True)
+
+class TestPrettyPrint(unittest.TestCase):
+    def test_flatten_json_array(self):
+        json_string = (
+            '{\n'
+            '  "arr": [\n'
+            '    "one",\n'
+            '    2,\n'
+            '    3.4,\n'
+            '    "\\"five\\""\n'
+            '  ],\n'
+            '  "foo": {\n'
+            '    "arr": [\n'
+            '      "six",\n'
+            '      7.8,\n'
+            '      9,\n'
+            '      "t\\"en"\n'
+            '    ]\n'
+            '  }\n'
+            '}'
+        )
+        flattened_json_string_ref = (
+            '{\n'
+            '  "arr": ["one", 2, 3.4, "\\"five\\""],\n'
+            '  "foo": {\n'
+            '    "arr": ["six", 7.8, 9, "t\\"en"]\n'
+            '  }\n'
+            '}'
+        )
+        flatten_json_array(json_string, "arr")
+        self.assertEqual(flattened_json_string_ref, flatten_json_array(json_string, "arr"))
 
 if __name__ == '__main__':
     unittest.main()

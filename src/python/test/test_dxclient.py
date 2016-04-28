@@ -6634,8 +6634,25 @@ class TestDXGetExecutables(DXTestCase):
             "name": "get_applet",
             "dxapi": "1.0.0",
             "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [{"name": "in1", "class": "file", "patterns": ["*.bam", "*.babam", "*.pab\"abam"]}],
-            "outputSpec": [{"name": "out1", "class": "file", "patterns": ["*.bam"]}],
+            "inputSpec": [{
+                "name": "in1",
+                "help": "A help for in1 input param",
+                "optional": False,
+                "class": "file",
+                "label": "A label for in1 input param",
+                "patterns": ["*.bam", "*.babam", "*.pab\"abam"]
+            }, {
+              "name": "reads_type",
+              "choices": ["single-end", "paired-end"],
+              "default": "paired-end",
+              "class": "string",
+              "group": "Advanced Options"
+            }],
+            "outputSpec": [{
+                "name": "out1",
+                "class": "file",
+                "patterns": ["*.bam"]
+            }],
             "description": "Description\n",
             "developerNotes": "Developer notes\n",
             "types": ["Foo"],
@@ -6655,29 +6672,32 @@ class TestDXGetExecutables(DXTestCase):
             f.write('content\n')
         new_applet_id = json.loads(run("dx build --json " + app_dir))["id"]
         with chdir(tempfile.mkdtemp()):
-            dx_get_output = run("dx get " + new_applet_id)
+            run("dx get " + new_applet_id)
             self.assertTrue(os.path.exists("get_applet"))
             self.assertTrue(os.path.exists(os.path.join("get_applet", "dxapp.json")))
-            self.assertEqual(
-                'Creating "./get_applet" output directory\nDownloading applet data\nUnpacking resources\n',
-                dx_get_output
-            )
 
             applet_metadata = open(os.path.join("get_applet", "dxapp.json")).read()
-
-            # Checking metadata keys alphabetical ordering
-            self.assertTrue(applet_metadata.find('"details":') < applet_metadata.find('"dxapi":'))
-            self.assertTrue(applet_metadata.find('"dxapi":') < applet_metadata.find('"inputSpec":'))
-            self.assertTrue(applet_metadata.find('"inputSpec":') < applet_metadata.find('"name": "get_applet"'))
-            self.assertTrue(applet_metadata.find('"name": "get_applet"') < applet_metadata.find('"outputSpec":'))
-            self.assertTrue(applet_metadata.find('"outputSpec":') < applet_metadata.find('"properties":'))
-            self.assertTrue(applet_metadata.find('"properties":') < applet_metadata.find('"runSpec":'))
-            self.assertTrue(applet_metadata.find('"runSpec":') < applet_metadata.find('"tags":'))
-            self.assertTrue(applet_metadata.find('"tags":') < applet_metadata.find('"types":'))
 
             # Checking inputSpec/outputSpec patterns arrays were flattened
             self.assertTrue(applet_metadata.find('"patterns": ["*.bam", "*.babam", "*.pab\\"abam"]') >= 0)
             self.assertTrue(applet_metadata.find('"patterns": ["*.bam"]') >= 0)
+
+            # Checking inputSpec keys ordering
+            self.assertTrue(applet_metadata.find('"name": "in1"') < applet_metadata.find('"label": "A label for in1 input param"'))
+            self.assertTrue(applet_metadata.find('"label": "A label for in1 input param"') < applet_metadata.find('"help": "A help for in1 input param"'))
+            self.assertTrue(applet_metadata.find('"help": "A help for in1 input param"') < applet_metadata.find('"class": "file"'))
+            self.assertTrue(applet_metadata.find('"class": "file"') < applet_metadata.find('"patterns": ["*.bam", "*.babam", "*.pab\\"abam"]'))
+            self.assertTrue(applet_metadata.find('"patterns": ["*.bam", "*.babam", "*.pab\\"abam"]') < applet_metadata.find('"optional": false'))
+
+            self.assertTrue(applet_metadata.find('"name": "reads_type"') < applet_metadata.find('"class": "string"'))
+            self.assertTrue(applet_metadata.find('"class": "string"') < applet_metadata.find('"default": "paired-end"'))
+            self.assertTrue(applet_metadata.find('"default": "paired-end"') < applet_metadata.find('"choices": ['))
+            self.assertTrue(applet_metadata.find('"choices": [') < applet_metadata.find('"group": "Advanced Options"'))
+
+            # Checking outputSpec keys ordering
+            output_spec_index = applet_metadata.find('"outputSpec"')
+            self.assertTrue(applet_metadata.find('"name": "out1"', output_spec_index) < applet_metadata.find('"class": "file"', output_spec_index))
+            self.assertTrue(applet_metadata.find('"class": "file"', output_spec_index) < applet_metadata.find('"patterns": ["*.bam"]', output_spec_index))
 
             output_json = json.loads(applet_metadata)
             self.assertEqual(output_app_spec, output_json)
