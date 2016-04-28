@@ -1737,6 +1737,7 @@ def get_output_path(obj_name, obj_class, args):
         os.unlink(output_path)
     # Here, output_path either points to a directory or a nonexistent path
     if not os.path.exists(output_path):
+        print('Creating "{}" output directory'.format(output_path), file=sys.stderr)
         os.mkdir(output_path)
     # Here, output_path points to a directory
     if len(os.listdir(output_path)):
@@ -1756,6 +1757,7 @@ def get_applet(project, entity_result, args):
                                   entity_result['describe']['class'],
                                   args)
     from dxpy.utils.app_unbuilder import dump_executable
+    print("Downloading applet data", file=sys.stderr)
     dx_obj = dxpy.DXApplet(obj_id, project=project)
     describe_output = dx_obj.describe(incl_properties=True,
                                       incl_details=True)
@@ -1772,6 +1774,7 @@ def get_app(entity_result, args):
                                   entity_result['describe']['class'],
                                   args)
     from dxpy.utils.app_unbuilder import dump_executable
+    print("Downloading application data", file=sys.stderr)
     dx_obj = dxpy.DXApp(obj_id)
     dump_executable(dx_obj, output_path, omit_resources=args.omit_resources)
 
