@@ -1,3 +1,8 @@
+DNAnexus Upload Agent 1.5.14 <support@dnanexus.com>, 2016-Apr-28
+----------------------------------------------------------------
+  * Fixed the help string for the visibility option
+  * PTFM-17813 Build dx-verify-file and dxcpp w/ MinGW
+
 DNAnexus Upload Agent 1.5.13 <support@dnanexus.com>, 2016-Apr-07
 ----------------------------------------------------------------
   * fixing the mac build
