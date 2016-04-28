@@ -92,22 +92,6 @@ else:
     app_json["dxapi"] = API_VERSION
     app_json["version"] = version
 
-    category_completer = Completer(sorted(APP_CATEGORIES))
-    use_completer(category_completer)
-    categories = []
-    print()
-    print(fill(BOLD() + 'App categories:' + ENDC() + ' provide categories to make your app easier to find in the App Library. (Visit https://platform.dnanexus.com/apps to see how your app might appear.) If you do not intend to publish your app, you can skip this step.'))
-    while True:
-        input_class = prompt_for_var('Choose a category (<TAB> twice for choices, <ENTER> to finish)', allow_empty=True)
-        if input_class == '':
-            break
-        if input_class not in category_completer.choices:
-            if not prompt_for_yn("This is not a recognized category name; users won't be able to browse this category to find your app. Use it anyway?",
-                                 default=True):
-                continue
-        categories.append(input_class)
-    app_json["categories"] = categories
-
     ############
     # IO SPECS #
     ############
@@ -204,6 +188,11 @@ array:boolean  array:int      boolean        hash           string
             if default_val is not None:
                 parameter_json['default'] = default_val
 
+            # Fill in patterns and blank help string
+            if input_class == 'file' or input_class == 'array:file':
+                parameter_json["patterns"] = ["*"]
+            parameter_json["help"] = ""
+
             app_json['inputSpec'].append(parameter_json)
 
     print('')
@@ -254,6 +243,11 @@ array:boolean  array:int      boolean        hash           string''')
             if output_label != '':
                 parameter_json['label'] = output_label
             parameter_json["class"] = output_class
+
+            # Fill in patterns and blank help string
+            if output_class == 'file' or output_class == 'array:file':
+                parameter_json["patterns"] = ["*"]
+            parameter_json["help"] = ""
 
             app_json['outputSpec'].append(parameter_json)
 
@@ -376,7 +370,7 @@ app_json['runSpec']['systemRequirements']['*']['instanceType'] = instance_type
 ######################
 
 # Default of no other authorizedUsers
-app_json['authorizedUsers'] = []
+# app_json['authorizedUsers'] = []
 
 # print('\n' + BOLD('Linux version: '))
 app_json['runSpec']['distribution'] = 'Ubuntu'
