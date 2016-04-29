@@ -1214,7 +1214,7 @@ class TestDXClientUploadDownload(DXTestCase):
                 temp_project_1.clone(temp_project_2.get_id(), objects=[fh.get_id()])
                 download_url = run("dx make_download_url " + fh.get_id()).strip()
                 run("wget -O /dev/null " + download_url)
-            # Even after project 1 is destroyed, the download URL should still work
+            # After project 1 is destroyed, the download URL should not work anymore
             with self.assertSubprocessFailure(stderr_regexp="Not Found", exit_code=8):
                 run("wget -O /dev/null " + download_url)
 
