@@ -34,6 +34,7 @@ import sys
 from .. import get_handler, download_dxfile
 from ..compat import open
 from ..exceptions import err_exit
+from .pretty_print import flatten_json_array
 
 def _recursive_cleanup(foo):
     """
@@ -45,7 +46,6 @@ def _recursive_cleanup(foo):
                 _recursive_cleanup(val)
             if val == "" or val == [] or val == {}:
                 del foo[key]
-
 
 def dump_executable(executable, destination_directory, omit_resources=False, describe_output=[]):
     """
@@ -94,7 +94,8 @@ def dump_executable(executable, destination_directory, omit_resources=False, des
                     handler_id = handler.get_id()
                     fname = "resources/%s.tar.gz" % (handler_id)
                     download_dxfile(handler_id, fname)
-                    subprocess.check_call(["tar", "-C", "resources", "-zxvf", fname], shell=False)
+                    print("Unpacking resources", file=sys.stderr)
+                    subprocess.check_call(["tar", "-C", "resources", "-zxf", fname], shell=False)
                     os.unlink(fname)
                     deps_to_remove.append(dep)
 
@@ -122,6 +123,24 @@ def dump_executable(executable, destination_directory, omit_resources=False, des
         for dep in deps_to_remove:
             dxapp_json["runSpec"]["bundledDepends"].remove(dep)
 
+        # Ordering input/output spec keys
+        ordered_spec_keys = ("name", "label", "help", "class", "type", "patterns", "optional", "default", "choices",
+                             "suggestions", "group")
+        for spec_key in "inputSpec", "outputSpec":
+            if spec_key not in dxapp_json.keys():
+                continue
+            for i, spec in enumerate(dxapp_json[spec_key]):
+                ordered_spec = collections.OrderedDict()
+                # Adding keys, for which the ordering is defined
+                for key in ordered_spec_keys:
+                    if key in spec.keys():
+                        ordered_spec[key] = spec[key]
+                # Adding the rest of the keys
+                for key in spec.keys():
+                    if key not in ordered_spec_keys:
+                        ordered_spec[key] = spec[key]
+                dxapp_json[spec_key][i] = ordered_spec
+
         # Remove dx-toolkit from execDepends
         dx_toolkit = {"name": "dx-toolkit", "package_manager": "apt"}
         if dx_toolkit in dxapp_json["runSpec"]["execDepends"]:
@@ -144,7 +163,7 @@ def dump_executable(executable, destination_directory, omit_resources=False, des
 
         # Write dxapp.json, Readme.md, and Readme.developer.md
         with open("dxapp.json", "w") as f:
-            f.write(json.dumps(dxapp_json, sort_keys=False, indent=2, separators=(',', ': ')))
+            f.write(flatten_json_array(json.dumps(dxapp_json, indent=2, separators=(',', ': ')), "patterns"))
             f.write('\n')
         if readme:
             with open("Readme.md", "w") as f:

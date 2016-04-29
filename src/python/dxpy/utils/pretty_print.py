@@ -179,3 +179,20 @@ def format_table(table, column_names=None, column_specs=None, max_col_width=32,
         return '\n'.join(formatted_table), len(formatted_table), sum(col_widths) + len(col_widths) + 1
     else:
         return '\n'.join(formatted_table)
+
+def flatten_json_array(json_string, array_name):
+    """
+    Flattens all arrays with the same name in the JSON string
+
+    :param json_string: JSON string
+    :type json_string: str
+    :param array_name: Array name to flatten
+    :type array_name: str
+    """
+
+    result = re.sub('"{}": \\[\r?\n\\s*'.format(array_name), '"{}": ['.format(array_name), json_string, flags=re.MULTILINE)
+    flatten_regexp = re.compile('"{}": \\[(.*)(?<=,)\r?\n\\s*'.format(array_name), flags=re.MULTILINE)
+    while flatten_regexp.search(result):
+        result = flatten_regexp.sub('"{}": [\\1 '.format(array_name), result)
+    result = re.sub('"{}": \\[(.*)\r?\n\\s*\\]'.format(array_name), '"{}": [\\1]'.format(array_name), result, flags=re.MULTILINE)
+    return result
