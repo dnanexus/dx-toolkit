@@ -1,3 +1,9 @@
+dx-toolkit (0.189.1) precise; urgency=low
+
+  * Fix argcomplete failures due to 67896ca 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Mon, 02 May 2016 21:27:17 +0000
+
 dx-toolkit (0.189.0) precise; urgency=low
 
   * Fix dx_app_wizard test
