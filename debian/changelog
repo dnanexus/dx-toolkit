@@ -1,3 +1,9 @@
+dx-toolkit (0.188.4) precise; urgency=low
+
+  * Fix argcomplete failures due to 67896ca 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Mon, 02 May 2016 21:28:06 +0000
+
 dx-toolkit (0.188.3) precise; urgency=low
 
   * Retry HTTP 400 errors during file upload
