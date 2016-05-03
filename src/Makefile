@@ -493,7 +493,7 @@ clean:
 	$(MAKE) -C dx-wig-to-wiggle clean
 	$(MAKE) -C dx-verify-file clean
 	$(MAKE) -C ua clean
-	-find ../bin -type f \( -name jq -or -name dx -or -name '*argcomplete*' -or -name 'dx-*' \) -not -name 'dx-unpack*' -delete
+	-find ../bin -type f \( -name jq -or -name dx -or -name 'dx-*' \) -not -name 'dx-unpack*' -delete
 	-rm -rf python/{build,*.{egg,egg-info}}
 	-rm -rf java/target
 	-rm -rf ../lib
