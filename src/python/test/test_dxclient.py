@@ -19,7 +19,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re, base64, random, time, filecmp
+import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re, base64, random, time, filecmp, stat
 import pipes
 import hashlib
 import collections
@@ -6494,8 +6494,96 @@ def main(in1):
         # Test: symbolic_link is a symlink
         self.assertTrue(os.path.islink(os.path.join(res_temp_dir, 'symbolic_link')))
         
-        shutil.rmtree(res_temp_dir)                                        
+        shutil.rmtree(res_temp_dir)
+        
+    def test_upload_resources_permissions(self):
+        app_spec = {
+            "name": "upload_resources_permissions",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+        }
+        test_perms_dir = "upload_resources_permissions"
+        os.mkdir(os.path.join(self.temp_file_path, test_perms_dir))
+        app_dir = self.write_app_directory(os.path.join(self.temp_file_path, test_perms_dir, 'app'), json.dumps(app_spec), "code.py")
+        os.mkdir(os.path.join(app_dir, 'resources'))
 
+        with open(os.path.join(app_dir, 'resources', 'test_644.txt'), 'w') as rf:
+            rf.write('test_permissions: 644\n')
+        with open(os.path.join(app_dir, 'resources', 'test_660.txt'), 'w') as rf:
+            rf.write('test_permissions: 660\n')
+        with open(os.path.join(app_dir, 'resources', 'test_400.txt'), 'w') as rf:
+            rf.write('test_permissions: 400\n')
+        with open(os.path.join(app_dir, 'resources', 'test_755.txt'), 'w') as rf:
+            rf.write('test_permissions: 755\n')
+        with open(os.path.join(app_dir, 'resources', 'test_770.txt'), 'w') as rf:
+            rf.write('test_permissions: 770\n')
+        with open(os.path.join(app_dir, 'resources', 'test_670.txt'), 'w') as rf:
+            rf.write('test_permissions: 670\n')
+        
+        # Now, set the permissions alluded to above
+        os.chmod(os.path.join(app_dir, 'resources', 'test_644.txt'), 
+            stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
+        os.chmod(os.path.join(app_dir, 'resources', 'test_660.txt'), 
+            stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP)
+        os.chmod(os.path.join(app_dir, 'resources', 'test_400.txt'), 
+            stat.S_IRUSR)
+        os.chmod(os.path.join(app_dir, 'resources', 'test_755.txt'), 
+            stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+        os.chmod(os.path.join(app_dir, 'resources', 'test_770.txt'), 
+            stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP)
+        os.chmod(os.path.join(app_dir, 'resources', 'test_670.txt'), 
+            stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP)
+        
+        # build app
+        res_temp_dir = self._build_check_resources(app_dir)
+        
+        # Test file permissions (all will have stat.S_IFREG as well)
+        # 644 => 644
+        self.assertEquals(os.stat(os.path.join(res_temp_dir, "test_644.txt")).st_mode,
+            stat.S_IFREG | stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
+        # 660 => 664
+        self.assertEquals(os.stat(os.path.join(res_temp_dir, "test_660.txt")).st_mode,
+            stat.S_IFREG | stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH)
+        # 400 => 444
+        self.assertEquals(os.stat(os.path.join(res_temp_dir, "test_400.txt")).st_mode,
+            stat.S_IFREG | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+        # 755 => 755
+        self.assertEquals(os.stat(os.path.join(res_temp_dir, "test_755.txt")).st_mode,
+            stat.S_IFREG | stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+        # 770 => 775
+        self.assertEquals(os.stat(os.path.join(res_temp_dir, "test_770.txt")).st_mode,
+            stat.S_IFREG | stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+        # 670 => 674
+        self.assertEquals(os.stat(os.path.join(res_temp_dir, "test_670.txt")).st_mode,
+            stat.S_IFREG | stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH)
+        
+        shutil.rmtree(res_temp_dir)                                     
+            
+        # If we make a permission change that does NOT affect the tar, we should re-use the resource bundle
+        id1 = self._build_check_resources(app_dir, extract_resources=False)
+        
+        # change the 400 => 444
+        os.chmod(os.path.join(app_dir, 'resources', 'test_400.txt'), 
+            stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+        
+        id2 = self._build_check_resources(app_dir, extract_resources=False)
+        
+        self.assertEquals(id1, id2)
+        
+        # If we make a permission change that DOES affect the tar, we should rebuild
+        
+        # change 400 => 500 (will result in perms 555)
+        os.chmod(os.path.join(app_dir, 'resources', 'test_400.txt'), 
+            stat.S_IRUSR | stat.S_IXUSR)
+        
+        id3 = self._build_check_resources(app_dir, extract_resources=False)
+        
+        self.assertNotEquals(id1, id3)
+        
+        
     def test_upload_resources_advanced(self):
         app_spec = {
             "name": "upload_resources_advanced",

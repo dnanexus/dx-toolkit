@@ -36,7 +36,7 @@ the effective destination project.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, json, subprocess, tempfile, multiprocessing, gzip, io, tarfile
+import os, sys, json, subprocess, tempfile, multiprocessing, gzip, io, tarfile, stat
 import datetime
 import hashlib
 
@@ -158,6 +158,33 @@ def is_link_local(link_target):
             
     return is_local    
     
+def _fix_perms(perm_obj):
+    """
+    :param perm_obj: A permissions object, as given by os.stat()
+    :type perm_obj: integer
+    :returns: A permissions object that is the result of "chmod a+rX" on the
+              given permission object.  This is defined to be the permission object
+              bitwise or-ed with all stat.S_IR*, and if the stat.S_IXUSR bit is
+              set, then the permission object should also be returned bitwise or-ed
+              with stat.S_IX* (stat.S_IXUSR not included because it would be redundant).
+    :rtype: integer
+    """
+    ret_perm = perm_obj | stat.S_IROTH | stat.S_IRGRP | stat.S_IRUSR
+    if ret_perm & stat.S_IXUSR:
+        ret_perm = ret_perm | stat.S_IXGRP | stat.S_IXOTH
+    
+    return ret_perm
+    
+def _fix_perm_filter(tar_obj):
+    """
+    :param tar_obj: A TarInfo object to be added to a tar file
+    :tpye tar_obj: tarfile.TarInfo
+    :returns: A TarInfo object with permissions changed (a+rX)
+    :rtype: tarfile.TarInfo
+    """
+    tar_obj.mode = _fix_perms(tar_obj.mode)
+    return tar_obj   
+
 
 def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, force_symlinks=False):
     """
@@ -244,12 +271,12 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
                 if not relative_dirname.startswith('/'):
                     relative_dirname = '/' + relative_dirname
 
-                fields = [relative_dirname, str(dir_stat.st_mode), str(int(dir_stat.st_mtime * 1000))]
+                fields = [relative_dirname, str(_fix_perms(dir_stat.st_mode)), str(int(dir_stat.st_mtime * 1000))]
                 output_sha1.update(b''.join(s.encode('utf-8') + b'\0' for s in fields))
                 
                 # add an entry in the tar file for the current directory, but
                 # do not recurse!
-                tar_fh.add('.' + relative_dirname, recursive=False)
+                tar_fh.add('.' + relative_dirname, recursive=False, filter=_fix_perm_filter)
                 
                 # Canonicalize the order of subdirectories; this is the order in
                 # which they will be visited by os.walk
@@ -307,14 +334,14 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
                                 raise AppBuilderException("Broken symlink: Link '%s' points to '%s', which does not exist" % (true_filename, os.path.realpath(true_filename)) )
                     
                     
-                    fields = [relative_filename, str(file_stat.st_mode), str(int(file_stat.st_mtime * 1000))]
+                    fields = [relative_filename, str(_fix_perms(file_stat.st_mode)), str(int(file_stat.st_mtime * 1000))]
                     output_sha1.update(b''.join(s.encode('utf-8') + b'\0' for s in fields))
                     
                     # If we are to dereference, use the target fn
                     if deref_link:
                         true_filename = os.path.realpath(true_filename)
                       
-                    tar_fh.add(true_filename, arcname='.' + relative_filename)
+                    tar_fh.add(true_filename, arcname='.' + relative_filename, filter=_fix_perm_filter)
                     
                 # end for filename in sorted(files)
 
