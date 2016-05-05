@@ -63,7 +63,7 @@ parser.add_argument("--force-symlinks", help="If specified, will not attempt to 
                                             "outside the resource directory are dereferenced (note "+
                                             "that links to directories outside of the resource directory " +
                                             "will cause an error).",
-                    action="store_true")                    
+                    action="store_true")
 
 src_dir_action = parser.add_argument("src_dir", help="App or applet source directory (default: current directory)", nargs='?')
 src_dir_action.completer = LocalCompleter()
