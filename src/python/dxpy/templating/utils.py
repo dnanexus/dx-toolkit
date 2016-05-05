@@ -27,12 +27,10 @@ from ..cli import prompt_for_yn
 from ..compat import input, open
 
 from . import python
-from . import cpp
 from . import bash
 
 language_options = {
     "Python": python,
-    "C++": cpp,
     "bash": bash
 }
 
@@ -161,7 +159,7 @@ def get_ordinal_str(num):
 
 def get_language():
     #language_choices = language_options.keys()
-    language_choices = ["Python", "C++", "bash"]
+    language_choices = ["Python", "bash"]
     use_completer(Completer(language_choices))
     print('')
     print(fill('You can write your app in any ' + BOLD() + 'programming language' + ENDC() + ', but we provide templates for the following supported languages' + ENDC() + ": " + ', '.join(language_choices)))

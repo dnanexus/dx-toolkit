@@ -38,7 +38,7 @@ def run(command, **kwargs):
     return output
 
 
-supported_languages = ['Python', 'C++', 'bash']
+supported_languages = ['Python', 'bash']
 
 def run_dx_app_wizard():
     old_cwd = os.getcwd()
