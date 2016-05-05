@@ -1,3 +1,17 @@
+dx-toolkit (0.190.0) precise; urgency=low
+
+  * Added ability to dereference symlinks; fix problematic umask
+  * get_download_url issue: Reverting 439dc3f 3425184 59401a8
+  * Propagate custom kwargs through to describe call for fileUploadParams
+  * Do not delete argcomplete executables from 32a19e5
+  * Fixed a comment on the test_dx_make_download_url_project_affinity test
+  * Fix argcomplete failures due to 67896ca
+  * int/long boundary is system-dependent
+  * All environment variables should be string only and case sensitive
+  * PTFM-13142 Various improvements to "dx get" 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 05 May 2016 20:07:40 +0000
+
 dx-toolkit (0.189.0) precise; urgency=low
 
   * Fix dx_app_wizard test
