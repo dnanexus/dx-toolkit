@@ -447,12 +447,13 @@ class DXFile(DXDataObject):
         future = self._http_threadpool.submit(self.upload_part, *args, **kwargs)
         self._http_threadpool_futures.add(future)
 
-    def _ensure_write_bufsize(self):
+    def _ensure_write_bufsize(self, **kwargs):
         if self._write_bufsize is not None:
             return
         file_upload_params = dxpy.api.project_describe(
-            self.project,
-            {'fields': {'fileUploadParameters': True}}
+            self.get_proj_id(),
+            {'fields': {'fileUploadParameters': True}},
+            **kwargs
         )['fileUploadParameters']
         self._empty_last_part_allowed = file_upload_params['emptyLastPartAllowed']
         self._write_bufsize = _get_write_buf_size(self._write_buffer_size_hint,
@@ -473,7 +474,7 @@ class DXFile(DXDataObject):
             does not affect where the next :meth:`write` will occur.
 
         '''
-        self._ensure_write_bufsize()
+        self._ensure_write_bufsize(**kwargs)
 
         def write_request(data_for_write_req):
             if multithread:
@@ -542,7 +543,7 @@ class DXFile(DXDataObject):
         #
         # TODO: only upload a zero-length part condition on
         # emptyLastPartAllowed
-        self._ensure_write_bufsize()
+        self._ensure_write_bufsize(**kwargs)
 
         if self._num_uploaded_parts == 0:
             # We haven't uploaded any parts in this session. In case no parts have been uploaded at all, try to upload

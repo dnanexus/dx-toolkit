@@ -111,14 +111,21 @@ def check_output(*popenargs, **kwargs):
     else:
         return output
 
+
 @contextmanager
-def temporary_project(name='dx client tests temporary project', cleanup=True, reclaim_permissions=False, select=False):
+def temporary_project(name='dx client tests temporary project', cleanup=True, reclaim_permissions=False, select=False,
+                      **kwargs):
     """Creates a temporary project scoped to the context manager, and
     yields a DXProject handler for the project.
 
-    :param cleanup: if False, do not clean up the project when done (useful for debugging so you can examine the state of the project)
+    :param cleanup:
+        if False, do not clean up the project when done (useful for
+        debugging so you can examine the state of the project)
     :type cleanup: bool
-    :param reclaim_permissions: if True, attempts a project-xxxx/join before trying to destroy the project. May be needed if the test reduced its own permissions in the project.
+    :param reclaim_permissions:
+        if True, attempts a project-xxxx/join before trying to destroy
+        the project. May be needed if the test reduced its own
+        permissions in the project.
     :type reclaim_permissions: bool
     :param select:
         if True, sets the environment variable DX_PROJECT_CONTEXT_ID
@@ -127,7 +134,7 @@ def temporary_project(name='dx client tests temporary project', cleanup=True, re
     :type select: bool
 
     """
-    temp_project = dxpy.DXProject(dxpy.api.project_new({'name': name})['id'])
+    temp_project = dxpy.DXProject(dxpy.api.project_new({'name': name}, **kwargs)['id'])
     try:
         if select:
             with select_project(temp_project):
@@ -136,9 +143,9 @@ def temporary_project(name='dx client tests temporary project', cleanup=True, re
             yield temp_project
     finally:
         if reclaim_permissions:
-            dxpy.DXHTTPRequest('/' + temp_project.get_id() + '/join', {'level': 'ADMINISTER'})
+            dxpy.DXHTTPRequest('/' + temp_project.get_id() + '/join', {'level': 'ADMINISTER'}, **kwargs)
         if cleanup:
-            dxpy.api.project_destroy(temp_project.get_id(), {"terminateJobs": True})
+            dxpy.api.project_destroy(temp_project.get_id(), {"terminateJobs": True}, **kwargs)
 
 
 @contextmanager

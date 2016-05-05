@@ -371,7 +371,7 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     num_ticks = 60
     offset = 0
 
-    handler._ensure_write_bufsize()
+    handler._ensure_write_bufsize(**remaining_kwargs)
 
     def can_be_mmapd(fd):
         if not hasattr(fd, "fileno"):

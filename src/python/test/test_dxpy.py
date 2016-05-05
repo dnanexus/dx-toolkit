@@ -20,6 +20,7 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import os, unittest, tempfile, filecmp, time, json, sys
+import shutil
 import string
 import subprocess
 import platform
@@ -380,6 +381,22 @@ class TestDXFile(unittest.TestCase):
 
         dxpy.download_dxfile(self.dxfile, filename=self.new_file.name)
         self.assertTrue(filecmp.cmp(self.foo_file.name, self.new_file.name))
+
+    def test_upload_file_with_custom_auth(self):
+        tempdir = tempfile.mkdtemp()
+        try:
+            second_user_auth = dxpy.DXHTTPOAuth2(json.loads(testutil.as_second_user()['DX_SECURITY_CONTEXT']))
+            templocalfile = os.path.join(tempdir, "foo.txt")
+            with open(templocalfile, "w") as f:
+                f.write("mydata")
+            with testutil.temporary_project(auth=second_user_auth) as p1:
+                fh = dxpy.upload_local_file(filename=templocalfile, project=p1.get_id(), wait_on_close=True,
+                                            auth=second_user_auth)
+                self.assertEqual(fh.describe(auth=second_user_auth)['project'], p1.get_id())
+            with self.assertRaises(ResourceNotFound):
+                fh.describe()
+        finally:
+            shutil.rmtree(tempdir)
 
     def test_upload_string_dxfile(self):
         self.dxfile = dxpy.upload_string(self.foo_str)
