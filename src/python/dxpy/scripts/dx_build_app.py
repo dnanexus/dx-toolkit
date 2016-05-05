@@ -56,6 +56,14 @@ parser.add_argument("--ensure-upload", help="If specified, will bypass computing
                                             "by default, will compute checksum and upload only if " +
                                             "it differs from a previously uploaded resources bundle.",
                     action="store_true")
+parser.add_argument("--force-symlinks", help="If specified, will not attempt to dereference "+
+                                            "symbolic links pointing outside of the resource " +
+                                            "directory.  By default, any symlinks within the resource " +
+                                            "directory are kept as links while links to files " +
+                                            "outside the resource directory are dereferenced (note "+
+                                            "that links to directories outside of the resource directory " +
+                                            "will cause an error).",
+                    action="store_true")
 
 src_dir_action = parser.add_argument("src_dir", help="App or applet source directory (default: current directory)", nargs='?')
 src_dir_action.completer = LocalCompleter()
@@ -681,7 +689,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                              version_override=None, bill_to_override=None, use_temp_build_project=True,
                              do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
                              dx_toolkit_autodep="stable", do_check_syntax=True, dry_run=False,
-                             return_object_dump=False, confirm=True, ensure_upload=False, region=None, **kwargs):
+                             return_object_dump=False, confirm=True, ensure_upload=False, force_symlinks=False, region=None, **kwargs):
 
     dxpy.app_builder.build(src_dir, parallel_build=do_parallel_build)
     app_json = _parse_app_spec(src_dir)
@@ -741,7 +749,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
         bundled_resources = dxpy.app_builder.upload_resources(src_dir,
                                                               project=working_project,
                                                               folder=override_folder,
-                                                              ensure_upload=ensure_upload) if not dry_run else []
+                                                              ensure_upload=ensure_upload,
+                                                              force_symlinks=force_symlinks) if not dry_run else []
 
         try:
             # TODO: the "auto" setting is vestigial and should be removed.
@@ -845,6 +854,7 @@ def _build_app(args, extra_args):
                 dx_toolkit_autodep=args.dx_toolkit_autodep,
                 do_check_syntax=args.check_syntax,
                 ensure_upload=args.ensure_upload,
+                force_symlinks=args.force_symlinks,
                 dry_run=args.dry_run,
                 confirm=args.confirm,
                 return_object_dump=args.json,

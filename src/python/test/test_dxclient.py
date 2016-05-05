@@ -19,8 +19,10 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re, base64, random, time
+import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re, base64, random, time, filecmp, stat
+import filecmp
 import pipes
+import stat
 import hashlib
 import collections
 from contextlib import contextmanager
@@ -6198,7 +6200,7 @@ def main(in1):
             "outputSpec": [],
             "version": "1.0.0"
             }
-        app_dir = self.write_app_directory("upload_åpp_resources", json.dumps(app_spec), "code.py")
+        app_dir = self.write_app_directory("upload_app_resources", json.dumps(app_spec), "code.py")
         os.mkdir(os.path.join(app_dir, 'resources'))
         with open(os.path.join(app_dir, 'resources', 'test.txt'), 'w') as resources_file:
             resources_file.write('test\n')
@@ -6208,6 +6210,377 @@ def main(in1):
         resources_file_describe = json.loads(run("dx describe --json " + resources_file))
         # Verify that the bundled depends appear in the same folder.
         self.assertEqual(resources_file_describe['folder'], '/subfolder')
+
+    def _build_check_resources(self, app_dir, args="", extract_resources=True):
+        """
+        Builds an app given the arguments and either:
+            - downloads and extracts the tarball to a temp directory, returning the path of
+              the temp directory (when extract_resources is True), or
+            - returns the ID of the resource bundle (when extract_resources is False)
+        """
+
+        # create applet and get the resource_file id
+        new_applet = json.loads(run("dx build -f --json " + args + " " + app_dir))
+        applet_describe = dxpy.api.applet_describe(new_applet["id"])
+        resources_file = applet_describe['runSpec']['bundledDepends'][0]['id']['$dnanexus_link']
+        id1 = dxpy.api.file_describe(resources_file)['id']
+
+        if not extract_resources:
+            return id1
+
+        # download resources tar and extract it to a temp. directory.
+        # note that if the resource directory also contains a file of the name
+        # './res.tar.gz', things could get ugly, but this is just a helper for
+        # a test, so we don't have to worry about this pathological case
+        res_temp_dir = tempfile.mkdtemp()
+        dxpy.download_dxfile(id1, os.path.join(res_temp_dir, 'res.tar.gz'))
+        subprocess.check_call(['tar', '-zxf', os.path.join(res_temp_dir, 'res.tar.gz'), '-C', res_temp_dir])
+
+        # remove the original tar file
+        os.remove(os.path.join(res_temp_dir, 'res.tar.gz'))
+
+        # return the temp directory to perform tests specific to the configuration
+        return res_temp_dir
+
+    def test_upload_resources_symlink(self):
+        app_spec = {
+            "name": "upload_resources_symlink",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+        }
+        test_symlink_dir = "upload_resources_symlink"
+        os.mkdir(os.path.join(self.temp_file_path, test_symlink_dir))
+        app_dir = self.write_app_directory(os.path.join(self.temp_file_path, test_symlink_dir, 'app'), json.dumps(app_spec), "code.py")
+        os.mkdir(os.path.join(app_dir, 'resources'))
+
+        with open(os.path.join(app_dir, 'resources', 'test_file2.txt'), 'w') as resources_file2:
+            resources_file2.write('test_file2\n')
+
+        if 'symbolic_link' in os.listdir(os.path.join(app_dir, 'resources')):
+            os.remove(os.path.join(app_dir, 'resources', 'symbolic_link'))
+
+        # ==== Case 1 ====
+
+        # == Links to local files are kept
+        os.symlink(os.path.join(os.curdir, 'test_file2.txt'), os.path.join(app_dir, 'resources', 'symbolic_link'))
+
+        # build app
+        res_temp_dir = self._build_check_resources(app_dir)
+        # Test symbolic_link is soft link
+        self.assertTrue(os.path.islink(os.path.join(res_temp_dir, 'symbolic_link')))
+
+        shutil.rmtree(res_temp_dir)
+
+        # == Links to local directories are kept when using relative build directory
+
+        curdir = os.getcwd()
+        os.chdir(os.path.join(app_dir, os.pardir))
+
+        # build app in the current wd
+        res_temp_dir = self._build_check_resources('app')
+
+        # Test symbolic_link is a soft link
+        self.assertTrue(os.path.islink(os.path.join(res_temp_dir, 'symbolic_link')))
+
+        shutil.rmtree(res_temp_dir)
+        os.chdir(curdir)
+
+        # == Links to local directories are kept
+        os.remove(os.path.join(app_dir, 'resources', 'symbolic_link'))
+        os.mkdir(os.path.join(app_dir, 'resources', 'local_dir'))
+        os.symlink(os.path.join(os.curdir, 'local_dir'), os.path.join(app_dir, 'resources', 'symbolic_link'))
+
+        # build app
+        res_temp_dir = self._build_check_resources(app_dir)
+        # Test symbolic_link is soft link
+        self.assertTrue(os.path.islink(os.path.join(res_temp_dir, 'symbolic_link')))
+
+        shutil.rmtree(res_temp_dir)
+
+        # ==== Case 2 ====
+
+        # == Links to remote files are dereferenced
+        with open(os.path.join(app_dir, os.pardir, 'test_file_outside.txt'), 'w') as file1:
+            file1.write('test_file_outside\n')
+        os.remove(os.path.join(app_dir, 'resources', 'symbolic_link'))
+        os.symlink(os.path.join(os.pardir, os.pardir, 'test_file_outside.txt'),
+                   os.path.join(app_dir, 'resources', 'symbolic_link'))
+
+        # create applet and get the resource_file id
+        res_temp_dir = self._build_check_resources(app_dir)
+
+        # Test: symbolic_link exists, is NOT a link, and has the same content
+        #       as app_dir/test_file_outside.txt
+        self.assertTrue(os.path.exists(os.path.join(res_temp_dir, 'symbolic_link')))
+        self.assertFalse(os.path.islink(os.path.join(res_temp_dir, 'symbolic_link')))
+        self.assertTrue(filecmp.cmp(os.path.join(res_temp_dir, 'symbolic_link'),
+                                    os.path.join(app_dir, os.pardir, 'test_file_outside.txt')))
+
+        shutil.rmtree(res_temp_dir)
+
+        # == Links to remote files are NOT dereferenced with --force-symlink
+
+        # create applet and get the resource_file id
+        res_temp_dir = self._build_check_resources(app_dir, "--force-symlinks")
+
+        # Test: symbolic_link is a symlink
+        self.assertTrue(os.path.islink(os.path.join(res_temp_dir, 'symbolic_link')))
+
+        shutil.rmtree(res_temp_dir)
+
+        # ==== Case 3 ====
+
+        # == Broken remote links result in build error
+        # NOTE: we just removed the test_file_outside.txt, breaking symbolic_link
+        os.remove(os.path.join(app_dir, os.pardir, 'test_file_outside.txt'))
+
+        with self.assertSubprocessFailure(stderr_regexp="Broken symlink"):
+            run("dx build -f " + app_dir)
+
+        # == Broken remote links are NOT dereferenced with --force-symlink
+
+        # create applet and get the resource_file id
+        res_temp_dir = self._build_check_resources(app_dir, "--force-symlinks")
+
+        # Test: symbolic_link is a symlink
+        self.assertTrue(os.path.islink(os.path.join(res_temp_dir, 'symbolic_link')))
+
+        shutil.rmtree(res_temp_dir)
+
+        # ==== Case 4 ====
+
+        # == Links to remote directories causes an AssertionError
+        os.mkdir(os.path.join(app_dir, 'test_outside_dir'))
+        os.remove(os.path.join(app_dir, 'resources', 'symbolic_link'))
+        os.symlink(os.path.join(os.pardir, 'test_outside_dir'),
+                   os.path.join(app_dir, 'resources', 'symbolic_link'))
+
+        with self.assertSubprocessFailure(stderr_regexp="Cannot include symlinks to directories outside of the resource directory"):
+            run("dx build -f " + app_dir)
+
+        # == Links to remote directories are NOT dereferenced with --force-symlink
+
+        # create applet and get the resource_file id
+        res_temp_dir = self._build_check_resources(app_dir, "--force-symlinks")
+
+        # Test: symbolic_link is a symlink
+        self.assertTrue(os.path.islink(os.path.join(res_temp_dir, 'symbolic_link')))
+
+        shutil.rmtree(res_temp_dir)
+
+        # ==== Case 5 ====
+
+        # == Links to local links (regardless of eventual destination) are kept
+        os.remove(os.path.join(app_dir, 'resources', 'symbolic_link'))
+
+        with open(os.path.join(app_dir, os.pardir, 'remote_file'), 'w') as file1:
+            file1.write('remote file outside\n')
+
+        os.symlink(os.path.join(os.pardir, os.pardir, 'remote_file'), os.path.join(app_dir, 'resources', 'remote_link'))
+        os.symlink(os.path.join(os.curdir, 'remote_link'), os.path.join(app_dir, 'resources', 'symbolic_link'))
+
+        # create applet and get the resource_file id
+        res_temp_dir = self._build_check_resources(app_dir)
+
+        # Test: symbolic_link is a symlink
+        self.assertTrue(os.path.islink(os.path.join(res_temp_dir, 'symbolic_link')))
+
+        shutil.rmtree(res_temp_dir)
+
+        # ==== Case 6 ====
+
+        # == Links to remote links (which are links to a file) are dereferenced
+        os.remove(os.path.join(app_dir, 'resources', 'remote_link'))
+        os.remove(os.path.join(app_dir, 'resources', 'symbolic_link'))
+        os.mkdir(os.path.join(app_dir, os.pardir, 'lib'))
+        shutil.move(os.path.join(app_dir, os.pardir, 'remote_file'), os.path.join(app_dir, os.pardir, 'lib'))
+        os.symlink(os.path.join(app_dir, os.pardir, 'lib', 'remote_file'), os.path.join(app_dir, os.pardir, 'outside_link'))
+        os.symlink(os.path.join(os.pardir, os.pardir, 'outside_link'), os.path.join(app_dir, 'resources', 'symbolic_link'))
+
+        # create applet and get the resource_file id
+        res_temp_dir = self._build_check_resources(app_dir)
+
+        # Test: symbolic_link is NOT a symlink and is the same file as app_dir/../lib/remote_file
+        self.assertFalse(os.path.islink(os.path.join(res_temp_dir, 'symbolic_link')))
+        self.assertTrue(filecmp.cmp(os.path.join(res_temp_dir, 'symbolic_link'),
+                                    os.path.join(app_dir, os.pardir, 'lib', 'remote_file')))
+
+        shutil.rmtree(res_temp_dir)
+
+        # == Links to remote links (which are links to a file) are kept using --force-symlink
+        res_temp_dir = self._build_check_resources(app_dir, "--force-symlinks")
+
+        # Test: symbolic_link is a symlink
+        self.assertTrue(os.path.islink(os.path.join(res_temp_dir, 'symbolic_link')))
+
+        shutil.rmtree(res_temp_dir)
+
+        # ==== Case 7 ====
+
+        # == Absolute links to files are ALWAYS dereferenced, regardless of destination
+        os.remove(os.path.join(app_dir, 'resources', 'symbolic_link'))
+        os.symlink(os.path.join(app_dir, 'resources', 'test_file2.txt'), os.path.join(app_dir, 'resources', 'symbolic_link'))
+
+        # create applet and get the resource_file id
+        res_temp_dir = self._build_check_resources(app_dir)
+
+        # Test: symbolic_link is NOT a symlink and is the same file as test_file2.txt
+        self.assertFalse(os.path.islink(os.path.join(res_temp_dir, 'symbolic_link')))
+        self.assertTrue(filecmp.cmp(os.path.join(res_temp_dir, 'symbolic_link'),
+                                    os.path.join(app_dir, 'resources', 'test_file2.txt')))
+
+        shutil.rmtree(res_temp_dir)
+
+        # == Absolute links to files are kept using --force-symlink
+        res_temp_dir = self._build_check_resources(app_dir, "--force-symlinks")
+
+        # Test: symbolic_link is a symlink
+        self.assertTrue(os.path.islink(os.path.join(res_temp_dir, 'symbolic_link')))
+
+        shutil.rmtree(res_temp_dir)
+
+        # == Absolute links to directories cause an error, regardless of destination
+        os.remove(os.path.join(app_dir, 'resources', 'symbolic_link'))
+        os.symlink(os.path.join(app_dir, 'resources', 'local_dir'), os.path.join(app_dir, 'resources', 'symbolic_link'))
+
+        with self.assertSubprocessFailure(stderr_regexp="Cannot include symlinks to directories outside of the resource directory"):
+            run("dx build -f " + app_dir)
+
+        # == Absolute links to directories are keps when --force-symlinks is used
+        res_temp_dir = self._build_check_resources(app_dir, "--force-symlinks")
+
+        # Test: symbolic_link is a symlink
+        self.assertTrue(os.path.islink(os.path.join(res_temp_dir, 'symbolic_link')))
+
+        # ==== Case 8 ====
+
+        # == Relative link to a file that extends outside the resource path is dereferenced
+        os.remove(os.path.join(app_dir, 'resources', 'symbolic_link'))
+        os.symlink(os.path.join(os.pardir, 'resources', 'test_file2.txt'), os.path.join(app_dir, 'resources', 'symbolic_link'))
+
+        # create applet and get the resource_file id
+        res_temp_dir = self._build_check_resources(app_dir)
+
+        # Test: symbolic_link is NOT a symlink and is the same file as test_file2.txt
+        self.assertFalse(os.path.islink(os.path.join(res_temp_dir, 'symbolic_link')))
+        self.assertTrue(filecmp.cmp(os.path.join(res_temp_dir, 'symbolic_link'),
+                                    os.path.join(app_dir, 'resources', 'test_file2.txt')))
+
+        shutil.rmtree(res_temp_dir)
+
+        # == Relative link to a file that extends outside resource path is kept using --force-symlinks
+        res_temp_dir = self._build_check_resources(app_dir, "--force-symlinks")
+
+        # Test: symbolic_link is a symlink
+        self.assertTrue(os.path.islink(os.path.join(res_temp_dir, 'symbolic_link')))
+
+        shutil.rmtree(res_temp_dir)
+
+        # == Relative link to directory extending outside resource path causes error
+        os.remove(os.path.join(app_dir, 'resources', 'symbolic_link'))
+        os.symlink(os.path.join(os.pardir, 'resources', 'local_dir'), os.path.join(app_dir, 'resources', 'symbolic_link'))
+
+        with self.assertSubprocessFailure(stderr_regexp="Cannot include symlinks to directories outside of the resource directory"):
+            run("dx build -f " + app_dir)
+
+        # == Relative link to directory extending outside resource path are kept when --force-symlinks is used
+        res_temp_dir = self._build_check_resources(app_dir, "--force-symlinks")
+
+        # Test: symbolic_link is a symlink
+        self.assertTrue(os.path.islink(os.path.join(res_temp_dir, 'symbolic_link')))
+
+        shutil.rmtree(res_temp_dir)
+
+    def test_upload_resources_permissions(self):
+        app_spec = {
+            "name": "upload_resources_permissions",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+        }
+        test_perms_dir = "upload_resources_permissions"
+        os.mkdir(os.path.join(self.temp_file_path, test_perms_dir))
+        app_dir = self.write_app_directory(os.path.join(self.temp_file_path, test_perms_dir, 'app'), json.dumps(app_spec), "code.py")
+        os.mkdir(os.path.join(app_dir, 'resources'))
+
+        with open(os.path.join(app_dir, 'resources', 'test_644.txt'), 'w') as rf:
+            rf.write('test_permissions: 644\n')
+        with open(os.path.join(app_dir, 'resources', 'test_660.txt'), 'w') as rf:
+            rf.write('test_permissions: 660\n')
+        with open(os.path.join(app_dir, 'resources', 'test_400.txt'), 'w') as rf:
+            rf.write('test_permissions: 400\n')
+        with open(os.path.join(app_dir, 'resources', 'test_755.txt'), 'w') as rf:
+            rf.write('test_permissions: 755\n')
+        with open(os.path.join(app_dir, 'resources', 'test_770.txt'), 'w') as rf:
+            rf.write('test_permissions: 770\n')
+        with open(os.path.join(app_dir, 'resources', 'test_670.txt'), 'w') as rf:
+            rf.write('test_permissions: 670\n')
+
+        # Now, set the permissions alluded to above
+        os.chmod(os.path.join(app_dir, 'resources', 'test_644.txt'),
+            stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
+        os.chmod(os.path.join(app_dir, 'resources', 'test_660.txt'),
+            stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP)
+        os.chmod(os.path.join(app_dir, 'resources', 'test_400.txt'),
+            stat.S_IRUSR)
+        os.chmod(os.path.join(app_dir, 'resources', 'test_755.txt'),
+            stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+        os.chmod(os.path.join(app_dir, 'resources', 'test_770.txt'),
+            stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP)
+        os.chmod(os.path.join(app_dir, 'resources', 'test_670.txt'),
+            stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP)
+
+        # build app
+        res_temp_dir = self._build_check_resources(app_dir)
+
+        # Test file permissions (all will have stat.S_IFREG as well)
+        # 644 => 644
+        self.assertEquals(os.stat(os.path.join(res_temp_dir, "test_644.txt")).st_mode,
+            stat.S_IFREG | stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
+        # 660 => 664
+        self.assertEquals(os.stat(os.path.join(res_temp_dir, "test_660.txt")).st_mode,
+            stat.S_IFREG | stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH)
+        # 400 => 444
+        self.assertEquals(os.stat(os.path.join(res_temp_dir, "test_400.txt")).st_mode,
+            stat.S_IFREG | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+        # 755 => 755
+        self.assertEquals(os.stat(os.path.join(res_temp_dir, "test_755.txt")).st_mode,
+            stat.S_IFREG | stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+        # 770 => 775
+        self.assertEquals(os.stat(os.path.join(res_temp_dir, "test_770.txt")).st_mode,
+            stat.S_IFREG | stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+        # 670 => 674
+        self.assertEquals(os.stat(os.path.join(res_temp_dir, "test_670.txt")).st_mode,
+            stat.S_IFREG | stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH)
+
+        shutil.rmtree(res_temp_dir)
+
+        # If we make a permission change that does NOT affect the tar, we should re-use the resource bundle
+        id1 = self._build_check_resources(app_dir, extract_resources=False)
+
+        # change the 400 => 444
+        os.chmod(os.path.join(app_dir, 'resources', 'test_400.txt'),
+            stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+
+        id2 = self._build_check_resources(app_dir, extract_resources=False)
+
+        self.assertEquals(id1, id2)
+
+        # If we make a permission change that DOES affect the tar, we should rebuild
+
+        # change 400 => 500 (will result in perms 555)
+        os.chmod(os.path.join(app_dir, 'resources', 'test_400.txt'),
+            stat.S_IRUSR | stat.S_IXUSR)
+
+        id3 = self._build_check_resources(app_dir, extract_resources=False)
+
+        self.assertNotEquals(id1, id3)
+
 
     def test_upload_resources_advanced(self):
         app_spec = {
@@ -6231,18 +6604,12 @@ def main(in1):
             os.remove(os.path.join(app_dir, 'resources', 'symbolic_link'))
         os.symlink(os.path.join(app_dir, 'test_file1.txt'), os.path.join(app_dir, 'resources', 'symbolic_link'))
 
-        new_applet = json.loads(run("dx build --json " + app_dir))
-        applet_describe = dxpy.api.applet_describe(new_applet["id"])
-        resources_file = applet_describe['runSpec']['bundledDepends'][0]['id']['$dnanexus_link']
-        id1 = dxpy.api.file_describe(resources_file)['id']
+        id1 = self._build_check_resources(app_dir, "--force-symlinks", False)
 
         # Remove test_file1.txt, even though symbolic_link points to it. Removal itself will not affect checksum
         os.remove(os.path.join(app_dir, 'test_file1.txt'))
 
-        new_applet = json.loads(run("dx build -f --json " + app_dir))
-        applet_describe = dxpy.api.applet_describe(new_applet["id"])
-        resources_file = applet_describe['runSpec']['bundledDepends'][0]['id']['$dnanexus_link']
-        id2 = dxpy.api.file_describe(resources_file)['id']
+        id2 = self._build_check_resources(app_dir, "--force-symlinks", False)
 
         self.assertEqual(id1, id2)  # No upload happened
 
@@ -6251,22 +6618,84 @@ def main(in1):
         os.symlink(os.path.join(app_dir, 'resources', 'test_file2.txt'),
                    os.path.join(app_dir, 'resources', 'symbolic_link'))
 
-        new_applet = json.loads(run("dx build -f --json " + app_dir))
-        applet_describe = dxpy.api.applet_describe(new_applet["id"])
-        resources_file = applet_describe['runSpec']['bundledDepends'][0]['id']['$dnanexus_link']
-        id3 = dxpy.api.file_describe(resources_file)['id']
+        id3 = self._build_check_resources(app_dir, "--force-symlinks", False)
 
         self.assertNotEqual(id2, id3)  # Upload should have happened
 
-        new_applet = json.loads(run("dx build -f --ensure-upload --json " + app_dir))
-        applet_describe = dxpy.api.applet_describe(new_applet["id"])
-        resources_file = applet_describe['runSpec']['bundledDepends'][0]['id']['$dnanexus_link']
-        resources_file_describe = json.loads(run("dx describe --json " + resources_file))
-
-        id4 = resources_file_describe['id']
+        # Force upload even with no changes
+        id4 = self._build_check_resources(app_dir, "--force-symlinks --ensure-upload", False)
 
         self.assertNotEqual(id3, id4)  # Upload should have happened
+
+        # Also, the new bundle should not have a checksum property
+        # (and thus be eligible for future loads)
+        resources_file_describe = json.loads(run("dx describe --json " + id4))
         self.assertNotIn('resource_bundle_checksum', resources_file_describe['properties'])
+
+        # Test the behavior without --force-symlinks
+
+        # First, let's clean up the old resources directory
+        shutil.rmtree(os.path.join(app_dir, 'resources'))
+        os.mkdir(os.path.join(app_dir, 'resources'))
+
+        # create a couple files both inside and outside the directory
+        with open(os.path.join(app_dir, 'outside_file1.txt'), 'w') as fn:
+            fn.write('test_file1\n')
+        with open(os.path.join(app_dir, 'outside_file2.txt'), 'w') as fn:
+            fn.write('test_file2\n')
+        with open(os.path.join(app_dir, 'resources', 'inside_file1.txt'), 'w') as fn:
+            fn.write('test_file1\n')
+        with open(os.path.join(app_dir, 'resources', 'inside_file2.txt'), 'w') as fn:
+            fn.write('test_file2\n')
+
+        os.symlink(os.path.join(app_dir, 'outside_file1.txt'), os.path.join(app_dir, 'outside_link'))
+
+        # First, testing dereferencing of links
+        # Create a link to be dereferenced
+        if 'symbolic_link' in os.listdir(os.path.join(app_dir, 'resources')):
+            os.remove(os.path.join(app_dir, 'resources', 'symbolic_link'))
+
+        # NOTE: we're going to have to use a link to a link in order to avoid modifying the directory mtime
+        os.symlink(os.path.join(app_dir, 'outside_link'), os.path.join(app_dir, 'resources', 'symbolic_link'))
+
+        idr1 = self._build_check_resources(app_dir, "", False)
+
+        # Update the link target; modify target mtime
+        with open(os.path.join(app_dir, 'outside_file1.txt'), 'w') as fn:
+            fn.write('test_file1 Update!\n')
+
+        idr2 = self._build_check_resources(app_dir, "", False)
+
+        self.assertNotEqual(idr1, idr2) # Upload should happen
+
+        # Change link destination; target mtime change
+        os.remove(os.path.join(app_dir, 'outside_link'))
+        os.symlink(os.path.join(app_dir, 'outside_file2.txt'), os.path.join(app_dir, 'outside_link'))
+
+        idr3 = self._build_check_resources(app_dir, "", False)
+
+        # New Upload should happen
+        self.assertNotEqual(idr2, idr3)
+
+        # Add another link the the chain, but eventual destination doesn't change
+        os.remove(os.path.join(app_dir, 'outside_link'))
+        os.symlink(os.path.join(app_dir, 'outside_file2.txt'), os.path.join(app_dir, 'outside_link_1'))
+        os.symlink(os.path.join(app_dir, 'outside_link_1'), os.path.join(app_dir, 'outside_link'))
+
+        idr4 = self._build_check_resources(app_dir, "", False)
+
+        # New Upload should NOT happen - filename change
+        self.assertEqual(idr3, idr4)
+
+        # However, if we ensure upload, we need to upload!
+        idr5 = self._build_check_resources(app_dir, "--ensure-upload", False)
+
+        # New Upload should happen
+        self.assertNotEqual(idr4, idr5)
+
+        # NOTE: for non-dereferenced links, almost any change will result in an mtime change
+        # for the directory or a file within.  It's virtually impossible to make a local
+        # symlink change and NOT create a new tarball, so we won't test that
 
     def test_archive_in_another_project(self):
         app_spec = {

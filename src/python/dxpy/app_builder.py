@@ -38,7 +38,11 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os, sys, json, subprocess, tempfile, multiprocessing
 import datetime
+import gzip
 import hashlib
+import io
+import tarfile
+import stat
 
 import dxpy
 from . import logger
@@ -131,58 +135,62 @@ def get_destination_project(src_dir, project=None):
         return project
     return _get_applet_spec(src_dir)['project']
 
-
-def _directory_checksum(resources_dir):
-    """Returns a hash of the contents of resources_dir.
-
-    The hash is based purely on the names, mtimes, and modes of the
-    files, and not on the contents or other metadata.
-
+def is_link_local(link_target):
     """
+    :param link_target: The target of a symbolic link, as given by os.readlink()
+    :type link_target: string
+    :returns: A boolean indicating the link is local to the current directory.
+              This is defined to mean that os.path.isabs(link_target) == False
+              and the link NEVER references the parent directory, so
+              "./foo/../../curdir/foo" would return False.
+    :rtype: boolean
+    """
+    is_local=(not os.path.isabs(link_target))
 
-    # The input to the SHA1 contains entries of the form (whitespace
-    # only included here for readability):
-    #
-    # / \0 MODE \0 MTIME \0
-    # /foo \0 MODE \0 MTIME \0
-    # ...
-    #
-    # where there is one entry for each directory or file (order is
-    # specified below), followed by a numeric representation of the
-    # mode, and the mtime in milliseconds since the epoch.
+    if is_local:
+        # make sure that the path NEVER extends outside the resources directory!
+        d,l = os.path.split(link_target)
+        link_parts = []
+        while l:
+            link_parts.append(l)
+            d,l = os.path.split(d)
+        curr_path = os.sep
 
-    output_sha1 = hashlib.sha1()
+        for p in reversed(link_parts):
+            is_local = (is_local and not (curr_path == os.sep and p == os.pardir) )
+            curr_path = os.path.abspath(os.path.join(curr_path, p))
 
-    for dirname, subdirs, files in os.walk(resources_dir):
-        if not dirname.startswith(resources_dir):
-            raise AssertionError('Expected %r to start with root directory %r' % (dirname, resources_dir))
+    return is_local
 
-        # Add an entry for the directory itself
-        relative_dirname = dirname[len(resources_dir):]
-        dir_stat = os.lstat(dirname)
-        if not relative_dirname.startswith('/'):
-            relative_dirname = '/' + relative_dirname
-        fields = [relative_dirname, str(dir_stat.st_mode), str(int(dir_stat.st_mtime * 1000))]
-        output_sha1.update(b''.join(s.encode('utf-8') + b'\0' for s in fields))
+def _fix_perms(perm_obj):
+    """
+    :param perm_obj: A permissions object, as given by os.stat()
+    :type perm_obj: integer
+    :returns: A permissions object that is the result of "chmod a+rX" on the
+              given permission object.  This is defined to be the permission object
+              bitwise or-ed with all stat.S_IR*, and if the stat.S_IXUSR bit is
+              set, then the permission object should also be returned bitwise or-ed
+              with stat.S_IX* (stat.S_IXUSR not included because it would be redundant).
+    :rtype: integer
+    """
+    ret_perm = perm_obj | stat.S_IROTH | stat.S_IRGRP | stat.S_IRUSR
+    if ret_perm & stat.S_IXUSR:
+        ret_perm = ret_perm | stat.S_IXGRP | stat.S_IXOTH
 
-        # Canonicalize the order of files so that we compute the
-        # checksum in a consistent order
-        for filename in sorted(files):
-            relative_filename = os.path.join(relative_dirname, filename)
-            true_filename = os.path.join(dirname, filename)
+    return ret_perm
 
-            file_stat = os.lstat(true_filename)
-            fields = [relative_filename, str(file_stat.st_mode), str(int(file_stat.st_mtime * 1000))]
-            output_sha1.update(b''.join(s.encode('utf-8') + b'\0' for s in fields))
-
-        # Canonicalize the order of subdirectories; this is the order in
-        # which they will be visited by os.walk
-        subdirs.sort()
-
-    return output_sha1.hexdigest()
+def _fix_perm_filter(tar_obj):
+    """
+    :param tar_obj: A TarInfo object to be added to a tar file
+    :tpye tar_obj: tarfile.TarInfo
+    :returns: A TarInfo object with permissions changed (a+rX)
+    :rtype: tarfile.TarInfo
+    """
+    tar_obj.mode = _fix_perms(tar_obj.mode)
+    return tar_obj
 
 
-def upload_resources(src_dir, project=None, folder='/', ensure_upload=False):
+def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, force_symlinks=False):
     """
     :param ensure_upload: If True, will bypass checksum of resources directory
                           and upload resources bundle unconditionally;
@@ -191,6 +199,12 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False):
                           if checksum is different from a previously uploaded
                           bundle's checksum.
     :type ensure_upload: boolean
+    :param force_symlinks: If true, will bypass the attempt to dereference any
+                           non-local symlinks and will unconditionally include
+                           the link as-is.  Note that this will almost certainly
+                           result in a broken link within the resource directory
+                           unless you really know what you're doing.
+    :type force_symlinks: boolean
     :returns: A list (possibly empty) of references to the generated archive(s)
     :rtype: list
 
@@ -212,50 +226,182 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False):
     if os.path.exists(resources_dir) and len(os.listdir(resources_dir)) > 0:
         target_folder = applet_spec['folder'] if 'folder' in applet_spec else folder
 
-        # Optimistically look for a resource bundle with the same
-        # contents, and reuse it if possible. The resource bundle
-        # carries a property 'resource_bundle_checksum' that indicates
-        # the checksum; the way in which the checksum is computed is
-        # given in the documentation of _directory_checksum.
+        # While creating the resource bundle, optimistically look for a
+        # resource bundle with the same contents, and reuse it if possible.
+        # The resource bundle carries a property 'resource_bundle_checksum'
+        # that indicates the checksum; the way in which the checksum is
+        # computed is given below.   If the checksum matches  (and
+        # ensure_upload is False), then we will use the existing file,
+        # otherwise, we will compress and upload the tarball.
 
-        if ensure_upload:
-            properties_dict = {}
-            existing_resources = False
-        else:
-            directory_checksum = _directory_checksum(resources_dir)
-            properties_dict = dict(resource_bundle_checksum=directory_checksum)
-            existing_resources = dxpy.find_one_data_object(
-                project=dest_project,
-                folder=target_folder,
-                properties=dict(resource_bundle_checksum=directory_checksum),
-                visibility='either',
-                zero_ok=True,
-                state='closed',
-                return_handler=True
-            )
 
-        if existing_resources:
-            logger.info("Found existing resource bundle that matches local resources directory: " +
-                        existing_resources.get_id())
+        # The input to the SHA1 contains entries of the form (whitespace
+        # only included here for readability):
+        #
+        # / \0 MODE \0 MTIME \0
+        # /foo \0 MODE \0 MTIME \0
+        # ...
+        #
+        # where there is one entry for each directory or file (order is
+        # specified below), followed by a numeric representation of the
+        # mode, and the mtime in milliseconds since the epoch.
+        #
+        # Note when looking at a link, if the link is to be dereferenced,
+        # the mtime and mode used are that of the target (using os.stat())
+        # If the link is to be kept as a link, the mtime and mode are those
+        # of the link itself (using os.lstat())
 
-            dx_resource_archive = existing_resources
-        else:
-            logger.debug("Uploading in " + src_dir)
+        with tempfile.NamedTemporaryFile(suffix=".tar") as tar_tmp_fh:
 
-            with tempfile.NamedTemporaryFile(suffix=".tar.gz") as tar_fh:
-                # The directory contents may have changed since the
-                # first time we checksummed the directory. Ideally we
-                # would extract the tar file to determine the checksum
-                # of the actually archived files, but maybe this is a
-                # little too paranoid.
-                subprocess.check_call(['tar', '-C', resources_dir, '-czf', tar_fh.name, '.'])
+            output_sha1 = hashlib.sha1()
+            tar_fh = tarfile.open(fileobj=tar_tmp_fh, mode='w')
+
+            for dirname, subdirs, files in os.walk(resources_dir):
+                if not dirname.startswith(resources_dir):
+                    raise AssertionError('Expected %r to start with root directory %r' % (dirname, resources_dir))
+
+                # Add an entry for the directory itself
+                relative_dirname = dirname[len(resources_dir):]
+                dir_stat = os.lstat(dirname)
+                if not relative_dirname.startswith('/'):
+                    relative_dirname = '/' + relative_dirname
+
+                fields = [relative_dirname, str(_fix_perms(dir_stat.st_mode)), str(int(dir_stat.st_mtime * 1000))]
+                output_sha1.update(b''.join(s.encode('utf-8') + b'\0' for s in fields))
+
+                # add an entry in the tar file for the current directory, but
+                # do not recurse!
+                tar_fh.add(dirname, arcname='.' + relative_dirname, recursive=False, filter=_fix_perm_filter)
+
+                # Canonicalize the order of subdirectories; this is the order in
+                # which they will be visited by os.walk
+                subdirs.sort()
+
+                # check the subdirectories for symlinks.  We should throw an error
+                # if there are any links that point outside of the directory (unless
+                # --force-symlinks is given).  If a link is pointing internal to
+                # the directory (or --force-symlinks is given), we should add it
+                # as a file.
+                for subdir_name in subdirs:
+                    dir_path = os.path.join(dirname, subdir_name)
+
+                    # If we do have a symlink,
+                    if os.path.islink(dir_path):
+                        # Let's get the pointed-to path to ensure that it is
+                        # still in the directory
+                        link_target = os.readlink(dir_path)
+
+                        # If this is a local link, add it to the list of files (case 1)
+                        # else raise an error
+                        if force_symlinks or is_link_local(link_target):
+                            files.append(subdir_name)
+                        else:
+                            raise AppBuilderException("Cannot include symlinks to directories outside of the resource directory.  '%s' points to directory '%s'" % (dir_path, os.path.realpath(dir_path)))
+
+
+                # Canonicalize the order of files so that we compute the
+                # checksum in a consistent order
+                for filename in sorted(files):
+                    deref_link = False
+
+                    relative_filename = os.path.join(relative_dirname, filename)
+                    true_filename = os.path.join(dirname, filename)
+
+                    file_stat = os.lstat(true_filename)
+                    # check for a link here, please!
+                    if os.path.islink(true_filename):
+
+                        # Get the pointed-to path
+                        link_target = os.readlink(true_filename)
+
+                        if not (force_symlinks or is_link_local(link_target)):
+                            # if we are pointing outside of the directory, then:
+                            # try to get the true stat of the file and make sure
+                            # to dereference the link!
+                            try:
+                                file_stat = os.stat(os.path.join(dirname, link_target))
+                                deref_link = True
+                            except OSError:
+                                # uh-oh! looks like we have a broken link!
+                                # since this is guaranteed to cause problems (and
+                                # we know we're not forcing symlinks here), we
+                                # should throw an error
+                                raise AppBuilderException("Broken symlink: Link '%s' points to '%s', which does not exist" % (true_filename, os.path.realpath(true_filename)) )
+
+
+                    fields = [relative_filename, str(_fix_perms(file_stat.st_mode)), str(int(file_stat.st_mtime * 1000))]
+                    output_sha1.update(b''.join(s.encode('utf-8') + b'\0' for s in fields))
+
+                    # If we are to dereference, use the target fn
+                    if deref_link:
+                        true_filename = os.path.realpath(true_filename)
+
+                    tar_fh.add(true_filename, arcname='.' + relative_filename, filter=_fix_perm_filter)
+
+                # end for filename in sorted(files)
+
+            # end for dirname, subdirs, files in os.walk(resources_dir):
+
+            # at this point, the tar is complete, so close the tar_fh
+            tar_fh.close()
+
+            # Optimistically look for a resource bundle with the same
+            # contents, and reuse it if possible. The resource bundle
+            # carries a property 'resource_bundle_checksum' that indicates
+            # the checksum; the way in which the checksum is computed is
+            # given in the documentation of _directory_checksum.
+
+            if ensure_upload:
+                properties_dict = {}
+                existing_resources = False
+            else:
+                directory_checksum = output_sha1.hexdigest()
+                properties_dict = dict(resource_bundle_checksum=directory_checksum)
+                existing_resources = dxpy.find_one_data_object(
+                    project=dest_project,
+                    folder=target_folder,
+                    properties=dict(resource_bundle_checksum=directory_checksum),
+                    visibility='either',
+                    zero_ok=True,
+                    state='closed',
+                    return_handler=True
+                )
+
+            if existing_resources:
+                logger.info("Found existing resource bundle that matches local resources directory: " +
+                            existing_resources.get_id())
+
+                dx_resource_archive = existing_resources
+            else:
+
+                logger.debug("Uploading in " + src_dir)
+                # We need to compress the tar that we've created
+
+
+                targz_fh = tempfile.NamedTemporaryFile(suffix=".tar.gz", delete=False)
+
+                # compress the file by reading the tar file and passing
+                # it though a GzipFile object, writing the given
+                # block size (by default 8192 bytes) at a time
+                targz_gzf = gzip.GzipFile(fileobj=targz_fh)
+                tar_tmp_fh.seek(0)
+                dat = tar_tmp_fh.read(io.DEFAULT_BUFFER_SIZE)
+                while dat:
+                    targz_gzf.write(dat)
+                    dat = tar_tmp_fh.read(io.DEFAULT_BUFFER_SIZE)
+
+                targz_gzf.flush()
+                targz_gzf.close()
+                targz_fh.close()
+
                 if 'folder' in applet_spec:
                     try:
                         dxpy.get_handler(dest_project).new_folder(applet_spec['folder'], parents=True)
                     except dxpy.exceptions.DXAPIError:
                         pass # TODO: make this better
+
                 dx_resource_archive = dxpy.upload_local_file(
-                    tar_fh.name,
+                    targz_fh.name,
                     wait_on_close=True,
                     project=dest_project,
                     folder=target_folder,
@@ -263,7 +409,14 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False):
                     properties=properties_dict
                 )
 
-        archive_link = dxpy.dxlink(dx_resource_archive.get_id())
+                os.unlink(targz_fh.name)
+
+                # end compressed file creation and upload
+
+            archive_link = dxpy.dxlink(dx_resource_archive.get_id())
+
+        # end tempfile.NamedTemporaryFile(suffix=".tar") as tar_fh
+
         return [{'name': 'resources.tar.gz', 'id': archive_link}]
     else:
         return []
