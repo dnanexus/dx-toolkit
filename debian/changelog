@@ -1,3 +1,10 @@
+dx-toolkit (0.189.2) precise; urgency=low
+
+  * get_download_url issue: Reverting 439dc3f 3425184
+  * Do not delete argcomplete executables from 32a19e5
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 05 May 2016 20:09:22 +0000
+
 dx-toolkit (0.189.1) precise; urgency=low
 
   * Fix argcomplete failures due to 67896ca 
