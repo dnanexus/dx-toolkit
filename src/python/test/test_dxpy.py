@@ -377,6 +377,7 @@ class TestDXFile(unittest.TestCase):
         dxpy.download_dxfile(self.dxfile, filename=self.new_file.name)
         self.assertTrue(filecmp.cmp(self.foo_file.name, self.new_file.name))
 
+    @unittest.skipUnless(testutil.TEST_MULTIPLE_USERS, 'skipping test that would require multiple users')
     def test_upload_file_with_custom_auth(self):
         tempdir = tempfile.mkdtemp()
         try:
