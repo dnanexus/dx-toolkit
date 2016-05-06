@@ -1,0 +1,249 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2016 DNAnexus, Inc.
+#
+# This file is part of dx-toolkit (DNAnexus platform client libraries).
+#
+#   Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#   use this file except in compliance with the License. You may obtain a copy
+#   of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#   License for the specific language governing permissions and limitations
+#   under the License.
+
+from __future__ import print_function, unicode_literals, division, absolute_import
+
+import os
+import unittest
+import tempfile
+import json
+import sys
+import shutil
+
+import dxpy
+import dxpy_testutil as testutil
+from dxpy_testutil import (DXTestCase, check_output, override_environment)
+
+
+def run(command, **kwargs):
+    print("$ %s" % (command,))
+    output = check_output(command, shell=True, **kwargs)
+    print(output)
+    return output
+
+
+class TestDXBuildAsset(DXTestCase):
+    def setUp(self):
+        super(TestDXBuildAsset, self).setUp()
+        self.temp_file_path = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_file_path)
+        super(TestDXBuildAsset, self).tearDown()
+
+    def write_asset_directory(self, asset_name, dxasset_str, asset_rsc_dir=None, makefile_str=None):
+        # Note: if called twice with the same asset_name, will overwrite
+        # the dxasset.json
+        try:
+            os.mkdir(os.path.join(self.temp_file_path, asset_name))
+        except OSError as e:
+            if e.errno != 17:
+                raise e
+        if dxasset_str is not None:
+            with open(os.path.join(self.temp_file_path, asset_name, 'dxasset.json'), 'wb') as manifest:
+                manifest.write(dxasset_str.encode())
+        if asset_rsc_dir:
+            try:
+                os.mkdir(os.path.join(self.temp_file_path, asset_name, asset_rsc_dir))
+            except OSError as e:
+                if e.errno != 17:
+                    raise e
+        if makefile_str is not None:
+            with open(os.path.join(self.temp_file_path, asset_name, 'Makefile'), 'wb') as manifest:
+                manifest.write(makefile_str.encode())
+
+        return os.path.join(self.temp_file_path, asset_name)
+
+    def write_app_directory(self, app_name, dxapp_str, code_filename=None, code_content="\n"):
+        # Note: if called twice with the same app_name, will overwrite
+        # the dxapp.json and code file (if specified) but will not
+        # remove any other files that happened to be present
+        try:
+            os.mkdir(os.path.join(self.temp_file_path, app_name))
+        except OSError as e:
+            if e.errno != 17:  # directory already exists
+                raise e
+        if dxapp_str is not None:
+            with open(os.path.join(self.temp_file_path, app_name, 'dxapp.json'), 'wb') as manifest:
+                manifest.write(dxapp_str.encode())
+        if code_filename:
+            with open(os.path.join(self.temp_file_path, app_name, code_filename), 'w') as code_file:
+                code_file.write(code_content)
+        return os.path.join(self.temp_file_path, app_name)
+
+    def test_build_asset_help(self):
+        env = override_environment(DX_SECURITY_CONTEXT=None, DX_APISERVER_HOST=None,
+                                   DX_APISERVER_PORT=None, DX_APISERVER_PROTOCOL=None)
+        run("dx build_asset -h", env=env)
+
+    def test_build_asset_with_no_dxasset_json(self):
+        asset_dir = self.write_asset_directory("asset_with_no_json", None)
+        with self.assertSubprocessFailure(stderr_regexp='is not a valid DNAnexus asset source directory',
+                                          exit_code=1):
+            run("dx build_asset " + asset_dir)
+
+    def test_build_asset_with_malformed_dxasset_json(self):
+        asset_dir = self.write_asset_directory("asset_with_malform_json", "{")
+        with self.assertSubprocessFailure(stderr_regexp='Could not parse dxasset\.json', exit_code=1):
+            run("dx build_asset " + asset_dir)
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
+    def test_build_asset_with_valid_dxasset(self):
+        asset_spec = {
+            "name": "asset_library_name",
+            "title": "A human readable name",
+            "description": " A detailed description about the asset",
+            "version": "0.0.1",
+            "distribution": "Ubuntu",
+            "release": "12.04",
+            "execDepends": [{"name": "python-numpy"}]
+        }
+        asset_dir = self.write_asset_directory("asset_with_valid_json", json.dumps(asset_spec))
+        asset_bundle_id = json.loads(run('dx build_asset --json ' + asset_dir))['id']
+        self.assertIn('record', asset_bundle_id)
+        self.assertEqual(dxpy.describe(asset_bundle_id)['project'], self.project)
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
+    def test_build_asset_with_valid_destination(self):
+        asset_spec = {
+            "name": "foo",
+            "title": "A human readable name",
+            "description": " A detailed description about the asset",
+            "version": "0.0.1",
+            "distribution": "Ubuntu",
+            "release": "12.04",
+            "execDepends": [{"name": "python-numpy"}]
+        }
+        asset_dir = self.write_asset_directory("asset_with_valid_destination", json.dumps(asset_spec))
+        with testutil.temporary_project() as other_project:
+            test_dirname = 'asset_dir'
+            run('dx mkdir -p {project}:{dirname}'.format(project=other_project.get_id(), dirname=test_dirname))
+            asset_bundle_id = json.loads(run('dx build_asset --json --destination ' + other_project.get_id() +
+                                             ':/' + test_dirname + '/ ' + asset_dir))['id']
+            self.assertIn('record', asset_bundle_id)
+            asset_desc = dxpy.describe(asset_bundle_id)
+            self.assertEqual(asset_desc['project'], other_project.get_id())
+            self.assertEqual(asset_desc['folder'], '/asset_dir')
+
+    def test_build_asset_invalid_destination(self):
+        asset_spec = {
+            "name": "asset_library_name",
+            "title": "A human readable name",
+            "description": " A detailed description about the asset",
+            "version": "0.0.1",
+            "distribution": "Ubuntu",
+            "release": "12.04"
+        }
+        asset_dir = self.write_asset_directory("asset_with_invalid_destination", json.dumps(asset_spec))
+        with self.assertSubprocessFailure(stderr_regexp='Could not find a project named', exit_code=3):
+            run("dx build_asset -d test:/new-name " + asset_dir)
+
+    def test_build_asset_missing_fields(self):
+        asset_spec = {
+            "title": "A human readable name",
+            "description": " A detailed description about the asset",
+            "version": "0.0.1",
+            "distribution": "Ubuntu",
+            "release": "12.04"
+        }
+        asset_dir = self.write_asset_directory("asset_with_missing_fields", json.dumps(asset_spec))
+        with self.assertSubprocessFailure(stderr_regexp='The asset configuration does not contain', exit_code=1):
+            run("dx build_asset " + asset_dir)
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
+    def test_build_asset_with_resources(self):
+        asset_spec = {
+            "name": "asset_library_name",
+            "title": "A human readable name",
+            "description": " A detailed description about the asset",
+            "version": "0.0.1",
+            "distribution": "Ubuntu",
+            "release": "12.04"
+        }
+        asset_dir = self.write_asset_directory("asset_with_resources", json.dumps(asset_spec), "resources")
+        asset_bundle_id = json.loads(run('dx build_asset --json ' + asset_dir))['id']
+        self.assertIn('record', asset_bundle_id)
+        self.assertEqual(dxpy.describe(asset_bundle_id)['project'], self.project)
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
+    def test_build_asset_with_invalid_makefile(self):
+        asset_spec = {
+            "name": "asset_library_name",
+            "title": "A human readable name",
+            "description": " A detailed description about the asset",
+            "version": "0.0.1",
+            "distribution": "Ubuntu",
+            "release": "12.04"
+        }
+        asset_dir = self.write_asset_directory("asset_with_invalid_makefile", json.dumps(asset_spec),
+                                               None, "echo")
+        with self.assertSubprocessFailure(stderr_regexp='', exit_code=3):
+            run("dx build_asset --json" + asset_dir)
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
+    def test_build_and_use_asset(self):
+        asset_spec = {
+            "name": "asset_library_name",
+            "title": "A human readable name",
+            "description": " A detailed description about the asset",
+            "version": "0.0.1",
+            "distribution": "Ubuntu",
+            "release": "12.04"
+        }
+        asset_dir = self.write_asset_directory("build_and_use_asset", json.dumps(asset_spec), "resources")
+
+        run("mkdir -p " + os.path.join(asset_dir, "resources/usr/local/bin"))
+        with open(os.path.join(asset_dir, "resources/usr/local/bin", 'test.sh'), 'wb') as manifest:
+            manifest.write("echo 'hi'".encode())
+        run("chmod +x " + os.path.join(asset_dir, "resources/usr/local/bin", 'test.sh'))
+
+        asset_bundle_id = json.loads(run('dx build_asset --json ' + asset_dir))['id']
+        code_str = """#!/bin/bash
+                    main(){
+                        test.sh
+                    }
+                    """
+        app_spec = {
+            "name": "asset_depends",
+            "dxapi": "1.0.0",
+            "runSpec": {
+                "code": code_str,
+                "interpreter": "bash",
+                "assetDepends":  [{"id": asset_bundle_id}]
+            },
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+        }
+        app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec))
+        asset_applet_id = json.loads(run("dx build --json {app_dir}".format(app_dir=app_dir)))["id"]
+        asset_applet = dxpy.DXApplet(asset_applet_id)
+        applet_job = asset_applet.run({})
+        applet_job.wait_on_done()
+        self.assertEqual(applet_job.describe()['state'], 'done')
+
+
+if __name__ == '__main__':
+    if dxpy.AUTH_HELPER is None:
+        sys.exit(1, 'Error: Need to be logged in to run these tests')
+    if 'DXTEST_FULL' not in os.environ:
+        if 'DXTEST_RUN_JOBS' not in os.environ:
+            sys.stderr.write('WARNING: neither env var DXTEST_FULL nor DXTEST_RUN_JOBS are set; \
+            tests that run jobs will not be run\n')
+    unittest.main()

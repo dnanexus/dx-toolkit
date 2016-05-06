@@ -1,0 +1,8 @@
+{
+  "name": "qiime_microbiome_asset",
+  "title": "Asset bundle to run QIIME microbiome analysis",
+  "description": "A set of libraries that are required to run QIIME microbiome analysis tools",
+  "version": "0.0.1",
+  "release": "12.04",
+  "distribution": "Ubuntu"
+}

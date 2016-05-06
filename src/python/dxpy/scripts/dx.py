@@ -3828,6 +3828,25 @@ parser_build = subparsers.add_parser('build', help='Upload and build a new apple
 parser_build.set_defaults(func=build)
 register_parser(parser_build, categories='exec')
 
+from ..asset_builder import build_asset
+parser_build_asset = subparsers.add_parser(
+    "build_asset",
+    help='Build an asset bundle',
+    formatter_class=argparse.RawTextHelpFormatter,
+    description=fill('Build an asset from a local source directory. The directory must have a file called '
+         '"dxasset.json" containing valid JSON. For more details, see '
+         '\n\nhttps://wiki.dnanexus.com/Developer-Tutorials/Asset-Build-Process'),
+    prog="dx build_asset")
+parser_build_asset.add_argument("src_dir", help="Asset source directory (default: current directory)", nargs='?')
+parser_build_asset.add_argument("-d", "--destination",
+                                help=fill("Specifies the destination project and destination folder for the asset,"
+                                          " in the form [PROJECT_NAME_OR_ID:][/[FOLDER/][NAME]]"),
+                                default='.')
+parser_build_asset.add_argument("--json", help=fill("Show ID of resulting asset bundle in JSON format"),
+                                action="store_true", dest="json")
+parser_build_asset.set_defaults(func=build_asset)
+register_parser(parser_build_asset)
+
 parser_add = subparsers.add_parser('add', help='Add one or more items to a list',
                                    description='Use this command with one of the availabile subcommands to perform various actions such as adding other users to the list of developers or authorized users of an app',
                                    prog='dx add')
@@ -4670,6 +4689,7 @@ parser_map['help run'] = parser_help
 for category in parser_categories:
     parser_categories[category]['cmds'].append(('help', subparsers._choices_actions[-1].help))
 parser_categories['all']['cmds'].sort()
+
 
 def main():
     # Bash argument completer hook
