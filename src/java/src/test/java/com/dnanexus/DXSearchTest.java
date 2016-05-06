@@ -591,13 +591,12 @@ public class DXSearchTest {
         DXSearch.FindDataObjectsResult<DXRecord> findResult =
                 DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*").withClassRecord().execute(3);
         Iterator<DXRecord> iter = findResult.iterator();
-        int foundItems = 0;
+        List<DXRecord> iterativelyFetchedRecords = Lists.newArrayList();
         while (iter.hasNext()) {
-            foundItems++;
-            iter.next();
+            iterativelyFetchedRecords.add(iter.next());
         }
-        Assert.assertEquals(8, foundItems);
-        Assert.assertEquals(3, ((DXSearch.FindDataObjectsResult<DXRecord>.ResultIterator) iter).currentPageNo());
+        Assert.assertEquals(outputRecords, iterativelyFetchedRecords);
+        Assert.assertEquals(3, ((DXSearch.FindDataObjectsResult<DXRecord>.ResultIterator) iter).pageNo());
     }
 
     /**

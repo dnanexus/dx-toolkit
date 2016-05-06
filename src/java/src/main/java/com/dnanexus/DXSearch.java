@@ -166,8 +166,10 @@ public final class DXSearch {
          * specified builder.
          *
          * @param builder builder object to initialize this query with
+         * @param limit maximum number of results to return, or null to use the default
+         *        (server-provided) limit
          */
-        private FindDataObjectsRequest(FindDataObjectsRequestBuilder<?> builder) {
+        private FindDataObjectsRequest(FindDataObjectsRequestBuilder<?> builder, Integer limit) {
             this.classConstraint = builder.classConstraint;
             this.id = builder.id;
             this.state = builder.state;
@@ -202,7 +204,7 @@ public final class DXSearch {
             }
 
             this.starting = null;
-            this.limit = null;
+            this.limit = limit;
         }
 
     }
@@ -248,7 +250,14 @@ public final class DXSearch {
         FindDataObjectsRequest buildRequestHash() {
             // Use this method to test the JSON hash created by a particular
             // builder call without actually executing the request.
-            return new FindDataObjectsRequest(this);
+            return new FindDataObjectsRequest(this, null);
+        }
+
+        @VisibleForTesting
+        FindDataObjectsRequest buildRequestHash(int limit) {
+            // Use this method to test the JSON hash created by a particular
+            // builder call without actually executing the request.
+            return new FindDataObjectsRequest(this, limit);
         }
 
         /**
@@ -299,7 +308,7 @@ public final class DXSearch {
          * @return object encapsulating the result set
          */
         public FindDataObjectsResult<T> execute(int pageSize) {
-            return new FindDataObjectsResult<T>(this.buildRequestHash(), this.classConstraint,
+            return new FindDataObjectsResult<T>(this.buildRequestHash(pageSize), this.classConstraint,
                     this.env, pageSize);
         }
 
@@ -1975,10 +1984,11 @@ public final class DXSearch {
         }
 
         /**
+         * Returns current page number in search result.
          *
          * @return Current page number
          */
-        public int currentPageNo() {
+        public int pageNo() {
             return this.currentPageNo;
         }
 
