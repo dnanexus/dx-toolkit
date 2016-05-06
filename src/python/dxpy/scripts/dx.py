@@ -2544,6 +2544,10 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
 
     input_json = exec_inputs.inputs
 
+    if args.debug_on:
+        if 'All' in args.debug_on:
+            args.debug_on = ['AppError', 'AppInternalError', 'ExecutionError']
+
     run_kwargs = {
         "project": dest_proj,
         "folder": dest_path,
@@ -4125,7 +4129,7 @@ parser_run.add_argument('--ssh',
                                   "sets --priority high",
                                   width_adjustment=-24),
                         action='store_true')
-parser_run.add_argument('--debug-on', action='append', choices=['AppError', 'AppInternalError', 'ExecutionError'],
+parser_run.add_argument('--debug-on', action='append', choices=['AppError', 'AppInternalError', 'ExecutionError', 'All'],
                         help=fill("Configure the job to hold for debugging when any of the listed errors occur",
                                   width_adjustment=-24))
 parser_run.add_argument('--input-help',

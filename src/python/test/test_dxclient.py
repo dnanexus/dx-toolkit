@@ -880,6 +880,20 @@ class TestDXClient(DXTestCase):
             dx.setwinsize(20, 90)
             dx.expect("dnanexus@", timeout=1200)
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
+    def test_dx_run_debug_on_all(self):
+        crash_applet = dxpy.api.applet_new(dict(name="crash",
+                                                runSpec={"code": "exit 5", "interpreter": "bash",
+                                                         "execDepends": [{"name": "dx-toolkit"}]},
+                                                inputSpec=[], outputSpec=[],
+                                                dxapi="1.0.0", version="1.0.0",
+                                                project=self.project))["id"]
+
+        job_id = run("dx run {} --yes --brief --debug-on All".format(crash_applet)).strip()
+        job_desc = dxpy.describe(job_id)
+        self.assertEqual(job_desc["debug"]['debugOn'], ['AppError', 'AppInternalError', 'ExecutionError'])
+
+
     @unittest.skipUnless(testutil.TEST_DX_LOGIN,
                          'This test requires authserver to run, requires dx login to select the right authserver, ' +
                          'and may result in temporary account lockout. TODO: update test instrumentation to allow ' +
