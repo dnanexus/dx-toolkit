@@ -22,6 +22,7 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.Iterator;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -585,6 +586,18 @@ public class DXSearchTest {
                 ImmutableList.copyOf(DXSearch.findDataObjects().inProject(testProject)
                         .nameMatchesGlob("foo*").withClassRecord().execute(3));
         Assert.assertEquals(outputRecords, outputRecordStreamWithPaging);
+
+        // Checking an amount of fetched pages
+        DXSearch.FindDataObjectsResult<DXRecord> findResult =
+                DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*").withClassRecord().execute(3);
+        Iterator<DXRecord> iter = findResult.iterator();
+        int foundItems = 0;
+        while (iter.hasNext()) {
+            foundItems++;
+            iter.next();
+        }
+        Assert.assertEquals(8, foundItems);
+        Assert.assertEquals(3, ((DXSearch.FindDataObjectsResult<DXRecord>.ResultIterator) iter).currentPageNo());
     }
 
     /**

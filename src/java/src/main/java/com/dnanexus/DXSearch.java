@@ -900,11 +900,11 @@ public final class DXSearch {
         /**
          * Iterator implementation for findDataObjects results.
          */
-        private class ResultIterator
+        public class ResultIterator
                 extends
                 PaginatingFindResultIterator<T, FindDataObjectsRequest, FindDataObjectsResultPage> {
 
-            public ResultIterator() {
+            private ResultIterator() {
                 super(baseQuery);
             }
 
@@ -1935,6 +1935,7 @@ public final class DXSearch {
         private Q query;
         private P currentPage;
         private int nextResultIndex = 0;
+        private int currentPageNo = 0;
 
         /**
          * Initializes the iterator with the specified initial query.
@@ -1945,6 +1946,7 @@ public final class DXSearch {
         private PaginatingFindResultIterator(Q initialQuery) {
             this.query = initialQuery;
             this.currentPage = issueQuery(initialQuery);
+            this.currentPageNo++;
         }
 
         /**
@@ -1968,7 +1970,16 @@ public final class DXSearch {
             // Reached the end of the previous page. Load a new page.
             query = getNextQuery(query, currentPage);
             currentPage = issueQuery(query);
+            this.currentPageNo++;
             nextResultIndex = 0;
+        }
+
+        /**
+         *
+         * @return Current page number
+         */
+        public int currentPageNo() {
+            return this.currentPageNo;
         }
 
         /**
