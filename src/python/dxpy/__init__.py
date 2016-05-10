@@ -127,6 +127,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os, sys, json, time, logging, platform, ssl, traceback
 import errno
+import math
 import mmap
 import requests
 import socket
@@ -184,6 +185,7 @@ DEFAULT_RETRY_AFTER_503_INTERVAL = 60
 _DEBUG = 0  # debug verbosity level
 _UPGRADE_NOTIFY = True
 
+INCOMPLETE_READS_NUM_SUBCHUNKS = 8
 
 USER_AGENT = "{name}/{version} ({platform})".format(name=__name__,
                                                     version=TOOLKIT_VERSION,
@@ -350,6 +352,10 @@ def _maybe_trucate_request(url, try_index, data):
             return data[0:MIN_UPLOAD_LEN]
     return data
 
+
+def _raise_error_for_testing(method):
+    if _INJECT_ERROR and method == 'GET':
+        raise exceptions.DXIncompleteReadsError()
 
 def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                   timeout=DEFAULT_TIMEOUT,
@@ -638,6 +644,49 @@ class DXHTTPOAuth2(AuthBase):
         else:
             raise NotImplementedError("Token types other than bearer are not yet supported")
         return r
+
+
+'''
+This function is used for reading a part of an S3 object. It returns a string containing the data. If there is an
+error, and exception is thrown.
+
+There is special handling if a DXIncompleteReadsError is thrown, for which urllib3 gets only part of the requested
+range from the chunk of data. The range is split into smaller chunks, and each sub-chunk is tried in a DXHTTPRequest.
+The smaller chunks are then concatenated to form the original range of data. If a DXIncompleteReadsError is thrown
+(after retrying the sub-chunk 6 times) while reading a sub-chunk, then we fail.
+'''
+
+
+def _dxhttp_read_range(url, headers, start_pos, end_pos, timeout, sub_range=True):
+    if sub_range:
+        headers['Range'] = "bytes=" + str(start_pos) + "-" + str(end_pos)
+    try:
+        data = DXHTTPRequest(url, '', method='GET', headers=headers, auth=None, jsonify_data=False, prepend_srv=False,
+                             always_retry=True, timeout=timeout, decode_response_body=False)
+        _raise_error_for_testing('GET')
+        return data
+
+    # When chunk fails to be read, it gets broken into sub-chunks
+    except exceptions.DXIncompleteReadsError:
+        chunk_buffer = StringIO()
+        subchunk_len = int(math.ceil((end_pos - start_pos + 1)/INCOMPLETE_READS_NUM_SUBCHUNKS))
+        subchunk_start_pos = start_pos
+
+        while subchunk_start_pos <= end_pos:
+            subchunk_end_pos = min(subchunk_start_pos + subchunk_len - 1, end_pos)
+            headers['Range'] = "bytes=" + str(subchunk_start_pos) + "-" + str(subchunk_end_pos)
+            subchunk_start_pos += subchunk_len
+            data = DXHTTPRequest(url, '', method='GET', headers=headers, auth=None, jsonify_data=False,
+                                 prepend_srv=False, always_retry=True, timeout=timeout,
+                                 decode_response_body=False)
+
+            # Concatenate sub-chunks
+            chunk_buffer.write(data)
+
+        concat_chunks = chunk_buffer.getvalue()
+        chunk_buffer.close()
+        return concat_chunks
+
 
 def set_api_server_info(host=None, port=None, protocol=None):
     '''
