@@ -31,30 +31,13 @@ import requests
 
 import dxpy
 from dxpy.scripts import dx_build_app
-from dxpy_testutil import (DXTestCase, check_output, temporary_project, select_project, cd, override_environment,
-                           generate_unique_username_email, without_project_context, without_auth, as_second_user)
+from dxpy_testutil import (DXTestCase, DXTestCaseBuildApps, check_output, temporary_project,
+                           select_project, cd, override_environment, generate_unique_username_email,
+                           without_project_context, without_auth, as_second_user, chdir, run)
 import dxpy_testutil as testutil
 from dxpy.exceptions import DXAPIError, DXSearchError, EXPECTED_ERR_EXIT_STATUS, HTTPError
 from dxpy.compat import str, sys_encoding, open
 from dxpy.utils.resolver import ResolutionError, _check_resolution_needed as check_resolution
-
-@contextmanager
-def chdir(dirname=None):
-    curdir = os.getcwd()
-    try:
-        if dirname is not None:
-            os.chdir(dirname)
-        yield
-    finally:
-        os.chdir(curdir)
-
-
-def run(command, **kwargs):
-    print("$ %s" % (command,))
-    output = check_output(command, shell=True, **kwargs)
-    print(output)
-    return output
-
 
 def create_file_in_project(fname, trg_proj_id, folder=None):
     data = "foo"
@@ -3951,7 +3934,7 @@ class TestDXClientFind(DXTestCase):
 
 
 @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test org, project, and user')
-class TestDXClientFindInOrg(DXTestCase):
+class TestDXClientFindInOrg(DXTestCaseBuildApps):
     @classmethod
     def setUpClass(cls):
         cls.org_id = "org-piratelabs"
@@ -4202,6 +4185,34 @@ class TestDXClientFindInOrg(DXTestCase):
 
             self.assertTrue(len(res) == 1, "Expected to find one project")
             self.assertEqual(res[0], project1_id)
+
+    def test_dx_find_org_apps(self):
+        # Create a number of apps, some billed to self.org_id ("org-piratelabs")
+        num_org_apps = 3
+        num_nonorg_apps = 1
+
+        apps = self.make_apps(num_org_apps,
+                              "find_org_app",
+                              bill_to=self.org_id)
+        expected_app_ids = sorted([app['id'] for app in apps])
+        self.make_apps(num_nonorg_apps, "unbilled_app")
+
+        # Check that all org apps are found, and nothing else
+        actual_app_ids = sorted(run("dx find org apps {} --brief".format(self.org_id)).strip().split("\n"))
+        self.assertEqual(actual_app_ids, expected_app_ids)
+        # Basic test to check consistency of client output to directly invoking API
+        dx_api_output = dxpy.api.org_find_apps(self.org_id)
+        self.assertEqual(len(dx_api_output['results']), num_org_apps)
+        self.assertEqual(actual_app_ids, [member['id'] for member in dx_api_output['results']])
+
+        # Same as above, without the --brief flag, so we need to destructure formatting
+        lengthy_outputs = run("dx find org apps {}".format(self.org_id)).rstrip().split("\n")
+        pattern = "^(\s\s|(\s\S)*x(\s\S)*)[a-zA-Z0-9_]*\s\([a-zA-Z0-9_]*\),\sv[0-9.]*$"
+        for lengthy_output in lengthy_outputs:
+            self.assertRegex(lengthy_output, pattern)
+
+        output_titles = sorted(map(lambda s: s.strip().split()[0], lengthy_outputs))
+        self.assertEqual(output_titles, sorted(map(lambda app: app['title'], apps)))
 
 
 @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping tests that require org creation')
@@ -5332,35 +5343,10 @@ class TestHTTPProxySupport(DXTestCase):
         self.proxy_process.terminate()
 
 
-class TestDXBuildApp(DXTestCase):
-    def setUp(self):
-        super(TestDXBuildApp, self).setUp()
-        self.temp_file_path = tempfile.mkdtemp()
-
-    def tearDown(self):
-        shutil.rmtree(self.temp_file_path)
-        super(TestDXBuildApp, self).tearDown()
-
+class TestDXBuildApp(DXTestCaseBuildApps):
     def run_and_assert_stderr_matches(self, cmd, stderr_regexp):
         with self.assertSubprocessFailure(stderr_regexp=stderr_regexp, exit_code=28):
             run(cmd + ' && exit 28')
-
-    def write_app_directory(self, app_name, dxapp_str, code_filename=None, code_content="\n"):
-        # Note: if called twice with the same app_name, will overwrite
-        # the dxapp.json and code file (if specified) but will not
-        # remove any other files that happened to be present
-        try:
-            os.mkdir(os.path.join(self.temp_file_path, app_name))
-        except OSError as e:
-            if e.errno != 17: # directory already exists
-                raise e
-        if dxapp_str is not None:
-            with open(os.path.join(self.temp_file_path, app_name, 'dxapp.json'), 'wb') as manifest:
-                manifest.write(dxapp_str.encode())
-        if code_filename:
-            with open(os.path.join(self.temp_file_path, app_name, code_filename), 'w') as code_file:
-                code_file.write(code_content)
-        return os.path.join(self.temp_file_path, app_name)
 
     def test_help_without_security_context(self):
         env = override_environment(DX_SECURITY_CONTEXT=None, DX_APISERVER_HOST=None,
@@ -7046,32 +7032,7 @@ def main(in1):
             self.assertEquals(temp_asset_fid, asset_file.get_id())
 
 
-class TestDXGetExecutables(DXTestCase):
-    def setUp(self):
-        super(TestDXGetExecutables, self).setUp()
-        self.temp_file_path = tempfile.mkdtemp()
-
-    def tearDown(self):
-        shutil.rmtree(self.temp_file_path)
-        super(TestDXGetExecutables, self).tearDown()
-
-    def write_app_directory(self, app_name, dxapp_str, code_filename=None, code_content="\n"):
-        # Note: if called twice with the same app_name, will overwrite
-        # the dxapp.json and code file (if specified) but will not
-        # remove any other files that happened to be present
-        try:
-            os.mkdir(os.path.join(self.temp_file_path, app_name))
-        except OSError as e:
-            if e.errno != 17:  # directory already exists
-                raise e
-        if dxapp_str is not None:
-            with open(os.path.join(self.temp_file_path, app_name, 'dxapp.json'), 'wb') as manifest:
-                manifest.write(dxapp_str.encode())
-        if code_filename:
-            with open(os.path.join(self.temp_file_path, app_name, code_filename), 'w') as code_file:
-                code_file.write(code_content)
-        return os.path.join(self.temp_file_path, app_name)
-
+class TestDXGetExecutables(DXTestCaseBuildApps):
     def test_get_applet(self):
         # TODO: not sure why self.assertEqual doesn't consider
         # assertEqual to pass unless the strings here are unicode strings

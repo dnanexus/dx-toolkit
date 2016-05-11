@@ -814,6 +814,125 @@ def org_find_projects(org_id=None, name=None, name_mode='exact', ids=None, prope
     return _org_find(dxpy.api.org_find_projects, org_id, query)
 
 
+def org_find_apps(org_id,
+                  name=None,
+                  name_mode='exact',
+                  category=None,
+                  all_versions=None,
+                  published=None,
+                  created_by=None,
+                  developer=None,
+                  authorized_user=None,
+                  created_after=None,
+                  created_before=None,
+                  modified_after=None,
+                  modified_before=None,
+                  describe=False,
+                  limit=None,
+                  return_handler=False,
+                  first_page_size=100,
+                  **kwargs):
+    """
+    :param name: Name of the app (also see *name_mode*)
+    :type name: string
+    :param name_mode: Method by which to interpret the *name* field
+        "exact": exact match,
+        "glob": use "*" and "?" as wildcards,
+        "regexp": interpret as a regular expression
+    :type name_mode: string
+    :param category: If specified, only returns apps that are in the specified category
+    :type category: string
+    :param all_versions: Whether to return all versions of each app or just the version tagged "default"
+    :type all_versions: boolean
+    :param published: If specified, only returns results that have the specified publish status
+        True for published apps,
+        False for unpublished apps
+    :type published: boolean
+    :param created_by: If specified, only returns app versions that were created by the specified user
+        (of the form "user-USERNAME")
+    :type created_by: string
+    :param developer: If specified, only returns apps for which the specified user (of the form "user-USERNAME")
+        is a developer
+    :type developer: string
+    :param authorized_user: If specified, only returns apps for which the specified user (either a user ID, org ID,
+        or the string "PUBLIC") appears in the app's list of authorized users
+    :type authorized_user: string
+    :param created_after: Timestamp after which each result was last created (see note accompanying
+        :meth:`find_data_objects()` for interpretation)
+    :type created_after: int or string
+    :param created_before: Timestamp before which each result was last created (see note accompanying
+        :meth:`find_data_objects()` for interpretation)
+    :type created_before: int or string
+    :param modified_after: Timestamp after which each result was last modified (see note accompanying
+        :meth:`find_data_objects()` for interpretation)
+    :type modified_after: int or string
+    :param modified_before: Timestamp before which each result was last modified (see note accompanying
+        :meth:`find_data_objects()` for interpretation)
+    :type modified_before: int or string
+    :param describe: Controls whether to also return the output of
+        calling describe() on each app. Supply False to omit describe
+        output, True to obtain the default describe output, or a dict to
+        be supplied as the describe call input (which may be used to
+        customize the set of fields that is returned)
+    :type describe: bool or dict
+    :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
+    :type limit: int
+    :param first_page_size: The number of results that the initial API call will return. Subsequent calls will raise
+        this by multiplying by 2 up to a maximum of 1000.
+    :type first_page_size: int
+    :param return_handler: If True, yields results as dxpy object handlers (otherwise, yields each result as a dict
+        with keys "id" and "project")
+    :type return_handler: boolean
+    :rtype: generator
+
+    Returns a generator that yields all apps that match the query. It
+    transparently handles paging through the result set if necessary.
+    For all parameters that are omitted, the search is not restricted by
+    the corresponding field.
+
+    """
+
+    query = {}
+    if name is not None:
+        if name_mode == 'exact':
+            query['name'] = name
+        elif name_mode == 'glob':
+            query['name'] = {'glob': name}
+        elif name_mode == 'regexp':
+            query['name'] = {'regexp': name}
+        else:
+            raise DXError('find_apps: Unexpected value found for argument name_mode')
+    if category is not None:
+        query["category"] = category
+    if all_versions is not None:
+        query["allVersions"] = all_versions
+    if published is not None:
+        query["published"] = published
+    if created_by is not None:
+        query["createdBy"] = created_by
+    if developer is not None:
+        query["developer"] = developer
+    if authorized_user is not None:
+        query["authorizedUser"] = authorized_user
+    if modified_after is not None or modified_before is not None:
+        query["modified"] = {}
+        if modified_after is not None:
+            query["modified"]["after"] = dxpy.utils.normalize_time_input(modified_after)
+        if modified_before is not None:
+            query["modified"]["before"] = dxpy.utils.normalize_time_input(modified_before)
+    if created_after is not None or created_before is not None:
+        query["created"] = {}
+        if created_after is not None:
+            query["created"]["after"] = dxpy.utils.normalize_time_input(created_after)
+        if created_before is not None:
+            query["created"]["before"] = dxpy.utils.normalize_time_input(created_before)
+    if describe is not None and describe is not False:
+        query["describe"] = describe
+    if limit is not None:
+        query["limit"] = limit
+
+    return _org_find(dxpy.api.org_find_apps, org_id, query)
+
 def find_orgs(query, first_page_size=10):
     """
     :param query: The input to the /system/findOrgs API method.

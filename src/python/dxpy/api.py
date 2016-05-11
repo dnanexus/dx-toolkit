@@ -1588,6 +1588,24 @@ def org_find_projects(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/findProjects' % object_id, input_params, always_retry=always_retry, **kwargs)
 
+def orgFindApps(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`org_find_apps()` instead.
+
+    """
+    print("dxpy.orgFindApps is deprecated; please use org_find_apps instead.", file=sys.stderr)
+    return org_find_apps(*args, **kwargs)
+
+def org_find_apps(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /org-xxxx/findApps API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FfindApps
+    """
+    return DXHTTPRequest('/%s/findApps' % object_id, input_params, always_retry=always_retry, **kwargs)
+
 def orgInvite(*args, **kwargs):
     """
 

@@ -273,3 +273,16 @@ def org_find_projects(args):
     except:
         err_exit()
     format_find_results(args, results)
+
+
+def org_find_apps(args):
+    try:
+        results = dxpy.org_find_apps(org_id=args.org_id,
+                                     name=args.name,
+                                     name_mode='glob',
+                                     describe=(not args.brief),
+                                     created_after=args.created_after,
+                                     created_before=args.created_before)
+    except:
+        err_exit()
+    format_find_results(args, results)

@@ -18,7 +18,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, unittest, subprocess, re, json, platform
+import os, sys, unittest, tempfile, shutil, subprocess, re, json, platform
 import time
 import random
 
@@ -110,6 +110,24 @@ def check_output(*popenargs, **kwargs):
         return (output, err)
     else:
         return output
+
+
+@contextmanager
+def chdir(dirname=None):
+    curdir = os.getcwd()
+    try:
+        if dirname is not None:
+            os.chdir(dirname)
+        yield
+    finally:
+        os.chdir(curdir)
+
+
+def run(command, **kwargs):
+    print("$ %s" % (command,))
+    output = check_output(command, shell=True, **kwargs)
+    print(output)
+    return output
 
 
 @contextmanager
@@ -390,3 +408,52 @@ class DXTestCase(unittest.TestCase):
                 error_string += "Keys missing from superset: {}\n".format(m)
 
             self.assertFalse(True, error_string)
+
+
+class DXTestCaseBuildApps(DXTestCase):
+    def setUp(self):
+        super(DXTestCaseBuildApps, self).setUp()
+        self.temp_file_path = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_file_path)
+        super(DXTestCaseBuildApps, self).tearDown()
+
+    def make_apps(self, num_apps, name_prefix, bill_to=None):
+        apps = []
+        app_spec = {
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0",
+        }
+        for i in range(num_apps):
+            app_spec["name"] = name_prefix + "_" + str(i)
+            if bill_to is not None:
+                app_spec["billTo"] = bill_to
+
+            app_dir = self.write_app_directory("minimal_åpp",
+                                               json.dumps(app_spec),
+                                               "code.py")
+            app = json.loads(run("dx build --create-app --json " + app_dir))
+            apps.append(app)
+
+        return apps
+
+    def write_app_directory(self, app_name, dxapp_str, code_filename=None, code_content="\n"):
+        # Note: if called twice with the same app_name, will overwrite
+        # the dxapp.json and code file (if specified) but will not
+        # remove any other files that happened to be present
+        try:
+            os.mkdir(os.path.join(self.temp_file_path, app_name))
+        except OSError as e:
+            if e.errno != 17:  # directory already exists
+                raise e
+        if dxapp_str is not None:
+            with open(os.path.join(self.temp_file_path, app_name, 'dxapp.json'), 'wb') as manifest:
+                manifest.write(dxapp_str.encode())
+        if code_filename:
+            with open(os.path.join(self.temp_file_path, app_name, code_filename), 'w') as code_file:
+                code_file.write(code_content)
+        return os.path.join(self.temp_file_path, app_name)

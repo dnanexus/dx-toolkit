@@ -716,6 +716,14 @@ module DX
       return DX::http_request("/#{object_id}/findProjects", input_params, opts)
     end
 
+    # Invokes the /org-xxxx/findApps API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FfindApps
+    def self.org_find_apps(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/findApps", input_params, opts)
+    end
+
     # Invokes the /org-xxxx/invite API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2Finvite

@@ -164,6 +164,18 @@ def _format_find_projects_results(results):
               DELIMITER(' (') + result["level"] + DELIMITER(')'))
 
 
+def _format_find_apps_results(results, verbose=False):
+    def maybe_x(result):
+        return DNANEXUS_X() if result['describe']['billTo'] == 'org-dnanexus' else ' '
+
+    if not verbose:
+        for result in results:
+            print(maybe_x(result) + DELIMITER(" ") + result['describe'].get('title', result['describe']['name']) + DELIMITER(' (') + result["describe"]["name"] + DELIMITER("), v") + result["describe"]["version"])
+    else:
+        for result in results:
+            print(maybe_x(result) + DELIMITER(" ") + result["id"] + DELIMITER(" ") + result['describe'].get('title', result['describe']['name']) + DELIMITER(' (') + result["describe"]["name"] + DELIMITER('), v') + result['describe']['version'] + DELIMITER(" (") + ("published" if result["describe"].get("published", 0) > 0 else "unpublished") + DELIMITER(")"))
+
+
 def _format_find_org_members_results(results):
     for result in results:
         print(result["id"] + DELIMITER(" : ") + result['describe']['first'] + DELIMITER(' ') +
@@ -175,7 +187,8 @@ def format_find_results(args, results):
     """
     Formats the output of ``dx find ...`` commands for `--json` and `--brief` arguments; also formats if no formatting
     arguments are given.
-    Currently used for ``dx find projects``, ``dx find org_projects``, and ``dx find org_members``
+    Currently used for ``dx find projects``, ``dx find org_projects``, ``dx find org_apps``,
+    and ``dx find org_members``
     """
     if args.json:
         print(json.dumps(list(results), indent=4))
@@ -185,5 +198,7 @@ def format_find_results(args, results):
     else:
         if args.func.__name__ in ("find_projects", "org_find_projects"):
             _format_find_projects_results(results)
-        if args.func.__name__ in ("org_find_members"):
+        elif args.func.__name__ in ("org_find_members"):
             _format_find_org_members_results(results)
+        elif args.func.__name__ in ("org_find_apps"):  # should have "find_apps" here one day
+            _format_find_apps_results(results, verbose=args.verbose)

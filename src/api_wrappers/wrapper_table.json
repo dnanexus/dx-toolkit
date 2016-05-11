@@ -783,6 +783,15 @@
         }
     ],
     [
+        "/org-xxxx/findApps",
+        "orgFindApps(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FfindApps"
+        }
+    ],
+    [
         "/org-xxxx/invite",
         "orgInvite(req, objectId)",
         {

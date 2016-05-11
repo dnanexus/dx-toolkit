@@ -46,7 +46,7 @@ from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_a
                            property_args, tag_args, contains_phi, process_phi_param)
 from ..cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
 from ..cli.org import (get_org_invite_args, add_membership, remove_membership, update_membership, new_org, update_org,
-                       find_orgs, org_find_members, org_find_projects)
+                       find_orgs, org_find_members, org_find_projects, org_find_apps)
 from ..exceptions import (err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions,
                           format_exception)
 from ..utils import warn, group_array_by_field, normalize_timedelta, normalize_time_input
@@ -4617,6 +4617,35 @@ parser_find_org_projects.add_argument('--created-after', help='Date (e.g. 2012-0
 parser_find_org_projects.add_argument('--created-before', help='Date (e.g. 2012-01-31) or integer timestamp before which the project was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y). Integer timestamps will be parsed as milliseconds since epoch.')
 parser_find_org_projects.set_defaults(func=org_find_projects)
 register_parser(parser_find_org_projects, subparsers_action=subparsers_find_org, categories=('data', 'org'))
+
+parser_find_org_apps = subparsers_find_org.add_parser(
+    'apps',
+    help='List apps billed to the specified org',
+    description=fill('Finds apps billed to the specified org subject to the given search parameters. You must '
+                     'be an ADMIN of the specified org to use this command. It allows you to identify apps billed '
+                     'to the org that have not been shared with you explicitly.'),
+    parents=[stdout_args, json_arg, delim_arg, env_args],
+    prog='dx find org apps'
+)
+parser_find_org_apps.add_argument('org_id', help='Org ID')
+parser_find_org_apps.add_argument('--name', help='Name of the apps')
+parser_find_org_apps.add_argument('--category', help='Category of the app').completer = ListCompleter(APP_CATEGORIES)
+parser_find_org_apps.add_argument('--category-help',
+                                  help='Print a list of common app categories',
+                                  nargs=0,
+                                  action=PrintCategoryHelp)
+
+parser_find_org_apps.add_argument('-a', '--all', help='Return all versions of each app', action='store_true')
+parser_find_org_apps.add_argument('--unpublished', help='Return only unpublished apps (if omitted, returns all apps)', action='store_true')
+parser_find_org_apps.add_argument('--installed', help='Return only installed apps', action='store_true')
+parser_find_org_apps.add_argument('--creator', help='Creator of the app version')
+parser_find_org_apps.add_argument('--developer', help='Developer of the app')
+parser_find_org_apps.add_argument('--created-after', help='Date (e.g. 2012-01-31) or integer timestamp after which the project was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y). Integer timestamps will be parsed as milliseconds since epoch.')
+parser_find_org_apps.add_argument('--created-before', help='Date (e.g. 2012-01-31) or integer timestamp before which the project was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y). Integer timestamps will be parsed as milliseconds since epoch.')
+parser_find_org_apps.add_argument('--mod-after', help='Date (e.g. 2012-01-01) or integer timestamp after which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_org_apps.add_argument('--mod-before', help='Date (e.g. 2012-01-01) or integer timestamp before which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_org_apps.set_defaults(func=org_find_apps)
+register_parser(parser_find_org_apps, subparsers_action=subparsers_find_org, categories=('exec', 'org'))
 
 parser_find_orgs = subparsers_find.add_parser(
     "orgs",
