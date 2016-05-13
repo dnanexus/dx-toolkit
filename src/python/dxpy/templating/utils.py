@@ -197,26 +197,6 @@ def get_pattern(template_dir):
     use_completer()
     return pattern
 
-def get_parallelized_io(required_file_input_names, gtable_input_names, gtable_output_names):
-    input_field = ''
-    output_field = ''
-
-    if required_file_input_names or gtable_input_names:
-        print('')
-        print(fill('Your app template can be initialized to split and process a ' + BOLD() + 'GTable' + ENDC() + ' input.  The following of your input fields are eligible for this template pattern:'))
-        print('  ' + '\n  '.join(gtable_input_names))
-        use_completer(Completer(gtable_input_names))
-        input_field = prompt_for_var('Input field to process (press ENTER to skip)', '', choices=required_file_input_names + gtable_input_names)
-        use_completer()
-
-    if input_field != '' and len(gtable_output_names) > 0:
-        print('')
-        print(fill('Your app template can be initialized to build a ' + BOLD() + 'GTable' + ENDC() + ' in parallel for your output.  The following of your output fields are eligible for this template pattern:'))
-        print('  ' + '\n  '.join(gtable_output_names))
-        use_completer(Completer(gtable_output_names))
-        output_field = prompt_for_var('Output gtable to build in parallel (press ENTER to skip)', '', choices=gtable_output_names)
-    return input_field, output_field
-
 def fill_in_name_and_ver(template_string, name, version):
     '''
     TODO: Rename this?

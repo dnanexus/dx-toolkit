@@ -84,7 +84,7 @@ DX_APP_WIZARD_UPLOAD_ANY_FILES
     # return { "app_output_field": postprocess_job.get_output_ref("answer"), ...}
     #
     # Tip: you can include in your output at this point any open
-    # objects (such as gtables) which will be closed by a job that
+    # objects (such as files) which will be closed by a job that
     # finishes later.  The system will check to make sure that the
     # output object is closed and will attempt to clone it out as
     # output into the parent container only after all subjobs have

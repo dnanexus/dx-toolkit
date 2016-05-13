@@ -26,8 +26,7 @@ from collections import OrderedDict
 import dxpy
 from dxpy.templating.utils import (print_intro, get_name, get_version, get_metadata, Completer, get_ordinal_str,
                                    prompt_for_var, prompt_for_yn, use_completer, get_language, language_options,
-                                   get_pattern, get_parallelized_io, fill_in_name_and_ver, clean,
-                                   create_files_from_templates)
+                                   get_pattern, fill_in_name_and_ver, clean, create_files_from_templates)
 from dxpy.utils.printing import fill, BOLD, UNDERLINE, DNANEXUS_LOGO, ENDC
 from dxpy.app_categories import APP_CATEGORIES
 from dxpy.utils.completer import InstanceTypesCompleter
@@ -256,8 +255,6 @@ optional_file_input_names = []
 required_file_array_input_names = []
 optional_file_array_input_names = []
 file_output_names = []
-gtable_input_names = []
-gtable_output_names = []
 
 if 'inputSpec' in app_json:
     for param in app_json['inputSpec']:
@@ -266,8 +263,6 @@ if 'inputSpec' in app_json:
             param_list = optional_file_input_names if may_be_missing else required_file_input_names
         elif param['class'] == 'array:file':
             param_list = optional_file_array_input_names if may_be_missing else required_file_array_input_names
-        elif param['class'] == 'gtable':
-            param_list = gtable_input_names
         else:
             param_list = None
         if param_list is not None:
@@ -275,7 +270,6 @@ if 'inputSpec' in app_json:
 
 if 'outputSpec' in app_json:
     file_output_names = [param['name'] for param in app_json['outputSpec'] if param['class'] == 'file']
-    gtable_output_names = [param['name'] for param in app_json['outputSpec'] if param['class'] == 'gtable']
 
 ########################
 # LANGUAGE AND PATTERN #
@@ -296,19 +290,6 @@ app_json["runSpec"] = OrderedDict({"interpreter": interpreter})
 template_dir = os.path.join(os.path.dirname(dxpy.__file__), 'templating', 'templates', language_options[language].get_path())
 pattern = get_pattern(template_dir)
 template_dir = os.path.join(template_dir, pattern)
-
-pattern_suffix = ''
-parallelized_input_field = ''
-parallelized_output_field = ''
-if pattern == 'parallelized' and len([filename for filename in os.listdir(os.path.join(template_dir, 'src')) if filename.startswith('code-')]) > 0:
-    parallelized_input_field, parallelized_output_field = get_parallelized_io(required_file_input_names,
-                                                                              gtable_input_names,
-                                                                              gtable_output_names)
-    pattern_suffix = ''
-    if parallelized_input_field != '':
-        pattern_suffix += '-input-gtable'
-    if parallelized_output_field != '':
-        pattern_suffix += '-output-gtable'
 
 with open(os.path.join(template_dir, 'dxapp.json'), 'r') as template_app_json_file:
     file_text = fill_in_name_and_ver(template_app_json_file.read(), name, version)
@@ -423,9 +404,7 @@ elif pattern == 'scatter-process-gather':
 manifest += create_files_from_templates(template_dir, app_json, language,
                                         required_file_input_names, optional_file_input_names,
                                         required_file_array_input_names, optional_file_array_input_names,
-                                        file_output_names,
-                                        pattern, pattern_suffix,
-                                        parallelized_input_field, parallelized_output_field,
+                                        file_output_names, pattern,
                                         entry_points=entry_points, description=description)
 
 print("Created files:")
