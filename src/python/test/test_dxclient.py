@@ -865,17 +865,18 @@ class TestDXClient(DXTestCase):
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_run_debug_on_all(self):
-        self.configure_ssh()
-        crash_applet = dxpy.api.applet_new(dict(name="crash",
+        with self.configure_ssh() as wd:
+            crash_applet = dxpy.api.applet_new(dict(name="crash",
                                                 runSpec={"code": "exit 5", "interpreter": "bash",
                                                          "execDepends": [{"name": "dx-toolkit"}]},
                                                 inputSpec=[], outputSpec=[],
                                                 dxapi="1.0.0", version="1.0.0",
                                                 project=self.project))["id"]
 
-        job_id = run("dx run {} --yes --brief --debug-on All".format(crash_applet)).strip()
-        job_desc = dxpy.describe(job_id)
-        self.assertEqual(job_desc["debug"]['debugOn'], ['AppError', 'AppInternalError', 'ExecutionError'])
+            job_id = run("dx run {} --yes --brief --debug-on All".format(crash_applet),
+                         env=override_environment(HOME=wd)).strip()
+            job_desc = dxpy.describe(job_id)
+            self.assertEqual(job_desc["debug"]['debugOn'], ['AppError', 'AppInternalError', 'ExecutionError'])
 
 
     @unittest.skipUnless(testutil.TEST_DX_LOGIN,
