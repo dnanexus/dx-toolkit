@@ -166,8 +166,10 @@ public final class DXSearch {
          * specified builder.
          *
          * @param builder builder object to initialize this query with
+         * @param limit maximum number of results to return, or null to use the default
+         *        (server-provided) limit
          */
-        private FindDataObjectsRequest(FindDataObjectsRequestBuilder<?> builder) {
+        private FindDataObjectsRequest(FindDataObjectsRequestBuilder<?> builder, Integer limit) {
             this.classConstraint = builder.classConstraint;
             this.id = builder.id;
             this.state = builder.state;
@@ -202,7 +204,7 @@ public final class DXSearch {
             }
 
             this.starting = null;
-            this.limit = null;
+            this.limit = limit;
         }
 
     }
@@ -248,7 +250,14 @@ public final class DXSearch {
         FindDataObjectsRequest buildRequestHash() {
             // Use this method to test the JSON hash created by a particular
             // builder call without actually executing the request.
-            return new FindDataObjectsRequest(this);
+            return new FindDataObjectsRequest(this, null);
+        }
+
+        @VisibleForTesting
+        FindDataObjectsRequest buildRequestHash(int limit) {
+            // Use this method to test the JSON hash created by a particular
+            // builder call without actually executing the request.
+            return new FindDataObjectsRequest(this, limit);
         }
 
         /**
@@ -299,7 +308,7 @@ public final class DXSearch {
          * @return object encapsulating the result set
          */
         public FindDataObjectsResult<T> execute(int pageSize) {
-            return new FindDataObjectsResult<T>(this.buildRequestHash(), this.classConstraint,
+            return new FindDataObjectsResult<T>(this.buildRequestHash(pageSize), this.classConstraint,
                     this.env, pageSize);
         }
 
@@ -900,11 +909,12 @@ public final class DXSearch {
         /**
          * Iterator implementation for findDataObjects results.
          */
-        private class ResultIterator
+        @VisibleForTesting
+        class ResultIterator
                 extends
                 PaginatingFindResultIterator<T, FindDataObjectsRequest, FindDataObjectsResultPage> {
 
-            public ResultIterator() {
+            private ResultIterator() {
                 super(baseQuery);
             }
 
@@ -1935,6 +1945,7 @@ public final class DXSearch {
         private Q query;
         private P currentPage;
         private int nextResultIndex = 0;
+        private int currentPageNo = 0;
 
         /**
          * Initializes the iterator with the specified initial query.
@@ -1945,6 +1956,7 @@ public final class DXSearch {
         private PaginatingFindResultIterator(Q initialQuery) {
             this.query = initialQuery;
             this.currentPage = issueQuery(initialQuery);
+            this.currentPageNo++;
         }
 
         /**
@@ -1968,7 +1980,18 @@ public final class DXSearch {
             // Reached the end of the previous page. Load a new page.
             query = getNextQuery(query, currentPage);
             currentPage = issueQuery(query);
+            this.currentPageNo++;
             nextResultIndex = 0;
+        }
+
+        /**
+         * Returns current page number in search result.
+         *
+         * @return Current page number
+         */
+        @VisibleForTesting
+        int pageNo() {
+            return this.currentPageNo;
         }
 
         /**
