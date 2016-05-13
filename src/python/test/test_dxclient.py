@@ -865,6 +865,7 @@ class TestDXClient(DXTestCase):
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_run_debug_on_all(self):
+        self.configure_ssh()
         crash_applet = dxpy.api.applet_new(dict(name="crash",
                                                 runSpec={"code": "exit 5", "interpreter": "bash",
                                                          "execDepends": [{"name": "dx-toolkit"}]},
