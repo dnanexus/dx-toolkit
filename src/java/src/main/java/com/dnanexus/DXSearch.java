@@ -909,7 +909,8 @@ public final class DXSearch {
         /**
          * Iterator implementation for findDataObjects results.
          */
-        public class ResultIterator
+        @VisibleForTesting
+        class ResultIterator
                 extends
                 PaginatingFindResultIterator<T, FindDataObjectsRequest, FindDataObjectsResultPage> {
 
@@ -1988,7 +1989,8 @@ public final class DXSearch {
          *
          * @return Current page number
          */
-        public int pageNo() {
+        @VisibleForTesting
+        int pageNo() {
             return this.currentPageNo;
         }
 
