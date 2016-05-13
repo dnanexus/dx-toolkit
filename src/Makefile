@@ -140,20 +140,28 @@ $(DNANEXUS_HOME)/bin/dx: $(shell find python/{dxpy,scripts,requirements*,setup*}
 	rm -rf "$(PYTHON_LIBDIR)" "$(DX_PY_ENV)" python/dist
 	mkdir -p "$$(dirname '$(PYTHON_LIBDIR)')"
 	virtualenv --python=python "$(DX_PY_ENV)"
+
+	# Install setuptools and other fundamental packages
 ifeq ($(OS), Windows_NT)
 	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; python -m pip install --upgrade -r python/requirements_setuptools.txt
+else
+	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; pip install --upgrade -r python/requirements_setuptools.txt
+endif
+
+	# On OS X, install the gnureadline package
+ifeq ($(UNAME), Darwin)
+	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; pip install --no-cache-dir --prefix="$(DNANEXUS_HOME)" -r python/requirements_readline.txt
+endif
+
+	# Build the dxpy wheel and move it into place
 	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; cd python; python setup.py bdist_wheel
+ifeq ($(OS), Windows_NT)
 	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; python -m pip install --ignore-installed --prefix="wheel_tempdir" python/dist/*.whl
 	mv "$(DNANEXUS_HOME)"/src/wheel_tempdir/Lib/site-packages "$(PYTHON_LIBDIR)"
 	mv "$(DNANEXUS_HOME)"/src/wheel_tempdir/Scripts/* "$(DNANEXUS_HOME)"/bin
 else
-	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; pip install --upgrade -r python/requirements_setuptools.txt
-	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; cd python; python setup.py bdist_wheel
 	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; pip install --ignore-installed --prefix="$(DNANEXUS_HOME)" python/dist/*.whl
 	mv "$(DNANEXUS_HOME)"/lib/python?.?/site-packages "$(PYTHON_LIBDIR)" || mv "$(DNANEXUS_HOME)"/site-packages "$(PYTHON_LIBDIR)"
-endif
-ifeq ($(UNAME), Darwin)
-	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; pip install --no-cache-dir --prefix="$(DNANEXUS_HOME)" -r python/requirements_readline.txt
 endif
 	rm -f "$(DNANEXUS_HOME)/bin/xattr"
 
