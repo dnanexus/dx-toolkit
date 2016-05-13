@@ -385,7 +385,7 @@ class DXExecDependencyInstaller(object):
         if bundle["id"].get("$dnanexus_link", "").startswith("file-"):
             self.log("Downloading bundled file {name}".format(**bundle))
             dxpy.download_dxfile(bundle["id"], bundle["name"])
-            self.run("dx-unpack '{}'".format(bundle["name"]))
+            self.run("dx-unpack '{}'".format(re.escape(bundle["name"])))
         else:
             self.log('Skipping bundled dependency "{name}" because it does not refer to a file'.format(**bundle))
 
