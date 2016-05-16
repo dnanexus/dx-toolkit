@@ -23,6 +23,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import os, sys, json, re, collections, logging, argparse, string, itertools, subprocess, tempfile
 from functools import wraps
 from collections import namedtuple
+import pipes
 
 import dxpy
 from ..compat import USING_PYTHON2, open
@@ -385,7 +386,7 @@ class DXExecDependencyInstaller(object):
         if bundle["id"].get("$dnanexus_link", "").startswith("file-"):
             self.log("Downloading bundled file {name}".format(**bundle))
             dxpy.download_dxfile(bundle["id"], bundle["name"])
-            self.run("dx-unpack '{}'".format(re.escape(bundle["name"])))
+            self.run("dx-unpack {}".format(pipes.quote(bundle["name"])))
         else:
             self.log('Skipping bundled dependency "{name}" because it does not refer to a file'.format(**bundle))
 

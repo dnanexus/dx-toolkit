@@ -20,7 +20,7 @@
 Downloads the contents of runSpec.bundledDepends of a job running in the execution environment.
 '''
 
-import os, sys, argparse, subprocess, re
+import os, sys, argparse, subprocess, pipes
 import dxpy
 
 parser = argparse.ArgumentParser(description=__doc__)
@@ -41,4 +41,4 @@ if 'DX_JOB_ID' in os.environ:
             if dep['id']['$dnanexus_link'].startswith('file-'):
                 print "*** Downloading bundled file", dep['name']
                 dxpy.download_dxfile(dep['id'], dep['name'])
-                subprocess.check_call(['dx-unpack', re.escape(dep['name'])])
+                subprocess.check_call(['dx-unpack', pipes.quote(dep['name'])])

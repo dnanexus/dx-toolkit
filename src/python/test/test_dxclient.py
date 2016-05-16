@@ -2728,6 +2728,33 @@ def main():
         shell.close()
         self.assertEqual(3, shell.exitstatus)
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping tests that would run jobs')
+    def test_bundledDepends_name_with_whitespaces(self):
+        # upload a tar.gz file with spaces in its name
+        bundle_name = "test bundle with spaces.tar.gz"
+        bundle_file = dxpy.upload_string("xxyyzz", project=self.project, wait_on_close=True,
+                                         name=bundle_name)
+
+        app_spec = {
+                    "project": self.project,
+                    "name": "app-bundled-depends-name-with-spaces",
+                    "dxapi": "1.0.0",
+                    "runSpec": {
+                                "interpreter": "bash",
+                                "code": "echo 'hello'",
+                                "bundledDepends": [{"name": bundle_name,
+                                                    "id": {"$dnanexus_link": bundle_file.get_id()}}]
+                                },
+                    "inputSpec": [],
+                    "outputSpec": [],
+                    "version": "1.0.0"
+                    }
+        bundle_applet_id = dxpy.api.applet_new(app_spec)["id"]
+        bundle_applet = dxpy.DXApplet(bundle_applet_id)
+        applet_job = bundle_applet.run({})
+        applet_job.wait_on_done()
+        self.assertEqual(applet_job.describe()['state'], 'done')
+
 
 class TestDXClientWorkflow(DXTestCase):
     default_inst_type = "mem2_hdd2_x2"
