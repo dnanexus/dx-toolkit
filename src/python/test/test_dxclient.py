@@ -252,9 +252,10 @@ class TestDXClient(DXTestCase):
         run("dx env --dx-flags")
 
     def test_dx_api(self):
-        with tempfile.NamedTemporaryFile() as fd:
+        with testutil.TemporaryFile() as fd:
             fd.write("{}")
             fd.flush()
+            fd.close()
             run("dx api {p} describe --input {fn}".format(p=self.project, fn=fd.name))
 
     @unittest.skipUnless(testutil.TEST_NO_RATE_LIMITS,
@@ -1074,9 +1075,10 @@ class TestDXClientUploadDownload(DXTestCase):
         os.mkdir(os.path.join(wd, "a"))
         os.mkdir(os.path.join(wd, "a", "б"))
         os.mkdir(os.path.join(wd, "a", "б", "c"))
-        with tempfile.NamedTemporaryFile(dir=os.path.join(wd, "a", "б")) as fd:
+        with testutil.TemporaryFile(dir=os.path.join(wd, "a", "б")) as fd:
             fd.write("0123456789ABCDEF"*64)
             fd.flush()
+            fd.close()
             with self.assertSubprocessFailure(stderr_regexp='is a directory but the -r/--recursive option was not given', exit_code=1):
                 run("dx upload "+wd)
             run("dx upload -r "+wd)
@@ -1160,9 +1162,10 @@ class TestDXClientUploadDownload(DXTestCase):
                          'skipping test that would clobber your local environment')
     def test_dx_download_no_env(self):
         testdir = tempfile.mkdtemp()
-        with tempfile.NamedTemporaryFile(dir=testdir) as fd:
+        with testutil.TemporaryFile(dir=testdir) as fd:
             fd.write("foo")
             fd.flush()
+            fd.close()
             file_id = run("dx upload " + fd.name + " --brief --wait").strip()
             self.assertTrue(file_id.startswith('file-'))
 
@@ -1187,9 +1190,10 @@ class TestDXClientUploadDownload(DXTestCase):
     def test_dx_make_download_url(self):
         testdir = tempfile.mkdtemp()
         output_testdir = tempfile.mkdtemp()
-        with tempfile.NamedTemporaryFile(dir=testdir) as fd:
+        with testutil.TemporaryFile(dir=testdir) as fd:
             fd.write("foo")
             fd.flush()
+            fd.close()
             file_id = run("dx upload " + fd.name + " --brief --wait").strip()
             self.assertTrue(file_id.startswith('file-'))
 
@@ -1202,6 +1206,7 @@ class TestDXClientUploadDownload(DXTestCase):
             download_url = run("dx make_download_url " + file_id + " --filename foo")
             run("wget -P " + output_testdir + " " + download_url)
             run('cmp ' + os.path.join(output_testdir, "foo") + ' ' + fd.name)
+
 
     def test_dx_make_download_url_project_affinity(self):
         # Ensure that URLs created with make_download_url never have project
@@ -1221,15 +1226,17 @@ class TestDXClientUploadDownload(DXTestCase):
     def test_dx_upload_mult_paths(self):
         testdir = tempfile.mkdtemp()
         os.mkdir(os.path.join(testdir, 'a'))
-        with tempfile.NamedTemporaryFile(dir=testdir) as fd:
+        with testutil.TemporaryFile(dir=testdir) as fd:
             fd.write("root-file")
             fd.flush()
-            with tempfile.NamedTemporaryFile(dir=os.path.join(testdir, "a")) as fd2:
+            fd.close()
+            with testutil.TemporaryFile(dir=os.path.join(testdir, "a")) as fd2:
                 fd2.write("a-file")
                 fd2.flush()
+                fd2.close()
 
-                run(("dx upload -r {testdir}/{rootfile} {testdir}/a " +
-                     "--wait").format(testdir=testdir, rootfile=os.path.basename(fd.name)))
+                run(("dx upload -r {rootfile} {testdir} " +
+                     "--wait").format(testdir=os.path.join(testdir, 'a'), rootfile=fd.name))
                 listing = run("dx ls").split("\n")
                 self.assertIn("a/", listing)
                 self.assertIn(os.path.basename(fd.name), listing)
@@ -1239,21 +1246,24 @@ class TestDXClientUploadDownload(DXTestCase):
     def test_dx_upload_mult_paths_with_dest(self):
         testdir = tempfile.mkdtemp()
         os.mkdir(os.path.join(testdir, 'a'))
-        with tempfile.NamedTemporaryFile(dir=testdir) as fd:
+        with testutil.TemporaryFile(dir=testdir) as fd:
             fd.write("root-file")
             fd.flush()
-            with tempfile.NamedTemporaryFile(dir=os.path.join(testdir, "a")) as fd2:
+            fd.close()
+            with testutil.TemporaryFile(dir=os.path.join(testdir, "a")) as fd2:
                 fd2.write("a-file")
                 fd2.flush()
+                fd2.close()
 
                 run("dx mkdir /destdir")
-                run(("dx upload -r {testdir}/{rootfile} {testdir}/a --destination /destdir " +
-                     "--wait").format(testdir=testdir, rootfile=os.path.basename(fd.name)))
+                run(("dx upload -r {rootfile} {testdir} --destination /destdir " +
+                     "--wait").format(testdir=os.path.join(testdir, 'a'), rootfile=fd.name))
                 listing = run("dx ls /destdir/").split("\n")
                 self.assertIn("a/", listing)
                 self.assertIn(os.path.basename(fd.name), listing)
                 listing = run("dx ls /destdir/a").split("\n")
                 self.assertIn(os.path.basename(fd2.name), listing)
+
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_download_by_job_id_and_output_field(self):
@@ -1337,7 +1347,7 @@ dxpy.run()
             with chdir(testdir):
                 run(cmd_string)
                 run("diff -Naur {} {}".format(org_dir, testdir))
-                shutil.rmtree(testdir)
+            shutil.rmtree(testdir)
 
         with temporary_project('test_proj', select=True) as temp_project:
             proj_id = temp_project.get_id()
@@ -1435,13 +1445,14 @@ class TestDXClientDownloadDataEgressBilling(DXTestCase):
                 os.remove(filename)
 
     def setUp(self):
-        self.temp_file_fd = tempfile.NamedTemporaryFile()
+        self.temp_file_fd = tempfile.NamedTemporaryFile(delete=False)
         # set output file to verify api call is called with correct project
         os.environ['_DX_DUMP_BILLED_PROJECT'] = self.temp_file_fd.name
 
     def tearDown(self):
         del os.environ['_DX_DUMP_BILLED_PROJECT']
         self.temp_file_fd.close()
+        os.remove(self.temp_file_fd.name)
 
     @unittest.skipUnless(testutil.TEST_ENV,
                          'skipping test that would clobber your local environment')

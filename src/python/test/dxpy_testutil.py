@@ -457,3 +457,33 @@ class DXTestCaseBuildApps(DXTestCase):
             with open(os.path.join(self.temp_file_path, app_name, code_filename), 'w') as code_file:
                 code_file.write(code_content)
         return os.path.join(self.temp_file_path, app_name)
+
+
+class TemporaryFile:
+    ''' A wrapper class around a NamedTemporaryFile. Intended for use inside a 'with' statement.
+        It returns a file-like object that can be opened by another process for writing, in particular
+        in Windows, where the OS does not allow multiple handles to a single file. The parameter
+        'close' determines if the file is returned closed or open.
+    '''
+    def __init__(self, mode='w+b', bufsize=-1, suffix='', prefix='tmp', dir=None, delete=True, close=False):
+        self.temp_file = tempfile.NamedTemporaryFile(mode, bufsize, suffix, prefix, dir, delete=False)
+        self.name = self.temp_file.name
+        self.delete = delete
+        if (close):
+            self.temp_file.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if self.delete:
+            os.unlink(self.name)
+
+    def write(self, buf):
+        return self.temp_file.write(buf)
+
+    def flush(self):
+        return self.temp_file.flush()
+
+    def close(self):
+        return self.temp_file.close()

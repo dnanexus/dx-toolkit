@@ -448,7 +448,7 @@ class TestDXFile(unittest.TestCase):
             dxpy.api.project_clone(p.get_id(), {"objects": [f.get_id()], "project": p2.get_id()})
 
             # Project specified in handler: bill that project for download
-            with tempfile.NamedTemporaryFile() as tmp:
+            with testutil.TemporaryFile(close=True) as tmp:
                 os.environ['_DX_DUMP_BILLED_PROJECT'] = tmp.name
                 f1 = dxpy.DXFile(dxid=f.get_id(), project=p.get_id())
                 f1.read(4)
@@ -457,7 +457,7 @@ class TestDXFile(unittest.TestCase):
 
             # Project specified in read() call: overrides project specified in
             # handler
-            with tempfile.NamedTemporaryFile() as tmp:
+            with testutil.TemporaryFile(close=True) as tmp:
                 os.environ['_DX_DUMP_BILLED_PROJECT'] = tmp.name
                 f2 = dxpy.DXFile(dxid=f.get_id(), project=p.get_id())
                 f2.read(4, project=p2.get_id())
@@ -466,15 +466,16 @@ class TestDXFile(unittest.TestCase):
 
             # Project specified in neither handler nor read() call: set no hint
             # when making API call
-            with tempfile.NamedTemporaryFile() as tmp:
+            with testutil.TemporaryFile(close=True) as tmp:
                 os.environ['_DX_DUMP_BILLED_PROJECT'] = tmp.name
                 f3 = dxpy.DXFile(dxid=f.get_id())  # project defaults to project context
                 f3.read(4)
                 with open(tmp.name, "r") as fd:
                     self.assertEqual(fd.read(), "")
 
-            # Project specified in read() that doesn't contain the file. The
-            # call should fail.
+            # Project specified in read() that doesn't contain the file.
+            # The call should fail.
+            del os.environ['_DX_DUMP_BILLED_PROJECT']
             dxpy.api.project_remove_objects(p2.get_id(), {"objects": [f.get_id()]})
             f4 = dxpy.DXFile(dxid=f.get_id())
             with self.assertRaises(ResourceNotFound):
@@ -483,7 +484,7 @@ class TestDXFile(unittest.TestCase):
             # Project specified in handler that doesn't contain the file. The
             # call must succeed for backward compatibility (and bill no project
             # in particular).
-            with tempfile.NamedTemporaryFile() as tmp:
+            with testutil.TemporaryFile(close=True) as tmp:
                 os.environ['_DX_DUMP_BILLED_PROJECT'] = tmp.name
                 f5 = dxpy.DXFile(dxid=f.get_id(), project=p2.get_id())
                 f5.read(4)
