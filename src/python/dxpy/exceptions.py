@@ -162,6 +162,12 @@ class BadJSONInReply(ValueError):
     '''
 
 
+class UrllibInternalError(AttributeError):
+    '''
+    Exception class for AttributeError from urllib3
+    '''
+
+
 def format_exception(e):
     """Returns a string containing the type and text of the exception.
 

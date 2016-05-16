@@ -134,6 +134,7 @@ import socket
 
 from collections import namedtuple
 from . import exceptions
+from random import randint
 from requests.auth import AuthBase
 from requests.packages import urllib3
 from requests.packages.urllib3.packages.ssl_match_hostname import match_hostname
@@ -196,8 +197,8 @@ _default_headers['DNAnexus-API'] = API_VERSION
 _default_headers['User-Agent'] = USER_AGENT
 _default_timeout = urllib3.util.timeout.Timeout(connect=DEFAULT_TIMEOUT, read=DEFAULT_TIMEOUT)
 _RequestForAuth = namedtuple('_RequestForAuth', 'method url headers')
-_expected_exceptions = exceptions.network_exceptions + \
-                       (exceptions.DXAPIError, BadStatusLine, exceptions.BadJSONInReply)
+_expected_exceptions = (exceptions.network_exceptions, exceptions.DXAPIError, BadStatusLine, exceptions.BadJSONInReply,
+                        exceptions.UrllibInternalError)
 
 # Multiple threads can ask for the pool, so we need to protect
 # access and make it thread safe.
@@ -345,7 +346,6 @@ def _extract_retry_after_timeout(response):
 # http://docs.aws.amazon.com/AmazonS3/latest/API/ErrorResponses.html
 def _maybe_trucate_request(url, try_index, data):
     MIN_UPLOAD_LEN = 16 * 1024
-    from random import randint
     if _INJECT_ERROR:
         if (randint(0, 9) == 0) and "upload" in url and len(data) > MIN_UPLOAD_LEN:
             logger.info("truncating upload data to length=%d", MIN_UPLOAD_LEN)
@@ -353,9 +353,16 @@ def _maybe_trucate_request(url, try_index, data):
     return data
 
 
-def _raise_error_for_testing(method):
-    if _INJECT_ERROR and method == 'GET':
-        raise exceptions.DXIncompleteReadsError()
+def _raise_error_for_testing(try_index=None, method='GET'):
+    if _INJECT_ERROR and method == 'GET' and randint(0, 9) == 0:
+        error_thrown = randint(0, 1)
+        if error_thrown == 0 and try_index is None:
+            raise exceptions.DXIncompleteReadsError()
+
+        # Raise exception to test urllib3 error in downloads
+        elif error_thrown == 1 and try_index is not None and try_index < 3:
+            raise exceptions.UrllibInternalError()
+
 
 def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                   timeout=DEFAULT_TIMEOUT,
@@ -484,6 +491,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             # throws BadStatusLine if the server returns nothing
             response = _get_pool_manager(**pool_args).request(_method, _url, headers=_headers, body=body,
                                                               timeout=timeout, retries=False, **kwargs)
+            _raise_error_for_testing(try_index, method)
             req_id = response.headers.get("x-request-id", "unavailable")
 
             if _UPGRADE_NOTIFY and response.headers.get('x-upgrade-info', '').startswith('A recommended update is available') and '_ARGCOMPLETE' not in os.environ:
@@ -500,7 +508,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             if response.status // 100 != 2:
                 # response.headers key lookup is case-insensitive
                 if response.headers.get('content-type', '').startswith('application/json'):
-                    content = response.data.decode('utf-8')
+                    try:
+                        content = response.data.decode('utf-8')
+                    except AttributeError:
+                        raise exceptions.UrllibInternalError("Content is none", response.status)
                     try:
                         content = json.loads(content)
                     except ValueError:
@@ -588,7 +599,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 if try_index + 1 < total_allowed_tries:
                     if response is None or \
                        isinstance(e, (exceptions.ContentLengthError, BadStatusLine, exceptions.BadJSONInReply, \
-                                      urllib3.exceptions.ProtocolError)):
+                                      urllib3.exceptions.ProtocolError, exceptions.UrllibInternalError)):
                         ok_to_retry = is_retryable
                     else:
                         ok_to_retry = 500 <= response.status < 600
@@ -663,7 +674,7 @@ def _dxhttp_read_range(url, headers, start_pos, end_pos, timeout, sub_range=True
     try:
         data = DXHTTPRequest(url, '', method='GET', headers=headers, auth=None, jsonify_data=False, prepend_srv=False,
                              always_retry=True, timeout=timeout, decode_response_body=False)
-        _raise_error_for_testing('GET')
+        _raise_error_for_testing()
         return data
 
     # When chunk fails to be read, it gets broken into sub-chunks
