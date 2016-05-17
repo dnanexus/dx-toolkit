@@ -256,7 +256,6 @@ def _download_dxfile(dxid, filename, part_retry_counter,
         try:
             # Main loop. In parallel: download chunks, verify them, and write them to disk.
             cur_part, got_bytes, hasher = None, None, None
-            dxfile._ensure_http_threadpool()
             for chunk_part, chunk_data in response_iterator(chunk_requests(), dxfile._http_threadpool):
                 if chunk_part != cur_part:
                     verify_part(cur_part, got_bytes, hasher)
