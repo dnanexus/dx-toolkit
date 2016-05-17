@@ -4216,7 +4216,7 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
         # Basic test to check consistency of client output to directly invoking API
         dx_api_output = dxpy.api.org_find_apps(self.org_id)
         self.assertEqual(len(dx_api_output['results']), num_org_apps)
-        self.assertEqual(actual_app_ids, [member['id'] for member in dx_api_output['results']])
+        self.assertEqual(actual_app_ids, [app['id'] for app in dx_api_output['results']])
 
         # Same as above, without the --brief flag, so we need to destructure formatting
         lengthy_outputs = run("dx find org apps {}".format(self.org_id)).rstrip().split("\n")
@@ -4224,8 +4224,8 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
         for lengthy_output in lengthy_outputs:
             self.assertRegex(lengthy_output, pattern)
 
-        output_titles = sorted(map(lambda s: s.strip().split()[0], lengthy_outputs))
-        self.assertEqual(output_titles, sorted(map(lambda app: app['title'], apps)))
+        output_titles = sorted([s.strip().split()[0] for s in lengthy_outputs])
+        self.assertEqual(output_titles, sorted([app['title'] for app in apps]))
 
 
 @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping tests that require org creation')

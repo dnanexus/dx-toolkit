@@ -411,6 +411,10 @@ class DXTestCase(unittest.TestCase):
 
 
 class DXTestCaseBuildApps(DXTestCase):
+    """
+    This class adds methods to ``DXTestCase`` related to app creation,
+    app destruction, and extraction of app data as local files.
+    """
     def setUp(self):
         super(DXTestCaseBuildApps, self).setUp()
         self.temp_file_path = tempfile.mkdtemp()
