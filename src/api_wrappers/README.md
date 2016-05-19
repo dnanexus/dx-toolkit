@@ -60,15 +60,45 @@ To add wrappers for your favorite language (say, Ruby):
 HTTP Retry logic
 ----------------
 
-An HTTP request to the API server should be retried (up to some fixed number of retries) if any of the following are true:
+An HTTP request to the API server should be retried (up to some fixed
+number of retries) if any of the following are true:
 
-* A response is received from the server, and the response has an HTTP status code in 5xx range.
+* A response is received from the server, and the response has an HTTP
+  status code in 5xx range.
     * This may indicate that the server encountered a transient error.
-    * If the status code is 503 (Service Unavailable) and Retry-After is set, the failure should not count against the maximum allowed number of retries.
-* *safe_to_retry* (caller-supplied parameter; for compatibility reasons this is called *always_retry* in some language bindings) is True, or the request *method* is "GET"; and one of the following is true:
-    * No response is received from the server.
-    * A response is received from the server, and the content length received does not match the "Content-Length" header.
-        * This indicates that the response was likely corrupted (truncated).
-    * A response is received from the server, the "Content-Length" header is not set, and the response JSON cannot be parsed.
-        * This is a mechanism that allows for the server to indicate a transient error encountered during a streaming response (after the headers have been sent), simply by halting output.
-* It is certain that the request was never received by the server (some clients may not be able to determine whether this was the case).
+    * If the status code is 503 (Service Unavailable) and Retry-After is
+      set, the failure should not count against the maximum allowed
+      number of retries.
+* *safe_to_retry* (caller-supplied parameter; for compatibility reasons
+  this is called *always_retry* in some language bindings) is True, or
+  the request *method* is "GET"; and one of the following is true:
+    * No response is received from the server. (For example, this may
+      manifest in the requests library as BadStatusLine.)
+    * A response is received from the server, and the content length
+      received does not match the "Content-Length" header (possibly
+      because the connection has been dropped). (For example, this may
+      manifest in the requests library as ContentLengthError or
+      ProtocolError.)
+        * This indicates that the response was likely corrupted
+          (truncated).
+    * A response is received from the server, the "Content-Length"
+      header is not set, and the response JSON cannot be parsed.
+        * This is a mechanism that allows for the server to indicate a
+          transient error encountered during a streaming response (after
+          the headers have been sent), simply by halting output.
+    * The HTTP client library signals an unhandled exception or other
+      protocol error.
+* The request *method* is "PUT", and one of the following is true:
+    * The HTTP status code is 400, and S3 returns a RequestTimeout
+      error. (See:
+      [Amazon S3 error codes](http://docs.aws.amazon.com/AmazonS3/latest/API/ErrorResponses.html))
+    * The HTTP client library signals an unhandled exception or other
+      protocol error.
+* It is certain that the request was never received by the server (some
+  clients may not be able to determine whether this was the case).
+
+If a download request (i.e. against a URL returned by
+/file-xxxx/download) fails and is retryable under the conditions above,
+the client may also consider splitting the byte range into smaller byte
+ranges and issuing separate requests for each (with each subrange itself
+being retryable using the logic specified above).
