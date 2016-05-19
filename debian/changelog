@@ -1,3 +1,13 @@
+dx-toolkit (0.191.0) precise; urgency=low
+
+  * dx build_asset
+
+  * Java: FindDataObjects didn't observe pagination parameters
+
+  * Remove C++ from dx-app-wizard
+
+ -- Phil Sung <psung@dnanexus.com>  Thu, 19 May 2016 21:45:37 +0000
+
 dx-toolkit (0.190.0) precise; urgency=low
 
   * Added ability to dereference symlinks; fix problematic umask
@@ -8,7 +18,7 @@ dx-toolkit (0.190.0) precise; urgency=low
   * Fix argcomplete failures due to 67896ca
   * int/long boundary is system-dependent
   * All environment variables should be string only and case sensitive
-  * PTFM-13142 Various improvements to "dx get" 
+  * PTFM-13142 Various improvements to "dx get"
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 05 May 2016 20:07:40 +0000
 
