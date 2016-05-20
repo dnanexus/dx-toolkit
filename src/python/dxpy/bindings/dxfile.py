@@ -177,7 +177,7 @@ class DXFile(DXDataObject):
     def set_http_threadpool_size(cls, num_threads):
         '''
 
-        .. deprecated:: 0.42.0
+        .. deprecated:: 0.191.0
 
         '''
         print('set_http_threadpool_size is deprecated')
