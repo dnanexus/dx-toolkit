@@ -7498,8 +7498,9 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
                                                       input_params={'authorizedUsers': list(authorized_users)})
         output = dxpy.api.app_describe(app_json['id'])
         self.assertNotIn(second_user_id, output['authorizedUsers'])
-        output = json.loads(run("dx uninstall %s" % name, env=as_second_user()))
-        self.assertEqual(name, output['name'])
+        run("dx uninstall %s" % name, env=as_second_user())
+        output = json.loads(run("dx find apps --installed --json", env=as_second_user()))
+        self.assertNotIn(name, [x['describe']['name'] for x in output])
 
 class TestDXBuildReportHtml(unittest.TestCase):
     js = "console.log('javascript');"
