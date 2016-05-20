@@ -173,6 +173,13 @@ class DXFile(DXDataObject):
 
     NO_PROJECT_HINT = 'NO_PROJECT_HINT'
 
+    @classmethod
+    def set_http_threadpool_size(cls, num_threads):
+        '''
+        Deprecated.
+        '''
+        print('set_http_threadpool_size is deprecated')
+
     def __init__(self, dxid=None, project=None, mode=None, read_buffer_size=DEFAULT_BUFFER_SIZE,
                  write_buffer_size=DEFAULT_BUFFER_SIZE, expected_file_size=None, file_is_mmapd=False):
         """
