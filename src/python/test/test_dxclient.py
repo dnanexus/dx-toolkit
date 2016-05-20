@@ -7463,6 +7463,43 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
                     break
             self.assertTrue(seenResources)
 
+    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
+    @unittest.skipUnless(testutil.TEST_MULTIPLE_USERS, 'skipping test that would require another user')
+    def test_uninstall_app(self):
+        second = json.loads(os.environ['DXTEST_SECOND_USER'])
+        second_user_id = second['user']
+        authorized_users = [second_user_id]
+        name = 'uninstall_test'
+        app_spec = {
+            "name": name,
+            "title": name,
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [{"name": "in1", "class": "file"}],
+            "outputSpec": [{"name": "out1", "class": "file"}],
+            "description": "Description\n",
+            "developerNotes": "Developer notes\n",
+            "authorizedUsers": authorized_users,
+            "openSource": True,
+            "version": "0.0.1"
+            }
+        app_dir = self.write_app_directory(name, json.dumps(app_spec), "code.py", code_content="import os\n")
+        os.mkdir(os.path.join(app_dir, "resources"))
+        with open(os.path.join(app_dir, "resources", "resources_file"), 'w') as f:
+            f.write('content\n')
+        build_cmd = "dx build --create-app --json --publish "
+        app_json = json.loads(run(build_cmd + app_dir))
+        self.assertEqual(app_json['name'], name)
+        run("dx install " + name, env=as_second_user())
+        output = json.loads(run("dx find apps --installed --json", env=as_second_user()))
+        self.assertIn(name, [x['describe']['name'] for x in output])
+        dxpy.api.app_remove_authorized_users(app_json['id'],
+                                                      input_params={'authorizedUsers': list(authorized_users)})
+        output = dxpy.api.app_describe(app_json['id'])
+        self.assertNotIn(second_user_id, output['authorizedUsers'])
+        output = json.loads(run("dx uninstall %s" % name, env=as_second_user()))
+        self.assertEqual(name, output['name'])
 
 class TestDXBuildReportHtml(unittest.TestCase):
     js = "console.log('javascript');"

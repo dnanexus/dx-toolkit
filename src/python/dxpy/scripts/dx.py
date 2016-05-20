@@ -2514,7 +2514,15 @@ def install(args):
 def uninstall(args):
     app_desc = get_app_from_path(args.app)
     if app_desc is None:
-        parser.exit(1, 'Could not find the app\n')
+        try:
+            dxpy.api.app_uninstall(args.app)
+            print('Uninstalled application with id: ' + args.app)
+        except:
+            try:
+                dxpy.api.app_uninstall('app-' + args.app)
+                print('Uninstalled application with name: ' + args.app)
+            except:
+                err_exit()
     else:
         try:
             dxpy.api.app_uninstall(app_desc['id'])
