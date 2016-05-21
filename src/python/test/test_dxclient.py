@@ -2762,6 +2762,17 @@ def main():
         applet_job.wait_on_done()
         self.assertEqual(applet_job.describe()['state'], 'done')
 
+    def test_bundledDepends_name_with_specialChars_locally(self):
+        # upload a tar.gz file with spaces, quotes and escape chars in its name
+        bundle_name = "test 'bundle' \"with\" \"$@#^&%()[]{}\" spaces.tar.gz"
+        bundle_tmp_dir = tempfile.mkdtemp()
+        os.mkdir(os.path.join(bundle_tmp_dir, "a"))
+        with open(os.path.join(bundle_tmp_dir, 'a', 'foo.txt'), 'w') as file_in_bundle:
+            file_in_bundle.write('foo\n')
+        subprocess.check_call(['tar', '-czf', os.path.join(bundle_tmp_dir, bundle_name),
+                               '-C', os.path.join(bundle_tmp_dir, 'a'), '.'])
+        subprocess.check_call(["dx-unpack", os.path.join(bundle_tmp_dir, bundle_name)])
+
 
 class TestDXClientWorkflow(DXTestCase):
     default_inst_type = "mem2_hdd2_x2"
