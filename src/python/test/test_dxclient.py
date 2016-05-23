@@ -25,6 +25,7 @@ import pipes
 import stat
 import hashlib
 import collections
+import string
 from contextlib import contextmanager
 import pexpect
 import requests
@@ -7463,12 +7464,10 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
                     break
             self.assertTrue(seenResources)
 
-    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
-    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
-    @unittest.skipUnless(testutil.TEST_MULTIPLE_USERS, 'skipping test that would require another user')
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_MULTIPLE_USERS,
+                         'skipping test that would create apps and another user')
     def test_uninstall_app(self):
-        second = json.loads(os.environ['DXTEST_SECOND_USER'])
-        second_user_id = second['user']
+        second_user_id = json.loads(os.environ['DXTEST_SECOND_USER'])['user']
         authorized_users = [second_user_id]
         name = 'uninstall_test'
         app_spec = {
@@ -7476,8 +7475,8 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
             "title": name,
             "dxapi": "1.0.0",
             "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [{"name": "in1", "class": "file"}],
-            "outputSpec": [{"name": "out1", "class": "file"}],
+            "inputSpec": [],
+            "outputSpec": [],
             "description": "Description\n",
             "developerNotes": "Developer notes\n",
             "authorizedUsers": authorized_users,
@@ -7485,22 +7484,41 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
             "version": "0.0.1"
             }
         app_dir = self.write_app_directory(name, json.dumps(app_spec), "code.py", code_content="import os\n")
-        os.mkdir(os.path.join(app_dir, "resources"))
-        with open(os.path.join(app_dir, "resources", "resources_file"), 'w') as f:
-            f.write('content\n')
         build_cmd = "dx build --create-app --json --publish "
         app_json = json.loads(run(build_cmd + app_dir))
         self.assertEqual(app_json['name'], name)
+        # Install and check uninstall by name
         run("dx install " + name, env=as_second_user())
         output = json.loads(run("dx find apps --installed --json", env=as_second_user()))
         self.assertIn(name, [x['describe']['name'] for x in output])
         dxpy.api.app_remove_authorized_users(app_json['id'],
-                                                      input_params={'authorizedUsers': list(authorized_users)})
+                                             input_params={'authorizedUsers': list(authorized_users)})
         output = dxpy.api.app_describe(app_json['id'])
         self.assertNotIn(second_user_id, output['authorizedUsers'])
+        dxpy.api.project_invite(self.project, input_params={'invitee': second_user_id, 'level': 'VIEW'})
+        user_data = json.loads(run('dx describe --json ' + second_user_id, env=as_second_user()))
+        self.assertIn(name, user_data['appsInstalled'])
         run("dx uninstall %s" % name, env=as_second_user())
         output = json.loads(run("dx find apps --installed --json", env=as_second_user()))
         self.assertNotIn(name, [x['describe']['name'] for x in output])
+        user_data = json.loads(run('dx describe --json ' + second_user_id, env=as_second_user()))
+        self.assertNotIn(name, user_data['appsInstalled'])
+        # Install and check uninstall by ID
+        dxpy.api.app_add_authorized_users(app_json['id'],
+                                          input_params={'authorizedUsers': list(authorized_users)})
+        run("dx install " + name, env=as_second_user())
+        dxpy.api.app_remove_authorized_users(app_json['id'],
+                                             input_params={'authorizedUsers': list(authorized_users)})
+        user_data = json.loads(run('dx describe --json ' + second_user_id, env=as_second_user()))
+        self.assertIn(name, user_data['appsInstalled'])
+        run("dx uninstall %s" % app_json['id'], env=as_second_user())
+        user_data = json.loads(run('dx describe --json ' + second_user_id, env=as_second_user()))
+        self.assertNotIn(name, user_data['appsInstalled'])
+        # Check for App not found
+        app_unknown_name = ''.join(random.choice(string.ascii_lowercase) for _ in range(12))
+        with self.assertSubprocessFailure(stderr_regexp='Could not find the app', exit_code=1):
+            run("dx uninstall %s" % app_unknown_name, env=as_second_user())
+        pass
 
 class TestDXBuildReportHtml(unittest.TestCase):
     js = "console.log('javascript');"

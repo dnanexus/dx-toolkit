@@ -2513,22 +2513,18 @@ def install(args):
 
 def uninstall(args):
     app_desc = get_app_from_path(args.app)
-    if app_desc is None:
-        try:
-            dxpy.api.app_uninstall(args.app)
-            print('Uninstalled application with id: ' + args.app)
-        except:
-            try:
-                dxpy.api.app_uninstall('app-' + args.app)
-                print('Uninstalled application with name: ' + args.app)
-            except:
-                err_exit()
+    if app_desc:
+        try_call(dxpy.api.app_uninstall, app_desc['id'])
     else:
-        try:
-            dxpy.api.app_uninstall(app_desc['id'])
-            print('Uninstalled the ' + app_desc['name'] + ' app')
-        except:
-            err_exit()
+        user_data = dxpy.api.user_describe(dxpy.whoami(), {"fields": {"appsInstalled": True}})
+        if args.app in user_data['appsInstalled']:
+            args.app = 'app-' + args.app
+        if args.app.startswith('app-'):
+            try_call(dxpy.api.app_uninstall, args.app)
+            print('Uninstalled the {app} app'.format(app=args.app))
+        else:
+            parser.exit(1, 'Could not find the app\n')
+
 
 def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None,
             is_the_only_job=True):
