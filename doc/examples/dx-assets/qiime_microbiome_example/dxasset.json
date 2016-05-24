@@ -4,5 +4,6 @@
   "description": "A set of libraries that are required to run QIIME microbiome analysis tools",
   "version": "0.0.1",
   "release": "12.04",
-  "distribution": "Ubuntu"
+  "distribution": "Ubuntu",
+  "instanceType": "mem2_ssd1_x4"
 }

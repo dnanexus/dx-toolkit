@@ -112,12 +112,15 @@ class TestDXBuildAsset(DXTestCase):
             "version": "0.0.1",
             "distribution": "Ubuntu",
             "release": "12.04",
+            "instanceType": "mem1_ssd1_x2",
             "execDepends": [{"name": "python-numpy"}]
         }
         asset_dir = self.write_asset_directory("asset_with_valid_json", json.dumps(asset_spec))
         asset_bundle_id = json.loads(run('dx build_asset --json ' + asset_dir))['id']
         self.assertIn('record', asset_bundle_id)
         self.assertEqual(dxpy.describe(asset_bundle_id)['project'], self.project)
+        job_id = dxpy.describe(asset_bundle_id)['createdBy']['job']
+        self.assertEqual(dxpy.describe(job_id)['instanceType'], "mem1_ssd1_x2")
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
     def test_build_asset_with_valid_destination(self):
@@ -239,6 +242,20 @@ class TestDXBuildAsset(DXTestCase):
         applet_job.wait_on_done()
         self.assertEqual(applet_job.describe()['state'], 'done')
 
+    def test_build_asset_with_invalid_instance_type(self):
+        asset_spec = {
+            "name": "asset_library_name",
+            "title": "A human readable name",
+            "description": " A detailed description about the asset",
+            "version": "0.0.1",
+            "distribution": "Ubuntu",
+            "release": "12.04",
+            "instanceType": "mem1_ssd1_x3"
+        }
+        asset_dir = self.write_asset_directory("build_asset_with_invalid_instance_type", json.dumps(asset_spec))
+        # TODO exit_code=3
+        with self.assertSubprocessFailure(stderr_regexp='code 422', exit_code=1):
+            run("dx build_asset --json " + asset_dir)
 
 if __name__ == '__main__':
     if dxpy.AUTH_HELPER is None:

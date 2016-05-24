@@ -198,8 +198,10 @@ def build_asset(args):
         builder_run_options = {
             "name": dest_asset_name,
             "input": input_hash,
-            "project": dest_project_name,
+            "project": dest_project_name
             }
+        if 'instanceType' in asset_conf:
+            builder_run_options["systemRequirements"] = {"*": {"instanceType": asset_conf["instanceType"]}}
         if dest_folder_name:
             builder_run_options["folder"] = dest_folder_name
 
