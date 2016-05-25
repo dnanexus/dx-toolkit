@@ -254,7 +254,7 @@ class TestDXBuildAsset(DXTestCase):
         }
         asset_dir = self.write_asset_directory("build_asset_with_invalid_instance_type", json.dumps(asset_spec))
         # TODO exit_code=3
-        with self.assertSubprocessFailure(stderr_regexp='code 422', exit_code=1):
+        with self.assertSubprocessFailure(stderr_regexp='', exit_code=1):
             run("dx build_asset --json " + asset_dir)
 
 if __name__ == '__main__':
