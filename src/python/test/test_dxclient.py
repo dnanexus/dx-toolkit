@@ -2739,6 +2739,52 @@ def main():
         shell.close()
         self.assertEqual(3, shell.exitstatus)
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping tests that would run jobs')
+    def test_bundledDepends_name_with_whitespaces(self):
+        # upload a tar.gz file with spaces in its name
+        bundle_name = "test bundle with spaces.tar.gz"
+        bundle_tmp_dir = tempfile.mkdtemp()
+        os.mkdir(os.path.join(bundle_tmp_dir, "a"))
+        with open(os.path.join(bundle_tmp_dir, 'a', 'foo.txt'), 'w') as file_in_bundle:
+            file_in_bundle.write('foo\n')
+        subprocess.check_call(['tar', '-czf', os.path.join(bundle_tmp_dir, bundle_name),
+                               '-C', os.path.join(bundle_tmp_dir, 'a'), '.'])
+        bundle_file = dxpy.upload_local_file(filename=os.path.join(bundle_tmp_dir, bundle_name),
+                                             project=self.project,
+                                             wait_on_close=True)
+
+        app_spec = {
+                    "project": self.project,
+                    "name": "app-bundled-depends-name-with-spaces",
+                    "dxapi": "1.0.0",
+                    "runSpec": {
+                                "interpreter": "bash",
+                                "code": "echo 'hello'",
+                                "bundledDepends": [{"name": bundle_name,
+                                                    "id": {"$dnanexus_link": bundle_file.get_id()}}]
+                                },
+                    "inputSpec": [],
+                    "outputSpec": [],
+                    "version": "1.0.0"
+                    }
+        bundle_applet_id = dxpy.api.applet_new(app_spec)["id"]
+        bundle_applet = dxpy.DXApplet(bundle_applet_id)
+        applet_job = bundle_applet.run({})
+        applet_job.wait_on_done()
+        self.assertEqual(applet_job.describe()['state'], 'done')
+
+    def test_bundledDepends_name_with_special_chars_locally(self):
+        # upload a tar.gz file with spaces, quotes and escape chars in its name
+        bundle_name = "test 'bundle' \"with\" \"$@#^&%()[]{}\" spaces.tar.gz"
+        bundle_tmp_dir = tempfile.mkdtemp()
+        os.mkdir(os.path.join(bundle_tmp_dir, "a"))
+        with open(os.path.join(bundle_tmp_dir, 'a', 'foo.txt'), 'w') as file_in_bundle:
+            file_in_bundle.write('foo\n')
+        subprocess.check_call(['tar', '-czf', os.path.join(bundle_tmp_dir, bundle_name),
+                               '-C', os.path.join(bundle_tmp_dir, 'a'), '.'])
+        subprocess.check_call(["dx-unpack", os.path.join(bundle_tmp_dir, bundle_name)])
+        os.remove(os.path.join(os.getcwd(), 'foo.txt'))
+
 
 class TestDXClientWorkflow(DXTestCase):
     default_inst_type = "mem2_hdd2_x2"

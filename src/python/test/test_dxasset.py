@@ -203,7 +203,7 @@ class TestDXBuildAsset(DXTestCase):
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
     def test_build_and_use_asset(self):
         asset_spec = {
-            "name": "asset_library_name",
+            "name": "asset library name with space",
             "title": "A human readable name",
             "description": " A detailed description about the asset",
             "version": "0.0.1",
