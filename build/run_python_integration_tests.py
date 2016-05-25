@@ -42,7 +42,9 @@ PYTHON_TEST_DIR = os.path.join(PYTHON_DIR, 'test')
 os.environ['DNANEXUS_INSTALL_PYTHON_TEST_DEPS'] = 'yes'
 
 def run():
-    subprocess.check_call(["make", "python"], cwd=TOOLKIT_ROOT_DIR)
+    # src_libs is to ensure that dx-unpack is runnable. If we had "bash unit
+    # tests" that were broken out separately, that would obviate this though.
+    subprocess.check_call(["make", "python", "src_libs"], cwd=TOOLKIT_ROOT_DIR)
 
     # Somewhat hacky-- ensures that all subprocess calls to dx-* tools
     # load the coverage instrumentation so that their use of dxpy is
