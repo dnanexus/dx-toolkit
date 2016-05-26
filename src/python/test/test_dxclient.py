@@ -2774,8 +2774,9 @@ def main():
         self.assertEqual(applet_job.describe()['state'], 'done')
 
     def test_bundledDepends_name_with_special_chars_locally(self):
-        # upload a tar.gz file with spaces, quotes and escape chars in its name
-        bundle_name = "test 'bundle' \"with\" \"$@#^&%()[]{}\" spaces.tar.gz"
+        # dx-unpack will fail for tarball names containing '$' at the begining of a word,
+        # example: "test '$bundle' \"with\" \"@#^&%()[]{}\" spaces.tar.gz"
+        bundle_name = "test 'bundle' \"with\" \"@#^&%()[]{}\" spaces.tar.gz"
         bundle_tmp_dir = tempfile.mkdtemp()
         os.mkdir(os.path.join(bundle_tmp_dir, "a"))
         with open(os.path.join(bundle_tmp_dir, 'a', 'foo.txt'), 'w') as file_in_bundle:
