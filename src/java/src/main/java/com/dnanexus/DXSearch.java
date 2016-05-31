@@ -1087,6 +1087,9 @@ public final class DXSearch {
             this.response = DXAPI.systemFindDataObjects(request, FindDataObjectsResponse.class, env);
         }
 
+        /**
+         * Returns an amount of items on findDataObjects results page
+         */
         int size() {
             return response.results.size();
         }
