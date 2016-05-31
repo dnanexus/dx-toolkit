@@ -1013,7 +1013,7 @@ public final class DXSearch {
      * @param <T> data object class to be returned
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class SearchPage<T extends DXDataObject> implements Iterator<SearchPage<T>>, Iterable<T> {
+    public static class SearchPage<T extends DXDataObject> implements Iterable<T> {
             private final FindDataObjectsRequest request;
         private final String classConstraint;
         private final DXEnvironment env;
@@ -1097,20 +1097,13 @@ public final class DXSearch {
             return new ResultIterator();
         }
 
-        @Override
         public boolean hasNext() {
             return response.next != null && !response.next.isNull();
         }
 
-        @Override
         public SearchPage<T> next() {
             FindDataObjectsRequest nextRequest = new FindDataObjectsRequest(this.request, response.next, pageSize);
             return new SearchPage(nextRequest, classConstraint, env, pageSize);
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
         }
     }
 
