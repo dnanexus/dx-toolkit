@@ -313,6 +313,18 @@ public final class DXSearch {
         }
 
         /**
+         * Executes the query and returns first result set page.
+         *
+         * @param pageSize Page size
+         *
+         * @return Iterable result set page
+         */
+        public SearchPage<T> getPage(int pageSize) {
+            return new SearchPage<T>(this.buildRequestHash(pageSize), this.classConstraint,
+                    this.env, pageSize);
+        }
+
+        /**
          * Requests the default describe data for each matching data object when the query is run.
          * The {@link DXDataObject#getCachedDescribe()} method can be used if, and only if, this
          * method is called at query time.
@@ -989,10 +1001,116 @@ public final class DXSearch {
             return (T) dataObject;
         }
 
-
         @Override
         public Iterator<T> iterator() {
             return new ResultIterator();
+        }
+    }
+
+    /**
+     * The page subset of data objects that matched a {@code findDataObjects} query.
+     *
+     * @param <T> data object class to be returned
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class SearchPage<T extends DXDataObject> implements Iterator<SearchPage<T>>, Iterable<T> {
+            private final FindDataObjectsRequest request;
+        private final String classConstraint;
+        private final DXEnvironment env;
+        private final Integer pageSize;
+        private final FindDataObjectsResponse response;
+
+        /**
+         * Iterator implementation for findDataObjects results page items.
+         */
+        @VisibleForTesting
+        private class ResultIterator implements Iterator<T> {
+
+            int lastElementIndex;
+
+            private ResultIterator() {
+                this.lastElementIndex = -1;
+            }
+
+            @Override
+            public boolean hasNext() {
+                return lastElementIndex < (response.results.size() - 1);
+            }
+
+            @Override
+            public T next() {
+                return getDataObjectInstanceFromResult(response.results.get(++lastElementIndex));
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+
+            @SuppressWarnings("unchecked")
+            private T getDataObjectInstanceFromResult(FindDataObjectsResponse.Entry e) {
+                DXDataObject dataObject = null;
+                DXContainer container = DXContainer.getInstance(e.project);
+                if (e.describe != null) {
+                    dataObject =
+                            DXDataObject.getInstanceWithCachedDescribe(e.id, container, env,
+                                    e.describe);
+                } else {
+                    dataObject = DXDataObject.getInstanceWithEnvironment(e.id, container, env);
+                }
+
+                if (classConstraint != null) {
+                    if (!dataObject.getId().startsWith(classConstraint + "-")) {
+                        throw new IllegalStateException("Expected all results to be of type "
+                                + classConstraint + " but received an object with ID "
+                                + dataObject.getId());
+                    }
+                }
+                // This is an unchecked cast, but the callers of this class
+                // should have set T appropriately so that it agrees with
+                // the class constraint (if any). If something goes wrong
+                // here, either that code is incorrect or the API server
+                // has returned incorrect results.
+                return (T) dataObject;
+            }
+        }
+
+        /**
+         * Initializes result set page object with the specified page size.
+         */
+        private SearchPage(FindDataObjectsRequest request, String classConstraint,
+                                      DXEnvironment env, int pageSize) {
+            this.request = request;
+            this.classConstraint = classConstraint;
+            this.env = env;
+            this.pageSize = pageSize;
+            this.response = DXAPI.systemFindDataObjects(request, FindDataObjectsResponse.class, env);
+        }
+
+        int size() {
+            return response.results.size();
+        }
+
+        @Override
+        public Iterator<T> iterator()
+        {
+            return new ResultIterator();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return response.next != null && !response.next.isNull();
+        }
+
+        @Override
+        public SearchPage<T> next() {
+            FindDataObjectsRequest nextRequest = new FindDataObjectsRequest(this.request, response.next, pageSize);
+            return new SearchPage(nextRequest, classConstraint, env, pageSize);
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
         }
     }
 
