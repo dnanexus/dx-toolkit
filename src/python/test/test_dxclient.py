@@ -2739,7 +2739,8 @@ def main():
         shell.close()
         self.assertEqual(3, shell.exitstatus)
 
-    @unittest.skipUnless(testutil.TEST_ONLY_MASTER, 'skipping test that requires latest server version')
+    @unittest.skipUnless(testutil.TEST_ONLY_MASTER and testutil.TEST_RUN_JOBS,
+                         "skipping test that requires latest server version and that would run jobs")
     def test_bundledDepends_name_with_whitespaces(self):
         # upload a tar.gz file with spaces in its name
         bundle_name = "test bundle with spaces.tar.gz"
