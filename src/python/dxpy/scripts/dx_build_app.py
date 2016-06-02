@@ -242,8 +242,10 @@ def _lint(dxapp_json_filename, mode):
         readme_filename = _find_readme(os.path.dirname(dxapp_json_filename))
         if 'description' in app_spec:
             if readme_filename:
-                logger.warn('"description" field shadows file ' + readme_filename)
-            if not app_spec['description'].strip().endswith('.'):
+                raise dxpy.app_builder.AppBuilderException('Description field found in {file} file! '
+                      'Please transfer content to Readme.md and remove parameter from config file.'.
+                      format(file=dxapp_json_filename))
+            if not app_spec['description'].strip().endswith('.') and not readme_filename:
                 logger.warn('"description" field should be written in complete sentences and end with a period')
         else:
             if readme_filename is None:
