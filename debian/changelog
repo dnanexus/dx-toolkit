@@ -1,3 +1,23 @@
+dx-toolkit (0.192.0) precise; urgency=low
+
+  * Updated to skip for both TEST_ONLY_MASTER and TEST_RUN_JOBS. Commit# e69257
+  * Updated test to skip unless TEST_ONLY_MASTER #ae66239
+  * PTFM-17831 Move dx-app-wizard src to dxpy/scripts
+  * Fix for 'dxpy-master-integration-tests-on-staging' failure, with respect to commit 99b1f80
+  * Fix related to commit e4c7380, skipping test that would run jobs
+  * dx-toolkit "Python tests" now test dx-unpack too
+  * Updated the 'dx-unpack' script to honor embeded quotes and special characters in its arguments
+  * Fix for Nucleus_Integration_Tests#7224 related to commit 1ab04e8
+  * Added 'instanceType' field to the 'dxasset.json'
+  * PTFM-17774 Document retry policy for apiserver and S3 errors
+  * Fix version in deprecated method from d5d19db
+  * Small fix for a test in dx uninstall
+  * Allow users to "dx uninstall" apps by ID to which they no longer have access (#146)
+  * Follow up 50196b6 use machine readable deprecation
+  * Replace set_http_threadpool_size from 09e70d1 with deprecated method
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 02 Jun 2016 16:53:59 +0000
+
 dx-toolkit (0.191.0) precise; urgency=low
 
   * dx build_asset
