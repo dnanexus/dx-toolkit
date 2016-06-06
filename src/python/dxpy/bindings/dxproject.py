@@ -276,6 +276,59 @@ class DXProject(DXContainer):
 
     _class = "project"
 
+    def new(self, name, summary=None, description=None, protected=None,
+            restricted=None, contains_phi=None, tags=None,
+            properties=None, bill_to=None, **kwargs):
+        """
+        :param name: The name of the project
+        :type name: string
+        :param summary: If provided, a short summary of what the project contains
+        :type summary: string
+        :param description: If provided, the new project description
+        :type name: string
+        :param protected: If provided, whether the project should be protected
+        :type protected: boolean
+        :param restricted: If provided, whether the project should be restricted
+        :type restricted: boolean
+        :param contains_phi: If provided, whether the project should be marked as containing protected health information (PHI)
+        :type contains_phi: boolean
+        :param tags: If provided, tags to associate with the project
+        :type tags: list of strings
+        :param properties: If provided, properties to associate with the project
+        :type properties: dict
+        :param bill_to: If provided, ID of the entity to which any costs associated with this project will be billed; must be the ID of the requesting user or an org of which the requesting user is a member with allowBillableActivities permission
+        :type bill_to: string
+
+        Creates a new project. Initially only the user performing this action
+        will be in the permissions/member list, with ADMINISTER access.
+        See the API documentation for the `/project/new
+        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject%2Fnew>`_
+        method for more info.
+
+        """
+        input_hash = {}
+        input_hash["name"] = name
+        if summary is not None:
+            input_hash["summary"] = summary
+        if description is not None:
+            input_hash["description"] = description
+        if protected is not None:
+            input_hash["protected"] = protected
+        if restricted is not None:
+            input_hash["restricted"] = restricted
+        if contains_phi is not None:
+            input_hash["containsPHI"] = contains_phi
+        if bill_to is not None:
+            input_hash["billTo"] = bill_to
+        if tags is not None:
+            input_hash["tags"] = tags
+        if properties is not None:
+            input_hash["properties"] = properties
+
+        self.set_id(dxpy.api.project_new(input_hash, **kwargs)["id"])
+        self._desc = {}
+        return self._dxid
+
     def update(self, name=None, summary=None, description=None, protected=None,
                restricted=None, version=None, **kwargs):
         """
