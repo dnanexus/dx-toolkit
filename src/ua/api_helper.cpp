@@ -108,11 +108,11 @@ void checkForUpdates() {
                         "\nPlease download latest version (v" + ver + ") from " + url + "\n**********");
   }
   // If we are here => A recommended update is available. Show user a message to that effect
-  DXLOG(logINFO);
-  cerr <<"*********** Update Available ***********" << endl
-       << "A new version of Upload Agent (v" << ver << ") is available for your platform!" << endl
-       << "It's highly recommended that you download the latest version from here " << url << endl
-       << "****************************************" << endl;
+  DXLOG(logUSERINFO)
+    <<"*********** Update Available ***********" << endl
+    << "A new version of Upload Agent (v" << ver << ") is available for your platform!" << endl
+    << "It's highly recommended that you download the latest version from here " << url << endl
+    << "****************************************" << endl;
   return;
 }
 

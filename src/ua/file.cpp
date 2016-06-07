@@ -138,17 +138,20 @@ void File::init(const bool tryResuming) {
         isRemoteFileOpen = true;
       }
       DXLOG(logINFO) << "A resume target is found .. " << endl;
-      cerr << "Signature of file " << localFile << " matches remote file " << findResult[0]["describe"]["name"].get<string>() 
-           << " (" << fileID << "), which is " << completePercentage << "% complete. Will resume uploading to it." << endl;
+      DXLOG(logUSERINFO)
+        << "Signature of file " << localFile << " matches remote file " << findResult[0]["describe"]["name"].get<string>() 
+        << " (" << fileID << "), which is " << completePercentage << "% complete. Will resume uploading to it." << endl;
       DXLOG(logINFO) << "Remote resume target is in state: \"" << state << "\"";
     }
     if (findResult.size() > 1) {
-      cerr << endl << "More than one resumable targets for local file \"" << localFile << "\" found in the project '" + projectID + "', candidates: " << endl;
+      ostringstream oss;
+      oss << endl << "More than one resumable targets for local file \"" << localFile << "\" found in the project '" + projectID + "', candidates: " << endl;
       for (unsigned i = 0; i < findResult.size(); ++i) {
-        cerr << "\t" << (i + 1) << ". " << findResult[i]["describe"]["name"].get<string>() << " (" << findResult[i]["id"].get<string>() << ")" << endl;
+        oss << "\t" << (i + 1) << ". " << findResult[i]["describe"]["name"].get<string>() << " (" << findResult[i]["id"].get<string>() << ")" << endl;
       }
-      cerr << "Unable to upload: \"" << localFile << "\"" << endl
-           << "Please either clean up the potential candidate files, or run upload agent with '--do-not-resume' option" << endl;
+      oss << "Unable to upload: \"" << localFile << "\"" << endl
+          << "Please either clean up the potential candidate files, or run upload agent with '--do-not-resume' option" << endl;
+      DXLOG(logUSERINFO) << oss.str();
       failed = true;
     }
   }
@@ -158,7 +161,7 @@ void File::init(const bool tryResuming) {
     isRemoteFileOpen = true;
     DXLOG(logINFO) << "fileID is " << fileID << endl;
 
-    cerr << "Uploading file " << localFile << " to file object " << fileID;
+    DXLOG(logUSERINFO) << "Uploading file " << localFile << " to file object " << fileID;
   }
 }
 

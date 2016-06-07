@@ -359,7 +359,8 @@ bool Options::env() {
 }
 
 void Options::printHelp(char * programName) {
-  cerr << "Usage: " << programName << " [options] <file> [...]" << endl
+  DXLOG(logUSERINFO)
+       << "Usage: " << programName << " [options] <file> [...]" << endl
        << endl
        << (*visible_opts) << endl;
 }
@@ -481,13 +482,13 @@ void Options::validate() {
   }
 
   if (throttle < 0) {
-    cerr << "Upload throttling is disabled." << endl;
+    DXLOG(logUSERINFO) << "Upload throttling is disabled.";
   } else if (throttle < 4 * 1024) {
     throw runtime_error("Uploads are throttled to " + boost::lexical_cast<string>(throttle) + " bytes/sec, which is less than 4 Kbytes/sec. Choose a larger value.");
   } else if (throttle < 256 * 1024) {
-    cerr << "WARNING: Uploads are throttled to " << throttle << " bytes/sec, which is less than 256 KBytes/sec. We recommend allowing higher speeds for better performance." << endl;
+    DXLOG(logUSERINFO) << "WARNING: Uploads are throttled to " << throttle << " bytes/sec, which is less than 256 KBytes/sec. We recommend allowing higher speeds for better performance." << endl;
   } else {
-    cerr << "Uploads are throttled to " << throttle << " bytes/sec." << endl;
+    DXLOG(logUSERINFO) << "Uploads are throttled to " << throttle << " bytes/sec." << endl;
   }
 
   // Check that at most one import flag is present.

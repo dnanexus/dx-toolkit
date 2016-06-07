@@ -133,11 +133,11 @@ void curlCleanup() {
 boost::once_flag bad_alloc_once = BOOST_ONCE_INIT;
 void handle_bad_alloc(const std::bad_alloc &e) {
   curlCleanup();
-  cerr << endl << "*********" << endl << "FATAL ERROR: The program ran out of memory. You may try following steps to avoid this problem: " << endl;
-  cerr << "1. Try decreasing number of upload/compress/read threads (Try ./ua --help to see how to set them) - Recommended solution" << endl;
-  cerr << "2. Reduce the chunk-size (--chunk-size options). Note: Trying with a different chunk size will not resume your previous upload" << endl;
-  cerr << endl << "If you still face problem, please contact DNAnexus support." << endl;
-  cerr << "\nError details (for advanced users only): '" << e.what() << "'" << endl << "*********" << endl;
+  DXLOG(logUSERINFO) << endl << "*********" << endl << "FATAL ERROR: The program ran out of memory. You may try following steps to avoid this problem: " << endl
+    << "1. Try decreasing number of upload/compress/read threads (Try ./ua --help to see how to set them) - Recommended solution" << endl
+    << "2. Reduce the chunk-size (--chunk-size options). Note: Trying with a different chunk size will not resume your previous upload" << endl
+    << endl << "If you still face problem, please contact DNAnexus support." << endl
+    << "\nError details (for advanced users only): '" << e.what() << "'" << endl << "*********" << endl;
   exit(1);
 }
 
@@ -234,11 +234,11 @@ bool isMemoryUseNormal() {
 
   long residentSet = getRSS();
   long freeMemory = getAvailableSystemMemory();
-  DXLOG(logINFO) << "Free Memory: " << freeMemory << " rss " << residentSet ;
+  DXLOG(logDEBUG4) << "Free Memory: " << freeMemory << " rss " << residentSet ;
 
   if(freeMemory*8/10 > rssLimit) {
     rssLimit = freeMemory*8/10;
-    DXLOG(logINFO) << "New RSS Limit: " << rssLimit;
+    DXLOG(logDEBUG4) << "New RSS Limit: " << rssLimit;
   }
 
   if (residentSet > rssLimit) {
@@ -359,7 +359,7 @@ void uploadChunks(vector<File> &files) {
       } else {
         c->log("Not retrying", logERROR);
         // TODO: Should we print it on stderr or DXLOG (verbose only) ??
-        cerr << "\nFailed to upload Chunk [" << c->start << " - " << c->end << "] for local file ("
+        DXLOG(logUSERINFO) << "Failed to upload Chunk [" << c->start << " - " << c->end << "] for local file ("
              << files[c->parentFileIndex].localFile << "). APIServer response for last try: '" << c->respData << "'" << endl;
         c->clear();
         chunksFailed.produce(c);
@@ -429,26 +429,26 @@ void waitOnClose(vector<File> &files) {
 }
 
 void uploadProgressHelper(vector<File> &files) {
-  cerr << (opt.verbose ? "\n" : "\r");
-
   // Print individual file progress
+  std::ostringstream oss;
   boost::mutex::scoped_lock boLock(bytesUploadedMutex);
   for (unsigned i = 0; i < files.size(); ++i) {
     double percent = (files[i].size == 0 && files[i].atleastOnePartDone) ? 100.0 : 0.0;
     percent =  (files[i].size != 0) ? ((double(files[i].bytesUploaded) / files[i].size) * 100.0) : percent;
 
-    cerr << files[i].localFile << " " << setw(6) << setprecision(2) << std::fixed
+    oss << files[i].localFile << " " << setw(6) << setprecision(2) << std::fixed
          << percent << "% complete";
     if ((i + 1) != files.size()) {
-      cerr << ", ";
+      oss << ", ";
     }
   }
+  DXLOG(logUSERINFO) << oss.str();
 
   // Print average transfer rate
   int64_t timediff  = std::time(0) - startTime;
   double mbps = (timediff > 0) ? (double(bytesUploadedSinceStart) / (1024.0 * 1024.0)) / timediff : 0.0;
   boLock.unlock();
-  cerr << " ... Average transfer speed = " << setw(6) << setprecision(2) << std::fixed << mbps << " MB/sec";
+  DXLOG(logUSERINFO) << " ... Average transfer speed = " << setw(6) << setprecision(2) << std::fixed << mbps << " MB/sec";
 
   // Print instantaneous transfer rate
   boost::mutex::scoped_lock queueLock(instantaneousBytesMutex);
@@ -473,15 +473,14 @@ void uploadProgressHelper(vector<File> &files) {
     }
   }
   queueLock.unlock();
-  cerr << " ... Instantaneous transfer speed = " << setw(6) << setprecision(2) << std::fixed << mbps2 << " MB/sec";
+  DXLOG(logUSERINFO) << " ... Instantaneous transfer speed = " << setw(6) << setprecision(2) << std::fixed << mbps2 << " MB/sec";
 
   if (opt.throttle >= 0) {
-    cerr << " (throttled to " << opt.throttle << " bytes/sec)";
+    DXLOG(logUSERINFO) << " (throttled to " << opt.throttle << " bytes/sec)";
   }
 }
 
 void uploadProgress(vector<File> &files) {
-  cerr << endl;
   try {
     do {
       uploadProgressHelper(files);
@@ -493,7 +492,6 @@ void uploadProgress(vector<File> &files) {
     // Call upload helper once at least, else message for "100%"
     // might not be displayed ever;
     uploadProgressHelper(files);
-    cerr << endl;
     return;
   }
 }
@@ -714,7 +712,7 @@ void check_for_complete_chunks(vector<File> &files) {
         fileDescriptions[c->fileID] = fileDescribe(c->fileID);
 
     if (!is_chunk_complete(c, fileDescriptions[c->fileID])) {
-        cerr << "Chunk " << c->index << " of file " << c->fileID << " did not complete.  This file will not be accessible.  PLease try to upload this file again." << endl;
+        DXLOG(logUSERINFO) << "Chunk " << c->index << " of file " << c->fileID << " did not complete.  This file will not be accessible.  PLease try to upload this file again." << endl;
     }
   }
 }
@@ -724,7 +722,7 @@ int main(int argc, char * argv[]) {
     // Note: Verbose mode logging is enabled (if requested) by options parse()
     opt.parse(argc, argv);
   } catch (exception &e) {
-    cerr << "Error processing arguments: " << e.what() << endl;
+    DXLOG(logUSERINFO) << "Error processing arguments: " << e.what() << endl;
     opt.printHelp(argv[0]);
     return 1;
   }
@@ -768,14 +766,14 @@ int main(int argc, char * argv[]) {
     try {
       checkForUpdates();
     } catch (runtime_error &e) {
-      cerr << endl << e.what() << endl;
+      DXLOG(logUSERINFO) << "ERROR: " << e.what() << endl;
       return 3;
     }
     if (!opt.doNotResume) {
       disallowDuplicateFiles(opt.files, opt.projects);
     }
   } catch (exception &e) {
-    cerr << endl << "ERROR: " << e.what() << endl;
+    DXLOG(logUSERINFO) << "ERROR: " << e.what() << endl;
     return 1;
   }
 
@@ -813,7 +811,6 @@ int main(int argc, char * argv[]) {
 			   opt.properties, opt.type, opt.tags, opt.details,
 			   toCompress, !opt.doNotResume, mimeType, opt.chunkSize, i));
       totalChunks += files[i].createChunks(chunksToRead, opt.tries);
-      cerr << endl;
     }
 
     if (opt.waitOnClose) {
@@ -867,15 +864,12 @@ int main(int argc, char * argv[]) {
       c->log("Chunk failed", logERROR);
       markFileAsFailed(files, c->fileID);
     }
-    if (opt.verbose) {
-      cerr << endl;
-    }
 
     for (unsigned int i = 0; i < files.size(); ++i) {
       if (files[i].failed) {
-        cerr << "File \""<< files[i].localFile << "\" could not be uploaded." << endl;
+        DXLOG(logUSERINFO) << "File \""<< files[i].localFile << "\" could not be uploaded." << endl;
       } else {
-        cerr << "File \"" << files[i].localFile << "\" was uploaded successfully. Closing..." << endl;
+        DXLOG(logUSERINFO) << "File \"" << files[i].localFile << "\" was uploaded successfully. Closing..." << endl;
         if (files[i].isRemoteFileOpen) {
           files[i].close();
         }
@@ -910,7 +904,7 @@ int main(int argc, char * argv[]) {
     boost::call_once(bad_alloc_once, boost::bind(&handle_bad_alloc, e));
   } catch (exception &e) {
     curlCleanup();
-    cerr << endl << "ERROR: " << e.what() << endl;
+    DXLOG(logUSERINFO) << endl << "ERROR: " << e.what() << endl;
     return 1;
   }
 
