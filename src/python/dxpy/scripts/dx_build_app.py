@@ -472,8 +472,8 @@ def _verify_app_writable(app_name):
     except dxpy.exceptions.DXAPIError as e:
         if e.name == 'ResourceNotFound':
             app_name_already_exists = False
-        elif type(e) == dxpy.exceptions.PermissionDenied:
-            raise dxpy.app_builder.AppBuilderException('App with given name already exist under another project! Please choose another unique name!')
+        elif e.name == 'PermissionDenied':
+            raise dxpy.app_builder.AppBuilderException('An app with the given name already exists and you are not a developer of that app')
         else:
             raise e
 
