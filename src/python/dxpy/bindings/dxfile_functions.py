@@ -466,3 +466,50 @@ def upload_string(to_upload, media_type=None, keep_open=False, wait_on_close=Fal
         handler.close(block=wait_on_close, **remaining_kwargs)
 
     return handler
+
+def download_folder(project, destdir, folder="/", chunksize=dxfile.DEFAULT_BUFFER_SIZE):
+    '''
+    :param project: Project ID to use as context for this download.
+    :type project: string
+    :param destdir: Local destination location
+    :type destdir: string
+    :param folder: Path to the remote folder to download
+    :type folder: string
+
+    Downloads the remote *folder* of *project* and saves it to *destdir* local location.
+
+    Example::
+
+        download_folder("project-xxxx", "/home/jsmith/input", folder="/input")
+
+    '''
+
+    def compose_dest_dir(remote_folder):
+        return os.path.join(destdir, remote_folder[1:] if folder == "/" else remote_folder[len(folder) + 1:])
+
+    if os.path.exists(destdir):
+        if os.path.isdir(destdir):
+            if os.listdir(destdir) != []:
+                raise DXFileError("Destination directory '{}' exists, but not empty".format(destdir))
+            if not os.access(destdir, os.W_OK):
+                raise DXFileError("Destination directory '{}' exists, but not writable".format(destdir))
+        else:
+            raise DXFileError("Destination location '{}' exists, but not a directory".format(destdir))
+    else:
+        os.makedirs(destdir)
+
+    for remote_folder in dxpy.get_handler(project).describe(input_params={'folders': True})['folders']:
+        if not remote_folder.startswith(folder):
+            continue
+        dest_folder = compose_dest_dir(remote_folder)
+        if not os.path.isdir(dest_folder):
+            logger.debug("Creating destination folder: '%s'", dest_folder)
+            os.makedirs(dest_folder)
+
+    for remote_file in dxpy.search.find_data_objects(classname='file', state='closed', project=project, folder=folder,
+            recurse=True, describe=True):
+        dest_filename = os.path.join(compose_dest_dir(remote_file['describe']['folder']), remote_file['describe']['name'])
+        logger.debug("Downloading '%s/%s' remote file to '%s' location",
+                ("" if remote_file['describe']['folder'] == "/" else remote_file['describe']['folder']),
+                remote_file['describe']['name'], dest_filename)
+        download_dxfile(remote_file['describe']['id'], dest_filename, chunksize=chunksize, project=project)
