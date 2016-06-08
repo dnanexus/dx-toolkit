@@ -4581,7 +4581,11 @@ register_parser(parser_find_projects, subparsers_action=subparsers_find, categor
 
 parser_find_org = subparsers_find.add_parser(
     "org",
-    help=fill("List entities within a specific org.") + "\n\n\t" + fill('"dx find org members" lists members in the specified org') + "\n\n\t" + fill('"dx find org projects" lists projects billed to the specified org') + "\n\n" + fill('Please execute "dx find org -h" for more information.'),
+    help=fill("List entities within a specific org.") + "\n\n\t" +
+         fill('"dx find org members" lists members in the specified org') + "\n\n\t" +
+         fill('"dx find org projects" lists projects billed to the specified org') + "\n\n\t" +
+         fill('"dx find org apps" lists apps billed to the specified org') + "\n\n" +
+         fill('Please execute "dx find org -h" for more information.'),
     description=fill("List entities within a specific org."),
     prog="dx find org",
 )
