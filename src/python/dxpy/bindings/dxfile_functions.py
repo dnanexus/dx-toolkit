@@ -467,7 +467,7 @@ def upload_string(to_upload, media_type=None, keep_open=False, wait_on_close=Fal
 
     return handler
 
-def download_folder(project, destdir, folder="/", chunksize=dxfile.DEFAULT_BUFFER_SIZE):
+def download_folder(project, destdir, folder="/", chunksize=dxfile.DEFAULT_BUFFER_SIZE, **kwargs):
     '''
     :param project: Project ID to use as context for this download.
     :type project: string
@@ -512,4 +512,4 @@ def download_folder(project, destdir, folder="/", chunksize=dxfile.DEFAULT_BUFFE
         logger.debug("Downloading '%s/%s' remote file to '%s' location",
                 ("" if remote_file['describe']['folder'] == "/" else remote_file['describe']['folder']),
                 remote_file['describe']['name'], dest_filename)
-        download_dxfile(remote_file['describe']['id'], dest_filename, chunksize=chunksize, project=project)
+        download_dxfile(remote_file['describe']['id'], dest_filename, chunksize=chunksize, project=project, **kwargs)
