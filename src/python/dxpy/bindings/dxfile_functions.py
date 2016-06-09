@@ -467,7 +467,7 @@ def upload_string(to_upload, media_type=None, keep_open=False, wait_on_close=Fal
 
     return handler
 
-def download_folder(project, destdir, folder="/", chunksize=dxfile.DEFAULT_BUFFER_SIZE, **kwargs):
+def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxfile.DEFAULT_BUFFER_SIZE, **kwargs):
     '''
     :param project: Project ID to use as context for this download.
     :type project: string
@@ -475,6 +475,8 @@ def download_folder(project, destdir, folder="/", chunksize=dxfile.DEFAULT_BUFFE
     :type destdir: string
     :param folder: Path to the remote folder to download
     :type folder: string
+    :param overwrite: Overwrite existing files
+    :type overwrite: boolean
 
     Downloads the remote *folder* of *project* and saves it to *destdir* local location.
 
@@ -484,32 +486,30 @@ def download_folder(project, destdir, folder="/", chunksize=dxfile.DEFAULT_BUFFE
 
     '''
 
-    def compose_dest_dir(remote_folder):
-        return os.path.join(destdir, remote_folder[1:] if folder == "/" else remote_folder[len(folder) + 1:])
+    def ensure_local_dir(d):
+        if not os.path.isdir(d):
+            if os.path.exists(d):
+                raise DXFileError("Destination location '{}' already exists and is not a directory".format(destdir))
+            logger.debug("Creating destination folder: '%s'", d)
+            os.makedirs(d)
 
-    if os.path.exists(destdir):
-        if os.path.isdir(destdir):
-            if os.listdir(destdir) != []:
-                raise DXFileError("Destination directory '{}' exists, but not empty".format(destdir))
-            if not os.access(destdir, os.W_OK):
-                raise DXFileError("Destination directory '{}' exists, but not writable".format(destdir))
-        else:
-            raise DXFileError("Destination location '{}' exists, but not a directory".format(destdir))
-    else:
-        os.makedirs(destdir)
+    def compose_local_dir(f):
+        local_dir = os.path.join(destdir, f[1:] if folder == "/" else f[len(folder) + 1:])
+        return local_dir if local_dir == "/" else local_dir.rstrip("/")
 
-    for remote_folder in dxpy.get_handler(project).describe(input_params={'folders': True})['folders']:
-        if not remote_folder.startswith(folder):
-            continue
-        dest_folder = compose_dest_dir(remote_folder)
-        if not os.path.isdir(dest_folder):
-            logger.debug("Creating destination folder: '%s'", dest_folder)
-            os.makedirs(dest_folder)
+    # Creating target directory tree
+    remote_subfolders = [f for f in dxpy.get_handler(project).describe(input_params={'folders': True})['folders'] if f.startswith(folder)]
+    remote_subfolders.sort()
+    for remote_subfolder in remote_subfolders:
+        ensure_local_dir(compose_local_dir(remote_subfolder))
 
+    # Downloading files
     for remote_file in dxpy.search.find_data_objects(classname='file', state='closed', project=project, folder=folder,
             recurse=True, describe=True):
-        dest_filename = os.path.join(compose_dest_dir(remote_file['describe']['folder']), remote_file['describe']['name'])
+        local_filename = os.path.join(compose_local_dir(remote_file['describe']['folder']), remote_file['describe']['name'])
+        if os.path.exists(local_filename) and not overwrite:
+            raise DXFileError("Destination file '{}' already exists but no overwrite option is provided".format(local_filename))
         logger.debug("Downloading '%s/%s' remote file to '%s' location",
                 ("" if remote_file['describe']['folder'] == "/" else remote_file['describe']['folder']),
-                remote_file['describe']['name'], dest_filename)
-        download_dxfile(remote_file['describe']['id'], dest_filename, chunksize=chunksize, project=project, **kwargs)
+                remote_file['describe']['name'], local_filename)
+        download_dxfile(remote_file['describe']['id'], local_filename, chunksize=chunksize, project=project, **kwargs)

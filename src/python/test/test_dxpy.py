@@ -665,8 +665,8 @@ class TestFolder(unittest.TestCase):
 
     def setUp(self):
         setUpTempProjects(self)
-        self.temp_dir = tempfile.mkdtemp(prefix="dx-toolkit.dxpy.TestFolder.")
-        self.temp_file_fd, self.temp_file_path = tempfile.mkstemp(prefix="dx-toolkit.dxpy.TestFile.")
+        self.temp_dir = tempfile.mkdtemp(prefix="test.dx-toolkit.dxpy.TestFolder.")
+        self.temp_file_fd, self.temp_file_path = tempfile.mkstemp(prefix="test.dx-toolkit.dxpy.TestFile.")
         with os.fdopen(self.temp_file_fd, 'w') as temp_file:
             temp_file.write('42')
 
@@ -712,12 +712,30 @@ class TestFolder(unittest.TestCase):
             self.assertTrue(os.path.isfile(filename))
             self.assertEquals("{}-th\n file\n content\n".format(i + 2), open(filename, "r").read())
 
-        # Checking download to existing file
+        # Checking download to existing structure
+        dxpy.download_folder(self.proj_id, a_dest_dir, folder="/a", overwrite=True)
+        path = []
+        for i, f in enumerate([a_dest_dir, "b", "c", "d"]):
+            path.append(f)
+            filename = os.path.join(os.path.join(*path), "file_{}.txt".format(i + 2))
+            self.assertTrue(os.path.isfile(filename))
+            self.assertEquals("{}-th\n file\n content\n".format(i + 2), open(filename, "r").read())
+
+        # Checking download to existing structure fails w/o overwrite flag
+        with self.assertRaises(DXFileError):
+            dxpy.download_folder(self.proj_id, a_dest_dir, folder="/a")
+
+        # Checking download to existing file fails
         with self.assertRaises(DXFileError):
             dxpy.download_folder(self.proj_id, self.temp_file_path)
-        # Checking download to non-empty directory
+
+        # Checking download to file instead of subdir fails
+        a1_dest_dir = os.path.join(self.temp_dir, "a1")
+        os.mkdir(a1_dest_dir)
+        with open(os.path.join(a1_dest_dir, "b"), "w") as f:
+            f.write("42")
         with self.assertRaises(DXFileError):
-            dxpy.download_folder(self.proj_id, self.temp_dir)
+            dxpy.download_folder(self.proj_id, a1_dest_dir, folder="/a")
 
 @unittest.skipUnless(testutil.TEST_GTABLE, 'skipping test that would create a GTable')
 class TestDXGTable(unittest.TestCase):
