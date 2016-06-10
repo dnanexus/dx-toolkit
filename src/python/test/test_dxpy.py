@@ -701,6 +701,8 @@ class TestFolder(unittest.TestCase):
             filename = os.path.join(os.path.join(*path), "file_{}.txt".format(i + 1))
             self.assertTrue(os.path.isfile(filename))
             self.assertEquals("{}-th\n file\n content\n".format(i + 1), open(filename, "r").read())
+        self.assertTrue(os.path.isdir(os.path.join(root_dest_dir, "a", "e", "f", "g")))
+        self.assertTrue(os.path.isdir(os.path.join(root_dest_dir, "h", "i", "j", "k")))
 
         # Checking non-root directory download
         a_dest_dir = os.path.join(self.temp_dir, "a")
@@ -746,6 +748,26 @@ class TestFolder(unittest.TestCase):
             f.write("42")
         with self.assertRaises(DXFileError):
             dxpy.download_folder(self.proj_id, a1_dest_dir, folder="/a")
+
+        # Checking download to non-writable location fails
+        with self.assertRaises(OSError):
+            dxpy.download_folder(self.proj_id, "/usr/bin/a", folder="/a")
+
+        # Checking download to empty location fails
+        with self.assertRaises(DXFileError):
+            dxpy.download_folder(self.proj_id, " ", folder="/a")
+
+        # Checking download from empty location fails
+        with self.assertRaises(DXFileError):
+            dxpy.download_folder(self.proj_id, os.path.join(self.temp_dir, "foobar"), folder="\t")
+
+        # Checking download from non-existent location fails
+        with self.assertRaises(DXFileError):
+            dxpy.download_folder(self.proj_id, os.path.join(self.temp_dir, "foobar"), folder="/non_existent")
+
+        # Checking download from invalid location fails
+        with self.assertRaises(DXFileError):
+            dxpy.download_folder(self.proj_id, os.path.join(self.temp_dir, "foobar"), folder="a/b")
 
 @unittest.skipUnless(testutil.TEST_GTABLE, 'skipping test that would create a GTable')
 class TestDXGTable(unittest.TestCase):

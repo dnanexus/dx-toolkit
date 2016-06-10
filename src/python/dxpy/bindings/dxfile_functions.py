@@ -497,12 +497,16 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
         return os.path.normpath(os.path.join(destdir, remote_subfolder[1:] if folder == "/" else remote_subfolder[len(folder) + 1:]))
 
     folder = os.path.normpath(folder).strip()
-    destdir = os.path.normpath(destdir).strip()
     if folder == "":
         raise DXFileError("Invalid remote folder name: '{}'".format(folder))
+    destdir = os.path.normpath(destdir).strip()
+    if destdir == "":
+        raise DXFileError("Invalid destination directory name: '{}'".format(destdir))
 
     # Creating target directory tree
     remote_subfolders = [f for f in dxpy.get_handler(project).describe(input_params={'folders': True})['folders'] if f.startswith(folder)]
+    if len(remote_subfolders) <= 0:
+        raise DXFileError("Remote folder '{}' not found".format(folder))
     remote_subfolders.sort()
     for remote_subfolder in remote_subfolders:
         ensure_local_dir(compose_local_dir(remote_subfolder))
