@@ -490,12 +490,16 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
         if not os.path.isdir(d):
             if os.path.exists(d):
                 raise DXFileError("Destination location '{}' already exists and is not a directory".format(destdir))
-            logger.debug("Creating destination folder: '%s'", d)
+            logger.debug("Creating destination directory: '%s'", d)
             os.makedirs(d)
 
-    def compose_local_dir(f):
-        local_dir = os.path.join(destdir, f[1:] if folder == "/" else f[len(folder) + 1:])
-        return local_dir if local_dir == "/" else local_dir.rstrip("/")
+    def compose_local_dir(remote_subfolder):
+        return os.path.normpath(os.path.join(destdir, remote_subfolder[1:] if folder == "/" else remote_subfolder[len(folder) + 1:]))
+
+    folder = os.path.normpath(folder).strip()
+    destdir = os.path.normpath(destdir).strip()
+    if folder == "":
+        raise DXFileError("Invalid remote folder name: '{}'".format(folder))
 
     # Creating target directory tree
     remote_subfolders = [f for f in dxpy.get_handler(project).describe(input_params={'folders': True})['folders'] if f.startswith(folder)]

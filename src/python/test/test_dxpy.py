@@ -704,13 +704,23 @@ class TestFolder(unittest.TestCase):
 
         # Checking non-root directory download
         a_dest_dir = os.path.join(self.temp_dir, "a")
-        dxpy.download_folder(self.proj_id, a_dest_dir, folder="/a")
+        dxpy.download_folder(self.proj_id, a_dest_dir, folder="/a/")
         path = []
         for i, f in enumerate([a_dest_dir, "b", "c", "d"]):
             path.append(f)
             filename = os.path.join(os.path.join(*path), "file_{}.txt".format(i + 2))
             self.assertTrue(os.path.isfile(filename))
             self.assertEquals("{}-th\n file\n content\n".format(i + 2), open(filename, "r").read())
+
+        # Checking 2-nd level subdirectory download
+        ag = os.path.join(self.temp_dir, "b")
+        dxpy.download_folder(self.proj_id, ag, folder="////a///b//")
+        path = []
+        for i, f in enumerate([ag, "c", "d"]):
+            path.append(f)
+            filename = os.path.join(os.path.join(*path), "file_{}.txt".format(i + 3))
+            self.assertTrue(os.path.isfile(filename))
+            self.assertEquals("{}-th\n file\n content\n".format(i + 3), open(filename, "r").read())
 
         # Checking download to existing structure
         dxpy.download_folder(self.proj_id, a_dest_dir, folder="/a", overwrite=True)
