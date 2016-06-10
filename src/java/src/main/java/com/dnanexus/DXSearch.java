@@ -168,8 +168,9 @@ public final class DXSearch {
          * @param builder builder object to initialize this query with
          * @param limit maximum number of results to return, or null to use the default
          *        (server-provided) limit
+         * @param starting The value of the 'next' attribute from the previous result set JSON
          */
-        private FindDataObjectsRequest(FindDataObjectsRequestBuilder<?> builder, Integer limit) {
+        private FindDataObjectsRequest(FindDataObjectsRequestBuilder<?> builder, Integer limit, JsonNode starting) {
             this.classConstraint = builder.classConstraint;
             this.id = builder.id;
             this.state = builder.state;
@@ -203,7 +204,7 @@ public final class DXSearch {
                 this.created = null;
             }
 
-            this.starting = null;
+            this.starting = starting;
             this.limit = limit;
         }
 
@@ -250,14 +251,14 @@ public final class DXSearch {
         FindDataObjectsRequest buildRequestHash() {
             // Use this method to test the JSON hash created by a particular
             // builder call without actually executing the request.
-            return new FindDataObjectsRequest(this, null);
+            return new FindDataObjectsRequest(this, null, null);
         }
 
         @VisibleForTesting
-        FindDataObjectsRequest buildRequestHash(int limit) {
+        FindDataObjectsRequest buildRequestHash(int limit, JsonNode starting) {
             // Use this method to test the JSON hash created by a particular
             // builder call without actually executing the request.
-            return new FindDataObjectsRequest(this, limit);
+            return new FindDataObjectsRequest(this, limit, starting);
         }
 
         /**
@@ -308,7 +309,7 @@ public final class DXSearch {
          * @return object encapsulating the result set
          */
         public FindDataObjectsResult<T> execute(int pageSize) {
-            return new FindDataObjectsResult<T>(this.buildRequestHash(pageSize), this.classConstraint,
+            return new FindDataObjectsResult<T>(this.buildRequestHash(pageSize, null), this.classConstraint,
                     this.env, pageSize);
         }
 
@@ -319,9 +320,20 @@ public final class DXSearch {
          *
          * @return Iterable result set page
          */
-        public SearchPage<T> getPage(int pageSize) {
-            return new SearchPage<T>(this.buildRequestHash(pageSize), this.classConstraint,
-                    this.env, pageSize);
+        public SearchPage<T> getFirstPage(int pageSize) {
+            return new SearchPage<T>(this.buildRequestHash(pageSize, null), this.classConstraint, this.env);
+        }
+
+        /**
+         * Executes the query and returns subsequent result set page.
+         *
+         * @param pageSize Page size
+         * @param starting Result of SearchPage<T>.getNext() call on previous page
+         *
+         * @return Iterable result set page
+         */
+        public SearchPage<T> getSubsequentPage(int pageSize, JsonNode starting) {
+            return new SearchPage<T>(this.buildRequestHash(pageSize, starting), this.classConstraint, this.env);
         }
 
         /**
@@ -1014,10 +1026,8 @@ public final class DXSearch {
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class SearchPage<T extends DXDataObject> implements Iterable<T> {
-            private final FindDataObjectsRequest request;
         private final String classConstraint;
         private final DXEnvironment env;
-        private final Integer pageSize;
         private final FindDataObjectsResponse response;
 
         /**
@@ -1079,11 +1089,9 @@ public final class DXSearch {
          * Initializes result set page object with the specified page size.
          */
         private SearchPage(FindDataObjectsRequest request, String classConstraint,
-                                      DXEnvironment env, int pageSize) {
-            this.request = request;
+                                      DXEnvironment env) {
             this.classConstraint = classConstraint;
             this.env = env;
-            this.pageSize = pageSize;
             this.response = DXAPI.systemFindDataObjects(request, FindDataObjectsResponse.class, env);
         }
 
@@ -1104,9 +1112,8 @@ public final class DXSearch {
             return response.next != null && !response.next.isNull();
         }
 
-        public SearchPage<T> next() {
-            FindDataObjectsRequest nextRequest = new FindDataObjectsRequest(this.request, response.next, pageSize);
-            return new SearchPage(nextRequest, classConstraint, env, pageSize);
+        public JsonNode getNext() {
+            return response.next;
         }
     }
 

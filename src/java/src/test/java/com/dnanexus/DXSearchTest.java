@@ -625,7 +625,7 @@ public class DXSearchTest {
         }
 
         DXSearch.SearchPage<DXRecord> page = DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
-                .withClassRecord().getPage(3);
+                .withClassRecord().getFirstPage(3);
         Assert.assertEquals(3, page.size());
         Assert.assertEquals(true, page.hasNext());
 
@@ -637,7 +637,8 @@ public class DXSearchTest {
         }
         Assert.assertEquals(false, iter.hasNext());
 
-        page = page.next();
+        page = DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
+                .withClassRecord().getSubsequentPage(3, page.getNext());
         Assert.assertEquals(3, page.size());
         Assert.assertEquals(true, page.hasNext());
 
@@ -649,7 +650,8 @@ public class DXSearchTest {
         }
         Assert.assertEquals(false, iter.hasNext());
 
-        page = page.next();
+        page = DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
+                .withClassRecord().getSubsequentPage(3, page.getNext());
         Assert.assertEquals(2, page.size());
         Assert.assertEquals(false, page.hasNext());
 
@@ -663,7 +665,7 @@ public class DXSearchTest {
 
         // Checking when the requested page size is greater than amount of items
         page = DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
-                .withClassRecord().getPage(100);
+                .withClassRecord().getFirstPage(100);
         Assert.assertEquals(8, page.size());
         Assert.assertEquals(false, page.hasNext());
         int i = 0;
