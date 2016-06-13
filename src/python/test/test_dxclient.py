@@ -34,7 +34,7 @@ import dxpy
 from dxpy.scripts import dx_build_app
 from dxpy_testutil import (DXTestCase, DXTestCaseBuildApps, check_output, temporary_project,
                            select_project, cd, override_environment, generate_unique_username_email,
-                           without_project_context, without_auth, as_second_user, chdir, run)
+                           without_project_context, without_auth, as_second_user, chdir, run, DXCalledProcessError)
 import dxpy_testutil as testutil
 from dxpy.exceptions import DXAPIError, DXSearchError, EXPECTED_ERR_EXIT_STATUS, HTTPError
 from dxpy.compat import str, sys_encoding, open
@@ -242,6 +242,25 @@ class TestDXClient(DXTestCase):
         run("dx find executions --project :")
         run("dx find analyses --project :")
         run("dx find data --project :")
+
+    def test_windows_pager(self):
+        with self.assertRaises(DXCalledProcessError):
+            original_path = os.environ['PATH']
+            try:
+                path_items = original_path.split(";")
+                new_path = ""
+                # Remove gnu tools from Path
+                for i in path_items:
+                    if "MinGW" not in i:
+                        new_path += i + ";"
+
+                os.environ['PATH'] = new_path
+                check_output("dx")
+            except DXCalledProcessError as e:
+                self.assertNotIn("'less' is not recognized", e.output)
+                raise e
+            finally:
+                os.environ['PATH'] = original_path
 
     def test_get_unicode_url(self):
         with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):

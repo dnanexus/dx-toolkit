@@ -20,6 +20,7 @@ This submodule gives basic utilities for printing to the terminal.
 
 import textwrap, subprocess, os, sys
 import json
+import platform
 from ..compat import USING_PYTHON2, sys_encoding
 from ..exceptions import DXCLIError
 
@@ -131,8 +132,16 @@ def pager(content, pager=None, file=None):
         if tty_rows > content_rows and tty_cols > content_cols:
             raise DXCLIError() # Just print the content, don't use a pager
 
-        pager_process = subprocess.Popen(pager or os.environ.get('PAGER', 'less -RS'),
-                                         shell=True, stdin=subprocess.PIPE, stdout=file)
+        if pager is None:
+            pager = os.environ.get('PAGER', 'less -RS')
+        if platform.system() == 'Windows':
+            # Verify if the pager is available on Windows
+            try:
+                subprocess.call(pager)
+            except:
+                raise DXCLIError()  # Just print the content, don't use a pager
+
+        pager_process = subprocess.Popen(pager, shell=True, stdin=subprocess.PIPE, stdout=file)
         pager_process.stdin.write(content.encode(sys_encoding))
         pager_process.stdin.close()
         pager_process.wait()
