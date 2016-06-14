@@ -321,6 +321,9 @@ public final class DXSearch {
          * @return Iterable result set page
          */
         public SearchPage<T> getFirstPage(int pageSize) {
+            if (pageSize <= 0) {
+                throw new IllegalArgumentException("Invalid page size - should be positive");
+            }
             return new SearchPage<T>(this.buildRequestHash(pageSize, null), this.classConstraint, this.env);
         }
 
@@ -333,6 +336,12 @@ public final class DXSearch {
          * @return Iterable result set page
          */
         public SearchPage<T> getSubsequentPage(int pageSize, JsonNode starting) {
+            if (pageSize <= 0) {
+                throw new IllegalArgumentException("Invalid page size - should be positive");
+            }
+            if (starting == null) {
+                throw new IllegalArgumentException("'starting' parameter is null");
+            }
             return new SearchPage<T>(this.buildRequestHash(pageSize, starting), this.classConstraint, this.env);
         }
 
@@ -1024,7 +1033,6 @@ public final class DXSearch {
      *
      * @param <T> data object class to be returned
      */
-    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class SearchPage<T extends DXDataObject> implements Iterable<T> {
         private final String classConstraint;
         private final DXEnvironment env;
@@ -1036,20 +1044,20 @@ public final class DXSearch {
         @VisibleForTesting
         private class ResultIterator implements Iterator<T> {
 
-            int lastElementIndex;
+            int nextElementIndex;
 
             private ResultIterator() {
-                this.lastElementIndex = -1;
+                this.nextElementIndex = 0;
             }
 
             @Override
             public boolean hasNext() {
-                return lastElementIndex < (response.results.size() - 1);
+                return nextElementIndex < response.results.size();
             }
 
             @Override
             public T next() {
-                return getDataObjectInstanceFromResult(response.results.get(++lastElementIndex));
+                return getDataObjectInstanceFromResult(response.results.get(nextElementIndex++));
             }
 
             @Override
@@ -1098,7 +1106,7 @@ public final class DXSearch {
         /**
          * Returns an amount of items on findDataObjects results page
          */
-        int size() {
+        public int size() {
             return response.results.size();
         }
 

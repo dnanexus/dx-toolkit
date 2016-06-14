@@ -672,6 +672,39 @@ public class DXSearchTest {
         for (DXRecord r : page) {
             Assert.assertEquals(outputRecords.get(i++).getId(), r.getId());
         }
+
+        // Checking invalid arguments
+        try {
+            DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
+                    .withClassRecord().getFirstPage(0);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+        }
+        try {
+            DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
+                    .withClassRecord().getFirstPage(-2);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
+                    .withClassRecord().getSubsequentPage(0, mapper.createObjectNode());
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+        }
+        try {
+            DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
+                    .withClassRecord().getSubsequentPage(-1, mapper.createObjectNode());
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+        }
+        try {
+            DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
+                    .withClassRecord().getSubsequentPage(10, null);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+        }
     }
 
     /**
