@@ -92,7 +92,10 @@ def _download_folders(folders, destdir, args):
                 err_exit('Error: "' + folder + '" is a folder but the -r/--recursive option was not given')
             assert(folder.startswith(strip_prefix))
             folder_destdir = os.path.join(destdir, folder[len(strip_prefix):].lstrip('/'))
-            dxpy.download_folder(project, folder_destdir, folder=folder)
+            try:
+                dxpy.download_folder(project, folder_destdir, folder=folder)
+            except:
+                err_exit()
 
 
 # Main entry point.
