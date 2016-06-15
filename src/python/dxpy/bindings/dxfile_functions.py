@@ -476,7 +476,7 @@ def static_var(var_name, initial_value):
 @static_var("folders_cache", {})
 def list_subfolders(project, path, usecache=True, recurse=True):
     '''
-    :param project: Project ID to use as context for this download.
+    :param project: Project ID to use as context for the listing
     :type project: string
     :param path: Subtree root path
     :type path: string
