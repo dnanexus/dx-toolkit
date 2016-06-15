@@ -467,7 +467,15 @@ def upload_string(to_upload, media_type=None, keep_open=False, wait_on_close=Fal
 
     return handler
 
-def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxfile.DEFAULT_BUFFER_SIZE, **kwargs):
+def static_var(var_name, initial_value):
+    def decorate(func):
+        setattr(func, var_name, initial_value)
+        return func
+    return decorate
+
+@static_var("folders_cache", {})
+def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxfile.DEFAULT_BUFFER_SIZE,
+        usecache=True, **kwargs):
     '''
     :param project: Project ID to use as context for this download.
     :type project: string
@@ -477,6 +485,8 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
     :type folder: string
     :param overwrite: Overwrite existing files
     :type overwrite: boolean
+    :param usecache: Use folders listing cache
+    :type usecache: boolean
 
     Downloads the remote *folder* of *project* and saves it to *destdir* local location.
 
@@ -503,8 +513,15 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
     if destdir == "":
         raise DXFileError("Invalid destination directory name: '{}'".format(destdir))
 
+    if usecache:
+        if project not in download_folder.folders_cache:
+            download_folder.folders_cache[project] = dxpy.get_handler(project).describe(input_params={'folders': True})['folders']
+        remote_folders = download_folder.folders_cache[project]
+    else:
+        remote_folders = dxpy.get_handler(project).describe(input_params={'folders': True})['folders']
+
     # Creating target directory tree
-    remote_subfolders = [f for f in dxpy.get_handler(project).describe(input_params={'folders': True})['folders'] if f.startswith(folder)]
+    remote_subfolders = [f for f in remote_folders if f.startswith(folder)]
     if len(remote_subfolders) <= 0:
         raise DXFileError("Remote folder '{}' not found".format(folder))
     remote_subfolders.sort()

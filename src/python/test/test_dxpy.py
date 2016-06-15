@@ -725,7 +725,7 @@ class TestFolder(unittest.TestCase):
             self.assertEquals("{}-th\n file\n content\n".format(i + 3), open(filename, "r").read())
 
         # Checking download to existing structure
-        dxpy.download_folder(self.proj_id, a_dest_dir, folder="/a", overwrite=True)
+        dxpy.download_folder(self.proj_id, a_dest_dir, folder="/a", overwrite=True, usecache=False)
         path = []
         for i, f in enumerate([a_dest_dir, "b", "c", "d"]):
             path.append(f)
