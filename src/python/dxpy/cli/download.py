@@ -62,19 +62,6 @@ def _ensure_local_dir(d):
         os.makedirs(d)
 
 
-def _list_subfolders(project, path, cached_folder_lists, recurse=True):
-    if project not in cached_folder_lists:
-        cached_folder_lists[project] = dxpy.get_handler(project).describe(
-            input_params={'folders': True}
-        )['folders']
-    # TODO: support shell-style path globbing (i.e. /a*/c matches /ab/c but not /a/b/c)
-    # return pathmatch.filter(cached_folder_lists[project], os.path.join(path, '*'))
-    if recurse:
-        return (f for f in cached_folder_lists[project] if f.startswith(path))
-    else:
-        return (f for f in cached_folder_lists[project] if f.startswith(path) and '/' not in f[len(path)+1:])
-
-
 def _is_glob(path):
     return get_first_pos_of_char('*', path) > -1 or get_first_pos_of_char('?', path) > -1
 
@@ -98,7 +85,7 @@ def _download_files(files, destdir, args, dest_filename=None):
             download_one_file(project, file_desc, dest, args)
 
 
-def _download_folders(folders, destdir, cached_folder_lists, args):
+def _download_folders(folders, destdir, args):
     for project in folders:
         for folder, strip_prefix in folders[project]:
             if not args.recursive:
@@ -110,9 +97,6 @@ def _download_folders(folders, destdir, cached_folder_lists, args):
 
 # Main entry point.
 def download(args):
-    # Get space for caching subfolders
-    cached_folder_lists = {}
-
     folders_to_get, files_to_get, count = collections.defaultdict(list), collections.defaultdict(list), 0
     foldernames, filenames = [], []
     for path in args.paths:
@@ -144,7 +128,7 @@ def download(args):
                 path = path[colon_pos + 1:]
             abs_path, strip_prefix = _rel2abs(path, project)
             parent_folder = os.path.dirname(abs_path)
-            folder_listing = _list_subfolders(project, parent_folder, cached_folder_lists, recurse=False)
+            folder_listing = dxpy.list_subfolders(project, parent_folder, recurse=False)
             matching_folders = pathmatch.filter(folder_listing, abs_path)
             if '/' in matching_folders and len(matching_folders) > 1:
                 # The list of subfolders is {'/', '/A', '/B'}.
@@ -196,5 +180,5 @@ def download(args):
     else:
         destdir, dest_filename = os.getcwd(), args.output
 
-    _download_folders(folders_to_get, destdir, cached_folder_lists, args)
+    _download_folders(folders_to_get, destdir, args)
     _download_files(files_to_get, destdir, args, dest_filename=dest_filename)

@@ -474,6 +474,37 @@ def static_var(var_name, initial_value):
     return decorate
 
 @static_var("folders_cache", {})
+def list_subfolders(project, path, usecache=True, recurse=True):
+    '''
+    :param project: Project ID to use as context for this download.
+    :type project: string
+    :param path: Subtree root path
+    :type path: string
+    :param usecache: Use folders listing cache
+    :type usecache: boolean
+    :param recurse: Return a complete subfolders tree
+    :type recurse: boolean
+
+    Returns a list of subfolders for the remote *path* (included to the result) of the *project*.
+
+    Example::
+
+        list_subfolders("project-xxxx", folder="/input", usecache=False)
+
+    '''
+    if usecache:
+        if project not in list_subfolders.folders_cache:
+            list_subfolders.folders_cache[project] = dxpy.get_handler(project).describe(input_params={'folders': True})['folders']
+        project_folders = list_subfolders.folders_cache[project]
+    else:
+        project_folders = dxpy.get_handler(project).describe(input_params={'folders': True})['folders']
+    # TODO: support shell-style path globbing (i.e. /a*/c matches /ab/c but not /a/b/c)
+    # return pathmatch.filter(project_folders, os.path.join(path, '*'))
+    if recurse:
+        return (f for f in project_folders if f.startswith(path))
+    else:
+        return (f for f in project_folders if f.startswith(path) and '/' not in f[len(path)+1:])
+
 def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxfile.DEFAULT_BUFFER_SIZE,
         usecache=True, **kwargs):
     '''
@@ -488,7 +519,7 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
     :param usecache: Use folders listing cache
     :type usecache: boolean
 
-    Downloads the remote *folder* of *project* and saves it to *destdir* local location.
+    Downloads a remote *folder* of the *project* and saves it to the *destdir* local location.
 
     Example::
 
@@ -513,12 +544,7 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
     if destdir == "":
         raise DXFileError("Invalid destination directory name: '{}'".format(destdir))
 
-    if usecache:
-        if project not in download_folder.folders_cache:
-            download_folder.folders_cache[project] = dxpy.get_handler(project).describe(input_params={'folders': True})['folders']
-        remote_folders = download_folder.folders_cache[project]
-    else:
-        remote_folders = dxpy.get_handler(project).describe(input_params={'folders': True})['folders']
+    remote_folders = list_subfolders(project, folder, usecache=usecache, recurse=True)
 
     # Creating target directory tree
     remote_subfolders = [f for f in remote_folders if f.startswith(folder)]
