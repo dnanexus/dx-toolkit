@@ -1,3 +1,16 @@
+dx-toolkit (0.193.0) precise; urgency=low
+
+  * Fixed chmod issue on win dx-appwizard
+  * PTFM-17276 Improve dx build help message when app name is taken
+  * PTFM-5485 Don't allow "description" field to shadow Readme.md
+  * PTFM-18239 Reappearance of dx download AttributeError:'NoneType' object has no attribute 'read'
+  * PTFM-18184 "dx find org -h" shows find org apps command but "dx find -h" doesn't
+  * PTFM-17957 Allow users to "dx uninstall" apps by ID to which they no longer have access
+  * PTFM-14108 Fixed race condition in the UA logging
+  * PTFM 18220 Implement Python binding for project new call
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 16 Jun 2016 18:23:28 +0000
+
 dx-toolkit (0.192.0) precise; urgency=low
 
   * Updated to skip for both TEST_ONLY_MASTER and TEST_RUN_JOBS. Commit# e69257
