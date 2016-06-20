@@ -136,12 +136,12 @@ public final class DXSearch {
          * changes the starting value and limit.
          *
          * @param previousQuery previous query to clone
-         * @param next starting value for subsequent results
+         * @param starting starting value for subsequent results
          * @param limit maximum number of results to return, or null to use the default
          *        (server-provided) limit
          */
         private FindDataObjectsRequest(FindDataObjectsRequest previousQuery,
-                JsonNode next, Integer limit) {
+                JsonNode starting, Integer limit) {
             this.classConstraint = previousQuery.classConstraint;
             this.id = previousQuery.id;
             this.state = previousQuery.state;
@@ -157,7 +157,7 @@ public final class DXSearch {
             this.created = previousQuery.created;
             this.describe = previousQuery.describe;
 
-            this.starting = next.isNull() ? null : next;
+            this.starting = starting.isNull() ? null : starting;
             this.limit = limit;
         }
 
@@ -166,11 +166,12 @@ public final class DXSearch {
          * specified builder.
          *
          * @param builder builder object to initialize this query with
+         * @param starting The value of the 'next' attribute from the previous result set, or null
+         *        to return all results
          * @param limit maximum number of results to return, or null to use the default
          *        (server-provided) limit
-         * @param starting The value of the 'next' attribute from the previous result set JSON
          */
-        private FindDataObjectsRequest(FindDataObjectsRequestBuilder<?> builder, Integer limit, JsonNode starting) {
+        private FindDataObjectsRequest(FindDataObjectsRequestBuilder<?> builder, JsonNode starting, Integer limit) {
             this.classConstraint = builder.classConstraint;
             this.id = builder.id;
             this.state = builder.state;
@@ -247,18 +248,35 @@ public final class DXSearch {
             this.env = env;
         }
 
+        /**
+         * Builds and returns a request to the findDataObjects route.
+         *
+         * <p>
+         * Use this method to test the JSON hash created by a particular builder call without
+         * actually executing the request.
+         * </p>
+         *
+         * @return
+         */
         @VisibleForTesting
         FindDataObjectsRequest buildRequestHash() {
-            // Use this method to test the JSON hash created by a particular
-            // builder call without actually executing the request.
             return new FindDataObjectsRequest(this, null, null);
         }
 
+        /**
+         * Builds and returns a request to the findDataObjects route with the specified starting
+         * item and limit.
+         *
+         * <p>
+         * Use this method to test the JSON hash created by a particular builder call without
+         * actually executing the request.
+         * </p>
+         *
+         * @return
+         */
         @VisibleForTesting
-        FindDataObjectsRequest buildRequestHash(int limit, JsonNode starting) {
-            // Use this method to test the JSON hash created by a particular
-            // builder call without actually executing the request.
-            return new FindDataObjectsRequest(this, limit, starting);
+        FindDataObjectsRequest buildRequestHash(JsonNode starting, int limit) {
+            return new FindDataObjectsRequest(this, starting, limit);
         }
 
         /**
@@ -309,40 +327,39 @@ public final class DXSearch {
          * @return object encapsulating the result set
          */
         public FindDataObjectsResult<T> execute(int pageSize) {
-            return new FindDataObjectsResult<T>(this.buildRequestHash(pageSize, null), this.classConstraint,
-                    this.env, pageSize);
+            return new FindDataObjectsResult<T>(this.buildRequestHash(null, pageSize), this.classConstraint, this.env,
+                    pageSize);
         }
 
         /**
-         * Executes the query and returns first result set page.
+         * Executes the query and returns the first page of results.
          *
-         * @param pageSize Page size
+         * @param pageSize number of elements to retrieve
          *
-         * @return Iterable result set page
+         * @return result set
          */
         public SearchPage<T> getFirstPage(int pageSize) {
             if (pageSize <= 0) {
-                throw new IllegalArgumentException("Invalid page size - should be positive");
+                throw new IllegalArgumentException("Page size must be a positive integer");
             }
-            return new SearchPage<T>(this.buildRequestHash(pageSize, null), this.classConstraint, this.env);
+            return new SearchPage<T>(this.buildRequestHash(null, pageSize), this.classConstraint, this.env);
         }
 
         /**
-         * Executes the query and returns subsequent result set page.
+         * Executes the query, returning a subsequent page of results starting from the specified
+         * location.
          *
-         * @param pageSize Page size
-         * @param starting Result of SearchPage<T>.getNext() call on previous page
+         * @param starting result of {@link SearchPage#getNext()} call on previous page
+         * @param pageSize number of elements to retrieve
          *
-         * @return Iterable result set page
+         * @return result set
          */
-        public SearchPage<T> getSubsequentPage(int pageSize, JsonNode starting) {
+        public SearchPage<T> getSubsequentPage(JsonNode starting, int pageSize) {
+            Preconditions.checkNotNull(starting);
             if (pageSize <= 0) {
-                throw new IllegalArgumentException("Invalid page size - should be positive");
+                throw new IllegalArgumentException("Page size must be a positive integer");
             }
-            if (starting == null) {
-                throw new IllegalArgumentException("'starting' parameter is null");
-            }
-            return new SearchPage<T>(this.buildRequestHash(pageSize, starting), this.classConstraint, this.env);
+            return new SearchPage<T>(this.buildRequestHash(starting, pageSize), this.classConstraint, this.env);
         }
 
         /**
@@ -1025,103 +1042,6 @@ public final class DXSearch {
         @Override
         public Iterator<T> iterator() {
             return new ResultIterator();
-        }
-    }
-
-    /**
-     * The page subset of data objects that matched a {@code findDataObjects} query.
-     *
-     * @param <T> data object class to be returned
-     */
-    public static class SearchPage<T extends DXDataObject> implements Iterable<T> {
-        private final String classConstraint;
-        private final DXEnvironment env;
-        private final FindDataObjectsResponse response;
-
-        /**
-         * Iterator implementation for findDataObjects results page items.
-         */
-        @VisibleForTesting
-        private class ResultIterator implements Iterator<T> {
-
-            int nextElementIndex;
-
-            private ResultIterator() {
-                this.nextElementIndex = 0;
-            }
-
-            @Override
-            public boolean hasNext() {
-                return nextElementIndex < response.results.size();
-            }
-
-            @Override
-            public T next() {
-                return getDataObjectInstanceFromResult(response.results.get(nextElementIndex++));
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-
-            @SuppressWarnings("unchecked")
-            private T getDataObjectInstanceFromResult(FindDataObjectsResponse.Entry e) {
-                DXDataObject dataObject = null;
-                DXContainer container = DXContainer.getInstance(e.project);
-                if (e.describe != null) {
-                    dataObject =
-                            DXDataObject.getInstanceWithCachedDescribe(e.id, container, env,
-                                    e.describe);
-                } else {
-                    dataObject = DXDataObject.getInstanceWithEnvironment(e.id, container, env);
-                }
-
-                if (classConstraint != null) {
-                    if (!dataObject.getId().startsWith(classConstraint + "-")) {
-                        throw new IllegalStateException("Expected all results to be of type "
-                                + classConstraint + " but received an object with ID "
-                                + dataObject.getId());
-                    }
-                }
-                // This is an unchecked cast, but the callers of this class
-                // should have set T appropriately so that it agrees with
-                // the class constraint (if any). If something goes wrong
-                // here, either that code is incorrect or the API server
-                // has returned incorrect results.
-                return (T) dataObject;
-            }
-        }
-
-        /**
-         * Initializes result set page object with the specified page size.
-         */
-        private SearchPage(FindDataObjectsRequest request, String classConstraint,
-                                      DXEnvironment env) {
-            this.classConstraint = classConstraint;
-            this.env = env;
-            this.response = DXAPI.systemFindDataObjects(request, FindDataObjectsResponse.class, env);
-        }
-
-        /**
-         * Returns an amount of items on findDataObjects results page
-         */
-        public int size() {
-            return response.results.size();
-        }
-
-        @Override
-        public Iterator<T> iterator()
-        {
-            return new ResultIterator();
-        }
-
-        public boolean hasNext() {
-            return response.next != null && !response.next.isNull();
-        }
-
-        public JsonNode getNext() {
-            return response.next;
         }
     }
 
@@ -2114,16 +2034,6 @@ public final class DXSearch {
         }
 
         /**
-         * Returns current page number in search result.
-         *
-         * @return Current page number
-         */
-        @VisibleForTesting
-        int pageNo() {
-            return this.currentPageNo;
-        }
-
-        /**
          * Returns a query that can be used to obtain the next page of results. In general this
          * query can be obtained by taking the previous query and setting its "starting" field to
          * the "next" value from the query results page.
@@ -2154,6 +2064,16 @@ public final class DXSearch {
         public T next() {
             ensureNextElementAvailable();
             return currentPage.get(nextResultIndex++);
+        }
+
+        /**
+         * Returns current page number in search result.
+         *
+         * @return Current page number
+         */
+        @VisibleForTesting
+        int pageNo() {
+            return this.currentPageNo;
         }
 
         @Override
@@ -2283,6 +2203,103 @@ public final class DXSearch {
             // Do not allow subclassing except by the implementations provided here
         }
 
+    }
+
+    /**
+     * The page subset of data objects that matched a {@code findDataObjects} query.
+     *
+     * @param <T> data object class to be returned
+     */
+    public static class SearchPage<T extends DXDataObject> implements Iterable<T> {
+        /**
+         * Iterator implementation for findDataObjects results page items.
+         */
+        @VisibleForTesting
+        private class ResultIterator implements Iterator<T> {
+
+            int nextElementIndex;
+
+            private ResultIterator() {
+                this.nextElementIndex = 0;
+            }
+
+            @SuppressWarnings("unchecked")
+            private T getDataObjectInstanceFromResult(FindDataObjectsResponse.Entry e) {
+                DXDataObject dataObject = null;
+                DXContainer container = DXContainer.getInstance(e.project);
+                if (e.describe != null) {
+                    dataObject =
+                            DXDataObject.getInstanceWithCachedDescribe(e.id, container, env,
+                                    e.describe);
+                } else {
+                    dataObject = DXDataObject.getInstanceWithEnvironment(e.id, container, env);
+                }
+
+                if (classConstraint != null) {
+                    if (!dataObject.getId().startsWith(classConstraint + "-")) {
+                        throw new IllegalStateException("Expected all results to be of type "
+                                + classConstraint + " but received an object with ID "
+                                + dataObject.getId());
+                    }
+                }
+                // This is an unchecked cast, but the callers of this class
+                // should have set T appropriately so that it agrees with
+                // the class constraint (if any). If something goes wrong
+                // here, either that code is incorrect or the API server
+                // has returned incorrect results.
+                return (T) dataObject;
+            }
+
+            @Override
+            public boolean hasNext() {
+                return nextElementIndex < response.results.size();
+            }
+
+            @Override
+            public T next() {
+                return getDataObjectInstanceFromResult(response.results.get(nextElementIndex++));
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        }
+        private final String classConstraint;
+        private final DXEnvironment env;
+
+        private final FindDataObjectsResponse response;
+
+        /**
+         * Initializes result set page object with the specified page size.
+         */
+        private SearchPage(FindDataObjectsRequest request, String classConstraint,
+                                      DXEnvironment env) {
+            this.classConstraint = classConstraint;
+            this.env = env;
+            this.response = DXAPI.systemFindDataObjects(request, FindDataObjectsResponse.class, env);
+        }
+
+        public JsonNode getNext() {
+            return response.next;
+        }
+
+        public boolean hasNext() {
+            return response.next != null && !response.next.isNull();
+        }
+
+        @Override
+        public Iterator<T> iterator()
+        {
+            return new ResultIterator();
+        }
+
+        /**
+         * Returns an amount of items on findDataObjects results page
+         */
+        public int size() {
+            return response.results.size();
+        }
     }
 
 
