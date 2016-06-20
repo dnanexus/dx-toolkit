@@ -35,6 +35,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.AbstractIterator;
 
 /**
  * Utility class containing methods for searching for platform objects by various criteria.
@@ -900,33 +901,6 @@ public final class DXSearch {
          * The page subset of data objects that matched a {@code findDataObjects} query.
          */
         public class Page implements Iterable<T> {
-            /**
-             * Iterator implementation for {@code findDataObjects} results page items.
-             */
-            private class PageIterator implements Iterator<T> {
-
-                int nextElementIndex;
-
-                private PageIterator() {
-                    this.nextElementIndex = 0;
-                }
-
-                @Override
-                public boolean hasNext() {
-                    return nextElementIndex < response.results.size();
-                }
-
-                @Override
-                public T next() {
-                    return getDataObjectInstanceFromResult(response.results.get(nextElementIndex++));
-                }
-
-                @Override
-                public void remove() {
-                    throw new UnsupportedOperationException();
-                }
-            }
-
             private final FindDataObjectsResponse response;
 
             /**
@@ -961,11 +935,19 @@ public final class DXSearch {
             @Override
             public Iterator<T> iterator()
             {
-                return new PageIterator();
+                return new AbstractIterator<T>() {
+                    private int nextElementIndex = 0;
+                    protected T computeNext() {
+                        if (nextElementIndex >= response.results.size()) {
+                            return endOfData();
+                        }
+                        return getDataObjectInstanceFromResult(response.results.get(nextElementIndex++));
+                    }
+                };
             }
 
             /**
-             * Returns an amount of items on findDataObjects results page
+             * Returns an amount of items on {@code findDataObjects} results page
              */
             public int size() {
                 return response.results.size();
