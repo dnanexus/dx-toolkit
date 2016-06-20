@@ -1046,103 +1046,6 @@ public final class DXSearch {
     }
 
     /**
-     * The page subset of data objects that matched a {@code findDataObjects} query.
-     *
-     * @param <T> data object class to be returned
-     */
-    public static class SearchPage<T extends DXDataObject> implements Iterable<T> {
-        private final String classConstraint;
-        private final DXEnvironment env;
-        private final FindDataObjectsResponse response;
-
-        /**
-         * Iterator implementation for findDataObjects results page items.
-         */
-        @VisibleForTesting
-        private class ResultIterator implements Iterator<T> {
-
-            int nextElementIndex;
-
-            private ResultIterator() {
-                this.nextElementIndex = 0;
-            }
-
-            @Override
-            public boolean hasNext() {
-                return nextElementIndex < response.results.size();
-            }
-
-            @Override
-            public T next() {
-                return getDataObjectInstanceFromResult(response.results.get(nextElementIndex++));
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-
-            @SuppressWarnings("unchecked")
-            private T getDataObjectInstanceFromResult(FindDataObjectsResponse.Entry e) {
-                DXDataObject dataObject = null;
-                DXContainer container = DXContainer.getInstance(e.project);
-                if (e.describe != null) {
-                    dataObject =
-                            DXDataObject.getInstanceWithCachedDescribe(e.id, container, env,
-                                    e.describe);
-                } else {
-                    dataObject = DXDataObject.getInstanceWithEnvironment(e.id, container, env);
-                }
-
-                if (classConstraint != null) {
-                    if (!dataObject.getId().startsWith(classConstraint + "-")) {
-                        throw new IllegalStateException("Expected all results to be of type "
-                                + classConstraint + " but received an object with ID "
-                                + dataObject.getId());
-                    }
-                }
-                // This is an unchecked cast, but the callers of this class
-                // should have set T appropriately so that it agrees with
-                // the class constraint (if any). If something goes wrong
-                // here, either that code is incorrect or the API server
-                // has returned incorrect results.
-                return (T) dataObject;
-            }
-        }
-
-        /**
-         * Initializes result set page object with the specified page size.
-         */
-        private SearchPage(FindDataObjectsRequest request, String classConstraint,
-                                      DXEnvironment env) {
-            this.classConstraint = classConstraint;
-            this.env = env;
-            this.response = DXAPI.systemFindDataObjects(request, FindDataObjectsResponse.class, env);
-        }
-
-        /**
-         * Returns an amount of items on findDataObjects results page
-         */
-        public int size() {
-            return response.results.size();
-        }
-
-        @Override
-        public Iterator<T> iterator()
-        {
-            return new ResultIterator();
-        }
-
-        public boolean hasNext() {
-            return response.next != null && !response.next.isNull();
-        }
-
-        public JsonNode getNext() {
-            return response.next;
-        }
-    }
-
-    /**
      * A request to the /system/findExecutions route.
      */
     @JsonInclude(Include.NON_NULL)
@@ -2131,16 +2034,6 @@ public final class DXSearch {
         }
 
         /**
-         * Returns current page number in search result.
-         *
-         * @return Current page number
-         */
-        @VisibleForTesting
-        int pageNo() {
-            return this.currentPageNo;
-        }
-
-        /**
          * Returns a query that can be used to obtain the next page of results. In general this
          * query can be obtained by taking the previous query and setting its "starting" field to
          * the "next" value from the query results page.
@@ -2171,6 +2064,16 @@ public final class DXSearch {
         public T next() {
             ensureNextElementAvailable();
             return currentPage.get(nextResultIndex++);
+        }
+
+        /**
+         * Returns current page number in search result.
+         *
+         * @return Current page number
+         */
+        @VisibleForTesting
+        int pageNo() {
+            return this.currentPageNo;
         }
 
         @Override
@@ -2300,6 +2203,103 @@ public final class DXSearch {
             // Do not allow subclassing except by the implementations provided here
         }
 
+    }
+
+    /**
+     * The page subset of data objects that matched a {@code findDataObjects} query.
+     *
+     * @param <T> data object class to be returned
+     */
+    public static class SearchPage<T extends DXDataObject> implements Iterable<T> {
+        /**
+         * Iterator implementation for findDataObjects results page items.
+         */
+        @VisibleForTesting
+        private class ResultIterator implements Iterator<T> {
+
+            int nextElementIndex;
+
+            private ResultIterator() {
+                this.nextElementIndex = 0;
+            }
+
+            @SuppressWarnings("unchecked")
+            private T getDataObjectInstanceFromResult(FindDataObjectsResponse.Entry e) {
+                DXDataObject dataObject = null;
+                DXContainer container = DXContainer.getInstance(e.project);
+                if (e.describe != null) {
+                    dataObject =
+                            DXDataObject.getInstanceWithCachedDescribe(e.id, container, env,
+                                    e.describe);
+                } else {
+                    dataObject = DXDataObject.getInstanceWithEnvironment(e.id, container, env);
+                }
+
+                if (classConstraint != null) {
+                    if (!dataObject.getId().startsWith(classConstraint + "-")) {
+                        throw new IllegalStateException("Expected all results to be of type "
+                                + classConstraint + " but received an object with ID "
+                                + dataObject.getId());
+                    }
+                }
+                // This is an unchecked cast, but the callers of this class
+                // should have set T appropriately so that it agrees with
+                // the class constraint (if any). If something goes wrong
+                // here, either that code is incorrect or the API server
+                // has returned incorrect results.
+                return (T) dataObject;
+            }
+
+            @Override
+            public boolean hasNext() {
+                return nextElementIndex < response.results.size();
+            }
+
+            @Override
+            public T next() {
+                return getDataObjectInstanceFromResult(response.results.get(nextElementIndex++));
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        }
+        private final String classConstraint;
+        private final DXEnvironment env;
+
+        private final FindDataObjectsResponse response;
+
+        /**
+         * Initializes result set page object with the specified page size.
+         */
+        private SearchPage(FindDataObjectsRequest request, String classConstraint,
+                                      DXEnvironment env) {
+            this.classConstraint = classConstraint;
+            this.env = env;
+            this.response = DXAPI.systemFindDataObjects(request, FindDataObjectsResponse.class, env);
+        }
+
+        public JsonNode getNext() {
+            return response.next;
+        }
+
+        public boolean hasNext() {
+            return response.next != null && !response.next.isNull();
+        }
+
+        @Override
+        public Iterator<T> iterator()
+        {
+            return new ResultIterator();
+        }
+
+        /**
+         * Returns an amount of items on findDataObjects results page
+         */
+        public int size() {
+            return response.results.size();
+        }
     }
 
 
