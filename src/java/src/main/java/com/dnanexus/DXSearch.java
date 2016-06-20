@@ -2214,7 +2214,6 @@ public final class DXSearch {
         /**
          * Iterator implementation for findDataObjects results page items.
          */
-        @VisibleForTesting
         private class ResultIterator implements Iterator<T> {
 
             int nextElementIndex;
@@ -2280,8 +2279,12 @@ public final class DXSearch {
             this.response = DXAPI.systemFindDataObjects(request, FindDataObjectsResponse.class, env);
         }
 
+        /**
+         * Returns an object that can be used in a later call to {@code getSubsequentPage()}
+         * to continue retrieving results where this page leaves off.
+         */
         public JsonNode getNext() {
-            return response.next;
+            return response.next.deepCopy();
         }
 
         public boolean hasNext() {

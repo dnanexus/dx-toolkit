@@ -312,14 +312,10 @@ public class DXSearchTest {
      */
     @Test
     public void testFindDataObjectsPaginated() {
-        List<DXRecord> records = Lists.newArrayList();
-        Set<String> recordIds = Sets.newHashSet();
         for (int i = 0; i < 8; ++i) {
             DXRecord record =
                     DXRecord.newRecord().setProject(testProject)
                             .setName("foo" + Integer.toString(i)).build();
-            records.add(record);
-            recordIds.add(record.getId());
         }
         List<DXRecord> outputRecords =
                 DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
