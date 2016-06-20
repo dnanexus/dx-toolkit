@@ -166,11 +166,12 @@ public final class DXSearch {
          * specified builder.
          *
          * @param builder builder object to initialize this query with
+         * @param starting The value of the 'next' attribute from the previous result set, or null
+         *        to return all results
          * @param limit maximum number of results to return, or null to use the default
          *        (server-provided) limit
-         * @param starting The value of the 'next' attribute from the previous result set JSON
          */
-        private FindDataObjectsRequest(FindDataObjectsRequestBuilder<?> builder, Integer limit, JsonNode starting) {
+        private FindDataObjectsRequest(FindDataObjectsRequestBuilder<?> builder, JsonNode starting, Integer limit) {
             this.classConstraint = builder.classConstraint;
             this.id = builder.id;
             this.state = builder.state;
@@ -247,18 +248,35 @@ public final class DXSearch {
             this.env = env;
         }
 
+        /**
+         * Builds and returns a request to the findDataObjects route.
+         *
+         * <p>
+         * Use this method to test the JSON hash created by a particular builder call without
+         * actually executing the request.
+         * </p>
+         *
+         * @return
+         */
         @VisibleForTesting
         FindDataObjectsRequest buildRequestHash() {
-            // Use this method to test the JSON hash created by a particular
-            // builder call without actually executing the request.
             return new FindDataObjectsRequest(this, null, null);
         }
 
+        /**
+         * Builds and returns a request to the findDataObjects route with the specified starting
+         * item and limit.
+         *
+         * <p>
+         * Use this method to test the JSON hash created by a particular builder call without
+         * actually executing the request.
+         * </p>
+         *
+         * @return
+         */
         @VisibleForTesting
-        FindDataObjectsRequest buildRequestHash(int limit, JsonNode starting) {
-            // Use this method to test the JSON hash created by a particular
-            // builder call without actually executing the request.
-            return new FindDataObjectsRequest(this, limit, starting);
+        FindDataObjectsRequest buildRequestHash(JsonNode starting, int limit) {
+            return new FindDataObjectsRequest(this, starting, limit);
         }
 
         /**
@@ -309,40 +327,39 @@ public final class DXSearch {
          * @return object encapsulating the result set
          */
         public FindDataObjectsResult<T> execute(int pageSize) {
-            return new FindDataObjectsResult<T>(this.buildRequestHash(pageSize, null), this.classConstraint,
-                    this.env, pageSize);
+            return new FindDataObjectsResult<T>(this.buildRequestHash(null, pageSize), this.classConstraint, this.env,
+                    pageSize);
         }
 
         /**
-         * Executes the query and returns first result set page.
+         * Executes the query and returns the first page of results.
          *
-         * @param pageSize Page size
+         * @param pageSize number of elements to retrieve
          *
-         * @return Iterable result set page
+         * @return result set
          */
         public SearchPage<T> getFirstPage(int pageSize) {
             if (pageSize <= 0) {
-                throw new IllegalArgumentException("Invalid page size - should be positive");
+                throw new IllegalArgumentException("Page size must be a positive integer");
             }
-            return new SearchPage<T>(this.buildRequestHash(pageSize, null), this.classConstraint, this.env);
+            return new SearchPage<T>(this.buildRequestHash(null, pageSize), this.classConstraint, this.env);
         }
 
         /**
-         * Executes the query and returns subsequent result set page.
+         * Executes the query, returning a subsequent page of results starting from the specified
+         * location.
          *
-         * @param pageSize Page size
-         * @param starting Result of SearchPage<T>.getNext() call on previous page
+         * @param starting result of {@link SearchPage#getNext()} call on previous page
+         * @param pageSize number of elements to retrieve
          *
-         * @return Iterable result set page
+         * @return result set
          */
-        public SearchPage<T> getSubsequentPage(int pageSize, JsonNode starting) {
+        public SearchPage<T> getSubsequentPage(JsonNode starting, int pageSize) {
+            Preconditions.checkNotNull(starting);
             if (pageSize <= 0) {
-                throw new IllegalArgumentException("Invalid page size - should be positive");
+                throw new IllegalArgumentException("Page size must be a positive integer");
             }
-            if (starting == null) {
-                throw new IllegalArgumentException("'starting' parameter is null");
-            }
-            return new SearchPage<T>(this.buildRequestHash(pageSize, starting), this.classConstraint, this.env);
+            return new SearchPage<T>(this.buildRequestHash(starting, pageSize), this.classConstraint, this.env);
         }
 
         /**

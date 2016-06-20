@@ -638,7 +638,7 @@ public class DXSearchTest {
         Assert.assertEquals(false, iter.hasNext());
 
         page = DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
-                .withClassRecord().getSubsequentPage(3, page.getNext());
+                .withClassRecord().getSubsequentPage(page.getNext(), 3);
         Assert.assertEquals(3, page.size());
         Assert.assertEquals(true, page.hasNext());
 
@@ -651,7 +651,7 @@ public class DXSearchTest {
         Assert.assertEquals(false, iter.hasNext());
 
         page = DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
-                .withClassRecord().getSubsequentPage(3, page.getNext());
+                .withClassRecord().getSubsequentPage(page.getNext(), 3);
         Assert.assertEquals(2, page.size());
         Assert.assertEquals(false, page.hasNext());
 
@@ -689,19 +689,19 @@ public class DXSearchTest {
         ObjectMapper mapper = new ObjectMapper();
         try {
             DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
-                    .withClassRecord().getSubsequentPage(0, mapper.createObjectNode());
+                    .withClassRecord().getSubsequentPage(mapper.createObjectNode(), 0);
             Assert.fail();
         } catch (IllegalArgumentException e) {
         }
         try {
             DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
-                    .withClassRecord().getSubsequentPage(-1, mapper.createObjectNode());
+                    .withClassRecord().getSubsequentPage(mapper.createObjectNode(), -1);
             Assert.fail();
         } catch (IllegalArgumentException e) {
         }
         try {
             DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
-                    .withClassRecord().getSubsequentPage(10, null);
+                    .withClassRecord().getSubsequentPage(null, 10);
             Assert.fail();
         } catch (IllegalArgumentException e) {
         }
