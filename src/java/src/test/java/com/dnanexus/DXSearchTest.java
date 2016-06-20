@@ -331,8 +331,9 @@ public class DXSearchTest {
             outputRecordIds.add(record.getId());
         }
 
-        DXSearch.SearchPage<DXRecord> page = DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
-                .withClassRecord().getFirstPage(3);
+        DXSearch.FindDataObjectsResult<DXRecord> result = DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
+                .withClassRecord().execute();
+        DXSearch.FindDataObjectsResult<DXRecord>.Page page = result.getFirstPage(3);
         Assert.assertEquals(3, page.size());
         Assert.assertEquals(true, page.hasNext());
 
@@ -344,8 +345,7 @@ public class DXSearchTest {
         }
         Assert.assertEquals(false, iter.hasNext());
 
-        page = DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
-                .withClassRecord().getSubsequentPage(page.getNext(), 3);
+        page = result.getSubsequentPage(page.getNext(), 3);
         Assert.assertEquals(3, page.size());
         Assert.assertEquals(true, page.hasNext());
 
@@ -357,8 +357,7 @@ public class DXSearchTest {
         }
         Assert.assertEquals(false, iter.hasNext());
 
-        page = DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
-                .withClassRecord().getSubsequentPage(page.getNext(), 3);
+        page = result.getSubsequentPage(page.getNext(), 3);
         Assert.assertEquals(2, page.size());
         Assert.assertEquals(false, page.hasNext());
 
@@ -371,8 +370,7 @@ public class DXSearchTest {
         Assert.assertEquals(false, iter.hasNext());
 
         // Checking when the requested page size is greater than amount of items
-        page = DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
-                .withClassRecord().getFirstPage(100);
+        page = result.getFirstPage(100);
         Assert.assertEquals(8, page.size());
         Assert.assertEquals(false, page.hasNext());
         int i = 0;
@@ -382,33 +380,28 @@ public class DXSearchTest {
 
         // Checking invalid arguments
         try {
-            DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
-                    .withClassRecord().getFirstPage(0);
+            result.getFirstPage(0);
             Assert.fail();
         } catch (IllegalArgumentException e) {
         }
         try {
-            DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
-                    .withClassRecord().getFirstPage(-2);
+            result.getFirstPage(-2);
             Assert.fail();
         } catch (IllegalArgumentException e) {
         }
         ObjectMapper mapper = new ObjectMapper();
         try {
-            DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
-                    .withClassRecord().getSubsequentPage(mapper.createObjectNode(), 0);
+            result.getSubsequentPage(mapper.createObjectNode(), 0);
             Assert.fail();
         } catch (IllegalArgumentException e) {
         }
         try {
-            DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
-                    .withClassRecord().getSubsequentPage(mapper.createObjectNode(), -1);
+            result.getSubsequentPage(mapper.createObjectNode(), -1);
             Assert.fail();
         } catch (IllegalArgumentException e) {
         }
         try {
-            DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
-                    .withClassRecord().getSubsequentPage(null, 10);
+            result.getSubsequentPage(null, 10);
             Assert.fail();
         } catch (NullPointerException e) {
         }

@@ -157,7 +157,7 @@ public final class DXSearch {
             this.created = previousQuery.created;
             this.describe = previousQuery.describe;
 
-            this.starting = starting.isNull() ? null : starting;
+            this.starting = (starting == null || starting.isNull()) ? null : starting;
             this.limit = limit;
         }
 
@@ -329,37 +329,6 @@ public final class DXSearch {
         public FindDataObjectsResult<T> execute(int pageSize) {
             return new FindDataObjectsResult<T>(this.buildRequestHash(null, pageSize), this.classConstraint, this.env,
                     pageSize);
-        }
-
-        /**
-         * Executes the query and returns the first page of results.
-         *
-         * @param pageSize number of elements to retrieve
-         *
-         * @return result set
-         */
-        public SearchPage<T> getFirstPage(int pageSize) {
-            if (pageSize <= 0) {
-                throw new IllegalArgumentException("Page size must be a positive integer");
-            }
-            return new SearchPage<T>(this.buildRequestHash(null, pageSize), this.classConstraint, this.env);
-        }
-
-        /**
-         * Executes the query, returning a subsequent page of results starting from the specified
-         * location.
-         *
-         * @param starting result of {@link SearchPage#getNext()} call on previous page
-         * @param pageSize number of elements to retrieve
-         *
-         * @return result set
-         */
-        public SearchPage<T> getSubsequentPage(JsonNode starting, int pageSize) {
-            Preconditions.checkNotNull(starting);
-            if (pageSize <= 0) {
-                throw new IllegalArgumentException("Page size must be a positive integer");
-            }
-            return new SearchPage<T>(this.buildRequestHash(starting, pageSize), this.classConstraint, this.env);
         }
 
         /**
@@ -926,6 +895,112 @@ public final class DXSearch {
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class FindDataObjectsResult<T extends DXDataObject> extends ObjectProducerImpl<T> {
+
+        /**
+         * The page subset of data objects that matched a {@code findDataObjects} query.
+         */
+        public class Page implements Iterable<T> {
+            /**
+             * Iterator implementation for {@code findDataObjects} results page items.
+             */
+            private class PageIterator implements Iterator<T> {
+
+                int nextElementIndex;
+
+                private PageIterator() {
+                    this.nextElementIndex = 0;
+                }
+
+                @Override
+                public boolean hasNext() {
+                    return nextElementIndex < response.results.size();
+                }
+
+                @Override
+                public T next() {
+                    return getDataObjectInstanceFromResult(response.results.get(nextElementIndex++));
+                }
+
+                @Override
+                public void remove() {
+                    throw new UnsupportedOperationException();
+                }
+            }
+
+            private final FindDataObjectsResponse response;
+
+            /**
+             * Initializes result set page object with the specified page size.
+             */
+            private Page(int pageSize) {
+                this.response = DXAPI.systemFindDataObjects(new FindDataObjectsRequest(baseQuery, null, pageSize),
+                        FindDataObjectsResponse.class, env);
+            }
+
+            /**
+             * Initializes result set page object with the specified page size.
+             */
+            private Page(JsonNode starting, int pageSize) {
+                this.response = DXAPI.systemFindDataObjects(new FindDataObjectsRequest(baseQuery, starting, pageSize),
+                        FindDataObjectsResponse.class, env);
+            }
+
+            /**
+             * Returns an object that can be used in a later call to
+             * {@link DXSearch.FindDataObjectsResult#getSubsequentPage(JsonNode, int)}
+             * to continue retrieving results where this page leaves off.
+             */
+            public JsonNode getNext() {
+                return response.next.deepCopy();
+            }
+
+            public boolean hasNext() {
+                return response.next != null && !response.next.isNull();
+            }
+
+            @Override
+            public Iterator<T> iterator()
+            {
+                return new PageIterator();
+            }
+
+            /**
+             * Returns an amount of items on findDataObjects results page
+             */
+            public int size() {
+                return response.results.size();
+            }
+        }
+
+        /**
+         * Returns a first page of the {@code findDataObjects} results.
+         *
+         * @param pageSize number of elements to retrieve
+         *
+         * @return result set
+         */
+        public Page getFirstPage(int pageSize) {
+            if (pageSize <= 0) {
+                throw new IllegalArgumentException("Page size must be a positive integer");
+            }
+            return new Page(pageSize);
+        }
+
+        /**
+         * Returns a subsequent page of the {@code findDataObjects} results starting from the specified item.
+         *
+         * @param starting result of {@link DXSearch.FindDataObjectsResult.Page#getNext()} call on previous page
+         * @param pageSize number of elements to retrieve
+         *
+         * @return result set
+         */
+        public Page getSubsequentPage(JsonNode starting, int pageSize) {
+            Preconditions.checkNotNull(starting);
+            if (pageSize <= 0) {
+                throw new IllegalArgumentException("Page size must be a positive integer");
+            }
+            return new Page(starting, pageSize);
+        }
 
         /**
          * Wrapper from the findDataObjects result page class to the high-level interface
@@ -2203,106 +2278,6 @@ public final class DXSearch {
             // Do not allow subclassing except by the implementations provided here
         }
 
-    }
-
-    /**
-     * The page subset of data objects that matched a {@code findDataObjects} query.
-     *
-     * @param <T> data object class to be returned
-     */
-    public static class SearchPage<T extends DXDataObject> implements Iterable<T> {
-        /**
-         * Iterator implementation for findDataObjects results page items.
-         */
-        private class ResultIterator implements Iterator<T> {
-
-            int nextElementIndex;
-
-            private ResultIterator() {
-                this.nextElementIndex = 0;
-            }
-
-            @SuppressWarnings("unchecked")
-            private T getDataObjectInstanceFromResult(FindDataObjectsResponse.Entry e) {
-                DXDataObject dataObject = null;
-                DXContainer container = DXContainer.getInstance(e.project);
-                if (e.describe != null) {
-                    dataObject =
-                            DXDataObject.getInstanceWithCachedDescribe(e.id, container, env,
-                                    e.describe);
-                } else {
-                    dataObject = DXDataObject.getInstanceWithEnvironment(e.id, container, env);
-                }
-
-                if (classConstraint != null) {
-                    if (!dataObject.getId().startsWith(classConstraint + "-")) {
-                        throw new IllegalStateException("Expected all results to be of type "
-                                + classConstraint + " but received an object with ID "
-                                + dataObject.getId());
-                    }
-                }
-                // This is an unchecked cast, but the callers of this class
-                // should have set T appropriately so that it agrees with
-                // the class constraint (if any). If something goes wrong
-                // here, either that code is incorrect or the API server
-                // has returned incorrect results.
-                return (T) dataObject;
-            }
-
-            @Override
-            public boolean hasNext() {
-                return nextElementIndex < response.results.size();
-            }
-
-            @Override
-            public T next() {
-                return getDataObjectInstanceFromResult(response.results.get(nextElementIndex++));
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        }
-        private final String classConstraint;
-        private final DXEnvironment env;
-
-        private final FindDataObjectsResponse response;
-
-        /**
-         * Initializes result set page object with the specified page size.
-         */
-        private SearchPage(FindDataObjectsRequest request, String classConstraint,
-                                      DXEnvironment env) {
-            this.classConstraint = classConstraint;
-            this.env = env;
-            this.response = DXAPI.systemFindDataObjects(request, FindDataObjectsResponse.class, env);
-        }
-
-        /**
-         * Returns an object that can be used in a later call to {@code getSubsequentPage()}
-         * to continue retrieving results where this page leaves off.
-         */
-        public JsonNode getNext() {
-            return response.next.deepCopy();
-        }
-
-        public boolean hasNext() {
-            return response.next != null && !response.next.isNull();
-        }
-
-        @Override
-        public Iterator<T> iterator()
-        {
-            return new ResultIterator();
-        }
-
-        /**
-         * Returns an amount of items on findDataObjects results page
-         */
-        public int size() {
-            return response.results.size();
-        }
     }
 
 
