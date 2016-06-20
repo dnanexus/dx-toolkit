@@ -414,7 +414,7 @@ public class DXSearchTest {
             DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
                     .withClassRecord().getSubsequentPage(null, 10);
             Assert.fail();
-        } catch (IllegalArgumentException e) {
+        } catch (NullPointerException e) {
         }
     }
 
