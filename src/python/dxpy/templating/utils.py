@@ -240,7 +240,7 @@ def create_files_from_templates(template_dir, app_json, language,
                      stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH |
                      stat.S_IXOTH)
         except OSError as e:
-            print ("Unable to change file {} mode: {}".format(file, e))
+            print("Unable to change file {} mode: {}".format(file, e))
 
     def use_template_file(path):
         '''
