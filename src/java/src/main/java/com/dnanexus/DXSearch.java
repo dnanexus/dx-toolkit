@@ -136,12 +136,12 @@ public final class DXSearch {
          * changes the starting value and limit.
          *
          * @param previousQuery previous query to clone
-         * @param next starting value for subsequent results
+         * @param starting starting value for subsequent results
          * @param limit maximum number of results to return, or null to use the default
          *        (server-provided) limit
          */
         private FindDataObjectsRequest(FindDataObjectsRequest previousQuery,
-                JsonNode next, Integer limit) {
+                JsonNode starting, Integer limit) {
             this.classConstraint = previousQuery.classConstraint;
             this.id = previousQuery.id;
             this.state = previousQuery.state;
@@ -157,7 +157,7 @@ public final class DXSearch {
             this.created = previousQuery.created;
             this.describe = previousQuery.describe;
 
-            this.starting = next.isNull() ? null : next;
+            this.starting = starting.isNull() ? null : starting;
             this.limit = limit;
         }
 
