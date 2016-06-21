@@ -60,6 +60,7 @@
 
 using namespace std;
 using namespace dx;
+namespace fs = boost::filesystem;
 
 // Definition of forceRefresh global variables (used in round_robin_dns.cpp)
 bool forceRefreshDNS = true;
@@ -97,7 +98,7 @@ bool keepShowingUploadProgress = true;
  * Chunks are initially added to the queue chunksToRead.
  */
 
-unsigned int totalChunks;
+unsigned int totalChunks = 0;
 
 BlockingQueue<Chunk*> chunksToRead;
 BlockingQueue<Chunk*> chunksToCompress;
@@ -198,7 +199,7 @@ long getRSS() {
   if (err != 0 ) {
     DXLOG(logWARNING) << "Unable to get process' memory usage, error code " << err;
       return 0;
-  }    
+  }
   return (long)info.WorkingSetSize;
 #elif MAC_BUILD
   task_basic_info_data_t info;
@@ -575,6 +576,21 @@ void markFileAsFailed(vector<File> &files, const string &fileID) {
   }
 }
 
+
+map<string, int> hashTable; // A map for hash string to index in files vector
+map<string, string> projectTable; // A map to map project names to ids.
+void resolveProjects(const vector<string> &projects){
+  // Insert unique projects into the table
+  for (std::vector<string>::const_iterator proj= projects.begin();
+        proj!= projects.end(); ++proj) {
+    projectTable[*proj] = "";
+  }
+  // Resolve each unique project
+  for (map<string, string>::iterator proj = projectTable.begin(); proj!= projectTable.end(); ++proj) {
+    proj->second = resolveProject(proj->first);
+    DXLOG(logDEBUG3) << "Proj : " << proj->first << " " << proj->second;
+  }
+}
 /*
  * This function throws a runtime_error if two or more files have the same
  * signature, and are being uploaded to the same project. The signature is
@@ -582,15 +598,27 @@ void markFileAsFailed(vector<File> &files, const string &fileID) {
  * detect resumable uploads.
  */
 void disallowDuplicateFiles(const vector<string> &files, const vector<string> &projects) {
-  map<string, int> hashTable; // a map for hash string to index in files vector
   for (unsigned i = 0; i < files.size(); ++i) {
-    string hash = resolveProject(projects[i]) + " ";
+    string hash = projectTable[projects[i]] + " ";
+    fs::path p(files[i]);
 
-    boost::filesystem::path p(files[i]);
-
+    if(fs::is_directory(p)) {
+      fs::directory_iterator end_itr;
+      vector<string> filesInDir, newProjects;
+      for(fs::directory_iterator itr(p); itr != end_itr; ++itr) {
+        filesInDir.push_back(itr->path().string());
+        // For files in a directory, we assume they use the project that goes with
+        // the directory itself.
+        newProjects.push_back(projects[i]);
+      }
+      if (opt.recursive)
+        disallowDuplicateFiles(filesInDir, newProjects);
+      continue;
+    }
     hash += boost::lexical_cast<string>(boost::filesystem::file_size(p)) + " ";
     hash += boost::lexical_cast<string>(boost::filesystem::last_write_time(p)) + " ";
     hash += p.filename().string();
+    DXLOG(logDEBUG3) << "File hash: " << hash;
     if (hashTable.count(hash) > 0) {
       throw runtime_error("File \"" + files[i] + "\" and \"" + files[hashTable[hash]] + "\" have same Signature. You cannot upload"
                            " two files with same signature to same project without using '--do-not-resume' flag");
@@ -717,6 +745,62 @@ void check_for_complete_chunks(vector<File> &files) {
   }
 }
 
+File createFile(const std::string &filePath,
+                const std::string &project,
+                const std::string &folders,
+                const std::string &name,
+                const unsigned int &fileIndex) {
+  DXLOG(logINFO) << "Getting MIME type for local file " << filePath << "...";
+  string mimeType = getMimeType(filePath);
+  DXLOG(logINFO) << "MIME type for local file " << filePath << " is '" << mimeType << "'.";
+  bool toCompress;
+  if (!opt.doNotCompress) {
+    bool is_compressed = isCompressed(mimeType);
+    toCompress = !is_compressed;
+    if (is_compressed)
+      DXLOG(logINFO) << "File " << filePath << " is already compressed, so won't try to compress it any further.";
+    else
+      DXLOG(logINFO) << "File " << filePath << " is not compressed, will compress it before uploading.";
+  } else {
+    toCompress = false;
+  }
+  if (toCompress) {
+    mimeType = "application/x-gzip";
+  }
+  return File(filePath, project, folders, name, opt.visibility,
+         opt.properties, opt.type, opt.tags, opt.details,
+         toCompress, !opt.doNotResume, mimeType, opt.chunkSize, fileIndex);
+}
+
+void traverseDirectory(const fs::path &localDirPath,
+                       const std::string &project,
+                       const fs::path &_folders,
+                       const fs::path &dirName,
+                       std::vector<File> &files) {
+  fs::path remoteFolders(_folders);
+
+  if (dirName != ".") {
+    remoteFolders /= dirName;
+  }
+
+  fs::directory_iterator it(localDirPath), end;
+  for (; it != end; ++it) {
+    fs::path currPath(it->path());
+    if (fs::is_directory(currPath)) {
+      if (opt.recursive) {
+        traverseDirectory(currPath, project, remoteFolders, currPath.filename(), files);
+      }
+    } else if (fs::is_regular_file(currPath)) {
+      unsigned int fileIndex = files.size();
+      files.push_back(createFile(currPath.string(), project, remoteFolders.string(), currPath.filename().string(), fileIndex));
+      totalChunks += files[fileIndex].createChunks(chunksToRead, opt.tries);
+      cerr << endl;
+    } else {
+      DXLOG(logWARNING) << "Unable to upload non regular file \"" << currPath.string() << "\"";
+    }
+  }
+}
+
 int main(int argc, char * argv[]) {
   try {
     // Note: Verbose mode logging is enabled (if requested) by options parse()
@@ -770,6 +854,7 @@ int main(int argc, char * argv[]) {
       return 3;
     }
     if (!opt.doNotResume) {
+      resolveProjects(opt.projects);
       disallowDuplicateFiles(opt.files, opt.projects);
     }
   } catch (exception &e) {
@@ -790,27 +875,13 @@ int main(int argc, char * argv[]) {
     vector<File> files;
 
     for (unsigned int i = 0; i < opt.files.size(); ++i) {
-      DXLOG(logINFO) << "Getting MIME type for local file " << opt.files[i] << "...";
-      string mimeType = getMimeType(opt.files[i]);
-      DXLOG(logINFO) << "MIME type for local file " << opt.files[i] << " is '" << mimeType << "'.";
-      bool toCompress;
-      if (!opt.doNotCompress) {
-        bool is_compressed = isCompressed(mimeType);
-        toCompress = !is_compressed;
-        if (is_compressed)
-          DXLOG(logINFO) << "File " << opt.files[i] << " is already compressed, so won't try to compress it any further.";
-        else
-          DXLOG(logINFO) << "File " << opt.files[i] << " is not compressed, will compress it before uploading.";
+      if (fs::is_directory(opt.files[i])) {
+        traverseDirectory(fs::path(opt.files[i]), opt.projects[i], fs::path(opt.folders[i]), fs::path(opt.names[i]), files);
       } else {
-        toCompress = false;
+        unsigned int fileIndex = files.size();
+        files.push_back(createFile(opt.files[i], opt.projects[i], opt.folders[i], opt.names[i], fileIndex));
+        totalChunks += files[fileIndex].createChunks(chunksToRead, opt.tries);
       }
-      if (toCompress) {
-        mimeType = "application/x-gzip";
-      }
-      files.push_back(File(opt.files[i], opt.projects[i], opt.folders[i], opt.names[i], opt.visibility, 
-			   opt.properties, opt.type, opt.tags, opt.details,
-			   toCompress, !opt.doNotResume, mimeType, opt.chunkSize, i));
-      totalChunks += files[i].createChunks(chunksToRead, opt.tries);
     }
 
     if (opt.waitOnClose) {
@@ -818,10 +889,6 @@ int main(int argc, char * argv[]) {
         files[i].waitOnClose = true;
       }
     }
-
-    // Create folders all at once (instead of one by one, above, where we
-    // initialize the File objects).
-    createFolders(opt.projects, opt.folders);
 
     // Take this point as the starting time for program operation
     // (to calculate average transfer speed)
