@@ -1,3 +1,12 @@
+dx-toolkit (0.194.0) precise; urgency=low
+
+  * PTFM-17632 dx update project returns valid JSON
+  * PTFM-5291 Recursive directory uploads in ua
+  * Adding F405 to flake8 ignored list
+  * Fixed E211 whitespace before '('
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 23 Jun 2016 22:57:07 +0000
+
 dx-toolkit (0.193.0) precise; urgency=low
 
   * Fixed chmod issue on win dx-appwizard
