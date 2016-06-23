@@ -2368,7 +2368,7 @@ def update_project(args):
         if args.brief:
             print(results['id'])
         else:
-            print(results)
+            print(json.dumps(results))
     except:
         err_exit()
 

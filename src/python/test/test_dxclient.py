@@ -5314,11 +5314,17 @@ class TestDXClientUpdateProject(DXTestCase):
                         'description': 'This is new a description',
                         'protected': 'false'}
 
-        cmd = "dx update project {pid} --name {name} --summary {summary} --description {desc} --protected {protect}"
+        update_project_output = check_output(["dx", "update", "project", self.project, "--name",
+                pipes.quote(update_items['name']), "--summary", update_items['summary'], "--description",
+                update_items['description'], "--protected", update_items['protected']])
+        update_project_json = json.loads(update_project_output);
+        self.assertTrue("id" in update_project_json)
+        self.assertEqual(self.project, update_project_json["id"])
 
-        run(cmd.format(pid=self.project, name=pipes.quote(update_items['name']),
-                       summary=pipes.quote(update_items['summary']), desc=pipes.quote(update_items['description']),
-                       protect=update_items['protected']))
+        update_project_output = check_output(["dx", "update", "project", self.project, "--name",
+                pipes.quote(update_items['name']), "--summary", update_items['summary'], "--description",
+                update_items['description'], "--protected", update_items['protected'], "--brief"])
+        self.assertEqual(self.project, update_project_output.rstrip("\n"))
 
         describe_input = {}
         for item in update_items:
