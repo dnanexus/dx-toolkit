@@ -3231,7 +3231,7 @@ def ssh(args, ssh_config_verified=False):
         msg = "Cannot resolve hostname or hostkey for {}. Please check your permissions and run settings."
         err_exit(msg.format(args.job_id))
 
-    known_hosts_file = os.path.expanduser('~/.dnanexus_config/ssh_known_hosts')
+    known_hosts_file = os.path.join(dxpy.config.get_user_conf_dir(), 'ssh_known_hosts')
     with open(known_hosts_file, 'a') as fh:
         fh.write("{job_id}.dnanex.us {key}\n".format(job_id=args.job_id, key=host_key.rstrip()))
 
@@ -3256,7 +3256,7 @@ def ssh(args, ssh_config_verified=False):
                  exception=DXCLIError())
 
     print("Connecting to", host)
-    ssh_args = ['ssh', '-i', os.path.expanduser('~/.dnanexus_config/ssh_id'),
+    ssh_args = ['ssh', '-i', os.path.join(dxpy.config.get_user_conf_dir(), 'ssh_id'),
                 '-o', 'HostKeyAlias={}.dnanex.us'.format(args.job_id),
                 '-o', 'UserKnownHostsFile={}'.format(known_hosts_file),
                 '-l', 'dnanexus', host]
