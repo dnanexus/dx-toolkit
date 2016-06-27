@@ -143,7 +143,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
             effective_file_size = bytes_downloaded
 
         ticks = int(round((bytes_downloaded / float(effective_file_size)) * num_ticks))
-        percent = int(round((bytes_downloaded / float(effective_file_size)) * 100))
+        percent = int(math.floor((bytes_downloaded / float(effective_file_size)) * 100))
 
         fmt = "[{done}{pending}] {action} {done_bytes:,}{remaining} bytes ({percent}%) {name}"
         # Erase the line and return the cursor to the start of the line.
