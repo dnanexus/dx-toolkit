@@ -790,7 +790,7 @@ class TestDXClient(DXTestCase):
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_ssh(self):
-        for use_alternate_config_dir in False, True:
+        for use_alternate_config_dir in [False, True]:
             with self.configure_ssh(use_alternate_config_dir=use_alternate_config_dir) as wd:
                 sleep_applet = dxpy.api.applet_new(dict(name="sleep",
                                                         runSpec={"code": "sleep 1200",
@@ -822,6 +822,10 @@ class TestDXClient(DXTestCase):
                 # Check for terminal prompt and verify we're in the container
                 job_id = dxpy.find_jobs(name="sleep", project=self.project).next()['id']
                 dx.expect(("dnanexus@%s" % job_id), timeout=10)
+
+                expected_history_filename = os.path.join(
+                        os.environ.get("DX_USER_CONF_DIR", os.path.join(wd, ".dnanexus_config")), ".dx_history")
+                self.assertTrue(os.path.isfile(expected_history_filename))
 
                 # Make sure the job can be connected to using 'dx ssh <job id>'
                 dx2 = pexpect.spawn("dx ssh " + job_id, env=override_environment(HOME=wd))

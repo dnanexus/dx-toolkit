@@ -3021,7 +3021,7 @@ def shell(orig_args):
             if readline.get_completer() is None:
                 readline.set_completer(DXCLICompleter().complete)
                 readline.clear_history()
-                readline.read_history_file(os.path.expanduser('~/.dnanexus_config/.dx_history'))
+                readline.read_history_file(os.path.join(dxpy.config.get_user_conf_dir(), '.dx_history'))
         except:
             pass
         try:
