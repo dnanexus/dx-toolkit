@@ -224,9 +224,9 @@ def _check_suggestions(src_dir, publish=False):
                 for suggestion in input_field['suggestions']:
                     if 'project' in suggestion:
                         try:
-                            project = dxpy.api.project_describe(suggestion['project'])
-                            if project['restricted']:
-                                logger.warn('Warning, project {name} is restricted!'.format(name=project['name']))
+                            project = dxpy.api.project_describe(suggestion['project'], {"permissions": True})
+                            if 'PUBLIC' not in project['permissions'] and publish:
+                                logger.warn('Warning, project {name} NOT PUBLIC!'.format(name=project['name']))
                         except dxpy.exceptions.DXAPIError as e:
                             if e.code == 404:
                                 raise dxpy.app_builder.AppBuilderException(
@@ -242,7 +242,12 @@ def _check_suggestions(src_dir, publish=False):
                     if '$dnanexus_link' in suggestion:
                         if suggestion['$dnanexus_link'].startswith(('file-', 'record-', 'gtable-')):
                             try:
-                                dxpy.describe(suggestion['$dnanexus_link'])
+                                object = dxpy.describe(suggestion['$dnanexus_link'])
+                                if 'project' in object:
+                                    if not object['project']:
+                                        raise dxpy.app_builder.AppBuilderException(
+                                            'Suggested object {name} does not belongs to any project'.format(
+                                                name=suggestion['value']['$dnanexus_link']))
                             except Exception as e:
                                 raise dxpy.app_builder.AppBuilderException(str(e))
                     if 'value' in suggestion:
@@ -260,7 +265,12 @@ def _check_suggestions(src_dir, publish=False):
                             elif isinstance(suggestion['value']['$dnanexus_link'], basestring):
                                 if suggestion['value']['$dnanexus_link'].startswith(('file-', 'record-', 'gtable-')):
                                     try:
-                                        dxpy.describe(suggestion['value']['$dnanexus_link'])
+                                        object = dxpy.describe(suggestion['value']['$dnanexus_link'])
+                                        if 'project' in object:
+                                            if not object['project']:
+                                                raise dxpy.app_builder.AppBuilderException(
+                                                    'Suggested object {name} does not belongs to any project'.format(
+                                                        name=suggestion['value']['$dnanexus_link']))
                                     except Exception as e:
                                         raise dxpy.app_builder.AppBuilderException(str(e))
 
@@ -891,7 +901,7 @@ def _build_app(args, extra_args):
     TODO: remote app builds still return None, but we should fix this.
 
     """
-    _check_suggestions(args.src_dir)
+    _check_suggestions(args.src_dir, args.publish)
 
     if not args.remote:
         # LOCAL BUILD
