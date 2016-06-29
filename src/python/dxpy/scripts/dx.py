@@ -1682,7 +1682,7 @@ def make_download_url(args):
         url, _headers = dxfile.get_download_url(preauthenticated=True,
                                                 duration=normalize_timedelta(args.duration)//1000 if args.duration else 24*3600,
                                                 filename=args.filename,
-                                                project=None)
+                                                project=dxpy.DXFile.NO_PROJECT_HINT)
         print(url)
     except:
         err_exit()
