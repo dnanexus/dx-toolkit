@@ -169,7 +169,7 @@ def download(args):
         # If the user did not explicitly provide the project, don't pass any
         # project parameter to the API call but continue with the download.
         if not path_has_explicit_proj:
-            project = None
+            project = dxpy.DXFile.NO_PROJECT_HINT
 
         # If the user explicitly provided the project and it doesn't contain
         # the files, don't allow the download.
