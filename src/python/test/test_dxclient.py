@@ -5752,15 +5752,15 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         except subprocess.CalledProcessError as err:
             self.assertIn('Invalid ID of class', err.stderr)
 
-        # check when project not public and we publish app
+        # check when project not public and we publish app, also check app build with a valid suggestion
         app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "project": "project-000000000000000000000001", "path": "/"}]
         app_dir = self.write_app_directory("test_build_app_suggestions", json.dumps(app_spec), "code.py")
-        try:
-            result = run("dx build --app --publish " + app_dir, also_return_stderr=True)
-            if len(result) == 2:
-                self.assertIn('NOT PUBLIC!'.format(name=app_spec['name']), result[1])
-        except subprocess.CalledProcessError as err:
-            raise
+        result = run("dx build --app --publish " + app_dir, also_return_stderr=True)
+        if len(result) == 2:
+            self.assertIn('NOT PUBLIC!'.format(name=app_spec['name']), result[1])
+        app_id = json.loads(result[0])['id']
+        app = dxpy.describe(app_id)
+        self.assertEqual(app['name'], app_spec['name'])
 
     def test_build_applet_with_no_dxapp_json(self):
         app_dir = self.write_app_directory("åpplet_with_no_dxapp_json", None, "code.py")
