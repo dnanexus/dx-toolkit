@@ -43,6 +43,11 @@ else
     false
 fi
 
+if [[ ! -w "${build_dir}" ]]; then
+    echo "${build_dir} directory not writable" 1>&2
+    false
+fi
+
 echo "Downloading $pkg_name (using ${get_cmd})..."
 rm -f "${build_dir}/${pkg_name}"
 (cd "$build_dir"; ${get_cmd} "https://wiki.dnanexus.com/images/files/${pkg_name}")
