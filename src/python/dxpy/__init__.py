@@ -489,8 +489,14 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             body = _maybe_trucate_request(_url, try_index, data)
 
             # throws BadStatusLine if the server returns nothing
-            response = _get_pool_manager(**pool_args).request(_method, _url, headers=_headers, body=body,
-                                                              timeout=timeout, retries=False, **kwargs)
+            try:
+                response = _get_pool_manager(**pool_args).request(_method, _url, headers=_headers, body=body,
+                                                                  timeout=timeout, retries=False, **kwargs)
+            except urllib3.exceptions.ClosedPoolError:
+                # If another thread closed the pool before the request was
+                # started, will throw ClosedPoolError
+                raise exceptions.UrllibInternalError("ClosedPoolError")
+
             _raise_error_for_testing(try_index, method)
             req_id = response.headers.get("x-request-id", "unavailable")
 
