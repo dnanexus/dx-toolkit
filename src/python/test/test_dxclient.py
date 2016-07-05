@@ -953,6 +953,7 @@ class TestDXClient(DXTestCase):
                     env=override_environment(HOME=wd))
             self.proxy_process.kill()
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_run_debug_on(self):
         with self.configure_ssh() as wd:
             crash_applet = dxpy.api.applet_new(dict(name="crash",

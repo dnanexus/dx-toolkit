@@ -2817,7 +2817,7 @@ def run(args):
     if args.allow_ssh == [] or ((args.ssh or args.debug_on) and not args.allow_ssh):
         args.allow_ssh = ['*']
     if args.ssh_proxy and not args.ssh:
-        err_exit(exception=DXCLIError("Options --ssh-proxy cannot be specified without --ssh"))
+        err_exit(exception=DXCLIError("Option --ssh-proxy cannot be specified without --ssh"))
     if args.ssh or args.allow_ssh or args.debug_on:
         verify_ssh_config()
 
