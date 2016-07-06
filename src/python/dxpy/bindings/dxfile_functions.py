@@ -521,7 +521,6 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
     def compose_local_dir(d, remote_folder, remote_subfolder):
         return os.path.normpath(os.path.join(d, remote_subfolder[1:] if remote_folder == "/" else remote_subfolder[len(remote_folder) + 1:]))
 
-    # TODO: Would not work on Windows - investigate and fix!!!
     normalizedFolder = folder.strip()
     if normalizedFolder != "/" and normalizedFolder.endswith("/"):
         normalizedFolder = normalizedFolder[:-1]
