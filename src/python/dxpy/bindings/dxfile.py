@@ -656,36 +656,56 @@ class DXFile(DXDataObject):
         :type filename: str
         :param project: ID of a project containing the file (the download URL
             will be associated with this project, and this may affect which
-            billing account is billed for this download). If None, no hint is
-            supplied to the API server. If set to a project, the URL is only
-            valid so long as the user has access to that project and the
-            project contains that file.
+            billing account is billed for this download).
+            If no project is specified, an attempt will be made to verify if the file is
+            in the project from the DXFile handler (as specified by the user or
+            the current project stored in dxpy.WORKSPACE_ID). Otherwise, no hint is supplied.
+            This fall back behavior does not happen inside a job environment.
+            A non preauthenticated URL is only valid as long as the user has
+            access to that project and the project contains that file.
         :type project: str
         :returns: download URL and dict containing HTTP headers to be supplied
             with the request
         :rtype: tuple (str, dict)
-        :raises: :exc:`~dxpy.exceptions.ResourceNotFound` if the project does
-            not contain this file.
+        :raises: :exc:`~dxpy.exceptions.ResourceNotFound` if a project context was
+            given and the file was not found in that project context.
+        :raises: :exc:`~dxpy.exceptions.ResourceNotFound` if no project context was
+            given and the file was not found in any projects.
 
         Obtains a URL that can be used to directly download the associated
         file.
 
         """
-        # Test hook to write 'project' argument passed to API call to a
-        # local file
-        if '_DX_DUMP_BILLED_PROJECT' in os.environ:
-            with open(os.environ['_DX_DUMP_BILLED_PROJECT'], "w") as fd:
-                if project is not None:
-                    fd.write(project)
-
         args = {"preauthenticated": preauthenticated}
 
         if duration is not None:
             args["duration"] = duration
         if filename is not None:
             args["filename"] = filename
-        if project is not None:
+
+        # If project=None, we fall back to the project attached to this handler
+        # (if any). If this is supplied, it's treated as a hint: if it's a
+        # project in which this file exists, it's passed on to the
+        # apiserver. Otherwise, NO hint is supplied. In principle supplying a
+        # project in the handler that doesn't contain this file ought to be an
+        # error, but it's this way for backwards compatibility. We don't know
+        # who might be doing downloads and creating handlers without being
+        # careful that the project encoded in the handler contains the file
+        # being downloaded. They may now rely on such behavior.
+        if project is None and not 'DX_JOB_ID' in os.environ:
+            project_from_handler = self.get_proj_id()
+            if project_from_handler and object_exists_in_project(self.get_id(), project_from_handler):
+                project = project_from_handler
+
+        if project is not None and project is not DXFile.NO_PROJECT_HINT:
             args["project"] = project
+
+        # Test hook to write 'project' argument passed to API call to a
+        # local file
+        if '_DX_DUMP_BILLED_PROJECT' in os.environ:
+            with open(os.environ['_DX_DUMP_BILLED_PROJECT'], "w") as fd:
+                if project is not None and project != DXFile.NO_PROJECT_HINT:
+                    fd.write(project)
 
         with self._url_download_mutex:
             if self._download_url is None or self._download_url_expires < time.time():
@@ -779,8 +799,8 @@ class DXFile(DXDataObject):
             project ID.
         :type project: str or None
         :rtype: string
-        :raises: :exc:`~dxpy.exceptions.ResourceNotFound` if *project* is
-            supplied and it does not contain this file
+        :raises: :exc:`~dxpy.exceptions.ResourceNotFound` if *project* is supplied
+           and it does not contain this file
 
         Returns the next *length* bytes, or all the bytes until the end of file
         (if no *length* is given or there are fewer than *length* bytes left in
@@ -802,26 +822,6 @@ class DXFile(DXDataObject):
 
         if length == None or length > self._file_length - self._pos:
             length = self._file_length - self._pos
-
-        # Project specified explicitly to this method read(project=...) is
-        # treated strictly. If supplied, it must be a project in which this
-        # file exists. Otherwise, it's an error.
-        #
-        # If project=None, we fall back to the project attached to this handler
-        # (if any). If this is supplied, it's treated as a hint: if it's a
-        # project in which this file exists, it's passed on to the
-        # apiserver. Otherwise, NO hint is supplied. In principle supplying a
-        # project in the handler that doesn't contain this file ought to be an
-        # error, but it's this way for backwards compatibility. We don't know
-        # who might be doing downloads and creating handlers without being
-        # careful that the project encoded in the handler contains the file
-        # being downloaded. They may now rely on such behavior.
-        if project is None:
-            project_from_handler = self.get_proj_id()
-            if project_from_handler and object_exists_in_project(self.get_id(), project_from_handler):
-                project = project_from_handler
-        elif project == DXFile.NO_PROJECT_HINT:
-            project = None
 
         buf = self._read_buf
         buf_remaining_bytes = dxpy.utils.string_buffer_length(buf) - buf.tell()

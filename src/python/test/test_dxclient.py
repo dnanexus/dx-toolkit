@@ -25,6 +25,7 @@ import pipes
 import stat
 import hashlib
 import collections
+import string
 from contextlib import contextmanager
 import pexpect
 import requests
@@ -836,6 +837,121 @@ class TestDXClient(DXTestCase):
             dx2.expect("still running. Terminate now?")
             dx2.sendline("y")
             dx2.expect("Terminated job", timeout=60)
+
+    @unittest.skipIf(sys.platform.startswith("win"), "pexpect is not supported")
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
+    @unittest.skipUnless(testutil.TEST_HTTP_PROXY,
+                         'skipping HTTP Proxy support test that needs squid3')
+    def test_dx_ssh_proxy(self):
+        proxy_host = "localhost"
+        proxy_port = "3129"
+        proxy_addr = "http://{h}:{p}".format(h=proxy_host, p=proxy_port)
+
+        port_check = run("netstat -plant 2>/dev/null|grep 3129||echo available")[:-1]
+        if port_check != 'available':
+            raise Exception("Cannot launch squid, because port 3129 is already bound")
+
+        def launch_squid():
+            squid_wd = os.path.join(os.path.dirname(__file__), 'http_proxy')
+            self.proxy_process = subprocess.Popen(['squid3', '-N', '-f', 'squid_noauth.conf'],
+                                                  cwd=squid_wd)
+            print("Waiting for squid to come up...")
+            t = 0
+            while True:
+                try:
+                    if requests.get(proxy_addr).status_code == requests.codes.bad_request:
+                        print("squid is up")
+                        break
+                except requests.exceptions.RequestException:
+                    pass
+                time.sleep(0.5)
+                t += 1
+                if t > 16:
+                    raise Exception("Failed to launch Squid")
+
+        with self.configure_ssh() as wd:
+            launch_squid()
+            applet_json = dict(name="sleep",
+                               runSpec={"code": "sleep 6000",
+                                        "interpreter": "bash",
+                                        "execDepends": [{"name": "dx-toolkit"}]},
+                               inputSpec=[], outputSpec=[],
+                               dxapi="1.0.0", version="1.0.0",
+                               project=self.project)
+            sleep_applet = dxpy.api.applet_new(applet_json)["id"]
+
+            # Test incorrect arguments i.e. --ssh is missing
+            with self.assertSubprocessFailure(stderr_regexp="DXCLIError", exit_code=3):
+                run("dx run {a} --yes --ssh-proxy {h}:{p} --debug-on All".format(a=sleep_applet,
+                                                                                 h=proxy_host,
+                                                                                 p=proxy_port),
+                    env=override_environment(HOME=wd))
+
+            # Create job using the proxy
+            dx = pexpect.spawn("dx run {a} --yes --ssh --ssh-proxy {h}:{p} --debug-on All".
+                               format(a=sleep_applet,
+                                      h=proxy_host,
+                                      p=proxy_port),
+                               env=override_environment(HOME=wd))
+            dx.logfile = sys.stdout
+            dx.setwinsize(20, 90)
+            dx.expect("The job is running in terminal 1.", timeout=1200)
+            # Check for terminal prompt and verify we're in the container
+            job_id = dxpy.find_jobs(name="sleep", project=self.project).next()['id']
+            dx.expect(("dnanexus@%s" % job_id), timeout=10)
+            # Cache default ssh command for refactoring
+            ssh_proxy_command = "dx ssh --ssh-proxy {h}:{p} {id}".format(h=proxy_host,
+                                                                         p=proxy_port,
+                                                                         id=job_id)
+            # Make sure the job can be connected to using 'dx ssh <job id>'
+            dx2 = pexpect.spawn(ssh_proxy_command, env=override_environment(HOME=wd))
+            dx2.expect(("dnanexus@%s" % job_id), timeout=10)
+            dx2.sendline("exit")
+            dx2.expect("bash running", timeout=10)
+            dx2.sendcontrol("c")  # CTRL-c
+            dx2.expect("[exited]")
+            dx2.expect("dnanexus@job", timeout=10)
+            # Test proxy connection from worker side
+            squid_address = run("netstat -plant 2>/dev/null|grep squid3|grep :22|awk '{print $4}'")
+            squid_port = squid_address.split(':')[1][:-1]
+            dx2.sendline("netstat -plant 2>/dev/null|grep :{p}|awk '{{print $6}}'".format(p=squid_port))
+            dx2.expect("ESTABLISHED", timeout=60)
+            # Make sure ssh-proxy fails without proxy running
+            self.proxy_process.kill()
+            with self.assertSubprocessFailure(stderr_regexp="DXCLIError", exit_code=3):
+                run(ssh_proxy_command, env=override_environment(HOME=wd))
+            # Test invalid proxy address
+            with self.assertSubprocessFailure(stderr_regexp="DXCLIError", exit_code=3):
+                run("dx ssh --ssh-proxy {h}:{p} {id}".format(h='999.999.9.9',
+                                                             p='9999',
+                                                             id=job_id),
+                    env=override_environment(HOME=wd))
+
+            run("dx terminate " + job_id, env=override_environment(HOME=wd))
+            # Verify job termination
+            running = 'terminating'
+            t = 0
+            while running == 'terminating':
+                running = run("dx find jobs --id {id}|grep 'terminated'||echo 'terminating'"
+                              .format(id=job_id))[:-1]
+                time.sleep(1)
+                t += 1
+                if t > 16:
+                    raise Exception("Failed to terminate job")
+
+            launch_squid()
+            # Test sshing into a terminated job while proxy is running
+            with self.assertSubprocessFailure(stderr_regexp=("%s is in a terminal state" % job_id), exit_code=1):
+                run(ssh_proxy_command, env=override_environment(HOME=wd))
+
+            # Test sshing into a non existentant job through proxy
+            with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
+                bad_id = 'job-000000000000000000000000'
+                run("dx ssh --ssh-proxy {h}:{p} {id}".format(h=proxy_host,
+                                                             p=proxy_port,
+                                                             id=bad_id),
+                    env=override_environment(HOME=wd))
+            self.proxy_process.kill()
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_run_debug_on(self):
@@ -5313,11 +5429,17 @@ class TestDXClientUpdateProject(DXTestCase):
                         'description': 'This is new a description',
                         'protected': 'false'}
 
-        cmd = "dx update project {pid} --name {name} --summary {summary} --description {desc} --protected {protect}"
+        update_project_output = check_output(["dx", "update", "project", self.project, "--name",
+                pipes.quote(update_items['name']), "--summary", update_items['summary'], "--description",
+                update_items['description'], "--protected", update_items['protected']])
+        update_project_json = json.loads(update_project_output);
+        self.assertTrue("id" in update_project_json)
+        self.assertEqual(self.project, update_project_json["id"])
 
-        run(cmd.format(pid=self.project, name=pipes.quote(update_items['name']),
-                       summary=pipes.quote(update_items['summary']), desc=pipes.quote(update_items['description']),
-                       protect=update_items['protected']))
+        update_project_output = check_output(["dx", "update", "project", self.project, "--name",
+                pipes.quote(update_items['name']), "--summary", update_items['summary'], "--description",
+                update_items['description'], "--protected", update_items['protected'], "--brief"])
+        self.assertEqual(self.project, update_project_output.rstrip("\n"))
 
         describe_input = {}
         for item in update_items:
@@ -7511,12 +7633,10 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
                     break
             self.assertTrue(seenResources)
 
-    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
-    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
-    @unittest.skipUnless(testutil.TEST_MULTIPLE_USERS, 'skipping test that would require another user')
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_MULTIPLE_USERS,
+                         'skipping test that would create apps and another user')
     def test_uninstall_app(self):
-        second = json.loads(os.environ['DXTEST_SECOND_USER'])
-        second_user_id = second['user']
+        second_user_id = json.loads(os.environ['DXTEST_SECOND_USER'])['user']
         authorized_users = [second_user_id]
         name = 'uninstall_test'
         app_spec = {
@@ -7524,8 +7644,8 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
             "title": name,
             "dxapi": "1.0.0",
             "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [{"name": "in1", "class": "file"}],
-            "outputSpec": [{"name": "out1", "class": "file"}],
+            "inputSpec": [],
+            "outputSpec": [],
             "description": "Description\n",
             "developerNotes": "Developer notes\n",
             "authorizedUsers": authorized_users,
@@ -7533,22 +7653,41 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
             "version": "0.0.1"
             }
         app_dir = self.write_app_directory(name, json.dumps(app_spec), "code.py", code_content="import os\n")
-        os.mkdir(os.path.join(app_dir, "resources"))
-        with open(os.path.join(app_dir, "resources", "resources_file"), 'w') as f:
-            f.write('content\n')
         build_cmd = "dx build --create-app --json --publish "
         app_json = json.loads(run(build_cmd + app_dir))
         self.assertEqual(app_json['name'], name)
+        # Install and check uninstall by name
         run("dx install " + name, env=as_second_user())
         output = json.loads(run("dx find apps --installed --json", env=as_second_user()))
         self.assertIn(name, [x['describe']['name'] for x in output])
         dxpy.api.app_remove_authorized_users(app_json['id'],
-                                                      input_params={'authorizedUsers': list(authorized_users)})
+                                             input_params={'authorizedUsers': list(authorized_users)})
         output = dxpy.api.app_describe(app_json['id'])
         self.assertNotIn(second_user_id, output['authorizedUsers'])
+        dxpy.api.project_invite(self.project, input_params={'invitee': second_user_id, 'level': 'VIEW'})
+        user_data = json.loads(run('dx describe --json ' + second_user_id, env=as_second_user()))
+        self.assertIn(name, user_data['appsInstalled'])
         run("dx uninstall %s" % name, env=as_second_user())
         output = json.loads(run("dx find apps --installed --json", env=as_second_user()))
         self.assertNotIn(name, [x['describe']['name'] for x in output])
+        user_data = json.loads(run('dx describe --json ' + second_user_id, env=as_second_user()))
+        self.assertNotIn(name, user_data['appsInstalled'])
+        # Install and check uninstall by ID
+        dxpy.api.app_add_authorized_users(app_json['id'],
+                                          input_params={'authorizedUsers': list(authorized_users)})
+        run("dx install " + name, env=as_second_user())
+        dxpy.api.app_remove_authorized_users(app_json['id'],
+                                             input_params={'authorizedUsers': list(authorized_users)})
+        user_data = json.loads(run('dx describe --json ' + second_user_id, env=as_second_user()))
+        self.assertIn(name, user_data['appsInstalled'])
+        run("dx uninstall %s" % app_json['id'], env=as_second_user())
+        user_data = json.loads(run('dx describe --json ' + second_user_id, env=as_second_user()))
+        self.assertNotIn(name, user_data['appsInstalled'])
+        # Check for App not found
+        app_unknown_name = ''.join(random.choice(string.ascii_lowercase) for _ in range(12))
+        with self.assertSubprocessFailure(stderr_regexp='Could not find the app', exit_code=1):
+            run("dx uninstall %s" % app_unknown_name, env=as_second_user())
+        pass
 
 class TestDXBuildReportHtml(unittest.TestCase):
     js = "console.log('javascript');"

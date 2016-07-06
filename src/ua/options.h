@@ -22,6 +22,7 @@
 #include <iostream>
 
 #include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
 
 #include "SimpleHttp.h"
 #include "dxjson/dxjson.h"
@@ -45,6 +46,7 @@ public:
   bool env();
   void printHelp(char * programName);
   void validate();
+  unsigned int getNumberOfFilesInDirectory(const boost::filesystem::path &dir);
 
   friend std::ostream &operator<<(std::ostream &out, const Options &opt);
 
@@ -67,6 +69,7 @@ public:
   bool progress;
   bool verbose;
   bool waitOnClose;
+  bool recursive;
 
   // Import flags
   bool reads;

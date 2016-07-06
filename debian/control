@@ -13,18 +13,6 @@ Description: DNAnexus client libraries and tools
  Bindings for interacting with the DNAnexus platform and common tools for
  developer use (inside or outside of the DNAnexus execution environment).
 
-Package: dx-toolkit-beta
-Architecture: any
-Depends: ${misc:Depends}, dx-toolkit (= ${binary:Version})
-Description: Transitional package for DNAnexus client tools
- This is a dummy package that loads vanilla dx-toolkit.
-
-Package: dx-toolkit-unstable
-Architecture: any
-Depends: ${misc:Depends}, dx-toolkit (= ${binary:Version})
-Description: Transitional package for DNAnexus client tools
- This is a dummy package that loads vanilla dx-toolkit.
-
 Package: dx-java-bindings
 Architecture: any
 Depends: ${misc:Depends}, openjdk-7-jre-headless | openjdk-8-jre-headless, dx-toolkit

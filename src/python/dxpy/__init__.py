@@ -523,7 +523,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                         error_class = exceptions.HTTPError
                     raise error_class(content, response.status)
                 else:
-                    content = response.data.decode('utf-8')
+                    try:
+                        content = response.data.decode('utf-8')
+                    except AttributeError:
+                        raise exceptions.UrllibInternalError("Content is none", response.status)
                     raise exceptions.HTTPError("{} {} [RequestID={}]\n{}".format(response.status,
                                                                                  response.reason,
                                                                                  req_id,

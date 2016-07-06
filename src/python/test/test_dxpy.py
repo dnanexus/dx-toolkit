@@ -336,6 +336,10 @@ class TestDXFileFunctions(unittest.TestCase):
                 # This project doesn't even exist
                 list(dxfile._generate_read_requests(project="project-012301230123012301230123"))
 
+            # Without a project argument, the function call should succeed
+            l = list(dxfile._generate_read_requests())
+            self.assertTrue(type(l) == list and len(l) > 0)
+
 
 class TestDXFile(unittest.TestCase):
 
@@ -649,6 +653,25 @@ class TestDXFile(unittest.TestCase):
             # This project doesn't even exist
             dxfile.get_download_url(project="project-012301230123012301230123")
 
+    def test_get_download_url_from_handler(self):
+        dxfile = dxpy.upload_string(self.foo_str, wait_on_close=True)
+        url = dxfile.get_download_url()
+
+        # Create a new DXFile handler with the correct project id.
+        dxfile1 = dxpy.DXFile(dxfile.get_id(), project=dxfile.get_proj_id())
+        url1 = dxfile1.get_download_url()
+        self.assertEqual(url, url1)
+
+        with testutil.temporary_project() as p:
+            # Create a new DXFile handler with a project that does not correspond to the file.
+            dxfile2 = dxpy.DXFile(dxfile.get_id(), project=p.get_id())
+            url1 = dxfile2.get_download_url()
+            # Verify that url1 is a tuple with a url and header
+            self.assertTrue(len(url1) == 2)
+            # Verify that the url contains the file id.
+            self.assertTrue(dxfile2.get_id() in url1[0])
+            # Verify that the url does not contain the project id from the wrong project.
+            self.assertFalse(p.get_id() in url1[0])
 
     def test_part_splitting(self):
         with dxpy.new_dxfile(write_buffer_size=4 * 1024 * 1024, mode='w', project=self.proj_id) as myfile:
@@ -660,6 +683,42 @@ class TestDXFile(unittest.TestCase):
         parts = myfile.describe(fields={"parts": True})['parts']
         self.assertEquals(parts['1']['size'], 5242880)
         self.assertEquals(parts['2']['size'], 2952504)
+
+    def test_download_in_job_env(self):
+        os.environ['DX_JOB_ID'] = "fake_job_id"
+        dxfile = dxpy.upload_string(self.foo_str, wait_on_close=True)
+
+        with testutil.temporary_project() as p:
+            with self.assertRaises(ResourceNotFound):
+                dxfile.get_download_url(project=p.get_id())
+
+            # The call should succeed if no project is specified
+            url = dxfile.get_download_url()
+            # Verify that url1 is a tuple with a url and header
+            self.assertTrue(len(url) == 2)
+            # Verify that the url contains the file id.
+            self.assertTrue(dxfile.get_id() in url[0])
+            # Verify that the url does not contain the project id from the wrong project.
+            self.assertFalse(p.get_id() in url[0])
+
+            # Getting the url by specifying the wrong project should fail in a job environment
+            with self.assertRaises(ResourceNotFound):
+                dxfile2 = dxpy.DXFile(dxid=dxfile.get_id(), project=p.get_id())
+                dxfile2.get_download_url(project=dxfile2.get_proj_id())
+
+            url2 = dxfile2.get_download_url()
+            self.assertEqual(url, url2)
+
+            # Change the current workspace to a project that does not contain the file
+            workspace_id = dxpy.WORKSPACE_ID
+            dxpy.WORKSPACE_ID = p.get_id()
+            dxfile3 = dxpy.DXFile(dxid=dxfile.get_id())
+            url3 = dxfile3.get_download_url()
+            self.assertEqual(url, url3)
+            dxpy.WORKSPACE_ID = workspace_id
+
+        del os.environ['DX_JOB_ID']
+
 
 class TestFolder(unittest.TestCase):
 
@@ -767,6 +826,7 @@ class TestFolder(unittest.TestCase):
         # Checking download from invalid location fails
         with self.assertRaises(DXFileError):
             dxpy.download_folder(self.proj_id, os.path.join(self.temp_dir, "foobar"), folder="a/b")
+
 
 @unittest.skipUnless(testutil.TEST_GTABLE, 'skipping test that would create a GTable')
 class TestDXGTable(unittest.TestCase):

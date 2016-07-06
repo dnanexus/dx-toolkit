@@ -19,7 +19,6 @@
 #include <cmath>
 #include <limits>
 
-#include <boost/filesystem.hpp>
 #include <boost/thread.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -49,6 +48,8 @@ const int DEFAULT_UPLOAD_THREADS = 8;
 #endif
 
 const int DEFAULT_READ_THREADS = 2;
+const int MAX_FILE_UPLOAD = 1000;
+
 
 Options::Options():
   properties(dx::JSON_OBJECT),
@@ -75,6 +76,7 @@ Options::Options():
     ("type", po::value<vector<string> >(&typeInput), "Type of the data object; repeat as necessary, e.g. \"--type type1 --type type2\"")
     ("tag", po::value<vector<string> >(&tagsInput), "Tag of the data object; repeat as necessary, e.g. \"--tag tag1 --tag tag2\"")
     ("details", po::value<string>(&detailsInput), "JSON to store as details")
+    ("recursive", po::bool_switch(&recursive)->default_value(false), "Recursively upload the directories")
     ("read-threads", po::value<int>(&readThreads)->default_value(DEFAULT_READ_THREADS), "Number of parallel disk read threads")
     ("compress-threads,c", po::value<int>(&compressThreads)->default_value(defaultCompressThreads), "Number of parallel compression threads")
     ("upload-threads,u", po::value<int>(&uploadThreads)->default_value(DEFAULT_UPLOAD_THREADS), "Number of parallel upload threads")
@@ -365,26 +367,53 @@ void Options::printHelp(char * programName) {
        << (*visible_opts) << endl;
 }
 
+unsigned int Options::getNumberOfFilesInDirectory(const fs::path &dir) {
+  unsigned int fileCount = 0;
+  for (fs::directory_iterator iter(dir); iter != fs::directory_iterator(); ++iter) {
+
+    fs::path currPath(*iter);
+    if (fs::is_directory(currPath) && recursive) {
+      fileCount += getNumberOfFilesInDirectory(currPath);
+    }
+    else if (fs::is_regular_file(currPath)) {
+      fileCount++;
+    }
+  }
+  return fileCount;
+}
+
 void Options::validate() {
   if (!files.empty()) {
     // - Check that all file actually exist
     // - Resolve all symlinks
-    // - Ensure that the inputs are regular files (not directories, etc.)
+    // - Ensure that the inputs are regular files or directories
+    // - Don't allow uploading more than MAX_FILE_UPLOAD files at a time
+    if (files.size() > MAX_FILE_UPLOAD) {
+      ostringstream errorMsg;
+      errorMsg << "The number of files to upload is limited to " << MAX_FILE_UPLOAD;
+      throw runtime_error(errorMsg.str());
+    }
+    unsigned int totalNumberOfFiles = 0;
     for (unsigned i = 0; i < files.size(); ++i) {
       fs::path p(files[i]);
       if (!fs::exists(p)) {
         throw runtime_error("File \"" + files[i] + "\" does not exist");
       }
-      if (fs::is_symlink(p)) {
-        p = fs::read_symlink(p);
-        files[i] = p.string();
-      }
       if (fs::is_directory(p)) {
-        throw runtime_error("Argument " + files[i] + " is a directory; recursive directory upload is not currently supported.");
-      } else if (!fs::is_regular_file(p)) {
-        throw runtime_error("Argument " + files[i] + " is not a regular file.");
+        totalNumberOfFiles += getNumberOfFilesInDirectory(fs::path(files[i]));
+      } else if (fs::is_regular_file(p)) {
+        totalNumberOfFiles++;
+      }
+      else {
+        throw runtime_error("Argument " + files[i] + " is not a regular file or directory.");
+      }
+      if (totalNumberOfFiles > MAX_FILE_UPLOAD) {
+        ostringstream errorMsg;
+        errorMsg << "The number of files to upload is limited to " << MAX_FILE_UPLOAD;
+        throw runtime_error(errorMsg.str());
       }
     }
+    DXLOG(logINFO) << "Found " << totalNumberOfFiles << " files ";
   } else {
     throw runtime_error("Must specify at least one file to upload");
   }
@@ -548,7 +577,8 @@ ostream &operator<<(ostream &out, const Options &opt) {
       out << " \"" << opt.files[i] << "\"";
     out << endl;
 
-    out << "  read-threads: " << opt.readThreads << endl
+    out << "  recursive directory upload: " << opt.recursive << endl
+        << "  read-threads: " << opt.readThreads << endl
         << "  compress-threads: " << opt.compressThreads << endl
         << "  upload-threads: " << opt.uploadThreads << endl
         << "  chunk-size: " << opt.chunkSize << endl

@@ -21,6 +21,7 @@ Miscellaneous utility classes and functions for the dx-app-wizard command-line t
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import os, shutil, subprocess, re, json
+import stat
 
 from ..utils.printing import (BOLD, DNANEXUS_LOGO, ENDC, fill)
 from ..cli import prompt_for_yn
@@ -232,6 +233,15 @@ def create_files_from_templates(template_dir, app_json, language,
     # those (after passing it through fill_in_name_and_ver).  For the
     # code.* in src,
 
+    def chmod_755(file):
+        try:
+            os.chmod(file,
+                     stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR |
+                     stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH |
+                     stat.S_IXOTH)
+        except OSError as e:
+            print("Unable to change file {} mode: {}".format(file, e))
+
     def use_template_file(path):
         '''
         :param path: relative path from template_dir
@@ -242,7 +252,7 @@ def create_files_from_templates(template_dir, app_json, language,
             with open(filled_template_filename, 'w') as filled_template_file:
                 filled_template_file.write(file_text)
             if filled_template_filename.endswith('.py') or filled_template_filename.endswith('.sh'):
-                subprocess.call(["chmod", "+x", filled_template_filename])
+                chmod_755(filled_template_filename)
             manifest.append(filled_template_filename)
 
     for template_filename in os.listdir(template_dir):
@@ -290,7 +300,7 @@ def create_files_from_templates(template_dir, app_json, language,
                     with open(filled_code_filename, 'w') as filled_code_file:
                         filled_code_file.write(code_file_text)
                     if filled_code_filename.endswith('.sh') or filled_code_filename.endswith('.py'):
-                        subprocess.call(["chmod", "+x", os.path.join(filled_code_filename)])
+                        chmod_755(filled_code_filename)
                     manifest.append(filled_code_filename)
         else:
             use_template_file(os.path.join('src', template_filename))

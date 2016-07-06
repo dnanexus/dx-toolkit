@@ -1682,7 +1682,7 @@ def make_download_url(args):
         url, _headers = dxfile.get_download_url(preauthenticated=True,
                                                 duration=normalize_timedelta(args.duration)//1000 if args.duration else 24*3600,
                                                 filename=args.filename,
-                                                project=None)
+                                                project=dxpy.DXFile.NO_PROJECT_HINT)
         print(url)
     except:
         err_exit()
@@ -2368,7 +2368,7 @@ def update_project(args):
         if args.brief:
             print(results['id'])
         else:
-            print(results)
+            print(json.dumps(results))
     except:
         err_exit()
 
@@ -2513,22 +2513,18 @@ def install(args):
 
 def uninstall(args):
     app_desc = get_app_from_path(args.app)
-    if app_desc is None:
-        try:
-            dxpy.api.app_uninstall(args.app)
-            print('Uninstalled application with id: ' + args.app)
-        except:
-            try:
-                dxpy.api.app_uninstall('app-' + args.app)
-                print('Uninstalled application with name: ' + args.app)
-            except:
-                err_exit()
+    if app_desc:
+        try_call(dxpy.api.app_uninstall, app_desc['id'])
     else:
-        try:
-            dxpy.api.app_uninstall(app_desc['id'])
-            print('Uninstalled the ' + app_desc['name'] + ' app')
-        except:
-            err_exit()
+        user_data = dxpy.api.user_describe(dxpy.whoami(), {"fields": {"appsInstalled": True}})
+        if args.app in user_data['appsInstalled']:
+            args.app = 'app-' + args.app
+        if args.app.startswith('app-'):
+            try_call(dxpy.api.app_uninstall, args.app)
+            print('Uninstalled the {app} app'.format(app=args.app))
+        else:
+            parser.exit(1, 'Could not find the app\n')
+
 
 def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None,
             is_the_only_job=True):
@@ -2669,7 +2665,11 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
                 print('-------')
                 watch(watch_args)
             elif args.ssh:
-                ssh_args = parser.parse_args(['ssh', dxexecution.get_id()])
+                if args.ssh_proxy:
+                    ssh_args = parser.parse_args(
+                        ['ssh', '--ssh-proxy', args.ssh_proxy, dxexecution.get_id()])
+                else:
+                    ssh_args = parser.parse_args(['ssh', dxexecution.get_id()])
                 ssh(ssh_args, ssh_config_verified=True)
     except Exception:
         err_exit()
@@ -2816,6 +2816,8 @@ def run(args):
         args.allow_ssh = [i for i in args.allow_ssh if i is not None]
     if args.allow_ssh == [] or ((args.ssh or args.debug_on) and not args.allow_ssh):
         args.allow_ssh = ['*']
+    if args.ssh_proxy and not args.ssh:
+        err_exit(exception=DXCLIError("Option --ssh-proxy cannot be specified without --ssh"))
     if args.ssh or args.allow_ssh or args.debug_on:
         verify_ssh_config()
 
@@ -3241,17 +3243,39 @@ def ssh(args, ssh_config_verified=False):
 
     import socket
     connected = False
-    sys.stdout.write("Checking connectivity to {}...".format(host))
+    sys.stdout.write("Checking connectivity to {}".format(host))
+    if args.ssh_proxy:
+        proxy_args = args.ssh_proxy.split(':')
+        sys.stdout.write(" through proxy {}".format(proxy_args[0]))
+    sys.stdout.write("...")
     sys.stdout.flush()
     for i in range(12):
         try:
-            socket.create_connection((host, 22), timeout=5)
+            if args.ssh_proxy:
+            # Test connecting to host through proxy
+                proxy_socket = socket.socket()
+                proxy_socket.connect((proxy_args[0], int(proxy_args[1])))
+                proxy_file = proxy_socket.makefile('r+')
+                proxy_file.write('CONNECT {host}:22 HTTP/1.0\r\nhost: {host}\r\n\r\n'
+                                 .format(host=host))
+            else:
+                socket.create_connection((host, 22), timeout=5)
             connected = True
             break
         except Exception:
             time.sleep(2)
             sys.stdout.write(".")
             sys.stdout.flush()
+    if args.ssh_proxy:
+    # Force close sockets to prevent memory leaks
+        try:
+            proxy_file.close()
+        except:
+            pass
+        try:
+            proxy_socket.close()
+        except:
+            pass
     if connected:
         sys.stdout.write(GREEN("OK") + "\n")
     else:
@@ -3264,6 +3288,9 @@ def ssh(args, ssh_config_verified=False):
                 '-o', 'HostKeyAlias={}.dnanex.us'.format(args.job_id),
                 '-o', 'UserKnownHostsFile={}'.format(known_hosts_file),
                 '-l', 'dnanexus', host]
+    if args.ssh_proxy:
+        ssh_args += ['-o', 'ProxyCommand=nc -X connect -x {proxy} %h %p'.
+                     format(proxy=args.ssh_proxy)]
     ssh_args += args.ssh_args
     exit_code = subprocess.call(ssh_args)
     try:
@@ -4156,6 +4183,8 @@ parser_run.add_argument('--ssh',
                                   "sets --priority high",
                                   width_adjustment=-24),
                         action='store_true')
+parser_run.add_argument('--ssh-proxy', metavar=('<address>:<port>'),
+                        help='SSH connect via proxy, argument supplied is used as the proxy address and port')
 parser_run.add_argument('--debug-on', action='append', choices=['AppError', 'AppInternalError', 'ExecutionError', 'All'],
                         help=fill("Configure the job to hold for debugging when any of the listed errors occur",
                                   width_adjustment=-24))
@@ -4211,6 +4240,8 @@ parser_ssh = subparsers.add_parser('ssh', help='Connect to a running job via SSH
                                    parents=[env_args])
 parser_ssh.add_argument('job_id', help='Name of job to connect to')
 parser_ssh.add_argument('ssh_args', help='Command-line arguments to pass to the SSH client', nargs=argparse.REMAINDER)
+parser_ssh.add_argument('--ssh-proxy', metavar=('<address>:<port>'),
+                        help='SSH connect via proxy, argument supplied is used as the proxy address and port')
 parser_ssh.set_defaults(func=ssh)
 register_parser(parser_ssh, categories='exec')
 
@@ -4541,7 +4572,7 @@ parser_find_data = subparsers_find.add_parser(
     parents=[stdout_args, json_arg, no_color_arg, delim_arg, env_args, find_by_properties_and_tags_args],
     prog='dx find data'
 )
-parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'gtable', 'applet', 'workflow'], help='Data object class')
+parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'gtable', 'applet', 'workflow'], help='Data object class', metavar='{record,file,applet,workflow}')
 parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
 parser_find_data.add_argument('--visibility', choices=['hidden', 'visible', 'either'], default='visible', help='Whether the object is hidden or not')
 parser_find_data.add_argument('--name', help='Name of the object')
@@ -4585,7 +4616,11 @@ register_parser(parser_find_projects, subparsers_action=subparsers_find, categor
 
 parser_find_org = subparsers_find.add_parser(
     "org",
-    help=fill("List entities within a specific org.") + "\n\n\t" + fill('"dx find org members" lists members in the specified org') + "\n\n\t" + fill('"dx find org projects" lists projects billed to the specified org') + "\n\n" + fill('Please execute "dx find org -h" for more information.'),
+    help=fill("List entities within a specific org.") + "\n\n\t" +
+         fill('"dx find org members" lists members in the specified org') + "\n\n\t" +
+         fill('"dx find org projects" lists projects billed to the specified org') + "\n\n\t" +
+         fill('"dx find org apps" lists apps billed to the specified org') + "\n\n" +
+         fill('Please execute "dx find org -h" for more information.'),
     description=fill("List entities within a specific org."),
     prog="dx find org",
 )

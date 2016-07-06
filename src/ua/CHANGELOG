@@ -1,3 +1,11 @@
+DNAnexus Upload Agent 1.5.16 <support@dnanexus.com>, 2016-Jun-23
+----------------------------------------------------------------
+  * PTFM-5291 Recursive directory uploads in ua
+
+DNAnexus Upload Agent 1.5.15 <support@dnanexus.com>, 2016-Jun-16
+----------------------------------------------------------------
+  * PTFM-14108 Fixed race condition in the UA logging
+
 DNAnexus Upload Agent 1.5.14 <support@dnanexus.com>, 2016-Apr-28
 ----------------------------------------------------------------
   * Fixed the help string for the visibility option
