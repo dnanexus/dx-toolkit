@@ -467,21 +467,12 @@ def upload_string(to_upload, media_type=None, keep_open=False, wait_on_close=Fal
 
     return handler
 
-def static_var(var_name, initial_value):
-    def decorate(func):
-        setattr(func, var_name, initial_value)
-        return func
-    return decorate
-
-@static_var("folders_cache", {})
-def list_subfolders(project, path, usecache=True, recurse=True):
+def list_subfolders(project, path, recurse=True):
     '''
     :param project: Project ID to use as context for the listing
     :type project: string
     :param path: Subtree root path
     :type path: string
-    :param usecache: Use folders listing cache
-    :type usecache: boolean
     :param recurse: Return a complete subfolders tree
     :type recurse: boolean
 
@@ -489,15 +480,10 @@ def list_subfolders(project, path, usecache=True, recurse=True):
 
     Example::
 
-        list_subfolders("project-xxxx", folder="/input", usecache=False)
+        list_subfolders("project-xxxx", folder="/input")
 
     '''
-    if usecache:
-        if project not in list_subfolders.folders_cache:
-            list_subfolders.folders_cache[project] = dxpy.get_handler(project).describe(input_params={'folders': True})['folders']
-        project_folders = list_subfolders.folders_cache[project]
-    else:
-        project_folders = dxpy.get_handler(project).describe(input_params={'folders': True})['folders']
+    project_folders = dxpy.get_handler(project).describe(input_params={'folders': True})['folders']
     # TODO: support shell-style path globbing (i.e. /a*/c matches /ab/c but not /a/b/c)
     # return pathmatch.filter(project_folders, os.path.join(path, '*'))
     if recurse:
@@ -506,7 +492,7 @@ def list_subfolders(project, path, usecache=True, recurse=True):
         return (f for f in project_folders if f.startswith(path) and '/' not in f[len(path)+1:])
 
 def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxfile.DEFAULT_BUFFER_SIZE,
-        usecache=True, **kwargs):
+        **kwargs):
     '''
     :param project: Project ID to use as context for this download.
     :type project: string
@@ -516,8 +502,6 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
     :type folder: string
     :param overwrite: Overwrite existing files
     :type overwrite: boolean
-    :param usecache: Use folders listing cache
-    :type usecache: boolean
 
     Downloads the contents of the remote *folder* of the *project* into the local directory specified by *destdir*.
 
@@ -547,7 +531,7 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
     if normalizedDestdir == "":
         raise DXFileError("Invalid destination directory name: '{}'".format(destdir))
     # Creating target directory tree
-    remote_folders = list(list_subfolders(project, normalizedFolder, usecache=usecache, recurse=True))
+    remote_folders = list(list_subfolders(project, normalizedFolder, recurse=True))
     if len(remote_folders) <= 0:
         raise DXFileError("Remote folder '{}' not found".format(normalizedFolder))
     remote_folders.sort()
