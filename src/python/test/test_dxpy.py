@@ -684,16 +684,14 @@ class TestFolder(unittest.TestCase):
         dxproject.new_folder("/h/i/j/k", parents=True)
 
         # Filling remote folders with objects
-        path = []
-        for i, f in enumerate(["/", "a", "b", "c", "d"]):
-            path.append(f)
-            folder = os.path.join(*path)
+        for i, folder in enumerate(["/", "/a", "/a/b", "/a/b/c", "/a/b/c/d"]):
             dxpy.upload_string("{}-th\n file\n content\n".format(i + 1), wait_on_close=True,
                     name="file_{}.txt".format(i + 1), folder=folder)
             dxrecord = dxpy.new_dxrecord(name="record_{}".format(i + 1), folder=folder)
 
         # Checking root directory download
         root_dest_dir = os.path.join(self.temp_dir, "root")
+        print("temp_dir: '{}', root_dest_dir: '{}'".format(self.temp_dir, root_dest_dir));
         dxpy.download_folder(self.proj_id, root_dest_dir)
         path = []
         for i, f in enumerate([root_dest_dir, "a", "b", "c", "d"]):
@@ -716,7 +714,7 @@ class TestFolder(unittest.TestCase):
 
         # Checking 2-nd level subdirectory download
         ag = os.path.join(self.temp_dir, "b")
-        dxpy.download_folder(self.proj_id, ag, folder="////a///b//")
+        dxpy.download_folder(self.proj_id, ag, folder="/a/b/")
         path = []
         for i, f in enumerate([ag, "c", "d"]):
             path.append(f)
@@ -750,8 +748,9 @@ class TestFolder(unittest.TestCase):
             dxpy.download_folder(self.proj_id, a1_dest_dir, folder="/a")
 
         # Checking download to non-writable location fails
-        with self.assertRaises(OSError):
-            dxpy.download_folder(self.proj_id, "/usr/bin/a", folder="/a")
+        if sys.platform != "win32":
+            with self.assertRaises(OSError):
+                dxpy.download_folder(self.proj_id, "/usr/bin/a", folder="/a")
 
         # Checking download to empty location fails
         with self.assertRaises(DXFileError):
