@@ -126,8 +126,6 @@ app_options.add_argument("--no-update", help="Never update an existing unpublish
 parser.set_defaults(dx_toolkit_autodep="stable")
 parser.add_argument("--dx-toolkit-legacy-git-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="git")
 parser.add_argument("--dx-toolkit-stable-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="stable")
-parser.add_argument("--dx-toolkit-beta-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="beta")         # deprecated
-parser.add_argument("--dx-toolkit-unstable-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="unstable") # deprecated
 parser.add_argument("--dx-toolkit-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="stable")
 parser.add_argument("--no-dx-toolkit-autodep", help="Do not auto-insert the dx-toolkit dependency (default is to add it if it would otherwise be absent from the runSpec)", action="store_false", dest="dx_toolkit_autodep")
 
@@ -514,10 +512,6 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
 
     temp_dir = tempfile.mkdtemp()
 
-    # TODO: this is vestigial, the "auto" setting should be removed.
-    if dx_toolkit_autodep == "auto":
-        dx_toolkit_autodep = "stable"
-
     build_options = {'dx_toolkit_autodep': dx_toolkit_autodep}
 
     if version_override:
@@ -693,7 +687,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                              version_override=None, bill_to_override=None, use_temp_build_project=True,
                              do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
                              dx_toolkit_autodep="stable", do_check_syntax=True, dry_run=False,
-                             return_object_dump=False, confirm=True, ensure_upload=False, force_symlinks=False, region=None, **kwargs):
+                             return_object_dump=False, confirm=True, ensure_upload=False, force_symlinks=False,
+                             region=None, **kwargs):
 
     dxpy.app_builder.build(src_dir, parallel_build=do_parallel_build)
     app_json = _parse_app_spec(src_dir)
@@ -727,7 +722,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             parser.error("Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
 
         if "buildOptions" in app_json:
-            if app_json["buildOptions"].get("dx_toolkit_autodep") == False:
+            if app_json["buildOptions"].get("dx_toolkit_autodep") is False:
                 dx_toolkit_autodep = False
 
         # Perform check for existence of applet with same name in
@@ -757,9 +752,6 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                                                               force_symlinks=force_symlinks) if not dry_run else []
 
         try:
-            # TODO: the "auto" setting is vestigial and should be removed.
-            if dx_toolkit_autodep == "auto":
-                dx_toolkit_autodep = "stable"
             applet_id, applet_spec = dxpy.app_builder.upload_applet(
                 src_dir,
                 bundled_resources,
@@ -965,9 +957,6 @@ def main(**kwargs):
 
     if args.mode == "applet" and args.region:
         parser.error("--region cannot be used when creating an applet (only an app)")
-
-    if args.dx_toolkit_autodep in ['beta', 'unstable']:
-        logging.warn('The --dx-toolkit-beta-autodep and --dx-toolkit-unstable-autodep flags have no effect and will be removed at some date in the future.')
 
     if args.overwrite and args.archive:
         parser.error("Options -f/--overwrite and -a/--archive cannot be specified together")
