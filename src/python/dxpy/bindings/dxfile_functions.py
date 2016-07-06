@@ -519,7 +519,7 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
     :param usecache: Use folders listing cache
     :type usecache: boolean
 
-    Downloads a remote *folder* of the *project* and saves it to the *destdir* local location.
+    Downloads the contents of the remote *folder* of the *project* into the local directory specified by *destdir*.
 
     Example::
 
@@ -530,34 +530,32 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
     def ensure_local_dir(d):
         if not os.path.isdir(d):
             if os.path.exists(d):
-                raise DXFileError("Destination location '{}' already exists and is not a directory".format(destdir))
+                raise DXFileError("Destination location '{}' already exists and is not a directory".format(d))
             logger.debug("Creating destination directory: '%s'", d)
             os.makedirs(d)
 
-    def compose_local_dir(remote_subfolder):
-        return os.path.normpath(os.path.join(destdir, remote_subfolder[1:] if folder == "/" else remote_subfolder[len(folder) + 1:]))
+    def compose_local_dir(d, remote_folder, remote_subfolder):
+        return os.path.normpath(os.path.join(d, remote_subfolder[1:] if remote_folder == "/" else remote_subfolder[len(remote_folder) + 1:]))
 
-    folder = os.path.normpath(folder).strip()
-    if folder == "":
+    # TODO: Would not work on Windows - investigate and fix!!!
+    normalizedFolder = os.path.normpath(folder).strip()
+    if normalizedFolder == "":
         raise DXFileError("Invalid remote folder name: '{}'".format(folder))
-    destdir = os.path.normpath(destdir).strip()
-    if destdir == "":
+    normalizedDestdir = os.path.normpath(destdir).strip()
+    if normalizedDestdir == "":
         raise DXFileError("Invalid destination directory name: '{}'".format(destdir))
-
-    remote_folders = list_subfolders(project, folder, usecache=usecache, recurse=True)
-
     # Creating target directory tree
-    remote_subfolders = [f for f in remote_folders if f.startswith(folder)]
-    if len(remote_subfolders) <= 0:
-        raise DXFileError("Remote folder '{}' not found".format(folder))
-    remote_subfolders.sort()
-    for remote_subfolder in remote_subfolders:
-        ensure_local_dir(compose_local_dir(remote_subfolder))
+    remote_folders = list(list_subfolders(project, normalizedFolder, usecache=usecache, recurse=True))
+    if len(remote_folders) <= 0:
+        raise DXFileError("Remote folder '{}' not found".format(normalizedFolder))
+    remote_folders.sort()
+    for remote_subfolder in remote_folders:
+        ensure_local_dir(compose_local_dir(normalizedDestdir, normalizedFolder, remote_subfolder))
 
     # Downloading files
-    for remote_file in dxpy.search.find_data_objects(classname='file', state='closed', project=project, folder=folder,
+    for remote_file in dxpy.search.find_data_objects(classname='file', state='closed', project=project, folder=normalizedFolder,
             recurse=True, describe=True):
-        local_filename = os.path.join(compose_local_dir(remote_file['describe']['folder']), remote_file['describe']['name'])
+        local_filename = os.path.join(compose_local_dir(normalizedDestdir, normalizedFolder, remote_file['describe']['folder']), remote_file['describe']['name'])
         if os.path.exists(local_filename) and not overwrite:
             raise DXFileError("Destination file '{}' already exists but no overwrite option is provided".format(local_filename))
         logger.debug("Downloading '%s/%s' remote file to '%s' location",
