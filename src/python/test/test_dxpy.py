@@ -750,7 +750,6 @@ class TestFolder(unittest.TestCase):
 
         # Checking root directory download
         root_dest_dir = os.path.join(self.temp_dir, "root")
-        print("temp_dir: '{}', root_dest_dir: '{}'".format(self.temp_dir, root_dest_dir));
         dxpy.download_folder(self.proj_id, root_dest_dir)
         path = []
         for i, f in enumerate([root_dest_dir, "a", "b", "c", "d"]):
