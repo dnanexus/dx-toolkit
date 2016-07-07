@@ -240,9 +240,9 @@ def _check_suggestions(src_dir, publish=False):
             if '$dnanexus_link' in suggestion:
                 if suggestion['$dnanexus_link'].startswith(('file-', 'record-', 'gtable-')):
                     try:
-                        object = dxpy.describe(suggestion['$dnanexus_link'])
-                        if 'project' in object:
-                            if not object['project']:
+                        dnanexus_link = dxpy.describe(suggestion['$dnanexus_link'])
+                        if 'project' in dnanexus_link:
+                            if not dnanexus_link['project']:
                                 raise dxpy.app_builder.AppBuilderException(
                                     'Suggested object {name} does not belongs to any project'.format(
                                         name=suggestion['value']['$dnanexus_link']))
@@ -263,9 +263,9 @@ def _check_suggestions(src_dir, publish=False):
                     elif isinstance(suggestion['value']['$dnanexus_link'], basestring):
                         if suggestion['value']['$dnanexus_link'].startswith(('file-', 'record-', 'gtable-')):
                             try:
-                                object = dxpy.describe(suggestion['value']['$dnanexus_link'])
-                                if 'project' in object:
-                                    if not object['project']:
+                                dnanexus_link = dxpy.describe(suggestion['value']['$dnanexus_link'])
+                                if 'project' in dnanexus_link:
+                                    if not dnanexus_link['project']:
                                         raise dxpy.app_builder.AppBuilderException(
                                             'Suggested object {name} does not belongs to any project'.format(
                                                 name=suggestion['value']['$dnanexus_link']))
