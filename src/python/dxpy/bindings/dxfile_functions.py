@@ -519,7 +519,10 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
             os.makedirs(d)
 
     def compose_local_dir(d, remote_folder, remote_subfolder):
-        return os.path.normpath(os.path.join(d, remote_subfolder[1:] if remote_folder == "/" else remote_subfolder[len(remote_folder) + 1:]))
+        suffix = remote_subfolder[1:] if remote_folder == "/" else remote_subfolder[len(remote_folder) + 1:]
+        if os.sep != '/':
+            suffix = suffix.replace('/', os.sep)
+        return os.path.join(d, suffix) if suffix != "" else d
 
     normalizedFolder = folder.strip()
     if normalizedFolder != "/" and normalizedFolder.endswith("/"):
