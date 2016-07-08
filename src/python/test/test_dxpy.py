@@ -638,9 +638,9 @@ class TestDXFile(unittest.TestCase):
         url2 = dxfile.get_download_url(**opts)
         self.assertEqual(url1, url2)
         # Cache is invalidated when the client knows the token has expired
-        # (subject to clock skew allowance of 60s)
+        # (subject to clock skew allowance of 30s)
         dxfile = dxpy.open_dxfile(dxfile.get_id())
-        url3 = dxfile.get_download_url(duration=60, **opts)
+        url3 = dxfile.get_download_url(duration=30, **opts)
         url4 = dxfile.get_download_url(**opts)
         self.assertNotEqual(url3, url4)
 
