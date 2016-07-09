@@ -216,8 +216,7 @@ def _check_suggestions(src_dir, publish=False):
     Examines the specified dxapp.json file and warns about any
     violations of suggestions guidelines.
     """
-    dxapp_json_filename = os.path.join(src_dir, "dxapp.json")
-    app_spec = json.load(open(dxapp_json_filename))
+    app_spec = _parse_app_spec(src_dir)
     for input_field in app_spec.get('inputSpec', []):
         for suggestion in input_field.get('suggestions', []):
             if 'project' in suggestion:
