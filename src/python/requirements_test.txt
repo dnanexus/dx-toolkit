@@ -1,2 +1,2 @@
-pexpect==3.3
+pexpect==4.2
 coverage==3.7.1

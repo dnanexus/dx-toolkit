@@ -2871,6 +2871,7 @@ def main():
         shell.expect("Warning:")
         shell.sendline("N")
         shell.expect("IOError")
+        shell.expect(pexpect.EOF)
         shell.close()
         self.assertEqual(3, shell.exitstatus)
 
