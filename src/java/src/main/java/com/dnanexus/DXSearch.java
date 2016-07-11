@@ -31,6 +31,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -133,15 +134,15 @@ public final class DXSearch {
 
         /**
          * Creates a new {@code FindDataObjectsRequest} that clones the specified request, but
-         * changes the starting value and limit.
+         * optionally changes the starting point and limit.
          *
          * @param previousQuery previous query to clone
-         * @param next starting value for subsequent results
+         * @param starting starting value for results (obtained from the 'next' attribute of a
+         *        previous result set), or null to start retrieving results from the beginning
          * @param limit maximum number of results to return, or null to use the default
          *        (server-provided) limit
          */
-        private FindDataObjectsRequest(FindDataObjectsRequest previousQuery,
-                JsonNode next, Integer limit) {
+        private FindDataObjectsRequest(FindDataObjectsRequest previousQuery, JsonNode starting, Integer limit) {
             this.classConstraint = previousQuery.classConstraint;
             this.id = previousQuery.id;
             this.state = previousQuery.state;
@@ -157,7 +158,7 @@ public final class DXSearch {
             this.created = previousQuery.created;
             this.describe = previousQuery.describe;
 
-            this.starting = next.isNull() ? null : next;
+            this.starting = (starting == null || starting.isNull()) ? null : starting;
             this.limit = limit;
         }
 
@@ -166,10 +167,12 @@ public final class DXSearch {
          * specified builder.
          *
          * @param builder builder object to initialize this query with
+         * @param starting starting value for results (obtained from the 'next' attribute of a
+         *        previous result set), or null to start retrieving results from the beginning
          * @param limit maximum number of results to return, or null to use the default
          *        (server-provided) limit
          */
-        private FindDataObjectsRequest(FindDataObjectsRequestBuilder<?> builder, Integer limit) {
+        private FindDataObjectsRequest(FindDataObjectsRequestBuilder<?> builder, JsonNode starting, Integer limit) {
             this.classConstraint = builder.classConstraint;
             this.id = builder.id;
             this.state = builder.state;
@@ -203,7 +206,7 @@ public final class DXSearch {
                 this.created = null;
             }
 
-            this.starting = null;
+            this.starting = (starting == null || starting.isNull()) ? null : starting;
             this.limit = limit;
         }
 
@@ -246,18 +249,31 @@ public final class DXSearch {
             this.env = env;
         }
 
+        /**
+         * Builds and returns a request to the findDataObjects route.
+         *
+         * <p>
+         * Use this method to test the JSON hash created by a particular builder call without
+         * actually executing the request.
+         * </p>
+         */
         @VisibleForTesting
         FindDataObjectsRequest buildRequestHash() {
-            // Use this method to test the JSON hash created by a particular
-            // builder call without actually executing the request.
-            return new FindDataObjectsRequest(this, null);
+            return new FindDataObjectsRequest(this, null, null);
         }
 
+        /**
+         * Builds and returns a request to the findDataObjects route with the specified starting
+         * item and limit.
+         *
+         * <p>
+         * Use this method to test the JSON hash created by a particular builder call without
+         * actually executing the request.
+         * </p>
+         */
         @VisibleForTesting
-        FindDataObjectsRequest buildRequestHash(int limit) {
-            // Use this method to test the JSON hash created by a particular
-            // builder call without actually executing the request.
-            return new FindDataObjectsRequest(this, limit);
+        FindDataObjectsRequest buildRequestHash(JsonNode starting, int limit) {
+            return new FindDataObjectsRequest(this, starting, limit);
         }
 
         /**
@@ -308,8 +324,8 @@ public final class DXSearch {
          * @return object encapsulating the result set
          */
         public FindDataObjectsResult<T> execute(int pageSize) {
-            return new FindDataObjectsResult<T>(this.buildRequestHash(pageSize), this.classConstraint,
-                    this.env, pageSize);
+            return new FindDataObjectsResult<T>(this.buildRequestHash(null, pageSize), this.classConstraint, this.env,
+                    pageSize);
         }
 
         /**
@@ -885,13 +901,13 @@ public final class DXSearch {
 
             private final FindDataObjectsResponse response;
 
-            public FindDataObjectsResultPage(FindDataObjectsResponse response) {
-                this.response = response;
+            public FindDataObjectsResultPage(FindDataObjectsRequest request) {
+                this.response = DXAPI.systemFindDataObjects(request, FindDataObjectsResponse.class, env);
             }
 
             @Override
-            public T get(int index) {
-                return getDataObjectInstanceFromResult(response.results.get(index));
+            public JsonNode getNext() {
+                return response.next.deepCopy();
             }
 
             @Override
@@ -900,10 +916,24 @@ public final class DXSearch {
             }
 
             @Override
+            public Iterator<T> iterator() {
+                final Iterator<FindDataObjectsResponse.Entry> results = response.results.iterator();
+
+                return new AbstractIterator<T>() {
+                    @Override
+                    protected T computeNext() {
+                        if (!results.hasNext()) {
+                            return endOfData();
+                        }
+                        return getDataObjectInstanceFromResult(results.next());
+                    }
+                };
+            }
+
+            @Override
             public int size() {
                 return response.results.size();
             }
-
         }
 
         /**
@@ -921,13 +951,12 @@ public final class DXSearch {
             @Override
             public FindDataObjectsRequest getNextQuery(FindDataObjectsRequest query,
                     FindDataObjectsResultPage currentResultPage) {
-                return new FindDataObjectsRequest(query, currentResultPage.response.next, pageSize);
+                return new FindDataObjectsRequest(query, currentResultPage.getNext(), pageSize);
             }
 
             @Override
             public FindDataObjectsResultPage issueQuery(FindDataObjectsRequest query) {
-                return new FindDataObjectsResultPage(DXAPI.systemFindDataObjects(query,
-                        FindDataObjectsResponse.class, env));
+                return new FindDataObjectsResultPage(query);
             }
         }
 
@@ -989,6 +1018,35 @@ public final class DXSearch {
             return (T) dataObject;
         }
 
+        /**
+         * Returns a first page of the {@code findDataObjects} results.
+         *
+         * @param pageSize number of elements to retrieve
+         *
+         * @return result set
+         */
+        public FindResultPage<T> getFirstPage(int pageSize) {
+            if (pageSize <= 0) {
+                throw new IllegalArgumentException("Page size must be a positive integer");
+            }
+            return new FindDataObjectsResultPage(new FindDataObjectsRequest(baseQuery, null, pageSize));
+        }
+
+        /**
+         * Returns a subsequent page of the {@code findDataObjects} results starting from the specified item.
+         *
+         * @param starting result of {@link DXSearch.FindDataObjectsResult.Page#getNext()} call on previous page
+         * @param pageSize number of elements to retrieve
+         *
+         * @return result set
+         */
+        public FindResultPage<T> getSubsequentPage(JsonNode starting, int pageSize) {
+            Preconditions.checkNotNull(starting);
+            if (pageSize <= 0) {
+                throw new IllegalArgumentException("Page size must be a positive integer");
+            }
+            return new FindDataObjectsResultPage(new FindDataObjectsRequest(baseQuery, starting, pageSize));
+        }
 
         @Override
         public Iterator<T> iterator() {
@@ -1699,8 +1757,8 @@ public final class DXSearch {
             }
 
             @Override
-            public T get(int index) {
-                return getExecutionInstanceFromResult(response.results.get(index));
+            public JsonNode getNext() {
+                return response.next.deepCopy();
             }
 
             @Override
@@ -1709,10 +1767,24 @@ public final class DXSearch {
             }
 
             @Override
+            public Iterator<T> iterator() {
+                final Iterator<FindExecutionsResponse.Entry> results = response.results.iterator();
+
+                return new AbstractIterator<T>() {
+                    @Override
+                    protected T computeNext() {
+                        if (!results.hasNext()) {
+                            return endOfData();
+                        }
+                        return getExecutionInstanceFromResult(results.next());
+                    }
+                };
+            }
+
+            @Override
             public int size() {
                 return response.results.size();
             }
-
         }
 
         /**
@@ -1729,7 +1801,7 @@ public final class DXSearch {
             @Override
             public FindExecutionsRequest getNextQuery(FindExecutionsRequest query,
                     FindExecutionsResultPage currentResultPage) {
-                return new FindExecutionsRequest(query, currentResultPage.response.next, pageSize);
+                return new FindExecutionsRequest(query, currentResultPage.getNext(), pageSize);
             }
 
             @Override
@@ -1803,22 +1875,26 @@ public final class DXSearch {
     }
 
     /**
-     * Encapsulates a single result page (of generic type) for a find route.
+     * Represents a single page of results for a find route.
+     *
+     * <p>
+     * A page contains a set of matching results that can be retrieved using the Iterator protocol,
+     * as well as a "bookmark" that can be used to retrieve the next page.
+     * </p>
      *
      * @param <T> Type of result to be returned e.g. DXDataObject for findDataObjects
      */
-    private static interface FindResultPage<T> {
+    public static interface FindResultPage<T> extends Iterable<T> {
         /**
-         * Returns the specified result from the current page.
-         *
-         * @param index index of result to obtain
-         *
-         * @return the requested result
+         * Returns an object that can be used in a later call to getSubsequentPage (e.g.
+         * {@link DXSearch.FindDataObjectsResult#getSubsequentPage(JsonNode, int)}) to continue
+         * retrieving results where this page leaves off, or null if there are no more results after
+         * the end of this page.
          */
-        public T get(int index);
+        public JsonNode getNext();
 
         /**
-         * Returns true if the next page exists.
+         * Returns true if more results exist.
          *
          * @return whether there are more results
          */
@@ -1944,7 +2020,7 @@ public final class DXSearch {
                 Iterator<T> {
         private Q query;
         private P currentPage;
-        private int nextResultIndex = 0;
+        private Iterator<T> currentPageIterator;
         private int currentPageNo = 0;
 
         /**
@@ -1956,6 +2032,7 @@ public final class DXSearch {
         private PaginatingFindResultIterator(Q initialQuery) {
             this.query = initialQuery;
             this.currentPage = issueQuery(initialQuery);
+            this.currentPageIterator = this.currentPage.iterator();
             this.currentPageNo++;
         }
 
@@ -1963,15 +2040,14 @@ public final class DXSearch {
          * Ensures that the next element is loaded (if it exists).
          *
          * <p>
-         * Postcondition: either findProjectsResponse.results.get(nextResultIndex) points to the
-         * next valid result, or nextResultIndex is equal to findProjectsResponse.results.size() and
-         * there are no results left.
+         * Postcondition: either currentPageIterator.hasNext() is true, or
+         * currentPageIterator.hasNext() is false and currentPage.hasNextPage() is false.
          * </p>
          */
         private void ensureNextElementAvailable() {
             // If two successive calls are made to this method with no intervening mutators, the
             // second call should be very fast.
-            if (nextResultIndex < currentPage.size()) {
+            if (currentPageIterator.hasNext()) {
                 return;
             }
             if (!currentPage.hasNextPage()) {
@@ -1980,18 +2056,8 @@ public final class DXSearch {
             // Reached the end of the previous page. Load a new page.
             query = getNextQuery(query, currentPage);
             currentPage = issueQuery(query);
+            this.currentPageIterator = this.currentPage.iterator();
             this.currentPageNo++;
-            nextResultIndex = 0;
-        }
-
-        /**
-         * Returns current page number in search result.
-         *
-         * @return Current page number
-         */
-        @VisibleForTesting
-        int pageNo() {
-            return this.currentPageNo;
         }
 
         /**
@@ -2009,7 +2075,7 @@ public final class DXSearch {
         @Override
         public boolean hasNext() {
             ensureNextElementAvailable();
-            return nextResultIndex < currentPage.size();
+            return currentPageIterator.hasNext();
         }
 
         /**
@@ -2024,7 +2090,17 @@ public final class DXSearch {
         @Override
         public T next() {
             ensureNextElementAvailable();
-            return currentPage.get(nextResultIndex++);
+            return currentPageIterator.next();
+        }
+
+        /**
+         * Returns current page number in search result.
+         *
+         * @return Current page number
+         */
+        @VisibleForTesting
+        int pageNo() {
+            return this.currentPageNo;
         }
 
         @Override
@@ -2579,9 +2655,6 @@ public final class DXSearch {
         return new FindExecutionsRequestBuilder<DXExecution>(env).withClassJob();
     }
 
-    // Prevent this utility class from being instantiated.
-    private DXSearch() {}
-
     // Serializes a query to the form
     //
     //   {operator: [operand1, operand2, ...]}
@@ -2595,5 +2668,8 @@ public final class DXSearch {
         return DXJSON.getObjectBuilder()
                 .put(operator, DXJSON.getArrayBuilder().addAll(transformedArgs).build()).build();
     }
+
+    // Prevent this utility class from being instantiated.
+    private DXSearch() {}
 
 }

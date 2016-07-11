@@ -19,16 +19,17 @@ package com.dnanexus;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.GregorianCalendar;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.Iterator;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.dnanexus.DXSearch.FindResultPage;
 import com.dnanexus.DXSearch.PropertiesQuery;
 import com.dnanexus.DXSearch.TypeQuery;
 import com.dnanexus.DXSearch.VisibilityQuery;
@@ -482,6 +483,50 @@ public class DXSearchTest {
     }
 
     /**
+     * Tests paging through results.
+     */
+    @Test
+    public void testFindDataObjectsWithCustomPaging() {
+        List<DXRecord> records = Lists.newArrayList();
+        Set<String> recordIds = Sets.newHashSet();
+        for (int i = 0; i < 8; ++i) {
+            DXRecord record =
+                    DXRecord.newRecord().setProject(testProject)
+                            .setName("foo" + Integer.toString(i)).build();
+            records.add(record);
+            recordIds.add(record.getId());
+        }
+        List<DXRecord> outputRecords =
+                DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
+                        .withClassRecord().execute().asList();
+        Assert.assertEquals(8, outputRecords.size());
+
+        List<DXRecord> outputRecordsWithPaging =
+                DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
+                        .withClassRecord().execute(3).asList();
+        Assert.assertEquals(outputRecords, outputRecordsWithPaging);
+        Set<String> outputRecordIds = Sets.newHashSet();
+        for (DXRecord record : outputRecordsWithPaging) {
+            outputRecordIds.add(record.getId());
+        }
+
+        Assert.assertEquals(recordIds, outputRecordIds);
+
+        List<DXRecord> outputRecordStreamWithPaging =
+                ImmutableList.copyOf(DXSearch.findDataObjects().inProject(testProject)
+                        .nameMatchesGlob("foo*").withClassRecord().execute(3));
+        Assert.assertEquals(outputRecords, outputRecordStreamWithPaging);
+
+        // Checking an amount of fetched pages
+        DXSearch.FindDataObjectsResult<DXRecord> findResult =
+                DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*").withClassRecord().execute(3);
+        Iterator<DXRecord> iter = findResult.iterator();
+        List<DXRecord> iterativelyFetchedRecords = Lists.newArrayList(iter);
+        Assert.assertEquals(outputRecords, iterativelyFetchedRecords);
+        Assert.assertEquals(3, ((DXSearch.FindDataObjectsResult<DXRecord>.ResultIterator) iter).pageNo());
+    }
+
+    /**
      * Tests retrieving Describe output with findDataObjects.
      */
     @Test
@@ -553,47 +598,92 @@ public class DXSearchTest {
     }
 
     /**
-     * Tests paging through results.
+     * Tests paging through results using API for explicit pagination.
      */
     @Test
-    public void testFindDataObjectsWithPaging() {
-        List<DXRecord> records = Lists.newArrayList();
-        Set<String> recordIds = Sets.newHashSet();
+    public void testFindDataObjectsWithExplicitPagination() {
         for (int i = 0; i < 8; ++i) {
-            DXRecord record =
-                    DXRecord.newRecord().setProject(testProject)
-                            .setName("foo" + Integer.toString(i)).build();
-            records.add(record);
-            recordIds.add(record.getId());
+            DXRecord.newRecord().setProject(testProject).setName("foo" + Integer.toString(i)).build();
         }
         List<DXRecord> outputRecords =
                 DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
                         .withClassRecord().execute().asList();
         Assert.assertEquals(8, outputRecords.size());
 
-        List<DXRecord> outputRecordsWithPaging =
-                DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
-                        .withClassRecord().execute(3).asList();
-        Assert.assertEquals(outputRecords, outputRecordsWithPaging);
-        Set<String> outputRecordIds = Sets.newHashSet();
-        for (DXRecord record : outputRecordsWithPaging) {
-            outputRecordIds.add(record.getId());
+        DXSearch.FindDataObjectsResult<DXRecord> result =
+                DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*").withClassRecord().execute();
+        FindResultPage<DXRecord> page = result.getFirstPage(3);
+        Assert.assertEquals(3, page.size());
+        Assert.assertEquals(true, page.hasNextPage());
+
+        Iterator<DXRecord> iter = page.iterator();
+        for (int i = 0; i < 3; i++) {
+            Assert.assertEquals(true, iter.hasNext());
+            DXRecord r = iter.next();
+            Assert.assertEquals(outputRecords.get(i).getId(), r.getId());
+        }
+        Assert.assertEquals(false, iter.hasNext());
+
+        page = result.getSubsequentPage(page.getNext(), 3);
+        Assert.assertEquals(3, page.size());
+        Assert.assertEquals(true, page.hasNextPage());
+
+        iter = page.iterator();
+        for (int i = 3; i < 6; i++) {
+            Assert.assertEquals(true, iter.hasNext());
+            DXRecord r = iter.next();
+            Assert.assertEquals(outputRecords.get(i).getId(), r.getId());
+        }
+        Assert.assertEquals(false, iter.hasNext());
+
+        page = result.getSubsequentPage(page.getNext(), 3);
+        Assert.assertEquals(2, page.size());
+        Assert.assertEquals(false, page.hasNextPage());
+
+        iter = page.iterator();
+        for (int i = 6; i < 8; i++) {
+            Assert.assertEquals(true, iter.hasNext());
+            DXRecord r = iter.next();
+            Assert.assertEquals(outputRecords.get(i).getId(), r.getId());
+        }
+        Assert.assertEquals(false, iter.hasNext());
+
+        // Checking when the requested page size is greater than amount of items
+        page = result.getFirstPage(100);
+        Assert.assertEquals(8, page.size());
+        Assert.assertEquals(false, page.hasNextPage());
+        int i = 0;
+        for (DXRecord r : page) {
+            Assert.assertEquals(outputRecords.get(i++).getId(), r.getId());
         }
 
-        Assert.assertEquals(recordIds, outputRecordIds);
-
-        List<DXRecord> outputRecordStreamWithPaging =
-                ImmutableList.copyOf(DXSearch.findDataObjects().inProject(testProject)
-                        .nameMatchesGlob("foo*").withClassRecord().execute(3));
-        Assert.assertEquals(outputRecords, outputRecordStreamWithPaging);
-
-        // Checking an amount of fetched pages
-        DXSearch.FindDataObjectsResult<DXRecord> findResult =
-                DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*").withClassRecord().execute(3);
-        Iterator<DXRecord> iter = findResult.iterator();
-        List<DXRecord> iterativelyFetchedRecords = Lists.newArrayList(iter);
-        Assert.assertEquals(outputRecords, iterativelyFetchedRecords);
-        Assert.assertEquals(3, ((DXSearch.FindDataObjectsResult<DXRecord>.ResultIterator) iter).pageNo());
+        // Checking invalid arguments
+        try {
+            result.getFirstPage(0);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+        }
+        try {
+            result.getFirstPage(-2);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            result.getSubsequentPage(mapper.createObjectNode(), 0);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+        }
+        try {
+            result.getSubsequentPage(mapper.createObjectNode(), -1);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+        }
+        try {
+            result.getSubsequentPage(null, 10);
+            Assert.fail();
+        } catch (NullPointerException e) {
+        }
     }
 
     /**
