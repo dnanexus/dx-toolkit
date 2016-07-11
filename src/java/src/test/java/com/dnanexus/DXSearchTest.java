@@ -19,10 +19,10 @@ package com.dnanexus;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.GregorianCalendar;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.Iterator;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -305,6 +305,106 @@ public class DXSearchTest {
                         .withClassWorkflow().execute().asList());
         Assert.assertEquals(workflow, workflowResult);
         Assert.assertEquals("aworkflow", workflowResult.describe().getName());
+    }
+
+    /**
+     * Tests paging through results using API for explicit pagination.
+     */
+    @Test
+    public void testFindDataObjectsPaginated() {
+        for (int i = 0; i < 8; ++i) {
+            DXRecord record =
+                    DXRecord.newRecord().setProject(testProject)
+                            .setName("foo" + Integer.toString(i)).build();
+        }
+        List<DXRecord> outputRecords =
+                DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
+                        .withClassRecord().execute().asList();
+        Assert.assertEquals(8, outputRecords.size());
+
+        List<DXRecord> outputRecordsWithPaging =
+                DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
+                        .withClassRecord().execute(3).asList();
+        Assert.assertEquals(outputRecords, outputRecordsWithPaging);
+        Set<String> outputRecordIds = Sets.newHashSet();
+        for (DXRecord record : outputRecordsWithPaging) {
+            outputRecordIds.add(record.getId());
+        }
+
+        DXSearch.FindDataObjectsResult<DXRecord> result = DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
+                .withClassRecord().execute();
+        DXSearch.FindDataObjectsResult<DXRecord>.Page page = result.getFirstPage(3);
+        Assert.assertEquals(3, page.size());
+        Assert.assertEquals(true, page.hasNext());
+
+        Iterator<DXRecord> iter = page.iterator();
+        for (int i = 0; i < 3; i++) {
+            Assert.assertEquals(true, iter.hasNext());
+            DXRecord r = iter.next();
+            Assert.assertEquals(outputRecords.get(i).getId(), r.getId());
+        }
+        Assert.assertEquals(false, iter.hasNext());
+
+        page = result.getSubsequentPage(page.getNext(), 3);
+        Assert.assertEquals(3, page.size());
+        Assert.assertEquals(true, page.hasNext());
+
+        iter = page.iterator();
+        for (int i = 3; i < 6; i++) {
+            Assert.assertEquals(true, iter.hasNext());
+            DXRecord r = iter.next();
+            Assert.assertEquals(outputRecords.get(i).getId(), r.getId());
+        }
+        Assert.assertEquals(false, iter.hasNext());
+
+        page = result.getSubsequentPage(page.getNext(), 3);
+        Assert.assertEquals(2, page.size());
+        Assert.assertEquals(false, page.hasNext());
+
+        iter = page.iterator();
+        for (int i = 6; i < 8; i++) {
+            Assert.assertEquals(true, iter.hasNext());
+            DXRecord r = iter.next();
+            Assert.assertEquals(outputRecords.get(i).getId(), r.getId());
+        }
+        Assert.assertEquals(false, iter.hasNext());
+
+        // Checking when the requested page size is greater than amount of items
+        page = result.getFirstPage(100);
+        Assert.assertEquals(8, page.size());
+        Assert.assertEquals(false, page.hasNext());
+        int i = 0;
+        for (DXRecord r : page) {
+            Assert.assertEquals(outputRecords.get(i++).getId(), r.getId());
+        }
+
+        // Checking invalid arguments
+        try {
+            result.getFirstPage(0);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+        }
+        try {
+            result.getFirstPage(-2);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            result.getSubsequentPage(mapper.createObjectNode(), 0);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+        }
+        try {
+            result.getSubsequentPage(mapper.createObjectNode(), -1);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+        }
+        try {
+            result.getSubsequentPage(null, 10);
+            Assert.fail();
+        } catch (NullPointerException e) {
+        }
     }
 
     /**
