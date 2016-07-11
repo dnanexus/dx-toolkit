@@ -211,13 +211,12 @@ def parse_destination(dest_str):
     return try_call(resolve_path, dest_str)
 
 
-def _check_suggestions(src_dir, publish=False):
+def _check_suggestions(app_json, publish=False):
     """
     Examines the specified dxapp.json file and warns about any
     violations of suggestions guidelines.
     """
-    app_spec = _parse_app_spec(src_dir)
-    for input_field in app_spec.get('inputSpec', []):
+    for input_field in app_json.get('inputSpec', []):
         for suggestion in input_field.get('suggestions', []):
             if 'project' in suggestion:
                 try:
@@ -757,7 +756,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
 
     dxpy.app_builder.build(src_dir, parallel_build=do_parallel_build)
     app_json = _parse_app_spec(src_dir)
-
+    _check_suggestions(app_json, publish=publish)
     _verify_app_source_dir(src_dir, mode, enforce=do_check_syntax)
     if mode == "app" and not dry_run:
         _verify_app_writable(app_json['name'])
@@ -898,7 +897,6 @@ def _build_app(args, extra_args):
     TODO: remote app builds still return None, but we should fix this.
 
     """
-    _check_suggestions(args.src_dir, args.publish)
 
     if not args.remote:
         # LOCAL BUILD
@@ -949,6 +947,7 @@ def _build_app(args, extra_args):
 
         try:
             app_json = _parse_app_spec(args.src_dir)
+            _check_suggestions(app_json, publish=args.publish)
             _verify_app_source_dir(args.src_dir, args.mode)
             if args.mode == "app" and not args.dry_run:
                 _verify_app_writable(app_json['name'])
