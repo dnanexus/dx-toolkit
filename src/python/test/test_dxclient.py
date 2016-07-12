@@ -5726,7 +5726,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                           format(name=app_spec["inputSpec"][0]["suggestions"][0]["project"]), err.stderr)
 
         # check path
-        app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "project": "project-0000000000000000000000pb",
+        app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "project": self.project,
                                                     "path": "/some_invalid_path"}]
         app_dir = self.write_app_directory("test_build_app_suggestions", json.dumps(app_spec), "code.py")
         try:
@@ -5752,8 +5752,13 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         except subprocess.CalledProcessError as err:
             self.assertIn('Invalid ID of class', err.stderr)
 
+    @ unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
+    def test_build_app_suggestions_success(self):
+        app_spec = {"name": "Foo", "dxapi": "1.0.0", "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+                    "inputSpec": [{"name": "testname", "class": "gtable", "suggestions": []}],
+                    "outputSpec": [], "version": "foo"}
         # check when project not public and we publish app, also check app build with a valid suggestion
-        app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "project": "project-000000000000000000000001", "path": "/"}]
+        app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "project": self.project, "path": "/"}]
         app_dir = self.write_app_directory("test_build_app_suggestions", json.dumps(app_spec), "code.py")
         result = run("dx build --app --publish " + app_dir, also_return_stderr=True)
         if len(result) == 2:
