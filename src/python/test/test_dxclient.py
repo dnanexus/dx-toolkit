@@ -5848,6 +5848,67 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             for warning in app_expected_warnings:
                 self.assertIn(warning, err.stderr)
 
+    def test_build_app_suggestions(self):
+        app_spec = {
+            "name": "Foo",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [{"name": "testname", "class": "gtable", "suggestions": []}],
+            "outputSpec": [],
+            "version": "foo"
+        }
+
+        # check if project exist
+        app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "project": "project-xxx", "path": "/"}]
+        app_dir = self.write_app_directory("test_build_app_suggestions", json.dumps(app_spec), "code.py")
+        try:
+            run("dx build --app " + app_dir)
+        except subprocess.CalledProcessError as err:
+            self.assertIn('Suggested project {name} does not exist'.
+                          format(name=app_spec["inputSpec"][0]["suggestions"][0]["project"]), err.stderr)
+
+        # check path
+        app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "project": self.project,
+                                                    "path": "/some_invalid_path"}]
+        app_dir = self.write_app_directory("test_build_app_suggestions", json.dumps(app_spec), "code.py")
+        try:
+            run("dx build --app " + app_dir)
+        except subprocess.CalledProcessError as err:
+            self.assertIn('Folder {path} could not be found in project'.
+                          format(path=app_spec["inputSpec"][0]["suggestions"][0]["path"]), err.stderr)
+
+        # check for $dnanexus_link
+        app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "$dnanexus_link": "gtable-invalid-name"}]
+        app_dir = self.write_app_directory("test_build_app_suggestions", json.dumps(app_spec), "code.py")
+        try:
+            run("dx build --app " + app_dir)
+        except subprocess.CalledProcessError as err:
+            self.assertIn('Invalid ID of class', err.stderr)
+
+        # check for value and $dnanexus_link in it
+        app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename",
+                                                    "value": {"$dnanexus_link": "file-invalid-name"}}]
+        app_dir = self.write_app_directory("test_build_app_suggestions", json.dumps(app_spec), "code.py")
+        try:
+            run("dx build --app " + app_dir)
+        except subprocess.CalledProcessError as err:
+            self.assertIn('Invalid ID of class', err.stderr)
+
+    @ unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
+    def test_build_app_suggestions_success(self):
+        app_spec = {"name": "Foo", "dxapi": "1.0.0", "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+                    "inputSpec": [{"name": "testname", "class": "gtable", "suggestions": []}],
+                    "outputSpec": [], "version": "foo"}
+        # check when project not public and we publish app, also check app build with a valid suggestion
+        app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "project": self.project, "path": "/"}]
+        app_dir = self.write_app_directory("test_build_app_suggestions", json.dumps(app_spec), "code.py")
+        result = run("dx build --app --publish " + app_dir, also_return_stderr=True)
+        if len(result) == 2:
+            self.assertIn('NOT PUBLIC!'.format(name=app_spec['name']), result[1])
+        app_id = json.loads(result[0])['id']
+        app = dxpy.describe(app_id)
+        self.assertEqual(app['name'], app_spec['name'])
+
     def test_build_applet_with_no_dxapp_json(self):
         app_dir = self.write_app_directory("åpplet_with_no_dxapp_json", None, "code.py")
         with self.assertSubprocessFailure(stderr_regexp='does not contain dxapp\.json', exit_code=3):
