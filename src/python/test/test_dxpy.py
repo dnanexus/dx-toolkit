@@ -24,6 +24,7 @@ import shutil
 import string
 import subprocess
 import platform
+import dateutil.parser
 
 import requests
 from requests.packages.urllib3.exceptions import SSLError
@@ -2342,8 +2343,8 @@ class TestHTTPResponses(unittest.TestCase):
         dxpy.DXHTTPRequest('/system/comeBackLater', {'waitUntil': server_time + 20000, 'setRetryAfter': False})
         end_time = int(time.time() * 1000)
         time_elapsed = end_time - start_time
-        self.assertTrue(50000 <= time_elapsed)
-        self.assertTrue(time_elapsed <= 70000)
+        self.assertTrue(20000 <= time_elapsed)
+        self.assertTrue(time_elapsed <= 30000)
 
     def test_generic_exception_not_retryable(self):
         self.assertFalse(dxpy._is_retryable_exception(KeyError('oops')))
@@ -2400,6 +2401,39 @@ class TestHTTPResponses(unittest.TestCase):
                                max_retries=max_num_retries, always_retry=True)
         end_time = time.time()
         self.assertGreater(end_time - start_time, min_sec_with_retries)
+
+
+class TestHTTPResponsesMockApi(unittest.TestCase):
+    apiServerMockSubprocess = None
+
+    def setUp(self):
+        # Setting up DXPY to use APIserver mock object
+        apiServerTcpPort = 8080
+        dxpy.set_api_server_info(host="127.0.0.1", port=apiServerTcpPort, protocol="http")
+
+        # Starting APIserver mock-object
+        apiServerMockFilename = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                "mock_api", "apiserver_mock.py")
+        apiServerMockHandlerFilename = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                "mock_api", "test_503_no_retry-after_exponential_randomized_timout.py")
+        self.apiServerMockSubprocess = subprocess.Popen([apiServerMockFilename, apiServerMockHandlerFilename, str(apiServerTcpPort)])
+        time.sleep(0.2)
+
+    def tearDown(self):
+        # Stopping APIserver mock-object
+        self.apiServerMockSubprocess.kill()
+        # Restoring DXPY env settings
+        dxpy.set_api_server_info(host=os.environ["DX_APISERVER_HOST"], port=os.environ["DX_APISERVER_PORT"],
+                protocol=os.environ["DX_APISERVER_PROTOCOL"])
+
+    def test_503_exponential_retry(self):
+        res = dxpy.DXHTTPRequest("/system/whoami", {}, want_full_response=True, always_retry=True)
+        apiServerStats = json.loads(requests.get("http://127.0.0.1:8080/stats").content)
+        for i in range(4, 7):
+            tried = dateutil.parser.parse(apiServerStats['postRequests'][i]['timestamp'])
+            retried = dateutil.parser.parse(apiServerStats['postRequests'][i + 1]['timestamp'])
+            interval = (retried - tried).total_seconds()
+            self.assertTrue(((i - 4) ** 2) <= interval)
 
 
 class TestDataobjectFunctions(unittest.TestCase):
