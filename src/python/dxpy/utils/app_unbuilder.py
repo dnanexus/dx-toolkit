@@ -150,7 +150,7 @@ def dump_executable(executable, destination_directory, omit_resources=False, des
         # will reconstruct the resources directory based on the
         # "bundledDepends" field, which should be equivalent to
         # "bundledDependsByRegion".
-        del dxapp_json["runSpec"]["bundledDependsByRegion"]
+        dxapp_json["runSpec"].pop("bundledDependsByRegion", None)
 
         # Cleanup of empty elements. Be careful not to let this step
         # introduce any semantic changes to the app specification. For
