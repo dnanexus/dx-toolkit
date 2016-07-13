@@ -213,6 +213,8 @@ def _check_suggestions(app_json, publish=False):
     """
     Examines the specified dxapp.json file and warns about any
     violations of suggestions guidelines.
+
+    :raises: AppBuilderException for data objects that could not be found
     """
     for input_field in app_json.get('inputSpec', []):
         for suggestion in input_field.get('suggestions', []):
@@ -220,28 +222,26 @@ def _check_suggestions(app_json, publish=False):
                 try:
                     project = dxpy.api.project_describe(suggestion['project'], {"permissions": True})
                     if 'PUBLIC' not in project['permissions'] and publish:
-                        logger.warn('Warning, project {name} NOT PUBLIC!'.format(name=project['name']))
+                        logger.warn('Project {name} NOT PUBLIC!'.format(name=project['name']))
                 except dxpy.exceptions.DXAPIError as e:
                     if e.code == 404:
-                        raise dxpy.app_builder.AppBuilderException(
-                            'Suggested project {name} does not exist, or not accessible by user'.format(
-                                name=suggestion['project']))
+                        logger.warn('Suggested project {name} does not exist, or not accessible by user'.format(
+                                     name=suggestion['project']))
                 if 'path' in suggestion:
                     try:
                         check_folder_exists(suggestion['project'], suggestion['path'], '')
                     except ResolutionError as e:
-                        raise dxpy.app_builder.AppBuilderException(
-                            'Folder {path} could not be found in project {project}'.format(
-                                path=suggestion['path'], project=suggestion['project']))
+                        logger.warn('Folder {path} could not be found in project {project}'.format(
+                                     path=suggestion['path'], project=suggestion['project']))
             if '$dnanexus_link' in suggestion:
                 if suggestion['$dnanexus_link'].startswith(('file-', 'record-', 'gtable-')):
                     try:
                         dnanexus_link = dxpy.describe(suggestion['$dnanexus_link'])
-                        if 'project' in dnanexus_link:
-                            if not dnanexus_link['project']:
-                                raise dxpy.app_builder.AppBuilderException(
-                                    'Suggested object {name} does not belongs to any project'.format(
-                                        name=suggestion['value']['$dnanexus_link']))
+                    except dxpy.exceptions.DXAPIError as e:
+                        if e.code == 404:
+                            raise dxpy.app_builder.AppBuilderException(
+                                'Suggested object {name} could not be found'.format(
+                                    name=suggestion['$dnanexus_link']))
                     except Exception as e:
                         raise dxpy.app_builder.AppBuilderException(str(e))
             if 'value' in suggestion:
@@ -253,18 +253,17 @@ def _check_suggestions(app_json, publish=False):
                                 dxpy.api.project_describe(suggestion['value']['$dnanexus_link']['project'])
                             except dxpy.exceptions.DXAPIError as e:
                                 if e.code == 404:
-                                    raise dxpy.app_builder.AppBuilderException(
-                                        'Suggested project {name} does not exist, or not accessible by user'.format(
-                                            name=suggestion['value']['$dnanexus_link']['project']))
+                                    logger.warn('Suggested project {name} does not exist, or not accessible by user'.format(
+                                                 name=suggestion['value']['$dnanexus_link']['project']))
                     elif isinstance(suggestion['value']['$dnanexus_link'], basestring):
                         if suggestion['value']['$dnanexus_link'].startswith(('file-', 'record-', 'gtable-')):
                             try:
                                 dnanexus_link = dxpy.describe(suggestion['value']['$dnanexus_link'])
-                                if 'project' in dnanexus_link:
-                                    if not dnanexus_link['project']:
-                                        raise dxpy.app_builder.AppBuilderException(
-                                            'Suggested object {name} does not belongs to any project'.format(
-                                                name=suggestion['value']['$dnanexus_link']))
+                            except dxpy.exceptions.DXAPIError as e:
+                                if e.code == 404:
+                                    raise dxpy.app_builder.AppBuilderException(
+                                        'Suggested object {name} could not be found'.format(
+                                            name=suggestion['value']['$dnanexus_link']))
                             except Exception as e:
                                 raise dxpy.app_builder.AppBuilderException(str(e))
 

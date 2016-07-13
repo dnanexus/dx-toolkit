@@ -5848,57 +5848,59 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             for warning in app_expected_warnings:
                 self.assertIn(warning, err.stderr)
 
+    @ unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
     def test_build_app_suggestions(self):
         app_spec = {
-            "name": "Foo",
+            "name": "test_build_app_suggestions",
             "dxapi": "1.0.0",
             "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [{"name": "testname", "class": "gtable", "suggestions": []}],
+            "inputSpec": [{"name": "testname", "class": "file", "suggestions": []}],
             "outputSpec": [],
-            "version": "foo"
+            "version": "0.0.1"
         }
 
-        # check if project exist
-        app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "project": "project-xxx", "path": "/"}]
+        # check if project exists
+        app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "project": "project-0000000000000000000000NA", "path": "/"}]
         app_dir = self.write_app_directory("test_build_app_suggestions", json.dumps(app_spec), "code.py")
-        try:
-            run("dx build --app " + app_dir)
-        except subprocess.CalledProcessError as err:
-            self.assertIn('Suggested project {name} does not exist'.
-                          format(name=app_spec["inputSpec"][0]["suggestions"][0]["project"]), err.stderr)
+        res = run("dx build --app " + app_dir, also_return_stderr=True)
+        self.assertIn('Suggested project {name} does not exist'.
+                       format(name=app_spec["inputSpec"][0]["suggestions"][0]["project"]), res[1])
 
         # check path
         app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "project": self.project,
                                                     "path": "/some_invalid_path"}]
         app_dir = self.write_app_directory("test_build_app_suggestions", json.dumps(app_spec), "code.py")
-        try:
-            run("dx build --app " + app_dir)
-        except subprocess.CalledProcessError as err:
-            self.assertIn('Folder {path} could not be found in project'.
-                          format(path=app_spec["inputSpec"][0]["suggestions"][0]["path"]), err.stderr)
+        res = run("dx build --app " + app_dir, also_return_stderr=True)
+        self.assertIn('Folder {path} could not be found in project'.
+                       format(path=app_spec["inputSpec"][0]["suggestions"][0]["path"]), res[1])
 
         # check for $dnanexus_link
-        app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "$dnanexus_link": "gtable-invalid-name"}]
+        app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "$dnanexus_link": "gtable-0000000000000000000000NA"}]
         app_dir = self.write_app_directory("test_build_app_suggestions", json.dumps(app_spec), "code.py")
         try:
             run("dx build --app " + app_dir)
         except subprocess.CalledProcessError as err:
-            self.assertIn('Invalid ID of class', err.stderr)
+            self.assertIn('Suggested object {name} could not be found'.format
+                         (name=app_spec["inputSpec"][0]["suggestions"][0]["$dnanexus_link"]), err.stderr)
 
         # check for value and $dnanexus_link in it
         app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename",
-                                                    "value": {"$dnanexus_link": "file-invalid-name"}}]
+                                                    "value": {"$dnanexus_link": "file-0000000000000000000000NA"}}]
         app_dir = self.write_app_directory("test_build_app_suggestions", json.dumps(app_spec), "code.py")
         try:
             run("dx build --app " + app_dir)
         except subprocess.CalledProcessError as err:
-            self.assertIn('Invalid ID of class', err.stderr)
+            self.assertIn('Suggested object {name} could not be found'.format
+                         (name=app_spec["inputSpec"][0]["suggestions"][0]['value']["$dnanexus_link"]), err.stderr)
 
     @ unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
     def test_build_app_suggestions_success(self):
-        app_spec = {"name": "Foo", "dxapi": "1.0.0", "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+        app_spec = {"name": "test_build_app_suggestions",
+                    "dxapi": "1.0.0",
+                    "runSpec": {"file": "code.py", "interpreter": "python2.7"},
                     "inputSpec": [{"name": "testname", "class": "gtable", "suggestions": []}],
-                    "outputSpec": [], "version": "foo"}
+                    "outputSpec": [], "version": "0.0.1"}
+
         # check when project not public and we publish app, also check app build with a valid suggestion
         app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "project": self.project, "path": "/"}]
         app_dir = self.write_app_directory("test_build_app_suggestions", json.dumps(app_spec), "code.py")
