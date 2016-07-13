@@ -146,6 +146,12 @@ def dump_executable(executable, destination_directory, omit_resources=False, des
         if dx_toolkit in dxapp_json["runSpec"]["execDepends"]:
             dxapp_json["runSpec"]["execDepends"].remove(dx_toolkit)
 
+        # Remove "bundledDependsByRegion" field from "runSpec". This utility
+        # will reconstruct the resources directory based on the
+        # "bundledDepends" field, which should be equivalent to
+        # "bundledDependsByRegion".
+        del dxapp_json["runSpec"]["bundledDependsByRegion"]
+
         # Cleanup of empty elements. Be careful not to let this step
         # introduce any semantic changes to the app specification. For
         # example, an empty input (output) spec is not equivalent to a
