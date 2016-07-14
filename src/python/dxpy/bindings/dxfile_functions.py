@@ -119,7 +119,7 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
     success = False
     while not success:
         success = _download_dxfile(dxid, filename, part_retry_counter,
-                                   chunksize=dxfile.MIN_BUFFER_SIZE, append=append,
+                                   chunksize=chunksize, append=append,
                                    show_progress=show_progress, project=project, **kwargs)
 
 
