@@ -143,7 +143,7 @@ class TestDXRemove(DXTestCase):
         record_name2 = "test_folder2"
 
         # Throw error on non-existent folder
-        with self.assertSubprocessFailure(exit_code=1):
+        with self.assertSubprocessFailure(exit_code=3):
             run("dx rm -r {f}".format(f=folder_name))
 
         # make folder and file of the same name, confirm that file is deleted with regular rm call
@@ -159,7 +159,7 @@ class TestDXRemove(DXTestCase):
         with self.assertRaises(DXSearchError):
             dxpy.find_one_data_object(classname="record", describe=True, project=self.project)
         # if no -r flag provided, should throw error since it's a folder
-        with self.assertSubprocessFailure(exit_code=1):
+        with self.assertSubprocessFailure(exit_code=3):
             run("dx rm {f}".format(f=record_name))
         # finally remove the folder
         run("dx rm -r {f}".format(f=record_name))
@@ -171,7 +171,7 @@ class TestDXRemove(DXTestCase):
                           dxpy.find_one_data_object(classname="record",
                                                     describe=True,
                                                     project=self.project)['describe']['name'])
-        with self.assertSubprocessFailure(exit_code=1):
+        with self.assertSubprocessFailure(exit_code=3):
             run("dx rm {f} {f2}".format(f=record_name, f2=record_name2))
 
 
@@ -281,7 +281,7 @@ class TestDXClient(DXTestCase):
         run("dx new record Ψ")
         run("dx add_types Ψ abc xyz")
         with self.assertSubprocessFailure(stderr_text="be an array of valid strings for a type name",
-                                          exit_code=1):
+                                          exit_code=3):
             run("dx add_types Ψ ΨΨ")
         run("dx remove_types Ψ abc xyz")
         run("dx remove_types Ψ abc xyz")
@@ -1194,7 +1194,7 @@ class TestDXClientUploadDownload(DXTestCase):
             fd.write("0123456789ABCDEF"*64)
             fd.flush()
             fd.close()
-            with self.assertSubprocessFailure(stderr_regexp='is a directory but the -r/--recursive option was not given', exit_code=1):
+            with self.assertSubprocessFailure(stderr_regexp='is a directory but the -r/--recursive option was not given', exit_code=3):
                 run("dx upload "+wd)
             run("dx upload -r "+wd)
             run('dx wait "{f}"'.format(f=os.path.join(os.path.basename(wd), "a", "б",
@@ -1706,7 +1706,7 @@ class TestDXClientDownloadDataEgressBilling(DXTestCase):
             self.assertEqual(self.get_billed_project(), proj.get_id())
 
             # Failure: project specified by ID does not contain file specified by ID
-            with self.assertSubprocessFailure(stderr_regexp="Error: project does not", exit_code=1):
+            with self.assertSubprocessFailure(stderr_regexp="Error: project does not", exit_code=3):
                 run("dx download -o - {p}:{f}".format(p=proj2.get_id(), f=file1_id))
 
             # Failure: project specified by ID does not contain file specified by name
@@ -1714,7 +1714,7 @@ class TestDXClientDownloadDataEgressBilling(DXTestCase):
                 run("dx download -o - {p}:{f}".format(p=proj.get_id(), f=file2_name))
 
             # Failure: project specified by name does not contain file specified by ID
-            with self.assertSubprocessFailure(stderr_regexp="Error: project does not", exit_code=1):
+            with self.assertSubprocessFailure(stderr_regexp="Error: project does not", exit_code=3):
                 run("dx download -o - {p}:{f}".format(p=proj2_name, f=file1_id))
 
             # Failure: project specified by name does not contain file specified by name
@@ -7684,7 +7684,7 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
         self.assertNotIn(name, user_data['appsInstalled'])
         # Check for App not found
         app_unknown_name = ''.join(random.choice(string.ascii_lowercase) for _ in range(12))
-        with self.assertSubprocessFailure(stderr_regexp='Could not find the app', exit_code=1):
+        with self.assertSubprocessFailure(stderr_regexp='Could not find the app', exit_code=3):
             run("dx uninstall %s" % app_unknown_name, env=as_second_user())
         pass
 
