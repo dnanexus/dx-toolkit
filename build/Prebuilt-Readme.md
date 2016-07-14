@@ -71,7 +71,7 @@ Notes:
 
 ### OS X
 
-Install the [Command Line Tools for XCode](https://developer.apple.com/downloads/). (Free registration required with Apple)
+Install the [Command Line Tools for XCode](https://developer.apple.com/xcode/downloads/). (Free registration required with Apple)
 
 Install the following packages, either from source or via [Homebrew](http://mxcl.github.com/homebrew/), [Fink](http://www.finkproject.org/), or [MacPorts](http://www.macports.org/):
 
