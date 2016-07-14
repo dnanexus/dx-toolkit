@@ -1,3 +1,7 @@
+DNAnexus Upload Agent 1.5.17 <support@dnanexus.com>, 2016-Jul-14
+----------------------------------------------------------------
+  * [PTFM-18415] Do not print "Upload throttling is disabled" message
+
 DNAnexus Upload Agent 1.5.16 <support@dnanexus.com>, 2016-Jun-23
 ----------------------------------------------------------------
   * PTFM-5291 Recursive directory uploads in ua
