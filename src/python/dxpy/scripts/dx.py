@@ -1303,8 +1303,7 @@ def new_project(args):
         if INTERACTIVE_CLI:
             args.name = input("Enter name for new project: ")
         else:
-            err_exit(parser_new_project.format_help() +
-                           fill("No project name supplied, and input is not interactive"), 3)
+            err_exit(parser_new_project.format_help() + fill("No project name supplied, and input is not interactive"), 3)
     inputs = {"name": args.name}
     if args.bill_to:
         inputs["billTo"] = args.bill_to
@@ -1695,9 +1694,7 @@ def get_record(entity_result, args):
         if args.output is None and not args.no_ext:
             filename += '.json'
         if not args.overwrite and os.path.exists(filename):
-            err_exit(fill('Error: path "' +
-                                filename +
-                                '" already exists but -f/--overwrite was not set'), 3)
+            err_exit(fill('Error: path "' + filename + '" already exists but -f/--overwrite was not set'), 3)
         try:
             fd = open(filename, 'w')
         except:
@@ -1717,8 +1714,7 @@ def get_record(entity_result, args):
 def get_output_path(obj_name, obj_class, args):
     path_name = obj_name.replace('/', '%2F')
     if args.output == '-':
-        err_exit('Error: An {} '.format(obj_class) +
-                 'cannot be dumped to stdout, please specify a directory', 3)
+        err_exit('Error: An {} '.format(obj_class) + 'cannot be dumped to stdout, please specify a directory', 3)
     output_base = args.output or '.'
     if os.path.isdir(output_base):
         output_path = os.path.join(output_base, path_name)
@@ -1796,7 +1792,7 @@ def get(args):
         get_app(entity_result, args)
     else:
         err_exit('Error: The given object is of class ' + entity_result['describe']['class'] +
-                 ' but an object of class file, record,' + ' applet or app was expected', 3)
+                 ' but an object of class file, record, applet or app was expected', 3)
 
 def cat(args):
     for path in args.path:
@@ -3342,8 +3338,7 @@ def print_help(args):
     elif args.subcommand is None:
         parser_map[args.command_or_category].print_help()
     elif (args.command_or_category + ' ' + args.subcommand) not in parser_map:
-        err_exit('Unrecognized command and subcommand combination: ' + args.command_or_category +
-                 ' ' + args.subcommand, 3)
+        err_exit('Unrecognized command and subcommand combination: ' + args.command_or_category + ' ' + args.subcommand, 3)
     else:
         parser_map[args.command_or_category + ' ' + args.subcommand].print_help()
 
