@@ -24,7 +24,7 @@ import dateutil.parser
 import dxpy
 from dxpy import AppError, AppInternalError, DXFile, DXRecord
 from dxpy.utils import (describe, exec_utils, genomic_utils, response_iterator, get_futures_threadpool, DXJSONEncoder,
-                        normalize_timedelta, normalize_time_input, config)
+                        normalize_timedelta, normalize_time_input, config, Nonce)
 from dxpy.utils.exec_utils import DXExecDependencyInstaller
 from dxpy.utils.pretty_print import flatten_json_array
 from dxpy.compat import USING_PYTHON2
@@ -320,6 +320,30 @@ class TestPrettyPrint(unittest.TestCase):
         )
         flatten_json_array(json_string, "arr")
         self.assertEqual(flattened_json_string_ref, flatten_json_array(json_string, "arr"))
+
+
+class TestNonceGeneration(unittest.TestCase):
+    def test_nonce_generator(self):
+        nonce_list = []
+        for i in range(0, 100):
+            nonce_list.append(str(Nonce()))
+
+        for nonce in nonce_list:
+            self.assertTrue(len(nonce) > 0)
+            self.assertTrue(len(nonce) <= 128)
+            self.assertEqual(nonce_list.count(nonce), 1)
+
+    def test_input_updater(self):
+        input_params = {"p1": "v1", "p2": "v2"}
+        updated_input = Nonce.update_nonce(input_params)
+        self.assertIn("nonce", updated_input)
+
+        nonce = str(Nonce())
+        input_params.update({"nonce": nonce})
+        updated_input = Nonce.update_nonce(input_params)
+        self.assertIn("nonce", updated_input)
+        self.assertEqual(nonce, updated_input["nonce"])
+
 
 if __name__ == '__main__':
     unittest.main()

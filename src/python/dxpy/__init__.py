@@ -439,6 +439,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
         auth(_RequestForAuth(method, url, headers))
 
     pool_args = {arg: kwargs.pop(arg, None) for arg in ("verify", "cert_file", "key_file")}
+    test_retry = kwargs.pop("_test_retry_http_request", False)
 
     if _DEBUG >= 2:
         if isinstance(data, basestring) or isinstance(data, mmap.mmap):
@@ -469,6 +470,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
         rewind_input_buffer_offset = data.tell()
 
     try_index = 0
+    retried_responses = []
     while True:
         success, time_started = True, None
         response = None
@@ -572,6 +574,15 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                         elif _DEBUG > 0:
                             print(method, req_id, url, "<=", response.status, "(%dms)" % t, Repr().repr(content),
                                   file=sys.stderr)
+
+                if test_retry:
+                    retried_responses.append(content)
+                    if len(retried_responses) == 1:
+                        continue
+                    else:
+                        _set_retry_response(retried_responses[0])
+                        return retried_responses[1]
+
                 return content
             raise AssertionError('Should never reach this line: expected a result to have been returned by now')
         except Exception as e:
@@ -822,6 +833,25 @@ def get_auth_server_name(host_override=None, port_override=None, protocol='https
     else:
         err_msg = "Could not determine which auth server is associated with {apiserver}."
         raise exceptions.DXError(err_msg.format(apiserver=APISERVER_HOST))
+
+
+'''This field is used for testing a retry of an Http request. The caller can pass
+an argument "_test_retry_http_request"=1 to DXHTTPREQUEST to simulate a request that
+required a retry. The first response will be returned and the second response can be
+retrieved by calling _get_retry_response
+'''
+
+_retry_response = None
+
+
+def _set_retry_response(response):
+    global _retry_response
+    _retry_response = response
+
+
+def _get_retry_response():
+    return _retry_response
+
 
 from .utils.config import DXConfig as _DXConfig
 config = _DXConfig()

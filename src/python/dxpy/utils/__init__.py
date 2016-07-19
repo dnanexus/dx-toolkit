@@ -26,6 +26,8 @@ import dateutil.parser
 from .. import logger
 from ..compat import basestring, THREAD_TIMEOUT_MAX
 import numbers
+import binascii
+import random
 
 def _force_quit(signum, frame):
     # traceback.print_stack(frame)
@@ -269,6 +271,40 @@ def json_loads_raise_on_duplicates(*args, **kwargs):
 
 def warn(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
+
+
+class Nonce:
+    '''
+    Generates a nonce by using the system's random number generator. If it fails
+    it uses python's random library to generate a random long integer.
+    The nonce is the random number concatenated with the time.
+    '''
+    def __init__(self):
+        try:
+            self.nonce = "%s%f" % (str(binascii.hexlify(os.urandom(32))), time.time())
+        except:
+            random.seed(time.time())
+            self.nonce = "%s%f" % (str(random.getrandbits(8*26)), time.time())
+
+    def __str__(self):
+        return self.nonce
+
+    @staticmethod
+    def update_nonce(input_params):
+        '''
+        Static method to return a copy of the input dictionary with an
+        additional unique nonce
+        :param input: an input dictionary that may be empty
+        :type input: dict
+        :returns an extended copy of the input with an additional nonce field
+
+        The input dictionary is updated with a nonce only if does not already
+        have a non empty nonce
+        '''
+        input_cp = input_params.copy()
+        if len(input_cp.get('nonce', '')) == 0:
+            input_cp['nonce'] = str(Nonce())
+        return input_cp
 
 # Moved to the bottom due to circular imports
 from .exec_utils import run, convert_handlers_to_dxlinks, parse_args_as_job_input, entry_point, DXJSONEncoder

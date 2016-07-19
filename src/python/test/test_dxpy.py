@@ -267,7 +267,6 @@ class TestDXProject(unittest.TestCase):
         with self.assertRaises(DXAPIError):
             dxrecord.describe()
 
-
 class TestDXFileFunctions(unittest.TestCase):
     def test_readable_part_size(self):
         self.assertEqual(dxpy.dxfile._readable_part_size(0), "0 bytes")
@@ -1444,7 +1443,6 @@ def main():
 
 class TestDXWorkflow(unittest.TestCase):
     default_inst_type = "mem2_hdd2_x2"
-
     def setUp(self):
         setUpTempProjects(self)
 
@@ -2487,7 +2485,6 @@ class TestDataobjectFunctions(unittest.TestCase):
         self.assertEqual(handler._name, "swiss-army-knife")
         self.assertEqual(handler._alias, "1.0.0")
 
-
 class TestResolver(testutil.DXTestCase):
     def setUp(self):
         super(TestResolver, self).setUp()
@@ -2743,6 +2740,189 @@ class TestResolver(testutil.DXTestCase):
         # Every job exists in a single project so we'll treat JBORs as being
         # identified with a single project, too
         self.assertTrue(is_project_explicit("job-012301230123012301230123:ofield"))
+
+
+class TestIdempotentRequests(unittest.TestCase):
+    def setUp(self):
+        setUpTempProjects(self)
+
+    def tearDown(self):
+        tearDownTempProjects(self)
+
+    code = '''@dxpy.entry_point('main')\ndef main():\n    pass'''
+    run_spec = {"code": code, "interpreter": "python2.7"}
+
+    # Create an applet using DXApplet.new
+    def create_applet(self, name="app_name"):
+        dxapplet = dxpy.DXApplet()
+        dxapplet.new(name=name,
+                     dxapi="1.04",
+                     runSpec=self.run_spec,
+                     inputSpec=[{"name": "number", "class": "int"}],
+                     outputSpec=[{"name": "number", "class": "int"}])
+        return dxapplet
+
+    def do_retry_http_request(self, api_method, args=None, kwargs={}):
+        if args is None:
+            result = api_method(_test_retry_http_request=True, **kwargs)
+        else:
+            result = api_method(*args, _test_retry_http_request=True, **kwargs)
+        return [result, dxpy._get_retry_response()]
+
+    def test_idempotent_record_creation(self):
+        input_params = {"project": self.proj_id, "name": "Unique Record"}
+
+        records = self.do_retry_http_request(dxpy.api.record_new, kwargs={"input_params": input_params})
+        self.assertItemsEqual(records[0], records[1])
+
+        dxrecord = dxpy.api.record_new(input_params=input_params)
+        self.assertNotIn(dxrecord, records)
+        records.append(dxrecord)
+
+        # A request with the same nonce, but different input, should fail
+        input_params.update({"nonce": "1234"})
+        dxrecord = dxpy.api.record_new(input_params=input_params)
+        self.assertNotIn(dxrecord, records)
+        with self.assertRaises(DXAPIError):
+            input_params.update({"name": "Diff Name"})
+            dxpy.api.record_new(input_params=input_params)
+
+    def test_idempotent_applet_and_app_creation(self):
+        input_params = {"project": self.proj_id,
+                        "name": "new_applet",
+                        "dxapi": "1.04",
+                        "runSpec": self.run_spec
+                        }
+
+        applets = self.do_retry_http_request(dxpy.api.applet_new, kwargs={"input_params": input_params})
+        self.assertItemsEqual(applets[0], applets[1])
+
+        applet = dxpy.api.applet_new(input_params)
+        self.assertNotIn(applet, applets)
+        applets.append(applet)
+
+        input_params.update({"nonce": "12345"})
+        applet = dxpy.api.applet_new(input_params)
+        self.assertNotIn(applet, applets)
+
+        with self.assertRaises(DXAPIError):
+            input_params.update({"name": "different_name"})
+            dxpy.api.applet_new(input_params)
+
+        userid = dxpy.whoami()
+        dxapplet = self.create_applet("test_applet")
+        input_params = {"applet": dxapplet.get_id(), "version": "0.0.1", "bill_to": userid, "name": "new_app_name"}
+        apps = self.do_retry_http_request(dxpy.api.app_new, kwargs={"input_params": input_params})
+        self.assertItemsEqual(apps[0]['id'], apps[1]['id'])
+
+        # A request with the same nonce, but different input, should fail
+        input_params = {"applet": dxapplet.get_id(),
+                        "version": "0.0.1",
+                        "bill_to": userid,
+                        "name": "new_app_name_2",
+                        "nonce": "123456"}
+        app = dxpy.api.app_new(input_params)
+        self.assertNotIn(app, apps)
+
+        with self.assertRaises(DXAPIError):
+            # This is throwing 500 error
+            input_params.update({"name": "another_name"})
+            dxpy.api.app_new(input_params)
+
+    def test_idempotent_file_creation(self):
+        input_params = {"project": self.proj_id, "name": "myFile.txt"}
+        files = self.do_retry_http_request(dxpy.api.file_new, kwargs={"input_params": input_params})
+        self.assertItemsEqual(files[0], files[1])
+
+        dxfile = dxpy.api.file_new(input_params=input_params)
+        self.assertNotIn(dxfile, files)
+        files.append(dxfile)
+
+        # A request with the same nonce, but different input, should fail
+        input_params.update({"nonce": "1234567"})
+        dxfile = dxpy.api.file_new(input_params=input_params)
+        self.assertNotIn(dxfile, files)
+        with self.assertRaises(DXAPIError):
+            input_params.update({"name": "differentFileName.txt"})
+            dxpy.api.file_new(input_params)
+
+    def test_idempotent_workflow_creation(self):
+        input_params = {"project": self.proj_id, "name": "The workflow"}
+        workflows = self.do_retry_http_request(dxpy.api.workflow_new, kwargs={"input_params": input_params})
+        self.assertItemsEqual(workflows[0], workflows[1])
+
+        dxworkflow = dxpy.api.workflow_new(input_params)
+        self.assertNotIn(dxworkflow, workflows)
+        workflows.append(dxworkflow)
+
+        # A request with the same nonce, but different input, should fail
+        input_params.update({"nonce": "23456"})
+        dxworkflow = dxpy.api.workflow_new(input_params)
+        self.assertNotIn(dxworkflow, workflows)
+        with self.assertRaises(DXAPIError):
+            input_params.update({"name": "Another workflow"})
+            dxpy.api.workflow_new(input_params)
+
+    def test_idempotent_runs(self):
+        # Create an applet and run it.
+        applet = self.create_applet()
+
+        input_params = {"input": {"number": 32}, "project": self.proj_id}
+        jobs = self.do_retry_http_request(dxpy.api.applet_run,
+                                          args=[applet.get_id()],
+                                          kwargs={"input_params": input_params})
+        self.assertItemsEqual(jobs[0], jobs[1])
+
+        job = dxpy.api.applet_run(applet.get_id(), input_params=input_params)
+        self.assertNotIn(job, jobs)
+        jobs.append(job)
+
+        input_params.update({"nonce": "987654"})
+        job = dxpy.api.applet_run(applet.get_id(), input_params)
+        self.assertNotIn(job, jobs)
+
+        with self.assertRaises(DXAPIError):
+            input_params['input'].update({"number": 42})
+            dxpy.api.applet_run(applet.get_id(), input_params)
+
+        ## Create an app and run it.
+        app = dxpy.DXApp()
+        userid = dxpy.whoami()
+
+        app.new(applet=applet.get_id(), version="0.0.1", bill_to=userid, name="app_name_other")
+        input_params = {"input": {"number": 32}, "project": self.proj_id}
+        jobs = self.do_retry_http_request(dxpy.api.app_run,
+                                          args=[app.get_id()],
+                                          kwargs={"input_params": input_params})
+        self.assertEqual(jobs[0], jobs[1])
+
+        job = dxpy.api.app_run(app.get_id(), input_params=input_params)
+        self.assertNotIn(job, jobs)
+        jobs.append(job)
+
+        input_params.update({"nonce": "109876"})
+        job = dxpy.api.applet_run(applet.get_id(), input_params)
+        self.assertNotIn(job, jobs)
+        with self.assertRaises(DXAPIError):
+            input_params['input'].update({"number": 42})
+            dxpy.api.applet_run(applet.get_id(), input_params)
+
+    def test_idempotent_org_creation(self):
+        input_params = {"name": "test_org", "handle": "some_handle"}
+        orgs = self.do_retry_http_request(dxpy.api.org_new, kwargs={"input_params": input_params})
+        self.assertItemsEqual(orgs[0], orgs[1])
+
+        input_params = {"name": "test_org2", "handle": "another_handle"}
+        org = dxpy.api.org_new(input_params=input_params)
+        self.assertNotIn(org, orgs)
+        orgs.append(org)
+
+        input_params = {"name": "test_org3", "handle": "another_handle_3", "nonce": "102938"}
+        org = dxpy.api.org_new(input_params=input_params)
+        self.assertNotIn(org, orgs)
+        with self.assertRaises(DXAPIError):
+            input_params.update({"name": "another_test_org"})
+            dxpy.api.org_new(input_params=input_params)
 
 
 if __name__ == '__main__':
