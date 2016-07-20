@@ -23,7 +23,6 @@ import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashli
 import shlex # respects quoted substrings when splitting
 
 import requests
-from dxpy.exceptions import err_exit
 
 logging.basicConfig(level=logging.INFO)
 
