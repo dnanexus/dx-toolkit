@@ -651,7 +651,7 @@ class DXDataObject(DXObject):
             elapsed += 2
 
 from .dxfile import DXFile, DXFILE_HTTP_THREADS, DEFAULT_BUFFER_SIZE
-from .dxfile_functions import open_dxfile, new_dxfile, download_dxfile, upload_local_file, upload_string
+from .dxfile_functions import open_dxfile, new_dxfile, download_dxfile, upload_local_file, upload_string, list_subfolders, download_folder
 from .dxgtable import DXGTable, NULL, DXGTABLE_HTTP_THREADS
 from .dxgtable_functions import open_dxgtable, new_dxgtable
 from .dxrecord import DXRecord, new_dxrecord

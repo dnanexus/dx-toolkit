@@ -719,6 +719,113 @@ class TestDXFile(unittest.TestCase):
         del os.environ['DX_JOB_ID']
 
 
+class TestFolder(unittest.TestCase):
+
+    def setUp(self):
+        setUpTempProjects(self)
+        self.temp_dir = tempfile.mkdtemp(prefix="test.dx-toolkit.dxpy.TestFolder.")
+        self.temp_file_fd, self.temp_file_path = tempfile.mkstemp(prefix="test.dx-toolkit.dxpy.TestFile.")
+        with os.fdopen(self.temp_file_fd, 'w') as temp_file:
+            temp_file.write('42')
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_dir)
+        os.remove(self.temp_file_path)
+        tearDownTempProjects(self)
+
+    def test_download_folder(self):
+        dxproject = dxpy.DXProject(self.proj_id)
+
+        # Creating remote folders
+        dxproject.new_folder("/a/b/c/d", parents=True)
+        dxproject.new_folder("/a/e/f/g", parents=True)
+        dxproject.new_folder("/h/i/j/k", parents=True)
+
+        # Filling remote folders with objects
+        for i, folder in enumerate(["/", "/a", "/a/b", "/a/b/c", "/a/b/c/d"]):
+            dxpy.upload_string("{}-th\n file\n content\n".format(i + 1), wait_on_close=True,
+                    name="file_{}.txt".format(i + 1), folder=folder)
+            dxrecord = dxpy.new_dxrecord(name="record_{}".format(i + 1), folder=folder)
+
+        # Checking root directory download
+        root_dest_dir = os.path.join(self.temp_dir, "root")
+        dxpy.download_folder(self.proj_id, root_dest_dir)
+        path = []
+        for i, f in enumerate([root_dest_dir, "a", "b", "c", "d"]):
+            path.append(f)
+            filename = os.path.join(os.path.join(*path), "file_{}.txt".format(i + 1))
+            self.assertTrue(os.path.isfile(filename))
+            self.assertEquals("{}-th\n file\n content\n".format(i + 1), open(filename, "r").read())
+        self.assertTrue(os.path.isdir(os.path.join(root_dest_dir, "a", "e", "f", "g")))
+        self.assertTrue(os.path.isdir(os.path.join(root_dest_dir, "h", "i", "j", "k")))
+
+        # Checking non-root directory download
+        a_dest_dir = os.path.join(self.temp_dir, "a")
+        dxpy.download_folder(self.proj_id, a_dest_dir, folder="/a/")
+        path = []
+        for i, f in enumerate([a_dest_dir, "b", "c", "d"]):
+            path.append(f)
+            filename = os.path.join(os.path.join(*path), "file_{}.txt".format(i + 2))
+            self.assertTrue(os.path.isfile(filename))
+            self.assertEquals("{}-th\n file\n content\n".format(i + 2), open(filename, "r").read())
+
+        # Checking 2-nd level subdirectory download
+        ag = os.path.join(self.temp_dir, "b")
+        dxpy.download_folder(self.proj_id, ag, folder="/a/b/")
+        path = []
+        for i, f in enumerate([ag, "c", "d"]):
+            path.append(f)
+            filename = os.path.join(os.path.join(*path), "file_{}.txt".format(i + 3))
+            self.assertTrue(os.path.isfile(filename))
+            self.assertEquals("{}-th\n file\n content\n".format(i + 3), open(filename, "r").read())
+
+        # Checking download to existing structure
+        dxpy.download_folder(self.proj_id, a_dest_dir, folder="/a", overwrite=True)
+        path = []
+        for i, f in enumerate([a_dest_dir, "b", "c", "d"]):
+            path.append(f)
+            filename = os.path.join(os.path.join(*path), "file_{}.txt".format(i + 2))
+            self.assertTrue(os.path.isfile(filename))
+            self.assertEquals("{}-th\n file\n content\n".format(i + 2), open(filename, "r").read())
+
+        # Checking download to existing structure fails w/o overwrite flag
+        with self.assertRaises(DXFileError):
+            dxpy.download_folder(self.proj_id, a_dest_dir, folder="/a")
+
+        # Checking download to existing file fails
+        with self.assertRaises(DXFileError):
+            dxpy.download_folder(self.proj_id, self.temp_file_path)
+
+        # Checking download to file instead of subdir fails
+        a1_dest_dir = os.path.join(self.temp_dir, "a1")
+        os.mkdir(a1_dest_dir)
+        with open(os.path.join(a1_dest_dir, "b"), "w") as f:
+            f.write("42")
+        with self.assertRaises(DXFileError):
+            dxpy.download_folder(self.proj_id, a1_dest_dir, folder="/a")
+
+        # Checking download to non-writable location fails
+        if sys.platform != "win32":
+            with self.assertRaises(OSError):
+                dxpy.download_folder(self.proj_id, "/usr/bin/a", folder="/a")
+
+        # Checking download to empty location fails
+        with self.assertRaises(DXFileError):
+            dxpy.download_folder(self.proj_id, " ", folder="/a")
+
+        # Checking download from empty location fails
+        with self.assertRaises(DXFileError):
+            dxpy.download_folder(self.proj_id, os.path.join(self.temp_dir, "foobar"), folder="\t")
+
+        # Checking download from non-existent location fails
+        with self.assertRaises(DXFileError):
+            dxpy.download_folder(self.proj_id, os.path.join(self.temp_dir, "foobar"), folder="/non_existent")
+
+        # Checking download from invalid location fails
+        with self.assertRaises(DXFileError):
+            dxpy.download_folder(self.proj_id, os.path.join(self.temp_dir, "foobar"), folder="a/b")
+
+
 @unittest.skipUnless(testutil.TEST_GTABLE, 'skipping test that would create a GTable')
 class TestDXGTable(unittest.TestCase):
     """
