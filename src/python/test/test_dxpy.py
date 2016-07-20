@@ -31,7 +31,7 @@ from requests.packages.urllib3.exceptions import SSLError
 import dxpy
 import dxpy_testutil as testutil
 from dxpy.exceptions import (DXAPIError, DXFileError, DXError, DXJobFailureError, ResourceNotFound)
-from dxpy.utils import pretty_print, warn
+from dxpy.utils import pretty_print, warn, Nonce
 from dxpy.utils.resolver import resolve_path, resolve_existing_path, ResolutionError, is_project_explicit
 
 def get_objects_from_listf(listf):
@@ -2876,6 +2876,9 @@ class TestIdempotentRequests(unittest.TestCase):
             result = api_method(*args, _test_retry_http_request=True, **kwargs)
         return [result, dxpy._get_retry_response()]
 
+    def get_a_nonce(self):
+        return str(Nonce())
+
     def test_idempotent_record_creation(self):
         input_params = {"project": self.proj_id, "name": "Unique Record"}
 
@@ -2887,7 +2890,7 @@ class TestIdempotentRequests(unittest.TestCase):
         records.append(dxrecord)
 
         # A request with the same nonce, but different input, should fail
-        input_params.update({"nonce": "1234"})
+        input_params.update({"nonce": self.get_a_nonce()})
         dxrecord = dxpy.api.record_new(input_params=input_params)
         self.assertNotIn(dxrecord, records)
         with self.assertRaises(DXAPIError):
@@ -2908,7 +2911,7 @@ class TestIdempotentRequests(unittest.TestCase):
         self.assertNotIn(applet, applets)
         applets.append(applet)
 
-        input_params.update({"nonce": "12345"})
+        input_params.update({"nonce": self.get_a_nonce()})
         applet = dxpy.api.applet_new(input_params)
         self.assertNotIn(applet, applets)
 
@@ -2927,7 +2930,7 @@ class TestIdempotentRequests(unittest.TestCase):
                         "version": "0.0.1",
                         "bill_to": userid,
                         "name": "new_app_name_2",
-                        "nonce": "123456"}
+                        "nonce": self.get_a_nonce()}
         app = dxpy.api.app_new(input_params)
         self.assertNotIn(app, apps)
 
@@ -2946,7 +2949,7 @@ class TestIdempotentRequests(unittest.TestCase):
         files.append(dxfile)
 
         # A request with the same nonce, but different input, should fail
-        input_params.update({"nonce": "1234567"})
+        input_params.update({"nonce": self.get_a_nonce()})
         dxfile = dxpy.api.file_new(input_params=input_params)
         self.assertNotIn(dxfile, files)
         with self.assertRaises(DXAPIError):
@@ -2963,7 +2966,7 @@ class TestIdempotentRequests(unittest.TestCase):
         workflows.append(dxworkflow)
 
         # A request with the same nonce, but different input, should fail
-        input_params.update({"nonce": "23456"})
+        input_params.update({"nonce": self.get_a_nonce()})
         dxworkflow = dxpy.api.workflow_new(input_params)
         self.assertNotIn(dxworkflow, workflows)
         with self.assertRaises(DXAPIError):
@@ -2984,7 +2987,7 @@ class TestIdempotentRequests(unittest.TestCase):
         self.assertNotIn(job, jobs)
         jobs.append(job)
 
-        input_params.update({"nonce": "987654"})
+        input_params.update({"nonce": self.get_a_nonce()})
         job = dxpy.api.applet_run(applet.get_id(), input_params)
         self.assertNotIn(job, jobs)
 
@@ -3007,7 +3010,7 @@ class TestIdempotentRequests(unittest.TestCase):
         self.assertNotIn(job, jobs)
         jobs.append(job)
 
-        input_params.update({"nonce": "109876"})
+        input_params.update({"nonce": self.get_a_nonce()})
         job = dxpy.api.applet_run(applet.get_id(), input_params)
         self.assertNotIn(job, jobs)
         with self.assertRaises(DXAPIError):
@@ -3024,7 +3027,7 @@ class TestIdempotentRequests(unittest.TestCase):
         self.assertNotIn(org, orgs)
         orgs.append(org)
 
-        input_params = {"name": "test_org3", "handle": "another_handle_3", "nonce": "102938"}
+        input_params = {"name": "test_org3", "handle": "another_handle_3", "nonce": self.get_a_nonce()}
         org = dxpy.api.org_new(input_params=input_params)
         self.assertNotIn(org, orgs)
         with self.assertRaises(DXAPIError):
