@@ -2521,7 +2521,7 @@ class TestHTTPRetry(unittest.TestCase):
                 "mock_api", "apiserver_mock.py")
         apiServerMockHandlerFilename = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                 "mock_api", "test_retry.py")
-        self.apiServerMockSubprocess = subprocess.Popen([apiServerMockFilename, apiServerMockHandlerFilename, str(apiServerTcpPort)])
+        self.apiServerMockSubprocess = subprocess.Popen([sys.executable, apiServerMockFilename, apiServerMockHandlerFilename, str(apiServerTcpPort)])
         time.sleep(0.2)
 
     def tearDown(self):

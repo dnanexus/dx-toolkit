@@ -147,8 +147,7 @@ except ImportError:
 
 
 logger = logging.getLogger(__name__)
-#logger.addHandler(logging.NullHandler())
-logger.addHandler(logging.StreamHandler(sys.stdout))
+logger.addHandler(logging.NullHandler())
 
 def configure_urllib3():
     # Disable verbose urllib3 warnings and log messages
