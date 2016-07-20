@@ -17,7 +17,7 @@ Gem::Specification.new do |gem|
   gem.files = Dir.glob('lib/**/*')
   gem.require_paths = ["lib"]
 
-  gem.add_dependency('json')
+  gem.add_dependency('json', '~> 1.8.3')
 
   gem.add_development_dependency('rake')
   gem.add_development_dependency('rspec', ["~> 2.0"])

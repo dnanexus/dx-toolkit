@@ -25,7 +25,8 @@ whose elements are arrays themselves. This is what it looks like:
     {
       "objectMethod": false,
       "retryable": false,
-      "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew"
+      "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew",
+      "acceptsNonce": true
     }
   ],
   ...,
@@ -40,6 +41,7 @@ Each route is described by an array with exactly 3 elements:
     * `objectMethod`: boolean; true for routes that are called on a specific object ID (e.g. `/record-xxxx/describe`), and false for routes that are not bound to a specific object ID (e.g. `/system/findJobs`, `/record/new`).
     * `retryable`: boolean; true if the route is "safe" to retry for failed requests. This information is used by the API wrappers to decide when to retry a failed request.
     * `wikiLink`: either null or a string; if provided, contains a URL for documentation for the route. This information can be used to add wiki links in api wrapper documentation.
+    * `acceptsNonce`: boolean; (optional) if present, the route accepts a nonce that is used to uniquely identify a request.
 
 Adding wrappers for a new language
 ----------------------------------

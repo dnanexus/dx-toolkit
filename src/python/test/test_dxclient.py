@@ -143,7 +143,7 @@ class TestDXRemove(DXTestCase):
         record_name2 = "test_folder2"
 
         # Throw error on non-existent folder
-        with self.assertSubprocessFailure(exit_code=1):
+        with self.assertSubprocessFailure(exit_code=3):
             run("dx rm -r {f}".format(f=folder_name))
 
         # make folder and file of the same name, confirm that file is deleted with regular rm call
@@ -159,7 +159,7 @@ class TestDXRemove(DXTestCase):
         with self.assertRaises(DXSearchError):
             dxpy.find_one_data_object(classname="record", describe=True, project=self.project)
         # if no -r flag provided, should throw error since it's a folder
-        with self.assertSubprocessFailure(exit_code=1):
+        with self.assertSubprocessFailure(exit_code=3):
             run("dx rm {f}".format(f=record_name))
         # finally remove the folder
         run("dx rm -r {f}".format(f=record_name))
@@ -171,7 +171,7 @@ class TestDXRemove(DXTestCase):
                           dxpy.find_one_data_object(classname="record",
                                                     describe=True,
                                                     project=self.project)['describe']['name'])
-        with self.assertSubprocessFailure(exit_code=1):
+        with self.assertSubprocessFailure(exit_code=3):
             run("dx rm {f} {f2}".format(f=record_name, f2=record_name2))
 
 
@@ -300,7 +300,7 @@ class TestDXClient(DXTestCase):
         run("dx new record Ψ")
         run("dx add_types Ψ abc xyz")
         with self.assertSubprocessFailure(stderr_text="be an array of valid strings for a type name",
-                                          exit_code=1):
+                                          exit_code=3):
             run("dx add_types Ψ ΨΨ")
         run("dx remove_types Ψ abc xyz")
         run("dx remove_types Ψ abc xyz")
@@ -1214,7 +1214,7 @@ class TestDXClientUploadDownload(DXTestCase):
             fd.write("0123456789ABCDEF"*64)
             fd.flush()
             fd.close()
-            with self.assertSubprocessFailure(stderr_regexp='is a directory but the -r/--recursive option was not given', exit_code=1):
+            with self.assertSubprocessFailure(stderr_regexp='is a directory but the -r/--recursive option was not given', exit_code=3):
                 run("dx upload "+wd)
             run("dx upload -r "+wd)
             run('dx wait "{f}"'.format(f=os.path.join(os.path.basename(wd), "a", "б",
@@ -1726,7 +1726,7 @@ class TestDXClientDownloadDataEgressBilling(DXTestCase):
             self.assertEqual(self.get_billed_project(), proj.get_id())
 
             # Failure: project specified by ID does not contain file specified by ID
-            with self.assertSubprocessFailure(stderr_regexp="Error: project does not", exit_code=1):
+            with self.assertSubprocessFailure(stderr_regexp="Error: project does not", exit_code=3):
                 run("dx download -o - {p}:{f}".format(p=proj2.get_id(), f=file1_id))
 
             # Failure: project specified by ID does not contain file specified by name
@@ -1734,7 +1734,7 @@ class TestDXClientDownloadDataEgressBilling(DXTestCase):
                 run("dx download -o - {p}:{f}".format(p=proj.get_id(), f=file2_name))
 
             # Failure: project specified by name does not contain file specified by ID
-            with self.assertSubprocessFailure(stderr_regexp="Error: project does not", exit_code=1):
+            with self.assertSubprocessFailure(stderr_regexp="Error: project does not", exit_code=3):
                 run("dx download -o - {p}:{f}".format(p=proj2_name, f=file1_id))
 
             # Failure: project specified by name does not contain file specified by name
@@ -2871,6 +2871,8 @@ def main():
         shell.expect("Warning:")
         shell.sendline("N")
         shell.expect("IOError")
+        shell.expect(pexpect.EOF)
+        shell.wait()
         shell.close()
         self.assertEqual(3, shell.exitstatus)
 
@@ -5846,6 +5848,69 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             for warning in app_expected_warnings:
                 self.assertIn(warning, err.stderr)
 
+    @ unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
+    def test_build_app_suggestions(self):
+        app_spec = {
+            "name": "test_build_app_suggestions",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [{"name": "testname", "class": "file", "suggestions": []}],
+            "outputSpec": [],
+            "version": "0.0.1"
+        }
+
+        # check if project exists
+        app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "project": "project-0000000000000000000000NA", "path": "/"}]
+        app_dir = self.write_app_directory("test_build_app_suggestions", json.dumps(app_spec), "code.py")
+        res = run("dx build --app " + app_dir, also_return_stderr=True)
+        self.assertIn('Suggested project {name} does not exist'.
+                       format(name=app_spec["inputSpec"][0]["suggestions"][0]["project"]), res[1])
+
+        # check path
+        app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "project": self.project,
+                                                    "path": "/some_invalid_path"}]
+        app_dir = self.write_app_directory("test_build_app_suggestions", json.dumps(app_spec), "code.py")
+        res = run("dx build --app " + app_dir, also_return_stderr=True)
+        self.assertIn('Folder {path} could not be found in project'.
+                       format(path=app_spec["inputSpec"][0]["suggestions"][0]["path"]), res[1])
+
+        # check for $dnanexus_link
+        app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "$dnanexus_link": "gtable-0000000000000000000000NA"}]
+        app_dir = self.write_app_directory("test_build_app_suggestions", json.dumps(app_spec), "code.py")
+        try:
+            run("dx build --app " + app_dir)
+        except subprocess.CalledProcessError as err:
+            self.assertIn('Suggested object {name} could not be found'.format
+                         (name=app_spec["inputSpec"][0]["suggestions"][0]["$dnanexus_link"]), err.stderr)
+
+        # check for value and $dnanexus_link in it
+        app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename",
+                                                    "value": {"$dnanexus_link": "file-0000000000000000000000NA"}}]
+        app_dir = self.write_app_directory("test_build_app_suggestions", json.dumps(app_spec), "code.py")
+        try:
+            run("dx build --app " + app_dir)
+        except subprocess.CalledProcessError as err:
+            self.assertIn('Suggested object {name} could not be found'.format
+                         (name=app_spec["inputSpec"][0]["suggestions"][0]['value']["$dnanexus_link"]), err.stderr)
+
+    @ unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
+    def test_build_app_suggestions_success(self):
+        app_spec = {"name": "test_build_app_suggestions",
+                    "dxapi": "1.0.0",
+                    "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+                    "inputSpec": [{"name": "testname", "class": "gtable", "suggestions": []}],
+                    "outputSpec": [], "version": "0.0.1"}
+
+        # check when project not public and we publish app, also check app build with a valid suggestion
+        app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "project": self.project, "path": "/"}]
+        app_dir = self.write_app_directory("test_build_app_suggestions", json.dumps(app_spec), "code.py")
+        result = run("dx build --app --publish " + app_dir, also_return_stderr=True)
+        if len(result) == 2:
+            self.assertIn('NOT PUBLIC!'.format(name=app_spec['name']), result[1])
+        app_id = json.loads(result[0])['id']
+        app = dxpy.describe(app_id)
+        self.assertEqual(app['name'], app_spec['name'])
+
     def test_build_applet_with_no_dxapp_json(self):
         app_dir = self.write_app_directory("åpplet_with_no_dxapp_json", None, "code.py")
         with self.assertSubprocessFailure(stderr_regexp='does not contain dxapp\.json', exit_code=3):
@@ -7704,7 +7769,7 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
         self.assertNotIn(name, user_data['appsInstalled'])
         # Check for App not found
         app_unknown_name = ''.join(random.choice(string.ascii_lowercase) for _ in range(12))
-        with self.assertSubprocessFailure(stderr_regexp='Could not find the app', exit_code=1):
+        with self.assertSubprocessFailure(stderr_regexp='Could not find the app', exit_code=3):
             run("dx uninstall %s" % app_unknown_name, env=as_second_user())
         pass
 

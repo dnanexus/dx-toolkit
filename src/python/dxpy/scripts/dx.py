@@ -135,8 +135,7 @@ def get_json_from_stdin():
     try:
         user_json = json.loads(user_json_str)
     except ValueError:
-        parser.exit(1, 'Error: user input could not be parsed as JSON\n')
-        return None
+        raise DXCLIError('Error: user input could not be parsed as JSON')
     return user_json
 
 def set_cli_colors(args=argparse.Namespace()):
@@ -283,7 +282,7 @@ def login(args):
     # the --special-host flags has been set.
     if args.token is None:
         if (args.host is None) != (args.port is None):
-            parser.exit(2, fill('Error: Only one of --host and --port were provided; provide either both or neither of the values') + '\n')
+            err_exit('Error: Only one of --host and --port were provided; provide either both or neither of the values', 2)
         authserver = dxpy.get_auth_server_name(args.host, args.port, args.protocol)
 
         using_default = authserver == default_authserver
@@ -490,7 +489,7 @@ def pick_and_set_project(args):
                                        " VIEW permissions, use " + BOLD("dx select --level VIEW") + " or " +
                                        BOLD("dx select --public") + ".") + '\n')
         elif len(results) == 0:
-            parser.exit(1, 'No projects left to choose from.\n')
+            err_exit('No projects left to choose from.', 3)
 
         if first_pass:
             if not args.public and args.level == "CONTRIBUTE":
@@ -527,7 +526,7 @@ def pick_and_set_project(args):
 
 def whoami(args):
     if dxpy.AUTH_HELPER is None:
-        parser.exit(3, 'You are not logged in; run "dx login" to obtain a token.\n')
+        err_exit('You are not logged in; run "dx login" to obtain a token.', 3)
     user_id = dxpy.whoami()
     if args.user_id:
         print(user_id)
@@ -546,7 +545,7 @@ def setenv(args):
             api_port = prompt_for_env_var('API server port', 'DX_APISERVER_PORT')
             set_api(api_protocol, api_host, api_port, args.save)
         except:
-            parser.exit(1, '\n')
+            raise DXCLIError("Error setting up API variables")
 
     if args.projects:
         args.name = None
@@ -618,7 +617,7 @@ def pwd(args):
     if pwd_str is not None:
         print(pwd_str)
     else:
-        parser.exit(1, 'Current project is not set\n')
+        err_exit('Current project is not set', 3)
 
 def api(args):
     json_input = json.loads(args.input_json)
@@ -628,7 +627,7 @@ def api(args):
             try:
                 json_input = json.loads(data)
             except ValueError:
-                parser.exit(1, 'Error: file contents could not be parsed as JSON\n')
+                err_exit('Error: file contents could not be parsed as JSON', 3)
     resp = None
     try:
         resp = dxpy.DXHTTPRequest('/' + args.resource + '/' + args.method,
@@ -638,7 +637,7 @@ def api(args):
     try:
         print(json.dumps(resp, indent=4))
     except ValueError:
-        parser.exit(1, 'Error: server response could not be parsed as JSON\n')
+        err_exit('Error: server response could not be parsed as JSON', 3)
 
 def invite(args):
     # If --project is a valid project (ID or name), then appending ":"
@@ -697,7 +696,7 @@ def cd(args):
             set_project(project, not state['interactive'], name=project_name)
             state['currentproj'] = project_name
     else:
-        parser.exit(1, 'Error: No current project was given\n')
+        err_exit('Error: No current project was given', 3)
 
     # TODO: attempt to add caching later if it's an issue
     # if project in cached_project_paths and folderpath in cached_project_paths[project]:
@@ -707,8 +706,7 @@ def cd(args):
         dxproj = dxpy.get_handler(dxpy.WORKSPACE_ID)
         dxproj.list_folder(folder=folderpath)
     except:
-        parser.exit(1, fill(folderpath + ': No such file or directory found in project ' + dxpy.WORKSPACE_ID) + '\n')
-        return
+        err_exit(fill(folderpath + ': No such file or directory found in project ' + dxpy.WORKSPACE_ID), 3)
 
     set_wd(folderpath, not state['interactive'])
 
@@ -721,7 +719,7 @@ def ls(args):
                                                    ask_to_resolve=False)
 
     if project is None:
-        parser.exit(1, fill('Current project must be set or specified before any data can be listed') + '\n')
+        err_exit('Current project must be set or specified before any data can be listed', 3)
     dxproj = dxpy.get_handler(project)
     only = ""
     if args.obj and not args.folders and not args.full:
@@ -812,7 +810,7 @@ def mkdir(args):
             print("  " + str(details))
             had_error = True
     if had_error:
-        parser.exit(1)
+        err_exit('', 3)
 
 def rmdir(args):
     had_error = False
@@ -832,7 +830,7 @@ def rmdir(args):
             print("  " + str(details))
             had_error = True
     if had_error:
-        parser.exit(1)
+        err_exit('', 3)
 
 def rm(args):
     had_error = False
@@ -888,7 +886,7 @@ def rm(args):
             had_error = True
     if had_error:
         # TODO: 'dx rm' and related commands should separate out user error exceptions and internal code exceptions
-        parser.exit(1)
+        err_exit('', 3)
 
 def rmproject(args):
     had_error = False
@@ -932,16 +930,14 @@ def rmproject(args):
             if not args.quiet:
                 print(fill('Successfully deleted project "' + proj_desc['name'] + '"'))
         except EOFError:
-            print('')
-            parser.exit(1)
+            err_exit('', 3)
         except KeyboardInterrupt:
-            print('')
-            parser.exit(1)
+            err_exit('', 3)
         except Exception as details:
             print(fill('Was unable to remove ' + project + ', ' + str(details)))
             had_error = True
     if had_error:
-        parser.exit(1)
+        err_exit('', 3)
 
 # ONLY for within the SAME project.  Will exit fatally otherwise.
 def mv(args):
@@ -953,11 +949,11 @@ def mv(args):
         dx_dest.list_folder(folder=dest_path, only='folders')
     except:
         if dest_path is None:
-            parser.exit(1, 'Cannot move to a hash ID\n')
+            err_exit('Cannot move to a hash ID', 3)
         # Destination folder path is new => renaming
         if len(args.sources) != 1:
             # Can't rename more than one object
-            parser.exit(1, 'The destination folder does not exist\n')
+            err_exit('The destination folder does not exist', 3)
         last_slash_pos = get_last_pos_of_char('/', dest_path)
         if last_slash_pos == 0:
             dest_folder = '/'
@@ -967,7 +963,7 @@ def mv(args):
         try:
             dx_dest.list_folder(folder=dest_folder, only='folders')
         except:
-            parser.exit(1, 'The destination folder does not exist\n')
+            err_exit('The destination folder does not exist', 3)
 
         # Either rename the data object or rename the folder
         src_proj, src_path, src_results = try_call(resolve_existing_path,
@@ -975,11 +971,11 @@ def mv(args):
                                                    allow_mult=True, all_mult=args.all)
 
         if src_proj != dest_proj:
-            parser.exit(1, fill('Error: Using "mv" for moving something from one project to another is unsupported.') + '\n')
+            err_exit(fill('Error: Using "mv" for moving something from one project to another is unsupported.'), 3)
 
         if src_results is None:
             if src_path == '/':
-                parser.exit(1, fill('Cannot rename root folder; to rename the project, please use the "dx rename" subcommand.') + '\n')
+                err_exit(fill('Cannot rename root folder; to rename the project, please use the "dx rename" subcommand.'), 3)
             try:
                 dxpy.api.project_rename_folder(src_proj, {"folder": src_path, "newpath": dest_path})
                 return
@@ -1000,7 +996,7 @@ def mv(args):
                 err_exit()
 
     if len(args.sources) == 0:
-        parser.exit(1, 'No sources provided to move\n')
+        err_exit('No sources provided to move', 3)
     src_objects = []
     src_folders = []
     for source in args.sources:
@@ -1008,7 +1004,7 @@ def mv(args):
                                                          source,
                                                          allow_mult=True, all_mult=args.all)
         if src_proj != dest_proj:
-            parser.exit(1, fill('Using "mv" for moving something from one project to another is unsupported.  Please use "cp" and "rm" instead.') + '\n')
+            err_exit(fill('Using "mv" for moving something from one project to another is unsupported.  Please use "cp" and "rm" instead.'), 3)
 
         if src_results is None:
             src_folders.append(src_folderpath)
@@ -1028,7 +1024,7 @@ def tree(args):
                                           expected='folder')
 
     if project is None:
-        parser.exit(1, fill('Current project must be set or specified before any data can be listed') + '\n')
+        err_exit(fill('Current project must be set or specified before any data can be listed'), 3)
     dxproj = dxpy.get_handler(project)
 
     tree = collections.OrderedDict()
@@ -1306,8 +1302,7 @@ def new_project(args):
         if INTERACTIVE_CLI:
             args.name = input("Enter name for new project: ")
         else:
-            parser.exit(1, parser_new_project.format_help() +
-                           fill("No project name supplied, and input is not interactive") + '\n')
+            err_exit(parser_new_project.format_help() + fill("No project name supplied, and input is not interactive"), 3)
     inputs = {"name": args.name}
     if args.bill_to:
         inputs["billTo"] = args.bill_to
@@ -1378,7 +1373,7 @@ def new_gtable(args):
             try:
                 col_name, col_type = args.columns[i].split(':')
             except ValueError:
-                parser.exit(1, 'Too many colons found in column spec ' + args.columns[i] + '\n')
+                err_exit('Too many colons found in column spec ' + args.columns[i], 3)
             if col_type.startswith('bool'):
                 col_type = 'boolean'
         else:
@@ -1415,7 +1410,7 @@ def set_visibility(args):
                                                      allow_mult=True, all_mult=args.all)
 
     if entity_results is None:
-        parser.exit(1, fill('Could not resolve "' + args.path + '" to a name or ID') + '\n')
+        err_exit(fill('Could not resolve "' + args.path + '" to a name or ID'), 3)
 
     for result in entity_results:
         try:
@@ -1426,7 +1421,7 @@ def set_visibility(args):
             had_error = True
 
     if had_error:
-        parser.exit(1)
+        err_exit('', 3)
 
 def get_details(args):
     # Attempt to resolve name
@@ -1434,7 +1429,7 @@ def get_details(args):
                                                     args.path, expected='entity')
 
     if entity_result is None:
-        parser.exit(1, fill('Could not resolve "' + args.path + '" to a name or ID') + '\n')
+        err_exit(fill('Could not resolve "' + args.path + '" to a name or ID'), 3)
 
     try:
         print(json.dumps(dxpy.DXHTTPRequest('/' + entity_result['id'] + '/getDetails', {}), indent=4))
@@ -1485,7 +1480,7 @@ def set_details(args):
             had_error = True
 
     if had_error:
-        parser.exit(1)
+        err_exit('', 3)
 
 def add_types(args):
     had_error = False
@@ -1496,7 +1491,7 @@ def add_types(args):
                                                      allow_mult=True, all_mult=args.all)
 
     if entity_results is None:
-        parser.exit(1, fill('Could not resolve "' + args.path + '" to a name or ID') + '\n')
+        err_exit(fill('Could not resolve "' + args.path + '" to a name or ID'), 3)
 
     for result in entity_results:
         try:
@@ -1506,7 +1501,7 @@ def add_types(args):
             print(format_exception(details), file=sys.stderr)
             had_error = True
     if had_error:
-        parser.exit(1)
+        err_exit('', 3)
 
 def remove_types(args):
     had_error = False
@@ -1517,7 +1512,7 @@ def remove_types(args):
                                                      allow_mult=True, all_mult=args.all)
 
     if entity_results is None:
-        parser.exit(1, fill('Could not resolve "' + args.path + '" to a name or ID') + '\n')
+        err_exit(fill('Could not resolve "' + args.path + '" to a name or ID'), 3)
 
     for result in entity_results:
         try:
@@ -1527,7 +1522,7 @@ def remove_types(args):
             print(format_exception(details), file=sys.stderr)
             had_error = True
     if had_error:
-        parser.exit(1)
+        err_exit('', 3)
 
 def add_tags(args):
     had_error = False
@@ -1546,9 +1541,9 @@ def add_tags(args):
                 print(format_exception(details), file=sys.stderr)
                 had_error = True
         if had_error:
-            parser.exit(1)
+            err_exit('', 3)
     elif not project.startswith('project-'):
-        parser.exit(1, 'Cannot add tags to a non-project data container\n')
+        err_exit('Cannot add tags to a non-project data container', 3)
     else:
         try:
             dxpy.DXHTTPRequest('/' + project + '/addTags',
@@ -1573,9 +1568,9 @@ def remove_tags(args):
                 print(format_exception(details), file=sys.stderr)
                 had_error = True
         if had_error:
-            parser.exit(1)
+            err_exit('', 3)
     elif not project.startswith('project-'):
-        parser.exit(1, 'Cannot remove tags from a non-project data container\n')
+        err_exit('Cannot remove tags from a non-project data container', 3)
     else:
         try:
             dxpy.DXHTTPRequest('/' + project + '/removeTags',
@@ -1600,9 +1595,9 @@ def rename(args):
                 print(format_exception(details), file=sys.stderr)
                 had_error = True
         if had_error:
-            parser.exit(1)
+            err_exit('', 3)
     elif not project.startswith('project-'):
-        parser.exit(1, 'Cannot rename a non-project data container\n')
+        err_exit('Cannot rename a non-project data container', 3)
     else:
         try:
             dxpy.api.project_update(project, {"name": args.name})
@@ -1627,9 +1622,9 @@ def set_properties(args):
                 print(format_exception(details), file=sys.stderr)
                 had_error = True
         if had_error:
-            parser.exit(1)
+            err_exit('', 3)
     elif not project.startswith('project-'):
-        parser.exit(1, 'Cannot set properties on a non-project data container\n')
+        err_exit('Cannot set properties on a non-project data container', 3)
     else:
         try:
             dxpy.api.project_set_properties(project, {"properties": args.properties})
@@ -1655,9 +1650,9 @@ def unset_properties(args):
                 print(format_exception(details), file=sys.stderr)
                 had_error = True
         if had_error:
-            parser.exit(1)
+            err_exit('', 3)
     elif not project.startswith('project-'):
-        parser.exit(1, 'Cannot unset properties on a non-project data container\n')
+        err_exit('Cannot unset properties on a non-project data container', 3)
     else:
         try:
             dxpy.api.project_set_properties(project, {"properties": properties})
@@ -1668,10 +1663,10 @@ def unset_properties(args):
 def make_download_url(args):
     project, _folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
     if entity_result is None:
-        parser.exit(1, fill('Could not resolve ' + args.path + ' to a data object') + '\n')
+        err_exit(fill('Could not resolve ' + args.path + ' to a data object'), 3)
 
     if entity_result['describe']['class'] != 'file':
-        parser.exit(1, fill('Error: dx download is only for downloading file objects') + '\n')
+        err_exit(fill('Error: dx download is only for downloading file objects'), 3)
 
     if args.filename is None:
         args.filename = entity_result['describe']['name']
@@ -1698,9 +1693,7 @@ def get_record(entity_result, args):
         if args.output is None and not args.no_ext:
             filename += '.json'
         if not args.overwrite and os.path.exists(filename):
-            parser.exit(1, fill('Error: path "' +
-                                filename +
-                                '" already exists but -f/--overwrite was not set') + '\n')
+            err_exit(fill('Error: path "' + filename + '" already exists but -f/--overwrite was not set'), 3)
         try:
             fd = open(filename, 'w')
         except:
@@ -1720,9 +1713,7 @@ def get_record(entity_result, args):
 def get_output_path(obj_name, obj_class, args):
     path_name = obj_name.replace('/', '%2F')
     if args.output == '-':
-        parser.exit(3,
-                    'Error: An {} '.format(obj_class) +
-                    'cannot be dumped to stdout, please specify a directory\n')
+        err_exit('Error: An {} '.format(obj_class) + 'cannot be dumped to stdout, please specify a directory', 3)
     output_base = args.output or '.'
     if os.path.isdir(output_base):
         output_path = os.path.join(output_base, path_name)
@@ -1730,10 +1721,7 @@ def get_output_path(obj_name, obj_class, args):
         output_path = output_base
     if os.path.isfile(output_path):
         if not args.overwrite:
-            parser.exit(3, fill('Error: path "' +
-                                output_path +
-                                '" already exists but -f/--overwrite was not set') +
-                        '\n')
+            err_exit(fill('Error: path "' + output_path + '" already exists but -f/--overwrite was not set'), 3)
         os.unlink(output_path)
     # Here, output_path either points to a directory or a nonexistent path
     if not os.path.exists(output_path):
@@ -1743,10 +1731,7 @@ def get_output_path(obj_name, obj_class, args):
     if len(os.listdir(output_path)):
         # For safety, refuse to remove an existing non-empty
         # directory automatically.
-        parser.exit(3, fill('Error: path "' +
-                            output_path +
-                            '" already exists. Remove it and try again.') +
-                    '\n')
+        err_exit(fill('Error: path "' + output_path + '" already exists. Remove it and try again.'), 3)
     return output_path
 
 
@@ -1789,10 +1774,7 @@ def get(args):
                                                        expected='entity')
 
     if entity_result is None:
-        parser.exit(3,
-                    fill('Could not resolve ' +
-                         args.path +
-                         ' to a data object') + '\n')
+        err_exit('Could not resolve ' + args.path + ' to a data object', 3)
 
     entity_result_class = entity_result['describe']['class']
 
@@ -1808,21 +1790,18 @@ def get(args):
     elif entity_result_class == 'app':
         get_app(entity_result, args)
     else:
-        parser.exit(3,
-                    'Error: The given object is of class ' +
-                    entity_result['describe']['class'] +
-                    ' but an object of class file, record,' +
-                    ' applet or app was expected\n')
+        err_exit('Error: The given object is of class ' + entity_result['describe']['class'] +
+                 ' but an object of class file, record, applet or app was expected', 3)
 
 def cat(args):
     for path in args.path:
         project, _folderpath, entity_result = try_call(resolve_existing_path, path)
 
         if entity_result is None:
-            parser.exit(1, fill('Could not resolve ' + path + ' to a data object') + '\n')
+            err_exit('Could not resolve ' + path + ' to a data object', 3)
 
         if entity_result['describe']['class'] != 'file':
-            parser.exit(1, fill('Error: expected a file object') + '\n')
+            err_exit('Error: expected a file object', 3)
 
         # If the user did not explicitly provide the project, don't pass any
         # project parameter to the API call but continue with download resolution
@@ -1835,7 +1814,7 @@ def cat(args):
         # the file, don't allow the download.
         if path_has_explicit_proj and project is not None and \
            not object_exists_in_project(entity_result['describe']['id'], project):
-            parser.exit(1, fill('Error: project does not contain specified file object') + '\n')
+            err_exit('Error: project does not contain specified file object', 3)
 
         try:
             dxfile = dxpy.DXFile(entity_result['id'])
@@ -1862,9 +1841,10 @@ def head(args):
     project, _folderpath, entity_result = try_call(resolve_existing_path,
                                                    args.path, expected='entity')
     if entity_result is None:
-        parser.exit(1, fill('Could not resolve ' + args.path + ' to a data object') + '\n')
+        err_exit('Could not resolve ' + args.path + ' to a data object', 3)
     if not entity_result['describe']['class'] in ['gtable', 'file']:
-        parser.exit(1, 'Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class gtable or file was expected\n')
+        err_exit('Error: The given object is of class ' + entity_result['describe']['class'] +
+                 ' but an object of class gtable or file was expected', 3)
 
     handler = dxpy.get_handler(entity_result['id'], project=project)
 
@@ -1884,7 +1864,7 @@ def head(args):
                         lo = int(args.gri[1])
                         hi = int(args.gri[2])
                     except:
-                        parser.exit(1, fill('Error: the LO and HI arguments to --gri must be integers') + '\n')
+                        err_exit('Error: the LO and HI arguments to --gri must be integers', 3)
                     gri_query = dxpy.DXGTable.genomic_range_query(args.gri[0],
                                                                   lo,
                                                                   hi,
@@ -1952,7 +1932,7 @@ def upload_one(args):
 
     if os.path.isdir(args.filename):
         if not args.recursive:
-            parser.exit("Error: {f} is a directory but the -r/--recursive option was not given".format(f=args.filename))
+            err_exit('Error: {f} is a directory but the -r/--recursive option was not given'.format(f=args.filename), 3)
         norm_path = os.path.realpath(args.filename)
         if norm_path in upload_seen_paths:
             print("Skipping {f}: directory loop".format(f=args.filename), file=sys.stderr)
@@ -2012,7 +1992,7 @@ importers = {
 
 def dximport(args):
     if args.format.lower() not in importers:
-        parser.exit(1, fill('Unsupported format: "' + args.format + '".  For a list of supported formats, run "dx help import"') + '\n')
+        err_exit('Unsupported format: "' + args.format + '".  For a list of supported formats, run "dx help import"', 3)
     importers[args.format.lower()](args)
 
 def export_fastq(args):
@@ -2050,7 +2030,7 @@ exporters = {
 
 def export(args):
     if args.format.lower() not in exporters:
-        parser.exit(1, fill('Unsupported format: "' + args.format + '".  For a list of supported formats, run "dx help export"') + '\n')
+        err_exit('Unsupported format: "' + args.format + '".  For a list of supported formats, run "dx help export"', 3)
     exporters[args.format.lower()](args)
 
 def find_executions(args):
@@ -2409,7 +2389,7 @@ def close(args):
             handler._wait_on_close()
 
     if had_error:
-        parser.exit(1)
+        err_exit('', 3)
 
 def wait(args):
     had_error = False
@@ -2436,7 +2416,7 @@ def wait(args):
                 print("Done")
 
     if had_error:
-        parser.exit(1)
+        err_exit('', 3)
 
 def build(args):
     from dxpy.scripts import dx_build_app
@@ -2523,7 +2503,7 @@ def uninstall(args):
             try_call(dxpy.api.app_uninstall, args.app)
             print('Uninstalled the {app} app'.format(app=args.app))
         else:
-            parser.exit(1, 'Could not find the app\n')
+            err_exit('Could not find the app', 3)
 
 
 def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None,
@@ -2825,8 +2805,8 @@ def run(args):
     try_call(process_properties_args, args)
 
     if args.clone is None and args.executable == "":
-        parser.exit(2, parser_map['run'].format_help() +
-                       fill("Error: Either the executable must be specified, or --clone must be used to indicate a job or analysis to clone") + "\n")
+        err_exit(parser_map['run'].format_help() +
+                 fill("Error: Either the executable must be specified, or --clone must be used to indicate a job or analysis to clone"), 2)
 
     args.input_from_clone, args.sys_reqs_from_clone = {}, {}
 
@@ -2901,9 +2881,9 @@ def run(args):
                                                                                   has_children=False,
                                                                                   single_result=True)))
                 if result_choice == "none found":
-                    parser.exit(1, "dx run --clone: No matching execution found. Please use a valid job or analysis name or ID.\n")
+                    err_exit("dx run --clone: No matching execution found. Please use a valid job or analysis name or ID.", 3)
                 elif result_choice == "none picked":
-                    parser.exit(1)
+                    err_exit('', 3)
                 else:
                     clone_desc = dxpy.api.job_describe(result_choice["id"])
 
@@ -3112,7 +3092,7 @@ def watch(args):
             print("Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, (" and sub-jobs" if args.tree else "")), file=sys.stderr)
         log_client.connect()
     except Exception as details:
-        parser.exit(3, fill(str(details)) + '\n')
+        err_exit(fill(str(details)), 3)
 
 def ssh_config(args):
     user_id = try_call(dxpy.whoami)
@@ -3336,16 +3316,16 @@ def print_help(args):
         for cmd in parser_categories[args.command_or_category]['cmds']:
             print('  ' + cmd[0] + ' '*(18-len(cmd[0])) + fill(cmd[1], width_adjustment=-20, subsequent_indent=' '*20))
     elif args.command_or_category not in parser_map:
-        parser.exit(1, 'Unrecognized command: ' + args.command_or_category + '\n')
+        err_exit('Unrecognized command: ' + args.command_or_category, 3)
     elif args.command_or_category == 'export' and args.subcommand is not None:
         if args.subcommand not in exporters:
-            parser.exit(1, 'Unsupported format for dx export: ' + args.subcommand + '\n')
+            err_exit('Unsupported format for dx export: ' + args.subcommand, 3)
         new_args = argparse.Namespace()
         setattr(new_args, 'exporter_args', ['-h'])
         exporters[args.subcommand](new_args)
     elif args.command_or_category == 'import' and args.subcommand is not None:
         if args.subcommand not in importers:
-            parser.exit(1, 'Unsupported format for dx import: ' + args.subcommand + '\n')
+            err_exit('Unsupported format for dx import: ' + args.subcommand, 3)
         new_args = argparse.Namespace()
         setattr(new_args, 'importer_args', ['-h'])
         importers[args.subcommand](new_args)
@@ -3357,7 +3337,7 @@ def print_help(args):
     elif args.subcommand is None:
         parser_map[args.command_or_category].print_help()
     elif (args.command_or_category + ' ' + args.subcommand) not in parser_map:
-        parser.exit(1, 'Unrecognized command and subcommand combination: ' + args.command_or_category + ' ' + args.subcommand + '\n')
+        err_exit('Unrecognized command and subcommand combination: ' + args.command_or_category + ' ' + args.subcommand, 3)
     else:
         parser_map[args.command_or_category + ' ' + args.subcommand].print_help()
 

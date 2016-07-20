@@ -119,7 +119,7 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
     success = False
     while not success:
         success = _download_dxfile(dxid, filename, part_retry_counter,
-                                   chunksize=dxfile.MIN_BUFFER_SIZE, append=append,
+                                   chunksize=chunksize, append=append,
                                    show_progress=show_progress, project=project, **kwargs)
 
 
@@ -466,3 +466,93 @@ def upload_string(to_upload, media_type=None, keep_open=False, wait_on_close=Fal
         handler.close(block=wait_on_close, **remaining_kwargs)
 
     return handler
+
+def list_subfolders(project, path, recurse=True):
+    '''
+    :param project: Project ID to use as context for the listing
+    :type project: string
+    :param path: Subtree root path
+    :type path: string
+    :param recurse: Return a complete subfolders tree
+    :type recurse: boolean
+
+    Returns a list of subfolders for the remote *path* (included to the result) of the *project*.
+
+    Example::
+
+        list_subfolders("project-xxxx", folder="/input")
+
+    '''
+    project_folders = dxpy.get_handler(project).describe(input_params={'folders': True})['folders']
+    # TODO: support shell-style path globbing (i.e. /a*/c matches /ab/c but not /a/b/c)
+    # return pathmatch.filter(project_folders, os.path.join(path, '*'))
+    if recurse:
+        return (f for f in project_folders if f.startswith(path))
+    else:
+        return (f for f in project_folders if f.startswith(path) and '/' not in f[len(path)+1:])
+
+def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxfile.DEFAULT_BUFFER_SIZE,
+        **kwargs):
+    '''
+    :param project: Project ID to use as context for this download.
+    :type project: string
+    :param destdir: Local destination location
+    :type destdir: string
+    :param folder: Path to the remote folder to download
+    :type folder: string
+    :param overwrite: Overwrite existing files
+    :type overwrite: boolean
+
+    Downloads the contents of the remote *folder* of the *project* into the local directory specified by *destdir*.
+
+    Example::
+
+        download_folder("project-xxxx", "/home/jsmith/input", folder="/input")
+
+    '''
+
+    def ensure_local_dir(d):
+        if not os.path.isdir(d):
+            if os.path.exists(d):
+                raise DXFileError("Destination location '{}' already exists and is not a directory".format(d))
+            logger.debug("Creating destination directory: '%s'", d)
+            os.makedirs(d)
+
+    def compose_local_dir(d, remote_folder, remote_subfolder):
+        suffix = remote_subfolder[1:] if remote_folder == "/" else remote_subfolder[len(remote_folder) + 1:]
+        if os.sep != '/':
+            suffix = suffix.replace('/', os.sep)
+        return os.path.join(d, suffix) if suffix != "" else d
+
+    normalized_folder = folder.strip()
+    if normalized_folder != "/" and normalized_folder.endswith("/"):
+        normalized_folder = normalized_folder[:-1]
+    if normalized_folder == "":
+        raise DXFileError("Invalid remote folder name: '{}'".format(folder))
+    normalized_dest_dir = os.path.normpath(destdir).strip()
+    if normalized_dest_dir == "":
+        raise DXFileError("Invalid destination directory name: '{}'".format(destdir))
+    # Creating target directory tree
+    remote_folders = list(list_subfolders(project, normalized_folder, recurse=True))
+    if len(remote_folders) <= 0:
+        raise DXFileError("Remote folder '{}' not found".format(normalized_folder))
+    remote_folders.sort()
+    for remote_subfolder in remote_folders:
+        ensure_local_dir(compose_local_dir(normalized_dest_dir, normalized_folder, remote_subfolder))
+
+    # Downloading files
+    for remote_file in dxpy.search.find_data_objects(classname='file', state='closed', project=project,
+                                                     folder=normalized_folder, recurse=True, describe=True):
+        local_filename = os.path.join(compose_local_dir(normalized_dest_dir,
+                                                        normalized_folder,
+                                                        remote_file['describe']['folder']),
+                                      remote_file['describe']['name'])
+        if os.path.exists(local_filename) and not overwrite:
+            raise DXFileError(
+                "Destination file '{}' already exists but no overwrite option is provided".format(local_filename)
+            )
+        logger.debug("Downloading '%s/%s' remote file to '%s' location",
+                     ("" if remote_file['describe']['folder'] == "/" else remote_file['describe']['folder']),
+                     remote_file['describe']['name'],
+                     local_filename)
+        download_dxfile(remote_file['describe']['id'], local_filename, chunksize=chunksize, project=project, **kwargs)

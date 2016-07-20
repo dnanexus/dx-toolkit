@@ -8,6 +8,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import sys
 
 from dxpy import DXHTTPRequest
+from dxpy.utils import Nonce
 
 def analysisAddTags(*args, **kwargs):
     """
@@ -419,8 +420,9 @@ def app_run(app_name_or_id, alias=None, input_params={}, always_retry=False, **k
 
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/run
     """
+    input_params_cp = Nonce.update_nonce(input_params)
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
-    return DXHTTPRequest('/%s/run' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+    return DXHTTPRequest('/%s/run' % fully_qualified_version, input_params_cp, always_retry=always_retry, **kwargs)
 
 def appUninstall(*args, **kwargs):
     """
@@ -476,7 +478,8 @@ def app_new(input_params={}, always_retry=False, **kwargs):
 
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app/new
     """
-    return DXHTTPRequest('/app/new', input_params, always_retry=always_retry, **kwargs)
+    input_params_cp = Nonce.update_nonce(input_params)
+    return DXHTTPRequest('/app/new', input_params_cp, always_retry=always_retry, **kwargs)
 
 def appletAddTags(*args, **kwargs):
     """
@@ -620,7 +623,8 @@ def applet_run(object_id, input_params={}, always_retry=False, **kwargs):
 
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fapplet-xxxx%2Frun
     """
-    return DXHTTPRequest('/%s/run' % object_id, input_params, always_retry=always_retry, **kwargs)
+    input_params_cp = Nonce.update_nonce(input_params)
+    return DXHTTPRequest('/%s/run' % object_id, input_params_cp, always_retry=always_retry, **kwargs)
 
 def appletSetProperties(*args, **kwargs):
     """
@@ -656,7 +660,8 @@ def applet_new(input_params={}, always_retry=False, **kwargs):
 
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fapplet%2Fnew
     """
-    return DXHTTPRequest('/applet/new', input_params, always_retry=always_retry, **kwargs)
+    input_params_cp = Nonce.update_nonce(input_params)
+    return DXHTTPRequest('/applet/new', input_params_cp, always_retry=always_retry, **kwargs)
 
 def containerClone(*args, **kwargs):
     """
@@ -1086,7 +1091,8 @@ def file_new(input_params={}, always_retry=False, **kwargs):
 
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew
     """
-    return DXHTTPRequest('/file/new', input_params, always_retry=always_retry, **kwargs)
+    input_params_cp = Nonce.update_nonce(input_params)
+    return DXHTTPRequest('/file/new', input_params_cp, always_retry=always_retry, **kwargs)
 
 def gtableAddRows(*args, **kwargs):
     """
@@ -1500,7 +1506,8 @@ def job_new(input_params={}, always_retry=False, **kwargs):
 
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fjob%2Fnew
     """
-    return DXHTTPRequest('/job/new', input_params, always_retry=always_retry, **kwargs)
+    input_params_cp = Nonce.update_nonce(input_params)
+    return DXHTTPRequest('/job/new', input_params_cp, always_retry=always_retry, **kwargs)
 
 def notificationsGet(*args, **kwargs):
     """
@@ -1694,7 +1701,8 @@ def org_new(input_params={}, always_retry=False, **kwargs):
 
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg%2Fnew
     """
-    return DXHTTPRequest('/org/new', input_params, always_retry=always_retry, **kwargs)
+    input_params_cp = Nonce.update_nonce(input_params)
+    return DXHTTPRequest('/org/new', input_params_cp, always_retry=always_retry, **kwargs)
 
 def projectAddTags(*args, **kwargs):
     """
@@ -2270,7 +2278,8 @@ def record_new(input_params={}, always_retry=False, **kwargs):
 
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord%2Fnew
     """
-    return DXHTTPRequest('/record/new', input_params, always_retry=always_retry, **kwargs)
+    input_params_cp = Nonce.update_nonce(input_params)
+    return DXHTTPRequest('/record/new', input_params_cp, always_retry=always_retry, **kwargs)
 
 def systemDescribeDataObjects(*args, **kwargs):
     """
@@ -2892,7 +2901,8 @@ def workflow_run(object_id, input_params={}, always_retry=False, **kwargs):
 
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Frun
     """
-    return DXHTTPRequest('/%s/run' % object_id, input_params, always_retry=always_retry, **kwargs)
+    input_params_cp = Nonce.update_nonce(input_params)
+    return DXHTTPRequest('/%s/run' % object_id, input_params_cp, always_retry=always_retry, **kwargs)
 
 def workflowSetDetails(*args, **kwargs):
     """
@@ -3018,5 +3028,6 @@ def workflow_new(input_params={}, always_retry=False, **kwargs):
 
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow%2Fnew
     """
-    return DXHTTPRequest('/workflow/new', input_params, always_retry=always_retry, **kwargs)
+    input_params_cp = Nonce.update_nonce(input_params)
+    return DXHTTPRequest('/workflow/new', input_params_cp, always_retry=always_retry, **kwargs)
 

@@ -511,7 +511,10 @@ void Options::validate() {
   }
 
   if (throttle < 0) {
-    DXLOG(logUSERINFO) << "Upload throttling is disabled.";
+    // Don't print this message -- users have been known to get confused
+    // and think that it indicates that something is wrong.
+
+    //DXLOG(logUSERINFO) << "Upload throttling is disabled.";
   } else if (throttle < 4 * 1024) {
     throw runtime_error("Uploads are throttled to " + boost::lexical_cast<string>(throttle) + " bytes/sec, which is less than 4 Kbytes/sec. Choose a larger value.");
   } else if (throttle < 256 * 1024) {

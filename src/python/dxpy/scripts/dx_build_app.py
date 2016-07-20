@@ -33,7 +33,7 @@ import dxpy, dxpy.app_builder
 from .. import logger
 
 from ..utils import json_load_raise_on_duplicates
-from ..utils.resolver import resolve_path, is_container_id
+from ..utils.resolver import resolve_path, check_folder_exists, ResolutionError, is_container_id
 from ..utils.completer import LocalCompleter
 from ..app_categories import APP_CATEGORIES
 from ..cli import try_call
@@ -208,6 +208,64 @@ def parse_destination(dest_str):
     # [PROJECT]:/FOLDER/ENTITYNAME
     return try_call(resolve_path, dest_str)
 
+
+def _check_suggestions(app_json, publish=False):
+    """
+    Examines the specified dxapp.json file and warns about any
+    violations of suggestions guidelines.
+
+    :raises: AppBuilderException for data objects that could not be found
+    """
+    for input_field in app_json.get('inputSpec', []):
+        for suggestion in input_field.get('suggestions', []):
+            if 'project' in suggestion:
+                try:
+                    project = dxpy.api.project_describe(suggestion['project'], {"permissions": True})
+                    if 'PUBLIC' not in project['permissions'] and publish:
+                        logger.warn('Project {name} NOT PUBLIC!'.format(name=project['name']))
+                except dxpy.exceptions.DXAPIError as e:
+                    if e.code == 404:
+                        logger.warn('Suggested project {name} does not exist, or not accessible by user'.format(
+                                     name=suggestion['project']))
+                if 'path' in suggestion:
+                    try:
+                        check_folder_exists(suggestion['project'], suggestion['path'], '')
+                    except ResolutionError as e:
+                        logger.warn('Folder {path} could not be found in project {project}'.format(
+                                     path=suggestion['path'], project=suggestion['project']))
+            if '$dnanexus_link' in suggestion:
+                if suggestion['$dnanexus_link'].startswith(('file-', 'record-', 'gtable-')):
+                    try:
+                        dnanexus_link = dxpy.describe(suggestion['$dnanexus_link'])
+                    except dxpy.exceptions.DXAPIError as e:
+                        if e.code == 404:
+                            raise dxpy.app_builder.AppBuilderException(
+                                'Suggested object {name} could not be found'.format(
+                                    name=suggestion['$dnanexus_link']))
+                    except Exception as e:
+                        raise dxpy.app_builder.AppBuilderException(str(e))
+            if 'value' in suggestion:
+                if '$dnanexus_link' in suggestion['value']:
+                    # Check if we have JSON or string
+                    if isinstance(suggestion['value']['$dnanexus_link'], dict):
+                        if 'project' in suggestion['value']['$dnanexus_link']:
+                            try:
+                                dxpy.api.project_describe(suggestion['value']['$dnanexus_link']['project'])
+                            except dxpy.exceptions.DXAPIError as e:
+                                if e.code == 404:
+                                    logger.warn('Suggested project {name} does not exist, or not accessible by user'.format(
+                                                 name=suggestion['value']['$dnanexus_link']['project']))
+                    elif isinstance(suggestion['value']['$dnanexus_link'], basestring):
+                        if suggestion['value']['$dnanexus_link'].startswith(('file-', 'record-', 'gtable-')):
+                            try:
+                                dnanexus_link = dxpy.describe(suggestion['value']['$dnanexus_link'])
+                            except dxpy.exceptions.DXAPIError as e:
+                                if e.code == 404:
+                                    raise dxpy.app_builder.AppBuilderException(
+                                        'Suggested object {name} could not be found'.format(
+                                            name=suggestion['value']['$dnanexus_link']))
+                            except Exception as e:
+                                raise dxpy.app_builder.AppBuilderException(str(e))
 
 def _lint(dxapp_json_filename, mode):
     """
@@ -692,7 +750,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
 
     dxpy.app_builder.build(src_dir, parallel_build=do_parallel_build)
     app_json = _parse_app_spec(src_dir)
-
+    _check_suggestions(app_json, publish=publish)
     _verify_app_source_dir(src_dir, mode, enforce=do_check_syntax)
     if mode == "app" and not dry_run:
         _verify_app_writable(app_json['name'])
@@ -830,6 +888,7 @@ def _build_app(args, extra_args):
     TODO: remote app builds still return None, but we should fix this.
 
     """
+
     if not args.remote:
         # LOCAL BUILD
 
@@ -879,6 +938,7 @@ def _build_app(args, extra_args):
 
         try:
             app_json = _parse_app_spec(args.src_dir)
+            _check_suggestions(app_json, publish=args.publish)
             _verify_app_source_dir(args.src_dir, args.mode)
             if args.mode == "app" and not args.dry_run:
                 _verify_app_writable(app_json['name'])

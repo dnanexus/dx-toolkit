@@ -1,3 +1,35 @@
+dx-toolkit (0.196.0) precise; urgency=low
+
+  * [PTFM-18415] Do not print "Upload throttling is disabled" message
+  * Smoke test fix for 0f1f63a
+  * Fix bug from ee205d1
+  * Filter out "bundledDependsByRegion" from run specification in "dx get"
+  * PTFM-7513, dx-build-app[let] should check validity of IDs that appear… (#158)
+  * PTFM-18414 Add wait() call to ensure dx has exited
+  * PTFM-15653 Allow client to explicitly decide when to request new page
+  * Handle ClosedPoolError during DXHTTPRequest
+  * PTFM-18420 Make subprocess string Windows-friendly
+  * PTFM-18414 Move to pexpect 4.2 for Windows testing
+  * PTFM-17914 Fix test_download_url_helper on Windows
+  * Don't complain about names not defined in Python 3
+  * Pin json gem dependency to prevent dependency on Ruby 2.0
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 14 Jul 2016 18:07:56 +0000
+
+dx-toolkit (0.195.0) precise; urgency=low
+
+  * Fixed Travis build
+  * Verify that 'less' works on Windows
+  * Remove legacy dx-toolkit-{beta,unstable} packages
+  * Check whether user has write permissions to destination directory when upgrading dx-toolkit
+  * fix failing test from d238d2e471ab55c0ea1138aca8c5245f51b52382
+  * PTFM-17351 Proxy support in dx ssh / dx run --ssh
+  * PTFM-17451 Use project context from DXFile object in get_download_url
+  * PTFM-16098 dx download floors percentage
+  * Removed gtable option from dx find data 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 07 Jul 2016 16:49:24 +0000
+
 dx-toolkit (0.194.0) precise; urgency=low
 
   * PTFM-17632 dx update project returns valid JSON

@@ -194,7 +194,8 @@
         {
             "objectMethod": true,
             "retryable": false,
-            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/run"
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/run",
+            "acceptNonce": true
         }
     ],
     [
@@ -221,7 +222,8 @@
         {
             "objectMethod": false,
             "retryable": false,
-            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app/new"
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app/new",
+            "acceptNonce": true
         }
     ],
     [
@@ -293,7 +295,8 @@
         {
             "objectMethod": true,
             "retryable": false,
-            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fapplet-xxxx%2Frun"
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fapplet-xxxx%2Frun",
+            "acceptNonce": true
         }
     ],
     [
@@ -311,7 +314,8 @@
         {
             "objectMethod": false,
             "retryable": false,
-            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fapplet%2Fnew"
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fapplet%2Fnew",
+            "acceptNonce": true
         }
     ],
     [
@@ -527,7 +531,8 @@
         {
             "objectMethod": false,
             "retryable": false,
-            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew"
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew",
+            "acceptNonce": true
         }
     ],
     [
@@ -734,7 +739,8 @@
         {
             "objectMethod": false,
             "retryable": false,
-            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fjob%2Fnew"
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fjob%2Fnew",
+            "acceptNonce": true
         }
     ],
     [
@@ -833,7 +839,8 @@
         {
             "objectMethod": false,
             "retryable": false,
-            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg%2Fnew"
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg%2Fnew",
+            "acceptNonce": true
         }
     ],
     [
@@ -1121,7 +1128,8 @@
         {
             "objectMethod": false,
             "retryable": false,
-            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord%2Fnew"
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord%2Fnew",
+            "acceptNonce": true
         }
     ],
     [
@@ -1436,7 +1444,8 @@
         {
             "objectMethod": true,
             "retryable": false,
-            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Frun"
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Frun",
+            "acceptNonce": true
         }
     ],
     [
@@ -1499,7 +1508,8 @@
         {
             "objectMethod": false,
             "retryable": false,
-            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow%2Fnew"
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow%2Fnew",
+            "acceptNonce": true
         }
     ]
 ]
