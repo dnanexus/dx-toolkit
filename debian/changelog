@@ -1,3 +1,9 @@
+dx-toolkit (0.196.1) precise; urgency=low
+
+  * PTFM-18402 Download chunk size too small 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 21 Jul 2016 19:23:33 +0000
+
 dx-toolkit (0.196.0) precise; urgency=low
 
   * [PTFM-18415] Do not print "Upload throttling is disabled" message
