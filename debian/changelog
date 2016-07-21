@@ -1,3 +1,19 @@
+dx-toolkit (0.197.0) precise; urgency=low
+
+  * Fixed failing tests on staging
+  * Fixed nonce tests failing on staging
+  * PTFM-18164 Explicit cmd string encoding on Windows
+  * PTFM-18344 Download local bundled dependencies onto worker
+  * PTFM-17466 Python method download_folder
+  * Something isn't playing right with pypy3; disable it in Travis
+  * Remove repeated import
+  * Update Python SDK with support for nonces
+  * PTFM-13821 Clean up dx error handling
+  * PTFM-18402 Download chunk size too small
+  * Updating link to XCode
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 21 Jul 2016 19:21:12 +0000
+
 dx-toolkit (0.196.0) precise; urgency=low
 
   * [PTFM-18415] Do not print "Upload throttling is disabled" message
