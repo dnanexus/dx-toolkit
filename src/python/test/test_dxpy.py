@@ -2897,6 +2897,7 @@ class TestIdempotentRequests(unittest.TestCase):
             input_params.update({"name": "Diff Name"})
             dxpy.api.record_new(input_params=input_params)
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create an app')
     def test_idempotent_applet_and_app_creation(self):
         input_params = {"project": self.proj_id,
                         "name": "new_applet",
@@ -2973,6 +2974,7 @@ class TestIdempotentRequests(unittest.TestCase):
             input_params.update({"name": "Another workflow"})
             dxpy.api.workflow_new(input_params)
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create an app')
     def test_idempotent_runs(self):
         # Create an applet and run it.
         applet = self.create_applet()
@@ -3017,6 +3019,7 @@ class TestIdempotentRequests(unittest.TestCase):
             input_params['input'].update({"number": 42})
             dxpy.api.applet_run(applet.get_id(), input_params)
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create an org')
     def test_idempotent_org_creation(self):
         input_params = {"name": "test_org", "handle": "some_handle"}
         orgs = self.do_retry_http_request(dxpy.api.org_new, kwargs={"input_params": input_params})
