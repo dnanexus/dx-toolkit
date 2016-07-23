@@ -272,8 +272,11 @@ class DXExecDependencyInstaller(object):
     def __init__(self, executable_desc, job_desc, logger=None):
         if "runSpec" not in executable_desc:
             raise DXExecDependencyError('Expected field "runSpec" to be present in executable description"')
-        if "region" not in job_desc and "project" not in job_desc:
-            raise DXExecDependencyError("Expected at least one of 'region' or 'project' in job description")
+
+        # "region" must be in the job describe dict if "bundledDependsByRegion"
+        # is specified in the executable describe dict.
+        if "bundledDependsByRegion" in executable_desc["runSpec"] and "region" not in job_desc:
+            raise DXExecDependencyError("Expected key 'region' in job description")
 
         self.exec_desc = executable_desc
         self.run_spec = executable_desc["runSpec"]
@@ -297,17 +300,12 @@ class DXExecDependencyInstaller(object):
             self.dep_groups[-1]["deps"].append(dep)
 
     def _get_local_bundled_dependencies(self):
-        # Resolve the local bundled dependencies for this job.
-        job_region = self.job_desc.get("region")
-        if job_region is None:
-            # For backward compatibility.
-            project_region = dxpy.get_handler(self.job_desc["project"]).describe()["region"]
-            job_region = project_region
-
         bundled_depends_by_region = self.run_spec.get("bundledDependsByRegion")
         if bundled_depends_by_region is None:
             return self.run_spec.get("bundledDepends", [])
         else:
+            # Resolve the local bundled dependencies for this job.
+            job_region = self.job_desc["region"]
             return bundled_depends_by_region[job_region]
 
     def log(self, message):
