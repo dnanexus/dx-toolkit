@@ -327,6 +327,8 @@ class DXTestCase(unittest.TestCase):
             del dxpy.config['DX_CLI_WD']
 
     def tearDown(self):
+        if "DX_USER_CONF_DIR" in os.environ:
+            os.environ.pop("DX_USER_CONF_DIR")
         try:
             dxpy.api.project_destroy(self.project, {"terminateJobs": True})
         except Exception as e:
