@@ -1,0 +1,74 @@
+[Application]
+name=DNAnexus CLI
+target=powershell.exe
+parameters=-ExecutionPolicy Bypass -NoLogo -NoExit -File "$INSTDIR\dnanexus-shell.ps1"
+#console=true
+version=TEMPLATE_STRING_TOOLKIT_VERSION
+icon=dnanexus.ico
+# To point shortcut at dx instead:
+#entry_point=dxpy.scripts.dx:main
+#extra_preamble=prerun-stuff.py
+
+[Shortcut DNAnexus Help]
+target=$INSTDIR\cli-quickstart.url
+icon=dnanexus.ico
+
+# Shortcut for the .bat cmd.exe launcher:
+#[Shortcut DNAnexus CLI (cmd)]
+#target=$INSTDIR\dnanexus-shell.bat
+##parameters=
+#console=true
+
+# How to add a shortcut for a python script:
+#[Shortcut dx-app-wizard]
+#entry_point=dxpy.scripts.dx_app_wizard:main
+#console=true
+#icon=foo.ico
+
+[Python]
+version=2.7.11
+format=installer
+
+[Build]
+nsi_template=pyapp_installpy_dnanexus.nsi
+
+[Include]
+# Importable packages that your application requires, one per line
+#packages = dxpy
+#    bs4
+#    colorama
+#    concurrent
+#    dateutil
+#    magic
+#    requests
+#    six
+#    wheel
+#    ws4py
+
+# Other files and folders that should be installed
+files = dnanexus-shell.ps1
+    cli-quickstart.url
+    TEMPLATE_STRING_DXPY_WHEEL_FILENAME
+    ../../bin/dx-verify-file.exe > $INSTDIR\\bin
+    ../../bin/jq.exe > $INSTDIR\\bin
+    ../../src/ua/dist/ua.exe > $INSTDIR\\bin
+    ../../src/ua/dist/libboost_atomic-mt.dll > $INSTDIR\\bin
+    ../../src/ua/dist/libboost_chrono-mt.dll > $INSTDIR\\bin
+    ../../src/ua/dist/libboost_date_time-mt.dll > $INSTDIR\\bin
+    ../../src/ua/dist/libboost_filesystem-mt.dll > $INSTDIR\\bin
+    ../../src/ua/dist/libboost_iostreams-mt.dll > $INSTDIR\\bin
+    ../../src/ua/dist/libboost_program_options-mt.dll > $INSTDIR\\bin
+    ../../src/ua/dist/libboost_regex-mt.dll > $INSTDIR\\bin
+    ../../src/ua/dist/libboost_signals-mt.dll > $INSTDIR\\bin
+    ../../src/ua/dist/libboost_system-mt.dll > $INSTDIR\\bin
+    ../../src/ua/dist/libboost_thread-mt.dll > $INSTDIR\\bin
+    ../../src/ua/dist/libcares-2.dll > $INSTDIR\\bin
+    ../../src/ua/dist/libcurl-4.dll > $INSTDIR\\bin
+    ../../src/ua/dist/libeay32.dll > $INSTDIR\\bin
+    ../../src/ua/dist/libgcc_s_dw2-1.dll > $INSTDIR\\bin
+    ../../src/ua/dist/libgnurx-0.dll > $INSTDIR\\bin
+    ../../src/ua/dist/libmagic-1.dll > $INSTDIR\\bin
+    ../../src/ua/dist/libstdc++-6.dll > $INSTDIR\\bin
+    ../../src/ua/dist/magic.mgc > $INSTDIR\\bin
+    ../../src/ua/dist/ssleay32.dll > $INSTDIR\\bin
+    ../../src/ua/dist/zlib1.dll > $INSTDIR\\bin

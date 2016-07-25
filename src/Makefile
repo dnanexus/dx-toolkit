@@ -131,9 +131,39 @@ python: api_wrappers toolkit_version $(DNANEXUS_HOME)/bin/dx
 
 ifeq ($(OS), Windows_NT)
         ACTIVATE=Scripts/activate
+	# On Windows using DNANEXUS_HOME as the pip install --prefix results in
+	# an oddly nested dir, so make a new var to hold the staging dir name in
+	# which we'll be installing packages:
+	WHEEL_TEMPDIR=wheel_tempdir
 else
         ACTIVATE=bin/activate
 endif
+
+# Get the short toolkit version string, resembling v0.195.0
+GIT_TOOLKIT_VERSION_SHORT := $(shell git describe --abbrev=0)
+
+pynsist_installer: toolkit_version $(DNANEXUS_HOME)/bin/dx dx-verify-file jq ua
+	# Create installer.cfg and insert the toolkit version string
+	export GIT_TOOLKIT_VERSION_SHORT=$(GIT_TOOLKIT_VERSION_SHORT) ; \
+	    sed s/TEMPLATE_STRING_TOOLKIT_VERSION/$${GIT_TOOLKIT_VERSION_SHORT}/ "$(DNANEXUS_HOME)"/build/pynsist_files/installer.cfg.template > "$(DNANEXUS_HOME)"/build/pynsist_files/installer.cfg
+
+	# Copy wheel file into place without changing its filename
+	export DXPY_WHEEL_FILENAME=$$(basename $(DNANEXUS_HOME)/src/python/dist/dxpy-*.whl) ; \
+	    cp "$(DNANEXUS_HOME)"/src/python/dist/$${DXPY_WHEEL_FILENAME} "$(DNANEXUS_HOME)"/build/pynsist_files/ 
+
+	# Insert the wheel filename into installer.cfg
+	export DXPY_WHEEL_FILENAME=$$(basename $(DNANEXUS_HOME)/src/python/dist/dxpy-*.whl) ; \
+	    sed --in-place s/TEMPLATE_STRING_DXPY_WHEEL_FILENAME/$${DXPY_WHEEL_FILENAME}/ "$(DNANEXUS_HOME)"/build/pynsist_files/installer.cfg
+
+	# Create pyapp_dnanexus.nsi and insert the wheel filename into it
+	export DXPY_WHEEL_FILENAME=$$(basename $(DNANEXUS_HOME)/src/python/dist/dxpy-*.whl) ; \
+	    sed s/TEMPLATE_STRING_DXPY_WHEEL_FILENAME/$${DXPY_WHEEL_FILENAME}/ "$(DNANEXUS_HOME)"/build/pynsist_files/pyapp_dnanexus.nsi.template > "$(DNANEXUS_HOME)"/build/pynsist_files/pyapp_dnanexus.nsi
+
+	# Install the pynsist package and use it to build a Windows installer
+	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; python -m pip install pynsist==1.7
+	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; pynsist "$(DNANEXUS_HOME)"/build/pynsist_files/installer.cfg
+	# Copy .exe installer to dx-toolkit root once it's ready
+	cp "$(DNANEXUS_HOME)"/build/pynsist_files/build/nsis/DNAnexus_CLI_"$(GIT_TOOLKIT_VERSION_SHORT)".exe "$(DNANEXUS_HOME)"
 
 $(DNANEXUS_HOME)/bin/dx: $(shell find python/{dxpy,scripts,requirements*,setup*} -not -name toolkit_version*)
 	python -c 'import sys; exit("dx-toolkit is not compatible with Python < 2.7" if sys.version_info < (2, 7) else 0)'
@@ -143,6 +173,7 @@ $(DNANEXUS_HOME)/bin/dx: $(shell find python/{dxpy,scripts,requirements*,setup*}
 
 	# Install setuptools and other fundamental packages
 ifeq ($(OS), Windows_NT)
+	# Install setuptools and build the dxpy wheel
 	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; python -m pip install --upgrade -r python/requirements_setuptools.txt
 else
 	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; pip install --upgrade -r python/requirements_setuptools.txt
@@ -156,9 +187,13 @@ endif
 	# Build the dxpy wheel and move it into place
 	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; cd python; python setup.py bdist_wheel
 ifeq ($(OS), Windows_NT)
-	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; python -m pip install --ignore-installed --prefix="wheel_tempdir" python/dist/*.whl
-	mv "$(DNANEXUS_HOME)"/src/wheel_tempdir/Lib/site-packages "$(PYTHON_LIBDIR)"
-	mv "$(DNANEXUS_HOME)"/src/wheel_tempdir/Scripts/* "$(DNANEXUS_HOME)"/bin
+	# Install the dxpy .whl and wheel itself to the temp dir. Note wheel is only
+	# needed because we need to bundle it with the pynsist installer.
+	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; python -m pip install --ignore-installed --prefix="$(WHEEL_TEMPDIR)" python/dist/*.whl
+	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; python -m pip install --ignore-installed --prefix="$(WHEEL_TEMPDIR)" wheel
+	# Move the staging dir artifacts into their final homes
+	mv "$(DNANEXUS_HOME)"/src/$(WHEEL_TEMPDIR)/Lib/site-packages "$(PYTHON_LIBDIR)"
+	mv "$(DNANEXUS_HOME)"/src/$(WHEEL_TEMPDIR)/Scripts/* "$(DNANEXUS_HOME)"/bin
 else
 	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; pip install --ignore-installed --prefix="$(DNANEXUS_HOME)" python/dist/*.whl
 	mv "$(DNANEXUS_HOME)"/lib/python?.?/site-packages "$(PYTHON_LIBDIR)" || mv "$(DNANEXUS_HOME)"/site-packages "$(PYTHON_LIBDIR)"
@@ -511,4 +546,4 @@ clean:
 	-rm -rf boost c-ares curl file openssl
 	-$(MAKE) -C jq clean
 
-.PHONY: all toolkit_version api_wrappers src_libs python perl java ruby dx-contigset-to-fasta ua test test_ruby test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R doc_ruby boost boost_build install_sysdeps
+.PHONY: all toolkit_version api_wrappers src_libs python pynsist_installer perl java ruby dx-contigset-to-fasta ua test test_ruby test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R doc_ruby boost boost_build install_sysdeps
