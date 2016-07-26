@@ -10,16 +10,6 @@ import sys
 from dxpy import DXHTTPRequest
 from dxpy.utils import Nonce
 
-def analysisAddTags(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`analysis_add_tags()` instead.
-
-    """
-    print("dxpy.analysisAddTags is deprecated; please use analysis_add_tags instead.", file=sys.stderr)
-    return analysis_add_tags(*args, **kwargs)
-
 def analysis_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /analysis-xxxx/addTags API method.
@@ -27,16 +17,6 @@ def analysis_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FaddTags
     """
     return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def analysisDescribe(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`analysis_describe()` instead.
-
-    """
-    print("dxpy.analysisDescribe is deprecated; please use analysis_describe instead.", file=sys.stderr)
-    return analysis_describe(*args, **kwargs)
 
 def analysis_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -46,16 +26,6 @@ def analysis_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def analysisRemoveTags(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`analysis_remove_tags()` instead.
-
-    """
-    print("dxpy.analysisRemoveTags is deprecated; please use analysis_remove_tags instead.", file=sys.stderr)
-    return analysis_remove_tags(*args, **kwargs)
-
 def analysis_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /analysis-xxxx/removeTags API method.
@@ -63,16 +33,6 @@ def analysis_remove_tags(object_id, input_params={}, always_retry=True, **kwargs
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FremoveTags
     """
     return DXHTTPRequest('/%s/removeTags' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def analysisSetProperties(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`analysis_set_properties()` instead.
-
-    """
-    print("dxpy.analysisSetProperties is deprecated; please use analysis_set_properties instead.", file=sys.stderr)
-    return analysis_set_properties(*args, **kwargs)
 
 def analysis_set_properties(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -82,16 +42,6 @@ def analysis_set_properties(object_id, input_params={}, always_retry=True, **kwa
     """
     return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def analysisTerminate(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`analysis_terminate()` instead.
-
-    """
-    print("dxpy.analysisTerminate is deprecated; please use analysis_terminate instead.", file=sys.stderr)
-    return analysis_terminate(*args, **kwargs)
-
 def analysis_terminate(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /analysis-xxxx/terminate API method.
@@ -99,16 +49,6 @@ def analysis_terminate(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2Fterminate
     """
     return DXHTTPRequest('/%s/terminate' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def appAddAuthorizedUsers(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`app_add_authorized_users()` instead.
-
-    """
-    print("dxpy.appAddAuthorizedUsers is deprecated; please use app_add_authorized_users instead.", file=sys.stderr)
-    return app_add_authorized_users(*args, **kwargs)
 
 def app_add_authorized_users(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
@@ -119,16 +59,6 @@ def app_add_authorized_users(app_name_or_id, alias=None, input_params={}, always
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/addAuthorizedUsers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
-def appAddCategories(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`app_add_categories()` instead.
-
-    """
-    print("dxpy.appAddCategories is deprecated; please use app_add_categories instead.", file=sys.stderr)
-    return app_add_categories(*args, **kwargs)
-
 def app_add_categories(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /app-xxxx/addCategories API method.
@@ -137,16 +67,6 @@ def app_add_categories(app_name_or_id, alias=None, input_params={}, always_retry
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/addCategories' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
-
-def appAddDevelopers(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`app_add_developers()` instead.
-
-    """
-    print("dxpy.appAddDevelopers is deprecated; please use app_add_developers instead.", file=sys.stderr)
-    return app_add_developers(*args, **kwargs)
 
 def app_add_developers(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
@@ -157,16 +77,6 @@ def app_add_developers(app_name_or_id, alias=None, input_params={}, always_retry
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/addDevelopers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
-def appAddTags(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`app_add_tags()` instead.
-
-    """
-    print("dxpy.appAddTags is deprecated; please use app_add_tags instead.", file=sys.stderr)
-    return app_add_tags(*args, **kwargs)
-
 def app_add_tags(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /app-xxxx/addTags API method.
@@ -175,16 +85,6 @@ def app_add_tags(app_name_or_id, alias=None, input_params={}, always_retry=True,
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/addTags' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
-
-def appDelete(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`app_delete()` instead.
-
-    """
-    print("dxpy.appDelete is deprecated; please use app_delete instead.", file=sys.stderr)
-    return app_delete(*args, **kwargs)
 
 def app_delete(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
@@ -195,16 +95,6 @@ def app_delete(app_name_or_id, alias=None, input_params={}, always_retry=True, *
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/delete' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
-def appDescribe(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`app_describe()` instead.
-
-    """
-    print("dxpy.appDescribe is deprecated; please use app_describe instead.", file=sys.stderr)
-    return app_describe(*args, **kwargs)
-
 def app_describe(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /app-xxxx/describe API method.
@@ -213,16 +103,6 @@ def app_describe(app_name_or_id, alias=None, input_params={}, always_retry=True,
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/describe' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
-
-def appGet(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`app_get()` instead.
-
-    """
-    print("dxpy.appGet is deprecated; please use app_get instead.", file=sys.stderr)
-    return app_get(*args, **kwargs)
 
 def app_get(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
@@ -233,16 +113,6 @@ def app_get(app_name_or_id, alias=None, input_params={}, always_retry=True, **kw
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/get' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
-def appInstall(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`app_install()` instead.
-
-    """
-    print("dxpy.appInstall is deprecated; please use app_install instead.", file=sys.stderr)
-    return app_install(*args, **kwargs)
-
 def app_install(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /app-xxxx/install API method.
@@ -251,16 +121,6 @@ def app_install(app_name_or_id, alias=None, input_params={}, always_retry=True, 
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/install' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
-
-def appListAuthorizedUsers(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`app_list_authorized_users()` instead.
-
-    """
-    print("dxpy.appListAuthorizedUsers is deprecated; please use app_list_authorized_users instead.", file=sys.stderr)
-    return app_list_authorized_users(*args, **kwargs)
 
 def app_list_authorized_users(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
@@ -271,16 +131,6 @@ def app_list_authorized_users(app_name_or_id, alias=None, input_params={}, alway
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/listAuthorizedUsers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
-def appListCategories(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`app_list_categories()` instead.
-
-    """
-    print("dxpy.appListCategories is deprecated; please use app_list_categories instead.", file=sys.stderr)
-    return app_list_categories(*args, **kwargs)
-
 def app_list_categories(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /app-xxxx/listCategories API method.
@@ -289,16 +139,6 @@ def app_list_categories(app_name_or_id, alias=None, input_params={}, always_retr
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/listCategories' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
-
-def appListDevelopers(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`app_list_developers()` instead.
-
-    """
-    print("dxpy.appListDevelopers is deprecated; please use app_list_developers instead.", file=sys.stderr)
-    return app_list_developers(*args, **kwargs)
 
 def app_list_developers(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
@@ -309,16 +149,6 @@ def app_list_developers(app_name_or_id, alias=None, input_params={}, always_retr
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/listDevelopers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
-def appPublish(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`app_publish()` instead.
-
-    """
-    print("dxpy.appPublish is deprecated; please use app_publish instead.", file=sys.stderr)
-    return app_publish(*args, **kwargs)
-
 def app_publish(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /app-xxxx/publish API method.
@@ -327,16 +157,6 @@ def app_publish(app_name_or_id, alias=None, input_params={}, always_retry=True, 
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/publish' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
-
-def appRemoveAuthorizedUsers(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`app_remove_authorized_users()` instead.
-
-    """
-    print("dxpy.appRemoveAuthorizedUsers is deprecated; please use app_remove_authorized_users instead.", file=sys.stderr)
-    return app_remove_authorized_users(*args, **kwargs)
 
 def app_remove_authorized_users(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
@@ -347,16 +167,6 @@ def app_remove_authorized_users(app_name_or_id, alias=None, input_params={}, alw
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/removeAuthorizedUsers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
-def appRemoveCategories(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`app_remove_categories()` instead.
-
-    """
-    print("dxpy.appRemoveCategories is deprecated; please use app_remove_categories instead.", file=sys.stderr)
-    return app_remove_categories(*args, **kwargs)
-
 def app_remove_categories(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /app-xxxx/removeCategories API method.
@@ -365,16 +175,6 @@ def app_remove_categories(app_name_or_id, alias=None, input_params={}, always_re
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/removeCategories' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
-
-def appRemoveDevelopers(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`app_remove_developers()` instead.
-
-    """
-    print("dxpy.appRemoveDevelopers is deprecated; please use app_remove_developers instead.", file=sys.stderr)
-    return app_remove_developers(*args, **kwargs)
 
 def app_remove_developers(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
@@ -385,16 +185,6 @@ def app_remove_developers(app_name_or_id, alias=None, input_params={}, always_re
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/removeDevelopers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
-def appRemoveTags(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`app_remove_tags()` instead.
-
-    """
-    print("dxpy.appRemoveTags is deprecated; please use app_remove_tags instead.", file=sys.stderr)
-    return app_remove_tags(*args, **kwargs)
-
 def app_remove_tags(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /app-xxxx/removeTags API method.
@@ -403,16 +193,6 @@ def app_remove_tags(app_name_or_id, alias=None, input_params={}, always_retry=Tr
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/removeTags' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
-
-def appRun(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`app_run()` instead.
-
-    """
-    print("dxpy.appRun is deprecated; please use app_run instead.", file=sys.stderr)
-    return app_run(*args, **kwargs)
 
 def app_run(app_name_or_id, alias=None, input_params={}, always_retry=False, **kwargs):
     """
@@ -424,16 +204,6 @@ def app_run(app_name_or_id, alias=None, input_params={}, always_retry=False, **k
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/run' % fully_qualified_version, input_params_cp, always_retry=always_retry, **kwargs)
 
-def appUninstall(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`app_uninstall()` instead.
-
-    """
-    print("dxpy.appUninstall is deprecated; please use app_uninstall instead.", file=sys.stderr)
-    return app_uninstall(*args, **kwargs)
-
 def app_uninstall(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /app-xxxx/uninstall API method.
@@ -442,16 +212,6 @@ def app_uninstall(app_name_or_id, alias=None, input_params={}, always_retry=True
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/uninstall' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
-
-def appUpdate(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`app_update()` instead.
-
-    """
-    print("dxpy.appUpdate is deprecated; please use app_update instead.", file=sys.stderr)
-    return app_update(*args, **kwargs)
 
 def app_update(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
@@ -462,16 +222,6 @@ def app_update(app_name_or_id, alias=None, input_params={}, always_retry=True, *
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/update' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
-def appNew(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`app_new()` instead.
-
-    """
-    print("dxpy.appNew is deprecated; please use app_new instead.", file=sys.stderr)
-    return app_new(*args, **kwargs)
-
 def app_new(input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /app/new API method.
@@ -481,16 +231,6 @@ def app_new(input_params={}, always_retry=False, **kwargs):
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/app/new', input_params_cp, always_retry=always_retry, **kwargs)
 
-def appletAddTags(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`applet_add_tags()` instead.
-
-    """
-    print("dxpy.appletAddTags is deprecated; please use applet_add_tags instead.", file=sys.stderr)
-    return applet_add_tags(*args, **kwargs)
-
 def applet_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /applet-xxxx/addTags API method.
@@ -498,16 +238,6 @@ def applet_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags
     """
     return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def appletDescribe(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`applet_describe()` instead.
-
-    """
-    print("dxpy.appletDescribe is deprecated; please use applet_describe instead.", file=sys.stderr)
-    return applet_describe(*args, **kwargs)
 
 def applet_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -517,16 +247,6 @@ def applet_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def appletGet(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`applet_get()` instead.
-
-    """
-    print("dxpy.appletGet is deprecated; please use applet_get instead.", file=sys.stderr)
-    return applet_get(*args, **kwargs)
-
 def applet_get(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /applet-xxxx/get API method.
@@ -534,16 +254,6 @@ def applet_get(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fapplet-xxxx%2Fget
     """
     return DXHTTPRequest('/%s/get' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def appletGetDetails(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`applet_get_details()` instead.
-
-    """
-    print("dxpy.appletGetDetails is deprecated; please use applet_get_details instead.", file=sys.stderr)
-    return applet_get_details(*args, **kwargs)
 
 def applet_get_details(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -553,16 +263,6 @@ def applet_get_details(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/getDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def appletListProjects(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`applet_list_projects()` instead.
-
-    """
-    print("dxpy.appletListProjects is deprecated; please use applet_list_projects instead.", file=sys.stderr)
-    return applet_list_projects(*args, **kwargs)
-
 def applet_list_projects(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /applet-xxxx/listProjects API method.
@@ -570,16 +270,6 @@ def applet_list_projects(object_id, input_params={}, always_retry=True, **kwargs
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects
     """
     return DXHTTPRequest('/%s/listProjects' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def appletRemoveTags(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`applet_remove_tags()` instead.
-
-    """
-    print("dxpy.appletRemoveTags is deprecated; please use applet_remove_tags instead.", file=sys.stderr)
-    return applet_remove_tags(*args, **kwargs)
 
 def applet_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -589,16 +279,6 @@ def applet_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/removeTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def appletRename(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`applet_rename()` instead.
-
-    """
-    print("dxpy.appletRename is deprecated; please use applet_rename instead.", file=sys.stderr)
-    return applet_rename(*args, **kwargs)
-
 def applet_rename(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /applet-xxxx/rename API method.
@@ -606,16 +286,6 @@ def applet_rename(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename
     """
     return DXHTTPRequest('/%s/rename' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def appletRun(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`applet_run()` instead.
-
-    """
-    print("dxpy.appletRun is deprecated; please use applet_run instead.", file=sys.stderr)
-    return applet_run(*args, **kwargs)
 
 def applet_run(object_id, input_params={}, always_retry=False, **kwargs):
     """
@@ -626,16 +296,6 @@ def applet_run(object_id, input_params={}, always_retry=False, **kwargs):
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/%s/run' % object_id, input_params_cp, always_retry=always_retry, **kwargs)
 
-def appletSetProperties(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`applet_set_properties()` instead.
-
-    """
-    print("dxpy.appletSetProperties is deprecated; please use applet_set_properties instead.", file=sys.stderr)
-    return applet_set_properties(*args, **kwargs)
-
 def applet_set_properties(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /applet-xxxx/setProperties API method.
@@ -643,16 +303,6 @@ def applet_set_properties(object_id, input_params={}, always_retry=True, **kwarg
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties
     """
     return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def appletNew(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`applet_new()` instead.
-
-    """
-    print("dxpy.appletNew is deprecated; please use applet_new instead.", file=sys.stderr)
-    return applet_new(*args, **kwargs)
 
 def applet_new(input_params={}, always_retry=False, **kwargs):
     """
@@ -663,16 +313,6 @@ def applet_new(input_params={}, always_retry=False, **kwargs):
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/applet/new', input_params_cp, always_retry=always_retry, **kwargs)
 
-def containerClone(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`container_clone()` instead.
-
-    """
-    print("dxpy.containerClone is deprecated; please use container_clone instead.", file=sys.stderr)
-    return container_clone(*args, **kwargs)
-
 def container_clone(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /container-xxxx/clone API method.
@@ -680,16 +320,6 @@ def container_clone(object_id, input_params={}, always_retry=False, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone
     """
     return DXHTTPRequest('/%s/clone' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def containerDescribe(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`container_describe()` instead.
-
-    """
-    print("dxpy.containerDescribe is deprecated; please use container_describe instead.", file=sys.stderr)
-    return container_describe(*args, **kwargs)
 
 def container_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -699,31 +329,11 @@ def container_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def containerDestroy(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`container_destroy()` instead.
-
-    """
-    print("dxpy.containerDestroy is deprecated; please use container_destroy instead.", file=sys.stderr)
-    return container_destroy(*args, **kwargs)
-
 def container_destroy(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /container-xxxx/destroy API method.
     """
     return DXHTTPRequest('/%s/destroy' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def containerListFolder(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`container_list_folder()` instead.
-
-    """
-    print("dxpy.containerListFolder is deprecated; please use container_list_folder instead.", file=sys.stderr)
-    return container_list_folder(*args, **kwargs)
 
 def container_list_folder(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -733,16 +343,6 @@ def container_list_folder(object_id, input_params={}, always_retry=True, **kwarg
     """
     return DXHTTPRequest('/%s/listFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def containerMove(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`container_move()` instead.
-
-    """
-    print("dxpy.containerMove is deprecated; please use container_move instead.", file=sys.stderr)
-    return container_move(*args, **kwargs)
-
 def container_move(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /container-xxxx/move API method.
@@ -750,16 +350,6 @@ def container_move(object_id, input_params={}, always_retry=False, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2Fmove
     """
     return DXHTTPRequest('/%s/move' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def containerNewFolder(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`container_new_folder()` instead.
-
-    """
-    print("dxpy.containerNewFolder is deprecated; please use container_new_folder instead.", file=sys.stderr)
-    return container_new_folder(*args, **kwargs)
 
 def container_new_folder(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -769,16 +359,6 @@ def container_new_folder(object_id, input_params={}, always_retry=True, **kwargs
     """
     return DXHTTPRequest('/%s/newFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def containerRemoveFolder(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`container_remove_folder()` instead.
-
-    """
-    print("dxpy.containerRemoveFolder is deprecated; please use container_remove_folder instead.", file=sys.stderr)
-    return container_remove_folder(*args, **kwargs)
-
 def container_remove_folder(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /container-xxxx/removeFolder API method.
@@ -786,16 +366,6 @@ def container_remove_folder(object_id, input_params={}, always_retry=False, **kw
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveFolder
     """
     return DXHTTPRequest('/%s/removeFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def containerRemoveObjects(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`container_remove_objects()` instead.
-
-    """
-    print("dxpy.containerRemoveObjects is deprecated; please use container_remove_objects instead.", file=sys.stderr)
-    return container_remove_objects(*args, **kwargs)
 
 def container_remove_objects(object_id, input_params={}, always_retry=False, **kwargs):
     """
@@ -805,16 +375,6 @@ def container_remove_objects(object_id, input_params={}, always_retry=False, **k
     """
     return DXHTTPRequest('/%s/removeObjects' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def containerRenameFolder(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`container_rename_folder()` instead.
-
-    """
-    print("dxpy.containerRenameFolder is deprecated; please use container_rename_folder instead.", file=sys.stderr)
-    return container_rename_folder(*args, **kwargs)
-
 def container_rename_folder(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /container-xxxx/renameFolder API method.
@@ -822,16 +382,6 @@ def container_rename_folder(object_id, input_params={}, always_retry=False, **kw
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FrenameFolder
     """
     return DXHTTPRequest('/%s/renameFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def fileAddTags(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`file_add_tags()` instead.
-
-    """
-    print("dxpy.fileAddTags is deprecated; please use file_add_tags instead.", file=sys.stderr)
-    return file_add_tags(*args, **kwargs)
 
 def file_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -841,16 +391,6 @@ def file_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def fileAddTypes(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`file_add_types()` instead.
-
-    """
-    print("dxpy.fileAddTypes is deprecated; please use file_add_types instead.", file=sys.stderr)
-    return file_add_types(*args, **kwargs)
-
 def file_add_types(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/addTypes API method.
@@ -858,16 +398,6 @@ def file_add_types(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes
     """
     return DXHTTPRequest('/%s/addTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def fileClose(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`file_close()` instead.
-
-    """
-    print("dxpy.fileClose is deprecated; please use file_close instead.", file=sys.stderr)
-    return file_close(*args, **kwargs)
 
 def file_close(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -877,16 +407,6 @@ def file_close(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/close' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def fileDescribe(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`file_describe()` instead.
-
-    """
-    print("dxpy.fileDescribe is deprecated; please use file_describe instead.", file=sys.stderr)
-    return file_describe(*args, **kwargs)
-
 def file_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/describe API method.
@@ -894,16 +414,6 @@ def file_describe(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fdescribe
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def fileDownload(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`file_download()` instead.
-
-    """
-    print("dxpy.fileDownload is deprecated; please use file_download instead.", file=sys.stderr)
-    return file_download(*args, **kwargs)
 
 def file_download(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -913,16 +423,6 @@ def file_download(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/download' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def fileGetDetails(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`file_get_details()` instead.
-
-    """
-    print("dxpy.fileGetDetails is deprecated; please use file_get_details instead.", file=sys.stderr)
-    return file_get_details(*args, **kwargs)
-
 def file_get_details(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/getDetails API method.
@@ -930,16 +430,6 @@ def file_get_details(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails
     """
     return DXHTTPRequest('/%s/getDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def fileListProjects(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`file_list_projects()` instead.
-
-    """
-    print("dxpy.fileListProjects is deprecated; please use file_list_projects instead.", file=sys.stderr)
-    return file_list_projects(*args, **kwargs)
 
 def file_list_projects(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -949,16 +439,6 @@ def file_list_projects(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/listProjects' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def fileRemoveTags(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`file_remove_tags()` instead.
-
-    """
-    print("dxpy.fileRemoveTags is deprecated; please use file_remove_tags instead.", file=sys.stderr)
-    return file_remove_tags(*args, **kwargs)
-
 def file_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/removeTags API method.
@@ -966,16 +446,6 @@ def file_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags
     """
     return DXHTTPRequest('/%s/removeTags' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def fileRemoveTypes(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`file_remove_types()` instead.
-
-    """
-    print("dxpy.fileRemoveTypes is deprecated; please use file_remove_types instead.", file=sys.stderr)
-    return file_remove_types(*args, **kwargs)
 
 def file_remove_types(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -985,16 +455,6 @@ def file_remove_types(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/removeTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def fileRename(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`file_rename()` instead.
-
-    """
-    print("dxpy.fileRename is deprecated; please use file_rename instead.", file=sys.stderr)
-    return file_rename(*args, **kwargs)
-
 def file_rename(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/rename API method.
@@ -1002,16 +462,6 @@ def file_rename(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename
     """
     return DXHTTPRequest('/%s/rename' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def fileSetDetails(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`file_set_details()` instead.
-
-    """
-    print("dxpy.fileSetDetails is deprecated; please use file_set_details instead.", file=sys.stderr)
-    return file_set_details(*args, **kwargs)
 
 def file_set_details(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -1021,16 +471,6 @@ def file_set_details(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/setDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def fileSetProperties(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`file_set_properties()` instead.
-
-    """
-    print("dxpy.fileSetProperties is deprecated; please use file_set_properties instead.", file=sys.stderr)
-    return file_set_properties(*args, **kwargs)
-
 def file_set_properties(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/setProperties API method.
@@ -1038,16 +478,6 @@ def file_set_properties(object_id, input_params={}, always_retry=True, **kwargs)
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties
     """
     return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def fileSetVisibility(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`file_set_visibility()` instead.
-
-    """
-    print("dxpy.fileSetVisibility is deprecated; please use file_set_visibility instead.", file=sys.stderr)
-    return file_set_visibility(*args, **kwargs)
 
 def file_set_visibility(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -1057,16 +487,6 @@ def file_set_visibility(object_id, input_params={}, always_retry=True, **kwargs)
     """
     return DXHTTPRequest('/%s/setVisibility' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def fileUpload(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`file_upload()` instead.
-
-    """
-    print("dxpy.fileUpload is deprecated; please use file_upload instead.", file=sys.stderr)
-    return file_upload(*args, **kwargs)
-
 def file_upload(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/upload API method.
@@ -1074,16 +494,6 @@ def file_upload(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fupload
     """
     return DXHTTPRequest('/%s/upload' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def fileNew(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`file_new()` instead.
-
-    """
-    print("dxpy.fileNew is deprecated; please use file_new instead.", file=sys.stderr)
-    return file_new(*args, **kwargs)
 
 def file_new(input_params={}, always_retry=False, **kwargs):
     """
@@ -1094,16 +504,6 @@ def file_new(input_params={}, always_retry=False, **kwargs):
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/file/new', input_params_cp, always_retry=always_retry, **kwargs)
 
-def gtableAddRows(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`gtable_add_rows()` instead.
-
-    """
-    print("dxpy.gtableAddRows is deprecated; please use gtable_add_rows instead.", file=sys.stderr)
-    return gtable_add_rows(*args, **kwargs)
-
 def gtable_add_rows(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /gtable-xxxx/addRows API method.
@@ -1111,16 +511,6 @@ def gtable_add_rows(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2FaddRows
     """
     return DXHTTPRequest('/%s/addRows' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def gtableAddTags(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`gtable_add_tags()` instead.
-
-    """
-    print("dxpy.gtableAddTags is deprecated; please use gtable_add_tags instead.", file=sys.stderr)
-    return gtable_add_tags(*args, **kwargs)
 
 def gtable_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -1130,16 +520,6 @@ def gtable_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def gtableAddTypes(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`gtable_add_types()` instead.
-
-    """
-    print("dxpy.gtableAddTypes is deprecated; please use gtable_add_types instead.", file=sys.stderr)
-    return gtable_add_types(*args, **kwargs)
-
 def gtable_add_types(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /gtable-xxxx/addTypes API method.
@@ -1147,16 +527,6 @@ def gtable_add_types(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes
     """
     return DXHTTPRequest('/%s/addTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def gtableClose(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`gtable_close()` instead.
-
-    """
-    print("dxpy.gtableClose is deprecated; please use gtable_close instead.", file=sys.stderr)
-    return gtable_close(*args, **kwargs)
 
 def gtable_close(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -1166,16 +536,6 @@ def gtable_close(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/close' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def gtableDescribe(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`gtable_describe()` instead.
-
-    """
-    print("dxpy.gtableDescribe is deprecated; please use gtable_describe instead.", file=sys.stderr)
-    return gtable_describe(*args, **kwargs)
-
 def gtable_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /gtable-xxxx/describe API method.
@@ -1183,16 +543,6 @@ def gtable_describe(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fdescribe
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def gtableGet(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`gtable_get()` instead.
-
-    """
-    print("dxpy.gtableGet is deprecated; please use gtable_get instead.", file=sys.stderr)
-    return gtable_get(*args, **kwargs)
 
 def gtable_get(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -1202,16 +552,6 @@ def gtable_get(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/get' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def gtableGetDetails(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`gtable_get_details()` instead.
-
-    """
-    print("dxpy.gtableGetDetails is deprecated; please use gtable_get_details instead.", file=sys.stderr)
-    return gtable_get_details(*args, **kwargs)
-
 def gtable_get_details(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /gtable-xxxx/getDetails API method.
@@ -1219,16 +559,6 @@ def gtable_get_details(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails
     """
     return DXHTTPRequest('/%s/getDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def gtableListProjects(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`gtable_list_projects()` instead.
-
-    """
-    print("dxpy.gtableListProjects is deprecated; please use gtable_list_projects instead.", file=sys.stderr)
-    return gtable_list_projects(*args, **kwargs)
 
 def gtable_list_projects(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -1238,16 +568,6 @@ def gtable_list_projects(object_id, input_params={}, always_retry=True, **kwargs
     """
     return DXHTTPRequest('/%s/listProjects' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def gtableNextPart(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`gtable_next_part()` instead.
-
-    """
-    print("dxpy.gtableNextPart is deprecated; please use gtable_next_part instead.", file=sys.stderr)
-    return gtable_next_part(*args, **kwargs)
-
 def gtable_next_part(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /gtable-xxxx/nextPart API method.
@@ -1255,16 +575,6 @@ def gtable_next_part(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2FnextPart
     """
     return DXHTTPRequest('/%s/nextPart' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def gtableRemoveTags(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`gtable_remove_tags()` instead.
-
-    """
-    print("dxpy.gtableRemoveTags is deprecated; please use gtable_remove_tags instead.", file=sys.stderr)
-    return gtable_remove_tags(*args, **kwargs)
 
 def gtable_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -1274,16 +584,6 @@ def gtable_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/removeTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def gtableRemoveTypes(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`gtable_remove_types()` instead.
-
-    """
-    print("dxpy.gtableRemoveTypes is deprecated; please use gtable_remove_types instead.", file=sys.stderr)
-    return gtable_remove_types(*args, **kwargs)
-
 def gtable_remove_types(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /gtable-xxxx/removeTypes API method.
@@ -1291,16 +591,6 @@ def gtable_remove_types(object_id, input_params={}, always_retry=True, **kwargs)
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes
     """
     return DXHTTPRequest('/%s/removeTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def gtableRename(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`gtable_rename()` instead.
-
-    """
-    print("dxpy.gtableRename is deprecated; please use gtable_rename instead.", file=sys.stderr)
-    return gtable_rename(*args, **kwargs)
 
 def gtable_rename(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -1310,16 +600,6 @@ def gtable_rename(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/rename' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def gtableSetDetails(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`gtable_set_details()` instead.
-
-    """
-    print("dxpy.gtableSetDetails is deprecated; please use gtable_set_details instead.", file=sys.stderr)
-    return gtable_set_details(*args, **kwargs)
-
 def gtable_set_details(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /gtable-xxxx/setDetails API method.
@@ -1327,16 +607,6 @@ def gtable_set_details(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails
     """
     return DXHTTPRequest('/%s/setDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def gtableSetProperties(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`gtable_set_properties()` instead.
-
-    """
-    print("dxpy.gtableSetProperties is deprecated; please use gtable_set_properties instead.", file=sys.stderr)
-    return gtable_set_properties(*args, **kwargs)
 
 def gtable_set_properties(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -1346,16 +616,6 @@ def gtable_set_properties(object_id, input_params={}, always_retry=True, **kwarg
     """
     return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def gtableSetVisibility(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`gtable_set_visibility()` instead.
-
-    """
-    print("dxpy.gtableSetVisibility is deprecated; please use gtable_set_visibility instead.", file=sys.stderr)
-    return gtable_set_visibility(*args, **kwargs)
-
 def gtable_set_visibility(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /gtable-xxxx/setVisibility API method.
@@ -1363,16 +623,6 @@ def gtable_set_visibility(object_id, input_params={}, always_retry=True, **kwarg
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility
     """
     return DXHTTPRequest('/%s/setVisibility' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def gtableNew(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`gtable_new()` instead.
-
-    """
-    print("dxpy.gtableNew is deprecated; please use gtable_new instead.", file=sys.stderr)
-    return gtable_new(*args, **kwargs)
 
 def gtable_new(input_params={}, always_retry=False, **kwargs):
     """
@@ -1382,16 +632,6 @@ def gtable_new(input_params={}, always_retry=False, **kwargs):
     """
     return DXHTTPRequest('/gtable/new', input_params, always_retry=always_retry, **kwargs)
 
-def jobAddTags(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`job_add_tags()` instead.
-
-    """
-    print("dxpy.jobAddTags is deprecated; please use job_add_tags instead.", file=sys.stderr)
-    return job_add_tags(*args, **kwargs)
-
 def job_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /job-xxxx/addTags API method.
@@ -1399,16 +639,6 @@ def job_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fjob-xxxx%2FaddTags
     """
     return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def jobDescribe(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`job_describe()` instead.
-
-    """
-    print("dxpy.jobDescribe is deprecated; please use job_describe instead.", file=sys.stderr)
-    return job_describe(*args, **kwargs)
 
 def job_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -1418,16 +648,6 @@ def job_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def jobGetLog(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`job_get_log()` instead.
-
-    """
-    print("dxpy.jobGetLog is deprecated; please use job_get_log instead.", file=sys.stderr)
-    return job_get_log(*args, **kwargs)
-
 def job_get_log(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /job-xxxx/getLog API method.
@@ -1435,16 +655,6 @@ def job_get_log(object_id, input_params={}, always_retry=False, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fjob-xxxx%2FgetLog
     """
     return DXHTTPRequest('/%s/getLog' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def jobRemoveTags(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`job_remove_tags()` instead.
-
-    """
-    print("dxpy.jobRemoveTags is deprecated; please use job_remove_tags instead.", file=sys.stderr)
-    return job_remove_tags(*args, **kwargs)
 
 def job_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -1454,16 +664,6 @@ def job_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/removeTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def jobSetProperties(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`job_set_properties()` instead.
-
-    """
-    print("dxpy.jobSetProperties is deprecated; please use job_set_properties instead.", file=sys.stderr)
-    return job_set_properties(*args, **kwargs)
-
 def job_set_properties(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /job-xxxx/setProperties API method.
@@ -1472,16 +672,6 @@ def job_set_properties(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def jobTerminate(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`job_terminate()` instead.
-
-    """
-    print("dxpy.jobTerminate is deprecated; please use job_terminate instead.", file=sys.stderr)
-    return job_terminate(*args, **kwargs)
-
 def job_terminate(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /job-xxxx/terminate API method.
@@ -1489,16 +679,6 @@ def job_terminate(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fjob-xxxx%2Fterminate
     """
     return DXHTTPRequest('/%s/terminate' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def jobNew(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`job_new()` instead.
-
-    """
-    print("dxpy.jobNew is deprecated; please use job_new instead.", file=sys.stderr)
-    return job_new(*args, **kwargs)
 
 def job_new(input_params={}, always_retry=False, **kwargs):
     """
@@ -1509,47 +689,17 @@ def job_new(input_params={}, always_retry=False, **kwargs):
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/job/new', input_params_cp, always_retry=always_retry, **kwargs)
 
-def notificationsGet(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`notifications_get()` instead.
-
-    """
-    print("dxpy.notificationsGet is deprecated; please use notifications_get instead.", file=sys.stderr)
-    return notifications_get(*args, **kwargs)
-
 def notifications_get(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /notifications/get API method.
     """
     return DXHTTPRequest('/notifications/get', input_params, always_retry=always_retry, **kwargs)
 
-def notificationsMarkRead(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`notifications_mark_read()` instead.
-
-    """
-    print("dxpy.notificationsMarkRead is deprecated; please use notifications_mark_read instead.", file=sys.stderr)
-    return notifications_mark_read(*args, **kwargs)
-
 def notifications_mark_read(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /notifications/markRead API method.
     """
     return DXHTTPRequest('/notifications/markRead', input_params, always_retry=always_retry, **kwargs)
-
-def orgDescribe(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`org_describe()` instead.
-
-    """
-    print("dxpy.orgDescribe is deprecated; please use org_describe instead.", file=sys.stderr)
-    return org_describe(*args, **kwargs)
 
 def org_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -1559,16 +709,6 @@ def org_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def orgFindMembers(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`org_find_members()` instead.
-
-    """
-    print("dxpy.orgFindMembers is deprecated; please use org_find_members instead.", file=sys.stderr)
-    return org_find_members(*args, **kwargs)
-
 def org_find_members(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /org-xxxx/findMembers API method.
@@ -1576,16 +716,6 @@ def org_find_members(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FfindMembers
     """
     return DXHTTPRequest('/%s/findMembers' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def orgFindProjects(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`org_find_projects()` instead.
-
-    """
-    print("dxpy.orgFindProjects is deprecated; please use org_find_projects instead.", file=sys.stderr)
-    return org_find_projects(*args, **kwargs)
 
 def org_find_projects(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -1595,16 +725,6 @@ def org_find_projects(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/findProjects' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def orgFindApps(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`org_find_apps()` instead.
-
-    """
-    print("dxpy.orgFindApps is deprecated; please use org_find_apps instead.", file=sys.stderr)
-    return org_find_apps(*args, **kwargs)
-
 def org_find_apps(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /org-xxxx/findApps API method.
@@ -1612,16 +732,6 @@ def org_find_apps(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FfindApps
     """
     return DXHTTPRequest('/%s/findApps' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def orgInvite(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`org_invite()` instead.
-
-    """
-    print("dxpy.orgInvite is deprecated; please use org_invite instead.", file=sys.stderr)
-    return org_invite(*args, **kwargs)
 
 def org_invite(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -1631,16 +741,6 @@ def org_invite(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/invite' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def orgRemoveMember(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`org_remove_member()` instead.
-
-    """
-    print("dxpy.orgRemoveMember is deprecated; please use org_remove_member instead.", file=sys.stderr)
-    return org_remove_member(*args, **kwargs)
-
 def org_remove_member(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /org-xxxx/removeMember API method.
@@ -1648,16 +748,6 @@ def org_remove_member(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FremoveMember
     """
     return DXHTTPRequest('/%s/removeMember' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def orgSetMemberAccess(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`org_set_member_access()` instead.
-
-    """
-    print("dxpy.orgSetMemberAccess is deprecated; please use org_set_member_access instead.", file=sys.stderr)
-    return org_set_member_access(*args, **kwargs)
 
 def org_set_member_access(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -1667,16 +757,6 @@ def org_set_member_access(object_id, input_params={}, always_retry=True, **kwarg
     """
     return DXHTTPRequest('/%s/setMemberAccess' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def orgUpdate(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`org_update()` instead.
-
-    """
-    print("dxpy.orgUpdate is deprecated; please use org_update instead.", file=sys.stderr)
-    return org_update(*args, **kwargs)
-
 def org_update(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /org-xxxx/update API method.
@@ -1684,16 +764,6 @@ def org_update(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2Fupdate
     """
     return DXHTTPRequest('/%s/update' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def orgNew(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`org_new()` instead.
-
-    """
-    print("dxpy.orgNew is deprecated; please use org_new instead.", file=sys.stderr)
-    return org_new(*args, **kwargs)
 
 def org_new(input_params={}, always_retry=False, **kwargs):
     """
@@ -1704,16 +774,6 @@ def org_new(input_params={}, always_retry=False, **kwargs):
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/org/new', input_params_cp, always_retry=always_retry, **kwargs)
 
-def projectAddTags(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`project_add_tags()` instead.
-
-    """
-    print("dxpy.projectAddTags is deprecated; please use project_add_tags instead.", file=sys.stderr)
-    return project_add_tags(*args, **kwargs)
-
 def project_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /project-xxxx/addTags API method.
@@ -1721,16 +781,6 @@ def project_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FaddTags
     """
     return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def projectClone(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`project_clone()` instead.
-
-    """
-    print("dxpy.projectClone is deprecated; please use project_clone instead.", file=sys.stderr)
-    return project_clone(*args, **kwargs)
 
 def project_clone(object_id, input_params={}, always_retry=False, **kwargs):
     """
@@ -1740,16 +790,6 @@ def project_clone(object_id, input_params={}, always_retry=False, **kwargs):
     """
     return DXHTTPRequest('/%s/clone' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def projectDecreasePermissions(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`project_decrease_permissions()` instead.
-
-    """
-    print("dxpy.projectDecreasePermissions is deprecated; please use project_decrease_permissions instead.", file=sys.stderr)
-    return project_decrease_permissions(*args, **kwargs)
-
 def project_decrease_permissions(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /project-xxxx/decreasePermissions API method.
@@ -1757,16 +797,6 @@ def project_decrease_permissions(object_id, input_params={}, always_retry=True, 
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method%3A-%2Fproject-xxxx%2FdecreasePermissions
     """
     return DXHTTPRequest('/%s/decreasePermissions' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def projectDescribe(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`project_describe()` instead.
-
-    """
-    print("dxpy.projectDescribe is deprecated; please use project_describe instead.", file=sys.stderr)
-    return project_describe(*args, **kwargs)
 
 def project_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -1776,16 +806,6 @@ def project_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def projectDestroy(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`project_destroy()` instead.
-
-    """
-    print("dxpy.projectDestroy is deprecated; please use project_destroy instead.", file=sys.stderr)
-    return project_destroy(*args, **kwargs)
-
 def project_destroy(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /project-xxxx/destroy API method.
@@ -1793,16 +813,6 @@ def project_destroy(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fdestroy
     """
     return DXHTTPRequest('/%s/destroy' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def projectInvite(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`project_invite()` instead.
-
-    """
-    print("dxpy.projectInvite is deprecated; please use project_invite instead.", file=sys.stderr)
-    return project_invite(*args, **kwargs)
 
 def project_invite(object_id, input_params={}, always_retry=False, **kwargs):
     """
@@ -1812,16 +822,6 @@ def project_invite(object_id, input_params={}, always_retry=False, **kwargs):
     """
     return DXHTTPRequest('/%s/invite' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def projectLeave(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`project_leave()` instead.
-
-    """
-    print("dxpy.projectLeave is deprecated; please use project_leave instead.", file=sys.stderr)
-    return project_leave(*args, **kwargs)
-
 def project_leave(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /project-xxxx/leave API method.
@@ -1829,16 +829,6 @@ def project_leave(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method%3A-%2Fproject-xxxx%2Fleave
     """
     return DXHTTPRequest('/%s/leave' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def projectListFolder(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`project_list_folder()` instead.
-
-    """
-    print("dxpy.projectListFolder is deprecated; please use project_list_folder instead.", file=sys.stderr)
-    return project_list_folder(*args, **kwargs)
 
 def project_list_folder(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -1848,16 +838,6 @@ def project_list_folder(object_id, input_params={}, always_retry=True, **kwargs)
     """
     return DXHTTPRequest('/%s/listFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def projectMove(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`project_move()` instead.
-
-    """
-    print("dxpy.projectMove is deprecated; please use project_move instead.", file=sys.stderr)
-    return project_move(*args, **kwargs)
-
 def project_move(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /project-xxxx/move API method.
@@ -1865,16 +845,6 @@ def project_move(object_id, input_params={}, always_retry=False, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2Fmove
     """
     return DXHTTPRequest('/%s/move' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def projectNewFolder(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`project_new_folder()` instead.
-
-    """
-    print("dxpy.projectNewFolder is deprecated; please use project_new_folder instead.", file=sys.stderr)
-    return project_new_folder(*args, **kwargs)
 
 def project_new_folder(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -1884,16 +854,6 @@ def project_new_folder(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/newFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def projectRemoveFolder(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`project_remove_folder()` instead.
-
-    """
-    print("dxpy.projectRemoveFolder is deprecated; please use project_remove_folder instead.", file=sys.stderr)
-    return project_remove_folder(*args, **kwargs)
-
 def project_remove_folder(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /project-xxxx/removeFolder API method.
@@ -1901,16 +861,6 @@ def project_remove_folder(object_id, input_params={}, always_retry=False, **kwar
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveFolder
     """
     return DXHTTPRequest('/%s/removeFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def projectRemoveObjects(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`project_remove_objects()` instead.
-
-    """
-    print("dxpy.projectRemoveObjects is deprecated; please use project_remove_objects instead.", file=sys.stderr)
-    return project_remove_objects(*args, **kwargs)
 
 def project_remove_objects(object_id, input_params={}, always_retry=False, **kwargs):
     """
@@ -1920,16 +870,6 @@ def project_remove_objects(object_id, input_params={}, always_retry=False, **kwa
     """
     return DXHTTPRequest('/%s/removeObjects' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def projectRemoveTags(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`project_remove_tags()` instead.
-
-    """
-    print("dxpy.projectRemoveTags is deprecated; please use project_remove_tags instead.", file=sys.stderr)
-    return project_remove_tags(*args, **kwargs)
-
 def project_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /project-xxxx/removeTags API method.
@@ -1937,16 +877,6 @@ def project_remove_tags(object_id, input_params={}, always_retry=True, **kwargs)
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FremoveTags
     """
     return DXHTTPRequest('/%s/removeTags' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def projectRenameFolder(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`project_rename_folder()` instead.
-
-    """
-    print("dxpy.projectRenameFolder is deprecated; please use project_rename_folder instead.", file=sys.stderr)
-    return project_rename_folder(*args, **kwargs)
 
 def project_rename_folder(object_id, input_params={}, always_retry=False, **kwargs):
     """
@@ -1956,16 +886,6 @@ def project_rename_folder(object_id, input_params={}, always_retry=False, **kwar
     """
     return DXHTTPRequest('/%s/renameFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def projectSetProperties(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`project_set_properties()` instead.
-
-    """
-    print("dxpy.projectSetProperties is deprecated; please use project_set_properties instead.", file=sys.stderr)
-    return project_set_properties(*args, **kwargs)
-
 def project_set_properties(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /project-xxxx/setProperties API method.
@@ -1973,16 +893,6 @@ def project_set_properties(object_id, input_params={}, always_retry=True, **kwar
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FsetProperties
     """
     return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def projectTransfer(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`project_transfer()` instead.
-
-    """
-    print("dxpy.projectTransfer is deprecated; please use project_transfer instead.", file=sys.stderr)
-    return project_transfer(*args, **kwargs)
 
 def project_transfer(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -1992,16 +902,6 @@ def project_transfer(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/transfer' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def projectUpdate(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`project_update()` instead.
-
-    """
-    print("dxpy.projectUpdate is deprecated; please use project_update instead.", file=sys.stderr)
-    return project_update(*args, **kwargs)
-
 def project_update(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /project-xxxx/update API method.
@@ -2009,16 +909,6 @@ def project_update(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fupdate
     """
     return DXHTTPRequest('/%s/update' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def projectUpdateSponsorship(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`project_update_sponsorship()` instead.
-
-    """
-    print("dxpy.projectUpdateSponsorship is deprecated; please use project_update_sponsorship instead.", file=sys.stderr)
-    return project_update_sponsorship(*args, **kwargs)
 
 def project_update_sponsorship(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -2028,16 +918,6 @@ def project_update_sponsorship(object_id, input_params={}, always_retry=True, **
     """
     return DXHTTPRequest('/%s/updateSponsorship' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def projectNew(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`project_new()` instead.
-
-    """
-    print("dxpy.projectNew is deprecated; please use project_new instead.", file=sys.stderr)
-    return project_new(*args, **kwargs)
-
 def project_new(input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /project/new API method.
@@ -2045,16 +925,6 @@ def project_new(input_params={}, always_retry=False, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject%2Fnew
     """
     return DXHTTPRequest('/project/new', input_params, always_retry=always_retry, **kwargs)
-
-def recordAddTags(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`record_add_tags()` instead.
-
-    """
-    print("dxpy.recordAddTags is deprecated; please use record_add_tags instead.", file=sys.stderr)
-    return record_add_tags(*args, **kwargs)
 
 def record_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -2064,16 +934,6 @@ def record_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def recordAddTypes(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`record_add_types()` instead.
-
-    """
-    print("dxpy.recordAddTypes is deprecated; please use record_add_types instead.", file=sys.stderr)
-    return record_add_types(*args, **kwargs)
-
 def record_add_types(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /record-xxxx/addTypes API method.
@@ -2081,16 +941,6 @@ def record_add_types(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes
     """
     return DXHTTPRequest('/%s/addTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def recordClose(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`record_close()` instead.
-
-    """
-    print("dxpy.recordClose is deprecated; please use record_close instead.", file=sys.stderr)
-    return record_close(*args, **kwargs)
 
 def record_close(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -2100,16 +950,6 @@ def record_close(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/close' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def recordDescribe(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`record_describe()` instead.
-
-    """
-    print("dxpy.recordDescribe is deprecated; please use record_describe instead.", file=sys.stderr)
-    return record_describe(*args, **kwargs)
-
 def record_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /record-xxxx/describe API method.
@@ -2117,16 +957,6 @@ def record_describe(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord-xxxx%2Fdescribe
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def recordGetDetails(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`record_get_details()` instead.
-
-    """
-    print("dxpy.recordGetDetails is deprecated; please use record_get_details instead.", file=sys.stderr)
-    return record_get_details(*args, **kwargs)
 
 def record_get_details(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -2136,16 +966,6 @@ def record_get_details(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/getDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def recordListProjects(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`record_list_projects()` instead.
-
-    """
-    print("dxpy.recordListProjects is deprecated; please use record_list_projects instead.", file=sys.stderr)
-    return record_list_projects(*args, **kwargs)
-
 def record_list_projects(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /record-xxxx/listProjects API method.
@@ -2153,16 +973,6 @@ def record_list_projects(object_id, input_params={}, always_retry=True, **kwargs
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects
     """
     return DXHTTPRequest('/%s/listProjects' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def recordRemoveTags(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`record_remove_tags()` instead.
-
-    """
-    print("dxpy.recordRemoveTags is deprecated; please use record_remove_tags instead.", file=sys.stderr)
-    return record_remove_tags(*args, **kwargs)
 
 def record_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -2172,16 +982,6 @@ def record_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/removeTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def recordRemoveTypes(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`record_remove_types()` instead.
-
-    """
-    print("dxpy.recordRemoveTypes is deprecated; please use record_remove_types instead.", file=sys.stderr)
-    return record_remove_types(*args, **kwargs)
-
 def record_remove_types(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /record-xxxx/removeTypes API method.
@@ -2189,16 +989,6 @@ def record_remove_types(object_id, input_params={}, always_retry=True, **kwargs)
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes
     """
     return DXHTTPRequest('/%s/removeTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def recordRename(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`record_rename()` instead.
-
-    """
-    print("dxpy.recordRename is deprecated; please use record_rename instead.", file=sys.stderr)
-    return record_rename(*args, **kwargs)
 
 def record_rename(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -2208,16 +998,6 @@ def record_rename(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/rename' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def recordSetDetails(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`record_set_details()` instead.
-
-    """
-    print("dxpy.recordSetDetails is deprecated; please use record_set_details instead.", file=sys.stderr)
-    return record_set_details(*args, **kwargs)
-
 def record_set_details(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /record-xxxx/setDetails API method.
@@ -2225,16 +1005,6 @@ def record_set_details(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails
     """
     return DXHTTPRequest('/%s/setDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def recordSetProperties(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`record_set_properties()` instead.
-
-    """
-    print("dxpy.recordSetProperties is deprecated; please use record_set_properties instead.", file=sys.stderr)
-    return record_set_properties(*args, **kwargs)
 
 def record_set_properties(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -2244,16 +1014,6 @@ def record_set_properties(object_id, input_params={}, always_retry=True, **kwarg
     """
     return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def recordSetVisibility(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`record_set_visibility()` instead.
-
-    """
-    print("dxpy.recordSetVisibility is deprecated; please use record_set_visibility instead.", file=sys.stderr)
-    return record_set_visibility(*args, **kwargs)
-
 def record_set_visibility(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /record-xxxx/setVisibility API method.
@@ -2261,16 +1021,6 @@ def record_set_visibility(object_id, input_params={}, always_retry=True, **kwarg
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility
     """
     return DXHTTPRequest('/%s/setVisibility' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def recordNew(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`record_new()` instead.
-
-    """
-    print("dxpy.recordNew is deprecated; please use record_new instead.", file=sys.stderr)
-    return record_new(*args, **kwargs)
 
 def record_new(input_params={}, always_retry=False, **kwargs):
     """
@@ -2281,16 +1031,6 @@ def record_new(input_params={}, always_retry=False, **kwargs):
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/record/new', input_params_cp, always_retry=always_retry, **kwargs)
 
-def systemDescribeDataObjects(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`system_describe_data_objects()` instead.
-
-    """
-    print("dxpy.systemDescribeDataObjects is deprecated; please use system_describe_data_objects instead.", file=sys.stderr)
-    return system_describe_data_objects(*args, **kwargs)
-
 def system_describe_data_objects(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/describeDataObjects API method.
@@ -2298,16 +1038,6 @@ def system_describe_data_objects(input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/describeDataObjects
     """
     return DXHTTPRequest('/system/describeDataObjects', input_params, always_retry=always_retry, **kwargs)
-
-def systemDescribeProjects(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`system_describe_projects()` instead.
-
-    """
-    print("dxpy.systemDescribeProjects is deprecated; please use system_describe_projects instead.", file=sys.stderr)
-    return system_describe_projects(*args, **kwargs)
 
 def system_describe_projects(input_params={}, always_retry=True, **kwargs):
     """
@@ -2317,31 +1047,11 @@ def system_describe_projects(input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/system/describeProjects', input_params, always_retry=always_retry, **kwargs)
 
-def systemFindAffiliates(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`system_find_affiliates()` instead.
-
-    """
-    print("dxpy.systemFindAffiliates is deprecated; please use system_find_affiliates instead.", file=sys.stderr)
-    return system_find_affiliates(*args, **kwargs)
-
 def system_find_affiliates(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/findAffiliates API method.
     """
     return DXHTTPRequest('/system/findAffiliates', input_params, always_retry=always_retry, **kwargs)
-
-def systemFindApps(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`system_find_apps()` instead.
-
-    """
-    print("dxpy.systemFindApps is deprecated; please use system_find_apps instead.", file=sys.stderr)
-    return system_find_apps(*args, **kwargs)
 
 def system_find_apps(input_params={}, always_retry=True, **kwargs):
     """
@@ -2351,16 +1061,6 @@ def system_find_apps(input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/system/findApps', input_params, always_retry=always_retry, **kwargs)
 
-def systemFindDataObjects(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`system_find_data_objects()` instead.
-
-    """
-    print("dxpy.systemFindDataObjects is deprecated; please use system_find_data_objects instead.", file=sys.stderr)
-    return system_find_data_objects(*args, **kwargs)
-
 def system_find_data_objects(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/findDataObjects API method.
@@ -2368,16 +1068,6 @@ def system_find_data_objects(input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindDataObjects
     """
     return DXHTTPRequest('/system/findDataObjects', input_params, always_retry=always_retry, **kwargs)
-
-def systemResolveDataObjects(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`system_resolve_data_objects()` instead.
-
-    """
-    print("dxpy.systemResolveDataObjects is deprecated; please use system_resolve_data_objects instead.", file=sys.stderr)
-    return system_resolve_data_objects(*args, **kwargs)
 
 def system_resolve_data_objects(input_params={}, always_retry=True, **kwargs):
     """
@@ -2387,16 +1077,6 @@ def system_resolve_data_objects(input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/system/resolveDataObjects', input_params, always_retry=always_retry, **kwargs)
 
-def systemFindExecutions(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`system_find_executions()` instead.
-
-    """
-    print("dxpy.systemFindExecutions is deprecated; please use system_find_executions instead.", file=sys.stderr)
-    return system_find_executions(*args, **kwargs)
-
 def system_find_executions(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/findExecutions API method.
@@ -2404,16 +1084,6 @@ def system_find_executions(input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindExecutions
     """
     return DXHTTPRequest('/system/findExecutions', input_params, always_retry=always_retry, **kwargs)
-
-def systemFindAnalyses(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`system_find_analyses()` instead.
-
-    """
-    print("dxpy.systemFindAnalyses is deprecated; please use system_find_analyses instead.", file=sys.stderr)
-    return system_find_analyses(*args, **kwargs)
 
 def system_find_analyses(input_params={}, always_retry=True, **kwargs):
     """
@@ -2423,16 +1093,6 @@ def system_find_analyses(input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/system/findAnalyses', input_params, always_retry=always_retry, **kwargs)
 
-def systemFindJobs(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`system_find_jobs()` instead.
-
-    """
-    print("dxpy.systemFindJobs is deprecated; please use system_find_jobs instead.", file=sys.stderr)
-    return system_find_jobs(*args, **kwargs)
-
 def system_find_jobs(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/findJobs API method.
@@ -2440,16 +1100,6 @@ def system_find_jobs(input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindJobs
     """
     return DXHTTPRequest('/system/findJobs', input_params, always_retry=always_retry, **kwargs)
-
-def systemFindProjects(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`system_find_projects()` instead.
-
-    """
-    print("dxpy.systemFindProjects is deprecated; please use system_find_projects instead.", file=sys.stderr)
-    return system_find_projects(*args, **kwargs)
 
 def system_find_projects(input_params={}, always_retry=True, **kwargs):
     """
@@ -2459,16 +1109,6 @@ def system_find_projects(input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/system/findProjects', input_params, always_retry=always_retry, **kwargs)
 
-def systemFindUsers(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`system_find_users()` instead.
-
-    """
-    print("dxpy.systemFindUsers is deprecated; please use system_find_users instead.", file=sys.stderr)
-    return system_find_users(*args, **kwargs)
-
 def system_find_users(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/findUsers API method.
@@ -2476,16 +1116,6 @@ def system_find_users(input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindUsers
     """
     return DXHTTPRequest('/system/findUsers', input_params, always_retry=always_retry, **kwargs)
-
-def systemFindProjectMembers(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`system_find_project_members()` instead.
-
-    """
-    print("dxpy.systemFindProjectMembers is deprecated; please use system_find_project_members instead.", file=sys.stderr)
-    return system_find_project_members(*args, **kwargs)
 
 def system_find_project_members(input_params={}, always_retry=True, **kwargs):
     """
@@ -2495,16 +1125,6 @@ def system_find_project_members(input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/system/findProjectMembers', input_params, always_retry=always_retry, **kwargs)
 
-def systemFindOrgs(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`system_find_orgs()` instead.
-
-    """
-    print("dxpy.systemFindOrgs is deprecated; please use system_find_orgs instead.", file=sys.stderr)
-    return system_find_orgs(*args, **kwargs)
-
 def system_find_orgs(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/findOrgs API method.
@@ -2512,16 +1132,6 @@ def system_find_orgs(input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/findOrgs
     """
     return DXHTTPRequest('/system/findOrgs', input_params, always_retry=always_retry, **kwargs)
-
-def systemGlobalSearch(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`system_global_search()` instead.
-
-    """
-    print("dxpy.systemGlobalSearch is deprecated; please use system_global_search instead.", file=sys.stderr)
-    return system_global_search(*args, **kwargs)
 
 def system_global_search(input_params={}, always_retry=True, **kwargs):
     """
@@ -2531,31 +1141,11 @@ def system_global_search(input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/system/globalSearch', input_params, always_retry=always_retry, **kwargs)
 
-def systemGreet(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`system_greet()` instead.
-
-    """
-    print("dxpy.systemGreet is deprecated; please use system_greet instead.", file=sys.stderr)
-    return system_greet(*args, **kwargs)
-
 def system_greet(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/greet API method.
     """
     return DXHTTPRequest('/system/greet', input_params, always_retry=always_retry, **kwargs)
-
-def systemShortenURL(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`system_shorten_url()` instead.
-
-    """
-    print("dxpy.systemShortenURL is deprecated; please use system_shorten_url instead.", file=sys.stderr)
-    return system_shorten_url(*args, **kwargs)
 
 def system_shorten_url(input_params={}, always_retry=True, **kwargs):
     """
@@ -2563,31 +1153,11 @@ def system_shorten_url(input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/system/shortenURL', input_params, always_retry=always_retry, **kwargs)
 
-def systemWhoami(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`system_whoami()` instead.
-
-    """
-    print("dxpy.systemWhoami is deprecated; please use system_whoami instead.", file=sys.stderr)
-    return system_whoami(*args, **kwargs)
-
 def system_whoami(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/whoami API method.
     """
     return DXHTTPRequest('/system/whoami', input_params, always_retry=always_retry, **kwargs)
-
-def userDescribe(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`user_describe()` instead.
-
-    """
-    print("dxpy.userDescribe is deprecated; please use user_describe instead.", file=sys.stderr)
-    return user_describe(*args, **kwargs)
 
 def user_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -2597,16 +1167,6 @@ def user_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def userUpdate(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`user_update()` instead.
-
-    """
-    print("dxpy.userUpdate is deprecated; please use user_update instead.", file=sys.stderr)
-    return user_update(*args, **kwargs)
-
 def user_update(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /user-xxxx/update API method.
@@ -2614,16 +1174,6 @@ def user_update(object_id, input_params={}, always_retry=False, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Users#API-method%3A-%2Fuser-xxxx%2Fupdate
     """
     return DXHTTPRequest('/%s/update' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def workflowAddStage(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`workflow_add_stage()` instead.
-
-    """
-    print("dxpy.workflowAddStage is deprecated; please use workflow_add_stage instead.", file=sys.stderr)
-    return workflow_add_stage(*args, **kwargs)
 
 def workflow_add_stage(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -2633,16 +1183,6 @@ def workflow_add_stage(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/addStage' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def workflowAddTags(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`workflow_add_tags()` instead.
-
-    """
-    print("dxpy.workflowAddTags is deprecated; please use workflow_add_tags instead.", file=sys.stderr)
-    return workflow_add_tags(*args, **kwargs)
-
 def workflow_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/addTags API method.
@@ -2650,16 +1190,6 @@ def workflow_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags
     """
     return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def workflowAddTypes(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`workflow_add_types()` instead.
-
-    """
-    print("dxpy.workflowAddTypes is deprecated; please use workflow_add_types instead.", file=sys.stderr)
-    return workflow_add_types(*args, **kwargs)
 
 def workflow_add_types(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -2669,16 +1199,6 @@ def workflow_add_types(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/addTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def workflowClose(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`workflow_close()` instead.
-
-    """
-    print("dxpy.workflowClose is deprecated; please use workflow_close instead.", file=sys.stderr)
-    return workflow_close(*args, **kwargs)
-
 def workflow_close(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/close API method.
@@ -2686,16 +1206,6 @@ def workflow_close(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Data-Object-Lifecycle#API-method%3A-%2Fclass-xxxx%2Fclose
     """
     return DXHTTPRequest('/%s/close' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def workflowDescribe(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`workflow_describe()` instead.
-
-    """
-    print("dxpy.workflowDescribe is deprecated; please use workflow_describe instead.", file=sys.stderr)
-    return workflow_describe(*args, **kwargs)
 
 def workflow_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -2705,16 +1215,6 @@ def workflow_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def workflowDryRun(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`workflow_dry_run()` instead.
-
-    """
-    print("dxpy.workflowDryRun is deprecated; please use workflow_dry_run instead.", file=sys.stderr)
-    return workflow_dry_run(*args, **kwargs)
-
 def workflow_dry_run(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/dryRun API method.
@@ -2722,16 +1222,6 @@ def workflow_dry_run(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FdryRun
     """
     return DXHTTPRequest('/%s/dryRun' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def workflowGetDetails(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`workflow_get_details()` instead.
-
-    """
-    print("dxpy.workflowGetDetails is deprecated; please use workflow_get_details instead.", file=sys.stderr)
-    return workflow_get_details(*args, **kwargs)
 
 def workflow_get_details(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -2741,16 +1231,6 @@ def workflow_get_details(object_id, input_params={}, always_retry=True, **kwargs
     """
     return DXHTTPRequest('/%s/getDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def workflowIsStageCompatible(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`workflow_is_stage_compatible()` instead.
-
-    """
-    print("dxpy.workflowIsStageCompatible is deprecated; please use workflow_is_stage_compatible instead.", file=sys.stderr)
-    return workflow_is_stage_compatible(*args, **kwargs)
-
 def workflow_is_stage_compatible(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/isStageCompatible API method.
@@ -2758,16 +1238,6 @@ def workflow_is_stage_compatible(object_id, input_params={}, always_retry=True, 
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FisStageCompatible
     """
     return DXHTTPRequest('/%s/isStageCompatible' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def workflowListProjects(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`workflow_list_projects()` instead.
-
-    """
-    print("dxpy.workflowListProjects is deprecated; please use workflow_list_projects instead.", file=sys.stderr)
-    return workflow_list_projects(*args, **kwargs)
 
 def workflow_list_projects(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -2777,16 +1247,6 @@ def workflow_list_projects(object_id, input_params={}, always_retry=True, **kwar
     """
     return DXHTTPRequest('/%s/listProjects' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def workflowMoveStage(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`workflow_move_stage()` instead.
-
-    """
-    print("dxpy.workflowMoveStage is deprecated; please use workflow_move_stage instead.", file=sys.stderr)
-    return workflow_move_stage(*args, **kwargs)
-
 def workflow_move_stage(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/moveStage API method.
@@ -2794,16 +1254,6 @@ def workflow_move_stage(object_id, input_params={}, always_retry=True, **kwargs)
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FmoveStage
     """
     return DXHTTPRequest('/%s/moveStage' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def workflowOverwrite(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`workflow_overwrite()` instead.
-
-    """
-    print("dxpy.workflowOverwrite is deprecated; please use workflow_overwrite instead.", file=sys.stderr)
-    return workflow_overwrite(*args, **kwargs)
 
 def workflow_overwrite(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -2813,16 +1263,6 @@ def workflow_overwrite(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/overwrite' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def workflowRemoveStage(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`workflow_remove_stage()` instead.
-
-    """
-    print("dxpy.workflowRemoveStage is deprecated; please use workflow_remove_stage instead.", file=sys.stderr)
-    return workflow_remove_stage(*args, **kwargs)
-
 def workflow_remove_stage(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/removeStage API method.
@@ -2830,16 +1270,6 @@ def workflow_remove_stage(object_id, input_params={}, always_retry=True, **kwarg
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FremoveStage
     """
     return DXHTTPRequest('/%s/removeStage' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def workflowRemoveTags(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`workflow_remove_tags()` instead.
-
-    """
-    print("dxpy.workflowRemoveTags is deprecated; please use workflow_remove_tags instead.", file=sys.stderr)
-    return workflow_remove_tags(*args, **kwargs)
 
 def workflow_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -2849,16 +1279,6 @@ def workflow_remove_tags(object_id, input_params={}, always_retry=True, **kwargs
     """
     return DXHTTPRequest('/%s/removeTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def workflowRemoveTypes(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`workflow_remove_types()` instead.
-
-    """
-    print("dxpy.workflowRemoveTypes is deprecated; please use workflow_remove_types instead.", file=sys.stderr)
-    return workflow_remove_types(*args, **kwargs)
-
 def workflow_remove_types(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/removeTypes API method.
@@ -2867,16 +1287,6 @@ def workflow_remove_types(object_id, input_params={}, always_retry=True, **kwarg
     """
     return DXHTTPRequest('/%s/removeTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def workflowRename(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`workflow_rename()` instead.
-
-    """
-    print("dxpy.workflowRename is deprecated; please use workflow_rename instead.", file=sys.stderr)
-    return workflow_rename(*args, **kwargs)
-
 def workflow_rename(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/rename API method.
@@ -2884,16 +1294,6 @@ def workflow_rename(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename
     """
     return DXHTTPRequest('/%s/rename' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def workflowRun(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`workflow_run()` instead.
-
-    """
-    print("dxpy.workflowRun is deprecated; please use workflow_run instead.", file=sys.stderr)
-    return workflow_run(*args, **kwargs)
 
 def workflow_run(object_id, input_params={}, always_retry=False, **kwargs):
     """
@@ -2904,16 +1304,6 @@ def workflow_run(object_id, input_params={}, always_retry=False, **kwargs):
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/%s/run' % object_id, input_params_cp, always_retry=always_retry, **kwargs)
 
-def workflowSetDetails(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`workflow_set_details()` instead.
-
-    """
-    print("dxpy.workflowSetDetails is deprecated; please use workflow_set_details instead.", file=sys.stderr)
-    return workflow_set_details(*args, **kwargs)
-
 def workflow_set_details(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/setDetails API method.
@@ -2921,16 +1311,6 @@ def workflow_set_details(object_id, input_params={}, always_retry=True, **kwargs
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails
     """
     return DXHTTPRequest('/%s/setDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def workflowSetProperties(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`workflow_set_properties()` instead.
-
-    """
-    print("dxpy.workflowSetProperties is deprecated; please use workflow_set_properties instead.", file=sys.stderr)
-    return workflow_set_properties(*args, **kwargs)
 
 def workflow_set_properties(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -2940,16 +1320,6 @@ def workflow_set_properties(object_id, input_params={}, always_retry=True, **kwa
     """
     return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def workflowSetStageInputs(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`workflow_set_stage_inputs()` instead.
-
-    """
-    print("dxpy.workflowSetStageInputs is deprecated; please use workflow_set_stage_inputs instead.", file=sys.stderr)
-    return workflow_set_stage_inputs(*args, **kwargs)
-
 def workflow_set_stage_inputs(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/setStageInputs API method.
@@ -2957,16 +1327,6 @@ def workflow_set_stage_inputs(object_id, input_params={}, always_retry=True, **k
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FsetStageInputs
     """
     return DXHTTPRequest('/%s/setStageInputs' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def workflowSetVisibility(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`workflow_set_visibility()` instead.
-
-    """
-    print("dxpy.workflowSetVisibility is deprecated; please use workflow_set_visibility instead.", file=sys.stderr)
-    return workflow_set_visibility(*args, **kwargs)
 
 def workflow_set_visibility(object_id, input_params={}, always_retry=True, **kwargs):
     """
@@ -2976,16 +1336,6 @@ def workflow_set_visibility(object_id, input_params={}, always_retry=True, **kwa
     """
     return DXHTTPRequest('/%s/setVisibility' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def workflowUpdate(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`workflow_update()` instead.
-
-    """
-    print("dxpy.workflowUpdate is deprecated; please use workflow_update instead.", file=sys.stderr)
-    return workflow_update(*args, **kwargs)
-
 def workflow_update(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/update API method.
@@ -2994,16 +1344,6 @@ def workflow_update(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/update' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def workflowUpdateStageExecutable(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`workflow_update_stage_executable()` instead.
-
-    """
-    print("dxpy.workflowUpdateStageExecutable is deprecated; please use workflow_update_stage_executable instead.", file=sys.stderr)
-    return workflow_update_stage_executable(*args, **kwargs)
-
 def workflow_update_stage_executable(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/updateStageExecutable API method.
@@ -3011,16 +1351,6 @@ def workflow_update_stage_executable(object_id, input_params={}, always_retry=Tr
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FupdateStageExecutable
     """
     return DXHTTPRequest('/%s/updateStageExecutable' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def workflowNew(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`workflow_new()` instead.
-
-    """
-    print("dxpy.workflowNew is deprecated; please use workflow_new instead.", file=sys.stderr)
-    return workflow_new(*args, **kwargs)
 
 def workflow_new(input_params={}, always_retry=False, **kwargs):
     """
