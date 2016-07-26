@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 DNAnexus, Inc.
+// Copyright (C) 2016 DNAnexus, Inc.
 //
 // This file is part of dx-toolkit (DNAnexus platform client libraries).
 //
