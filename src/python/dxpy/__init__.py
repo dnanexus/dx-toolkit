@@ -125,29 +125,48 @@ environment variables:
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, json, time, logging, platform, ssl, traceback
+import logging
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+
+import os, sys, json, time, platform, ssl, traceback
 import errno
 import math
 import mmap
 import requests
 import socket
+import threading
 
 from collections import namedtuple
+
 from . import exceptions
+from .compat import USING_PYTHON2, BadStatusLine, StringIO
+from .utils.printing import BOLD, BLUE, YELLOW, GREEN, RED, WHITE
+
 from random import randint
 from requests.auth import AuthBase
 from requests.packages import urllib3
 from requests.packages.urllib3.packages.ssl_match_hostname import match_hostname
-from .compat import USING_PYTHON2, expanduser, BadStatusLine, StringIO
 from threading import Lock
+
 try:
     from urllib.parse import urlsplit
 except ImportError:
     from urlparse import urlsplit
 
 
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+sequence_number_mutex = threading.Lock()
+counter = 0
+
+
+def _get_sequence_number():
+    global counter
+    with sequence_number_mutex:
+        retval = counter
+        counter += 1
+        return retval
+
 
 def configure_urllib3():
     # Disable verbose urllib3 warnings and log messages
@@ -429,6 +448,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
     global _UPGRADE_NOTIFY
 
+    seq_num = _get_sequence_number()
+
     url = APISERVER + resource if prepend_srv else resource
     method = method.upper()  # Convert method name to uppercase, to ease string comparisons later
 
@@ -483,10 +504,21 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 maybe_headers = ''
                 if 'Range' in _headers:
                     maybe_headers = " " + json.dumps({"Range": _headers["Range"]})
-                print("%s %s%s => %s\n" % (method, _url, maybe_headers, formatted_data), file=sys.stderr, end="")
+                print("%s %s %s%s => %s\n" % (YELLOW(BOLD(">%d" % seq_num)),
+                                              BLUE(method),
+                                              _url,
+                                              maybe_headers,
+                                              formatted_data),
+                      file=sys.stderr,
+                      end="")
             elif _DEBUG > 0:
                 from repr import Repr
-                print("%s %s => %s\n" % (method, _url, Repr().repr(data)), file=sys.stderr, end="")
+                print("%s %s %s => %s\n" % (YELLOW(BOLD(">%d" % seq_num)),
+                                            BLUE(method),
+                                            _url,
+                                            Repr().repr(data)),
+                      file=sys.stderr,
+                      end="")
 
             body = _maybe_trucate_request(_url, try_index, data)
 
@@ -554,6 +586,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
                 content = response.data
 
+                content_to_print = "(%d bytes)" % len(content) if len(content) > 0 else ''
+
                 if decode_response_body:
                     content = content.decode('utf-8')
                     if response.headers.get('content-type', '').startswith('application/json'):
@@ -562,18 +596,26 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                         except ValueError:
                             # The JSON is not parsable, but we should be able to retry.
                             raise exceptions.BadJSONInReply("Invalid JSON received from server", response.status)
-                        if _DEBUG > 0:
-                            t = int((time.time() - time_started) * 1000)
-                            req_id = response.headers.get('x-request-id')
                         if _DEBUG >= 3:
-                            print(method, req_id, url, "<=", response.status, "(%dms)" % t,
-                                  "\n" + json.dumps(content, indent=2), file=sys.stderr)
+                            content_to_print = "\n  " + json.dumps(content, indent=2).replace("\n", "\n  ")
                         elif _DEBUG == 2:
-                            print(method, req_id, url, "<=", response.status, "(%dms)" % t, json.dumps(content),
-                                  file=sys.stderr)
+                            content_to_print = json.dumps(content)
                         elif _DEBUG > 0:
-                            print(method, req_id, url, "<=", response.status, "(%dms)" % t, Repr().repr(content),
-                                  file=sys.stderr)
+                            content_to_print = Repr().repr(content)
+
+                if _DEBUG > 0:
+                    t = int((time.time() - time_started) * 1000)
+                    req_id = response.headers.get('x-request-id') or "--"
+                    code_format = GREEN if (200 <= response.status < 300) else RED
+                    print("  " + YELLOW(BOLD("<%d" % seq_num)),
+                          BLUE(method),
+                          req_id,
+                          _url,
+                          "<=",
+                          code_format(str(response.status)),
+                          WHITE(BOLD("(%dms)" % t)),
+                          content_to_print,
+                          file=sys.stderr)
 
                 if test_retry:
                     retried_responses.append(content)
