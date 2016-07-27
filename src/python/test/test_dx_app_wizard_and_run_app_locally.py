@@ -19,7 +19,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, unittest, json, tempfile, subprocess
+import os, sys, unittest, json, tempfile, subprocess, re
 import pexpect
 import pipes
 
@@ -354,6 +354,7 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
                         '-irequired_array_gtable=agtable',
                         '-irequired_boolean=true',
                         '-irequired_array_boolean=true',
+                        '-irequired_array_boolean=false',
                         '-irequired_int=32',
                         '-irequired_array_int=42',
                         '-irequired_float=3.4',
@@ -366,6 +367,8 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
             # Test with bare-minimum of inputs
             output = subprocess.check_output(['dx-run-app-locally', appdir] + cmdline_args)
             print(output)
+            # Verify array is printed total 3 times once in each input, logs, and final output
+            self.assertEquals(len(re.findall("required_array_boolean = \[ true, false ]", output)), 3)
             self.assertIn("App finished successfully", output)
 
             # See PTFM-13697 for CentOS 5 details
