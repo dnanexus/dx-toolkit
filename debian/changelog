@@ -1,3 +1,16 @@
+dx-toolkit (0.198.0) precise; urgency=low
+
+  * Improvements to formatting of _DX_DEBUG output
+  * dx-app-wizard code generation for array outputs
+  * Remove Python deprecated wrappers
+  * dx-toolkit Windows installer
+  * Skip dx build bash syn check on Windows
+  * dx ssh respects dx user conf dir env var
+  * Update DXExecDependencyInstaller init method
+  * Add a default timeout policy to dx-app-wizard
+
+ -- Phil Sung <psung@dnanexus.com>  Thu, 28 Jul 2016 17:23:53 +0000
+
 dx-toolkit (0.197.0) precise; urgency=low
 
   * Fixed failing tests on staging
