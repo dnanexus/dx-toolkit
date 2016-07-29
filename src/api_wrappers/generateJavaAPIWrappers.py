@@ -98,10 +98,11 @@ class_method_template = '''
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      */
-    public static <T> T {method_name}(Object inputObject, Class<T> outputClass) {{
+    public static <T> T {method_name}(Object inputObject, Class<T> outputClass) {{{nonce_code}
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("{route}", mapper.valueToTree(inputObject), {retry_strategy}),
+                new DXHTTPRequest().request("{route}", mapper.valueToTree({inputObject}), {retry_strategy}),
                 outputClass);
+    }
     }}
     /**
      * Invokes the {method_name} method with the specified input using the specified environment, deserializing to an object of the specified class.{wiki_link}
@@ -119,10 +120,11 @@ class_method_template = '''
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      */
-    public static <T> T {method_name}(Object inputObject, Class<T> outputClass, DXEnvironment env) {{
+    public static <T> T {method_name}(Object inputObject, Class<T> outputClass, DXEnvironment env) {{{nonce_code}
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("{route}", mapper.valueToTree(inputObject), {retry_strategy}),
+                new DXHTTPRequest(env).request("{route}", mapper.valueToTree({inputObject}), {retry_strategy}),
                 outputClass);
+    }
     }}
 
     /**
@@ -240,10 +242,11 @@ object_method_template = '''
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      */
-    public static <T> T {method_name}(String objectId, Object inputObject, Class<T> outputClass) {{
+    public static <T> T {method_name}(String objectId, Object inputObject, Class<T> outputClass) {{{nonce_code}
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "{method_route}",
-                        mapper.valueToTree(inputObject), {retry_strategy}), outputClass);
+                        mapper.valueToTree({inputObject}), {retry_strategy}), outputClass);
+    }
     }}
     /**
      * Invokes the {method_name} method with an empty input using the given environment, deserializing to an object of the specified class.{wiki_link}
@@ -281,10 +284,11 @@ object_method_template = '''
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      */
-    public static <T> T {method_name}(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {{
+    public static <T> T {method_name}(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {{{nonce_code}
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "{method_route}",
-                    mapper.valueToTree(inputObject), {retry_strategy}), outputClass);
+                    mapper.valueToTree({inputObject}), {retry_strategy}), outputClass);
+    }
     }}
 
     /**
@@ -381,6 +385,12 @@ object_method_template = '''
 #'''
 app_object_method_template = object_method_template
 
+def make_nonce_code(accept_nonce):
+    return ("\n        Object inputObjectCp = Nonce.update_nonce(inputObject)" if accept_nonce else "")
+
+def make_input_params(accept_nonce):
+    return ("inputObjectCp" if accept_nonce else "inputObject")
+
 print preamble
 
 for method in json.loads(sys.stdin.read()):
@@ -390,13 +400,29 @@ for method in json.loads(sys.stdin.read()):
     if opts.get('wikiLink', None):
         wiki_link = '\n     *\n     * <p>For more information about this method, see the <a href="%s">API specification</a>.' % (opts['wikiLink'],)
     retry_param = "RetryStrategy.SAFE_TO_RETRY" if opts['retryable'] else "RetryStrategy.UNSAFE_TO_RETRY"
+    accept_nonce = True if 'acceptNonce' in opts else False
     if (opts['objectMethod']):
         root, oid_route, method_route = route.split("/")
         if oid_route == 'app-xxxx':
-            print app_object_method_template.format(method_name=method_name, method_route=method_route, wiki_link=wiki_link, retry_strategy=retry_param)
+            print app_object_method_template.format(method_name=method_name,
+                                                    method_route=method_route,
+                                                    wiki_link=wiki_link,
+                                                    retry_strategy=retry_param,
+                                                    nonce_code=make_nonce_code(accept_nonce),
+                                                    inputObject=make_input_params(accept_nonce))
         else:
-            print object_method_template.format(method_name=method_name, method_route=method_route, wiki_link=wiki_link, retry_strategy=retry_param)
+            print object_method_template.format(method_name=method_name,
+                                                method_route=method_route,
+                                                wiki_link=wiki_link,
+                                                retry_strategy=retry_param,
+                                                nonce_code=make_nonce_code(accept_nonce),
+                                                inputObject=make_input_params(accept_nonce))
     else:
-        print class_method_template.format(method_name=method_name, route=route, wiki_link=wiki_link, retry_strategy=retry_param)
+        print class_method_template.format(method_name=method_name,
+                                           route=route,
+                                           wiki_link=wiki_link,
+                                           retry_strategy=retry_param,
+                                           nonce_code=make_nonce_code(accept_nonce),
+                                           inputObject=make_input_params(accept_nonce))
 
 print postscript
