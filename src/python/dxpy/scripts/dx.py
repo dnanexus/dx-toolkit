@@ -4164,7 +4164,8 @@ parser_run.add_argument('--ssh',
                                   width_adjustment=-24),
                         action='store_true')
 parser_run.add_argument('--ssh-proxy', metavar=('<address>:<port>'),
-                        help='SSH connect via proxy, argument supplied is used as the proxy address and port')
+                        help=fill('SSH connect via proxy, argument supplied is used as the proxy address and port',
+                                  width_adjustment=-24))
 parser_run.add_argument('--debug-on', action='append', choices=['AppError', 'AppInternalError', 'ExecutionError', 'All'],
                         help=fill("Configure the job to hold for debugging when any of the listed errors occur",
                                   width_adjustment=-24))
