@@ -36,7 +36,9 @@ public enum JobState {
     FAILED("failed"),
     UNRESPONSIVE("unresponsive"),
     TERMINATING("terminating"),
-    TERMINATED("terminated");
+    TERMINATED("terminated"),
+    DEBUG_HOLD("debug_hold"),
+    RESTARTABLE("restartable");
 
     private static Map<String, JobState> createMap;
 
