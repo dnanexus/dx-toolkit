@@ -108,9 +108,9 @@ def download_all_inputs(exclude=None, parallel=False, max_threads=None):
     '''
     :param exclude: List of input variables that should not be downloaded.
     :type exclude: Array of strings
-    :param parallel: Should we download multiple files in parallel? (default: True)
+    :param parallel: Should we download multiple files in parallel? (default: False)
     :type filename: boolean
-    :param max_num_parallel_downloads: If parallel is True, how many threads should be used
+    :param max_threads: If parallel is True, how many threads should be used
         to download files? (default: number of cores)
     :type append: int
     :returns: dict of lists of strings where each key is the input variable
