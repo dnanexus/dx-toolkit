@@ -270,11 +270,24 @@ class DXExecDependencyInstaller(object):
     group_pms = ("apt", "gem", "cpan", "cran", "pip")
 
     def __init__(self, executable_desc, job_desc, logger=None):
+        """
+        :param executable_desc: The description of the executable of
+            this job, which can be obtained in the response of the
+            /executable-x/describe request. This dict must contain the
+            following keys:
+                - "runSpec"
+        :type executable_desc: dict
+        :param job_desc: The description of this job, which can be
+            obtained in the response of the /job-x/describe request.
+            If ``executable_desc["runSpec"]`` has key
+            "bundledDependsByRegion", then this dict must contain the
+            following keys:
+                - "region"
+        :type job_desc: dict
+        """
         if "runSpec" not in executable_desc:
             raise DXExecDependencyError('Expected field "runSpec" to be present in executable description"')
 
-        # "region" must be in the job describe dict if "bundledDependsByRegion"
-        # is specified in the executable describe dict.
         if "bundledDependsByRegion" in executable_desc["runSpec"] and "region" not in job_desc:
             raise DXExecDependencyError("Expected key 'region' in job description")
 

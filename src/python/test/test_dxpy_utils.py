@@ -230,12 +230,6 @@ class TestDXExecDependsUtils(unittest.TestCase):
                 {"name": "asset.east", "id": {"$dnanexus_link": "file-asseteast"}}
             ]
         }
-        edi = self.get_edi({"bundledDependsByRegion": bundled_depends_by_region},
-                           job_desc={"region": "aws:us-east-1"})
-        with self.assertRaisesRegexp(DXError, 'file-asseteast'):
-            # Asserts that we attempted to download the correct file.
-            edi.install()
-
         with self.assertRaisesRegexp(DXError, 'region.*job description'):
             self.get_edi({"bundledDependsByRegion": bundled_depends_by_region})
 
