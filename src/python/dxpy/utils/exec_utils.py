@@ -270,8 +270,26 @@ class DXExecDependencyInstaller(object):
     group_pms = ("apt", "gem", "cpan", "cran", "pip")
 
     def __init__(self, executable_desc, job_desc, logger=None):
+        """
+        :param executable_desc: The description of the executable of
+            this job, which can be obtained in the response of the
+            /executable-x/describe request. This dict must contain the
+            following keys:
+                - "runSpec"
+        :type executable_desc: dict
+        :param job_desc: The description of this job, which can be
+            obtained in the response of the /job-x/describe request.
+            If ``executable_desc["runSpec"]`` has key
+            "bundledDependsByRegion", then this dict must contain the
+            following keys:
+                - "region"
+        :type job_desc: dict
+        """
         if "runSpec" not in executable_desc:
             raise DXExecDependencyError('Expected field "runSpec" to be present in executable description"')
+
+        if "bundledDependsByRegion" in executable_desc["runSpec"] and "region" not in job_desc:
+            raise DXExecDependencyError("Expected key 'region' in job description")
 
         self.exec_desc = executable_desc
         self.run_spec = executable_desc["runSpec"]
@@ -280,7 +298,7 @@ class DXExecDependencyInstaller(object):
         self.logger = logger
 
         self.dep_groups = []
-        for dep in itertools.chain(self.run_spec.get("bundledDepends", []),
+        for dep in itertools.chain(self._get_local_bundled_dependencies(),
                                    self.run_spec.get("execDepends", []),
                                    self.run_spec.get("dependencies", [])):
             self._validate_dependency(dep)
@@ -293,6 +311,15 @@ class DXExecDependencyInstaller(object):
             if len(self.dep_groups) == 0 or self.dep_groups[-1]["type"] != dep_type or dep_type not in self.group_pms:
                 self.dep_groups.append({"type": dep_type, "deps": [], "index": len(self.dep_groups)})
             self.dep_groups[-1]["deps"].append(dep)
+
+    def _get_local_bundled_dependencies(self):
+        bundled_depends_by_region = self.run_spec.get("bundledDependsByRegion")
+        if bundled_depends_by_region is None:
+            return self.run_spec.get("bundledDepends", [])
+        else:
+            # Resolve the local bundled dependencies for this job.
+            job_region = self.job_desc["region"]
+            return bundled_depends_by_region[job_region]
 
     def log(self, message):
         if self.logger:

@@ -367,6 +367,10 @@ def main(**kwargs):
     # print('\n' + BOLD('Linux version: '))
     app_json['runSpec']['distribution'] = 'Ubuntu'
     app_json['runSpec']['release'] = '12.04'
+
+    app_json.setdefault('timeoutPolicy', {})
+    app_json['timeoutPolicy'].setdefault('*', {})
+    app_json['timeoutPolicy']['*'].setdefault('hours', 24)
     #if any(instance_type.startswith(prefix) for prefix in ('mem1_hdd2', 'mem2_hdd2', 'mem3_hdd2')):
     #    print(fill('Your app will run on Ubuntu 12.04. To use Ubuntu 14.04, select from the list of common instance ' +
     #               'types above.'))

@@ -125,29 +125,48 @@ environment variables:
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, json, time, logging, platform, ssl, traceback
+import logging
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+
+import os, sys, json, time, platform, ssl, traceback
 import errno
 import math
 import mmap
 import requests
 import socket
+import threading
 
 from collections import namedtuple
+
 from . import exceptions
+from .compat import USING_PYTHON2, BadStatusLine, StringIO
+from .utils.printing import BOLD, BLUE, YELLOW, GREEN, RED, WHITE
+
 from random import randint
 from requests.auth import AuthBase
 from requests.packages import urllib3
 from requests.packages.urllib3.packages.ssl_match_hostname import match_hostname
-from .compat import USING_PYTHON2, expanduser, BadStatusLine, StringIO
 from threading import Lock
+
 try:
     from urllib.parse import urlsplit
 except ImportError:
     from urlparse import urlsplit
 
 
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+sequence_number_mutex = threading.Lock()
+counter = 0
+
+
+def _get_sequence_number():
+    global counter
+    with sequence_number_mutex:
+        retval = counter
+        counter += 1
+        return retval
+
 
 def configure_urllib3():
     # Disable verbose urllib3 warnings and log messages
@@ -429,6 +448,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
     global _UPGRADE_NOTIFY
 
+    seq_num = _get_sequence_number()
+
     url = APISERVER + resource if prepend_srv else resource
     method = method.upper()  # Convert method name to uppercase, to ease string comparisons later
 
@@ -439,6 +460,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
         auth(_RequestForAuth(method, url, headers))
 
     pool_args = {arg: kwargs.pop(arg, None) for arg in ("verify", "cert_file", "key_file")}
+    test_retry = kwargs.pop("_test_retry_http_request", False)
 
     if _DEBUG >= 2:
         if isinstance(data, basestring) or isinstance(data, mmap.mmap):
@@ -469,6 +491,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
         rewind_input_buffer_offset = data.tell()
 
     try_index = 0
+    retried_responses = []
     while True:
         success, time_started = True, None
         response = None
@@ -481,10 +504,21 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 maybe_headers = ''
                 if 'Range' in _headers:
                     maybe_headers = " " + json.dumps({"Range": _headers["Range"]})
-                print("%s %s%s => %s\n" % (method, _url, maybe_headers, formatted_data), file=sys.stderr, end="")
+                print("%s %s %s%s => %s\n" % (YELLOW(BOLD(">%d" % seq_num)),
+                                              BLUE(method),
+                                              _url,
+                                              maybe_headers,
+                                              formatted_data),
+                      file=sys.stderr,
+                      end="")
             elif _DEBUG > 0:
                 from repr import Repr
-                print("%s %s => %s\n" % (method, _url, Repr().repr(data)), file=sys.stderr, end="")
+                print("%s %s %s => %s\n" % (YELLOW(BOLD(">%d" % seq_num)),
+                                            BLUE(method),
+                                            _url,
+                                            Repr().repr(data)),
+                      file=sys.stderr,
+                      end="")
 
             body = _maybe_trucate_request(_url, try_index, data)
 
@@ -552,6 +586,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
                 content = response.data
 
+                content_to_print = "(%d bytes)" % len(content) if len(content) > 0 else ''
+
                 if decode_response_body:
                     content = content.decode('utf-8')
                     if response.headers.get('content-type', '').startswith('application/json'):
@@ -560,18 +596,35 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                         except ValueError:
                             # The JSON is not parsable, but we should be able to retry.
                             raise exceptions.BadJSONInReply("Invalid JSON received from server", response.status)
-                        if _DEBUG > 0:
-                            t = int((time.time() - time_started) * 1000)
-                            req_id = response.headers.get('x-request-id')
                         if _DEBUG >= 3:
-                            print(method, req_id, url, "<=", response.status, "(%dms)" % t,
-                                  "\n" + json.dumps(content, indent=2), file=sys.stderr)
+                            content_to_print = "\n  " + json.dumps(content, indent=2).replace("\n", "\n  ")
                         elif _DEBUG == 2:
-                            print(method, req_id, url, "<=", response.status, "(%dms)" % t, json.dumps(content),
-                                  file=sys.stderr)
+                            content_to_print = json.dumps(content)
                         elif _DEBUG > 0:
-                            print(method, req_id, url, "<=", response.status, "(%dms)" % t, Repr().repr(content),
-                                  file=sys.stderr)
+                            content_to_print = Repr().repr(content)
+
+                if _DEBUG > 0:
+                    t = int((time.time() - time_started) * 1000)
+                    req_id = response.headers.get('x-request-id') or "--"
+                    code_format = GREEN if (200 <= response.status < 300) else RED
+                    print("  " + YELLOW(BOLD("<%d" % seq_num)),
+                          BLUE(method),
+                          req_id,
+                          _url,
+                          "<=",
+                          code_format(str(response.status)),
+                          WHITE(BOLD("(%dms)" % t)),
+                          content_to_print,
+                          file=sys.stderr)
+
+                if test_retry:
+                    retried_responses.append(content)
+                    if len(retried_responses) == 1:
+                        continue
+                    else:
+                        _set_retry_response(retried_responses[0])
+                        return retried_responses[1]
+
                 return content
             raise AssertionError('Should never reach this line: expected a result to have been returned by now')
         except Exception as e:
@@ -822,6 +875,25 @@ def get_auth_server_name(host_override=None, port_override=None, protocol='https
     else:
         err_msg = "Could not determine which auth server is associated with {apiserver}."
         raise exceptions.DXError(err_msg.format(apiserver=APISERVER_HOST))
+
+
+'''This field is used for testing a retry of an Http request. The caller can pass
+an argument "_test_retry_http_request"=1 to DXHTTPREQUEST to simulate a request that
+required a retry. The first response will be returned and the second response can be
+retrieved by calling _get_retry_response
+'''
+
+_retry_response = None
+
+
+def _set_retry_response(response):
+    global _retry_response
+    _retry_response = response
+
+
+def _get_retry_response():
+    return _retry_response
+
 
 from .utils.config import DXConfig as _DXConfig
 config = _DXConfig()

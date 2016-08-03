@@ -628,7 +628,7 @@ class ExecutableInputs(object):
 
             readline.set_completer_delims("")
 
-            readline.write_history_file(os.path.expanduser('~/.dnanexus_config/.dx_history'))
+            readline.write_history_file(os.path.join(dxpy.config.get_user_conf_dir(), '.dx_history'))
             readline.clear_history()
             readline.set_completer()
         except:

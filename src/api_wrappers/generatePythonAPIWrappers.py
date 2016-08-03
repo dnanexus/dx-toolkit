@@ -32,71 +32,71 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import sys
 
 from dxpy import DXHTTPRequest
+from dxpy.utils import Nonce
 '''
 
-class_method_template = '''def {legacy_wrapper_method_name}(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`{wrapper_method_name}()` instead.
-
-    """
-    print("dxpy.{legacy_wrapper_method_name} is deprecated; please use {wrapper_method_name} instead.", file=sys.stderr)
-    return {wrapper_method_name}(*args, **kwargs)
-
-def {wrapper_method_name}(input_params={{}}, always_retry={retry}, **kwargs):
+class_method_template = '''def {wrapper_method_name}(input_params={{}}, always_retry={retry}, **kwargs):
     """
     Invokes the {route} API method.{wiki_ref}
-    """
-    return DXHTTPRequest('{route}', input_params, always_retry=always_retry, **kwargs)
+    """{nonce_code}
+    return DXHTTPRequest('{route}', {input_params}, always_retry=always_retry, **kwargs)
 '''
 
-object_method_template = '''def {legacy_wrapper_method_name}(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`{wrapper_method_name}()` instead.
-
-    """
-    print("dxpy.{legacy_wrapper_method_name} is deprecated; please use {wrapper_method_name} instead.", file=sys.stderr)
-    return {wrapper_method_name}(*args, **kwargs)
-
-def {wrapper_method_name}(object_id, input_params={{}}, always_retry={retry}, **kwargs):
+object_method_template = '''def {wrapper_method_name}(object_id, input_params={{}}, always_retry={retry}, **kwargs):
     """
     Invokes the {route} API method.{wiki_ref}
-    """
-    return DXHTTPRequest('/%s/{api_method_name}' % object_id, input_params, always_retry=always_retry, **kwargs)
+    """{nonce_code}
+    return DXHTTPRequest('/%s/{api_method_name}' % object_id, {input_params}, always_retry=always_retry, **kwargs)
 '''
 
-app_object_method_template = '''def {legacy_wrapper_method_name}(*args, **kwargs):
-    """
-
-    .. deprecated:: 0.42.0
-       Use :func:`{wrapper_method_name}()` instead.
-
-    """
-    print("dxpy.{legacy_wrapper_method_name} is deprecated; please use {wrapper_method_name} instead.", file=sys.stderr)
-    return {wrapper_method_name}(*args, **kwargs)
-
-def {wrapper_method_name}(app_name_or_id, alias=None, input_params={{}}, always_retry={retry}, **kwargs):
+app_object_method_template = '''def {wrapper_method_name}(app_name_or_id, alias=None, input_params={{}}, always_retry={retry}, **kwargs):
     """
     Invokes the /app-xxxx/{api_method_name} API method.{wiki_ref}
-    """
+    """{nonce_code}
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
-    return DXHTTPRequest('/%s/{api_method_name}' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+    return DXHTTPRequest('/%s/{api_method_name}' % fully_qualified_version, {input_params}, always_retry=always_retry, **kwargs)
 '''
+
+
+def make_nonce_code(accept_nonce):
+    return ("\n    input_params_cp = Nonce.update_nonce(input_params)" if accept_nonce else "")
+
+
+def make_input_params(accept_nonce):
+    return ("input_params_cp" if accept_nonce else "input_params")
+
 
 def make_wiki_ref(url):
     return ("\n\n    For more info, see: " + url) if url else ""
 
-def make_class_method(wrapper_method_name, legacy_wrapper_method_name, route, retry=False, url=None):
-    return class_method_template.format(wrapper_method_name=wrapper_method_name, legacy_wrapper_method_name=legacy_wrapper_method_name, route=route, retry=retry, wiki_ref=make_wiki_ref(url))
 
-def make_object_method(wrapper_method_name, legacy_wrapper_method_name, api_method_name, route, retry=False, url=None):
-    return object_method_template.format(wrapper_method_name=wrapper_method_name, legacy_wrapper_method_name=legacy_wrapper_method_name, api_method_name=api_method_name, route=route, retry=retry, wiki_ref=make_wiki_ref(url))
+def make_class_method(wrapper_method_name, route, accept_nonce, retry=False, url=None):
+    return class_method_template.format(wrapper_method_name=wrapper_method_name,
+                                        route=route,
+                                        retry=retry,
+                                        wiki_ref=make_wiki_ref(url),
+                                        nonce_code=make_nonce_code(accept_nonce),
+                                        input_params=make_input_params(accept_nonce))
 
-def make_app_object_method(wrapper_method_name, legacy_wrapper_method_name, api_method_name, retry=False, url=None):
-    return app_object_method_template.format(wrapper_method_name=wrapper_method_name, legacy_wrapper_method_name=legacy_wrapper_method_name, api_method_name=api_method_name, retry=retry, wiki_ref=make_wiki_ref(url))
+
+def make_object_method(wrapper_method_name, api_method_name, route, accept_nonce, retry=False, url=None):
+    return object_method_template.format(wrapper_method_name=wrapper_method_name,
+                                         api_method_name=api_method_name,
+                                         route=route,
+                                         retry=retry,
+                                         wiki_ref=make_wiki_ref(url),
+                                         nonce_code=make_nonce_code(accept_nonce),
+                                         input_params=make_input_params(accept_nonce))
+
+
+def make_app_object_method(wrapper_method_name, api_method_name, accept_nonce, retry=False, url=None):
+    return app_object_method_template.format(wrapper_method_name=wrapper_method_name,
+                                             api_method_name=api_method_name,
+                                             retry=retry,
+                                             wiki_ref=make_wiki_ref(url),
+                                             nonce_code=make_nonce_code(accept_nonce),
+                                             input_params=make_input_params(accept_nonce))
+
 
 def camel_case_to_underscore(name):
     """
@@ -108,15 +108,27 @@ print(preamble)
 
 for method in json.loads(sys.stdin.read()):
     route, signature, opts = method
-    # TODO: remove legacy camelcase methods
-    legacy_wrapper_method_name = signature.split("(")[0]
-    wrapper_method_name = camel_case_to_underscore(legacy_wrapper_method_name)
+    wrapper_method_name = camel_case_to_underscore(signature.split("(")[0])
     retry = "True" if (opts['retryable']) else "False"
+    accept_nonce = True if 'acceptNonce' in opts else False
     if (opts['objectMethod']):
         root, oid_route, api_method_name = route.split("/")
         if oid_route == 'app-xxxx':
-            print(make_app_object_method(wrapper_method_name, legacy_wrapper_method_name, api_method_name, retry=retry, url=opts.get('wikiLink', None)))
+            print(make_app_object_method(wrapper_method_name,
+                                         api_method_name,
+                                         accept_nonce,
+                                         retry=retry,
+                                         url=opts.get('wikiLink', None)))
         else:
-            print(make_object_method(wrapper_method_name, legacy_wrapper_method_name, api_method_name, route, retry=retry, url=opts.get('wikiLink', None)))
+            print(make_object_method(wrapper_method_name,
+                                     api_method_name,
+                                     route,
+                                     accept_nonce,
+                                     retry=retry,
+                                     url=opts.get('wikiLink', None)))
     else:
-        print(make_class_method(wrapper_method_name, legacy_wrapper_method_name, route, retry=retry, url=opts.get('wikiLink', None)))
+        print(make_class_method(wrapper_method_name,
+                                route,
+                                accept_nonce,
+                                retry=retry,
+                                url=opts.get('wikiLink', None)))

@@ -62,35 +62,6 @@ def _ensure_local_dir(d):
         os.makedirs(d)
 
 
-def _list_subfolders(project, path, cached_folder_lists, recurse=True):
-    if project not in cached_folder_lists:
-        cached_folder_lists[project] = dxpy.get_handler(project).describe(
-            input_params={'folders': True}
-        )['folders']
-    # TODO: support shell-style path globbing (i.e. /a*/c matches /ab/c but not /a/b/c)
-    # return pathmatch.filter(cached_folder_lists[project], os.path.join(path, '*'))
-    if recurse:
-        return (f for f in cached_folder_lists[project] if f.startswith(path))
-    else:
-        return (f for f in cached_folder_lists[project] if f.startswith(path) and '/' not in f[len(path)+1:])
-
-
-def _download_one_folder(project, folder, strip_prefix, destdir, cached_folder_lists, args):
-    assert(folder.startswith(strip_prefix))
-    if not args.recursive:
-        err_exit('Error: "' + folder + '" is a folder but the -r/--recursive option was not given')
-
-    for subfolder in _list_subfolders(project, folder, cached_folder_lists, recurse=True):
-        _ensure_local_dir(os.path.join(destdir, subfolder[len(strip_prefix):].lstrip('/')))
-
-    # TODO: control visibility=hidden
-    for f in dxpy.search.find_data_objects(classname='file', state='closed', project=project, folder=folder,
-                                           recurse=True, describe=True):
-        file_desc = f['describe']
-        dest_filename = os.path.join(destdir, file_desc['folder'][len(strip_prefix):].lstrip('/'), file_desc['name'])
-        download_one_file(project, file_desc, dest_filename, args)
-
-
 def _is_glob(path):
     return get_first_pos_of_char('*', path) > -1 or get_first_pos_of_char('?', path) > -1
 
@@ -114,17 +85,21 @@ def _download_files(files, destdir, args, dest_filename=None):
             download_one_file(project, file_desc, dest, args)
 
 
-def _download_folders(folders, destdir, cached_folder_lists, args):
+def _download_folders(folders, destdir, args):
     for project in folders:
         for folder, strip_prefix in folders[project]:
-            _download_one_folder(project, folder, strip_prefix, destdir, cached_folder_lists, args)
+            if not args.recursive:
+                err_exit('Error: "' + folder + '" is a folder but the -r/--recursive option was not given')
+            assert(folder.startswith(strip_prefix))
+            folder_destdir = os.path.join(destdir, folder[len(strip_prefix):].lstrip('/'))
+            try:
+                dxpy.download_folder(project, folder_destdir, folder=folder)
+            except:
+                err_exit()
 
 
 # Main entry point.
 def download(args):
-    # Get space for caching subfolders
-    cached_folder_lists = {}
-
     folders_to_get, files_to_get, count = collections.defaultdict(list), collections.defaultdict(list), 0
     foldernames, filenames = [], []
     for path in args.paths:
@@ -156,7 +131,7 @@ def download(args):
                 path = path[colon_pos + 1:]
             abs_path, strip_prefix = _rel2abs(path, project)
             parent_folder = os.path.dirname(abs_path)
-            folder_listing = _list_subfolders(project, parent_folder, cached_folder_lists, recurse=False)
+            folder_listing = dxpy.list_subfolders(project, parent_folder, recurse=False)
             matching_folders = pathmatch.filter(folder_listing, abs_path)
             if '/' in matching_folders and len(matching_folders) > 1:
                 # The list of subfolders is {'/', '/A', '/B'}.
@@ -208,5 +183,5 @@ def download(args):
     else:
         destdir, dest_filename = os.getcwd(), args.output
 
-    _download_folders(folders_to_get, destdir, cached_folder_lists, args)
+    _download_folders(folders_to_get, destdir, args)
     _download_files(files_to_get, destdir, args, dest_filename=dest_filename)

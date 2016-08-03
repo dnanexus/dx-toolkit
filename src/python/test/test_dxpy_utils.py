@@ -22,9 +22,9 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import unittest, time, json, re, os
 import dateutil.parser
 import dxpy
-from dxpy import AppError, AppInternalError, DXFile, DXRecord
+from dxpy import AppError, AppInternalError, DXError, DXFile, DXRecord
 from dxpy.utils import (describe, exec_utils, genomic_utils, response_iterator, get_futures_threadpool, DXJSONEncoder,
-                        normalize_timedelta, normalize_time_input, config)
+                        normalize_timedelta, normalize_time_input, config, Nonce)
 from dxpy.utils.exec_utils import DXExecDependencyInstaller
 from dxpy.utils.pretty_print import flatten_json_array
 from dxpy.compat import USING_PYTHON2
@@ -125,10 +125,33 @@ class TestDXExecDependsUtils(unittest.TestCase):
         assertRegex = unittest.TestCase.assertRegexpMatches
         assertNotRegex = unittest.TestCase.assertNotRegexpMatches
 
-    def test_dx_execdepends_installer(self):
-        def get_edi(run_spec, job_desc=None):
-            return TestEDI(executable_desc={"runSpec": run_spec}, job_desc=job_desc if job_desc else {})
+    def get_edi(self, run_spec, job_desc=None):
+        return TestEDI(executable_desc={"runSpec": run_spec}, job_desc=job_desc if job_desc else {})
 
+    def test_install_bundled_dependencies(self):
+        bundled_depends_by_region = {
+            "aws:us-east-1": [
+                {"name": "asset.east", "id": {"$dnanexus_link": "file-asseteast"}}
+            ],
+
+            "aws:us-west-1": [
+                {"name": "asset.west", "id": {"$dnanexus_link": "file-assetwest"}}
+            ]
+        }
+        edi = self.get_edi({"bundledDependsByRegion": bundled_depends_by_region},
+                           job_desc={"region": "aws:us-east-1"})
+        with self.assertRaisesRegexp(DXError, 'file-asseteast'):
+            # Asserts that we attempted to download the correct file.
+            edi.install()
+        edi = self.get_edi({"bundledDependsByRegion": bundled_depends_by_region},
+                           job_desc={"region": "aws:us-west-1"})
+        with self.assertRaisesRegexp(DXError, 'file-assetwest'):
+            edi.install()
+        with self.assertRaisesRegexp(KeyError, 'aws:cn-north-1'):
+            self.get_edi({"bundledDependsByRegion": bundled_depends_by_region},
+                         job_desc={"region": "aws:cn-north-1"})
+
+    def test_dx_execdepends_installer(self):
         def assert_cmd_ran(edi, regexp):
             self.assertRegex("\n".join(edi.command_log), regexp)
 
@@ -139,47 +162,44 @@ class TestDXExecDependsUtils(unittest.TestCase):
             DXExecDependencyInstaller({}, {})
 
         with self.assertRaisesRegexp(AppInternalError, 'Expected field "name" to be present'):
-            get_edi({"dependencies": [{"foo": "bar"}]})
+            self.get_edi({"dependencies": [{"foo": "bar"}]})
 
-        edi = get_edi({"dependencies": [{"name": "foo", "package_manager": "cran", "version": "1.2.3"}]})
+        edi = self.get_edi({"dependencies": [{"name": "foo", "package_manager": "cran", "version": "1.2.3"}]})
         edi.install()
         assert_cmd_ran(edi, "R -e .+ install.packages.+devtools.+install_version.+foo.+version.+1.2.3")
 
         with self.assertRaisesRegexp(AppInternalError, 'does not have a "url" field'):
-            get_edi({"dependencies": [{"name": "foo", "package_manager": "git"}]})
+            self.get_edi({"dependencies": [{"name": "foo", "package_manager": "git"}]})
 
-        edi = get_edi({"execDepends": [{"name": "git"}], "dependencies": [{"name": "tmux"}]})
+        edi = self.get_edi({"execDepends": [{"name": "git"}], "dependencies": [{"name": "tmux"}]})
         edi.install()
         assert_cmd_ran(edi, "apt-get install --yes --no-install-recommends git tmux")
 
-        edi = get_edi({})
+        edi = self.get_edi({"execDepends": [], "bundledDepends": [], "dependencies": []})
         edi.install()
 
-        edi = get_edi({"execDepends": [], "bundledDepends": [], "dependencies": []})
-        edi.install()
-
-        edi = get_edi({"dependencies": [{"name": "pytz", "package_manager": "pip", "version": "2014.7"},
-                                        {"name": "certifi", "package_manager": "pip", "stages": ["main"]},
-                                        {"name": "tmux", "package_manager": "apt"},
-                                        {"name": "rake", "package_manager": "gem", "version": "10.3.2"},
-                                        {"name": "nokogiri", "package_manager": "gem", "stages": ["main"]},
-                                        {"name": "Module::Provision", "package_manager": "cpan", "version": "0.36.1"},
-                                        {"name": "LWP::MediaTypes", "package_manager": "cpan"},
-                                        {"name": "RJSONIO", "package_manager": "cran"},
-                                        {"name": "plyr", "package_manager": "cran", "version": "1.8.1"},
-                                        {"name": "ggplot2", "package_manager": "cran", "stages": ["main"],
-                                         "version": "1.0.1"},
-                                        {"name": "r1", "id": {"$dnanexus_link": "record-123"}},
-                                        {"name": "g1",
-                                         "package_manager": "git",
-                                         "url": "https://github.com/dnanexus/oauth2-demo"},
-                                        {"name": "g2",
-                                         "package_manager": "git",
-                                         "url": "https://github.com/dnanexus/bwa",
-                                         "tag": "production",
-                                         "destdir": "/tmp/ee-edi-test-bwa",
-                                         "buld_commands": "echo build bwa here",
-                                         "stages": ["main"]}]})
+        edi = self.get_edi({"dependencies": [{"name": "pytz", "package_manager": "pip", "version": "2014.7"},
+                                             {"name": "certifi", "package_manager": "pip", "stages": ["main"]},
+                                             {"name": "tmux", "package_manager": "apt"},
+                                             {"name": "rake", "package_manager": "gem", "version": "10.3.2"},
+                                             {"name": "nokogiri", "package_manager": "gem", "stages": ["main"]},
+                                             {"name": "Module::Provision", "package_manager": "cpan", "version": "0.36.1"},
+                                             {"name": "LWP::MediaTypes", "package_manager": "cpan"},
+                                             {"name": "RJSONIO", "package_manager": "cran"},
+                                             {"name": "plyr", "package_manager": "cran", "version": "1.8.1"},
+                                             {"name": "ggplot2", "package_manager": "cran", "stages": ["main"],
+                                              "version": "1.0.1"},
+                                             {"name": "r1", "id": {"$dnanexus_link": "record-123"}},
+                                             {"name": "g1",
+                                              "package_manager": "git",
+                                              "url": "https://github.com/dnanexus/oauth2-demo"},
+                                             {"name": "g2",
+                                              "package_manager": "git",
+                                              "url": "https://github.com/dnanexus/bwa",
+                                              "tag": "production",
+                                              "destdir": "/tmp/ee-edi-test-bwa",
+                                              "buld_commands": "echo build bwa here",
+                                              "stages": ["main"]}]})
         edi.install()
         assert_cmd_ran(edi, re.escape("pip install --upgrade pytz==2014.7 certifi"))
         assert_cmd_ran(edi, "apt-get install --yes --no-install-recommends tmux")
@@ -190,18 +210,42 @@ class TestDXExecDependsUtils(unittest.TestCase):
         assert_cmd_ran(edi, "cd /tmp/ee-edi-test-bwa && git clone https://github.com/dnanexus/bwa")
         assert_cmd_ran(edi, "git checkout production")
 
-        edi = get_edi({"execDepends": [{"name": "w00t", "stages": ["foo", "bar"]},
-                                       {"name": "f1", "id": {"$dnanexus_link": "file-123"}, "stages": ["xyzzt"]}]})
+        edi = self.get_edi({"execDepends": [{"name": "w00t", "stages": ["foo", "bar"]},
+                                            {"name": "f1", "id": {"$dnanexus_link": "file-123"}, "stages": ["xyzzt"]}]})
         edi.install()
         self.assertNotRegex("\n".join(edi.command_log), "w00t")
         for name in "w00t", "f1":
             assert_log_contains(edi,
                                 "Skipping dependency {} because it is inactive in stage \(function\) main".format(name))
 
-        edi = get_edi({"execDepends": [{"name": "git", "stages": ["foo", "bar"]}]},
-                      job_desc = {"function": "foo"})
+        edi = self.get_edi({"execDepends": [{"name": "git", "stages": ["foo", "bar"]}]},
+                           job_desc={"function": "foo"})
         edi.install()
         assert_cmd_ran(edi, "apt-get install --yes --no-install-recommends git")
+
+        # Job describe dict must contain "region" if the run specification
+        # contains "bundledDependsByRegion".
+        bundled_depends_by_region = {
+            "aws:us-east-1": [
+                {"name": "asset.east", "id": {"$dnanexus_link": "file-asseteast"}}
+            ]
+        }
+        with self.assertRaisesRegexp(DXError, 'region.*job description'):
+            self.get_edi({"bundledDependsByRegion": bundled_depends_by_region})
+
+        bundled_depends_by_region = {
+            "aws:us-east-1": []
+        }
+        with self.assertRaisesRegexp(DXError, 'region.*job description'):
+            self.get_edi({"bundledDependsByRegion": bundled_depends_by_region})
+
+        # Job describe dict may specify or omit "region" if
+        # "bundledDependsByRegion" is not in run specification.
+        edi = self.get_edi({}, job_desc={"region": "aws:us-west-1"})
+        edi.install()
+
+        edi = self.get_edi({}, job_desc={})
+        edi.install()
 
 
 class TestTimeUtils(unittest.TestCase):
@@ -320,6 +364,30 @@ class TestPrettyPrint(unittest.TestCase):
         )
         flatten_json_array(json_string, "arr")
         self.assertEqual(flattened_json_string_ref, flatten_json_array(json_string, "arr"))
+
+
+class TestNonceGeneration(unittest.TestCase):
+    def test_nonce_generator(self):
+        nonce_list = []
+        for i in range(0, 100):
+            nonce_list.append(str(Nonce()))
+
+        for nonce in nonce_list:
+            self.assertTrue(len(nonce) > 0)
+            self.assertTrue(len(nonce) <= 128)
+            self.assertEqual(nonce_list.count(nonce), 1)
+
+    def test_input_updater(self):
+        input_params = {"p1": "v1", "p2": "v2"}
+        updated_input = Nonce.update_nonce(input_params)
+        self.assertIn("nonce", updated_input)
+
+        nonce = str(Nonce())
+        input_params.update({"nonce": nonce})
+        updated_input = Nonce.update_nonce(input_params)
+        self.assertIn("nonce", updated_input)
+        self.assertEqual(nonce, updated_input["nonce"])
+
 
 if __name__ == '__main__':
     unittest.main()

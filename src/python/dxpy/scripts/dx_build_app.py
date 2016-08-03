@@ -23,6 +23,7 @@ logging.basicConfig(level=logging.WARNING)
 logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
 
 import os, sys, json, subprocess, argparse
+import platform
 import py_compile
 import re
 import shutil
@@ -394,7 +395,11 @@ def _check_file_syntax(filename, temp_dir, override_lang=None, enforce=True):
             except OSError:
                 pass
     def check_bash(filename):
-        subprocess.check_output(["/bin/bash", "-n", filename], stderr=subprocess.STDOUT)
+        if platform.system() == 'Windows':
+            logging.warn(
+                    'Skipping bash syntax check due to unavailability of bash on Windows.')
+        else:
+            subprocess.check_output(["/bin/bash", "-n", filename], stderr=subprocess.STDOUT)
 
     if override_lang == 'python2.7':
         checker_fn = check_python

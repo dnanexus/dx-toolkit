@@ -26,6 +26,9 @@ set "DNANEXUS_HOME=%SOURCE_DIR%"
 
 REM Place DNANEXUS_HOME bin dir in PATH
 set "PATH=%DNANEXUS_HOME%bin;%PATH%"
+REM Place C:\Python27 and its Scripts dir in PATH
+REM TODO - check whether they're already there or not
+REM set "PATH=C:\Python27;C:\Python27\Scripts;%PATH%"
 
 REM Enable Python to locate dxpy and other dependencies
 set "PYTHONPATH=%DNANEXUS_HOME%share\dnanexus\lib\python2.7\site-packages;%PYTHONPATH%"

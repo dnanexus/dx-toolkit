@@ -18,6 +18,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
+import locale
 import os, sys, unittest, tempfile, shutil, subprocess, re, json, platform
 import time
 import random
@@ -125,7 +126,15 @@ def chdir(dirname=None):
 
 def run(command, **kwargs):
     print("$ %s" % (command,))
-    output = check_output(command, shell=True, **kwargs)
+    if platform.system() == 'Windows':
+        # Before running unicode command strings here via subprocess, avoid
+        # letting Python 2.7 on Windows default to encoding the string with
+        # the ascii codec - use the preferred encoding of the OS instead
+        # (which will likely be 'cp1252'):
+        command_encoded = command.encode(locale.getpreferredencoding())
+        output = check_output(command_encoded, shell=True, **kwargs)
+    else:
+        output = check_output(command, shell=True, **kwargs)
     print(output)
     return output
 
@@ -318,6 +327,8 @@ class DXTestCase(unittest.TestCase):
             del dxpy.config['DX_CLI_WD']
 
     def tearDown(self):
+        if "DX_USER_CONF_DIR" in os.environ:
+            os.environ.pop("DX_USER_CONF_DIR")
         try:
             dxpy.api.project_destroy(self.project, {"terminateJobs": True})
         except Exception as e:
