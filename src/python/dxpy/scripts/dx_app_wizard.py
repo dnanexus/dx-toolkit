@@ -144,9 +144,9 @@ def main(**kwargs):
                 if not printed_classes:
                     print('Your input parameter must be of one of the following classes:')
                     print('''applet         array:file     array:record   file           int
-    array:applet   array:float    array:string   float          record         
-    array:boolean  array:int      boolean        hash           string
-    ''')
+array:applet   array:float    array:string   float          record         
+array:boolean  array:int      boolean        hash           string
+''')
                     printed_classes = True
 
                 while True:
@@ -235,8 +235,8 @@ def main(**kwargs):
                 if not printed_classes:
                     print('Your output parameter must be of one of the following classes:')
                     print('''applet         array:file     array:record   file           int            
-    array:applet   array:float    array:string   float          record         
-    array:boolean  array:int      boolean        hash           string''')
+array:applet   array:float    array:string   float          record         
+array:boolean  array:int      boolean        hash           string''')
                     printed_classes = True
                 while True:
                     output_class = prompt_for_var('Choose a class (<TAB> twice for choices)')
@@ -314,8 +314,7 @@ def main(**kwargs):
 
     print('')
     print(BOLD('Access Permissions'))
-    print(fill('''If you request these extra permissions for your app, users will see this fact when launching your app,
-    and certain other restrictions will apply. For more information, see ''' + 
+    print(fill('''If you request these extra permissions for your app, users will see this fact when launching your app, and certain other restrictions will apply. For more information, see ''' + 
     BOLD('https://wiki.dnanexus.com/App-Permissions') + '.'))
 
     print('')
@@ -393,12 +392,12 @@ def main(**kwargs):
 
     print('')
     print(fill('''Your app specification has been written to the
-    dxapp.json file. You can specify more app options by editing this file
-    directly (see https://wiki.dnanexus.com/Developer-Portal for complete
-    documentation).''' + ('''  Note that without an input and output specification,
-    your app can only be built as an APPLET on the system.  To publish it to
-    the DNAnexus community, you must first specify your inputs and outputs.
-    ''' if not ('inputSpec' in app_json and 'outputSpec' in app_json) else "")))
+dxapp.json file. You can specify more app options by editing this file
+directly (see https://wiki.dnanexus.com/Developer-Portal for complete
+documentation).''' + ('''  Note that without an input and output specification,
+your app can only be built as an APPLET on the system.  To publish it to
+the DNAnexus community, you must first specify your inputs and outputs.
+''' if not ('inputSpec' in app_json and 'outputSpec' in app_json) else "")))
     print('')
 
     for subdir in 'src', 'test', 'resources':
@@ -426,13 +425,11 @@ def main(**kwargs):
     for filename in sorted(manifest):
         print("\t", filename)
     print("\n" + fill('''App directory created!  See
-    https://wiki.dnanexus.com/Developer-Portal for tutorials on how to modify these files,
-    or run "dx build {n}" or "dx build --create-app {n}" while logged in with dx.'''.format(n=name)) + "\n")
-    print(fill('''Running the DNAnexus build utility will create an
-    executable on the DNAnexus platform.  Any files found in the ''' +
-    BOLD() + 'resources' + ENDC() + ''' directory will be uploaded so that
-    they will be present in the root directory when the executable is
-    run.'''))
+https://wiki.dnanexus.com/Developer-Portal for tutorials on how to modify these files,
+or run "dx build {n}" or "dx build --create-app {n}" while logged in with dx.'''.format(n=name)) + "\n")
+    print(fill('''Running the DNAnexus build utility will create an executable on the DNAnexus platform.  Any files found in the ''' +
+            BOLD() + 'resources' + ENDC() +
+            ''' directory will be uploaded so that they will be present in the root directory when the executable is run.'''))
 
 if __name__ == '__main__':
     main()
