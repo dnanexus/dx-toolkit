@@ -258,6 +258,43 @@ class TestDXBuildAsset(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp='code 422', exit_code=1):
             run("dx build_asset --json " + asset_dir)
 
+    @unittest.skipUnless(testutil.TEST_ONLY_MASTER, 'skipping test that requires latest server version')
+    def test_build_asset_inside_job(self):
+        asset_spec = {
+            "name": "asset library name with space",
+            "title": "A human readable name",
+            "description": " A detailed description about the asset",
+            "version": "0.0.1",
+            "distribution": "Ubuntu",
+            "release": "12.04"
+        }
+        asset_dir = self.write_asset_directory("test_build_asset_inside_job", json.dumps(asset_spec))
+        asset_conf_file_id = run("dx upload " + os.path.join(asset_dir, "dxasset.json") + " --brief --wait").strip()
+        code_str = """#!/bin/bash
+                    main(){
+                        dx download "${asset_conf}" -o dxasset.json
+                        dx build_asset
+                    }
+                    """
+        app_spec = {
+            "name": "run_build_asset",
+            "dxapi": "1.0.0",
+            "runSpec": {
+                "code": code_str,
+                "interpreter": "bash"
+            },
+            "inputSpec": [{"name": "asset_conf", "class": "file"}],
+            "outputSpec": [],
+            "version": "1.0.0"
+        }
+        app_dir = self.write_app_directory("run_build_asset", json.dumps(app_spec))
+        asset_applet_id = json.loads(run("dx build --json {app_dir}".format(app_dir=app_dir)))["id"]
+
+        asset_applet = dxpy.DXApplet(asset_applet_id)
+        applet_job = asset_applet.run({"asset_conf": {"$dnanexus_link": asset_conf_file_id}})
+        applet_job.wait_on_done()
+        self.assertEqual(applet_job.describe()['state'], 'done')
+
 if __name__ == '__main__':
     if dxpy.AUTH_HELPER is None:
         sys.exit(1, 'Error: Need to be logged in to run these tests')

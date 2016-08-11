@@ -181,6 +181,10 @@ def build_asset(args):
         if dest_asset_name is None:
             dest_asset_name = asset_conf['name']
 
+        # If dx build_asset is launched form a job, set json flag to True to avoid watching the job log
+        if dxpy.JOB_ID:
+            args.json = True
+
         if not args.json:
             print("Uploading input files for the AssetBuilder", file=sys.stderr)
 
@@ -197,9 +201,13 @@ def build_asset(args):
 
         builder_run_options = {
             "name": dest_asset_name,
-            "input": input_hash,
-            "project": dest_project_name
+            "input": input_hash
             }
+
+        # Add the default destination project to app run options, if it is not run from a job
+        if not dxpy.JOB_ID:
+            builder_run_options["project"] = dest_project_name
+
         if 'instanceType' in asset_conf:
             builder_run_options["systemRequirements"] = {"*": {"instanceType": asset_conf["instanceType"]}}
         if dest_folder_name:
