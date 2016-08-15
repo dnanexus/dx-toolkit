@@ -21,5 +21,8 @@
   ],
   "outputSpec": [
     {"name": "foo",    "class": "array:file", "optional" : true}
-  ]
+  ],
+  "access": {
+    "network": ["*"]
+  }
 }

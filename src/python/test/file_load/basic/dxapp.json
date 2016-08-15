@@ -18,5 +18,8 @@
     {"name": "genes", "class":  "array:file"},
     {"name": "foo",    "class": "array:file", "optional" : true},
     {"name": "bar",    "class": "int", "optional" : true}
-  ]
+  ],
+  "access": {
+    "network": ["*"]
+  }
 }

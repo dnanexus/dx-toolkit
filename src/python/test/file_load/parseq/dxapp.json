@@ -15,5 +15,8 @@
     {"name": "result2", "class": "file"},
     {"name": "result3", "class": "file"},
     {"name": "result4", "class": "file"}
-  ]
+  ],
+  "access": {
+    "network": ["*"]
+  }
 }

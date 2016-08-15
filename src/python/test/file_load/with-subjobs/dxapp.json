@@ -28,5 +28,8 @@
     "interpreter": "bash",
     "file": "code.sh"
   },
-  "authorizedUsers": []
+  "authorizedUsers": [],
+  "access": {
+    "network": ["*"]
+  }
 }

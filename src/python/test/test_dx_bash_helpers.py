@@ -52,43 +52,35 @@ LOCAL_SCRIPTS = os.path.join(os.path.dirname(__file__), '..', 'scripts')
 LOCAL_UTILS = os.path.join(os.path.dirname(__file__), '..', 'dxpy', 'utils')
 
 
+def ignore_folders(directory, contents):
+    accepted_bin = ['dx-unpack', 'dx-unpack-file', 'dxfs', 'register-python-argcomplete',
+                    'python-argcomplete-check-easy-install-script']
+    if "test" in directory:
+        return contents
+    if "../bin" in directory:
+        return [f for f in contents if f not in accepted_bin]
+    return []
+
 def build_app_with_bash_helpers(app_dir, project_id):
     tempdir = tempfile.mkdtemp()
     try:
         updated_app_dir = os.path.join(tempdir, os.path.basename(app_dir))
         shutil.copytree(app_dir, updated_app_dir)
-        # Copy the scripts we'd like to test. These can go directly into
-        # /usr/local/bin in the guest, since the normal executables will
-        # have been installed into /usr/bin, and /usr/local/bin will
-        # appear earlier on the PATH, overriding them.
-        resources_bindir = os.path.join(updated_app_dir, 'resources', 'usr', 'local', 'bin')
-        if not os.path.exists(resources_bindir):
-            os.makedirs(resources_bindir)
-        shutil.copy(os.path.join(LOCAL_SCRIPTS, 'dx-download-all-inputs'), resources_bindir)
-        shutil.copy(os.path.join(LOCAL_SCRIPTS, 'dx-upload-all-outputs'), resources_bindir)
+        # Copy the current verion of dx-toolkit. We will build it on the worker
+        # and source this version which will overload the stock version of dx-toolkit.
+        # This we we can test all bash helpers as they would appear locally with all
+        # necessary dependencies
+        dxtoolkit_dir = os.path.join(updated_app_dir, 'resources', 'dxtoolkit')
+        local_dxtoolkit = os.path.join(os.path.dirname(__file__), '..', '..', '..')
+        shutil.copytree(local_dxtoolkit, dxtoolkit_dir, ignore=ignore_folders)
 
-        # Now copy any libraries we depend on. This is tricky to get
-        # right in general (because we will end up with some subset of
-        # the files from whatever version is installed on the worker by
-        # default, and some subset of files replaced with our custom
-        # versions here). So it might be wise to keep at a minimum the
-        # number of files that will be replaced here.
-        #
-        # In order to prevent the files in the resources bundle that go
-        # into /usr/share/dnanexus/... from being clobbered at
-        # execDepends installation time with the (older) versions from
-        # dx-toolkit, we do the following multi-stage deployment:
-        # (1) At build time, copy the files into /opt/utils_staging_area
-        # (2) Then, at runtime, copy the files into the proper place.
-        utils_staging_area = os.path.join(updated_app_dir, 'resources', 'opt', 'utils_staging_area')
-        os.makedirs(utils_staging_area)
+        # Add lines to the beginning of the job to make and use our new dx-toolkit
         preamble = []
-        for filename in ('file_load_utils.py', 'printing.py'):
-            shutil.copy(os.path.join(LOCAL_UTILS, filename), utils_staging_area)
-            cmd = "cp /opt/utils_staging_area/{f} /usr/share/dnanexus/lib/python2.7/site-packages/dxpy/utils;\n"
-            preamble.append(cmd.format(f=filename))
-        # Now find the applet entry point file and prepend the copy
-        # operations (step 2 above), overwriting it in place.
+        preamble.append('sudo pip install --upgrade virtualenv\n')
+        preamble.append('make -C /dxtoolkit\n')
+        preamble.append('source /dxtoolkit/environment\n')
+        # Now find the applet entry point file and prepend the
+        # operations above, overwriting it in place.
         dxapp_json = json.load(open(os.path.join(app_dir, 'dxapp.json')))
         if dxapp_json['runSpec']['interpreter'] != 'bash':
             raise Exception('Sorry, I only know how to patch bash apps for remote testing')

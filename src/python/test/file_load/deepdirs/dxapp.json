@@ -13,5 +13,8 @@
     {"name": "phenotypes", "class": "array:file"},
     {"name": "report", "class": "file"},
     {"name": "helix", "class": "file"}
-  ]
+  ],
+  "access": {
+    "network": ["*"]
+  }
 }

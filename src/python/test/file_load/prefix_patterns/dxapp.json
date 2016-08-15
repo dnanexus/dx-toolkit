@@ -46,5 +46,8 @@
       "patterns": ["*year*.sam"]
     }
   ],
-  "outputSpec": []
+  "outputSpec": [],
+  "access": {
+    "network": ["*"]
+  }
 }

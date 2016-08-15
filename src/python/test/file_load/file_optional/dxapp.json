@@ -11,5 +11,8 @@
   "outputSpec": [
     {"name": "seq2", "class": "file", "optional" : true},
     {"name": "seq3", "class": "file"}
-  ]
+  ],
+  "access": {
+    "network": ["*"]
+  }
 }
