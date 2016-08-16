@@ -258,7 +258,8 @@ class TestDXBuildAsset(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp='code 422', exit_code=1):
             run("dx build_asset --json " + asset_dir)
 
-    @unittest.skipUnless(testutil.TEST_ONLY_MASTER, 'skipping test that requires latest server version')
+    @unittest.skipUnless(testutil.TEST_ONLY_MASTER and testutil.TEST_RUN_JOBS,
+                         'skipping test that requires latest server version')
     def test_build_asset_inside_job(self):
         asset_spec = {
             "name": "asset library name with space",
