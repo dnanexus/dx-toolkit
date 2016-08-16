@@ -77,7 +77,7 @@ def build_app_with_bash_helpers(app_dir, project_id):
         # Add lines to the beginning of the job to make and use our new dx-toolkit
         preamble = []
         preamble.append('sudo pip install --upgrade virtualenv\n')
-        preamble.append('make -C /dxtoolkit\n')
+        preamble.append('make -C /dxtoolkit python\n')
         preamble.append('source /dxtoolkit/environment\n')
         # Now find the applet entry point file and prepend the
         # operations above, overwriting it in place.
