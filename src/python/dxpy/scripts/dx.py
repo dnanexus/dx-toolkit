@@ -2193,7 +2193,7 @@ def find_executions(args):
                     process_execution_result(execution_result)
 
                 # ensure roots are sorted by their creation time
-                sorted_roots = sorted(roots.values(), key=lambda x: -descriptions[x]['created'])
+                sorted_roots = sorted(roots, key=lambda root: -descriptions[roots[root]]['created'])
 
                 for root in sorted_roots:
                     process_tree(descriptions[roots[root]], executions_by_parent, descriptions)
