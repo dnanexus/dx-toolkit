@@ -272,9 +272,9 @@ class TestDXFileFunctions(unittest.TestCase):
         self.assertEqual(dxpy.dxfile._readable_part_size(0), "0 bytes")
         self.assertEqual(dxpy.dxfile._readable_part_size(1), "1 byte")
         self.assertEqual(dxpy.dxfile._readable_part_size(2), "2 bytes")
-        self.assertEqual(dxpy.dxfile._readable_part_size(2.5 * 1024), "2.50 KB")
-        self.assertEqual(dxpy.dxfile._readable_part_size(1024 * 1024), "1.00 MB")
-        self.assertEqual(dxpy.dxfile._readable_part_size(31415926535), "29.26 GB")
+        self.assertEqual(dxpy.dxfile._readable_part_size(2.5 * 1024), "2.50 KiB")
+        self.assertEqual(dxpy.dxfile._readable_part_size(1024 * 1024), "1.00 MiB")
+        self.assertEqual(dxpy.dxfile._readable_part_size(31415926535), "29.26 GiB")
 
     def test_get_buffer_size(self):
         amazon = {
