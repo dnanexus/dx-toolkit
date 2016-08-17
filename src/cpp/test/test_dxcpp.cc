@@ -18,9 +18,23 @@
 #include <fstream>
 #include <string>
 #include <boost/lexical_cast.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/date_time.hpp>
+#include <curl/curl.h>
+#include <cmath>
 #include <gtest/gtest.h>
 #include "dxjson/dxjson.h"
 #include "dxcpp.h"
+
+#ifdef __MINGW32__
+#include <windows.h>
+#else
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <signal.h>
+#include <string.h>
+#endif
 
 using namespace std;
 using namespace dx;
@@ -75,11 +89,223 @@ TEST(DXHTTPRequestTest, retryLogicWithRetryAfter) {
   long currentTime = response["currentTime"].get<long>();
   long waitUntil = currentTime + 8000;
   DXHTTPRequest(std::string("/system/comeBackLater"),
-		std::string("{\"waitUntil\": ") + boost::lexical_cast<string>(waitUntil) + std::string("}"));
+                std::string("{\"waitUntil\": ") + boost::lexical_cast<string>(waitUntil) + std::string("}"));
   long localTimeElapsed = std::time(NULL) * 1000 - localStartTime;
   cerr << "Local time elapsed: " << localTimeElapsed;
   ASSERT_GE(localTimeElapsed, 8000);
   ASSERT_LE(localTimeElapsed, 16000);
+}
+
+////////////////////////////
+// Retry logic (mock API) //
+////////////////////////////
+
+class DXHTTPRequestRetryTest : public ::testing::Test
+{
+protected:
+  virtual void SetUp() {
+    cerr << __PRETTY_FUNCTION__ << endl;
+    // Curl initalization
+    curl = curl_easy_init();
+    assert(curl);
+    assert(curl_easy_setopt(curl, CURLOPT_WRITEDATA, static_cast<void *>(this)) == CURLE_OK);
+    assert(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteCallback) == CURLE_OK);
+    assert(curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L) == CURLE_OK);
+    respData.str("");
+
+    // Configuring dx API to use APIserver mock object
+    apiServerProtocolBakup.assign("http");
+    apiServerHostBakup.assign("localhost");
+    apiServerPortBakup.assign("8080");
+    config::APISERVER_PROTOCOL().swap(apiServerProtocolBakup);
+    config::APISERVER_HOST().swap(apiServerHostBakup);
+    config::APISERVER_PORT().swap(apiServerPortBakup);
+
+    // Starting APIserver mock object
+    boost::filesystem::path apiMockPath = boost::filesystem::current_path() / ".." / ".." / ".." / "python" / "test" / "mock_api" / "apiserver_mock.py";
+    boost::filesystem::path apiMockHandlerPath = boost::filesystem::current_path() / ".." / ".." / ".." / "python" / "test" / "mock_api" / "test_retry.py";
+#ifdef __MINGW32__
+    ZeroMemory(&pi, sizeof(pi));
+
+    STARTUPINFO si;
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+
+    char cmd[32768];
+    ostringstream cmdStream;
+    cmdStream << "python.exe " << apiMockPath.string() << ' ' << apiMockHandlerPath.string();
+    cmd[cmdStream.str().copy(cmd, cmdStream.str().length())] = '\0';
+    if (!CreateProcess(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+      ostringstream msg;
+      msg << "Error launching API mock object: " << GetLastError();
+      throw runtime_error(msg.str());
+    }
+#else
+    sigset_t mask;
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGCHLD);
+    sigprocmask(SIG_BLOCK, &mask, &omask);
+
+    apiMockPid = fork();
+    assert(apiMockPid >= 0);
+    if (apiMockPid == 0) {
+      sigprocmask(SIG_SETMASK, &omask, NULL);
+      execl("/usr/bin/python", "python", apiMockPath.string().c_str(), apiMockHandlerPath.string().c_str(), static_cast<char *>(0));
+      ostringstream msg;
+      msg << "Error launching API mock object: " << strerror(errno);
+      throw runtime_error(msg.str());
+    }
+    cerr << "API mock object started with pid " << apiMockPid << endl;
+#endif
+    // Awaiting for API mock object to start
+    boost::this_thread::sleep(boost::posix_time::milliseconds(500));
+  }
+
+  virtual void TearDown() {
+    config::APISERVER_PROTOCOL().swap(apiServerProtocolBakup);
+    config::APISERVER_HOST().swap(apiServerHostBakup);
+    config::APISERVER_PORT().swap(apiServerPortBakup);
+
+    curl_easy_cleanup(curl);
+#ifdef __MINGW32__
+    if (!TerminateProcess(pi.hProcess, 0)) {
+      ostringstream msg;
+      msg << "Error terminating API mock object: " << GetLastError();
+      throw runtime_error(msg.str());
+    }
+    assert(WaitForSingleObject(pi.hProcess, INFINITE) == WAIT_OBJECT_0);
+    assert(CloseHandle(pi.hProcess));
+    assert(CloseHandle(pi.hThread));
+#else
+    cerr << "Sending SIGTERM to API mock object using pid " << apiMockPid << endl;
+    if (kill(apiMockPid, SIGTERM) != 0) {
+      throw runtime_error(strerror(errno));
+    }
+    cerr << "Awaiting for API mock to stop pid " << apiMockPid << endl;
+    int status;
+    pid_t p = waitpid(apiMockPid, &status, 0);
+    assert(p == apiMockPid);
+    assert(WEXITSTATUS(status) == 0);
+    sigprocmask(SIG_SETMASK, &omask, NULL);
+#endif
+  }
+
+  static size_t curlWriteCallback(char *ptr, size_t size, size_t nmemb, void * userdata) {
+    DXHTTPRequestRetryTest * test = static_cast<DXHTTPRequestRetryTest *>(userdata);
+    size_t dataSize = size * nmemb;
+    cerr << __PRETTY_FUNCTION__ << ": " << dataSize << " bytes of data received: '" << string(ptr, dataSize) << '\'' << endl;
+    test->respData.write(ptr, dataSize);
+    return dataSize;
+  }
+
+  void checkRetry(const string& testingMode) {
+    ostringstream url;
+    url << "http://localhost:8080/set_testing_mode/" << testingMode;
+    assert(curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str()) == CURLE_OK);
+    assert(curl_easy_perform(curl) == CURLE_OK);
+    cerr << __PRETTY_FUNCTION__ << ": response data is \'" << respData.str() << '\'' << endl;
+    JSON respJson = JSON::parse(respData.str());
+
+    bool exceptionRaised = false;
+    try {
+      systemWhoami(std::string("{}"), true);
+    } catch (DXError&) {
+      exceptionRaised = true;
+    } catch (JSONException&) {
+      exceptionRaised = true;
+    }
+
+    respData.str("");
+    assert(curl_easy_setopt(curl, CURLOPT_URL, "http://127.0.0.1:8080/stats") == CURLE_OK);
+    assert(curl_easy_perform(curl) == CURLE_OK);
+    cerr << __PRETTY_FUNCTION__ << ": response data is \'" << respData.str() << '\'' << endl;
+    respJson = JSON::parse(respData.str());
+
+    JSON postRequests = respJson["postRequests"];
+    for (size_t i = 1u; i < postRequests.length(); ++i) {
+      boost::posix_time::ptime tried = boost::date_time::parse_delimited_time<boost::posix_time::ptime>(postRequests[i - 1]["timestamp"].get<string>(), 'T');
+      boost::posix_time::ptime retried = boost::date_time::parse_delimited_time<boost::posix_time::ptime>(postRequests[i]["timestamp"].get<string>(), 'T');
+      double interval = static_cast<double>((retried - tried).total_milliseconds()) / 1000.0;
+      if (testingMode == "503_retry_after") {
+        ASSERT_LE(static_cast<double>(i), interval);
+        ASSERT_LE(interval, (static_cast<double>(i) + 0.5));
+      } else if ((testingMode == "503_mixed" && i == 3u) || (testingMode == "mixed" && i == 4u)) {
+        ASSERT_LE(2.0, interval);
+        ASSERT_LE(interval, 2.5);
+      } else if (testingMode == "503_mixed_limited") {
+        if (i < 11u) {
+          ASSERT_LE(1.0, interval);
+          ASSERT_LE(interval, 1.5);
+        } else {
+          ASSERT_LE(300.0, interval);
+          ASSERT_LE(interval, 600.5);
+        }
+      } else {
+        ASSERT_LE(pow(2.0, static_cast<double>(i - 1)), interval);
+        ASSERT_LE(interval, pow(2.0, static_cast<double>(i) + 0.5));
+      }
+    }
+
+    if (testingMode == "500_fail") {
+      ASSERT_TRUE(exceptionRaised);
+      ASSERT_EQ(7u, postRequests.length());
+    } else if (testingMode == "503_mixed_limited") {
+      ASSERT_FALSE(exceptionRaised);
+      ASSERT_EQ(12u, postRequests.length());
+    } else {
+      ASSERT_FALSE(exceptionRaised);
+      ASSERT_EQ(5u, postRequests.length());
+    }
+  }
+
+private:
+#ifdef __MINGW32__
+  PROCESS_INFORMATION pi;
+#else
+  pid_t apiMockPid;
+  sigset_t omask;
+#endif
+  CURL * curl;
+  ostringstream respData;
+  string apiServerProtocolBakup;
+  string apiServerHostBakup;
+  string apiServerPortBakup;
+};
+
+TEST_F(DXHTTPRequestRetryTest, retry500) {
+  checkRetry("500");
+}
+
+TEST_F(DXHTTPRequestRetryTest, retry500Fail) {
+  if (!DXTEST_FULL) {
+    cerr << "Skipping DXHTTPRequestRetryTest.retry500Fail test because DXTEST_FULL was not set" << endl;
+    return;
+  }
+  checkRetry("500_fail");
+}
+
+TEST_F(DXHTTPRequestRetryTest, retry503) {
+  checkRetry("503");
+}
+
+TEST_F(DXHTTPRequestRetryTest, retry503RetryAfter) {
+  checkRetry("503_retry_after");
+}
+
+TEST_F(DXHTTPRequestRetryTest, retry503Mixed) {
+  checkRetry("503_mixed");
+}
+
+TEST_F(DXHTTPRequestRetryTest, retry503MixedLimited) {
+  if (!DXTEST_FULL) {
+    cerr << "Skipping DXHTTPRequestRetryTest.retry503MixedLimited test because DXTEST_FULL was not set" << endl;
+    return;
+  }
+  checkRetry("503_mixed_limited");
+}
+
+TEST_F(DXHTTPRequestRetryTest, retry5xxMixed) {
+  checkRetry("mixed");
 }
 
 ////////////
@@ -315,7 +541,7 @@ TEST_F(DXRecordTest, CreateRemoveTest) {
   options["details"] = DXRecordTest::example_JSON;
   DXRecord first_record = DXRecord::newDXRecord(options);
   ASSERT_EQ(DXRecordTest::example_JSON,
-	    first_record.getDetails());
+            first_record.getDetails());
   ASSERT_EQ(first_record.getProjectID(), proj_id);
   string firstID = first_record.getID();
 
@@ -746,7 +972,7 @@ TEST(DXFileTest_Async, UploadAndDownloadLargeFile_2_SLOW) {
   for (int64_t i = 0; i < file_size; i += chunkSize) {
     string toWrite = string(std::min(chunkSize, (file_size - i)), '#');
     dxfile.write(toWrite);
-    if (random() % 2 == 0) {
+    if (rand() % 2 == 0) {
       // Randomly flush sometime
       dxfile.flush();
     }
@@ -762,7 +988,7 @@ TEST(DXFileTest_Async, UploadAndDownloadLargeFile_2_SLOW) {
     for (int i = 0; i < chunk.size(); ++i)
       ASSERT_EQ(chunk[i], '#');
     bytes_read += chunk.size();
-    if (random() % 10 == 0) {
+    if (rand() % 10 == 0) {
       // ~1 in 10 time, stop the linear query and restart from current position
       dxfile.stopLinearQuery();
       dxfile.startLinearQuery(bytes_read);
@@ -789,7 +1015,7 @@ TEST_F(DXFileTest, UploadDownloadFiles) {
   ASSERT_FALSE(dxfile.is_open());
 
   EXPECT_EQ(getBaseName(foofilename),
-  	    dxfile.describe(true)["name"].get<string>());
+              dxfile.describe(true)["name"].get<string>());
 
   DXFile::downloadDXFile(dxfile.getID(), tempfilename);
 
@@ -1023,7 +1249,7 @@ TEST_F(DXGTableTest, AddRowsMultiThreadingTest_SLOW) {
     temp.push_back(data);
     dxgtable.addRows(temp);
     dxgtable2.addRows(temp);
-    if (random()%100 == 0)
+    if (rand() % 100 == 0)
       dxgtable.flush();
   }
   dxgtable.flush();
@@ -1105,7 +1331,7 @@ TEST_F(DXGTableTest, GetRowsLinearQueryTest_SLOW) {
       EXPECT_EQ(chunk[i][1].get<std::string>().length(), str_size);
       EXPECT_EQ(chunk[i][2].get<int>(), lq_row_count);
     }
-    if (random() % 10 == 0) {
+    if (rand() % 10 == 0) {
       // Randomly stop the linear query, and continue from that point onwards
       dxgtable.stopLinearQuery();
       dxgtable.startLinearQuery(JSON(JSON_NULL), lq_row_count);
@@ -1136,7 +1362,7 @@ TEST_F(DXGTableTest, InvalidSpecTest) {
   vector<JSON> invalid_spec = columns;
   invalid_spec[1]["type"] = "muffins";
   ASSERT_THROW(DXGTable::newDXGTable(invalid_spec),
-	       DXAPIError);
+               DXAPIError);
 }
 
 TEST_F(DXGTableTest, GetRowsTest) {
@@ -1283,9 +1509,9 @@ TEST(DXSystemTest, findDataObjects) {
 
     // Note: Due to clock differences on various machine, some of these test might fail.
     //       Be aware of this fact while debugging.
-    usleep(1 * 1000000); // Sleep for 1s
+    boost::this_thread::sleep(boost::posix_time::seconds(1)); // Sleep for 1s
     int64_t ts1 = std::time(NULL) * 1000; // in ms => Time of object creation
-    usleep(10000); // Sleep for 10ms
+    boost::this_thread::sleep(boost::posix_time::milliseconds(10)); // Sleep for 10ms
     DXRecord dxrecord = DXRecord::newDXRecord();
     JSON q1(JSON_OBJECT);
     q1["created"] = JSON::parse("{\"after\": " + boost::lexical_cast<std::string>(ts1) + "}");
@@ -1298,7 +1524,7 @@ TEST(DXSystemTest, findDataObjects) {
 
     // Sleep for .5 sec, and then find all objects modified in last .25 second
     // should be zero
-    usleep(2 * 1000000); // Sleep for 2sec
+    boost::this_thread::sleep(boost::posix_time::seconds(2)); // Sleep for 2s
     q1 = JSON::parse("{\"modified\": {\"after\": \"-0.25s\"}}");
     res = DXSystem::findDataObjects(q1);
     ASSERT_EQ(res["results"].size(), 0);

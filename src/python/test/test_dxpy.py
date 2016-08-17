@@ -24,13 +24,14 @@ import shutil
 import string
 import subprocess
 import platform
+import dateutil.parser
 
 import requests
 from requests.packages.urllib3.exceptions import SSLError
 
 import dxpy
 import dxpy_testutil as testutil
-from dxpy.exceptions import (DXAPIError, DXFileError, DXError, DXJobFailureError, ResourceNotFound)
+from dxpy.exceptions import (DXAPIError, HTTPError, DXFileError, DXError, DXJobFailureError, ResourceNotFound)
 from dxpy.utils import pretty_print, warn, Nonce
 from dxpy.utils.resolver import resolve_path, resolve_existing_path, ResolutionError, is_project_explicit
 
@@ -2439,7 +2440,7 @@ class TestHTTPResponses(unittest.TestCase):
         end_time = int(time.time() * 1000)
         time_elapsed = end_time - start_time
         self.assertTrue(20000 <= time_elapsed)
-        self.assertTrue(time_elapsed <= 30000)
+        self.assertTrue(time_elapsed <= (20000 + 10000))
 
     def test_retry_after_without_header_set(self):
         start_time = int(time.time() * 1000)
@@ -2447,8 +2448,8 @@ class TestHTTPResponses(unittest.TestCase):
         dxpy.DXHTTPRequest('/system/comeBackLater', {'waitUntil': server_time + 20000, 'setRetryAfter': False})
         end_time = int(time.time() * 1000)
         time_elapsed = end_time - start_time
-        self.assertTrue(50000 <= time_elapsed)
-        self.assertTrue(time_elapsed <= 70000)
+        self.assertTrue(20000 <= time_elapsed)
+        self.assertTrue(time_elapsed <= (2000 + 4000 + 8000 + 16000 + 10000))
 
     def test_generic_exception_not_retryable(self):
         self.assertFalse(dxpy._is_retryable_exception(KeyError('oops')))
@@ -2505,6 +2506,99 @@ class TestHTTPResponses(unittest.TestCase):
                                max_retries=max_num_retries, always_retry=True)
         end_time = time.time()
         self.assertGreater(end_time - start_time, min_sec_with_retries)
+
+
+class TestHTTPRetry(unittest.TestCase):
+    apiServerMockSubprocess = None
+
+    def setUp(self):
+        # Setting up DXPY to use APIserver mock object
+        apiServerTcpPort = 8080
+        dxpy.set_api_server_info(host="127.0.0.1", port=apiServerTcpPort, protocol="http")
+
+        # Starting APIserver mock-object
+        apiServerMockFilename = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                "mock_api", "apiserver_mock.py")
+        apiServerMockHandlerFilename = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                "mock_api", "test_retry.py")
+        self.apiServerMockSubprocess = subprocess.Popen([sys.executable, apiServerMockFilename, apiServerMockHandlerFilename, str(apiServerTcpPort)])
+        time.sleep(0.2)
+
+    def tearDown(self):
+        # Stopping APIserver mock-object
+        self.apiServerMockSubprocess.kill()
+        # Restoring DXPY env settings
+        dxpy.set_api_server_info(host=os.environ["DX_APISERVER_HOST"], port=os.environ["DX_APISERVER_PORT"],
+                protocol=os.environ["DX_APISERVER_PROTOCOL"])
+
+    def checkRetry(self, testingMode):
+        requests.get("http://127.0.0.1:8080/set_testing_mode/{}".format(testingMode))
+        exceptionRaised = False
+        try:
+            res = dxpy.DXHTTPRequest("/system/whoami", {}, want_full_response=True)
+        except HTTPError as e:
+            exceptionRaised = True
+        apiServerStats = json.loads(requests.get("http://127.0.0.1:8080/stats").content)
+
+        for i in range(1, len(apiServerStats['postRequests'])):
+            tried = dateutil.parser.parse(apiServerStats['postRequests'][i - 1]['timestamp'])
+            retried = dateutil.parser.parse(apiServerStats['postRequests'][i]['timestamp'])
+            interval = (retried - tried).total_seconds()
+            if testingMode == "503_retry_after":
+                self.assertTrue(i <= interval);
+                self.assertTrue(interval <= (i + 0.5));
+            elif (testingMode == "503_mixed" and i == 3) or (testingMode == "mixed" and i == 4):
+                self.assertTrue(2.0 <= interval)
+                self.assertTrue(interval <= 2.5)
+            elif testingMode == "503_mixed_limited":
+                if i < 11:
+                    self.assertTrue(1.0 <= interval);
+                    self.assertTrue(interval <= 1.5);
+                else:
+                    self.assertTrue(300.0 <= interval);
+                    self.assertTrue(interval <= 600.5);
+            else:
+                self.assertTrue((2 ** (i - 1)) <= interval)
+                self.assertTrue(interval <= (2 ** i + 0.5))
+
+        if testingMode == "500_fail":
+            self.assertTrue(exceptionRaised)
+            self.assertEqual(7, len(apiServerStats['postRequests']))
+        elif testingMode == "503_mixed_limited":
+            self.assertEquals(12, len(apiServerStats['postRequests']));
+        else:
+            self.assertFalse(exceptionRaised)
+            self.assertEqual(5, len(apiServerStats['postRequests']))
+
+    def test_500(self):
+        self.checkRetry("500")
+        return
+
+    @unittest.skipUnless('DXTEST_FULL' in os.environ, 'Skipping test that requires too much time to pass (up to 2 minutes)')
+    def test_500_fail(self):
+        self.checkRetry("500_fail")
+        return
+
+    def test_503(self):
+        self.checkRetry("503")
+        return
+
+    def test_503_retry_after(self):
+        self.checkRetry("503_retry_after")
+        return
+
+    def test_503_mixed(self):
+        self.checkRetry("503_mixed")
+        return
+
+    @unittest.skipUnless('DXTEST_FULL' in os.environ, 'Skipping test that requires too much time to pass (up to 10 minutes)')
+    def test_503_mixed_limited(self):
+        self.checkRetry("503_mixed_limited")
+        return
+
+    def test_mixed(self):
+        self.checkRetry("mixed")
+        return
 
 
 class TestDataobjectFunctions(unittest.TestCase):
