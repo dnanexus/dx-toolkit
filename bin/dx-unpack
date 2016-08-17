@@ -60,4 +60,5 @@ if [[ $output != "" ]]; then
     rmdir "$tempdir"
 else
     unpack "$@"
+    rm -f "$@"
 fi
