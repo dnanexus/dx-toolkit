@@ -7752,6 +7752,7 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
         self._test_get_app("get_app_open_source_published_no_authusers", True, True, [])
         self._test_get_app("get_app_published_no_authusers", False, True, [])
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
     def test_get_app_by_name(self):
         [app_id, output_app_spec] = self.make_app("cool_app_name", False, False, [])
 
