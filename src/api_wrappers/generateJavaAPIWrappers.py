@@ -102,7 +102,6 @@ class_method_template = '''
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("{route}", mapper.valueToTree({inputObject}), {retry_strategy}),
                 outputClass);
-    }
     }}
     /**
      * Invokes the {method_name} method with the specified input using the specified environment, deserializing to an object of the specified class.{wiki_link}
@@ -124,7 +123,6 @@ class_method_template = '''
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest(env).request("{route}", mapper.valueToTree({inputObject}), {retry_strategy}),
                 outputClass);
-    }
     }}
 
     /**
@@ -246,7 +244,6 @@ object_method_template = '''
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "{method_route}",
                         mapper.valueToTree({inputObject}), {retry_strategy}), outputClass);
-    }
     }}
     /**
      * Invokes the {method_name} method with an empty input using the given environment, deserializing to an object of the specified class.{wiki_link}
@@ -288,7 +285,6 @@ object_method_template = '''
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "{method_route}",
                     mapper.valueToTree({inputObject}), {retry_strategy}), outputClass);
-    }
     }}
 
     /**
@@ -386,7 +382,9 @@ object_method_template = '''
 app_object_method_template = object_method_template
 
 def make_nonce_code(accept_nonce):
-    return ("\n        Object inputObjectCp = Nonce.update_nonce(inputObject)" if accept_nonce else "")
+    nonce_code = '''
+        Object inputObjectCp = Nonce.updateNonce(inputObject);'''
+    return (nonce_code if accept_nonce else "")
 
 def make_input_params(accept_nonce):
     return ("inputObjectCp" if accept_nonce else "inputObject")

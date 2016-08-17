@@ -3927,9 +3927,10 @@ public final class DXAPI {
      *             the response (includes HTTP protocol errors).
      */
     public static <T> T appRun(String objectId, Object inputObject, Class<T> outputClass) {
+        Object inputObjectCp = Nonce.updateNonce(inputObject);
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "run",
-                        mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
+                        mapper.valueToTree(inputObjectCp), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appRun method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -3972,9 +3973,10 @@ public final class DXAPI {
      *             the response (includes HTTP protocol errors).
      */
     public static <T> T appRun(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        Object inputObjectCp = Nonce.updateNonce(inputObject);
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "run",
-                    mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
+                    mapper.valueToTree(inputObjectCp), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -4497,8 +4499,9 @@ public final class DXAPI {
      *             the response (includes HTTP protocol errors).
      */
     public static <T> T appNew(Object inputObject, Class<T> outputClass) {
+        Object inputObjectCp = Nonce.updateNonce(inputObject);
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/app/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest().request("/app/new", mapper.valueToTree(inputObjectCp), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -4520,8 +4523,9 @@ public final class DXAPI {
      *             the response (includes HTTP protocol errors).
      */
     public static <T> T appNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        Object inputObjectCp = Nonce.updateNonce(inputObject);
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/app/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest(env).request("/app/new", mapper.valueToTree(inputObjectCp), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -5940,9 +5944,10 @@ public final class DXAPI {
      *             the response (includes HTTP protocol errors).
      */
     public static <T> T appletRun(String objectId, Object inputObject, Class<T> outputClass) {
+        Object inputObjectCp = Nonce.updateNonce(inputObject);
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "run",
-                        mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
+                        mapper.valueToTree(inputObjectCp), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appletRun method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -5985,9 +5990,10 @@ public final class DXAPI {
      *             the response (includes HTTP protocol errors).
      */
     public static <T> T appletRun(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        Object inputObjectCp = Nonce.updateNonce(inputObject);
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "run",
-                    mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
+                    mapper.valueToTree(inputObjectCp), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -6326,8 +6332,9 @@ public final class DXAPI {
      *             the response (includes HTTP protocol errors).
      */
     public static <T> T appletNew(Object inputObject, Class<T> outputClass) {
+        Object inputObjectCp = Nonce.updateNonce(inputObject);
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/applet/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest().request("/applet/new", mapper.valueToTree(inputObjectCp), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -6349,8 +6356,9 @@ public final class DXAPI {
      *             the response (includes HTTP protocol errors).
      */
     public static <T> T appletNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        Object inputObjectCp = Nonce.updateNonce(inputObject);
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/applet/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest(env).request("/applet/new", mapper.valueToTree(inputObjectCp), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -10715,8 +10723,9 @@ public final class DXAPI {
      *             the response (includes HTTP protocol errors).
      */
     public static <T> T fileNew(Object inputObject, Class<T> outputClass) {
+        Object inputObjectCp = Nonce.updateNonce(inputObject);
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/file/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest().request("/file/new", mapper.valueToTree(inputObjectCp), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -10738,8 +10747,9 @@ public final class DXAPI {
      *             the response (includes HTTP protocol errors).
      */
     public static <T> T fileNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        Object inputObjectCp = Nonce.updateNonce(inputObject);
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/file/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest(env).request("/file/new", mapper.valueToTree(inputObjectCp), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -14925,8 +14935,9 @@ public final class DXAPI {
      *             the response (includes HTTP protocol errors).
      */
     public static <T> T jobNew(Object inputObject, Class<T> outputClass) {
+        Object inputObjectCp = Nonce.updateNonce(inputObject);
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/job/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest().request("/job/new", mapper.valueToTree(inputObjectCp), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -14948,8 +14959,9 @@ public final class DXAPI {
      *             the response (includes HTTP protocol errors).
      */
     public static <T> T jobNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        Object inputObjectCp = Nonce.updateNonce(inputObject);
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/job/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest(env).request("/job/new", mapper.valueToTree(inputObjectCp), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -16884,8 +16896,9 @@ public final class DXAPI {
      *             the response (includes HTTP protocol errors).
      */
     public static <T> T orgNew(Object inputObject, Class<T> outputClass) {
+        Object inputObjectCp = Nonce.updateNonce(inputObject);
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/org/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest().request("/org/new", mapper.valueToTree(inputObjectCp), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -16907,8 +16920,9 @@ public final class DXAPI {
      *             the response (includes HTTP protocol errors).
      */
     public static <T> T orgNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        Object inputObjectCp = Nonce.updateNonce(inputObject);
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/org/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest(env).request("/org/new", mapper.valueToTree(inputObjectCp), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -22750,8 +22764,9 @@ public final class DXAPI {
      *             the response (includes HTTP protocol errors).
      */
     public static <T> T recordNew(Object inputObject, Class<T> outputClass) {
+        Object inputObjectCp = Nonce.updateNonce(inputObject);
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/record/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest().request("/record/new", mapper.valueToTree(inputObjectCp), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -22773,8 +22788,9 @@ public final class DXAPI {
      *             the response (includes HTTP protocol errors).
      */
     public static <T> T recordNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        Object inputObjectCp = Nonce.updateNonce(inputObject);
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/record/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest(env).request("/record/new", mapper.valueToTree(inputObjectCp), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -28910,9 +28926,10 @@ public final class DXAPI {
      *             the response (includes HTTP protocol errors).
      */
     public static <T> T workflowRun(String objectId, Object inputObject, Class<T> outputClass) {
+        Object inputObjectCp = Nonce.updateNonce(inputObject);
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "run",
-                        mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
+                        mapper.valueToTree(inputObjectCp), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowRun method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -28955,9 +28972,10 @@ public final class DXAPI {
      *             the response (includes HTTP protocol errors).
      */
     public static <T> T workflowRun(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        Object inputObjectCp = Nonce.updateNonce(inputObject);
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "run",
-                    mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
+                    mapper.valueToTree(inputObjectCp), RetryStrategy.UNSAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -30216,8 +30234,9 @@ public final class DXAPI {
      *             the response (includes HTTP protocol errors).
      */
     public static <T> T workflowNew(Object inputObject, Class<T> outputClass) {
+        Object inputObjectCp = Nonce.updateNonce(inputObject);
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/workflow/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest().request("/workflow/new", mapper.valueToTree(inputObjectCp), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -30239,8 +30258,9 @@ public final class DXAPI {
      *             the response (includes HTTP protocol errors).
      */
     public static <T> T workflowNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        Object inputObjectCp = Nonce.updateNonce(inputObject);
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/workflow/new", mapper.valueToTree(inputObject), RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest(env).request("/workflow/new", mapper.valueToTree(inputObjectCp), RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
 

@@ -19,6 +19,9 @@ package com.dnanexus;
 import java.io.IOException;
 import java.util.Collections;
 import java.security.SecureRandom;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /*import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -64,5 +67,15 @@ public class Nonce {
         return nonce;
     }
 
+    private static ObjectMapper mapper = new ObjectMapper();
+
+    public static Object updateNonce(Object input) {
+        JsonNode json = mapper.valueToTree(input);
+        ObjectNode inputJson = DXJSON.safeTreeToValue(json, ObjectNode.class);
+        if (!inputJson.has("nonce")) {
+            inputJson.put("nonce", nonce());
+        }
+        return inputJson;
+    }
 }
 
