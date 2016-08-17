@@ -70,13 +70,13 @@ def _readable_part_size(num_bytes):
     if B < KB:
         return '{0} {1}'.format(B, 'bytes' if B != 1 else 'byte')
     elif KB <= B < MB:
-        return '{0:.2f} KB'.format(B/KB)
+        return '{0:.2f} KiB'.format(B/KB)
     elif MB <= B < GB:
-        return '{0:.2f} MB'.format(B/MB)
+        return '{0:.2f} MiB'.format(B/MB)
     elif GB <= B < TB:
-        return '{0:.2f} GB'.format(B/GB)
+        return '{0:.2f} GiB'.format(B/GB)
     elif TB <= B:
-        return '{0:.2f} TB'.format(B/TB)
+        return '{0:.2f} TiB'.format(B/TB)
 
 
 def _get_write_buf_size(buffer_size_hint, file_upload_params, expected_file_size, file_is_mmapd=False):
