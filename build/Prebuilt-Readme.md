@@ -87,7 +87,8 @@ Install the following packages, either from source or via [Homebrew](http://mxcl
     * On Homebrew, install and select an up-to-date version of GCC with:
 
         ```
-        brew install --enable-cxx https://raw.github.com/Homebrew/homebrew-dupes/master/gcc.rb
+        brew tap homebrew/versions
+        brew install --enable-cxx gcc48
         export CC=gcc-4.7
         export CXX=g++-4.7
         ```
