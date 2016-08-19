@@ -26,7 +26,7 @@ from collections import OrderedDict
 import dxpy
 from dxpy.templating.utils import (print_intro, get_name, get_version, get_metadata, Completer, get_ordinal_str,
                                    prompt_for_var, prompt_for_yn, use_completer, get_language, language_options,
-                                   get_pattern, fill_in_name_and_ver, clean, create_files_from_templates)
+                                   get_pattern, get_timeout, fill_in_name_and_ver, clean, create_files_from_templates)
 from dxpy.utils.printing import fill, BOLD, UNDERLINE, DNANEXUS_LOGO, ENDC
 from dxpy.app_categories import APP_CATEGORIES
 from dxpy.utils.completer import InstanceTypesCompleter
@@ -47,6 +47,9 @@ API_VERSION = '1.0.0'
 parser = argparse.ArgumentParser(description="Create a source code directory for a DNAnexus app.  You will be prompted for various metadata for the app as well as for its input and output specifications.")
 parser.add_argument('--json-file', help='Use the metadata and IO spec found in the given file')
 parser.add_argument('--language', help='Programming language of your app')
+parser.add_argument('--template',
+                    choices=["basic", "parallelized", "scatter-process-gather"], default='basic',
+                    help='Execution pattern of your app')
 parser.add_argument('name', help='Name of your app', nargs='?')
 args = parser.parse_args()
 
@@ -70,7 +73,6 @@ def main(**kwargs):
             app_json['name'] = name
             version = get_version(default=app_json.get('version'))
             app_json['version'] = version
-        description = '<!-- Insert a description of your app here -->'
         try:
             os.mkdir(app_json['name'])
         except:
@@ -89,7 +91,7 @@ def main(**kwargs):
             sys.stderr.write(fill('''Unable to create a directory for %s, please check that it is a valid app name and the working directory exists and is writable.''' % name) + '\n')
             sys.exit(1)
 
-        title, summary, description = get_metadata(API_VERSION)
+        title, summary = get_metadata(API_VERSION)
 
         version = get_version()
 
@@ -144,7 +146,7 @@ def main(**kwargs):
                 if not printed_classes:
                     print('Your input parameter must be of one of the following classes:')
                     print('''applet         array:file     array:record   file           int
-array:applet   array:float    array:string   float          record         
+array:applet   array:float    array:string   float          record
 array:boolean  array:int      boolean        hash           string
 ''')
                     printed_classes = True
@@ -234,8 +236,8 @@ array:boolean  array:int      boolean        hash           string
                 use_completer(class_completer)
                 if not printed_classes:
                     print('Your output parameter must be of one of the following classes:')
-                    print('''applet         array:file     array:record   file           int            
-array:applet   array:float    array:string   float          record         
+                    print('''applet         array:file     array:record   file           int
+array:applet   array:float    array:string   float          record
 array:boolean  array:int      boolean        hash           string''')
                     printed_classes = True
                 while True:
@@ -282,6 +284,20 @@ array:boolean  array:int      boolean        hash           string''')
     if 'outputSpec' in app_json:
         file_output_names = [param['name'] for param in app_json['outputSpec'] if param['class'] == 'file']
 
+    ##################
+    # TIMEOUT POLICY #
+    ##################
+
+    print('')
+    print(BOLD() + 'Timeout Policy' + ENDC())
+
+    app_json.setdefault('timeoutPolicy', {})
+
+    timeout, timeout_units = get_timeout(default=app_json['timeoutPolicy'].get('*'))
+
+    app_json['timeoutPolicy'].setdefault('*', {})
+    app_json['timeoutPolicy']['*'].setdefault(timeout_units, timeout)
+
     ########################
     # LANGUAGE AND PATTERN #
     ########################
@@ -296,10 +312,14 @@ array:boolean  array:int      boolean        hash           string''')
     interpreter = language_options[language].get_interpreter()
     app_json["runSpec"] = OrderedDict({"interpreter": interpreter})
 
-    # Prompt for execution pattern
+    # Prompt the execution pattern iff the args.pattern is provided and invalid
 
     template_dir = os.path.join(os.path.dirname(dxpy.__file__), 'templating', 'templates', language_options[language].get_path())
-    pattern = get_pattern(template_dir)
+    if not os.path.isdir(os.path.join(template_dir, args.template)):
+        print(fill('The execution pattern "' + args.template + '" is not available for your programming language.'))
+        pattern = get_pattern(template_dir)
+    else:
+        pattern = args.template
     template_dir = os.path.join(template_dir, pattern)
 
     with open(os.path.join(template_dir, 'dxapp.json'), 'r') as template_app_json_file:
@@ -308,13 +328,16 @@ array:boolean  array:int      boolean        hash           string''')
         for key in template_app_json['runSpec']:
             app_json['runSpec'][key] = template_app_json['runSpec'][key]
 
+    if (language == args.language) and (pattern == args.template):
+        print('All template options are supplied in the arguments.')
+
     ##########################
     # APP ACCESS PERMISSIONS #
     ##########################
 
     print('')
     print(BOLD('Access Permissions'))
-    print(fill('''If you request these extra permissions for your app, users will see this fact when launching your app, and certain other restrictions will apply. For more information, see ''' + 
+    print(fill('''If you request these extra permissions for your app, users will see this fact when launching your app, and certain other restrictions will apply. For more information, see ''' +
     BOLD('https://wiki.dnanexus.com/App-Permissions') + '.'))
 
     print('')
@@ -367,9 +390,6 @@ array:boolean  array:int      boolean        hash           string''')
     app_json['runSpec']['distribution'] = 'Ubuntu'
     app_json['runSpec']['release'] = '12.04'
 
-    app_json.setdefault('timeoutPolicy', {})
-    app_json['timeoutPolicy'].setdefault('*', {})
-    app_json['timeoutPolicy']['*'].setdefault('hours', 24)
     #if any(instance_type.startswith(prefix) for prefix in ('mem1_hdd2', 'mem2_hdd2', 'mem3_hdd2')):
     #    print(fill('Your app will run on Ubuntu 12.04. To use Ubuntu 14.04, select from the list of common instance ' +
     #               'types above.'))
@@ -419,7 +439,8 @@ the DNAnexus community, you must first specify your inputs and outputs.
                                             required_file_input_names, optional_file_input_names,
                                             required_file_array_input_names, optional_file_array_input_names,
                                             file_output_names, pattern,
-                                            entry_points=entry_points, description=description)
+                                            description='<!-- Insert a description of your app here -->',
+                                            entry_points=entry_points)
 
     print("Created files:")
     for filename in sorted(manifest):

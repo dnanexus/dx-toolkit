@@ -45,7 +45,7 @@ def run_dx_app_wizard():
     tempdir = tempfile.mkdtemp(prefix='Программа')
     os.chdir(tempdir)
     try:
-        wizard = pexpect.spawn("dx-app-wizard")
+        wizard = pexpect.spawn("dx-app-wizard --template parallelized")
         wizard.logfile = sys.stdout
         wizard.setwinsize(20, 90)
         wizard.expect("App Name:")
@@ -57,8 +57,6 @@ def run_dx_app_wizard():
         wizard.sendline("Заголовок")
         wizard.expect("Summary")
         wizard.sendline("Конспект")
-        wizard.expect("Description")
-        wizard.sendline("Описание")
         wizard.expect("Version")
         wizard.sendline("1.2.3")
         wizard.expect("1st input name")
@@ -81,15 +79,17 @@ def run_dx_app_wizard():
         wizard.sendline("int")
         wizard.expect("2nd output name")
         wizard.sendline()
+        wizard.expect("Timeout policy")
+        wizard.sendline("31d")
+        wizard.expect("Error: max allowed timeout is 30 days")
+        wizard.sendline("ЄЯTЪЦGЇCЄкЇ")
+        wizard.expect("Error: enter an int with a single-letter suffix")
+        wizard.expect("Timeout policy")
+        wizard.sendline("24h")
         wizard.expect("Programming language")
         wizard.sendline("АЛГОЛ")
         wizard.expect("Error: unrecognized response")
         wizard.sendline("Python")
-        wizard.expect("Execution pattern")
-        wizard.sendline("параллельно")
-        wizard.expect("Error: unrecognized response")
-        wizard.expect("Execution pattern")
-        wizard.sendline("parallelized")
         wizard.expect("Will this app need access to the Internet?")
         wizard.sendline("y")
         wizard.expect("Will this app need access to the parent project?")
@@ -141,7 +141,7 @@ def create_app_dir_with_dxapp_json(dxapp_json, language):
         wizard.sendline()
         wizard.expect("Version")
         wizard.sendline()
-        wizard.expect("Execution pattern")
+        wizard.expect("Timeout policy")
         wizard.sendline()
         wizard.expect("Will this app need access to the Internet?")
         wizard.sendline()
@@ -158,6 +158,10 @@ def create_app_dir_with_dxapp_json(dxapp_json, language):
         os.chdir(old_cwd)
 
 class TestDXAppWizardAndRunAppLocally(DXTestCase):
+    def test_invalid_arguments(self):
+        with self.assertRaises(testutil.DXCalledProcessError):
+            check_output(['dx-app-wizard', '--template=par'])
+
     def test_dx_app_wizard(self):
         appdir = run_dx_app_wizard()
         dxapp_json = json.load(open(os.path.join(appdir, 'dxapp.json')))
@@ -165,6 +169,7 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
                          InstanceTypesCompleter.default_instance_type.Name)
         self.assertEqual(dxapp_json['runSpec']['distribution'], 'Ubuntu')
         self.assertEqual(dxapp_json['runSpec']['release'], '12.04')
+        self.assertEqual(dxapp_json['timeoutPolicy']['*']['hours'], 24)
 
     def test_dx_run_app_locally_interactively(self):
         appdir = create_app_dir()

@@ -141,11 +141,7 @@ def get_metadata(api_version):
     print(fill('The ' + BOLD() + 'summary' + ENDC() + ' of your app is a short phrase or one-line description of what your app does.  It can be any UTF-8 human-readable string.'))
     summary = prompt_for_var('Summary', '')
 
-    print('')
-    print(fill('The ' + BOLD() + 'description' + ENDC() + ' of your app is a longer piece of text describing your app.  It can be any UTF-8 human-readable string, and it will be interpreted using Markdown (see http://daringfireball.net/projects/markdown/syntax/ for more details).'))
-    description = prompt_for_var('Description', '')
-
-    return title, summary, description
+    return title, summary
 
 def get_version(default=None):
     if default is None:
@@ -154,6 +150,33 @@ def get_version(default=None):
     print(fill('You can publish multiple versions of your app, and the ' + BOLD() + 'version' + ENDC() + ' of your app is a string with which to tag a particular version.  We encourage the use of Semantic Versioning for labeling your apps (see http://semver.org/ for more details).'))
     version = prompt_for_var('Version', default)
     return version
+
+def get_timeout(default=None):
+    # Max timeout is 30 days
+    max_timeout = {'m': 30 * 24 * 60, 'h': 30 * 24, 'd': 30}
+    units = {'m': 'minutes', 'h': 'hours', 'd': 'days'}
+    time_pattern = re.compile('^[1-9]\d*[mhd]$')
+
+    def timeout_dict_to_str(d):
+        # Used to convert app_json inputs:
+        # {'hours': 48} -> '48h'
+        return str(d.values()[0]) + d.keys()[0][0]
+
+    if default is None:
+        default = '48h'
+    else:
+        default = timeout_dict_to_str(default)
+    print('')
+    print(fill('Set a ' + BOLD() + 'timeout policy' + ENDC() + ' for your app. Any single entry point of the app that runs longer than the specified timeout will fail with a TimeoutExceeded error. Enter an int greater than 0 with a single-letter suffix (m=minutes, h=hours, d=days) (e.g. "48h").'))
+    while True:
+        timeout = prompt_for_var('Timeout policy', default)
+        if not time_pattern.match(timeout):
+            print(fill('Error: enter an int with a single-letter suffix (m=minutes, h=hours, d=days)'))
+        elif int(timeout[:-1]) > max_timeout[timeout[-1]]:
+            print(fill('Error: max allowed timeout is 30 days'))
+        else:
+            break
+    return int(timeout[:-1]), units[timeout[-1]]
 
 def get_ordinal_str(num):
     return str(num) + ('th' if 11 <= num % 100 <= 13 else {1: 'st', 2: 'nd', 3: 'rd'}.get(num % 10, 'th'))
