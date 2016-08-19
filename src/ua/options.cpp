@@ -98,6 +98,7 @@ Options::Options():
     ("apiserver-port", po::value<int>(&apiserverPort)->default_value(-1), "API server port")
     ("certificate-file", po::value<string>(&certificateFile)->default_value(""), "Certificate file (for verifying peer). Set to NOVERIFY for no check.")
     ("no-round-robin-dns", po::bool_switch(&noRoundRobinDNS), "Disable explicit resolution of ip address by /UPLOAD calls (for round robin DNS)")
+    ("override-file-limit", po::bool_switch(&overrideFileLimit), "Override the file number limit")
     // Options for running import apps
     ("reads", po::bool_switch(&reads), "After uploading is complete, run import app to convert file(s) to Reads object(s)")
     ("paired-reads", po::bool_switch(&pairedReads), "Same as --reads option, but assumes file sequence to be pairs of left, and right reads (e.g., L1 R1 L2 R2 L3 R3 ...)")
@@ -388,11 +389,12 @@ void Options::validate() {
     // - Resolve all symlinks
     // - Ensure that the inputs are regular files or directories
     // - Don't allow uploading more than MAX_FILE_UPLOAD files at a time
-    if (files.size() > MAX_FILE_UPLOAD) {
+    if (!overrideFileLimit && files.size() > MAX_FILE_UPLOAD) {
       ostringstream errorMsg;
       errorMsg << "The number of files to upload is limited to " << MAX_FILE_UPLOAD;
       throw runtime_error(errorMsg.str());
     }
+
     unsigned int totalNumberOfFiles = 0;
     for (unsigned i = 0; i < files.size(); ++i) {
       fs::path p(files[i]);
@@ -407,7 +409,7 @@ void Options::validate() {
       else {
         throw runtime_error("Argument " + files[i] + " is not a regular file or directory.");
       }
-      if (totalNumberOfFiles > MAX_FILE_UPLOAD) {
+      if (!overrideFileLimit && totalNumberOfFiles > MAX_FILE_UPLOAD) {
         ostringstream errorMsg;
         errorMsg << "The number of files to upload is limited to " << MAX_FILE_UPLOAD;
         throw runtime_error(errorMsg.str());

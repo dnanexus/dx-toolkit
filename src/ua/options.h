@@ -70,6 +70,7 @@ public:
   bool verbose;
   bool waitOnClose;
   bool recursive;
+  bool overrideFileLimit;
 
   // Import flags
   bool reads;
