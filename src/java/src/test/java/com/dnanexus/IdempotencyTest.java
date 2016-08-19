@@ -76,8 +76,8 @@ public class IdempotencyTest {
         JsonNode updatedInput2 = mapper.valueToTree(Nonce.updateNonce(updatedInput));
         Assert.assertEquals(updatedInput, updatedInput2);
     }
-    
-    
+
+
     @Test
     public void testIdempotentRecordCreation() {
         JsonNode input = DXJSON.getObjectBuilder().put("name", "test_record")
@@ -215,10 +215,10 @@ public class IdempotencyTest {
         // Create an app from the previously created applet
         input = DXJSON.getObjectBuilder().put("name", "test_app")
                                 .put("applet", appletId)
-                                .put("version", "1")                                
+                                .put("version", "1")
                                 .put("nonce", Nonce.nonce()).build();
 
-        
+
         JsonNode result1 = DXAPI.appNew(input, JsonNode.class);
         JsonNode result2 = DXAPI.appNew(input, JsonNode.class);
         Assert.assertEquals(result1, result2);
