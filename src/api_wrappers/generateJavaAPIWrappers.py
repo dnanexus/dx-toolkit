@@ -381,10 +381,12 @@ object_method_template = '''
 #'''
 app_object_method_template = object_method_template
 
+
 def make_nonce_code(accept_nonce):
     nonce_code = '''
         Object inputObjectCp = Nonce.updateNonce(inputObject);'''
     return (nonce_code if accept_nonce else "")
+
 
 def make_input_params(accept_nonce):
     return ("inputObjectCp" if accept_nonce else "inputObject")
