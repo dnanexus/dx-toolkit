@@ -16,49 +16,36 @@
 
 package com.dnanexus;
 
-import java.io.IOException;
-import java.util.Collections;
 import java.security.SecureRandom;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
-/*import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.BooleanNode;
-import com.fasterxml.jackson.databind.node.DoubleNode;
-import com.fasterxml.jackson.databind.node.IntNode;
-import com.fasterxml.jackson.databind.node.LongNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-import com.google.common.collect.Lists;
-*/
 
 /**
  * Utility class for generating nonces.
  */
 public class Nonce {
 
-	public static final SecureRandom random = new SecureRandom();
+    public static final SecureRandom random = new SecureRandom();
     final protected static char[] hexArray = "0123456789abcdef".toCharArray();
-	public static int counter = 0;
+    public static int counter = 0;
 
-	// From http://stackoverflow.com/questions/9655181/how-to-convert-a-byte-array-to-a-hex-string-in-java
-	public static String bytesToHex(byte[] bytes) {
-    	char[] hexChars = new char[bytes.length * 2];
-    
-	    for ( int j = 0; j < bytes.length; j++ ) {
-    	    int v = bytes[j] & 0xFF;
-        	hexChars[j * 2] = hexArray[v >>> 4];
-        	hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-    	}
-    	return new String(hexChars);
-	}
-    
+    private static ObjectMapper mapper = new ObjectMapper();
+
+    // From
+    // http://stackoverflow.com/questions/9655181/how-to-convert-a-byte-array-to-a-hex-string-in-java
+    public static String bytesToHex(byte[] bytes) {
+        char[] hexChars = new char[bytes.length * 2];
+
+        for (int j = 0; j < bytes.length; j++) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = hexArray[v >>> 4];
+            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+        }
+        return new String(hexChars);
+    }
+
     public static String nonce() {
         byte bytes[] = new byte[32];
         random.nextBytes(bytes);
@@ -66,8 +53,6 @@ public class Nonce {
         nonce += String.valueOf(System.currentTimeMillis()) + String.valueOf(counter++);
         return nonce;
     }
-
-    private static ObjectMapper mapper = new ObjectMapper();
 
     public static Object updateNonce(Object input) {
         JsonNode json = mapper.valueToTree(input);
@@ -78,4 +63,3 @@ public class Nonce {
         return inputJson;
     }
 }
-
