@@ -1142,6 +1142,15 @@
         }
     ],
     [
+        "/system/describeExecutions",
+        "systemDescribeExecutions(req)",
+        {
+            "objectMethod": false,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/describeExecutions"
+        }
+    ],
+    [
         "/system/describeProjects",
         "systemDescribeProjects(req)",
         {

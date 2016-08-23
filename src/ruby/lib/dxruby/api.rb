@@ -1028,6 +1028,14 @@ module DX
       return DX::http_request("/system/describeDataObjects", input_params, opts)
     end
 
+    # Invokes the /system/describeExecutions API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/describeExecutions
+    def self.system_describe_executions(input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/system/describeExecutions", input_params, opts)
+    end
+
     # Invokes the /system/describeProjects API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/describeProjects

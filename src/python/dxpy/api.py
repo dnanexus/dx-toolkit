@@ -1039,6 +1039,14 @@ def system_describe_data_objects(input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/system/describeDataObjects', input_params, always_retry=always_retry, **kwargs)
 
+def system_describe_executions(input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /system/describeExecutions API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/describeExecutions
+    """
+    return DXHTTPRequest('/system/describeExecutions', input_params, always_retry=always_retry, **kwargs)
+
 def system_describe_projects(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/describeProjects API method.

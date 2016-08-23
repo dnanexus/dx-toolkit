@@ -1166,6 +1166,14 @@ namespace dx {
     return systemDescribeDataObjects(input_params.toString(), safe_to_retry);
   }
 
+  JSON systemDescribeExecutions(const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest("/system/describeExecutions", input_params, safe_to_retry);
+  }
+
+  JSON systemDescribeExecutions(const JSON &input_params, const bool safe_to_retry) {
+    return systemDescribeExecutions(input_params.toString(), safe_to_retry);
+  }
+
   JSON systemDescribeProjects(const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest("/system/describeProjects", input_params, safe_to_retry);
   }
