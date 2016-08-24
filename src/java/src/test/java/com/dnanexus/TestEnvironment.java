@@ -42,7 +42,7 @@ public class TestEnvironment {
          * initializable in an environment where no app of that name currently exists, so it must be
          * possible to clean the environment before the tests start.
          */
-        CREATE_APPS("DXTEST_ISOLATED_ENV"),
+        ISOLATED_ENV("DXTEST_ISOLATED_ENV"),
 
         /**
          * Run tests that use a FUSE filesystem.
