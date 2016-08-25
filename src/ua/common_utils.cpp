@@ -3,7 +3,7 @@
 #include <string>
 #include "dxcpp/dxlog.h"
 
-#if LINUX_BUILD && OLD_KERNEL_SUPPORT
+#if LINUX_BUILD
 
 namespace LC_ALL_Hack {
   boost::mutex LC_ALL_Mutex;
@@ -13,6 +13,7 @@ namespace LC_ALL_Hack {
 
   pair<bool, string> originalValue; // first element is true iff LC_ALL was set to something previously, and second element of is the original value (is empty if first elem is "false")
   void set_LC_ALL_C() {
+    boost::mutex::scoped_lock envLock(LC_ALL_Mutex);
     char *orig = getenv("LC_ALL"); // note: this pointer will be modified by subsequent calls to setenv/unsetenv
     DXLOG(logINFO) << "In set_LC_ALL_C() ...";
     if (orig != NULL) {
@@ -27,6 +28,7 @@ namespace LC_ALL_Hack {
   }
 
   void reset_LC_ALL() {
+    boost::mutex::scoped_lock envLock(LC_ALL_Mutex);
     DXLOG(logINFO) << "In reset_LC_ALL() ...";
     int ret_val;
     if (originalValue.first) {

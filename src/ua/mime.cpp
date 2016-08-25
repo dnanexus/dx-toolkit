@@ -28,8 +28,6 @@
 #include <boost/filesystem.hpp>
 #include <magic.h>
 
-#include "common_utils.h"
-
 #include "dxcpp/dxlog.h"
 
 using namespace std;
@@ -263,10 +261,6 @@ string getMimeTypeUsingLibmagic(const string& filePath) {
     namespace fs = boost::filesystem;
     fs::path sp; // path of temp symlink file we will create
     {
-#if LINUX_BUILD && OLD_KERNEL_SUPPORT
-      boost::mutex::scoped_lock envLock(LC_ALL_Hack::LC_ALL_Mutex);
-      LC_ALL_Hack::set_LC_ALL_C();
-#endif
       try {
         sp = fs::unique_path(fs::temp_directory_path().string() + "/ua-symlink-%%%%%%%%%%%%%.tmp"); // Create it in a temp directory
         DXLOG(logINFO) << "Generated path for unique temp file: '" << sp.string() << "'";
@@ -281,9 +275,6 @@ string getMimeTypeUsingLibmagic(const string& filePath) {
         DXLOG(logINFO) << "An exception occured while trying to create a temp symlink to existing file. Error message = '" << boost_err.what() << "'";
         fs_success = false;
       }
-#if LINUX_BUILD && OLD_KERNEL_SUPPORT
-      LC_ALL_Hack::reset_LC_ALL();
-#endif
     }
     if (fs_success) {
       string cmd = "file -L --brief --mime-type " + sp.string() + " 2>&1";

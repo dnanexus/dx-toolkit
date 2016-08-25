@@ -45,6 +45,7 @@
 #include "import_apps.h"
 #include "mime.h"
 #include "round_robin_dns.h"
+#include "common_utils.h"
 
 // http://www.boost.org/doc/libs/1_48_0/libs/config/doc/html/boost_config/boost_macro_reference.html
 #if ((BOOST_VERSION / 100000) < 1 || ((BOOST_VERSION/100000) == 1 && ((BOOST_VERSION / 100) % 1000) < 48))
@@ -802,6 +803,9 @@ void traverseDirectory(const fs::path &localDirPath,
 }
 
 int main(int argc, char * argv[]) {
+#if LINUX_BUILD
+  LC_ALL_Hack::set_LC_ALL_C();
+#endif
   try {
     // Note: Verbose mode logging is enabled (if requested) by options parse()
     opt.parse(argc, argv);
@@ -975,5 +979,8 @@ int main(int argc, char * argv[]) {
     return 1;
   }
 
+#if LINUX_BUILD
+  LC_ALL_Hack::reset_LC_ALL();
+#endif
   return exitCode;
 }
