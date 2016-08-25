@@ -1,3 +1,25 @@
+dx-toolkit (0.199.0) precise; urgency=low
+
+  * PTFM-17974 Update Java SDK with support for idempotent object creation
+  * API wrappers for /system/describeExecutions
+  * PTFM-18370 Update dx-app-wizard prompts
+  * Update Prebuilt-Readme.md
+  * Don't run test_get_app_by_name on stg since it relies on app state
+  * PTFM-18143 dx find analyses errors out when it reaches a job which launched a workflow
+  * Fix file size labels to use binary prefixes
+  * PTFM-18583 Don't run test that would run a job
+  * bash helper test fix part 2
+  * PTFM-18583 Run 'dx build_asset' within an applet
+  * Remove ancient TEST_ONLY_MASTER annotations
+  * Fix dx-download-all-inputs tests
+  * Fix printing of ssh-proxy helpstring for terminal width <= 80
+  * Dedent indentation accidentally added in d6932641
+  * Make download_all_inputs available from within dxpy
+  * Add documentation for DXExecDependencyInstaller
+  * JobState enum matches the API specification 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 25 Aug 2016 20:40:10 +0000
+
 dx-toolkit (0.198.0) precise; urgency=low
 
   * Improvements to formatting of _DX_DEBUG output
