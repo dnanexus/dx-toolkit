@@ -6035,6 +6035,35 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create apps')
+    def test_build_app_and_update_code(self):
+        app_spec = {
+            "name": "update_app_code",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("update_app_code", json.dumps(app_spec), "code.py", code_content="'v1'\n")
+        json.loads(run("dx build --create-app --json " + app_dir))
+
+        with chdir(tempfile.mkdtemp()):
+            run("dx get app-update_app_code")
+            self.assertEqual(open(os.path.join("update_app_code", "src", "code.py")).read(), "'v1'\n")
+
+        shutil.rmtree(app_dir)
+
+        # Change the content of the app entry point (keeping everything else
+        # the same)
+        app_dir = self.write_app_directory("update_app_code", json.dumps(app_spec), "code.py", code_content="'v2'\n")
+        json.loads(run("dx build --create-app --json " + app_dir))
+
+        with chdir(tempfile.mkdtemp()):
+            run("dx get app-update_app_code")
+            self.assertEqual(open(os.path.join("update_app_code", "src", "code.py")).read(), "'v2'\n")
+
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
     def test_build_app_and_pretend_to_update_devs(self):
         app_spec = {

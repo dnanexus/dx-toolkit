@@ -528,10 +528,6 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
 
     # Inline the code of the program
     if "runSpec" in applet_spec and "file" in applet_spec["runSpec"]:
-        # Avoid using runSpec.file for now, it's not fully implemented
-        #code_filename = os.path.join(src_dir, applet_spec["runSpec"]["file"])
-        #f = dxpy.upload_local_file(code_filename, wait_on_close=True)
-        #applet_spec["runSpec"]["file"] = f.get_id()
         # Put it into runSpec.code instead
         with open(os.path.join(src_dir, applet_spec["runSpec"]["file"])) as code_fh:
             applet_spec["runSpec"]["code"] = code_fh.read()
