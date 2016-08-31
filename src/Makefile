@@ -63,7 +63,7 @@ else
 	MAYBE_SUDO='sudo'
 endif
 
-all: api_wrappers cpp src_libs python dx-contigset-to-fasta dx-verify-file dx-wig-to-wiggle jq
+all: api_wrappers cpp src_libs python dx-contigset-to-fasta dx-verify-file dx-wig-to-wiggle jq dx-docker
 
 # Don't try to initialize the submodule in source distributions, it should
 # already be there and ready to build.
@@ -149,7 +149,7 @@ pynsist_installer: toolkit_version $(DNANEXUS_HOME)/bin/dx dx-verify-file jq ua
 
 	# Copy wheel file into place without changing its filename
 	export DXPY_WHEEL_FILENAME=$$(basename $(DNANEXUS_HOME)/src/python/dist/dxpy-*.whl) ; \
-	    cp "$(DNANEXUS_HOME)"/src/python/dist/$${DXPY_WHEEL_FILENAME} "$(DNANEXUS_HOME)"/build/pynsist_files/ 
+	    cp "$(DNANEXUS_HOME)"/src/python/dist/$${DXPY_WHEEL_FILENAME} "$(DNANEXUS_HOME)"/build/pynsist_files/
 
 	# Insert the wheel filename into installer.cfg
 	export DXPY_WHEEL_FILENAME=$$(basename $(DNANEXUS_HOME)/src/python/dist/dxpy-*.whl) ; \
@@ -234,6 +234,14 @@ dx-wig-to-wiggle: api_wrappers
 
 ua: toolkit_version ua_deps
 	$(MAKE) -C ua install dist DESTDIR=$(DNANEXUS_HOME) PREFIX=/
+
+dx-docker: bin/proot bin/docker2aci
+
+bin/proot:
+	mkdir -p $(DNANEXUS_HOME)/proot-build && cd $(DNANEXUS_HOME)/proot-build && curl -k -sL https://github.com/proot-me/PRoot/archive/v4.0.0.tar.gz | tar --strip-components=1 -zxf - && cd src && make && mv proot $(DNANEXUS_HOME)/bin && rm -r $(DNANEXUS_HOME)/proot-build
+
+bin/docker2aci:
+	cd $(DNANEXUS_HOME)/bin && curl -k -sL https://github.com/appc/docker2aci/releases/download/v0.12.3/docker2aci-v0.12.3.tar.gz | tar --strip-components=1 -zxf -
 
 # Tests
 # =====
@@ -514,16 +522,16 @@ endif
 install_sysdeps:
 ifeq ($(CENTOS_MAJOR_VERSION), 5)
 	${MAYBE_SUDO} yum groupinstall -y "Development tools"
-	${MAYBE_SUDO} yum install -y cmake gcc44-c++ zlib-devel bzip2-devel curl-devel
+	${MAYBE_SUDO} yum install -y cmake gcc44-c++ zlib-devel bzip2-devel curl-devel libtalloc-devel
 else ifeq ($(FEDORA_MAJOR_VERSION), 20)
 	${MAYBE_SUDO} yum groupinstall -y "Development tools"
-	${MAYBE_SUDO} yum install -y gcc gcc-c++ automake bison flex python python-pip python-virtualenv boost-devel boost-static cmake openssl-devel libcurl-devel bzip2-devel
+	${MAYBE_SUDO} yum install -y gcc gcc-c++ automake bison flex python python-pip python-virtualenv boost-devel boost-static cmake openssl-devel libcurl-devel bzip2-devel libtalloc-devel
 else ifeq ($(UBUNTU_VERSION), 12.04)
 	${MAYBE_SUDO} apt-get install make python-setuptools python-pip python-virtualenv python-dev \
-		g++ cmake libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison autoconf
+		g++ cmake libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison autoconf libtalloc-dev
 else ifeq ($(UBUNTU_VERSION), 14.04)
 	${MAYBE_SUDO} apt-get install make python-setuptools python-pip python-virtualenv python-dev \
-		g++ cmake libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison autoconf
+		g++ cmake libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison autoconf libtalloc-dev
 endif
 
 # Clean
@@ -537,6 +545,7 @@ clean:
 	$(MAKE) -C dx-verify-file clean
 	$(MAKE) -C ua clean
 	-find ../bin -type f \( -name jq -or -name dx -or -name 'dx-*' \) -not -name 'dx-unpack*' -delete
+	-rm -f ../bin/docker2aci ../bin/proot
 	-rm -rf python/{build,*.{egg,egg-info}}
 	-rm -rf java/target
 	-rm -rf ../lib

@@ -1,0 +1,111 @@
+#!/usr/bin/env python
+
+"""dx-docker Run Docker images in your DNAnexus app."""
+
+import argparse
+import sys
+import os
+import subprocess
+import pprint
+import json
+import multiprocessing.dummy
+import tempfile
+import glob
+
+CACHE_DIR = '/dx-docker-cache'
+
+def shell(cmd, verbose=True):
+    def poll_stream(args):
+        subproc, istream, ostream, lock = args
+
+        for out in istream:
+            lock.acquire()
+            ostream.write("{output}\n".format(output=out.rstrip()))
+            lock.release()
+
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    if verbose:
+        pool = multiprocessing.dummy.Pool(2)
+        lock = multiprocessing.Lock()
+        outputs = pool.map(poll_stream,
+            [(p, p.stdout, sys.stdout, lock),
+             (p, p.stderr, sys.stderr, lock)])
+        pool.close()
+        pool.join()
+
+    p.communicate()
+    if p.returncode != 0:
+       sys.exit(p.returncode) 
+
+parser = argparse.ArgumentParser()
+subparsers = parser.add_subparsers()
+
+def image_name_from_path(image_path):
+    imagename = image_path.replace("/","-").replace(":", "-")
+    return imagename.replace("quay.io-", "")
+
+def extract_aci(image):
+    imagename = image_name_from_path(image)
+    tmpdir = tempfile.mkdtemp()
+    shell("cd {tmpdir} && tar -xzf {cachedir}/*{image}*.aci --exclude 'rootfs/dev/*'|| true".format(cachedir=CACHE_DIR, tmpdir=tmpdir, image=imagename))
+    return tmpdir
+
+parser_pull = subparsers.add_parser('pull', help="Pulls a docker image for use in DNAnexus")
+parser_pull.add_argument("image", help="image name")
+parser_pull.add_argument("--verbose", action='store_true', help="Show verbose output for pulling an image")
+def pull(args):
+    if not os.path.isdir(CACHE_DIR):
+        shell("mkdir {cachedir}".format(cachedir=CACHE_DIR))
+    shell("cd {cachedir} && docker2aci docker://{image}".format(cachedir=CACHE_DIR, image=args.image), verbose=args.verbose)
+parser_pull.set_defaults(func=pull)
+
+parser_run = subparsers.add_parser('run', help="Runs a docker image in a container")
+parser_run.add_argument("-v", "--volume", help="Directory to mount inside the container. Can be supplied multiple times (e.g. -v /mnt/data:/mnt/data -v /host:/guest", action='append', default=[])
+parser_run.add_argument("--entrypoint",  help="Overwrite default entry point for image")
+parser_run.add_argument("-w", "--workdir",  help="Working directory", default="/")
+parser_run.add_argument("image", help="image name")
+parser_run.add_argument("command", help="command to run within container", nargs=argparse.REMAINDER, default=[])
+def run(args):
+    imagename = image_name_from_path(args.image)
+    matching_files = glob.glob("{cachedir}/*{image}*.aci".format(cachedir=CACHE_DIR, image=imagename))
+    if len(matching_files) == 0:
+        pull(parser_pull.parse_args([args.image]))
+    elif len(matching_files) > 1:
+        raise Exception("dx-docker cache error: Exactly one aci archive should correspond to an image name: {} found archives".format(len(matching_files)))
+
+    tmpdir = extract_aci(args.image)
+
+    with open("{tmpdir}/manifest".format(tmpdir=tmpdir, image=imagename)) as f:
+        imagemeta = json.loads(f.read())
+    annotations = {a['name'].split("/")[-1]: a['value'] for a in imagemeta['annotations']}
+    vols = ["/run/shm/:/dev/shm"] + args.volume
+    volume = " ".join(["-b {}".format(v) for v in vols])
+    entrypoint = ""
+    if args.entrypoint:
+        if entrypoint.startswith("["):
+            entrypoint = json.loads(args.entrypoint)
+        else:
+           entrypoint = [args.entrypoint]
+    elif 'entrypoint' in annotations:
+        entrypoint = json.loads(annotations['entrypoint'])
+
+    cmd = ""
+    if args.command:
+         cmd = args.command
+    elif 'cmd' in annotations and not args.entrypoint:
+         cmd = json.loads(annotations['cmd'])
+
+    workdir = args.workdir
+    if 'workingDirectory' in imagemeta['app']:
+       workdir = imagemeta['app']['workingDirectory']
+
+    env = "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    if 'environment' in imagemeta['app']:
+        env = " ".join([var['name']+"="+var['value']  for var in imagemeta['app']['environment']])
+
+    shell("proot -R {tmpdir}/rootfs {volume} -w {workdir} /usr/bin/env -i {env} /bin/sh -c '{entrypoint} {cmd}'".format(volume=volume, tmpdir=tmpdir, entrypoint=" ".join(entrypoint), cmd=" ".join(cmd), workdir=workdir, env=env))
+parser_run.set_defaults(func=run)
+
+if __name__ == "__main__":
+    args = parser.parse_args()
+    args.func(args)
