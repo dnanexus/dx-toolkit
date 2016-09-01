@@ -238,7 +238,7 @@ ua: toolkit_version ua_deps
 dx-docker: bin/proot bin/docker2aci
 
 bin/proot:
-	mkdir -p $(DNANEXUS_HOME)/proot-build && cd $(DNANEXUS_HOME)/proot-build && curl -k -sL https://github.com/proot-me/PRoot/archive/v4.0.0.tar.gz | tar --strip-components=1 -zxf - && cd src && make && mv proot $(DNANEXUS_HOME)/bin && rm -r $(DNANEXUS_HOME)/proot-build
+	curl -k -sL https://github.com/proot-me/proot-static-build/raw/6521685b9a27274b4bf4a4fe49e6887fdc32a7aa/static/proot-x86_64 > $(DNANEXUS_HOME)/bin/proot && chmod 777 $(DNANEXUS_HOME)/bin/proot
 
 bin/docker2aci:
 	cd $(DNANEXUS_HOME)/bin && curl -k -sL https://github.com/appc/docker2aci/releases/download/v0.12.3/docker2aci-v0.12.3.tar.gz | tar --strip-components=1 -zxf -
@@ -522,16 +522,16 @@ endif
 install_sysdeps:
 ifeq ($(CENTOS_MAJOR_VERSION), 5)
 	${MAYBE_SUDO} yum groupinstall -y "Development tools"
-	${MAYBE_SUDO} yum install -y cmake gcc44-c++ zlib-devel bzip2-devel curl-devel libtalloc-devel
+	${MAYBE_SUDO} yum install -y cmake gcc44-c++ zlib-devel bzip2-devel curl-devel
 else ifeq ($(FEDORA_MAJOR_VERSION), 20)
 	${MAYBE_SUDO} yum groupinstall -y "Development tools"
-	${MAYBE_SUDO} yum install -y gcc gcc-c++ automake bison flex python python-pip python-virtualenv boost-devel boost-static cmake openssl-devel libcurl-devel bzip2-devel libtalloc-devel
+	${MAYBE_SUDO} yum install -y gcc gcc-c++ automake bison flex python python-pip python-virtualenv boost-devel boost-static cmake openssl-devel libcurl-devel bzip2-devel
 else ifeq ($(UBUNTU_VERSION), 12.04)
 	${MAYBE_SUDO} apt-get install make python-setuptools python-pip python-virtualenv python-dev \
-		g++ cmake libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison autoconf libtalloc-dev
+		g++ cmake libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison autoconf
 else ifeq ($(UBUNTU_VERSION), 14.04)
 	${MAYBE_SUDO} apt-get install make python-setuptools python-pip python-virtualenv python-dev \
-		g++ cmake libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison autoconf libtalloc-dev
+		g++ cmake libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison autoconf
 endif
 
 # Clean

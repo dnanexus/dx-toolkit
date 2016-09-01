@@ -58,20 +58,20 @@ toolkit that doesn't require them.
 
     sudo apt-get install make python-setuptools python-pip python-virtualenv python-dev \
       g++ cmake libboost1.55-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison \
-      autoconf libtalloc-dev
+      autoconf
 
 ### Ubuntu 12.04
 
     sudo apt-get install make python-setuptools python-pip python-dev \
       g++ cmake libboost1.48-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison \
-      autoconf libtalloc-dev
+      autoconf
     sudo pip install --upgrade virtualenv
 
 ### Fedora
 
     yum install gcc gcc-c++ automake bison flex python python-pip \
       python-virtualenv boost-devel boost-static cmake openssl-devel \
-      libcurl-devel bzip2-devel libtalloc-devel
+      libcurl-devel bzip2-devel
 
 This package set was tested on **Fedora 20**, which has the following package
 versions (abbreviated list):
