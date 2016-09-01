@@ -307,7 +307,8 @@ namespace dx {
   }
 
   JSON appRun(const std::string &app_id_or_name, const JSON &input_params, const bool safe_to_retry) {
-    return appRun(app_id_or_name, input_params.toString(), safe_to_retry);
+    JSON input_params_cp = Nonce::updateNonce(input_params);
+    return appRun(app_id_or_name, input_params_cp.toString(), safe_to_retry);
   }
 
   JSON appRunWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params, const bool safe_to_retry) {
@@ -315,7 +316,8 @@ namespace dx {
   }
 
   JSON appRunWithAlias(const std::string &app_name, const std::string &app_alias, const JSON &input_params, const bool safe_to_retry) {
-    return appRunWithAlias(app_name, app_alias, input_params.toString(), safe_to_retry);
+    JSON input_params_cp = Nonce::updateNonce(input_params);
+    return appRunWithAlias(app_name, app_alias, input_params_cp.toString(), safe_to_retry);
   }
 
   JSON appUninstall(const std::string &app_id_or_name, const std::string &input_params, const bool safe_to_retry) {
@@ -355,7 +357,8 @@ namespace dx {
   }
 
   JSON appNew(const JSON &input_params, const bool safe_to_retry) {
-    return appNew(input_params.toString(), safe_to_retry);
+    JSON input_params_cp = Nonce::updateNonce(input_params);
+    return appNew(input_params_cp.toString(), safe_to_retry);
   }
 
   JSON appletAddTags(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
@@ -419,7 +422,8 @@ namespace dx {
   }
 
   JSON appletRun(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
-    return appletRun(object_id, input_params.toString(), safe_to_retry);
+    JSON input_params_cp = Nonce::updateNonce(input_params);
+    return appletRun(object_id, input_params_cp.toString(), safe_to_retry);
   }
 
   JSON appletSetProperties(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
@@ -435,7 +439,8 @@ namespace dx {
   }
 
   JSON appletNew(const JSON &input_params, const bool safe_to_retry) {
-    return appletNew(input_params.toString(), safe_to_retry);
+    JSON input_params_cp = Nonce::updateNonce(input_params);
+    return appletNew(input_params_cp.toString(), safe_to_retry);
   }
 
   JSON containerClone(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
@@ -627,7 +632,8 @@ namespace dx {
   }
 
   JSON fileNew(const JSON &input_params, const bool safe_to_retry) {
-    return fileNew(input_params.toString(), safe_to_retry);
+    JSON input_params_cp = Nonce::updateNonce(input_params);
+    return fileNew(input_params_cp.toString(), safe_to_retry);
   }
 
   JSON gtableAddRows(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
@@ -811,7 +817,8 @@ namespace dx {
   }
 
   JSON jobNew(const JSON &input_params, const bool safe_to_retry) {
-    return jobNew(input_params.toString(), safe_to_retry);
+    JSON input_params_cp = Nonce::updateNonce(input_params);
+    return jobNew(input_params_cp.toString(), safe_to_retry);
   }
 
   JSON notificationsGet(const std::string &input_params, const bool safe_to_retry) {
@@ -899,7 +906,8 @@ namespace dx {
   }
 
   JSON orgNew(const JSON &input_params, const bool safe_to_retry) {
-    return orgNew(input_params.toString(), safe_to_retry);
+    JSON input_params_cp = Nonce::updateNonce(input_params);
+    return orgNew(input_params_cp.toString(), safe_to_retry);
   }
 
   JSON projectAddTags(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
@@ -1155,7 +1163,8 @@ namespace dx {
   }
 
   JSON recordNew(const JSON &input_params, const bool safe_to_retry) {
-    return recordNew(input_params.toString(), safe_to_retry);
+    JSON input_params_cp = Nonce::updateNonce(input_params);
+    return recordNew(input_params_cp.toString(), safe_to_retry);
   }
 
   JSON systemDescribeDataObjects(const std::string &input_params, const bool safe_to_retry) {
@@ -1443,7 +1452,8 @@ namespace dx {
   }
 
   JSON workflowRun(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
-    return workflowRun(object_id, input_params.toString(), safe_to_retry);
+    JSON input_params_cp = Nonce::updateNonce(input_params);
+    return workflowRun(object_id, input_params_cp.toString(), safe_to_retry);
   }
 
   JSON workflowSetDetails(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
@@ -1499,7 +1509,8 @@ namespace dx {
   }
 
   JSON workflowNew(const JSON &input_params, const bool safe_to_retry) {
-    return workflowNew(input_params.toString(), safe_to_retry);
+    JSON input_params_cp = Nonce::updateNonce(input_params);
+    return workflowNew(input_params_cp.toString(), safe_to_retry);
   }
 
 }

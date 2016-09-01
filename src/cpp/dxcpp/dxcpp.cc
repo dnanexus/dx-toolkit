@@ -17,6 +17,9 @@
 #include <algorithm>
 #include <boost/thread.hpp>
 #include <boost/regex.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/random/uniform_int.hpp>
+#include <boost/random/linear_congruential.hpp>
 
 #include "dxlog.h"
 #include "dxcpp.h"
@@ -538,5 +541,40 @@ namespace dx {
     };
     IgnoreSIGPIPE IgnoreSIGPIPE_static_initializer;
     #endif
+  }
+
+  namespace Nonce {
+    using namespace boost::posix_time;
+    ptime currTime() {
+      return microsec_clock::local_time();
+    }
+
+    long getMicroSecs() {
+      ptime now = currTime();
+      ptime t0(now.date(), hours(0));
+      time_duration td = now - t0;
+      return td.total_microseconds();
+    }
+
+    static boost::minstd_rand generator(getMicroSecs());
+    static boost::random::uniform_int_distribution<> uniform(0, 15);
+    static const std::string hexchars = "0123456789abcdef";
+
+    string nonce() {
+      std::stringstream ss;
+      for (int i=0; i<64;++i){
+	       ss << hexchars[uniform(generator)];
+      }
+      ss << " " << currTime();
+      return ss.str();
+    }
+
+    JSON updateNonce(const JSON &input_params) {
+      JSON input_params_cp(input_params);
+      if (!(input_params_cp.has("nonce") && !input_params_cp["nonce"].get<string>().empty())) {
+        input_params_cp["nonce"] = nonce();
+      }
+      return input_params_cp;
+    }
   }
 }

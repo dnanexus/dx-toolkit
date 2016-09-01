@@ -79,6 +79,11 @@ namespace dx {
    * appropriate.
    */
   bool loadFromEnvironment();
+
+  namespace Nonce {
+    std::string nonce();
+    dx::JSON updateNonce(const dx::JSON &input_params);
+  }
 }
 
 #include "exceptions.h"

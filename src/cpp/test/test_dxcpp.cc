@@ -63,6 +63,176 @@ void createANewApplet(DXApplet &apl) {
   apl.create(applet_details);
 }
 
+//////////////////////
+// Nonce Generation //
+/////////////////////
+
+TEST(NonceGeneration, generateNonces) {
+  std::set<std::string> nonces;
+  const int numNonces = 100;
+  for (int i=0; i < numNonces; ++i) {
+    nonces.insert(Nonce::nonce());
+  }
+  // This ensures that there are no duplicate nonces
+  ASSERT_EQ(nonces.size(), numNonces);
+
+  for (std::set<std::string>::iterator it = nonces.begin();
+                                       it != nonces.end();
+                                       ++it) {
+    ASSERT_TRUE(it->size() > 0);
+    ASSERT_TRUE(it->size() <= 128);
+  }
+}
+
+TEST(NonceGeneration, updateInput) {
+  JSON inputParams(JSON_OBJECT);
+  inputParams["p1"] = "v1";
+  inputParams["p2"] = "v2";
+  JSON updatedInput = Nonce::updateNonce(inputParams);
+  ASSERT_EQ(inputParams["p1"], updatedInput["p1"]);
+  ASSERT_EQ(inputParams["p2"], updatedInput["p2"]);
+  ASSERT_TRUE(updatedInput.has("nonce"));
+  std::string nonce = updatedInput["nonce"].get<string>();
+  ASSERT_TRUE(nonce.size() > 0);
+  ASSERT_TRUE(nonce.size() <= 128);
+
+  std::string inputNonce = Nonce::nonce();
+  inputParams["nonce"] = inputNonce;
+  updatedInput = Nonce::updateNonce(inputParams);
+  ASSERT_EQ(inputParams["p1"], updatedInput["p1"]);
+  ASSERT_EQ(inputParams["p2"], updatedInput["p2"]);
+  ASSERT_TRUE(updatedInput.has("nonce"));
+  nonce = updatedInput["nonce"].get<string>();
+  ASSERT_EQ(inputNonce, nonce);
+  ASSERT_TRUE(nonce.size() > 0);
+  ASSERT_TRUE(nonce.size() <= 128);
+}
+
+/////////////////
+// Idempotency //
+/////////////////
+
+// Assert that a call to an api method returns the same response with a given input, an Idempotent Operation.
+void assertEqualResponse(JSON (*apiMethod)(const dx::JSON &, const bool), const JSON &inputParams, const bool safeToRetry=false) {
+  JSON response1 =  (*apiMethod)(inputParams, safeToRetry);
+  JSON response2 =  (*apiMethod)(inputParams, safeToRetry);
+  ASSERT_EQ(response1, response2);
+}
+
+void assertEqualResponse(JSON (*apiMethod)(const string &, const dx::JSON &, const bool),
+                         const string& objectId, const JSON &inputParams, const bool safeToRetry=false) {
+  JSON response1 =  (*apiMethod)(objectId, inputParams, safeToRetry);
+  JSON response2 =  (*apiMethod)(objectId, inputParams, safeToRetry);
+  ASSERT_EQ(response1, response2);
+}
+
+static const std::string apiNonceError =
+  "InvalidInput: 'Nonce was reused for an earlier API request that had a different input', Server returned HTTP code '422'";
+
+// Reusing a nonce with a different input should fail.
+void assertNonceReuseError(JSON (*apiMethod)(const dx::JSON &, const bool), const JSON &inputParams, const bool safeToRetry=false){
+  try {
+    (*apiMethod)(inputParams, safeToRetry);
+    ASSERT_THROW((*apiMethod)(inputParams, safeToRetry), DXAPIError);
+  } catch(DXAPIError &err) {
+    ASSERT_EQ(err.resp_code, 422);
+    ASSERT_EQ(std::string(err.what()), apiNonceError);
+  }
+}
+
+void assertNonceReuseError(JSON (*apiMethod)(const string &, const dx::JSON &, const bool),
+                           const string& objectId, const JSON &inputParams, const bool safeToRetry=false) {
+  try {
+    (*apiMethod)(objectId, inputParams, safeToRetry);
+    ASSERT_THROW((*apiMethod)(objectId, inputParams, safeToRetry), DXAPIError);
+  } catch(DXAPIError &err) {
+    ASSERT_EQ(err.resp_code, 422);
+    ASSERT_EQ(std::string(err.what()), apiNonceError);
+  }
+}
+
+TEST(Idempotency, fileNew) {
+  JSON inputParams(JSON_OBJECT);
+  inputParams["project"] = config::CURRENT_PROJECT();
+  inputParams["name"] = "testfile.txt";
+  inputParams["nonce"] = Nonce::nonce();
+  assertEqualResponse(fileNew, inputParams);
+
+  inputParams["name"] = "testfile2.txt";
+  assertNonceReuseError(fileNew, inputParams);
+}
+
+TEST(Idempotency, recordNew) {
+  JSON inputParams(JSON_OBJECT);
+  inputParams["project"] = config::CURRENT_PROJECT();
+  inputParams["name"] = "test_record";
+  inputParams["nonce"] = Nonce::nonce();
+  assertEqualResponse(recordNew, inputParams);
+
+  inputParams["name"] = "test_record_2";
+  assertNonceReuseError(recordNew, inputParams);
+}
+
+TEST(Idempotency, appletNew) {
+  JSON inputParams(JSON_OBJECT);
+  inputParams["name"] = "test_applet";
+  inputParams["inputSpec"] = JSON(JSON_ARRAY);
+  inputParams["inputSpec"].push_back(JSON::parse("{\"name\": \"rowFetchChunk\", \"class\": \"int\"}"));
+  inputParams["runSpec"] = JSON(JSON_OBJECT);
+  inputParams["outputSpec"] = JSON::parse("[{\"name\":\"message\", \"class\":\"string\"}]");
+  inputParams["runSpec"]["code"] = "#!/bin/bash\n\n#main() {\necho '{\"message\": \"hello world!\"}' > job_output.json \n#}";
+  inputParams["runSpec"]["interpreter"] = "bash";
+  inputParams["dxapi"] = "1.0.0";
+  inputParams["project"] = config::CURRENT_PROJECT();
+  inputParams["nonce"] = Nonce::nonce();
+  assertEqualResponse(appletNew, inputParams);
+
+  inputParams["name"] = "test_applet2";
+  assertNonceReuseError(appletNew, inputParams);
+}
+
+TEST(Idempotency, appletRun) {
+  DXApplet apl;
+  createANewApplet(apl);
+  JSON inputParams(JSON_OBJECT);
+  inputParams["input"] = JSON::parse("{\"rowFetchChunk\": 100}");
+  inputParams["project"] = config::CURRENT_PROJECT();
+  inputParams["nonce"] = Nonce::nonce();
+  assertEqualResponse(appletRun, apl.getID(), inputParams);
+
+  inputParams["input"] = JSON::parse("{\"rowFetchChunk\": 500}");
+  assertNonceReuseError(appletRun, apl.getID(), inputParams);
+}
+
+TEST(Idempotency, appCreateAndRun) {
+  if (DXTEST_FULL){
+    DXApplet apl;
+    createANewApplet(apl);
+    JSON inputParams(JSON_OBJECT);
+    inputParams["applet"] = apl.getID();
+    inputParams["version"] = "1";
+    inputParams["name"] = "app_name";
+    inputParams["nonce"] = Nonce::nonce();
+    assertEqualResponse(appNew, inputParams);
+
+    inputParams["name"] = "new_app_name";
+    assertNonceReuseError(appNew, inputParams);
+  } else {
+    cerr << "Skipping appCreateAndRun test because DXTEST_FULL was not set" << endl;
+  }
+}
+
+TEST(Idempotency, workflowNew) {
+  JSON inputParams(JSON_OBJECT);
+  inputParams["name"] = "WorkflowTest";
+  inputParams["project"] = config::CURRENT_PROJECT();
+  inputParams["nonce"] = Nonce::nonce();
+  assertEqualResponse(workflowNew, inputParams);
+
+  inputParams["name"] = "New_workflow";
+  assertNonceReuseError(workflowNew, inputParams);
+}
+
 /////////////////
 // Retry logic //
 /////////////////

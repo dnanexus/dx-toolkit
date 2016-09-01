@@ -31,8 +31,8 @@ class_method_template = '''
     return DXHTTPRequest("{route}", input_params, safe_to_retry);
   }}
 
-  JSON {method_name}(const JSON &input_params, const bool safe_to_retry) {{
-    return {method_name}(input_params.toString(), safe_to_retry);
+  JSON {method_name}(const JSON &input_params, const bool safe_to_retry) {{{nonce_code}
+    return {method_name}({input_params}.toString(), safe_to_retry);
   }}'''
 
 object_method_template = '''
@@ -40,8 +40,8 @@ object_method_template = '''
     return DXHTTPRequest(std::string("/") + object_id + std::string("/{method_route}"), input_params, safe_to_retry);
   }}
 
-  JSON {method_name}(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {{
-    return {method_name}(object_id, input_params.toString(), safe_to_retry);
+  JSON {method_name}(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {{{nonce_code}
+    return {method_name}(object_id, {input_params}.toString(), safe_to_retry);
   }}'''
 
 app_object_method_template = '''
@@ -49,33 +49,52 @@ app_object_method_template = '''
     return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/{method_route}"), input_params, safe_to_retry);
   }}
 
-  JSON {method_name}(const std::string &app_id_or_name, const JSON &input_params, const bool safe_to_retry) {{
-    return {method_name}(app_id_or_name, input_params.toString(), safe_to_retry);
+  JSON {method_name}(const std::string &app_id_or_name, const JSON &input_params, const bool safe_to_retry) {{{nonce_code}
+    return {method_name}(app_id_or_name, {input_params}.toString(), safe_to_retry);
   }}
 
   JSON {method_name}WithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params, const bool safe_to_retry) {{
     return {method_name}(app_name + std::string("/") + app_alias, input_params, safe_to_retry);
   }}
 
-  JSON {method_name}WithAlias(const std::string &app_name, const std::string &app_alias, const JSON &input_params, const bool safe_to_retry) {{
-    return {method_name}WithAlias(app_name, app_alias, input_params.toString(), safe_to_retry);
+  JSON {method_name}WithAlias(const std::string &app_name, const std::string &app_alias, const JSON &input_params, const bool safe_to_retry) {{{nonce_code}
+    return {method_name}WithAlias(app_name, app_alias, {input_params}.toString(), safe_to_retry);
   }}'''
 
 postscript = '''
 }'''
+
+
+def make_nonce_code(acceptNonce):
+    return ("\n    JSON input_params_cp = Nonce::updateNonce(input_params);" if acceptNonce else "")
+
+
+def make_input_params(accept_nonce):
+    return ("input_params_cp" if accept_nonce else "input_params")
+
 
 print preamble
 
 for method in json.loads(sys.stdin.read()):
     route, signature, opts = method
     method_name = signature.split("(")[0]
+    accept_nonce = True if 'acceptNonce' in opts else False
     if (opts['objectMethod']):
         root, oid_route, method_route = route.split("/")
         if oid_route == 'app-xxxx':
-            print app_object_method_template.format(method_name=method_name, method_route=method_route)
+            print app_object_method_template.format(method_name=method_name,
+                                                    method_route=method_route,
+                                                    nonce_code=make_nonce_code(accept_nonce),
+                                                    input_params=make_input_params(accept_nonce))
         else:
-            print object_method_template.format(method_name=method_name, method_route=method_route)
+            print object_method_template.format(method_name=method_name,
+                                                method_route=method_route,
+                                                nonce_code=make_nonce_code(accept_nonce),
+                                                input_params=make_input_params(accept_nonce))
     else:
-        print class_method_template.format(method_name=method_name, route=route)
+        print class_method_template.format(method_name=method_name,
+                                           route=route,
+                                           nonce_code=make_nonce_code(accept_nonce),
+                                           input_params=make_input_params(accept_nonce))
 
 print postscript
