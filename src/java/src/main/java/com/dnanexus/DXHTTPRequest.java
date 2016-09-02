@@ -112,6 +112,31 @@ public class DXHTTPRequest {
     }
 
     /**
+     * Prints an error message to stderr
+     *
+     * @param msg the error message to be printed
+     *
+     */
+    private static void logError(String msg) {
+        System.err.println("[" + System.currentTimeMillis() + "] " + msg);
+    }
+
+    /**
+     * Returns the value of a given header from an HttpResponse
+     *
+     * @param response the HttpResponse Object
+     *
+     * @param headerName name of the header to extract the value
+     */
+    private static String getHeader(HttpResponse response, String headerName) {
+        String headerValue = "";
+        if (response.containsHeader(headerName)) {
+            headerValue = response.getFirstHeader(headerName).getValue();
+        }
+        return headerValue;
+    }
+
+    /**
      * Construct the DXHTTPRequest using the default DXEnvironment.
      */
     public DXHTTPRequest() {
@@ -234,6 +259,7 @@ public class DXHTTPRequest {
 
         while (true) {
             Integer statusCode = null;
+            String requestId = "";
 
             // This guarantees that we get at least one iteration around this loop before running
             // out of retries, so we can check at the bottom of the loop instead of the top.
@@ -256,6 +282,7 @@ public class DXHTTPRequest {
                 HttpResponse response = httpclient.execute(request);
 
                 statusCode = response.getStatusLine().getStatusCode();
+                requestId = getHeader(response, "X-Request-ID");
                 HttpEntity entity = response.getEntity();
 
                 if (statusCode == null) {
@@ -320,13 +347,15 @@ public class DXHTTPRequest {
                         // Just fall back to reproducing the entire response
                         // body.
                     }
-
+                    logError(errorType + ": " + errorMessage + ". Code: " + Integer.toString(statusCode)
+                        + " Request ID: " + requestId);
                     throw DXAPIException.getInstance(errorType, errorMessage, statusCode);
                 } else {
                     // Propagate 500 error to caller
                     if (this.disableRetry && statusCode != 503) {
-                        System.err.println("POST " + resource + ": " + statusCode + " Internal Server Error, try "
-                                + String.valueOf(attempts + 1) + "/" + NUM_RETRIES);
+                        logError("POST " + resource + ": " + statusCode + " Internal Server Error, try "
+                                + String.valueOf(attempts + 1) + "/" + NUM_RETRIES
+                                + " Request ID: " +  requestId);
                         throw new InternalErrorException("Internal Server Error", statusCode);
                     }
                     // If retries enabled, 500 InternalError should get retried unconditionally
@@ -350,22 +379,22 @@ public class DXHTTPRequest {
                 int secondsToWait = retryAfterSeconds;
 
                 if (this.disableRetry) {
-                    System.err.println("POST " + resource + ": 503 Service Unavailable, suggested wait "
-                            + secondsToWait + " seconds");
+                    logError("POST " + resource + ": 503 Service Unavailable, suggested wait "
+                            + secondsToWait + " seconds" + ". Request ID: " +  requestId);
                     throw e;
                 }
 
                 // Retries due to 503 Service Unavailable and Retry-After do NOT count against the
                 // allowed number of retries.
-                System.err.println("POST " + resource + ": 503 Service Unavailable, waiting for "
-                        + Integer.toString(secondsToWait) + " seconds");
+                logError("POST " + resource + ": 503 Service Unavailable, waiting for "
+                        + Integer.toString(secondsToWait) + " seconds" + " Request ID: " +  requestId);
                 sleep(secondsToWait);
                 continue;
             } catch (IOException e) {
                 // Note, this catches both exceptions directly thrown from httpclient.execute (e.g.
                 // no connectivity to server) and exceptions thrown by our code above after parsing
                 // the response.
-                System.err.println(errorMessage("POST", resource, e.toString(), timeoutSeconds,
+                logError(errorMessage("POST", resource, e.toString(), timeoutSeconds,
                         attempts + 1, NUM_RETRIES));
                 if (attempts == NUM_RETRIES || !retryRequest) {
                     if (statusCode == null) {

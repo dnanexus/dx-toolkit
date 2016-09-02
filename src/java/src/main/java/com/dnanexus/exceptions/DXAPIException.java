@@ -124,7 +124,7 @@ public class DXAPIException extends RuntimeException {
         if (errorType != null && valueMap.containsKey(errorType)) {
             return valueMap.get(errorType).generateException(errorMessageOrDefault, statusCode);
         }
-        System.err.println("Received an API error of unknown type " + errorType
+        System.err.println("[" + System.currentTimeMillis() + "] " + "Received an API error of unknown type " + errorType
                 + "; deserializing it as a generic DXAPIException.");
         return new DXAPIException(errorMessageOrDefault, statusCode);
     }
