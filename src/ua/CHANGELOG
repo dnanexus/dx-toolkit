@@ -1,3 +1,8 @@
+DNAnexus Upload Agent 1.5.18 <support@dnanexus.com>, 2016-Sep-03
+----------------------------------------------------------------
+  * Allow file limit to be overridden
+  * Fix for false positive duplicate detection in ua --recursive
+
 DNAnexus Upload Agent 1.5.17 <support@dnanexus.com>, 2016-Jul-14
 ----------------------------------------------------------------
   * [PTFM-18415] Do not print "Upload throttling is disabled" message

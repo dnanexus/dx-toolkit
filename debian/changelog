@@ -1,3 +1,14 @@
+dx-toolkit (0.200.0) precise; urgency=low
+
+  * PTFM-18587 Initial dx-docker script for dx-toolkit
+  * PTFM-18629 Enable boost locale hack during ua execution
+  * PTFM-18637 UA - Override file limit
+  * PTFM-18636 Fix for ua --recursive
+  * PTFM-18556 dx-toolkit-* prefix for .exe installer (#175)
+  * Remove the archive file from the system after unpack
+
+ -- Phil Sung <psung@dnanexus.com>  Sat, 03 Sep 2016 00:24:35 +0000
+
 dx-toolkit (0.199.0) precise; urgency=low
 
   * PTFM-17974 Update Java SDK with support for idempotent object creation
@@ -16,7 +27,7 @@ dx-toolkit (0.199.0) precise; urgency=low
   * Dedent indentation accidentally added in d6932641
   * Make download_all_inputs available from within dxpy
   * Add documentation for DXExecDependencyInstaller
-  * JobState enum matches the API specification 
+  * JobState enum matches the API specification
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 25 Aug 2016 20:40:10 +0000
 
@@ -77,7 +88,7 @@ dx-toolkit (0.195.0) precise; urgency=low
   * PTFM-17351 Proxy support in dx ssh / dx run --ssh
   * PTFM-17451 Use project context from DXFile object in get_download_url
   * PTFM-16098 dx download floors percentage
-  * Removed gtable option from dx find data 
+  * Removed gtable option from dx find data
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 07 Jul 2016 16:49:24 +0000
 
