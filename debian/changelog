@@ -1,3 +1,9 @@
+dx-toolkit (0.200.1) precise; urgency=low
+
+  * Reduce resource consumption of downloads
+
+ -- Phil Sung <psung@dnanexus.com>  Fri, 09 Sep 2016 02:01:50 +0000
+
 dx-toolkit (0.200.0) precise; urgency=low
 
   * PTFM-18587 Initial dx-docker script for dx-toolkit
