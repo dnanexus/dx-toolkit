@@ -84,21 +84,30 @@ def wait_for_all_futures(futures, print_traceback=False):
         os._exit(os.EX_IOERR)
 
 
-def response_iterator(request_iterator, thread_pool, max_active_tasks=None):
+def response_iterator(request_iterator, thread_pool, max_active_tasks=None, do_first_task_sequentially=True):
     """
-    :param request_iterator: An iterator producing inputs for consumption by the worker pool.
+    :param request_iterator:
+        An iterator producing inputs for consumption by the worker pool.
     :type request_iterator: iterator of callable, args, kwargs
     :param thread_pool: thread pool to submit the requests to
     :type thread_pool: concurrent.futures.thread.ThreadPoolExecutor
     :param max_active_tasks:
-        The maximum number of tasks that may be either running or waiting for consumption of their result.
-        If not given, defaults to the number of CPU cores on the machine.
+        The maximum number of tasks that may be either running or
+        waiting for consumption of their result. If not given, defaults
+        to the number of CPU cores on the machine.
     :type max_active_tasks: int
+    :param do_first_task_sequentially:
+        If True, executes (and returns the result of) the first request
+        before submitting any other requests (the subsequent requests
+        are submitted with *max_active_tasks* parallelism).
+    :type do_first_task_sequentially: bool
 
-    Rate-limited asynchronous multithreaded task runner.
-    Consumes tasks from *request_iterator*. Yields their results in order, while allowing up to *max_active_tasks* to run
-    simultaneously. Unlike concurrent.futures.Executor.map, prevents new tasks from starting while there are
-    *max_active_tasks* or more unconsumed results.
+    Rate-limited asynchronous multithreaded task runner. Consumes tasks
+    from *request_iterator*. Yields their results in order, while
+    allowing up to *max_active_tasks* to run simultaneously. Unlike
+    concurrent.futures.Executor.map, prevents new tasks from starting
+    while there are *max_active_tasks* or more unconsumed results.
+
     """
     tasks_in_progress = collections.deque()
     if max_active_tasks is None:
@@ -118,6 +127,10 @@ def response_iterator(request_iterator, thread_pool, max_active_tasks=None):
             print('')
             os._exit(os.EX_IOERR)
         return result
+
+    if do_first_task_sequentially:
+        task_callable, task_args, task_kwargs = next(request_iterator)
+        yield task_callable(*task_args, **task_kwargs)
 
     for _i in range(max_active_tasks):
         try:
