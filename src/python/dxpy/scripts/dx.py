@@ -1954,6 +1954,11 @@ def upload_one(args):
                 upload_one(sub_args)
     else:
         try:
+
+            if args.write_buffer_size is None:
+                write_buffer_size = dxfile.DEFAULT_BUFFER_SIZE
+            else:
+                write_buffer_size = args.write_buffer_size
             dxfile = dxpy.upload_local_file(filename=(None if args.filename == '-' else args.filename),
                                             file=(sys.stdin.buffer if args.filename == '-' else None),
                                             name=name,
@@ -1965,7 +1970,8 @@ def upload_one(args):
                                             details=args.details,
                                             folder=folder,
                                             parents=args.parents,
-                                            show_progress=args.show_progress)
+                                            show_progress=args.show_progress,
+                                            write_buffer_size = write_buffer_size)
             if args.wait:
                 dxfile._wait_on_close()
             if args.brief:
@@ -3741,6 +3747,7 @@ parser_upload.add_argument('-r', '--recursive', help='Upload directories recursi
 parser_upload.add_argument('--wait', help='Wait until the file has finished closing', action='store_true')
 parser_upload.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress',
                            action='store_false', default=sys.stderr.isatty())
+parser_upload.add_argument('--buffer-size', help='Set the write buffer size', dest='write_buffer_size')
 parser_upload.set_defaults(func=upload, mute=False)
 register_parser(parser_upload, categories='data')
 

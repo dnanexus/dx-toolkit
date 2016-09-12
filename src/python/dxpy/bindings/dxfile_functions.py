@@ -350,7 +350,7 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
 
         # Use 'a' mode because we will be responsible for closing the file
         # ourselves later (if requested).
-        handler = new_dxfile(mode='a', media_type=media_type, write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE,
+        handler = new_dxfile(mode='a', media_type=media_type,
                              expected_file_size=file_size, file_is_mmapd=file_is_mmapd, **creation_kwargs)
 
     # For subsequent API calls, don't supply the dataobject metadata
