@@ -1958,7 +1958,7 @@ def upload_one(args):
             if args.write_buffer_size is None:
                 write_buffer_size = dxfile.DEFAULT_BUFFER_SIZE
             else:
-                write_buffer_size = args.write_buffer_size
+                write_buffer_size = int(args.write_buffer_size)
             dxfile = dxpy.upload_local_file(filename=(None if args.filename == '-' else args.filename),
                                             file=(sys.stdin.buffer if args.filename == '-' else None),
                                             name=name,
@@ -1971,7 +1971,7 @@ def upload_one(args):
                                             folder=folder,
                                             parents=args.parents,
                                             show_progress=args.show_progress,
-                                            write_buffer_size = write_buffer_size)
+                                            write_buffer_size=write_buffer_size)
             if args.wait:
                 dxfile._wait_on_close()
             if args.brief:
