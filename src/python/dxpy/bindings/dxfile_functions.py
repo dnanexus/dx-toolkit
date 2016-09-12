@@ -255,6 +255,11 @@ def _download_dxfile(dxid, filename, part_retry_counter,
 
         try:
             # Main loop. In parallel: download chunks, verify them, and write them to disk.
+            # We'll make a first request for a download url so that if we need to go through
+            # a proxy url, the cache will be pre-loaded when we use the threadpool to actually
+            # download the data.
+            url, headers = dxfile.get_download_url(project=project, **kwargs)
+            
             cur_part, got_bytes, hasher = None, None, None
             for chunk_part, chunk_data in response_iterator(chunk_requests(), dxfile._http_threadpool):
                 if chunk_part != cur_part:
