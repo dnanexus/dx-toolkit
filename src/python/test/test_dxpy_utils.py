@@ -102,31 +102,20 @@ class TestResponseIterator(unittest.TestCase):
 
     def test_first_chunk_sequentially(self):
         pending_tasks = set()
+        complete_tasks = set()
 
-        def task(i, overlap=False):
+        def task(i):
             pending_tasks.add(i)
             if i >= 1:
-                if overlap:
-                    self.assertIn(0, pending_tasks, "Expected task 0 to be pending during task %d" % i)
-                else:
-                    self.assertNotIn(0, pending_tasks, "Task 0 was pending during task %d" % i)
+                self.assertNotIn(0, pending_tasks, "Task 0 was pending during task %d" % i)
             time.sleep(1)
+            complete_tasks.add(i)
             pending_tasks.remove(i)
 
-        def tasks(overlap=False):
+        def tasks():
             for i in range(8):
-                yield task, [i], dict(overlap=overlap)
+                yield task, [i], {}
 
-        #
-        # |---0---|
-        # |---1---|
-        # |---2---|
-        # |---3---|
-        #
-        # Assert that 0 overlaps with 1, 2, and 3. This assumes that the start
-        # of task 0 happens instantly from the perspective of the calling
-        # thread-- is that reliable?
-        list(response_iterator(tasks(overlap=True), get_futures_threadpool(8), do_first_task_sequentially=False))
         #
         # |---0---|
         #           |---1---|
@@ -134,7 +123,7 @@ class TestResponseIterator(unittest.TestCase):
         #           |---3---|
         #
         # Assert that 0 doesn't overlap with 1, 2, or 3
-        list(response_iterator(tasks(overlap=False), get_futures_threadpool(8), do_first_task_sequentially=True))
+        list(response_iterator(tasks(), get_futures_threadpool(8), do_first_task_sequentially=True))
 
 
 class TestDXUtils(unittest.TestCase):
