@@ -330,7 +330,7 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
 
     file_is_mmapd = hasattr(fd, "fileno")
 
-    if 'write_buffer_size' in kwargs:
+    if 'write_buffer_size' in kwargs and kwargs['write_buffer_size'] is not None:
         buf_size=kwargs['write_buffer_size']
         del kwargs['write_buffer_size']
     else:

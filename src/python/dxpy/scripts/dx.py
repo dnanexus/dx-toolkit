@@ -33,7 +33,7 @@ wrap_stdio_in_codecs()
 decode_command_line_args()
 
 import dxpy
-from ..bindings.dxfile import DEFAULT_BUFFER_SIZE
+
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
 from ..cli.cp import cp
@@ -1955,13 +1955,10 @@ def upload_one(args):
                 upload_one(sub_args)
     else:
         try:
-
-            if args.write_buffer_size is None:
-                write_buffer_size = DEFAULT_BUFFER_SIZE
-            else:
-                write_buffer_size = int(args.write_buffer_size)
             dxfile = dxpy.upload_local_file(filename=(None if args.filename == '-' else args.filename),
                                             file=(sys.stdin.buffer if args.filename == '-' else None),
+                                            write_buffer_size=(int(args.write_buffer_size) if args.write_buffer_size is not None
+                                                               else None),
                                             name=name,
                                             tags=args.tags,
                                             types=args.types,
@@ -1971,8 +1968,7 @@ def upload_one(args):
                                             details=args.details,
                                             folder=folder,
                                             parents=args.parents,
-                                            show_progress=args.show_progress,
-                                            write_buffer_size=write_buffer_size)
+                                            show_progress=args.show_progress)
             if args.wait:
                 dxfile._wait_on_close()
             if args.brief:
