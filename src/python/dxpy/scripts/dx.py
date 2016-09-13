@@ -1957,8 +1957,8 @@ def upload_one(args):
         try:
             dxfile = dxpy.upload_local_file(filename=(None if args.filename == '-' else args.filename),
                                             file=(sys.stdin.buffer if args.filename == '-' else None),
-                                            write_buffer_size=(int(args.write_buffer_size) if args.write_buffer_size is not None
-                                                               else None),
+                                            write_buffer_size=(None if args.write_buffer_size is None
+                                                               else int(args.write_buffer_size)),
                                             name=name,
                                             tags=args.tags,
                                             types=args.types,
