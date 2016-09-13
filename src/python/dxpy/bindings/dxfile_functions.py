@@ -332,9 +332,9 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
 
     if 'write_buffer_size' in kwargs and kwargs['write_buffer_size'] is not None:
         buf_size=kwargs['write_buffer_size']
-        del kwargs['write_buffer_size']
     else:
         buf_size=dxfile.DEFAULT_BUFFER_SIZE
+    del kwargs['write_buffer_size']
 
     if use_existing_dxfile:
         handler = use_existing_dxfile
