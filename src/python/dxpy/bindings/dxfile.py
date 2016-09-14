@@ -770,11 +770,12 @@ class DXFile(DXDataObject):
             yield dxpy._dxhttp_read_range, [url, headers, chunk_start_pos, min(chunk_end_pos, self._file_length - 1),
                                             FILE_REQUEST_TIMEOUT], {}
 
-    def _next_response_content(self):
+    def _next_response_content(self, get_first_chunk_sequentially=False):
         if self._response_iterator is None:
             self._response_iterator = dxpy.utils.response_iterator(
                 self._request_iterator,
-                self._http_threadpool
+                self._http_threadpool,
+                do_first_task_sequentially=get_first_chunk_sequentially
             )
         try:
             return next(self._response_iterator)
@@ -825,10 +826,7 @@ class DXFile(DXDataObject):
         # size for this heuristic so we don't incur the overhead for
         # tiny files (which wouldn't contribute as much to the load
         # anyway).
-        if self._file_length > 128 * 1024 and self._pos == 0 and dxpy.JOB_ID:
-            get_first_chunk_sequentially = True
-        else:
-            get_first_chunk_sequentially = False
+        get_first_chunk_sequentially = (self._file_length > 128 * 1024 and self._pos == 0 and dxpy.JOB_ID)
 
         if self._pos == self._file_length:
             return b""
@@ -853,18 +851,7 @@ class DXFile(DXDataObject):
                     self._request_iterator = self._generate_read_requests(
                         start_pos=self._pos, project=project, **kwargs)
 
-                if get_first_chunk_sequentially:
-                    # Make the first chunk request without using the
-                    # usual thread pool and block until it completes. On
-                    # the second chunk, we'll call
-                    # _next_response_content in the alternative block
-                    # below. This starts the threadpool going for the
-                    # second and all subsequent chunks.
-                    _callable, _args, _kwargs = next(self._request_iterator)
-                    content = _callable(*_args, **_kwargs)
-                    get_first_chunk_sequentially = False
-                else:
-                    content = self._next_response_content()
+                content = self._next_response_content(get_first_chunk_sequentially=get_first_chunk_sequentially)
 
                 if len(content) < remaining_len:
                     buf.write(content)

@@ -100,6 +100,32 @@ class TestResponseIterator(unittest.TestCase):
         for i, res in enumerate(response_iterator(tasks(), get_futures_threadpool(5), max_active_tasks=6)):
             self.assertEqual(i, res)
 
+    def test_first_chunk_sequentially(self):
+        pending_tasks = set()
+        complete_tasks = set()
+
+        def task(i):
+            pending_tasks.add(i)
+            if i >= 1:
+                self.assertNotIn(0, pending_tasks, "Task 0 was pending during task %d" % i)
+            time.sleep(1)
+            complete_tasks.add(i)
+            pending_tasks.remove(i)
+
+        def tasks():
+            for i in range(8):
+                yield task, [i], {}
+
+        #
+        # |---0---|
+        #           |---1---|
+        #           |---2---|
+        #           |---3---|
+        #
+        # Assert that 0 doesn't overlap with 1, 2, or 3
+        list(response_iterator(tasks(), get_futures_threadpool(8), do_first_task_sequentially=True))
+
+
 class TestDXUtils(unittest.TestCase):
     def test_dxjsonencoder(self):
         f = DXFile("file-" + "x"*24, project="project-" + "y"*24)

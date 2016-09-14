@@ -218,10 +218,12 @@ def _download_dxfile(dxid, filename, part_retry_counter,
             raise DXChecksumMismatchError(msg)
 
     with fh:
+        last_verified_pos = 0
+
         if fh.mode == "rb+":
             # We already downloaded the beginning of the file, verify that the
             # chunk checksums match the metadata.
-            last_verified_part, last_verified_pos, max_verify_chunk_size = None, 0, 1024*1024
+            last_verified_part, max_verify_chunk_size = None, 1024*1024
             try:
                 for part_id in parts_to_get:
                     part_info = parts[part_id]
@@ -255,8 +257,11 @@ def _download_dxfile(dxid, filename, part_retry_counter,
 
         try:
             # Main loop. In parallel: download chunks, verify them, and write them to disk.
+            get_first_chunk_sequentially = (file_size > 128 * 1024 and last_verified_pos == 0 and dxpy.JOB_ID)
             cur_part, got_bytes, hasher = None, None, None
-            for chunk_part, chunk_data in response_iterator(chunk_requests(), dxfile._http_threadpool):
+            for chunk_part, chunk_data in response_iterator(chunk_requests(),
+                                                            dxfile._http_threadpool,
+                                                            do_first_task_sequentially=get_first_chunk_sequentially):
                 if chunk_part != cur_part:
                     verify_part(cur_part, got_bytes, hasher)
                     cur_part, got_bytes, hasher = chunk_part, 0, hashlib.md5()
