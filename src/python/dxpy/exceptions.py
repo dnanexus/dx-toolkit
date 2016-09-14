@@ -37,7 +37,7 @@ class DXAPIError(DXError):
     https://wiki.dnanexus.com/API-Specification-v1.0.0/Protocols#Errors for complete documentation of API errors,
     including those reflected by subclasses of this class.
     '''
-    def __init__(self, content, code):
+    def __init__(self, content, code, timestamp="", req_id=""):
         self.name = content["error"]["type"]
         self.msg = content["error"]["message"]
         if "details" in content["error"]:
@@ -45,10 +45,13 @@ class DXAPIError(DXError):
         else:
             self.details = None
         self.code = code
+        self.timestamp = timestamp
+        self.req_id = req_id
 
     def error_message(self):
         "Returns a one-line description of the error."
         output = self.msg + ", code " + str(self.code)
+        output += ". Request time=[{}], Request ID=[{}]".format(self.timestamp, self.req_id)
         if self.name != self.__class__.__name__:
             output = self.name + ": " + output
         return output

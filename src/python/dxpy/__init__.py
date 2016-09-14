@@ -495,28 +495,30 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
     while True:
         success, time_started = True, None
         response = None
+        req_id = None
         try:
-            if _DEBUG > 0:
-                time_started = time.time()
+            time_started = time.time()
             _method, _url, _headers = _process_method_url_headers(method, url, headers)
 
             if _DEBUG >= 2:
                 maybe_headers = ''
                 if 'Range' in _headers:
                     maybe_headers = " " + json.dumps({"Range": _headers["Range"]})
-                print("%s %s %s%s => %s\n" % (YELLOW(BOLD(">%d" % seq_num)),
-                                              BLUE(method),
-                                              _url,
-                                              maybe_headers,
-                                              formatted_data),
+                print("%s [%f] %s %s%s => %s\n" % (YELLOW(BOLD(">%d" % seq_num)),
+                                                   time_started,
+                                                   BLUE(method),
+                                                   _url,
+                                                   maybe_headers,
+                                                   formatted_data),
                       file=sys.stderr,
                       end="")
             elif _DEBUG > 0:
                 from repr import Repr
-                print("%s %s %s => %s\n" % (YELLOW(BOLD(">%d" % seq_num)),
-                                            BLUE(method),
-                                            _url,
-                                            Repr().repr(data)),
+                print("%s [%f] %s %s => %s\n" % (YELLOW(BOLD(">%d" % seq_num)),
+                                                 time_started,
+                                                 BLUE(method),
+                                                 _url,
+                                                 Repr().repr(data)),
                       file=sys.stderr,
                       end="")
 
@@ -560,17 +562,18 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     try:
                         error_class = getattr(exceptions, content["error"]["type"], exceptions.DXAPIError)
                     except (KeyError, AttributeError, TypeError):
-                        error_class = exceptions.HTTPError
-                    raise error_class(content, response.status)
+                        raise exceptions.HTTPError(response.status, content)
+                    raise error_class(content, response.status, time_started, req_id)
                 else:
                     try:
                         content = response.data.decode('utf-8')
                     except AttributeError:
                         raise exceptions.UrllibInternalError("Content is none", response.status)
-                    raise exceptions.HTTPError("{} {} [RequestID={}]\n{}".format(response.status,
-                                                                                 response.reason,
-                                                                                 req_id,
-                                                                                 content))
+                    raise exceptions.HTTPError("{} {} [Time={} RequestID={}]\n{}".format(response.status,
+                                                                                         response.reason,
+                                                                                         time_started,
+                                                                                         req_id,
+                                                                                         content))
 
             if want_full_response:
                 return response
@@ -580,8 +583,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                         range_str = (' (%s)' % (headers['Range'],)) if 'Range' in headers else ''
                         raise exceptions.ContentLengthError(
                             "Received response with content-length header set to %s but content length is %d%s. " +
-                            "[RequestID=%s]" %
-                            (response.headers['content-length'], len(response.data), range_str, req_id)
+                            "[Time=%f RequestID=%s]" %
+                            (response.headers['content-length'], len(response.data), range_str, time_started, req_id)
                         )
 
                 content = response.data
@@ -608,6 +611,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     req_id = response.headers.get('x-request-id') or "--"
                     code_format = GREEN if (200 <= response.status < 300) else RED
                     print("  " + YELLOW(BOLD("<%d" % seq_num)),
+                          "[%f]" % time_started,
                           BLUE(method),
                           req_id,
                           _url,
@@ -637,8 +641,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             if isinstance(e, _expected_exceptions):
                 if response is not None and response.status == 503:
                     seconds_to_wait = _extract_retry_after_timeout(response)
-                    logger.warn("%s %s: %s. Waiting %d seconds due to server unavailability...",
-                                method, url, exception_msg, seconds_to_wait)
+                    logger.warn("[%f] %s %s: %s. RequestId [%s]. Waiting %d seconds due to server unavailability...",
+                                time.ctime(), method, url, exception_msg, req_id, seconds_to_wait)
                     time.sleep(seconds_to_wait)
                     # Note, we escape the "except" block here without
                     # incrementing try_index because 503 responses with
@@ -671,9 +675,12 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                        response.status == 400 and is_retryable and method == 'PUT' and \
                        isinstance(e, requests.exceptions.HTTPError):
                         if '<Code>RequestTimeout</Code>' in exception_msg:
-                            logger.info("Retrying 400 HTTP error, due to slow data transfer")
+                            logger.info("[%s]. Retrying 400 HTTP error, due to slow data transfer." +
+                                        " Request Time=[%f] RequestId=[%s]", time.ctime(), time_started, req_id)
                         else:
-                            logger.info("400 HTTP error, of unknown origin, exception_msg=[%s]", exception_msg)
+                            logger.info("[%s]. 400 HTTP error, of unknown origin, exception_msg=[%s]. " +
+                                        " Request Time=[%f] RequestId=[%s]",
+                                        time.ctime(), exception_msg, time_started, req_id)
                         ok_to_retry = True
 
                 if ok_to_retry:
@@ -681,8 +688,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                         data.seek(rewind_input_buffer_offset)
                     delay = min(2 ** try_index, DEFAULT_TIMEOUT)
                     range_str = (' (range=%s)' % (headers['Range'],)) if 'Range' in headers else ''
-                    logger.warn("%s %s: %s. Waiting %d seconds before retry %d of %d... %s",
-                                method, url, exception_msg, delay, try_index + 1, max_retries, range_str)
+                    logger.warn("[%s] %s %s: %s. Waiting %d seconds before retry %d of %d... %s",
+                                time.ctime(), method, url, exception_msg, delay, try_index + 1, max_retries, range_str)
                     time.sleep(delay)
                     try_index += 1
                     continue
@@ -690,7 +697,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             # All retries have been exhausted OR the error is deemed not
             # retryable. Print the latest error and propagate it back to the caller.
             if not isinstance(e, exceptions.DXAPIError):
-                logger.error("%s %s: %s", method, url, exception_msg)
+                logger.error("[%s] %s %s: %s.", time.ctime(), method, url, exception_msg)
 
             # Retries have been exhausted, and we are unable to get a full
             # buffer from the data source. Raise a special exception.
@@ -700,7 +707,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             raise
         finally:
             if success and try_index > 0:
-                logger.info("%s %s: Recovered after %d retries", method, url, try_index)
+                logger.info("[%s] %s %s: Recovered after %d retries", time.ctime(), method, url, try_index)
 
         raise AssertionError('Should never reach this line: should have attempted a retry or reraised by now')
     raise AssertionError('Should never reach this line: should never break out of loop')

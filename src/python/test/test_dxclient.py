@@ -1083,6 +1083,18 @@ class TestDXClient(DXTestCase):
                                prepend_srv=False,
                                max_retries=0)
 
+    def test_dx_debug_timestamp(self):
+        (stdout, stderr) = run("_DX_DEBUG=1 dx ls", also_return_stderr=True)
+        timestamp_regex = "\[\d{1,15}\.\d{0,8}\]"
+        self.assertRegexpMatches(stderr, timestamp_regex, msg="Debug log does not contain a timestamp")
+        (stdout, stderr) = run("_DX_DEBUG=2 dx ls", also_return_stderr=True)
+        self.assertRegexpMatches(stderr, timestamp_regex, msg="Debug log does not contain a timestamp")
+
+    def test_dx_api_error_msg(self):
+        error_regex = "Request time=\[\d{1,15}\.\d{0,8}\], Request ID=\[\d{13}-\d{1,6}\]"
+        with self.assertSubprocessFailure(stderr_regexp=error_regex, exit_code=3):
+            run("dx api file-InvalidFileID describe")
+
 
 class TestDXNewRecord(DXTestCase):
     def test_new_record_basic(self):
