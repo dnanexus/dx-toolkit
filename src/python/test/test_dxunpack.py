@@ -25,6 +25,7 @@ import tempfile
 import shutil
 import subprocess
 from dxpy_testutil import (DXTestCase)
+from dxpy_testutil import chdir
 
 
 class TestDXUnpack(DXTestCase):
@@ -38,11 +39,9 @@ class TestDXUnpack(DXTestCase):
         subprocess.check_call(['tar', '-czf', os.path.join(bundle_tmp_dir, bundle_name),
                                '-C', os.path.join(bundle_tmp_dir, 'a'), '.'])
         extract_tmp_dir = tempfile.mkdtemp()
-        curr_dir = os.path.abspath(os.curdir)
-        os.chdir(extract_tmp_dir)
-        subprocess.check_call(["dx-unpack", os.path.join(bundle_tmp_dir, bundle_name)])
-        self.assertTrue(os.path.exists(os.path.join(extract_tmp_dir, 'foo.txt')))
-        os.chdir(curr_dir)
+        with chdir(extract_tmp_dir):
+            subprocess.check_call(["dx-unpack", os.path.join(bundle_tmp_dir, bundle_name)])
+            self.assertTrue(os.path.exists(os.path.join(extract_tmp_dir, 'foo.txt')))
 
     def test_remove_file_after_unpack(self):
         # dx-unpack removes the file after unpacking
@@ -54,13 +53,11 @@ class TestDXUnpack(DXTestCase):
         subprocess.check_call(['tar', '-czf', os.path.join(bundle_tmp_dir, bundle_name),
                                '-C', os.path.join(bundle_tmp_dir, 'a'), '.'])
         extract_tmp_dir = tempfile.mkdtemp()
-        curr_dir = os.path.abspath(os.curdir)
-        os.chdir(extract_tmp_dir)
-        subprocess.check_call(["dx-unpack", os.path.join(bundle_tmp_dir, bundle_name)])
-        self.assertTrue(os.path.exists(os.path.join(extract_tmp_dir, 'foo.txt')))
-        shutil.rmtree(os.path.join(bundle_tmp_dir, "a"))
-        self.assertFalse(os.path.exists(os.path.join(bundle_tmp_dir, bundle_name)))
-        os.chdir(curr_dir)
+        with chdir(extract_tmp_dir):
+            subprocess.check_call(["dx-unpack", os.path.join(bundle_tmp_dir, bundle_name)])
+            self.assertTrue(os.path.exists(os.path.join(extract_tmp_dir, 'foo.txt')))
+            shutil.rmtree(os.path.join(bundle_tmp_dir, "a"))
+            self.assertFalse(os.path.exists(os.path.join(bundle_tmp_dir, bundle_name)))
 
 if __name__ == '__main__':
     unittest.main()
