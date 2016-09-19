@@ -3744,7 +3744,7 @@ parser_upload.add_argument('-r', '--recursive', help='Upload directories recursi
 parser_upload.add_argument('--wait', help='Wait until the file has finished closing', action='store_true')
 parser_upload.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress',
                            action='store_false', default=sys.stderr.isatty())
-parser_upload.add_argument('--buffer-size', help='Set the write buffer size', dest='write_buffer_size')
+parser_upload.add_argument('--buffer-size', help='Set the write buffer size (in bytes)', dest='write_buffer_size')
 parser_upload.set_defaults(func=upload, mute=False)
 register_parser(parser_upload, categories='data')
 

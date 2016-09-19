@@ -288,8 +288,9 @@ def _download_dxfile(dxid, filename, part_retry_counter,
 
         return True
 
-def upload_local_file(filename=None, file=None, media_type=None, keep_open=False, write_buffer_size=None,
-                      wait_on_close=False, use_existing_dxfile=None, show_progress=False, **kwargs):
+def upload_local_file(filename=None, file=None, media_type=None, keep_open=False,
+                      wait_on_close=False, use_existing_dxfile=None, show_progress=False,
+                      write_buffer_size=None, **kwargs):
     '''
     :param filename: Local filename
     :type filename: string
