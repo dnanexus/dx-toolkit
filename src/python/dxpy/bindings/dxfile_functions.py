@@ -289,7 +289,8 @@ def _download_dxfile(dxid, filename, part_retry_counter,
         return True
 
 def upload_local_file(filename=None, file=None, media_type=None, keep_open=False,
-                      wait_on_close=False, use_existing_dxfile=None, show_progress=False, **kwargs):
+                      wait_on_close=False, use_existing_dxfile=None, show_progress=False,
+                      write_buffer_size=None, **kwargs):
     '''
     :param filename: Local filename
     :type filename: string
@@ -299,6 +300,8 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     :type media_type: string
     :param keep_open: If False, closes the file after uploading
     :type keep_open: boolean
+    :param write_buffer_size: Buffer size to use for upload
+    :type write_buffer_size: int
     :param wait_on_close: If True, waits for the file to close
     :type wait_on_close: boolean
     :param use_existing_dxfile: Instead of creating a new file object, upload to the specified file
@@ -335,6 +338,9 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
 
     file_is_mmapd = hasattr(fd, "fileno")
 
+    if write_buffer_size is None:
+        write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE
+
     if use_existing_dxfile:
         handler = use_existing_dxfile
     else:
@@ -355,7 +361,7 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
 
         # Use 'a' mode because we will be responsible for closing the file
         # ourselves later (if requested).
-        handler = new_dxfile(mode='a', media_type=media_type, write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE,
+        handler = new_dxfile(mode='a', media_type=media_type, write_buffer_size=write_buffer_size,
                              expected_file_size=file_size, file_is_mmapd=file_is_mmapd, **creation_kwargs)
 
     # For subsequent API calls, don't supply the dataobject metadata

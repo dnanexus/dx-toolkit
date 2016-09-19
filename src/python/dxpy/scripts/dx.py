@@ -33,6 +33,7 @@ wrap_stdio_in_codecs()
 decode_command_line_args()
 
 import dxpy
+
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
 from ..cli.cp import cp
@@ -1956,6 +1957,8 @@ def upload_one(args):
         try:
             dxfile = dxpy.upload_local_file(filename=(None if args.filename == '-' else args.filename),
                                             file=(sys.stdin.buffer if args.filename == '-' else None),
+                                            write_buffer_size=(None if args.write_buffer_size is None
+                                                               else int(args.write_buffer_size)),
                                             name=name,
                                             tags=args.tags,
                                             types=args.types,
@@ -3741,6 +3744,7 @@ parser_upload.add_argument('-r', '--recursive', help='Upload directories recursi
 parser_upload.add_argument('--wait', help='Wait until the file has finished closing', action='store_true')
 parser_upload.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress',
                            action='store_false', default=sys.stderr.isatty())
+parser_upload.add_argument('--buffer-size', help='Set the write buffer size (in bytes)', dest='write_buffer_size')
 parser_upload.set_defaults(func=upload, mute=False)
 register_parser(parser_upload, categories='data')
 

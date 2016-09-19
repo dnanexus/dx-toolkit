@@ -86,6 +86,9 @@ dxR.Rcheck
 /bin/dx-download-all-inputs
 /bin/dx-download-input
 /bin/dx-upload-all-outputs
+/bin/docker2aci
+/bin/dx-docker
+/bin/proot
 /src/ua/dist/ua
 /src/ua/dnanexus-upload-agent-*-linux.tar.gz
 /src/ua/dnanexus-upload-agent-*-linux
