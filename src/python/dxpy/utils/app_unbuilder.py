@@ -30,6 +30,7 @@ import json
 import os
 import subprocess
 import sys
+import tarfile
 
 from .. import get_handler, download_dxfile
 from ..compat import open
@@ -95,7 +96,9 @@ def dump_executable(executable, destination_directory, omit_resources=False, des
                     fname = "resources/%s.tar.gz" % (handler_id)
                     download_dxfile(handler_id, fname)
                     print("Unpacking resources", file=sys.stderr)
-                    subprocess.check_call(["tar", "-C", "resources", "-zxf", fname], shell=False)
+                    tar = tarfile.open(fname)
+                    tar.extractall("resources")
+                    tar.close()
                     os.unlink(fname)
                     deps_to_remove.append(dep)
 

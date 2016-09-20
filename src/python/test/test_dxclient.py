@@ -7643,6 +7643,37 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
             self.assertFalse(os.path.exists(os.path.join("get_applet", "Readme.md")))
             self.assertFalse(os.path.exists(os.path.join("get_applet", "Readme.developer.md")))
 
+    def test_get_applet_on_windows(self):
+        # This test is to verify that "dx get applet" works correctly on windows,
+        # making sure the resource directory is downloaded.
+        app_spec = {
+            "name": "get_applet_windows",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": []
+            }
+        output_app_spec = app_spec.copy()
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7"}
+
+        app_dir = self.write_app_directory("get_åpplet_windows", json.dumps(app_spec), "code.py",
+                                           code_content="import os\n")
+        os.mkdir(os.path.join(app_dir, "resources"))
+        with open(os.path.join(app_dir, "resources", "resources_file"), 'w') as f:
+            f.write('content\n')
+        new_applet_id = json.loads(run("dx build --json " + app_dir))["id"]
+        with chdir(tempfile.mkdtemp()):
+            run("dx get " + new_applet_id)
+            self.assertTrue(os.path.exists("get_applet_windows"))
+            self.assertTrue(os.path.exists(os.path.join("get_applet_windows", "dxapp.json")))
+            output_json = json.load(open(os.path.join("get_applet_windows", "dxapp.json")))
+            self.assertEqual(output_app_spec, output_json)
+            self.assertFalse(os.path.exists(os.path.join("get_applet_windows", "Readme.md")))
+            self.assertFalse(os.path.exists(os.path.join("get_applet_windows", "Readme.developer.md")))
+            self.assertEqual("import os\n", open(os.path.join("get_applet_windows", "src", "code.py")).read())
+            self.assertEqual("content\n",
+                             open(os.path.join("get_applet_windows", "resources", "resources_file")).read())
+
     def make_app(self, name, open_source=True, published=True, authorized_users=[]):
         app_spec = {
             "name": name,
