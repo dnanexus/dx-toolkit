@@ -1,4 +1,10 @@
-#!/usr/bin/env python
+#!/home/geet/dx-toolkit/build/py_env/bin/python
+
+# Note:
+#
+# Certain Docker images build with newer versions of Docker may not work with the default ENTRYPOINT.
+# We are tracking this issue with the docker2aci team here: https://github.com/appc/docker2aci/issues/198
+# In the meanwhile, please provide your ENTRYPOINT command explicitly in your `dx-docker run` command.
 
 """dx-docker Run Docker images in your DNAnexus app."""
 
@@ -11,31 +17,32 @@ import json
 import multiprocessing.dummy
 import tempfile
 import glob
+import datetime
+import dateutil.parser
+import dxpy.utils.printing
 
 CACHE_DIR = '/dx-docker-cache'
 
-def shell(cmd, verbose=True):
-    def poll_stream(args):
-        subproc, istream, ostream, lock = args
+def shell(cmd, ignore_error=False):
+    try:
+        subprocess.check_call(cmd)
+    except subprocess.CalledProcessError as e:
+        if ignore_error:
+            return
+        else:
+            sys.exit(e.returncode)
 
-        for out in istream:
-            lock.acquire()
-            ostream.write("{output}\n".format(output=out.rstrip()))
-            lock.release()
-
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    if verbose:
-        pool = multiprocessing.dummy.Pool(2)
-        lock = multiprocessing.Lock()
-        outputs = pool.map(poll_stream,
-            [(p, p.stdout, sys.stdout, lock),
-             (p, p.stderr, sys.stderr, lock)])
-        pool.close()
-        pool.join()
-
-    p.communicate()
-    if p.returncode != 0:
-       sys.exit(p.returncode) 
+def shell_suppress(cmd, ignore_error=False):
+    out = ""
+    try:
+        out = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        print e.output
+        if ignore_error:
+            pass
+        else:
+            raise
+    return out
 
 parser = argparse.ArgumentParser()
 subparsers = parser.add_subparsers()
@@ -44,66 +51,116 @@ def image_name_from_path(image_path):
     imagename = image_path.replace("/","-").replace(":", "-")
     return imagename.replace("quay.io-", "")
 
+def get_aci_name(imagename):
+    matching_files = glob.glob("{cachedir}/*{image}*.aci".format(cachedir=CACHE_DIR, image=imagename))
+    if len(matching_files) == 0:
+        return None
+    elif len(matching_files) == 1:
+        return matching_files[0]
+    else:
+        raise Exception("dx-docker cache error: Exactly one aci archive should correspond to an image name: {} found archives".format(len(matching_files)))
+
 def extract_aci(image):
     imagename = image_name_from_path(image)
+    aciname = get_aci_name(imagename)
     tmpdir = tempfile.mkdtemp()
-    shell("cd {tmpdir} && tar -xzf {cachedir}/*{image}*.aci --exclude 'rootfs/dev/*'|| true".format(cachedir=CACHE_DIR, tmpdir=tmpdir, image=imagename))
+    shell_suppress(["tar", "-xzf", aciname, "--exclude", "rootfs/dev/*", "-C", tmpdir], ignore_error=True)
     return tmpdir
 
 parser_pull = subparsers.add_parser('pull', help="Pulls a docker image for use in DNAnexus")
 parser_pull.add_argument("image", help="image name")
-parser_pull.add_argument("--verbose", action='store_true', help="Show verbose output for pulling an image")
 def pull(args):
     if not os.path.isdir(CACHE_DIR):
-        shell("mkdir {cachedir}".format(cachedir=CACHE_DIR))
-    shell("cd {cachedir} && docker2aci docker://{image}".format(cachedir=CACHE_DIR, image=args.image), verbose=args.verbose)
+        shell_suppress(["mkdir", CACHE_DIR])
+    os.chdir(CACHE_DIR)
+    shell_suppress(["docker2aci", "docker://{image}".format(image=args.image)])
 parser_pull.set_defaults(func=pull)
+
 
 parser_run = subparsers.add_parser('run', help="Runs a docker image in a container")
 parser_run.add_argument("-v", "--volume", help="Directory to mount inside the container. Can be supplied multiple times (e.g. -v /mnt/data:/mnt/data -v /host:/guest", action='append', default=[])
 parser_run.add_argument("--entrypoint",  help="Overwrite default entry point for image")
 parser_run.add_argument("-w", "--workdir",  help="Working directory", default="/")
+parser_run.add_argument("-q", "--quiet",  action='store_true', help="Suppress printign of image metadata")
 parser_run.add_argument("image", help="image name")
 parser_run.add_argument("command", help="command to run within container", nargs=argparse.REMAINDER, default=[])
 def run(args):
     imagename = image_name_from_path(args.image)
-    matching_files = glob.glob("{cachedir}/*{image}*.aci".format(cachedir=CACHE_DIR, image=imagename))
-    if len(matching_files) == 0:
+    aciname = get_aci_name(imagename)
+    if not aciname:
         pull(parser_pull.parse_args([args.image]))
-    elif len(matching_files) > 1:
-        raise Exception("dx-docker cache error: Exactly one aci archive should correspond to an image name: {} found archives".format(len(matching_files)))
 
     tmpdir = extract_aci(args.image)
 
     with open("{tmpdir}/manifest".format(tmpdir=tmpdir, image=imagename)) as f:
         imagemeta = json.loads(f.read())
+
     annotations = {a['name'].split("/")[-1]: a['value'] for a in imagemeta['annotations']}
+    labels = {a['name'].split("/")[-1]: a['value'] for a in imagemeta['labels']}
+    if not args.quiet:
+        def print_annotation(name, key, data=annotations):
+            if key in data:
+                sys.stderr.write(dxpy.utils.printing.LIGHTBLUE(name)+"\t"+dxpy.utils.printing.YELLOW(data[key])+"\n")
+
+        stats = {
+            'size': shell_suppress(["du", "-sh", tmpdir]).split()[0]
+        }
+
+        if 'created' in annotations:
+            created_time = dateutil.parser.parse(annotations['created'])
+            current_time = datetime.datetime.now(dateutil.tz.tzutc())
+            time_since_creation = current_time - created_time
+            if (time_since_creation.days == 0 and time_since_creation.seconds < 10*60):
+               human_readable_delta = "(just now)"
+            else:
+               human_readable_delta = "({}d {}h ago)".format(time_since_creation.days, time_since_creation.seconds/3600)
+            stats['created'] = annotations['created'] + ' ' + human_readable_delta
+
+        print_annotation("Image Repo", 'repository')
+        print_annotation("Image Tag", 'version', data=labels)
+        print_annotation("Image Size", 'size', data=stats)
+        print_annotation("Image ID", 'imageid')
+        print_annotation("Parent ID", 'parentimageid')
+        print_annotation("Last Updated", 'created', data=stats)
+        print_annotation("Registry", 'registryurl')
+        print_annotation("ENTRYPOINT", 'entrypoint')
+        print_annotation("Default CMD", 'cmd')
+        sys.stderr.write("\n\n")
+
+
     vols = ["/run/shm/:/dev/shm"] + args.volume
-    volume = " ".join(["-b {}".format(v) for v in vols])
-    entrypoint = ""
+    volume = []
+    for v in vols:
+       volume.append("-b")
+       volume.append(v)
+
+
+    entrypoint = []
     if args.entrypoint:
-        if entrypoint.startswith("["):
-            entrypoint = json.loads(args.entrypoint)
-        else:
-           entrypoint = [args.entrypoint]
+        entrypoint = [args.entrypoint]
     elif 'entrypoint' in annotations:
         entrypoint = json.loads(annotations['entrypoint'])
 
-    cmd = ""
+    cmd = []
     if args.command:
          cmd = args.command
     elif 'cmd' in annotations and not args.entrypoint:
          cmd = json.loads(annotations['cmd'])
 
+    container_cmd = entrypoint + cmd
+
     workdir = args.workdir
     if 'workingDirectory' in imagemeta['app']:
        workdir = imagemeta['app']['workingDirectory']
 
-    env = "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    env = ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"]
     if 'environment' in imagemeta['app']:
-        env = " ".join([var['name']+"="+var['value']  for var in imagemeta['app']['environment']])
+        env += [var['name']+"="+var['value']  for var in imagemeta['app']['environment']]
 
-    shell("proot -R {tmpdir}/rootfs {volume} -w {workdir} /usr/bin/env -i {env} /bin/sh -c '{entrypoint} {cmd}'".format(volume=volume, tmpdir=tmpdir, entrypoint=" ".join(entrypoint), cmd=" ".join(cmd), workdir=workdir, env=env))
+    # TODO: implement some form of nested subprocesses to avoid quoting command array if possible
+    proot_cmd =  ["proot", "-R", "{tmpdir}/rootfs".format(tmpdir=tmpdir)] + volume + ["-w", workdir, "/usr/bin/env", "-i"] + env + ["/bin/sh", "-c", " ".join(("'"+x+"'" for x in container_cmd))]
+    shell(proot_cmd)
+    shell_suppress(["rm", "-r", tmpdir])
 parser_run.set_defaults(func=run)
 
 if __name__ == "__main__":

@@ -45,6 +45,12 @@ def CYAN(message=None):
     else:
         return CYAN() + message + ENDC()
 
+def LIGHTBLUE(message=None):
+    if message is None:
+        return '\033[1;34m' if color_state else ''
+    else:
+        return LIGHTBLUE() + message + ENDC()
+
 def BLUE(message=None):
     if message is None:
         return '\033[34m' if color_state else ''
