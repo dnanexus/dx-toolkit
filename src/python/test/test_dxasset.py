@@ -25,10 +25,11 @@ import tempfile
 import json
 import sys
 import shutil
+import subprocess
 
 import dxpy
 import dxpy_testutil as testutil
-from dxpy_testutil import (DXTestCase, check_output, override_environment)
+from dxpy_testutil import (DXTestCase, check_output, override_environment, chdir)
 
 
 def run(command, **kwargs):
@@ -108,7 +109,7 @@ class TestDXBuildAsset(DXTestCase):
         asset_spec = {
             "name": "asset_library_name",
             "title": "A human readable name",
-            "description": " A detailed description about the asset",
+            "description": "A detailed description about the asset",
             "version": "0.0.1",
             "distribution": "Ubuntu",
             "release": "12.04",
@@ -127,7 +128,7 @@ class TestDXBuildAsset(DXTestCase):
         asset_spec = {
             "name": "foo",
             "title": "A human readable name",
-            "description": " A detailed description about the asset",
+            "description": "A detailed description about the asset",
             "version": "0.0.1",
             "distribution": "Ubuntu",
             "release": "12.04",
@@ -148,7 +149,7 @@ class TestDXBuildAsset(DXTestCase):
         asset_spec = {
             "name": "asset_library_name",
             "title": "A human readable name",
-            "description": " A detailed description about the asset",
+            "description": "A detailed description about the asset",
             "version": "0.0.1",
             "distribution": "Ubuntu",
             "release": "12.04"
@@ -160,7 +161,7 @@ class TestDXBuildAsset(DXTestCase):
     def test_build_asset_missing_fields(self):
         asset_spec = {
             "title": "A human readable name",
-            "description": " A detailed description about the asset",
+            "description": "A detailed description about the asset",
             "version": "0.0.1",
             "distribution": "Ubuntu",
             "release": "12.04"
@@ -174,7 +175,7 @@ class TestDXBuildAsset(DXTestCase):
         asset_spec = {
             "name": "asset_library_name",
             "title": "A human readable name",
-            "description": " A detailed description about the asset",
+            "description": "A detailed description about the asset",
             "version": "0.0.1",
             "distribution": "Ubuntu",
             "release": "12.04"
@@ -189,7 +190,7 @@ class TestDXBuildAsset(DXTestCase):
         asset_spec = {
             "name": "asset_library_name",
             "title": "A human readable name",
-            "description": " A detailed description about the asset",
+            "description": "A detailed description about the asset",
             "version": "0.0.1",
             "distribution": "Ubuntu",
             "release": "12.04"
@@ -205,7 +206,7 @@ class TestDXBuildAsset(DXTestCase):
         asset_spec = {
             "name": "asset library name with space",
             "title": "A human readable name",
-            "description": " A detailed description about the asset",
+            "description": "A detailed description about the asset",
             "version": "0.0.1",
             "distribution": "Ubuntu",
             "release": "12.04"
@@ -247,7 +248,7 @@ class TestDXBuildAsset(DXTestCase):
         asset_spec = {
             "name": "asset_library_name",
             "title": "A human readable name",
-            "description": " A detailed description about the asset",
+            "description": "A detailed description about the asset",
             "version": "0.0.1",
             "distribution": "Ubuntu",
             "release": "12.04",
@@ -295,6 +296,85 @@ class TestDXBuildAsset(DXTestCase):
         applet_job = asset_applet.run({"asset_conf": {"$dnanexus_link": asset_conf_file_id}})
         applet_job.wait_on_done()
         self.assertEqual(applet_job.describe()['state'], 'done')
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
+    def test_get_appet_with_asset(self):
+        bundle_name = "test-bundle-depends.tar.gz"
+        bundle_tmp_dir = tempfile.mkdtemp()
+        os.mkdir(os.path.join(bundle_tmp_dir, "a"))
+        with open(os.path.join(bundle_tmp_dir, 'a', 'foo.txt'), 'w') as file_in_bundle:
+            file_in_bundle.write('foo\n')
+        subprocess.check_call(['tar', '-czf', os.path.join(bundle_tmp_dir, bundle_name),
+                               '-C', os.path.join(bundle_tmp_dir, 'a'), '.'])
+        bundle_file = dxpy.upload_local_file(filename=os.path.join(bundle_tmp_dir, bundle_name),
+                                             project=self.project,
+                                             wait_on_close=True)
+
+        asset_file = dxpy.upload_local_file(filename=os.path.join(bundle_tmp_dir, bundle_name),
+                                            project=self.project,
+                                            wait_on_close=True)
+
+        dxrecord_details = {"archiveFileId": {"$dnanexus_link": asset_file.get_id()}}
+        dxrecord = dxpy.new_dxrecord(project=self.project, types=["AssetBundle"], details=dxrecord_details,
+                                     name='asset-lib-test', properties={"version": "0.0.1"})
+        dxrecord.close()
+        asset_bundle_id = dxrecord.get_id()
+
+        asset_file.set_properties({"AssetBundle": asset_bundle_id})
+
+        code_str = """#!/bin/bash
+                    main(){
+                        echo 'Hello World'
+                    }
+                    """
+        app_spec = {
+            "name": "asset_depends",
+            "dxapi": "1.0.0",
+            "runSpec": {
+                "code": code_str,
+                "interpreter": "bash",
+                "assetDepends":  [{"id": asset_bundle_id}],
+                "bundledDepends": [{"name": bundle_name, "id": {"$dnanexus_link": bundle_file.get_id()}}]
+            },
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+        }
+        app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec))
+        asset_applet_id = json.loads(run("dx build --json {app_dir}".format(app_dir=app_dir)))["id"]
+        with chdir(tempfile.mkdtemp()):
+            run("dx get --omit-resources " + asset_applet_id)
+            self.assertTrue(os.path.exists("asset_depends"))
+            self.assertFalse(os.path.exists(os.path.join("asset_depends", "resources")))
+            self.assertTrue(os.path.exists(os.path.join("asset_depends", "dxapp.json")))
+
+            applet_spec = json.load(open(os.path.join("asset_depends", "dxapp.json")))
+            self.assertEqual([{"name": "asset-lib-test",
+                               "project": self.project,
+                               "folder": "/",
+                               "version": "0.0.1"}
+                              ],
+                             applet_spec["runSpec"]["assetDepends"])
+            self.assertEqual([{"name": bundle_name, "id": {"$dnanexus_link": bundle_file.get_id()}}],
+                             applet_spec["runSpec"]["bundledDepends"])
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
+    def test_set_assetbundle_tarball_property(self):
+        asset_spec = {
+            "name": "tarball_property_assetbundle",
+            "title": "A human readable name",
+            "description": "A detailed description about the asset",
+            "version": "0.0.1",
+            "distribution": "Ubuntu",
+            "release": "12.04"
+        }
+        asset_dir = self.write_asset_directory("set_tarball_property", json.dumps(asset_spec))
+        asset_bundle_id = json.loads(run('dx build_asset --json ' + asset_dir))['id']
+        self.assertIn('record', asset_bundle_id)
+        tarball_file_id = dxpy.describe(asset_bundle_id,
+                                        fields={"details"})["details"]["archiveFileId"]["$dnanexus_link"]
+        self.assertEqual(dxpy.describe(tarball_file_id,
+                                       fields={"properties"})["properties"]["AssetBundle"], asset_bundle_id)
 
 if __name__ == '__main__':
     if dxpy.AUTH_HELPER is None:

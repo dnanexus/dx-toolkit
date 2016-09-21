@@ -32,9 +32,10 @@ import subprocess
 import sys
 import tarfile
 
+import dxpy
 from .. import get_handler, download_dxfile
 from ..compat import open
-from ..exceptions import err_exit
+from ..exceptions import err_exit, DXError
 from .pretty_print import flatten_json_array
 
 def _recursive_cleanup(foo):
@@ -82,13 +83,58 @@ def dump_executable(executable, destination_directory, omit_resources=False, des
         with open(script, "w") as f:
             f.write(info["runSpec"]["code"])
 
-        # resources/ directory
+        # Get all the asset bundles
+        asset_depends = []
         deps_to_remove = []
+
+        # When an applet is built bundledDepends are added in the following order:
+        # 1. bundledDepends explicitly specified in the dxapp.json
+        # 2. resources (contents of resources directory added as bundledDepends)
+        # 3. assetDepends (translated into bundledDepends)
+        #
+        # Therefore while translating bundledDepends to assetDepends, we are traversing the
+        # list in reverse order and exiting when we can't find the "AssetBundle" property
+        # with the tarball file.
+        #
+        # NOTE: If last item (and contiguous earlier items) of bundledDepends (#1 above) refers to an
+        # AssetBundle tarball, those items will be converted to assetDepends.
+        #
+        # TODO: The bundledDepends should be annotated with another field called {"asset": true}
+        # to distinguish it from non assets. It will be needed to annotate the bundleDepends,
+        # when the wrapper record object is no more accessible.
+
+        for dep in reversed(info["runSpec"]["bundledDepends"]):
+            file_handle = get_handler(dep["id"])
+            if isinstance(file_handle, dxpy.DXFile):
+                asset_record_id = file_handle.get_properties().get("AssetBundle")
+                asset_record = None
+                if asset_record_id:
+                    asset_record = dxpy.DXRecord(asset_record_id)
+                    if asset_record:
+                        try:
+                            asset_depends.append({"name": asset_record.describe().get("name"),
+                                                  "project": asset_record.get_proj_id(),
+                                                  "folder": asset_record.describe().get("folder"),
+                                                  "version": asset_record.describe(fields={"properties": True}
+                                                                                   )["properties"]["version"]
+                                                  })
+                            deps_to_remove.append(dep)
+                        except DXError:
+                            print("Describe failed on the assetDepends record object with ID - " +
+                                  asset_record_id + "\n", file=sys.stderr)
+                            pass
+                else:
+                    break
+        # Reversing the order of the asset_depends[] so that original order is maintained
+        asset_depends.reverse()
+        # resources/ directory
         created_resources_directory = False
         if not omit_resources:
             for dep in info["runSpec"]["bundledDepends"]:
+                if dep in deps_to_remove:
+                    continue
                 handler = get_handler(dep["id"])
-                if handler.__class__.__name__ == "DXFile":
+                if isinstance(handler, dxpy.DXFile):
                     if not created_resources_directory:
                         os.mkdir("resources")
                         created_resources_directory = True
@@ -125,6 +171,10 @@ def dump_executable(executable, destination_directory, omit_resources=False, des
         # Remove resources from bundledDepends
         for dep in deps_to_remove:
             dxapp_json["runSpec"]["bundledDepends"].remove(dep)
+
+        # Add assetDepends to dxapp.json
+        if len(asset_depends) > 0:
+            dxapp_json["runSpec"]["assetDepends"] = asset_depends
 
         # Ordering input/output spec keys
         ordered_spec_keys = ("name", "label", "help", "class", "type", "patterns", "optional", "default", "choices",
