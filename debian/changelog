@@ -1,3 +1,9 @@
+dx-toolkit (0.200.3) precise; urgency=low
+
+  * Test fixes
+
+ -- Phil Sung <psung@dnanexus.com>  Thu, 22 Sep 2016 18:59:53 +0000
+
 dx-toolkit (0.200.2) precise; urgency=low
 
   * Reduce resource consumption of downloads for real this time
