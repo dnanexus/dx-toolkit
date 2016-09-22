@@ -1,3 +1,7 @@
+DNAnexus Upload Agent 1.5.19 <support@dnanexus.com>, 2016-Sep-22
+----------------------------------------------------------------
+  * UA supplies nonce to /file/new for improved resilience
+
 DNAnexus Upload Agent 1.5.18 <support@dnanexus.com>, 2016-Sep-03
 ----------------------------------------------------------------
   * Allow file limit to be overridden

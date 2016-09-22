@@ -1,3 +1,17 @@
+dx-toolkit (0.201.0) precise; urgency=low
+
+  * PTFM-18459 Applet decompilation preserves 'assetDepends' in dxapp.json
+  * PTFM-17432 Checksum verification for file downloads in Java
+  * PTFM-18471 Use python's tarfile to extract applet's resources
+  * Export upload file buffer size to cli (#178)
+  * PTFM-18686 Java: added timestamp and request id to logs
+  * PTFM-18686 Added timestamps and req-id to api error logs in dxpy.
+  * PTFM-18747 "dx download" code path issues first req sequentially
+  * PTFM-18587 Use newest version of proot for rpath support in dx-docker
+  * PTFM-17975 Update C++ SDK to support nonces
+
+ -- Phil Sung <psung@dnanexus.com>  Thu, 22 Sep 2016 18:54:36 +0000
+
 dx-toolkit (0.200.0) precise; urgency=low
 
   * PTFM-18587 Initial dx-docker script for dx-toolkit
