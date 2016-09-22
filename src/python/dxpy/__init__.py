@@ -641,8 +641,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             if isinstance(e, _expected_exceptions):
                 if response is not None and response.status == 503:
                     seconds_to_wait = _extract_retry_after_timeout(response)
-                    logger.warn("[%f] %s %s: %s. RequestId [%s]. Waiting %d seconds due to server unavailability...",
-                                time.ctime(), method, url, exception_msg, req_id, seconds_to_wait)
+                    logger.warn("%s %s: %s. Request Time=[%f] RequestID=[%s] Waiting %d seconds due to server unavailability...",
+                                method, url, exception_msg, time_started, req_id, seconds_to_wait)
                     time.sleep(seconds_to_wait)
                     # Note, we escape the "except" block here without
                     # incrementing try_index because 503 responses with
@@ -675,12 +675,11 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                        response.status == 400 and is_retryable and method == 'PUT' and \
                        isinstance(e, requests.exceptions.HTTPError):
                         if '<Code>RequestTimeout</Code>' in exception_msg:
-                            logger.info("[%s]. Retrying 400 HTTP error, due to slow data transfer." +
-                                        " Request Time=[%f] RequestId=[%s]", time.ctime(), time_started, req_id)
+                            logger.info("Retrying 400 HTTP error, due to slow data transfer. " +
+                                        "Request Time=[%f] RequestID=[%s]", time_started, req_id)
                         else:
-                            logger.info("[%s]. 400 HTTP error, of unknown origin, exception_msg=[%s]. " +
-                                        " Request Time=[%f] RequestId=[%s]",
-                                        time.ctime(), exception_msg, time_started, req_id)
+                            logger.info("400 HTTP error, of unknown origin, exception_msg=[%s]. " +
+                                        "Request Time=[%f] RequestID=[%s]", exception_msg, time_started, req_id)
                         ok_to_retry = True
 
                 if ok_to_retry:
