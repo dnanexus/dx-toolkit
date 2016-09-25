@@ -2592,6 +2592,42 @@ class TestDataobjectFunctions(unittest.TestCase):
         self.assertEqual(handler._name, "swiss-army-knife")
         self.assertEqual(handler._alias, "1.0.0")
 
+    def test_describe_data_objects(self):
+        objects = []
+        types = []
+        tags = []
+        objects.append(dxpy.new_dxrecord())
+        types.append('record')
+        tags.append([])
+        objects.append(dxpy.new_dxfile())
+        types.append('file')
+        tags.append([])
+        objects.append(dxpy.new_dxworkflow())
+        types.append('workflow')
+        tags.append(['my_tag'])
+        objects[-1].add_tags(tags[-1])
+        
+        # Should be able to handle a mix of raw ids and dxlinks.
+        ids = [o.get_id() for o in objects]
+        desc = dxpy.describe(ids)
+
+        self.assertEqual(len(ids), len(desc))
+        for i in xrange(len(desc)):
+            self.assertEqual(desc[i]["project"], self.proj_id)
+            self.assertEqual(desc[i]["id"], ids[i])
+            self.assertEqual(desc[i]["class"], types[i])
+            self.assertEqual(desc[i]["types"], []) 
+            self.assertTrue("created" in desc[i]) 
+            self.assertEqual(desc[i]["state"], "open")
+            self.assertEqual(desc[i]["hidden"], False)
+            self.assertEqual(desc[i]["links"], [])
+            self.assertEqual(desc[i]["folder"], "/")
+            self.assertEqual(desc[i]["tags"], tags[i])
+            self.assertTrue("modified" in desc[i])
+            self.assertFalse("properties" in desc[i])
+            self.assertFalse("details" in desc[i])
+
+
 class TestResolver(testutil.DXTestCase):
     def setUp(self):
         super(TestResolver, self).setUp()
