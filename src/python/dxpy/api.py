@@ -415,6 +415,21 @@ def file_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
+def data_objects_describe(object_ids, always_retry=True, **kwargs):
+    """
+    Invokes the /system/describeDataObjects API method.
+
+    Presently, only accepts an array of object-id's.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods
+
+    """
+    input_params = {'objects': object_ids}
+    ret_val = DXHTTPRequest('/system/describeDataObjects', input_params, always_retry=always_retry, **kwargs)
+    ret_val = [rv['describe'] for rv in ret_val['results']]
+
+    return ret_val
+
 def file_download(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/download API method.
@@ -1037,7 +1052,9 @@ def system_describe_data_objects(input_params={}, always_retry=True, **kwargs):
 
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/describeDataObjects
     """
-    return DXHTTPRequest('/system/describeDataObjects', input_params, always_retry=always_retry, **kwargs)
+    retval = DXHTTPRequest('/system/describeDataObjects', input_params, always_retry=always_retry, **kwargs)
+    retval = [rv['describe'] for rv in retval['results']]
+    return retval
 
 def system_describe_executions(input_params={}, always_retry=True, **kwargs):
     """
