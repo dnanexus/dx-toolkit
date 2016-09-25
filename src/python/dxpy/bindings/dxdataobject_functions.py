@@ -167,7 +167,8 @@ def describe(id_or_link, **kwargs):
                 else:
                     link = link['$dnanexus_link']['id']
             links.append(link)
-        return dxpy.api.data_objects_describe(links)
+        retval = dxpy.api.system_describe_data_objects({'objects': links})
+        return [rv['describe'] for rv in retval['results']]
     else:
         handler = get_handler(id_or_link)
         return handler.describe(**kwargs)
