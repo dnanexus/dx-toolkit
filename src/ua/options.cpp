@@ -88,6 +88,7 @@ Options::Options():
     ("verbose,v", po::bool_switch(&verbose), "Verbose logging")
     ("wait-on-close", po::bool_switch(&waitOnClose), "Wait for file objects to be closed before exiting")
     ("do-not-resume", po::bool_switch(&doNotResume), "Do not attempt to resume any incomplete uploads")
+    ("test", "Test upload agent settings")
     ;
 
   hidden_opts = new po::options_description();
@@ -359,6 +360,10 @@ bool Options::version() {
 
 bool Options::env() {
   return vm.count("env");
+}
+
+bool Options::test() {
+  return vm.count("test");
 }
 
 void Options::printHelp(char * programName) {

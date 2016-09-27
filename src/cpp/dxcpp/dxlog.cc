@@ -27,10 +27,10 @@ namespace dx {
   Log::~Log() {
     try {
       boost::mutex::scoped_lock lock(mtx);
-      cerr << endl <<  oss.str();
+      cerr << oss.str() << endl;
     }
     catch(...) {
-      cerr << endl <<  oss.str();
+      cerr << oss.str() << endl;
     }
   }
 

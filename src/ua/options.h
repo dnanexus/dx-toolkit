@@ -44,6 +44,7 @@ public:
   bool help();
   bool version();
   bool env();
+  bool test();
   void printHelp(char * programName);
   void validate();
   unsigned int getNumberOfFilesInDirectory(const boost::filesystem::path &dir);
