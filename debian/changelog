@@ -1,3 +1,9 @@
+dx-toolkit (0.201.1) precise; urgency=low
+
+  * Fixed log formatting from commit 4384316 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Tue, 27 Sep 2016 21:03:57 +0000
+
 dx-toolkit (0.201.0) precise; urgency=low
 
   * PTFM-18459 Applet decompilation preserves 'assetDepends' in dxapp.json
