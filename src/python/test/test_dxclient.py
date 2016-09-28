@@ -5523,7 +5523,7 @@ class TestDXClientUpdateProject(DXTestCase):
     cmd = "dx update project {pid} --{item} {n}"
 
     def setUp(self):
-        proj_name = u"Project_name"
+        proj_name = u"Project_name" + str(time.time())
         self.project = dxpy.api.project_new({"name": proj_name})['id']
         dxpy.config["DX_PROJECT_CONTEXT_ID"] = self.project
         cd(self.project + ":/")
@@ -5531,11 +5531,14 @@ class TestDXClientUpdateProject(DXTestCase):
         if 'DX_CLI_WD' in dxpy.config:
             del dxpy.config['DX_CLI_WD']
 
+    def tearDown(self):
+        dxpy.api.project_destroy(self.project, {'terminateJobs': True})
+
     def project_describe(self, input_params):
         return dxpy.api.project_describe(self.project, input_params)
 
     def test_update_strings(self):
-        update_items = {'name': 'NewProjectName',
+        update_items = {'name': 'NewProjectName' + str(time.time()),
                         'summary': 'This is a summary',
                         'description': 'This is a description'}
 
@@ -5549,7 +5552,7 @@ class TestDXClientUpdateProject(DXTestCase):
 
     def test_update_multiple_items(self):
         #Test updating multiple items in a single api call
-        update_items = {'name': 'NewProjectName',
+        update_items = {'name': 'NewProjectName' + str(time.time()),
                         'summary': 'This is new a summary',
                         'description': 'This is new a description',
                         'protected': 'false'}
@@ -5583,7 +5586,7 @@ class TestDXClientUpdateProject(DXTestCase):
         describe_input['name'] = 'true'
 
         project_name = self.project_describe(describe_input)['name']
-        new_name = 'Another Project Name'
+        new_name = 'Another Project Name' + str(time.time())
 
         run(self.cmd.format(pid=project_name, item='name', n=pipes.quote(new_name)))
         result = self.project_describe(describe_input)
