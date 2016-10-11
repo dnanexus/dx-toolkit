@@ -6010,7 +6010,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "inputSpec": [],
             "outputSpec": [],
             "version": "1.0.0",
-            "regionalOptions": {"aws:us-east-1": {}}
+            "requestedRegionalOptions": {"aws:us-east-1": {}}
             }
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
         new_app = json.loads(run("dx build --create-app --json " + app_dir))
@@ -6021,7 +6021,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEqual(app_describe["name"], app_name)
         self.assertFalse("published" in app_describe)
         self.assertIn("regionalOptions", app_describe)
-        self.assertItemsEqual(app_describe["regionalOptions"].keys(), app_spec["regionalOptions"].keys())
+        self.assertItemsEqual(app_describe["regionalOptions"].keys(), app_spec["requestedRegionalOptions"].keys())
 
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
@@ -6037,8 +6037,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "inputSpec": [],
             "outputSpec": [],
             "version": "1.0.0",
-            "regionalOptions": {"aws:us-east-1": {},
-                                "azure:westus": {}}
+            "requestedRegionalOptions": {"aws:us-east-1": {},
+                                         "azure:westus": {}}
             }
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
@@ -6050,7 +6050,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEqual(app_desc_res["name"], app_name)
         self.assertFalse("published" in app_desc_res)
         self.assertIn("regionalOptions", app_desc_res)
-        self.assertItemsEqual(app_desc_res["regionalOptions"].keys(), app_spec["regionalOptions"].keys())
+        self.assertItemsEqual(app_desc_res["regionalOptions"].keys(), app_spec["requestedRegionalOptions"].keys())
 
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
