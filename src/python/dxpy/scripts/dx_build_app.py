@@ -767,10 +767,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     override_folder = None
     override_applet_name = None
 
-    # Pull "requestedRegionalOptions" out of `app_json`, if it exists. We will
-    # place this in the body of the /app/new or /app-x/update request later as
-    # "regionalOptions", if necessary.
-    regional_options = app_json.pop("requestedRegionalOptions", None)
+    # TODO: Parse and validate "requestedRegionalOptions".
+    regional_options = app_json.get("requestedRegionalOptions", None)
     enabled_regions = regional_options.keys() if regional_options is not None else []
 
     # Cannot build multi-region app if `use_temp_build_project` is falsy.
