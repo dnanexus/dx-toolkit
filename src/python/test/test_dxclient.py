@@ -6057,6 +6057,24 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
+    def test_build_multi_region_app_invalid_regional_options(self):
+        app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
+        app_spec = {
+            "name": app_name,
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0",
+            "requestedRegionalOptions": {}
+            }
+        app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+
+        with self.assertRaisesRegexp(subprocess.CalledProcessError, "requestedRegionalOptions"):
+            run("dx build --create-app --json " + app_dir)
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create apps')
     def test_build_app_and_update_code(self):
         app_spec = {
             "name": "update_app_code",

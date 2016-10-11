@@ -865,3 +865,12 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
             dxpy.api.app_add_tags(app_id, input_params={'tags': ['default']})
 
     return app_id
+
+def parse_regional_options(dx_app_json):
+    requested_regional_options = dx_app_json.get("requestedRegionalOptions")
+    if requested_regional_options is None:
+        return None
+    if len(requested_regional_options.keys()) < 1:
+        raise AppBuilderException("The field 'requestedRegionalOptions' in dxapp.json must be a non-empty mapping")
+    # TODO: Assert that the keys are actually region names.
+    return requested_regional_options
