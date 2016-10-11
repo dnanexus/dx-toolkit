@@ -769,16 +769,22 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
 
     # TODO: Parse and validate "requestedRegionalOptions".
     regional_options = app_json.get("requestedRegionalOptions", None)
-    enabled_regions = regional_options.keys() if regional_options is not None else []
-
-    # Cannot build multi-region app if `use_temp_build_project` is falsy.
-    if len(enabled_regions) > 0 and not use_temp_build_project:
-        err_exit()
+    enabled_regions = None
+    if regional_options is not None:
+        enabled_regions = regional_options.keys()
+    elif region is not None:
+        enabled_regions = [region]
+    if enabled_regions is not None:
+        assert(len(enabled_regions) > 0)
 
     # The region specified on the command-line (i.e., --region) and the set of
     # enabled regions in dxapp.json disagree.
     # TODO: Allow using one or more --region args to build a multi-region app.
-    if len(enabled_regions) > 0 and region is not None and enabled_regions != [region]:
+    if enabled_regions is not None and region is not None and enabled_regions != [region]:
+        err_exit()
+
+    # Cannot build multi-region app if `use_temp_build_project` is falsy.
+    if enabled_regions is not None and not use_temp_build_project:
         err_exit()
 
     projects_by_region = {}
@@ -786,10 +792,9 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     if mode == "applet" and destination_override:
         working_project, override_folder, override_applet_name = parse_destination(destination_override)
     elif mode == "app" and use_temp_build_project and not dry_run:
-
-        if len(enabled_regions) > 0:
+        if enabled_regions is not None:
+            # Create temporary projects in each enabled region.
             for region in enabled_regions:
-                # Create a temp project
                 try:
                     working_project = dxpy.api.project_new({"name": "Temporary build project for dx-build-app",
                                                             "region": region})["id"]
@@ -800,14 +805,11 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
         else:
             # Create a temp project
             try:
-                if region:
-                    working_project = dxpy.api.project_new({"name": "Temporary build project for dx-build-app",
-                                                            "region": region})["id"]
-                else:
-                    working_project = dxpy.api.project_new({"name": "Temporary build project for dx-build-app"})["id"]
+                working_project = dxpy.api.project_new({"name": "Temporary build project for dx-build-app"})["id"]
             except:
                 err_exit()
             logger.debug("Created temporary project %s to build in" % (working_project,))
+
         using_temp_project = True
 
     try:
@@ -839,7 +841,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 raise dxpy.app_builder.AppBuilderException(msg)
 
         resources_bundles_by_region = {}
-        if len(projects_by_region.keys()) > 0:
+        if enabled_regions is not None:
             for region, project in projects_by_region.iteritems():
                 resources_bundles_by_region[region] = dxpy.app_builder.upload_resources(src_dir,
                                                                                         project=project,
@@ -853,10 +855,9 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                                                                   ensure_upload=ensure_upload,
                                                                   force_symlinks=force_symlinks) if not dry_run else []
 
-        applet_info_by_region = {}
-
+        applet_ids_by_region = {}
         try:
-            if len(projects_by_region.keys()) > 0:
+            if enabled_regions is not None:
                 for region, project in projects_by_region.iteritems():
                     applet_id, applet_spec = dxpy.app_builder.upload_applet(
                         src_dir,
@@ -870,7 +871,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                         dx_toolkit_autodep=dx_toolkit_autodep,
                         dry_run=dry_run,
                         **kwargs)
-                    applet_info_by_region[region] = {"id": applet_id, "spec": applet_spec}
+                    applet_ids_by_region[region] = applet_id
             else:
                 applet_id, applet_spec = dxpy.app_builder.upload_applet(
                     src_dir,
@@ -901,7 +902,11 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
 
         applet_name = applet_spec['name']
 
-        logger.debug("Created applet " + applet_id + " successfully")
+        if enabled_regions is not None:
+            for regional_applet_id in applet_ids_by_region.values():
+                logger.debug("Created applet " + regional_applet_id + " successfully")
+        else:
+            logger.debug("Created applet " + applet_id + " successfully")
 
         if mode == "app":
             if 'version' not in app_json:
@@ -912,10 +917,10 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 try_versions.append(version + _get_version_suffix(src_dir, version))
 
             regional_options = None
-            if len(projects_by_region) > 0:
+            if enabled_regions is not None:
                 regional_options = {}
                 for region in projects_by_region:
-                    regional_options[region] = {"applet": applet_info_by_region[region]["id"]}
+                    regional_options[region] = {"applet": applet_ids_by_region[region]}
             app_id = dxpy.app_builder.create_app(applet_id,
                                                  applet_name,
                                                  src_dir,
