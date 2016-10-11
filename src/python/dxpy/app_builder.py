@@ -647,6 +647,9 @@ def _create_or_update_version(app_name, version, app_spec, try_update=True):
     # This has a race condition since the app could have been created or
     # published since we last looked.
     try:
+        print("\nASSET2", file=sys.stderr)
+        print(app_spec, file=sys.stderr)
+
         app_id = dxpy.api.app_new(app_spec)["id"]
         return app_id
     except dxpy.exceptions.DXAPIError as e:
@@ -678,14 +681,18 @@ def _update_version(app_name, version, app_spec, try_update=True):
             return None
         raise e
 
-def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False, billTo=None, try_versions=None, try_update=True, confirm=True):
+def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False, billTo=None, try_versions=None,
+               try_update=True, confirm=True, regional_options=None):
     """
     Creates a new app object from the specified applet.
     """
     app_spec = _get_app_spec(src_dir)
     logger.info("Will create app with spec: %s" % (app_spec,))
 
-    app_spec["applet"] = applet_id
+    if regional_options is None:
+        app_spec["applet"] = applet_id
+    else:
+        app_spec["regionalOptions"] = regional_options
     app_spec["name"] = applet_name
 
     # Inline Readme.md and Readme.developer.md
