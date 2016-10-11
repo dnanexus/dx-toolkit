@@ -951,7 +951,11 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     finally:
         # Clean up after ourselves.
         if using_temp_project:
-            dxpy.api.project_destroy(working_project)
+            if enabled_regions is not None:
+                for project in projects_by_region.values():
+                    dxpy.api.project_destroy(project)
+            else:
+                dxpy.api.project_destroy(working_project)
 
 
 def _build_app(args, extra_args):
