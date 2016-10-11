@@ -647,9 +647,6 @@ def _create_or_update_version(app_name, version, app_spec, try_update=True):
     # This has a race condition since the app could have been created or
     # published since we last looked.
     try:
-        print("\nASSET2", file=sys.stderr)
-        print(app_spec, file=sys.stderr)
-
         app_id = dxpy.api.app_new(app_spec)["id"]
         return app_id
     except dxpy.exceptions.DXAPIError as e:

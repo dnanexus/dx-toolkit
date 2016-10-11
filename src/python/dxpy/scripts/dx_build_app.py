@@ -773,10 +773,6 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     regional_options = app_json.pop("requestedRegionalOptions", None)
     enabled_regions = regional_options.keys() if regional_options is not None else []
 
-    print("\nASSET", file=sys.stderr)
-    print(regional_options, file=sys.stderr)
-    print(enabled_regions, file=sys.stderr)
-
     # Cannot build multi-region app if `use_temp_build_project` is falsy.
     if len(enabled_regions) > 0 and not use_temp_build_project:
         err_exit()
