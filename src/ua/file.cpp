@@ -83,13 +83,27 @@ File::File(const string &localFile_, const string &projectSpec_, const string &f
 	   const std::string &visibility_, const dx::JSON &properties_, 
 	   const dx::JSON &type_, const dx::JSON &tags_, const dx::JSON &details_,
            const bool toCompress_, const bool tryResuming, const string &mimeType_,
-           const int64_t chunkSize_, const unsigned fileIndex_)
+           const int64_t chunkSize_, const unsigned fileIndex_, const bool stdin_)
   : localFile(localFile_), projectSpec(projectSpec_), folder(folder_), name(name_),
     visibility(visibility_), properties(properties_), type(type_), tags(tags_), details(details_),
     failed(false), waitOnClose(false), closed(false), toCompress(toCompress_), mimeType(mimeType_),
-    chunkSize(chunkSize_), bytesUploaded(0), fileIndex(fileIndex_), atleastOnePartDone(false), jobID() {
+    chunkSize(chunkSize_), bytesUploaded(0), fileIndex(fileIndex_), atleastOnePartDone(false), jobID(), stdin(stdin_) {
 
-  init(tryResuming);
+  if (!stdin) {
+    init(tryResuming);
+  } else {
+    init();
+  }
+}
+
+void File::init(){
+  projectID = resolveProject(projectSpec);
+  string remoteFileName = name;
+  if (toCompress)
+    remoteFileName += ".gz";
+  fileID = createFileObject(projectID, folder, remoteFileName, mimeType, properties, type, tags, visibility, details);
+  isRemoteFileOpen = true;
+  DXLOG(logINFO) << "fileID is " << fileID << endl;
 }
 
 void File::init(const bool tryResuming) {
@@ -111,7 +125,7 @@ void File::init(const bool tryResuming) {
 
   string remoteFileName = name;
 
-  if (toCompress) 
+  if (toCompress)
     remoteFileName += ".gz";
 
   const int64_t modifiedTimestamp = static_cast<int64_t>(fs::last_write_time(p));
@@ -211,6 +225,42 @@ unsigned int File::createChunks(dx::BlockingQueue<Chunk *> &queue, const int tri
     ++countChunks;
   }
   return actualChunksCreated++;
+}
+
+unsigned int File::readStdin(dx::BlockingQueue<Chunk *> &chunksToCompress, const int tries) {
+  // Read data from stdin into chunks and put those chunks into the compress queue.
+  std::vector<char> buffer;
+  buffer.resize(chunkSize);
+  unsigned int countChunks = 0;
+  unsigned int bytesRead = 0;
+  unsigned int start = 0;
+  unsigned int end = 0;
+  size = 0;
+
+  DXLOG(logINFO) << "Starting to read data from stdin.";
+  while (std::cin.good()) {
+    std::cin.read(&buffer[0], chunkSize);
+    bytesRead = std::cin.gcount();
+    const bool lastChunk = (std::cin.good() == false);
+    if (lastChunk && bytesRead == 0) {
+      // Last Chunk is empty
+      break;
+    }
+    start = size;
+    end = size + bytesRead;
+    Chunk * c = new Chunk(localFile, fileID, countChunks, tries, start, end, toCompress, lastChunk, fileIndex);
+    c->data.resize(bytesRead);
+    c->data.assign(buffer.begin(), buffer.begin() + bytesRead);
+    size += bytesRead;
+    c->log("created");
+    chunksToCompress.produce(c);
+    countChunks++;
+  }
+  if (std::cin.bad()) {
+    DXLOG(logWARNING) << "Possible error in the input stream: bad bit set.";
+  }
+  DXLOG(logINFO) << "Done reading data from stdin.";
+  return countChunks;
 }
 
 void File::close(void) {

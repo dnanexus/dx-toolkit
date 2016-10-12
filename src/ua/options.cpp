@@ -89,6 +89,7 @@ Options::Options():
     ("wait-on-close", po::bool_switch(&waitOnClose), "Wait for file objects to be closed before exiting")
     ("do-not-resume", po::bool_switch(&doNotResume), "Do not attempt to resume any incomplete uploads")
     ("test", "Test upload agent settings")
+    ("read-from-stdin,i", po::bool_switch(&stdin), "Read file content from stdin")
     ;
 
   hidden_opts = new po::options_description();
@@ -389,7 +390,13 @@ unsigned int Options::getNumberOfFilesInDirectory(const fs::path &dir) {
 }
 
 void Options::validate() {
-  if (!files.empty()) {
+  if (files.empty()) {
+    throw runtime_error("Must specify at least one file to upload");
+  } else if (stdin) {
+    if (files.size() != 1) {
+      throw runtime_error("Only one filename can be specified when reading from stdin.");
+    }
+  } else {
     // - Check that all file actually exist
     // - Resolve all symlinks
     // - Ensure that the inputs are regular files or directories
@@ -421,8 +428,6 @@ void Options::validate() {
       }
     }
     DXLOG(logINFO) << "Found " << totalNumberOfFiles << " files ";
-  } else {
-    throw runtime_error("Must specify at least one file to upload");
   }
 
   if (names.size() == 0) {
@@ -598,6 +603,7 @@ ostream &operator<<(ostream &out, const Options &opt) {
         << "  verbose: " << opt.verbose << endl
         << "  wait on close: " << opt.waitOnClose << endl
         << "  do-not-resume: " << opt.doNotResume << endl
+        << "  read-from-stdin: " << opt.stdin << endl
         << "  reads: " << opt.reads << endl
         << "  paired-reads: " << opt.pairedReads << endl
         << "  mappings: " << opt.mappings << endl

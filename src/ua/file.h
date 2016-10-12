@@ -31,11 +31,13 @@ public:
        const std::string &visibility, const dx::JSON &properties_, const dx::JSON &type_,
        const dx::JSON &tags_, const dx::JSON &details,
        const bool toCompress_, const bool tryResuming, const std::string &mimeType_, 
-       const int64_t chunkSize, const unsigned int fileIndex_);
+       const int64_t chunkSize, const unsigned int fileIndex_, const bool stdin_);
 
+  void init();
   void init(const bool tryResuming);
 
   unsigned int createChunks(dx::BlockingQueue<Chunk *> &queue, const int tries);
+  unsigned int readStdin(dx::BlockingQueue<Chunk *> &queue, const int tries);
 
   void close(void);
 
@@ -121,6 +123,9 @@ public:
    * - the empty string if no import app was asked by user to be called.
    */
   std::string jobID;
+
+  /* File content comes from stdin.*/
+  bool stdin;
 
   friend std::ostream &operator<<(std::ostream &out, const File &file);
   
