@@ -54,6 +54,12 @@ toolkit that doesn't require them.
 
 **Note:** There is a known incompatibility (in compiling dxcpp) when using GCC 4.7 with Boost 1.49. Please either use the GCC 4.6 series, or Boost 1.50+.
 
+### Ubuntu 16.04
+
+    sudo apt install make python-setuptools python-pip python-virtualenv python-dev \
+      gcc g++ cmake libboost-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison \
+      openssl libssl-dev autoconf
+
 ### Ubuntu 14.04
 
     sudo apt-get install make python-setuptools python-pip python-virtualenv python-dev \
