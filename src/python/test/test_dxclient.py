@@ -6055,6 +6055,42 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
 
+    def test_update_multi_region_app(self):
+        app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
+        app_spec = {
+            "name": app_name,
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0",
+            "requestedRegionalOptions": {"aws:us-east-1": {},
+                                         "azure:westus": {}}
+            }
+        app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+
+        app_new_res = json.loads(run("dx build --create-app --json " + app_dir))
+        app_desc_res = json.loads(run("dx describe --json " + app_new_res["id"]))
+        self.assertIn("regionalOptions", app_desc_res)
+
+        # The underlying applets of the newly created multi-region app.
+        aws_applet = app_desc_res["regionalOptions"]["aws:us-east-1"]["applet"]
+        azure_applet = app_desc_res["regionalOptions"]["azure:westus"]["applet"]
+
+        # Update the multi-region app.
+        app_new_res = json.loads(run("dx build --create-app --json " + app_dir))
+
+        app_desc_res = json.loads(run("dx describe --json " + app_new_res["id"]))
+        self.assertFalse("published" in app_desc_res)
+        self.assertIn("regionalOptions", app_desc_res)
+
+        new_aws_applet = app_desc_res["regionalOptions"]["aws:us-east-1"]["applet"]
+        new_azure_applet = app_desc_res["regionalOptions"]["azure:westus"]["applet"]
+        self.assertNotEqual(new_aws_applet, aws_applet)
+        self.assertNotEqual(new_aws_applet, azure_applet)
+        self.assertNotEqual(new_azure_applet, azure_applet)
+        self.assertNotEqual(new_azure_applet, aws_applet)
+
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
     def test_build_multi_region_app_invalid_regional_options(self):
