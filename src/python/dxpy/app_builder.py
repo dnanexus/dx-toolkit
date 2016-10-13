@@ -678,6 +678,7 @@ def _update_version(app_name, version, app_spec, try_update=True):
             return None
         raise e
 
+
 def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False, billTo=None, try_versions=None,
                try_update=True, confirm=True, regional_options=None):
     """
@@ -865,6 +866,7 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
             dxpy.api.app_add_tags(app_id, input_params={'tags': ['default']})
 
     return app_id
+
 
 def parse_regional_options(dx_app_json):
     requested_regional_options = dx_app_json.get("requestedRegionalOptions")

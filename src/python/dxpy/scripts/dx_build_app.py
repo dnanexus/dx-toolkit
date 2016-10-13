@@ -842,11 +842,12 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
         resources_bundles_by_region = {}
         if enabled_regions is not None and using_temp_project:
             for region, project in projects_by_region.iteritems():
-                resources_bundles_by_region[region] = dxpy.app_builder.upload_resources(src_dir,
-                                                                                        project=project,
-                                                                                        folder=override_folder,
-                                                                                        ensure_upload=ensure_upload,
-                                                                                        force_symlinks=force_symlinks) if not dry_run else []
+                resources_bundles_by_region[region] = dxpy.app_builder.upload_resources(
+                    src_dir,
+                    project=project,
+                    folder=override_folder,
+                    ensure_upload=ensure_upload,
+                    force_symlinks=force_symlinks) if not dry_run else []
         else:
             bundled_resources = dxpy.app_builder.upload_resources(src_dir,
                                                                   project=working_project,
