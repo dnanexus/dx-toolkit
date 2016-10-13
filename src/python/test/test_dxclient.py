@@ -6075,6 +6075,55 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
+    def test_build_multi_region_app_requires_temporary_projects(self):
+        # Attempt to build app without creating temporary projects.
+        base_cmd = "dx build --create-app --no-temp-build-project --json {app_dir}"
+
+        app_name = "asset_{t}_multi_region_app".format(t=int(time.time() * 1000))
+        app_spec = {
+            "name": app_name,
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0",
+
+            # This is a multi-region app.
+            "requestedRegionalOptions": {"aws:us-east-1": {},
+                                         "azure:westus": {}}
+            }
+        app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+
+        # Temporary projects must be created to build multi-region apps.
+        with self.assertRaisesRegexp(subprocess.CalledProcessError, "--no-temp-build-project.*multi-region"):
+            run(base_cmd.format(app_dir=app_dir))
+
+        app_name = "asset_{t}_multi_region_app".format(t=int(time.time() * 1000))
+        app_spec = {
+            "name": app_name,
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0",
+
+            # This is a single-region app.
+            "requestedRegionalOptions": {"aws:us-east-1": {}}
+            }
+        app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+
+        app_new_res = json.loads(run(base_cmd.format(app_dir=app_dir)))
+        app_desc_res = json.loads(run("dx describe --json " + app_new_res["id"]))
+        self.assertEqual(app_desc_res["class"], "app")
+        self.assertEqual(app_desc_res["id"], app_desc_res["id"])
+        self.assertEqual(app_desc_res["version"], "1.0.0")
+        self.assertEqual(app_desc_res["name"], app_name)
+        self.assertFalse("published" in app_desc_res)
+        self.assertIn("regionalOptions", app_desc_res)
+        self.assertItemsEqual(app_desc_res["regionalOptions"].keys(), app_spec["requestedRegionalOptions"].keys())
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create apps')
     def test_build_app_and_update_code(self):
         app_spec = {
             "name": "update_app_code",
