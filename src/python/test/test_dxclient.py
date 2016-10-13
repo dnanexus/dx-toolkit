@@ -5650,6 +5650,27 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEqual(applet_describe["id"], applet_describe["id"])
         self.assertEqual(applet_describe["name"], "minimal_applet")
 
+        name = "asset_applet_{t}".format(t=int(time.time() * 1000))
+        app_spec = {
+            "name": name,
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0",
+
+            # Will be ignored when building applets.
+            "requestedRegionalOptions": {"aws:us-east-1": {}}
+            }
+        app_dir = self.write_app_directory(name, json.dumps(app_spec), "code.py")
+        new_applet = json.loads(run("dx build --json " + app_dir))
+        applet_describe = json.loads(run("dx describe --json " + new_applet["id"]))
+        self.assertEqual(applet_describe["class"], "applet")
+        self.assertEqual(applet_describe["id"], applet_describe["id"])
+        self.assertEqual(applet_describe["name"], name)
+        # We already know this via the API, but here goes.
+        self.assertNotIn("regionalOptions", applet_describe)
+
     def test_dx_build_applet_dxapp_json_created_with_makefile(self):
         app_name = "nodxapp_applet"
         app_dir = self.write_app_directory(app_name, None, "code.py")
