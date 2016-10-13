@@ -57,7 +57,7 @@ def load_app_resource(**kwargs):
         raise DXError('App resources container ID could not be found')
 
     kwargs['project'] = os.environ.get('DX_RESOURCES_ID', os.environ.get('DX_PROJECT_CONTEXT_ID'))
-    kwargs['get_handler'] = True
+    kwargs['return_handler'] = True
 
     return find_one_data_object(**kwargs)
 
@@ -90,7 +90,7 @@ def load_from_cache(**kwargs):
         raise DXError('Project cache ID could not be found in the environment variable DX_PROJECT_CACHE_ID')
 
     kwargs['project'] = os.environ.get('DX_PROJECT_CACHE_ID')
-    kwargs['get_handler'] = True
+    kwargs['return_handler'] = True
 
     cached_object = find_one_data_object(**kwargs)
 
