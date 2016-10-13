@@ -7797,7 +7797,9 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
             "developerNotes": "Developer notes\n",
             "authorizedUsers": authorized_users,
             "openSource": open_source,
-            "version": "0.0.1"
+            "version": "0.0.1",
+            "requestedRegionalOptions": {"aws:us-east-1": {},
+                                         "azure:westus": {}}
             }
         # description and developerNotes should be un-inlined back to files
         output_app_spec = dict((k, v)
