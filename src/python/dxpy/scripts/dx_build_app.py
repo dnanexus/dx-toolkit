@@ -767,7 +767,6 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     override_folder = None
     override_applet_name = None
 
-    # TODO: Parse and validate "requestedRegionalOptions".
     regional_options = dxpy.app_builder.parse_regional_options(app_json)
     enabled_regions = None
     if regional_options is not None:
