@@ -748,10 +748,9 @@ File createFile(const std::string &filePath,
                 const std::string &project,
                 const std::string &folders,
                 const std::string &name,
-                const unsigned int &fileIndex,
-                const bool &stdin=false) {
+                const unsigned int &fileIndex) {
   string mimeType = "";
-  if (!stdin) {
+  if (!opt.stdin) {
     DXLOG(logINFO) << "Getting MIME type for local file " << filePath << "...";
     mimeType = getMimeType(filePath);
     DXLOG(logINFO) << "MIME type for local file " << filePath << " is '" << mimeType << "'.";
@@ -777,7 +776,7 @@ File createFile(const std::string &filePath,
   }
   return File(filePath, project, folders, name, opt.visibility,
          opt.properties, opt.type, opt.tags, opt.details,
-         toCompress, !opt.doNotResume, mimeType, opt.chunkSize, fileIndex, stdin);
+         toCompress, !opt.doNotResume, mimeType, opt.chunkSize, fileIndex, opt.stdin);
 }
 
 void traverseDirectory(const fs::path &localDirPath,
@@ -906,7 +905,7 @@ int main(int argc, char * argv[]) {
         traverseDirectory(fs::path(opt.files[i]), opt.projects[i], fs::path(opt.folders[i]), fs::path(opt.names[i]), files);
       } else {
         unsigned int fileIndex = files.size();
-        files.push_back(createFile(opt.files[i], opt.projects[i], opt.folders[i], opt.names[i], fileIndex, stdin));
+        files.push_back(createFile(opt.files[i], opt.projects[i], opt.folders[i], opt.names[i], fileIndex));
         if (!opt.stdin) {
           totalChunks += files[fileIndex].createChunks(chunksToRead, opt.tries);
         }
