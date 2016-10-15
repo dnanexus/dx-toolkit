@@ -121,7 +121,7 @@ string userAgentString; // definition (declared in chunk.h)
 int NUM_CHUNK_CHECKS = 3;
 
 bool finished() {
-  if (opt.stdin && !readStdinDone) {
+  if (opt.standardInput && !readStdinDone) {
     return false;
   }
   return (chunksFinished.size() + chunksFailed.size() == totalChunks);
@@ -518,7 +518,7 @@ void uploadProgress(vector<File> &files) {
 void createWorkerThreads(vector<File> &files) {
   DXLOG(logINFO) << "Creating worker threads:";
 
-  if (opt.stdin) {
+  if (opt.standardInput) {
     DXLOG(logINFO) << " read stdin...";
     readThreads.push_back(boost::thread(readStdinChunks, boost::ref(files)));
   } else {
@@ -750,7 +750,7 @@ File createFile(const std::string &filePath,
                 const std::string &name,
                 const unsigned int &fileIndex) {
   string mimeType = "";
-  if (!opt.stdin) {
+  if (!opt.standardInput) {
     DXLOG(logINFO) << "Getting MIME type for local file " << filePath << "...";
     mimeType = getMimeType(filePath);
     DXLOG(logINFO) << "MIME type for local file " << filePath << " is '" << mimeType << "'.";
@@ -776,7 +776,7 @@ File createFile(const std::string &filePath,
   }
   return File(filePath, project, folders, name, opt.visibility,
          opt.properties, opt.type, opt.tags, opt.details,
-         toCompress, !opt.doNotResume, mimeType, opt.chunkSize, fileIndex, opt.stdin);
+         toCompress, !opt.doNotResume, mimeType, opt.chunkSize, fileIndex, opt.standardInput);
 }
 
 void traverseDirectory(const fs::path &localDirPath,
@@ -879,7 +879,7 @@ int main(int argc, char * argv[]) {
       DXLOG(logUSERINFO) << "ERROR: " << e.what() << endl;
       return 3;
     }
-    if (!opt.doNotResume && !opt.stdin) {
+    if (!opt.doNotResume && !opt.standardInput) {
       resolveProjects(opt.projects);
       disallowDuplicateFiles(opt.files, opt.projects);
     }
@@ -906,7 +906,7 @@ int main(int argc, char * argv[]) {
       } else {
         unsigned int fileIndex = files.size();
         files.push_back(createFile(opt.files[i], opt.projects[i], opt.folders[i], opt.names[i], fileIndex));
-        if (!opt.stdin) {
+        if (!opt.standardInput) {
           totalChunks += files[fileIndex].createChunks(chunksToRead, opt.tries);
         }
       }

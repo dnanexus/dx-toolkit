@@ -31,7 +31,7 @@ public:
        const std::string &visibility, const dx::JSON &properties_, const dx::JSON &type_,
        const dx::JSON &tags_, const dx::JSON &details,
        const bool toCompress_, const bool tryResuming, const std::string &mimeType_, 
-       const int64_t chunkSize, const unsigned int fileIndex_, const bool stdin_);
+       const int64_t chunkSize, const unsigned int fileIndex_, const bool standardInput_);
 
   void init();
   void init(const bool tryResuming);
@@ -125,7 +125,7 @@ public:
   std::string jobID;
 
   /* File content comes from stdin.*/
-  bool stdin;
+  bool standardInput;
 
   friend std::ostream &operator<<(std::ostream &out, const File &file);
   
