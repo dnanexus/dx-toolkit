@@ -83,13 +83,13 @@ File::File(const string &localFile_, const string &projectSpec_, const string &f
 	   const std::string &visibility_, const dx::JSON &properties_, 
 	   const dx::JSON &type_, const dx::JSON &tags_, const dx::JSON &details_,
            const bool toCompress_, const bool tryResuming, const string &mimeType_,
-           const int64_t chunkSize_, const unsigned fileIndex_, const bool stdin_)
+           const int64_t chunkSize_, const unsigned fileIndex_, const bool standardInput_)
   : localFile(localFile_), projectSpec(projectSpec_), folder(folder_), name(name_),
     visibility(visibility_), properties(properties_), type(type_), tags(tags_), details(details_),
     failed(false), waitOnClose(false), closed(false), toCompress(toCompress_), mimeType(mimeType_),
-    chunkSize(chunkSize_), bytesUploaded(0), fileIndex(fileIndex_), atleastOnePartDone(false), jobID(), stdin(stdin_) {
+    chunkSize(chunkSize_), bytesUploaded(0), fileIndex(fileIndex_), atleastOnePartDone(false), jobID(), standardInput(standardInput_) {
 
-  if (!stdin) {
+  if (!standardInput) {
     init(tryResuming);
   } else {
     init();

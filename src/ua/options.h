@@ -72,7 +72,7 @@ public:
   bool waitOnClose;
   bool recursive;
   bool overrideFileLimit;
-  bool stdin;
+  bool standardInput;
 
   // Import flags
   bool reads;
