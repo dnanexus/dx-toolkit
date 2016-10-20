@@ -1,6 +1,13 @@
+dx-toolkit (0.201.2) precise; urgency=low
+
+  * Bug fixes
+  * Revert PTFM-17432 Java checksum verification
+
+ -- Phil Sung <psung@dnanexus.com>  Thu, 20 Oct 2016 22:55:55 +0000
+
 dx-toolkit (0.201.1) precise; urgency=low
 
-  * Fixed log formatting from commit 4384316 
+  * Fixed log formatting from commit 4384316
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Tue, 27 Sep 2016 21:03:57 +0000
 
