@@ -1,3 +1,8 @@
+DNAnexus Upload Agent 1.5.20 <support@dnanexus.com>, 2016-Oct-20
+----------------------------------------------------------------
+  * Add option to read data from stdin
+  * Add --test flag to run connectivity diagnostics
+
 DNAnexus Upload Agent 1.5.19 <support@dnanexus.com>, 2016-Sep-22
 ----------------------------------------------------------------
   * UA supplies nonce to /file/new for improved resilience

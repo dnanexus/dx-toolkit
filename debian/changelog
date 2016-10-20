@@ -1,3 +1,15 @@
+dx-toolkit (0.202.0) precise; urgency=low
+
+  * Revert PTFM-17432 Checksum verification for file downloads in Java
+  * PTFM-13920 Upload Agent: Read data from stdin.
+  * Fix dxpy app bindings: keyword arg is "return_handler", not "get_handler".
+  * PTFM-18776, PTFM-18858 dx-docker enhancements
+  * Add list of of apt packages needed for Ubuntu 16.04
+  * PTFM-15867 ua --test flag
+  * Fixed failing dxpy test, need a unique project name
+
+ -- Phil Sung <psung@dnanexus.com>  Thu, 20 Oct 2016 22:36:54 +0000
+
 dx-toolkit (0.201.0) precise; urgency=low
 
   * PTFM-18459 Applet decompilation preserves 'assetDepends' in dxapp.json
