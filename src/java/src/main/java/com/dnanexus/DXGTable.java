@@ -40,6 +40,7 @@ import com.google.common.collect.ImmutableList;
  * GTables</a>. Also, indices are not supported at this time.
  * </p>
  */
+@Deprecated
 public class DXGTable extends DXDataObject {
 
     /**
