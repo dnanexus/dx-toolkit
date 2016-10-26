@@ -27,6 +27,7 @@ import java.util.Map;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.NoHttpResponseException;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
@@ -408,22 +409,35 @@ public class DXFile extends DXDataObject {
      */
     private static HttpResponse executeRequestWithRetry(HttpClient httpclient, HttpRequestBase request) throws IOException {
         HttpResponse response;
-        int RETRY_ATTEMPTS = 1;
+        int retryAttempts = 1;
+        final int maxRetryAttempts = 5;
         int timeoutSeconds = 1;
         while (true) {
             try {
                 response = httpclient.execute(request);
             } catch (NoHttpResponseException e) {
-                // Maximum 5 retries
-                RETRY_ATTEMPTS ++;
-                if (RETRY_ATTEMPTS > 5) {
+                retryAttempts++;
+                if (retryAttempts > maxRetryAttempts) {
                     throw e;
                 }
-                System.out.println("Error downloading chunk. Waiting " + timeoutSeconds + " second(s) before retrying...");
+                System.out.println("HTTP error (no response). Waiting " + timeoutSeconds + " second(s) before retrying...");
                 sleep(timeoutSeconds);
                 timeoutSeconds *= 2;
                 continue;
             }
+
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode != HttpStatus.SC_OK && statusCode != HttpStatus.SC_PARTIAL_CONTENT) {
+                retryAttempts++;
+                if (retryAttempts > maxRetryAttempts) {
+                    throw new IOException("HTTP error (status code " + statusCode + ")");
+                }
+                System.out.println("HTTP error (status code " + statusCode + "). Waiting " + timeoutSeconds + " second(s) before retrying...");
+                sleep(timeoutSeconds);
+                timeoutSeconds *= 2;
+                continue;
+            }
+
             return response;
         }
     }
