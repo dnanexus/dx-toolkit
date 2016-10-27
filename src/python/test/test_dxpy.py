@@ -458,6 +458,17 @@ class TestDXFile(unittest.TestCase):
 
         self.assertTrue(filecmp.cmp(self.foo_file.name, self.new_file.name))
 
+    def test_upload_empty_dxfile(self):
+        # Checking default backend
+        dxpy.new_dxfile().close()
+        dxpy.upload_local_file(filename=self.new_file.name, project=self.proj_id, wait_on_close=True)
+        # Checking azure backend
+        with testutil.temporary_project("TestDXFile.test_upload_empty_dxfile azure", select=True, region="azure:westus") as ap:
+            with dxpy.DXFile(project=ap.get_id()) as f:
+                f.new()
+                f.close()
+            dxpy.upload_local_file(filename=self.new_file.name, project=ap.get_id(), wait_on_close=True)
+
     def test_write_read_dxfile(self):
         dxid = ""
         with dxpy.new_dxfile() as self.dxfile:
