@@ -166,7 +166,7 @@ def temporary_project(name='dx client tests temporary project', cleanup=True, re
 
     """
     input_params = {'name': name}
-    if region != None:
+    if region is not None:
         input_params["region"] = region
     temp_project = dxpy.DXProject(dxpy.api.project_new(input_params, **kwargs)['id'])
     try:

@@ -538,14 +538,13 @@ class DXFile(DXDataObject):
         self.flush(**kwargs)
 
         # Also populates emptyLastPartAllowed
-        #
-        # TODO: only upload a zero-length part condition on
-        # emptyLastPartAllowed
         self._ensure_write_bufsize(**kwargs)
 
-        if self._num_uploaded_parts == 0:
-            # We haven't uploaded any parts in this session. In case no parts have been uploaded at all, try to upload
-            # an empty part (files with 0 parts cannot be closed).
+        if self._num_uploaded_parts == 0 and self._empty_last_part_allowed:
+            # We haven't uploaded any parts in this session.
+            # In case no parts have been uploaded at all and region
+            # settings allow last empty part upload, try to upload
+            # an empty part (otherwise files with 0 parts cannot be closed).
             try:
                 self.upload_part('', 1, **kwargs)
             except dxpy.exceptions.InvalidState:
@@ -586,11 +585,6 @@ class DXFile(DXDataObject):
         defaults to 1. This probably only makes sense if this is the
         only part to be uploaded.
         """
-    
-        # AZURE-314: Do not upload a first (single) empty part if region settings do not allow that
-        if index == 1 and len(data) == 0 and not self._empty_last_part_allowed:
-            return
-
         req_input = {}
         if index is not None:
             req_input["index"] = int(index)
