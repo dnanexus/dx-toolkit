@@ -77,27 +77,30 @@ def get_aci(image, imgname, prefix="", quiet=False):
     tmpdir = tempfile.mkdtemp()
     os.chdir(tmpdir)
     cmd = ["docker2aci", "-compression", "none", imgname]
-    if quiet:
-        shell_suppress(cmd)
-    else:
-        layers = {}
-        for line in docker2aci_line(cmd):
-            fields = line.rstrip().split()
-            if len(fields) == 7 and fields[0] == "Downloading":
-                _, imghash, downloaded, unita, _, total, unitb = line.rstrip().split()
-            else:
-                sys.stderr.write(line)
-                continue
-            percent = round(float(downloaded)/float(total),1)
-            def print_progress():
-                sys.stderr.write(dxpy.utils.printing.BLUE(imghash)+": "+dxpy.utils.printing.YELLOW("{} {}/{} {}\n".format(downloaded, unita, total, unitb)))
-            if imghash not in layers:
-                layers[imghash] = percent
-                if percent == 1:
+    try:
+        if quiet:
+            shell_suppress(cmd)
+        else:
+            layers = {}
+            for line in docker2aci_line(cmd):
+                fields = line.rstrip().split()
+                if len(fields) == 7 and fields[0] == "Downloading":
+                    _, imghash, downloaded, unita, _, total, unitb = line.rstrip().split()
+                else:
+                    sys.stderr.write(line)
+                    continue
+                percent = round(float(downloaded)/float(total),1)
+                def print_progress():
+                    sys.stderr.write(dxpy.utils.printing.BLUE(imghash)+": "+dxpy.utils.printing.YELLOW("{} {}/{} {}\n".format(downloaded, unita, total, unitb)))
+                if imghash not in layers:
+                    layers[imghash] = percent
+                    if percent == 1:
+                        print_progress()
+                elif layers[imghash] != percent and percent > 0:
                     print_progress()
-            elif layers[imghash] != percent and percent > 0:
-                print_progress()
-                layers[imghash] = percent
+                    layers[imghash] = percent
+    except Exception as e:
+        raise Exception("Failed to obtain image {}.  Does this image exist in the specified repository?\n\n{}".format(image, e))
 
     img_dirname = prefix+CACHE_DIR
     shell_suppress(["mkdir", "-p", img_dirname])
@@ -222,6 +225,11 @@ parser_add_to_applet = subparsers.add_parser('add-to-applet', help="Adds a local
 parser_add_to_applet.add_argument("image", help="image name")
 parser_add_to_applet.add_argument("applet", help="directory corresponding to applet")
 def add_to_applet(args):
+    try:
+        with open(args.applet+"/dxapp.json") as f:
+            json.loads(f.read())
+    except Exception as e:
+        raise Exception("{} does not appear to have a dxapp.json that parses. Please make sure you have selected a working DNAnexus applet directory\n\n{}.".format(args.applet, e))
     tmpdir = tempfile.mkdtemp()
     local_image_to_aci(args.image, tmpdir, os.path.abspath(args.applet)+"/resources")
     shell_suppress(["rm", "-r", tmpdir])
