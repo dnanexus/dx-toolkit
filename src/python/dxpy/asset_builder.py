@@ -222,18 +222,19 @@ def build_asset(args):
 
         if not args.json:
             print("\nStarted job '" + str(job_id) + "' to build the asset bundle.\n", file=sys.stderr)
-            try:
-                subprocess.check_call(["dx", "watch", job_id])
-            except subprocess.CalledProcessError as e:
-                if e.returncode == 3:
-                    # Some kind of failure to build the asset. The reason
-                    # for the failure is probably self-evident from the
-                    # job log (and if it's not, the CalledProcessError
-                    # is not informative anyway), so just propagate the
-                    # return code without additional remarks.
-                    sys.exit(3)
-                else:
-                    raise e
+            if not args.skip_watch:
+                try:
+                    subprocess.check_call(["dx", "watch", job_id])
+                except subprocess.CalledProcessError as e:
+                    if e.returncode == 3:
+                        # Some kind of failure to build the asset. The reason
+                        # for the failure is probably self-evident from the
+                        # job log (and if it's not, the CalledProcessError
+                        # is not informative anyway), so just propagate the
+                        # return code without additional remarks.
+                        sys.exit(3)
+                    else:
+                        raise e
 
         dxpy.DXJob(job_id).wait_on_done(interval=1)
         asset_id, _ = dxpy.get_dxlink_ids(dxpy.api.job_describe(job_id)['output']['asset_bundle'])
