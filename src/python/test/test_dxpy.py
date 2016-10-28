@@ -459,7 +459,7 @@ class TestDXFile(unittest.TestCase):
         self.assertTrue(filecmp.cmp(self.foo_file.name, self.new_file.name))
 
     def test_upload_empty_dxfile(self):
-        self.assertEqual(0, os.path.getsize(self.new_file.name));
+        self.assertEqual(0, os.path.getsize(self.new_file.name))
         # Checking default backend
         with dxpy.new_dxfile() as f:
             f.close(block=True)

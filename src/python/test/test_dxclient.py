@@ -1420,14 +1420,19 @@ class TestDXClientUploadDownload(DXTestCase):
                 self.assertIn(os.path.basename(fd2.name), listing)
 
     def test_dx_upload_empty_file(self):
-        testdir = tempfile.mkdtemp()
-        os.mkdir(os.path.join(testdir, 'a'))
-        with testutil.TemporaryFile(dir=os.path.join(testdir, "a")) as fd:
+        with testutil.TemporaryFile() as fd:
             fd.close()
-            with temporary_project("test_dx_upload_empty_file default", select=True) as upload_empty_file_project_default:
-                run("dx upload {}".format(fd.name))
-            with temporary_project("test_dx_upload_empty_file azure", select=True, region="azure:westus") as upload_empty_file_project_azure:
-                run("dx upload {}".format(fd.name))
+            self.assertEqual(0, os.path.getsize(fd.name))
+            with temporary_project("test_dx_upload_empty_file default", select=True) as p:
+                listing = run("dx upload --wait {}".format(fd.name))
+                self.assertIn(p.get_id(), listing)
+                self.assertIn(os.path.basename(fd.name), listing)
+                self.assertIn("0 bytes", listing)
+            with temporary_project("test_dx_upload_empty_file azure", select=True, region="azure:westus") as p:
+                listing = run("dx upload --wait {}".format(fd.name))
+                self.assertIn(p.get_id(), listing)
+                self.assertIn(os.path.basename(fd.name), listing)
+                self.assertIn("0 bytes", listing)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_download_by_job_id_and_output_field(self):
