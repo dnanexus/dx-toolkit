@@ -62,7 +62,7 @@ _app_required_keys = ['name', 'title', 'summary', 'dxapi', 'openSource',
 
 # These are optional keys for apps, not sure what to do with them
 _app_optional_keys = ['description', 'developerNotes', 'details',
-                      'categories', 'resources', 'access']
+                      'categories', 'access']
 
 _app_describe_output_keys = []
 
