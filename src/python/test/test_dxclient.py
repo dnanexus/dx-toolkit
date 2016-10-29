@@ -1419,6 +1419,20 @@ class TestDXClientUploadDownload(DXTestCase):
                 listing = run("dx ls /destdir/a").split("\n")
                 self.assertIn(os.path.basename(fd2.name), listing)
 
+    def test_dx_upload_empty_file(self):
+        with testutil.TemporaryFile() as fd:
+            fd.close()
+            self.assertEqual(0, os.path.getsize(fd.name))
+            with temporary_project("test_dx_upload_empty_file default", select=True) as p:
+                listing = run("dx upload --wait {}".format(fd.name))
+                self.assertIn(p.get_id(), listing)
+                self.assertIn(os.path.basename(fd.name), listing)
+                self.assertIn("0 bytes", listing)
+            with temporary_project("test_dx_upload_empty_file azure", select=True, region="azure:westus") as p:
+                listing = run("dx upload --wait {}".format(fd.name))
+                self.assertIn(p.get_id(), listing)
+                self.assertIn(os.path.basename(fd.name), listing)
+                self.assertIn("0 bytes", listing)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_download_by_job_id_and_output_field(self):
