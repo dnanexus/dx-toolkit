@@ -6076,6 +6076,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create apps')
     def test_update_multi_region_app(self):
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
         app_spec = {
