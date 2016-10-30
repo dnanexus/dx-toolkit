@@ -38,7 +38,7 @@ from ..utils.resolver import resolve_path, check_folder_exists, ResolutionError,
 from ..utils.completer import LocalCompleter
 from ..app_categories import APP_CATEGORIES
 from ..cli import try_call
-from ..exceptions import err_exit, DXError, PermissionDenied
+from ..exceptions import err_exit, DXError, DXAPIError
 from ..utils.printing import BOLD
 from ..compat import open, USING_PYTHON2, decode_command_line_args, basestring
 
@@ -767,17 +767,17 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     override_folder = None
     override_applet_name = None
 
-    regional_options = dxpy.app_builder.parse_regional_options(app_json)
+    requested_regional_options = dxpy.app_builder.parse_regional_options(app_json)
 
     # The region specified on the command-line (i.e., --region) and the set of
     # enabled regions in dxapp.json disagree.
     # TODO: Allow using one or more --region args to build a multi-region app.
-    if regional_options is not None and region is not None and regional_options.keys() != [region]:
+    if requested_regional_options is not None and region is not None and requested_regional_options.keys() != [region]:
         raise dxpy.app_builder.AppBuilderException("--region and the 'requestedRegionalOptions' key in dxapp.json do not agree")
 
     enabled_regions = None
-    if regional_options is not None:
-        enabled_regions = regional_options.keys()
+    if requested_regional_options is not None:
+        enabled_regions = requested_regional_options.keys()
     elif region is not None:
         enabled_regions = [region]
 
@@ -799,7 +799,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 try:
                     working_project = dxpy.api.project_new({"name": "Temporary build project for dx-build-app",
                                                             "region": region})["id"]
-                except PermissionDenied:
+                except DXAPIError:
                     # The /project/new request may fail if the requesting user
                     # is not authorized to create projects in a certain region.
                     err_exit()
