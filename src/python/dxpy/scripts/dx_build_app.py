@@ -878,7 +878,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                         dx_toolkit_autodep=dx_toolkit_autodep,
                         dry_run=dry_run,
                         **kwargs)
-                    logger.debug("Created applet " + applet_id + " successfully")
+                    if not dry_run:
+                        logger.debug("Created applet " + applet_id + " successfully")
                     applet_ids_by_region[region] = applet_id
             else:
                 applet_id, applet_spec = dxpy.app_builder.upload_applet(
@@ -893,7 +894,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                     dx_toolkit_autodep=dx_toolkit_autodep,
                     dry_run=dry_run,
                     **kwargs)
-                logger.debug("Created applet " + applet_id + " successfully")
+                if not dry_run:
+                    logger.debug("Created applet " + applet_id + " successfully")
         except:
             # Avoid leaking any bundled_resources files we may have
             # created, if applet creation fails. Note that if
