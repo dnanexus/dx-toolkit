@@ -748,6 +748,11 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
         shutil.rmtree(temp_dir)
 
 
+def delete_temporary_projects(projects):
+    for project in projects:
+        dxpy.api.project_destroy(project)
+
+
 def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publish=False, destination_override=None,
                              version_override=None, bill_to_override=None, use_temp_build_project=True,
                              do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
@@ -803,8 +808,9 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                     working_project = dxpy.api.project_new({"name": "Temporary build project for dx-build-app",
                                                             "region": region})["id"]
                 except DXAPIError:
-                    # The /project/new request may fail if the requesting user
-                    # is not authorized to create projects in a certain region.
+                    # A /project/new request may fail if the requesting user is
+                    # not authorized to create projects in a certain region.
+                    delete_temporary_projects(projects_by_region.values())
                     err_exit()
                 projects_by_region[region] = working_project
                 logger.debug("Created temporary project %s to build in" % (working_project,))
@@ -957,10 +963,9 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
         # Clean up after ourselves.
         if using_temp_project:
             if enabled_regions is not None:
-                for project in projects_by_region.values():
-                    dxpy.api.project_destroy(project)
+                delete_temporary_projects(projects_by_region.values())
             else:
-                dxpy.api.project_destroy(working_project)
+                delete_temporary_projects([working_project])
 
 
 def _build_app(args, extra_args):
