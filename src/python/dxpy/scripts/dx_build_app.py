@@ -38,7 +38,7 @@ from ..utils.resolver import resolve_path, check_folder_exists, ResolutionError,
 from ..utils.completer import LocalCompleter
 from ..app_categories import APP_CATEGORIES
 from ..cli import try_call
-from ..exceptions import err_exit, DXError
+from ..exceptions import err_exit, DXError, PermissionDenied
 from ..utils.printing import BOLD
 from ..compat import open, USING_PYTHON2, decode_command_line_args, basestring
 
@@ -799,7 +799,9 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 try:
                     working_project = dxpy.api.project_new({"name": "Temporary build project for dx-build-app",
                                                             "region": region})["id"]
-                except:
+                except PermissionDenied:
+                    # The /project/new request may fail if the requesting user
+                    # is not authorized to create projects in a certain region.
                     err_exit()
                 projects_by_region[region] = working_project
                 logger.debug("Created temporary project %s to build in" % (working_project,))
