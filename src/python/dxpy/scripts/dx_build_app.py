@@ -153,7 +153,7 @@ parser.add_argument("--extra-args", help="Arguments (in JSON format) to pass to 
 parser.add_argument("--run", help="Run the app or applet after building it (options following this are passed to "+BOLD("dx run")+"; run at high priority by default)", nargs=argparse.REMAINDER)
 
 # --region
-app_options.add_argument("--region", help="The single region this app will be created in if --no-temp-build-project is *not* specified")
+app_options.add_argument("--region", action="append", help="The enabled region(s) of this app. Note that if only one region is specified and --no-temp-build-project is specified, then the region will be ignored")
 
 
 class DXSyntaxError(Exception):
@@ -569,6 +569,9 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
                       version_override=None, bill_to_override=None, dx_toolkit_autodep="stable",
                       do_version_autonumbering=True, do_try_update=True, do_parallel_build=True,
                       do_check_syntax=True, region=None, watch=True):
+    if region is not None:
+        region = region[0]
+
     if mode == 'app':
         builder_app = 'app-tarball_app_builder'
     else:
@@ -774,18 +777,17 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
 
     requested_regional_options = dxpy.app_builder.parse_regional_options(app_json)
 
-    # The region specified on the command-line (i.e., --region) and the set of
-    # enabled regions in dxapp.json disagree.
-    # TODO: Allow using one or more --region args to build a multi-region app.
-    if requested_regional_options is not None and region is not None and requested_regional_options.keys() != [region]:
+    # The set of regions specified on the command-line (i.e., --region) and the
+    # set of enabled regions in dxapp.json disagree.
+    if (requested_regional_options is not None and region is not None and
+            sorted(requested_regional_options.keys()) != sorted(region)):
         raise dxpy.app_builder.AppBuilderException("--region and the 'requestedRegionalOptions' key in dxapp.json do not agree")
 
     enabled_regions = None
     if requested_regional_options is not None:
         enabled_regions = requested_regional_options.keys()
     elif region is not None:
-        enabled_regions = [region]
-
+        enabled_regions = region
     if enabled_regions is not None:
         assert(len(enabled_regions) > 0)
 
