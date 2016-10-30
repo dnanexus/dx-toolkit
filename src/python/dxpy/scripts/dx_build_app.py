@@ -780,7 +780,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     # The set of regions specified on the command-line (i.e., --region) and the
     # set of enabled regions in dxapp.json disagree.
     if (requested_regional_options is not None and region is not None and
-            sorted(requested_regional_options.keys()) != sorted(region)):
+            set(requested_regional_options) != set(region)):
         raise dxpy.app_builder.AppBuilderException("--region and the 'requestedRegionalOptions' key in dxapp.json do not agree")
 
     enabled_regions = None
