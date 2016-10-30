@@ -38,7 +38,7 @@ from ..utils.resolver import resolve_path, check_folder_exists, ResolutionError,
 from ..utils.completer import LocalCompleter
 from ..app_categories import APP_CATEGORIES
 from ..cli import try_call
-from ..exceptions import err_exit, DXError, DXAPIError
+from ..exceptions import err_exit, DXAPIError
 from ..utils.printing import BOLD
 from ..compat import open, USING_PYTHON2, decode_command_line_args, basestring
 
