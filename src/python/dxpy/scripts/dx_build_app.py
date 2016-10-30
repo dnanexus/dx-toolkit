@@ -788,13 +788,16 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     if enabled_regions is not None and len(enabled_regions) > 1 and not use_temp_build_project:
         raise dxpy.app_builder.AppBuilderException("Cannot specify --no-temp-build-project when building multi-region apps")
 
-    projects_by_region = {}
+    # This will not be None iff `use_temp_build_project` is truthy and
+    # `enabled_regions` is not None.
+    projects_by_region = None
 
     if mode == "applet" and destination_override:
         working_project, override_folder, override_applet_name = parse_destination(destination_override)
     elif mode == "app" and use_temp_build_project and not dry_run:
         if enabled_regions is not None:
             # Create temporary projects in each enabled region.
+            projects_by_region = {}
             for region in enabled_regions:
                 try:
                     working_project = dxpy.api.project_new({"name": "Temporary build project for dx-build-app",
@@ -844,7 +847,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 raise dxpy.app_builder.AppBuilderException(msg)
 
         resources_bundles_by_region = {}
-        if enabled_regions is not None and using_temp_project:
+        if projects_by_region is not None:
             for region, project in projects_by_region.iteritems():
                 resources_bundles_by_region[region] = dxpy.app_builder.upload_resources(
                     src_dir,
@@ -861,7 +864,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
 
         applet_ids_by_region = {}
         try:
-            if enabled_regions is not None and using_temp_project:
+            if projects_by_region is not None:
                 for region, project in projects_by_region.iteritems():
                     applet_id, applet_spec = dxpy.app_builder.upload_applet(
                         src_dir,
@@ -917,7 +920,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 try_versions.append(version + _get_version_suffix(src_dir, version))
 
             regional_options = None
-            if enabled_regions is not None and using_temp_project:
+            if projects_by_region is not None:
                 regional_options = {}
                 for region in projects_by_region:
                     regional_options[region] = {"applet": applet_ids_by_region[region]}
