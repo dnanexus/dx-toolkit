@@ -234,10 +234,10 @@ def add_to_applet(args):
     shutil.rmtree(tmpdir)
 parser_add_to_applet.set_defaults(func=add_to_applet)
 
-parser_upload = subparsers.add_parser('upload', help="EXPERIMENTAL: Uploads a local Docker image as an asset in the DNAnexus platform (subject to change)")
-parser_upload.add_argument("--output_path", "-o", help="Project ID and path in project to upload image to (defaults to project root)")
-parser_upload.add_argument("image", help="image name")
-def upload(args):
+parser_create_asset = subparsers.add_parser('create-asset', help="EXPERIMENTAL: Caches a local Docker image as an asset in the DNAnexus platform (subject to change)")
+parser_create_asset.add_argument("--output_path", "-o", help="Project ID and path in project to upload image to (defaults to project root)")
+parser_create_asset.add_argument("image", help="image name")
+def create_asset(args):
     # Create asset
     tmpdir = tempfile.mkdtemp()
     asset_path = tmpdir+"/resources/usr/bin"
@@ -312,7 +312,7 @@ def upload(args):
     # Remove the temporary directory
     shutil.rmtree(tmpdir)
 
-parser_upload.set_defaults(func=upload)
+parser_create_asset.set_defaults(func=create_asset)
 
 
 if __name__ == "__main__":
