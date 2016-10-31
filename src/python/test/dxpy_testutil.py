@@ -141,7 +141,7 @@ def run(command, **kwargs):
 
 @contextmanager
 def temporary_project(name='dx client tests temporary project', cleanup=True, reclaim_permissions=False, select=False,
-                      **kwargs):
+                      region=None, **kwargs):
     """Creates a temporary project scoped to the context manager, and
     yields a DXProject handler for the project.
 
@@ -159,9 +159,16 @@ def temporary_project(name='dx client tests temporary project', cleanup=True, re
         (and restores the previous value afterwards) so that subprocess
         calls made within the block use the new project by default.
     :type select: bool
+    :param region:
+        Region name to create a project in. If None the project is created
+        in the default region.
+    :type region: str
 
     """
-    temp_project = dxpy.DXProject(dxpy.api.project_new({'name': name}, **kwargs)['id'])
+    input_params = {'name': name}
+    if region is not None:
+        input_params["region"] = region
+    temp_project = dxpy.DXProject(dxpy.api.project_new(input_params, **kwargs)['id'])
     try:
         if select:
             with select_project(temp_project):
