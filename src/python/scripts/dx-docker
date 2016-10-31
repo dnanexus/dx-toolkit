@@ -22,6 +22,8 @@ import dateutil.parser
 import dxpy.utils.printing
 import dxpy
 import urllib
+import tarfile
+import shutil
 
 CACHE_DIR = '/tmp/dx-docker-cache'
 
@@ -46,6 +48,12 @@ def shell_suppress(cmd, ignore_error=False):
             raise
     return out
 
+def makedirs(path):
+    try:
+        os.makedirs(path)
+    except:  # If the directory already exists, continue gracefully
+        pass
+
 parser = argparse.ArgumentParser()
 subparsers = parser.add_subparsers()
 
@@ -65,7 +73,7 @@ def extract_aci(acifile):
 
 def get_aci(image, imgname, prefix="", quiet=False):
     def docker2aci_line(cmd):
-        popen = subprocess.Popen(cmd, stderr=subprocess.PIPE, universal_newlines=True)
+        popen = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=open(os.devnull, "w"), universal_newlines=True)
         stderr_lines = iter(popen.stderr.readline, "")
         for stderr_line in stderr_lines:
             yield stderr_line
@@ -100,16 +108,16 @@ def get_aci(image, imgname, prefix="", quiet=False):
                 layers[imghash] = percent
 
     img_dirname = prefix+CACHE_DIR
-    shell_suppress(["mkdir", "-p", img_dirname])
-    shell_suppress(["mv", glob.glob(tmpdir+"/*.aci")[0], img_dirname+"/"+urllib.quote_plus(image)+".aci"])
-    shell_suppress(["rm", "-r", tmpdir])
+    makedirs(img_dirname)
+    os.rename(glob.glob(tmpdir+"/*.aci")[0], img_dirname+"/"+urllib.quote_plus(image)+".aci")
+    shutil.rmtree(tmpdir)
 
 parser_pull = subparsers.add_parser('pull', help="Pulls a docker image for use in DNAnexus")
 parser_pull.add_argument("image", help="image name")
 parser_pull.add_argument("-q", "--quiet", action='store_true', help="Suppress printing pull progress to stderr")
 def pull(args):
     if not os.path.isdir(CACHE_DIR):
-        shell_suppress(["mkdir", CACHE_DIR])
+        makedirs(CACHE_DIR)
 
     get_aci(args.image, "docker://"+args.image, quiet=args.quiet)
 parser_pull.set_defaults(func=pull)
@@ -203,12 +211,11 @@ def run(args):
     proot_cmd =  ["proot", "-R", "{tmpdir}/rootfs".format(tmpdir=tmpdir)] + volume + ["-w", workdir] + env + ["/bin/sh", "-c"] + [" ".join(("'"+x+"'" for x in container_cmd))]
     shell(proot_cmd)
     if not args.rootfs:
-        shell_suppress(["rm", "-rf", tmpdir])
+        shutil.rmtree(tmpdir)
 parser_run.set_defaults(func=run)
 
 def local_image_to_aci(image, tmpdir, dirprefix):
     # Ensure core utilities are available on local host
-    shell_suppress(["which", "docker"])
     shell_suppress(["which", "docker"])
     shell_suppress(["which", "docker2aci"])
 
@@ -224,7 +231,7 @@ parser_add_to_applet.add_argument("applet", help="directory corresponding to app
 def add_to_applet(args):
     tmpdir = tempfile.mkdtemp()
     local_image_to_aci(args.image, tmpdir, os.path.abspath(args.applet)+"/resources")
-    shell_suppress(["rm", "-r", tmpdir])
+    shutil.rmtree(tmpdir)
 parser_add_to_applet.set_defaults(func=add_to_applet)
 
 parser_upload = subparsers.add_parser('upload', help="EXPERIMENTAL: Uploads a local Docker image as an asset in the DNAnexus platform (subject to change)")
@@ -234,7 +241,7 @@ def upload(args):
     # Create asset
     tmpdir = tempfile.mkdtemp()
     asset_path = tmpdir+"/resources/usr/bin"
-    shell_suppress(["mkdir", "-p", asset_path])
+    makedirs(asset_path)
 
     local_image_to_aci(args.image, tmpdir, tmpdir+"/resources")
 
@@ -269,9 +276,10 @@ def upload(args):
     escaped_image_name = args.image.replace("/","\\/").replace(":", "\\:")
     image_tarball = imagename+".tar.gz"
     os.chdir(tmpdir)
-    shell_suppress(["tar", "--transform", "s|{}/resources||".format(tmpdir), "-Pczf",
-	            image_tarball, tmpdir+"/resources"])
+    with tarfile.open(image_tarball, "w:gz") as tar:
+        tar.add(tmpdir+"/resources", "/")
     asset_tarball_id = shell_suppress(["dx", "upload", "--wait", "--brief", "--visibility", "hidden", image_tarball]).rstrip()
+    asset_tarball_id = dxpy.upload_local_file(image_tarball, wait_on_close=True, hidden=True).get_id()
     record_name = args.image
     record_details = {"archiveFileId": {"$dnanexus_link": asset_tarball_id}}
     record_properties = {
@@ -302,7 +310,7 @@ def upload(args):
     """).format(project_name, project_path, args.image)+"}\n")
 
     # Remove the temporary directory
-    shell_suppress(["rm", "-r", tmpdir])
+    shutil.rmtree(tmpdir)
 
 parser_upload.set_defaults(func=upload)
 
