@@ -829,9 +829,9 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             logger.debug("Created temporary project %s to build in" % (working_project,))
 
         using_temp_project = True
-    elif not dry_run:
-        # If we are not using temporary project(s) to build the app, then we
-        # should have a project context somewhere.
+    elif mode == "app" and not dry_run:
+        # If we are not using temporary project(s) to build the executable,
+        # then we should have a project context somewhere.
         try:
             project = app_json.get("project", dxpy.WORKSPACE_ID)
             region = dxpy.api.project_describe(project,
@@ -861,6 +861,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             dest_folder = override_folder or app_json.get('folder') or '/'
             if not dest_folder.endswith('/'):
                 dest_folder = dest_folder + '/'
+
             dest_project = working_project if working_project else dxpy.WORKSPACE_ID
             try:
                 region = dxpy.api.project_describe(dest_project,
@@ -869,12 +870,15 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 err_exit()
             else:
                 projects_by_region = {region: dest_project}
+
             for result in dxpy.find_data_objects(classname="applet", name=dest_name, folder=dest_folder,
                                                  project=dest_project, recurse=False):
                 dest_path = dest_folder + dest_name
                 msg = "An applet already exists at {} (id {}) and neither".format(dest_path, result["id"])
                 msg += " -f/--overwrite nor -a/--archive were given."
                 raise dxpy.app_builder.AppBuilderException(msg)
+
+        assert(projects_by_region is not None)
 
         resources_bundles_by_region = {}
         for region, project in projects_by_region.iteritems():
