@@ -795,11 +795,12 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     if enabled_regions is not None and len(enabled_regions) > 1 and not use_temp_build_project:
         raise dxpy.app_builder.AppBuilderException("Cannot specify --no-temp-build-project when building multi-region apps")
 
-    projects_by_region = {}
+    projects_by_region = None
 
     if mode == "applet" and destination_override:
         working_project, override_folder, override_applet_name = parse_destination(destination_override)
     elif mode == "app" and use_temp_build_project and not dry_run:
+        projects_by_region = {}
         if enabled_regions is not None:
             # Create temporary projects in each enabled region.
             for region in enabled_regions:
@@ -828,11 +829,17 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     # elif mode == "app" and not dry_run:
     elif not dry_run:
         # If we are not using temporary project(s) to build the app, then we
-        # must must have a project set somewhere.
-        project = app_json.get("project", dxpy.WORKSPACE_ID)
-        region = dxpy.api.project_describe(project,
-                                           input_params={"fields": {"region": True}})["region"]
-        projects_by_region[region] = project
+        # should have a project context somewhere.
+        try:
+            project = app_json.get("project", dxpy.WORKSPACE_ID)
+            region = dxpy.api.project_describe(project,
+                                               input_params={"fields": {"region": True}})["region"]
+        except Exception:
+            # Defer raising until later.
+            print("\nDeferring...")
+            pass
+        else:
+            projects_by_region = {region: project}
 
     try:
         if mode == "applet" and working_project is None and dxpy.WORKSPACE_ID is None:
@@ -855,9 +862,14 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             if not dest_folder.endswith('/'):
                 dest_folder = dest_folder + '/'
             dest_project = working_project if working_project else dxpy.WORKSPACE_ID
-            region = dxpy.api.project_describe(dest_project,
-                                               input_params={"fields": {"region": True}})["region"]
-            projects_by_region[region] = dest_project
+            try:
+                region = dxpy.api.project_describe(dest_project,
+                                                   input_params={"fields": {"region": True}})["region"]
+            except Exception:
+                print("\nDeferring...")
+                pass
+            else:
+                projects_by_region = {region: dest_project}
             for result in dxpy.find_data_objects(classname="applet", name=dest_name, folder=dest_folder,
                                                  project=dest_project, recurse=False):
                 dest_path = dest_folder + dest_name
@@ -884,9 +896,6 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
         applet_ids_by_region = {}
         try:
             if projects_by_region is not None:
-                if len(projects_by_region.keys()) == 0:
-                    print("WHAT?!")
-                    sys.exit(1)
                 for region, project in projects_by_region.iteritems():
                     applet_id, applet_spec = dxpy.app_builder.upload_applet(
                         src_dir,
@@ -924,10 +933,17 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             # using_temp_project, the entire project gets destroyed at
             # the end, so we don't bother.
             if not using_temp_project:
-                objects_to_delete = [dxpy.get_dxlink_ids(bundled_resource_obj['id'])[0] for bundled_resource_obj in bundled_resources]
-                if objects_to_delete:
-                    dxpy.api.project_remove_objects(dxpy.app_builder.get_destination_project(src_dir, project=working_project),
-                                                    input_params={"objects": objects_to_delete})
+                if projects_by_region is None:
+                    objects_to_delete = [dxpy.get_dxlink_ids(bundled_resource_obj['id'])[0] for bundled_resource_obj in bundled_resources]
+                    if objects_to_delete:
+                        dxpy.api.project_remove_objects(dxpy.app_builder.get_destination_project(src_dir, project=working_project),
+                                                        input_params={"objects": objects_to_delete})
+                else:
+                    for region, project in projects_by_region.iteritems():
+                        objects_to_delete = [dxpy.get_dxlink_ids(bundled_resource_obj['id'])[0] for bundled_resource_obj in resources_bundles_by_region[region]]
+                        if objects_to_delete:
+                            dxpy.api.project_remove_objects(dxpy.app_builder.get_destination_project(src_dir, project=project),
+                                                            input_params={"objects": objects_to_delete})
             raise
 
         if dry_run:
