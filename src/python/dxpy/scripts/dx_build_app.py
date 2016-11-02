@@ -795,16 +795,13 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     if enabled_regions is not None and len(enabled_regions) > 1 and not use_temp_build_project:
         raise dxpy.app_builder.AppBuilderException("Cannot specify --no-temp-build-project when building multi-region apps")
 
-    # This will not be None iff `use_temp_build_project` is truthy and
-    # `enabled_regions` is not None.
-    projects_by_region = None
+    projects_by_region = {}
 
     if mode == "applet" and destination_override:
         working_project, override_folder, override_applet_name = parse_destination(destination_override)
     elif mode == "app" and use_temp_build_project and not dry_run:
         if enabled_regions is not None:
             # Create temporary projects in each enabled region.
-            projects_by_region = {}
             for region in enabled_regions:
                 try:
                     working_project = dxpy.api.project_new({"name": "Temporary build project for dx-build-app",
@@ -822,9 +819,20 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 working_project = dxpy.api.project_new({"name": "Temporary build project for dx-build-app"})["id"]
             except:
                 err_exit()
+            region = dxpy.api.project_describe(working_project,
+                                               input_params={"fields": {"region": True}})["region"]
+            projects_by_region[region] = working_project
             logger.debug("Created temporary project %s to build in" % (working_project,))
 
         using_temp_project = True
+    # elif mode == "app" and not dry_run:
+    elif not dry_run:
+        # If we are not using temporary project(s) to build the app, then we
+        # must must have a project set somewhere.
+        project = app_json.get("project", dxpy.WORKSPACE_ID)
+        region = dxpy.api.project_describe(project,
+                                           input_params={"fields": {"region": True}})["region"]
+        projects_by_region[region] = project
 
     try:
         if mode == "applet" and working_project is None and dxpy.WORKSPACE_ID is None:
@@ -847,6 +855,9 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             if not dest_folder.endswith('/'):
                 dest_folder = dest_folder + '/'
             dest_project = working_project if working_project else dxpy.WORKSPACE_ID
+            region = dxpy.api.project_describe(dest_project,
+                                               input_params={"fields": {"region": True}})["region"]
+            projects_by_region[region] = dest_project
             for result in dxpy.find_data_objects(classname="applet", name=dest_name, folder=dest_folder,
                                                  project=dest_project, recurse=False):
                 dest_path = dest_folder + dest_name
@@ -873,6 +884,9 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
         applet_ids_by_region = {}
         try:
             if projects_by_region is not None:
+                if len(projects_by_region.keys()) == 0:
+                    print("WHAT?!")
+                    sys.exit(1)
                 for region, project in projects_by_region.iteritems():
                     applet_id, applet_spec = dxpy.app_builder.upload_applet(
                         src_dir,
