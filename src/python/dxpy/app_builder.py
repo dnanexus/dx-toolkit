@@ -876,5 +876,4 @@ def parse_regional_options(dx_app_json):
         raise AppBuilderException("The field 'requestedRegionalOptions' in dxapp.json must be a mapping")
     if len(requested_regional_options.keys()) < 1:
         raise AppBuilderException("The field 'requestedRegionalOptions' in dxapp.json must be a non-empty mapping")
-    # TODO: Assert that the keys are actually region names.
     return requested_regional_options
