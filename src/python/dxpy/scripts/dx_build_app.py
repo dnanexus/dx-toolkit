@@ -891,9 +891,6 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
 
         applet_ids_by_region = {}
         try:
-            if projects_by_region is None:
-                # TODO: Remove this later.
-                err_exit()
             for region, project in projects_by_region.iteritems():
                 applet_id, applet_spec = dxpy.app_builder.upload_applet(
                     src_dir,
