@@ -895,32 +895,16 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
         applet_ids_by_region = {}
         try:
             if projects_by_region is None:
+                # TODO: Remove this later.
                 err_exit()
-            if projects_by_region is not None:
-                for region, project in projects_by_region.iteritems():
-                    applet_id, applet_spec = dxpy.app_builder.upload_applet(
-                        src_dir,
-                        resources_bundles_by_region[region],
-                        check_name_collisions=(mode == "applet"),
-                        overwrite=overwrite and mode == "applet",
-                        archive=archive and mode == "applet",
-                        project=project,
-                        override_folder=override_folder,
-                        override_name=override_applet_name,
-                        dx_toolkit_autodep=dx_toolkit_autodep,
-                        dry_run=dry_run,
-                        **kwargs)
-                    if not dry_run:
-                        logger.debug("Created applet " + applet_id + " successfully")
-                    applet_ids_by_region[region] = applet_id
-            else:
+            for region, project in projects_by_region.iteritems():
                 applet_id, applet_spec = dxpy.app_builder.upload_applet(
                     src_dir,
-                    bundled_resources,
+                    resources_bundles_by_region[region],
                     check_name_collisions=(mode == "applet"),
                     overwrite=overwrite and mode == "applet",
                     archive=archive and mode == "applet",
-                    project=working_project,
+                    project=project,
                     override_folder=override_folder,
                     override_name=override_applet_name,
                     dx_toolkit_autodep=dx_toolkit_autodep,
@@ -928,6 +912,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                     **kwargs)
                 if not dry_run:
                     logger.debug("Created applet " + applet_id + " successfully")
+                applet_ids_by_region[region] = applet_id
         except:
             # Avoid leaking any bundled_resources files we may have
             # created, if applet creation fails. Note that if
@@ -960,11 +945,9 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             if not version_override and do_version_autonumbering:
                 try_versions.append(version + _get_version_suffix(src_dir, version))
 
-            regional_options = None
-            if projects_by_region is not None:
-                regional_options = {}
-                for region in projects_by_region:
-                    regional_options[region] = {"applet": applet_ids_by_region[region]}
+            regional_options = {}
+            for region in projects_by_region:
+                regional_options[region] = {"applet": applet_ids_by_region[region]}
             app_id = dxpy.app_builder.create_app(applet_id,
                                                  applet_name,
                                                  src_dir,
@@ -995,10 +978,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     finally:
         # Clean up after ourselves.
         if using_temp_project:
-            if enabled_regions is not None:
-                delete_temporary_projects(projects_by_region.values())
-            else:
-                delete_temporary_projects([working_project])
+            delete_temporary_projects(projects_by_region.values())
 
 
 def _build_app(args, extra_args):
