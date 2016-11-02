@@ -799,6 +799,9 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
 
     if mode == "applet" and destination_override:
         working_project, override_folder, override_applet_name = parse_destination(destination_override)
+        region = dxpy.api.project_describe(working_project,
+                                           input_params={"fields": {"region": True}})["region"]
+        projects_by_region = {region: working_project}
     elif mode == "app" and use_temp_build_project and not dry_run:
         projects_by_region = {}
         if enabled_regions is not None:
@@ -891,6 +894,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
 
         applet_ids_by_region = {}
         try:
+            if projects_by_region is None:
+                err_exit()
             if projects_by_region is not None:
                 for region, project in projects_by_region.iteritems():
                     applet_id, applet_spec = dxpy.app_builder.upload_applet(
