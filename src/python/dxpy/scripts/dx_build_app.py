@@ -826,7 +826,6 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             logger.debug("Created temporary project %s to build in" % (working_project,))
 
         using_temp_project = True
-    # elif mode == "app" and not dry_run:
     elif not dry_run:
         # If we are not using temporary project(s) to build the app, then we
         # should have a project context somewhere.
@@ -835,9 +834,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             region = dxpy.api.project_describe(project,
                                                input_params={"fields": {"region": True}})["region"]
         except Exception:
-            # Defer raising until later.
-            print("\nDeferring...")
-            pass
+            err_exit()
         else:
             projects_by_region = {region: project}
 
@@ -866,8 +863,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 region = dxpy.api.project_describe(dest_project,
                                                    input_params={"fields": {"region": True}})["region"]
             except Exception:
-                print("\nDeferring...")
-                pass
+                err_exit()
             else:
                 projects_by_region = {region: dest_project}
             for result in dxpy.find_data_objects(classname="applet", name=dest_name, folder=dest_folder,
