@@ -1,0 +1,2 @@
+colorama==0.2.4
+futures==3.0.4
