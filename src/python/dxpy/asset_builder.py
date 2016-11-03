@@ -222,7 +222,7 @@ def build_asset(args):
 
         if not args.json:
             print("\nStarted job '" + str(job_id) + "' to build the asset bundle.\n", file=sys.stderr)
-            if not args.skip_watch:
+            if args.watch:
                 try:
                     subprocess.check_call(["dx", "watch", job_id])
                 except subprocess.CalledProcessError as e:

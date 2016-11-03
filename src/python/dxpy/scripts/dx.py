@@ -3863,8 +3863,8 @@ parser_build_asset.add_argument("-d", "--destination",
                                 default='.')
 parser_build_asset.add_argument("--json", help=fill("Show ID of resulting asset bundle in JSON format"),
                                 action="store_true", dest="json")
-parser_build_asset.add_argument("--skip-watch", help=fill("Don't watch the real-time logs of the asset-builder job."),
-                                action="store_true", dest="skip_watch")
+parser_build_asset.add_argument("--no-watch", help=fill("Don't watch the real-time logs of the asset-builder job."),
+                                action="store_false", dest="watch")
 parser_build_asset.set_defaults(func=build_asset)
 register_parser(parser_build_asset)
 
