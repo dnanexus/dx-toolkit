@@ -45,7 +45,10 @@ nsi_template=pyapp_installpy_dnanexus.nsi
 #    wheel
 #    ws4py
 
-# Other files and folders that should be installed
+# Other files and folders that should be installed.
+# Note that the versions for each .whl file below
+# should match dx-toolkit/src/python/requirements.txt
+# and requirements_windows.txt:
 files = dnanexus-shell.ps1
     cli-quickstart.url
     TEMPLATE_STRING_DXPY_WHEEL_FILENAME > $INSTDIR\\wheelfiles
