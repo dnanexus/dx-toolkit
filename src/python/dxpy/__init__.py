@@ -526,8 +526,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
             # throws BadStatusLine if the server returns nothing
             try:
-                response = _get_pool_manager(**pool_args).request(_method, _url, headers=_headers, body=body,
-                                                                  timeout=timeout, retries=False, **kwargs)
+		pool_manager = _get_pool_manager(**pool_args)
+		_headers.update(pool_manager.headers)
+                response = pool_manager.request(_method, _url, headers=_headers, body=body,
+                                                timeout=timeout, retries=False, **kwargs)
             except urllib3.exceptions.ClosedPoolError:
                 # If another thread closed the pool before the request was
                 # started, will throw ClosedPoolError

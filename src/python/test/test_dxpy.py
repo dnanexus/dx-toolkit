@@ -2526,6 +2526,12 @@ class TestHTTPResponses(unittest.TestCase):
         end_time = time.time()
         self.assertGreater(end_time - start_time, min_sec_with_retries)
 
+    def test_system_headers_user_agent(self):
+        headers = dxpy.DXHTTPRequest('/system/headers', {})
+        self.assertTrue('user-agent' in headers)
+        self.assertTrue(headers['user-agent'].startswith("dxpy"))
+
+
 
 class TestDataobjectFunctions(unittest.TestCase):
     def setUp(self):
