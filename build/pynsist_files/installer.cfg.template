@@ -45,10 +45,22 @@ nsi_template=pyapp_installpy_dnanexus.nsi
 #    wheel
 #    ws4py
 
-# Other files and folders that should be installed
+# Other files and folders that should be installed.
+# Note that the versions for each .whl file below
+# should match dx-toolkit/src/python/requirements.txt
+# and requirements_windows.txt:
 files = dnanexus-shell.ps1
     cli-quickstart.url
-    TEMPLATE_STRING_DXPY_WHEEL_FILENAME
+    TEMPLATE_STRING_DXPY_WHEEL_FILENAME > $INSTDIR\\wheelfiles
+    beautifulsoup4-4.4.1-py2-none-any.whl > $INSTDIR\\wheelfiles
+    colorama-0.2.4-cp27-none-any.whl > $INSTDIR\\wheelfiles
+    futures-3.0.4-py2-none-any.whl > $INSTDIR\\wheelfiles
+    psutil-3.3.0-cp27-none-win32.whl > $INSTDIR\\wheelfiles
+    python_dateutil-2.3-py2.py3-none-any.whl > $INSTDIR\\wheelfiles
+    python_magic-0.4.6-cp27-none-any.whl > $INSTDIR\\wheelfiles
+    requests-2.7.0-py2.py3-none-any.whl > $INSTDIR\\wheelfiles
+    six-1.10.0-py2.py3-none-any.whl > $INSTDIR\\wheelfiles
+    ws4py-0.3.2-cp27-none-any.whl > $INSTDIR\\wheelfiles
     ../../bin/dx-verify-file.exe > $INSTDIR\\bin
     ../../bin/jq.exe > $INSTDIR\\bin
     ../../src/ua/dist/ua.exe > $INSTDIR\\bin
