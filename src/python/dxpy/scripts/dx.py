@@ -534,6 +534,11 @@ def whoami(args):
     else:
         print(dxpy.api.user_describe(user_id)['handle'])
 
+def compress(args):
+    if dxpy.AUTH_HELPER is None:
+        err_exit('You are not logged in; run "dx login" to obtain a token.', 3)
+
+
 def setenv(args):
     if not state['interactive']:
         args.save = True
@@ -3540,6 +3545,15 @@ parser_whoami.add_argument('--id', help='Print user ID instead of username', act
 parser_whoami.set_defaults(func=whoami)
 register_parser(parser_whoami, categories='session')
 
+parser_compress = subparsers.add_parser('compress', help='Compress .bam files when not used',
+                                      description='Compresses sequencing alingment files in the backend ' +
+                                                  '(decompression performed only when file is used).',
+                                      prog='dx compress',
+                                      parents=[env_args])
+parser_compress.add_argument('id', help='File ID to compress (coming soon also include project IDs)')
+parser_compress.set_defaults(func=compress)
+register_parser(parser_compress, categories='fs')
+
 parser_env = subparsers.add_parser('env', help='Print all environment variables in use',
                                    description=fill('Prints all environment variables in use as they have been resolved from environment variables and configuration files.  For more details, see') + '\n\nhttps://wiki.dnanexus.com/Command-Line-Client/Environment-Variables',
                                    formatter_class=argparse.RawTextHelpFormatter, prog='dx env',
@@ -4746,6 +4760,8 @@ parser_map['help run'] = parser_help
 for category in parser_categories:
     parser_categories[category]['cmds'].append(('help', subparsers._choices_actions[-1].help))
 parser_categories['all']['cmds'].sort()
+
+
 
 
 def main():
