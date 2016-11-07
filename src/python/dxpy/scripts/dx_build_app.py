@@ -99,6 +99,7 @@ app_options.add_argument("--no-publish", help=argparse.SUPPRESS, action="store_f
 # --[no-]remote
 parser.set_defaults(remote=False)
 parser.add_argument("--remote", help="Build the app remotely by uploading the source directory to the DNAnexus Platform and building it there. This option is useful if you would otherwise need to cross-compile the app(let) to target the Execution Environment.", action="store_true", dest="remote")
+parser.add_argument("--no-watch", help="Don't watch the real-time logs of the remote builder. (This option only applicable if --remote was specified).", action="store_false", dest="watch")
 parser.add_argument("--no-remote", help=argparse.SUPPRESS, action="store_false", dest="remote")
 
 applet_options.add_argument("-f", "--overwrite", help="Remove existing applet(s) of the same name in the destination folder.",
@@ -567,7 +568,7 @@ def _parse_app_spec(src_dir):
 def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
                       version_override=None, bill_to_override=None, dx_toolkit_autodep="stable",
                       do_version_autonumbering=True, do_try_update=True, do_parallel_build=True,
-                      do_check_syntax=True, region=None):
+                      do_check_syntax=True, region=None, watch=True):
     if mode == 'app':
         builder_app = 'app-tarball_app_builder'
     else:
@@ -715,18 +716,19 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
             app_run_result = dxpy.api.app_run(builder_app, input_params=api_options)
             job_id = app_run_result["id"]
             print("Started builder job %s" % (job_id,))
-            try:
-                subprocess.check_call(["dx", "watch", job_id])
-            except subprocess.CalledProcessError as e:
-                if e.returncode == 3:
-                    # Some kind of failure to build the app. The reason
-                    # for the failure is probably self-evident from the
-                    # job log (and if it's not, the CalledProcessError
-                    # is not informative anyway), so just propagate the
-                    # return code without additional remarks.
-                    sys.exit(3)
-                else:
-                    raise e
+            if watch:
+                try:
+                    subprocess.check_call(["dx", "watch", job_id])
+                except subprocess.CalledProcessError as e:
+                    if e.returncode == 3:
+                        # Some kind of failure to build the app. The reason
+                        # for the failure is probably self-evident from the
+                        # job log (and if it's not, the CalledProcessError
+                        # is not informative anyway), so just propagate the
+                        # return code without additional remarks.
+                        sys.exit(3)
+                    else:
+                        raise e
 
             dxpy.DXJob(job_id).wait_on_done(interval=1)
 
@@ -984,7 +986,7 @@ def _build_app(args, extra_args):
 
         return _build_app_remote(args.mode, args.src_dir, destination_override=args.destination,
                                  publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep,
-                                 region=args.region, **more_kwargs)
+                                 region=args.region, watch=args.watch, **more_kwargs)
 
 
 def main(**kwargs):
