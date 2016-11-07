@@ -526,9 +526,17 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
             # throws BadStatusLine if the server returns nothing
             try:
-		pool_manager = _get_pool_manager(**pool_args)
-		_headers.update(pool_manager.headers)
-                response = pool_manager.request(_method, _url, headers=_headers, body=body,
+                pool_manager = _get_pool_manager(**pool_args)
+
+                def unicode2str(s):
+                    if isinstance(s, unicode):
+                        return s.encode('ascii')
+                    else:
+                        return s
+
+                merged_headers = {unicode2str(k): unicode2str(v) for k, v in pool_manager.headers.items()}
+                merged_headers.update(_headers)
+                response = pool_manager.request(_method, _url, headers=merged_headers, body=body,
                                                 timeout=timeout, retries=False, **kwargs)
             except urllib3.exceptions.ClosedPoolError:
                 # If another thread closed the pool before the request was
