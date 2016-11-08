@@ -1295,6 +1295,14 @@ namespace dx {
     return systemGreet(input_params.toString(), safe_to_retry);
   }
 
+  JSON systemHeaders(const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest("/system/headers", input_params, safe_to_retry);
+  }
+
+  JSON systemHeaders(const JSON &input_params, const bool safe_to_retry) {
+    return systemHeaders(input_params.toString(), safe_to_retry);
+  }
+
   JSON systemShortenURL(const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest("/system/shortenURL", input_params, safe_to_retry);
   }

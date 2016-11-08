@@ -212,8 +212,6 @@ USER_AGENT = "{name}/{version} ({platform})".format(name=__name__,
                                                     platform=platform.platform())
 _default_certs = requests.certs.where()
 _default_headers = requests.utils.default_headers()
-_default_headers['DNAnexus-API'] = API_VERSION
-_default_headers['User-Agent'] = USER_AGENT
 _default_timeout = urllib3.util.timeout.Timeout(connect=DEFAULT_TIMEOUT, read=DEFAULT_TIMEOUT)
 _RequestForAuth = namedtuple('_RequestForAuth', 'method url headers')
 _expected_exceptions = (exceptions.network_exceptions, exceptions.DXAPIError, BadStatusLine, exceptions.BadJSONInReply,
@@ -526,8 +524,25 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
             # throws BadStatusLine if the server returns nothing
             try:
-                response = _get_pool_manager(**pool_args).request(_method, _url, headers=_headers, body=body,
-                                                                  timeout=timeout, retries=False, **kwargs)
+                pool_manager = _get_pool_manager(**pool_args)
+
+                def unicode2str(s):
+                    if isinstance(s, unicode):
+                        return s.encode('ascii')
+                    else:
+                        return s
+
+                # Create merged set of headers
+                merged_headers = pool_manager.headers
+                merged_headers.update(_headers)
+
+                merged_headers['User-Agent'] = USER_AGENT
+                merged_headers['DNAnexus-API'] = API_VERSION
+
+                # Converted Unicode headers to ASCII and throw an error if not possible
+                merged_headers = {unicode2str(k): unicode2str(v) for k, v in merged_headers.items()}
+                response = pool_manager.request(_method, _url, headers=merged_headers, body=body,
+                                                timeout=timeout, retries=False, **kwargs)
             except urllib3.exceptions.ClosedPoolError:
                 # If another thread closed the pool before the request was
                 # started, will throw ClosedPoolError

@@ -24,6 +24,7 @@ import shutil
 import string
 import subprocess
 import platform
+import re
 
 import requests
 from requests.packages.urllib3.exceptions import SSLError
@@ -2201,6 +2202,12 @@ class TestHTTPResponses(unittest.TestCase):
                                max_retries=max_num_retries, always_retry=True)
         end_time = time.time()
         self.assertGreater(end_time - start_time, min_sec_with_retries)
+
+    def test_system_headers_user_agent(self):
+        headers = dxpy.api.system_headers()
+        self.assertTrue('user-agent' in headers)
+        self.assertTrue(bool(re.match("dxpy/\d+\.\d+\.\d+.*\s+\(.*\)", headers['user-agent'])))
+
 
 
 class TestDataobjectFunctions(unittest.TestCase):
