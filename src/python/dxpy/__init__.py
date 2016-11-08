@@ -543,7 +543,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
                 # Verify that headers can be converted into ASCII
                 merged_headers = {unicode2str(k): unicode2str(v) for k, v in merged_headers.items()}
-                merged_headers.update(_headers)
                 response = pool_manager.request(_method, _url, headers=merged_headers, body=body,
                                                 timeout=timeout, retries=False, **kwargs)
             except urllib3.exceptions.ClosedPoolError:

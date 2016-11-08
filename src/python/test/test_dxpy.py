@@ -2530,7 +2530,7 @@ class TestHTTPResponses(unittest.TestCase):
     def test_system_headers_user_agent(self):
         headers = dxpy.api.system_headers()
         self.assertTrue('user-agent' in headers)
-        self.assertTrue(re.match("dxpy/\d+\.\d+\.\d+\+\w+\s+\(.*\)", headers['user-agent']))
+        self.assertTrue(bool(re.match("dxpy/\d+\.\d+\.\d+.*\s+\(.*\)", headers['user-agent'])))
 
 
 
