@@ -1144,6 +1144,12 @@ module DX
       return DX::http_request("/system/greet", input_params, opts)
     end
 
+    # Invokes the /system/headers API method.
+    def self.system_headers(input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/system/headers", input_params, opts)
+    end
+
     # Invokes the /system/shortenURL API method.
     def self.system_shorten_url(input_params={}, opts={})
       opts = { "always_retry" => true }.merge(opts)

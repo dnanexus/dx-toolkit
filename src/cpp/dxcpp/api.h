@@ -487,6 +487,9 @@ namespace dx {
   JSON systemGreet(const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON systemGreet(const dx::JSON &input_params, const bool safe_to_retry=true);
 
+  JSON systemHeaders(const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON systemHeaders(const dx::JSON &input_params, const bool safe_to_retry=true);
+
   JSON systemShortenURL(const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON systemShortenURL(const dx::JSON &input_params, const bool safe_to_retry=true);
 

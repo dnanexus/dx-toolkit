@@ -534,8 +534,15 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     else:
                         return s
 
-                merged_headers = {unicode2str(k): unicode2str(v) for k, v in pool_manager.headers.items()}
+                # Create merged set of headers
+                merged_headers = pool_manager.headers
                 merged_headers.update(_headers)
+
+                # Update the user agent if dxpy.USER_AGENT was modified after initialization
+                merged_headers['User-Agent'] = USER_AGENT
+
+                # Verify that headers can be converted into ASCII
+                merged_headers = {unicode2str(k): unicode2str(v) for k, v in merged_headers.items()}
                 response = pool_manager.request(_method, _url, headers=merged_headers, body=body,
                                                 timeout=timeout, retries=False, **kwargs)
             except urllib3.exceptions.ClosedPoolError:

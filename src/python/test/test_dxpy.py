@@ -24,6 +24,7 @@ import shutil
 import string
 import subprocess
 import platform
+import re
 
 import requests
 from requests.packages.urllib3.exceptions import SSLError
@@ -2527,9 +2528,12 @@ class TestHTTPResponses(unittest.TestCase):
         self.assertGreater(end_time - start_time, min_sec_with_retries)
 
     def test_system_headers_user_agent(self):
-        headers = dxpy.DXHTTPRequest('/system/headers', {})
+        dxpy.USER_AGENT += " OINK"
+        headers = dxpy.api.system_headers()
+        from pprint import pprint
+        pprint(headers)
         self.assertTrue('user-agent' in headers)
-        self.assertTrue(headers['user-agent'].startswith("dxpy"))
+        self.assertTrue(re.match("dxpy/\d+\.\d+\.\d+\+\w+\s+\(.*\)", headers['user-agent']))
 
 
 

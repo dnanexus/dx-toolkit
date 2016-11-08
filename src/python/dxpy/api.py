@@ -1155,6 +1155,12 @@ def system_greet(input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/system/greet', input_params, always_retry=always_retry, **kwargs)
 
+def system_headers(input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /system/headers API method.
+    """
+    return DXHTTPRequest('/system/headers', input_params, always_retry=always_retry, **kwargs)
+
 def system_shorten_url(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/shortenURL API method.
