@@ -212,8 +212,6 @@ USER_AGENT = "{name}/{version} ({platform})".format(name=__name__,
                                                     platform=platform.platform())
 _default_certs = requests.certs.where()
 _default_headers = requests.utils.default_headers()
-_default_headers['DNAnexus-API'] = API_VERSION
-_default_headers['User-Agent'] = USER_AGENT
 _default_timeout = urllib3.util.timeout.Timeout(connect=DEFAULT_TIMEOUT, read=DEFAULT_TIMEOUT)
 _RequestForAuth = namedtuple('_RequestForAuth', 'method url headers')
 _expected_exceptions = (exceptions.network_exceptions, exceptions.DXAPIError, BadStatusLine, exceptions.BadJSONInReply,
@@ -538,10 +536,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 merged_headers = pool_manager.headers
                 merged_headers.update(_headers)
 
-                # Update the user agent if dxpy.USER_AGENT was modified after initialization
                 merged_headers['User-Agent'] = USER_AGENT
+                merged_headers['DNAnexus-API'] = API_VERSION
 
-                # Verify that headers can be converted into ASCII
+                # Converted Unicode headers to ASCII and throw an error if not possible
                 merged_headers = {unicode2str(k): unicode2str(v) for k, v in merged_headers.items()}
                 response = pool_manager.request(_method, _url, headers=merged_headers, body=body,
                                                 timeout=timeout, retries=False, **kwargs)
