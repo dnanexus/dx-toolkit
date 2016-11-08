@@ -532,16 +532,12 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     else:
                         return s
 
-                # Create merged set of headers
-                merged_headers = pool_manager.headers
-                merged_headers.update(_headers)
-
-                merged_headers['User-Agent'] = USER_AGENT
-                merged_headers['DNAnexus-API'] = API_VERSION
+                _headers['User-Agent'] = USER_AGENT
+                _headers['DNAnexus-API'] = API_VERSION
 
                 # Converted Unicode headers to ASCII and throw an error if not possible
-                merged_headers = {unicode2str(k): unicode2str(v) for k, v in merged_headers.items()}
-                response = pool_manager.request(_method, _url, headers=merged_headers, body=body,
+                _headers = {unicode2str(k): unicode2str(v) for k, v in _headers.items()}
+                response = pool_manager.request(_method, _url, headers=_headers, body=body,
                                                 timeout=timeout, retries=False, **kwargs)
             except urllib3.exceptions.ClosedPoolError:
                 # If another thread closed the pool before the request was
