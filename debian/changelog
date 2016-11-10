@@ -1,3 +1,9 @@
+dx-toolkit (0.202.2) precise; urgency=low
+
+  * Comment out broken test for now 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 10 Nov 2016 17:22:42 +0000
+
 dx-toolkit (0.202.1) precise; urgency=low
 
   * Bug fix for Java uploads
