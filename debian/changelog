@@ -1,3 +1,21 @@
+dx-toolkit (0.203.0) precise; urgency=low
+
+  * PTFM-18692: Do not merge headers. In some cases a bug is introduced
+  * PTFM-18962 dxpy not supplying user agent since 384e8ef
+  * STACK-163: Minor dx-docker improvements with more informative error messages (#186)
+  * Allow disabling "watch" on remote builds
+  * Remove GTable example apps
+  * PTFM-18961 Remove installer dependency on pypi
+  * Comment out broken test for now
+  * First pass at removing some GTable tests
+  * STACK-171: 'dx-docker upload' => 'create-asset'
+  * STACK-165: Mac OS support for dx-docker
+  * PTFM-18850 Remove "resources" field from app optional fields in "dx get"
+  * AZURE-314 Support for uploading empty files in Azure
+  * PTFM-18920 Check response code for uploaded parts before returning 
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 10 Nov 2016 17:12:53 +0000
+
 dx-toolkit (0.202.0) precise; urgency=low
 
   * Revert PTFM-17432 Checksum verification for file downloads in Java
