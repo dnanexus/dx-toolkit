@@ -119,7 +119,7 @@ def get_aci(image, imgname, prefix="", quiet=False):
 def register_docker_subcommand(cmd):
     orig_user_agent = dxpy.USER_AGENT
     dxpy.USER_AGENT += " dx-docker {}".format(cmd)
-    dxpy.whoami()
+    dxpy.api.system_greet()
     dxpy.USER_AGENT = orig_user_agent
 
 parser_pull = subparsers.add_parser('pull', help="Pulls a docker image for use in DNAnexus")
