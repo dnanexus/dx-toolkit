@@ -115,6 +115,13 @@ def get_aci(image, imgname, prefix="", quiet=False):
     os.rename(glob.glob(tmpdir+"/*.aci")[0], img_dirname+"/"+urllib.quote_plus(image)+".aci")
     shutil.rmtree(tmpdir)
 
+
+def register_docker_subcommand(cmd):
+    orig_user_agent = dxpy.USER_AGENT
+    dxpy.USER_AGENT += " dx-docker {}".format(cmd)
+    dxpy.api.system_greet()
+    dxpy.USER_AGENT = orig_user_agent
+
 parser_pull = subparsers.add_parser('pull', help="Pulls a docker image for use in DNAnexus")
 parser_pull.add_argument("image", help="image name")
 parser_pull.add_argument("-q", "--quiet", action='store_true', help="Suppress printing pull progress to stderr")
@@ -135,6 +142,7 @@ parser_run.add_argument("--rootfs",  help="Use directory pointed to here for roo
 parser_run.add_argument("image", help="image name")
 parser_run.add_argument("command", help="command to run within container", nargs=argparse.REMAINDER, default=[])
 def run(args):
+    register_docker_subcommand("run")
     acifile = get_aci_fname(args.image)
     if not acifile:
         pull(parser_pull.parse_args([args.image]))
@@ -232,6 +240,7 @@ parser_add_to_applet = subparsers.add_parser('add-to-applet', help="Adds a local
 parser_add_to_applet.add_argument("image", help="image name")
 parser_add_to_applet.add_argument("applet", help="directory corresponding to applet")
 def add_to_applet(args):
+    register_docker_subcommand("add-to-applet")
     try:
         with open(args.applet+"/dxapp.json") as f:
             json.loads(f.read())
@@ -246,6 +255,7 @@ parser_create_asset = subparsers.add_parser('create-asset', help="EXPERIMENTAL: 
 parser_create_asset.add_argument("--output_path", "-o", help="Project ID and path in project to upload image to (defaults to project root)")
 parser_create_asset.add_argument("image", help="image name")
 def create_asset(args):
+    register_docker_subcommand("create-asset")
     # Create asset
     tmpdir = tempfile.mkdtemp()
     asset_path = tmpdir+"/resources/usr/bin"
