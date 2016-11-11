@@ -239,4 +239,38 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
         return ExecutableRunner.getWorkflowRunnerWithEnvironment(this.getId(), this.env);
     }
 
+
+    @JsonInclude(Include.NON_NULL)
+    private static class WorkflowAddStageInput {
+        @JsonProperty
+        public int editVersion;
+
+        @JsonProperty
+        public String executable;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class WorkflowAddStageOutput {
+        @JsonProperty
+        public int editVersion;
+
+        @JsonProperty
+        public String stage;
+    }
+
+    public DXStage addStage(DXApplet applet,
+                            String name) {  // stage name
+        //Map<String, Object> __stageInputs)    // TODO: stage inputs
+        WorkflowAddStageInput input = new WorkflowAddStageInput();
+        addStage1Input.editVersion = 0;
+        addStage1Input.executable = applet.getId();
+
+
+        WorkflowAddStageInput addStage0Input = new WorkflowAddStageInput();
+        addStage0Input.editVersion = 0;
+        addStage0Input.executable = applet.getId();
+
+        WorkflowAddStageOutput addStage0Output = DXAPI.workflowAddStage(workflow.getId(),
+                addStage0Input, WorkflowAddStageOutput.class);
+    }
 }
