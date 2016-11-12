@@ -36,31 +36,6 @@ import com.google.common.collect.ImmutableList;
  * Tests for creating workflows.
  */
 public class DXWorkflowTest {
-
-    @JsonInclude(Include.NON_NULL)
-    private static class WorkflowAddStageInput {
-        @JsonProperty
-        public int editVersion;
-
-        @JsonProperty
-        public String executable;
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    private static class WorkflowAddStageOutput {
-        @JsonProperty
-        public int editVersion;
-
-        @JsonProperty
-        public String stage;
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    private static class WorkflowRunOutput {
-        @JsonProperty
-        public String id;
-    }
-
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private DXProject testProject;
@@ -179,31 +154,15 @@ public class DXWorkflowTest {
                 .setInputSpecification(ImmutableList.of(inputString, inputRecord))
                 .setOutputSpecification(ImmutableList.of(outputRecord)).build();
 
-        // ---
-        // Here is some low-level code for building up the workflow. Eventually there will be
-        // high-level bindings to this functionality.
-        WorkflowAddStageInput addStage0Input = new WorkflowAddStageInput();
-        addStage0Input.editVersion = 0;
-        addStage0Input.executable = applet.getId();
-
-        WorkflowAddStageOutput addStage0Output = DXAPI.workflowAddStage(workflow.getId(),
-                addStage0Input, WorkflowAddStageOutput.class);
-
-        WorkflowAddStageInput addStage1Input = new WorkflowAddStageInput();
-        addStage1Input.editVersion = addStage0Output.editVersion;
-        addStage1Input.executable = applet.getId();
-
-        WorkflowAddStageOutput addStage1Output = DXAPI.workflowAddStage(workflow.getId(),
-                addStage1Input, WorkflowAddStageOutput.class);
-        // End low-level code
-        // ---
+        DXStage stage1 = workflow.addStage(applet, "stageA", null, 0);
+        DXStage stage2 = workflow.addStage(applet, "stageB", null, stage1.getEditVersion());
 
         // Supply workflow inputs in the format STAGE.INPUTNAME
         ObjectNode runInput = DXJSON.getObjectBuilder()
-                .put(addStage0Output.stage + ".input_string", "foo")
-                .put(addStage0Output.stage + ".input_record", makeDXLink(myRecord))
-                .put(addStage1Output.stage + ".input_string", "bar")
-                .put(addStage1Output.stage + ".input_record", makeDXLink(myRecord)).build();
+            .put(stage1.getId() + ".input_string", "foo")
+            .put(stage1.getId() + ".input_record", makeDXLink(myRecord))
+            .put(stage2.getId() + ".input_string", "bar")
+            .put(stage2.getId() + ".input_record", makeDXLink(myRecord)).build();
 
         // We run a workflow here, but do not wait for its result, so it's fine that this test
         // doesn't check for ConfigOption.RUN_JOBS.

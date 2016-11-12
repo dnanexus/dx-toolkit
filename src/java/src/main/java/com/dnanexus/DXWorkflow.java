@@ -20,9 +20,12 @@ import java.util.Map;
 
 import com.dnanexus.DXHTTPRequest.RetryStrategy;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
@@ -259,18 +262,15 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
     }
 
     public DXStage addStage(DXApplet applet,
-                            String name) {  // stage name
-        //Map<String, Object> __stageInputs)    // TODO: stage inputs
-        WorkflowAddStageInput input = new WorkflowAddStageInput();
-        addStage1Input.editVersion = 0;
-        addStage1Input.executable = applet.getId();
+                            String name,
+                            Map<String, Object> stageInputs,
+                            int editVersion) {
+        WorkflowAddStageInput reqInput = new WorkflowAddStageInput();
+        reqInput.editVersion = editVersion;
+        reqInput.executable = applet.getId();
 
-
-        WorkflowAddStageInput addStage0Input = new WorkflowAddStageInput();
-        addStage0Input.editVersion = 0;
-        addStage0Input.executable = applet.getId();
-
-        WorkflowAddStageOutput addStage0Output = DXAPI.workflowAddStage(workflow.getId(),
-                addStage0Input, WorkflowAddStageOutput.class);
+        WorkflowAddStageOutput reqOutput = DXAPI.workflowAddStage(this.getId(),
+                                                                  reqInput, WorkflowAddStageOutput.class);
+        return new DXStage(reqOutput.editVersion, reqOutput.stage);
     }
 }
