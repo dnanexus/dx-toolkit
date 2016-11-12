@@ -17,6 +17,8 @@
 package com.dnanexus;
 
 import java.io.IOException;
+import java.util.*;
+//import java.util.HashMap;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -154,7 +156,10 @@ public class DXWorkflowTest {
                 .setInputSpecification(ImmutableList.of(inputString, inputRecord))
                 .setOutputSpecification(ImmutableList.of(outputRecord)).build();
 
-        DXStage stage1 = workflow.addStage(applet, "stageA", null, 0);
+        HashMap<String, String> stage1Inputs = new HashMap<String, String>();
+        stage1Inputs.put("input_string", "xxx");
+
+        DXStage stage1 = workflow.addStage(applet, "stageA", stage1Inputs, 0);
         DXStage stage2 = workflow.addStage(applet, "stageB", null, stage1.getEditVersion());
 
         // Supply workflow inputs in the format STAGE.INPUTNAME

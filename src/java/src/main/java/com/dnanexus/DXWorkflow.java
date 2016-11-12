@@ -249,6 +249,12 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
         public int editVersion;
 
         @JsonProperty
+        public String name;
+
+        @JsonProperty
+        private JsonNode input;
+
+        @JsonProperty
         public String executable;
     }
 
@@ -263,12 +269,13 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
 
     public DXStage addStage(DXApplet applet,
                             String name,
-                            Map<String, Object> stageInputs,
+                            Map<String, String> stageInputs,
                             int editVersion) {
         WorkflowAddStageInput reqInput = new WorkflowAddStageInput();
         reqInput.editVersion = editVersion;
+        reqInput.name = name;
+        reqInput.input = MAPPER.valueToTree(stageInputs);
         reqInput.executable = applet.getId();
-
         WorkflowAddStageOutput reqOutput = DXAPI.workflowAddStage(this.getId(),
                                                                   reqInput, WorkflowAddStageOutput.class);
         return new DXStage(reqOutput.editVersion, reqOutput.stage);
