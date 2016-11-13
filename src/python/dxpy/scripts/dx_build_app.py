@@ -756,7 +756,10 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
 
 def delete_temporary_projects(projects):
     for project in projects:
-        dxpy.api.project_destroy(project)
+        try:
+            dxpy.api.project_destroy(project)
+        except Exception:
+            pass
 
 
 def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publish=False, destination_override=None,
