@@ -891,7 +891,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             raise AssertionError("'projects_by_region' should not be None at this point")
 
         resources_bundles_by_region = {}
-        for region, project in projects_by_region.iteritems():
+        for region, project in projects_by_region.items():
             resources_bundles_by_region[region] = dxpy.app_builder.upload_resources(
                 src_dir,
                 project=project,
