@@ -153,7 +153,8 @@ parser.add_argument("--extra-args", help="Arguments (in JSON format) to pass to 
 parser.add_argument("--run", help="Run the app or applet after building it (options following this are passed to "+BOLD("dx run")+"; run at high priority by default)", nargs=argparse.REMAINDER)
 
 # --region
-app_options.add_argument("--region", action="append", help="The enabled region(s) of this app. Note that if only one region is specified and --no-temp-build-project is specified, then the region will be ignored")
+app_options.add_argument("--region", action="append", help="Enable the app in this region. This flag can be specified multiple times to enable the app in multiple regions. If only one region is specified and --no-temp-build-project is specified, then the specified region will be ignored. If --region is not specified, then the ultimate region will be resolved based on the project context.")
+
 
 
 class DXSyntaxError(Exception):
