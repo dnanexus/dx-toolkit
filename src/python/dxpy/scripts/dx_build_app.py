@@ -887,7 +887,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 msg += " -f/--overwrite nor -a/--archive were given."
                 raise dxpy.app_builder.AppBuilderException(msg)
 
-        assert(projects_by_region is not None)
+        if projects_by_region is None:
+            raise AssertionError("'projects_by_region' should not be None at this point")
 
         resources_bundles_by_region = {}
         for region, project in projects_by_region.iteritems():
