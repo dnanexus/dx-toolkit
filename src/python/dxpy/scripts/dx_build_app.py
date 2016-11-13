@@ -814,8 +814,9 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             # Create temporary projects in each enabled region.
             try:
                 for region in enabled_regions:
-                    working_project = dxpy.api.project_new({"name": "Temporary build project for dx-build-app",
-                                                            "region": region})["id"]
+                    working_project = dxpy.api.project_new({
+                        "name": "Temporary build project for dx-build-app in {r}".format(r=region),
+                        "region": region})["id"]
                     projects_by_region[region] = working_project
                     logger.debug("Created temporary project %s to build in" % (working_project,))
             except Exception as e:
