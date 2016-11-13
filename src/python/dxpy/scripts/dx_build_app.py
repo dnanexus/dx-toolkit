@@ -927,8 +927,9 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 for region, project in projects_by_region.iteritems():
                     objects_to_delete = [dxpy.get_dxlink_ids(bundled_resource_obj['id'])[0] for bundled_resource_obj in resources_bundles_by_region[region]]
                     if objects_to_delete:
-                        dxpy.api.project_remove_objects(dxpy.app_builder.get_destination_project(src_dir, project=project),
-                                                        input_params={"objects": objects_to_delete})
+                        dxpy.api.project_remove_objects(
+                            dxpy.app_builder.get_destination_project(src_dir, project=project),
+                            input_params={"objects": objects_to_delete})
             raise
 
         if dry_run:
