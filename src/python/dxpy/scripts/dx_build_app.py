@@ -816,13 +816,16 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 try:
                     working_project = dxpy.api.project_new({"name": "Temporary build project for dx-build-app",
                                                             "region": region})["id"]
-                except DXAPIError:
+                    projects_by_region[region] = working_project
+                    logger.debug("Created temporary project %s to build in" % (working_project,))
+                except Exception as e:
                     # A /project/new request may fail if the requesting user is
                     # not authorized to create projects in a certain region.
                     delete_temporary_projects(projects_by_region.values())
-                    err_exit()
-                projects_by_region[region] = working_project
-                logger.debug("Created temporary project %s to build in" % (working_project,))
+                    if isinstance(e, DXAPIError):
+                        err_exit()
+                    else:
+                        raise e
         else:
             # Create a temp project
             try:
