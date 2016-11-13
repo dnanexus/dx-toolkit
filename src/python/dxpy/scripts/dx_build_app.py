@@ -571,6 +571,8 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
                       do_version_autonumbering=True, do_try_update=True, do_parallel_build=True,
                       do_check_syntax=True, region=None, watch=True):
     if region is not None:
+        if not isinstance(region, list) or len(region) > 1:
+            raise ValueError("Expected 'region' to be a singleton list")
         region = region[0]
 
     if mode == 'app':
@@ -1068,7 +1070,7 @@ def _build_app(args, extra_args):
 
         return _build_app_remote(args.mode, args.src_dir, destination_override=args.destination,
                                  publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep,
-                                 region=args.region, watch=args.watch, **more_kwargs)
+                                 region=[args.region[0]], watch=args.watch, **more_kwargs)
 
 
 def main(**kwargs):

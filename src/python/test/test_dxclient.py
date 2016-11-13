@@ -5821,6 +5821,25 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         app_dir = self.write_app_directory("minimal_remote_build_åpp", json.dumps(app_spec), "code.py")
         run("dx build --remote --app " + app_dir)
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create apps and run jobs')
+    def test_remote_build_multi_region_app(self):
+        app_name = "asset_{t}_remote_multi_region_app".format(t=int(time.time()))
+        app_spec = {
+            "name": app_name,
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+        run("dx build --remote --app --region aws:us-east-1 --region azure:westus " + app_dir)
+        # TODO: Ideally, we want to assert that this app is a single-region app
+        # (because we currently ignore multiple --region specifications in the
+        # remote build flow. Unfortunately, "dx build" does not return the app
+        # id.
+
     def test_remote_build_app_and_run_immediately(self):
         app_spec = {
             "name": "minimal_remote_build_app_to_run",
