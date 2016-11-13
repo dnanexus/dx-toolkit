@@ -868,7 +868,7 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
     return app_id
 
 
-def parse_regional_options(dx_app_json):
+def get_regional_options(dx_app_json):
     requested_regional_options = dx_app_json.get("requestedRegionalOptions")
     if requested_regional_options is None:
         return None
