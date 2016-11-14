@@ -269,7 +269,7 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
 
     public DXStage addStage(DXApplet applet,
                             String name,
-                            Map<String, String> stageInputs,
+                            Object stageInputs,
                             int editVersion) {
         WorkflowAddStageInput reqInput = new WorkflowAddStageInput();
         reqInput.editVersion = editVersion;

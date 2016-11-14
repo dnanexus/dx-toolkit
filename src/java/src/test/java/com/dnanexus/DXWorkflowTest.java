@@ -156,10 +156,7 @@ public class DXWorkflowTest {
                 .setInputSpecification(ImmutableList.of(inputString, inputRecord))
                 .setOutputSpecification(ImmutableList.of(outputRecord)).build();
 
-        HashMap<String, String> stage1Inputs = new HashMap<String, String>();
-        stage1Inputs.put("input_string", "xxx");
-
-        DXStage stage1 = workflow.addStage(applet, "stageA", stage1Inputs, 0);
+        DXStage stage1 = workflow.addStage(applet, "stageA", null, 0);
         DXStage stage2 = workflow.addStage(applet, "stageB", null, stage1.getEditVersion());
 
         // Supply workflow inputs in the format STAGE.INPUTNAME
@@ -187,6 +184,90 @@ public class DXWorkflowTest {
                 MAPPER.valueToTree(DXWorkflow.newWorkflow()
                         .setProject(DXProject.getInstance("project-000011112222333344445555"))
                         .setName("foo").buildRequestHash()));
+    }
+
+    //
+    // Create a link to a field in a previous stage. The intended use,
+    // is to plug that value, once calculated, into the current stage.
+    //
+    // This method is equivalent to following two example python calls:
+    // dxpy.dxlink({'stage': etl_stage_id, 'outputField': 'discovered_alleles'}),
+    // dxpy.dxlink({'stage': etl_stage_id, 'inputField': 'bed_ranges_to_discover_alleles'})
+    //
+    // The expected JSON is something like this:
+    //  {u'$dnanexus_link': {'inputField': 'bed_ranges_to_discover_alleles',
+    //                       'stage': u'stage-F0b28zQ04YPjPxP1Qj6z9qvJ'}}
+    private static ObjectNode makeDXLink(DXStage stage,
+                                         boolean input,
+                                         String  fieldName) {
+        String modifier = null;
+        if (input)
+            modifier = "inputField";
+        else
+            modifier = "outputField";
+        ObjectNode promise = DXJSON.getObjectBuilder()
+            .put("stage", stage.getId())
+            .put(modifier, fieldName).build();
+        ObjectNode retval = DXJSON.getObjectBuilder().put("$dnanexus_link", promise).build();
+
+/*        try {
+            String pretty = MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(retval);
+            System.err.println("makeDXLink=" + pretty);
+        } catch (Exception e) {
+            System.err.println("Caught exception" + e.getStackTrace());
+            }*/
+
+        return retval;
+    }
+
+    @JsonInclude(Include.NON_NULL)
+    private static class OutputVars {
+        @JsonProperty
+        int sum;
+    }
+
+    @Test
+    public void testRunWorkflowWithDependencies() {
+        DXWorkflow workflow = DXWorkflow.newWorkflow().setProject(testProject).build();
+
+        // Create an applet that adds two numbers
+        InputParameter inputA = InputParameter.newInputParameter("ai", IOClass.INT).build();
+        InputParameter inputB = InputParameter.newInputParameter("bi", IOClass.INT).build();
+        OutputParameter outputSum = OutputParameter.newOutputParameter("sum",  IOClass.INT).build();
+        String code = "dx-jobutil-add-output sum `echo $((ai + bi))` --class=int\n";
+        DXApplet applet = DXApplet.newApplet().setProject(testProject)
+            .setName("applet_add_java")
+            .setRunSpecification(RunSpecification.newRunSpec("bash", code).build())
+            .setInputSpecification(ImmutableList.of(inputA, inputB))
+            .setOutputSpecification(ImmutableList.of(outputSum)).build();
+
+        // Stage 1
+        DXStage stage1 = workflow.addStage(applet, "stageA", null, 0);
+
+        // Stage 2: waits for the result of the previous stage, and adds another number
+        ObjectNode runInput2 = DXJSON.getObjectBuilder()
+            .put("ai", makeDXLink(stage1, false, "sum"))
+            .put("bi", 4)
+            .build();
+
+        DXStage stage2 = workflow.addStage(applet, "stageB", runInput2, stage1.getEditVersion());
+
+        // Supply workflow inputs in the format STAGE.INPUTNAME
+        ObjectNode runInput = DXJSON.getObjectBuilder()
+            .put(stage1.getId() + ".ai", 1)
+            .put(stage1.getId() + ".bi", 2).build();
+
+        // We run a workflow here, but do not wait for its result, so it's fine that this test
+        // doesn't check for ConfigOption.RUN_JOBS.
+        DXAnalysis analysis = workflow.newRun().setInput(runInput).setProject(testProject).run();
+        analysis.waitUntilDone();
+        System.err.println("Completed waiting for analysis");
+
+        //Assert.assertEquals("sum", analysis.getOutput(OutputVars.class).outputParam);
+        //int sum = analysis.getOutput(OutputVars.class).sum;
+        //System.err.println("sum=" + sum);
+        DXAnalysis.Describe desc = analysis.describe();
+        System.err.println(desc);
     }
 
 }
