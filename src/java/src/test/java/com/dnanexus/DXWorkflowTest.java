@@ -18,13 +18,13 @@ package com.dnanexus;
 
 import java.io.IOException;
 import java.util.*;
-//import java.util.HashMap;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.dnanexus.DXUtil;
 import com.dnanexus.DXDataObject.DescribeOptions;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -41,10 +41,6 @@ public class DXWorkflowTest {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private DXProject testProject;
-
-    private ObjectNode makeDXLink(DXDataObject dataObject) {
-        return DXJSON.getObjectBuilder().put("$dnanexus_link", dataObject.getId()).build();
-    }
 
     @Before
     public void setUp() {
@@ -162,28 +158,14 @@ public class DXWorkflowTest {
         // Supply workflow inputs in the format STAGE.INPUTNAME
         ObjectNode runInput = DXJSON.getObjectBuilder()
             .put(stage1.getId() + ".input_string", "foo")
-            .put(stage1.getId() + ".input_record", makeDXLink(myRecord))
+            .put(stage1.getId() + ".input_record", DXUtil.makeDXLink(myRecord))
             .put(stage2.getId() + ".input_string", "bar")
-            .put(stage2.getId() + ".input_record", makeDXLink(myRecord)).build();
+            .put(stage2.getId() + ".input_record", DXUtil.makeDXLink(myRecord)).build();
 
         // We run a workflow here, but do not wait for its result, so it's fine that this test
         // doesn't check for ConfigOption.RUN_JOBS.
         DXAnalysis analysis = workflow.newRun().setInput(runInput).setProject(testProject).run();
         analysis.terminate();
-    }
-
-    // Internal tests
-
-    /**
-     * Tests serialization of the input hash to /workflow/new
-     */
-    @Test
-    public void testCreateWorkflowSerialization() throws IOException {
-        Assert.assertEquals(
-                DXJSON.parseJson("{\"project\":\"project-000011112222333344445555\", \"name\": \"foo\"}"),
-                MAPPER.valueToTree(DXWorkflow.newWorkflow()
-                        .setProject(DXProject.getInstance("project-000011112222333344445555"))
-                        .setName("foo").buildRequestHash()));
     }
 
     private static void prettyPrintJsonNode(ObjectNode jnode) {
@@ -193,42 +175,6 @@ public class DXWorkflowTest {
         } catch (Exception e) {
             System.err.println("Caught exception" + e.getStackTrace());
         }
-    }
-
-    //
-    // Create a link to a field in a previous stage. The intended use,
-    // is to plug that value, once calculated, into the current stage.
-    //
-    // This method is equivalent to following two example python calls:
-    // dxpy.dxlink({'stage': etl_stage_id, 'outputField': 'discovered_alleles'}),
-    // dxpy.dxlink({'stage': etl_stage_id, 'inputField': 'bed_ranges_to_discover_alleles'})
-    //
-    // The expected JSON is something like this:
-    //  {u'$dnanexus_link': {'inputField': 'bed_ranges_to_discover_alleles',
-    //                       'stage': u'stage-F0b28zQ04YPjPxP1Qj6z9qvJ'}}
-    private static ObjectNode makeDXLink(DXStage stage,
-                                         boolean input,
-                                         String  fieldName) {
-        String modifier = null;
-        if (input)
-            modifier = "inputField";
-        else
-            modifier = "outputField";
-        ObjectNode promise = DXJSON.getObjectBuilder()
-            .put("stage", stage.getId())
-            .put(modifier, fieldName).build();
-        ObjectNode retval = DXJSON.getObjectBuilder().put("$dnanexus_link", promise).build();
-
-        return retval;
-    }
-
-    @JsonInclude(Include.NON_NULL)
-    private static class OutputVars {
-        @JsonProperty
-        int sumA;
-
-        @JsonProperty
-        int sumB;
     }
 
     @Test
@@ -251,7 +197,7 @@ public class DXWorkflowTest {
 
         // Stage 2: waits for the result of the previous stage, and adds another number
         ObjectNode runInput2 = DXJSON.getObjectBuilder()
-            .put("ai", makeDXLink(stage1, false, "sum"))
+            .put("ai", DXUtil.makeDXLink(stage1, false, "sum"))
             .put("bi", 4)
             .build();
 
@@ -266,7 +212,6 @@ public class DXWorkflowTest {
         // doesn't check for ConfigOption.RUN_JOBS.
         DXAnalysis analysis = workflow.newRun().setInput(runInput).setProject(testProject).run();
         analysis.waitUntilDone();
-        System.err.println("Completed waiting for analysis");
 
         // The results are supposed to be something like this:
         //{
@@ -275,9 +220,20 @@ public class DXWorkflowTest {
         //}
         ObjectNode jnode = analysis.getOutput(ObjectNode.class);
         prettyPrintJsonNode(jnode);
-
-        //Assert.assertEquals("sum", analysis.getOutput(OutputVars.class).outputParam);
-        //OutputVars oVars = analysis.getOutput(OutputVars.class);
-        //System.err.println("sum=" + oVars.sumA + " " + oVars.sumB);
     }
+
+    // Internal tests
+
+    /**
+     * Tests serialization of the input hash to /workflow/new
+     */
+    @Test
+    public void testCreateWorkflowSerialization() throws IOException {
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"project\":\"project-000011112222333344445555\", \"name\": \"foo\"}"),
+                MAPPER.valueToTree(DXWorkflow.newWorkflow()
+                        .setProject(DXProject.getInstance("project-000011112222333344445555"))
+                        .setName("foo").buildRequestHash()));
+    }
+
 }
