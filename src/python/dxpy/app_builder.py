@@ -869,11 +869,11 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
 
 
 def get_regional_options(dx_app_json):
-    requested_regional_options = dx_app_json.get("requestedRegionalOptions")
+    requested_regional_options = dx_app_json.get("regionalOptions")
     if requested_regional_options is None:
         return None
     if not isinstance(requested_regional_options, dict):
-        raise AppBuilderException("The field 'requestedRegionalOptions' in dxapp.json must be a mapping")
+        raise AppBuilderException("The field 'regionalOptions' in dxapp.json must be a mapping")
     if len(requested_regional_options.keys()) < 1:
-        raise AppBuilderException("The field 'requestedRegionalOptions' in dxapp.json must be a non-empty mapping")
+        raise AppBuilderException("The field 'regionalOptions' in dxapp.json must be a non-empty mapping")
     return requested_regional_options

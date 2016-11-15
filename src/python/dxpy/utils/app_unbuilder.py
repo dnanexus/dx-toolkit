@@ -205,15 +205,15 @@ def dump_executable(executable, destination_directory, omit_resources=False, des
         # "bundledDependsByRegion".
         dxapp_json["runSpec"].pop("bundledDependsByRegion", None)
 
-        # For an app, "dx build" parses "requestedRegionalOptions" from
-        # dxapp.json into the "regionalOptions" key in the body of the /app/new
-        # (or /app-x/update) request. "dx get" should parse the
-        # "regionalOptions" from the response of /app-x/get into the
-        # "requestedRegionalOptions" key in dxapp.json.
+        # For an app, "dx build" parses "regionalOptions" from dxapp.json into
+        # the "regionalOptions" key in the body of the /app/new (or
+        # /app-x/update) request. "dx get" should parse the "regionalOptions"
+        # from the response of /app-x/get into the "regionalOptions" key in
+        # dxapp.json.
         if "regionalOptions" in dxapp_json:
-            dxapp_json["requestedRegionalOptions"] = {}
+            dxapp_json["regionalOptions"] = {}
             for region, ignore in dxapp_json["regionalOptions"].iteritems():
-                dxapp_json["requestedRegionalOptions"][region] = {}
+                dxapp_json["regionalOptions"][region] = {}
             del dxapp_json["regionalOptions"]
 
         # Cleanup of empty elements. Be careful not to let this step

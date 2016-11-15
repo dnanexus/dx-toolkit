@@ -5660,7 +5660,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "version": "1.0.0",
 
             # Will be ignored when building applets.
-            "requestedRegionalOptions": {"aws:us-east-1": {}}
+            "regionalOptions": {"aws:us-east-1": {}}
             }
         app_dir = self.write_app_directory(name, json.dumps(app_spec), "code.py")
         new_applet = json.loads(run("dx build --json " + app_dir))
@@ -6050,7 +6050,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "inputSpec": [],
             "outputSpec": [],
             "version": "1.0.0",
-            "requestedRegionalOptions": {"aws:us-east-1": {}}
+            "regionalOptions": {"aws:us-east-1": {}}
             }
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
         new_app = json.loads(run("dx build --create-app --json " + app_dir))
@@ -6061,7 +6061,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEqual(app_describe["name"], app_name)
         self.assertFalse("published" in app_describe)
         self.assertIn("regionalOptions", app_describe)
-        self.assertItemsEqual(app_describe["regionalOptions"].keys(), app_spec["requestedRegionalOptions"].keys())
+        self.assertItemsEqual(app_describe["regionalOptions"].keys(), app_spec["regionalOptions"].keys())
 
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
@@ -6077,7 +6077,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "inputSpec": [],
             "outputSpec": [],
             "version": "1.0.0",
-            "requestedRegionalOptions": {"aws:us-east-1": {},
+            "regionalOptions": {"aws:us-east-1": {},
                                          "azure:westus": {}}
             }
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
@@ -6090,7 +6090,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEqual(app_desc_res["name"], app_name)
         self.assertFalse("published" in app_desc_res)
         self.assertIn("regionalOptions", app_desc_res)
-        self.assertItemsEqual(app_desc_res["regionalOptions"].keys(), app_spec["requestedRegionalOptions"].keys())
+        self.assertItemsEqual(app_desc_res["regionalOptions"].keys(), app_spec["regionalOptions"].keys())
 
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
@@ -6132,7 +6132,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "inputSpec": [],
             "outputSpec": [],
             "version": "1.0.0",
-            "requestedRegionalOptions": {"aws:us-east-1": {},
+            "regionalOptions": {"aws:us-east-1": {},
                                          "azure:westus": {}}
             }
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
@@ -6170,11 +6170,11 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "inputSpec": [],
             "outputSpec": [],
             "version": "1.0.0",
-            "requestedRegionalOptions": {}
+            "regionalOptions": {}
             }
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
-        with self.assertRaisesRegexp(subprocess.CalledProcessError, "requestedRegionalOptions"):
+        with self.assertRaisesRegexp(subprocess.CalledProcessError, "regionalOptions"):
             run("dx build --create-app --json " + app_dir)
 
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
@@ -6185,11 +6185,11 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "inputSpec": [],
             "outputSpec": [],
             "version": "1.0.0",
-            "requestedRegionalOptions": {"aws:us-east-1": {}}
+            "regionalOptions": {"aws:us-east-1": {}}
             }
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
-        with self.assertRaisesRegexp(subprocess.CalledProcessError, "requestedRegionalOptions"):
+        with self.assertRaisesRegexp(subprocess.CalledProcessError, "regionalOptions"):
             run("dx build --create-app --region azure:westus --json " + app_dir)
 
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
@@ -6200,12 +6200,12 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "inputSpec": [],
             "outputSpec": [],
             "version": "1.0.0",
-            "requestedRegionalOptions": {"azure:westus": {},
+            "regionalOptions": {"azure:westus": {},
                                          "aws:us-east-1": {}}
             }
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
-        with self.assertRaisesRegexp(subprocess.CalledProcessError, "requestedRegionalOptions"):
+        with self.assertRaisesRegexp(subprocess.CalledProcessError, "regionalOptions"):
             run("dx build --create-app --region azure:westus --region aws:us-east-2 --json " + app_dir)
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
@@ -6224,7 +6224,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "version": "1.0.0",
 
             # This is a multi-region app.
-            "requestedRegionalOptions": {"aws:us-east-1": {},
+            "regionalOptions": {"aws:us-east-1": {},
                                          "azure:westus": {}}
             }
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
@@ -6243,7 +6243,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "version": "1.0.0",
 
             # This is a single-region app.
-            "requestedRegionalOptions": {"aws:us-east-1": {}}
+            "regionalOptions": {"aws:us-east-1": {}}
             }
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
@@ -6255,7 +6255,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEqual(app_desc_res["name"], app_name)
         self.assertFalse("published" in app_desc_res)
         self.assertIn("regionalOptions", app_desc_res)
-        self.assertItemsEqual(app_desc_res["regionalOptions"].keys(), app_spec["requestedRegionalOptions"].keys())
+        self.assertItemsEqual(app_desc_res["regionalOptions"].keys(), app_spec["regionalOptions"].keys())
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
@@ -7897,7 +7897,7 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
             "authorizedUsers": authorized_users,
             "openSource": open_source,
             "version": "0.0.1",
-            "requestedRegionalOptions": {"aws:us-east-1": {},
+            "regionalOptions": {"aws:us-east-1": {},
                                          "azure:westus": {}}
             }
         # description and developerNotes should be un-inlined back to files
