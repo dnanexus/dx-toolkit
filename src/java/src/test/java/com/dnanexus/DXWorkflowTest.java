@@ -186,6 +186,15 @@ public class DXWorkflowTest {
                         .setName("foo").buildRequestHash()));
     }
 
+    private static void prettyPrintJsonNode(ObjectNode jnode) {
+        try {
+            String pretty = MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(jnode);
+            System.err.println(pretty);
+        } catch (Exception e) {
+            System.err.println("Caught exception" + e.getStackTrace());
+        }
+    }
+
     //
     // Create a link to a field in a previous stage. The intended use,
     // is to plug that value, once calculated, into the current stage.
@@ -210,20 +219,16 @@ public class DXWorkflowTest {
             .put(modifier, fieldName).build();
         ObjectNode retval = DXJSON.getObjectBuilder().put("$dnanexus_link", promise).build();
 
-/*        try {
-            String pretty = MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(retval);
-            System.err.println("makeDXLink=" + pretty);
-        } catch (Exception e) {
-            System.err.println("Caught exception" + e.getStackTrace());
-            }*/
-
         return retval;
     }
 
     @JsonInclude(Include.NON_NULL)
     private static class OutputVars {
         @JsonProperty
-        int sum;
+        int sumA;
+
+        @JsonProperty
+        int sumB;
     }
 
     @Test
@@ -263,11 +268,16 @@ public class DXWorkflowTest {
         analysis.waitUntilDone();
         System.err.println("Completed waiting for analysis");
 
-        //Assert.assertEquals("sum", analysis.getOutput(OutputVars.class).outputParam);
-        //int sum = analysis.getOutput(OutputVars.class).sum;
-        //System.err.println("sum=" + sum);
-        DXAnalysis.Describe desc = analysis.describe();
-        System.err.println(desc);
-    }
+        // The results are supposed to be something like this:
+        //{
+        //   "stage-F0b4zz807vqPqYzGJbxQ712k.sum" : 3,
+        //   "stage-F0b4zzQ07vqFgvfJ5xfjPg16.sum" : 7
+        //}
+        ObjectNode jnode = analysis.getOutput(ObjectNode.class);
+        prettyPrintJsonNode(jnode);
 
+        //Assert.assertEquals("sum", analysis.getOutput(OutputVars.class).outputParam);
+        //OutputVars oVars = analysis.getOutput(OutputVars.class);
+        //System.err.println("sum=" + oVars.sumA + " " + oVars.sumB);
+    }
 }
