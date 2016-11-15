@@ -6078,7 +6078,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "outputSpec": [],
             "version": "1.0.0",
             "regionalOptions": {"aws:us-east-1": {},
-                                         "azure:westus": {}}
+                                "azure:westus": {}}
             }
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
@@ -6133,7 +6133,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "outputSpec": [],
             "version": "1.0.0",
             "regionalOptions": {"aws:us-east-1": {},
-                                         "azure:westus": {}}
+                                "azure:westus": {}}
             }
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
@@ -6201,7 +6201,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "outputSpec": [],
             "version": "1.0.0",
             "regionalOptions": {"azure:westus": {},
-                                         "aws:us-east-1": {}}
+                                "aws:us-east-1": {}}
             }
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
@@ -6225,7 +6225,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
             # This is a multi-region app.
             "regionalOptions": {"aws:us-east-1": {},
-                                         "azure:westus": {}}
+                                "azure:westus": {}}
             }
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
@@ -7898,7 +7898,7 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
             "openSource": open_source,
             "version": "0.0.1",
             "regionalOptions": {"aws:us-east-1": {},
-                                         "azure:westus": {}}
+                                "azure:westus": {}}
             }
         # description and developerNotes should be un-inlined back to files
         output_app_spec = dict((k, v)
