@@ -156,7 +156,10 @@ def describe(id_or_link, **kwargs):
         describe("file-1234")
     '''
     # If this is a list, extract the ids.
-    if isinstance(id_or_link, list):
+    if isinstance(id_or_link, string) or is_dxlink(id_or_link):
+        handler = get_handler(id_or_link)
+        return handler.describe(**kwargs)
+    else:
         links = []
         for link in id_or_link:
             # If this entry is a dxlink, then get the id.
@@ -167,11 +170,8 @@ def describe(id_or_link, **kwargs):
                 else:
                     link = link['$dnanexus_link']['id']
             links.append(link)
-        retval = dxpy.api.system_describe_data_objects({'objects': links})
-        return [rv['describe'] for rv in retval['results']]
-    else:
-        handler = get_handler(id_or_link)
-        return handler.describe(**kwargs)
+        data_object_descriptions = dxpy.api.system_describe_data_objects({'objects': links})
+        return [desc['describe'] for desc in data_object_descriptions['results']]
 
 def get_details(id_or_link, **kwargs):
     '''

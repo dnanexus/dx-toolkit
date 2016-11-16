@@ -2617,15 +2617,15 @@ class TestDataobjectFunctions(unittest.TestCase):
             self.assertEqual(desc[i]["id"], ids[i])
             self.assertEqual(desc[i]["class"], types[i])
             self.assertEqual(desc[i]["types"], []) 
-            self.assertTrue("created" in desc[i]) 
+            self.assertIn("created", desc[i]) 
             self.assertEqual(desc[i]["state"], "open")
             self.assertEqual(desc[i]["hidden"], False)
             self.assertEqual(desc[i]["links"], [])
             self.assertEqual(desc[i]["folder"], "/")
             self.assertEqual(desc[i]["tags"], tags[i])
-            self.assertTrue("modified" in desc[i])
-            self.assertFalse("properties" in desc[i])
-            self.assertFalse("details" in desc[i])
+            self.assertIn("modified", desc[i])
+            self.assertNotIn("properties", desc[i])
+            self.assertNotIn("details", desc[i])
 
 
 class TestResolver(testutil.DXTestCase):
