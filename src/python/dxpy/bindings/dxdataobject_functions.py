@@ -156,7 +156,7 @@ def describe(id_or_link, **kwargs):
         describe("file-1234")
     '''
     # If this is a list, extract the ids.
-    if isinstance(id_or_link, string) or is_dxlink(id_or_link):
+    if isinstance(id_or_link, basestring) or is_dxlink(id_or_link):
         handler = get_handler(id_or_link)
         return handler.describe(**kwargs)
     else:
