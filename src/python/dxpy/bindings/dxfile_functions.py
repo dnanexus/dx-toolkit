@@ -26,6 +26,9 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os, sys, math, mmap, stat
 import hashlib
+import multiprocessing
+import subprocess
+import tempfile
 import traceback
 import warnings
 from collections import defaultdict
@@ -123,6 +126,34 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
                                    show_progress=show_progress, project=project, **kwargs)
 
 
+def _download_compressed_dxfile(dxfile, filename):
+
+    # The first thing we need to do is download the reference file so deez can
+    # use it to decompress.
+    reference_dir = tempfile.mkdtemp()
+    reference_dxid = dxfile.get_details()['reference']
+    reference_name = dxpy.DXFile(reference_dxid).name
+    reference_local_path = os.path.join(reference_dir, reference_name)
+    dxpy.download_dxfile(reference_dxid, filename=reference_local_path)
+
+    # Then get the url for the compressed file. Deez can work directly with a
+    # url rather than downloading first
+
+    # JK! The url input doesn't work. Deez just hangs at some point. So we're
+    # going to download the whole file first.
+    deez_dir = tempfile.mkdtemp()
+    deez_local_path = os.path.join(deez_dir, dxfile.name)
+    dxpy.download_dxfile(dxfile.get_id(), deez_local_path, ignore_deez=True)
+
+    deez_decompress_cmd = [
+        'deez', '-r', reference_local_path, '--threads', str(multiprocessing.cpu_count()),
+        deez_local_path, '-o', filename]
+
+    proc = subprocess.Popen(deez_decompress_cmd)
+    proc.communicate()
+
+
+
 def _download_dxfile(dxid, filename, part_retry_counter,
                      chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
                      project=None, **kwargs):
@@ -135,6 +166,16 @@ def _download_dxfile(dxid, filename, part_retry_counter,
     - False means the download was stopped because of a retryable error
     - Exception raised for other errors
     '''
+
+    # Check if this file should get deez-decompressed
+    if kwargs.get("ignore_deez"):
+        kwargs.pop("ignore_deez")
+    else:
+        dxfile = dxpy.DXFile(dxid)
+        if dxfile.get_details().get('compressed-with') == 'DeeZ':
+            _download_compressed_dxfile(dxfile, filename)
+            return True
+
     def print_progress(bytes_downloaded, file_size, action="Downloaded"):
         num_ticks = 60
 
