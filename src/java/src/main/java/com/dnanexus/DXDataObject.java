@@ -1062,7 +1062,7 @@ public abstract class DXDataObject extends DXObject {
      * @return a DNAnexus link
      */
     @JsonValue
-    private JsonNode getDXLink() {
+    public JsonNode getDXLink() {
         return DXJSON.getObjectBuilder().put("$dnanexus_link", this.getId()).build();
     }
 

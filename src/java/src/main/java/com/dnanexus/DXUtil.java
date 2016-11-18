@@ -71,34 +71,4 @@ public class DXUtil {
         }
     }
 
-    // Create a link to an object. This can be used as asn
-    public static ObjectNode makeDXLink(DXDataObject dataObject) {
-        return DXJSON.getObjectBuilder().put("$dnanexus_link", dataObject.getId()).build();
-    }
-
-    /**
-     * Create a link to a field in a previous stage. This is
-     * used in workflows, to link results between stages.
-     *
-     * @param stage  previous workflow stage
-     * @param input  true for an output field, false otherwise
-     * @param fieldName name of the field (output or input)
-     *
-     * @return JSON representation of a link. Can be used as an input to a workflow stage
-     */
-    public static ObjectNode makeDXLink(DXStage stage,
-                                         boolean input,
-                                         String  fieldName) {
-        String modifier = null;
-        if (input)
-            modifier = "inputField";
-        else
-            modifier = "outputField";
-        ObjectNode promise = DXJSON.getObjectBuilder()
-            .put("stage", stage.getId())
-            .put(modifier, fieldName).build();
-        return DXJSON.getObjectBuilder().put("$dnanexus_link", promise).build();
-    }
-
-
 }

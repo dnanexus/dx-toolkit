@@ -17,7 +17,6 @@
 package com.dnanexus;
 
 import java.io.IOException;
-import java.util.*;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -26,12 +25,14 @@ import org.junit.Test;
 
 import com.dnanexus.DXUtil;
 import com.dnanexus.DXDataObject.DescribeOptions;
+import com.dnanexus.TestEnvironment.ConfigOption;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -131,6 +132,11 @@ public class DXWorkflowTest {
 
     @Test
     public void testRunWorkflow() {
+        if (!TestEnvironment.canRunTest(ConfigOption.RUN_JOBS)) {
+            System.err.println("Skipping test that would run jobs");
+            return;
+        }
+
         DXWorkflow workflow = DXWorkflow.newWorkflow().setProject(testProject).build();
 
         // Create an applet to be added to the workflow and some inputs to be supplied to it
@@ -152,15 +158,21 @@ public class DXWorkflowTest {
                 .setInputSpecification(ImmutableList.of(inputString, inputRecord))
                 .setOutputSpecification(ImmutableList.of(outputRecord)).build();
 
-        DXStage stage1 = workflow.addStage(applet, "stageA", null, 0);
-        DXStage stage2 = workflow.addStage(applet, "stageB", null, stage1.getEditVersion());
+        int editVersion = 0;
+        DXWorkflow.Modification<DXWorkflow.DXStage> retval = workflow.addStage(applet, "stageA", null, editVersion);
+        DXWorkflow.DXStage stage1 = retval.obj;
+        editVersion = retval.editVersion;
+
+        retval = workflow.addStage(applet, "stageB", null, editVersion);
+        DXWorkflow.DXStage stage2 = retval.obj;
+        editVersion = retval.editVersion;
 
         // Supply workflow inputs in the format STAGE.INPUTNAME
         ObjectNode runInput = DXJSON.getObjectBuilder()
             .put(stage1.getId() + ".input_string", "foo")
-            .put(stage1.getId() + ".input_record", DXUtil.makeDXLink(myRecord))
+            .put(stage1.getId() + ".input_record", myRecord.getDXLink())
             .put(stage2.getId() + ".input_string", "bar")
-            .put(stage2.getId() + ".input_record", DXUtil.makeDXLink(myRecord)).build();
+            .put(stage2.getId() + ".input_record", myRecord.getDXLink()).build();
 
         // We run a workflow here, but do not wait for its result, so it's fine that this test
         // doesn't check for ConfigOption.RUN_JOBS.
@@ -179,6 +191,11 @@ public class DXWorkflowTest {
 
     @Test
     public void testRunWorkflowWithDependencies() {
+        if (!TestEnvironment.canRunTest(ConfigOption.RUN_JOBS)) {
+            System.err.println("Skipping test that would run jobs");
+            return;
+        }
+
         DXWorkflow workflow = DXWorkflow.newWorkflow().setProject(testProject).build();
 
         // Create an applet that adds two numbers
@@ -193,15 +210,20 @@ public class DXWorkflowTest {
             .setOutputSpecification(ImmutableList.of(outputSum)).build();
 
         // Stage 1
-        DXStage stage1 = workflow.addStage(applet, "stageA", null, 0);
+        int editVersion = 0;
+        DXWorkflow.Modification<DXWorkflow.DXStage> retval = workflow.addStage(applet, "stageA", null, 0);
+        DXWorkflow.DXStage stage1 = retval.obj;
+        editVersion = retval.editVersion;
 
         // Stage 2: waits for the result of the previous stage, and adds another number
         ObjectNode runInput2 = DXJSON.getObjectBuilder()
-            .put("ai", DXUtil.makeDXLink(stage1, false, "sum"))
+            .put("ai", stage1.getOutputReference("sum"))
             .put("bi", 4)
             .build();
 
-        DXStage stage2 = workflow.addStage(applet, "stageB", runInput2, stage1.getEditVersion());
+        retval = workflow.addStage(applet, "stageB", runInput2, editVersion);
+        DXWorkflow.DXStage stage2 = retval.obj;
+        editVersion = retval.editVersion;
 
         // Supply workflow inputs in the format STAGE.INPUTNAME
         ObjectNode runInput = DXJSON.getObjectBuilder()
@@ -219,7 +241,21 @@ public class DXWorkflowTest {
         //   "stage-F0b4zzQ07vqFgvfJ5xfjPg16.sum" : 7
         //}
         ObjectNode jnode = analysis.getOutput(ObjectNode.class);
-        prettyPrintJsonNode(jnode);
+        java.util.Iterator<java.util.Map.Entry<String, JsonNode>> iter = jnode.fields();
+        while (iter.hasNext()){
+            java.util.Map.Entry<String, JsonNode> pair = iter.next();
+            String key = pair.getKey();
+            int val = pair.getValue().asInt();
+
+            if (key.contains(stage1.getId())) {
+                Assert.assertTrue(val == 3);
+            }
+            if (key.contains(stage2.getId())) {
+                Assert.assertTrue(val == 7);
+            }
+
+            //System.out.println(key + ": " + val);
+        }
     }
 
     // Internal tests
