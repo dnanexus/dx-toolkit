@@ -537,7 +537,9 @@ def whoami(args):
 def compress(args):
     if dxpy.AUTH_HELPER is None:
         err_exit('You are not logged in; run "dx login" to obtain a token.', 3)
-
+    import os
+    os.system("dx run dx-compress -iinput_bam={} -y".format(args.file))
+    #dxpy.DXApplet("applet-F0ggYB000x329z14b4Q79j8z").run({'input_bam': args.file}, project=dxpy.PROJECT_CONTEXT_ID)
 
 def setenv(args):
     if not state['interactive']:
@@ -3550,7 +3552,7 @@ parser_compress = subparsers.add_parser('compress', help='Compress .bam files wh
                                                   '(decompression performed only when file is used).',
                                       prog='dx compress',
                                       parents=[env_args])
-parser_compress.add_argument('id', help='File ID to compress (coming soon also include project IDs)')
+parser_compress.add_argument('file', help='File ID or name to compress (coming soon also include project IDs)')
 parser_compress.set_defaults(func=compress)
 register_parser(parser_compress, categories='fs')
 
