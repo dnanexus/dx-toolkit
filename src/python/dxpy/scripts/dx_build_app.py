@@ -570,11 +570,6 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
                       version_override=None, bill_to_override=None, dx_toolkit_autodep="stable",
                       do_version_autonumbering=True, do_try_update=True, do_parallel_build=True,
                       do_check_syntax=True, region=None, watch=True):
-    if region is not None:
-        if not isinstance(region, list) or len(region) > 1:
-            raise ValueError("Expected 'region' to be a singleton list")
-        region = region[0]
-
     if mode == 'app':
         builder_app = 'app-tarball_app_builder'
     else:
@@ -900,6 +895,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 ensure_upload=ensure_upload,
                 force_symlinks=force_symlinks) if not dry_run else []
 
+        # TODO: Clean up these applets if the app build fails.
         applet_ids_by_region = {}
         try:
             for region, project in projects_by_region.iteritems():
@@ -1077,9 +1073,11 @@ def _build_app(args, extra_args):
         if not args.check_syntax:
             more_kwargs['do_check_syntax'] = False
 
+        if isinstance(args.region, list) and len(args.region) > 1:
+            raise ValueError("Expected 'region' to be a singleton list")
         return _build_app_remote(args.mode, args.src_dir, destination_override=args.destination,
                                  publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep,
-                                 region=[args.region[0]], watch=args.watch, **more_kwargs)
+                                 region=args.region[0], watch=args.watch, **more_kwargs)
 
 
 def main(**kwargs):
