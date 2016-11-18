@@ -826,7 +826,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 if isinstance(e, DXAPIError):
                     err_exit()
                 else:
-                    raise e
+                    raise
         else:
             # Create a temp project
             try:
