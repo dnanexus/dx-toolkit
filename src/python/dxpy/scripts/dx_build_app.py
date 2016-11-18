@@ -1059,6 +1059,9 @@ def _build_app(args, extra_args):
         if not args.use_temp_build_project:
             parser.error('--remote cannot be combined with --no-temp-build-project')
 
+        if isinstance(args.region, list) and len(args.region) > 1:
+            parser.error('--region can only be specified once for remote builds')
+
         more_kwargs = {}
         if args.version_override:
             more_kwargs['version_override'] = args.version_override
@@ -1073,8 +1076,6 @@ def _build_app(args, extra_args):
         if not args.check_syntax:
             more_kwargs['do_check_syntax'] = False
 
-        if isinstance(args.region, list) and len(args.region) > 1:
-            raise ValueError("Expected 'region' to be a singleton list")
         return _build_app_remote(args.mode, args.src_dir, destination_override=args.destination,
                                  publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep,
                                  region=args.region[0], watch=args.watch, **more_kwargs)
