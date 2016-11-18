@@ -794,7 +794,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
 
     # Cannot build multi-region app if `use_temp_build_project` is falsy.
     if enabled_regions is not None and len(enabled_regions) > 1 and not use_temp_build_project:
-        raise dxpy.app_builder.AppBuilderException("Cannot specify --no-temp-build-project when building multi-region apps")
+        use_temp_build_project = True
 
     projects_by_region = None
 
