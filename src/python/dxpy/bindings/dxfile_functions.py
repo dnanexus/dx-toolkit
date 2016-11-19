@@ -135,6 +135,7 @@ def _download_compressed_dxfile(dxfile, filename):
     reference_name = dxpy.DXFile(reference_dxid).name
     reference_local_path = os.path.join(reference_dir, reference_name)
     dxpy.download_dxfile(reference_dxid, filename=reference_local_path)
+    subprocess.check_call(["gunzip", reference_local_path])
 
     # Then get the url for the compressed file. Deez can work directly with a
     # url rather than downloading first
@@ -146,11 +147,14 @@ def _download_compressed_dxfile(dxfile, filename):
     dxpy.download_dxfile(dxfile.get_id(), deez_local_path, ignore_deez=True)
 
     deez_decompress_cmd = [
-        'deez', '-r', reference_local_path, '--threads', str(multiprocessing.cpu_count()),
-        deez_local_path, '-o', filename]
+        'deez', '-h', '-r', reference_local_path[:-3], '--threads', str(multiprocessing.cpu_count()),
+        deez_local_path, '-o', filename+".sam"]
 
     proc = subprocess.Popen(deez_decompress_cmd)
     proc.communicate()
+
+    subprocess.check_call(["samtools", "view", "-o", filename, "-Sb", filename+".sam"])
+    subprocess.check_call(["rm", filename+".sam"])
 
 
 
