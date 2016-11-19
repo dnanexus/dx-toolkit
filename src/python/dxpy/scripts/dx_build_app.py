@@ -942,16 +942,15 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             regional_options = {}
             for region in projects_by_region:
                 regional_options[region] = {"applet": applet_ids_by_region[region]}
-            app_id = dxpy.app_builder.create_app(applet_id,
-                                                 applet_name,
-                                                 src_dir,
-                                                 publish=publish,
-                                                 set_default=publish,
-                                                 billTo=bill_to_override,
-                                                 try_versions=try_versions,
-                                                 try_update=do_try_update,
-                                                 confirm=confirm,
-                                                 regional_options=regional_options)
+            app_id = dxpy.app_builder.create_app_multi_region(regional_options,
+                                                              applet_name,
+                                                              src_dir,
+                                                              publish=publish,
+                                                              set_default=publish,
+                                                              billTo=bill_to_override,
+                                                              try_versions=try_versions,
+                                                              try_update=do_try_update,
+                                                              confirm=confirm)
 
             app_describe = dxpy.api.app_describe(app_id)
 

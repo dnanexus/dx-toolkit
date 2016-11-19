@@ -680,7 +680,7 @@ def _update_version(app_name, version, app_spec, try_update=True):
 
 
 def create_app_multi_region(regional_options, app_name, src_dir, publish=False, set_default=False, billTo=None,
-                            try_versions=None, try_update=True, confirm=True, regional_options=None):
+                            try_versions=None, try_update=True, confirm=True):
     """
     Creates a new app object from the specified applet(s).
 
@@ -693,8 +693,8 @@ def create_app_multi_region(regional_options, app_name, src_dir, publish=False, 
     :type regional_options: dict
     """
     return _create_app(dict(regionalOptions=regional_options), app_name, src_dir, publish=publish,
-                       set_default=set_default, billto=billto, try_versions=try_versions, try_update=try_update,
-                       confirm=confirm, regional_options=regional_options)
+                       set_default=set_default, billTo=billTo, try_versions=try_versions, try_update=try_update,
+                       confirm=confirm)
 
 
 def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False, billTo=None, try_versions=None,
@@ -710,16 +710,15 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
     # legacy API {"applet": applet_id} without specifying a region
     # specifically.
     return _create_app(dict(applet=applet_id), applet_name, src_dir, publish=publish, set_default=set_default,
-                       billto=billto, try_versions=try_versions, try_update=try_update, confirm=confirm,
-                       regional_options=regional_options)
+                       billto=billto, try_versions=try_versions, try_update=try_update, confirm=confirm)
 
 
-def _create_app(applet_options, app_name, src_dir, publish=False, set_default=False, billTo=None, try_versions=None,
+def _create_app(regional_options, app_name, src_dir, publish=False, set_default=False, billTo=None, try_versions=None,
                 try_update=True, confirm=True):
     app_spec = _get_app_spec(src_dir)
     logger.info("Will create app with spec: %s" % (app_spec,))
 
-    app_spec.update(applet_options, name=app_name)
+    app_spec.update(regional_options, name=app_name)
 
     # Inline Readme.md and Readme.developer.md
     _inline_documentation_files(app_spec, src_dir)
