@@ -815,14 +815,11 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                         "region": region})["id"]
                     projects_by_region[region] = working_project
                     logger.debug("Created temporary project %s to build in" % (working_project,))
-            except Exception as e:
+            except:
                 # A /project/new request may fail if the requesting user is
                 # not authorized to create projects in a certain region.
                 delete_temporary_projects(projects_by_region.values())
-                if isinstance(e, DXAPIError):
-                    err_exit()
-                else:
-                    raise
+                err_exit()
         else:
             # Create a temp project
             try:
