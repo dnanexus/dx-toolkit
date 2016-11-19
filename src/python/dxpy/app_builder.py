@@ -710,7 +710,7 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
     # legacy API {"applet": applet_id} without specifying a region
     # specifically.
     return _create_app(dict(applet=applet_id), applet_name, src_dir, publish=publish, set_default=set_default,
-                       billto=billto, try_versions=try_versions, try_update=try_update, confirm=confirm)
+                       billTo=billTo, try_versions=try_versions, try_update=try_update, confirm=confirm)
 
 
 def _create_app(regional_options, app_name, src_dir, publish=False, set_default=False, billTo=None, try_versions=None,
