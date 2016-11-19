@@ -679,26 +679,47 @@ def _update_version(app_name, version, app_spec, try_update=True):
         raise e
 
 
+def create_app_multi_region(regional_options, app_name, src_dir, publish=False, set_default=False, billTo=None,
+                            try_versions=None, try_update=True, confirm=True, regional_options=None):
+    """
+    Creates a new app object from the specified applet(s).
+
+    :param regional_options: Region-specific options for the app. See
+        https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app/new
+        for details; this should contain keys for each region the app is
+        to be enabled in, and for the values, a dict containing (at
+        minimum) a key "applet" whose value is an applet ID for that
+        region.
+    :type regional_options: dict
+    """
+    return _create_app(dict(regionalOptions=regional_options), app_name, src_dir, publish=publish,
+                       set_default=set_default, billto=billto, try_versions=try_versions, try_update=try_update,
+                       confirm=confirm, regional_options=regional_options)
+
+
 def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False, billTo=None, try_versions=None,
                try_update=True, confirm=True, regional_options=None):
     """
     Creates a new app object from the specified applet.
 
-    :param regional_options: The regional configurations that will be used to
-    create this app. The caller is responsible for ensuring that the dict, if
-    specified, is well-formed.
-    :type regional_options: dict
+    .. deprecated:: 0.204.0
+       Use :func:`create_app_multi_region()` instead.
+
     """
+    # In this case we don't know the region of the applet, so we use the
+    # legacy API {"applet": applet_id} without specifying a region
+    # specifically.
+    return _create_app(dict(applet=applet_id), applet_name, src_dir, publish=publish, set_default=set_default,
+                       billto=billto, try_versions=try_versions, try_update=try_update, confirm=confirm,
+                       regional_options=regional_options)
+
+
+def _create_app(applet_options, app_name, src_dir, publish=False, set_default=False, billTo=None, try_versions=None,
+                try_update=True, confirm=True):
     app_spec = _get_app_spec(src_dir)
     logger.info("Will create app with spec: %s" % (app_spec,))
 
-    if regional_options is None:
-        # TODO: Specify the applet in a multi-region-enabled manner. Will need
-        # to somehow fetch the region of the applet.
-        app_spec["applet"] = applet_id
-    else:
-        app_spec["regionalOptions"] = regional_options
-    app_spec["name"] = applet_name
+    app_spec.update(applet_options, name=app_name)
 
     # Inline Readme.md and Readme.developer.md
     _inline_documentation_files(app_spec, src_dir)
@@ -861,7 +882,7 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
         # If no versions of this app have ever been published, then
         # we'll set the "default" tag to point to the latest
         # (unpublished) version.
-        no_published_versions = len(list(dxpy.find_apps(name=applet_name, published=True, limit=1))) == 0
+        no_published_versions = len(list(dxpy.find_apps(name=app_name, published=True, limit=1))) == 0
         if no_published_versions:
             dxpy.api.app_add_tags(app_id, input_params={'tags': ['default']})
 
