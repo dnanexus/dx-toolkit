@@ -896,7 +896,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
         # TODO: Clean up these applets if the app build fails.
         applet_ids_by_region = {}
         try:
-            for region, project in projects_by_region.iteritems():
+            for region, project in projects_by_region.items():
                 applet_id, applet_spec = dxpy.app_builder.upload_applet(
                     src_dir,
                     resources_bundles_by_region[region],
@@ -918,7 +918,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             # using_temp_project, the entire project gets destroyed at
             # the end, so we don't bother.
             if not using_temp_project:
-                for region, project in projects_by_region.iteritems():
+                for region, project in projects_by_region.items():
                     objects_to_delete = [dxpy.get_dxlink_ids(bundled_resource_obj['id'])[0] for bundled_resource_obj in resources_bundles_by_region[region]]
                     if objects_to_delete:
                         dxpy.api.project_remove_objects(
