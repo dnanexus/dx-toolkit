@@ -1978,21 +1978,6 @@ def upload_one(args):
         except:
             err_exit()
 
-def import_csv(args):
-    sys.argv = [sys.argv[0] + ' import csv'] + args.importer_args
-    from dxpy.scripts import dx_csv_to_gtable
-    dx_csv_to_gtable.main()
-
-def import_tsv(args):
-    sys.argv = [sys.argv[0] + ' import tsv'] + args.importer_args
-    from dxpy.scripts import dx_tsv_to_gtable
-    dx_tsv_to_gtable.main()
-
-importers = {
-    "tsv": import_tsv,
-    "csv": import_csv
-}
-
 def dximport(args):
     if args.format.lower() not in importers:
         err_exit('Unsupported format: "' + args.format + '".  For a list of supported formats, run "dx help import"', 3)
