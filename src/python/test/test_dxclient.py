@@ -6107,7 +6107,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         }
 
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
-        app_spec = {}
+        app_spec = {"name": app_name}
         app_spec.update(base_app_spec)
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
