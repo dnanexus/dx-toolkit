@@ -713,12 +713,12 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
                        billTo=billTo, try_versions=try_versions, try_update=try_update, confirm=confirm)
 
 
-def _create_app(regional_options, app_name, src_dir, publish=False, set_default=False, billTo=None, try_versions=None,
-                try_update=True, confirm=True):
+def _create_app(applet_or_regional_options, app_name, src_dir, publish=False, set_default=False, billTo=None,
+                try_versions=None, try_update=True, confirm=True):
     app_spec = _get_app_spec(src_dir)
     logger.info("Will create app with spec: %s" % (app_spec,))
 
-    app_spec.update(regional_options, name=app_name)
+    app_spec.update(applet_or_regional_options, name=app_name)
 
     # Inline Readme.md and Readme.developer.md
     _inline_documentation_files(app_spec, src_dir)
