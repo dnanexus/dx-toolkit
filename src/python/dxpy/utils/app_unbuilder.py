@@ -212,7 +212,7 @@ def dump_executable(executable, destination_directory, omit_resources=False, des
         # dxapp.json.
         if "regionalOptions" in dxapp_json:
             dxapp_json["regionalOptions"] = {}
-            for region, ignore in dxapp_json["regionalOptions"].iteritems():
+            for region, ignore in dxapp_json["regionalOptions"].items():
                 dxapp_json["regionalOptions"][region] = {}
             del dxapp_json["regionalOptions"]
 
