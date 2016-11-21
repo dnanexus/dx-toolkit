@@ -138,8 +138,8 @@ parser.add_argument("--no-parallel-build", help="Build with " + BOLD("make") + "
                     dest="parallel_build")
 
 app_options.set_defaults(use_temp_build_project=True)
+# Original help: "When building an app, build its applet in the current project instead of a temporary project".
 app_options.add_argument("--no-temp-build-project", help=argparse.SUPPRESS, action="store_false", dest="use_temp_build_project")
-# app_options.add_argument("--no-temp-build-project", help="When building an app, build its applet in the current project instead of a temporary project", action="store_false", dest="use_temp_build_project")
 
 # --yes
 app_options.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation for potentially dangerous operations', action='store_false')
@@ -154,7 +154,7 @@ parser.add_argument("--extra-args", help="Arguments (in JSON format) to pass to 
 parser.add_argument("--run", help="Run the app or applet after building it (options following this are passed to "+BOLD("dx run")+"; run at high priority by default)", nargs=argparse.REMAINDER)
 
 # --region
-app_options.add_argument("--region", action="append", help="Enable the app in this region. This flag can be specified multiple times to enable the app in multiple regions. If only one region is specified and --no-temp-build-project is specified, then the specified region will be ignored. If --region is not specified, then the app will be enabled in one region, that of the project context.")
+app_options.add_argument("--region", action="append", help="Enable the app in this region. This flag can be specified multiple times to enable the app in multiple regions. If --region is not specified, then the enabled regions may be resolved by what is specified in dxapp.json, or the app will be enabled in the region of project context.")
 
 
 
