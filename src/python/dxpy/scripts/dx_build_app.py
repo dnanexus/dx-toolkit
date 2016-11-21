@@ -790,8 +790,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
         enabled_regions = requested_regional_options.keys()
     elif region is not None:
         enabled_regions = region
-    if enabled_regions is not None:
-        assert(len(enabled_regions) > 0)
+    if enabled_regions is not None and len(enabled_regions) == 0:
+        raise AssertionError("This app should be enabled in at least one region")
 
     # Cannot build multi-region app if `use_temp_build_project` is falsy.
     if enabled_regions is not None and len(enabled_regions) > 1 and not use_temp_build_project:
@@ -841,8 +841,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                                                input_params={"fields": {"region": True}})["region"]
         except Exception:
             err_exit()
-        else:
-            projects_by_region = {region: project}
+        projects_by_region = {region: project}
 
     try:
         if mode == "applet" and working_project is None and dxpy.WORKSPACE_ID is None:
@@ -871,8 +870,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                                                    input_params={"fields": {"region": True}})["region"]
             except Exception:
                 err_exit()
-            else:
-                projects_by_region = {region: dest_project}
+            projects_by_region = {region: dest_project}
 
             for result in dxpy.find_data_objects(classname="applet", name=dest_name, folder=dest_folder,
                                                  project=dest_project, recurse=False):
@@ -1058,6 +1056,7 @@ def _build_app(args, extra_args):
 
         if isinstance(args.region, list) and len(args.region) > 1:
             parser.error('--region can only be specified once for remote builds')
+        region = args.region[0] if args.region is not None else None
 
         more_kwargs = {}
         if args.version_override:
@@ -1075,7 +1074,7 @@ def _build_app(args, extra_args):
 
         return _build_app_remote(args.mode, args.src_dir, destination_override=args.destination,
                                  publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep,
-                                 region=args.region[0], watch=args.watch, **more_kwargs)
+                                 region=region, watch=args.watch, **more_kwargs)
 
 
 def main(**kwargs):
