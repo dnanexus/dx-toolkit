@@ -5645,7 +5645,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             }
         app_dir = self.write_app_directory("minimal_åpplet", json.dumps(app_spec), "code.py")
         new_applet = json.loads(run("dx build --json " + app_dir))
-        applet_describe = json.loads(run("dx describe --json " + new_applet["id"]))
+        applet_describe = dxpy.get_handler(new_applet["id"]).describe()
         self.assertEqual(applet_describe["class"], "applet")
         self.assertEqual(applet_describe["id"], applet_describe["id"])
         self.assertEqual(applet_describe["name"], "minimal_applet")
@@ -5665,7 +5665,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             }
         app_dir = self.write_app_directory(name, json.dumps(app_spec), "code.py")
         new_applet = json.loads(run("dx build --json " + app_dir))
-        applet_describe = json.loads(run("dx describe --json " + new_applet["id"]))
+        applet_describe = dxpy.get_handler(new_applet["id"]).describe()
         self.assertEqual(applet_describe["class"], "applet")
         self.assertEqual(applet_describe["id"], applet_describe["id"])
         self.assertEqual(applet_describe["name"], name)
@@ -6065,16 +6065,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
     def test_build_multi_region_app_with_regional_options(self):
-        base_app_spec = {
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-        }
-
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
-        app_spec = dict(base_app_spec, name=app_name,
+        app_spec = dict(self.base_app_spec, name=app_name,
                         regionalOptions={"aws:us-east-1": {},
                                          "azure:westus": {}})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
@@ -6093,16 +6085,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
 
     def test_build_multi_region_app_without_regional_options(self):
-        base_app_spec = {
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-        }
-
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
-        app_spec = dict(base_app_spec, name=app_name)
+        app_spec = dict(self.base_app_spec, name=app_name)
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
         cmd = "dx build --create-app --region aws:us-east-1 --region azure:westus --json {app_dir}".format(
@@ -6161,30 +6145,22 @@ class TestDXBuildApp(DXTestCaseBuildApps):
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
     def test_build_multi_region_app_invalid_regional_options(self):
-        base_app_spec = {
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-        }
-
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
-        app_spec = dict(base_app_spec, name=app_name, regionalOptions={})
+        app_spec = dict(self.base_app_spec, name=app_name, regionalOptions={})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
         with self.assertSubprocessFailure(stderr_regexp="regionalOptions", exit_code=3):
             run("dx build --create-app --json " + app_dir)
 
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
-        app_spec = dict(base_app_spec, name=app_name, regionalOptions={"aws:us-east-1": {}})
+        app_spec = dict(self.base_app_spec, name=app_name, regionalOptions={"aws:us-east-1": {}})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
         with self.assertSubprocessFailure(stderr_regexp="regionalOptions", exit_code=3):
             run("dx build --create-app --region azure:westus --json " + app_dir)
 
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
-        app_spec = dict(base_app_spec, name=app_name,
+        app_spec = dict(self.base_app_spec, name=app_name,
                         regionalOptions={"azure:westus": {},
                                          "aws:us-east-1": {}})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
@@ -6198,16 +6174,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         # Attempt to build app without creating temporary projects.
         base_cmd = "dx build --create-app --no-temp-build-project --json {app_dir}"
 
-        base_app_spec = {
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-        }
-
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time() * 1000))
-        app_spec = dict(base_app_spec, name=app_name,
+        app_spec = dict(self.base_app_spec, name=app_name,
                         # This is a multi-region app.
                         regionalOptions={"aws:us-east-1": {},
                                          "azure:westus": {}})
@@ -6218,7 +6186,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time() * 1000))
         # This is a single-region app.
-        app_spec = dict(base_app_spec, name=app_name, regionalOptions={"aws:us-east-1": {}})
+        app_spec = dict(self.base_app_spec, name=app_name, regionalOptions={"aws:us-east-1": {}})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
         app_new_res = json.loads(run(base_cmd.format(app_dir=app_dir)))
@@ -6789,7 +6757,7 @@ def main(in1):
         with open(os.path.join(app_dir, 'resources', 'test.txt'), 'w') as resources_file:
             resources_file.write('test\n')
         new_applet = json.loads(run("dx build --json " + app_dir))
-        applet_describe = json.loads(run("dx describe --json " + new_applet["id"]))
+        applet_describe = dxpy.get_handler(new_applet["id"]).describe()
         resources_file = applet_describe['runSpec']['bundledDepends'][0]['id']['$dnanexus_link']
         resources_file_describe = json.loads(run("dx describe --json " + resources_file))
         # Verify that the bundled depends appear in the same folder.
