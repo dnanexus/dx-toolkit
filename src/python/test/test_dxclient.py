@@ -6074,12 +6074,9 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         }
 
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
-        app_spec = {
-            "name": app_name,
-            "regionalOptions": {"aws:us-east-1": {},
-                                "azure:westus": {}}
-        }
-        app_spec.update(base_app_spec)
+        app_spec = dict(base_app_spec, name=app_name,
+                        regionalOptions={"aws:us-east-1": {},
+                                         "azure:westus": {}})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
         app_new_res = json.loads(run("dx build --create-app --json " + app_dir))
@@ -6105,8 +6102,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         }
 
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
-        app_spec = {"name": app_name}
-        app_spec.update(base_app_spec)
+        app_spec = dict(base_app_spec, name=app_name)
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
         cmd = "dx build --create-app --region aws:us-east-1 --region azure:westus --json {app_dir}".format(
@@ -6174,34 +6170,23 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         }
 
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
-        app_spec = {
-            "name": app_name,
-            "regionalOptions": {}
-        }
-        app_spec.update(base_app_spec)
+        app_spec = dict(base_app_spec, name=app_name, regionalOptions={})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
         with self.assertSubprocessFailure(stderr_regexp="regionalOptions", exit_code=3):
             run("dx build --create-app --json " + app_dir)
 
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
-        app_spec = {
-            "name": app_name,
-            "regionalOptions": {"aws:us-east-1": {}}
-            }
-        app_spec.update(base_app_spec)
+        app_spec = dict(base_app_spec, name=app_name, regionalOptions={"aws:us-east-1": {}})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
         with self.assertSubprocessFailure(stderr_regexp="regionalOptions", exit_code=3):
             run("dx build --create-app --region azure:westus --json " + app_dir)
 
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
-        app_spec = {
-            "name": app_name,
-            "regionalOptions": {"azure:westus": {},
-                                "aws:us-east-1": {}}
-            }
-        app_spec.update(base_app_spec)
+        app_spec = dict(base_app_spec, name=app_name,
+                        regionalOptions={"azure:westus": {},
+                                         "aws:us-east-1": {}})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
         with self.assertSubprocessFailure(stderr_regexp="regionalOptions", exit_code=3):
@@ -6222,25 +6207,18 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         }
 
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time() * 1000))
-        app_spec = {
-            "name": app_name,
-            # This is a multi-region app.
-            "regionalOptions": {"aws:us-east-1": {},
-                                "azure:westus": {}}
-        }
-        app_spec.update(base_app_spec)
+        app_spec = dict(base_app_spec, name=app_name,
+                        # This is a multi-region app.
+                        regionalOptions={"aws:us-east-1": {},
+                                         "azure:westus": {}})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
         with self.assertSubprocessFailure(stderr_regexp="--no-temp-build-project.*multi-region"):
             run(base_cmd.format(app_dir=app_dir))
 
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time() * 1000))
-        app_spec = {
-            "name": app_name,
-            # This is a single-region app.
-            "regionalOptions": {"aws:us-east-1": {}}
-        }
-        app_spec.update(base_app_spec)
+        # This is a single-region app.
+        app_spec = dict(base_app_spec, name=app_name, regionalOptions={"aws:us-east-1": {}})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
         app_new_res = json.loads(run(base_cmd.format(app_dir=app_dir)))
