@@ -6181,7 +6181,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         app_spec.update(base_app_spec)
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
-        with self.assertRaisesRegexp(subprocess.CalledProcessError, "regionalOptions"):
+        with self.assertSubprocessFailure(stderr_regexp="regionalOptions", exit_code=3):
             run("dx build --create-app --json " + app_dir)
 
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
@@ -6192,7 +6192,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         app_spec.update(base_app_spec)
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
-        with self.assertRaisesRegexp(subprocess.CalledProcessError, "regionalOptions"):
+        with self.assertSubprocessFailure(stderr_regexp="regionalOptions", exit_code=3):
             run("dx build --create-app --region azure:westus --json " + app_dir)
 
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
@@ -6204,7 +6204,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         app_spec.update(base_app_spec)
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
-        with self.assertRaisesRegexp(subprocess.CalledProcessError, "regionalOptions"):
+        with self.assertSubprocessFailure(stderr_regexp="regionalOptions", exit_code=3):
             run("dx build --create-app --region azure:westus --region aws:us-east-2 --json " + app_dir)
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
