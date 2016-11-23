@@ -175,7 +175,7 @@ class DXCLICompleter():
                    'update': ['stage ', 'workflow ', 'org ', 'member ', 'project '],
                    'org': ['projects ', 'members ']}
 
-    silent_commands = set(['import', 'export'])
+    silent_commands = set(['export'])
 
     def __init__(self):
         self.commands = [subcmd + ' ' for subcmd in subparsers.choices.keys() if subcmd not in self.silent_commands]
@@ -1978,26 +1978,6 @@ def upload_one(args):
         except:
             err_exit()
 
-def import_csv(args):
-    sys.argv = [sys.argv[0] + ' import csv'] + args.importer_args
-    from dxpy.scripts import dx_csv_to_gtable
-    dx_csv_to_gtable.main()
-
-def import_tsv(args):
-    sys.argv = [sys.argv[0] + ' import tsv'] + args.importer_args
-    from dxpy.scripts import dx_tsv_to_gtable
-    dx_tsv_to_gtable.main()
-
-importers = {
-    "tsv": import_tsv,
-    "csv": import_csv
-}
-
-def dximport(args):
-    if args.format.lower() not in importers:
-        err_exit('Unsupported format: "' + args.format + '".  For a list of supported formats, run "dx help import"', 3)
-    importers[args.format.lower()](args)
-
 def export_fastq(args):
     sys.argv = [sys.argv[0] + ' export fastq'] + args.exporter_args
     from dxpy.scripts import dx_reads_to_fastq
@@ -3326,12 +3306,6 @@ def print_help(args):
         new_args = argparse.Namespace()
         setattr(new_args, 'exporter_args', ['-h'])
         exporters[args.subcommand](new_args)
-    elif args.command_or_category == 'import' and args.subcommand is not None:
-        if args.subcommand not in importers:
-            err_exit('Unsupported format for dx import: ' + args.subcommand, 3)
-        new_args = argparse.Namespace()
-        setattr(new_args, 'importer_args', ['-h'])
-        importers[args.subcommand](new_args)
     elif args.command_or_category == 'run':
         if args.subcommand is None:
             parser_map[args.command_or_category].print_help()
@@ -3808,19 +3782,6 @@ head_path_action = parser_head.add_argument('path', help='File ID or name to acc
 head_path_action.completer = DXPathCompleter(classes=['file'])
 parser_head.set_defaults(func=head)
 register_parser(parser_head, categories='data')
-
-parser_import = subparsers.add_parser('import',
-                                      help='Import (convert and upload) a local table or genomic file',
-                                      description=fill('Import a local file to the DNAnexus platform as a GenomicTable.') + '\n\n' + fill('For more details on how to import from a particular format, run ') + '\n  $ dx help import <format>' + '\n\nSupported formats:\n\n  ' + '\n  '.join(sorted(importers)),
-                                      formatter_class=argparse.RawTextHelpFormatter,
-                                      prog='dx import',
-                                      parents=[env_args])
-parser_import.add_argument('format', help='Format to import from')
-import_args_action = parser_import.add_argument('importer_args', help=fill('Arguments passed to the importer', width_adjustment=-24),
-                                                nargs=argparse.REMAINDER)
-import_args_action.completer = LocalCompleter()
-parser_import.set_defaults(func=dximport)
-register_parser(parser_import, categories='data')
 
 parser_export = subparsers.add_parser('export',
                                       help='Export (download and convert) a gtable into a local file',
@@ -4332,7 +4293,7 @@ parser_new_workflow.set_defaults(func=workflow_cli.new_workflow)
 register_parser(parser_new_workflow, subparsers_action=subparsers_new, categories='workflow')
 
 parser_new_gtable = subparsers_new.add_parser('gtable', add_help=False, #help='Create a new gtable',
-                                              description='Create a new gtable from scratch.  See \'dx import\' for importing special file formats (e.g. csv, fastq) into GenomicTables.',
+                                              description='Create a new gtable from scratch.',
                                               parents=[parser_dataobject_args, parser_single_dataobject_output_args,
                                                        stdout_args, env_args],
                                               formatter_class=argparse.RawTextHelpFormatter,
@@ -4756,7 +4717,7 @@ def main():
         from ..packages import argcomplete
         argcomplete.autocomplete(parser,
                                  always_complete_options=False,
-                                 exclude=['import', 'gtable', 'export'],
+                                 exclude=['gtable', 'export'],
                                  output_stream=sys.stdout if '_DX_ARC_DEBUG' in os.environ else None)
 
     if len(args_list) > 0:

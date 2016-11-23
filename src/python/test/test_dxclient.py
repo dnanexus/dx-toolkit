@@ -40,6 +40,7 @@ from dxpy.exceptions import DXAPIError, DXSearchError, EXPECTED_ERR_EXIT_STATUS,
 from dxpy.compat import str, sys_encoding, open
 from dxpy.utils.resolver import ResolutionError, _check_resolution_needed as check_resolution
 
+
 def create_file_in_project(fname, trg_proj_id, folder=None):
     data = "foo"
     if folder is None:
@@ -71,34 +72,10 @@ def list_folder(proj_id, path):
     output['objects'] = sorted(output['objects'])
     return output
 
-def makeGenomeObject():
-    # NOTE: for these tests we don't upload a full sequence file (which
-    # would be huge, for hg19). Importers and exporters that need to
-    # look at the full sequence file can't be run on this test
-    # contigset.
-    sequence_file = dxpy.upload_string("", hidden=True)
-
-    genome_record = dxpy.new_dxrecord()
-    genome_record.set_details({
-        "flat_sequence_file": {"$dnanexus_link": sequence_file.get_id()},
-        "contigs": {
-            "offsets": [0],
-            "names": ["chr1"],
-            "sizes": [249250621]
-        }
-    })
-    genome_record.add_types(["ContigSet"])
-    genome_record.close()
-
-    sequence_file.wait_on_close()
-
-    return genome_record.get_id()
-
 
 class TestDXTestUtils(DXTestCase):
     def test_temporary_project(self):
-        test_dirname = '/test_folder'
-        with temporary_project('test_temporary_project', select=True) as temp_project:
+        with temporary_project('test_temporary_project', select=True):
             self.assertEquals('test_temporary_project:/', run('dx pwd').strip())
 
     def test_select_project(self):
@@ -135,8 +112,17 @@ class TestDXTestUtils(DXTestCase):
         self.assertNotEqual(default_user, second_user)
 
 
-# TODO: these 'dx rm' and related commands should really exit with code 3 to distinguish user and internal errors
 class TestDXRemove(DXTestCase):
+    def test_remove_objects(self):
+        dxpy.new_dxrecord(name="my record")
+        dxpy.find_one_data_object(name="my record", project=self.project, zero_ok=False)
+        run("dx rm 'my record'")
+        self.assertEqual(dxpy.find_one_data_object(name="my record", project=self.project, zero_ok=True), None)
+
+    def test_remove_nonexistent_object(self):
+        with self.assertSubprocessFailure(exit_code=3):
+            run("dx rm nonexistent")
+
     def test_remove_folders(self):
         folder_name = "/test_folder"
         record_name = "test_folder"
@@ -184,64 +170,25 @@ class TestDXClient(DXTestCase):
         (stdout, stderr) = run("_DX_DEBUG=1 dx ls", also_return_stderr=True)
         self.assertRegexpMatches(stderr, "POST \d{13}-\d{1,6} http", msg="stderr does not appear to contain request ID")
 
-    def test_dx_actions(self):
+    def test_dx(self):
         with self.assertRaises(subprocess.CalledProcessError):
             run("dx")
         run("dx help")
-        folder_name = "эксперимент 1"
-        cd("/")
-        run("dx ls")
-        run("dx mkdir '{f}'".format(f=folder_name))
-        cd(folder_name)
-        with tempfile.NamedTemporaryFile() as f:
-            local_filename = f.name
-            filename = folder_name
-            run("echo xyzzt > {tf}".format(tf=local_filename))
-            fileid = run("dx upload --wait {tf} -o '../{f}/{f}' --brief".format(tf=local_filename,
-                                                                                f=filename))
-            self.assertEqual(fileid, run("dx ls '../{f}/{f}' --brief".format(f=filename)))
-            self.assertEqual("xyzzt\n", run("dx head '../{f}/{f}'".format(f=filename)))
-        run("dx pwd")
-        cd("..")
-        run("dx pwd")
-        run("dx ls")
-        with self.assertRaises(subprocess.CalledProcessError):
-            run("dx rm '{f}'".format(f=filename))
-        cd(folder_name)
 
-        run("dx mv '{f}' '{f}2'".format(f=filename))
-        run("dx mv '{f}2' '{f}'".format(f=filename))
+    def test_head(self):
+        dxpy.upload_string("abcd\n", project=self.project, name="foo", wait_on_close=True)
+        self.assertEqual("abcd\n", run("dx head foo"))
 
-        run("dx rm '{f}'".format(f=filename))
-
-        table_name = folder_name
-        with tempfile.NamedTemporaryFile(suffix='.csv') as f:
-            writer = csv.writer(f)
-            writer.writerows([['a:uint8', 'b:string', 'c:float'], [1, "x", 1.0], [2, "y", 4.0]])
-            f.flush()
-            run("dx import csv -o '../{n}' '{f}' --wait".format(n=table_name, f=f.name))
-            run("dx export csv '../{n}' --output {o} -f".format(n=table_name, o=f.name))
-
-        run("dx get_details '../{n}'".format(n=table_name))
-
-        cd("..")
-        run("dx rmdir '{f}'".format(f=folder_name))
-
-        run("dx tree")
-        run("dx find data --name '{n}'".format(n=table_name))
-        run("dx find data --name '{n} --property foo=bar'".format(n=table_name))
-        run("dx rename '{n}' '{n}'2".format(n=table_name))
-        run("dx rename '{n}'2 '{n}'".format(n=table_name))
-        run("dx set_properties '{n}' '{n}={n}' '{n}2={n}3'".format(n=table_name))
-        run("dx unset_properties '{n}' '{n}' '{n}2'".format(n=table_name))
-        run("dx tag '{n}' '{n}'2".format(n=table_name))
-        run("dx describe '{n}'".format(n=table_name))
-
-        # Path resolution is used
+    def test_path_resolution_doesnt_crash(self):
+        # TODO: add some assertions
         run("dx find jobs --project :")
         run("dx find executions --project :")
         run("dx find analyses --project :")
         run("dx find data --project :")
+
+    def test_tree(self):
+        # TODO: add some assertions
+        run("dx tree")
 
     def test_windows_pager(self):
         with self.assertRaises(DXCalledProcessError):
@@ -1151,6 +1098,31 @@ class TestDXWhoami(DXTestCase):
     def test_dx_whoami_id(self):
         whoami_output = run("dx whoami --id").strip()
         self.assertEqual(whoami_output, dxpy.whoami())
+
+
+class TestDXRmdir(DXTestCase):
+    def test_dx_rmdir(self):
+        dxpy.api.project_new_folder(self.project, {"folder": "/mydirectory"})
+        self.assertIn("/mydirectory", list_folder(self.project, "/")['folders'])
+        run("dx rmdir mydirectory")
+        self.assertNotIn("/mydirectory", list_folder(self.project, "/")['folders'])
+
+
+class TestDXMv(DXTestCase):
+    def test_dx_mv(self):
+        dxpy.new_dxrecord(name="a")
+        dxpy.find_one_data_object(name="a", project=self.project, zero_ok=False)
+        run("dx mv a b")
+        dxpy.find_one_data_object(name="b", project=self.project, zero_ok=False)
+        self.assertEqual(dxpy.find_one_data_object(name="a", project=self.project, zero_ok=True), None)
+
+
+class TestDXRename(DXTestCase):
+    def test_rename(self):
+        my_record = dxpy.new_dxrecord(name="my record").get_id()
+        self.assertEquals(dxpy.describe(my_record)["name"], "my record")
+        run("dx rename 'my record' 'my record 2'")
+        self.assertEquals(dxpy.describe(my_record)["name"], "my record 2")
 
 
 class TestDXClientUploadDownload(DXTestCase):
@@ -3515,6 +3487,7 @@ class TestDXClientWorkflow(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
             run("dx update stage /myworkflow stage-123456789012345678901234 --name foo")
 
+
 class TestDXClientFind(DXTestCase):
 
     def assert_cmd_gives_ids(self, cmd, ids):
@@ -3529,6 +3502,11 @@ class TestDXClientFind(DXTestCase):
         for category in APP_CATEGORIES:
             self.assertIn(category, category_help)
         run("dx find apps --category foo") # any category can be searched
+
+    def test_dx_find_data_by_name(self):
+        record_id = dxpy.new_dxrecord(name="find_data_by_name").get_id()
+        self.assertEqual(run("dx find data --brief --name " + "find_data_by_name").strip(),
+                         self.project + ':' + record_id)
 
     def test_dx_find_data_by_class(self):
         ids = {"record": run("dx new record --brief").strip(),
@@ -8043,7 +8021,7 @@ class TestDXCp(DXTestCase):
     #   dx cp  proj-1111:/file-1111   proj-2222:/file-2222
     def test_cp_rename(self):
         basename = self.gen_uniq_fname()
-        file_id = create_file_in_project(basename, self.proj_id1)
+        create_file_in_project(basename, self.proj_id1)
         run("dx cp {p1}:/{f1} {p2}:/{f2}".format(f1=basename, f2="AAA.txt",
                                                  p1=self.proj_id1, p2=self.proj_id2))
         self.verify_file_ids_are_equal(basename, path2="AAA.txt")
