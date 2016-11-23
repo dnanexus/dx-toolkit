@@ -7967,8 +7967,6 @@ class TestDXScripts(DXTestCase):
         # This is a hack and obviously it would be preferable to figure
         # out why the coverage generator sometimes likes to include
         # these files and sometimes likes to exclude them.
-        run('dx-gff-to-genes -h')
-        run('dx-gtf-to-genes -h')
         run('dx-variants-to-vcf -h')
         run('dx-genes-to-gff -h')
         run('dx-genes-to-gtf -h')
