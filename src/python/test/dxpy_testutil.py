@@ -326,6 +326,7 @@ class DXTestCase(unittest.TestCase):
 
     def setUp(self):
         proj_name = u"dxclient_test_pröject"
+        self.azure_project = dxpy.api.project_new({"name": proj_name, "region": "azure:westus"})['id']
         self.project = dxpy.api.project_new({"name": proj_name})['id']
         dxpy.config["DX_PROJECT_CONTEXT_ID"] = self.project
         cd(self.project + ":/")
@@ -340,6 +341,10 @@ class DXTestCase(unittest.TestCase):
             dxpy.api.project_destroy(self.project, {"terminateJobs": True})
         except Exception as e:
             print("Failed to remove test project:", str(e))
+        try:
+            dxpy.api.project_destroy(self.azure_project, {"terminateJobs": True})
+        except Exception as e:
+            print("Failed to remove test Azure project:", str(e))
         if 'DX_PROJECT_CONTEXT_ID' in dxpy.config:
             del dxpy.config['DX_PROJECT_CONTEXT_ID']
         if 'DX_CLI_WD' in dxpy.config:

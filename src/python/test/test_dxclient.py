@@ -808,62 +808,65 @@ class TestDXClient(DXTestCase):
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_ssh(self):
-        for use_alternate_config_dir in [False, True]:
-            with self.configure_ssh(use_alternate_config_dir=use_alternate_config_dir) as wd:
-                sleep_applet = dxpy.api.applet_new(dict(name="sleep",
-                                                        runSpec={"code": "sleep 1200",
-                                                                 "interpreter": "bash",
-                                                                 "execDepends": [{"name": "dx-toolkit"}]},
-                                                        inputSpec=[], outputSpec=[],
-                                                        dxapi="1.0.0", version="1.0.0",
-                                                        project=self.project))["id"]
+        for project, instance_type in {self.project: "mem2_hdd2_x1", self.azure_project: "azure:mem2_ssd1_x1"}.iteritems():
+            dxpy.config["DX_PROJECT_CONTEXT_ID"] = project
+            for use_alternate_config_dir in [False, True]:
+                with self.configure_ssh(use_alternate_config_dir=use_alternate_config_dir) as wd:
+                    sleep_applet = dxpy.api.applet_new(dict(name="sleep",
+                                                            runSpec={"code": "sleep 1200",
+                                                                     "interpreter": "bash",
+                                                                     "execDepends": [{"name": "dx-toolkit"}],
+                                                                     "systemRequirements": {"*": {"instanceType": instance_type}}},
+                                                            inputSpec=[], outputSpec=[],
+                                                            dxapi="1.0.0", version="1.0.0",
+                                                            project=project))["id"]
 
-                dx = pexpect.spawn("dx run {} --yes --ssh".format(sleep_applet),
-                                   env=override_environment(HOME=wd))
-                dx.logfile = sys.stdout
-                dx.setwinsize(20, 90)
-                dx.expect("Waiting for job")
-                dx.expect("Resolving job hostname and SSH host key", timeout=1200)
+                    dx = pexpect.spawn("dx run {} --yes --ssh".format(sleep_applet),
+                                       env=override_environment(HOME=wd))
+                    dx.logfile = sys.stdout
+                    dx.setwinsize(20, 90)
+                    dx.expect("Waiting for job")
+                    dx.expect("Resolving job hostname and SSH host key", timeout=1200)
 
-                # Wait for the line displayed between the first and second MOTDs,
-                # since we only care about checking the second set of MOTD lines.
-                # Example of the dividing line:
-                # dnanexus@job-BP90K3Q0X2v81PXXPZj005Zj.dnanex.us (10.0.0.200) - byobu
-                dx.expect(["dnanexus.io \(10.0.0.200\) - byobu",
-                           "dnanex.us \(10.0.0.200\) - byobu"], timeout=120)
-                dx.expect("This is the DNAnexus Execution Environment", timeout=600)
-                # Check for job name (e.g. "Job: sleep")
-                dx.expect("Job: \x1b\[1msleep", timeout=5)
-                # \xf6 is ö
-                dx.expect("Project: dxclient_test_pr\xf6ject".encode(sys_encoding))
-                dx.expect("The job is running in terminal 1.", timeout=5)
-                # Check for terminal prompt and verify we're in the container
-                job_id = dxpy.find_jobs(name="sleep", project=self.project).next()['id']
-                dx.expect(("dnanexus@%s" % job_id), timeout=10)
+                    # Wait for the line displayed between the first and second MOTDs,
+                    # since we only care about checking the second set of MOTD lines.
+                    # Example of the dividing line:
+                    # dnanexus@job-BP90K3Q0X2v81PXXPZj005Zj.dnanex.us (10.0.0.200) - byobu
+                    dx.expect(["dnanexus.io \(10.0.0.200\) - byobu",
+                               "dnanex.us \(10.0.0.200\) - byobu"], timeout=120)
+                    dx.expect("This is the DNAnexus Execution Environment", timeout=600)
+                    # Check for job name (e.g. "Job: sleep")
+                    dx.expect("Job: \x1b\[1msleep", timeout=5)
+                    # \xf6 is ö
+                    dx.expect("Project: dxclient_test_pr\xf6ject".encode(sys_encoding))
+                    dx.expect("The job is running in terminal 1.", timeout=5)
+                    # Check for terminal prompt and verify we're in the container
+                    job_id = dxpy.find_jobs(name="sleep", project=project).next()['id']
+                    dx.expect(("dnanexus@%s" % job_id), timeout=10)
 
-                expected_history_filename = os.path.join(
-                        os.environ.get("DX_USER_CONF_DIR", os.path.join(wd, ".dnanexus_config")), ".dx_history")
-                self.assertTrue(os.path.isfile(expected_history_filename))
+                    expected_history_filename = os.path.join(
+                            os.environ.get("DX_USER_CONF_DIR", os.path.join(wd, ".dnanexus_config")), ".dx_history")
+                    self.assertTrue(os.path.isfile(expected_history_filename))
 
-                # Make sure the job can be connected to using 'dx ssh <job id>'
-                dx2 = pexpect.spawn("dx ssh " + job_id, env=override_environment(HOME=wd))
-                dx2.logfile = sys.stdout
-                dx2.setwinsize(20, 90)
-                dx2.expect("Waiting for job")
-                dx2.expect("Resolving job hostname and SSH host key", timeout=1200)
-                dx2.expect(("dnanexus@%s" % job_id), timeout=10)
-                dx2.sendline("whoami")
-                dx2.expect("dnanexus", timeout=10)
-                # Exit SSH session and terminate job
-                dx2.sendline("exit")
-                dx2.expect("bash running")
-                dx2.sendcontrol("c") # CTRL-c
-                dx2.expect("[exited]")
-                dx2.expect("dnanexus@job", timeout=10)
-                dx2.sendline("exit")
-                dx2.expect("still running. Terminate now?")
-                dx2.sendline("y")
-                dx2.expect("Terminated job", timeout=60)
+                    # Make sure the job can be connected to using 'dx ssh <job id>'
+                    dx2 = pexpect.spawn("dx ssh " + job_id, env=override_environment(HOME=wd))
+                    dx2.logfile = sys.stdout
+                    dx2.setwinsize(20, 90)
+                    dx2.expect("Waiting for job")
+                    dx2.expect("Resolving job hostname and SSH host key", timeout=1200)
+                    dx2.expect(("dnanexus@%s" % job_id), timeout=10)
+                    dx2.sendline("whoami")
+                    dx2.expect("dnanexus", timeout=10)
+                    # Exit SSH session and terminate job
+                    dx2.sendline("exit")
+                    dx2.expect("bash running")
+                    dx2.sendcontrol("c") # CTRL-c
+                    dx2.expect("[exited]")
+                    dx2.expect("dnanexus@job", timeout=10)
+                    dx2.sendline("exit")
+                    dx2.expect("still running. Terminate now?")
+                    dx2.sendline("y")
+                    dx2.expect("Terminated job", timeout=60)
 
     @unittest.skipIf(sys.platform.startswith("win"), "pexpect is not supported")
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
@@ -896,89 +899,93 @@ class TestDXClient(DXTestCase):
                 if t > 16:
                     raise Exception("Failed to launch Squid")
 
-        with self.configure_ssh() as wd:
-            launch_squid()
-            applet_json = dict(name="sleep",
-                               runSpec={"code": "sleep 6000",
-                                        "interpreter": "bash",
-                                        "execDepends": [{"name": "dx-toolkit"}]},
-                               inputSpec=[], outputSpec=[],
-                               dxapi="1.0.0", version="1.0.0",
-                               project=self.project)
-            sleep_applet = dxpy.api.applet_new(applet_json)["id"]
+        for project, instance_type in {self.project: "mem2_hdd2_x1", self.azure_project: "azure:mem2_ssd1_x1"}.iteritems():
+            dxpy.config["DX_PROJECT_CONTEXT_ID"] = project
+            with self.configure_ssh() as wd:
+                launch_squid()
+                applet_json = dict(name="sleep",
+                                   runSpec={"code": "sleep 6000",
+                                            "interpreter": "bash",
+                                            "execDepends": [{"name": "dx-toolkit"}],
+                                            "systemRequirements": {"*": {"instanceType": instance_type}}},
+                                   inputSpec=[], outputSpec=[],
+                                   dxapi="1.0.0", version="1.0.0",
+                                   project=project)
+                sleep_applet = dxpy.api.applet_new(applet_json)["id"]
 
-            # Test incorrect arguments i.e. --ssh is missing
-            with self.assertSubprocessFailure(stderr_regexp="DXCLIError", exit_code=3):
-                run("dx run {a} --yes --ssh-proxy {h}:{p} --debug-on All".format(a=sleep_applet,
-                                                                                 h=proxy_host,
-                                                                                 p=proxy_port),
-                    env=override_environment(HOME=wd))
+                # Test incorrect arguments i.e. --ssh is missing
+                with self.assertSubprocessFailure(stderr_regexp="DXCLIError", exit_code=3):
+                    run("dx run {a} --yes --ssh-proxy {h}:{p} --debug-on All".format(a=sleep_applet,
+                                                                                     h=proxy_host,
+                                                                                     p=proxy_port),
+                        env=override_environment(HOME=wd))
 
-            # Create job using the proxy
-            dx = pexpect.spawn("dx run {a} --yes --ssh --ssh-proxy {h}:{p} --debug-on All".
-                               format(a=sleep_applet,
-                                      h=proxy_host,
-                                      p=proxy_port),
-                               env=override_environment(HOME=wd))
-            dx.logfile = sys.stdout
-            dx.setwinsize(20, 90)
-            dx.expect("The job is running in terminal 1.", timeout=1200)
-            # Check for terminal prompt and verify we're in the container
-            job_id = dxpy.find_jobs(name="sleep", project=self.project).next()['id']
-            dx.expect(("dnanexus@%s" % job_id), timeout=10)
-            # Cache default ssh command for refactoring
-            ssh_proxy_command = "dx ssh --ssh-proxy {h}:{p} {id}".format(h=proxy_host,
-                                                                         p=proxy_port,
-                                                                         id=job_id)
-            # Make sure the job can be connected to using 'dx ssh <job id>'
-            dx2 = pexpect.spawn(ssh_proxy_command, env=override_environment(HOME=wd))
-            dx2.expect(("dnanexus@%s" % job_id), timeout=10)
-            dx2.sendline("exit")
-            dx2.expect("bash running", timeout=10)
-            dx2.sendcontrol("c")  # CTRL-c
-            dx2.expect("[exited]")
-            dx2.expect("dnanexus@job", timeout=10)
-            # Test proxy connection from worker side
-            squid_address = run("netstat -plant 2>/dev/null|grep squid3|grep :22|awk '{print $4}'")
-            squid_port = squid_address.split(':')[1][:-1]
-            dx2.sendline("netstat -plant 2>/dev/null|grep :{p}|awk '{{print $6}}'".format(p=squid_port))
-            dx2.expect("ESTABLISHED", timeout=60)
-            # Make sure ssh-proxy fails without proxy running
-            self.proxy_process.kill()
-            with self.assertSubprocessFailure(stderr_regexp="DXCLIError", exit_code=3):
-                run(ssh_proxy_command, env=override_environment(HOME=wd))
-            # Test invalid proxy address
-            with self.assertSubprocessFailure(stderr_regexp="DXCLIError", exit_code=3):
-                run("dx ssh --ssh-proxy {h}:{p} {id}".format(h='999.999.9.9',
-                                                             p='9999',
-                                                             id=job_id),
-                    env=override_environment(HOME=wd))
+                # Create job using the proxy
+                dx = pexpect.spawn("dx run {a} --yes --ssh --ssh-proxy {h}:{p} --debug-on All".
+                                   format(a=sleep_applet,
+                                          h=proxy_host,
+                                          p=proxy_port),
+                                   env=override_environment(HOME=wd))
+                dx.logfile = sys.stdout
+                dx.setwinsize(20, 90)
+                dx.expect("The job is running in terminal 1.", timeout=1200)
+                # Check for terminal prompt and verify we're in the container
+                job_id = dxpy.find_jobs(name="sleep", project=project).next()['id']
+                job_ssh_port = dxpy.DXJob(job_id).describe().get('sshPort', 22)
+                dx.expect(("dnanexus@%s" % job_id), timeout=10)
+                # Cache default ssh command for refactoring
+                ssh_proxy_command = "dx ssh --ssh-proxy {h}:{p} {id}".format(h=proxy_host,
+                                                                             p=proxy_port,
+                                                                             id=job_id)
+                # Make sure the job can be connected to using 'dx ssh <job id>'
+                dx2 = pexpect.spawn(ssh_proxy_command, env=override_environment(HOME=wd))
+                dx2.expect(("dnanexus@%s" % job_id), timeout=10)
+                dx2.sendline("exit")
+                dx2.expect("bash running", timeout=10)
+                dx2.sendcontrol("c")  # CTRL-c
+                dx2.expect("[exited]")
+                dx2.expect("dnanexus@job", timeout=10)
+                # Test proxy connection from worker side
+                squid_address = run("netstat -plant 2>/dev/null|grep squid3|grep :{p}|awk '{{print $4}}'".format(p=job_ssh_port))
+                squid_port = squid_address.split(':')[1][:-1]
+                dx2.sendline("netstat -plant 2>/dev/null|grep :{p}|awk '{{print $6}}'".format(p=squid_port))
+                dx2.expect("ESTABLISHED", timeout=60)
+                # Make sure ssh-proxy fails without proxy running
+                self.proxy_process.kill()
+                with self.assertSubprocessFailure(stderr_regexp="DXCLIError", exit_code=3):
+                    run(ssh_proxy_command, env=override_environment(HOME=wd))
+                # Test invalid proxy address
+                with self.assertSubprocessFailure(stderr_regexp="DXCLIError", exit_code=3):
+                    run("dx ssh --ssh-proxy {h}:{p} {id}".format(h='999.999.9.9',
+                                                                 p='9999',
+                                                                 id=job_id),
+                        env=override_environment(HOME=wd))
 
-            run("dx terminate " + job_id, env=override_environment(HOME=wd))
-            # Verify job termination
-            running = 'terminating'
-            t = 0
-            while running == 'terminating':
-                running = run("dx find jobs --id {id}|grep 'terminated'||echo 'terminating'"
-                              .format(id=job_id))[:-1]
-                time.sleep(1)
-                t += 1
-                if t > 16:
-                    raise Exception("Failed to terminate job")
+                run("dx terminate " + job_id, env=override_environment(HOME=wd))
+                # Verify job termination
+                running = 'terminating'
+                t = 0
+                while running == 'terminating':
+                    running = run("dx find jobs --id {id}|grep 'terminated'||echo 'terminating'"
+                                  .format(id=job_id))[:-1]
+                    time.sleep(1)
+                    t += 1
+                    if t > 16:
+                        raise Exception("Failed to terminate job")
 
-            launch_squid()
-            # Test sshing into a terminated job while proxy is running
-            with self.assertSubprocessFailure(stderr_regexp=("%s is in a terminal state" % job_id), exit_code=1):
-                run(ssh_proxy_command, env=override_environment(HOME=wd))
+                launch_squid()
+                # Test sshing into a terminated job while proxy is running
+                with self.assertSubprocessFailure(stderr_regexp=("%s is in a terminal state" % job_id), exit_code=1):
+                    run(ssh_proxy_command, env=override_environment(HOME=wd))
 
-            # Test sshing into a non existentant job through proxy
-            with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
-                bad_id = 'job-000000000000000000000000'
-                run("dx ssh --ssh-proxy {h}:{p} {id}".format(h=proxy_host,
-                                                             p=proxy_port,
-                                                             id=bad_id),
-                    env=override_environment(HOME=wd))
-            self.proxy_process.kill()
+                # Test sshing into a non existentant job through proxy
+                with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
+                    bad_id = 'job-000000000000000000000000'
+                    run("dx ssh --ssh-proxy {h}:{p} {id}".format(h=proxy_host,
+                                                                 p=proxy_port,
+                                                                 id=bad_id),
+                        env=override_environment(HOME=wd))
+                self.proxy_process.kill()
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_run_debug_on(self):
