@@ -879,6 +879,11 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 msg += " -f/--overwrite nor -a/--archive were given."
                 raise dxpy.app_builder.AppBuilderException(msg)
 
+        if dry_run:
+            # Set a dummy "projects_by_region" so that we can exercise the dry
+            # run flows for uploading resources bundles and applets below.
+            projects_by_region = {"dummy-cloud:dummy-region": "project-dummy"}
+
         if projects_by_region is None:
             raise AssertionError("'projects_by_region' should not be None at this point")
 
