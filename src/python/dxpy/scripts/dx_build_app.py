@@ -884,6 +884,16 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             # run flows for uploading resources bundles and applets below.
             projects_by_region = {"dummy-cloud:dummy-region": "project-dummy"}
 
+        if mode == "applet" and projects_by_region is None:
+            project = app_json.get("project", False) or dxpy.WORKSPACE_ID
+
+            try:
+                region = dxpy.api.project_describe(project,
+                                                   input_params={"fields": {"region": True}})["region"]
+            except Exception:
+                err_exit()
+            projects_by_region = {region: project}
+
         if projects_by_region is None:
             raise AssertionError("'projects_by_region' should not be None at this point")
 
