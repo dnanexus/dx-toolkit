@@ -7572,7 +7572,7 @@ def main(in1):
 
         # Build the applet with --dry-run: the "assetDepends" should not be
         # cloned.
-        with temporary_project('test_select_project', select=True):
+        with temporary_project('does_not_clone_asset', select=True) as p:
             app_name = "asset_depends_not_cloned"
             app_spec = dict(self.base_app_spec,
                             name=app_name,
@@ -7581,8 +7581,9 @@ def main(in1):
                                      "assetDepends": [{"id": record.get_id()}]})
             app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
             run("dx build --dry-run {app_dir}".format(app_dir=app_dir))
-            with self.assertSubprocessFailure(stderr_regexp="Unable to resolve", exit_code=3):
-                run("dx ls {asset} --brief".format(asset=record_name))
+            self.assertIsNone(dxpy.find_one_data_object(project=p.get_id(),
+                                                        name=record_name,
+                                                        zero_ok=True))
 
     def test_asset_depends_clone_app(self):
         # upload a tar.gz file and mark it hidden
