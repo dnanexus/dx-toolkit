@@ -7572,18 +7572,11 @@ def main(in1):
 
         # create an applet with assetDepends in a different project
         with temporary_project('test_select_project', select=True):
-            app_spec = {
-                "name": "asset_depends",
-                "dxapi": "1.0.0",
-                "runSpec": {
-                    "file": "code.py",
-                    "interpreter": "python2.7",
-                    "assetDepends": [{"id": record.get_id()}]
-                },
-                "inputSpec": [],
-                "outputSpec": [],
-                "version": "1.0.0"
-                }
+            app_spec = dict(self.base_app_spec,
+                            name="asset_depends",
+                            runSpec={"file": "code.py",
+                                     "interpreter": "python2.7",
+                                     "assetDepends": [{"id": record.get_id()}]})
             app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
             run("dx build --dry-run {app_dir}".format(app_dir=app_dir))
             temp_record_id = run("dx ls {asset} --brief".format(asset=record_name)).strip()
