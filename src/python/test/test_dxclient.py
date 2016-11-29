@@ -7557,6 +7557,34 @@ def main(in1):
             temp_record_id = run("dx ls {asset} --brief".format(asset=record_name)).strip()
             self.assertEquals(temp_record_id, record.get_id())
 
+    def test_dry_run_does_not_clone_asset_depends(self):
+        # create an asset in this project
+        asset_name = "test-asset.tar.gz"
+        asset_file = dxpy.upload_string("xxyyzz", project=self.project, hidden=True, wait_on_close=True,
+                                        name=asset_name)
+
+        # create a record with details to the hidden asset
+        record_name = "asset-record"
+        record_details = {"archiveFileId": {"$dnanexus_link": asset_file.get_id()}}
+        record_properties = {"version": "0.0.1"}
+        record = dxpy.new_dxrecord(project=self.project, types=["AssetBundle"], details=record_details,
+                                   name=record_name, properties=record_properties, close=True)
+
+        # Build the applet with --dry-run: the "assetDepends" should not be
+        # cloned.
+        with temporary_project('does_not_clone_asset', select=True) as p:
+            app_name = "asset_depends_not_cloned"
+            app_spec = dict(self.base_app_spec,
+                            name=app_name,
+                            runSpec={"file": "code.py",
+                                     "interpreter": "python2.7",
+                                     "assetDepends": [{"id": record.get_id()}]})
+            app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+            run("dx build --dry-run {app_dir}".format(app_dir=app_dir))
+            self.assertIsNone(dxpy.find_one_data_object(project=p.get_id(),
+                                                        name=record_name,
+                                                        zero_ok=True))
+
     def test_asset_depends_clone_app(self):
         # upload a tar.gz file and mark it hidden
         asset_name = "test-asset.tar.gz"
