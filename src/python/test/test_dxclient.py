@@ -7557,7 +7557,7 @@ def main(in1):
             temp_record_id = run("dx ls {asset} --brief".format(asset=record_name)).strip()
             self.assertEquals(temp_record_id, record.get_id())
 
-    def test_asset_depends_clone_dry_run(self):
+    def test_dry_run_does_not_clone_asset_depends(self):
         # create an asset in this project
         asset_name = "test-asset.tar.gz"
         asset_file = dxpy.upload_string("xxyyzz", project=self.project, hidden=True, wait_on_close=True,
@@ -7570,17 +7570,19 @@ def main(in1):
         record = dxpy.new_dxrecord(project=self.project, types=["AssetBundle"], details=record_details,
                                    name=record_name, properties=record_properties, close=True)
 
-        # create an applet with assetDepends in a different project
+        # Build the applet with --dry-run: the "assetDepends" should not be
+        # cloned.
         with temporary_project('test_select_project', select=True):
+            app_name = "asset_depends_not_cloned"
             app_spec = dict(self.base_app_spec,
-                            name="asset_depends",
+                            name=app_name,
                             runSpec={"file": "code.py",
                                      "interpreter": "python2.7",
                                      "assetDepends": [{"id": record.get_id()}]})
-            app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
+            app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
             run("dx build --dry-run {app_dir}".format(app_dir=app_dir))
-            temp_record_id = run("dx ls {asset} --brief".format(asset=record_name)).strip()
-            self.assertEquals(temp_record_id, record.get_id())
+            with self.assertSubprocessFailure(stderr_regexp="Unable to resolve", exit_code=3):
+                run("dx ls {asset} --brief".format(asset=record_name))
 
     def test_asset_depends_clone_app(self):
         # upload a tar.gz file and mark it hidden

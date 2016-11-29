@@ -575,7 +575,8 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                 }
                 applet_spec["runSpec"]["bundledDepends"].append(bundle_depends)
                 # If the file is not found in the applet destination project, clone it from the asset project
-                if dxpy.DXRecord(dxid=asset_record["id"], project=dest_project).describe()["project"] != dest_project:
+                if (not dry_run and
+                        dxpy.DXRecord(dxid=asset_record["id"], project=dest_project).describe()["project"] != dest_project):
                     dxpy.DXRecord(asset_record["id"], project=asset_record["project"]).clone(dest_project)
             else:
                 raise AppBuilderException("No asset bundle was found that matched the specification %s"
