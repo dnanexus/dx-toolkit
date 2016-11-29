@@ -3183,10 +3183,11 @@ def ssh(args, ssh_config_verified=False):
 
     sys.stdout.write("Resolving job hostname and SSH host key...")
     sys.stdout.flush()
-    host, host_key = None, None
+    host, host_key, ssh_port = None, None, None
     for i in range(90):
         host = job_desc.get('host')
         host_key = job_desc.get('sshHostKey') or job_desc['properties'].get('ssh_host_rsa_key')
+        ssh_port = job_desc.get('sshPort') or 22
         if host and host_key:
             break
         else:
@@ -3206,7 +3207,7 @@ def ssh(args, ssh_config_verified=False):
 
     import socket
     connected = False
-    sys.stdout.write("Checking connectivity to {}".format(host))
+    sys.stdout.write("Checking connectivity to {}:{}".format(host, ssh_port))
     if args.ssh_proxy:
         proxy_args = args.ssh_proxy.split(':')
         sys.stdout.write(" through proxy {}".format(proxy_args[0]))
@@ -3219,10 +3220,10 @@ def ssh(args, ssh_config_verified=False):
                 proxy_socket = socket.socket()
                 proxy_socket.connect((proxy_args[0], int(proxy_args[1])))
                 proxy_file = proxy_socket.makefile('r+')
-                proxy_file.write('CONNECT {host}:22 HTTP/1.0\r\nhost: {host}\r\n\r\n'
-                                 .format(host=host))
+                proxy_file.write('CONNECT {host}:{port} HTTP/1.0\r\nhost: {host}\r\n\r\n'
+                                 .format(host=host, port=ssh_port))
             else:
-                socket.create_connection((host, 22), timeout=5)
+                socket.create_connection((host, ssh_port), timeout=5)
             connected = True
             break
         except Exception:
@@ -3246,11 +3247,11 @@ def ssh(args, ssh_config_verified=False):
         err_exit(msg.format(h=host, cmd=BOLD("dx ssh {}".format(args.job_id))),
                  exception=DXCLIError())
 
-    print("Connecting to", host)
+    print("Connecting to {}:{}".format(host, ssh_port))
     ssh_args = ['ssh', '-i', os.path.join(dxpy.config.get_user_conf_dir(), 'ssh_id'),
                 '-o', 'HostKeyAlias={}.dnanex.us'.format(args.job_id),
                 '-o', 'UserKnownHostsFile={}'.format(known_hosts_file),
-                '-l', 'dnanexus', host]
+                '-p', str(ssh_port), '-l', 'dnanexus', host]
     if args.ssh_proxy:
         ssh_args += ['-o', 'ProxyCommand=nc -X connect -x {proxy} %h %p'.
                      format(proxy=args.ssh_proxy)]

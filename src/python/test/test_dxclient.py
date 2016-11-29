@@ -753,17 +753,18 @@ class TestDXClient(DXTestCase):
             if original_ssh_public_key:
                 dxpy.api.user_update(user_id, {"sshPublicKey": original_ssh_public_key})
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
-    def test_dx_ssh(self):
+    def _test_dx_ssh(self, project, instance_type):
+        dxpy.config["DX_PROJECT_CONTEXT_ID"] = project
         for use_alternate_config_dir in [False, True]:
             with self.configure_ssh(use_alternate_config_dir=use_alternate_config_dir) as wd:
                 sleep_applet = dxpy.api.applet_new(dict(name="sleep",
                                                         runSpec={"code": "sleep 1200",
                                                                  "interpreter": "bash",
-                                                                 "execDepends": [{"name": "dx-toolkit"}]},
+                                                                 "execDepends": [{"name": "dx-toolkit"}],
+                                                                 "systemRequirements": {"*": {"instanceType": instance_type}}},
                                                         inputSpec=[], outputSpec=[],
                                                         dxapi="1.0.0", version="1.0.0",
-                                                        project=self.project))["id"]
+                                                        project=project))["id"]
 
                 dx = pexpect.spawn("dx run {} --yes --ssh".format(sleep_applet),
                                    env=override_environment(HOME=wd))
@@ -785,7 +786,7 @@ class TestDXClient(DXTestCase):
                 dx.expect("Project: dxclient_test_pr\xf6ject".encode(sys_encoding))
                 dx.expect("The job is running in terminal 1.", timeout=5)
                 # Check for terminal prompt and verify we're in the container
-                job_id = dxpy.find_jobs(name="sleep", project=self.project).next()['id']
+                job_id = dxpy.find_jobs(name="sleep", project=project).next()['id']
                 dx.expect(("dnanexus@%s" % job_id), timeout=10)
 
                 expected_history_filename = os.path.join(
@@ -812,11 +813,19 @@ class TestDXClient(DXTestCase):
                 dx2.sendline("y")
                 dx2.expect("Terminated job", timeout=60)
 
-    @unittest.skipIf(sys.platform.startswith("win"), "pexpect is not supported")
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
-    @unittest.skipUnless(testutil.TEST_HTTP_PROXY,
-                         'skipping HTTP Proxy support test that needs squid3')
-    def test_dx_ssh_proxy(self):
+    def test_dx_ssh(self):
+        self._test_dx_ssh(self.project, "mem2_hdd2_x1")
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_AZURE, "Skipping test that would run jobs in Azure")
+    def test_dx_ssh_azure(self):
+        azure_project = dxpy.api.project_new({"name": "test_dx_ssh_azure", "region": testutil.TEST_AZURE})['id']
+        try:
+            self._test_dx_ssh(azure_project, "azure:mem2_ssd1_x1")
+        finally:
+            dxpy.api.project_destroy(azure_project, {"terminateJobs": True})
+
+    def _test_dx_ssh_proxy(self, project, instance_type):
         proxy_host = "localhost"
         proxy_port = "3129"
         proxy_addr = "http://{h}:{p}".format(h=proxy_host, p=proxy_port)
@@ -843,15 +852,17 @@ class TestDXClient(DXTestCase):
                 if t > 16:
                     raise Exception("Failed to launch Squid")
 
+        dxpy.config["DX_PROJECT_CONTEXT_ID"] = project
         with self.configure_ssh() as wd:
             launch_squid()
             applet_json = dict(name="sleep",
                                runSpec={"code": "sleep 6000",
                                         "interpreter": "bash",
-                                        "execDepends": [{"name": "dx-toolkit"}]},
+                                        "execDepends": [{"name": "dx-toolkit"}],
+                                        "systemRequirements": {"*": {"instanceType": instance_type}}},
                                inputSpec=[], outputSpec=[],
                                dxapi="1.0.0", version="1.0.0",
-                               project=self.project)
+                               project=project)
             sleep_applet = dxpy.api.applet_new(applet_json)["id"]
 
             # Test incorrect arguments i.e. --ssh is missing
@@ -871,7 +882,8 @@ class TestDXClient(DXTestCase):
             dx.setwinsize(20, 90)
             dx.expect("The job is running in terminal 1.", timeout=1200)
             # Check for terminal prompt and verify we're in the container
-            job_id = dxpy.find_jobs(name="sleep", project=self.project).next()['id']
+            job_id = dxpy.find_jobs(name="sleep", project=project).next()['id']
+            job_ssh_port = dxpy.DXJob(job_id).describe().get('sshPort', 22)
             dx.expect(("dnanexus@%s" % job_id), timeout=10)
             # Cache default ssh command for refactoring
             ssh_proxy_command = "dx ssh --ssh-proxy {h}:{p} {id}".format(h=proxy_host,
@@ -886,7 +898,7 @@ class TestDXClient(DXTestCase):
             dx2.expect("[exited]")
             dx2.expect("dnanexus@job", timeout=10)
             # Test proxy connection from worker side
-            squid_address = run("netstat -plant 2>/dev/null|grep squid3|grep :22|awk '{print $4}'")
+            squid_address = run("netstat -plant 2>/dev/null|grep squid3|grep :{p}|awk '{{print $4}}'".format(p=job_ssh_port))
             squid_port = squid_address.split(':')[1][:-1]
             dx2.sendline("netstat -plant 2>/dev/null|grep :{p}|awk '{{print $6}}'".format(p=squid_port))
             dx2.expect("ESTABLISHED", timeout=60)
@@ -926,6 +938,25 @@ class TestDXClient(DXTestCase):
                                                              id=bad_id),
                     env=override_environment(HOME=wd))
             self.proxy_process.kill()
+
+    @unittest.skipIf(sys.platform.startswith("win"), "pexpect is not supported")
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
+    @unittest.skipUnless(testutil.TEST_HTTP_PROXY,
+                         'skipping HTTP Proxy support test that needs squid3')
+    def test_dx_ssh_proxy(self):
+        self._test_dx_ssh_proxy(self.project, "mem2_hdd2_x1")
+
+    @unittest.skipIf(sys.platform.startswith("win"), "pexpect is not supported")
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
+    @unittest.skipUnless(testutil.TEST_HTTP_PROXY,
+                         'skipping HTTP Proxy support test that needs squid3')
+    @unittest.skipUnless(testutil.TEST_AZURE, 'skipping test that runs on Azure')
+    def test_dx_ssh_proxy_azure(self):
+        azure_project = dxpy.api.project_new({"name": "test_dx_ssh_azure", "region": testutil.TEST_AZURE})['id']
+        try:
+            self._test_dx_ssh_proxy(azure_project, "azure:mem2_ssd1_x1")
+        finally:
+            dxpy.api.project_destroy(azure_project, {"terminateJobs": True})
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_run_debug_on(self):
