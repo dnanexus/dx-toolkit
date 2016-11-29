@@ -8023,8 +8023,9 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
     def test_get_app_omit_resources(self):
+        app_name = "omit_resources"
         app_spec = {
-            "name": "get_app_open_source",
+            "name": app_name,
             "title": "Sir",
             "dxapi": "1.0.0",
             "runSpec": {"file": "code.py", "interpreter": "python2.7"},
@@ -8041,7 +8042,7 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
                                if k not in ('description', 'developerNotes'))
         output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7"}
 
-        app_dir = self.write_app_directory("get_app_open_source",
+        app_dir = self.write_app_directory(app_name,
                                            json.dumps(app_spec),
                                            "code.py",
                                            code_content="import os\n")
@@ -8055,16 +8056,16 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
 
         self.assertEqual(app_describe["class"], "app")
         self.assertEqual(app_describe["version"], "0.0.1")
-        self.assertEqual(app_describe["name"], "get_app_open_source")
+        self.assertEqual(app_describe["name"], app_name)
         self.assertFalse("published" in app_describe)
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
 
         with chdir(tempfile.mkdtemp()):
             run("dx get --omit-resources " + new_app_id)
-            self.assertFalse(os.path.exists(os.path.join("get_app_open_source", "resources")))
+            self.assertFalse(os.path.exists(os.path.join(app_name, "resources")))
 
-            output_json = json.load(open(os.path.join("get_app_open_source", "dxapp.json")))
+            output_json = json.load(open(os.path.join(app_name, "dxapp.json")))
             self.assertTrue("bundledDepends" in output_json["runSpec"])
             seenResources = False
             for bd in output_json["runSpec"]["bundledDepends"]:

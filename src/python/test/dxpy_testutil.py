@@ -452,7 +452,7 @@ class DXTestCaseBuildApps(DXTestCase):
 
     def make_apps(self, num_apps, name_prefix, bill_to=None):
         apps = []
-        app_spec = self.base_app_spec
+        app_spec = dict(self.base_app_spec)
         for i in range(num_apps):
             app_spec["name"] = name_prefix + "_" + str(i)
             if bill_to is not None:
