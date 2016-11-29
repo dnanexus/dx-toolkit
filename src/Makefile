@@ -63,7 +63,7 @@ else
 	MAYBE_SUDO='sudo'
 endif
 
-all: api_wrappers cpp src_libs python dx-contigset-to-fasta dx-verify-file dx-wig-to-wiggle jq dx-docker
+all: api_wrappers cpp src_libs python dx-contigset-to-fasta dx-verify-file jq dx-docker
 
 # Don't try to initialize the submodule in source distributions, it should
 # already be there and ready to build.
@@ -231,9 +231,6 @@ dx-contigset-to-fasta: api_wrappers
 
 dx-verify-file: api_wrappers
 	$(MAKE) -C dx-verify-file install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
-
-dx-wig-to-wiggle: api_wrappers
-	$(MAKE) -C dx-wig-to-wiggle install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
 
 ua: toolkit_version ua_deps
 	$(MAKE) -C ua install dist DESTDIR=$(DNANEXUS_HOME) PREFIX=/
@@ -550,7 +547,6 @@ distclean: clean
 
 clean:
 	$(MAKE) -C dx-contigset-to-fasta clean
-	$(MAKE) -C dx-wig-to-wiggle clean
 	$(MAKE) -C dx-verify-file clean
 	$(MAKE) -C ua clean
 	-find ../bin -type f \( -name jq -or -name dx -or -name 'dx-*' \) -not -name 'dx-unpack*' -delete

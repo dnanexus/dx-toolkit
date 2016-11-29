@@ -38,7 +38,7 @@ from ..utils.resolver import resolve_path, check_folder_exists, ResolutionError,
 from ..utils.completer import LocalCompleter
 from ..app_categories import APP_CATEGORIES
 from ..cli import try_call
-from ..exceptions import err_exit, DXError
+from ..exceptions import err_exit
 from ..utils.printing import BOLD
 from ..compat import open, USING_PYTHON2, decode_command_line_args, basestring
 
@@ -138,7 +138,8 @@ parser.add_argument("--no-parallel-build", help="Build with " + BOLD("make") + "
                     dest="parallel_build")
 
 app_options.set_defaults(use_temp_build_project=True)
-app_options.add_argument("--no-temp-build-project", help="When building an app, build its applet in the current project instead of a temporary project", action="store_false", dest="use_temp_build_project")
+# Original help: "When building an app, build its applet in the current project instead of a temporary project".
+app_options.add_argument("--no-temp-build-project", help=argparse.SUPPRESS, action="store_false", dest="use_temp_build_project")
 
 # --yes
 app_options.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation for potentially dangerous operations', action='store_false')
@@ -153,7 +154,8 @@ parser.add_argument("--extra-args", help="Arguments (in JSON format) to pass to 
 parser.add_argument("--run", help="Run the app or applet after building it (options following this are passed to "+BOLD("dx run")+"; run at high priority by default)", nargs=argparse.REMAINDER)
 
 # --region
-app_options.add_argument("--region", help="The region this app will be created in")
+app_options.add_argument("--region", action="append", help="Enable the app in this region. This flag can be specified multiple times to enable the app in multiple regions. If --region is not specified, then the enabled region(s) will be determined by 'regionalOptions' in dxapp.json, or the project context.")
+
 
 
 class DXSyntaxError(Exception):
@@ -748,6 +750,14 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
         shutil.rmtree(temp_dir)
 
 
+def delete_temporary_projects(projects):
+    for project in projects:
+        try:
+            dxpy.api.project_destroy(project)
+        except Exception:
+            pass
+
+
 def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publish=False, destination_override=None,
                              version_override=None, bill_to_override=None, use_temp_build_project=True,
                              do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
@@ -767,20 +777,71 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     override_folder = None
     override_applet_name = None
 
+    requested_regional_options = dxpy.app_builder.get_regional_options(app_json)
+
+    # The set of regions specified on the command-line (i.e., --region) and the
+    # set of enabled regions in dxapp.json disagree.
+    if (requested_regional_options is not None and region is not None and
+            set(requested_regional_options) != set(region)):
+        raise dxpy.app_builder.AppBuilderException("--region and the 'regionalOptions' key in dxapp.json do not agree")
+
+    enabled_regions = None
+    if requested_regional_options is not None:
+        enabled_regions = requested_regional_options.keys()
+    elif region is not None:
+        enabled_regions = region
+    if enabled_regions is not None and len(enabled_regions) == 0:
+        raise AssertionError("This app should be enabled in at least one region")
+
+    # Cannot build multi-region app if `use_temp_build_project` is falsy.
+    if enabled_regions is not None and len(enabled_regions) > 1 and not use_temp_build_project:
+        raise dxpy.app_builder.AppBuilderException("Cannot specify --no-temp-build-project when building multi-region apps")
+
+    projects_by_region = None
+
     if mode == "applet" and destination_override:
         working_project, override_folder, override_applet_name = parse_destination(destination_override)
+        region = dxpy.api.project_describe(working_project,
+                                           input_params={"fields": {"region": True}})["region"]
+        projects_by_region = {region: working_project}
     elif mode == "app" and use_temp_build_project and not dry_run:
-        # Create a temp project
-        try:
-            if region:
-                working_project = dxpy.api.project_new({"name": "Temporary build project for dx-build-app",
-                                                        "region": region})["id"]
-            else:
+        projects_by_region = {}
+        if enabled_regions is not None:
+            # Create temporary projects in each enabled region.
+            try:
+                for region in enabled_regions:
+                    working_project = dxpy.api.project_new({
+                        "name": "Temporary build project for dx-build-app in {r}".format(r=region),
+                        "region": region})["id"]
+                    projects_by_region[region] = working_project
+                    logger.debug("Created temporary project %s to build in" % (working_project,))
+            except:
+                # A /project/new request may fail if the requesting user is
+                # not authorized to create projects in a certain region.
+                delete_temporary_projects(projects_by_region.values())
+                err_exit()
+        else:
+            # Create a temp project
+            try:
                 working_project = dxpy.api.project_new({"name": "Temporary build project for dx-build-app"})["id"]
-        except:
-            err_exit()
-        logger.debug("Created temporary project %s to build in" % (working_project,))
+            except:
+                err_exit()
+            region = dxpy.api.project_describe(working_project,
+                                               input_params={"fields": {"region": True}})["region"]
+            projects_by_region[region] = working_project
+            logger.debug("Created temporary project %s to build in" % (working_project,))
+
         using_temp_project = True
+    elif mode == "app" and not dry_run:
+        # If we are not using temporary project(s) to build the executable,
+        # then we should have a project context somewhere.
+        try:
+            project = app_json.get("project", dxpy.WORKSPACE_ID)
+            region = dxpy.api.project_describe(project,
+                                               input_params={"fields": {"region": True}})["region"]
+        except Exception:
+            err_exit()
+        projects_by_region = {region: project}
 
     try:
         if mode == "applet" and working_project is None and dxpy.WORKSPACE_ID is None:
@@ -802,7 +863,15 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             dest_folder = override_folder or app_json.get('folder') or '/'
             if not dest_folder.endswith('/'):
                 dest_folder = dest_folder + '/'
+
             dest_project = working_project if working_project else dxpy.WORKSPACE_ID
+            try:
+                region = dxpy.api.project_describe(dest_project,
+                                                   input_params={"fields": {"region": True}})["region"]
+            except Exception:
+                err_exit()
+            projects_by_region = {region: dest_project}
+
             for result in dxpy.find_data_objects(classname="applet", name=dest_name, folder=dest_folder,
                                                  project=dest_project, recurse=False):
                 dest_path = dest_folder + dest_name
@@ -810,43 +879,70 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 msg += " -f/--overwrite nor -a/--archive were given."
                 raise dxpy.app_builder.AppBuilderException(msg)
 
-        bundled_resources = dxpy.app_builder.upload_resources(src_dir,
-                                                              project=working_project,
-                                                              folder=override_folder,
-                                                              ensure_upload=ensure_upload,
-                                                              force_symlinks=force_symlinks) if not dry_run else []
+        if dry_run:
+            # Set a dummy "projects_by_region" so that we can exercise the dry
+            # run flows for uploading resources bundles and applets below.
+            projects_by_region = {"dummy-cloud:dummy-region": "project-dummy"}
 
-        try:
-            applet_id, applet_spec = dxpy.app_builder.upload_applet(
+        if mode == "applet" and projects_by_region is None:
+            project = app_json.get("project", False) or dxpy.WORKSPACE_ID
+
+            try:
+                region = dxpy.api.project_describe(project,
+                                                   input_params={"fields": {"region": True}})["region"]
+            except Exception:
+                err_exit()
+            projects_by_region = {region: project}
+
+        if projects_by_region is None:
+            raise AssertionError("'projects_by_region' should not be None at this point")
+
+        resources_bundles_by_region = {}
+        for region, project in projects_by_region.items():
+            resources_bundles_by_region[region] = dxpy.app_builder.upload_resources(
                 src_dir,
-                bundled_resources,
-                check_name_collisions=(mode == "applet"),
-                overwrite=overwrite and mode == "applet",
-                archive=archive and mode == "applet",
-                project=working_project,
-                override_folder=override_folder,
-                override_name=override_applet_name,
-                dx_toolkit_autodep=dx_toolkit_autodep,
-                dry_run=dry_run,
-                **kwargs)
+                project=project,
+                folder=override_folder,
+                ensure_upload=ensure_upload,
+                force_symlinks=force_symlinks) if not dry_run else []
+
+        # TODO: Clean up these applets if the app build fails.
+        applet_ids_by_region = {}
+        try:
+            for region, project in projects_by_region.items():
+                applet_id, applet_spec = dxpy.app_builder.upload_applet(
+                    src_dir,
+                    resources_bundles_by_region[region],
+                    check_name_collisions=(mode == "applet"),
+                    overwrite=overwrite and mode == "applet",
+                    archive=archive and mode == "applet",
+                    project=project,
+                    override_folder=override_folder,
+                    override_name=override_applet_name,
+                    dx_toolkit_autodep=dx_toolkit_autodep,
+                    dry_run=dry_run,
+                    **kwargs)
+                if not dry_run:
+                    logger.debug("Created applet " + applet_id + " successfully")
+                applet_ids_by_region[region] = applet_id
         except:
             # Avoid leaking any bundled_resources files we may have
             # created, if applet creation fails. Note that if
             # using_temp_project, the entire project gets destroyed at
             # the end, so we don't bother.
             if not using_temp_project:
-                objects_to_delete = [dxpy.get_dxlink_ids(bundled_resource_obj['id'])[0] for bundled_resource_obj in bundled_resources]
-                if objects_to_delete:
-                    dxpy.api.project_remove_objects(dxpy.app_builder.get_destination_project(src_dir, project=working_project),
-                                                    input_params={"objects": objects_to_delete})
+                for region, project in projects_by_region.items():
+                    objects_to_delete = [dxpy.get_dxlink_ids(bundled_resource_obj['id'])[0] for bundled_resource_obj in resources_bundles_by_region[region]]
+                    if objects_to_delete:
+                        dxpy.api.project_remove_objects(
+                            dxpy.app_builder.get_destination_project(src_dir, project=project),
+                            input_params={"objects": objects_to_delete})
             raise
 
         if dry_run:
             return
 
         applet_name = applet_spec['name']
-
-        logger.debug("Created applet " + applet_id + " successfully")
 
         if mode == "app":
             if 'version' not in app_json:
@@ -856,15 +952,18 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             if not version_override and do_version_autonumbering:
                 try_versions.append(version + _get_version_suffix(src_dir, version))
 
-            app_id = dxpy.app_builder.create_app(applet_id,
-                                                 applet_name,
-                                                 src_dir,
-                                                 publish=publish,
-                                                 set_default=publish,
-                                                 billTo=bill_to_override,
-                                                 try_versions=try_versions,
-                                                 try_update=do_try_update,
-                                                 confirm=confirm)
+            regional_options = {}
+            for region in projects_by_region:
+                regional_options[region] = {"applet": applet_ids_by_region[region]}
+            app_id = dxpy.app_builder.create_app_multi_region(regional_options,
+                                                              applet_name,
+                                                              src_dir,
+                                                              publish=publish,
+                                                              set_default=publish,
+                                                              billTo=bill_to_override,
+                                                              try_versions=try_versions,
+                                                              try_update=do_try_update,
+                                                              confirm=confirm)
 
             app_describe = dxpy.api.app_describe(app_id)
 
@@ -885,7 +984,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     finally:
         # Clean up after ourselves.
         if using_temp_project:
-            dxpy.api.project_destroy(working_project)
+            delete_temporary_projects(projects_by_region.values())
 
 
 def _build_app(args, extra_args):
@@ -970,6 +1069,10 @@ def _build_app(args, extra_args):
         if not args.use_temp_build_project:
             parser.error('--remote cannot be combined with --no-temp-build-project')
 
+        if isinstance(args.region, list) and len(args.region) > 1:
+            parser.error('--region can only be specified once for remote builds')
+        region = args.region[0] if args.region is not None else None
+
         more_kwargs = {}
         if args.version_override:
             more_kwargs['version_override'] = args.version_override
@@ -986,7 +1089,7 @@ def _build_app(args, extra_args):
 
         return _build_app_remote(args.mode, args.src_dir, destination_override=args.destination,
                                  publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep,
-                                 region=args.region, watch=args.watch, **more_kwargs)
+                                 region=region, watch=args.watch, **more_kwargs)
 
 
 def main(**kwargs):
