@@ -1,3 +1,19 @@
+dx-toolkit (0.204.0) precise; urgency=low
+
+  * Fix failing tests from fb8c269
+  * "dx build --dry-run" does not clone app assets
+  * AZURE-82 SSH to worker support
+  * Fix "dx build" for applets; it was broken by fb8c269
+  * Allow "dx build" to exercise the dry run flows
+  * PTFM-18860 Update "dx build" and "dx get" to manipulate multi-region apps
+  * Remove test invocation of importer scripts too
+  * Followup to previous commit: remove "dx import"
+  * Remove some deprecated GTable tools
+  * STACK-197: Adding logging of dx-docker subcommands (#187)
+  * Clean up temporary projects after tests
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 01 Dec 2016 18:43:29 +0000
+
 dx-toolkit (0.203.0) precise; urgency=low
 
   * PTFM-18692: Do not merge headers. In some cases a bug is introduced
