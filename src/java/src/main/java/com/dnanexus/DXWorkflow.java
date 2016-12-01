@@ -293,8 +293,8 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
      *  to report the new edit version, together with the operation result.
      */
     public static class Modification<T> {
-        int editVersion;
-        T obj;
+        public int editVersion;
+        public T obj;
 
         Modification(int editVersion, T obj) {
             this.editVersion = editVersion;
