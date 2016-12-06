@@ -1115,7 +1115,6 @@ def describe(args):
 
         # Could be a project
         json_input = {}
-        json_input['countObjects'] = True
         json_input['properties'] = True
         if args.verbose:
             json_input["permissions"] = True
