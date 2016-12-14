@@ -5831,6 +5831,19 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         app_dir = self.write_app_directory("minimal_remote_build_åpp", json.dumps(app_spec), "code.py")
         run("dx build --remote --app " + app_dir)
 
+    def test_remote_build_app_trusty(self):
+        app_spec = {
+            "name": "minimal_remote_build_app_trusty",
+            "dxapi": "1.0.0",
+            # Use a package specific to trusty but not in precise as part of the execdepends to ensure it is installed properly
+            "runSpec": {"file": "code.py", "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04", "execDepends": [{"name": "postgresql-9.3"}], "systemRequirements": {"*": {"instanceType": "mem1_ssd1_x4"}}},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("minimal_remote_build_åpp_trusty", json.dumps(app_spec), "code.py")
+        run("dx build --remote --app " + app_dir)
+
     def test_cannot_remote_build_multi_region_app(self):
         app_name = "asset_{t}_remote_multi_region_app".format(t=int(time.time()))
         app_spec = {
