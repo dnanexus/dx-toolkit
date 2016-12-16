@@ -161,14 +161,56 @@ class TestDXRemove(DXTestCase):
             run("dx rm {f} {f2}".format(f=record_name, f2=record_name2))
 
 
+class TestApiDebugOutput(DXTestCase):
+    def test_dx_debug_shows_request_id(self):
+        (stdout, stderr) = run("_DX_DEBUG=1 dx ls", also_return_stderr=True)
+        self.assertRegexpMatches(stderr, "POST \d{13}-\d{1,6} http",
+                                 msg="stderr does not appear to contain request ID")
+
+    def test_dx_debug_shows_timestamp(self):
+        timestamp_regex = "\[\d{1,15}\.\d{0,8}\]"
+
+        (stdout, stderr) = run("_DX_DEBUG=1 dx ls", also_return_stderr=True)
+        self.assertRegexpMatches(stderr, timestamp_regex, msg="Debug log does not contain a timestamp")
+        (stdout, stderr) = run("_DX_DEBUG=2 dx ls", also_return_stderr=True)
+        self.assertRegexpMatches(stderr, timestamp_regex, msg="Debug log does not contain a timestamp")
+
+    def test_dx_debug_shows_request_response(self):
+        (stdout, stderr) = run("_DX_DEBUG=1 dx new project --brief dx_debug_test", also_return_stderr=True)
+        proj_id = stdout.strip()
+        self.assertIn("/project/new", stderr)
+        self.assertIn("{u'name': u'dx_debug_test'}", stderr)
+        self.assertIn(proj_id[-4:], stderr)  # repr can ellipsize the output
+
+        (stdout, stderr) = run("_DX_DEBUG=2 dx new project --brief dx_debug_test", also_return_stderr=True)
+        proj_id = stdout.strip()
+        self.assertIn("/project/new", stderr)
+        self.assertIn('{"name": "dx_debug_test"}', stderr)
+        self.assertIn('{"id": "' + proj_id + '"}', stderr)
+
+        (stdout, stderr) = run("_DX_DEBUG=3 dx new project --brief dx_debug_test", also_return_stderr=True)
+        proj_id = stdout.strip()
+        self.assertIn("/project/new", stderr)
+        self.assertIn('{\n  "name": "dx_debug_test"\n}', stderr)
+        self.assertIn('{\n    "id": "' + proj_id + '"\n  }', stderr)
+
+    def test_upload_binary_data(self):
+        # Really a test that the _DX_DEBUG output doesn't barf on binary data
+        with chdir(tempfile.mkdtemp()):
+            with open('binary', 'wb') as f:
+                f.write(b'\xee\xee\xee\xef')
+            (stdout, stderr) = run('_DX_DEBUG=1 dx upload binary', also_return_stderr=True)
+            self.assertIn("'\\xee\\xee\\xee\\xef'", stderr)
+            (stdout, stderr) = run('_DX_DEBUG=2 dx upload binary', also_return_stderr=True)
+            self.assertIn("<file data of length 4>", stderr)
+            (stdout, stderr) = run('_DX_DEBUG=3 dx upload binary', also_return_stderr=True)
+            self.assertIn("<file data of length 4>", stderr)
+
+
 class TestDXClient(DXTestCase):
     def test_dx_version(self):
         version = run("dx --version")
         self.assertIn("dx", version)
-
-    def test_dx_debug_request_id(self):
-        (stdout, stderr) = run("_DX_DEBUG=1 dx ls", also_return_stderr=True)
-        self.assertRegexpMatches(stderr, "POST \d{13}-\d{1,6} http", msg="stderr does not appear to contain request ID")
 
     def test_dx(self):
         with self.assertRaises(subprocess.CalledProcessError):
@@ -1061,13 +1103,6 @@ class TestDXClient(DXTestCase):
                                prepend_srv=False,
                                max_retries=0)
 
-    def test_dx_debug_timestamp(self):
-        (stdout, stderr) = run("_DX_DEBUG=1 dx ls", also_return_stderr=True)
-        timestamp_regex = "\[\d{1,15}\.\d{0,8}\]"
-        self.assertRegexpMatches(stderr, timestamp_regex, msg="Debug log does not contain a timestamp")
-        (stdout, stderr) = run("_DX_DEBUG=2 dx ls", also_return_stderr=True)
-        self.assertRegexpMatches(stderr, timestamp_regex, msg="Debug log does not contain a timestamp")
-
     def test_dx_api_error_msg(self):
         error_regex = "Request Time=\[\d{1,15}\.\d{0,8}\], RequestID=\[\d{13}-\d{1,6}\]"
         with self.assertSubprocessFailure(stderr_regexp=error_regex, exit_code=3):
@@ -1517,15 +1552,6 @@ dxpy.run()
         run("cd {wd}; rm test; touch test".format(wd=wd))
         run("cd {wd}; dx download -f test".format(wd=wd))
         assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
-
-    def test_upload_binary_data_with_debugging_info(self):
-        # Really a test that the _DX_DEBUG output doesn't barf on binary data
-        with chdir(tempfile.mkdtemp()):
-            with open('binary', 'wb') as f:
-                f.write(b'\xee\xee\xee\xef')
-            run('_DX_DEBUG=1 dx upload binary')
-            run('_DX_DEBUG=2 dx upload binary')
-            run('_DX_DEBUG=3 dx upload binary')
 
 
 class TestDXClientDownloadDataEgressBilling(DXTestCase):
