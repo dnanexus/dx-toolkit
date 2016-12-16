@@ -490,6 +490,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
     try_index = 0
     retried_responses = []
+    _url = None
     while True:
         success, time_started = True, None
         response = None
@@ -653,7 +654,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 if response is not None and response.status == 503:
                     seconds_to_wait = _extract_retry_after_timeout(response)
                     logger.warn("%s %s: %s. Request Time=[%f] RequestID=[%s] Waiting %d seconds due to server unavailability...",
-                                method, url, exception_msg, time_started, req_id, seconds_to_wait)
+                                method, _url, exception_msg, time_started, req_id, seconds_to_wait)
                     time.sleep(seconds_to_wait)
                     # Note, we escape the "except" block here without
                     # incrementing try_index because 503 responses with
@@ -699,7 +700,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     delay = min(2 ** try_index, DEFAULT_TIMEOUT)
                     range_str = (' (range=%s)' % (headers['Range'],)) if 'Range' in headers else ''
                     logger.warn("[%s] %s %s: %s. Waiting %d seconds before retry %d of %d... %s",
-                                time.ctime(), method, url, exception_msg, delay, try_index + 1, max_retries, range_str)
+                                time.ctime(), method, _url, exception_msg, delay, try_index + 1, max_retries, range_str)
                     time.sleep(delay)
                     try_index += 1
                     continue
@@ -707,7 +708,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             # All retries have been exhausted OR the error is deemed not
             # retryable. Print the latest error and propagate it back to the caller.
             if not isinstance(e, exceptions.DXAPIError):
-                logger.error("[%s] %s %s: %s.", time.ctime(), method, url, exception_msg)
+                logger.error("[%s] %s %s: %s.", time.ctime(), method, _url, exception_msg)
 
             # Retries have been exhausted, and we are unable to get a full
             # buffer from the data source. Raise a special exception.
@@ -717,7 +718,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             raise
         finally:
             if success and try_index > 0:
-                logger.info("[%s] %s %s: Recovered after %d retries", time.ctime(), method, url, try_index)
+                logger.info("[%s] %s %s: Recovered after %d retries", time.ctime(), method, _url, try_index)
 
         raise AssertionError('Should never reach this line: should have attempted a retry or reraised by now')
     raise AssertionError('Should never reach this line: should never break out of loop')
