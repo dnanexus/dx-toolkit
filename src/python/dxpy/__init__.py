@@ -564,6 +564,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                                  # do exponential backoff.
 
     retried_responses = []
+    _url = None
     while True:
         success, time_started = True, None
         response = None
@@ -736,7 +737,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                             delay, try_index + 1, max_retries)
 
                     logger.warn("[%s] %s %s: %s. %s %s",
-                                time.ctime(), method, url, exception_msg, waiting_msg, range_str)
+                                time.ctime(), method, _url, exception_msg, waiting_msg, range_str)
                     time.sleep(delay)
                     try_index_including_503 += 1
                     if response is None or response.status != 503:
@@ -746,7 +747,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             # All retries have been exhausted OR the error is deemed not
             # retryable. Print the latest error and propagate it back to the caller.
             if not isinstance(e, exceptions.DXAPIError):
-                logger.error("[%s] %s %s: %s.", time.ctime(), method, url, exception_msg)
+                logger.error("[%s] %s %s: %s.", time.ctime(), method, _url, exception_msg)
 
             # Retries have been exhausted, and we are unable to get a full
             # buffer from the data source. Raise a special exception.
@@ -756,7 +757,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             raise
         finally:
             if success and try_index > 0:
-                logger.info("[%s] %s %s: Recovered after %d retries", time.ctime(), method, url, try_index)
+                logger.info("[%s] %s %s: Recovered after %d retries", time.ctime(), method, _url, try_index)
 
         raise AssertionError('Should never reach this line: should have attempted a retry or reraised by now')
     raise AssertionError('Should never reach this line: should never break out of loop')
