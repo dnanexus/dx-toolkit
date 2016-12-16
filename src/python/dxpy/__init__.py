@@ -201,7 +201,6 @@ APISERVER_PORT = DEFAULT_APISERVER_PORT
 
 DEFAULT_RETRIES = 6
 DEFAULT_TIMEOUT = 600
-DEFAULT_RETRY_AFTER_503_INTERVAL = 60
 
 _DEBUG = 0  # debug verbosity level
 _UPGRADE_NOTIFY = True
@@ -340,18 +339,26 @@ def _extract_msg_from_last_exception():
         return traceback.format_exc().splitlines()[-1].strip()
 
 
-def _extract_retry_after_timeout(response):
-    '''Returns the time in seconds that the server is asking us to
-    wait. The information is deduced from the server http response.'''
-    try:
-        seconds_to_wait = int(response.headers.get('retry-after', DEFAULT_RETRY_AFTER_503_INTERVAL))
-    except ValueError:
-        # retry-after could be formatted as absolute time
-        # instead of seconds to wait. We don't know how to
-        # parse that, but the apiserver doesn't generate
-        # such responses anyway.
-        seconds_to_wait = DEFAULT_RETRY_AFTER_503_INTERVAL
-    return max(1, seconds_to_wait)
+def _calculate_retry_delay(response, num_attempts):
+    '''
+    Returns the time in seconds that we should wait.
+
+    :param num_attempts: number of attempts that have been made to the
+        resource, including the most recent failed one
+    :type num_attempts: int
+    '''
+    if response is not None and response.status == 503 and 'retry-after' in response.headers:
+        try:
+            return int(response.headers['retry-after'])
+        except ValueError:
+            # In RFC 2616, retry-after can be formatted as absolute time
+            # instead of seconds to wait. We don't bother to parse that,
+            # but the apiserver doesn't generate such responses anyway.
+            pass
+    if num_attempts <= 1:
+        return 1
+    num_attempts = min(num_attempts, 7)
+    return randint(2 ** (num_attempts - 2), 2 ** (num_attempts - 1))
 
 
 # Truncate the message, if the error injection flag is on, and other
@@ -549,7 +556,13 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
     if _DEBUG == 0:
         data = None
 
-    try_index = 0
+    # Maintain two separate counters for the number of tries...
+
+    try_index = 0  # excluding 503 errors. The number of tries as given here
+                   # cannot exceed (max_retries + 1).
+    try_index_including_503 = 0  # including 503 errors. This number is used to
+                                 # do exponential backoff.
+
     retried_responses = []
     while True:
         success, time_started = True, None
@@ -679,58 +692,55 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             success = False
             exception_msg = _extract_msg_from_last_exception()
             if isinstance(e, _expected_exceptions):
-                if response is not None and response.status == 503:
-                    seconds_to_wait = _extract_retry_after_timeout(response)
-                    logger.warn("%s %s: %s. Request Time=[%f] RequestID=[%s] Waiting %d seconds due to server unavailability...",
-                                method, url, exception_msg, time_started, req_id, seconds_to_wait)
-                    time.sleep(seconds_to_wait)
-                    # Note, we escape the "except" block here without
-                    # incrementing try_index because 503 responses with
-                    # Retry-After should not count against the number of
-                    # permitted retries.
-                    continue
-
-                # Total number of allowed tries is the initial try + up to
-                # (max_retries) subsequent retries.
+                # Total number of allowed tries is the initial try PLUS
+                # up to (max_retries) subsequent retries.
                 total_allowed_tries = max_retries + 1
                 ok_to_retry = False
                 is_retryable = always_retry or (method == 'GET') or _is_retryable_exception(e)
-                # Because try_index is not incremented until we escape this
-                # iteration of the loop, try_index is equal to the number of
-                # tries that have failed so far, minus one. Test whether we
-                # have exhausted all retries.
-                #
-                # BadStatusLine ---  server did not return anything
-                # BadJSONInReply --- server returned JSON that didn't parse properly
+                # Because try_index is not incremented until we escape
+                # this iteration of the loop, try_index is equal to the
+                # number of tries that have failed so far, minus one.
                 if try_index + 1 < total_allowed_tries:
-                    if response is None or \
-                       isinstance(e, (exceptions.ContentLengthError, BadStatusLine, exceptions.BadJSONInReply, \
-                                      urllib3.exceptions.ProtocolError, exceptions.UrllibInternalError)):
+                    # BadStatusLine ---  server did not return anything
+                    # BadJSONInReply --- server returned JSON that didn't parse properly
+                    if (response is None
+                       or isinstance(e, (exceptions.ContentLengthError, BadStatusLine, exceptions.BadJSONInReply,
+                                         urllib3.exceptions.ProtocolError, exceptions.UrllibInternalError))):
                         ok_to_retry = is_retryable
                     else:
                         ok_to_retry = 500 <= response.status < 600
 
                     # The server has closed the connection prematurely
-                    if response is not None and \
-                       response.status == 400 and is_retryable and method == 'PUT' and \
-                       isinstance(e, requests.exceptions.HTTPError):
+                    if (response is not None
+                       and response.status == 400 and is_retryable and method == 'PUT'
+                       and isinstance(e, requests.exceptions.HTTPError)):
                         if '<Code>RequestTimeout</Code>' in exception_msg:
                             logger.info("Retrying 400 HTTP error, due to slow data transfer. " +
-                                        "Request Time=[%f] RequestID=[%s]", time_started, req_id)
+                                        "Request Time=%f Request ID=%s", time_started, req_id)
                         else:
                             logger.info("400 HTTP error, of unknown origin, exception_msg=[%s]. " +
-                                        "Request Time=[%f] RequestID=[%s]", exception_msg, time_started, req_id)
+                                        "Request Time=%f Request ID=%s", exception_msg, time_started, req_id)
                         ok_to_retry = True
 
                 if ok_to_retry:
                     if rewind_input_buffer_offset is not None:
                         data.seek(rewind_input_buffer_offset)
-                    delay = min(2 ** try_index, DEFAULT_TIMEOUT)
+
+                    delay = _calculate_retry_delay(response, try_index_including_503 + 1)
+
                     range_str = (' (range=%s)' % (headers['Range'],)) if 'Range' in headers else ''
-                    logger.warn("[%s] %s %s: %s. Waiting %d seconds before retry %d of %d... %s",
-                                time.ctime(), method, url, exception_msg, delay, try_index + 1, max_retries, range_str)
+                    if response is not None and response.status == 503:
+                        waiting_msg = 'Waiting %d seconds before retry...' % (delay,)
+                    else:
+                        waiting_msg = 'Waiting %d seconds before retry %d of %d...' % (
+                            delay, try_index + 1, max_retries)
+
+                    logger.warn("[%s] %s %s: %s. %s %s",
+                                time.ctime(), method, url, exception_msg, waiting_msg, range_str)
                     time.sleep(delay)
-                    try_index += 1
+                    try_index_including_503 += 1
+                    if response is None or response.status != 503:
+                        try_index += 1
                     continue
 
             # All retries have been exhausted OR the error is deemed not

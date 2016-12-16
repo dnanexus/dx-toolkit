@@ -1104,7 +1104,7 @@ class TestDXClient(DXTestCase):
                                max_retries=0)
 
     def test_dx_api_error_msg(self):
-        error_regex = "Request Time=\[\d{1,15}\.\d{0,8}\], RequestID=\[\d{13}-\d{1,6}\]"
+        error_regex = "Request Time=\d{1,15}\.\d{0,8}, Request ID=\d{13}-\d{1,6}"
         with self.assertSubprocessFailure(stderr_regexp=error_regex, exit_code=3):
             run("dx api file-InvalidFileID describe")
 
