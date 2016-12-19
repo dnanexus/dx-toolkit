@@ -2123,6 +2123,7 @@ class TestWarn(unittest.TestCase):
     def test_warn(self):
         warn("testing, one two three...")
 
+
 class TestHTTPResponses(unittest.TestCase):
     def test_content_type_no_sniff(self):
         resp = dxpy.api.system_find_projects({'limit': 1}, want_full_response=True)
@@ -2151,11 +2152,26 @@ class TestHTTPResponses(unittest.TestCase):
     def test_retry_after_without_header_set(self):
         start_time = int(time.time() * 1000)
         server_time = dxpy.DXHTTPRequest('/system/comeBackLater', {})['currentTime']
-        dxpy.DXHTTPRequest('/system/comeBackLater', {'waitUntil': server_time + 20000, 'setRetryAfter': False})
+        dxpy.DXHTTPRequest('/system/comeBackLater',
+                           {'waitUntil': server_time + 10000, 'setRetryAfter': False})
         end_time = int(time.time() * 1000)
         time_elapsed = end_time - start_time
-        self.assertTrue(50000 <= time_elapsed)
-        self.assertTrue(time_elapsed <= 70000)
+
+        # We'd better have waited at least 10 seconds (accounting for up to 0.5
+        # seconds of clock skew)
+        self.assertTrue(9000 <= time_elapsed)
+        # After 10 seconds we must have completed the original request, plus
+        # either 2 or 3 retries (r2 or r3 below). (2 retries take at most 1 + 2
+        # + 4 = 7 < 10 seconds, and 4 retries take at least 1 + 1 + 2 + 4 + 8 =
+        # 16 seconds.)
+        #
+        # Therefore, we're in the middle of waiting at most 4 or 8 seconds, so
+        # after 10 seconds, we can have no more than 8 more seconds to wait.
+        # Add 2 seconds for clock skew plus the time it takes to do the
+        # requests themselves.
+
+        # r <--1sec--> r1 <-- 1-2sec --> r2 <---- 2-4sec ----> r3 <------- 4-8 sec ...
+        self.assertTrue(time_elapsed <= 20000)
 
     def test_generic_exception_not_retryable(self):
         self.assertFalse(dxpy._is_retryable_exception(KeyError('oops')))
