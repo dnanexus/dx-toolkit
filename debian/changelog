@@ -1,3 +1,13 @@
+dx-toolkit (0.205.0) precise; urgency=low
+
+  * More detailed logging of URL for downloads
+  * PTFM-14074 truncated exponential backoff with randomness (dxpy)
+  * PTFM-18767 Limit number of threads in dx-download-all-inputs
+  * Don't show object count in describe output
+  * dxpy.describe can accept a sequence and do bulk describe
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 20 Dec 2016 06:19:33 +0000
+
 dx-toolkit (0.204.0) precise; urgency=low
 
   * Fix failing tests from fb8c269
