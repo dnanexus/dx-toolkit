@@ -479,6 +479,10 @@ class TestDXFile(unittest.TestCase):
             self.assertEqual(0, f.describe()["size"])
         with dxpy.upload_string('', wait_on_close=True) as f:
             self.assertEqual(0, f.describe()["size"])
+
+    @unittest.skipUnless(testutil.TEST_AZURE, "Skipping test that would upload file to Azure")
+    def test_upload_empty_dxfile_azure(self):
+        self.assertEqual(0, os.path.getsize(self.new_file.name))
         # Checking Azure backend
         with testutil.temporary_project("TestDXFile.test_upload_empty_dxfile azure", select=True, region="azure:westus") as ap:
             with dxpy.new_dxfile(project=ap.get_id()) as f:
@@ -2335,7 +2339,7 @@ class TestDataobjectFunctions(unittest.TestCase):
         types.append('workflow')
         tags.append(['my_tag'])
         objects[-1].add_tags(tags[-1])
-        
+
         # Should be able to handle a mix of raw ids and dxlinks.
         ids = [o.get_id() for o in objects]
         desc = dxpy.describe(ids)
@@ -2345,8 +2349,8 @@ class TestDataobjectFunctions(unittest.TestCase):
             self.assertEqual(desc[i]["project"], self.proj_id)
             self.assertEqual(desc[i]["id"], ids[i])
             self.assertEqual(desc[i]["class"], types[i])
-            self.assertEqual(desc[i]["types"], []) 
-            self.assertIn("created", desc[i]) 
+            self.assertEqual(desc[i]["types"], [])
+            self.assertIn("created", desc[i])
             self.assertEqual(desc[i]["state"], "open")
             self.assertEqual(desc[i]["hidden"], False)
             self.assertEqual(desc[i]["links"], [])

@@ -1398,6 +1398,12 @@ class TestDXClientUploadDownload(DXTestCase):
                 self.assertIn(p.get_id(), listing)
                 self.assertIn(os.path.basename(fd.name), listing)
                 self.assertIn("0 bytes", listing)
+
+    @unittest.skipUnless(testutil.TEST_AZURE, "Skipping test that would upload file to Azure")
+    def test_dx_upload_empty_file_azure(self):
+        with testutil.TemporaryFile() as fd:
+            fd.close()
+            self.assertEqual(0, os.path.getsize(fd.name))
             with temporary_project("test_dx_upload_empty_file azure", select=True, region="azure:westus") as p:
                 listing = run("dx upload --wait {}".format(fd.name))
                 self.assertIn(p.get_id(), listing)
@@ -5856,6 +5862,50 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             }
         app_dir = self.write_app_directory("minimal_remote_build_åpp", json.dumps(app_spec), "code.py")
         run("dx build --remote --app " + app_dir)
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create apps and run jobs')
+    def test_remote_build_app_trusty(self):
+        app_spec = {
+            "name": "minimal_remote_build_app_trusty",
+            "dxapi": "1.0.0",
+            # Use a package specific to trusty but not in precise as part of the execdepends to ensure it is installed properly
+            "runSpec": {"file": "code.py", "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04", "buildDepends": [{"name": "postgresql-9.3"}], "systemRequirements": {"*": {"instanceType": "mem1_ssd1_x4"}}},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("minimal_remote_build_åpp_trusty", json.dumps(app_spec), "code.py")
+        run("dx build --remote --app " + app_dir)
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create apps and run jobs')
+    def test_remote_build_applet(self):
+        app_spec = {
+            "name": "minimal_remote_build_applet",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("minimal_remote_build_åpplet", json.dumps(app_spec), "code.py")
+        run("dx build --remote " + app_dir)
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create apps and run jobs')
+    def test_remote_build_applet_trusty(self):
+        app_spec = {
+            "name": "minimal_remote_build_applet_trusty",
+            "dxapi": "1.0.0",
+            # Use a package specific to trusty but not in precise as part of the execdepends to ensure it is installed properly
+            "runSpec": {"file": "code.py", "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04", "buildDepends": [{"name": "postgresql-9.3"}], "systemRequirements": {"*": {"instanceType": "mem1_ssd1_x4"}}},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("minimal_remote_build_åpplet_trusty", json.dumps(app_spec), "code.py")
+        run("dx build --remote " + app_dir)
 
     def test_cannot_remote_build_multi_region_app(self):
         app_name = "asset_{t}_remote_multi_region_app".format(t=int(time.time()))

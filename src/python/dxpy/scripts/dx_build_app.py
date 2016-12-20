@@ -576,6 +576,10 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
     else:
         builder_app = 'app-tarball_applet_builder'
 
+    app_spec = _parse_app_spec(src_dir)
+    if app_spec['runSpec'].get('release') == '14.04':
+        builder_app += "_trusty"
+
     temp_dir = tempfile.mkdtemp()
 
     build_options = {'dx_toolkit_autodep': dx_toolkit_autodep}
@@ -590,7 +594,6 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
         # before uploading, we need to determine the correct version to
         # use here and pass it in to the interior run of dx-build-app.
         if do_version_autonumbering:
-            app_spec = _parse_app_spec(src_dir)
             original_version = app_spec['version']
             app_describe = None
             try:
