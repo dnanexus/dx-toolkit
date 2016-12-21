@@ -15,7 +15,6 @@
 #   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #   License for the specific language governing permissions and limitations
 #   under the License.
-
 ostype=$(uname)
 
 product_name=$1
@@ -27,7 +26,13 @@ echo "$product_name" > "$(dirname $0)"/info/target
 # Hide any existing Python packages from the build process.
 export PYTHONPATH=
 
-source "$(dirname $0)/../environment"
+#source "$(dirname $0)/../environment"
+
+# Get home directory location
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
+export DNANEXUS_HOME="$( cd -P "$( dirname "$SOURCE" )" && pwd )/.."
+
 cd "${DNANEXUS_HOME}"
 make clean
 make
