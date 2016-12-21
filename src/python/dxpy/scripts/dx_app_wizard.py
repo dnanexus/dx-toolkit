@@ -388,16 +388,15 @@ array:boolean  array:int      boolean        hash           string''')
 
     # print('\n' + BOLD('Linux version: '))
     app_json['runSpec']['distribution'] = 'Ubuntu'
-    app_json['runSpec']['release'] = '12.04'
 
-    #if any(instance_type.startswith(prefix) for prefix in ('mem1_hdd2', 'mem2_hdd2', 'mem3_hdd2')):
-    #    print(fill('Your app will run on Ubuntu 12.04. To use Ubuntu 14.04, select from the list of common instance ' +
-    #               'types above.'))
-    #    app_json['runSpec']['release'] = '12.04'
-    #else:
-    #    app_json['runSpec']['release'] = '14.04'
-    #    print(fill('Your app has been configured to run on Ubuntu 14.04. To use Ubuntu 12.04, edit the ' +
-    #               BOLD('runSpec.release') + ' field of your dxapp.json.'))
+    if any(instance_type.startswith(prefix) for prefix in ('mem1_hdd2', 'mem2_hdd2', 'mem3_hdd2')):
+        print(fill('Your app will run on Ubuntu 12.04. To use Ubuntu 14.04, select from the list of common instance ' +
+                   'types above.'))
+        app_json['runSpec']['release'] = '12.04'
+    else:
+        app_json['runSpec']['release'] = '14.04'
+        print(fill('Your app has been configured to run on Ubuntu 14.04. To use Ubuntu 12.04, edit the ' +
+                   BOLD('runSpec.release') + ' field of your dxapp.json.'))
 
     #################
     # WRITING FILES #
