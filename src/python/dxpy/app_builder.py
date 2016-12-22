@@ -890,6 +890,9 @@ def _create_app(applet_or_regional_options, app_name, src_dir, publish=False, se
 
 
 def get_regional_options(app_spec):
+    """Gets the regional options specified in dxapp.json. This function is
+    agnostic to apps versus applets.
+    """
     regional_options = app_spec.get("regionalOptions")
     if regional_options is None:
         return None
@@ -898,3 +901,38 @@ def get_regional_options(app_spec):
     if len(regional_options.keys()) < 1:
         raise AppBuilderException("The field 'regionalOptions' in dxapp.json must be a non-empty mapping")
     return regional_options
+
+
+def assert_consistent_regions(from_app_spec, from_command_line):
+    """
+    :param from_app_spec: The regional options specified in dxapp.json.
+    :type from_app_spec: dict or None.
+    :param from_command_line: The regional options specified on the
+    command-line via --region.
+    :type from_command_line: list or None.
+    """
+    if from_app_spec is None or from_command_line is None:
+        return
+    if set(from_app_spec) != set(from_command_line):
+        raise dxpy.app_builder.AppBuilderException("--region and the 'regionalOptions' key in dxapp.json do not agree")
+
+
+def get_enabled_regions(from_app_spec, from_command_line):
+    """
+    :param from_app_spec: The regional options specified in dxapp.json.
+    :type from_app_spec: dict or None.
+    :param from_command_line: The regional options specified on the
+    command-line via --region.
+    :type from_command_line: list or None.
+    """
+    assert_consistent_regions(from_app_spec, from_command_line)
+
+    enabled_regions = None
+    if from_app_spec is not None:
+        enabled_regions = from_app_spec.keys()
+    elif from_command_line is not None:
+        enabled_regions = from_command_line
+
+    if enabled_regions is not None and len(enabled_regions) == 0:
+        raise AssertionError("This app should be enabled in at least one region")
+    return enabled_regions
