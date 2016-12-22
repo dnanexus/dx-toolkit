@@ -781,20 +781,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     override_applet_name = None
 
     requested_regional_options = dxpy.app_builder.get_regional_options(app_json)
-
-    # The set of regions specified on the command-line (i.e., --region) and the
-    # set of enabled regions in dxapp.json disagree.
-    if (requested_regional_options is not None and region is not None and
-            set(requested_regional_options) != set(region)):
-        raise dxpy.app_builder.AppBuilderException("--region and the 'regionalOptions' key in dxapp.json do not agree")
-
-    enabled_regions = None
-    if requested_regional_options is not None:
-        enabled_regions = requested_regional_options.keys()
-    elif region is not None:
-        enabled_regions = region
-    if enabled_regions is not None and len(enabled_regions) == 0:
-        raise AssertionError("This app should be enabled in at least one region")
+    enabled_regions = dxpy.app_builder.get_enabled_regions(requested_regional_options, region)
 
     # Cannot build multi-region app if `use_temp_build_project` is falsy.
     if enabled_regions is not None and len(enabled_regions) > 1 and not use_temp_build_project:
