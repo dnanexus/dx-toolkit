@@ -308,14 +308,11 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
         dxpy.PROJECT_CONTEXT_ID = self.project
 
         # Make some data objects for input
-        dxapplet = dxpy.api.applet_new({"project": dxpy.WORKSPACE_ID,
-                                        "name": "anapplet",
-                                        "dxapi": "1.0.0",
-                                        "runSpec": {"code": "", "interpreter": "bash"}})['id']
-        dxfile = dxpy.upload_string("foo", name="afile")
-        dxgtable = dxpy.new_dxgtable(columns=[{"name": "int_col", "type": "int"}], name="agtable")
-        dxgtable.add_rows([[3], [0]])
-        dxgtable.close(block=True)
+        dxpy.api.applet_new({"project": dxpy.WORKSPACE_ID,
+                             "name": "anapplet",
+                             "dxapi": "1.0.0",
+                             "runSpec": {"code": "", "interpreter": "bash"}})['id']
+        dxpy.upload_string("foo", name="afile")
         dxrecord = dxpy.new_dxrecord(name="arecord")
         dxrecord.close()
 
@@ -330,9 +327,9 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
             "outputSpec": []
         }
 
-        classes = ['applet', 'record', 'file', 'gtable',
+        classes = ['applet', 'record', 'file',
                    'boolean', 'int', 'float', 'string', 'hash',
-                   'array:applet', 'array:record', 'array:file', 'array:gtable',
+                   'array:applet', 'array:record', 'array:file',
                    'array:boolean', 'array:int', 'array:float', 'array:string']
 
         for classname in classes:
@@ -355,8 +352,6 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
                         '-irequired_array_record=arecord',
                         '-irequired_file=afile',
                         '-irequired_array_file=afile',
-                        '-irequired_gtable=agtable',
-                        '-irequired_array_gtable=agtable',
                         '-irequired_boolean=true',
                         '-irequired_array_boolean=true',
                         '-irequired_array_boolean=false',
