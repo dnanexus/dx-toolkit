@@ -23,7 +23,7 @@ import unittest, time, json, re, os
 import dateutil.parser
 import dxpy
 from dxpy import AppError, AppInternalError, DXError, DXFile, DXRecord
-from dxpy.utils import (describe, exec_utils, genomic_utils, response_iterator, get_futures_threadpool, DXJSONEncoder,
+from dxpy.utils import (exec_utils, genomic_utils, response_iterator, get_futures_threadpool, DXJSONEncoder,
                         normalize_timedelta, normalize_time_input, config, Nonce)
 from dxpy.utils.exec_utils import DXExecDependencyInstaller
 from dxpy.utils.pretty_print import flatten_json_array
@@ -31,23 +31,6 @@ from dxpy.compat import USING_PYTHON2
 
 # TODO: unit tests for dxpy.utils.get_field_from_jbor, get_job_from_jbor, is_job_ref
 
-class TestDescribe(unittest.TestCase):
-    def test_is_job_ref(self):
-        # Positive results
-        jobref = {"job": "job-B55ZF5kZKQGz1Xxyb5FQ0003", "field": "number"}
-        self.assertTrue(describe.is_job_ref(jobref))
-        jobref = {"$dnanexus_link": jobref}
-        self.assertTrue(describe.is_job_ref(jobref))
-
-        # Negative results
-        jobref = {"job": "job-B55ZF5kZKQGz1Xxyb5FQ0003", "field": "number", "other": "field"}
-        self.assertFalse(describe.is_job_ref(jobref))
-        jobref = {"job": "job-B55ZF5kZKQGz1Xxyb5FQ0003", "field": 32}
-        self.assertFalse(describe.is_job_ref(jobref))
-        jobref = {"$dnanexus_link": jobref}
-        self.assertFalse(describe.is_job_ref(jobref))
-        jobref = {"$dnanexus_link": "job-B55ZF5kZKQGz1Xxyb5FQ0003"}
-        self.assertFalse(describe.is_job_ref(jobref))
 
 class TestErrorSanitizing(unittest.TestCase):
     def test_error_sanitizing(self):

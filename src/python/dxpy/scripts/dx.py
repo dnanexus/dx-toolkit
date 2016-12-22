@@ -64,8 +64,8 @@ from ..utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id
                               object_exists_in_project, is_jbor_str)
 from ..utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, LocalCompleter,
                                ListCompleter, MultiCompleter)
-from ..utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_desc,
-                              get_io_desc, get_find_executions_string)
+from ..utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_header,
+                              print_ls_l_desc, get_io_desc, get_find_executions_string)
 
 try:
     import colorama
@@ -763,7 +763,7 @@ def ls(args):
                 resp["objects"] = sorted(resp["objects"], key=cmp_names)
                 if args.verbose:
                     if len(resp['objects']) > 0:
-                        print(BOLD() + 'State' + DELIMITER('\t') + 'Last modified' + DELIMITER('       ') + 'Size' + DELIMITER('     ') + 'Name' + DELIMITER(' (') + 'ID' + DELIMITER(')') + ENDC())
+                        print_ls_l_header()
                     else:
                         print("No data objects found in the folder")
                 if not args.brief and not args.verbose:

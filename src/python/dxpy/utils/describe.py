@@ -55,7 +55,13 @@ def DATA_STATES(state):
 
 SIZE_LEVEL = ['bytes', 'KB', 'MB', 'GB', 'TB']
 
+
 def get_size_str(size):
+    """
+    Formats a byte size as a string.
+
+    The returned string is no more than 9 characters long.
+    """
     if size == 0:
         magnitude = 0
         level = 0
@@ -63,6 +69,7 @@ def get_size_str(size):
         magnitude = math.floor(math.log(size, 10))
         level = int(min(math.floor(magnitude // 3), 4))
     return ('%d' if level == 0 else '%.2f') % (float(size) / 2**(level*10)) + ' ' + SIZE_LEVEL[level]
+
 
 def parse_typespec(thing):
     if isinstance(thing, basestring):
@@ -857,8 +864,24 @@ def get_ls_desc(desc, print_id=False):
     else:
         return desc['name'] + addendum
 
+
 def print_ls_desc(desc, **kwargs):
     print(get_ls_desc(desc, **kwargs))
+
+
+def get_ls_l_header():
+    return (BOLD() +
+            'State' + DELIMITER('   ') +
+            'Last modified' + DELIMITER('       ') +
+            'Size' + DELIMITER('      ') +
+            'Name' + DELIMITER(' (') +
+            'ID' + DELIMITER(')') +
+            ENDC())
+
+
+def print_ls_l_header():
+    print(get_ls_l_header())
+
 
 def get_ls_l_desc(desc, include_folder=False, include_project=False):
     if 'state' in desc:
@@ -885,12 +908,19 @@ def get_ls_l_desc(desc, include_folder=False, include_project=False):
         size_str = get_size_str(desc['size'])
     elif 'length' in desc:
         size_str = str(desc['length']) + ' rows'
-    size_padding = ' '*(max(0, 8 - len(size_str)))
+    size_padding = ' ' * max(0, 9 - len(size_str))
 
-    return state_str + DELIMITER(' '*(8 - state_len)) + render_short_timestamp(desc['modified']) + DELIMITER(' ') + size_str + DELIMITER(size_padding + ' ') + name_str + DELIMITER(' (') + ((desc['project'] + DELIMITER(':')) if include_project else '') + desc['id'] + DELIMITER(')')
+    return (state_str +
+            DELIMITER(' '*(8 - state_len)) + render_short_timestamp(desc['modified']) +
+            DELIMITER(' ') + size_str +
+            DELIMITER(size_padding + ' ') + name_str +
+            DELIMITER(' (') + ((desc['project'] + DELIMITER(':')) if include_project else '') + desc['id'] +
+            DELIMITER(')'))
+
 
 def print_ls_l_desc(desc, **kwargs):
     print(get_ls_l_desc(desc, **kwargs))
+
 
 def get_find_executions_string(desc, has_children, single_result=False, show_outputs=True,
                                is_cached_result=False):
