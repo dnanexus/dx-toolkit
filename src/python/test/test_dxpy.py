@@ -2164,19 +2164,20 @@ class TestHTTPResponses(unittest.TestCase):
 
         # We'd better have waited at least 10 seconds (accounting for up to 0.5
         # seconds of clock skew)
-        self.assertTrue(9000 <= time_elapsed)
+        self.assertTrue(9500 <= time_elapsed)
         # After 10 seconds we must have completed the original request, plus
-        # either 2 or 3 retries (r2 or r3 below). (2 retries take at most 1 + 2
-        # + 4 = 7 < 10 seconds, and 4 retries take at least 1 + 1 + 2 + 4 + 8 =
-        # 16 seconds.)
+        # either 3 or 4 retries (r3 or r4 below). (3 retries take at most 1 + 2
+        # + 4 < 10 seconds, so we must have done at least 3, and 5 retries take
+        # at least 1 + 1 + 2 + 4 + 8 = > 10 seconds, so we can't have completed
+        # 5).
         #
-        # Therefore, we're in the middle of waiting at most 4 or 8 seconds, so
-        # after 10 seconds, we can have no more than 8 more seconds to wait.
+        # Therefore, we're in the middle of waiting at most 8 or 16 seconds, so
+        # after 10 seconds, we can have no more than 16 more seconds to wait.
         # Add 2 seconds for clock skew plus the time it takes to do the
         # requests themselves.
 
-        # r <--1sec--> r1 <-- 1-2sec --> r2 <---- 2-4sec ----> r3 <------- 4-8 sec ...
-        self.assertTrue(time_elapsed <= 20000)
+        # r <-1s-> r1 <-- 1-2s --> r2 <---- 2-4s ----> r3 <----- 4-8 s -----> r4 <-- ...
+        self.assertTrue(time_elapsed <= 10000 + 16000 + 2000)
 
     def test_generic_exception_not_retryable(self):
         self.assertFalse(dxpy._is_retryable_exception(KeyError('oops')))
