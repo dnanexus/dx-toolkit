@@ -1,7 +1,5 @@
-dxruby: DNAnexus Ruby API
-=========================
-
-[API Documentation](http://autodoc.dnanexus.com/bindings/ruby/current/)
+DNAnexus Ruby API
+=================
 
 Build dependencies
 ------------------
@@ -24,17 +22,25 @@ toolchain. Instead, use `brew install ruby` to install the
 Building
 --------
 
-    make ruby
+    make
+    # For API documentation...
+    make doc
 
 Using the package
 -----------------
 
-The `environment` file will prepend to your `GEM_PATH` (see
-[Installing the toolkit](#installing-the-toolkit)). To use `dxruby`, run:
+Set `GEM_PATH` appropriately:
 
-```
-require 'rubygems'
-require 'dxruby'
-```
+    export GEM_PATH="${DNANEXUS_HOME}/lib/rubygems:$GEM_PATH"
+
+Then, in your Ruby code:
+
+    require 'rubygems'
+    require 'dxruby'
 
 In Ruby 1.9, `require 'rubygems'` is not necessary.
+
+Tests / Sample Code
+-------------------
+
+    ruby test/test_dxruby.rb

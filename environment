@@ -38,15 +38,12 @@ if [ "$DNANEXUS_HOME" == "/etc/profile.d" ]; then
   # Private Python packages. We really ought not pollute PYTHONPATH with these though.
   export PYTHONPATH="/usr/share/dnanexus/lib/python2.7/site-packages:$PYTHONPATH"
   export CLASSPATH="/usr/share/java/dnanexus-api-0.1.0.jar:${CLASSPATH}"
-  export GEM_PATH="/usr/share/dnanexus/lib/rubygems:$GEM_PATH"
 
 else
 
   export PATH="${DNANEXUS_HOME}/bin:$PATH"
   export PYTHONPATH="${DNANEXUS_HOME}/share/dnanexus/lib/python2.7/site-packages:${DNANEXUS_HOME}/lib/python:$PYTHONPATH"
-  export PERL5LIB="${DNANEXUS_HOME}/lib/perl5:$PERL5LIB"
   export CLASSPATH="${DNANEXUS_HOME}/lib/java/*:${CLASSPATH}"
-  export GEM_PATH="${DNANEXUS_HOME}/lib/rubygems:$GEM_PATH"
 
 fi
 

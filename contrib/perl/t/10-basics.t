@@ -20,12 +20,11 @@ use Test::More;
 
 use DNAnexus::API;
 
-$f = DNAnexus::API::systemFindDataObjects();
-for $i (@{$$f{results}}) {
-    print "$_\t$$i{$_}\n" for keys %$i;
+$resp = DNAnexus::API::systemFindDataObjects();
+for $result (@{$$resp{results}}) {
+    print "$_\t$$result{$_}\n" for keys %$result;
 }
 
 ok( 1 == 1 );
 
 done_testing();
-

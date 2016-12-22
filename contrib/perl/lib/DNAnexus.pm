@@ -60,7 +60,7 @@ sub DXHTTPRequest($;$%) {
     $request->authorization($$SECURITY_CONTEXT{auth_token_type}.' '.$$SECURITY_CONTEXT{auth_token});
 
     $request->content(encode_json($data));
-    
+
     my $ua = LWP::UserAgent->new;
     my $response = $ua->request($request);
 
@@ -81,7 +81,7 @@ sub set_api_server_info(;$$$) {
     $host ||= 'api.dnanexus.com';
     $port ||= 443;
     $protocol ||= 'https';
-    
+
     $APISERVER_HOST = $host;
     $APISERVER_PORT = $port;
     $APISERVER = $protocol . "://" . $host . ":" . $port;
@@ -114,7 +114,7 @@ sub _initialize() {
         set_security_context(decode_json($ENV{DX_SECURITY_CONTEXT}));
     }
 
-    print $APISERVER_HOST, $APISERVER_PORT, $APISERVER_PROTOCOL, $APISERVER, $SECURITY_CONTEXT, $PROJECT_CONTEXT_ID, $_DEBUG;
+    # print $APISERVER_HOST, $APISERVER_PORT, $APISERVER_PROTOCOL, $APISERVER, $SECURITY_CONTEXT, $PROJECT_CONTEXT_ID, $_DEBUG;
 }
 
 _initialize();

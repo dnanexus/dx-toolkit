@@ -12,15 +12,11 @@
 /src/.setup_doc_virtualenv
 /src/java/target/
 /src/java/src/main/java/com/dnanexus/DXToolkitVersion.java
-/src/perl/DNAnexus-*
 /src/python/dxpy/toolkit_version.py
 /src/python/coverage-reports/
-/src/ruby/lib/dxruby/version.rb
 /src/R/install_dxR_deps.Rout
 /src/R/dxR*.tar.gz
 /src/R/roxygen2_*
-/src/ruby/*.gem
-/src/ruby/.yardoc
 
 /src/openssl*.tar.gz
 /src/openssl

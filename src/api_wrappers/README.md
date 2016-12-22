@@ -49,7 +49,8 @@ Adding wrappers for a new language
 By convention we create a file `generateXXXXAPIWrappers.py` in this directory
 for each supported language. This is a Python script which reads
 `wrapper_table.json` from stdin, and produces a language-specific wrapper file
-on stdout.
+on stdout. There are also some unsupported wrappers for additional languages in
+the `contrib` directory of dx-toolkit.
 
 To add wrappers for your favorite language (say, Ruby):
 
