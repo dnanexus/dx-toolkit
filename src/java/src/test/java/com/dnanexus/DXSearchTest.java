@@ -269,11 +269,6 @@ public class DXSearchTest {
     public void testFindDataObjectsByClass() {
         DXRecord record = DXRecord.newRecord().setProject(testProject).setName("arecord").build();
         DXFile file = DXFile.newFile().setProject(testProject).setName("afile").build();
-        DXGTable gtable =
-                DXGTable.newGTable(
-                        ImmutableList.of(ColumnSpecification.getInstance("num_goats",
-                                ColumnType.INT16))).setProject(testProject).setName("agtable")
-                        .build();
         DXApplet applet =
                 DXApplet.newApplet().setProject(testProject).setName("anapplet")
                         .setRunSpecification(RunSpecification.newRunSpec("bash", "").build())
@@ -291,11 +286,6 @@ public class DXSearchTest {
                         .withClassFile().execute().asList());
         Assert.assertEquals(file, fileResult);
         Assert.assertEquals("afile", fileResult.describe().getName());
-        DXGTable gtableResult =
-                Iterables.getOnlyElement(DXSearch.findDataObjects().inProject(testProject)
-                        .withClassGTable().execute().asList());
-        Assert.assertEquals(gtable, gtableResult);
-        Assert.assertEquals("agtable", gtableResult.describe().getName());
         DXApplet appletResult =
                 Iterables.getOnlyElement(DXSearch.findDataObjects().inProject(testProject)
                         .withClassApplet().execute().asList());
@@ -535,9 +525,6 @@ public class DXSearchTest {
                 .putProperty("sampleId", "1234").build();
         DXFile.newFile().setProject(testProject).setName("file1").putProperty("sampleId", "2345")
                 .build();
-        DXGTable.newGTable(
-                ImmutableList.of(ColumnSpecification.getInstance("num_goats", ColumnType.INT16)))
-                .setProject(testProject).setName("gtable1").build();
         DXApplet.newApplet().setProject(testProject).setName("applet1")
                 .setRunSpecification(RunSpecification.newRunSpec("bash", "").build()).build();
         DXWorkflow.newWorkflow().setProject(testProject).setName("workflow1").build();
@@ -552,14 +539,14 @@ public class DXSearchTest {
         Assert.assertEquals(recordResult.getCachedDescribe().getProperties().get("sampleId"),
                 "1234");
 
-        DXGTable gtableResult =
-                Iterables.getOnlyElement(DXSearch.findDataObjects().withClassGTable()
-                        .inProject(testProject).nameMatchesExactly("gtable1")
+        recordResult =
+                Iterables.getOnlyElement(DXSearch.findDataObjects().withClassRecord()
+                        .inProject(testProject).nameMatchesExactly("record1")
                         .includeDescribeOutput().execute().asList());
-        Assert.assertEquals(gtableResult.getCachedDescribe().getName(), "gtable1");
+        Assert.assertEquals(recordResult.getCachedDescribe().getName(), "record1");
         // Called includeDescribeOutput with default settings so properties should NOT be returned
         try {
-            gtableResult.getCachedDescribe().getProperties();
+            recordResult.getCachedDescribe().getProperties();
             Assert.fail("Expected IllegalStateException to be thrown because properties should not have been returned");
         } catch (IllegalStateException e) {
             // Expected

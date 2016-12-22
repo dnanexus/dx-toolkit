@@ -994,10 +994,6 @@ TEST(DXSystemTest, findDataObjects) {
   // because these tests rely heavily on server & client clock being in total sync
   // (so they are good for running locally only)
   if (DXTEST_FULL) {
-    vector<DXGTable> dxg;
-    dxg.push_back(DXGTable("", ""));
-    dxg.push_back(DXGTable("", ""));
-
     // Note: Due to clock differences on various machine, some of these test might fail.
     //       Be aware of this fact while debugging.
     usleep(1 * 1000000); // Sleep for 1s
