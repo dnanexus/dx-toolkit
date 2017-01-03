@@ -25,6 +25,7 @@ containers, dataobjects, apps, and jobs).
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import datetime, time, json, math, sys, copy
+import subprocess
 from collections import defaultdict
 
 import dxpy
@@ -248,30 +249,36 @@ def job_output_to_str(job_output, prefix='\n', title="Output: ", title_len=None)
                                                                    subsequent_indent=' '*9,
                                                                    break_long_words=False) for key, value in job_output.items()])
 
+
 def get_io_field(io_hash, defaults=None, delim='=', highlight_fields=()):
+
+    def highlight_value(key, value):
+        if key in highlight_fields:
+            return YELLOW() + value + ENDC()
+        else:
+            return value
+
     if defaults is None:
         defaults = {}
     if io_hash is None:
         return '-'
     if len(io_hash) == 0 and len(defaults) == 0:
         return '-'
-    def highlight_value(key, value):
-        if key in highlight_fields:
-            return YELLOW() + value + ENDC()
-        else:
-            return value
     if get_delimiter() is not None:
         return ('\n' + get_delimiter()).join([(key + delim + highlight_value(key, io_val_to_str(value))) for key, value in io_hash.items()] +
                                              [('[' + key + delim + io_val_to_str(value) + ']') for key, value in defaults.items()])
     else:
-        return ('\n').join([fill(key + ' ' + delim + ' ' + highlight_value(key, io_val_to_str(value)),
-                                 initial_indent=' '*16,
-                                 subsequent_indent=' '*17,
-                                 break_long_words=False) for key, value in io_hash.items()] +
-                           [fill('[' + key + ' ' + delim + ' ' + io_val_to_str(value) + ']',
-                                 initial_indent=' '*16,
-                                 subsequent_indent=' '*17,
-                                 break_long_words=False) for key, value in defaults.items()])[16:]
+        lines = [fill(key + ' ' + delim + ' ' + highlight_value(key, io_val_to_str(value)),
+                      initial_indent=' ' * FIELD_NAME_WIDTH,
+                      subsequent_indent=' ' * (FIELD_NAME_WIDTH + 1),
+                      break_long_words=False)
+                 for key, value in io_hash.items()]
+        lines.extend([fill('[' + key + ' ' + delim + ' ' + io_val_to_str(value) + ']',
+                           initial_indent=' ' * FIELD_NAME_WIDTH,
+                           subsequent_indent=' ' * (FIELD_NAME_WIDTH + 1),
+                           break_long_words=False)
+                      for key, value in defaults.items()])
+        return '\n'.join(lines)[FIELD_NAME_WIDTH:]
 
 def get_resolved_jbors(resolved_thing, orig_thing, resolved_jbors):
     if resolved_thing == orig_thing:
@@ -669,8 +676,19 @@ def print_data_obj_desc(desc, verbose=False):
             else: # Unhandled prettifying
                 print_json_field(field, desc[field])
 
+
+def printable_ssh_host_key(ssh_host_key):
+    try:
+        keygen = subprocess.Popen(["ssh-keygen", "-lf", "/dev/stdin"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        (stdout, stderr) = keygen.communicate(ssh_host_key)
+    except:
+        return ssh_host_key.strip()
+    else:
+        return stdout.replace(" no comment", "").strip()
+
+
 def print_execution_desc(desc):
-    recognized_fields = ['id', 'class', 'project', 'workspace',
+    recognized_fields = ['id', 'class', 'project', 'workspace', 'region',
                          'app', 'applet', 'executable', 'workflow',
                          'state',
                          'rootExecution', 'parentAnalysis', 'parentJob', 'originJob', 'analysis', 'stage',
@@ -680,7 +698,7 @@ def print_execution_desc(desc):
                          'name', 'instanceType', 'systemRequirements', 'executableName', 'failureFrom', 'billTo',
                          'startedRunning', 'stoppedRunning', 'stateTransitions',
                          'delayWorkspaceDestruction', 'stages', 'totalPrice', 'isFree', 'invoiceMetadata',
-                         'priority']
+                         'priority', 'sshHostKey']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -689,6 +707,8 @@ def print_execution_desc(desc):
     if "executableName" in desc and desc['executableName'] is not None:
         print_field("Executable name", desc['executableName'])
     print_field("Project context", desc["project"])
+    if 'region' in desc:
+        print_field("Region", desc["region"])
     if 'billTo' in desc:
         print_field("Billed to",  desc['billTo'][5 if desc['billTo'].startswith('user-') else 0:])
     if 'workspace' in desc:
@@ -811,9 +831,11 @@ def print_execution_desc(desc):
                 else:
                     print_nofill_field(" sys reqs", YELLOW() + json.dumps(cloned_sys_reqs) + ENDC())
     if not desc.get('isFree') and desc.get('totalPrice') is not None:
-        print_field('Total Price', "%.2f" % desc['totalPrice'])
+        print_field('Total Price', "$%.2f" % desc['totalPrice'])
     if desc.get('invoiceMetadata'):
         print_json_field("Invoice Metadata", desc['invoiceMetadata'])
+    if desc.get('sshHostKey'):
+        print_nofill_field("SSH Host Key", printable_ssh_host_key(desc['sshHostKey']))
 
     for field in desc:
         if field not in recognized_fields:
