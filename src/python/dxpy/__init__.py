@@ -581,17 +581,16 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             try:
                 pool_manager = _get_pool_manager(**pool_args)
 
-                def unicode2str(s):
-                    if isinstance(s, unicode):
-                        return s.encode('ascii')
-                    else:
-                        return s
-
                 _headers['User-Agent'] = USER_AGENT
                 _headers['DNAnexus-API'] = API_VERSION
 
                 # Converted Unicode headers to ASCII and throw an error if not possible
-                _headers = {unicode2str(k): unicode2str(v) for k, v in _headers.items()}
+                def ensure_ascii(i):
+                    if not isinstance(i, bytes):
+                        i = i.encode('ascii')
+                    return i
+
+                _headers = {ensure_ascii(k): ensure_ascii(v) for k, v in _headers.items()}
                 response = pool_manager.request(_method, _url, headers=_headers, body=body,
                                                 timeout=timeout, retries=False, **kwargs)
             except urllib3.exceptions.ClosedPoolError:
