@@ -141,7 +141,7 @@ import threading
 from collections import namedtuple
 
 from . import exceptions
-from .compat import USING_PYTHON2, BadStatusLine, StringIO, bytes, _ensure_bytes
+from .compat import USING_PYTHON2, BadStatusLine, StringIO, bytes
 from .utils.printing import BOLD, BLUE, YELLOW, GREEN, RED, WHITE
 
 from random import randint
@@ -585,7 +585,12 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 _headers['DNAnexus-API'] = API_VERSION
 
                 # Converted Unicode headers to ASCII and throw an error if not possible
-                _headers = {_ensure_bytes(k): _ensure_bytes(v) for k, v in _headers.items()}
+                def ensure_ascii(i):
+                    if not isinstance(i, bytes):
+                        i = i.encode('ascii')
+                    return i
+
+                _headers = {ensure_ascii(k): ensure_ascii(v) for k, v in _headers.items()}
                 response = pool_manager.request(_method, _url, headers=_headers, body=body,
                                                 timeout=timeout, retries=False, **kwargs)
             except urllib3.exceptions.ClosedPoolError:
