@@ -46,5 +46,5 @@ https://wiki.dnanexus.com/Downloads
 1. Build upload agent:
 
     ```
-    CC=clang CXX=clang++ make ua
+    CC=clang CXX=clang++ VERSIONER_PERL_VERSION=5.16 make ua
     ```
