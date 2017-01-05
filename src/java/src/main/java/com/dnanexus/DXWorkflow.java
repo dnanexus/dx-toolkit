@@ -247,10 +247,10 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
      * A workflow stage
      *
      */
-    public static class DXStage {
+    public static class Stage {
         private String ID;
 
-        DXStage(String ID) {
+        Stage(String ID) {
             this.ID = ID;
         }
 
@@ -259,17 +259,19 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
         }
 
         /**
-         * Create a link to an output field. This is used in workflows, to
-         * link results between stages.
+         * Create a link to an output field.
          *
-         * @param fieldName  name of an output field
+         * <p> This is used in workflows, to link results between
+         * stages. </p>
+         *
+         * @param outputName  name of an output field
          *
          * @return JSON representation of a link. Can be used as an input to a workflow stage.
          */
-        public ObjectNode getOutputReference(String  fieldName) {
+        public JsonNode getOutputReference(String  outputName) {
             ObjectNode dxlink = DXJSON.getObjectBuilder()
                 .put("stage", ID)
-                .put("outputField", fieldName).build();
+                .put("outputField", outputName).build();
             return DXJSON.getObjectBuilder().put("$dnanexus_link", dxlink).build();
         }
 
@@ -277,14 +279,14 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
          * Create a link to an input field. This is used in workflows, to
          * link results between stages.
          *
-         * @param fieldName  name of an input field
+         * @param inputName  name of an input field
          *
          * @return JSON representation of a link. Can be used as an input to a workflow stage.
          */
-        public ObjectNode getInputReference(String  fieldName) {
+        public ObjectNode getInputReference(String  inputName) {
             ObjectNode dxlink = DXJSON.getObjectBuilder()
                 .put("stage", ID)
-                .put("inputField", fieldName).build();
+                .put("inputField", inputName).build();
             return DXJSON.getObjectBuilder().put("$dnanexus_link", dxlink).build();
         }
     }
@@ -293,12 +295,20 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
      *  to report the new edit version, together with the operation result.
      */
     public static class Modification<T> {
-        public int editVersion;
-        public T obj;
+        private int editVersion;
+        private T obj;
 
         Modification(int editVersion, T obj) {
             this.editVersion = editVersion;
             this.obj = obj;
+        }
+
+        final public int getEditVersion() {
+            return editVersion;
+        }
+
+        final public T getValue() {
+            return obj;
         }
     }
 
@@ -326,10 +336,10 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
         public String stage;
     }
 
-    public Modification<DXStage> addStage(DXApplet applet,
-                                          String name,
-                                          Object stageInputs,
-                                          int editVersion) {
+    public Modification<Stage> addStage(DXApplet applet,
+                                        String name,
+                                        Object stageInputs,
+                                        int editVersion) {
         WorkflowAddStageInput reqInput = new WorkflowAddStageInput();
         reqInput.editVersion = editVersion;
         reqInput.name = name;
@@ -337,7 +347,7 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
         reqInput.executable = applet.getId();
         WorkflowAddStageOutput reqOutput = DXAPI.workflowAddStage(this.getId(),
                                                                   reqInput, WorkflowAddStageOutput.class);
-        return new Modification<DXStage> (reqOutput.editVersion,
-                                          new DXStage(reqOutput.stage));
+        return new Modification<Stage> (reqOutput.editVersion,
+                                        new Stage(reqOutput.stage));
     }
 }
