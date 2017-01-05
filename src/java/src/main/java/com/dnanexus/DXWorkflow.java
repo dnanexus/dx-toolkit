@@ -295,19 +295,19 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
      *  to report the new edit version, together with the operation result.
      */
     public static class Modification<T> {
-        private int editVersion;
-        private T obj;
+        private final int editVersion;
+        private final T obj;
 
         Modification(int editVersion, T obj) {
             this.editVersion = editVersion;
             this.obj = obj;
         }
 
-        final public int getEditVersion() {
+        public int getEditVersion() {
             return editVersion;
         }
 
-        final public T getValue() {
+        public T getValue() {
             return obj;
         }
     }
@@ -336,6 +336,16 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
         public String stage;
     }
 
+    /**
+     * Adds a stage to a workflow.
+     *
+     * @param applet Applet to run
+     * @param name   stage name
+     * @param stageInputs  inputs to be provided to the applet
+     * @param editVersion current version of the workflow
+     *
+     * @return a new stage, wrapped in a modification structure.
+     */
     public Modification<Stage> addStage(DXApplet applet,
                                         String name,
                                         Object stageInputs,
