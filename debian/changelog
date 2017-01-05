@@ -1,3 +1,10 @@
+dx-toolkit (0.205.1) precise; urgency=low
+
+  * dx-docker: Handle workdir properly when overriding image metadata (#192)
+  * Fix for dx failing to import psutil on windows introduced in 90902a1
+
+ -- Geet Duggal <gduggal@home.vdev.dnanexus.com>  Thu, 05 Jan 2017 21:30:09 +0000
+
 dx-toolkit (0.205.0) precise; urgency=low
 
   * More detailed logging of URL for downloads
@@ -38,7 +45,7 @@ dx-toolkit (0.203.0) precise; urgency=low
   * STACK-165: Mac OS support for dx-docker
   * PTFM-18850 Remove "resources" field from app optional fields in "dx get"
   * AZURE-314 Support for uploading empty files in Azure
-  * PTFM-18920 Check response code for uploaded parts before returning 
+  * PTFM-18920 Check response code for uploaded parts before returning
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 10 Nov 2016 17:12:53 +0000
 
