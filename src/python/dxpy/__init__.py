@@ -550,10 +550,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
     if hasattr(data, 'seek') and hasattr(data, 'tell'):
         rewind_input_buffer_offset = data.tell()
 
-    # After this point, data isn't used unless _DEBUG>0. Free it before we go
-    # on to make the request because it and serialized_data could both be
-    # large.
-    if _DEBUG == 0:
+    # After this point, data isn't used unless it's a seekable buffer or
+    # unless _DEBUG>0. Free it before we go on to make the request
+    # because it and serialized_data could both be large.
+    if rewind_input_buffer_offset is None and _DEBUG == 0:
         data = None
 
     # Maintain two separate counters for the number of tries...
