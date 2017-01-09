@@ -1,3 +1,9 @@
+dx-toolkit (0.206.1) precise; urgency=low
+
+  * Fix crash in dx-download introduced by a3633a7
+
+ -- Geet Duggal <gduggal@home.vdev.dnanexus.com>  Mon, 09 Jan 2017 22:40:24 +0000
+
 dx-toolkit (0.206.0) precise; urgency=low
 
   * Fix Python 2-3 unicode bug for user agent strings
