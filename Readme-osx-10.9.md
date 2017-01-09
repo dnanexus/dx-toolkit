@@ -16,9 +16,17 @@ https://wiki.dnanexus.com/Downloads
 
   https://www.macports.org/install.php
 
+1. If you want your dx-toolkit build to be backwards-compatible on OS X 10.7, add these lines to ```/opt/local/etc/macports/macports.conf``` to ensure that your MacPorts Python build is compiled with 10.7 support:
+
+    ```
+    macosx_deployment_target            10.7
+    MACOSX_DEPLOYMENT_TARGET            10.7
+    ```
+
 1. Run the MacPorts install and select commands to configure your build environment:
 
     ```
+    sudo port install -s python27
     sudo port install cmake bison autoconf automake
     sudo port install boost -no_static
     sudo port select --set python python27
