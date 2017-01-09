@@ -1,3 +1,9 @@
+dx-toolkit (0.205.2) precise; urgency=low
+
+  * Fix crash in dx-download introduced by a3633a7
+
+ -- Geet Duggal <gduggal@home.vdev.dnanexus.com>  Mon, 09 Jan 2017 22:42:25 +0000
+
 dx-toolkit (0.205.1) precise; urgency=low
 
   * dx-docker: Handle workdir properly when overriding image metadata (#192)
