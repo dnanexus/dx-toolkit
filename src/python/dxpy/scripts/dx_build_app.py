@@ -846,7 +846,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 err_exit()
             projects_by_region = {region: dest_project}
 
-            if not overwite and not archive:
+            if not overwrite and not archive:
                 # If we cannot overwite or archive an existing applet and an
                 # applet in the destination exists with the same name as this
                 # one, then we should err out *before* uploading resources.
