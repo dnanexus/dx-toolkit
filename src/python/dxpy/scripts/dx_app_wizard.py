@@ -290,13 +290,13 @@ array:boolean  array:int      boolean        hash           string''')
 
     print('')
     print(BOLD() + 'Timeout Policy' + ENDC())
+    app_json["runSpec"] = OrderedDict({})
+    app_json['runSpec'].setdefault('timeoutPolicy', {})
 
-    app_json.setdefault('timeoutPolicy', {})
+    timeout, timeout_units = get_timeout(default=app_json['runSpec']['timeoutPolicy'].get('*'))
 
-    timeout, timeout_units = get_timeout(default=app_json['timeoutPolicy'].get('*'))
-
-    app_json['timeoutPolicy'].setdefault('*', {})
-    app_json['timeoutPolicy']['*'].setdefault(timeout_units, timeout)
+    app_json['runSpec']['timeoutPolicy'].setdefault('*', {})
+    app_json['runSpec']['timeoutPolicy']['*'].setdefault(timeout_units, timeout)
 
     ########################
     # LANGUAGE AND PATTERN #
@@ -310,7 +310,7 @@ array:boolean  array:int      boolean        hash           string''')
     language = args.language if args.language is not None else get_language()
 
     interpreter = language_options[language].get_interpreter()
-    app_json["runSpec"] = OrderedDict({"interpreter": interpreter})
+    app_json["runSpec"]["interpreter"] = interpreter
 
     # Prompt the execution pattern iff the args.pattern is provided and invalid
 
