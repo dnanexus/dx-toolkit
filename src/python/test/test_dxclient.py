@@ -6155,10 +6155,10 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                                          "azure:westus": {}})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
-        app_new_res = json.loads(run("dx build --create-app --json " + app_dir))
-        app_desc_res = json.loads(run("dx describe --json " + app_new_res["id"]))
+        app_id = json.loads(run("dx build --create-app --json " + app_dir))["id"]
+        app_desc_res = json.loads(run("dx describe --json " + app_id))
         self.assertEqual(app_desc_res["class"], "app")
-        self.assertEqual(app_desc_res["id"], app_desc_res["id"])
+        self.assertEqual(app_desc_res["id"], app_id)
         self.assertEqual(app_desc_res["version"], "1.0.0")
         self.assertEqual(app_desc_res["name"], app_name)
         self.assertFalse("published" in app_desc_res)
