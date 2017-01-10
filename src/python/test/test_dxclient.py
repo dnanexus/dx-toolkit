@@ -6168,6 +6168,48 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
 
+    # @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
+    #                      'skipping test that would create apps')
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create apps')
+    def test_build_multi_region_app_with_system_requirements(self):
+        app_name = "asset_{t}_multi_region_app_with_regional_system_requirements".format(t=int(time.time()))
+        # TODO: Reset the database initialization script. We had to change it
+        # to add us-west-1 here.
+        # TODO: Figure out why "regionalOptions" is present in the /applet/new
+        # requests.
+        app_spec = dict(self.base_app_spec, name=app_name,
+                        regionalOptions={"aws:us-east-1": {},
+                                         "aws:us-west-1": {}})
+                                         # "azure:westus": {}})
+        app_spec["runSpec"]["systemRequirements"] = dict(main=dict(instanceType="mem2_hdd2_x2"))
+        app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+
+        app_id = json.loads(run("dx build --create-app --json " + app_dir))["id"]
+        app_desc_res = dxpy.api.app_describe(app_id)
+        self.assertEqual(app_desc_res["class"], "app")
+        self.assertEqual(app_desc_res["id"], app_id)
+        self.assertEqual(app_desc_res["version"], "1.0.0")
+        self.assertEqual(app_desc_res["name"], app_name)
+        self.assertFalse("published" in app_desc_res)
+
+        self.assertIn("regionalOptions", app_desc_res)
+        regional_options = app_desc_res["regionalOptions"]
+        self.assertItemsEqual(regional_options.keys(), app_spec["regionalOptions"].keys())
+
+        self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
+        self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
+
+        app_sr = app_desc_res["runSpec"]["systemRequirements"]
+        applet_aws = regional_options["aws:us-east-1"]["applet"]
+        applet_aws_sr = dxpy.api.applet_describe(applet_aws)["runSpec"]["systemRequirements"]
+        applet_azure = regional_options["aws:us-west-1"]["applet"]
+        # applet_azure = regional_options["azure:westus"]["applet"]
+        applet_azure_sr = dxpy.api.applet_describe(applet_azure)["runSpec"]["systemRequirements"]
+        print(app_sr, applet_aws_sr, applet_azure_sr)
+        # The app seems to have a system requirements, which does not really
+        # mean anything if it is backed by multiple applets, right?
+
     def test_build_multi_region_app_without_regional_options(self):
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
         app_spec = dict(self.base_app_spec, name=app_name)
