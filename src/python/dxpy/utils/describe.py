@@ -25,6 +25,7 @@ containers, dataobjects, apps, and jobs).
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import datetime, time, json, math, sys, copy
+import subprocess
 from collections import defaultdict
 
 import dxpy
@@ -55,7 +56,13 @@ def DATA_STATES(state):
 
 SIZE_LEVEL = ['bytes', 'KB', 'MB', 'GB', 'TB']
 
+
 def get_size_str(size):
+    """
+    Formats a byte size as a string.
+
+    The returned string is no more than 9 characters long.
+    """
     if size == 0:
         magnitude = 0
         level = 0
@@ -63,6 +70,7 @@ def get_size_str(size):
         magnitude = math.floor(math.log(size, 10))
         level = int(min(math.floor(magnitude // 3), 4))
     return ('%d' if level == 0 else '%.2f') % (float(size) / 2**(level*10)) + ' ' + SIZE_LEVEL[level]
+
 
 def parse_typespec(thing):
     if isinstance(thing, basestring):
@@ -241,30 +249,36 @@ def job_output_to_str(job_output, prefix='\n', title="Output: ", title_len=None)
                                                                    subsequent_indent=' '*9,
                                                                    break_long_words=False) for key, value in job_output.items()])
 
+
 def get_io_field(io_hash, defaults=None, delim='=', highlight_fields=()):
+
+    def highlight_value(key, value):
+        if key in highlight_fields:
+            return YELLOW() + value + ENDC()
+        else:
+            return value
+
     if defaults is None:
         defaults = {}
     if io_hash is None:
         return '-'
     if len(io_hash) == 0 and len(defaults) == 0:
         return '-'
-    def highlight_value(key, value):
-        if key in highlight_fields:
-            return YELLOW() + value + ENDC()
-        else:
-            return value
     if get_delimiter() is not None:
         return ('\n' + get_delimiter()).join([(key + delim + highlight_value(key, io_val_to_str(value))) for key, value in io_hash.items()] +
                                              [('[' + key + delim + io_val_to_str(value) + ']') for key, value in defaults.items()])
     else:
-        return ('\n').join([fill(key + ' ' + delim + ' ' + highlight_value(key, io_val_to_str(value)),
-                                 initial_indent=' '*16,
-                                 subsequent_indent=' '*17,
-                                 break_long_words=False) for key, value in io_hash.items()] +
-                           [fill('[' + key + ' ' + delim + ' ' + io_val_to_str(value) + ']',
-                                 initial_indent=' '*16,
-                                 subsequent_indent=' '*17,
-                                 break_long_words=False) for key, value in defaults.items()])[16:]
+        lines = [fill(key + ' ' + delim + ' ' + highlight_value(key, io_val_to_str(value)),
+                      initial_indent=' ' * FIELD_NAME_WIDTH,
+                      subsequent_indent=' ' * (FIELD_NAME_WIDTH + 1),
+                      break_long_words=False)
+                 for key, value in io_hash.items()]
+        lines.extend([fill('[' + key + ' ' + delim + ' ' + io_val_to_str(value) + ']',
+                           initial_indent=' ' * FIELD_NAME_WIDTH,
+                           subsequent_indent=' ' * (FIELD_NAME_WIDTH + 1),
+                           break_long_words=False)
+                      for key, value in defaults.items()])
+        return '\n'.join(lines)[FIELD_NAME_WIDTH:]
 
 def get_resolved_jbors(resolved_thing, orig_thing, resolved_jbors):
     if resolved_thing == orig_thing:
@@ -662,8 +676,19 @@ def print_data_obj_desc(desc, verbose=False):
             else: # Unhandled prettifying
                 print_json_field(field, desc[field])
 
+
+def printable_ssh_host_key(ssh_host_key):
+    try:
+        keygen = subprocess.Popen(["ssh-keygen", "-lf", "/dev/stdin"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        (stdout, stderr) = keygen.communicate(ssh_host_key)
+    except:
+        return ssh_host_key.strip()
+    else:
+        return stdout.replace(" no comment", "").strip()
+
+
 def print_execution_desc(desc):
-    recognized_fields = ['id', 'class', 'project', 'workspace',
+    recognized_fields = ['id', 'class', 'project', 'workspace', 'region',
                          'app', 'applet', 'executable', 'workflow',
                          'state',
                          'rootExecution', 'parentAnalysis', 'parentJob', 'originJob', 'analysis', 'stage',
@@ -673,7 +698,7 @@ def print_execution_desc(desc):
                          'name', 'instanceType', 'systemRequirements', 'executableName', 'failureFrom', 'billTo',
                          'startedRunning', 'stoppedRunning', 'stateTransitions',
                          'delayWorkspaceDestruction', 'stages', 'totalPrice', 'isFree', 'invoiceMetadata',
-                         'priority']
+                         'priority', 'sshHostKey']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -682,6 +707,8 @@ def print_execution_desc(desc):
     if "executableName" in desc and desc['executableName'] is not None:
         print_field("Executable name", desc['executableName'])
     print_field("Project context", desc["project"])
+    if 'region' in desc:
+        print_field("Region", desc["region"])
     if 'billTo' in desc:
         print_field("Billed to",  desc['billTo'][5 if desc['billTo'].startswith('user-') else 0:])
     if 'workspace' in desc:
@@ -804,9 +831,11 @@ def print_execution_desc(desc):
                 else:
                     print_nofill_field(" sys reqs", YELLOW() + json.dumps(cloned_sys_reqs) + ENDC())
     if not desc.get('isFree') and desc.get('totalPrice') is not None:
-        print_field('Total Price', "%.2f" % desc['totalPrice'])
+        print_field('Total Price', "$%.2f" % desc['totalPrice'])
     if desc.get('invoiceMetadata'):
         print_json_field("Invoice Metadata", desc['invoiceMetadata'])
+    if desc.get('sshHostKey'):
+        print_nofill_field("SSH Host Key", printable_ssh_host_key(desc['sshHostKey']))
 
     for field in desc:
         if field not in recognized_fields:
@@ -857,8 +886,24 @@ def get_ls_desc(desc, print_id=False):
     else:
         return desc['name'] + addendum
 
+
 def print_ls_desc(desc, **kwargs):
     print(get_ls_desc(desc, **kwargs))
+
+
+def get_ls_l_header():
+    return (BOLD() +
+            'State' + DELIMITER('   ') +
+            'Last modified' + DELIMITER('       ') +
+            'Size' + DELIMITER('      ') +
+            'Name' + DELIMITER(' (') +
+            'ID' + DELIMITER(')') +
+            ENDC())
+
+
+def print_ls_l_header():
+    print(get_ls_l_header())
+
 
 def get_ls_l_desc(desc, include_folder=False, include_project=False):
     if 'state' in desc:
@@ -885,12 +930,19 @@ def get_ls_l_desc(desc, include_folder=False, include_project=False):
         size_str = get_size_str(desc['size'])
     elif 'length' in desc:
         size_str = str(desc['length']) + ' rows'
-    size_padding = ' '*(max(0, 8 - len(size_str)))
+    size_padding = ' ' * max(0, 9 - len(size_str))
 
-    return state_str + DELIMITER(' '*(8 - state_len)) + render_short_timestamp(desc['modified']) + DELIMITER(' ') + size_str + DELIMITER(size_padding + ' ') + name_str + DELIMITER(' (') + ((desc['project'] + DELIMITER(':')) if include_project else '') + desc['id'] + DELIMITER(')')
+    return (state_str +
+            DELIMITER(' '*(8 - state_len)) + render_short_timestamp(desc['modified']) +
+            DELIMITER(' ') + size_str +
+            DELIMITER(size_padding + ' ') + name_str +
+            DELIMITER(' (') + ((desc['project'] + DELIMITER(':')) if include_project else '') + desc['id'] +
+            DELIMITER(')'))
+
 
 def print_ls_l_desc(desc, **kwargs):
     print(get_ls_l_desc(desc, **kwargs))
+
 
 def get_find_executions_string(desc, has_children, single_result=False, show_outputs=True,
                                is_cached_result=False):

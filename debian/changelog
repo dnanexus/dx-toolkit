@@ -1,3 +1,44 @@
+dx-toolkit (0.206.0) precise; urgency=low
+
+  * Fix Python 2-3 unicode bug for user agent strings
+  * Fix for dx failing to import psutil on windows introduced in 90902a1
+  * PTFM-18903 Raise exception if OpenSSL out of date
+  * Fixups for "dx describe JOBID"
+  * dx-docker: Handle workdir properly when overriding image metadata (#192)
+  * Improve SSL packaging on Mac OS
+  * Align "ls -l" output correctly for files
+  * Desupport perl, ruby bindings-- move them to /contrib
+  * PTFM-17112: 14.04 is default for 'dx-app-wizard' (#191)
+  * PTFM-17112 - Allow remote builds on 14.04 workers (#190)
+
+ -- Geet Duggal <gduggal@dnanexus.com>  Thu, 05 Jan 2017 21:16:06 +0000
+
+dx-toolkit (0.205.0) precise; urgency=low
+
+  * More detailed logging of URL for downloads
+  * PTFM-14074 truncated exponential backoff with randomness (dxpy)
+  * PTFM-18767 Limit number of threads in dx-download-all-inputs
+  * Don't show object count in describe output
+  * dxpy.describe can accept a sequence and do bulk describe
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 20 Dec 2016 06:19:33 +0000
+
+dx-toolkit (0.204.0) precise; urgency=low
+
+  * Fix failing tests from fb8c269
+  * "dx build --dry-run" does not clone app assets
+  * AZURE-82 SSH to worker support
+  * Fix "dx build" for applets; it was broken by fb8c269
+  * Allow "dx build" to exercise the dry run flows
+  * PTFM-18860 Update "dx build" and "dx get" to manipulate multi-region apps
+  * Remove test invocation of importer scripts too
+  * Followup to previous commit: remove "dx import"
+  * Remove some deprecated GTable tools
+  * STACK-197: Adding logging of dx-docker subcommands (#187)
+  * Clean up temporary projects after tests
+
+ -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 01 Dec 2016 18:43:29 +0000
+
 dx-toolkit (0.203.0) precise; urgency=low
 
   * PTFM-18692: Do not merge headers. In some cases a bug is introduced
@@ -12,7 +53,7 @@ dx-toolkit (0.203.0) precise; urgency=low
   * STACK-165: Mac OS support for dx-docker
   * PTFM-18850 Remove "resources" field from app optional fields in "dx get"
   * AZURE-314 Support for uploading empty files in Azure
-  * PTFM-18920 Check response code for uploaded parts before returning 
+  * PTFM-18920 Check response code for uploaded parts before returning
 
  -- Kaveh Nafissi <knafissi@dnanexus.com>  Thu, 10 Nov 2016 17:12:53 +0000
 

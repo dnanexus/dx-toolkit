@@ -575,7 +575,8 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                 }
                 applet_spec["runSpec"]["bundledDepends"].append(bundle_depends)
                 # If the file is not found in the applet destination project, clone it from the asset project
-                if dxpy.DXRecord(dxid=asset_record["id"], project=dest_project).describe()["project"] != dest_project:
+                if (not dry_run and
+                        dxpy.DXRecord(dxid=asset_record["id"], project=dest_project).describe()["project"] != dest_project):
                     dxpy.DXRecord(asset_record["id"], project=asset_record["project"]).clone(dest_project)
             else:
                 raise AppBuilderException("No asset bundle was found that matched the specification %s"
@@ -678,15 +679,47 @@ def _update_version(app_name, version, app_spec, try_update=True):
             return None
         raise e
 
-def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False, billTo=None, try_versions=None, try_update=True, confirm=True):
+
+def create_app_multi_region(regional_options, app_name, src_dir, publish=False, set_default=False, billTo=None,
+                            try_versions=None, try_update=True, confirm=True):
+    """
+    Creates a new app object from the specified applet(s).
+
+    :param regional_options: Region-specific options for the app. See
+        https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app/new
+        for details; this should contain keys for each region the app is
+        to be enabled in, and for the values, a dict containing (at
+        minimum) a key "applet" whose value is an applet ID for that
+        region.
+    :type regional_options: dict
+    """
+    return _create_app(dict(regionalOptions=regional_options), app_name, src_dir, publish=publish,
+                       set_default=set_default, billTo=billTo, try_versions=try_versions, try_update=try_update,
+                       confirm=confirm)
+
+
+def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False, billTo=None, try_versions=None,
+               try_update=True, confirm=True, regional_options=None):
     """
     Creates a new app object from the specified applet.
+
+    .. deprecated:: 0.204.0
+       Use :func:`create_app_multi_region()` instead.
+
     """
+    # In this case we don't know the region of the applet, so we use the
+    # legacy API {"applet": applet_id} without specifying a region
+    # specifically.
+    return _create_app(dict(applet=applet_id), applet_name, src_dir, publish=publish, set_default=set_default,
+                       billTo=billTo, try_versions=try_versions, try_update=try_update, confirm=confirm)
+
+
+def _create_app(applet_or_regional_options, app_name, src_dir, publish=False, set_default=False, billTo=None,
+                try_versions=None, try_update=True, confirm=True):
     app_spec = _get_app_spec(src_dir)
     logger.info("Will create app with spec: %s" % (app_spec,))
 
-    app_spec["applet"] = applet_id
-    app_spec["name"] = applet_name
+    app_spec.update(applet_or_regional_options, name=app_name)
 
     # Inline Readme.md and Readme.developer.md
     _inline_documentation_files(app_spec, src_dir)
@@ -849,8 +882,19 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
         # If no versions of this app have ever been published, then
         # we'll set the "default" tag to point to the latest
         # (unpublished) version.
-        no_published_versions = len(list(dxpy.find_apps(name=applet_name, published=True, limit=1))) == 0
+        no_published_versions = len(list(dxpy.find_apps(name=app_name, published=True, limit=1))) == 0
         if no_published_versions:
             dxpy.api.app_add_tags(app_id, input_params={'tags': ['default']})
 
     return app_id
+
+
+def get_regional_options(app_spec):
+    regional_options = app_spec.get("regionalOptions")
+    if regional_options is None:
+        return None
+    if not isinstance(regional_options, dict):
+        raise AppBuilderException("The field 'regionalOptions' in dxapp.json must be a mapping")
+    if len(regional_options.keys()) < 1:
+        raise AppBuilderException("The field 'regionalOptions' in dxapp.json must be a non-empty mapping")
+    return regional_options

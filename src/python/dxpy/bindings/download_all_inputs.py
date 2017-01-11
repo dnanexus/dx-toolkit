@@ -19,6 +19,7 @@ import concurrent.futures
 import os
 import sys
 import multiprocessing
+import psutil
 
 import dxpy
 from dxpy.utils import file_load_utils
@@ -104,6 +105,13 @@ def _gen_helper_dict(filtered_inputs):
     return flattened_dict
 
 
+def _get_num_parallel_threads(max_threads, num_cores, mem_available_mb):
+    '''
+    Ensure at least ~1.2 GB memory per thread, see PTFM-18767
+    '''
+    return min(max_threads, num_cores, max(int(mem_available_mb/1200), 1))
+
+
 def download_all_inputs(exclude=None, parallel=False, max_threads=None):
     '''
     :param exclude: List of input variables that should not be downloaded.
@@ -179,7 +187,10 @@ def download_all_inputs(exclude=None, parallel=False, max_threads=None):
 
     # Download the files
     if parallel:
-        max_num_parallel_downloads = max_threads or multiprocessing.cpu_count()
+        total_mem = psutil.virtual_memory().total >> 20  # Total RAM in MB
+        num_cores = multiprocessing.cpu_count()
+        max_num_parallel_downloads = _get_num_parallel_threads(max_threads, num_cores, total_mem)
+        sys.stderr.write("Downloading files using {} threads".format(max_num_parallel_downloads))
         _parallel_file_download(to_download, idir, max_num_parallel_downloads)
     else:
         _sequential_file_download(to_download, idir)

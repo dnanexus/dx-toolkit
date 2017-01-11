@@ -2,10 +2,6 @@
 /dx-toolkit.*
 /dx-java-bindings/
 /dx-java-bindings.*
-/dx-perl-bindings/
-/dx-perl-bindings.*
 /dx-r-bindings/
 /dx-r-bindings.*
-/dx-ruby-bindings/
-/dx-ruby-bindings.*
 /files

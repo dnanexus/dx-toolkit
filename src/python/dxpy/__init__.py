@@ -141,10 +141,11 @@ import threading
 from collections import namedtuple
 
 from . import exceptions
-from .compat import USING_PYTHON2, BadStatusLine, StringIO
+from .compat import USING_PYTHON2, BadStatusLine, StringIO, bytes
 from .utils.printing import BOLD, BLUE, YELLOW, GREEN, RED, WHITE
 
 from random import randint
+from repr import Repr
 from requests.auth import AuthBase
 from requests.packages import urllib3
 from requests.packages.urllib3.packages.ssl_match_hostname import match_hostname
@@ -200,7 +201,6 @@ APISERVER_PORT = DEFAULT_APISERVER_PORT
 
 DEFAULT_RETRIES = 6
 DEFAULT_TIMEOUT = 600
-DEFAULT_RETRY_AFTER_503_INTERVAL = 60
 
 _DEBUG = 0  # debug verbosity level
 _UPGRADE_NOTIFY = True
@@ -339,18 +339,26 @@ def _extract_msg_from_last_exception():
         return traceback.format_exc().splitlines()[-1].strip()
 
 
-def _extract_retry_after_timeout(response):
-    '''Returns the time in seconds that the server is asking us to
-    wait. The information is deduced from the server http response.'''
-    try:
-        seconds_to_wait = int(response.headers.get('retry-after', DEFAULT_RETRY_AFTER_503_INTERVAL))
-    except ValueError:
-        # retry-after could be formatted as absolute time
-        # instead of seconds to wait. We don't know how to
-        # parse that, but the apiserver doesn't generate
-        # such responses anyway.
-        seconds_to_wait = DEFAULT_RETRY_AFTER_503_INTERVAL
-    return max(1, seconds_to_wait)
+def _calculate_retry_delay(response, num_attempts):
+    '''
+    Returns the time in seconds that we should wait.
+
+    :param num_attempts: number of attempts that have been made to the
+        resource, including the most recent failed one
+    :type num_attempts: int
+    '''
+    if response is not None and response.status == 503 and 'retry-after' in response.headers:
+        try:
+            return int(response.headers['retry-after'])
+        except ValueError:
+            # In RFC 2616, retry-after can be formatted as absolute time
+            # instead of seconds to wait. We don't bother to parse that,
+            # but the apiserver doesn't generate such responses anyway.
+            pass
+    if num_attempts <= 1:
+        return 1
+    num_attempts = min(num_attempts, 7)
+    return randint(2 ** (num_attempts - 2), 2 ** (num_attempts - 1))
 
 
 # Truncate the message, if the error injection flag is on, and other
@@ -361,7 +369,7 @@ def _extract_retry_after_timeout(response):
 # supposed to get an "EntityTooSmall" error from S3, which has a 400
 # code. However, I have not observed such responses in practice.
 # http://docs.aws.amazon.com/AmazonS3/latest/API/ErrorResponses.html
-def _maybe_trucate_request(url, try_index, data):
+def _maybe_truncate_request(url, data):
     MIN_UPLOAD_LEN = 16 * 1024
     if _INJECT_ERROR:
         if (randint(0, 9) == 0) and "upload" in url and len(data) > MIN_UPLOAD_LEN:
@@ -379,6 +387,70 @@ def _raise_error_for_testing(try_index=None, method='GET'):
         # Raise exception to test urllib3 error in downloads
         elif error_thrown == 1 and try_index is not None and try_index < 3:
             raise exceptions.UrllibInternalError()
+
+
+def _debug_print_request(debug_level, seq_num, time_started, method, url, headers, jsonify_data, data):
+    if debug_level >= 2:
+        if not jsonify_data:
+            if len(data) == 0:
+                formatted_data = '""'
+            else:
+                formatted_data = "<file data of length " + str(len(data)) + ">"
+        else:
+            try:
+                if _DEBUG >= 3:
+                    formatted_data = json.dumps(data, indent=2)
+                else:
+                    formatted_data = json.dumps(data)
+            except (UnicodeDecodeError, TypeError):
+                formatted_data = "<binary data>"
+
+        printable_headers = ''
+        if 'Range' in headers:
+            printable_headers = " " + json.dumps({"Range": headers["Range"]})
+        print("%s [%f] %s %s%s => %s\n" % (YELLOW(BOLD(">%d" % seq_num)),
+                                           time_started,
+                                           BLUE(method),
+                                           url,
+                                           printable_headers,
+                                           formatted_data),
+              file=sys.stderr,
+              end="")
+    elif debug_level > 0:
+        print("%s [%f] %s %s => %s\n" % (YELLOW(BOLD(">%d" % seq_num)),
+                                         time_started,
+                                         BLUE(method),
+                                         url,
+                                         Repr().repr(data)),
+              file=sys.stderr,
+              end="")
+
+
+def _debug_print_response(debug_level, seq_num, time_started, req_id, response_status, response_was_json, method,
+                          url, content):
+    if debug_level > 0:
+        if response_was_json:
+            if debug_level >= 3:
+                content_to_print = "\n  " + json.dumps(content, indent=2).replace("\n", "\n  ")
+            elif debug_level == 2:
+                content_to_print = json.dumps(content)
+            else:
+                content_to_print = Repr().repr(content)
+        else:
+            content_to_print = "(%d bytes)" % len(content) if len(content) > 0 else ''
+
+        t = int((time.time() - time_started) * 1000)
+        code_format = GREEN if (200 <= response_status < 300) else RED
+        print("  " + YELLOW(BOLD("<%d" % seq_num)),
+              "[%f]" % time_started,
+              BLUE(method),
+              req_id,
+              url,
+              "<=",
+              code_format(str(response_status)),
+              WHITE(BOLD("(%dms)" % t)),
+              content_to_print,
+              file=sys.stderr)
 
 
 def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
@@ -460,25 +532,15 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
     pool_args = {arg: kwargs.pop(arg, None) for arg in ("verify", "cert_file", "key_file")}
     test_retry = kwargs.pop("_test_retry_http_request", False)
 
-    if _DEBUG >= 2:
-        if isinstance(data, basestring) or isinstance(data, mmap.mmap):
-            if len(data) == 0:
-                formatted_data = '""'
-            else:
-                formatted_data = "<file data>"
-        else:
-            try:
-                if _DEBUG >= 3:
-                    formatted_data = json.dumps(data, indent=2)
-                else:
-                    formatted_data = json.dumps(data)
-            except (UnicodeDecodeError, TypeError):
-                formatted_data = "<binary data>"
+    # data is a sequence/buffer or a dict
+    # serialized_data is a sequence/buffer
 
     if jsonify_data:
-        data = json.dumps(data)
+        serialized_data = json.dumps(data)
         if 'Content-Type' not in headers and method == 'POST':
             headers['Content-Type'] = 'application/json'
+    else:
+        serialized_data = data
 
     # If the input is a buffer, its data gets consumed by
     # requests.request (moving the read position). Record the initial
@@ -488,8 +550,15 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
     if hasattr(data, 'seek') and hasattr(data, 'tell'):
         rewind_input_buffer_offset = data.tell()
 
-    try_index = 0
+    # Maintain two separate counters for the number of tries...
+
+    try_index = 0  # excluding 503 errors. The number of tries as given here
+                   # cannot exceed (max_retries + 1).
+    try_index_including_503 = 0  # including 503 errors. This number is used to
+                                 # do exponential backoff.
+
     retried_responses = []
+    _url = None
     while True:
         success, time_started = True, None
         response = None
@@ -498,45 +567,24 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             time_started = time.time()
             _method, _url, _headers = _process_method_url_headers(method, url, headers)
 
-            if _DEBUG >= 2:
-                maybe_headers = ''
-                if 'Range' in _headers:
-                    maybe_headers = " " + json.dumps({"Range": _headers["Range"]})
-                print("%s [%f] %s %s%s => %s\n" % (YELLOW(BOLD(">%d" % seq_num)),
-                                                   time_started,
-                                                   BLUE(method),
-                                                   _url,
-                                                   maybe_headers,
-                                                   formatted_data),
-                      file=sys.stderr,
-                      end="")
-            elif _DEBUG > 0:
-                from repr import Repr
-                print("%s [%f] %s %s => %s\n" % (YELLOW(BOLD(">%d" % seq_num)),
-                                                 time_started,
-                                                 BLUE(method),
-                                                 _url,
-                                                 Repr().repr(data)),
-                      file=sys.stderr,
-                      end="")
+            _debug_print_request(_DEBUG, seq_num, time_started, _method, _url, _headers, jsonify_data, data)
 
-            body = _maybe_trucate_request(_url, try_index, data)
+            body = _maybe_truncate_request(_url, serialized_data)
 
             # throws BadStatusLine if the server returns nothing
             try:
                 pool_manager = _get_pool_manager(**pool_args)
 
-                def unicode2str(s):
-                    if isinstance(s, unicode):
-                        return s.encode('ascii')
-                    else:
-                        return s
-
                 _headers['User-Agent'] = USER_AGENT
                 _headers['DNAnexus-API'] = API_VERSION
 
                 # Converted Unicode headers to ASCII and throw an error if not possible
-                _headers = {unicode2str(k): unicode2str(v) for k, v in _headers.items()}
+                def ensure_ascii(i):
+                    if not isinstance(i, bytes):
+                        i = i.encode('ascii')
+                    return i
+
+                _headers = {ensure_ascii(k): ensure_ascii(v) for k, v in _headers.items()}
                 response = pool_manager.request(_method, _url, headers=_headers, body=body,
                                                 timeout=timeout, retries=False, **kwargs)
             except urllib3.exceptions.ClosedPoolError:
@@ -547,7 +595,9 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             _raise_error_for_testing(try_index, method)
             req_id = response.headers.get("x-request-id", "unavailable")
 
-            if _UPGRADE_NOTIFY and response.headers.get('x-upgrade-info', '').startswith('A recommended update is available') and '_ARGCOMPLETE' not in os.environ:
+            if (_UPGRADE_NOTIFY
+               and response.headers.get('x-upgrade-info', '').startswith('A recommended update is available')
+               and '_ARGCOMPLETE' not in os.environ):
                 logger.info(response.headers['x-upgrade-info'])
                 try:
                     with file(_UPGRADE_NOTIFY, 'a'):
@@ -600,7 +650,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
                 content = response.data
 
-                content_to_print = "(%d bytes)" % len(content) if len(content) > 0 else ''
+                response_was_json = False
 
                 if decode_response_body:
                     content = content.decode('utf-8')
@@ -610,27 +660,13 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                         except ValueError:
                             # The JSON is not parsable, but we should be able to retry.
                             raise exceptions.BadJSONInReply("Invalid JSON received from server", response.status)
-                        if _DEBUG >= 3:
-                            content_to_print = "\n  " + json.dumps(content, indent=2).replace("\n", "\n  ")
-                        elif _DEBUG == 2:
-                            content_to_print = json.dumps(content)
-                        elif _DEBUG > 0:
-                            content_to_print = Repr().repr(content)
+                        else:
+                            response_was_json = True
 
-                if _DEBUG > 0:
-                    t = int((time.time() - time_started) * 1000)
-                    req_id = response.headers.get('x-request-id') or "--"
-                    code_format = GREEN if (200 <= response.status < 300) else RED
-                    print("  " + YELLOW(BOLD("<%d" % seq_num)),
-                          "[%f]" % time_started,
-                          BLUE(method),
-                          req_id,
-                          _url,
-                          "<=",
-                          code_format(str(response.status)),
-                          WHITE(BOLD("(%dms)" % t)),
-                          content_to_print,
-                          file=sys.stderr)
+                req_id = response.headers.get('x-request-id') or "--"
+
+                _debug_print_response(_DEBUG, seq_num, time_started, req_id, response.status, response_was_json,
+                                      _method, _url, content)
 
                 if test_retry:
                     retried_responses.append(content)
@@ -650,64 +686,61 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             success = False
             exception_msg = _extract_msg_from_last_exception()
             if isinstance(e, _expected_exceptions):
-                if response is not None and response.status == 503:
-                    seconds_to_wait = _extract_retry_after_timeout(response)
-                    logger.warn("%s %s: %s. Request Time=[%f] RequestID=[%s] Waiting %d seconds due to server unavailability...",
-                                method, url, exception_msg, time_started, req_id, seconds_to_wait)
-                    time.sleep(seconds_to_wait)
-                    # Note, we escape the "except" block here without
-                    # incrementing try_index because 503 responses with
-                    # Retry-After should not count against the number of
-                    # permitted retries.
-                    continue
-
-                # Total number of allowed tries is the initial try + up to
-                # (max_retries) subsequent retries.
+                # Total number of allowed tries is the initial try PLUS
+                # up to (max_retries) subsequent retries.
                 total_allowed_tries = max_retries + 1
                 ok_to_retry = False
                 is_retryable = always_retry or (method == 'GET') or _is_retryable_exception(e)
-                # Because try_index is not incremented until we escape this
-                # iteration of the loop, try_index is equal to the number of
-                # tries that have failed so far, minus one. Test whether we
-                # have exhausted all retries.
-                #
-                # BadStatusLine ---  server did not return anything
-                # BadJSONInReply --- server returned JSON that didn't parse properly
+                # Because try_index is not incremented until we escape
+                # this iteration of the loop, try_index is equal to the
+                # number of tries that have failed so far, minus one.
                 if try_index + 1 < total_allowed_tries:
-                    if response is None or \
-                       isinstance(e, (exceptions.ContentLengthError, BadStatusLine, exceptions.BadJSONInReply, \
-                                      urllib3.exceptions.ProtocolError, exceptions.UrllibInternalError)):
+                    # BadStatusLine ---  server did not return anything
+                    # BadJSONInReply --- server returned JSON that didn't parse properly
+                    if (response is None
+                       or isinstance(e, (exceptions.ContentLengthError, BadStatusLine, exceptions.BadJSONInReply,
+                                         urllib3.exceptions.ProtocolError, exceptions.UrllibInternalError))):
                         ok_to_retry = is_retryable
                     else:
                         ok_to_retry = 500 <= response.status < 600
 
                     # The server has closed the connection prematurely
-                    if response is not None and \
-                       response.status == 400 and is_retryable and method == 'PUT' and \
-                       isinstance(e, requests.exceptions.HTTPError):
+                    if (response is not None
+                       and response.status == 400 and is_retryable and method == 'PUT'
+                       and isinstance(e, requests.exceptions.HTTPError)):
                         if '<Code>RequestTimeout</Code>' in exception_msg:
                             logger.info("Retrying 400 HTTP error, due to slow data transfer. " +
-                                        "Request Time=[%f] RequestID=[%s]", time_started, req_id)
+                                        "Request Time=%f Request ID=%s", time_started, req_id)
                         else:
                             logger.info("400 HTTP error, of unknown origin, exception_msg=[%s]. " +
-                                        "Request Time=[%f] RequestID=[%s]", exception_msg, time_started, req_id)
+                                        "Request Time=%f Request ID=%s", exception_msg, time_started, req_id)
                         ok_to_retry = True
 
                 if ok_to_retry:
                     if rewind_input_buffer_offset is not None:
                         data.seek(rewind_input_buffer_offset)
-                    delay = min(2 ** try_index, DEFAULT_TIMEOUT)
+
+                    delay = _calculate_retry_delay(response, try_index_including_503 + 1)
+
                     range_str = (' (range=%s)' % (headers['Range'],)) if 'Range' in headers else ''
-                    logger.warn("[%s] %s %s: %s. Waiting %d seconds before retry %d of %d... %s",
-                                time.ctime(), method, url, exception_msg, delay, try_index + 1, max_retries, range_str)
+                    if response is not None and response.status == 503:
+                        waiting_msg = 'Waiting %d seconds before retry...' % (delay,)
+                    else:
+                        waiting_msg = 'Waiting %d seconds before retry %d of %d...' % (
+                            delay, try_index + 1, max_retries)
+
+                    logger.warn("[%s] %s %s: %s. %s %s",
+                                time.ctime(), method, _url, exception_msg, waiting_msg, range_str)
                     time.sleep(delay)
-                    try_index += 1
+                    try_index_including_503 += 1
+                    if response is None or response.status != 503:
+                        try_index += 1
                     continue
 
             # All retries have been exhausted OR the error is deemed not
             # retryable. Print the latest error and propagate it back to the caller.
             if not isinstance(e, exceptions.DXAPIError):
-                logger.error("[%s] %s %s: %s.", time.ctime(), method, url, exception_msg)
+                logger.error("[%s] %s %s: %s.", time.ctime(), method, _url, exception_msg)
 
             # Retries have been exhausted, and we are unable to get a full
             # buffer from the data source. Raise a special exception.
@@ -717,7 +750,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             raise
         finally:
             if success and try_index > 0:
-                logger.info("[%s] %s %s: Recovered after %d retries", time.ctime(), method, url, try_index)
+                logger.info("[%s] %s %s: Recovered after %d retries", time.ctime(), method, _url, try_index)
 
         raise AssertionError('Should never reach this line: should have attempted a retry or reraised by now')
     raise AssertionError('Should never reach this line: should never break out of loop')

@@ -64,8 +64,8 @@ from ..utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id
                               object_exists_in_project, is_jbor_str)
 from ..utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, LocalCompleter,
                                ListCompleter, MultiCompleter)
-from ..utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_desc,
-                              get_io_desc, get_find_executions_string)
+from ..utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_header,
+                              print_ls_l_desc, get_io_desc, get_find_executions_string)
 
 try:
     import colorama
@@ -175,7 +175,7 @@ class DXCLICompleter():
                    'update': ['stage ', 'workflow ', 'org ', 'member ', 'project '],
                    'org': ['projects ', 'members ']}
 
-    silent_commands = set(['import', 'export'])
+    silent_commands = set(['export'])
 
     def __init__(self):
         self.commands = [subcmd + ' ' for subcmd in subparsers.choices.keys() if subcmd not in self.silent_commands]
@@ -763,7 +763,7 @@ def ls(args):
                 resp["objects"] = sorted(resp["objects"], key=cmp_names)
                 if args.verbose:
                     if len(resp['objects']) > 0:
-                        print(BOLD() + 'State' + DELIMITER('\t') + 'Last modified' + DELIMITER('       ') + 'Size' + DELIMITER('     ') + 'Name' + DELIMITER(' (') + 'ID' + DELIMITER(')') + ENDC())
+                        print_ls_l_header()
                     else:
                         print("No data objects found in the folder")
                 if not args.brief and not args.verbose:
@@ -1115,7 +1115,6 @@ def describe(args):
 
         # Could be a project
         json_input = {}
-        json_input['countObjects'] = True
         json_input['properties'] = True
         if args.verbose:
             json_input["permissions"] = True
@@ -1977,26 +1976,6 @@ def upload_one(args):
                 print_desc(dxfile.describe(incl_properties=True, incl_details=True))
         except:
             err_exit()
-
-def import_csv(args):
-    sys.argv = [sys.argv[0] + ' import csv'] + args.importer_args
-    from dxpy.scripts import dx_csv_to_gtable
-    dx_csv_to_gtable.main()
-
-def import_tsv(args):
-    sys.argv = [sys.argv[0] + ' import tsv'] + args.importer_args
-    from dxpy.scripts import dx_tsv_to_gtable
-    dx_tsv_to_gtable.main()
-
-importers = {
-    "tsv": import_tsv,
-    "csv": import_csv
-}
-
-def dximport(args):
-    if args.format.lower() not in importers:
-        err_exit('Unsupported format: "' + args.format + '".  For a list of supported formats, run "dx help import"', 3)
-    importers[args.format.lower()](args)
 
 def export_fastq(args):
     sys.argv = [sys.argv[0] + ' export fastq'] + args.exporter_args
@@ -3203,10 +3182,11 @@ def ssh(args, ssh_config_verified=False):
 
     sys.stdout.write("Resolving job hostname and SSH host key...")
     sys.stdout.flush()
-    host, host_key = None, None
+    host, host_key, ssh_port = None, None, None
     for i in range(90):
         host = job_desc.get('host')
         host_key = job_desc.get('sshHostKey') or job_desc['properties'].get('ssh_host_rsa_key')
+        ssh_port = job_desc.get('sshPort') or 22
         if host and host_key:
             break
         else:
@@ -3226,7 +3206,7 @@ def ssh(args, ssh_config_verified=False):
 
     import socket
     connected = False
-    sys.stdout.write("Checking connectivity to {}".format(host))
+    sys.stdout.write("Checking connectivity to {}:{}".format(host, ssh_port))
     if args.ssh_proxy:
         proxy_args = args.ssh_proxy.split(':')
         sys.stdout.write(" through proxy {}".format(proxy_args[0]))
@@ -3239,10 +3219,10 @@ def ssh(args, ssh_config_verified=False):
                 proxy_socket = socket.socket()
                 proxy_socket.connect((proxy_args[0], int(proxy_args[1])))
                 proxy_file = proxy_socket.makefile('r+')
-                proxy_file.write('CONNECT {host}:22 HTTP/1.0\r\nhost: {host}\r\n\r\n'
-                                 .format(host=host))
+                proxy_file.write('CONNECT {host}:{port} HTTP/1.0\r\nhost: {host}\r\n\r\n'
+                                 .format(host=host, port=ssh_port))
             else:
-                socket.create_connection((host, 22), timeout=5)
+                socket.create_connection((host, ssh_port), timeout=5)
             connected = True
             break
         except Exception:
@@ -3266,11 +3246,11 @@ def ssh(args, ssh_config_verified=False):
         err_exit(msg.format(h=host, cmd=BOLD("dx ssh {}".format(args.job_id))),
                  exception=DXCLIError())
 
-    print("Connecting to", host)
+    print("Connecting to {}:{}".format(host, ssh_port))
     ssh_args = ['ssh', '-i', os.path.join(dxpy.config.get_user_conf_dir(), 'ssh_id'),
                 '-o', 'HostKeyAlias={}.dnanex.us'.format(args.job_id),
                 '-o', 'UserKnownHostsFile={}'.format(known_hosts_file),
-                '-l', 'dnanexus', host]
+                '-p', str(ssh_port), '-l', 'dnanexus', host]
     if args.ssh_proxy:
         ssh_args += ['-o', 'ProxyCommand=nc -X connect -x {proxy} %h %p'.
                      format(proxy=args.ssh_proxy)]
@@ -3326,12 +3306,6 @@ def print_help(args):
         new_args = argparse.Namespace()
         setattr(new_args, 'exporter_args', ['-h'])
         exporters[args.subcommand](new_args)
-    elif args.command_or_category == 'import' and args.subcommand is not None:
-        if args.subcommand not in importers:
-            err_exit('Unsupported format for dx import: ' + args.subcommand, 3)
-        new_args = argparse.Namespace()
-        setattr(new_args, 'importer_args', ['-h'])
-        importers[args.subcommand](new_args)
     elif args.command_or_category == 'run':
         if args.subcommand is None:
             parser_map[args.command_or_category].print_help()
@@ -3808,19 +3782,6 @@ head_path_action = parser_head.add_argument('path', help='File ID or name to acc
 head_path_action.completer = DXPathCompleter(classes=['file'])
 parser_head.set_defaults(func=head)
 register_parser(parser_head, categories='data')
-
-parser_import = subparsers.add_parser('import',
-                                      help='Import (convert and upload) a local table or genomic file',
-                                      description=fill('Import a local file to the DNAnexus platform as a GenomicTable.') + '\n\n' + fill('For more details on how to import from a particular format, run ') + '\n  $ dx help import <format>' + '\n\nSupported formats:\n\n  ' + '\n  '.join(sorted(importers)),
-                                      formatter_class=argparse.RawTextHelpFormatter,
-                                      prog='dx import',
-                                      parents=[env_args])
-parser_import.add_argument('format', help='Format to import from')
-import_args_action = parser_import.add_argument('importer_args', help=fill('Arguments passed to the importer', width_adjustment=-24),
-                                                nargs=argparse.REMAINDER)
-import_args_action.completer = LocalCompleter()
-parser_import.set_defaults(func=dximport)
-register_parser(parser_import, categories='data')
 
 parser_export = subparsers.add_parser('export',
                                       help='Export (download and convert) a gtable into a local file',
@@ -4332,7 +4293,7 @@ parser_new_workflow.set_defaults(func=workflow_cli.new_workflow)
 register_parser(parser_new_workflow, subparsers_action=subparsers_new, categories='workflow')
 
 parser_new_gtable = subparsers_new.add_parser('gtable', add_help=False, #help='Create a new gtable',
-                                              description='Create a new gtable from scratch.  See \'dx import\' for importing special file formats (e.g. csv, fastq) into GenomicTables.',
+                                              description='Create a new gtable from scratch.',
                                               parents=[parser_dataobject_args, parser_single_dataobject_output_args,
                                                        stdout_args, env_args],
                                               formatter_class=argparse.RawTextHelpFormatter,
@@ -4756,7 +4717,7 @@ def main():
         from ..packages import argcomplete
         argcomplete.autocomplete(parser,
                                  always_complete_options=False,
-                                 exclude=['import', 'gtable', 'export'],
+                                 exclude=['gtable', 'export'],
                                  output_stream=sys.stdout if '_DX_ARC_DEBUG' in os.environ else None)
 
     if len(args_list) > 0:

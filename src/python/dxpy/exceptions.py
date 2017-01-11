@@ -51,7 +51,7 @@ class DXAPIError(DXError):
     def error_message(self):
         "Returns a one-line description of the error."
         output = self.msg + ", code " + str(self.code)
-        output += ". Request Time=[{}], RequestID=[{}]".format(self.timestamp, self.req_id)
+        output += ". Request Time={}, Request ID={}".format(self.timestamp, self.req_id)
         if self.name != self.__class__.__name__:
             output = self.name + ": " + output
         return output

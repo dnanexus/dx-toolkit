@@ -26,9 +26,11 @@ import tempfile
 import shutil
 import pipes
 import dxpy
+from dxpy.utils.completer import InstanceTypesCompleter
 from dxpy_testutil import DXTestCase, check_output, temporary_project, override_environment
 import dxpy_testutil as testutil
 from dxpy.exceptions import DXJobFailureError
+from dxpy.bindings.download_all_inputs import _get_num_parallel_threads
 
 def run(command, **kwargs):
     try:
@@ -663,6 +665,19 @@ class TestDXJobutilNewJob(DXTestCase):
         self.assertNewJobError("--property foo", exit_code=3)
         # extra-args not in key=value format
         self.assertNewJobError("--extra-args argument", exit_code=3)
+
+
+class TestDXBashHelperMethods(unittest.TestCase):
+    def test_limit_threads(self):
+        ''' Tests that the number of threads used for downloading inputs in parallel is limited '''
+        instance_types = InstanceTypesCompleter().instance_types
+        max_threads = 8
+        for inst in instance_types.values():
+            num_threads = _get_num_parallel_threads(max_threads, inst.CPU_Cores, inst.Memory_GB*1024)
+            self.assertTrue(num_threads >= 1 and num_threads <= max_threads)
+            self.assertTrue(num_threads <= inst.CPU_Cores)
+            self.assertTrue(num_threads*1200 <= inst.Memory_GB*1024 or num_threads == 1)
+
 
 if __name__ == '__main__':
     unittest.main()

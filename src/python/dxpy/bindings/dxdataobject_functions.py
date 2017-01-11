@@ -146,7 +146,8 @@ def get_handler(id_or_link, project=None):
 
 def describe(id_or_link, **kwargs):
     '''
-    :param id_or_link: String containing an object ID or dict containing a DXLink
+    :param id_or_link: String containing an object ID or dict containing a DXLink,
+                       or a list of object ID's or dict's containing a DXLink.
 
     Given an object ID, calls :meth:`~dxpy.bindings.DXDataObject.describe` on the object.
 
@@ -154,8 +155,23 @@ def describe(id_or_link, **kwargs):
 
         describe("file-1234")
     '''
-    handler = get_handler(id_or_link)
-    return handler.describe(**kwargs)
+    # If this is a list, extract the ids.
+    if isinstance(id_or_link, basestring) or is_dxlink(id_or_link):
+        handler = get_handler(id_or_link)
+        return handler.describe(**kwargs)
+    else:
+        links = []
+        for link in id_or_link:
+            # If this entry is a dxlink, then get the id.
+            if is_dxlink(link):
+                # Guaranteed by is_dxlink that one of the following will work
+                if isinstance(link['$dnanexus_link'], basestring):
+                    link = link['$dnanexus_link']
+                else:
+                    link = link['$dnanexus_link']['id']
+            links.append(link)
+        data_object_descriptions = dxpy.api.system_describe_data_objects({'objects': links})
+        return [desc['describe'] for desc in data_object_descriptions['results']]
 
 def get_details(id_or_link, **kwargs):
     '''

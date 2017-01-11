@@ -1,3 +1,5 @@
+#!/usr/bin/env perl
+#
 # Copyright (C) 2013-2016 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
@@ -14,22 +16,15 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-ifndef DESTDIR
-	export DESTDIR=/opt/dnanexus
-endif
-ifndef PREFIX
-	export PREFIX=/
-endif
+use Test::More;
 
-all:
-	mkdir -pv build
-	cd build && cmake .. -DCMAKE_BUILD_TYPE:STRING=RELEASE -DSTATIC_BOOST=1
-	$(MAKE) -C build
+use DNAnexus::API;
 
-clean:
-	rm -rvf build
+$resp = DNAnexus::API::systemFindDataObjects();
+for $result (@{$$resp{results}}) {
+    print "$_\t$$result{$_}\n" for keys %$result;
+}
 
-install: all
-	install -v build/dx-wig-to-wiggle $(DESTDIR)/$(PREFIX)/bin
+ok( 1 == 1 );
 
-.PHONY: all clean install
+done_testing();

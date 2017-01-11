@@ -28,6 +28,7 @@ import re
 
 import requests
 from requests.packages.urllib3.exceptions import SSLError
+import OpenSSL
 
 import dxpy
 import dxpy_testutil as testutil
@@ -479,6 +480,10 @@ class TestDXFile(unittest.TestCase):
             self.assertEqual(0, f.describe()["size"])
         with dxpy.upload_string('', wait_on_close=True) as f:
             self.assertEqual(0, f.describe()["size"])
+
+    @unittest.skipUnless(testutil.TEST_AZURE, "Skipping test that would upload file to Azure")
+    def test_upload_empty_dxfile_azure(self):
+        self.assertEqual(0, os.path.getsize(self.new_file.name))
         # Checking Azure backend
         with testutil.temporary_project("TestDXFile.test_upload_empty_dxfile azure", select=True, region="azure:westus") as ap:
             with dxpy.new_dxfile(project=ap.get_id()) as f:
@@ -2123,6 +2128,7 @@ class TestWarn(unittest.TestCase):
     def test_warn(self):
         warn("testing, one two three...")
 
+
 class TestHTTPResponses(unittest.TestCase):
     def test_content_type_no_sniff(self):
         resp = dxpy.api.system_find_projects({'limit': 1}, want_full_response=True)
@@ -2151,11 +2157,27 @@ class TestHTTPResponses(unittest.TestCase):
     def test_retry_after_without_header_set(self):
         start_time = int(time.time() * 1000)
         server_time = dxpy.DXHTTPRequest('/system/comeBackLater', {})['currentTime']
-        dxpy.DXHTTPRequest('/system/comeBackLater', {'waitUntil': server_time + 20000, 'setRetryAfter': False})
+        dxpy.DXHTTPRequest('/system/comeBackLater',
+                           {'waitUntil': server_time + 10000, 'setRetryAfter': False})
         end_time = int(time.time() * 1000)
         time_elapsed = end_time - start_time
-        self.assertTrue(50000 <= time_elapsed)
-        self.assertTrue(time_elapsed <= 70000)
+
+        # We'd better have waited at least 10 seconds (accounting for up to 0.5
+        # seconds of clock skew)
+        self.assertTrue(9500 <= time_elapsed)
+        # After 10 seconds we must have completed the original request, plus
+        # either 3 or 4 retries (r3 or r4 below). (3 retries take at most 1 + 2
+        # + 4 < 10 seconds, so we must have done at least 3, and 5 retries take
+        # at least 1 + 1 + 2 + 4 + 8 = > 10 seconds, so we can't have completed
+        # 5).
+        #
+        # Therefore, we're in the middle of waiting at most 8 or 16 seconds, so
+        # after 10 seconds, we can have no more than 16 more seconds to wait.
+        # Add 2 seconds for clock skew plus the time it takes to do the
+        # requests themselves.
+
+        # r <-1s-> r1 <-- 1-2s --> r2 <---- 2-4s ----> r3 <----- 4-8 s -----> r4 <-- ...
+        self.assertTrue(time_elapsed <= 10000 + 16000 + 2000)
 
     def test_generic_exception_not_retryable(self):
         self.assertFalse(dxpy._is_retryable_exception(KeyError('oops')))
@@ -2188,9 +2210,9 @@ class TestHTTPResponses(unittest.TestCase):
         with self.assertRaises(TypeError):
             dxpy.DXHTTPRequest("/system/whoami", {}, cert="nonexistent")
         if dxpy.APISERVER_PROTOCOL == "https":
-            with self.assertRaisesRegexp(SSLError, "file"):
+            with self.assertRaisesRegexp((TypeError,SSLError), "file|string"):
                 dxpy.DXHTTPRequest("/system/whoami", {}, verify="nonexistent")
-            with self.assertRaisesRegexp((SSLError, IOError), "file"):
+            with self.assertRaisesRegexp((SSLError, IOError, OpenSSL.SSL.Error), "file"):
                 dxpy.DXHTTPRequest("/system/whoami", {}, cert_file="nonexistent")
 
     def test_fake_errors(self):
@@ -2304,6 +2326,42 @@ class TestDataobjectFunctions(unittest.TestCase):
         self.assertIsNone(handler._dxid)
         self.assertEqual(handler._name, "swiss-army-knife")
         self.assertEqual(handler._alias, "1.0.0")
+
+    def test_describe_data_objects(self):
+        objects = []
+        types = []
+        tags = []
+        objects.append(dxpy.new_dxrecord())
+        types.append('record')
+        tags.append([])
+        objects.append(dxpy.new_dxfile())
+        types.append('file')
+        tags.append([])
+        objects.append(dxpy.new_dxworkflow())
+        types.append('workflow')
+        tags.append(['my_tag'])
+        objects[-1].add_tags(tags[-1])
+
+        # Should be able to handle a mix of raw ids and dxlinks.
+        ids = [o.get_id() for o in objects]
+        desc = dxpy.describe(ids)
+
+        self.assertEqual(len(ids), len(desc))
+        for i in xrange(len(desc)):
+            self.assertEqual(desc[i]["project"], self.proj_id)
+            self.assertEqual(desc[i]["id"], ids[i])
+            self.assertEqual(desc[i]["class"], types[i])
+            self.assertEqual(desc[i]["types"], [])
+            self.assertIn("created", desc[i])
+            self.assertEqual(desc[i]["state"], "open")
+            self.assertEqual(desc[i]["hidden"], False)
+            self.assertEqual(desc[i]["links"], [])
+            self.assertEqual(desc[i]["folder"], "/")
+            self.assertEqual(desc[i]["tags"], tags[i])
+            self.assertIn("modified", desc[i])
+            self.assertNotIn("properties", desc[i])
+            self.assertNotIn("details", desc[i])
+
 
 class TestResolver(testutil.DXTestCase):
     def setUp(self):

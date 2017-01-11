@@ -34,11 +34,11 @@ Supported languages
 * Python (requires Python 2.7)
 * C++
 
-If you wish to use bindings for the other supported languages (Java, Perl, R,
-Ruby), please see the [DNAnexus developer
-portal](https://wiki.dnanexus.com/Developer-Portal) for specific instructions
-for your language. In general you can either build from the source
-distribution, or install a prebuilt package specific to the language.
+If you wish to use bindings for the other supported languages (Java, R), please
+see the [DNAnexus developer portal](https://wiki.dnanexus.com/Developer-Portal)
+for specific instructions for your language. In general you can either build
+from the source distribution, or install a prebuilt package specific to the
+language.
 
 Runtime dependencies
 --------------------
@@ -63,9 +63,9 @@ installs it into `/usr/local/bin`. (Run the script as root.)
 
 Notes:
 
-  - On CentOS/RHEL 5.x, two of the utilities, `dx-contigset-to-fasta`
-    and `dx-reads-validator`, will not function correctly, as some of
-    the library versions are too old.
+  - On CentOS/RHEL 5.x, one of the utilities, `dx-contigset-to-fasta`,
+    will not function correctly, as some of the library versions are too
+    old.
 
   - Tested on CentOS 5.4 and CentOS 6.2.
 
