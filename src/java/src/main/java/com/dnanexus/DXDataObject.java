@@ -42,10 +42,11 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 /**
- * Base class for all data object classes in the DNAnexus
- * Platform. Instances of this class are JSON-serialized as a DNAnexus
- * link, which makes it suitable to provide an objects with references
- * to DXDataObjects as the input when running a {@link DXApplet}, etc.
+ * Base class for all data object classes in the DNAnexus Platform.
+ *
+ * <p>Instances of this class are JSON-serialized as a DNAnexus link, which
+ * makes it suitable to provide an object with references to DXDataObjects as
+ * the input when running a {@link DXApplet}, etc.</p>
  */
 public abstract class DXDataObject extends DXObject {
 

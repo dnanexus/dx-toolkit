@@ -244,8 +244,7 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
     }
 
     /**
-     * A workflow stage
-     *
+     * A workflow stage.
      */
     public static class Stage {
         private String ID;
@@ -261,8 +260,7 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
         /**
          * Create a link to an output field.
          *
-         * <p> This is used in workflows, to link results between
-         * stages. </p>
+         * <p>This is used in workflows, to link results between stages.</p>
          *
          * @param outputName  name of an output field
          *
@@ -276,8 +274,9 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
         }
 
         /**
-         * Create a link to an input field. This is used in workflows, to
-         * link results between stages.
+         * Create a link to an input field.
+         *
+         * <p>This is used in workflows, to link results between stages.</p>
          *
          * @param inputName  name of an input field
          *
@@ -291,8 +290,9 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
         }
     }
 
-    /** Some workflow update operations return an edit version. This class is a way
-     *  to report the new edit version, together with the operation result.
+    /**
+     * Represents the result of a workflow-modifying operation, along with the
+     * workflow's edit version after that operation.
      */
     public static class Modification<T> {
         private final int editVersion;
@@ -344,7 +344,7 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
      * @param stageInputs  inputs to be provided to the applet
      * @param editVersion current version of the workflow
      *
-     * @return a new stage, wrapped in a modification structure.
+     * @return Modification object containing the new stage
      */
     public Modification<Stage> addStage(DXApplet applet,
                                         String name,
