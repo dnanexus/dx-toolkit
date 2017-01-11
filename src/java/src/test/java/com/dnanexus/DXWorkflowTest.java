@@ -23,51 +23,25 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.dnanexus.DXUtil;
 import com.dnanexus.DXDataObject.DescribeOptions;
+import com.dnanexus.TestEnvironment.ConfigOption;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableList;
 
 /**
  * Tests for creating workflows.
  */
 public class DXWorkflowTest {
-
-    @JsonInclude(Include.NON_NULL)
-    private static class WorkflowAddStageInput {
-        @JsonProperty
-        public int editVersion;
-
-        @JsonProperty
-        public String executable;
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    private static class WorkflowAddStageOutput {
-        @JsonProperty
-        public int editVersion;
-
-        @JsonProperty
-        public String stage;
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    private static class WorkflowRunOutput {
-        @JsonProperty
-        public String id;
-    }
-
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private DXProject testProject;
-
-    private ObjectNode makeDXLink(DXDataObject dataObject) {
-        return DXJSON.getObjectBuilder().put("$dnanexus_link", dataObject.getId()).build();
-    }
 
     @Before
     public void setUp() {
@@ -158,6 +132,11 @@ public class DXWorkflowTest {
 
     @Test
     public void testRunWorkflow() {
+        if (!TestEnvironment.canRunTest(ConfigOption.RUN_JOBS)) {
+            System.err.println("Skipping test that would run jobs");
+            return;
+        }
+
         DXWorkflow workflow = DXWorkflow.newWorkflow().setProject(testProject).build();
 
         // Create an applet to be added to the workflow and some inputs to be supplied to it
@@ -179,36 +158,104 @@ public class DXWorkflowTest {
                 .setInputSpecification(ImmutableList.of(inputString, inputRecord))
                 .setOutputSpecification(ImmutableList.of(outputRecord)).build();
 
-        // ---
-        // Here is some low-level code for building up the workflow. Eventually there will be
-        // high-level bindings to this functionality.
-        WorkflowAddStageInput addStage0Input = new WorkflowAddStageInput();
-        addStage0Input.editVersion = 0;
-        addStage0Input.executable = applet.getId();
+        int editVersion = 0;
+        DXWorkflow.Modification<DXWorkflow.Stage> retval = workflow.addStage(applet, "stageA", null, editVersion);
+        DXWorkflow.Stage stage1 = retval.getValue();
+        editVersion = retval.getEditVersion();
 
-        WorkflowAddStageOutput addStage0Output = DXAPI.workflowAddStage(workflow.getId(),
-                addStage0Input, WorkflowAddStageOutput.class);
-
-        WorkflowAddStageInput addStage1Input = new WorkflowAddStageInput();
-        addStage1Input.editVersion = addStage0Output.editVersion;
-        addStage1Input.executable = applet.getId();
-
-        WorkflowAddStageOutput addStage1Output = DXAPI.workflowAddStage(workflow.getId(),
-                addStage1Input, WorkflowAddStageOutput.class);
-        // End low-level code
-        // ---
+        retval = workflow.addStage(applet, "stageB", null, editVersion);
+        DXWorkflow.Stage stage2 = retval.getValue();
+        editVersion = retval.getEditVersion();
 
         // Supply workflow inputs in the format STAGE.INPUTNAME
-        ObjectNode runInput = DXJSON.getObjectBuilder()
-                .put(addStage0Output.stage + ".input_string", "foo")
-                .put(addStage0Output.stage + ".input_record", makeDXLink(myRecord))
-                .put(addStage1Output.stage + ".input_string", "bar")
-                .put(addStage1Output.stage + ".input_record", makeDXLink(myRecord)).build();
+        JsonNode runInput = DXJSON.getObjectBuilder()
+            .put(stage1.getId() + ".input_string", "foo")
+            .put(stage1.getId() + ".input_record", myRecord.getLinkAsJson())
+            .put(stage2.getId() + ".input_string", "bar")
+            .put(stage2.getId() + ".input_record", myRecord.getLinkAsJson()).build();
 
         // We run a workflow here, but do not wait for its result, so it's fine that this test
         // doesn't check for ConfigOption.RUN_JOBS.
         DXAnalysis analysis = workflow.newRun().setInput(runInput).setProject(testProject).run();
         analysis.terminate();
+    }
+
+    private static void prettyPrintJsonNode(ObjectNode jnode) {
+        try {
+            String pretty = MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(jnode);
+            System.err.println(pretty);
+        } catch (Exception e) {
+            System.err.println("Caught exception" + e.getStackTrace());
+        }
+    }
+
+    @Test
+    public void testRunWorkflowWithDependencies() {
+        if (!TestEnvironment.canRunTest(ConfigOption.RUN_JOBS)) {
+            System.err.println("Skipping test that would run jobs");
+            return;
+        }
+
+        DXWorkflow workflow = DXWorkflow.newWorkflow().setProject(testProject).build();
+
+        // Create an applet that adds two numbers
+        InputParameter inputA = InputParameter.newInputParameter("ai", IOClass.INT).build();
+        InputParameter inputB = InputParameter.newInputParameter("bi", IOClass.INT).build();
+        OutputParameter outputSum = OutputParameter.newOutputParameter("sum",  IOClass.INT).build();
+        String code = "dx-jobutil-add-output sum `echo $((ai + bi))` --class=int\n";
+        DXApplet applet = DXApplet.newApplet().setProject(testProject)
+            .setName("applet_add_java")
+            .setRunSpecification(RunSpecification.newRunSpec("bash", code).build())
+            .setInputSpecification(ImmutableList.of(inputA, inputB))
+            .setOutputSpecification(ImmutableList.of(outputSum)).build();
+
+        // Stage 1
+        int editVersion = 0;
+        DXWorkflow.Modification<DXWorkflow.Stage> retval = workflow.addStage(applet, "stageA", null, 0);
+        DXWorkflow.Stage stage1 = retval.getValue();
+        editVersion = retval.getEditVersion();
+
+        // Stage 2: waits for the result of the previous stage, and adds another number
+        ObjectNode runInput2 = DXJSON.getObjectBuilder()
+            .put("ai", stage1.getOutputReference("sum"))
+            .put("bi", 4)
+            .build();
+
+        retval = workflow.addStage(applet, "stageB", runInput2, editVersion);
+        DXWorkflow.Stage stage2 = retval.getValue();
+        editVersion = retval.getEditVersion();
+
+        // Supply workflow inputs in the format STAGE.INPUTNAME
+        ObjectNode runInput = DXJSON.getObjectBuilder()
+            .put(stage1.getId() + ".ai", 1)
+            .put(stage1.getId() + ".bi", 2).build();
+
+        // We run a workflow here, but do not wait for its result, so it's fine that this test
+        // doesn't check for ConfigOption.RUN_JOBS.
+        DXAnalysis analysis = workflow.newRun().setInput(runInput).setProject(testProject).run();
+        analysis.waitUntilDone();
+
+        // The results are supposed to be something like this:
+        //{
+        //   "stage-F0b4zz807vqPqYzGJbxQ712k.sum" : 3,
+        //   "stage-F0b4zzQ07vqFgvfJ5xfjPg16.sum" : 7
+        //}
+        ObjectNode jnode = analysis.getOutput(ObjectNode.class);
+        java.util.Iterator<java.util.Map.Entry<String, JsonNode>> iter = jnode.fields();
+        while (iter.hasNext()){
+            java.util.Map.Entry<String, JsonNode> pair = iter.next();
+            String key = pair.getKey();
+            int val = pair.getValue().asInt();
+
+            if (key.contains(stage1.getId())) {
+                Assert.assertEquals(val, 3);
+            }
+            if (key.contains(stage2.getId())) {
+                Assert.assertEquals(val, 7);
+            }
+
+            //System.out.println(key + ": " + val);
+        }
     }
 
     // Internal tests

@@ -43,6 +43,10 @@ import com.google.common.collect.Maps;
 
 /**
  * Base class for all data object classes in the DNAnexus Platform.
+ *
+ * <p>Instances of this class are JSON-serialized as a DNAnexus link, which
+ * makes it suitable to provide an object with references to DXDataObjects as
+ * the input when running a {@link DXApplet}, etc.</p>
  */
 public abstract class DXDataObject extends DXObject {
 
@@ -1055,14 +1059,12 @@ public abstract class DXDataObject extends DXObject {
     }
 
     /**
-     * Returns a DNAnexus link for this object. This is the JSON serializer so it makes it suitable
-     * to provide an object with references to DXDataObjects as the input when running a
-     * {@link DXApplet}, etc.
+     * Returns a DNAnexus link for this object.
      *
      * @return a DNAnexus link
      */
     @JsonValue
-    private JsonNode getDXLink() {
+    public JsonNode getLinkAsJson() {
         return DXJSON.getObjectBuilder().put("$dnanexus_link", this.getId()).build();
     }
 

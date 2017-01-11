@@ -20,9 +20,13 @@ import java.util.Map;
 
 import com.dnanexus.DXHTTPRequest.RetryStrategy;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
@@ -239,4 +243,121 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
         return ExecutableRunner.getWorkflowRunnerWithEnvironment(this.getId(), this.env);
     }
 
+    /**
+     * A workflow stage.
+     */
+    public static class Stage {
+        private String ID;
+
+        Stage(String ID) {
+            this.ID = ID;
+        }
+
+        public String getId() {
+            return ID;
+        }
+
+        /**
+         * Create a link to an output field.
+         *
+         * <p>This is used in workflows, to link results between stages.</p>
+         *
+         * @param outputName  name of an output field
+         *
+         * @return JSON representation of a link. Can be used as an input to a workflow stage.
+         */
+        public JsonNode getOutputReference(String  outputName) {
+            ObjectNode dxlink = DXJSON.getObjectBuilder()
+                .put("stage", ID)
+                .put("outputField", outputName).build();
+            return DXJSON.getObjectBuilder().put("$dnanexus_link", dxlink).build();
+        }
+
+        /**
+         * Create a link to an input field.
+         *
+         * <p>This is used in workflows, to link results between stages.</p>
+         *
+         * @param inputName  name of an input field
+         *
+         * @return JSON representation of a link. Can be used as an input to a workflow stage.
+         */
+        public ObjectNode getInputReference(String  inputName) {
+            ObjectNode dxlink = DXJSON.getObjectBuilder()
+                .put("stage", ID)
+                .put("inputField", inputName).build();
+            return DXJSON.getObjectBuilder().put("$dnanexus_link", dxlink).build();
+        }
+    }
+
+    /**
+     * Represents the result of a workflow-modifying operation, along with the
+     * workflow's edit version after that operation.
+     */
+    public static class Modification<T> {
+        private final int editVersion;
+        private final T obj;
+
+        Modification(int editVersion, T obj) {
+            this.editVersion = editVersion;
+            this.obj = obj;
+        }
+
+        public int getEditVersion() {
+            return editVersion;
+        }
+
+        public T getValue() {
+            return obj;
+        }
+    }
+
+    @JsonInclude(Include.NON_NULL)
+    private static class WorkflowAddStageInput {
+        @JsonProperty
+        public int editVersion;
+
+        @JsonProperty
+        public String name;
+
+        @JsonProperty
+        private JsonNode input;
+
+        @JsonProperty
+        public String executable;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class WorkflowAddStageOutput {
+        @JsonProperty
+        public int editVersion;
+
+        @JsonProperty
+        public String stage;
+    }
+
+    /**
+     * Adds a stage to a workflow.
+     *
+     * @param applet Applet to run
+     * @param name   stage name
+     * @param stageInputs  inputs to be provided to the applet
+     * @param editVersion current version of the workflow
+     *
+     * @return Modification object containing the new stage
+     */
+    public Modification<Stage> addStage(DXApplet applet,
+                                        String name,
+                                        Object stageInputs,
+                                        int editVersion) {
+        WorkflowAddStageInput reqInput = new WorkflowAddStageInput();
+        reqInput.editVersion = editVersion;
+        reqInput.name = name;
+        reqInput.input = MAPPER.valueToTree(stageInputs);
+        reqInput.executable = applet.getId();
+        WorkflowAddStageOutput reqOutput = DXAPI.workflowAddStage(this.getId(),
+                                                                  reqInput, WorkflowAddStageOutput.class);
+        return new Modification<Stage> (reqOutput.editVersion,
+                                        new Stage(reqOutput.stage));
+    }
 }
