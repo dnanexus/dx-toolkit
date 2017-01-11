@@ -447,6 +447,7 @@ def _inline_documentation_files(app_spec, src_dir):
                     app_spec['developerNotes'] = fh.read()
                 break
 
+
 def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, archive=False, project=None, override_folder=None, override_name=None, dx_toolkit_autodep="stable", dry_run=False, **kwargs):
     """
     Creates a new applet object.
@@ -465,6 +466,17 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
 
     """
     applet_spec = _get_applet_spec(src_dir)
+
+    region = dxpy.api.project_describe(project, input_params={"fields": {"region": True}})["region"]
+    regional_options = get_regional_options(applet_spec)
+    relevant_option = regional_options[region]
+    system_requirements = relevant_option.get("systemRequirements")
+    print("\nASSET2", system_requirements)
+    if system_requirements is None:
+        pass
+    else:
+        # TODO: Assert that "systemRequirements" is not set at the top level?
+        applet_spec["runSpec"]["systemRequirements"] = system_requirements
 
     if project is None:
         dest_project = applet_spec['project']
@@ -626,6 +638,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
             applet_spec["tags"] = []
         applet_spec["tags"] = list(set(applet_spec["tags"]) | set(applet_spec["categories"]))
 
+    print("\nASSET1", applet_spec.get("runSpec"), applet_spec.get("regionalOptions"), "\n")
     applet_id = dxpy.api.applet_new(applet_spec)["id"]
 
     if archived_applet:
@@ -756,7 +769,9 @@ def _create_app(applet_or_regional_options, app_name, src_dir, publish=False, se
         # from API errors.
         if app_describe is None:
             logger.debug('App %s/%s does not yet exist' % (app_spec["name"], version))
+            print("\nASSET100\n")
             app_id = _create_or_update_version(app_spec['name'], app_spec['version'], app_spec, try_update=try_update)
+            print("\nASSET101\n")
             if app_id is None:
                 continue
             logger.info("Created app " + app_id)
@@ -886,6 +901,7 @@ def _create_app(applet_or_regional_options, app_name, src_dir, publish=False, se
         if no_published_versions:
             dxpy.api.app_add_tags(app_id, input_params={'tags': ['default']})
 
+    print("\nASSET102\n")
     return app_id
 
 

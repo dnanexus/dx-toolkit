@@ -6178,14 +6178,17 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         # to add us-west-1 here.
         # TODO: Figure out why "regionalOptions" is present in the /applet/new
         # requests.
+        exp_applet_aws_sr = dict(main=dict(instanceType="mem2_hdd2_x1"))
+        exp_applet_azure_sr = dict(main=dict(instanceType="mem2_hdd2_x2"))
         app_spec = dict(self.base_app_spec, name=app_name,
-                        regionalOptions={"aws:us-east-1": {},
-                                         "aws:us-west-1": {}})
+                        regionalOptions={"aws:us-east-1": dict(systemRequirements=exp_applet_aws_sr),
+                                         "aws:us-west-1": dict(systemRequirements=exp_applet_azure_sr)})
                                          # "azure:westus": {}})
-        app_spec["runSpec"]["systemRequirements"] = dict(main=dict(instanceType="mem2_hdd2_x2"))
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
+        print("\nASSET3\n")
         app_id = json.loads(run("dx build --create-app --json " + app_dir))["id"]
+        print("\nASSET4\n")
         app_desc_res = dxpy.api.app_describe(app_id)
         self.assertEqual(app_desc_res["class"], "app")
         self.assertEqual(app_desc_res["id"], app_id)
@@ -6207,6 +6210,9 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         # applet_azure = regional_options["azure:westus"]["applet"]
         applet_azure_sr = dxpy.api.applet_describe(applet_azure)["runSpec"]["systemRequirements"]
         print(app_sr, applet_aws_sr, applet_azure_sr)
+        self.assertEqual(applet_aws_sr, exp_applet_aws_sr)
+        self.assertEqual(applet_azure_sr, exp_applet_azure_sr)
+        # TODO
         # The app seems to have a system requirements, which does not really
         # mean anything if it is backed by multiple applets, right?
 
