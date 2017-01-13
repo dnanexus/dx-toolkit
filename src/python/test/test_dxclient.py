@@ -6186,9 +6186,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                                          # "azure:westus": {}})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
-        print("\nASSET3\n")
         app_id = json.loads(run("dx build --create-app --json " + app_dir))["id"]
-        print("\nASSET4\n")
         app_desc_res = dxpy.api.app_describe(app_id)
         self.assertEqual(app_desc_res["class"], "app")
         self.assertEqual(app_desc_res["id"], app_id)

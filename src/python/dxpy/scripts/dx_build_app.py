@@ -935,7 +935,6 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             regional_options = {}
             for region in projects_by_region:
                 regional_options[region] = {"applet": applet_ids_by_region[region]}
-            print("\nASSET103\n")
             app_id = dxpy.app_builder.create_app_multi_region(regional_options,
                                                               applet_name,
                                                               src_dir,
@@ -945,11 +944,9 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                                                               try_versions=try_versions,
                                                               try_update=do_try_update,
                                                               confirm=confirm)
-            print("\nASSET104\n")
 
             app_describe = dxpy.api.app_describe(app_id)
 
-            print("\nASSET105\n")
 
             if publish:
                 print("Uploaded and published app %s/%s (%s) successfully" % (app_describe["name"], app_describe["version"], app_id), file=sys.stderr)
@@ -958,7 +955,6 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 print("You can publish this app with:", file=sys.stderr)
                 print("  dx api app-%s/%s publish \"{\\\"makeDefault\\\": true}\"" % (app_describe["name"], app_describe["version"]), file=sys.stderr)
 
-            print("\nASSET106\n")
             return app_describe if return_object_dump else {"id": app_id}
 
         elif mode == "applet":
@@ -969,9 +965,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     finally:
         # Clean up after ourselves.
         if using_temp_project:
-            print("\nASSET107\n")
             delete_temporary_projects(projects_by_region.values())
-            print("\nASSET108\n")
 
 
 def _build_app(args, extra_args):
