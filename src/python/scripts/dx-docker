@@ -136,7 +136,7 @@ parser_run = subparsers.add_parser('run', help="Runs a docker image in a contain
 parser_run.add_argument("-v", "--volume", help="Directory to mount inside the container. Can be supplied multiple times (e.g. -v /mnt/data:/mnt/data -v /host:/guest", action='append', default=[])
 parser_run.add_argument("-e", "--env", help="Environment variables to set within container. Can be supplied multiple times (e.g. -e foo=bar -e pizza=pie", action='append', default=[])
 parser_run.add_argument("--entrypoint",  help="Overwrite default entry point for image")
-parser_run.add_argument("-w", "--workdir",  help="Working directory", default="/")
+parser_run.add_argument("-w", "--workdir",  help="Working directory")
 parser_run.add_argument("-q", "--quiet",  action='store_true', help="Suppress printing of image metadata")
 parser_run.add_argument("--rootfs",  help="Use directory pointed to here for rootfs instead of extracting the image (for expert use/development purposes)")
 parser_run.add_argument("image", help="image name")
@@ -185,6 +185,7 @@ def run(args):
         print_annotation("Last Updated", 'created', data=stats)
         print_annotation("Registry", 'registryurl')
         print_annotation("ENTRYPOINT", 'entrypoint')
+        print_annotation("Working Dir", 'workingDirectory', data=imagemeta['app'])
         print_annotation("Default CMD", 'cmd')
         sys.stderr.write("\n\n")
 
