@@ -185,6 +185,7 @@ def run(args):
         print_annotation("Last Updated", 'created', data=stats)
         print_annotation("Registry", 'registryurl')
         print_annotation("ENTRYPOINT", 'entrypoint')
+        print_annotation("Working Dir", 'workingDirectory', data=imagemeta['app'])
         print_annotation("Default CMD", 'cmd')
         sys.stderr.write("\n\n")
 
