@@ -1,3 +1,9 @@
+dx-toolkit (0.205.3) precise; urgency=low
+
+  * Fix dx-docker working directory default argument
+
+ -- Geet Duggal <gduggal@dnanexus.com>  Wed, 18 Jan 2017 00:54:53 +0000
+
 dx-toolkit (0.205.2) precise; urgency=low
 
   * Fix crash in dx-download introduced by a3633a7
