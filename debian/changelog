@@ -1,3 +1,12 @@
+dx-toolkit (0.206.3) precise; urgency=low
+
+  * Added: On Mac OS dx-toolkit now supports TLS 1.2 by activating a virtualenv
+  * Changed: `dx-app-wizard` now defaults to Ubuntu 14.04 as opposed to 12.04
+  * Changed: Cosmetic improvements to CLI `describe` and `ls` subcommands
+  * Deprecated: Perl and Ruby bindings are no longer supported and associated code has moved to the `dx-toolkit/contrib` directory
+
+ -- Geet Duggal <gduggal@dnanexus.com>  Thu, 19 Jan 2017 22:06:09 +0000
+
 dx-toolkit (0.206.2) precise; urgency=low
 
   * Fix dx-docker working directory default argument
