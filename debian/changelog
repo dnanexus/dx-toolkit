@@ -1,3 +1,13 @@
+dx-toolkit (0.207.0) precise; urgency=low
+
+  * Added: Workflow handler to the Java bindings
+  * Added: Checksum verification for file downloads in Java
+  * Fixed: Bug resulting in transient errors on large downloads
+  * Fixed: `dx-app-wizard` now correctly specifies `timeoutPolicy`
+  * Fixed: `dx-docker` now handles default working directory and override properly
+
+ -- Geet Duggal <gduggal@dnanexus.com>  Thu, 19 Jan 2017 21:58:48 +0000
+
 dx-toolkit (0.206.0) precise; urgency=low
 
   * Fix Python 2-3 unicode bug for user agent strings
