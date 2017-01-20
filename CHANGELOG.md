@@ -7,6 +7,9 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+
+## [207.0] - beta
+
 ### Added
 
 * Workflow handler to the Java bindings
@@ -19,7 +22,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx-docker` now handles default working directory and override properly
 
 
-## [206.3] - 2017-01-18
+## [206.3] - 2017-01-19 - stable
 
 ### Added
 
