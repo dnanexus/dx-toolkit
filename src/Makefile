@@ -133,7 +133,7 @@ endif
 # Get the short toolkit version string, resembling v0.195.0
 GIT_TOOLKIT_VERSION_SHORT := $(shell git describe --abbrev=0)
 
-pynsist_installer: toolkit_version $(DNANEXUS_HOME)/bin/dx dx-verify-file jq ua
+pynsist_installer: toolkit_version $(DNANEXUS_HOME)/bin/dx dx-verify-file jq
 	# Create installer.cfg and insert the toolkit version string
 	export GIT_TOOLKIT_VERSION_SHORT=$(GIT_TOOLKIT_VERSION_SHORT) ; \
 	    sed s/TEMPLATE_STRING_TOOLKIT_VERSION/$${GIT_TOOLKIT_VERSION_SHORT}/ "$(DNANEXUS_HOME)"/build/pynsist_files/installer.cfg.template > "$(DNANEXUS_HOME)"/build/pynsist_files/installer.cfg
