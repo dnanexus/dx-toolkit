@@ -21,18 +21,27 @@
 # variables:
 # $ source environment
 
-# This line is compatible with both bash and csh/tcsh. If running in csh, it sources the file "environment.csh" and quits.
+# This line is compatible with bash, zsh and csh/tcsh. If running in csh, it sources the file "environment.csh" and quits.
 
 test ! -z "$version" && echo "$shell" | grep -q csh && set SOURCE=`echo $_ | cut -f 2 -d " "` && set SOURCE=`dirname "$SOURCE"` && source "$SOURCE/environment.csh" && exit
 
 # Resolve the location of this file
-SOURCE="${BASH_SOURCE[0]}"
+if [ -n "$ZSH_VERSION" ]; then
+    SOURCE="$0"
+
+    # While we're doing ZSH specifics, also turn on autocomplete compatibility
+    autoload bashcompinit
+    bashcompinit
+elif [ -n "$BASH_VERSION" ]; then
+    SOURCE="${BASH_SOURCE[0]}"
+fi
+
 while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
 
 export DNANEXUS_HOME="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 # Detect system installation of dx-toolkit
-if [ "$DNANEXUS_HOME" == "/etc/profile.d" ]; then
+if [ "$DNANEXUS_HOME" = "/etc/profile.d" ]; then
 
   export DNANEXUS_HOME="/usr/share/dnanexus"
   # Private Python packages. We really ought not pollute PYTHONPATH with these though.
@@ -54,14 +63,20 @@ export PYTHONIOENCODING=UTF-8
 eval "$(register-python-argcomplete dx|sed 's/-o default//')"
 
 # Clean up old session files
-(shopt -s nullglob;
- if [[ $HOME != "" ]]; then
-     for session_dir in "${HOME}/.dnanexus_config/sessions/"*; do
-         if ! ps -p $(basename "$session_dir") &> /dev/null; then
-             rm -rf "$session_dir"
-         fi
-     done
- fi
+(
+    if [ -n "$BASH_VERSION" ]; then
+        shopt -s nullglob
+    elif [ -n "$ZSH_VERSION" ]; then
+        setopt null_glob
+    fi
+
+    if [[ $HOME != "" ]]; then
+        for session_dir in "${HOME}/.dnanexus_config/sessions/"*; do
+            if ! ps -p $(basename "$session_dir") &> /dev/null; then
+                rm -rf "$session_dir"
+            fi
+        done
+    fi
 )
 
 if [[ -z "$DX_SECURITY_CONTEXT" && -n "$DX_AUTH_TOKEN" ]]; then
