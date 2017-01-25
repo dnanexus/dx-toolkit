@@ -472,8 +472,10 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     relevant_option = regional_options[region]
     system_requirements = relevant_option.get("systemRequirements")
     if system_requirements is None:
+        # The top-level "systemRequirements", if present, will be respected.
         pass
     else:
+        # Override the top-level "systemRequirements" in memory.
         # TODO: Assert that "systemRequirements" is not set at the top level?
         applet_spec["runSpec"]["systemRequirements"] = system_requirements
 
