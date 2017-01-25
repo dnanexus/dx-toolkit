@@ -8250,6 +8250,10 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
             run("dx uninstall %s" % app_unknown_name, env=as_second_user())
         pass
 
+    # @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
+    #                      'skipping test that would create apps')
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create apps')
     def test_get_preserves_system_requirements(self):
         app_name = "asset_{t}_multi_region_app_with_regional_system_requirements".format(t=int(time.time()))
 
