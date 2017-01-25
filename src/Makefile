@@ -35,6 +35,7 @@ UNAME := $(shell uname)
 CENTOS_MAJOR_VERSION := $(shell test -e /etc/issue && (grep -o "CentOS release [0-9]\+" /etc/issue | sed -e "s/CentOS release //"))
 FEDORA_MAJOR_VERSION := $(shell test -e /etc/issue && (grep -o "Fedora release [0-9]\+" /etc/issue | sed -e "s/Fedora release //"))
 UBUNTU_VERSION := $(shell test -e /etc/issue && (grep -o "Ubuntu [0-9]\+\.[0-9]\+" /etc/issue | sed -e "s/Ubuntu //"))
+RHEL_MAJOR_VERSION := $(shell test -e /etc/redhat-release && (grep -o "Red Hat Enterprise Linux .* release [0-9]\+" /etc/redhat-release | sed -e "s/Red Hat Enterprise Linux .* release //"))
 
 ifndef CCACHE_DISABLE
 	export PATH := /usr/lib/ccache:$(PATH)
@@ -353,10 +354,10 @@ build_git:
 	(cd git && autoreconf --install && ./configure && $(MAKE) && $(MAKE) install)
 	(cd ../build/bin && ln -s ../../src/git/git)
 
-OPENSSL_PV=1.0.1f
-OPENSSL_SHA=9ef09e97dfc9f14ac2c042f3b7e301098794fc0f
+OPENSSL_PV=1.0.2g
+OPENSSL_SHA=36af23887402a5ea4ebef91df8e61654906f58f2
 openssl: shasum
-	if [[ "$(OS)" == Windows_NT || "$(UNAME)" == Darwin || "$(CENTOS_MAJOR_VERSION)" == "5" ]]; then \
+	if [[ "$(OS)" == Windows_NT || "$(UNAME)" == Darwin || "$(CENTOS_MAJOR_VERSION)" == "5" || "$(RHEL_MAJOR_VERSION)" == "7" ]]; then \
 	    $(MAKE) build_openssl; \
 	fi
 
@@ -436,6 +437,9 @@ else ifeq ($(UNAME), Darwin)
 	CURL_WITH_SSL=--with-ssl=$$(pwd)/../openssl/stage
 	CURL_SHARED_LIBS=--enable-shared=yes
 else ifeq ($(CENTOS_MAJOR_VERSION), 5)
+	CURL_WITH_SSL=--with-ssl=$$(pwd)/../openssl/stage
+	CURL_SHARED_LIBS=--enable-shared=no
+else ifeq ($(RHEL_MAJOR_VERSION), 7)
 	CURL_WITH_SSL=--with-ssl=$$(pwd)/../openssl/stage
 	CURL_SHARED_LIBS=--enable-shared=no
 else
