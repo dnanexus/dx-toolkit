@@ -467,9 +467,13 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     """
     applet_spec = _get_applet_spec(src_dir)
 
-    region = dxpy.api.project_describe(project, input_params={"fields": {"region": True}})["region"]
+    # The applet's region is the parent project's region.
+    applet_region = dxpy.api.project_describe(project, input_params={"fields": {"region": True}})["region"]
+
+    # We can assume that "regional_options" is not None here because this
+    # function is only called at app creation time.
     regional_options = get_regional_options(applet_spec)
-    relevant_option = regional_options[region]
+    relevant_option = regional_options[applet_region]
     system_requirements = relevant_option.get("systemRequirements")
     if system_requirements is None:
         # The top-level "systemRequirements", if present, will be respected.
