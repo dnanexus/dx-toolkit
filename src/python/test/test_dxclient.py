@@ -7979,7 +7979,12 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
             self.assertEqual("content\n",
                              open(os.path.join("get_applet_windows", "resources", "resources_file")).read())
 
-    def make_app(self, name, open_source=True, published=True, authorized_users=[]):
+    def make_app(self, name, open_source=True, published=True, authorized_users=[], regional_options=None):
+        if regional_options is None:
+            regional_options = {"aws:us-east-1": dict(), "azure:westus": dict()}
+        elif not isinstance(regional_options, dict):
+            raise ValueError()
+
         app_spec = {
             "name": name,
             "title": "Sir",
@@ -7992,9 +7997,8 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
             "authorizedUsers": authorized_users,
             "openSource": open_source,
             "version": "0.0.1",
-            "regionalOptions": {"aws:us-east-1": {},
-                                "azure:westus": {}}
-            }
+            "regionalOptions": regional_options}
+
         # description and developerNotes should be un-inlined back to files
         output_app_spec = dict((k, v)
                                for (k, v) in app_spec.iteritems()
@@ -8245,6 +8249,24 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
         with self.assertSubprocessFailure(stderr_regexp='Could not find the app', exit_code=3):
             run("dx uninstall %s" % app_unknown_name, env=as_second_user())
         pass
+
+    def test_get_and_build_preserves_system_requirements(self):
+        app_name = "asset_{t}_multi_region_app_with_regional_system_requirements".format(t=int(time.time()))
+
+        exp_applet_aws_us_east_sr = dict(main=dict(instanceType="mem2_hdd2_x1"))
+        exp_applet_aws_us_west_sr = dict(main=dict(instanceType="mem2_hdd2_x2"))
+        exp_regional_options = {"aws:us-east-1": dict(systemRequirements=exp_applet_aws_us_east_sr),
+                            "aws:us-west-1": dict(systemRequirements=exp_applet_aws_us_west_sr)}
+
+        app_id, ignore = self.make_app(app_name, regional_options=exp_regional_options)
+
+        with chdir(tempfile.mkdtemp()):
+            run("dx get {app_id}".format(app_id=app_id))
+            path_to_dxapp_json = "./{app_name}/dxapp.json".format(app_name=app_name)
+            with open(path_to_dxapp_json, "r") as fh:
+                app_spec = json.load(fh)
+                print(app_spec)
+                self.assertEqual(app_spec["regionalOptions"], exp_regional_options)
 
 class TestDXBuildReportHtml(unittest.TestCase):
     js = "console.log('javascript');"
