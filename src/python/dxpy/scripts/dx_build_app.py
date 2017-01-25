@@ -947,7 +947,6 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
 
             app_describe = dxpy.api.app_describe(app_id)
 
-
             if publish:
                 print("Uploaded and published app %s/%s (%s) successfully" % (app_describe["name"], app_describe["version"], app_id), file=sys.stderr)
             else:
