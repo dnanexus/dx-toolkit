@@ -8260,7 +8260,7 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
         exp_applet_aws_us_east_sr = dict(main=dict(instanceType="mem2_hdd2_x1"))
         exp_applet_aws_us_west_sr = dict(main=dict(instanceType="mem2_hdd2_x2"))
         exp_regional_options = {"aws:us-east-1": dict(systemRequirements=exp_applet_aws_us_east_sr),
-                            "aws:us-west-1": dict(systemRequirements=exp_applet_aws_us_west_sr)}
+                                "aws:us-west-1": dict(systemRequirements=exp_applet_aws_us_west_sr)}
 
         app_id, ignore = self.make_app(app_name, regional_options=exp_regional_options)
 
