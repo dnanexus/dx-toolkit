@@ -8250,7 +8250,7 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
             run("dx uninstall %s" % app_unknown_name, env=as_second_user())
         pass
 
-    def test_get_and_build_preserves_system_requirements(self):
+    def test_get_preserves_system_requirements(self):
         app_name = "asset_{t}_multi_region_app_with_regional_system_requirements".format(t=int(time.time()))
 
         exp_applet_aws_us_east_sr = dict(main=dict(instanceType="mem2_hdd2_x1"))
@@ -8265,7 +8265,6 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
             path_to_dxapp_json = "./{app_name}/dxapp.json".format(app_name=app_name)
             with open(path_to_dxapp_json, "r") as fh:
                 app_spec = json.load(fh)
-                print(app_spec)
                 self.assertEqual(app_spec["regionalOptions"], exp_regional_options)
 
 class TestDXBuildReportHtml(unittest.TestCase):
