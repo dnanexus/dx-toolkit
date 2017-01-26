@@ -35,6 +35,7 @@ import dxpy_testutil as testutil
 from dxpy.exceptions import (DXAPIError, DXFileError, DXError, DXJobFailureError, ResourceNotFound)
 from dxpy.utils import pretty_print, warn, Nonce
 from dxpy.utils.resolver import resolve_path, resolve_existing_path, ResolutionError, is_project_explicit
+import dxpy.app_builder as app_builder
 
 def get_objects_from_listf(listf):
     objects = []
@@ -2807,6 +2808,18 @@ class TestIdempotentRequests(unittest.TestCase):
         with self.assertRaises(DXAPIError):
             input_params.update({"name": "another_test_org"})
             dxpy.api.org_new(input_params=input_params)
+
+
+class TestAppBuilderUtils(unittest.TestCase):
+    def test_assert_consistent_regions(self):
+        f = app_builder.assert_consistent_regions
+        e = app_builder.AppBuilderException
+
+        self.assertIsNone(f(None, None))
+        # The actual key-value pairs are irrelevant.
+        self.assertIsNone(f({"aws:us-east-1": None}, ["aws:us-east-1"]))
+        with self.assertRaises(e):
+            f({"aws:us-east-1": None}, ["aws:us-west-1"])
 
 
 if __name__ == '__main__':
