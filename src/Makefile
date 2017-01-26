@@ -477,7 +477,7 @@ file/stage/lib/libmagic.la: shasum
 	curl ${UBUNTU_MIRROR}/pool/main/f/file/file_${FILE_PV}.orig.tar.xz > file-${FILE_PV}.tar.xz
 	[[ $$(shasum file-${FILE_PV}.tar.xz|cut -f 1 -d ' ') == $(FILE_SHA) ]]
 	tar -xf file-${FILE_PV}.tar.xz -C file --strip-components=1
-	cd file; ./configure --prefix=/
+	cd file; ./configure --enable-static=yes --prefix=/
 	$(MAKE) -C file install DESTDIR="$(DNANEXUS_HOME)/src/file/stage"
 
 # Bundled utilities
