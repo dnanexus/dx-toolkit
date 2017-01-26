@@ -460,8 +460,8 @@ curl/stage/lib/libcurl.la: shasum openssl
 	    --enable-static=yes $(CURL_SHARED_LIBS) $(CURL_WITH_SSL) --prefix=/
 	$(MAKE) -C curl install DESTDIR="$(DNANEXUS_HOME)/src/curl/stage"
 
-CARES_PV=1.10.0
-CARES_SHA=e44e6575d5af99cb3a38461486e1ee8b49810eb5
+CARES_PV=1.12.0
+CARES_SHA=8abfce61d2d788fb60a3441d05275162a460cbed
 c-ares/stage/lib/libcares.la: shasum
 	mkdir -p c-ares
 	curl ${UBUNTU_MIRROR}/pool/main/c/c-ares/c-ares_${CARES_PV}.orig.tar.gz > c-ares-${CARES_PV}.tar.gz
