@@ -63,7 +63,7 @@ else
 	MAYBE_SUDO='sudo'
 endif
 
-all: api_wrappers cpp src_libs python dx-contigset-to-fasta dx-verify-file dx-wig-to-wiggle jq dx-docker
+all: api_wrappers cpp src_libs python dx-contigset-to-fasta dx-verify-file jq dx-docker
 
 # Don't try to initialize the submodule in source distributions, it should
 # already be there and ready to build.
@@ -80,14 +80,12 @@ git_submodules:
 toolkit_version:
 	(if [ ! -e "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py" ]; then \
 	    echo "version = 'UNKNOWN_VERSION'" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; \
-	    echo -e "module DX\n  VERSION = \"0.0.0\"\nend\n" > "$(DNANEXUS_HOME)/src/ruby/lib/dxruby/version.rb"; \
 	    echo -e "package com.dnanexus;\nclass DXToolkitVersion {\n    public static final String TOOLKIT_VERSION = \"0.0.0\";\n}" > "$(DNANEXUS_HOME)/src/java/src/main/java/com/dnanexus/DXToolkitVersion.java"; \
 	    echo UNKNOWN_VERSION > "$(DNANEXUS_HOME)/build/info/version"; \
 	fi)
 	(if [ -d "$(DNANEXUS_HOME)/.git" ]; then \
 	    export GIT_TOOLKIT_VERSION=$$((git describe --match 'v*.*.*' || git rev-parse --short HEAD) | sed -e 's/-[0-9]-/+/'); \
 	    echo "version = '$${GIT_TOOLKIT_VERSION/#v/}'" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; \
-	    perl -e '$$ENV{GIT_TOOLKIT_VERSION} =~ /^v(\d+.\d+.\d+)/ and print "module DX\n  VERSION = \"$$1\"\nend\n"' > "$(DNANEXUS_HOME)/src/ruby/lib/dxruby/version.rb"; \
 	    echo -e "package com.dnanexus;\nclass DXToolkitVersion {\n    public static final String TOOLKIT_VERSION = \"$$GIT_TOOLKIT_VERSION\";\n}" > "$(DNANEXUS_HOME)/src/java/src/main/java/com/dnanexus/DXToolkitVersion.java"; \
 	    echo $$GIT_TOOLKIT_VERSION > "$(DNANEXUS_HOME)/build/info/version"; \
 	fi)
@@ -101,19 +99,14 @@ cpp/dxcpp/api.h: api_wrappers/wrapper_table.json api_wrappers/generateCppAPIHWra
 cpp/dxcpp/api.cc: api_wrappers/wrapper_table.json api_wrappers/generateCppAPICCWrappers.py
 	cat api_wrappers/wrapper_table.json | api_wrappers/generateCppAPICCWrappers.py > cpp/dxcpp/api.cc
 
-perl/lib/DNAnexus/API.pm: api_wrappers/wrapper_table.json api_wrappers/generatePerlAPIWrappers.py
-	cat api_wrappers/wrapper_table.json | api_wrappers/generatePerlAPIWrappers.py > perl/lib/DNAnexus/API.pm
-
 java/src/main/java/com/dnanexus/DXAPI.java: api_wrappers/wrapper_table.json api_wrappers/generateJavaAPIWrappers.py
 	cat api_wrappers/wrapper_table.json | api_wrappers/generateJavaAPIWrappers.py > java/src/main/java/com/dnanexus/DXAPI.java
 
 R/dxR/R/api.R: api_wrappers/wrapper_table.json api_wrappers/generateRAPIWrappers.py
 	cat api_wrappers/wrapper_table.json | api_wrappers/generateRAPIWrappers.py > R/dxR/R/api.R
 
-ruby/lib/dxruby/api.rb: api_wrappers/wrapper_table.json api_wrappers/generateRubyAPIWrappers.py
-	cat api_wrappers/wrapper_table.json | api_wrappers/generateRubyAPIWrappers.py > ruby/lib/dxruby/api.rb
-
-api_wrappers: toolkit_version python/dxpy/api.py cpp/dxcpp/api.h cpp/dxcpp/api.cc perl/lib/DNAnexus/API.pm java/src/main/java/com/dnanexus/DXAPI.java R/dxR/R/api.R ruby/lib/dxruby/api.rb
+api_wrappers: toolkit_version python/dxpy/api.py cpp/dxcpp/api.h cpp/dxcpp/api.cc java/src/main/java/com/dnanexus/DXAPI.java R/dxR/R/api.R
+	$(MAKE) -C ../contrib api_wrappers
 
 cpp: api_wrappers
 	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/src"
@@ -122,8 +115,6 @@ cpp: api_wrappers
 src_libs: api_wrappers
 	mkdir -p "$(DNANEXUS_LIBDIR)"
 	cp -R -v bash "$(DNANEXUS_LIBDIR)"
-	mkdir -p "$(DNANEXUS_HOME)/lib/perl5"
-	cp -R -v perl/lib/* "$(DNANEXUS_HOME)/lib/perl5/"
 
 PYTHON_LIBDIR := $(DNANEXUS_LIBDIR)/python2.7/site-packages
 
@@ -182,9 +173,14 @@ else
 	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; pip install --upgrade -r python/requirements_setuptools.txt
 endif
 
-	# On OS X, install the gnureadline package
+	# On OS X, install the gnureadline package and download other osx specific packages
 ifeq ($(UNAME), Darwin)
 	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; pip install --no-cache-dir --prefix="$(DNANEXUS_HOME)" -r python/requirements_readline.txt
+	# Download ndg-httpsclient for cryptography
+	pip download --no-cache-dir -d "$(DNANEXUS_HOME)"/osx-python-packages -r python/requirements_osx.txt
+	# For OS X < 10.10 download cryptography.whl and cffi.whl
+	pip download --no-cache-dir --no-deps -d "$(DNANEXUS_HOME)"/osx-python-packages --platform macosx_10_6_intel --only-binary=:all: cryptography
+	pip download --no-cache-dir --no-deps -d "$(DNANEXUS_HOME)"/osx-python-packages --platform macosx_10_6_intel --only-binary=:all: cffi
 endif
 
 	# Build the dxpy wheel and move it into place
@@ -203,11 +199,6 @@ else
 endif
 	rm -f "$(DNANEXUS_HOME)/bin/xattr"
 
-# TODO: fix up perl and java targets
-
-perl: api_wrappers
-	(source ../environment; cd perl; dzil build; cd DNAnexus-0.1; perl Makefile.PL; make install DESTDIR="$(DNANEXUS_HOME)/lib/perl5" DESTINSTALLSITELIB="$(DNANEXUS_HOME)/lib/perl5")
-
 # If running in fakeroot, override some maven settings so that maven can still
 # find a localRepository to write to.
 java: api_wrappers toolkit_version
@@ -219,9 +210,6 @@ R: api_wrappers toolkit_version
 	mkdir -p "$(DNANEXUS_HOME)/lib/R"
 	(cd R; export R_LIBS_SITE="$(DNANEXUS_HOME)/lib/R"; R -q --no-restore --no-save < install_dxR_build_deps.R; R -q --no-restore --no-save -e "library(roxygen2); roxygenize(\"dxR\")"; R CMD INSTALL --build dxR --library="$(DNANEXUS_HOME)/lib/R"; )
 
-ruby: api_wrappers toolkit_version
-	(cd ruby; gem build dxruby.gemspec)
-	(cd ruby; export GEM_HOME="$(DNANEXUS_HOME)/lib/rubygems"; gem install dxruby*.gem)
 
 # Tools
 # =====
@@ -231,9 +219,6 @@ dx-contigset-to-fasta: api_wrappers
 
 dx-verify-file: api_wrappers
 	$(MAKE) -C dx-verify-file install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
-
-dx-wig-to-wiggle: api_wrappers
-	$(MAKE) -C dx-wig-to-wiggle install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
 
 ua: toolkit_version ua_deps
 	$(MAKE) -C ua install dist DESTDIR=$(DNANEXUS_HOME) PREFIX=/
@@ -255,10 +240,7 @@ endif
 # Tests
 # =====
 
-test: test_python test_perl
-
-test_ruby: ruby
-	(source ../environment && ruby ruby/test/test_dxruby.rb)
+test: test_python
 
 coverage_python:
 	(cd python; export PYTHONPATH="$$PYTHONPATH:$$(echo $$(pwd)/coverage-*.egg)"; \
@@ -266,9 +248,6 @@ coverage_python:
 
 test_python:
 	../build/run_python_integration_tests.py
-
-test_perl: perl
-	(cd perl; prove)
 
 # mvn will compile the Java files, but it doesn't know how to generate the API
 # wrappers and toolkit release file.
@@ -313,18 +292,10 @@ debian_java_install: java
 	$(eval CLEANED_JAR_NAME := `cd "$(DNANEXUS_HOME)"/lib/java; ls *.jar | sed "s/dnanexus-api-\([0-9]\+\.[0-9]\+\.[0-9]\+\)-.*/dnanexus-api-\1.jar/g"`)
 	(cd "$(DNANEXUS_HOME)"/lib/java; cp -a *.jar $(DESTDIR)/$(PREFIX)/share/java/"$(CLEANED_JAR_NAME)")
 
-debian_perl_install: perl
-	mkdir -p $(DESTDIR)/$(PREFIX)/lib
-	cp -a $(DNANEXUS_HOME)/lib/perl5 $(DESTDIR)/$(PREFIX)/lib
-
 debian_r_install: R
 	mkdir -p $(DESTDIR)/$(PREFIX)/lib/R/site-library
 	cp -a $(DNANEXUS_HOME)/lib/R/{RCurl,RJSONIO} $(DESTDIR)/$(PREFIX)/lib/R/site-library/
 	cp -a $(DNANEXUS_HOME)/lib/R/dxR $(DESTDIR)/$(PREFIX)/lib/R/site-library/
-
-debian_ruby_install: ruby
-	mkdir -p $(DESTDIR)/$(PREFIX)/share/dnanexus/lib
-	cp -a "$(DNANEXUS_HOME)"/lib/rubygems $(DESTDIR)/$(PREFIX)/share/dnanexus/lib
 
 # Documentation
 # =============
@@ -359,10 +330,6 @@ doc_java: api_wrappers
 doc_R: R
 	(export R_LIBS_SITE="$(DNANEXUS_HOME)/lib/R"; R --no-save < "$(DNANEXUS_HOME)/src/R/install_dxR_doc_deps.R")
 	(export R_LIBS_SITE="$(DNANEXUS_HOME)/lib/R"; R -q -e "library('parser'); library('highlight'); library('staticdocs'); build_package('R/dxR', '$(DNANEXUS_HOME)/doc/R/')")
-
-doc_ruby: ruby
-	-rm -rf ../doc/ruby
-	(cd ruby; yard --output-dir "$(DNANEXUS_HOME)/doc/ruby")
 
 # Upload Agent dependencies
 # =========================
@@ -550,7 +517,6 @@ distclean: clean
 
 clean:
 	$(MAKE) -C dx-contigset-to-fasta clean
-	$(MAKE) -C dx-wig-to-wiggle clean
 	$(MAKE) -C dx-verify-file clean
 	$(MAKE) -C ua clean
 	-find ../bin -type f \( -name jq -or -name dx -or -name 'dx-*' \) -not -name 'dx-unpack*' -delete
@@ -564,4 +530,4 @@ clean:
 	-rm -rf boost c-ares curl file openssl
 	-$(MAKE) -C jq clean
 
-.PHONY: all toolkit_version api_wrappers src_libs python pynsist_installer perl java ruby dx-contigset-to-fasta ua test test_ruby test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R doc_ruby boost boost_build install_sysdeps
+.PHONY: all toolkit_version api_wrappers src_libs python pynsist_installer java dx-contigset-to-fasta ua test test_python install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R boost boost_build install_sysdeps

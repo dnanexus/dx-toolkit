@@ -23348,8 +23348,9 @@ public final class DXAPI {
      *             the response (includes HTTP protocol errors).
      */
     public static <T> T systemDescribeExecutions(Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/system/describeExecutions", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
+                new DXHTTPRequest().request("/system/describeExecutions", input, RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -23371,8 +23372,9 @@ public final class DXAPI {
      *             the response (includes HTTP protocol errors).
      */
     public static <T> T systemDescribeExecutions(Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/system/describeExecutions", mapper.valueToTree(inputObject), RetryStrategy.SAFE_TO_RETRY),
+                new DXHTTPRequest(env).request("/system/describeExecutions", input, RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -25880,6 +25882,165 @@ public final class DXAPI {
     @Deprecated
     public static JsonNode systemGreet(JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/system/greet", inputParams, RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
+     * Invokes the systemHeaders method with an empty input, deserializing to an object of the specified class.
+     *
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemHeaders(Class<T> outputClass) {
+        return systemHeaders(mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the systemHeaders method with an empty input using the specified environment, deserializing to an object of the specified class.
+     *
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemHeaders(Class<T> outputClass, DXEnvironment env) {
+        return systemHeaders(mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the systemHeaders method with the specified input, deserializing to an object of the specified class.
+     *
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemHeaders(Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/system/headers", input, RetryStrategy.SAFE_TO_RETRY),
+                outputClass);
+    }
+    /**
+     * Invokes the systemHeaders method with the specified input using the specified environment, deserializing to an object of the specified class.
+     *
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemHeaders(Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest(env).request("/system/headers", input, RetryStrategy.SAFE_TO_RETRY),
+                outputClass);
+    }
+
+    /**
+     * Invokes the systemHeaders method.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemHeaders(Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemHeaders() {
+        return systemHeaders(mapper.createObjectNode());
+    }
+    /**
+     * Invokes the systemHeaders method with the specified input parameters.
+     *
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemHeaders(Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemHeaders(JsonNode inputParams) {
+        return new DXHTTPRequest().request("/system/headers", inputParams, RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the systemHeaders method with the specified environment.
+     *
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemHeaders(Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemHeaders(DXEnvironment env) {
+        return systemHeaders(mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the systemHeaders method with the specified environment and input parameters.
+     *
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemHeaders(Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemHeaders(JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/system/headers", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**

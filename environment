@@ -38,15 +38,12 @@ if [ "$DNANEXUS_HOME" == "/etc/profile.d" ]; then
   # Private Python packages. We really ought not pollute PYTHONPATH with these though.
   export PYTHONPATH="/usr/share/dnanexus/lib/python2.7/site-packages:$PYTHONPATH"
   export CLASSPATH="/usr/share/java/dnanexus-api-0.1.0.jar:${CLASSPATH}"
-  export GEM_PATH="/usr/share/dnanexus/lib/rubygems:$GEM_PATH"
 
 else
 
   export PATH="${DNANEXUS_HOME}/bin:$PATH"
   export PYTHONPATH="${DNANEXUS_HOME}/share/dnanexus/lib/python2.7/site-packages:${DNANEXUS_HOME}/lib/python:$PYTHONPATH"
-  export PERL5LIB="${DNANEXUS_HOME}/lib/perl5:$PERL5LIB"
   export CLASSPATH="${DNANEXUS_HOME}/lib/java/*:${CLASSPATH}"
-  export GEM_PATH="${DNANEXUS_HOME}/lib/rubygems:$GEM_PATH"
 
 fi
 
@@ -69,4 +66,23 @@ eval "$(register-python-argcomplete dx|sed 's/-o default//')"
 
 if [[ -z "$DX_SECURITY_CONTEXT" && -n "$DX_AUTH_TOKEN" ]]; then
     export DX_SECURITY_CONTEXT="{\"auth_token_type\":\"Bearer\",\"auth_token\":\"$DX_AUTH_TOKEN\"}"
+fi
+
+if [[ $OSTYPE == "darwin"* ]]; then
+    # On the first run, create a virtualenv for Mac-specific needs;
+    # skip to activating it when it already exists.
+    VIRTUALENV_DIR="$DNANEXUS_HOME/dxenv"
+
+    if [ ! -d "$VIRTUALENV_DIR" ]; then
+        virtualenv "$VIRTUALENV_DIR"
+        source "$VIRTUALENV_DIR/bin/activate"
+        
+        # Install ndg-httpsclient in the env to provide TLS 1.2 support
+        # Install all tar packages only for osx python virtual environment
+        PYTHON_PKG_DIR="$DNANEXUS_HOME"/osx-python-packages/
+        pip install --no-cache-dir --no-index --find-links="$PYTHON_PKG_DIR" ndg-httpsclient
+        
+    else
+        source "$VIRTUALENV_DIR/bin/activate"
+    fi
 fi

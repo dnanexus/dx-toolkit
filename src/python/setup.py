@@ -46,7 +46,7 @@ backports_dependencies = [line.rstrip() for line in open(os.path.join(os.path.di
 
 # If on Windows, also depend on colorama, which translates ANSI terminal color control sequences into whatever cmd.exe uses.
 if platform.system() == 'Windows':
-    dependencies = [d for d in dependencies if not (d.startswith('distribute') or d.startswith('psutil'))]
+    dependencies = [d for d in dependencies if not (d.startswith('distribute'))]
     dependencies.append("colorama==0.2.4")
 
 # If this is an OS X system where GNU readline is imitated by libedit, add the readline module from pypi to dependencies.

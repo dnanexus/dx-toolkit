@@ -37,7 +37,6 @@ The Platform SDK contains API language bindings for the following platforms:
 
 * [Python](src/python/Readme.md) (requires Python 2.7)
 * C++
-* Perl
 * [Java](src/java/Readme.md) (requires Java 7 or higher)
 * [R](src/R/Readme.md)
 
@@ -111,9 +110,9 @@ Then:
 
 Notes:
 
-  - On CentOS/RHEL 5.x, two of the utilities, `dx-contigset-to-fasta`
-    and `dx-reads-validator`, will not function correctly, as some of
-    the library versions are too old.
+  - On CentOS/RHEL 5.x, one of the utilities, `dx-contigset-to-fasta`,
+    will not function correctly, as some of the library versions are too
+    old.
 
   - Tested on CentOS 5.4 and CentOS 6.2.
 

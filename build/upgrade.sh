@@ -75,3 +75,5 @@ rm -rf "${build_dir}/dx-toolkit"
 echo "${new_version}" > "${build_dir}/info/version"
 
 echo "$(basename $0): Updated to version ${new_version}. Previous version saved in ${build_dir}/${current_version}."
+echo "Please close this terminal, open a new terminal, and source the environment file in the dx-toolkit folder"
+

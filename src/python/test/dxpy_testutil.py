@@ -433,6 +433,15 @@ class DXTestCaseBuildApps(DXTestCase):
     This class adds methods to ``DXTestCase`` related to app creation,
     app destruction, and extraction of app data as local files.
     """
+
+    base_app_spec = {
+        "dxapi": "1.0.0",
+        "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+        "inputSpec": [],
+        "outputSpec": [],
+        "version": "1.0.0"
+    }
+
     def setUp(self):
         super(DXTestCaseBuildApps, self).setUp()
         self.temp_file_path = tempfile.mkdtemp()
@@ -443,13 +452,7 @@ class DXTestCaseBuildApps(DXTestCase):
 
     def make_apps(self, num_apps, name_prefix, bill_to=None):
         apps = []
-        app_spec = {
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0",
-        }
+        app_spec = dict(self.base_app_spec)
         for i in range(num_apps):
             app_spec["name"] = name_prefix + "_" + str(i)
             if bill_to is not None:

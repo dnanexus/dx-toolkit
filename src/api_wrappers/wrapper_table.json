@@ -1277,6 +1277,15 @@
         }
     ],
     [
+        "/system/headers",
+        "systemHeaders(req)",
+        {
+            "objectMethod": false,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
         "/system/shortenURL",
         "systemShortenURL(req)",
         {
