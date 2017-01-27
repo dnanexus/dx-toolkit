@@ -4,11 +4,13 @@ This change log spiritually adheres to [these guidelines](http://keepachangelog.
 
 Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Security
 
-
 ## [Unreleased]
 
+## [208.0]
 
-## [207.0] - beta
+No significant changes.
+
+## [207.0] - 2017-01-26 - stable
 
 ### Added
 
@@ -22,7 +24,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx-docker` now handles default working directory and override properly
 
 
-## [206.3] - 2017-01-19 - stable
+## [206.3] - 2017-01-19
 
 ### Added
 
