@@ -538,7 +538,7 @@ def compress(args):
     if dxpy.AUTH_HELPER is None:
         err_exit('You are not logged in; run "dx login" to obtain a token.', 3)
     import os
-    os.system("dx run dx-compress -iinput_bam={} -y".format(args.file))
+    os.system("dx run dx-compress -iinput_bam={} -y --brief".format(args.file))
     #dxpy.DXApplet("applet-F0ggYB000x329z14b4Q79j8z").run({'input_bam': args.file}, project=dxpy.PROJECT_CONTEXT_ID)
 
 def setenv(args):
