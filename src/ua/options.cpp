@@ -511,9 +511,9 @@ void Options::validate() {
     msg << "Number of upload threads must be positive: " << uploadThreads;
     throw runtime_error(msg.str());
   }
-  if (chunkSize < 5 * 1024 * 1024) {
+  if (chunkSize < 3 * 1024 * 1024) {
     ostringstream msg;
-    msg << "Minimum chunk size is " << (5 * 1024 * 1024) << " (5 MB): " << chunkSize;
+    msg << "Minimum chunk size is " << (3 * 1024 * 1024) << " (5 MB): " << chunkSize;
     throw runtime_error(msg.str());
   }
   if (tries < 1) {

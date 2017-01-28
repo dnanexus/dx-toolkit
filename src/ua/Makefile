@@ -75,7 +75,7 @@ else
 		ifeq ($(CC), clang)
 			CXXFLAGS += -stdlib=libc++
 		endif
-        else ifeq ($(RHEL_MAJOR_VERSION), 7)
+	else ifeq ($(RHEL_MAJOR_VERSION), 7)
 		CXXFLAGS += -DLINUX_BUILD=1 -std=c++0x
 		LDFLAGS += -lrt -static
 	else

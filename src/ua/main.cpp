@@ -143,7 +143,7 @@ void handle_bad_alloc(const std::bad_alloc &e) {
   DXLOG(logUSERINFO) << endl << "*********" << endl << "FATAL ERROR: The program ran out of memory. You may try following steps to avoid this problem: " << endl
     << "1. Try decreasing number of upload/compress/read threads (Try ./ua --help to see how to set them) - Recommended solution" << endl
     << "2. Reduce the chunk-size (--chunk-size options). Note: Trying with a different chunk size will not resume your previous upload" << endl
-    << endl << "If you still face problem, please contact DNAnexus support." << endl
+    << endl << "If you still encounter problems, please contact DNAnexus support." << endl
     << "\nError details (for advanced users only): '" << e.what() << "'" << endl << "*********" << endl;
   exit(1);
 }
