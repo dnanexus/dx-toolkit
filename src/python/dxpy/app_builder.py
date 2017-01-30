@@ -467,8 +467,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     """
     applet_spec = _get_applet_spec(src_dir)
 
-    # The applet's region is the parent project's region.
-    system_requirements = get_system_requirements(applet_spec, project, dry_run)
+    system_requirements = get_regional_system_requirements_by_project(applet_spec, project, dry_run)
     if system_requirements is None:
         # The top-level "systemRequirements", if present, will be respected.
         pass
@@ -914,8 +913,11 @@ def get_regional_options(app_spec):
     return regional_options
 
 
-def get_system_requirements(executable_spec, project, dry_run):
-    """
+def get_regional_system_requirements_by_project(executable_spec, project, dry_run):
+    """Gets the regional system requirements based on the region of the
+    specified project, if possible. Current-schema dxapp.json may contain
+    system requirements by region. Old-schema dxapp.json do not contain
+    regional options at all.
     """
     if dry_run:
         return None
