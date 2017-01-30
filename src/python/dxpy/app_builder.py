@@ -468,13 +468,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     applet_spec = _get_applet_spec(src_dir)
 
     # The applet's region is the parent project's region.
-    applet_region = dxpy.api.project_describe(project, input_params={"fields": {"region": True}})["region"]
-
-    # We can assume that "regional_options" is not None here because this
-    # function is only called at app creation time.
-    regional_options = get_regional_options(applet_spec)
-    relevant_option = regional_options[applet_region]
-    system_requirements = relevant_option.get("systemRequirements")
+    system_requirements = get_system_requirements(applet_spec, project, dry_run)
     if system_requirements is None:
         # The top-level "systemRequirements", if present, will be respected.
         pass
@@ -918,6 +912,22 @@ def get_regional_options(app_spec):
     if len(regional_options.keys()) < 1:
         raise AppBuilderException("The field 'regionalOptions' in dxapp.json must be a non-empty mapping")
     return regional_options
+
+
+def get_system_requirements(executable_spec, project, dry_run):
+    """
+    """
+    if dry_run:
+        return None
+
+    region = dxpy.api.project_describe(project, input_params={"fields": {"region": True}})["region"]
+    # We cannot assume that "regional_options" is None here even though this
+    # function is only called at app creation time because we need to be
+    # backward compatible with old-schema dxapp.json files.
+    regional_options = get_regional_options(executable_spec)
+    if regional_options is None:
+        return None
+    return regional_options[region].get("systemRequirements")
 
 
 def assert_consistent_regions(from_app_spec, from_command_line):
