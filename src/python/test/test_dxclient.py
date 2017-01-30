@@ -6168,45 +6168,42 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
 
-    # @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
-    #                      'skipping test that would create apps')
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
     def test_build_multi_region_app_with_system_requirements(self):
         app_name = "asset_{t}_multi_region_app_with_regional_system_requirements".format(t=int(time.time()))
-        # TODO: Reset the database initialization script. We had to change it
-        # to add us-west-1 here.
-        # TODO: Figure out why "regionalOptions" is present in the /applet/new
-        # requests.
+
         exp_aws_us_east_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x1"))
         exp_aws_us_west_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x2"))
+        exp_azure_westus_system_requirements = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
         app_spec = dict(self.base_app_spec, name=app_name,
                         regionalOptions={"aws:us-east-1": dict(systemRequirements=exp_aws_us_east_system_requirements),
-                                         "aws:us-west-1": dict(systemRequirements=exp_aws_us_west_system_requirements)})
-                                         # "azure:westus": {}})
+                                         "aws:us-west-1": dict(systemRequirements=exp_aws_us_west_system_requirements),
+                                         "azure:westus": dict(systemRequirements=exp_azure_westus_system_requirements)})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
-
         app_id = json.loads(run("dx build --create-app --json " + app_dir))["id"]
+
         app_desc_res = dxpy.api.app_describe(app_id)
         self.assertEqual(app_desc_res["class"], "app")
         self.assertEqual(app_desc_res["id"], app_id)
         self.assertEqual(app_desc_res["version"], "1.0.0")
         self.assertEqual(app_desc_res["name"], app_name)
-        self.assertFalse("published" in app_desc_res)
 
         self.assertIn("regionalOptions", app_desc_res)
         regional_options = app_desc_res["regionalOptions"]
         self.assertItemsEqual(regional_options.keys(), app_spec["regionalOptions"].keys())
 
-        self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
-        self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
-
         applet_aws_us_east = regional_options["aws:us-east-1"]["applet"]
         applet_aws_us_east_system_requirements = dxpy.api.applet_describe(applet_aws_us_east)["runSpec"]["systemRequirements"]
+        self.assertEqual(applet_aws_us_east_system_requirements, exp_aws_us_east_system_requirements)
+
         applet_aws_us_west = regional_options["aws:us-west-1"]["applet"]
         applet_aws_us_west_system_requirements = dxpy.api.applet_describe(applet_aws_us_west)["runSpec"]["systemRequirements"]
-        self.assertEqual(applet_aws_us_east_system_requirements, exp_aws_us_east_system_requirements)
         self.assertEqual(applet_aws_us_west_system_requirements, exp_aws_us_west_system_requirements)
+
+        applet_azure_westus = regional_options["azure:westus"]["applet"]
+        applet_azure_westus_system_requirements = dxpy.api.applet_describe(applet_azure_westus)["runSpec"]["systemRequirements"]
+        self.assertEqual(applet_azure_westus_system_requirements, exp_azure_westus_system_requirements)
 
     def test_build_applets_using_multi_region_dxapp_json(self):
         app_name = "asset_{t}_multi_region_dxapp_json_with_regional_system_requirements".format(t=int(time.time()))
@@ -8277,17 +8274,16 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
             run("dx uninstall %s" % app_unknown_name, env=as_second_user())
         pass
 
-    # @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
-    #                      'skipping test that would create apps')
-    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
-                         'skipping test that would create apps')
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
     def test_get_preserves_system_requirements(self):
         app_name = "asset_{t}_multi_region_app_with_regional_system_requirements".format(t=int(time.time()))
 
         exp_aws_us_east_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x1"))
         exp_aws_us_west_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x2"))
+        exp_azure_westus_system_requirements = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
         exp_regional_options = {"aws:us-east-1": dict(systemRequirements=exp_aws_us_east_system_requirements),
-                                "aws:us-west-1": dict(systemRequirements=exp_aws_us_west_system_requirements)}
+                                "aws:us-west-1": dict(systemRequirements=exp_aws_us_west_system_requirements),
+                                "azure:westus": dict(systemRequirements=exp_azure_westus_system_requirements)}
 
         app_id, ignore = self.make_app(app_name, regional_options=exp_regional_options)
 
