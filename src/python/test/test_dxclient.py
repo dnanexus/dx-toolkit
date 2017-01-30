@@ -6271,12 +6271,16 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                          'skipping test that would create apps')
     def test_build_multi_region_app_invalid_regional_options(self):
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
+
+        # Regional options mapping is empty.
         app_spec = dict(self.base_app_spec, name=app_name, regionalOptions={})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
         with self.assertSubprocessFailure(stderr_regexp="regionalOptions", exit_code=3):
             run("dx build --create-app --json " + app_dir)
 
+        # Regional options in dxapp.json does not match the ones specified on
+        # command-line.
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
         app_spec = dict(self.base_app_spec, name=app_name, regionalOptions={"aws:us-east-1": {}})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
