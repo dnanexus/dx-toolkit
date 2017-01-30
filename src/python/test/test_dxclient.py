@@ -7984,9 +7984,9 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
 
     def make_app(self, name, open_source=True, published=True, authorized_users=[], regional_options=None):
         if regional_options is None:
-            regional_options = {"aws:us-east-1": dict(), "azure:westus": dict()}
+            regional_options = {"aws:us-east-1": {}, "azure:westus": {}}
         elif not isinstance(regional_options, dict):
-            raise ValueError()
+            raise ValueError("'regional_options' should be None or a dict")
 
         app_spec = {
             "name": name,
