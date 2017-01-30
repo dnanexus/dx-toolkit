@@ -6208,6 +6208,30 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEqual(applet_aws_us_east_system_requirements, exp_aws_us_east_system_requirements)
         self.assertEqual(applet_aws_us_west_system_requirements, exp_aws_us_west_system_requirements)
 
+    def test_build_applets_using_multi_region_dxapp_json(self):
+        app_name = "asset_{t}_multi_region_dxapp_json_with_regional_system_requirements".format(t=int(time.time()))
+
+        exp_aws_us_east_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x1"))
+        exp_aws_us_west_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x2"))
+        app_spec = dict(self.base_app_spec, name=app_name,
+                        regionalOptions={"aws:us-east-1": dict(systemRequirements=exp_aws_us_east_system_requirements),
+                                         "aws:us-west-1": dict(systemRequirements=exp_aws_us_west_system_requirements)})
+        app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+
+        aws_us_east = "aws:us-east-1"
+        with temporary_project(region=aws_us_east, select=True):
+            applet_id = json.loads(run("dx build --json " + app_dir))["id"]
+            applet_desc = dxpy.api.applet_describe(applet_id)
+            self.assertEqual(applet_desc["runSpec"]["bundledDependsByRegion"].keys()[0],
+                             aws_us_east)
+
+        aws_us_west = "aws:us-west-1"
+        with temporary_project(region=aws_us_west, select=True):
+            applet_id = json.loads(run("dx build --json " + app_dir))["id"]
+            applet_desc = dxpy.api.applet_describe(applet_id)
+            self.assertEqual(applet_desc["runSpec"]["bundledDependsByRegion"].keys()[0],
+                             aws_us_west)
+
     def test_build_multi_region_app_without_regional_options(self):
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
         app_spec = dict(self.base_app_spec, name=app_name)
