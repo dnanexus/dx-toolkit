@@ -2812,14 +2812,18 @@ class TestIdempotentRequests(unittest.TestCase):
 
 class TestAppBuilderUtils(unittest.TestCase):
     def test_assert_consistent_regions(self):
-        f = app_builder.assert_consistent_regions
-        abe = app_builder.AppBuilderException
+        assert_consistent_regions = app_builder.assert_consistent_regions
 
-        self.assertIsNone(f(None, None))
+        # These calls should not raise exceptions.
+
+        assert_consistent_regions(None, None)
+        assert_consistent_regions(None, ["aws:us-east-1"])
+        assert_consistent_regions({"aws:us-east-1": None}, None)
         # The actual key-value pairs are irrelevant.
-        self.assertIsNone(f({"aws:us-east-1": None}, ["aws:us-east-1"]))
-        with self.assertRaises(abe):
-            f({"aws:us-east-1": None}, ["aws:us-west-1"])
+        assert_consistent_regions({"aws:us-east-1": None}, ["aws:us-east-1"])
+
+        with self.assertRaises(app_builder.AppBuilderException):
+            assert_consistent_regions({"aws:us-east-1": None}, ["aws:us-west-1"])
 
 
 if __name__ == '__main__':
