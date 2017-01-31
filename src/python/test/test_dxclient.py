@@ -6168,18 +6168,18 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
 
-    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
     def test_build_multi_region_app_with_system_requirements(self):
         app_name = "asset_{t}_multi_region_app_with_regional_system_requirements".format(t=int(time.time()))
 
-        exp_aws_us_east_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x1"))
-        exp_aws_us_west_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x2"))
-        exp_azure_westus_system_requirements = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
+        aws_us_east_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x1"))
+        aws_us_west_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x2"))
+        azure_westus_system_requirements = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
         app_spec = dict(self.base_app_spec, name=app_name,
-                        regionalOptions={"aws:us-east-1": dict(systemRequirements=exp_aws_us_east_system_requirements),
-                                         "aws:us-west-1": dict(systemRequirements=exp_aws_us_west_system_requirements),
-                                         "azure:westus": dict(systemRequirements=exp_azure_westus_system_requirements)})
+                        regionalOptions={"aws:us-east-1": dict(systemRequirements=aws_us_east_system_requirements),
+                                         "aws:us-west-1": dict(systemRequirements=aws_us_west_system_requirements),
+                                         "azure:westus": dict(systemRequirements=azure_westus_system_requirements)})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
         app_id = json.loads(run("dx build --create-app --json " + app_dir))["id"]
 
@@ -6194,40 +6194,33 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertItemsEqual(regional_options.keys(), app_spec["regionalOptions"].keys())
 
         applet_aws_us_east = regional_options["aws:us-east-1"]["applet"]
-        applet_aws_us_east_system_requirements = dxpy.api.applet_describe(applet_aws_us_east)["runSpec"]["systemRequirements"]
-        self.assertEqual(applet_aws_us_east_system_requirements, exp_aws_us_east_system_requirements)
+        self.assertEqual(dxpy.api.applet_describe(applet_aws_us_east)["runSpec"]["systemRequirements"],
+                         aws_us_east_system_requirements)
 
         applet_aws_us_west = regional_options["aws:us-west-1"]["applet"]
-        applet_aws_us_west_system_requirements = dxpy.api.applet_describe(applet_aws_us_west)["runSpec"]["systemRequirements"]
-        self.assertEqual(applet_aws_us_west_system_requirements, exp_aws_us_west_system_requirements)
+        self.assertEqual(dxpy.api.applet_describe(applet_aws_us_west)["runSpec"]["systemRequirements"],
+                         aws_us_west_system_requirements)
 
         applet_azure_westus = regional_options["azure:westus"]["applet"]
-        applet_azure_westus_system_requirements = dxpy.api.applet_describe(applet_azure_westus)["runSpec"]["systemRequirements"]
-        self.assertEqual(applet_azure_westus_system_requirements, exp_azure_westus_system_requirements)
+        self.assertEqual(dxpy.api.applet_describe(applet_azure_westus)["runSpec"]["systemRequirements"],
+                         azure_westus_system_requirements)
 
     def test_build_applets_using_multi_region_dxapp_json(self):
         app_name = "asset_{t}_multi_region_dxapp_json_with_regional_system_requirements".format(t=int(time.time()))
 
-        exp_aws_us_east_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x1"))
-        exp_aws_us_west_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x2"))
+        aws_us_east_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x1"))
+        aws_us_west_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x2"))
         app_spec = dict(self.base_app_spec, name=app_name,
-                        regionalOptions={"aws:us-east-1": dict(systemRequirements=exp_aws_us_east_system_requirements),
-                                         "aws:us-west-1": dict(systemRequirements=exp_aws_us_west_system_requirements)})
+                        regionalOptions={"aws:us-east-1": dict(systemRequirements=aws_us_east_system_requirements),
+                                         "aws:us-west-1": dict(systemRequirements=aws_us_west_system_requirements)})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
-        aws_us_east = "aws:us-east-1"
-        with temporary_project(region=aws_us_east, select=True):
-            applet_id = json.loads(run("dx build --json " + app_dir))["id"]
-            applet_desc = dxpy.api.applet_describe(applet_id)
-            self.assertEqual(applet_desc["runSpec"]["bundledDependsByRegion"].keys()[0],
-                             aws_us_east)
-
-        aws_us_west = "aws:us-west-1"
-        with temporary_project(region=aws_us_west, select=True):
-            applet_id = json.loads(run("dx build --json " + app_dir))["id"]
-            applet_desc = dxpy.api.applet_describe(applet_id)
-            self.assertEqual(applet_desc["runSpec"]["bundledDependsByRegion"].keys()[0],
-                             aws_us_west)
+        for region in ("aws:us-east-1", "aws:us-west-1"):
+            with temporary_project(region=region, select=True):
+                applet_id = json.loads(run("dx build --json " + app_dir))["id"]
+                applet_desc = dxpy.api.applet_describe(applet_id)
+                bundled_depends_by_region = applet_desc["runSpec"]["bundledDependsByRegion"]
+                self.assertEqual(bundled_depends_by_region.keys(), [region])
 
     def test_build_multi_region_app_without_regional_options(self):
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
@@ -6289,16 +6282,18 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
-    def test_build_multi_region_app_invalid_regional_options(self):
+    def test_build_multi_region_app_regional_options_empty(self):
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
 
-        # Regional options mapping is empty.
         app_spec = dict(self.base_app_spec, name=app_name, regionalOptions={})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
         with self.assertSubprocessFailure(stderr_regexp="regionalOptions", exit_code=3):
             run("dx build --create-app --json " + app_dir)
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
+                         'skipping test that would create apps')
+    def test_build_multi_region_app_regional_options_do_not_match(self):
         # Regional options in dxapp.json does not match the ones specified on
         # command-line.
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
@@ -8274,18 +8269,19 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
             run("dx uninstall %s" % app_unknown_name, env=as_second_user())
         pass
 
-    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
+                         'skipping test that would create apps')
     def test_get_preserves_system_requirements(self):
         app_name = "asset_{t}_multi_region_app_with_regional_system_requirements".format(t=int(time.time()))
 
-        exp_aws_us_east_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x1"))
-        exp_aws_us_west_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x2"))
-        exp_azure_westus_system_requirements = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
-        exp_regional_options = {"aws:us-east-1": dict(systemRequirements=exp_aws_us_east_system_requirements),
-                                "aws:us-west-1": dict(systemRequirements=exp_aws_us_west_system_requirements),
-                                "azure:westus": dict(systemRequirements=exp_azure_westus_system_requirements)}
+        aws_us_east_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x1"))
+        aws_us_west_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x2"))
+        azure_westus_system_requirements = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
+        exp_regional_options = {"aws:us-east-1": dict(systemRequirements=aws_us_east_system_requirements),
+                                "aws:us-west-1": dict(systemRequirements=aws_us_west_system_requirements),
+                                "azure:westus": dict(systemRequirements=azure_westus_system_requirements)}
 
-        app_id, ignore = self.make_app(app_name, regional_options=exp_regional_options)
+        app_id, _ = self.make_app(app_name, regional_options=exp_regional_options)
 
         with chdir(tempfile.mkdtemp()):
             run("dx get {app_id}".format(app_id=app_id))
