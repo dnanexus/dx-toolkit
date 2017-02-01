@@ -221,7 +221,7 @@ def run(args):
         env = ["env", "-i"] + args.env + [var['name'] +"="+var['value']  for var in imagemeta['app']['environment']]
 
     if args.rm and not args.quiet:
-        sys.stderr.write(dxpy.utils.printing.YELLOW("--rm: Note that by default container is not preserved after execution\n"))
+        sys.stderr.write(dxpy.utils.printing.YELLOW("--rm: Note that by default the container is not preserved after execution\n"))
 
     # TODO: implement some form of nested subprocesses to avoid quoting command array if possible
     proot_cmd =  ["proot", "-R", "{tmpdir}/rootfs".format(tmpdir=tmpdir)] + volume + ["-w", workdir] + env + ["/bin/sh", "-c"] + [" ".join(("'"+x+"'" for x in container_cmd))]
