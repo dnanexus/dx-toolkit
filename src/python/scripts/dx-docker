@@ -216,9 +216,12 @@ def run(args):
     if args.workdir:
        workdir = args.workdir
 
-    env = []
+    default_homedir_env = "HOME=/root"
+    env = ["env", "-i"]
+    if not any([i.startswith("HOME=") for i in args.env]):
+        env.append(default_homedir_env)
     if 'environment' in imagemeta['app']:
-        env = ["env", "-i"] + args.env + [var['name'] +"="+var['value']  for var in imagemeta['app']['environment']]
+        env.extend(args.env + [var['name'] +"="+var['value']  for var in imagemeta['app']['environment']])
 
     if args.rm and not args.quiet:
         sys.stderr.write(dxpy.utils.printing.YELLOW("--rm: Note that by default the container is not preserved after execution\n"))
