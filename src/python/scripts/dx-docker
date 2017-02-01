@@ -217,9 +217,7 @@ def run(args):
        workdir = args.workdir
 
     default_homedir_env = "HOME=/root"
-    env = ["env", "-i"]
-    if not any([i.startswith("HOME=") for i in args.env]):
-        env.append(default_homedir_env)
+    env = ["env", "-i", default_homedir_env]
     if 'environment' in imagemeta['app']:
         env.extend(args.env + [var['name'] +"="+var['value']  for var in imagemeta['app']['environment']])
 
