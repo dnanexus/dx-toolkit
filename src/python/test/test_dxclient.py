@@ -1192,7 +1192,8 @@ class TestDXRename(DXTestCase):
 
 
 class TestDXClientUploadDownload(DXTestCase):
-    def test_dx_upload_download(self):
+    def _test_dx_upload_download(self, project):
+        dxpy.config["DX_PROJECT_CONTEXT_ID"] = project
         with self.assertSubprocessFailure(stderr_regexp='expected the path to be a non-empty string',
                                           exit_code=3):
             run('dx download ""')
@@ -1240,14 +1241,14 @@ class TestDXClientUploadDownload(DXTestCase):
 
                 # Specify an absolute path in another project
                 with select_project(other_project):
-                    run("dx download -r '{proj}:/super/{path}'".format(proj=self.project, path=os.path.basename(wd)))
+                    run("dx download -r '{proj}:/super/{path}'".format(proj=project, path=os.path.basename(wd)))
 
                     tree1 = check_output("cd {wd} && find .".format(wd=wd), shell=True)
                     tree2 = check_output("cd {wd} && find .".format(wd=os.path.basename(wd)), shell=True)
                     self.assertEqual(tree1, tree2)
 
                 # Now specify a relative path in the same project
-                with chdir(tempfile.mkdtemp()), select_project(self.project):
+                with chdir(tempfile.mkdtemp()), select_project(project):
                     run("dx download -r super/{path}/".format(path=os.path.basename(wd)))
 
                     tree3 = check_output("cd {wd} && find .".format(wd=os.path.basename(wd)), shell=True)
@@ -1257,6 +1258,45 @@ class TestDXClientUploadDownload(DXTestCase):
                 cmd = "dx cd {d}; dx mkdir {f}; dx download -r {f}*"
                 run(cmd.format(d=os.path.join("/super", os.path.basename(wd), "a", "б"),
                                f=os.path.basename(fd.name)))
+
+    def test_dx_upload_download(self):
+        self._test_dx_upload_download(self.project)
+
+    @unittest.skipUnless(testutil.TEST_AZURE, "Skipping test in Azure")
+    def test_dx_upload_download_azure(self):
+        azure_project = dxpy.api.project_new({"name": "test_dx_upload_azure", "region": testutil.TEST_AZURE})['id']
+        try:
+            self._test_dx_upload_download(azure_project)
+        finally:
+            dxpy.api.project_destroy(azure_project)
+
+    def _test_dx_upload_download_large_file(self, project):
+        dxpy.config["DX_PROJECT_CONTEXT_ID"] = project
+        fileSizeMb = 64
+        wd = tempfile.mkdtemp()
+        try:
+            orig_file_name = os.path.join(wd, "large_file.txt");
+            run("base64 /dev/urandom | head -c {} > {}".format(fileSizeMb * 1024 * 1024, orig_file_name))
+
+            file_id = run("dx upload --brief --wait {}".format(orig_file_name)).strip()
+
+            copy_file_name = os.path.join(wd, "large_file.txt.copy");
+            run("dx download -o {} {}".format(copy_file_name, file_id));
+
+            self.assertEqual(run("cmp -s {} {} || echo 'Files are different'".format(orig_file_name, copy_file_name)).strip(), "")
+        finally:
+            shutil.rmtree(wd)
+
+    def test_dx_upload_download_large_file(self):
+        self._test_dx_upload_download_large_file(self.project);
+
+    @unittest.skipUnless(testutil.TEST_AZURE, "Skipping test in Azure")
+    def test_dx_upload_download_large_file_azure(self):
+        azure_project = dxpy.api.project_new({"name": "test_dx_upload_azure", "region": testutil.TEST_AZURE})['id']
+        try:
+            self._test_dx_upload_download_large_file(azure_project)
+        finally:
+            dxpy.api.project_destroy(azure_project)
 
     @unittest.skipUnless(testutil.TEST_WITH_AUTHSERVER,
                          'skipping tests that require a running authserver')
