@@ -8277,18 +8277,18 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
         aws_us_east_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x1"))
         aws_us_west_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x2"))
         azure_westus_system_requirements = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
-        exp_regional_options = {"aws:us-east-1": dict(systemRequirements=aws_us_east_system_requirements),
-                                "aws:us-west-1": dict(systemRequirements=aws_us_west_system_requirements),
-                                "azure:westus": dict(systemRequirements=azure_westus_system_requirements)}
+        regional_options = {"aws:us-east-1": dict(systemRequirements=aws_us_east_system_requirements),
+                            "aws:us-west-1": dict(systemRequirements=aws_us_west_system_requirements),
+                            "azure:westus": dict(systemRequirements=azure_westus_system_requirements)}
 
-        app_id, _ = self.make_app(app_name, regional_options=exp_regional_options)
+        app_id, _ = self.make_app(app_name, regional_options=regional_options)
 
         with chdir(tempfile.mkdtemp()):
             run("dx get {app_id}".format(app_id=app_id))
             path_to_dxapp_json = "./{app_name}/dxapp.json".format(app_name=app_name)
             with open(path_to_dxapp_json, "r") as fh:
                 app_spec = json.load(fh)
-                self.assertEqual(app_spec["regionalOptions"], exp_regional_options)
+                self.assertEqual(app_spec["regionalOptions"], regional_options)
 
 class TestDXBuildReportHtml(unittest.TestCase):
     js = "console.log('javascript');"
