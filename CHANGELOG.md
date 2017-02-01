@@ -6,6 +6,15 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+### Added
+
+* Support to build of upload agent on RHEL7
+
+### Fixed
+
+* Environment file so that `source environment` works properly on RHEL7 
+* Modified `dx-docker` so that `--rm` passes through gracefully
+
 ## [208.0] - beta
 
 No significant changes.
