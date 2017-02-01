@@ -6209,13 +6209,13 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         app_name = "asset_{t}_multi_region_dxapp_json_with_regional_system_requirements".format(t=int(time.time()))
 
         aws_us_east_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x1"))
-        aws_us_west_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x2"))
+        azure_westus_system_requirements = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
         app_spec = dict(self.base_app_spec, name=app_name,
                         regionalOptions={"aws:us-east-1": dict(systemRequirements=aws_us_east_system_requirements),
-                                         "aws:us-west-1": dict(systemRequirements=aws_us_west_system_requirements)})
+                                         "azure:westus": dict(systemRequirements=azure_westus_system_requirements)})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
-        for region in ("aws:us-east-1", "aws:us-west-1"):
+        for region in ("aws:us-east-1", "azure:westus"):
             with temporary_project(region=region, select=True):
                 applet_id = json.loads(run("dx build --json " + app_dir))["id"]
                 applet_desc = dxpy.api.applet_describe(applet_id)
