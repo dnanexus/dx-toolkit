@@ -1193,19 +1193,19 @@ class TestDXRename(DXTestCase):
 
 class TestDXClientUploadDownload(DXTestCase):
     def test_dx_download_recursive_overwrite(self):
-        if os.path.exists("foodir/"):
-            run("rm -rf foodir")
         wd = "foodir"
+        if os.path.exists("{wd}".format(wd=wd)):
+            run("rm -rf {}".format(wd=wd))
         os.mkdir(wd)
         with open(os.path.join(wd, "file.txt"), 'w') as fd:
             fd.write("foo")
-        run("dx upload -r " + wd)
+        run("dx upload -r {wd}".format(wd=wd))
         tree1 = check_output("find {wd}".format(wd=wd), shell=True)
-        # download the directory with an overwrite (-f) flag
-        run("dx download -r -f " + wd)
+        # download the directory again with an overwrite (-f) flag
+        run("dx download -r -f {wd}".format(wd=wd))
         tree2 = check_output("find {wd}".format(wd=wd), shell=True)
         self.assertEqual(tree1, tree2)
-        run("rm -rf foodir")
+        run("rm -rf {wd}".format(wd=wd))
 
     def test_dx_upload_download(self):
         with self.assertSubprocessFailure(stderr_regexp='expected the path to be a non-empty string',
