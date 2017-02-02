@@ -1,3 +1,9 @@
+dx-toolkit (0.208.1) precise; urgency=low
+
+  * Fixed: dx download failure with both -r and -f flags 
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 02 Feb 2017 19:58:22 +0000
+
 dx-toolkit (0.208.0) precise; urgency=low
 
   * No significant changes
