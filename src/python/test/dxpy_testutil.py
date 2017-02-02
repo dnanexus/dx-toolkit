@@ -135,7 +135,11 @@ def run(command, **kwargs):
         output = check_output(command_encoded, shell=True, **kwargs)
     else:
         output = check_output(command, shell=True, **kwargs)
-    print(output)
+    if isinstance(output, tuple):
+        print(output[0])
+        print(output[1])
+    else:
+        print(output)
     return output
 
 
