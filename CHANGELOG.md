@@ -9,6 +9,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * Support to build of upload agent on RHEL7
+* Ability to build and get multi-region apps with custom system requirements
 
 ### Fixed
 
