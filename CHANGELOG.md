@@ -23,7 +23,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Fixed
 
-* `dx download` interprets the overwrite option during argument parsing
+* bug where `dx download` incorrectly interpreted the overwrite option during argument parsing
 
 ## [208.0]
 
