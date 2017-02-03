@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+## [209.0] - beta
+
 ### Added
 
 * Support to build of upload agent on RHEL7
@@ -15,12 +17,19 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Environment file so that `source environment` works properly on RHEL7 
 * Modified `dx-docker` so that `--rm` passes through gracefully
+* Modified `dx-docker` so that the `HOME` environment variable defaults to `/root`
 
-## [208.0] - beta
+## [208.1] - 2017-02-02 - stable
+
+### Fixed
+
+* `dx download` interprets the overwrite option during argument parsing
+
+## [208.0]
 
 No significant changes.
 
-## [207.0] - 2017-01-26 - stable
+## [207.0] - 2017-01-26
 
 ### Added
 
