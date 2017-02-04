@@ -27,7 +27,7 @@ all:
 ifeq ($(OS), Windows_NT)
 	cd build && cmake -G "MSYS Makefiles" .. -DCMAKE_BUILD_TYPE:STRING=RELEASE -DSTATIC_BOOST=1
 else
-	cd build && cmake .. -DCMAKE_BUILD_TYPE:STRING=RELEASE -DSTATIC_BOOST=1
+	cd build && cmake .. -DCMAKE_BUILD_TYPE:STRING=RELEASE -DSTATIC_BOOST=1 -DCMAKE_EXE_LINKER_FLAGS="-lpthread"
 endif
 	$(MAKE) -C build
 

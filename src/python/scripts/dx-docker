@@ -139,6 +139,7 @@ parser_run.add_argument("--entrypoint",  help="Overwrite default entry point for
 parser_run.add_argument("-w", "--workdir",  help="Working directory")
 parser_run.add_argument("-q", "--quiet",  action='store_true', help="Suppress printing of image metadata")
 parser_run.add_argument("--rootfs",  help="Use directory pointed to here for rootfs instead of extracting the image (for expert use/development purposes)")
+parser_run.add_argument("--rm",  action="store_true", help="Automatically remove the container when it exits")
 parser_run.add_argument("image", help="image name")
 parser_run.add_argument("command", help="command to run within container", nargs=argparse.REMAINDER, default=[])
 def run(args):
@@ -189,13 +190,11 @@ def run(args):
         print_annotation("Default CMD", 'cmd')
         sys.stderr.write("\n\n")
 
-
     vols = ["/run/shm/:/dev/shm"] + args.volume
     volume = []
     for v in vols:
        volume.append("-b")
        volume.append(v)
-
 
     entrypoint = []
     if args.entrypoint:
@@ -217,9 +216,13 @@ def run(args):
     if args.workdir:
        workdir = args.workdir
 
-    env = []
+    default_homedir_env = "HOME=/root"
+    env = ["env", "-i", default_homedir_env]
     if 'environment' in imagemeta['app']:
-        env = ["env", "-i"] + args.env + [var['name'] +"="+var['value']  for var in imagemeta['app']['environment']]
+        env.extend(args.env + [var['name'] +"="+var['value']  for var in imagemeta['app']['environment']])
+
+    if args.rm and not args.quiet:
+        sys.stderr.write(dxpy.utils.printing.YELLOW("--rm: Note that by default the container is not preserved after execution\n"))
 
     # TODO: implement some form of nested subprocesses to avoid quoting command array if possible
     proot_cmd =  ["proot", "-R", "{tmpdir}/rootfs".format(tmpdir=tmpdir)] + volume + ["-w", workdir] + env + ["/bin/sh", "-c"] + [" ".join(("'"+x+"'" for x in container_cmd))]

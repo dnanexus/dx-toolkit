@@ -447,6 +447,7 @@ def _inline_documentation_files(app_spec, src_dir):
                     app_spec['developerNotes'] = fh.read()
                 break
 
+
 def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, archive=False, project=None, override_folder=None, override_name=None, dx_toolkit_autodep="stable", dry_run=False, **kwargs):
     """
     Creates a new applet object.
@@ -465,6 +466,15 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
 
     """
     applet_spec = _get_applet_spec(src_dir)
+
+    system_requirements = get_regional_system_requirements_by_project(applet_spec, project, dry_run)
+    if system_requirements is None:
+        # The top-level "systemRequirements", if present, will be respected.
+        pass
+    else:
+        # Override the top-level "systemRequirements" in memory.
+        # TODO: Assert that "systemRequirements" is not set at the top level?
+        applet_spec["runSpec"]["systemRequirements"] = system_requirements
 
     if project is None:
         dest_project = applet_spec['project']
@@ -890,6 +900,9 @@ def _create_app(applet_or_regional_options, app_name, src_dir, publish=False, se
 
 
 def get_regional_options(app_spec):
+    """Gets the regional options specified in dxapp.json. This function is
+    agnostic to apps versus applets.
+    """
     regional_options = app_spec.get("regionalOptions")
     if regional_options is None:
         return None
@@ -898,3 +911,57 @@ def get_regional_options(app_spec):
     if len(regional_options.keys()) < 1:
         raise AppBuilderException("The field 'regionalOptions' in dxapp.json must be a non-empty mapping")
     return regional_options
+
+
+def get_regional_system_requirements_by_project(executable_spec, project, dry_run):
+    """Gets the regional system requirements based on the region of the
+    specified project, if possible. Current-schema dxapp.json may contain
+    system requirements by region. Old-schema dxapp.json do not contain
+    regional options at all.
+    """
+    if dry_run:
+        return None
+
+    region = dxpy.api.project_describe(project, input_params={"fields": {"region": True}})["region"]
+    # We cannot assume that "regional_options" is None here even though this
+    # function is only called at app creation time because we need to be
+    # backward compatible with old-schema dxapp.json files.
+    regional_options = get_regional_options(executable_spec)
+    if regional_options is None:
+        return None
+    return regional_options[region].get("systemRequirements")
+
+
+def assert_consistent_regions(from_app_spec, from_command_line):
+    """
+    :param from_app_spec: The regional options specified in dxapp.json.
+    :type from_app_spec: dict or None.
+    :param from_command_line: The regional options specified on the
+    command-line via --region.
+    :type from_command_line: list or None.
+    """
+    if from_app_spec is None or from_command_line is None:
+        return
+    if set(from_app_spec) != set(from_command_line):
+        raise dxpy.app_builder.AppBuilderException("--region and the 'regionalOptions' key in dxapp.json do not agree")
+
+
+def get_enabled_regions(from_app_spec, from_command_line):
+    """
+    :param from_app_spec: The regional options specified in dxapp.json.
+    :type from_app_spec: dict or None.
+    :param from_command_line: The regional options specified on the
+    command-line via --region.
+    :type from_command_line: list or None.
+    """
+    assert_consistent_regions(from_app_spec, from_command_line)
+
+    enabled_regions = None
+    if from_app_spec is not None:
+        enabled_regions = from_app_spec.keys()
+    elif from_command_line is not None:
+        enabled_regions = from_command_line
+
+    if enabled_regions is not None and len(enabled_regions) == 0:
+        raise AssertionError("This app should be enabled in at least one region")
+    return enabled_regions
