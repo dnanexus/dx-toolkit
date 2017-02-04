@@ -142,9 +142,16 @@ def dump_executable(executable, destination_directory, omit_resources=False, des
                     fname = "resources/%s.tar.gz" % (handler_id)
                     download_dxfile(handler_id, fname)
                     print("Unpacking resources", file=sys.stderr)
-                    tar = tarfile.open(fname)
-                    tar.extractall("resources")
-                    tar.close()
+
+                    def untar_strip_leading_slash(tarfname, path):
+                        t = tarfile.open(tarfname)
+                        for m in t.getmembers():
+                            if m.name.startswith("/"):
+                                m.name = m.name[1:]
+                            t.extract(m, path)
+                        t.close()
+
+                    untar_strip_leading_slash(fname, "resources")
                     os.unlink(fname)
                     deps_to_remove.append(dep)
 
