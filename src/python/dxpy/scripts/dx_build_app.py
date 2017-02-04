@@ -781,20 +781,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     override_applet_name = None
 
     requested_regional_options = dxpy.app_builder.get_regional_options(app_json)
-
-    # The set of regions specified on the command-line (i.e., --region) and the
-    # set of enabled regions in dxapp.json disagree.
-    if (requested_regional_options is not None and region is not None and
-            set(requested_regional_options) != set(region)):
-        raise dxpy.app_builder.AppBuilderException("--region and the 'regionalOptions' key in dxapp.json do not agree")
-
-    enabled_regions = None
-    if requested_regional_options is not None:
-        enabled_regions = requested_regional_options.keys()
-    elif region is not None:
-        enabled_regions = region
-    if enabled_regions is not None and len(enabled_regions) == 0:
-        raise AssertionError("This app should be enabled in at least one region")
+    enabled_regions = dxpy.app_builder.get_enabled_regions(requested_regional_options, region)
 
     # Cannot build multi-region app if `use_temp_build_project` is falsy.
     if enabled_regions is not None and len(enabled_regions) > 1 and not use_temp_build_project:
@@ -850,24 +837,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
         if mode == "applet" and working_project is None and dxpy.WORKSPACE_ID is None:
             parser.error("Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
 
-        if "buildOptions" in app_json:
-            if app_json["buildOptions"].get("dx_toolkit_autodep") is False:
-                dx_toolkit_autodep = False
-
-        # Perform check for existence of applet with same name in
-        # destination for case in which neither "-f" nor "-a" is
-        # given BEFORE uploading resources.
-        if mode == "applet" and not overwrite and not archive:
-            try:
-                dest_name = override_applet_name or app_json.get('name') or os.path.basename(os.path.abspath(src_dir))
-            except:
-                raise dxpy.app_builder.AppBuilderException("Could not determine applet name from specification + "
-                                                           "(dxapp.json) or from working directory (%r)" % (src_dir,))
-            dest_folder = override_folder or app_json.get('folder') or '/'
-            if not dest_folder.endswith('/'):
-                dest_folder = dest_folder + '/'
-
-            dest_project = working_project if working_project else dxpy.WORKSPACE_ID
+        if mode == "applet":
+            dest_project = working_project or dxpy.WORKSPACE_ID or app_json.get("project", False)
             try:
                 region = dxpy.api.project_describe(dest_project,
                                                    input_params={"fields": {"region": True}})["region"]
@@ -875,27 +846,33 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 err_exit()
             projects_by_region = {region: dest_project}
 
-            for result in dxpy.find_data_objects(classname="applet", name=dest_name, folder=dest_folder,
-                                                 project=dest_project, recurse=False):
-                dest_path = dest_folder + dest_name
-                msg = "An applet already exists at {} (id {}) and neither".format(dest_path, result["id"])
-                msg += " -f/--overwrite nor -a/--archive were given."
-                raise dxpy.app_builder.AppBuilderException(msg)
+            if not overwrite and not archive:
+                # If we cannot overwite or archive an existing applet and an
+                # applet in the destination exists with the same name as this
+                # one, then we should err out *before* uploading resources.
+                try:
+                    dest_name = override_applet_name or app_json.get('name') or os.path.basename(os.path.abspath(src_dir))
+                except:
+                    raise dxpy.app_builder.AppBuilderException("Could not determine applet name from specification + "
+                                                               "(dxapp.json) or from working directory (%r)" % (src_dir,))
+                dest_folder = override_folder or app_json.get('folder') or '/'
+                if not dest_folder.endswith('/'):
+                    dest_folder = dest_folder + '/'
+                for result in dxpy.find_data_objects(classname="applet", name=dest_name, folder=dest_folder,
+                                                     project=dest_project, recurse=False):
+                    dest_path = dest_folder + dest_name
+                    msg = "An applet already exists at {} (id {}) and neither".format(dest_path, result["id"])
+                    msg += " -f/--overwrite nor -a/--archive were given."
+                    raise dxpy.app_builder.AppBuilderException(msg)
+
+        if "buildOptions" in app_json:
+            if app_json["buildOptions"].get("dx_toolkit_autodep") is False:
+                dx_toolkit_autodep = False
 
         if dry_run:
             # Set a dummy "projects_by_region" so that we can exercise the dry
             # run flows for uploading resources bundles and applets below.
             projects_by_region = {"dummy-cloud:dummy-region": "project-dummy"}
-
-        if mode == "applet" and projects_by_region is None:
-            project = app_json.get("project", False) or dxpy.WORKSPACE_ID
-
-            try:
-                region = dxpy.api.project_describe(project,
-                                                   input_params={"fields": {"region": True}})["region"]
-            except Exception:
-                err_exit()
-            projects_by_region = {region: project}
 
         if projects_by_region is None:
             raise AssertionError("'projects_by_region' should not be None at this point")

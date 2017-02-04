@@ -93,7 +93,7 @@ def _download_folders(folders, destdir, args):
             assert(folder.startswith(strip_prefix))
             folder_destdir = os.path.join(destdir, folder[len(strip_prefix):].lstrip('/'))
             try:
-                dxpy.download_folder(project, folder_destdir, folder=folder)
+                dxpy.download_folder(project, folder_destdir, folder=folder, overwrite=args.overwrite)
             except:
                 err_exit()
 

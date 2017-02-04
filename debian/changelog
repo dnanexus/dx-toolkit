@@ -1,3 +1,18 @@
+dx-toolkit (0.209.0) precise; urgency=low
+
+  * Added: Support to build of upload agent on RHEL7
+  * Added: Ability to build and get multi-region apps with custom system requirements
+  * Fixed: Environment file so that source environment works properly on RHEL7
+  * Fixed: Modified dx-docker so that --rm passes through gracefully 
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 02 Feb 2017 19:56:24 +0000
+
+dx-toolkit (0.208.0) precise; urgency=low
+
+  * No significant changes
+
+ -- Nicolas Bock <nbock@dnanexus.com>  Thu, 26 Jan 2017 21:31:52 +0000
+
 dx-toolkit (0.207.0) precise; urgency=low
 
   * Added: Workflow handler to the Java bindings

@@ -29,6 +29,11 @@ test ! -z "$version" && echo "$shell" | grep -q csh && set SOURCE=`echo $_ | cut
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
 
+# Get RHEL version
+if [ -e /etc/redhat-release ] ; then
+  RHEL_MAJOR_VERSION=$(grep -o "Red Hat Enterprise Linux .* release [0-9]\+" /etc/redhat-release | sed -e "s/Red Hat Enterprise Linux .* release //")
+fi
+
 export DNANEXUS_HOME="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 # Detect system installation of dx-toolkit
@@ -42,8 +47,13 @@ if [ "$DNANEXUS_HOME" == "/etc/profile.d" ]; then
 else
 
   export PATH="${DNANEXUS_HOME}/bin:$PATH"
-  export PYTHONPATH="${DNANEXUS_HOME}/share/dnanexus/lib/python2.7/site-packages:${DNANEXUS_HOME}/lib/python:$PYTHONPATH"
   export CLASSPATH="${DNANEXUS_HOME}/lib/java/*:${CLASSPATH}"
+
+  if [ "$RHEL_MAJOR_VERSION" == "7" ]; then
+    export PYTHONPATH="${DNANEXUS_HOME}/share/dnanexus/lib/python2.7/site-packages:${DNANEXUS_HOME}/lib64/python2.7/site-packages:$PYTHONPATH"
+  else
+    export PYTHONPATH="${DNANEXUS_HOME}/share/dnanexus/lib/python2.7/site-packages:${DNANEXUS_HOME}/lib/python:$PYTHONPATH"
+  fi
 
 fi
 

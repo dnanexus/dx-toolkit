@@ -4,11 +4,32 @@ This change log spiritually adheres to [these guidelines](http://keepachangelog.
 
 Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Security
 
-
 ## [Unreleased]
 
+## [209.0] - beta
 
-## [207.0] - beta
+### Added
+
+* Support to build of upload agent on RHEL7
+* Ability to build and get multi-region apps with custom system requirements
+
+### Fixed
+
+* Environment file so that `source environment` works properly on RHEL7 
+* Modified `dx-docker` so that `--rm` passes through gracefully
+* Modified `dx-docker` so that the `HOME` environment variable defaults to `/root`
+
+## [208.1] - 2017-02-02 - stable
+
+### Fixed
+
+* bug where `dx download` incorrectly interpreted the overwrite option during argument parsing
+
+## [208.0]
+
+No significant changes.
+
+## [207.0] - 2017-01-26
 
 ### Added
 
@@ -22,7 +43,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx-docker` now handles default working directory and override properly
 
 
-## [206.3] - 2017-01-19 - stable
+## [206.3] - 2017-01-19
 
 ### Added
 

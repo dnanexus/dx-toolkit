@@ -212,7 +212,10 @@ def dump_executable(executable, destination_directory, omit_resources=False, des
         # "regionalOptions" key in dxapp.json.
         if "regionalOptions" in dxapp_json:
             for region in dxapp_json["regionalOptions"]:
-                dxapp_json["regionalOptions"][region] = {}
+                applet_handler = get_handler(dxapp_json["regionalOptions"][region]["applet"])
+                system_requirements = applet_handler.describe()["runSpec"]["systemRequirements"]
+
+                dxapp_json["regionalOptions"][region] = dict(systemRequirements=system_requirements)
 
         # Cleanup of empty elements. Be careful not to let this step
         # introduce any semantic changes to the app specification. For
