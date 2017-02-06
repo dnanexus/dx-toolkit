@@ -25,6 +25,7 @@ import string
 import subprocess
 import platform
 import re
+import hashlib
 
 import requests
 from requests.packages.urllib3.exceptions import SSLError
@@ -51,11 +52,15 @@ def setUpTempProjects(thing):
     thing.old_workspace_id = dxpy.WORKSPACE_ID
     thing.proj_id = dxpy.api.project_new({'name': 'test project 1'})['id']
     thing.second_proj_id = dxpy.api.project_new({'name': 'test project 2'})['id']
+    if testutil.TEST_AZURE:
+        thing.azure_proj_id = dxpy.api.project_new({'name': 'azure test project 1', 'region': 'azure:westus'})['id']
     dxpy.set_workspace_id(thing.proj_id)
 
 def tearDownTempProjects(thing):
     dxpy.api.project_destroy(thing.proj_id, {'terminateJobs': True})
     dxpy.api.project_destroy(thing.second_proj_id, {'terminateJobs': True})
+    if testutil.TEST_AZURE:
+        dxpy.api.project_destroy(thing.azure_proj_id, {'terminateJobs': True})
     dxpy.set_workspace_id(thing.old_workspace_id)
 
 class TestDXProject(unittest.TestCase):
@@ -754,6 +759,25 @@ class TestDXFile(unittest.TestCase):
             dxpy.WORKSPACE_ID = workspace_id
 
         del os.environ['DX_JOB_ID']
+
+    def test_dx_upload_url(self):
+        data = 'This is a test file data'
+        m = hashlib.md5()
+        data_md5 = m.hexdigest()
+        projects = [self.proj_id]
+        if testutil.TEST_AZURE:
+            projects.append(self.azure_proj_id)
+
+        for project in projects:
+            dxpy.set_workspace_id(project)
+            file_id = dxpy.api.file_new(input_params={'project': project, 'name': 'upload_url_test_file.txt'})['id']
+            upload_url = dxpy.api.file_upload(file_id, {'index': 1, 'size': len(data), 'md5': data_md5})['url']
+            if project == self.proj_id:
+                self.assertTrue(upload_url.startswith('https://dnanexus-vdev-test-uploads.s3.amazonaws.com') or
+                        upload_url.startswith('https://dnanexus-platform-upload-stg.s3.amazonaws.com'))
+            else:
+                self.assertTrue(upload_url.startswith('https://dnanexuswestusdev') or
+                        upload_url.startswith('https://dnanexuswestusstg'))
 
 
 class TestFolder(unittest.TestCase):
