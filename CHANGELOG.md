@@ -4,9 +4,13 @@ This change log spiritually adheres to [these guidelines](http://keepachangelog.
 
 Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Security
 
-## [Unreleased]
+## [210.0] - 2017-02-09 beta
 
-## [209.0] - beta
+### Fixed
+
+* Fix dx-get untar issue with leading / 
+
+## [209.0] - 2017-02-09 stable
 
 ### Added
 
