@@ -23,7 +23,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Modified `dx-docker` so that `--rm` passes through gracefully
 * Modified `dx-docker` so that the `HOME` environment variable defaults to `/root`
 
-## [208.1] - 2017-02-02 - stable
+## [208.1] - 2017-02-02
 
 ### Fixed
 
