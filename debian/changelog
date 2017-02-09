@@ -1,3 +1,9 @@
+dx-toolkit (0.210.0) precise; urgency=low
+
+  * Fixed: Fix dx-get untar issue with leading /
+
+ -- Hamed Haddadian <hamedh@home.vdev.dnanexus.com>  Thu, 09 Feb 2017 21:29:00 +0000
+
 dx-toolkit (0.209.0) precise; urgency=low
 
   * Added: Support to build of upload agent on RHEL7
