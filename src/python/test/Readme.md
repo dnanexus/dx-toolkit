@@ -2,7 +2,7 @@
 
 To build the toolkit with the test requirements, set an environment variable before running make
 ```bash
-$ export DNANEXUS_INSTALL_PYTHON_TEST_DEPS='yes
+$ export DNANEXUS_INSTALL_PYTHON_TEST_DEPS='yes'
 ```
 Alternatively you can `pip install -r dx-toolkit/src/python/requirements_test.txt` afterwards
 
