@@ -1,5 +1,11 @@
 ## Python Testing
 
+To build the toolkit with the test requirements, set an environment variable before running make
+```bash
+$ export DNANEXUS_INSTALL_PYTHON_TEST_DEPS='yes
+```
+Alternatively you can `pip install -r dx-toolkit/src/python/requirements_test.txt` afterwards
+
 For most tests in this directory, you will need to be logged in with
 appropriate credentials to create projects.  To log in from the
 command line, run `dx login`.
