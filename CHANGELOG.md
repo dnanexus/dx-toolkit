@@ -4,11 +4,16 @@ This change log spiritually adheres to [these guidelines](http://keepachangelog.
 
 Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Security
 
+## [Unreleased]
+
+No significant changes.
+
 ## [210.0] - beta
 
 ### Fixed
 
-* Fix dx-get untar issue with leading / 
+* Fix `dx get` untar issue with leading /
+* Missing `dx-verify-file` and `jq` dependencies on Windows
 
 ## [209.0] - 2017-02-09 stable
 
