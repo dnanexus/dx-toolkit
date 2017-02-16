@@ -1,3 +1,9 @@
+dx-toolkit (0.210.1) precise; urgency=low
+
+  * Fixed: Missing dx-verify-file and jq dependencies on Windows
+
+ -- Hamed Haddadian <HAMEDH@DNANEXUS.COM>  Thu, 16 Feb 2017 19:48:54 +0000
+
 dx-toolkit (0.210.0) precise; urgency=low
 
   * Fixed: Fix dx-get untar issue with leading /
