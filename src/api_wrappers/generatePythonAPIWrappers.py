@@ -109,8 +109,8 @@ print(preamble)
 for method in json.loads(sys.stdin.read()):
     route, signature, opts = method
     wrapper_method_name = camel_case_to_underscore(signature.split("(")[0])
-    retry = "True" if (opts['retryable']) else "False"
-    accept_nonce = True if 'acceptNonce' in opts else False
+    accept_nonce = opts.get('acceptNonce', False)
+    retry = opts['retryable'] or accept_nonce
     if (opts['objectMethod']):
         root, oid_route, api_method_name = route.split("/")
         if oid_route == 'app-xxxx':

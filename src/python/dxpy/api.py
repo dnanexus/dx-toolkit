@@ -194,7 +194,7 @@ def app_remove_tags(app_name_or_id, alias=None, input_params={}, always_retry=Tr
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/removeTags' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
-def app_run(app_name_or_id, alias=None, input_params={}, always_retry=False, **kwargs):
+def app_run(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /app-xxxx/run API method.
 
@@ -222,7 +222,7 @@ def app_update(app_name_or_id, alias=None, input_params={}, always_retry=True, *
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/update' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
-def app_new(input_params={}, always_retry=False, **kwargs):
+def app_new(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /app/new API method.
 
@@ -287,7 +287,7 @@ def applet_rename(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/rename' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def applet_run(object_id, input_params={}, always_retry=False, **kwargs):
+def applet_run(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /applet-xxxx/run API method.
 
@@ -304,7 +304,7 @@ def applet_set_properties(object_id, input_params={}, always_retry=True, **kwarg
     """
     return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def applet_new(input_params={}, always_retry=False, **kwargs):
+def applet_new(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /applet/new API method.
 
@@ -495,7 +495,7 @@ def file_upload(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/upload' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def file_new(input_params={}, always_retry=False, **kwargs):
+def file_new(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file/new API method.
 
@@ -680,7 +680,7 @@ def job_terminate(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/terminate' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def job_new(input_params={}, always_retry=False, **kwargs):
+def job_new(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /job/new API method.
 
@@ -765,7 +765,7 @@ def org_update(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/update' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def org_new(input_params={}, always_retry=False, **kwargs):
+def org_new(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /org/new API method.
 
@@ -1022,7 +1022,7 @@ def record_set_visibility(object_id, input_params={}, always_retry=True, **kwarg
     """
     return DXHTTPRequest('/%s/setVisibility' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def record_new(input_params={}, always_retry=False, **kwargs):
+def record_new(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /record/new API method.
 
@@ -1309,7 +1309,7 @@ def workflow_rename(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/rename' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def workflow_run(object_id, input_params={}, always_retry=False, **kwargs):
+def workflow_run(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/run API method.
 
@@ -1366,7 +1366,7 @@ def workflow_update_stage_executable(object_id, input_params={}, always_retry=Tr
     """
     return DXHTTPRequest('/%s/updateStageExecutable' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def workflow_new(input_params={}, always_retry=False, **kwargs):
+def workflow_new(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow/new API method.
 
