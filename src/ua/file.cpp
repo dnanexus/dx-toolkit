@@ -152,10 +152,19 @@ void File::init(const bool tryResuming) {
         isRemoteFileOpen = true;
       }
       DXLOG(logINFO) << "A resume target is found .. " << endl;
-      DXLOG(logUSERINFO)
-        << "Signature of file " << localFile << " matches remote file " << findResult[0]["describe"]["name"].get<string>() 
-        << " (" << fileID << "), which is " << completePercentage << "% complete. Will resume uploading to it." << endl;
-      DXLOG(logINFO) << "Remote resume target is in state: \"" << state << "\"";
+      if (isRemoteFileOpen) {
+        DXLOG(logUSERINFO)
+          << "Signature of file " << localFile << " matches remote file " << findResult[0]["describe"]["name"].get<string>() 
+          << " (" << fileID << "), which is " << completePercentage << "% complete. Will resume uploading to it." << endl;
+        DXLOG(logINFO) << "Remote resume target is in state: \"" << state << "\"";
+      }
+      else {
+        DXLOG(logUSERINFO)
+          << "Signature of file " << localFile << " matches remote file " << findResult[0]["describe"]["name"].get<string>() 
+          << " (" << fileID << "), which is " << completePercentage << "% complete. Will not upload it." << endl;
+        DXLOG(logINFO) << "Remote resume target is in state: \"" << state << "\"";
+      }
+
     }
     if (findResult.size() > 1) {
       ostringstream oss;
