@@ -3972,7 +3972,7 @@ public final class DXAPI {
         JsonNode input = Nonce.updateNonce(mapper.valueToTree(inputObject));
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "run",
-                        input, RetryStrategy.UNSAFE_TO_RETRY), outputClass);
+                        input, RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appRun method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -4018,7 +4018,7 @@ public final class DXAPI {
         JsonNode input = Nonce.updateNonce(mapper.valueToTree(inputObject));
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "run",
-                    input, RetryStrategy.UNSAFE_TO_RETRY), outputClass);
+                    input, RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -4547,7 +4547,7 @@ public final class DXAPI {
     public static <T> T appNew(Object inputObject, Class<T> outputClass) {
         JsonNode input = Nonce.updateNonce(mapper.valueToTree(inputObject));
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/app/new", input, RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest().request("/app/new", input, RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -4571,7 +4571,7 @@ public final class DXAPI {
     public static <T> T appNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         JsonNode input = Nonce.updateNonce(mapper.valueToTree(inputObject));
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/app/new", input, RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest(env).request("/app/new", input, RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -6007,7 +6007,7 @@ public final class DXAPI {
         JsonNode input = Nonce.updateNonce(mapper.valueToTree(inputObject));
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "run",
-                        input, RetryStrategy.UNSAFE_TO_RETRY), outputClass);
+                        input, RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the appletRun method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -6053,7 +6053,7 @@ public final class DXAPI {
         JsonNode input = Nonce.updateNonce(mapper.valueToTree(inputObject));
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "run",
-                    input, RetryStrategy.UNSAFE_TO_RETRY), outputClass);
+                    input, RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -6396,7 +6396,7 @@ public final class DXAPI {
     public static <T> T appletNew(Object inputObject, Class<T> outputClass) {
         JsonNode input = Nonce.updateNonce(mapper.valueToTree(inputObject));
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/applet/new", input, RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest().request("/applet/new", input, RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -6420,7 +6420,7 @@ public final class DXAPI {
     public static <T> T appletNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         JsonNode input = Nonce.updateNonce(mapper.valueToTree(inputObject));
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/applet/new", input, RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest(env).request("/applet/new", input, RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -10833,7 +10833,7 @@ public final class DXAPI {
     public static <T> T fileNew(Object inputObject, Class<T> outputClass) {
         JsonNode input = Nonce.updateNonce(mapper.valueToTree(inputObject));
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/file/new", input, RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest().request("/file/new", input, RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -10857,7 +10857,7 @@ public final class DXAPI {
     public static <T> T fileNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         JsonNode input = Nonce.updateNonce(mapper.valueToTree(inputObject));
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/file/new", input, RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest(env).request("/file/new", input, RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -15089,7 +15089,7 @@ public final class DXAPI {
     public static <T> T jobNew(Object inputObject, Class<T> outputClass) {
         JsonNode input = Nonce.updateNonce(mapper.valueToTree(inputObject));
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/job/new", input, RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest().request("/job/new", input, RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -15113,7 +15113,7 @@ public final class DXAPI {
     public static <T> T jobNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         JsonNode input = Nonce.updateNonce(mapper.valueToTree(inputObject));
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/job/new", input, RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest(env).request("/job/new", input, RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -17070,7 +17070,7 @@ public final class DXAPI {
     public static <T> T orgNew(Object inputObject, Class<T> outputClass) {
         JsonNode input = Nonce.updateNonce(mapper.valueToTree(inputObject));
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/org/new", input, RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest().request("/org/new", input, RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -17094,7 +17094,7 @@ public final class DXAPI {
     public static <T> T orgNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         JsonNode input = Nonce.updateNonce(mapper.valueToTree(inputObject));
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/org/new", input, RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest(env).request("/org/new", input, RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -23000,7 +23000,7 @@ public final class DXAPI {
     public static <T> T recordNew(Object inputObject, Class<T> outputClass) {
         JsonNode input = Nonce.updateNonce(mapper.valueToTree(inputObject));
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/record/new", input, RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest().request("/record/new", input, RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -23024,7 +23024,7 @@ public final class DXAPI {
     public static <T> T recordNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         JsonNode input = Nonce.updateNonce(mapper.valueToTree(inputObject));
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/record/new", input, RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest(env).request("/record/new", input, RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
 
@@ -29565,7 +29565,7 @@ public final class DXAPI {
         JsonNode input = Nonce.updateNonce(mapper.valueToTree(inputObject));
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "run",
-                        input, RetryStrategy.UNSAFE_TO_RETRY), outputClass);
+                        input, RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
      * Invokes the workflowRun method with an empty input using the given environment, deserializing to an object of the specified class.
@@ -29611,7 +29611,7 @@ public final class DXAPI {
         JsonNode input = Nonce.updateNonce(mapper.valueToTree(inputObject));
         return DXJSON.safeTreeToValue(
             new DXHTTPRequest(env).request("/" + objectId + "/" + "run",
-                    input, RetryStrategy.UNSAFE_TO_RETRY), outputClass);
+                    input, RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
@@ -30884,7 +30884,7 @@ public final class DXAPI {
     public static <T> T workflowNew(Object inputObject, Class<T> outputClass) {
         JsonNode input = Nonce.updateNonce(mapper.valueToTree(inputObject));
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/workflow/new", input, RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest().request("/workflow/new", input, RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
     /**
@@ -30908,7 +30908,7 @@ public final class DXAPI {
     public static <T> T workflowNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         JsonNode input = Nonce.updateNonce(mapper.valueToTree(inputObject));
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/workflow/new", input, RetryStrategy.UNSAFE_TO_RETRY),
+                new DXHTTPRequest(env).request("/workflow/new", input, RetryStrategy.SAFE_TO_RETRY),
                 outputClass);
     }
 
