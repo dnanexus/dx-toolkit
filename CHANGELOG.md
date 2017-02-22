@@ -6,16 +6,23 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+### Fixed
+
+* Upload agent now does not gzip compress .gz files on Ubuntu 14.04
+* Minor log message fix if file is already uploaded
+
+## [211.0] - beta
+
 No significant changes.
 
-## [210.0] - beta
+## [210.0] - 2017-02-16 stable 
 
 ### Fixed
 
 * Fix `dx get` untar issue with leading /
 * Missing `dx-verify-file` and `jq` dependencies on Windows
 
-## [209.0] - 2017-02-09 stable
+## [209.0] - 2017-02-09 
 
 ### Added
 
