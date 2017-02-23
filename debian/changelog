@@ -1,3 +1,11 @@
+dx-toolkit (0.212.0) precise; urgency=low
+
+  * Fixed: Upload agent now does not gzip compress .gz files on Ubuntu 14.04
+  * Fixed: Minor log message fix if file is already uploaded
+  * Added: Mark routes as retryable for those that support idempotent calls (e.g. creating a new file)
+
+ -- Hamed Haddadian <HAMEDH@DNANEXUS.COM>  Thu, 23 Feb 2017 18:46:24 +0000
+
 dx-toolkit (0.211.0) precise; urgency=low
 
   * No significant changes.
