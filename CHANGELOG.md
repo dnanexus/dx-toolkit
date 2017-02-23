@@ -15,6 +15,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Mark routes as retryable for those that support idempotent calls (e.g. creating a new file)
 
+### Removed
+
+* High-level GTable bindings
+
 ## [211.0] - beta
 
 No significant changes.
