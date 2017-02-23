@@ -44,61 +44,6 @@ import com.google.common.collect.ImmutableList;
 public class DXGTable extends DXDataObject {
 
     /**
-     * Builder class for creating a new {@code DXGTable} object. To obtain an instance, call
-     * {@link DXGTable#newGTable(List)}.
-     */
-    public static class Builder extends DXDataObject.Builder<Builder, DXGTable> {
-
-        List<ColumnSpecification> columns;
-
-        private Builder(List<? extends ColumnSpecification> columns) {
-            super();
-            this.columns = ImmutableList.copyOf(columns);
-        }
-
-        private Builder(List<? extends ColumnSpecification> columns, DXEnvironment env) {
-            super(env);
-            this.columns = ImmutableList.copyOf(columns);
-        }
-
-        /**
-         * Creates the GTable.
-         *
-         * @return a {@code DXGTable} object corresponding to the newly created object
-         */
-        @Override
-        public DXGTable build() {
-            return new DXGTable(DXAPI.gtableNew(this.buildRequestHash(), ObjectNewResponse.class,
-                    this.env).getId(), this.project, this.env, null);
-        }
-
-        /**
-         * Use this method to test the JSON hash created by a particular builder call without
-         * actually executing the request.
-         *
-         * @return a JsonNode
-         */
-        @VisibleForTesting
-        JsonNode buildRequestHash() {
-            checkAndFixParameters();
-            return MAPPER.valueToTree(new GTableNewRequest(this));
-        }
-
-        /*
-         * (non-Javadoc)
-         *
-         * @see com.dnanexus.DXDataObject.Builder#getThisInstance()
-         */
-        @Override
-        protected Builder getThisInstance() {
-            return this;
-        }
-
-        // TODO: initializeFrom
-
-    }
-
-    /**
      * Contains metadata for a GTable.
      */
     public static class Describe extends DXDataObject.Describe {
@@ -146,18 +91,6 @@ public class DXGTable extends DXDataObject {
                     "row count is not available because table was open or "
                             + "because row count was not retrieved with the describe call");
             return this.length;
-        }
-    }
-
-    @JsonInclude(Include.NON_NULL)
-    private static class GTableNewRequest extends DataObjectNewRequest {
-        @JsonProperty
-        private final List<ColumnSpecification> columns;
-
-        public GTableNewRequest(Builder builder) {
-            super(builder);
-            this.columns = builder.columns;
-            // TODO: indices
         }
     }
 
@@ -232,31 +165,6 @@ public class DXGTable extends DXDataObject {
      */
     public static DXGTable getInstanceWithEnvironment(String gtableId, DXEnvironment env) {
         return new DXGTable(gtableId, Preconditions.checkNotNull(env, "env may not be null"));
-    }
-
-    /**
-     * Returns a Builder object for creating a new {@code DXGTable} with the specified columns.
-     *
-     * @param columns column specifications (in the order they will appear in the table)
-     *
-     * @return a newly initialized builder object
-     */
-    public static Builder newGTable(List<? extends ColumnSpecification> columns) {
-        return new Builder(columns);
-    }
-
-    /**
-     * Returns a Builder object for creating a new {@code DXGTable} with the specified columns,
-     * using the specified environment.
-     *
-     * @param columns column specifications (in the order they will appear in the table)
-     * @param env environment to use to make API calls
-     *
-     * @return a newly initialized builder object
-     */
-    public static Builder newGTableWithEnvironment(List<? extends ColumnSpecification> columns,
-            DXEnvironment env) {
-        return new Builder(columns, env);
     }
 
     private DXGTable(String gtableId, DXContainer project, DXEnvironment env, JsonNode describe) {

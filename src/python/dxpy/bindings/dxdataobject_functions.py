@@ -117,7 +117,7 @@ def get_handler(id_or_link, project=None):
 
     Example::
 
-        get_handler("gtable-1234").get_col_names()
+        get_handler("file-1234")
     '''
     try:
         cls = _guess_link_target_type(id_or_link)

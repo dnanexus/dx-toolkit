@@ -255,7 +255,7 @@ add_subdirectory(../SimpleHttpLib SimpleHttpLib)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_SOURCE_DIR}/../SimpleHttpLib ${CMAKE_CURRENT_SOURCE_DIR}/../dxjson)
 
-add_library(dxcpp dxcpp.cc api.cc bindings.cc bindings/dxapplet.cc bindings/dxrecord.cc bindings/dxfile.cc bindings/dxjob.cc bindings/dxgtable.cc bindings/dxapp.cc bindings/dxproject.cc bindings/search.cc bindings/execution_common_helper.cc exec_utils.cc utils.cc dxlog.cc)
+add_library(dxcpp dxcpp.cc api.cc bindings.cc bindings/dxapplet.cc bindings/dxrecord.cc bindings/dxfile.cc bindings/dxjob.cc bindings/dxapp.cc bindings/dxproject.cc bindings/search.cc bindings/execution_common_helper.cc exec_utils.cc utils.cc dxlog.cc)
 if (MINGW)
   target_link_libraries(dxcpp dxhttp dxjson ${OPENSSL_LIBRARIES} ${Boost_LIBRARIES})
 else()
