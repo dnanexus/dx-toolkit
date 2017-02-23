@@ -73,7 +73,5 @@ parser.add_argument("--parallel", help="Download the files in parallel", action=
 parser.add_argument("--sequential", help="Download the files sequentially", action="store_false",
                     dest="parallel")
 args = parser.parse_args()
-max_num_parallel_downloads = 8
 
-dxpy.download_all_inputs(exclude=args.exclude, parallel=args.parallel,
-                         max_threads=max_num_parallel_downloads)
+dxpy.download_all_inputs(exclude=args.exclude, parallel=args.parallel)
