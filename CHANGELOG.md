@@ -11,6 +11,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Upload agent now does not gzip compress .gz files on Ubuntu 14.04
 * Minor log message fix if file is already uploaded
 
+### Added
+
+* Mark routes as retryable for those that support idempotent calls (e.g. creating a new file)
+
 ## [211.0] - beta
 
 No significant changes.
