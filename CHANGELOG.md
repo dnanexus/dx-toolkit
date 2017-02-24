@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+## [212.0] - beta
+
 ### Fixed
 
 * Upload agent now does not gzip compress .gz files on Ubuntu 14.04
@@ -19,11 +21,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * High-level GTable bindings
 
-## [211.0] - beta
+## [211.0] - 2017-02-23 - stable
 
 No significant changes.
 
-## [210.0] - 2017-02-16 stable 
+## [210.0] - 2017-02-16 
 
 ### Fixed
 
