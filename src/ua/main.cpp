@@ -629,7 +629,7 @@ void disallowDuplicateFiles(const vector<string> &files, const vector<string> &p
       fs::directory_iterator end_itr;
       vector<string> filesInDir, newProjects;
       for(fs::directory_iterator itr(p); itr != end_itr; ++itr) {
-        filesInDir.push_back(itr->path().string());
+        filesInDir.push_back(itr->path().generic_string());
         // For files in a directory, we assume they use the project that goes with
         // the directory itself.
         newProjects.push_back(projects[i]);
@@ -640,7 +640,7 @@ void disallowDuplicateFiles(const vector<string> &files, const vector<string> &p
     }
     hash += boost::lexical_cast<string>(boost::filesystem::file_size(p)) + " ";
     hash += boost::lexical_cast<string>(boost::filesystem::last_write_time(p)) + " ";
-    hash += fs::canonical(p).string();
+    hash += fs::canonical(p).generic_string();
     DXLOG(logDEBUG3) << "File hash: " << hash;
     if (hashTable.count(hash) > 0) {
       throw runtime_error("File \"" + files[i] + "\" and \"" + hashTable[hash].string() + "\" have same Signature. You cannot upload"
@@ -799,7 +799,7 @@ void traverseDirectory(const fs::path &localDirPath,
       }
     } else if (fs::is_regular_file(currPath)) {
       unsigned int fileIndex = files.size();
-      files.push_back(createFile(currPath.string(), project, remoteFolders.string(), currPath.filename().string(), fileIndex));
+      files.push_back(createFile(currPath.generic_string(), project, remoteFolders.generic_string(), currPath.filename().generic_string(), fileIndex));
       totalChunks += files[fileIndex].createChunks(chunksToRead, opt.tries);
       cerr << endl;
     } else {
