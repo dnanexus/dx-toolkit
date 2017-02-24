@@ -21,13 +21,9 @@ DXGTable Handler
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, json, traceback
-import concurrent.futures
-
 import dxpy
 from . import DXDataObject
-from ..exceptions import DXError
-from ..compat import StringIO, basestring
+from ..compat import basestring
 from ..utils import warn
 
 DXGTABLE_HTTP_THREADS = 1
@@ -38,20 +34,10 @@ DXGTABLE_HTTP_THREADS = 1
 # progressively larger requests?
 DEFAULT_TABLE_READ_ROW_BUFFER_SIZE = 40000
 
-# Writing uses two buffers: one that contains the actual rows (list of Python lists) and the
-# stringified data to send to the server (kept in a StringIO object). The row data is stringified
-# when we have accumulated a fixed number of rows. The stringified data is sent to the server once
-# its size exceeds a certain number of bytes.
-#
-# The row buffer should be large enough that we don't suffer a huge amount of overhead in
-# stringifying, but the larger the row buffer, the more we could exceed the max byte size of the
-# stringified buffer.
-DEFAULT_TABLE_WRITE_ROW_BUFFER_SIZE = 10000
-DEFAULT_TABLE_WRITE_REQUEST_SIZE = 1024*1024*64 # bytes
-
 # Use this value for creating 'null' values in gtables.  Will be interpreted as null downstream.
 # Available in apps as dxpy.NULL
 NULL = - (1 << 31)
+
 
 class DXGTable(DXDataObject):
     '''
@@ -88,7 +74,6 @@ class DXGTable(DXDataObject):
     _set_properties = staticmethod(dxpy.api.gtable_set_properties)
     _add_tags = staticmethod(dxpy.api.gtable_add_tags)
     _remove_tags = staticmethod(dxpy.api.gtable_remove_tags)
-    _close = staticmethod(dxpy.api.gtable_close)
     _list_projects = staticmethod(dxpy.api.gtable_list_projects)
 
     _http_threadpool = None
@@ -103,7 +88,7 @@ class DXGTable(DXDataObject):
         if cls._http_threadpool is None:
             cls._http_threadpool = dxpy.utils.get_futures_threadpool(max_workers=cls._http_threadpool_size)
 
-    def __init__(self, dxid=None, project=None, mode=None, request_size=DEFAULT_TABLE_WRITE_REQUEST_SIZE):
+    def __init__(self, dxid=None, project=None, mode=None, request_size=None):
         DXDataObject.__init__(self, dxid=dxid, project=project)
         if mode is None:
             self._close_on_exit = True
@@ -115,8 +100,6 @@ class DXGTable(DXDataObject):
         self._write_request_size = request_size
         self._row_buf = []
         self._read_row_buffer_size = DEFAULT_TABLE_READ_ROW_BUFFER_SIZE
-        self._write_row_buffer_size = DEFAULT_TABLE_WRITE_ROW_BUFFER_SIZE
-        self._string_row_buf = None
         self._http_threadpool_futures = set()
         self._columns, self._col_names = None, None
 
@@ -124,38 +107,7 @@ class DXGTable(DXDataObject):
         return self
 
     def __exit__(self, type, value, traceback):
-        self.flush()
-        if self._close_on_exit:
-            self.close()
-
-    def __del__(self):
-        '''
-        Exceptions raised here in the destructor are IGNORED by Python! We will try and flush data
-        here just as a safety measure, but you should not rely on this to flush your data! We will
-        be really grumpy and complain if we detect unflushed data here.
-
-        Use a context manager or flush the object explicitly to avoid this.
-
-        In addition, when this is triggered by interpreter shutdown, the thread pool is not
-        available, and we will wait for the request queue forever. In this case, we must revert to
-        synchronous, in-thread flushing. We don't know how to detect this condition, so we'll use
-        that for all destructor events.
-
-        Neither this nor context managers are compatible with kwargs pass-through (so e.g. no
-        custom auth).
-        '''
-        if len(self._row_buf) > 0 or (self._string_row_buf != None and self._string_row_buf.tell() > len('{"data": [')) or len(self._http_threadpool_futures) > 0:
-            warn("=== WARNING! ===")
-            warn("There is still unflushed data in the destructor of a DXGTable object!")
-            warn("We will attempt to flush it now, but if an error were to occur, we could not report it back to you.")
-            warn("Your program could fail to flush the data but appear to succeed.")
-            warn("Instead, please call flush() or close(), or use the context managed version (e.g., with open_dxgtable(ID, mode='w') as gtable:)")
-        try:
-            self.flush(multithread=False)
-        except Exception as e:
-            warn("=== Exception occurred while flushing accumulated row data for %r" % (self._dxid,))
-            traceback.print_exception(*sys.exc_info())
-            raise
+        pass
 
     def _check_row_is_valid(self, row):
         # TODO: if the user is using initFrom, we don't know what the schema looks like
@@ -178,49 +130,6 @@ class DXGTable(DXDataObject):
             elif column['type'].startswith('int') or column['type'].startswith('uint'):
                 if type(value) is not int:
                     raise ValueError("Expected value in column %d to be an int, got %r instead" % (index, value))
-
-    def _new(self, dx_hash, **kwargs):
-        '''
-        :param dx_hash: Standard hash populated in :func:`dxpy.bindings.DXDataObject.new()` containing attributes common to all data object classes.
-        :type dx_hash: dict
-        :param columns: An ordered list containing column descriptors. See :meth:`make_column_desc`.
-        :type columns: list of column descriptors
-        :param indices: An ordered list containing index descriptors. See :meth:`genomic_range_index()` and :meth:`lexicographic_index()`. If not provided, no indices are created.
-        :type indices: list of index descriptors
-        :param init_from: GTable from which to initialize the metadata including column and index specs
-        :type init_from: :class:`DXGTable`
-
-        Creates a new GTable with the columns described in *columns* and
-        the indices described in *indices*.
-
-        '''
-
-        if "columns" in kwargs:
-            if kwargs["columns"] is not None:
-                dx_hash["columns"] = kwargs["columns"]
-            del kwargs["columns"]
-        else:
-            if "init_from" not in kwargs:
-                raise DXError("Column specs need to be specified if init_from is not used")
-
-        if "indices" in kwargs:
-            if kwargs["indices"] is not None:
-                dx_hash["indices"] = kwargs["indices"]
-            del kwargs["indices"]
-
-        if "init_from" in kwargs:
-            if kwargs["init_from"] is not None:
-                if not isinstance(kwargs["init_from"], DXGTable):
-                    raise DXError("Expected instance of DXGTable to init_from")
-                dx_hash["initializeFrom"] = \
-                    {"id": kwargs["init_from"].get_id(),
-                     "project": kwargs["init_from"].get_proj_id()}
-            del kwargs["init_from"]
-
-        resp = dxpy.api.gtable_new(dx_hash, **kwargs)
-        self.set_ids(resp["id"], dx_hash["project"])
-        if "columns" in dx_hash:
-            self._columns = dx_hash["columns"]
 
     def set_ids(self, dxid, project=None):
         '''
@@ -396,151 +305,6 @@ class DXGTable(DXDataObject):
     def __iter__(self):
         return self.iterate_rows()
 
-    # TODO: make this consume recarrays
-    def add_rows(self, data, part=None, validate=True, **kwargs):
-        '''
-        :param data: List of rows to be added
-        :type data: List of lists, list of mappings from column names to values (TODO), or mapping from column names to lists of values (TODO)
-        :param part: The part ID to label the rows in data. Optional; it will be selected automatically if not given.
-        :type part: integer
-        :raises: :exc:`~dxpy.exceptions.DXGTableError`
-
-        Adds the rows listed in data to the current GTable. If *part* is
-        not given (recommended), rows may be queued up for addition
-        internally and will be flushed to the remote server
-        periodically.
-
-        Example::
-
-            with new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
-                               dxpy.DXGTable.make_column_desc("b", "int32")], mode='w') as dxgtable:
-                dxgtable.add_rows([["foo", 23], ["bar", 7]])
-
-        '''
-
-        if validate:
-            for row in data:
-                self._check_row_is_valid(row)
-        if part is None:
-            for row in data:
-                self._row_buf.append(row)
-                if len(self._row_buf) >= self._write_row_buffer_size:
-                    self._flush_row_buf_to_string_buf()
-                    if self._string_row_buf.tell() > self._write_request_size:
-                        self._finalize_string_row_buf()
-                        request_data = self._string_row_buf.getvalue()
-                        self._string_row_buf = None
-                        self._async_add_rows_request(self._dxid, request_data, jsonify_data=False, **kwargs)
-                        del request_data
-        else:
-            dxpy.api.gtable_add_rows(self._dxid, {"data": data, "part": part}, **kwargs)
-
-    def add_row(self, row, **kwargs):
-        '''
-        :param row: Row to be added
-        :type data: List or mapping from column names to values (TODO)
-        :raises: :exc:`~dxpy.exceptions.DXGTableError`
-
-        Adds a single row to the current GTable. Rows may be queued up for addition internally
-        and will be flushed to the remote server periodically.
-
-        Example::
-
-            with new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
-                               dxpy.DXGTable.make_column_desc("b", "int32")], mode='w') as dxgtable:
-                for i in range(1000):
-                    dxgtable.add_row(["foo", i])
-        '''
-        self.add_rows([row], **kwargs)
-
-    def get_unused_part_id(self, **kwargs):
-        '''
-        :returns: An unused part id
-        :rtype: integer
-
-        Obtains an unused part ID for use with
-        :meth:`~dxpy.bindings.dxgtable.DXGTable.add_rows()`. Each call
-        to this method on the same GTable (even from different clients)
-        returns a different part ID.
-
-        '''
-        return dxpy.api.gtable_next_part(self._dxid, **kwargs)['part']
-
-    def _flush_row_buf_to_string_buf(self):
-        if self._string_row_buf == None:
-            self._string_row_buf = StringIO()
-            self._string_row_buf.write('{"data": [')
-
-        if len(self._row_buf) > 0:
-            self._string_row_buf.write(json.dumps(self._row_buf)[1:])
-            self._string_row_buf.seek(-1, os.SEEK_END) # chop off trailing "]"
-            self._string_row_buf.write(", ")
-            self._row_buf = []
-
-    def _finalize_string_row_buf(self, part_id=None):
-        if part_id == None:
-            part_id = self.get_unused_part_id()
-
-        # Temporary debug
-        self._string_row_buf.seek(-2, os.SEEK_END) # chop off trailing ", "
-        tail = self._string_row_buf.read()
-        if tail != ', ':
-            self._string_row_buf.seek(-100, os.SEEK_END)
-            tail = self._string_row_buf.read()
-            raise Exception("Unexpected buffer state: _finalize_string_row_buf called twice. Buffer tail: "+tail)
-        
-        self._string_row_buf.seek(-2, os.SEEK_END) # chop off trailing ", "
-        self._string_row_buf.write('], "part": %s}' % str(part_id))
-
-    def flush(self, multithread=True, **kwargs):
-        '''
-        Sends any rows in the internal buffer to the API server. If the buffer is empty, does nothing.
-        '''
-        if len(self._row_buf) > 0:
-            self._flush_row_buf_to_string_buf()
-        if self._string_row_buf != None and self._string_row_buf.tell() > len('{"data": ['):
-            self._finalize_string_row_buf()
-            request_data = self._string_row_buf.getvalue()
-            self._string_row_buf = None
-            if multithread:
-                self._async_add_rows_request(self._dxid, request_data, jsonify_data=False, **kwargs)
-            else:
-                dxpy.api.gtable_add_rows(self._dxid, request_data, jsonify_data=False, **kwargs)
-
-        if len(self._http_threadpool_futures) > 0:
-            dxpy.utils.wait_for_all_futures(self._http_threadpool_futures)
-            try:
-                for future in self._http_threadpool_futures:
-                    if future.exception() != None:
-                        raise future.exception()
-            finally:
-                self._http_threadpool_futures = set()
-
-    def close(self, block=False, **kwargs):
-        '''
-        :param block: If True, blocks until the remote GTable has closed
-        :type block: boolean
-
-        Closes the GTable.
-
-        '''
-        self.flush(**kwargs)
-
-        dxpy.api.gtable_close(self._dxid, **kwargs)
-
-        if block:
-            self._wait_on_close(**kwargs)
-
-    def wait_on_close(self, timeout=3600*24*7, **kwargs):
-        '''
-        :param timeout: Maximum amount of time to wait until the GTable is closed
-        :type timeout: integer
-        :raises: :exc:`~dxpy.exceptions.DXError` if the timeout is reached before the remote GTable has been closed
-
-        Waits until the remote GTable is closed.
-        '''
-        self._wait_on_close(timeout, **kwargs)
-
     @staticmethod
     def make_column_desc(name, typename):
         """
@@ -662,21 +426,6 @@ class DXGTable(DXDataObject):
         """
 
         return {"index": index, "parameters": query}
-
-    def _async_add_rows_request(self, *args, **kwargs):
-        kwargs['always_retry'] = True
-
-        DXGTable._ensure_http_threadpool()
-
-        while len(self._http_threadpool_futures) >= self._http_threadpool_size:
-            future = dxpy.utils.wait_for_a_future(self._http_threadpool_futures)
-            if future.exception() != None:
-                raise future.exception()
-            self._http_threadpool_futures.remove(future)
-            del future
-
-        future = self._http_threadpool.submit(dxpy.api.gtable_add_rows, *args, **kwargs)
-        self._http_threadpool_futures.add(future)
 
     def _generate_read_requests(self, start_row=0, end_row=None, query=None, columns=None, **kwargs):
         if end_row is None:

@@ -6,7 +6,31 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
-## [209.0] - beta
+### Fixed
+
+* Upload agent now does not gzip compress .gz files on Ubuntu 14.04
+* Minor log message fix if file is already uploaded
+
+### Added
+
+* Mark routes as retryable for those that support idempotent calls (e.g. creating a new file)
+
+### Removed
+
+* High-level GTable bindings
+
+## [211.0] - beta
+
+No significant changes.
+
+## [210.0] - 2017-02-16 stable 
+
+### Fixed
+
+* Fix `dx get` untar issue with leading /
+* Missing `dx-verify-file` and `jq` dependencies on Windows
+
+## [209.0] - 2017-02-09 
 
 ### Added
 
@@ -19,7 +43,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Modified `dx-docker` so that `--rm` passes through gracefully
 * Modified `dx-docker` so that the `HOME` environment variable defaults to `/root`
 
-## [208.1] - 2017-02-02 - stable
+## [208.1] - 2017-02-02
 
 ### Fixed
 

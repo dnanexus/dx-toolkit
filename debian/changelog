@@ -1,3 +1,23 @@
+dx-toolkit (0.212.0) precise; urgency=low
+
+  * Fixed: Upload agent now does not gzip compress .gz files on Ubuntu 14.04
+  * Fixed: Minor log message fix if file is already uploaded
+  * Added: Mark routes as retryable for those that support idempotent calls (e.g. creating a new file)
+
+ -- Hamed Haddadian <HAMEDH@DNANEXUS.COM>  Thu, 23 Feb 2017 18:46:24 +0000
+
+dx-toolkit (0.211.0) precise; urgency=low
+
+  * No significant changes.
+
+ -- Hamed Haddadian <HAMEDH@DNANEXUS.COM>  Thu, 16 Feb 2017 19:46:23 +0000
+
+dx-toolkit (0.210.0) precise; urgency=low
+
+  * Fixed: Fix dx-get untar issue with leading /
+
+ -- Hamed Haddadian <hamedh@home.vdev.dnanexus.com>  Thu, 09 Feb 2017 21:29:00 +0000
+
 dx-toolkit (0.209.0) precise; urgency=low
 
   * Added: Support to build of upload agent on RHEL7

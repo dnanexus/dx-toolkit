@@ -164,5 +164,3 @@ Reporting Bugs
 
 Please use [GitHub](https://github.com/dnanexus/dx-toolkit/issues) to
 report bugs, post suggestions, or send us pull requests.
-
-<a href="https://travis-ci.org/dnanexus/dx-toolkit"><img src="https://travis-ci.org/dnanexus/dx-toolkit.svg"></a>

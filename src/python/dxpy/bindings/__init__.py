@@ -484,13 +484,13 @@ class DXDataObject(DXObject):
         project associated with the handler.
 
         The following example sets the properties for "name" and
-        "project" for a remote GTable::
+        "project" for a remote file::
 
-            dxgtable.set_properties({"name": "George", "project": "cancer"})
+            dxfile.set_properties({"name": "George", "project": "cancer"})
 
         Subsequently, the following would delete the property "project"::
 
-            dxgtable.set_properties({"project": None})
+            dxfile.set_properties({"project": None})
 
         """
 

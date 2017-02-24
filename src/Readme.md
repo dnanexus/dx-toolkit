@@ -13,7 +13,6 @@ Environment Variable         | Tests included
 `DXTEST_AZURE`               | Run tests that require permission to use an Azure region (by default `azure:westus` but the region can also be read from the value of this variable)
 `DXTEST_ENV`                 | Run tests which may clobber your local environment
 `DXTEST_FUSE`                | Run tests against FUSE filesystems
-`DXTEST_GTABLE`              | Run tests that create GTables (these tests may take a long time if waiting for GTables to close)
 `DXTEST_HTTP_PROXY`          | Run tests that use squid3 to launch an HTTP proxy
 `DXTEST_ISOLATED_ENV`        | Run tests that may create, or rely on the presence of, certain apps, users, orgs, etc.
 `DXTEST_NO_RATE_LIMITS`      | Run tests that require one or more tokens where rate limiting is not enforced
