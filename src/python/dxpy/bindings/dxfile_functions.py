@@ -503,7 +503,7 @@ def list_subfolders(project, path, recurse=True):
         return (f for f in project_folders if f.startswith(path) and '/' not in f[len(path)+1:])
 
 def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxfile.DEFAULT_BUFFER_SIZE,
-        **kwargs):
+                    show_progress=False, **kwargs):
     '''
     :param project: Project ID to use as context for this download.
     :type project: string
@@ -566,4 +566,5 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
                      ("" if remote_file['describe']['folder'] == "/" else remote_file['describe']['folder']),
                      remote_file['describe']['name'],
                      local_filename)
-        download_dxfile(remote_file['describe']['id'], local_filename, chunksize=chunksize, project=project, **kwargs)
+        download_dxfile(remote_file['describe']['id'], local_filename, chunksize=chunksize, project=project,
+                        show_progress=show_progress, **kwargs)

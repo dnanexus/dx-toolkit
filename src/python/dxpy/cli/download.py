@@ -86,6 +86,10 @@ def _download_files(files, destdir, args, dest_filename=None):
 
 
 def _download_folders(folders, destdir, args):
+    try:
+        show_progress = args.show_progress
+    except AttributeError:
+        show_progress = False
     for project in folders:
         for folder, strip_prefix in folders[project]:
             if not args.recursive:
@@ -93,7 +97,8 @@ def _download_folders(folders, destdir, args):
             assert(folder.startswith(strip_prefix))
             folder_destdir = os.path.join(destdir, folder[len(strip_prefix):].lstrip('/'))
             try:
-                dxpy.download_folder(project, folder_destdir, folder=folder, overwrite=args.overwrite)
+                dxpy.download_folder(project, folder_destdir, folder=folder, overwrite=args.overwrite,
+                                     show_progress=show_progress)
             except:
                 err_exit()
 
