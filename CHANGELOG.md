@@ -6,6 +6,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+### Fixed
+
+* Recursive file upload on Windows for the Upload Agent
+* Show download progress for calls to `dx download -r`
+* Issue where calls to `dxpy.download_all_inputs(parallel=True)` hang
+
 ## [212.0] - beta
 
 ### Fixed
