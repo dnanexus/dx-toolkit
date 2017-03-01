@@ -29,7 +29,7 @@ InstallDir "$APPDATA\${COMPANYNAME}\${APPNAME}"
 
 # This will be in the installer/uninstaller's title bar
 Name "${COMPANYNAME} ${APPNAME}"
-outFile "${COMPANYNAME}-${APPNAME}-${VERSIONMAJOR}.${VERSIONMINOR}.${VERSIONBUILD}-Installer.exe"
+outFile "${COMPANYNAME} ${APPNAME} ${VERSIONMAJOR}.${VERSIONMINOR}.${VERSIONBUILD} Installer.exe"
 
 !include LogicLib.nsh
 !include EnvVarUpdate.nsh
