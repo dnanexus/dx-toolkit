@@ -1,3 +1,11 @@
+dx-toolkit (0.213.0) precise; urgency=low
+
+  * Fixed: Recursife file upload on Windows for the Upload Agent
+  * Fixed: Show download progress for calls to `dx download -r`
+  * Fixed: Issue where calls to `dxpy.download_all_inputs(parallel=True)` hang
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 02 Mar 2017 18:35:14 +0000
+
 dx-toolkit (0.212.0) precise; urgency=low
 
   * Fixed: Upload agent now does not gzip compress .gz files on Ubuntu 14.04
