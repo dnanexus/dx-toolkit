@@ -6,13 +6,15 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+## [213.0] - beta
+
 ### Fixed
 
 * Recursive file upload on Windows for the Upload Agent
 * Show download progress for calls to `dx download -r`
 * Issue where calls to `dxpy.download_all_inputs(parallel=True)` hang
 
-## [212.0] - beta
+## [212.0] - 2017-03-02 - stable
 
 ### Fixed
 
@@ -27,7 +29,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * High-level GTable bindings
 
-## [211.0] - 2017-02-23 - stable
+## [211.0] - 2017-02-23
 
 No significant changes.
 
