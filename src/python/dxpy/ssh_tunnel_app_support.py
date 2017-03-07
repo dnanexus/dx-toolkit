@@ -19,6 +19,21 @@ from sys import platform
 NOTEBOOK_APP = 'app-notebook_server'
 
 
+def setup_ssh_tunnel(job_id, local_port, remote_port):
+    cmd = 'dx ssh --suppress-running-check {0}  -o "StrictHostKeyChecking no" -f -L {1}:localhost:{2} -N'.format(job_id, local_port, remote_port)
+    subprocess.check_call(cmd, shell=True)
+
+
+def multi_platform_open(cmd):
+    if platform == "linux" or platform == "linux2":
+        cmd = 'xdg-open {0}'.format(cmd)
+    elif platform == "darwin":
+        cmd = 'open {0}'.format(cmd)
+    elif platform == "win32":
+        cmd = 'start {0}'.format(cmd)
+    subprocess.check_call(cmd, shell=True)
+
+
 def run_notebook(args):
     input_files = ' '.join(['-iinput_files={0}'.format(f) for f in args.notebook_files])
     cmd = 'dx run {0} -inotebook_type={1} {2} -itimeout={3} -y --brief --allow-ssh --instance-type {4} '
@@ -30,14 +45,5 @@ def run_notebook(args):
     elif args.notebook_type == 'rstudio':
         remote_port = 8787
 
-    cmd = 'dx ssh --suppress-running-check {0}  -o "StrictHostKeyChecking no" -f -L {1}:localhost:{2} -N'.format(job_id, args.port, remote_port)
-    subprocess.check_call(cmd, shell=True)
-
-    if platform == "linux" or platform == "linux2":
-        cmd = 'xdg-open '
-    elif platform == "darwin":
-        cmd = 'open '
-    elif platform == "win32":
-        cmd = 'start '
-    cmd += 'http://localhost:{0}'.format(args.port)
-    subprocess.check_call(cmd, shell=True)
+    setup_ssh_tunnel(job_id, args.port, remote_port)
+    multi_platform_open('http://localhost:{0}'.format(args.port))
