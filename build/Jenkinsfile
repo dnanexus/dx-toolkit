@@ -185,7 +185,7 @@ stage 'Build'
                 
                 bat "git checkout ${env.commit_hash}"
                 
-                bat "make pynsist_installer"
+                bat "make DLL_DEPS_FOLDER=${dll_deps_folder} pynsist_installer"
 
                 bat "mkdir ${env.commit_hash}"
                 bat "xcopy dx-toolkit-*.exe .\\${env.commit_hash}"
