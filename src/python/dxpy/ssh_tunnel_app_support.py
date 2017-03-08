@@ -14,10 +14,14 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+import sys
 import subprocess
+import dxpy
+
 from sys import platform
 NOTEBOOK_APP = 'app-notebook_server'
-
+LOUPE_APP = 'app-10x_loupe_server'
+SLEEP_PERIOD = 5
 
 def setup_ssh_tunnel(job_id, local_port, remote_port):
     cmd = 'dx ssh --suppress-running-check {0}  -o "StrictHostKeyChecking no" -f -L {1}:localhost:{2} -N'.format(job_id, local_port, remote_port)
@@ -44,6 +48,25 @@ def run_notebook(args):
         remote_port = 8888
     elif args.notebook_type == 'rstudio':
         remote_port = 8787
+
+    setup_ssh_tunnel(job_id, args.port, remote_port)
+    multi_platform_open('http://localhost:{0}'.format(args.port))
+
+def run_loupe(args):
+    input_files = ' '.join(['-iloupe_files={0}'.format(f) for f in args.loupe_files])
+    cmd = 'dx run {0} {1} -itimeout={2} -y --brief --allow-ssh --instance-type {3} '
+    cmd = cmd.format(LOUPE_APP, input_files, args.timeout, args.instance_type)
+    job_id = subprocess.check_output(cmd, shell=True).strip()
+
+    # Wait until the server is running
+    sys.stdout.write('Waiting for Loupe server to initialize ...')
+    sys.stdout.flush()
+    while('ready' not in dxpy.describe(job_id)['tags']):
+        subprocess.check_call('sleep {0}'.format(SLEEP_PERIOD), shell=True)
+        sys.stdout.write('.')
+        sys.stdout.flush()
+
+    remote_port = 3000
 
     setup_ssh_tunnel(job_id, args.port, remote_port)
     multi_platform_open('http://localhost:{0}'.format(args.port))
