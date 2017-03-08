@@ -145,7 +145,7 @@ parser_run.add_argument("command", help="command to run within container", nargs
 def run(args):
     register_docker_subcommand("run")
     acifile = get_aci_fname(args.image)
-    if not acifile:
+    if not acifile and args.image != "debug":
         pull(parser_pull.parse_args([args.image]))
         acifile = get_aci_fname(args.image)
 
@@ -186,7 +186,8 @@ def run(args):
         print_annotation("Last Updated", 'created', data=stats)
         print_annotation("Registry", 'registryurl')
         print_annotation("ENTRYPOINT", 'entrypoint')
-        print_annotation("Working Dir", 'workingDirectory', data=imagemeta['app'])
+        if 'app' in imagemeta:
+            print_annotation("Working Dir", 'workingDirectory', data=imagemeta['app'])
         print_annotation("Default CMD", 'cmd')
         sys.stderr.write("\n\n")
 
@@ -211,14 +212,14 @@ def run(args):
     container_cmd = entrypoint + cmd
 
     workdir = "/"
-    if 'workingDirectory' in imagemeta['app']:
+    if 'app' in imagemeta and 'workingDirectory' in imagemeta['app']:
        workdir = imagemeta['app']['workingDirectory']
     if args.workdir:
        workdir = args.workdir
 
     default_homedir_env = "HOME=/root"
     env = ["env", "-i", default_homedir_env]
-    if 'environment' in imagemeta['app']:
+    if 'app' in imagemeta and 'environment' in imagemeta['app']:
         env.extend(args.env + [var['name'] +"="+var['value']  for var in imagemeta['app']['environment']])
 
     if args.rm and not args.quiet:
