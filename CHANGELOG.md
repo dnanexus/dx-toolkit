@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+### Fixed
+
+* Issue where calls to `dx run -i` in an interactive terminal does not display options for multiple files
+
 ## [213.0] - beta
 
 ### Fixed
