@@ -53,7 +53,7 @@ def run_notebook(args):
     multi_platform_open('http://localhost:{0}'.format(args.port))
 
     print 'A web browser should have opened to connect you to your notebook.'
-    print 'If no browser appears, or if you need to reopen a browser at any point, you should be able to point your browser to http://localhost:{0}'.foramt(args.port)
+    print 'If no browser appears, or if you need to reopen a browser at any point, you should be able to point your browser to http://localhost:{0}'.format(args.port)
 
 def run_loupe(args):
     input_files = ' '.join(['-iloupe_files={0}'.format(f) for f in args.loupe_files])
@@ -75,6 +75,6 @@ def run_loupe(args):
     multi_platform_open('http://localhost:{0}'.format(args.port))
 
     print 'A web browser should have opened to connect you to your notebook.'
-    print 'If no browser appears, or if you need to reopen a browser at any point, you should be able to point your browser to http://localhost:{0}'.foramt(args.port)
+    print 'If no browser appears, or if you need to reopen a browser at any point, you should be able to point your browser to http://localhost:{0}'.format(args.port)
     print 'Your Loupe session is sceduled to terminate in {0}.  If you wish to terminate before this, please run:'.format(args.timeout)
     print 'dx terminate {0}'.format(job_id)
