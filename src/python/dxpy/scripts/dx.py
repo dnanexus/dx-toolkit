@@ -4660,12 +4660,24 @@ parser_notebook = subparsers.add_parser('notebook', help='Launch a web notebook 
                                         formatter_class=argparse.RawTextHelpFormatter,
                                         prog='dx notebook')
 parser_notebook.add_argument('notebook_type', help='Type of notebook to launch', choices=['jupyter', 'rstudio'])
-parser_notebook.add_argument('notebook_files', help='Files to include on notebook instance', default=[], nargs=argparse.REMAINDER).completer = DXPathCompleter()
+parser_notebook.add_argument('notebook_files', help='Files to include on notebook instance', default=[], nargs=argparse.REMAINDER).completer = DXPathCompleter(classes=['file'])
 parser_notebook.add_argument('--port', help='local port to use to access the notebook.', default='2001')
 parser_notebook.add_argument('--timeout', help='How long to keep the notebook open (smhwMy).', default='1h')
 parser_notebook.add_argument('--instance-type', help='Instance type to run the notebook on.', default='mem1_ssd1_x4')
 parser_notebook.set_defaults(func=run_notebook)
 register_parser(parser_notebook, categories='data')
+
+from ..ssh_tunnel_app_support import run_loupe
+parser_loupe_viewer = subparsers.add_parser('loupe-viewer', help='Launch the Loupe viewer for 10x data on DNAnexus.',
+                                            description='Launch the Loupe viewer for 10x data on DNAnexus.',
+                                            formatter_class=argparse.RawTextHelpFormatter,
+                                            prog='dx loupe-viewer')
+parser_loupe_viewer.add_argument('loupe_files', help='Files to include in loupe viewer', default=[], nargs=argparse.REMAINDER).completer = DXPathCompleter(classes=['file'])
+parser_loupe_viewer.add_argument('--port', help='local port to use to access the Loupe viewer.', default='2001')
+parser_loupe_viewer.add_argument('--timeout', help='How long to keep the Loupe viewer open (smhwMy).', default='1h')
+parser_loupe_viewer.add_argument('--instance-type', help='Instance type to run the Loupe viewer on.', default='mem1_ssd1_x4')
+parser_loupe_viewer.set_defaults(func=run_loupe)
+register_parser(parser_loupe_viewer, categories='data')
 
 
 parser_api = subparsers.add_parser('api', help='Call an API method',
