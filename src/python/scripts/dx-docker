@@ -145,7 +145,7 @@ parser_run.add_argument("command", help="command to run within container", nargs
 def run(args):
     register_docker_subcommand("run")
     acifile = get_aci_fname(args.image)
-    if not acifile and args.image != "debug":
+    if not acifile:
         pull(parser_pull.parse_args([args.image]))
         acifile = get_aci_fname(args.image)
 
