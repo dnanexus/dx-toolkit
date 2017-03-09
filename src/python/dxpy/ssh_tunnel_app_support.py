@@ -21,11 +21,21 @@ import dxpy
 from sys import platform
 NOTEBOOK_APP = 'app-notebook_server'
 LOUPE_APP = 'app-10x_loupe_server'
+SERVER_READY_TAG = 'server_running'
 SLEEP_PERIOD = 5
 
 def setup_ssh_tunnel(job_id, local_port, remote_port):
     cmd = 'dx ssh --suppress-running-check {0}  -o "StrictHostKeyChecking no" -f -L {1}:localhost:{2} -N'.format(job_id, local_port, remote_port)
     subprocess.check_call(cmd, shell=True)
+
+
+def poll_for_server_running(job_id):
+    sys.stdout.write('Waiting for server to initialize ...')
+    sys.stdout.flush()
+    while(SERVER_READY_TAG not in dxpy.describe(job_id)['tags']):
+        subprocess.check_call('sleep {0}'.format(SLEEP_PERIOD), shell=True)
+        sys.stdout.write('.')
+        sys.stdout.flush()
 
 
 def multi_platform_open(cmd):
@@ -44,15 +54,18 @@ def run_notebook(args):
     cmd = cmd.format(NOTEBOOK_APP, args.notebook_type, input_files, args.timeout, args.instance_type)
     job_id = subprocess.check_output(cmd, shell=True).strip()
 
+    poll_for_server_running(job_id)
+
     if args.notebook_type == 'jupyter':
         remote_port = 8888
     elif args.notebook_type == 'rstudio':
         remote_port = 8787
 
     setup_ssh_tunnel(job_id, args.port, remote_port)
-    multi_platform_open('http://localhost:{0}'.format(args.port))
 
-    print 'A web browser should have opened to connect you to your notebook.'
+    if args.open_server:
+        multi_platform_open('http://localhost:{0}'.format(args.port))
+        print 'A web browser should have opened to connect you to your notebook.'
     print 'If no browser appears, or if you need to reopen a browser at any point, you should be able to point your browser to http://localhost:{0}'.format(args.port)
 
 def run_loupe(args):
@@ -61,20 +74,15 @@ def run_loupe(args):
     cmd = cmd.format(LOUPE_APP, input_files, args.timeout, args.instance_type)
     job_id = subprocess.check_output(cmd, shell=True).strip()
 
-    # Wait until the server is running
-    sys.stdout.write('Waiting for Loupe server to initialize ...')
-    sys.stdout.flush()
-    while('ready' not in dxpy.describe(job_id)['tags']):
-        subprocess.check_call('sleep {0}'.format(SLEEP_PERIOD), shell=True)
-        sys.stdout.write('.')
-        sys.stdout.flush()
+    poll_for_server_running(job_id)
 
     remote_port = 3000
 
     setup_ssh_tunnel(job_id, args.port, remote_port)
-    multi_platform_open('http://localhost:{0}'.format(args.port))
 
-    print 'A web browser should have opened to connect you to your notebook.'
+    if args.open_server:
+        multi_platform_open('http://localhost:{0}'.format(args.port))
+        print 'A web browser should have opened to connect you to your notebook.'
     print 'If no browser appears, or if you need to reopen a browser at any point, you should be able to point your browser to http://localhost:{0}'.format(args.port)
     print 'Your Loupe session is sceduled to terminate in {0}.  If you wish to terminate before this, please run:'.format(args.timeout)
     print 'dx terminate {0}'.format(job_id)
