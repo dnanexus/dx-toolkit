@@ -155,7 +155,7 @@ Warning: Not all parts of the SDK are compatible with Windows. Install the follo
 * [MinGW](http://www.mingw.org/), including `mingw32-libz-dev`, `mingw-zip`, and [`mingw-regex`](http://sourceforge.net/projects/mingw/files/Other/UserContributed/regex/mingw-regex-2.5.1/).
 * [NSIS](http://nsis.sourceforge.net/)
 
-To generate the .dll dependencies required for Windows, run `make ua`, then `make pynsist_installer`, it is also possible to pass `DLL_DEPS_FOLDER=C:\\folder\\path\\` as an argument to make
+To generate the .dll dependencies required for Windows, run `make ua`, then `make pynsist_installer`, it is also possible to pass `DLL_DEPS_FOLDER=C:/folder/path/` as an argument to make
 
 Upload Agent
 ------------
