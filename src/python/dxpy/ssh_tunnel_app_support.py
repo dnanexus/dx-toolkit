@@ -30,12 +30,14 @@ def setup_ssh_tunnel(job_id, local_port, remote_port):
 
 
 def poll_for_server_running(job_id):
-    sys.stdout.write('Waiting for server to initialize ...')
+    sys.stdout.write('Waiting for server in {0} to initialize ...'.format(job_id))
     sys.stdout.flush()
-    while(SERVER_READY_TAG not in dxpy.describe(job_id)['tags']):
+    desc = dxpy.describe(job_id)
+    while(SERVER_READY_TAG not in desc['tags'] and desc['state'] != 'failed'):
         subprocess.check_call('sleep {0}'.format(SLEEP_PERIOD), shell=True)
         sys.stdout.write('.')
         sys.stdout.flush()
+        desc = dxpy.describe(job_id)
 
 
 def multi_platform_open(cmd):
@@ -49,8 +51,10 @@ def multi_platform_open(cmd):
 
 
 def run_notebook(args):
-    input_files = ' '.join(['-iinput_files={0}'.format(f) for f in args.notebook_files])
+    input_files = ' '.join(['-iinput_files={0}'.format(f.replace(' ', '\\ ')) for f in args.notebook_files])
     cmd = 'dx run {0} -inotebook_type={1} {2} -itimeout={3} -y --brief --allow-ssh --instance-type {4} '
+    if args.ds_packages:
+        cmd += '-iinstall_data_science_packages=true '
     cmd = cmd.format(NOTEBOOK_APP, args.notebook_type, input_files, args.timeout, args.instance_type)
     job_id = subprocess.check_output(cmd, shell=True).strip()
 
@@ -69,7 +73,7 @@ def run_notebook(args):
     print 'If no browser appears, or if you need to reopen a browser at any point, you should be able to point your browser to http://localhost:{0}'.format(args.port)
 
 def run_loupe(args):
-    input_files = ' '.join(['-iloupe_files={0}'.format(f) for f in args.loupe_files])
+    input_files = ' '.join(['-iloupe_files={0}'.format(f.replace(' ', '\\ ')) for f in args.loupe_files])
     cmd = 'dx run {0} {1} -itimeout={2} -y --brief --allow-ssh --instance-type {3} '
     cmd = cmd.format(LOUPE_APP, input_files, args.timeout, args.instance_type)
     job_id = subprocess.check_output(cmd, shell=True).strip()
