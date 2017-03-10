@@ -236,14 +236,13 @@ def local_image_to_aci(image, tmpdir, dirprefix, alternative_export=False):
     # We have observed an instance where the Docker CLI and docker2aci do not properly export a rootfs.  Here is a hopefully temporary workaround
     if alternative_export:
         # TODO: Do obvious things to make the following steps more efficient (e.g. no re-untarring rootfs, ...)
-        print("Running alternative export")
+        sys.stderr.write(dxpy.utils.printing.YELLOW("Running alternative export for {}\n".format(image)))
         shell_suppress(["docker", "run", "--entrypoint", "tar", "-w", "/tmp", "-v", "{}:/tmp".format(tmpdir), image, "-cf", "rootfs.tar", "/"], ignore_error=True)
-        print("Extracting rootfs")
+        sys.stderr.write(dxpy.utils.printing.YELLOW("Extracting root file system for {}\n".format(image)))
         shell(["mkdir", "-p", tmpdir+"/new-aci-template/rootfs"])
-        shell_suppress(["tar", "-xf", tmpdir+"/rootfs.tar", "--exclude", "dev/*", "-C", tmpdir+"/new-aci-template/rootfs/"], ignore_error=True)
-        shell_suppress(["rm", tmpdir+"/rootfs.tar"])
+        shell_suppress(["tar", "-xf", tmpdir+"/rootfs.tar", "--exclude", "dev/*", "--exclude", "proc/*", "--exclude", "sys/*", "-C", tmpdir+"/new-aci-template/rootfs/"], ignore_error=True)
+        shell(["rm", "-f", tmpdir+"/rootfs.tar"])
         # We do not have a manifest file so we must create one on our own from 'docker inspect'
-        print("Creating manifest")
         inspect_out = json.loads(shell_suppress(["docker", "inspect", image]))[0]
         imsplit = inspect_out["RepoTags"][0].split(':')
         dictifiedenv = [{"name": var.split("=")[0], "value": var.split("=")[1]} for var in inspect_out["Config"]["Env"]]
@@ -271,7 +270,8 @@ def local_image_to_aci(image, tmpdir, dirprefix, alternative_export=False):
         with open(tmpdir+"/new-aci-template/manifest", "w") as f:
             f.write(json.dumps(manifest))
         shell(["mkdir", "-p", dirprefix+CACHE_DIR])
-        shell(["tar", "-C", tmpdir+"/new-aci-template", "-cf", dirprefix+CACHE_DIR+"/"+urllib.quote_plus(image)+".aci", "."])
+        sys.stderr.write(dxpy.utils.printing.YELLOW("Creating ACI filesystem bundle for {}\n".format(image)))
+        shell_suppress(["tar", "-C", tmpdir+"/new-aci-template", "-cf", dirprefix+CACHE_DIR+"/"+urllib.quote_plus(image)+".aci", "."], ignore_error=True)
     # Use Docker and docker2aci to generate an aci
     else:
         sys.stderr.write(dxpy.utils.printing.YELLOW("Exporting Docker image {}\n".format(image)))
@@ -348,6 +348,7 @@ def create_asset(args):
     os.chdir(tmpdir)
     with tarfile.open(image_tarball, "w:gz") as tar:
         tar.add(tmpdir+"/resources", "/")
+    sys.stderr.write(dxpy.utils.printing.YELLOW("Uploading DNAnexus asset for {}\n".format(args.image)))
     asset_tarball_id = _upload_file(image_tarball, project_id, folder_path)
     record_name = args.image
     record_details = {"archiveFileId": {"$dnanexus_link": asset_tarball_id}}
