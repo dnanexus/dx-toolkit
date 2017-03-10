@@ -1,10 +1,4 @@
-#!/usr/bin/env python
-
-# Note:
-#
-# Certain Docker images build with newer versions of Docker may not work with the default ENTRYPOINT.
-# We are tracking this issue with the docker2aci team here: https://github.com/appc/docker2aci/issues/198
-# In the meanwhile, please provide your ENTRYPOINT command explicitly in your `dx-docker run` command.
+#!/usr/bin/env python2.7
 
 """dx-docker Run Docker images in your DNAnexus app."""
 
@@ -41,10 +35,10 @@ def shell_suppress(cmd, ignore_error=False):
     try:
         out = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
-        print e.output
         if ignore_error:
             pass
         else:
+            print e.output
             raise
     return out
 
@@ -232,20 +226,63 @@ def run(args):
         shutil.rmtree(tmpdir)
 parser_run.set_defaults(func=run)
 
-def local_image_to_aci(image, tmpdir, dirprefix):
+def local_image_to_aci(image, tmpdir, dirprefix, alternative_export=False):
     # Ensure core utilities are available on local host
     shell_suppress(["which", "docker"])
     shell_suppress(["which", "docker2aci"])
 
     # Perform the operations to save and subsequently cache Docker image to the platform
-    sys.stderr.write(dxpy.utils.printing.YELLOW("Exporting Docker image {}\n".format(image)))
-    docker_tarball = tmpdir+"/image.docker.tgz"
-    shell(["docker", "save", "-o", docker_tarball, image])
-    get_aci(image, docker_tarball, prefix=dirprefix)
+
+    # We have observed an instance where the Docker CLI and docker2aci do not properly export a rootfs.  Here is a hopefully temporary workaround
+    if alternative_export:
+        # TODO: Do obvious things to make the following steps more efficient (e.g. no re-untarring rootfs, ...)
+        print("Running alternative export")
+        shell_suppress(["docker", "run", "--entrypoint", "tar", "-w", "/tmp", "-v", "{}:/tmp".format(tmpdir), image, "-cf", "rootfs.tar", "/"], ignore_error=True)
+        print("Extracting rootfs")
+        shell(["mkdir", "-p", tmpdir+"/new-aci-template/rootfs"])
+        shell_suppress(["tar", "-xf", tmpdir+"/rootfs.tar", "--exclude", "dev/*", "-C", tmpdir+"/new-aci-template/rootfs/"], ignore_error=True)
+        shell_suppress(["rm", tmpdir+"/rootfs.tar"])
+        # We do not have a manifest file so we must create one on our own from 'docker inspect'
+        print("Creating manifest")
+        inspect_out = json.loads(shell_suppress(["docker", "inspect", image]))[0]
+        imsplit = inspect_out["RepoTags"][0].split(':')
+        dictifiedenv = [{"name": var.split("=")[0], "value": var.split("=")[1]} for var in inspect_out["Config"]["Env"]]
+        entrypoint = inspect_out["Config"]["Entrypoint"]
+        if not entrypoint:
+            entrypoint = []
+        workdir = inspect_out["Config"]["WorkingDir"]
+        if not workdir or workdir == "":
+            workdir = "/"
+
+        # TODO if this needs to be kept longer-term: resolve simultaneous CMD + ENTRYPOINT and whether it goes in exec field (ignoring user/group ...)
+        manifest={"acKind":"ImageManifest",
+                  "acVersion":"0.8.5",
+                  "name":imsplit[0],
+                  "labels":[{"name":"version","value":imsplit[1]},
+                            {"name":"os","value":inspect_out["Os"]},
+                            {"name":"arch","value":inspect_out["Architecture"]}],
+                             "app":{"exec":entrypoint,"user":"0","group":"0","workingDirectory":workdir,"environment":dictifiedenv},
+                             "annotations":[{"name":"created","value":inspect_out["Created"]},
+                                            {"name":"appc.io/docker/repository","value":imsplit[0]},
+                                            {"name":"appc.io/docker/imageid","value":inspect_out["Id"]},
+                                            {"name":"appc.io/docker/parentimageid","value":inspect_out["Parent"]},
+                                            {"name":"appc.io/docker/entrypoint","value":json.dumps(entrypoint)},
+                                            {"name":"appc.io/docker/tag","value":imsplit[1]}]}
+        with open(tmpdir+"/new-aci-template/manifest", "w") as f:
+            f.write(json.dumps(manifest))
+        shell(["mkdir", "-p", dirprefix+CACHE_DIR])
+        shell(["tar", "-C", tmpdir+"/new-aci-template", "-cf", dirprefix+CACHE_DIR+"/"+urllib.quote_plus(image)+".aci", "."])
+    # Use Docker and docker2aci to generate an aci
+    else:
+        sys.stderr.write(dxpy.utils.printing.YELLOW("Exporting Docker image {}\n".format(image)))
+        docker_tarball = tmpdir+"/image.docker.tgz"
+        shell(["docker", "save", "-o", docker_tarball, image])
+        get_aci(image, docker_tarball, prefix=dirprefix)
 
 parser_add_to_applet = subparsers.add_parser('add-to-applet', help="Adds a local Docker image to an applet")
 parser_add_to_applet.add_argument("image", help="image name")
 parser_add_to_applet.add_argument("applet", help="directory corresponding to applet")
+parser_add_to_applet.add_argument("--alternative_export", help="EXPERT ONLY: Use alternative method to export Docker image since Docker CLI export sometimes doesn't create the root filesystem properly.", action="store_true")
 def add_to_applet(args):
     register_docker_subcommand("add-to-applet")
     try:
@@ -254,13 +291,14 @@ def add_to_applet(args):
     except Exception as e:
         raise Exception("{} does not appear to have a dxapp.json that parses. Please make sure you have selected a working DNAnexus applet directory\n\n{}.".format(args.applet, e))
     tmpdir = tempfile.mkdtemp()
-    local_image_to_aci(args.image, tmpdir, os.path.abspath(args.applet)+"/resources")
+    local_image_to_aci(args.image, tmpdir, os.path.abspath(args.applet)+"/resources", args.alternative_export)
     shutil.rmtree(tmpdir)
 parser_add_to_applet.set_defaults(func=add_to_applet)
 
-parser_create_asset = subparsers.add_parser('create-asset', help="EXPERIMENTAL: Caches a local Docker image as an asset in the DNAnexus platform (subject to change)")
+parser_create_asset = subparsers.add_parser('create-asset', help="Caches a local Docker image as an asset in the DNAnexus platform (subject to change)")
 parser_create_asset.add_argument("--output_path", "-o", help="Project ID and path in project to upload image to (defaults to project root)")
 parser_create_asset.add_argument("image", help="image name")
+parser_create_asset.add_argument("--alternative_export", help="EXPERT ONLY: Use alternative method to export Docker image since Docker CLI export sometimes doesn't create the root filesystem properly.", action="store_true")
 def create_asset(args):
     register_docker_subcommand("create-asset")
     # Create asset
@@ -268,7 +306,7 @@ def create_asset(args):
     asset_path = tmpdir+"/resources/usr/bin"
     makedirs(asset_path)
 
-    local_image_to_aci(args.image, tmpdir, tmpdir+"/resources")
+    local_image_to_aci(args.image, tmpdir, tmpdir+"/resources", args.alternative_export)
 
     imagename = args.image.replace("/", "%").replace(":","#")
     # Create the asset configuration
