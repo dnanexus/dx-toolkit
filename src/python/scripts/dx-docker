@@ -296,6 +296,14 @@ def add_to_applet(args):
 parser_add_to_applet.set_defaults(func=add_to_applet)
 
 parser_create_asset = subparsers.add_parser('create-asset', help="Caches a local Docker image as an asset in the DNAnexus platform (subject to change)")
+def _upload_file(filename, project_id=None, folder_path=None, wait_on_close=True, hidden=True):
+    kwargs = {'project': project_id, 'folder': folder_path}
+    try:
+        return dxpy.upload_local_file(filename, wait_on_close=wait_on_close, hidden=hidden, **kwargs).get_id()
+    except Exception as e:
+        print "Unable to upload file {}.\n{}.".format(filename, e)
+        sys.exit(1)
+
 parser_create_asset.add_argument("--output_path", "-o", help="Project ID and path in project to upload image to (defaults to project root)")
 parser_create_asset.add_argument("image", help="image name")
 parser_create_asset.add_argument("--alternative_export", help="EXPERT ONLY: Use alternative method to export Docker image since Docker CLI export sometimes doesn't create the root filesystem properly.", action="store_true")
@@ -320,20 +328,19 @@ def create_asset(args):
     with open("{}/dxasset.json".format(tmpdir), "w") as f:
         f.write(json.dumps(dxasset))
 
-    project_name = ""
-    project_path = ""
+    project_id = ""
+    folder_path = ""
     if args.output_path:
         if ":" in args.output_path:
-            project_name, project_path = args.output_path.split(":")
-            destpath = args.output_path + imagename
+            project_id, folder_path = args.output_path.split(":")
         else:
-            project_name = dxpy.PROJECT_CONTEXT_ID
-            project_path = args.output_path
-            destpath = project_name + ":" + args.output_path + imagename
+            project_id = dxpy.PROJECT_CONTEXT_ID
+            folder_path = args.output_path
     else:
-        project_name = dxpy.PROJECT_CONTEXT_ID
-        project_path = ""
-        destpath = project_name + ":" + imagename
+        project_id = dxpy.PROJECT_CONTEXT_ID
+        folder_path = ""
+    if not folder_path.startswith("/"):
+        folder_path = "/" + folder_path
 
     sys.stderr.write(dxpy.utils.printing.YELLOW("Building DNAnexus asset for {}\n".format(args.image)))
     escaped_image_name = args.image.replace("/","\\/").replace(":", "\\:")
@@ -341,8 +348,7 @@ def create_asset(args):
     os.chdir(tmpdir)
     with tarfile.open(image_tarball, "w:gz") as tar:
         tar.add(tmpdir+"/resources", "/")
-    asset_tarball_id = shell_suppress(["dx", "upload", "--wait", "--brief", "--visibility", "hidden", image_tarball]).rstrip()
-    asset_tarball_id = dxpy.upload_local_file(image_tarball, wait_on_close=True, hidden=True).get_id()
+    asset_tarball_id = _upload_file(image_tarball, project_id, folder_path)
     record_name = args.image
     record_details = {"archiveFileId": {"$dnanexus_link": asset_tarball_id}}
     record_properties = {
@@ -353,16 +359,15 @@ def create_asset(args):
                           "release": dxasset["release"]
                         }
     asset_bundle = dxpy.new_dxrecord(name=record_name,
+                                     project=project_id, folder=folder_path,
                                      types=["AssetBundle"], details=record_details,
                                      properties=record_properties, close=True)
 
     # Add a property called {"AssetBundle": record-xxx} to the hidden tarball
-    asset_file = dxpy.DXFile(asset_tarball_id)
+    asset_file = dxpy.DXFile(asset_tarball_id, project=project_id)
     asset_file.set_properties({"AssetBundle": asset_bundle.get_id()})
 
     # Print output message for successful building of asset
-    if project_path == "":
-        project_path = "/"
     sys.stderr.write(dxpy.utils.printing.YELLOW("Image {} successfully cached in DNAnexus platform.\n".format(args.image)))
     sys.stderr.write("To include this cached image in an application, please include the following within the runspec/assetDepends list in your dxapp.json.\n")
     sys.stderr.write("    {"+dxpy.utils.printing.BLUE("""
@@ -370,7 +375,7 @@ def create_asset(args):
         "folder": \"{}\",
         "name": \"{}\",
         "version": "0.0.1"
-    """).format(project_name, project_path, args.image)+"}\n")
+    """).format(project_id, folder_path, args.image)+"}\n")
 
     # Remove the temporary directory
     shutil.rmtree(tmpdir)
