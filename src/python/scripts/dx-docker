@@ -295,7 +295,6 @@ def add_to_applet(args):
     shutil.rmtree(tmpdir)
 parser_add_to_applet.set_defaults(func=add_to_applet)
 
-parser_create_asset = subparsers.add_parser('create-asset', help="Caches a local Docker image as an asset in the DNAnexus platform (subject to change)")
 def _upload_file(filename, project_id=None, folder_path=None, wait_on_close=True, hidden=True):
     kwargs = {'project': project_id, 'folder': folder_path}
     try:
@@ -304,6 +303,8 @@ def _upload_file(filename, project_id=None, folder_path=None, wait_on_close=True
         print "Unable to upload file {}.\n{}.".format(filename, e)
         sys.exit(1)
 
+
+parser_create_asset = subparsers.add_parser('create-asset', help="Caches a local Docker image as an asset in the DNAnexus platform (subject to change)")
 parser_create_asset.add_argument("--output_path", "-o", help="Project ID and path in project to upload image to (defaults to project root)")
 parser_create_asset.add_argument("image", help="image name")
 parser_create_asset.add_argument("--alternative_export", help="EXPERT ONLY: Use alternative method to export Docker image since Docker CLI export sometimes doesn't create the root filesystem properly.", action="store_true")
