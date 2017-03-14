@@ -1363,6 +1363,32 @@ class TestDXClientUploadDownload(DXTestCase):
             # Even after project 1 is destroyed, the download URL should still work
             run("wget -O /dev/null " + download_url)
 
+    @unittest.skipUnless(testutil.TEST_ENV,
+                         'skipping test that would clobber your local environment')
+    def test_dx_download_when_current_project_inaccessible(self):
+        with testutil.TemporaryFile(close=True) as fd:
+            with temporary_project("test_dx_accessible_project", select=True) as p_accessible:
+                tmp_filename = os.path.basename(fd.name)
+                listing = run("dx upload --wait {filepath} --path {project}:{filename}".format(
+                        filepath=fd.name, project=p_accessible.get_id(), filename=tmp_filename))
+                self.assertIn(p_accessible.get_id(), listing)
+                self.assertIn(os.path.basename(fd.name), listing)
+
+                # Create another project, select it, and remove it to loose access to it
+                p_inaccessible_name = ("test_dx_inaccessible_project" + str(random.randint(0, 1000000)) + "_" +
+                                str(int(time.time() * 1000)))
+                p_inaccessible_id = run("dx new project {name} --brief --select".format(name=p_inaccessible_name)).strip()
+                with select_project(p_inaccessible_id) as selected:
+                    self.assertEqual(run("dx find projects --brief --name {name}".format(name=p_inaccessible_name)).strip(),
+                                 p_inaccessible_id)
+                    run("dx rmproject -y {name} -q".format(name=p_inaccessible_name))
+                    self.assertEqual(run("dx find projects --brief --name {name}".format(name=p_inaccessible_name)).strip(), "")
+                    current_project_env_var = dxpy.config.get('DX_PROJECT_CONTEXT_ID', None)
+                    self.assertEqual(p_inaccessible_id, current_project_env_var)
+                    # Successfully download file from the accessible project
+                    result = run("dx download {project}:{filename}".format(project=p_accessible.name, filename=tmp_filename)).strip()
+                    self.assertTrue(p_accessible.get_id() in result)
+
     def test_dx_upload_mult_paths(self):
         testdir = tempfile.mkdtemp()
         os.mkdir(os.path.join(testdir, 'a'))

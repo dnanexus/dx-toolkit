@@ -102,8 +102,8 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
     :param append: If True, appends to the local file (default is to truncate local file if it exists)
     :type append: boolean
     :param project: project to use as context for this download (may affect
-            which billing account is billed for this download). If None, no
-            project hint is supplied to the API server.
+            which billing account is billed for this download). If None or
+            DXFile.NO_PROJECT_HINT, no project hint is supplied to the API server.
     :type project: str or None
 
 
@@ -165,7 +165,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
     if isinstance(dxid, DXFile):
         dxfile = dxid
     else:
-        dxfile = DXFile(dxid, mode="r")
+        dxfile = DXFile(dxid, mode="r", project=(project if project != DXFile.NO_PROJECT_HINT else None))
 
     dxfile_desc = dxfile.describe(fields={"parts"}, default_fields=True, **kwargs)
     parts = dxfile_desc["parts"]
