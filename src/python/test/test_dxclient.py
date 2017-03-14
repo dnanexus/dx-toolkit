@@ -2394,7 +2394,7 @@ dx-jobutil-add-output outrecord $record_id
         with self.assertSubprocessFailure(stderr_regexp='unrecognized arguments', exit_code=2):
             run("dx run " + applet_id + " --brief -y -d " + job2_dep_id + " " + job1_dep_id)
 
-        with self.assertSubprocessFailure(stderr_regexp='could not be found', exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp='ResourceNotFound', exit_code=3):
             run("dx run " + applet_id + " --brief -y -d not_a_valid_id")
 
         # Testing for use of --depends-on with running workflows
