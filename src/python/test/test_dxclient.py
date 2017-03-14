@@ -6617,6 +6617,50 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         with self.assertSubprocessFailure(exit_code=3):
             run("dx describe " + applet_id)
 
+    def test_overwrite_multiple_applets(self):
+        app_spec = {
+            "name": "applet_overwriting",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+
+        app_dir = self.write_app_directory("applet_overwriting", json.dumps(app_spec), "code.py")
+
+        # Create two applets in different directories, but with the same name
+        run("dx mkdir subfolder1")
+        app_1_spec = json.loads(run("dx build --json --destination=subfolder1/applet_overwriting " + app_dir))
+        run("dx mkdir subfolder2")
+        app_2_spec = json.loads(run("dx build --json --destination=subfolder2/applet_overwriting " + app_dir))
+
+        # Move the applet in subfolder2 to subfolder1
+        run("dx mv subfolder2/applet_overwriting subfolder1")
+
+        # Verify that subfolder1 has two applets with the same name
+        desc_1 = json.loads(run("dx describe --json " + app_1_spec["id"]))
+        desc_2 = json.loads(run("dx describe --json " + app_2_spec["id"]))
+        self.assertEqual(desc_1["name"], desc_2["name"])
+        self.assertEqual(desc_1["folder"], desc_2["folder"])
+
+        # Creating a new applet with the same name should fail
+        with self.assertSubprocessFailure():
+            run("dx build --destination=subfolder1/applet_overwriting " + app_dir)
+
+        # Creating a new applet with the same name with overwrite should succeed
+        app_final_spec = json.loads(run("dx build -f --json --destination=subfolder1/applet_overwriting " + app_dir))
+
+        # Verify that the original applets were deleted by dx build -f
+        with self.assertSubprocessFailure(exit_code=3):
+            run("dx describe " + app_1_spec["id"])
+        with self.assertSubprocessFailure(exit_code=3):
+            run("dx describe " + app_2_spec["id"])
+
+        # Verify that the newly created applet exists
+        run("dx describe " + app_final_spec["id"])
+
+
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
     def test_update_app_categories(self):
