@@ -6,9 +6,23 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+### Added
+
+* Alternative export for `dx-docker` when docker image is improperly exported by docker engine
+
 ### Fixed
 
 * Issue where calls to `dx run -i` in an interactive terminal does not display options for multiple files
+* `dx run -i=filename` now prompts user to select input file if duplicate filenames exist in project
+* `dx-docker create-asset` now supports output path
+* `dx download` failure when run within project that user has lost access to
+* `dx build -f` now removes all applets with matching name/directory
+
+## [213.1]
+
+### Fixed
+
+* `dx-docker run` KeyError when docker image is built from container
 
 ## [213.0] - beta
 
