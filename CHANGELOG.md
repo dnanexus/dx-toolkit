@@ -6,6 +6,9 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+
+## [214.0] - beta
+
 ### Added
 
 * Alternative export for `dx-docker` when docker image is improperly exported by docker engine
@@ -18,13 +21,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx download` failure when run within project that user has lost access to
 * `dx build -f` now removes all applets with matching name/directory
 
-## [213.1]
+## [213.1] - 2017-03-16 - stable
 
 ### Fixed
 
 * `dx-docker run` KeyError when docker image is built from container
 
-## [213.0] - beta
+## [213.0]
 
 ### Fixed
 
@@ -32,7 +35,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Show download progress for calls to `dx download -r`
 * Issue where calls to `dxpy.download_all_inputs(parallel=True)` hang
 
-## [212.0] - 2017-03-02 - stable
+## [212.0]
 
 ### Fixed
 
