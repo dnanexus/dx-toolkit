@@ -15,7 +15,6 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Fixed
 
-* Issue where calls to `dx run -i` in an interactive terminal does not display options for multiple files
 * `dx run -i=filename` now prompts user to select input file if duplicate filenames exist in project
 * `dx-docker create-asset` now supports output path
 * `dx download` failure when run within project that user has lost access to
