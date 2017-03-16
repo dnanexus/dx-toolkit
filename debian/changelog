@@ -1,3 +1,9 @@
+dx-toolkit (0.213.1) precise; urgency=low
+
+  * Fixed: `dx-docker run` KeyError when docker image is built from container 
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 16 Mar 2017 16:54:41 +0000
+
 dx-toolkit (0.213.0) precise; urgency=low
 
   * Fixed: Recursife file upload on Windows for the Upload Agent
