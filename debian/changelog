@@ -1,6 +1,16 @@
+dx-toolkit (0.214.0) precise; urgency=low
+
+  * Added: Alternative export for dx-docker when docker image is improperly exported by docker engine
+  * Fixed: Issue where calls to `dx run -i` in an interactive terminal does not display options for multiple files
+  * Fixed: `dx-docker create-asset` now supports output path
+  * Fixed: `dx-download` failure when run within project that user has lost access to
+  * Fixed: `dx build -f` now removes all applets with matching name/directory
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 16 Mar 2017 16:49:05 +0000
+
 dx-toolkit (0.213.0) precise; urgency=low
 
-  * Fixed: Recursife file upload on Windows for the Upload Agent
+  * Fixed: Recursive file upload on Windows for the Upload Agent
   * Fixed: Show download progress for calls to `dx download -r`
   * Fixed: Issue where calls to `dxpy.download_all_inputs(parallel=True)` hang
 
