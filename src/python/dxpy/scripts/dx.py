@@ -3258,7 +3258,7 @@ def ssh(args, ssh_config_verified=False):
     exit_code = subprocess.call(ssh_args)
     try:
         job_desc = dxpy.describe(args.job_id)
-        if job_desc['state'] == 'running':
+        if args.check_running and job_desc['state'] == 'running':
             msg = "Job {job_id} is still running. Terminate now?".format(job_id=args.job_id)
             if prompt_for_yn(msg, default=False):
                 dxpy.api.job_terminate(args.job_id)
@@ -4190,6 +4190,7 @@ parser_ssh.add_argument('job_id', help='Name of job to connect to')
 parser_ssh.add_argument('ssh_args', help='Command-line arguments to pass to the SSH client', nargs=argparse.REMAINDER)
 parser_ssh.add_argument('--ssh-proxy', metavar=('<address>:<port>'),
                         help='SSH connect via proxy, argument supplied is used as the proxy address and port')
+parser_ssh.add_argument('--suppress-running-check', action='store_false', help=argparse.SUPPRESS, dest='check_running')
 parser_ssh.set_defaults(func=ssh)
 register_parser(parser_ssh, categories='exec')
 
