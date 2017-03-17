@@ -33,6 +33,7 @@ TEST_AZURE = ((os.environ.get('DXTEST_AZURE', '').startswith('azure:') and os.en
               (os.environ.get('DXTEST_AZURE') and 'azure:westus'))
 TEST_ISOLATED_ENV = _run_all_tests or 'DXTEST_ISOLATED_ENV' in os.environ
 TEST_ENV = _run_all_tests or 'DXTEST_ENV' in os.environ
+TEST_DX_DOCKER = 'DXTEST_DOCKER' in os.environ
 TEST_FUSE = _run_all_tests or 'DXTEST_FUSE' in os.environ
 TEST_HTTP_PROXY = _run_all_tests or 'DXTEST_HTTP_PROXY' in os.environ
 TEST_NO_RATE_LIMITS = _run_all_tests or 'DXTEST_NO_RATE_LIMITS' in os.environ
