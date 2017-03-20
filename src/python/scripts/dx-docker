@@ -260,7 +260,27 @@ def local_image_to_aci(image, tmpdir, dirprefix, alternative_export=False):
     shell_suppress(["which", "docker"])
     shell_suppress(["which", "docker2aci"])
 
-    # Perform the operations to save and subsequently cache Docker image to the platform
+    # Check if image is docker image id or digest
+    def is_image_id_or_digest(image):
+        # Remove prefix for string comparisons
+        if ('@sha256:' in image or image.startswith('sha256:')):
+            img_id = image.split('sha256:')[1]
+        else:
+            img_id = image
+
+        image_id_list = shell_suppress(["docker", "images", "-q", "--no-trunc"]).split("\n")
+        digest_list = shell_suppress(["docker", "images", "--digests", "--filter", "dangling=false", "--format", "{{.Repository}}@{{.Digest}}"]).split("\n")
+
+        # Check if given image id equal to full hash or short hash (first 12 chars)
+        if any(img_id in [image_id.split('sha256:')[1], image_id.split('sha256:')[1][:12]] for image_id in image_id_list if image_id.strip()):
+            sys.stderr.write(dxpy.utils.printing.YELLOW("Image ID: {} found in local docker cache\n".format(image)))
+            return True
+        # Check if given image id is a digest
+        elif any(image == digest for digest in digest_list if digest.strip()):
+            sys.stderr.write(dxpy.utils.printing.YELLOW("Digest: {} found in local docker cache\n".format(image)))
+            return True
+        else:    
+            return False
 
     # We have observed an instance where the Docker CLI and docker2aci do not properly export a rootfs.  Here is a hopefully temporary workaround
     if alternative_export:
@@ -305,7 +325,18 @@ def local_image_to_aci(image, tmpdir, dirprefix, alternative_export=False):
     else:
         sys.stderr.write(dxpy.utils.printing.YELLOW("Exporting Docker image {}\n".format(image)))
         docker_tarball = tmpdir+"/image.docker.tgz"
-        shell(["docker", "save", "-o", docker_tarball, image])
+        # If image id is given instead of 'repo:tag', tag image as 'dx-docker:id' and export with `docker save dx-docker:id`
+        if is_image_id_or_digest(image):
+            # Remove 'sha256:' prefix if it is supplied, colon cannot exist in the repo:tag format
+            if ('@sha256:' in image or image.startswith('sha256:')):
+                image_id_tag = image.split('sha256:')[1]
+            else:
+                image_id_tag = image
+            shell_suppress(["docker", "tag", image, "dx-docker:{}".format(image_id_tag)])
+            shell(["docker", "save", "-o", docker_tarball, "dx-docker:{}".format(image_id_tag)])
+            shell_suppress(["docker", "rmi", "dx-docker:{}".format(image_id_tag)])
+        else:
+            shell(["docker", "save", "-o", docker_tarball, image])
         get_aci(image, docker_tarball, prefix=dirprefix)
 
 parser_add_to_applet = subparsers.add_parser('add-to-applet', help="Adds a local Docker image to an applet")

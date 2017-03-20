@@ -144,6 +144,36 @@ class TestDXDocker(DXTestCase):
             ls_out = run("dx ls testfolder\\/busybox.tar.gz").strip()
             self.assertEqual(ls_out, 'busybox.tar.gz')
 
+    def test_dx_docker_create_asset_with_short_imageid(self):
+        with temporary_project(select=True) as temp_project:
+            test_projectid = temp_project.get_id()
+            run("docker pull ubuntu:14.04")
+            short_id = run("docker images -q ubuntu:14.04").strip()
+            run("dx-docker create-asset {short_id} -o testfolder".format(short_id=short_id))
+            create_folder_in_project(test_projectid, '/testfolder')
+            ls_out = run("dx ls /testfolder").strip()
+            self.assertEqual(ls_out, short_id)
+
+    def test_dx_docker_create_asset_with_long_imageid(self):
+        with temporary_project(select=True) as temp_project:
+            test_projectid = temp_project.get_id()
+            run("docker pull ubuntu:14.04")
+            long_id = run("docker images --no-trunc -q ubuntu:14.04").strip()
+            run("dx-docker create-asset {long_id} -o testfolder".format(long_id=long_id))
+            create_folder_in_project(test_projectid, '/testfolder')
+            ls_out = run("dx ls /testfolder").strip()
+            self.assertEqual(ls_out, long_id)
+
+    def test_dx_docker_create_asset_with_image_digest(self):
+        with temporary_project(select=True) as temp_project:
+            test_projectid = temp_project.get_id()
+            run("docker pull ubuntu:14.04")
+            image_digest = run("docker inspect ubuntu:14.04 | jq -r '.[] | .RepoDigests[0]'").strip()
+            run("dx-docker create-asset {image_digest} -o testfolder".format(image_digest=image_digest))
+            create_folder_in_project(test_projectid, '/testfolder')
+            ls_out = run("dx ls /testfolder").strip()
+            self.assertEqual(ls_out, image_digest)
+
     def test_dx_docker_additional_container(self):
         run("dx-docker run busybox ls")
 
