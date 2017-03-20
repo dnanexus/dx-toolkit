@@ -12,6 +12,7 @@ import multiprocessing.dummy
 import tempfile
 import glob
 import datetime
+import time
 import dateutil.parser
 import dxpy.utils.printing
 import dxpy
@@ -38,7 +39,7 @@ def shell_suppress(cmd, ignore_error=False):
         if ignore_error:
             pass
         else:
-            print e.output
+            print e.output.strip()
             raise
     return out
 
@@ -64,6 +65,34 @@ def extract_aci(acifile):
     tmpdir = tempfile.mkdtemp()
     shell_suppress(["tar", "-xf", acifile, "--exclude", "rootfs/dev/*", "-C", tmpdir], ignore_error=True)
     return tmpdir
+
+def retry(tries=3, delay=1, backoff=2, retry_on_exceptions=None):
+    '''A decorator that retries a function until it completes without throwing an exception.'''
+
+    if tries < 0:
+        raise ValueError("tries must be a non-negative number")
+    if delay <= 0:
+        raise ValueError("delay must be a positive number")
+    if backoff <= 1:
+        raise ValueError("backoff must be greater than 1")
+    if not retry_on_exceptions:
+        retry_on_exceptions = (Exception,)
+
+    def decorated_f(f):
+        def wrapper(*args, **kwargs):
+            mdelay = delay
+            for i in range(tries):
+                try:
+                    f(*args, **kwargs)
+                except retry_on_exceptions as retry_exception:
+                    sys.stderr.write(dxpy.utils.printing.YELLOW("Error. Retrying in {} s.\n".format(mdelay)))
+                    time.sleep(mdelay)
+                    mdelay *= backoff
+                    if i == tries - 1:
+                        raise retry_exception
+                    continue
+        return wrapper
+    return decorated_f
 
 def get_aci(image, imgname, prefix="", quiet=False):
     def docker2aci_line(cmd):
@@ -109,7 +138,6 @@ def get_aci(image, imgname, prefix="", quiet=False):
     os.rename(glob.glob(tmpdir+"/*.aci")[0], img_dirname+"/"+urllib.quote_plus(image)+".aci")
     shutil.rmtree(tmpdir)
 
-
 def register_docker_subcommand(cmd):
     orig_user_agent = dxpy.USER_AGENT
     dxpy.USER_AGENT += " dx-docker {}".format(cmd)
@@ -119,6 +147,7 @@ def register_docker_subcommand(cmd):
 parser_pull = subparsers.add_parser('pull', help="Pulls a docker image for use in DNAnexus")
 parser_pull.add_argument("image", help="image name")
 parser_pull.add_argument("-q", "--quiet", action='store_true', help="Suppress printing pull progress to stderr")
+@retry()
 def pull(args):
     if not os.path.isdir(CACHE_DIR):
         makedirs(CACHE_DIR)
