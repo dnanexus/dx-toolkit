@@ -60,6 +60,11 @@ class TestDXDocker(DXTestCase):
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(CACHE_DIR)
+        
+    @classmethod
+    def setUpClass(cls):
+        run("docker pull ubuntu:14.04")
+        run("docker pull busybox")
 
     def test_dx_docker_pull(self):
         run("dx-docker pull ubuntu:14.04")
