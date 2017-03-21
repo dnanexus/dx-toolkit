@@ -573,7 +573,7 @@ class TestDXClient(DXTestCase):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test user')
     def test_dx_project_invite_without_email(self):
-        user_id = 'user-alice'
+        user_id = 'user-bob'
         with temporary_project() as unique_project:
             project_id = unique_project.get_id()
 
