@@ -5156,8 +5156,7 @@ class TestDXClientMembership(DXTestCase):
         return dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
 
     def setUp(self):
-        # Bob.
-        self.username = "000000000000000000000001"
+        self.username = "bob"
         self.user_id = "user-" + self.username
 
         # ADMIN: Alice.
