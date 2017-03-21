@@ -573,7 +573,7 @@ class TestDXClient(DXTestCase):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test user')
     def test_dx_project_invite_without_email(self):
-        user_id = 'user-000000000000000000000001'
+        user_id = 'user-alice'
         with temporary_project() as unique_project:
             project_id = unique_project.get_id()
 
@@ -4276,8 +4276,8 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
     @classmethod
     def setUpClass(cls):
         cls.org_id = "org-piratelabs"
-        cls.user_alice = "user-000000000000000000000000"  # ADMIN
-        cls.user_bob = "user-000000000000000000000001"
+        cls.user_alice = "user-alice"  # ADMIN
+        cls.user_bob = "user-bob"
         dxpy.api.org_invite(cls.org_id, {"invitee": cls.user_bob})  # Invite user_bob as MEMEBER of org-piratelabs
         cls.project_ppb = "project-0000000000000000000000pb"  # public project in "org-piratelabs"
 
@@ -4838,7 +4838,7 @@ class TestDXClientNewProject(DXTestCase):
                          'skipping test that requires presence of test org')
     def test_dx_create_new_project_with_bill_to(self):
         curr_bill_to = dxpy.api.user_describe(dxpy.whoami())['billTo']
-        alice_id = "user-000000000000000000000000"
+        alice_id = "user-alice"
         org_id = "org-piratelabs"
         project_name = "test_dx_create_project"
 
@@ -6471,22 +6471,22 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEqual(set(app_developers), set([my_userid, 'user-eve']))
 
         # Add and remove a developer
-        app_spec['developers'] = [my_userid, 'user-000000000000000000000001']
+        app_spec['developers'] = [my_userid, 'user-bob']
         self.write_app_directory("test_build_app_and_update_devs", json.dumps(app_spec), "code.py")
         self.run_and_assert_stderr_matches(
             'dx build --create-app --yes --json ' + app_dir,
-            'the following developers will be added: user-000000000000000000000001; and ' \
+            'the following developers will be added: user-bob; and ' \
             + 'the following developers will be removed: user-eve'
         )
         app_developers = dxpy.api.app_list_developers('app-test_build_app_and_update_devs')['developers']
-        self.assertEqual(set(app_developers), set([my_userid, 'user-000000000000000000000001']))
+        self.assertEqual(set(app_developers), set([my_userid, 'user-bob']))
 
         # Remove a developer
         app_spec['developers'] = [my_userid]
         self.write_app_directory("test_build_app_and_update_devs", json.dumps(app_spec), "code.py")
         self.run_and_assert_stderr_matches('dx build --create-app --yes --json ' + app_dir,
                                            'the following developers will be removed: ' +
-                                           'user-000000000000000000000001')
+                                           'user-bob')
         app_developers = dxpy.api.app_list_developers('app-test_build_app_and_update_devs')['developers']
         self.assertEqual(app_developers, [my_userid])
 

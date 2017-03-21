@@ -102,7 +102,7 @@ class TestDXProject(unittest.TestCase):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test user')
     def test_invite_without_email(self):
-        user_id = 'user-000000000000000000000001'
+        user_id = 'user-bob'
         dxproject = dxpy.DXProject(self.proj_id)
 
         # Check that user is not already invited to project
