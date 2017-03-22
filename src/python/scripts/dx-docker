@@ -148,11 +148,11 @@ parser_pull = subparsers.add_parser('pull', help="Pulls a docker image for use i
 parser_pull.add_argument("image", help="image name")
 parser_pull.add_argument("-q", "--quiet", action='store_true', help="Suppress printing pull progress to stderr")
 @retry()
-def pull(args):
+def pull(image, quiet):
     if not os.path.isdir(CACHE_DIR):
         makedirs(CACHE_DIR)
 
-    get_aci(args.image, "docker://"+args.image, quiet=args.quiet)
+    get_aci(image, "docker://"+image, quiet=quiet)
 parser_pull.set_defaults(func=pull)
 
 parser_run = subparsers.add_parser('run', help="Runs a docker image in a container")
@@ -165,15 +165,15 @@ parser_run.add_argument("--rootfs",  help="Use directory pointed to here for roo
 parser_run.add_argument("--rm",  action="store_true", help="Automatically remove the container when it exits")
 parser_run.add_argument("image", help="image name")
 parser_run.add_argument("command", help="command to run within container", nargs=argparse.REMAINDER, default=[])
-def run(args):
+def run(image, command, quiet, rm, env, rootfs, workdir, volume, entrypoint):
     register_docker_subcommand("run")
-    acifile = get_aci_fname(args.image)
+    acifile = get_aci_fname(image)
     if not acifile:
-        pull(parser_pull.parse_args([args.image]))
-        acifile = get_aci_fname(args.image)
+        pull(image, quiet)
+        acifile = get_aci_fname(image)
 
-    if args.rootfs:
-        tmpdir = args.rootfs
+    if rootfs:
+        tmpdir = rootfs
     else:
         tmpdir = extract_aci(acifile)
 
@@ -182,7 +182,7 @@ def run(args):
 
     annotations = {a['name'].split("/")[-1]: a['value'] for a in imagemeta['annotations']}
     labels = {a['name'].split("/")[-1]: a['value'] for a in imagemeta['labels']}
-    if not args.quiet:
+    if not quiet:
         def print_annotation(name, key, data=annotations):
             if key in data:
                 sys.stderr.write(dxpy.utils.printing.BLUE(name)+"\t"+dxpy.utils.printing.YELLOW(data[key])+"\n")
@@ -214,44 +214,47 @@ def run(args):
         print_annotation("Default CMD", 'cmd')
         sys.stderr.write("\n\n")
 
-    vols = ["/run/shm/:/dev/shm"] + args.volume
+    vols = ["/run/shm/:/dev/shm"] + volume
     volume = []
     for v in vols:
        volume.append("-b")
        volume.append(v)
 
-    entrypoint = []
-    if args.entrypoint:
-        entrypoint = [args.entrypoint]
+    entry_point = []
+    if entrypoint:
+        entry_point = [entrypoint]
     elif 'entrypoint' in annotations:
-        entrypoint = json.loads(annotations['entrypoint'])
+        entry_point = json.loads(annotations['entrypoint'])
 
     cmd = []
-    if args.command:
-         cmd = args.command
-    elif 'cmd' in annotations and not args.entrypoint:
+    if command:
+         cmd = command
+    elif 'cmd' in annotations and not entrypoint:
          cmd = json.loads(annotations['cmd'])
 
-    container_cmd = entrypoint + cmd
+    print cmd
+    container_cmd = entry_point + cmd
+    print container_cmd
 
-    workdir = "/"
+    wkdir = "/"
     if 'app' in imagemeta and 'workingDirectory' in imagemeta['app']:
-       workdir = imagemeta['app']['workingDirectory']
-    if args.workdir:
-       workdir = args.workdir
+       wkdir = imagemeta['app']['workingDirectory']
+    if workdir:
+       wkdir = workdir
 
     default_homedir_env = "HOME=/root"
-    env = ["env", "-i", default_homedir_env]
+    environment = ["env", "-i", default_homedir_env]
     if 'app' in imagemeta and 'environment' in imagemeta['app']:
-        env.extend(args.env + [var['name'] +"="+var['value']  for var in imagemeta['app']['environment']])
+        environment.extend(env + [var['name'] +"="+var['value']  for var in imagemeta['app']['environment']])
 
-    if args.rm and not args.quiet:
+    if rm and not quiet:
         sys.stderr.write(dxpy.utils.printing.YELLOW("--rm: Note that by default the container is not preserved after execution\n"))
 
     # TODO: implement some form of nested subprocesses to avoid quoting command array if possible
-    proot_cmd =  ["proot", "-R", "{tmpdir}/rootfs".format(tmpdir=tmpdir)] + volume + ["-w", workdir] + env + ["/bin/sh", "-c"] + [" ".join(("'"+x+"'" for x in container_cmd))]
+    proot_cmd =  ["proot", "-R", "{tmpdir}/rootfs".format(tmpdir=tmpdir)] + volume + ["-w", wkdir] + environment + ["/bin/sh", "-c"] + [" ".join(("'"+x+"'" for x in container_cmd))]
+    print proot_cmd
     shell(proot_cmd)
-    if not args.rootfs:
+    if not rootfs:
         shutil.rmtree(tmpdir)
 parser_run.set_defaults(func=run)
 
@@ -447,4 +450,10 @@ parser_create_asset.set_defaults(func=create_asset)
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    args.func(args)
+    print args
+    if args.func == pull:
+        args.func(args.image, args.quiet)
+    elif args.func == run:
+        args.func(image=args.image, command=args.command, quiet=args.quiet, rm=args.rm, env=args.env, rootfs=args.rootfs, workdir=args.workdir, volume=args.volume, entrypoint=args.entrypoint)
+    else:
+        args.func(args)
