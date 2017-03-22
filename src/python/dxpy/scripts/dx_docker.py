@@ -165,7 +165,7 @@ parser_run.add_argument("--rootfs",  help="Use directory pointed to here for roo
 parser_run.add_argument("--rm",  action="store_true", help="Automatically remove the container when it exits")
 parser_run.add_argument("image", help="image name")
 parser_run.add_argument("command", help="command to run within container", nargs=argparse.REMAINDER, default=[])
-def run(image, command=None, quiet=None, rm=None, env=None, rootfs=None, workdir=None, volume=[], entrypoint=None):
+def run(image, command=[], quiet=None, rm=None, env=[], rootfs=None, workdir=None, volume=[], entrypoint=None):
     register_docker_subcommand("run")
     acifile = get_aci_fname(image)
     if not acifile:
