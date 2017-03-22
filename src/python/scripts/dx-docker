@@ -232,9 +232,7 @@ def run(image, command, quiet, rm, env, rootfs, workdir, volume, entrypoint):
     elif 'cmd' in annotations and not entrypoint:
          cmd = json.loads(annotations['cmd'])
 
-    print cmd
     container_cmd = entry_point + cmd
-    print container_cmd
 
     wkdir = "/"
     if 'app' in imagemeta and 'workingDirectory' in imagemeta['app']:
@@ -346,15 +344,15 @@ parser_add_to_applet = subparsers.add_parser('add-to-applet', help="Adds a local
 parser_add_to_applet.add_argument("image", help="image name")
 parser_add_to_applet.add_argument("applet", help="directory corresponding to applet")
 parser_add_to_applet.add_argument("--alternative_export", help="EXPERT ONLY: Use alternative method to export Docker image since Docker CLI export sometimes doesn't create the root filesystem properly.", action="store_true")
-def add_to_applet(args):
+def add_to_applet(applet, image, alternative_export=False):
     register_docker_subcommand("add-to-applet")
     try:
-        with open(args.applet+"/dxapp.json") as f:
+        with open(applet+"/dxapp.json") as f:
             json.loads(f.read())
     except Exception as e:
-        raise Exception("{} does not appear to have a dxapp.json that parses. Please make sure you have selected a working DNAnexus applet directory\n\n{}.".format(args.applet, e))
+        raise Exception("{} does not appear to have a dxapp.json that parses. Please make sure you have selected a working DNAnexus applet directory\n\n{}.".format(applet, e))
     tmpdir = tempfile.mkdtemp()
-    local_image_to_aci(args.image, tmpdir, os.path.abspath(args.applet)+"/resources", args.alternative_export)
+    local_image_to_aci(image, tmpdir, os.path.abspath(applet)+"/resources", alternative_export)
     shutil.rmtree(tmpdir)
 parser_add_to_applet.set_defaults(func=add_to_applet)
 
@@ -371,19 +369,19 @@ parser_create_asset = subparsers.add_parser('create-asset', help="Caches a local
 parser_create_asset.add_argument("--output_path", "-o", help="Project ID and path in project to upload image to (defaults to project root)")
 parser_create_asset.add_argument("image", help="image name")
 parser_create_asset.add_argument("--alternative_export", help="EXPERT ONLY: Use alternative method to export Docker image since Docker CLI export sometimes doesn't create the root filesystem properly.", action="store_true")
-def create_asset(args):
+def create_asset(output_path, image, alternative_export=False):
     register_docker_subcommand("create-asset")
     # Create asset
     tmpdir = tempfile.mkdtemp()
     asset_path = tmpdir+"/resources/usr/bin"
     makedirs(asset_path)
 
-    local_image_to_aci(args.image, tmpdir, tmpdir+"/resources", args.alternative_export)
+    local_image_to_aci(image, tmpdir, tmpdir+"/resources", alternative_export)
 
-    imagename = args.image.replace("/", "%").replace(":","#")
+    imagename = image.replace("/", "%").replace(":","#")
     # Create the asset configuration
     dxasset = { 'name': imagename }
-    dxasset['title'] = "DNAnexus asset for Docker image "+args.image
+    dxasset['title'] = "DNAnexus asset for Docker image "+image
     dxasset['description'] = dxasset['title']
     dxasset['version'] = "0.0.1"
     dxasset['distribution'] = "Ubuntu"
@@ -394,27 +392,27 @@ def create_asset(args):
 
     project_id = ""
     folder_path = ""
-    if args.output_path:
-        if ":" in args.output_path:
-            project_id, folder_path = args.output_path.split(":")
+    if output_path:
+        if ":" in output_path:
+            project_id, folder_path = output_path.split(":")
         else:
             project_id = dxpy.PROJECT_CONTEXT_ID
-            folder_path = args.output_path
+            folder_path = output_path
     else:
         project_id = dxpy.PROJECT_CONTEXT_ID
         folder_path = ""
     if not folder_path.startswith("/"):
         folder_path = "/" + folder_path
 
-    sys.stderr.write(dxpy.utils.printing.YELLOW("Building DNAnexus asset for {}\n".format(args.image)))
-    escaped_image_name = args.image.replace("/","\\/").replace(":", "\\:")
+    sys.stderr.write(dxpy.utils.printing.YELLOW("Building DNAnexus asset for {}\n".format(image)))
+    escaped_image_name = image.replace("/","\\/").replace(":", "\\:")
     image_tarball = imagename+".tar.gz"
     os.chdir(tmpdir)
     with tarfile.open(image_tarball, "w:gz") as tar:
         tar.add(tmpdir+"/resources", "/")
-    sys.stderr.write(dxpy.utils.printing.YELLOW("Uploading DNAnexus asset for {}\n".format(args.image)))
+    sys.stderr.write(dxpy.utils.printing.YELLOW("Uploading DNAnexus asset for {}\n".format(image)))
     asset_tarball_id = _upload_file(image_tarball, project_id, folder_path)
-    record_name = args.image
+    record_name = image
     record_details = {"archiveFileId": {"$dnanexus_link": asset_tarball_id}}
     record_properties = {
                           "title": dxasset["title"],
@@ -433,14 +431,14 @@ def create_asset(args):
     asset_file.set_properties({"AssetBundle": asset_bundle.get_id()})
 
     # Print output message for successful building of asset
-    sys.stderr.write(dxpy.utils.printing.YELLOW("Image {} successfully cached in DNAnexus platform.\n".format(args.image)))
+    sys.stderr.write(dxpy.utils.printing.YELLOW("Image {} successfully cached in DNAnexus platform.\n".format(image)))
     sys.stderr.write("To include this cached image in an application, please include the following within the runspec/assetDepends list in your dxapp.json.\n")
     sys.stderr.write("    {"+dxpy.utils.printing.BLUE("""
         "project": \"{}\",
         "folder": \"{}\",
         "name": \"{}\",
         "version": "0.0.1"
-    """).format(project_id, folder_path, args.image)+"}\n")
+    """).format(project_id, folder_path, image)+"}\n")
 
     # Remove the temporary directory
     shutil.rmtree(tmpdir)
