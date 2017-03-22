@@ -250,7 +250,6 @@ def run(image, command, quiet, rm, env, rootfs, workdir, volume, entrypoint):
 
     # TODO: implement some form of nested subprocesses to avoid quoting command array if possible
     proot_cmd =  ["proot", "-R", "{tmpdir}/rootfs".format(tmpdir=tmpdir)] + volume + ["-w", wkdir] + environment + ["/bin/sh", "-c"] + [" ".join(("'"+x+"'" for x in container_cmd))]
-    print proot_cmd
     shell(proot_cmd)
     if not rootfs:
         shutil.rmtree(tmpdir)
@@ -448,7 +447,6 @@ parser_create_asset.set_defaults(func=create_asset)
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    print args
     if args.func == pull:
         args.func(args.image, args.quiet)
     elif args.func == run:
