@@ -450,8 +450,12 @@ def main(**kwargs):
         args.func(args.image, args.quiet)
     elif args.func == run:
         args.func(image=args.image, command=args.command, quiet=args.quiet, rm=args.rm, env=args.env, rootfs=args.rootfs, workdir=args.workdir, volume=args.volume, entrypoint=args.entrypoint)
+    elif args.func == create_asset:
+        args.func(output_path=args.output_path, image=args.image, alternative_export=args.alternative_export)
+    elif args.func == add_to_applet:
+        args.func(applet=args.applet, image=args.image, alternative_export=args.alternative_export)
     else:
-        args.func(args)
+        print "Method doesn't exist!"
 
 if __name__ == "__main__":
     main()
