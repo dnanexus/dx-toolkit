@@ -6,6 +6,17 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+## Added
+
+* dx-docker test suite to toolkit
+* Retry download of Docker image if there is transient network failure
+* Allow image ID as a parameter for `dx-docker`; see wiki documentation for more details
+
+## [214.1]
+
+### Fixed
+
+* missing pyasn1 module for OSX list of install dependencies; gets rid of import warning messages 
 
 ## [214.0] - beta
 
