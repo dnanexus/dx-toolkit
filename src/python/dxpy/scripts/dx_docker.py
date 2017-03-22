@@ -148,7 +148,7 @@ parser_pull = subparsers.add_parser('pull', help="Pulls a docker image for use i
 parser_pull.add_argument("image", help="image name")
 parser_pull.add_argument("-q", "--quiet", action='store_true', help="Suppress printing pull progress to stderr")
 @retry()
-def pull(image, quiet):
+def pull(image, quiet=None):
     if not os.path.isdir(CACHE_DIR):
         makedirs(CACHE_DIR)
 
@@ -165,7 +165,7 @@ parser_run.add_argument("--rootfs",  help="Use directory pointed to here for roo
 parser_run.add_argument("--rm",  action="store_true", help="Automatically remove the container when it exits")
 parser_run.add_argument("image", help="image name")
 parser_run.add_argument("command", help="command to run within container", nargs=argparse.REMAINDER, default=[])
-def run(image, command, quiet, rm, env, rootfs, workdir, volume, entrypoint):
+def run(image, command=None, quiet=None, rm=None, env=None, rootfs=None, workdir=None, volume=None, entrypoint=None):
     register_docker_subcommand("run")
     acifile = get_aci_fname(image)
     if not acifile:
@@ -368,7 +368,7 @@ parser_create_asset = subparsers.add_parser('create-asset', help="Caches a local
 parser_create_asset.add_argument("--output_path", "-o", help="Project ID and path in project to upload image to (defaults to project root)")
 parser_create_asset.add_argument("image", help="image name")
 parser_create_asset.add_argument("--alternative_export", help="EXPERT ONLY: Use alternative method to export Docker image since Docker CLI export sometimes doesn't create the root filesystem properly.", action="store_true")
-def create_asset(output_path, image, alternative_export=False):
+def create_asset(image, output_path=None, alternative_export=False):
     register_docker_subcommand("create-asset")
     # Create asset
     tmpdir = tempfile.mkdtemp()
@@ -447,7 +447,7 @@ parser_create_asset.set_defaults(func=create_asset)
 def main(**kwargs):
     args = parser.parse_args()
     if args.func == pull:
-        args.func(args.image, args.quiet)
+        args.func(image=args.image, quiet=args.quiet)
     elif args.func == run:
         args.func(image=args.image, command=args.command, quiet=args.quiet, rm=args.rm, env=args.env, rootfs=args.rootfs, workdir=args.workdir, volume=args.volume, entrypoint=args.entrypoint)
     elif args.func == create_asset:
