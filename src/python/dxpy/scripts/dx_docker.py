@@ -444,8 +444,7 @@ def create_asset(output_path, image, alternative_export=False):
 
 parser_create_asset.set_defaults(func=create_asset)
 
-
-if __name__ == "__main__":
+def main(**kwargs):
     args = parser.parse_args()
     if args.func == pull:
         args.func(args.image, args.quiet)
@@ -453,3 +452,6 @@ if __name__ == "__main__":
         args.func(image=args.image, command=args.command, quiet=args.quiet, rm=args.rm, env=args.env, rootfs=args.rootfs, workdir=args.workdir, volume=args.volume, entrypoint=args.entrypoint)
     else:
         args.func(args)
+
+if __name__ == "__main__":
+    main()
