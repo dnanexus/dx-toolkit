@@ -6,6 +6,7 @@ import argparse
 import sys
 import os
 import subprocess
+import shlex
 import pprint
 import json
 import multiprocessing.dummy
@@ -228,9 +229,9 @@ def run(image, command=[], quiet=None, rm=None, env=[], rootfs=None, workdir=Non
 
     cmd = []
     if command:
-         cmd = command
+        cmd = command if isinstance(command, list) else shlex.split(command)
     elif 'cmd' in annotations and not entrypoint:
-         cmd = json.loads(annotations['cmd'])
+        cmd = json.loads(annotations['cmd'])
 
     container_cmd = entry_point + cmd
 
