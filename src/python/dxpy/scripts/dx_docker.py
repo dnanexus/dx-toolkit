@@ -92,6 +92,7 @@ def retry(tries=3, delay=1, backoff=2, retry_on_exceptions=None):
                     if i == tries - 1:
                         raise retry_exception
                     continue
+                break
         return wrapper
     return decorated_f
 
