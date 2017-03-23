@@ -1,3 +1,9 @@
+dx-toolkit (0.214.1) precise; urgency=low
+
+  * Fixed: missing pyasn1 module for OSX list of install dependencies; gets rid of import warning messages
+
+ -- Geet Duggal <gduggal@dnanexus.com>  Thu, 23 Mar 2017 18:10:17 +0000
+
 dx-toolkit (0.214.0) precise; urgency=low
 
   * Added: Alternative export for dx-docker when docker image is improperly exported by docker engine
@@ -41,7 +47,7 @@ dx-toolkit (0.209.0) precise; urgency=low
   * Added: Support to build of upload agent on RHEL7
   * Added: Ability to build and get multi-region apps with custom system requirements
   * Fixed: Environment file so that source environment works properly on RHEL7
-  * Fixed: Modified dx-docker so that --rm passes through gracefully 
+  * Fixed: Modified dx-docker so that --rm passes through gracefully
 
  -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 02 Feb 2017 19:56:24 +0000
 
