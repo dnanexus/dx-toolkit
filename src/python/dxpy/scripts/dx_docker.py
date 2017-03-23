@@ -447,16 +447,9 @@ parser_create_asset.set_defaults(func=create_asset)
 
 def main(**kwargs):
     args = parser.parse_args()
-    if args.func == pull:
-        args.func(image=args.image, quiet=args.quiet)
-    elif args.func == run:
-        args.func(image=args.image, command=args.command, quiet=args.quiet, rm=args.rm, env=args.env, rootfs=args.rootfs, workdir=args.workdir, volume=args.volume, entrypoint=args.entrypoint)
-    elif args.func == create_asset:
-        args.func(output_path=args.output_path, image=args.image, alternative_export=args.alternative_export)
-    elif args.func == add_to_applet:
-        args.func(applet=args.applet, image=args.image, alternative_export=args.alternative_export)
-    else:
-        print "Method doesn't exist!"
+    func = args.func
+    del args.func
+    func(**vars(args))
 
 if __name__ == "__main__":
     main()
