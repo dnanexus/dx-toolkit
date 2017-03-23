@@ -189,9 +189,6 @@ class TestDXDocker(DXTestCase):
 @unittest.skipUnless(testutil.TEST_DX_DOCKER,
                     'skipping tests that would run dx-docker')
 class TestDXDockerUnit(DXTestCase):
-    @classmethod
-    def tearDownClass(cls):
-        shutil.rmtree(CACHE_DIR)
 
     def test_dx_docker_retry_two_retries(self):
         callCount = [0]
