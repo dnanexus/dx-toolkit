@@ -167,6 +167,7 @@ parser_run.add_argument("--rm",  action="store_true", help="Automatically remove
 parser_run.add_argument("image", help="image name")
 parser_run.add_argument("command", help="command to run within container", nargs=argparse.REMAINDER, default=[])
 def run(image, command=[], quiet=None, rm=None, env=[], rootfs=None, workdir=None, volume=[], entrypoint=None):
+    
     register_docker_subcommand("run")
     acifile = get_aci_fname(image)
     if not acifile:

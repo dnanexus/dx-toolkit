@@ -27,6 +27,7 @@ import time
 import dxpy
 from dxpy_testutil import (DXTestCase, temporary_project, run)
 import dxpy_testutil as testutil
+import dxpy.scripts.dx_docker as docker
 
 CACHE_DIR = '/tmp/dx-docker-cache'
 
@@ -184,3 +185,57 @@ class TestDXDocker(DXTestCase):
 
     def test_dx_docker_working_dir_override(self):
         run("dx-docker run -v $PWD:/tmp -w /tmp quay.io/ucsc_cgl/samtools faidx test.fa")
+
+@unittest.skipUnless(testutil.TEST_DX_DOCKER,
+                    'skipping tests that would run dx-docker')
+class TestDXDockerUnit(DXTestCase):
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(CACHE_DIR)
+
+    def test_dx_docker_retry_two_retries(self):
+        callCount = [0]
+        @docker.retry(tries=2, delay=1)
+        def _test():
+            callCount[0] += 1
+            raise Exception
+        try:
+           _test()
+        except:
+            pass
+        self.assertEqual(2, callCount[0])
+
+    def test_dx_docker_retry_no_retries(self):
+        callCount = [0]
+        @docker.retry()
+        def _test():
+            callCount[0] += 1
+        try:
+            _test()
+        except:
+            pass
+        self.assertEqual(1, callCount[0])
+
+    def test_dx_docker_retry_must_not_retry_on_exception(self):
+        callCount = [0]
+        @docker.retry(retry_on_exceptions=(ArithmeticError))
+        def _test():
+            callCount[0] += 1
+            raise ValueError
+        try:
+            _test()
+        except:
+            pass
+        self.assertEqual(1, callCount[0])
+
+    def test_dx_docker_retry_must_retry_on_exception(self):
+        callCount = [0]
+        @docker.retry(tries=2, delay=1, retry_on_exceptions=(ArithmeticError))
+        def _test():
+            callCount[0] += 1
+            raise ArithmeticError
+        try:
+            _test()
+        except:
+            pass
+        self.assertEqual(2, callCount[0])
