@@ -63,24 +63,23 @@ files = dnanexus-shell.ps1
     ws4py-0.3.2-cp27-none-any.whl > $INSTDIR\\wheelfiles
     ../../bin/dx-verify-file.exe > $INSTDIR\\bin
     ../../bin/jq.exe > $INSTDIR\\bin
-    ../../src/ua/dist/ua.exe > $INSTDIR\\bin
-    ../../src/ua/dist/libboost_atomic-mt.dll > $INSTDIR\\bin
-    ../../src/ua/dist/libboost_chrono-mt.dll > $INSTDIR\\bin
-    ../../src/ua/dist/libboost_date_time-mt.dll > $INSTDIR\\bin
-    ../../src/ua/dist/libboost_filesystem-mt.dll > $INSTDIR\\bin
-    ../../src/ua/dist/libboost_iostreams-mt.dll > $INSTDIR\\bin
-    ../../src/ua/dist/libboost_program_options-mt.dll > $INSTDIR\\bin
-    ../../src/ua/dist/libboost_regex-mt.dll > $INSTDIR\\bin
-    ../../src/ua/dist/libboost_signals-mt.dll > $INSTDIR\\bin
-    ../../src/ua/dist/libboost_system-mt.dll > $INSTDIR\\bin
-    ../../src/ua/dist/libboost_thread-mt.dll > $INSTDIR\\bin
-    ../../src/ua/dist/libcares-2.dll > $INSTDIR\\bin
-    ../../src/ua/dist/libcurl-4.dll > $INSTDIR\\bin
-    ../../src/ua/dist/libeay32.dll > $INSTDIR\\bin
-    ../../src/ua/dist/libgcc_s_dw2-1.dll > $INSTDIR\\bin
-    ../../src/ua/dist/libgnurx-0.dll > $INSTDIR\\bin
-    ../../src/ua/dist/libmagic-1.dll > $INSTDIR\\bin
-    ../../src/ua/dist/libstdc++-6.dll > $INSTDIR\\bin
-    ../../src/ua/dist/magic.mgc > $INSTDIR\\bin
-    ../../src/ua/dist/ssleay32.dll > $INSTDIR\\bin
-    ../../src/ua/dist/zlib1.dll > $INSTDIR\\bin
+    DLL_DEPS_FOLDERlibboost_atomic-mt.dll > $INSTDIR\\bin
+    DLL_DEPS_FOLDERlibboost_chrono-mt.dll > $INSTDIR\\bin
+    DLL_DEPS_FOLDERlibboost_date_time-mt.dll > $INSTDIR\\bin
+    DLL_DEPS_FOLDERlibboost_filesystem-mt.dll > $INSTDIR\\bin
+    DLL_DEPS_FOLDERlibboost_iostreams-mt.dll > $INSTDIR\\bin
+    DLL_DEPS_FOLDERlibboost_program_options-mt.dll > $INSTDIR\\bin
+    DLL_DEPS_FOLDERlibboost_regex-mt.dll > $INSTDIR\\bin
+    DLL_DEPS_FOLDERlibboost_signals-mt.dll > $INSTDIR\\bin
+    DLL_DEPS_FOLDERlibboost_system-mt.dll > $INSTDIR\\bin
+    DLL_DEPS_FOLDERlibboost_thread-mt.dll > $INSTDIR\\bin
+    DLL_DEPS_FOLDERlibcares-2.dll > $INSTDIR\\bin
+    DLL_DEPS_FOLDERlibcurl-4.dll > $INSTDIR\\bin
+    DLL_DEPS_FOLDERlibeay32.dll > $INSTDIR\\bin
+    DLL_DEPS_FOLDERlibgcc_s_dw2-1.dll > $INSTDIR\\bin
+    DLL_DEPS_FOLDERlibgnurx-0.dll > $INSTDIR\\bin
+    DLL_DEPS_FOLDERlibmagic-1.dll > $INSTDIR\\bin
+    DLL_DEPS_FOLDERlibstdc++-6.dll > $INSTDIR\\bin
+    DLL_DEPS_FOLDERmagic.mgc > $INSTDIR\\bin
+    DLL_DEPS_FOLDERssleay32.dll > $INSTDIR\\bin
+    DLL_DEPS_FOLDERzlib1.dll > $INSTDIR\\bin

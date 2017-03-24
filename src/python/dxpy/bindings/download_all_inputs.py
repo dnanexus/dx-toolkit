@@ -112,14 +112,14 @@ def _get_num_parallel_threads(max_threads, num_cores, mem_available_mb):
     return min(max_threads, num_cores, max(int(mem_available_mb/1200), 1))
 
 
-def download_all_inputs(exclude=None, parallel=False, max_threads=None):
+def download_all_inputs(exclude=None, parallel=False, max_threads=8):
     '''
     :param exclude: List of input variables that should not be downloaded.
     :type exclude: Array of strings
     :param parallel: Should we download multiple files in parallel? (default: False)
     :type filename: boolean
     :param max_threads: If parallel is True, how many threads should be used
-        to download files? (default: number of cores)
+        to download files? (default: 8)
     :type append: int
     :returns: dict of lists of strings where each key is the input variable
                 and each list element is the full path to the file that has

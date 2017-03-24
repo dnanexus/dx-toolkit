@@ -132,7 +132,7 @@ void File::init(const bool tryResuming) {
   //dx::JSON properties(dx::JSON_OBJECT);
 
   // Add property {FILE_SIGNATURE_PROPERTY: "<size> <modified time stamp> <toCompress> <chunkSize> <name of file>"
-  properties[FILE_SIGNATURE_PROPERTY] = File::createResumeInfoString(size, modifiedTimestamp, toCompress, chunkSize, fs::canonical(p).string());
+  properties[FILE_SIGNATURE_PROPERTY] = File::createResumeInfoString(size, modifiedTimestamp, toCompress, chunkSize, fs::canonical(p).generic_string());
 
   DXLOG(logINFO) << "Resume info string: '" << properties[FILE_SIGNATURE_PROPERTY].get<string>() << "'"; 
   dx::JSON findResult;

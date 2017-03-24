@@ -6,6 +6,49 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+## [215.0] - beta
+
+## Added
+
+* dx-docker test suite to toolkit
+* Retry download of Docker image if there is transient network failure
+* Allow image ID as a parameter for `dx-docker`; see wiki documentation for more details
+
+## [214.1] - 2017-03-23 - stable
+
+### Fixed
+
+* missing pyasn1 module for OSX list of install dependencies; gets rid of import warning messages 
+
+## [214.0]
+
+### Added
+
+* Alternative export for `dx-docker` when docker image is improperly exported by docker engine
+
+### Fixed
+
+* `dx run -i=filename` now prompts user to select input file if duplicate filenames exist in project
+* `dx-docker create-asset` now supports output path
+* `dx download` failure when run within project that user has lost access to
+* `dx build -f` now removes all applets with matching name/directory
+
+## [213.1] - 2017-03-16
+
+### Fixed
+
+* `dx-docker run` KeyError when docker image is built from container
+
+## [213.0]
+
+### Fixed
+
+* Recursive file upload on Windows for the Upload Agent
+* Show download progress for calls to `dx download -r`
+* Issue where calls to `dxpy.download_all_inputs(parallel=True)` hang
+
+## [212.0]
+
 ### Fixed
 
 * Upload agent now does not gzip compress .gz files on Ubuntu 14.04
@@ -19,11 +62,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * High-level GTable bindings
 
-## [211.0] - beta
+## [211.0] - 2017-02-23
 
 No significant changes.
 
-## [210.0] - 2017-02-16 stable 
+## [210.0] - 2017-02-16 
 
 ### Fixed
 

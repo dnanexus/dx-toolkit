@@ -86,11 +86,7 @@ fi
 
 cd "${DNANEXUS_HOME}"
 
-if [[ "$ostype" == 'Linux' ]]; then
-  dest_tarball="${DNANEXUS_HOME}/dx-toolkit-$(git describe).tar.gz"
-elif [[ "$ostype" == 'Darwin' ]]; then # Mac OS
-  dest_tarball="${DNANEXUS_HOME}/dx-toolkit-$(git describe)-osx.tar.gz"
-fi
+dest_tarball="${DNANEXUS_HOME}/dx-toolkit-$(git describe)-${product_name}.tar.gz"
 
 mv $temp_archive $dest_tarball
 if [[ "$ostype" == 'Darwin' ]]; then

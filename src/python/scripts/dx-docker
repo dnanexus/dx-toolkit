@@ -1,10 +1,4 @@
-#!/usr/bin/env python
-
-# Note:
-#
-# Certain Docker images build with newer versions of Docker may not work with the default ENTRYPOINT.
-# We are tracking this issue with the docker2aci team here: https://github.com/appc/docker2aci/issues/198
-# In the meanwhile, please provide your ENTRYPOINT command explicitly in your `dx-docker run` command.
+#!/usr/bin/env python2.7
 
 """dx-docker Run Docker images in your DNAnexus app."""
 
@@ -18,6 +12,7 @@ import multiprocessing.dummy
 import tempfile
 import glob
 import datetime
+import time
 import dateutil.parser
 import dxpy.utils.printing
 import dxpy
@@ -41,10 +36,10 @@ def shell_suppress(cmd, ignore_error=False):
     try:
         out = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
-        print e.output
         if ignore_error:
             pass
         else:
+            print e.output.strip()
             raise
     return out
 
@@ -70,6 +65,35 @@ def extract_aci(acifile):
     tmpdir = tempfile.mkdtemp()
     shell_suppress(["tar", "-xf", acifile, "--exclude", "rootfs/dev/*", "-C", tmpdir], ignore_error=True)
     return tmpdir
+
+def retry(tries=3, delay=1, backoff=2, retry_on_exceptions=None):
+    '''A decorator that retries a function until it completes without throwing an exception.'''
+
+    if tries < 0:
+        raise ValueError("tries must be a non-negative number")
+    if delay <= 0:
+        raise ValueError("delay must be a positive number")
+    if backoff <= 1:
+        raise ValueError("backoff must be greater than 1")
+    if not retry_on_exceptions:
+        retry_on_exceptions = (Exception,)
+
+    def decorated_f(f):
+        def wrapper(*args, **kwargs):
+            mdelay = delay
+            for i in range(tries):
+                try:
+                    f(*args, **kwargs)
+                except retry_on_exceptions as retry_exception:
+                    sys.stderr.write(dxpy.utils.printing.YELLOW("Error. Retrying in {} s.\n".format(mdelay)))
+                    time.sleep(mdelay)
+                    mdelay *= backoff
+                    if i == tries - 1:
+                        raise retry_exception
+                    continue
+                break
+        return wrapper
+    return decorated_f
 
 def get_aci(image, imgname, prefix="", quiet=False):
     def docker2aci_line(cmd):
@@ -115,7 +139,6 @@ def get_aci(image, imgname, prefix="", quiet=False):
     os.rename(glob.glob(tmpdir+"/*.aci")[0], img_dirname+"/"+urllib.quote_plus(image)+".aci")
     shutil.rmtree(tmpdir)
 
-
 def register_docker_subcommand(cmd):
     orig_user_agent = dxpy.USER_AGENT
     dxpy.USER_AGENT += " dx-docker {}".format(cmd)
@@ -125,6 +148,7 @@ def register_docker_subcommand(cmd):
 parser_pull = subparsers.add_parser('pull', help="Pulls a docker image for use in DNAnexus")
 parser_pull.add_argument("image", help="image name")
 parser_pull.add_argument("-q", "--quiet", action='store_true', help="Suppress printing pull progress to stderr")
+@retry()
 def pull(args):
     if not os.path.isdir(CACHE_DIR):
         makedirs(CACHE_DIR)
@@ -186,7 +210,8 @@ def run(args):
         print_annotation("Last Updated", 'created', data=stats)
         print_annotation("Registry", 'registryurl')
         print_annotation("ENTRYPOINT", 'entrypoint')
-        print_annotation("Working Dir", 'workingDirectory', data=imagemeta['app'])
+        if 'app' in imagemeta:
+            print_annotation("Working Dir", 'workingDirectory', data=imagemeta['app'])
         print_annotation("Default CMD", 'cmd')
         sys.stderr.write("\n\n")
 
@@ -211,14 +236,14 @@ def run(args):
     container_cmd = entrypoint + cmd
 
     workdir = "/"
-    if 'workingDirectory' in imagemeta['app']:
+    if 'app' in imagemeta and 'workingDirectory' in imagemeta['app']:
        workdir = imagemeta['app']['workingDirectory']
     if args.workdir:
        workdir = args.workdir
 
     default_homedir_env = "HOME=/root"
     env = ["env", "-i", default_homedir_env]
-    if 'environment' in imagemeta['app']:
+    if 'app' in imagemeta and 'environment' in imagemeta['app']:
         env.extend(args.env + [var['name'] +"="+var['value']  for var in imagemeta['app']['environment']])
 
     if args.rm and not args.quiet:
@@ -231,20 +256,94 @@ def run(args):
         shutil.rmtree(tmpdir)
 parser_run.set_defaults(func=run)
 
-def local_image_to_aci(image, tmpdir, dirprefix):
+def local_image_to_aci(image, tmpdir, dirprefix, alternative_export=False):
     # Ensure core utilities are available on local host
     shell_suppress(["which", "docker"])
     shell_suppress(["which", "docker2aci"])
 
-    # Perform the operations to save and subsequently cache Docker image to the platform
-    sys.stderr.write(dxpy.utils.printing.YELLOW("Exporting Docker image {}\n".format(image)))
-    docker_tarball = tmpdir+"/image.docker.tgz"
-    shell(["docker", "save", "-o", docker_tarball, image])
-    get_aci(image, docker_tarball, prefix=dirprefix)
+    # Check if image is docker image id or digest
+    def is_image_id_or_digest(image):
+        # Remove prefix for string comparisons
+        if ('@sha256:' in image or image.startswith('sha256:')):
+            img_id = image.split('sha256:')[1]
+        else:
+            img_id = image
+
+        image_id_list = shell_suppress(["docker", "images", "-q", "--no-trunc"]).split("\n")
+        digest_list = shell_suppress(["docker", "images", "--digests", "--filter", "dangling=false", "--format", "{{.Repository}}@{{.Digest}}"]).split("\n")
+
+        # Check if given image id equal to full hash or short hash (first 12 chars)
+        if any(img_id in [image_id.split('sha256:')[1], image_id.split('sha256:')[1][:12]] for image_id in image_id_list if image_id.strip()):
+            sys.stderr.write(dxpy.utils.printing.YELLOW("Image ID: {} found in local docker cache\n".format(image)))
+            return True
+        # Check if given image id is a digest
+        elif any(image == digest for digest in digest_list if digest.strip()):
+            sys.stderr.write(dxpy.utils.printing.YELLOW("Digest: {} found in local docker cache\n".format(image)))
+            return True
+        else:    
+            return False
+
+    # We have observed an instance where the Docker CLI and docker2aci do not properly export a rootfs.  Here is a hopefully temporary workaround
+    if alternative_export:
+        # TODO: Do obvious things to make the following steps more efficient (e.g. no re-untarring rootfs, ...)
+        sys.stderr.write(dxpy.utils.printing.YELLOW("Running alternative export for {}\n".format(image)))
+        shell_suppress(["docker", "run", "--entrypoint", "tar", "-w", "/tmp", "-v", "{}:/tmp".format(tmpdir), image, "-cf", "rootfs.tar", "/"], ignore_error=True)
+        sys.stderr.write(dxpy.utils.printing.YELLOW("Extracting root file system for {}\n".format(image)))
+        shell(["mkdir", "-p", tmpdir+"/new-aci-template/rootfs"])
+        shell_suppress(["tar", "-xf", tmpdir+"/rootfs.tar", "--exclude", "dev/*", "--exclude", "proc/*", "--exclude", "sys/*", "-C", tmpdir+"/new-aci-template/rootfs/"], ignore_error=True)
+        shell(["rm", "-f", tmpdir+"/rootfs.tar"])
+        # We do not have a manifest file so we must create one on our own from 'docker inspect'
+        inspect_out = json.loads(shell_suppress(["docker", "inspect", image]))[0]
+        imsplit = inspect_out["RepoTags"][0].split(':')
+        dictifiedenv = [{"name": var.split("=")[0], "value": var.split("=")[1]} for var in inspect_out["Config"]["Env"]]
+        entrypoint = inspect_out["Config"]["Entrypoint"]
+        if not entrypoint:
+            entrypoint = []
+        workdir = inspect_out["Config"]["WorkingDir"]
+        if not workdir or workdir == "":
+            workdir = "/"
+
+        # TODO if this needs to be kept longer-term: resolve simultaneous CMD + ENTRYPOINT and whether it goes in exec field (ignoring user/group ...)
+        manifest={"acKind":"ImageManifest",
+                  "acVersion":"0.8.5",
+                  "name":imsplit[0],
+                  "labels":[{"name":"version","value":imsplit[1]},
+                            {"name":"os","value":inspect_out["Os"]},
+                            {"name":"arch","value":inspect_out["Architecture"]}],
+                             "app":{"exec":entrypoint,"user":"0","group":"0","workingDirectory":workdir,"environment":dictifiedenv},
+                             "annotations":[{"name":"created","value":inspect_out["Created"]},
+                                            {"name":"appc.io/docker/repository","value":imsplit[0]},
+                                            {"name":"appc.io/docker/imageid","value":inspect_out["Id"]},
+                                            {"name":"appc.io/docker/parentimageid","value":inspect_out["Parent"]},
+                                            {"name":"appc.io/docker/entrypoint","value":json.dumps(entrypoint)},
+                                            {"name":"appc.io/docker/tag","value":imsplit[1]}]}
+        with open(tmpdir+"/new-aci-template/manifest", "w") as f:
+            f.write(json.dumps(manifest))
+        shell(["mkdir", "-p", dirprefix+CACHE_DIR])
+        sys.stderr.write(dxpy.utils.printing.YELLOW("Creating ACI filesystem bundle for {}\n".format(image)))
+        shell_suppress(["tar", "-C", tmpdir+"/new-aci-template", "-cf", dirprefix+CACHE_DIR+"/"+urllib.quote_plus(image)+".aci", "."], ignore_error=True)
+    # Use Docker and docker2aci to generate an aci
+    else:
+        sys.stderr.write(dxpy.utils.printing.YELLOW("Exporting Docker image {}\n".format(image)))
+        docker_tarball = tmpdir+"/image.docker.tgz"
+        # If image id is given instead of 'repo:tag', tag image as 'dx-docker:id' and export with `docker save dx-docker:id`
+        if is_image_id_or_digest(image):
+            # Remove 'sha256:' prefix if it is supplied, colon cannot exist in the repo:tag format
+            if ('@sha256:' in image or image.startswith('sha256:')):
+                image_id_tag = image.split('sha256:')[1]
+            else:
+                image_id_tag = image
+            shell_suppress(["docker", "tag", image, "dx-docker:{}".format(image_id_tag)])
+            shell(["docker", "save", "-o", docker_tarball, "dx-docker:{}".format(image_id_tag)])
+            shell_suppress(["docker", "rmi", "dx-docker:{}".format(image_id_tag)])
+        else:
+            shell(["docker", "save", "-o", docker_tarball, image])
+        get_aci(image, docker_tarball, prefix=dirprefix)
 
 parser_add_to_applet = subparsers.add_parser('add-to-applet', help="Adds a local Docker image to an applet")
 parser_add_to_applet.add_argument("image", help="image name")
 parser_add_to_applet.add_argument("applet", help="directory corresponding to applet")
+parser_add_to_applet.add_argument("--alternative_export", help="EXPERT ONLY: Use alternative method to export Docker image since Docker CLI export sometimes doesn't create the root filesystem properly.", action="store_true")
 def add_to_applet(args):
     register_docker_subcommand("add-to-applet")
     try:
@@ -253,13 +352,23 @@ def add_to_applet(args):
     except Exception as e:
         raise Exception("{} does not appear to have a dxapp.json that parses. Please make sure you have selected a working DNAnexus applet directory\n\n{}.".format(args.applet, e))
     tmpdir = tempfile.mkdtemp()
-    local_image_to_aci(args.image, tmpdir, os.path.abspath(args.applet)+"/resources")
+    local_image_to_aci(args.image, tmpdir, os.path.abspath(args.applet)+"/resources", args.alternative_export)
     shutil.rmtree(tmpdir)
 parser_add_to_applet.set_defaults(func=add_to_applet)
 
-parser_create_asset = subparsers.add_parser('create-asset', help="EXPERIMENTAL: Caches a local Docker image as an asset in the DNAnexus platform (subject to change)")
+def _upload_file(filename, project_id=None, folder_path=None, wait_on_close=True, hidden=True):
+    kwargs = {'project': project_id, 'folder': folder_path}
+    try:
+        return dxpy.upload_local_file(filename, wait_on_close=wait_on_close, hidden=hidden, **kwargs).get_id()
+    except Exception as e:
+        print "Unable to upload file {}.\n{}.".format(filename, e)
+        sys.exit(1)
+
+
+parser_create_asset = subparsers.add_parser('create-asset', help="Caches a local Docker image as an asset in the DNAnexus platform (subject to change)")
 parser_create_asset.add_argument("--output_path", "-o", help="Project ID and path in project to upload image to (defaults to project root)")
 parser_create_asset.add_argument("image", help="image name")
+parser_create_asset.add_argument("--alternative_export", help="EXPERT ONLY: Use alternative method to export Docker image since Docker CLI export sometimes doesn't create the root filesystem properly.", action="store_true")
 def create_asset(args):
     register_docker_subcommand("create-asset")
     # Create asset
@@ -267,7 +376,7 @@ def create_asset(args):
     asset_path = tmpdir+"/resources/usr/bin"
     makedirs(asset_path)
 
-    local_image_to_aci(args.image, tmpdir, tmpdir+"/resources")
+    local_image_to_aci(args.image, tmpdir, tmpdir+"/resources", args.alternative_export)
 
     imagename = args.image.replace("/", "%").replace(":","#")
     # Create the asset configuration
@@ -281,20 +390,19 @@ def create_asset(args):
     with open("{}/dxasset.json".format(tmpdir), "w") as f:
         f.write(json.dumps(dxasset))
 
-    project_name = ""
-    project_path = ""
+    project_id = ""
+    folder_path = ""
     if args.output_path:
         if ":" in args.output_path:
-            project_name, project_path = args.output_path.split(":")
-            destpath = args.output_path + imagename
+            project_id, folder_path = args.output_path.split(":")
         else:
-            project_name = dxpy.PROJECT_CONTEXT_ID
-            project_path = args.output_path
-            destpath = project_name + ":" + args.output_path + imagename
+            project_id = dxpy.PROJECT_CONTEXT_ID
+            folder_path = args.output_path
     else:
-        project_name = dxpy.PROJECT_CONTEXT_ID
-        project_path = ""
-        destpath = project_name + ":" + imagename
+        project_id = dxpy.PROJECT_CONTEXT_ID
+        folder_path = ""
+    if not folder_path.startswith("/"):
+        folder_path = "/" + folder_path
 
     sys.stderr.write(dxpy.utils.printing.YELLOW("Building DNAnexus asset for {}\n".format(args.image)))
     escaped_image_name = args.image.replace("/","\\/").replace(":", "\\:")
@@ -302,8 +410,8 @@ def create_asset(args):
     os.chdir(tmpdir)
     with tarfile.open(image_tarball, "w:gz") as tar:
         tar.add(tmpdir+"/resources", "/")
-    asset_tarball_id = shell_suppress(["dx", "upload", "--wait", "--brief", "--visibility", "hidden", image_tarball]).rstrip()
-    asset_tarball_id = dxpy.upload_local_file(image_tarball, wait_on_close=True, hidden=True).get_id()
+    sys.stderr.write(dxpy.utils.printing.YELLOW("Uploading DNAnexus asset for {}\n".format(args.image)))
+    asset_tarball_id = _upload_file(image_tarball, project_id, folder_path)
     record_name = args.image
     record_details = {"archiveFileId": {"$dnanexus_link": asset_tarball_id}}
     record_properties = {
@@ -314,16 +422,15 @@ def create_asset(args):
                           "release": dxasset["release"]
                         }
     asset_bundle = dxpy.new_dxrecord(name=record_name,
+                                     project=project_id, folder=folder_path,
                                      types=["AssetBundle"], details=record_details,
                                      properties=record_properties, close=True)
 
     # Add a property called {"AssetBundle": record-xxx} to the hidden tarball
-    asset_file = dxpy.DXFile(asset_tarball_id)
+    asset_file = dxpy.DXFile(asset_tarball_id, project=project_id)
     asset_file.set_properties({"AssetBundle": asset_bundle.get_id()})
 
     # Print output message for successful building of asset
-    if project_path == "":
-        project_path = "/"
     sys.stderr.write(dxpy.utils.printing.YELLOW("Image {} successfully cached in DNAnexus platform.\n".format(args.image)))
     sys.stderr.write("To include this cached image in an application, please include the following within the runspec/assetDepends list in your dxapp.json.\n")
     sys.stderr.write("    {"+dxpy.utils.printing.BLUE("""
@@ -331,7 +438,7 @@ def create_asset(args):
         "folder": \"{}\",
         "name": \"{}\",
         "version": "0.0.1"
-    """).format(project_name, project_path, args.image)+"}\n")
+    """).format(project_id, folder_path, args.image)+"}\n")
 
     # Remove the temporary directory
     shutil.rmtree(tmpdir)

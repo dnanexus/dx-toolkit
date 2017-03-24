@@ -499,7 +499,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     if 'dxapi' not in applet_spec:
         applet_spec['dxapi'] = dxpy.API_VERSION
 
-    applet_to_overwrite = None
+    applets_to_overwrite = []
     archived_applet = None
     if check_name_collisions and not dry_run:
         destination_path = applet_spec['folder'] + ('/' if not applet_spec['folder'].endswith('/') else '') + applet_spec['name']
@@ -511,7 +511,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                 # we remove the old applet, but that causes garbage
                 # collection of the bundled resources that will be
                 # shared with the new applet
-                applet_to_overwrite = result['id']
+                applets_to_overwrite.append(result['id'])
             elif archive:
                 logger.debug("Archiving applet %s" % (result['id']))
                 proj = dxpy.DXProject(dest_project)
@@ -641,11 +641,10 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     if archived_applet:
         archived_applet.set_properties({'replacedWith': applet_id})
 
-    # Now it is permissible to delete the old applet, if any
-    if applet_to_overwrite:
-        logger.info("Deleting applet %s" % (applet_to_overwrite,))
-        # TODO: test me
-        dxpy.DXProject(dest_project).remove_objects([applet_to_overwrite])
+    # Now it is permissible to delete the old applet(s), if any
+    if applets_to_overwrite:
+        logger.info("Deleting applet(s) %s" % (','.join(applets_to_overwrite)))
+        dxpy.DXProject(dest_project).remove_objects(applets_to_overwrite)
 
     return applet_id, applet_spec
 

@@ -573,7 +573,7 @@ class TestDXClient(DXTestCase):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test user')
     def test_dx_project_invite_without_email(self):
-        user_id = 'user-000000000000000000000001'
+        user_id = 'user-bob'
         with temporary_project() as unique_project:
             project_id = unique_project.get_id()
 
@@ -1362,6 +1362,41 @@ class TestDXClientUploadDownload(DXTestCase):
                 run("wget -O /dev/null " + download_url)
             # Even after project 1 is destroyed, the download URL should still work
             run("wget -O /dev/null " + download_url)
+
+    @unittest.skipUnless(testutil.TEST_ENV,
+                         'skipping test that would clobber your local environment')
+    def test_dx_download_when_current_project_inaccessible(self):
+        with testutil.TemporaryFile() as fd:
+            with temporary_project("test_dx_accessible_project", select=True) as p_accessible:
+                expected_content = '1234'
+                fd.write(expected_content)
+                fd.flush()
+                fd.close()
+                tmp_filename = os.path.basename(fd.name)
+                listing = run("dx upload --wait {filepath} --path {project}:{filename}".format(
+                              filepath=fd.name, project=p_accessible.get_id(), filename=tmp_filename))
+                self.assertIn(p_accessible.get_id(), listing)
+                self.assertIn(os.path.basename(fd.name), listing)
+
+                # Create another project, select it, and remove it to loose access to it
+                p_inaccessible_name = ("test_dx_inaccessible_project" + str(random.randint(0, 1000000)) + "_" +
+                                       str(int(time.time() * 1000)))
+                p_inaccessible_id = run("dx new project {name} --brief --select"
+                                        .format(name=p_inaccessible_name)).strip()
+                with select_project(p_inaccessible_id):
+                    self.assertEqual(run("dx find projects --brief --name {name}"
+                                         .format(name=p_inaccessible_name)).strip(), p_inaccessible_id)
+                    run("dx rmproject -y {name} -q".format(name=p_inaccessible_name))
+                    self.assertEqual(run("dx find projects --brief --name {name}"
+                                         .format(name=p_inaccessible_name)).strip(), "")
+                    current_project_env_var = dxpy.config.get('DX_PROJECT_CONTEXT_ID', None)
+                    self.assertEqual(p_inaccessible_id, current_project_env_var)
+                    # Successfully download file from the accessible project
+                    run("dx download {project}:{filename}"
+                        .format(project=p_accessible.name, filename=tmp_filename)).strip()
+                    result_content = run("dx head {project}:{filename}"
+                                         .format(project=p_accessible.name, filename=tmp_filename)).strip()
+                    self.assertEqual(expected_content, result_content)
 
     def test_dx_upload_mult_paths(self):
         testdir = tempfile.mkdtemp()
@@ -2368,7 +2403,7 @@ dx-jobutil-add-output outrecord $record_id
         with self.assertSubprocessFailure(stderr_regexp='unrecognized arguments', exit_code=2):
             run("dx run " + applet_id + " --brief -y -d " + job2_dep_id + " " + job1_dep_id)
 
-        with self.assertSubprocessFailure(stderr_regexp='could not be found', exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp='ResourceNotFound', exit_code=3):
             run("dx run " + applet_id + " --brief -y -d not_a_valid_id")
 
         # Testing for use of --depends-on with running workflows
@@ -4241,8 +4276,8 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
     @classmethod
     def setUpClass(cls):
         cls.org_id = "org-piratelabs"
-        cls.user_alice = "user-000000000000000000000000"  # ADMIN
-        cls.user_bob = "user-000000000000000000000001"
+        cls.user_alice = "user-alice"  # ADMIN
+        cls.user_bob = "user-bob"
         dxpy.api.org_invite(cls.org_id, {"invitee": cls.user_bob})  # Invite user_bob as MEMEBER of org-piratelabs
         cls.project_ppb = "project-0000000000000000000000pb"  # public project in "org-piratelabs"
 
@@ -4803,7 +4838,7 @@ class TestDXClientNewProject(DXTestCase):
                          'skipping test that requires presence of test org')
     def test_dx_create_new_project_with_bill_to(self):
         curr_bill_to = dxpy.api.user_describe(dxpy.whoami())['billTo']
-        alice_id = "user-000000000000000000000000"
+        alice_id = "user-alice"
         org_id = "org-piratelabs"
         project_name = "test_dx_create_project"
 
@@ -5121,8 +5156,7 @@ class TestDXClientMembership(DXTestCase):
         return dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
 
     def setUp(self):
-        # Bob.
-        self.username = "000000000000000000000001"
+        self.username = "bob"
         self.user_id = "user-" + self.username
 
         # ADMIN: Alice.
@@ -6436,22 +6470,22 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEqual(set(app_developers), set([my_userid, 'user-eve']))
 
         # Add and remove a developer
-        app_spec['developers'] = [my_userid, 'user-000000000000000000000001']
+        app_spec['developers'] = [my_userid, 'user-bob']
         self.write_app_directory("test_build_app_and_update_devs", json.dumps(app_spec), "code.py")
         self.run_and_assert_stderr_matches(
             'dx build --create-app --yes --json ' + app_dir,
-            'the following developers will be added: user-000000000000000000000001; and ' \
+            'the following developers will be added: user-bob; and ' \
             + 'the following developers will be removed: user-eve'
         )
         app_developers = dxpy.api.app_list_developers('app-test_build_app_and_update_devs')['developers']
-        self.assertEqual(set(app_developers), set([my_userid, 'user-000000000000000000000001']))
+        self.assertEqual(set(app_developers), set([my_userid, 'user-bob']))
 
         # Remove a developer
         app_spec['developers'] = [my_userid]
         self.write_app_directory("test_build_app_and_update_devs", json.dumps(app_spec), "code.py")
         self.run_and_assert_stderr_matches('dx build --create-app --yes --json ' + app_dir,
                                            'the following developers will be removed: ' +
-                                           'user-000000000000000000000001')
+                                           'user-bob')
         app_developers = dxpy.api.app_list_developers('app-test_build_app_and_update_devs')['developers']
         self.assertEqual(app_developers, [my_userid])
 
@@ -6590,6 +6624,50 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         # dx build -f
         with self.assertSubprocessFailure(exit_code=3):
             run("dx describe " + applet_id)
+
+    def test_overwrite_multiple_applets(self):
+        app_spec = {
+            "name": "applet_overwriting",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+
+        app_dir = self.write_app_directory("applet_overwriting", json.dumps(app_spec), "code.py")
+
+        # Create two applets in different directories, but with the same name
+        run("dx mkdir subfolder1")
+        app_1_spec = json.loads(run("dx build --json --destination=subfolder1/applet_overwriting " + app_dir))
+        run("dx mkdir subfolder2")
+        app_2_spec = json.loads(run("dx build --json --destination=subfolder2/applet_overwriting " + app_dir))
+
+        # Move the applet in subfolder2 to subfolder1
+        run("dx mv subfolder2/applet_overwriting subfolder1")
+
+        # Verify that subfolder1 has two applets with the same name
+        desc_1 = json.loads(run("dx describe --json " + app_1_spec["id"]))
+        desc_2 = json.loads(run("dx describe --json " + app_2_spec["id"]))
+        self.assertEqual(desc_1["name"], desc_2["name"])
+        self.assertEqual(desc_1["folder"], desc_2["folder"])
+
+        # Creating a new applet with the same name should fail
+        with self.assertSubprocessFailure():
+            run("dx build --destination=subfolder1/applet_overwriting " + app_dir)
+
+        # Creating a new applet with the same name with overwrite should succeed
+        app_final_spec = json.loads(run("dx build -f --json --destination=subfolder1/applet_overwriting " + app_dir))
+
+        # Verify that the original applets were deleted by dx build -f
+        with self.assertSubprocessFailure(exit_code=3):
+            run("dx describe " + app_1_spec["id"])
+        with self.assertSubprocessFailure(exit_code=3):
+            run("dx describe " + app_2_spec["id"])
+
+        # Verify that the newly created applet exists
+        run("dx describe " + app_final_spec["id"])
+
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')

@@ -811,6 +811,10 @@ def _validate_resolution_output_length(path, entity_name, results, allow_mult=Fa
             return results
         if INTERACTIVE_CLI:
             print('The given path "' + path + '" resolves to the following data objects:')
+            if any(['describe' not in result for result in results]):
+                # findDataObject API call must be made to get 'describe' mappings
+                project, folderpath, entity_name = resolve_path(path, expected='entity')
+                results = _resolve_global_entity(project, folderpath, entity_name)
             choice = pick([get_ls_l_desc(result['describe']) for result in results],
                           allow_mult=allow_mult)
             if allow_mult and choice == '*':
