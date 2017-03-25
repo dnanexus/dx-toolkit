@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 #
 # Copyright (C) 2013-2017 DNAnexus, Inc.
 #
@@ -16,8 +16,17 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-# On OS X/macOS, installs Python 2.7 with > OpenSSL 1.0.1.
+# On OS X/macOS, installs Python 2.7 with an OpenSSL that supports TLS 1.2.
+
+# Get home directory location
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
+export DNANEXUS_HOME="$( cd -P "$( dirname "$SOURCE" )" && pwd )/.."
+
+if $DNANEXUS_HOME/build/tls12check.py ; then
+    echo "Your Python build does not need an upgrade for TLS 1.2 support; exiting."
+    exit 0
+fi
 
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-
 brew install python
