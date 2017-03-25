@@ -16,11 +16,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-# Installs Python 2.7 with > OpenSSL 1.0.1 (required for running dx-toolkit).
-#
-# <Tested on OS X 10.7 through macOS 10.12>
-
-xcode-select --install
+# On OS X/macOS, installs Python 2.7 with > OpenSSL 1.0.1.
 
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
