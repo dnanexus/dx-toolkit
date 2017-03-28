@@ -6,8 +6,21 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+## [215.0] - beta
 
-## [214.0] - beta
+## Added
+
+* dx-docker test suite to toolkit
+* Retry download of Docker image if there is transient network failure
+* Allow image ID as a parameter for `dx-docker`; see wiki documentation for more details
+
+## [214.1] - 2017-03-23 - stable
+
+### Fixed
+
+* missing pyasn1 module for OSX list of install dependencies; gets rid of import warning messages 
+
+## [214.0]
 
 ### Added
 
@@ -20,7 +33,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx download` failure when run within project that user has lost access to
 * `dx build -f` now removes all applets with matching name/directory
 
-## [213.1] - 2017-03-16 - stable
+## [213.1] - 2017-03-16
 
 ### Fixed
 
