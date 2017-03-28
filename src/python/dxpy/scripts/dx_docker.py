@@ -167,8 +167,20 @@ parser_run.add_argument("--rootfs",  help="Use directory pointed to here for roo
 parser_run.add_argument("--rm",  action="store_true", help="Automatically remove the container when it exits")
 parser_run.add_argument("image", help="image name")
 parser_run.add_argument("command", help="command to run within container", nargs=argparse.REMAINDER, default=[])
-def run(image, command=[], quiet=None, rm=None, env=[], rootfs=None, workdir=None, volume=[], entrypoint=None):
-    
+def run(image, command=[], quiet=None, rm=True, env=[], rootfs=None, workdir=None, volume=[], entrypoint=None):
+    '''
+    :param image: Image name or ID
+    :param command: Command to execute in container
+    :param quiet: Suppress output
+    :param rm: Automatically remove the container when it exits
+    :param env: Environment variables to set within container
+    :type env: list
+    :param rootfs: Use directory pointed to here for rootfs instead of extracting the image
+    :param workdir: Working directory
+    :param volume: Directory to mount inside the container
+    :type volume: list
+    :param entrypoint: Overwrite default entry point for image
+    '''
     register_docker_subcommand("run")
     acifile = get_aci_fname(image)
     if not acifile:
@@ -347,6 +359,11 @@ parser_add_to_applet.add_argument("image", help="image name")
 parser_add_to_applet.add_argument("applet", help="directory corresponding to applet")
 parser_add_to_applet.add_argument("--alternative_export", help="EXPERT ONLY: Use alternative method to export Docker image since Docker CLI export sometimes doesn't create the root filesystem properly.", action="store_true")
 def add_to_applet(applet, image, alternative_export=False):
+    '''
+    :param applet: Directory path to applet
+    :param image: Docker image name or ID
+    :param alternative_export: Alternative export method other than `docker save`
+    '''
     register_docker_subcommand("add-to-applet")
     try:
         with open(applet+"/dxapp.json") as f:
@@ -372,6 +389,11 @@ parser_create_asset.add_argument("--output_path", "-o", help="Project ID and pat
 parser_create_asset.add_argument("image", help="image name")
 parser_create_asset.add_argument("--alternative_export", help="EXPERT ONLY: Use alternative method to export Docker image since Docker CLI export sometimes doesn't create the root filesystem properly.", action="store_true")
 def create_asset(image, output_path=None, alternative_export=False):
+    '''
+    :param image: Docker image name or ID
+    :param output_path: 
+    :param alternative_export: Alternative export method other than `docker save`
+    '''
     register_docker_subcommand("create-asset")
     # Create asset
     tmpdir = tempfile.mkdtemp()
@@ -447,6 +469,7 @@ def create_asset(image, output_path=None, alternative_export=False):
 
 parser_create_asset.set_defaults(func=create_asset)
 
+# Entrypoint for `dx-docker` shell commands
 def main(**kwargs):
     args = parser.parse_args()
     func = args.func
