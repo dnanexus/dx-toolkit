@@ -167,7 +167,7 @@ parser_run.add_argument("--rootfs",  help="Use directory pointed to here for roo
 parser_run.add_argument("--rm",  action="store_true", help="Automatically remove the container when it exits")
 parser_run.add_argument("image", help="image name")
 parser_run.add_argument("command", help="command to run within container", nargs=argparse.REMAINDER, default=[])
-def run(image, command=[], quiet=None, rm=True, env=[], rootfs=None, workdir=None, volume=[], entrypoint=None):
+def run(image, command=[], quiet=None, rm=True, env=[], rootfs=None, workdir=None, volumes=[], entrypoint=None):
     '''
     :param image: Image name or ID
     :param command: Command to execute in container
@@ -177,8 +177,8 @@ def run(image, command=[], quiet=None, rm=True, env=[], rootfs=None, workdir=Non
     :type env: list
     :param rootfs: Use directory pointed to here for rootfs instead of extracting the image
     :param workdir: Working directory
-    :param volume: Directory to mount inside the container
-    :type volume: list
+    :param volumes: Directory to mount inside the container
+    :type volumes: list
     :param entrypoint: Overwrite default entry point for image
     '''
     register_docker_subcommand("run")
@@ -229,7 +229,7 @@ def run(image, command=[], quiet=None, rm=True, env=[], rootfs=None, workdir=Non
         print_annotation("Default CMD", 'cmd')
         sys.stderr.write("\n\n")
 
-    vols = ["/run/shm/:/dev/shm"] + volume
+    vols = ["/run/shm/:/dev/shm"] + volumes
     volume = []
     for v in vols:
        volume.append("-b")
