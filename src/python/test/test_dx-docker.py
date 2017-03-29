@@ -232,6 +232,7 @@ class TestDXDockerPythonHooks(DXTestCase):
         with open('tmpapp/dxapp.json', 'w') as dxapp:
             dxapp.write("[]")
         docker.add_to_applet(applet='tmpapp', image='busybox')
+        shutil.rmtree('tmpapp')
 
     def test_dx_docker_python_create_asset(self):
         with temporary_project(select=True) as temp_project:
