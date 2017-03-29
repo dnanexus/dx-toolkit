@@ -227,12 +227,12 @@ class TestDXDockerPythonHooks(DXTestCase):
         docker.run(image='quay.io/ucsc_cgl/samtools', command="--help")
 
     def test_dx_docker_python_add_to_applet(self):
-        os.makedirs('tmpapp')
+        os.makedirs(os.path.join(os.cwd(), 'tmpapp'))
         run("docker pull busybox")
         with open('tmpapp/dxapp.json', 'w') as dxapp:
             dxapp.write("[]")
         docker.add_to_applet(applet='tmpapp', image='busybox')
-        shutil.rmtree('tmpapp')
+        shutil.rmtree(os.path.join(os.cwd(), 'tmpapp'))
 
     def test_dx_docker_python_create_asset(self):
         with temporary_project(select=True) as temp_project:
