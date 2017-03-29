@@ -188,6 +188,100 @@ class TestDXDocker(DXTestCase):
 
 @unittest.skipUnless(testutil.TEST_DX_DOCKER,
                     'skipping tests that would run dx-docker')
+class TestDXDockerPythonHooks(DXTestCase):
+    @classmethod
+    def setUpClass(cls):
+        run('docker pull busybox')
+        run('docker pull busybox:1')
+        run('docker pull ubuntu:14.04')
+        run('docker pull geetduggal/testdocker')
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(CACHE_DIR)
+
+    def test_dx_docker_python_run(self):
+        docker.run(image='ubuntu:14.04', command="ls --color")
+
+    def test_dx_docker_python_run_from_hash(self):
+        docker.run(image='geetduggal/testdocker@sha256:b680a129fdd06380c461c3b97240a61c246328c6917d60aa3eb393e49529ac9c')
+
+    def test_dx_docker_python_volume(self):
+        os.makedirs('dxdtestdata')
+        docker.run(image='ubuntu:14.04', volumes=["dxdtestdata:/data-host"], command="touch /data-host/newfile.txt")
+        self.assertTrue(os.path.isfile(os.path.join('dxdtestdata', 'newfile.txt')))
+        shutil.rmtree('dxdtestdata')
+
+    def test_dx_docker_python_entrypoint_cmd(self):
+        docker_out = run("docker run geetduggal/testdocker /bin")
+        dx_docker_out = docker.run(image='geetduggal/testdocker', quiet=True, command="/bin")
+        self.assertEqual(docker_out, dx_docker_out)
+
+    def test_dx_docker_python_home_dir(self):
+        docker.run(image='julia:0.5.0', command="julia -E 'println(\"hello world\")'")
+
+    def test_dx_docker_python_run_rm(self):
+        docker.run(image='ubuntu:14.04', rm=True)
+
+    def test_dx_docker_python_run_canonical(self):
+        docker.run(image='quay.io/ucsc_cgl/samtools', command="--help")
+
+    def test_dx_docker_python_add_to_applet(self):
+        os.makedirs('tmpapp')
+        run("docker pull busybox")
+        with open('tmpapp/dxapp.json', 'w') as dxapp:
+            dxapp.write("[]")
+        docker.add_to_applet(applet='tmpapp', image='busybox')
+
+    def test_dx_docker_python_create_asset(self):
+        with temporary_project(select=True) as temp_project:
+            test_projectid = temp_project.get_id()
+            run("docker pull busybox:latest")
+            docker.create_asset(image='busybox:latest')
+            self.assertEqual(run("dx ls busybox\\\\:latest").strip(), 'busybox:latest')
+
+            create_folder_in_project(test_projectid, '/testfolder')
+            docker.create_asset(image='busybox', output_foler='testfolder')
+
+            ls_out = run("dx ls /testfolder").strip()
+            self.assertEqual(ls_out, 'busybox')
+
+            ls_out = run("dx ls testfolder\\/busybox.tar.gz").strip()
+            self.assertEqual(ls_out, 'busybox.tar.gz')
+
+    def test_dx_docker_python_create_asset_with_short_imageid(self):
+        with temporary_project(select=True) as temp_project:
+            test_projectid = temp_project.get_id()
+            run("docker pull busybox:1")
+            short_id = run("docker images -q busybox:1").strip()
+            create_folder_in_project(test_projectid, '/testfolder')
+            docker.create_asset(image=short_id, output_folder='testfolder')
+            ls_out = run("dx ls /testfolder").strip()
+            self.assertEqual(ls_out, short_id)
+
+    def test_dx_docker_python_create_asset_with_long_imageid(self):
+        with temporary_project(select=True) as temp_project:
+            test_projectid = temp_project.get_id()
+            run("docker pull busybox:1")
+            long_id = run("docker images --no-trunc -q busybox:1").strip()
+            create_folder_in_project(test_projectid, '/testfolder')
+            docker.create_asset(image=long_id, output_folder='testfolder')
+            ls_out = run("dx ls /testfolder").strip()
+            self.assertEqual(ls_out, long_id)
+
+    def test_dx_docker_python_create_asset_with_image_digest(self):
+        with temporary_project(select=True) as temp_project:
+            test_projectid = temp_project.get_id()
+            run("docker pull busybox:1")
+            create_folder_in_project(test_projectid, '/testfolder')
+            image_digest = run("docker inspect busybox:1 | jq -r '.[] | .RepoDigests[0]'").strip()
+            docker.create_asset(image=image_digest, output_folder='testfolder')
+            ls_out = run("dx ls /testfolder").strip()
+            self.assertEqual(ls_out, image_digest)
+
+
+@unittest.skipUnless(testutil.TEST_DX_DOCKER,
+                    'skipping tests that would run dx-docker')
 class TestDXDockerUnit(DXTestCase):
 
     def test_dx_docker_retry_two_retries(self):
