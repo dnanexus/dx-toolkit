@@ -5,6 +5,7 @@
 import argparse
 import sys
 import os
+import errno
 import subprocess
 import pprint
 import json
@@ -46,7 +47,9 @@ def shell_suppress(cmd, ignore_error=False):
 def makedirs(path):
     try:
         os.makedirs(path)
-    except:  # If the directory already exists, continue gracefully
+    except OSError as e:  # If the directory already exists, continue gracefully
+        if e.errno != errno.EEXIST:
+            raise
         pass
 
 parser = argparse.ArgumentParser()
