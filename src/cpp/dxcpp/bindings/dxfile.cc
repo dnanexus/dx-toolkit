@@ -505,10 +505,22 @@ namespace dx {
       HttpHeaders req_headers;
 
       const JSON resp = fileUpload(dxid_, input_params);
-      for (JSON::const_object_iterator it = resp["headers"].object_begin(); it != resp["headers"].object_end(); ++it)
+      bool has_content_type_header = false;
+      for (JSON::const_object_iterator it = resp["headers"].object_begin(); it != resp["headers"].object_end(); ++it) {
         req_headers[it->first] = it->second.get<string>();
+        string header_name = it->first;
+        boost::algorithm::to_lower(header_name);
+        if (header_name == "content-type") {
+          has_content_type_header = true;
+        }
+      }
 
-      req_headers["Content-Type"] = ""; // this is necessary because libcurl otherwise adds "Content-Type: application/x-www-form-urlencoded"
+      if (!has_content_type_header) {
+        // this is necessary because libcurl adds "Content-Type:
+        // application/x-www-form-urlencoded" when no content-type is specified
+        req_headers["Content-Type"] = "";
+      }
+
       HttpRequest resp2;
       try {
         DXLOG(logDEBUG) << "In uploadPart(), index = " << index << ", calling makeHTTPRequestForFileReadAndWrite() ...";
