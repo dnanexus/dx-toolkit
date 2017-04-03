@@ -488,25 +488,27 @@ namespace dx {
 
   void DXFile::uploadPart(const char *ptr, int64_t n, const int index) {
     JSON input_params(JSON_OBJECT);
-    if (index >= 1)
+
+    if (index >= 1) {
       input_params["index"] = index;
-  
+    }
+    input_params["size"] = boost::lexical_cast<string>(n);
+    input_params["md5"] = getHexifiedMD5(reinterpret_cast<const unsigned char*>(ptr), n);
+
     int MAX_TRIES = 5;
-    
+
     for (int tries = 1; true; ++tries) {
       // we exit this loop in one of the two cases:
       //  1) Total number of tries are exhausted (in which case we "throw")
       //  2) Request is completed (in which case we "break" from the loop)
 
       HttpHeaders req_headers;
-      
+
       const JSON resp = fileUpload(dxid_, input_params);
       for (JSON::const_object_iterator it = resp["headers"].object_begin(); it != resp["headers"].object_end(); ++it)
         req_headers[it->first] = it->second.get<string>();
-      
-      req_headers["Content-Length"] = boost::lexical_cast<string>(n);
+
       req_headers["Content-Type"] = ""; // this is necessary because libcurl otherwise adds "Content-Type: application/x-www-form-urlencoded"
-      req_headers["Content-MD5"] = getHexifiedMD5(reinterpret_cast<const unsigned char*>(ptr), n); // Add the content MD5 header 
       HttpRequest resp2;
       try {
         DXLOG(logDEBUG) << "In uploadPart(), index = " << index << ", calling makeHTTPRequestForFileReadAndWrite() ...";
