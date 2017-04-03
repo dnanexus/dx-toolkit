@@ -492,7 +492,7 @@ namespace dx {
     if (index >= 1) {
       input_params["index"] = index;
     }
-    input_params["size"] = boost::lexical_cast<string>(n);
+    input_params["size"] = n;
     input_params["md5"] = getHexifiedMD5(reinterpret_cast<const unsigned char*>(ptr), n);
 
     int MAX_TRIES = 5;
