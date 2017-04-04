@@ -1713,7 +1713,7 @@ def get_record(entity_result, args):
 def get_output_path(obj_name, obj_class, args):
     path_name = obj_name.replace('/', '%2F')
     if args.output == '-':
-        err_exit('Error: An {} '.format(obj_class) + 'cannot be dumped to stdout, please specify a directory', 3)
+        err_exit('Error: {} '.format(obj_class) + 'objects cannot be dumped to stdout, please specify a directory', 3)
     output_base = args.output or '.'
     if os.path.isdir(output_base):
         output_path = os.path.join(output_base, path_name)
@@ -1741,7 +1741,7 @@ def get_applet(project, entity_result, args):
     output_path = get_output_path(obj_name,
                                   entity_result['describe']['class'],
                                   args)
-    from dxpy.utils.app_unbuilder import dump_executable
+    from dxpy.utils.executable_unbuilder import dump_executable
     print("Downloading applet data", file=sys.stderr)
     dx_obj = dxpy.DXApplet(obj_id, project=project)
     describe_output = dx_obj.describe(incl_properties=True,
@@ -1758,10 +1758,24 @@ def get_app(entity_result, args):
     output_path = get_output_path(obj_name,
                                   entity_result['describe']['class'],
                                   args)
-    from dxpy.utils.app_unbuilder import dump_executable
+    from dxpy.utils.executable_unbuilder import dump_executable
     print("Downloading application data", file=sys.stderr)
     dx_obj = dxpy.DXApp(obj_id)
     dump_executable(dx_obj, output_path, omit_resources=args.omit_resources)
+
+
+def get_workflow(entity_result, args):
+    obj_name = entity_result['describe']['name']
+    obj_id = entity_result['id']
+    output_path = get_output_path(obj_name,
+                                  entity_result['describe']['class'],
+                                  args)
+    from dxpy.utils.executable_unbuilder import dump_executable
+    print("Downloading workflow data", file=sys.stderr)
+    dx_obj = dxpy.DXWorkflow(obj_id)
+    describe_output = entity_result['describe']
+    dump_executable(dx_obj, output_path, omit_resources=True, describe_output=describe_output)
+
 
 def get(args):
     # Decide what to do based on entity's class
@@ -1789,9 +1803,11 @@ def get(args):
         get_applet(project, entity_result, args)
     elif entity_result_class == 'app':
         get_app(entity_result, args)
+    elif entity_result_class == 'workflow':
+        get_workflow(entity_result, args)
     else:
         err_exit('Error: The given object is of class ' + entity_result['describe']['class'] +
-                 ' but an object of class file, record, applet or app was expected', 3)
+                 ' but an object of class file, record, applet, app, or workflow was expected', 3)
 
 def cat(args):
     for path in args.path:
@@ -4423,12 +4439,12 @@ path_action.completer = DXPathCompleter()
 parser_wait.set_defaults(func=wait)
 register_parser(parser_wait, categories=('data', 'metadata', 'exec'))
 
-parser_get = subparsers.add_parser('get', help='Download records, applets, and files',
-                                   description='Download the contents of some types of data (records, applets, and files).  Downloading an applet will attempt to reconstruct a source directory that can be used to rebuild the app with "dx build".  Use "-o -" to direct the output to stdout.',
+parser_get = subparsers.add_parser('get', help='Download records, applets, workflows, and files',
+                                   description='Download the contents of some types of data (records, applets, workflows, and files).  Downloading an applet or a workflow will attempt to reconstruct a source directory that can be used to rebuild it with "dx build".  Use "-o -" to direct the output to stdout.',
                                    prog='dx get',
                                    parents=[env_args])
-parser_get.add_argument('path', help='Data object ID or name to access').completer = DXPathCompleter(classes=['file', 'record', 'applet'])
-parser_get.add_argument('-o', '--output', help='local file path where the data is to be saved ("-" indicates stdout output for objects of class file and record). If not supplied, the object\'s name on the platform will be used, along with any applicable extensions. For applets, if OUTPUT does not exist, an applet source directory will be created there; if OUTPUT is an existing directory, a new directory with the applet\'s name will be created inside it.')
+parser_get.add_argument('path', help='Data object ID or name to access').completer = DXPathCompleter(classes=['file', 'record', 'applet', 'workflow'])
+parser_get.add_argument('-o', '--output', help='local file path where the data is to be saved ("-" indicates stdout output for objects of class file and record). If not supplied, the object\'s name on the platform will be used, along with any applicable extensions. For applet and workflow objects, if OUTPUT does not exist, the object\'s source directory will be created there; if OUTPUT is an existing directory, a new directory with the object\'s name will be created inside it.')
 parser_get.add_argument('--no-ext', help='If -o is not provided, do not add an extension to the filename', action='store_true')
 parser_get.add_argument('--omit-resources', help='When downloading an applet, omit fetching the resources associated with the applet.', action='store_true')
 parser_get.add_argument('-f', '--overwrite', help='Overwrite the local file if necessary', action='store_true')

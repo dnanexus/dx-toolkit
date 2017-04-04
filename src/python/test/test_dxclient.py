@@ -7850,6 +7850,88 @@ def main(in1):
 
 
 class TestDXGetExecutables(DXTestCaseBuildApps):
+    def test_get_workflow(self):
+        workflow_id = run("dx new workflow get_workflow --brief").strip()
+        applet_01_id = dxpy.api.applet_new({"name": "myapplet_01",
+                                            "project": self.project,
+                                            "dxapi": "1.0.0",
+                                            "inputSpec": [{"name": "my_number_in_01", "class": "int"}],
+                                            "outputSpec": [{"name": "my_number_out_01", "class": "int"}],
+                                            "runSpec": {"interpreter": "bash", "code": "exit 0"}})['id']
+        applet_02_id = dxpy.api.applet_new({"name": "myapplet_02",
+                                            "project": self.project,
+                                            "dxapi": "1.0.0",
+                                            "inputSpec": [{"name": "my_number_in_02", "class": "int"}],
+                                            "outputSpec": [{"name": "my_number_out_02", "class": "int"}],
+                                            "runSpec": {"interpreter": "bash", "code": "exit 0"}})['id']
+        stage_01_name = "Stage 1 name"
+        stage_01_id = dxpy.api.workflow_add_stage(workflow_id,
+                                                  {"editVersion": 0, "executable": applet_01_id,
+                                                   "name": stage_01_name})['stage']
+        bound_input = {"my_number_in_02": {
+                       "$dnanexus_link": {"stage": stage_01_id, "outputField": "my_number_out_01"}}}
+        stage_02_name = "Stage 2 name"
+        stage_02_id = dxpy.api.workflow_add_stage(workflow_id,
+                                                  {"editVersion": 1, "executable": applet_02_id,
+                                                   "input": bound_input, "name": stage_02_name})['stage']
+
+        output_workflow_spec = {
+            "name": "get_workflow",
+            "outputFolder": None,
+            "stages": [{
+              "id": stage_01_id,
+              "name": stage_01_name,
+              "executable": applet_01_id
+            }, {
+              "id": stage_02_id,
+              "name": stage_02_name,
+              "executable": applet_02_id,
+              "input": bound_input
+          }]
+        }
+        with chdir(tempfile.mkdtemp()):
+            run("dx get {workflow_id}".format(workflow_id=workflow_id))
+            self.assertTrue(os.path.exists(os.path.join("get_workflow", "dxworkflow.json")))
+
+            workflow_metadata = open(os.path.join("get_workflow", "dxworkflow.json")).read()
+            output_json = json.loads(workflow_metadata, object_pairs_hook=collections.OrderedDict)
+            self.assertEqual(output_workflow_spec, output_json)
+
+            # Target workflow does not exist
+            with self.assertSubprocessFailure(stderr_regexp='Unable to resolve', exit_code=3):
+                run("dx get path_does_not_exist")
+
+            # -o dest (dest does not exist yet)
+            run("dx get -o dest get_workflow")
+            self.assertTrue(os.path.exists("dest"))
+            self.assertTrue(os.path.exists(os.path.join("dest", "dxworkflow.json")))
+
+            # -o -
+            with self.assertSubprocessFailure(stderr_regexp='cannot be dumped to stdout', exit_code=3):
+                run("dx get -o - " + workflow_id)
+
+            # -o dir (such that dir/workflow_name is empty)
+            os.mkdir('destdir')
+            os.mkdir(os.path.join('destdir', 'get_workflow'))
+            run("dx get -o destdir get_workflow")  # Also tests getting by name
+            self.assertTrue(os.path.exists(os.path.join("destdir", "get_workflow", "dxworkflow.json")))
+
+            # -o dir (such that dir/workflow_name is not empty)
+            os.mkdir('destdir_nonempty')
+            os.mkdir(os.path.join('destdir_nonempty', 'get_workflow'))
+            with open(os.path.join('destdir_nonempty', 'get_workflow', 'myfile'), 'w') as f:
+                f.write('content')
+            get_workflow_error = 'path "destdir_nonempty/get_workflow" already exists'
+            with self.assertSubprocessFailure(stderr_regexp=get_workflow_error, exit_code=3):
+                run("dx get -o destdir_nonempty get_workflow")
+
+            # -o dir (such that dir/workflow_name is a file)
+            os.mkdir('destdir_withfile')
+            with open(os.path.join('destdir_withfile', 'get_workflow'), 'w') as f:
+                f.write('content')
+            with self.assertSubprocessFailure(stderr_regexp='already exists', exit_code=3):
+                run("dx get -o destdir_withfile get_workflow")
+
     def test_get_applet(self):
         # TODO: not sure why self.assertEqual doesn't consider
         # assertEqual to pass unless the strings here are unicode strings

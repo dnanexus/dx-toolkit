@@ -137,25 +137,25 @@ class DXExecutable:
 
     def _get_required_keys(self):
         """
-        Abstract method used in app_unbuilder.dump_executable
+        Abstract method used in executable_unbuilder.dump_executable
         """
         raise NotImplementedError('_get_required_keys is not implemented')
 
     def _get_optional_keys(self):
         """
-        Abstract method used in app_unbuilder.dump_executable
+        Abstract method used in executable_unbuilder.dump_executable
         """
         raise NotImplementedError('_get_optional_keys is not implemented')
 
     def _get_describe_output_keys(self):
         """
-        Abstract method used in app_unbuilder.dump_executable
+        Abstract method used in executable_unbuilder.dump_executable
         """
         raise NotImplementedError('_get_describe_output_keys is not implemented')
 
     def _get_cleanup_keys(self):
         """
-        Abstract method used in app_unbuilder.dump_executable
+        Abstract method used in executable_unbuilder.dump_executable
         """
         raise NotImplementedError('_get_cleanup_keys is not implemented')
 

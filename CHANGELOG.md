@@ -8,6 +8,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Use DNAnexus DockerHub repo for dx-docker tests
 * Pass gracefully when the user selects from ten projects using the `m` option
+* `dx get workflow-xxxx` creates a local representation of a workflow
 
 ## [217.0] - beta
 
