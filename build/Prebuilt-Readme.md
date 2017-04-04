@@ -89,8 +89,8 @@ Install the following packages, either from source or via [Homebrew](http://mxcl
         ```
         brew tap homebrew/versions
         brew install --enable-cxx gcc48
-        export CC=gcc-4.7
-        export CXX=g++-4.7
+        export CC=gcc-4.8
+        export CXX=g++-4.8
         ```
 
 Reporting Bugs
