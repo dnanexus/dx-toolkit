@@ -80,8 +80,8 @@ Install the following packages, either from source or via [Homebrew](http://mxcl
     * On MacPorts, install and select GCC with:
 
         ```
-        sudo port install gcc47
-        sudo port select --set gcc mp-gcc47
+        sudo port install gcc48
+        sudo port select --set gcc mp-gcc48
         ```
 
     * On Homebrew, install and select an up-to-date version of GCC with:
@@ -89,8 +89,8 @@ Install the following packages, either from source or via [Homebrew](http://mxcl
         ```
         brew tap homebrew/versions
         brew install --enable-cxx gcc48
-        export CC=gcc-4.7
-        export CXX=g++-4.7
+        export CC=gcc-4.8
+        export CXX=g++-4.8
         ```
 
 Reporting Bugs
