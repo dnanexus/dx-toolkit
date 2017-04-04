@@ -4190,6 +4190,12 @@ parser_ssh.add_argument('job_id', help='Name of job to connect to')
 parser_ssh.add_argument('ssh_args', help='Command-line arguments to pass to the SSH client', nargs=argparse.REMAINDER)
 parser_ssh.add_argument('--ssh-proxy', metavar=('<address>:<port>'),
                         help='SSH connect via proxy, argument supplied is used as the proxy address and port')
+# If ssh is run with the  supress-running-check flag, then dx won't prompt
+# the user whether they would like to terminate the currently running job
+# after they exit ssh.  Among other things, this will allow users to setup
+# ssh tunnels using dx ssh, and exit the ssh command with the tunnel still 
+# in place, and not be prompted to terminate the instance (which would close
+# the tunnel).
 parser_ssh.add_argument('--suppress-running-check', action='store_false', help=argparse.SUPPRESS, dest='check_running')
 parser_ssh.set_defaults(func=ssh)
 register_parser(parser_ssh, categories='exec')
