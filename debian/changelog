@@ -1,3 +1,9 @@
+dx-toolkit (0.216.1) precise; urgency=low
+
+  * Fixed: Python 3 compatibility with repr import
+
+ -- Hamed Haddadian <HAMEDH@DNANEXUS.COM>  Thu, 06 Apr 2017 18:04:38 +0000
+
 dx-toolkit (0.216.0) precise; urgency=low
 
   * No significant changes.
