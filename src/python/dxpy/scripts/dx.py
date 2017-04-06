@@ -490,7 +490,7 @@ def pick_and_set_project(args):
                                        " VIEW permissions, use " + BOLD("dx select --level VIEW") + " or " +
                                        BOLD("dx select --public") + ".") + '\n')
         elif len(results) == 0:
-            err_exit('No projects left to choose from.', 3)
+            err_exit('No projects left to choose from.', 3, expected_exceptions=StopIteration)
 
         if first_pass:
             if not args.public and args.level == "CONTRIBUTE":
