@@ -6,11 +6,21 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+## [217.0] - beta
+
+No significant changes. 
+
+## [216.1] - 2017-04-06 - stable
+
 ### Fixed
 
 * Python 3 compatibility with `repr` import
 
-## [215.0] - beta
+## [216.0]
+
+No significant changes.
+
+## [215.0]
 
 ## Added
 
