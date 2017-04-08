@@ -25,15 +25,28 @@ export DNANEXUS_HOME="$( cd -P "$( dirname "$SOURCE" )" && pwd )/.."
 
 if $DNANEXUS_HOME/build/tls12check.py ; then
     echo ""
-    echo "Your Python build does not need an upgrade for TLS 1.2 support; exiting."
+    echo "Your Python release does not need an upgrade for TLS 1.2 support; exiting."
     exit 0
 fi
 
 echo ""
-echo "Preparing to install Python 2.7 with TLS 1.2 support."
+echo "Your version of Python must be upgraded in order to support TLS 1.2."
 echo ""
-echo "Note: This script will prompt for your macOS user password in order to complete the Python installation."
+echo "This script can upgrade Python for you (using the Homebrew package manager)."
+echo ""
+echo "Note:"
+echo " * This script is meant for use on OS X 10.10 and higher."
+echo " * Homebrew will prompt for your OS user password to begin the installation."
+echo " * Please see https://brew.sh/ for more information on Homebrew."
 echo ""
 
-/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-brew install python
+read -r -p "Would you like to perform the Python upgrade? [y/N] " response
+case "$response" in
+    [yY][eE][sS]|[yY]) 
+        /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+        brew install python
+        ;;
+    *)
+        echo "Exiting without changes."
+        ;;
+esac
