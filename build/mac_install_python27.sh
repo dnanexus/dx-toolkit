@@ -30,14 +30,15 @@ if $DNANEXUS_HOME/build/tls12check.py ; then
 fi
 
 echo ""
-echo "Your version of Python must be upgraded in order to support TLS 1.2."
+echo "Your version of Python must be upgraded in order to support the DNAnexus CLI."
 echo ""
 echo "This script can upgrade Python for you (using the Homebrew package manager)."
 echo ""
 echo "Note:"
 echo " * This script is meant for use on OS X 10.10 and higher."
 echo " * Homebrew will prompt for your OS user password to begin the installation."
-echo " * Please see https://brew.sh/ for more information on Homebrew."
+echo ""
+echo "Please see https://brew.sh/ for more information on Homebrew."
 echo ""
 
 read -r -p "Would you like to perform the Python upgrade? [y/N] " response
