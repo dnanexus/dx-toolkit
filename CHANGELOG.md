@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+* Use DNAnexus DockerHub repo for dx-docker tests
+
 ## [217.0] - beta
 
 No significant changes. 
