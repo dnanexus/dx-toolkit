@@ -81,10 +81,12 @@ class TestDXDocker(DXTestCase):
         self.assertTrue(os.path.isfile(os.path.join(CACHE_DIR, 'quay.io%2Fucsc_cgl%2Fsamtools.aci')))
 
     def test_dx_docker_pull_hash_or_not(self):
-        run("dx-docker pull geetduggal/testdocker")
-        self.assertTrue(os.path.isfile(os.path.join(CACHE_DIR, 'geetduggal%2Ftestdocker.aci')))
-        run("dx-docker pull geetduggal/testdocker@sha256:b680a129fdd06380c461c3b97240a61c246328c6917d60aa3eb393e49529ac9c")
-        self.assertTrue(os.path.isfile(os.path.join(CACHE_DIR, 'geetduggal%2Ftestdocker%40sha256%3Ab680a129fdd06380c461c3b97240a61c246328c6917d60aa3eb393e49529ac9c.aci')))
+        run("dx-docker pull dnanexus/testdocker")
+        self.assertTrue(os.path.isfile(os.path.join(CACHE_DIR, 'dnanexus%2Ftestdocker.aci')))
+        repo = "dnanexus/testdocker@sha256:4f983c07e762f5afadf9c45ccd6a557e1a414460e769676826b01c99c4ccb1cb"
+        run("dx-docker pull {}".format(repo))
+        sanit='dnanexus%2Ftestdocker%40sha256%3A4f983c07e762f5afadf9c45ccd6a557e1a414460e769676826b01c99c4ccb1cb.aci'
+        self.assertTrue(os.path.isfile(os.path.join(CACHE_DIR, sanit)))
 
     def test_dx_docker_pull_failure(self):
         with self.assertSubprocessFailure(exit_code=1, stderr_regexp='Failed to obtain image'):
@@ -95,7 +97,8 @@ class TestDXDocker(DXTestCase):
         run("dx-docker run ubuntu:15.04 ls")
 
     def test_dx_docker_run_from_hash(self):
-        run("dx-docker run geetduggal/testdocker@sha256:b680a129fdd06380c461c3b97240a61c246328c6917d60aa3eb393e49529ac9c")
+        repo = "dnanexus/testdocker@sha256:4f983c07e762f5afadf9c45ccd6a557e1a414460e769676826b01c99c4ccb1cb"
+        run("dx-docker run {}".format(repo))
 
     def test_dx_docker_run_error_codes(self):
         with self.assertSubprocessFailure(exit_code=1):
@@ -109,8 +112,8 @@ class TestDXDocker(DXTestCase):
         shutil.rmtree('dxdtestdata')
 
     def test_dx_docker_entrypoint_cmd(self):
-        docker_out = run("docker run geetduggal/testdocker /bin")
-        dx_docker_out = run("dx-docker run -q geetduggal/testdocker /bin")
+        docker_out = run("docker run dnanexus/testdocker /bin")
+        dx_docker_out = run("dx-docker run -q dnanexus/testdocker /bin")
         self.assertEqual(docker_out, dx_docker_out)
 
     def test_dx_docker_home_dir(self):
