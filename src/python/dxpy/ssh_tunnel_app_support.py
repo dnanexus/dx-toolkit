@@ -55,6 +55,9 @@ def run_notebook(args):
     cmd = 'dx run {0} -inotebook_type={1} {2} -itimeout={3} -y --brief --allow-ssh --instance-type {4} '
     if args.ds_packages:
         cmd += '-iinstall_data_science_packages=true '
+    if args.spark:
+        cmd += '-iinstall_spark=true '
+
     cmd = cmd.format(NOTEBOOK_APP, args.notebook_type, input_files, args.timeout, args.instance_type)
     job_id = subprocess.check_output(cmd, shell=True).strip()
 
