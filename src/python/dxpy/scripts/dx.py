@@ -4689,6 +4689,7 @@ parser_notebook = subparsers.add_parser('notebook', help='Launch a web notebook 
                                         prog='dx notebook')
 parser_notebook.add_argument('notebook_type', help='Type of notebook to launch', choices=['jupyter', 'rstudio'])
 parser_notebook.add_argument('notebook_files', help='Files to include on notebook instance', default=[], nargs=argparse.REMAINDER).completer = DXPathCompleter(classes=['file'])
+parser_notebook.add_argument('--spark', help='Install spark infrastructure.', action='store_true', default=False)
 parser_notebook.add_argument('--port', help='local port to use to access the notebook.', default='2001')
 parser_notebook.add_argument('--timeout', help='How long to keep the notebook open (smhwMy).', default='1h')
 parser_notebook.add_argument('--ds-packages', help='Install data science packages.', action='store_true')
