@@ -6197,7 +6197,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
-    def test_build_multi_region_app_with_regional_options(self):
+    def test_build_multi_region_app(self):
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
         app_spec = dict(self.base_app_spec, name=app_name,
                         regionalOptions={"aws:us-east-1": {},
@@ -6219,40 +6219,71 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
-    def test_build_multi_region_app_with_system_requirements(self):
+    def test_build_multi_region_app_with_regional_options(self):
         app_name = "asset_{t}_multi_region_app_with_regional_system_requirements".format(t=int(time.time()))
 
-        aws_us_east_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x1"))
-        aws_us_west_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x2"))
-        azure_westus_system_requirements = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
-        app_spec = dict(self.base_app_spec, name=app_name,
-                        regionalOptions={"aws:us-east-1": dict(systemRequirements=aws_us_east_system_requirements),
-                                         "aws:us-west-1": dict(systemRequirements=aws_us_west_system_requirements),
-                                         "azure:westus": dict(systemRequirements=azure_westus_system_requirements)})
-        app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
-        app_id = json.loads(run("dx build --create-app --json " + app_dir))["id"]
+        with temporary_project(region="aws:us-east-1") as us_east_proj:
+            with temporary_project(region="aws:us-west-1") as us_west_proj:
+                with temporary_project(region="azure:westus") as azure_proj:
+                    us_east_bundled_dep = dxpy.upload_string("foo", project=us_east_proj.get_id())
+                    us_west_bundled_dep = dxpy.upload_string("foo", project=us_west_proj.get_id())
+                    azure_bundled_dep = dxpy.upload_string("foo", project=azure_proj.get_id())
 
-        app_desc_res = dxpy.api.app_describe(app_id)
-        self.assertEqual(app_desc_res["class"], "app")
-        self.assertEqual(app_desc_res["id"], app_id)
-        self.assertEqual(app_desc_res["version"], "1.0.0")
-        self.assertEqual(app_desc_res["name"], app_name)
+                    us_east_sys_reqs = dict(main=dict(instanceType="mem2_hdd2_x1"))
+                    us_west_sys_reqs = dict(main=dict(instanceType="mem2_hdd2_x2"))
+                    azure_sys_reqs = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
 
-        self.assertIn("regionalOptions", app_desc_res)
-        regional_options = app_desc_res["regionalOptions"]
-        self.assertItemsEqual(regional_options.keys(), app_spec["regionalOptions"].keys())
+                    app_spec = dict(
+                        self.base_app_spec,
+                        name=app_name,
+                        regionalOptions={
+                            "aws:us-east-1": dict(
+                                systemRequirements=us_east_sys_reqs,
+                                bundledDepends=[{"name": "foo.tar.gz",
+                                                 "id": {"$dnanexus_link": us_east_bundled_dep.get_id()}}]
+                            ),
+                            "aws:us-west-1": dict(
+                                systemRequirements=us_west_sys_reqs,
+                                bundledDepends=[{"name": "foo.tar.gz",
+                                                 "id": {"$dnanexus_link": us_west_bundled_dep.get_id()}}]
+                            ),
+                            "azure:westus": dict(
+                                systemRequirements=azure_sys_reqs,
+                                bundledDepends=[{"name": "foo.tar.gz",
+                                                 "id": {"$dnanexus_link": azure_bundled_dep.get_id()}}]
+                            )
+                        }
+                    )
+                    app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+                    app_id = json.loads(run("dx build --create-app --json " + app_dir))["id"]
 
-        applet_aws_us_east = regional_options["aws:us-east-1"]["applet"]
-        self.assertEqual(dxpy.api.applet_describe(applet_aws_us_east)["runSpec"]["systemRequirements"],
-                         aws_us_east_system_requirements)
+                    app_desc_res = dxpy.api.app_describe(app_id)
+                    self.assertEqual(app_desc_res["class"], "app")
+                    self.assertEqual(app_desc_res["id"], app_id)
+                    self.assertEqual(app_desc_res["version"], "1.0.0")
+                    self.assertEqual(app_desc_res["name"], app_name)
 
-        applet_aws_us_west = regional_options["aws:us-west-1"]["applet"]
-        self.assertEqual(dxpy.api.applet_describe(applet_aws_us_west)["runSpec"]["systemRequirements"],
-                         aws_us_west_system_requirements)
+                    self.assertIn("regionalOptions", app_desc_res)
+                    regional_options = app_desc_res["regionalOptions"]
+                    self.assertItemsEqual(regional_options.keys(), app_spec["regionalOptions"].keys())
 
-        applet_azure_westus = regional_options["azure:westus"]["applet"]
-        self.assertEqual(dxpy.api.applet_describe(applet_azure_westus)["runSpec"]["systemRequirements"],
-                         azure_westus_system_requirements)
+                    us_east_applet = regional_options["aws:us-east-1"]["applet"]
+                    self.assertEqual(dxpy.api.applet_describe(us_east_applet)["runSpec"]["systemRequirements"],
+                                     us_east_sys_reqs)
+
+                    us_west_applet = regional_options["aws:us-west-1"]["applet"]
+                    self.assertEqual(dxpy.api.applet_describe(us_west_applet)["runSpec"]["systemRequirements"],
+                                     us_west_sys_reqs)
+
+                    azure_applet = regional_options["azure:westus"]["applet"]
+                    self.assertEqual(dxpy.api.applet_describe(azure_applet)["runSpec"]["systemRequirements"],
+                                     azure_sys_reqs)
+
+                    # Make sure the bundledDepends are the same as what we put
+                    # in
+                    self.assertEqual(app_desc_res["runSpec"]["bundledDependsByRegion"],
+                                     {region: options_for_region["bundledDepends"]
+                                      for region, options_for_region in app_spec["regionalOptions"].items()})
 
     def test_build_applets_using_multi_region_dxapp_json(self):
         app_name = "asset_{t}_multi_region_dxapp_json_with_regional_system_requirements".format(t=int(time.time()))
@@ -8447,7 +8478,7 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
-    def test_get_preserves_system_requirements(self):
+    def test_get_preserves_regional(self):
         app_name = "asset_{t}_multi_region_app_with_regional_system_requirements".format(t=int(time.time()))
 
         aws_us_east_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x1"))
