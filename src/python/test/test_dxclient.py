@@ -6267,39 +6267,39 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                 app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
                 app_id = json.loads(run("dx build --create-app --json " + app_dir))["id"]
 
-        app_desc_res = dxpy.api.app_describe(app_id)
-        self.assertEqual(app_desc_res["class"], "app")
-        self.assertEqual(app_desc_res["id"], app_id)
-        self.assertEqual(app_desc_res["version"], "1.0.0")
-        self.assertEqual(app_desc_res["name"], app_name)
+                app_desc_res = dxpy.api.app_describe(app_id)
+                self.assertEqual(app_desc_res["class"], "app")
+                self.assertEqual(app_desc_res["id"], app_id)
+                self.assertEqual(app_desc_res["version"], "1.0.0")
+                self.assertEqual(app_desc_res["name"], app_name)
 
-        self.assertIn("regionalOptions", app_desc_res)
-        regional_options = app_desc_res["regionalOptions"]
-        self.assertItemsEqual(regional_options.keys(), app_spec["regionalOptions"].keys())
+                self.assertIn("regionalOptions", app_desc_res)
+                regional_options = app_desc_res["regionalOptions"]
+                self.assertItemsEqual(regional_options.keys(), app_spec["regionalOptions"].keys())
 
-        aws_applet = regional_options["aws:us-east-1"]["applet"]
-        self.assertEqual(dxpy.api.applet_describe(aws_applet)["runSpec"]["systemRequirements"],
-                         aws_sys_reqs)
+                aws_applet = regional_options["aws:us-east-1"]["applet"]
+                self.assertEqual(dxpy.api.applet_describe(aws_applet)["runSpec"]["systemRequirements"],
+                                 aws_sys_reqs)
 
-        azure_applet = regional_options["azure:westus"]["applet"]
-        self.assertEqual(dxpy.api.applet_describe(azure_applet)["runSpec"]["systemRequirements"],
-                         azure_sys_reqs)
+                azure_applet = regional_options["azure:westus"]["applet"]
+                self.assertEqual(dxpy.api.applet_describe(azure_applet)["runSpec"]["systemRequirements"],
+                                 azure_sys_reqs)
 
-        # Given an asset ID, returns the bundledDepends spec that the
-        # inclusion of that asset would have generated
-        def get_asset_spec(asset_id):
-            tarball_id = dxpy.DXRecord(asset_id).describe(
-               fields={'details'})["details"]["archiveFileId"]["$dnanexus_link"]
-            tarball_name = dxpy.DXFile(tarball_id).describe()["name"]
-            return {"name": tarball_name, "id": {"$dnanexus_link": tarball_id}}
+                # Given an asset ID, returns the bundledDepends spec that the
+                # inclusion of that asset would have generated
+                def get_asset_spec(asset_id):
+                    tarball_id = dxpy.DXRecord(asset_id).describe(
+                       fields={'details'})["details"]["archiveFileId"]["$dnanexus_link"]
+                    tarball_name = dxpy.DXFile(tarball_id).describe()["name"]
+                    return {"name": tarball_name, "id": {"$dnanexus_link": tarball_id}}
 
-        # Make sure the bundledDepends are the same as what we put
-        # in: explicit bundledDepends first, then assets
-        self.assertEqual(
-            app_desc_res["runSpec"]["bundledDependsByRegion"],
-            {region: opts["bundledDepends"] + [get_asset_spec(opts["assetDepends"][0]["id"])]
-             for region, opts in app_spec["regionalOptions"].items()}
-        )
+                # Make sure the bundledDepends are the same as what we put
+                # in: explicit bundledDepends first, then assets
+                self.assertEqual(
+                    app_desc_res["runSpec"]["bundledDependsByRegion"],
+                    {region: opts["bundledDepends"] + [get_asset_spec(opts["assetDepends"][0]["id"])]
+                     for region, opts in app_spec["regionalOptions"].items()}
+                )
 
     def test_build_applets_using_multi_region_dxapp_json(self):
         app_name = "asset_{t}_multi_region_dxapp_json_with_regional_system_requirements".format(t=int(time.time()))
