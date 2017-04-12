@@ -780,16 +780,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     override_folder = None
     override_applet_name = None
 
-    if 'regionalOptions' in app_json:
-        requested_regional_options = app_json['regionalOptions']
-        if not isinstance(requested_regional_options, dict):
-            raise dxpy.app_builder.AppBuilderException("The field 'regionalOptions' in dxapp.json must be a mapping")
-        if not requested_regional_options:
-            raise dxpy.app_builder.AppBuilderException(
-                "The field 'regionalOptions' in dxapp.json must be a non-empty mapping")
-    else:
-        requested_regional_options = None
-    enabled_regions = dxpy.app_builder.get_enabled_regions(requested_regional_options, region)
+    enabled_regions = dxpy.app_builder.get_enabled_regions(app_json, region)
 
     # Cannot build multi-region app if `use_temp_build_project` is falsy.
     if enabled_regions is not None and len(enabled_regions) > 1 and not use_temp_build_project:

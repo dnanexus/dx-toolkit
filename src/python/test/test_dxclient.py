@@ -6217,6 +6217,17 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
 
+    def create_asset(self, tarball_name, proj):
+        asset_archive = dxpy.upload_string("foo", name=tarball_name, project=proj.get_id())
+        asset_archive.wait_on_close()
+        asset = dxpy.new_dxrecord(
+            project=proj.get_id(),
+            details={"archiveFileId": {"$dnanexus_link": asset_archive.get_id()}},
+            properties={"version": "0.0.1"}
+        )
+        asset.close()
+        return asset.get_id()
+
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
     def test_build_multi_region_app_with_regional_options(self):
@@ -6225,26 +6236,12 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         with temporary_project(region="aws:us-east-1") as aws_proj:
             with temporary_project(region="azure:westus") as azure_proj:
                 aws_bundled_dep = dxpy.upload_string("foo", project=aws_proj.get_id())
+                aws_bundled_dep.close()
                 azure_bundled_dep = dxpy.upload_string("foo", project=azure_proj.get_id())
+                azure_bundled_dep.close()
 
-                aws_asset_archive = dxpy.upload_string("foo", name="aws_asset.tar.gz", project=aws_proj.get_id())
-                azure_asset_archive = dxpy.upload_string("foo", name="azure_asset.tar.gz", project=azure_proj.get_id())
-
-                for f in (aws_bundled_dep, azure_bundled_dep, aws_asset_archive, azure_asset_archive):
-                    f.wait_on_close()
-
-                aws_asset = dxpy.new_dxrecord(
-                    project=aws_proj.get_id(),
-                    details={"archiveFileId": {"$dnanexus_link": aws_asset_archive.get_id()}},
-                    properties={"version": "0.0.1"}
-                )
-                aws_asset.close()
-                azure_asset = dxpy.new_dxrecord(
-                    project=azure_proj.get_id(),
-                    details={"archiveFileId": {"$dnanexus_link": azure_asset_archive.get_id()}},
-                    properties={"version": "0.0.1"}
-                )
-                azure_asset.close()
+                aws_asset = self.create_asset("aws_asset.tar.gz", aws_proj)
+                azure_asset = self.create_asset("azure_asset.tar.gz", azure_proj)
 
                 aws_sys_reqs = dict(main=dict(instanceType="mem2_hdd2_x1"))
                 azure_sys_reqs = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
@@ -6257,52 +6254,52 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                             systemRequirements=aws_sys_reqs,
                             bundledDepends=[{"name": "aws.tar.gz",
                                              "id": {"$dnanexus_link": aws_bundled_dep.get_id()}}],
-                            assetDepends=[{"id": aws_asset.get_id()}]
+                            assetDepends=[{"id": aws_asset}]
                         ),
                         "azure:westus": dict(
                             systemRequirements=azure_sys_reqs,
                             bundledDepends=[{"name": "azure.tar.gz",
                                              "id": {"$dnanexus_link": azure_bundled_dep.get_id()}}],
-                            assetDepends=[{"id": azure_asset.get_id()}]
+                            assetDepends=[{"id": azure_asset}]
                         )
                     }
                 )
                 app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
                 app_id = json.loads(run("dx build --create-app --json " + app_dir))["id"]
 
-                app_desc_res = dxpy.api.app_describe(app_id)
-                self.assertEqual(app_desc_res["class"], "app")
-                self.assertEqual(app_desc_res["id"], app_id)
-                self.assertEqual(app_desc_res["version"], "1.0.0")
-                self.assertEqual(app_desc_res["name"], app_name)
+        app_desc_res = dxpy.api.app_describe(app_id)
+        self.assertEqual(app_desc_res["class"], "app")
+        self.assertEqual(app_desc_res["id"], app_id)
+        self.assertEqual(app_desc_res["version"], "1.0.0")
+        self.assertEqual(app_desc_res["name"], app_name)
 
-                self.assertIn("regionalOptions", app_desc_res)
-                regional_options = app_desc_res["regionalOptions"]
-                self.assertItemsEqual(regional_options.keys(), app_spec["regionalOptions"].keys())
+        self.assertIn("regionalOptions", app_desc_res)
+        regional_options = app_desc_res["regionalOptions"]
+        self.assertItemsEqual(regional_options.keys(), app_spec["regionalOptions"].keys())
 
-                aws_applet = regional_options["aws:us-east-1"]["applet"]
-                self.assertEqual(dxpy.api.applet_describe(aws_applet)["runSpec"]["systemRequirements"],
-                                 aws_sys_reqs)
+        aws_applet = regional_options["aws:us-east-1"]["applet"]
+        self.assertEqual(dxpy.api.applet_describe(aws_applet)["runSpec"]["systemRequirements"],
+                         aws_sys_reqs)
 
-                azure_applet = regional_options["azure:westus"]["applet"]
-                self.assertEqual(dxpy.api.applet_describe(azure_applet)["runSpec"]["systemRequirements"],
-                                 azure_sys_reqs)
+        azure_applet = regional_options["azure:westus"]["applet"]
+        self.assertEqual(dxpy.api.applet_describe(azure_applet)["runSpec"]["systemRequirements"],
+                         azure_sys_reqs)
 
-                # Given an asset ID, returns the bundledDepends spec that the
-                # inclusion of that asset would have generated
-                def get_asset_spec(asset_id):
-                    tarball_id = dxpy.DXRecord(asset_id).describe(
-                       fields={'details'})["details"]["archiveFileId"]["$dnanexus_link"]
-                    tarball_name = dxpy.DXFile(tarball_id).describe()["name"]
-                    return {"name": tarball_name, "id": {"$dnanexus_link": tarball_id}}
+        # Given an asset ID, returns the bundledDepends spec that the
+        # inclusion of that asset would have generated
+        def get_asset_spec(asset_id):
+            tarball_id = dxpy.DXRecord(asset_id).describe(
+               fields={'details'})["details"]["archiveFileId"]["$dnanexus_link"]
+            tarball_name = dxpy.DXFile(tarball_id).describe()["name"]
+            return {"name": tarball_name, "id": {"$dnanexus_link": tarball_id}}
 
-                # Make sure the bundledDepends are the same as what we put
-                # in: explicit bundledDepends first, then assets
-                self.assertEqual(
-                    app_desc_res["runSpec"]["bundledDependsByRegion"],
-                    {region: opts["bundledDepends"] + [get_asset_spec(opts["assetDepends"][0]["id"])]
-                     for region, opts in app_spec["regionalOptions"].items()}
-                )
+        # Make sure the bundledDepends are the same as what we put
+        # in: explicit bundledDepends first, then assets
+        self.assertEqual(
+            app_desc_res["runSpec"]["bundledDependsByRegion"],
+            {region: opts["bundledDepends"] + [get_asset_spec(opts["assetDepends"][0]["id"])]
+             for region, opts in app_spec["regionalOptions"].items()}
+        )
 
     def test_build_applets_using_multi_region_dxapp_json(self):
         app_name = "asset_{t}_multi_region_dxapp_json_with_regional_system_requirements".format(t=int(time.time()))
@@ -6392,8 +6389,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
-    def test_build_multi_region_app_regional_options_do_not_match(self):
-        # Regional options in dxapp.json does not match the ones specified on
+    def test_build_multi_region_app_regions_do_not_match(self):
+        # Regions specified in dxapp.json do not match the ones specified on
         # command-line.
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
         app_spec = dict(self.base_app_spec, name=app_name, regionalOptions={"aws:us-east-1": {}})
@@ -6410,6 +6407,84 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
         with self.assertSubprocessFailure(stderr_regexp="regionalOptions", exit_code=3):
             run("dx build --create-app --region azure:westus --region aws:us-east-2 --json " + app_dir)
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
+                         'skipping test that would create apps')
+    def test_build_multi_region_app_with_inconsistent_regional_options(self):
+        app_name = "multi_region_app_with_inconsistent_regional_options"
+
+        with temporary_project(region="aws:us-east-1") as aws_proj:
+            with temporary_project(region="azure:westus") as azure_proj:
+                aws_bundled_dep = dxpy.upload_string("foo", project=aws_proj.get_id())
+                aws_bundled_dep.close()
+                azure_bundled_dep = dxpy.upload_string("foo", project=azure_proj.get_id())
+                azure_bundled_dep.close()
+
+                aws_asset = self.create_asset("aws_asset.tar.gz", aws_proj)
+                azure_asset = self.create_asset("azure_asset.tar.gz", azure_proj)
+
+                aws_sys_reqs = dict(main=dict(instanceType="mem2_hdd2_x1"))
+                azure_sys_reqs = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
+
+                app_spec = dict(
+                    self.base_app_spec,
+                    name=app_name,
+                    title="title",
+                    summary="summary",
+                    description="description.",
+                    regionalOptions={
+                        "aws:us-east-1": dict(
+                            systemRequirements=aws_sys_reqs,
+                            bundledDepends=[{"name": "aws.tar.gz",
+                                             "id": {"$dnanexus_link": aws_bundled_dep.get_id()}}],
+                            assetDepends=[{"id": aws_asset}]
+                        ),
+                        "azure:westus": dict(
+                            systemRequirements=azure_sys_reqs,
+                            bundledDepends=[{"name": "azure.tar.gz",
+                                             "id": {"$dnanexus_link": azure_bundled_dep.get_id()}}],
+                            assetDepends=[{"id": azure_asset}]
+                        )
+                    }
+                )
+
+                # Build an app spec that looks like {region-A: {foo: ..., bar:
+                # ...}, region-B: {foo: ...}} and make sure it is rejected
+                for region_to_remove, key_to_remove in (("azure:westus", "systemRequirements"),
+                                                        ("aws:us-east-1", "bundledDepends"),
+                                                        ("azure:westus", "assetDepends")):
+                    # Remove one of the regionalOptions keys from one of the
+                    # regions
+                    app_spec_without_regional_option = dict(app_spec)
+                    app_spec_without_regional_option['regionalOptions'] = dict(app_spec['regionalOptions'])
+                    app_spec_without_regional_option['regionalOptions'][region_to_remove] = (
+                       dict(app_spec['regionalOptions'][region_to_remove]))
+                    del app_spec_without_regional_option['regionalOptions'][region_to_remove][key_to_remove]
+
+                    app_dir = self.write_app_directory(app_name,
+                                                       json.dumps(app_spec_without_regional_option),
+                                                       "code.py")
+                    with self.assertSubprocessFailure(
+                           stderr_regexp=key_to_remove + " was given for [-a-z0-9:]+ but not for " +
+                           region_to_remove):
+                        run("dx build --create-app --json " + app_dir)
+
+                # Build an app spec where some of the keys in the
+                # regionalOptions also appear in the runSpec, and make sure it
+                # is rejected
+                for key_to_add in ("systemRequirements", "bundledDepends", "assetDepends"):
+                    app_spec_with_redundant_option = dict(app_spec)
+                    app_spec_with_redundant_option['runSpec'] = dict(app_spec['runSpec'])
+                    app_spec_with_redundant_option['runSpec'][key_to_add] = (
+                        app_spec['regionalOptions']['aws:us-east-1'][key_to_add])
+
+                    app_dir = self.write_app_directory(app_name,
+                                                       json.dumps(app_spec_with_redundant_option),
+                                                       "code.py")
+                    with self.assertSubprocessFailure(
+                            stderr_regexp=key_to_add + " cannot be given in both runSpec and in regional options"):
+                        run("dx build --create-app --json " + app_dir)
+
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')

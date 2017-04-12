@@ -925,14 +925,48 @@ def assert_consistent_regions(from_app_spec, from_command_line):
         raise dxpy.app_builder.AppBuilderException("--region and the 'regionalOptions' key in dxapp.json do not agree")
 
 
-def get_enabled_regions(from_app_spec, from_command_line):
+def get_enabled_regions(app_spec, from_command_line):
+    """Returns a list of the regions in which the app should be enabled.
+
+    Also validates that app_spec['regionalOptions'], if supplied, is
+    well-formed.
+
+    :param app_spec: app specification
+    :type app_spec: dict
+    :param from_command_line: The regions specified on the command-line
+      via --region
+    :type from_command_line: list or None
+
     """
-    :param from_app_spec: The regional options specified in dxapp.json.
-    :type from_app_spec: dict or None.
-    :param from_command_line: The regional options specified on the
-    command-line via --region.
-    :type from_command_line: list or None.
-    """
+    from_app_spec = app_spec.get('regionalOptions')
+
+    if from_app_spec is not None:
+        if not isinstance(from_app_spec, dict):
+            raise dxpy.app_builder.AppBuilderException("The field 'regionalOptions' in dxapp.json must be a mapping")
+        if not from_app_spec:
+            raise dxpy.app_builder.AppBuilderException(
+                "The field 'regionalOptions' in dxapp.json must be a non-empty mapping")
+        regional_options_list = list(from_app_spec.items())
+        for region, opts_for_region in regional_options_list:
+            if not isinstance(opts_for_region, dict):
+                raise dxpy.app_builder.AppBuilderException("The field 'regionalOptions['" + region +
+                                                           "']' in dxapp.json must be a mapping")
+            if set(opts_for_region.keys()) != set(regional_options_list[0][1].keys()):
+                if set(opts_for_region.keys()) - set(regional_options_list[0][1].keys()):
+                    with_key, without_key = region, regional_options_list[0][0]
+                    key_name = next(iter(set(opts_for_region.keys()) - set(regional_options_list[0][1].keys())))
+                else:
+                    with_key, without_key = regional_options_list[0][0], region
+                    key_name = next(iter(set(regional_options_list[0][1].keys()) - set(opts_for_region.keys())))
+                raise dxpy.app_builder.AppBuilderException(
+                    "All regions in regionalOptions must specify the same options; %s was given for %s but not for %s" % (
+                        key_name, with_key, without_key)
+                )
+            for key in opts_for_region:
+                if key in app_spec.get('runSpec', {}):
+                    raise dxpy.app_builder.AppBuilderException(
+                        key + " cannot be given in both runSpec and in regional options for " + region)
+
     assert_consistent_regions(from_app_spec, from_command_line)
 
     enabled_regions = None
