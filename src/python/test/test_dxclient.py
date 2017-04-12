@@ -6485,7 +6485,6 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                             stderr_regexp=key_to_add + " cannot be given in both runSpec and in regional options"):
                         run("dx build --create-app --json " + app_dir)
 
-
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
     def test_build_multi_region_app_requires_temporary_projects(self):

@@ -532,16 +532,14 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
         region = dxpy.api.project_describe(project, input_params={"fields": {"region": True}})["region"]
         regional_options = applet_spec.get('regionalOptions', {}).get(region, {})
 
-        # If region-specific values for the fields below are given,
-        # override or augment the ones given at the top level.
+        # We checked earlier that if region-specific values for the
+        # fields below are given, the same fields are not also specified
+        # in the top-level runSpec. So thie operations below should not
+        # result in any user-supplied settings being clobbered.
 
         if 'systemRequirements' in regional_options:
-            # TODO: Since we're clobbering runSpec.systemRequirements,
-            # assert that "systemRequirements" is not set there?
             applet_spec["runSpec"]["systemRequirements"] = regional_options['systemRequirements']
 
-        # TODO: should it be permissible to specify this globally
-        # and have region-specific values?
         if 'bundledDepends' in regional_options:
             applet_spec["runSpec"]["bundledDepends"].extend(regional_options["bundledDepends"])
         if 'assetDepends' in regional_options:
@@ -959,8 +957,8 @@ def get_enabled_regions(app_spec, from_command_line):
                     with_key, without_key = regional_options_list[0][0], region
                     key_name = next(iter(set(regional_options_list[0][1].keys()) - set(opts_for_region.keys())))
                 raise dxpy.app_builder.AppBuilderException(
-                    "All regions in regionalOptions must specify the same options; %s was given for %s but not for %s" % (
-                        key_name, with_key, without_key)
+                    "All regions in regionalOptions must specify the same options; " +
+                    "%s was given for %s but not for %s" % (key_name, with_key, without_key)
                 )
             for key in opts_for_region:
                 if key in app_spec.get('runSpec', {}):
