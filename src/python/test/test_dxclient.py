@@ -6227,8 +6227,11 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                 aws_bundled_dep = dxpy.upload_string("foo", project=aws_proj.get_id())
                 azure_bundled_dep = dxpy.upload_string("foo", project=azure_proj.get_id())
 
-                aws_asset_archive = dxpy.upload_string("foo", project=aws_proj.get_id())
-                azure_asset_archive = dxpy.upload_string("foo", project=azure_proj.get_id())
+                aws_asset_archive = dxpy.upload_string("foo", name="aws_asset.tar.gz", project=aws_proj.get_id())
+                azure_asset_archive = dxpy.upload_string("foo", name="azure_asset.tar.gz", project=azure_proj.get_id())
+
+                for f in (aws_bundled_dep, azure_bundled_dep, aws_asset_archive, azure_asset_archive):
+                    f.wait_on_close()
 
                 aws_asset = dxpy.new_dxrecord(project=aws_proj.get_id(),
                                               details={"archiveFileId": {"$dnanexus_link": aws_asset_archive.get_id()}},
@@ -6281,14 +6284,17 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                 self.assertEqual(dxpy.api.applet_describe(azure_applet)["runSpec"]["systemRequirements"],
                                  azure_sys_reqs)
 
-                def get_asset_tarball(asset_id):
+                # Given an asset ID, returns the bundledDepends spec that the
+                # inclusion of that asset would have generated
+                def get_asset_spec(asset_id):
                     tarball_id = dxpy.DXRecord(asset_id).describe(fields={'details'})["details"]["archiveFileId"]["$dnanexus_link"]
-                    return {"id": {"$dnanexus_link": tarball_id}}
+                    tarball_name = dxpy.DXFile(tarball_id).describe()["name"]
+                    return {"name": tarball_name, "id": {"$dnanexus_link": tarball_id}}
 
                 # Make sure the bundledDepends are the same as what we put
                 # in: explicit bundledDepends first, then assets
                 self.assertEqual(app_desc_res["runSpec"]["bundledDependsByRegion"],
-                                 {region: options_for_region["bundledDepends"] + [get_asset_tarball(options_for_region["assetDepends"][0]["id"])]
+                                 {region: options_for_region["bundledDepends"] + [get_asset_spec(options_for_region["assetDepends"][0]["id"])]
                                   for region, options_for_region in app_spec["regionalOptions"].items()})
 
     def test_build_applets_using_multi_region_dxapp_json(self):

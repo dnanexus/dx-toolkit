@@ -467,15 +467,6 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     """
     applet_spec = _get_applet_spec(src_dir)
 
-    system_requirements = get_regional_system_requirements_by_project(applet_spec, project, dry_run)
-    if system_requirements is None:
-        # The top-level "systemRequirements", if present, will be respected.
-        pass
-    else:
-        # Override the top-level "systemRequirements" in memory.
-        # TODO: Assert that "systemRequirements" is not set at the top level?
-        applet_spec["runSpec"]["systemRequirements"] = system_requirements
-
     if project is None:
         dest_project = applet_spec['project']
     else:
@@ -533,6 +524,29 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     # -----
     # Override various fields from the pristine dxapp.json
 
+    # Carry region-specific values from regionalOptions into the main
+    # runSpec
+    applet_spec["runSpec"].setdefault("bundledDepends", [])
+    applet_spec["runSpec"].setdefault("assetDepends", [])
+    if not dry_run:
+        region = dxpy.api.project_describe(project, input_params={"fields": {"region": True}})["region"]
+        regional_options = get_regional_options(applet_spec).get(region, {})
+
+        # If region-specific values for the fields below are given,
+        # override or augment the ones given at the top level.
+
+        if 'systemRequirements' in regional_options:
+            # TODO: Since we're clobbering runSpec.systemRequirements,
+            # assert that "systemRequirements" is not set there?
+            applet_spec["runSpec"]["systemRequirements"] = regional_options['systemRequirements']
+
+        # TODO: should it be permissible to specify this globally
+        # and have region-specific values?
+        if 'bundledDepends' in regional_options:
+            applet_spec["runSpec"]["bundledDepends"].extend(regional_options["bundledDepends"])
+        if 'assetDepends' in regional_options:
+            applet_spec["runSpec"]["assetDepends"].extend(regional_options["assetDepends"])
+
     # Inline Readme.md and Readme.developer.md
     _inline_documentation_files(applet_spec, src_dir)
 
@@ -545,7 +559,6 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
 
     # Attach bundled resources to the app
     if uploaded_resources is not None:
-        applet_spec["runSpec"].setdefault("bundledDepends", [])
         applet_spec["runSpec"]["bundledDepends"].extend(uploaded_resources)
 
     if "runSpec" in applet_spec and "assetDepends" in applet_spec["runSpec"]:
@@ -899,36 +912,15 @@ def _create_app(applet_or_regional_options, app_name, src_dir, publish=False, se
 
 
 def get_regional_options(app_spec):
-    """Gets the regional options specified in dxapp.json. This function is
-    agnostic to apps versus applets.
+    """Returns the regional options map from the executable specification.
+
+    Works for apps and applets. Returns {} if the dxapp.json didn't
+    specify any regional options.
     """
-    regional_options = app_spec.get("regionalOptions")
-    if regional_options is None:
-        return None
+    regional_options = app_spec.get("regionalOptions", {})
     if not isinstance(regional_options, dict):
         raise AppBuilderException("The field 'regionalOptions' in dxapp.json must be a mapping")
-    if len(regional_options.keys()) < 1:
-        raise AppBuilderException("The field 'regionalOptions' in dxapp.json must be a non-empty mapping")
     return regional_options
-
-
-def get_regional_system_requirements_by_project(executable_spec, project, dry_run):
-    """Gets the regional system requirements based on the region of the
-    specified project, if possible. Current-schema dxapp.json may contain
-    system requirements by region. Old-schema dxapp.json do not contain
-    regional options at all.
-    """
-    if dry_run:
-        return None
-
-    region = dxpy.api.project_describe(project, input_params={"fields": {"region": True}})["region"]
-    # We cannot assume that "regional_options" is None here even though this
-    # function is only called at app creation time because we need to be
-    # backward compatible with old-schema dxapp.json files.
-    regional_options = get_regional_options(executable_spec)
-    if regional_options is None:
-        return None
-    return regional_options[region].get("systemRequirements")
 
 
 def assert_consistent_regions(from_app_spec, from_command_line):
