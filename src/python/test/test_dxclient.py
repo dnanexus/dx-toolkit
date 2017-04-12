@@ -8490,7 +8490,7 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
-    def test_get_preserves_regional(self):
+    def test_get_preserves_system_requirements(self):
         app_name = "asset_{t}_multi_region_app_with_regional_system_requirements".format(t=int(time.time()))
 
         aws_us_east_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x1"))

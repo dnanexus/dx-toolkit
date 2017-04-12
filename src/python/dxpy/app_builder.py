@@ -530,7 +530,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     applet_spec["runSpec"].setdefault("assetDepends", [])
     if not dry_run:
         region = dxpy.api.project_describe(project, input_params={"fields": {"region": True}})["region"]
-        regional_options = get_regional_options(applet_spec).get(region, {})
+        regional_options = applet_spec.get('regionalOptions', {}).get(region, {})
 
         # If region-specific values for the fields below are given,
         # override or augment the ones given at the top level.
@@ -909,18 +909,6 @@ def _create_app(applet_or_regional_options, app_name, src_dir, publish=False, se
             dxpy.api.app_add_tags(app_id, input_params={'tags': ['default']})
 
     return app_id
-
-
-def get_regional_options(app_spec):
-    """Returns the regional options map from the executable specification.
-
-    Works for apps and applets. Returns {} if the dxapp.json didn't
-    specify any regional options.
-    """
-    regional_options = app_spec.get("regionalOptions", {})
-    if not isinstance(regional_options, dict):
-        raise AppBuilderException("The field 'regionalOptions' in dxapp.json must be a mapping")
-    return regional_options
 
 
 def assert_consistent_regions(from_app_spec, from_command_line):
