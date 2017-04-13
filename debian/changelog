@@ -1,3 +1,11 @@
+dx-toolkit (0.218.0) precise; urgency=low
+
+  * Changed: Use DNAnexus DockerHub repo for dx-docker tests
+  * Added: `dx get workflow-xxxx` creates a local representation of a workflow
+  * Fixed: Pass gracefully when the user selects from ten projects using the `m` option
+
+ -- Aleksandra Zalcman <azalcman@dnanexus.com>  Thu, 13 Apr 2017 17:50:14 +0000
+
 dx-toolkit (0.217.0) precise; urgency=low
 
   * No significant changes. 
