@@ -780,8 +780,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     override_folder = None
     override_applet_name = None
 
-    requested_regional_options = dxpy.app_builder.get_regional_options(app_json)
-    enabled_regions = dxpy.app_builder.get_enabled_regions(requested_regional_options, region)
+    enabled_regions = dxpy.app_builder.get_enabled_regions(app_json, region)
 
     # Cannot build multi-region app if `use_temp_build_project` is falsy.
     if enabled_regions is not None and len(enabled_regions) > 1 and not use_temp_build_project:
