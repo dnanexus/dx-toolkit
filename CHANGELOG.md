@@ -6,15 +6,25 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+## [218.0] - beta
+
+### Changed
+
 * Use DNAnexus DockerHub repo for dx-docker tests
+
+### Fixed
+
 * Pass gracefully when the user selects from ten projects using the `m` option
+
+### Added
+
 * `dx get workflow-xxxx` creates a local representation of a workflow
 
-## [217.0] - beta
+## [217.0] - 2017-04-13 stable
 
 No significant changes. 
 
-## [216.1] - 2017-04-06 - stable
+## [216.1] - 2017-04-06
 
 ### Fixed
 
