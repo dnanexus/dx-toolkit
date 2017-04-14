@@ -6410,8 +6410,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
-    def test_build_multi_region_app_with_inconsistent_regional_options(self):
-        app_name = "multi_region_app_with_inconsistent_regional_options"
+    def test_build_multi_region_app_with_malformed_regional_options(self):
+        app_name = "multi_region_app_with_malformed_regional_options"
 
         with temporary_project(region="aws:us-east-1") as aws_proj:
             with temporary_project(region="azure:westus") as azure_proj:
