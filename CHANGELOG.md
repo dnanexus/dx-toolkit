@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+### Added
+
+* Ability to specify bundledDepends and assetDepends for multi-region apps
+
 ## [218.0] - beta
 
 ### Changed
@@ -14,7 +18,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Fixed
 
-* Pass gracefully when the user selects from ten projects using the `m` option
+* Issue where selecting from exactly 10 projects resulted in a stacktrace error
 
 ### Added
 
