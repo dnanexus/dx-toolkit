@@ -1,3 +1,9 @@
+dx-toolkit (0.219.0) precise; urgency=low
+
+  * Added: Ability to specify bundledDepends and assetDepends for multi-region apps 
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 20 Apr 2017 16:32:29 +0000
+
 dx-toolkit (0.218.0) precise; urgency=low
 
   * Changed: Use DNAnexus DockerHub repo for dx-docker tests
