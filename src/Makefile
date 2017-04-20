@@ -519,6 +519,10 @@ else ifeq ($(UBUNTU_VERSION), 12.04)
 else ifeq ($(UBUNTU_VERSION), 14.04)
 	${MAYBE_SUDO} apt-get install make python-setuptools python-pip python-virtualenv python-dev \
 		g++ cmake libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison autoconf curl
+else ifeq ($(UNAME), Darwin)
+	# Assumes Homebrew is installed
+	brew install python openssl cmake bison autoconf automake boost libmagic c-ares
+	pip install virtualenv
 endif
 
 # Clean
