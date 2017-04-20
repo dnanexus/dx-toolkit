@@ -6,11 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+## [219.0] - beta
+
 ### Added
 
 * Ability to specify bundledDepends and assetDepends for multi-region apps
 
-## [218.0] - beta
+## [218.0] - 2017-04-20 stable
 
 ### Changed
 
@@ -24,7 +26,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * `dx get workflow-xxxx` creates a local representation of a workflow
 
-## [217.0] - 2017-04-13 stable
+## [217.0] - 2017-04-13 
 
 No significant changes. 
 
