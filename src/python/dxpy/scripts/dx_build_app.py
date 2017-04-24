@@ -786,14 +786,6 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     if enabled_regions is not None and len(enabled_regions) > 1 and not use_temp_build_project:
         raise dxpy.app_builder.AppBuilderException("Cannot specify --no-temp-build-project when building multi-region apps")
 
-    # "resources" can be used only with an app enabled in a single region and when
-    # "regionalOptions" field is not specified.
-    if "resources" in app_json and ("regionalOptions" in app_json or len(enabled_regions) > 1):
-        error_message = "dxapp.json cannot contain a top-level \"resources\" field "
-        error_message += "when the \"regionalOptions\" field is used or when "
-        error_message += "the app is enabled in multiple regions"
-        raise dxpy.app_builder.AppBuilderException(error_message)
-
     projects_by_region = None
 
     if mode == "applet" and destination_override:
@@ -883,6 +875,14 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
 
         if projects_by_region is None:
             raise AssertionError("'projects_by_region' should not be None at this point")
+
+        # "resources" can be used only with an app enabled in a single region and when
+        # "regionalOptions" field is not specified.
+        if "resources" in app_json and ("regionalOptions" in app_json or len(projects_by_region) > 1):
+            error_message = "dxapp.json cannot contain a top-level \"resources\" field "
+            error_message += "when the \"regionalOptions\" field is used or when "
+            error_message += "the app is enabled in multiple regions"
+            raise dxpy.app_builder.AppBuilderException(error_message)
 
         resources_bundles_by_region = {}
         for region, project in projects_by_region.items():
