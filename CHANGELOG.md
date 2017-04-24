@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+* Ability to specify additional resources for multi-region apps
+
 ## [219.0] - beta
 
 ### Added
