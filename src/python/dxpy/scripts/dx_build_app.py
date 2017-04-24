@@ -786,6 +786,14 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     if enabled_regions is not None and len(enabled_regions) > 1 and not use_temp_build_project:
         raise dxpy.app_builder.AppBuilderException("Cannot specify --no-temp-build-project when building multi-region apps")
 
+    # "resources" can be used only with an app enabled in a single region and when
+    # "regionalOptions" field is not specified.
+    if "resources" in app_json and ("regionalOptions" in app_json or len(enabled_regions) > 1):
+        error_message = "dxapp.json cannot contain a top-level \"resources\" field "
+        error_message += "when the \"regionalOptions\" field is used or when "
+        error_message += "the app is enabled in multiple regions"
+        raise dxpy.app_builder.AppBuilderException(error_message)
+
     projects_by_region = None
 
     if mode == "applet" and destination_override:
@@ -931,9 +939,19 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             if not version_override and do_version_autonumbering:
                 try_versions.append(version + _get_version_suffix(src_dir, version))
 
+            additional_resources_by_region = {}
+            if "regionalOptions" in app_json:
+                for region, region_config in app_json["regionalOptions"].items():
+                    if "resources" in region_config:
+                        additional_resources_by_region[region] = region_config["resources"]
+            elif "resources" in app_json:
+                additional_resources_by_region[projects_by_region.keys()[0]] = app_json["resources"]
+
             regional_options = {}
             for region in projects_by_region:
                 regional_options[region] = {"applet": applet_ids_by_region[region]}
+                if region in additional_resources_by_region:
+                    regional_options[region]["resources"] = additional_resources_by_region[region]
             app_id = dxpy.app_builder.create_app_multi_region(regional_options,
                                                               applet_name,
                                                               src_dir,
@@ -1118,7 +1136,6 @@ def main(**kwargs):
 
     executable_id = _build_app(args,
                                json.loads(args.extra_args) if args.extra_args else {})
-
     if args.run is not None:
 
         if executable_id is None:

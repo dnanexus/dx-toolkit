@@ -6185,7 +6185,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         new_app = json.loads(run("dx build --create-app --json " + app_dir))
         app_describe = json.loads(run("dx describe --json " + new_app["id"]))
         self.assertEqual(app_describe["class"], "app")
-        self.assertEqual(app_describe["id"], app_describe["id"])
+        self.assertEqual(app_describe["id"], new_app["id"])
         self.assertEqual(app_describe["version"], "1.0.0")
         self.assertEqual(app_describe["name"], app_name)
         self.assertFalse("published" in app_describe)
@@ -6194,6 +6194,23 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create apps')
+    def test_build_single_region_app_with_resources_and_no_regional_options_fields(self):
+        region = "aws:us-east-1"
+        with temporary_project(region=region) as tmp_project:
+            file_id = create_file_in_project("abc", tmp_project.get_id())
+            app_name = "asset_{t}_single_region_app_resources".format(t=int(time.time()))
+            app_spec = dict(self.base_app_spec, name=app_name,
+                            resources=tmp_project.get_id())
+            app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+            new_app = json.loads(run("dx build --create-app --json " + app_dir))
+            self.assertIn("regionalOptions", new_app)
+            self.assertIn(region, new_app["regionalOptions"])
+            app_container = new_app["regionalOptions"][region]["resources"]
+            container_content = dxpy.api.container_list_folder(app_container, {"folder": "/"})
+            self.assertIn(file_id, [item["id"] for item in container_content["objects"]])
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
@@ -6246,6 +6263,9 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                 aws_sys_reqs = dict(main=dict(instanceType="mem2_hdd2_x1"))
                 azure_sys_reqs = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
 
+                aws_file_id = create_file_in_project("aws_file", aws_proj.get_id())
+                azure_file_id_a = create_file_in_project("azure_a", azure_proj.get_id())
+                azure_file_id_b = create_file_in_project("azure_b", azure_proj.get_id())
                 app_spec = dict(
                     self.base_app_spec,
                     name=app_name,
@@ -6254,13 +6274,15 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                             systemRequirements=aws_sys_reqs,
                             bundledDepends=[{"name": "aws.tar.gz",
                                              "id": {"$dnanexus_link": aws_bundled_dep.get_id()}}],
-                            assetDepends=[{"id": aws_asset}]
+                            assetDepends=[{"id": aws_asset}],
+                            resources=aws_proj.get_id()
                         ),
                         "azure:westus": dict(
                             systemRequirements=azure_sys_reqs,
                             bundledDepends=[{"name": "azure.tar.gz",
                                              "id": {"$dnanexus_link": azure_bundled_dep.get_id()}}],
-                            assetDepends=[{"id": azure_asset}]
+                            assetDepends=[{"id": azure_asset}],
+                            resources=[azure_file_id_a, azure_file_id_b]
                         )
                     }
                 )
@@ -6301,6 +6323,18 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                      for region, opts in app_spec["regionalOptions"].items()}
                 )
 
+                # Make sure additional resources were cloned to the app containers
+                # in the specified regions
+                aws_container = regional_options["aws:us-east-1"]["resources"]
+                aws_obj_id_list = dxpy.api.container_list_folder(aws_container, {"folder": "/"})
+                self.assertIn(aws_file_id, [item["id"] for item in aws_obj_id_list["objects"]])
+
+                azure_container = regional_options["azure:westus"]["resources"]
+                azure_container_list = dxpy.api.container_list_folder(azure_container, {"folder": "/"})
+                azure_obj_id_list = [item["id"] for item in azure_container_list["objects"]]
+                self.assertIn(azure_file_id_a, azure_obj_id_list)
+                self.assertIn(azure_file_id_b, azure_obj_id_list)
+
     def test_build_applets_using_multi_region_dxapp_json(self):
         app_name = "asset_{t}_multi_region_dxapp_json_with_regional_system_requirements".format(t=int(time.time()))
 
@@ -6337,6 +6371,35 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
+
+    def test_build_multi_region_app_with_resources_failure(self):
+        error_message = "dxapp.json cannot contain a top-level \"resources\" field "
+        error_message += "when the \"regionalOptions\" field is used or when "
+        error_message += "the app is enabled in multiple regions"
+        region_0 = "aws:us-east-1"
+        region_1 = "azure:westus"
+        with temporary_project(region=region_0) as tmp_project:
+            # Build an app with top-level "resources" and enable it in multiple regions
+            # with --region
+            app_name = "asset_{t}_multi_region_app_resources".format(t=int(time.time()))
+            app_spec = dict(self.base_app_spec, name=app_name,
+                            resources=tmp_project.get_id())
+            app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+            cmd = "dx build --create-app --json --region {} --region {} {}".format(
+                   region_0, region_1, app_dir)
+            with self.assertRaisesRegexp(DXCalledProcessError, error_message):
+                run(cmd)
+
+            # Build an app where both top-level "resources" and "regionalOptions" are set
+            app_name = "asset_{t}_multi_region_app_resources".format(t=int(time.time()))
+            app_spec_resources_regionalOpts = dict(self.base_app_spec, name=app_name,
+                            resources = tmp_project.get_id(),
+                            regionalOptions={region_0: dict(resources=tmp_project.get_id())})
+            app_dir = self.write_app_directory(app_name,
+                                               json.dumps(app_spec_resources_regionalOpts),
+                                               "code.py")
+            with self.assertRaisesRegexp(DXCalledProcessError, error_message):
+                run("dx build --create-app --json " + app_dir)
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
