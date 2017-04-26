@@ -14,6 +14,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Ability to specify additional resources for multi-region apps
 
+### Changed
+
+* `dx ls -l` and friends now request only needed describe fields 
+
 ## [219.0] - beta
 
 ### Added
