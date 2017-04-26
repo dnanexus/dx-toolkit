@@ -6,6 +6,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+### Fixed
+
+* Bug introduced in release 204.0: including app resources fails
+
+### Added
+
 * Ability to specify additional resources for multi-region apps
 
 ## [219.0] - beta
