@@ -862,6 +862,10 @@ def _resolve_global_entity(project_or_job_id, folderpath, entity_name, describe=
     mapping was provided.
 
     TODO: Inspect entity_name and conditionally treat it as a "glob" pattern.
+
+    TODO: Callers should specify exactly what fields they want, and then
+    hopefully we can avoid having a default set of fields that may be very
+    expensive
     """
     if is_job_id(project_or_job_id):
         if describe is True:
@@ -1036,7 +1040,9 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
     Output is of the form {"id": id, "describe": describe hash} a list
     of those
 
-    TODO: Allow arbitrary flags for the describe hash.
+    TODO: Callers should specify exactly what fields they want, and then
+    hopefully we can avoid having a default set of fields that may be very
+    expensive
 
     NOTE: if expected_classes is provided and conflicts with the class
     of the hash ID, it will return None for all fields.

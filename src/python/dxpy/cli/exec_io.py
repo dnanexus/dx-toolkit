@@ -28,7 +28,7 @@ import dxpy
 from . import INTERACTIVE_CLI
 from ..exceptions import DXCLIError, DXError
 from ..utils.printing import (RED, GREEN, WHITE, BOLD, ENDC, UNDERLINE, fill)
-from ..utils.describe import (get_find_executions_string, get_ls_l_desc, parse_typespec)
+from ..utils.describe import (get_find_executions_string, get_ls_l_desc, get_ls_l_desc_fields, parse_typespec)
 from ..utils.resolver import (get_first_pos_of_char, is_hashid, is_job_id, is_localjob_id, paginate_and_pick, pick,
                               resolve_existing_path, resolve_multiple_existing_paths, split_unescaped, is_analysis_id)
 from ..utils import OrderedDefaultdict
@@ -144,7 +144,7 @@ def interactive_help(in_class, param_desc, prompt):
             if opt_num in range(3):
                 result_generator = dxpy.find_data_objects(classname=in_class,
                                                           typename=param_desc.get('type'),
-                                                          describe=True,
+                                                          describe=dict(fields=get_ls_l_desc_fields()),
                                                           project=query_project)
                 print('\nAvailable data:')
                 result_choice = paginate_and_pick(result_generator,

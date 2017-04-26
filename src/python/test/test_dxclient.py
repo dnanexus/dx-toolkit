@@ -228,10 +228,6 @@ class TestDXClient(DXTestCase):
         run("dx find analyses --project :")
         run("dx find data --project :")
 
-    def test_tree(self):
-        # TODO: add some assertions
-        run("dx tree")
-
     def test_windows_pager(self):
         with self.assertRaises(DXCalledProcessError):
             original_path = os.environ['PATH']
@@ -3615,6 +3611,13 @@ class TestDXClientFind(DXTestCase):
         for category in APP_CATEGORIES:
             self.assertIn(category, category_help)
         run("dx find apps --category foo") # any category can be searched
+
+    def test_dx_find_data_formatted(self):
+        record_id = dxpy.new_dxrecord(project=self.project, name="find_data_formatting", close=True).get_id()
+        self.assertRegexpMatches(
+            run("dx find data --name " + "find_data_formatting").strip(),
+            r"^closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+/find_data_formatting \(" + record_id + "\)$"
+        )
 
     def test_dx_find_data_by_name(self):
         record_id = dxpy.new_dxrecord(name="find_data_by_name").get_id()
@@ -8925,6 +8928,32 @@ class TestDXCp(DXTestCase):
 
         #cleanup
         rm_project(proj_id)
+
+
+class TestDXLs(DXTestCase):
+    def test_regular_output(self):
+        dxpy.new_dxrecord(project=self.project, name="foo", close=True)
+        o = run("dx ls")
+        self.assertEqual(o.strip(), "foo")
+
+    def test_long_output(self):
+        rec = dxpy.new_dxrecord(project=self.project, name="foo", close=True)
+        o = run("dx ls -l")
+        #                             state    modified                              name      id
+        self.assertRegexpMatches(o, r"closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+foo \(" + rec.get_id() + "\)")
+
+
+class TestDXTree(DXTestCase):
+    def test_regular_output(self):
+        dxpy.new_dxrecord(project=self.project, name="foo", close=True)
+        o = run("dx tree")
+        self.assertEqual(o.strip(), '.\n└── foo')
+
+    def test_tree(self):
+        rec = dxpy.new_dxrecord(project=self.project, name="foo", close=True)
+        o = run("dx tree -l")
+        self.assertRegexpMatches(o.strip(),
+                                 r".\n└── closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+foo \(" + rec.get_id() + "\)")
 
 
 if __name__ == '__main__':

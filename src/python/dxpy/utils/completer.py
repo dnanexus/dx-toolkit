@@ -153,7 +153,7 @@ def get_data_matches(text, delim_pos, dxproj, folderpath, classname=None,
                                               visibility=visibility,
                                               classname=classname,
                                               limit=100,
-                                              describe=True,
+                                              describe=dict(fields=dict(name=True)),
                                               typename=typespec))
         prefix = '' if text == '' else text[:delim_pos + 1]
         return [prefix + escape_name(result['describe']['name']) for result in results]
