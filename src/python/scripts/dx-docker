@@ -247,7 +247,7 @@ def run(args):
     default_homedir_env = "HOME=/root"
     env = ["env", "-i", default_homedir_env]
     if 'app' in imagemeta and 'environment' in imagemeta['app']:
-        env.extend(args.env + [var['name'] +"="+var['value']  for var in imagemeta['app']['environment']])
+        env.extend([var['name'] +"="+var['value']  for var in imagemeta['app']['environment']] + args.env)
 
     if args.rm and not args.quiet:
         sys.stderr.write(dxpy.utils.printing.YELLOW("--rm: Note that by default the container is not preserved after execution\n"))
@@ -283,7 +283,7 @@ def local_image_to_aci(image, tmpdir, dirprefix, alternative_export=False):
         elif any(image == digest for digest in digest_list if digest.strip()):
             sys.stderr.write(dxpy.utils.printing.YELLOW("Digest: {} found in local docker cache\n".format(image)))
             return True
-        else:    
+        else:
             return False
 
     # We have observed an instance where the Docker CLI and docker2aci do not properly export a rootfs.  Here is a hopefully temporary workaround
