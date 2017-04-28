@@ -1,6 +1,14 @@
+dx-toolkit (0.220.0) precise; urgency=low
+
+  * Fixed: Bug introduced in release 204.0: including app resources fails
+  * Added: Ability to specify additional resources for multi-region apps
+  * Changed: `dx ls -l` and friends now request only needed describe fields
+
+ -- Geet Duggal <gduggal@dnanexus.com>  Fri, 28 Apr 2017 16:43:37 +0000
+
 dx-toolkit (0.219.0) precise; urgency=low
 
-  * Added: Ability to specify bundledDepends and assetDepends for multi-region apps 
+  * Added: Ability to specify bundledDepends and assetDepends for multi-region apps
 
  -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 20 Apr 2017 16:32:29 +0000
 
@@ -14,7 +22,7 @@ dx-toolkit (0.218.0) precise; urgency=low
 
 dx-toolkit (0.217.0) precise; urgency=low
 
-  * No significant changes. 
+  * No significant changes.
 
  -- Hamed Haddadian <HAMEDH@DNANEXUS.COM>  Thu, 06 Apr 2017 17:58:21 +0000
 
