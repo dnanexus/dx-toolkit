@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+## [220.0] - beta
+
 ### Fixed
 
 * Bug introduced in release 204.0: including app resources fails
@@ -18,13 +20,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * `dx ls -l` and friends now request only needed describe fields 
 
-## [219.0] - beta
+## [219.0] - 2017-04-28 - stable
 
 ### Added
 
 * Ability to specify bundledDepends and assetDepends for multi-region apps
 
-## [218.0] - 2017-04-20 stable
+## [218.0]
 
 ### Changed
 
