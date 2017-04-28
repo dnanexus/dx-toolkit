@@ -143,8 +143,7 @@ def _download_compressed_dxfile(dxfile, filename):
 
     get_bam_cmd="deez -h -r {refpath} --threads `nproc` -c {deez_path} | samtools view -o {filename} -Sb -".format(refpath=reference_local_path, deez_path=deez_local_path, filename=filename)
     subprocess.check_call(get_bam_cmd, shell=True, executable='/bin/bash')
-    os.removedirs(reference_dir)
-    os.removedirs(deez_dir)
+    subprocess.check_call("rm -r {} {}".format(reference_dir, deez_dir), shell=True)
 
 
 
