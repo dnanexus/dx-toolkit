@@ -78,20 +78,5 @@ if [[ -z "$DX_SECURITY_CONTEXT" && -n "$DX_AUTH_TOKEN" ]]; then
     export DX_SECURITY_CONTEXT="{\"auth_token_type\":\"Bearer\",\"auth_token\":\"$DX_AUTH_TOKEN\"}"
 fi
 
-if [[ $OSTYPE == "darwin"* ]]; then
-    # On the first run, create a virtualenv for Mac-specific needs;
-    # skip to activating it when it already exists.
-    VIRTUALENV_DIR="$DNANEXUS_HOME/dxenv"
-
-    if [ ! -d "$VIRTUALENV_DIR" ]; then
-        virtualenv "$VIRTUALENV_DIR"
-        source "$VIRTUALENV_DIR/bin/activate"
-        
-        # Install ndg-httpsclient in the env to provide TLS 1.2 support
-        # Install all tar packages only for osx python virtual environment
-        PYTHON_PKG_DIR="$DNANEXUS_HOME"/osx-python-packages/
-        pip install --no-cache-dir --no-index --find-links="$PYTHON_PKG_DIR" -r "${DNANEXUS_HOME}/src/python/requirements_osx.txt"
-    else
-        source "$VIRTUALENV_DIR/bin/activate"
-    fi
-fi
+# TODO - if the dir "$DNANEXUS_HOME/dxenv" exists, perhaps print a warning to
+# download the latest dx-toolkit? Or run dx upgrade if that works?
