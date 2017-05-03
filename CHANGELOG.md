@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+## Changed
+
+* Mac install no longer uses virtualenv. Instead, we ask users to install desired version of Python
+
 ## [220.0] - beta
 
 ### Fixed
