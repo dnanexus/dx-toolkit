@@ -60,7 +60,7 @@ class TestDXDocker(DXTestCase):
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(CACHE_DIR)
-        
+
     @classmethod
     def setUpClass(cls):
         run("docker pull ubuntu:14.04")
@@ -71,7 +71,7 @@ class TestDXDocker(DXTestCase):
         self.assertTrue(os.path.isfile(os.path.join(CACHE_DIR, 'ubuntu%3A14.04.aci')))
         run("dx-docker pull ubuntu:15.04")
         self.assertTrue(os.path.isfile(os.path.join(CACHE_DIR, 'ubuntu%3A15.04.aci')))
-    
+
     def test_dx_docker_pull_silent(self):
         dx_docker_out = run("dx-docker pull -q busybox").strip()
         self.assertEqual(dx_docker_out, '')
@@ -121,6 +121,10 @@ class TestDXDocker(DXTestCase):
 
     def test_dx_docker_run_rm(self):
         run("dx-docker run --rm ubuntu ls")
+
+    def test_dx_docker_set_env(self):
+        dx_docker_out = run("dx-docker run --env HOME=/somethingelse busybox env")
+        self.assertTrue(dx_docker_out.find("HOME=/somethingelse") != -1)
 
     def test_dx_docker_run_canonical(self):
         run("dx-docker run quay.io/ucsc_cgl/samtools --help")
