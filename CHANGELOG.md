@@ -10,6 +10,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Mac install no longer uses virtualenv. Instead, we ask users to install desired version of Python
 
+## Fixed
+
+* dx-docker bug where environment variables passed in through the CLI do not get set within container
+
 ## [220.0] - beta
 
 ### Fixed
