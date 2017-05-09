@@ -547,7 +547,9 @@ class TestDXClient(DXTestCase):
         self.assertNotRegex(desc_output, field_regexp("Archival state", "null"))
         self.assertNotRegex(desc_output, field_regexp("Archival progress", "null"))
         self.assertRegex(desc_output, field_regexp("Data usage", "0.00 GB"))
-        self.assertRegex(desc_output, field_regexp("Storage cost", "$0.000/month"))
+        self.assertRegex(desc_output,
+                         field_regexp("Storage cost", "$0.000/month"),
+                         "No storage cost shown, does this account have billing information supplied?")
         self.assertRegex(desc_output, field_regexp("Sponsored egress", "0.00 GB used of 0.00 GB total"))
         self.assertRegex(desc_output, field_regexp("At spending limit?", "false"))
         self.assertRegex(desc_output, field_regexp("Properties", "-"))
