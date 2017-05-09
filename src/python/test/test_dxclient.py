@@ -4155,7 +4155,7 @@ class TestDXClientFind(DXTestCase):
                     break
                 except IndexError:
                     t += 1
-                    if t > 300:
+                    if t > 600:
                         raise Exception("Timeout while waiting for workflow to be run by root execution")
                     time.sleep(1)
 
