@@ -104,6 +104,8 @@ class DXWorkflow(DXDataObject, DXExecutable):
         :type description: string
         :param output_folder: Default output folder of the workflow (optional)
         :type output_folder: string
+        :param stages: Stages of the workflow (optional)
+        :type stages: array of dictionaries
         :param init_from: Another analysis workflow object handler or and analysis (string or handler) from which to initialize the metadata (optional)
         :type init_from: :class:`~dxpy.bindings.dxworkflow.DXWorkflow`, :class:`~dxpy.bindings.dxanalysis.DXAnalysis`, or string (for analysis IDs only)
 
@@ -144,6 +146,11 @@ class DXWorkflow(DXDataObject, DXExecutable):
                 dx_hash["outputFolder"] = kwargs["output_folder"]
             del kwargs["output_folder"]
 
+        if "stages" in kwargs:
+            if kwargs["stages"] is not None:
+                dx_hash["stages"] = kwargs["stages"]
+            del kwargs["stages"]
+
         resp = dxpy.api.workflow_new(dx_hash, **kwargs)
         self.set_ids(resp["id"], dx_hash["project"])
 
@@ -158,7 +165,7 @@ class DXWorkflow(DXDataObject, DXExecutable):
         :param stage: A stage ID, name, or index (stage index is the number n for the nth stage, starting from 0; can be provided as an int or a string)
         :type stage: int or string
         :returns: The stage ID (this is a no-op if it was already a stage ID)
-        :raises: :class:`~dxpy.exceptions.DXError` if *stage* could not be parsed or resolved to a stage ID
+        :raises: :class:`~dxpy.exceptions.DXError` if *stage* could not be parsed, resolved to a stage ID, or it could not be found in the workflow
         '''
         # first, if it is a string, see if it is an integer
         if isinstance(stage, basestring):
@@ -180,24 +187,28 @@ class DXWorkflow(DXDataObject, DXExecutable):
                               ' stage(s), and the numerical value of the given stage identifier is out of range')
             return self.stages[stage_index].get("id")
 
-        if re.compile('^stage-[0-9A-Za-z]{24}$').match(stage) is None:
-            # Doesn't look like a stage ID, so look for it as a name
-            matching_stage_ids = [stg['id'] for stg in self.stages if stg.get('name') == stage]
-            if len(matching_stage_ids) == 0:
-                raise DXError('DXWorkflow: the given stage identifier could not be parsed as a stage ID nor found as a stage name')
-            elif len(matching_stage_ids) > 1:
-                raise DXError('DXWorkflow: more than one workflow stage was found to have the name "' + stage + '"')
-            else:
-                return matching_stage_ids[0]
-        else:
-            # Already a stage ID
-            return stage
+        if re.compile('^([a-zA-Z_]|stage-)[0-9a-zA-Z_]*$').match(stage) is not None:
+            # Check if there exists a stage with this stage id
+            stage_id_exists = any([stg['id'] for stg in self.stages if stg.get('id') == stage])
+            if stage_id_exists:
+                return stage
 
-    def add_stage(self, executable, name=None, folder=None, stage_input=None, instance_type=None,
+        # A stage with the provided ID can't be found in the workflow, so look for it as a name
+        stage_ids_matching_name = [stg['id'] for stg in self.stages if stg.get('name') == stage]
+        if len(stage_ids_matching_name) == 0:
+            raise DXError('DXWorkflow: the given stage identifier could not be found as a stage ID nor as a stage name')
+        elif len(stage_ids_matching_name) > 1:
+            raise DXError('DXWorkflow: more than one workflow stage was found to have the name "' + stage + '"')
+        else:
+            return stage_ids_matching_name[0]
+
+    def add_stage(self, executable, stage_id=None, name=None, folder=None, stage_input=None, instance_type=None,
                   edit_version=None, **kwargs):
         '''
         :param executable: string or a handler for an app or applet
         :type executable: string, DXApplet, or DXApp
+        :param stage_id: id for the stage (optional)
+        :type stage_id: string
         :param name: name for the stage (optional)
         :type name: string
         :param folder: default output folder for the stage; either a relative or absolute path (optional)
@@ -221,6 +232,8 @@ class DXWorkflow(DXDataObject, DXExecutable):
         else:
             raise DXError("dxpy.DXWorkflow.add_stage: executable must be a string or an instance of DXApplet or DXApp")
         add_stage_input = {"executable": exec_id}
+        if stage_id is not None:
+            add_stage_input["id"] = stage_id
         if name is not None:
             add_stage_input["name"] = name
         if folder is not None:
