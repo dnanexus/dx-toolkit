@@ -1,3 +1,12 @@
+dx-toolkit (0.221.0) precise; urgency=low
+
+  * Changed: Mac install no longer uses virtualenv. Instead, we ask users to install desired version of Python
+  * Fixed: dx-docker bug where environment variables passed in through the CLI do not get set within container
+  * Added: dx build creates a workflow on the platform based on the workflow's local source directory
+  * Removed: the deprecated dx-build-app and dx-build-applet scripts (that were replaced with dx build) were removed
+
+ -- Nicolas Bock <nbock@dnanexus.com>  Thu, 11 May 2017 18:03:24 +0000
+
 dx-toolkit (0.220.0) precise; urgency=low
 
   * Fixed: Bug introduced in release 204.0: including app resources fails
