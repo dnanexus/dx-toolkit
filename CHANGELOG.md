@@ -14,6 +14,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * dx-docker bug where environment variables passed in through the CLI do not get set within container
 
+### Added
+
+* `dx build` creates a workflow on the platform based on the workflow's local source directory
+
+### Removed
+
+* the deprecated `dx-build-app` and `dx-build-applet` scripts (that were replaced with `dx build`) were removed
+
 ## [220.0] - beta
 
 ### Fixed
