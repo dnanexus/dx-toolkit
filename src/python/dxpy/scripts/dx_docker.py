@@ -158,7 +158,7 @@ def pull(image, quiet=None):
 parser_pull.set_defaults(func=pull)
 
 parser_run = subparsers.add_parser('run', help="Runs a docker image in a container")
-parser_run.add_argument("-v", "--volume", help="Directory to mount inside the container. Can be supplied multiple times (e.g. -v /mnt/data:/mnt/data -v /host:/guest", action='append', default=[])
+parser_run.add_argument("-v", "--volumes", help="Directory to mount inside the container. Can be supplied multiple times (e.g. -v /mnt/data:/mnt/data -v /host:/guest", action='append', default=[])
 parser_run.add_argument("-e", "--env", help="Environment variables to set within container. Can be supplied multiple times (e.g. -e foo=bar -e pizza=pie", action='append', default=[])
 parser_run.add_argument("--entrypoint",  help="Overwrite default entry point for image")
 parser_run.add_argument("-w", "--workdir",  help="Working directory")
