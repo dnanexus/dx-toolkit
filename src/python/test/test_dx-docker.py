@@ -202,7 +202,7 @@ class TestDXDockerPythonHooks(DXTestCase):
 
     def test_dx_docker_python_run(self):
         cwd = os.getcwd()
-        print cwd
+        print(cwd)
         docker.run(image='ubuntu:14.04', command="ls --color")
 
     def test_dx_docker_python_run_from_hash(self):
