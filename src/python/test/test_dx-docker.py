@@ -209,10 +209,11 @@ class TestDXDockerPythonHooks(DXTestCase):
         docker.run(image='geetduggal/testdocker@sha256:b680a129fdd06380c461c3b97240a61c246328c6917d60aa3eb393e49529ac9c')
 
     def test_dx_docker_python_volume(self):
-        os.makedirs(os.path.join(os.getcwd(),'dxdtestdata'))
-        docker.run(image='ubuntu:14.04', volumes=[os.path.join(os.getcwd(),"dxdtestdata") + ":/data-host"], command="touch /data-host/newfile.txt")
-        self.assertTrue(os.path.isfile(os.path.join(os.getcwd(), 'dxdtestdata', 'newfile.txt')))
-        shutil.rmtree(os.path.join(os.getcwd(),'dxdtestdata'))
+        test_folder_path = os.path.join(os.getcwd(),'dxdtestdata')
+        os.makedirs(test_folder_path)
+        docker.run(image='ubuntu:14.04', volumes=[test_folder_path + ":/data-host"], command="touch /data-host/newfile.txt")
+        self.assertTrue(os.path.isfile(os.path.join(test_folder_path, 'newfile.txt')))
+        shutil.rmtree(test_folder_path)
 
     def test_dx_docker_python_entrypoint_cmd(self):
         docker_out = run("docker run geetduggal/testdocker /bin")
