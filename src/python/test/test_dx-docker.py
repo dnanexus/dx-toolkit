@@ -201,8 +201,6 @@ class TestDXDockerPythonHooks(DXTestCase):
         shutil.rmtree(CACHE_DIR)
 
     def test_dx_docker_python_run(self):
-        cwd = os.getcwd()
-        print(cwd)
         docker.run(image='ubuntu:14.04', command="ls --color")
 
     def test_dx_docker_python_run_from_hash(self):
@@ -230,12 +228,13 @@ class TestDXDockerPythonHooks(DXTestCase):
         docker.run(image='quay.io/ucsc_cgl/samtools', command="--help")
 
     def test_dx_docker_python_add_to_applet(self):
-        os.makedirs(os.path.join(os.getcwd(), 'tmpapp'))
+        test_folder_path = os.path.join(os.getcwd(),'tmpapp')
+        os.makedirs(test_folder_path)
         run("docker pull busybox")
-        with open('tmpapp/dxapp.json', 'w') as dxapp:
+        with open(os.path.join(test_folder_path, 'dxapp.json'), 'w') as dxapp:
             dxapp.write("[]")
         docker.add_to_applet(applet='tmpapp', image='busybox')
-        shutil.rmtree(os.path.join(os.getcwd(), 'tmpapp'))
+        shutil.rmtree(test_folder_path)
 
     def test_dx_docker_python_create_asset(self):
         with temporary_project(select=True) as temp_project:
