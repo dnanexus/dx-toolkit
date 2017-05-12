@@ -211,7 +211,7 @@ class TestDXDockerPythonHooks(DXTestCase):
     def test_dx_docker_python_volume(self):
         os.makedirs('dxdtestdata')
         docker.run(image='ubuntu:14.04', volumes=[os.path.join(os.getcwd(),"dxdtestdata") + ":/data-host"], command="touch /data-host/newfile.txt")
-        self.assertTrue(os.path.isfile(os.path.join('dxdtestdata', 'newfile.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(os.getcwd(), 'dxdtestdata', 'newfile.txt')))
         shutil.rmtree('dxdtestdata')
 
     def test_dx_docker_python_entrypoint_cmd(self):
