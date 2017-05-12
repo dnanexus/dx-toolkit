@@ -201,6 +201,8 @@ class TestDXDockerPythonHooks(DXTestCase):
         shutil.rmtree(CACHE_DIR)
 
     def test_dx_docker_python_run(self):
+        cwd = os.getcwd()
+        print cwd
         docker.run(image='ubuntu:14.04', command="ls --color")
 
     def test_dx_docker_python_run_from_hash(self):
