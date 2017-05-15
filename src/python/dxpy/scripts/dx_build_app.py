@@ -517,11 +517,13 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
     elif mode == "app":
         using_temp_project_for_remote_build = True
         try:
+            project_input = {}
+            project_input["name"] = "dx-build-app --remote temporary project"
+            if bill_to_override:
+                project_input["billTo"] = bill_to_override
             if region:
-                build_project_id = dxpy.api.project_new({"name": "dx-build-app --remote temporary project",
-                                                         "region": region})["id"]
-            else:
-                build_project_id = dxpy.api.project_new({"name": "dx-build-app --remote temporary project"})["id"]
+                project_input["region"] = region
+            build_project_id = dxpy.api.project_new(project_input)["id"]
         except:
             err_exit()
 
@@ -670,9 +672,13 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             # Create temporary projects in each enabled region.
             try:
                 for region in enabled_regions:
-                    working_project = dxpy.api.project_new({
+                    project_input = {
                         "name": "Temporary build project for dx-build-app in {r}".format(r=region),
-                        "region": region})["id"]
+                        "region": region
+                    }
+                    if bill_to_override:
+                        project_input["billTo"] = bill_to_override
+                    working_project = dxpy.api.project_new(project_input)["id"]
                     projects_by_region[region] = working_project
                     logger.debug("Created temporary project %s to build in" % (working_project,))
             except:
@@ -683,7 +689,10 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
         else:
             # Create a temp project
             try:
-                working_project = dxpy.api.project_new({"name": "Temporary build project for dx-build-app"})["id"]
+                project_input = {"name": "Temporary build project for dx-build-app"}
+                if bill_to_override:
+                    project_input["billTo"] = bill_to_override
+                working_project = dxpy.api.project_new(project_input)["id"]
             except:
                 err_exit()
             region = dxpy.api.project_describe(working_project,
