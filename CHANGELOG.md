@@ -6,11 +6,17 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
-## Changed
+### Fixed
+
+* `--bill-to` option is utilized when building multi-region apps with `dx build`
+
+## [221.0] - beta
+
+### Changed
 
 * Mac install no longer uses virtualenv. Instead, we ask users to install desired version of Python
 
-## Fixed
+### Fixed
 
 * dx-docker bug where environment variables passed in through the CLI do not get set within container
 
@@ -22,7 +28,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * the deprecated `dx-build-app` and `dx-build-applet` scripts (that were replaced with `dx build`) were removed
 
-## [220.0] - beta
+## [220.0] - 2017-05-11 - stable
 
 ### Fixed
 
@@ -36,7 +42,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * `dx ls -l` and friends now request only needed describe fields 
 
-## [219.0] - 2017-04-28 - stable
+## [219.0] - 2017-04-28
 
 ### Added
 
@@ -72,7 +78,7 @@ No significant changes.
 
 ## [215.0]
 
-## Added
+### Added
 
 * dx-docker test suite to toolkit
 * Retry download of Docker image if there is transient network failure
