@@ -2865,7 +2865,7 @@ class TestAppBuilderUtils(unittest.TestCase):
         assert_consistent_regions({"aws:us-east-1": None}, ["aws:us-east-1"])
 
         with self.assertRaises(app_builder.AppBuilderException):
-            assert_consistent_regions({"aws:us-east-1": None}, ["aws:us-west-1"])
+            assert_consistent_regions({"aws:us-east-1": None}, ["azure:westus"])
 
 
 if __name__ == '__main__':

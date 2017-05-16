@@ -8872,10 +8872,8 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
         app_name = "asset_{t}_multi_region_app_with_regional_system_requirements".format(t=int(time.time()))
 
         aws_us_east_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x1"))
-        aws_us_west_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x2"))
         azure_westus_system_requirements = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
         regional_options = {"aws:us-east-1": dict(systemRequirements=aws_us_east_system_requirements),
-                            "aws:us-west-1": dict(systemRequirements=aws_us_west_system_requirements),
                             "azure:westus": dict(systemRequirements=azure_westus_system_requirements)}
 
         app_id, _ = self.make_app(app_name, regional_options=regional_options)
