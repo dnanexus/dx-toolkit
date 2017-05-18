@@ -1,3 +1,10 @@
+dx-toolkit (0.222.0) precise; urgency=low
+
+  * Fixed --bill-to option is utilized when building multi-region apps with dx build
+
+
+ -- Hamed Haddadian <HAMEDH@DNANEXUS.COM>  Thu, 18 May 2017 18:48:00 +0000
+
 dx-toolkit (0.221.0) precise; urgency=low
 
   * Changed: Mac install no longer uses virtualenv. Instead, we ask users to install desired version of Python
