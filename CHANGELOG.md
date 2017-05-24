@@ -4,13 +4,13 @@ This change log spiritually adheres to [these guidelines](http://keepachangelog.
 
 Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Security
 
-## [Unreleased]
+## [222.0] - beta
 
 ### Fixed
 
 * `--bill-to` option is utilized when building multi-region apps with `dx build`
 
-## [221.0] - beta
+## [221.0] - stable
 
 ### Changed
 
