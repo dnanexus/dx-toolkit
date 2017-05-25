@@ -1,3 +1,9 @@
+dx-toolkit (0.223.0) precise; urgency=low
+
+  * Add methods __next__() and next() to DXFile to complete iteration interface (thanks to Eric Talevich!)
+
+ -- Aleksandra Zalcman <azalcman@dnanexus.com>  Thu, 25 May 2017 18:29:42 +0000
+
 dx-toolkit (0.222.0) precise; urgency=low
 
   * Fixed --bill-to option is utilized when building multi-region apps with dx build
