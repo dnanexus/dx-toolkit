@@ -6,17 +6,19 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+## [223.0] - beta
+
 ### Added
 
-* Add methods `.__next__()` and `next()` to DXFile to complete iteration interface (thanks to Eric Talevich!)
+* Add methods `__next__()` and `next()` to DXFile to complete iteration interface (thanks to Eric Talevich!)
 
-## [222.0] - beta
+## [222.0] - 2017-05-25 - stable
 
 ### Fixed
 
 * `--bill-to` option is utilized when building multi-region apps with `dx build`
 
-## [221.0] - stable
+## [221.0] - 2017-05-18
 
 ### Changed
 
@@ -34,7 +36,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * the deprecated `dx-build-app` and `dx-build-applet` scripts (that were replaced with `dx build`) were removed
 
-## [220.0] - 2017-05-11 - stable
+## [220.0] - 2017-05-11
 
 ### Fixed
 
