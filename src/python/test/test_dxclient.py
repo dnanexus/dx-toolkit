@@ -8427,6 +8427,9 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
             self.assertEqual(output_app_spec, output_json)
             self.assertNotIn("bundledDepends", output_json["runSpec"])
 
+            self.assertNotIn("description", output_json)
+            self.assertNotIn("developerNotes", output_json)
+
             self.assertEqual("Description\n", open(os.path.join("get_applet", "Readme.md")).read())
             self.assertEqual("Developer notes\n",
                              open(os.path.join("get_applet", "Readme.developer.md")).read())
@@ -8665,6 +8668,9 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
         filtered_app_spec = dict((k, v)
                                  for (k, v) in app_spec.iteritems()
                                  if k not in black_list)
+
+        self.assertNotIn("description", output_json)
+        self.assertNotIn("developerNotes", output_json)
 
         self.assertDictSubsetOf(filtered_app_spec, output_json)
 
