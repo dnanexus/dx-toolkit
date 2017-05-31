@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+### Fixed
+
+* Python 3 compatibility with `dx-app-wizard`
+
 ## [223.0] - beta
 
 ### Added
