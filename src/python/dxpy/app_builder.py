@@ -578,6 +578,14 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
             raise AppBuilderException("No asset bundle was found that matched the specification %s"
                                       % (json.dumps(asset)))
 
+    # runSpec.systemRequirements was deprecated and replaced with
+    # runSpec.appletSystemRequirements in dxapp.json, as it is only used when building
+    # applets. When building apps, system requirements will be read from
+    # regionalOptions.$.systemRequirements
+
+    if 'appletSystemRequirements' in applet_spec["runSpec"]:
+        applet_spec["runSpec"]["systemRequirements"] = applet_spec["runSpec"].pop("appletSystemRequirements")
+
     # Include the DNAnexus client libraries as an execution dependency, if they are not already
     # there
     if dx_toolkit_autodep == "git":
@@ -936,7 +944,7 @@ def get_enabled_regions(app_spec, from_command_line):
                     "%s was given for %s but not for %s" % (key_name, with_key, without_key)
                 )
             for key in opts_for_region:
-                if key in app_spec.get('runSpec', {}):
+                if key in app_spec.get('runSpec', {}) and key != 'systemRequirements':
                     raise dxpy.app_builder.AppBuilderException(
                         key + " cannot be given in both runSpec and in regional options for " + region)
 

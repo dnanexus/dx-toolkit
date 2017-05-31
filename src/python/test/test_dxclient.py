@@ -6032,6 +6032,72 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEqual(applet_describe["id"], applet_describe["id"])
         self.assertEqual(applet_describe["name"], "minimal_applet")
 
+    def test_dx_build_get_build_applet(self):
+
+        def _build(dxapp_json, app_or_applet):
+            """Builds an app/applet"""
+
+        def _get(dxid):
+            """Returns the name of created source directory"""
+
+        def _get_spec():
+            return {"name": name,
+                    "project": self.project,
+                    "dxapi": "1.0.0",
+                    "version": "1.0.0",
+                    "inputSpec": [{"name": "number", "class": "int"}],
+                    "outputSpec": [{"name": "number", "class": "int"}],
+                    "runSpec": {
+                        "interpreter": "bash",
+                        "code": "exit 0"}
+            }
+
+        # build app, get
+            # build applet
+            # build app
+
+        # build applet, get
+            # build applet
+            # build app
+
+        # 1. Build
+        workflow_dir = self.write_workflow_directory("workflow_cycle",
+                                                     json.dumps(workflow_spec),
+                                                     readme_content="Workflow Cycle Readme")
+        workflow_01 = json.loads(run("dx build --json " + workflow_dir))
+        wf_describe_01 = dxpy.get_handler(workflow_01["id"]).describe()
+        self.assertEqual(wf_describe_01["id"], workflow_01["id"])
+
+        # 2. Get and compare with the initial workflow
+        with chdir(tempfile.mkdtemp()):
+            run("dx get {workflow_id}".format(workflow_id=workflow_01["id"]))
+            self.assertTrue(os.path.exists(os.path.join(workflow_name, "dxworkflow.json")))
+            self.assertTrue(os.path.exists(os.path.join(workflow_name, "Readme.md")))
+            workflow_metadata = open(os.path.join(workflow_name, "dxworkflow.json")).read()
+            output_json = json.loads(workflow_metadata, object_pairs_hook=collections.OrderedDict)
+            self.assertEqual(output_json, workflow_spec)
+
+            # 3. Build again and compare with the initial workflow
+            os.chdir(workflow_name) # move to the directory created with dx get
+            workflow_02 = json.loads(run("dx build --json"))
+            wf_describe_02 = dxpy.get_handler(workflow_02["id"]).describe()
+            self.assertEqual(wf_describe_02["class"], "workflow")
+            self.assertEqual(wf_describe_02["id"], workflow_02["id"])
+            self.assertEqual(wf_describe_02["editVersion"], 0)
+            self.assertEqual(wf_describe_02["name"], workflow_name)
+            self.assertEqual(wf_describe_02["state"], "closed")
+            self.assertEqual(wf_describe_02["outputFolder"], "/")
+            self.assertEqual(wf_describe_02["project"], self.project)
+            self.assertEqual(wf_describe_02["description"], "Workflow Cycle Readme")
+            self.assertEqual(len(wf_describe_02["stages"]), 2)
+            self.assertEqual(wf_describe_02["stages"][0]["id"], "stage_0")
+            self.assertEqual(wf_describe_02["stages"][0]["name"], "stage_0_name")
+            self.assertEqual(wf_describe_02["stages"][0]["executable"], applet_id)
+            self.assertEqual(wf_describe_02["stages"][0]["input"]["number"], 123456)
+            self.assertEqual(wf_describe_02["stages"][1]["id"], "stage_1")
+            self.assertIsNone(wf_describe_02["stages"][1]["name"])
+            self.assertEqual(wf_describe_02["stages"][1]["executable"], applet_id)
+
     def test_build_applet_ignores_regional_options_in_dxapp(self):
         name = "asset_applet_{t}".format(t=int(time.time() * 1000))
         app_spec = dict(self.base_app_spec, name=name,
@@ -8139,6 +8205,7 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
             output_json = json.loads(applet_metadata)
             self.assertEqual(output_app_spec, output_json)
             self.assertNotIn("bundledDepends", output_json["runSpec"])
+            self.assertNotIn("systemRequirementsByRegion", output_json["runSpec"])
 
             self.assertNotIn("description", output_json)
             self.assertNotIn("developerNotes", output_json)
@@ -8377,6 +8444,9 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
 
         self.assertNotIn("description", output_json)
         self.assertNotIn("developerNotes", output_json)
+
+        self.assertNotIn("systemRequirements", output_json["runSpec"])
+        self.assertNotIn("systemRequirementsByRegion", output_json["runSpec"])
 
         self.assertDictSubsetOf(filtered_app_spec, output_json)
 
