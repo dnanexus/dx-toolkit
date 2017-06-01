@@ -21,6 +21,7 @@ from tempfile import NamedTemporaryFile, mkdtemp
 
 import dxpy
 import dxpy_testutil as testutil
+from dxpy.exceptions import DXError
 
 # TODO: unit tests for dxpy.utils.completer
 
@@ -98,8 +99,13 @@ class TestDXTabCompletion(unittest.TestCase):
         dxpy.set_workspace_id(self.project_id)
 
     def tearDown(self):
-        dxpy.api.project_remove_folder(self.project_id,
-                                       {"folder": "/", "recurse": True})
+        completed = False
+        while not completed:
+            resp = dxpy.api.project_remove_folder(self.project_id,
+                                                  {"folder": "/", "recurse": True, "partial": True})
+            if 'completed' not in resp:
+                raise DXError('Error removing folder')
+            completed = resp['completed']
         for var in 'IFS', '_ARGCOMPLETE', '_DX_ARC_DEBUG', 'COMP_WORDBREAKS':
             if var in os.environ:
                 del os.environ[var]

@@ -248,15 +248,19 @@ public class DXContainer extends DXObject {
         private final String folder;
         @JsonProperty
         private final Boolean recurse;
+        @JsonProperty
+        private final Boolean partial;
 
         private ContainerRemoveFolderRequest(String folder) {
             this.folder = folder;
             this.recurse = null;
+            this.partial = true;
         }
 
-        private ContainerRemoveFolderRequest(String folder, boolean recurse) {
+        private ContainerRemoveFolderRequest(String folder, boolean recurse, boolean partial) {
             this.folder = folder;
             this.recurse = recurse;
+            this.partial = partial;
         }
     }
 
@@ -264,7 +268,12 @@ public class DXContainer extends DXObject {
      * A response from the /container-xxxx/removeFolder route.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private static class ContainerRemoveFolderResponse {}
+    private static class ContainerRemoveFolderResponse {
+        @JsonProperty
+        private String id;
+        @JsonProperty
+        private boolean completed = true;
+    }
 
     /**
      * Removes the specified folder.
@@ -272,8 +281,13 @@ public class DXContainer extends DXObject {
      * @param folderPath path to the folder to be removed (String starting with {@code "/"})
      */
     public void removeFolder(String folderPath) {
-        DXAPI.containerRemoveFolder(this.getId(), new ContainerRemoveFolderRequest(folderPath),
-                ContainerRemoveFolderResponse.class, this.env);
+        boolean completed = false;
+        while(!completed) {
+            ContainerRemoveFolderResponse response = DXAPI.containerRemoveFolder(
+                    this.getId(), new ContainerRemoveFolderRequest(folderPath),
+                    ContainerRemoveFolderResponse.class, this.env);
+            completed = response.completed;
+        }
     }
 
     /**
@@ -283,8 +297,13 @@ public class DXContainer extends DXObject {
      * @param recurse if true, deletes all objects and subfolders in the folder as well
      */
     public void removeFolder(String folderPath, boolean recurse) {
-        DXAPI.containerRemoveFolder(this.getId(), new ContainerRemoveFolderRequest(folderPath,
-                recurse), ContainerRemoveFolderResponse.class, this.env);
+        boolean completed = false;
+        while(!completed) {
+            ContainerRemoveFolderResponse response = DXAPI.containerRemoveFolder(
+                    this.getId(), new ContainerRemoveFolderRequest(folderPath, recurse, true),
+                    ContainerRemoveFolderResponse.class, this.env);
+            completed = response.completed;
+        }
     }
 
     /**

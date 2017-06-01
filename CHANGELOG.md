@@ -11,6 +11,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Python 3 compatibility with `dx-app-wizard`
 * `dx get` does not redundantly inline description and developerNotes in dxapp.json any more
 
+### Added
+
+* Client support for partial folder deletion
+
 ## [223.0] - beta
 
 ### Added

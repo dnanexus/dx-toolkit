@@ -827,7 +827,13 @@ def rmdir(args):
         if project is None:
             print(fill('Could not resolve the project of "' + path + '"'))
         try:
-            dxpy.api.project_remove_folder(project, {"folder": folderpath})
+            completed = False
+            while not completed:
+                resp = dxpy.api.project_remove_folder(project, {"folder": folderpath,
+                                                                "partial": True})
+                if 'completed' not in resp:
+                    raise DXError('Error removing folder')
+                completed = resp['completed']
         except Exception as details:
             print("Error while removing " + folderpath + " in " + project)
             print("  " + str(details))
@@ -871,9 +877,15 @@ def rm(args):
         for folder in projects[project]['folders']:
             try:
                 # set force as true so the underlying API requests are idempotent
-                dxpy.api.project_remove_folder(project,
-                                               {"folder": folder, "recurse": True, "force": True},
-                                               always_retry=True)
+                completed = False
+                while not completed:
+                    resp = dxpy.api.project_remove_folder(project,
+                                                          {"folder": folder, "recurse": True,
+                                                           "force": True, "partial": True},
+                                                          always_retry=True)
+                    if 'completed' not in resp:
+                        raise DXError('Error removing folder')
+                    completed = resp['completed']
             except Exception as details:
                 print("Error while removing " + folder + " from " + project)
                 print("  " + str(details))
