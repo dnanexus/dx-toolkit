@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+## [224.0] - beta
+
 ### Fixed
 
 * Python 3 compatibility with `dx-app-wizard`
@@ -15,13 +17,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Client support for partial folder deletion
 
-## [223.0] - beta
+## [223.0] - 2017-06-02 - stable
 
 ### Added
 
 * Add methods `__next__()` and `next()` to DXFile to complete iteration interface (thanks to Eric Talevich!)
 
-## [222.0] - 2017-05-25 - stable
+## [222.0] - 2017-05-25
 
 ### Fixed
 
