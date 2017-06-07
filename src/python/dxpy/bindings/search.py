@@ -428,7 +428,7 @@ def find_analyses(*args, **kwargs):
     return find_executions(*args, **kwargs)
 
 def find_projects(name=None, name_mode='exact', properties=None, tags=None,
-                  level=None, describe=False, explicit_perms=None,
+                  level=None, describe=False, explicit_perms=None, region=None,
                   public=None, created_after=None, created_before=None, billed_to=None,
                   limit=None, return_handler=False, first_page_size=100, containsPHI=None, **kwargs):
     """
@@ -450,6 +450,8 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
     :type describe: bool or dict
     :param explicit_perms: Filter on presence of an explicit permision. If True, matching projects must have an explicit permission (any permission granted directly to the user or an organization to which the user belongs). If False, matching projects must not have any explicit permissions for the user. (default is None, for no filter)
     :type explicit_perms: boolean or None
+    :param region: If specified, only returns projects where the project is in the given region.
+    :type region: string
     :param public: Filter on the project being public. If True, matching projects must be public. If False, matching projects must not be public. (default is None, for no filter)
     :type public: boolean or None
     :param created_after: Timestamp after which each result was created
@@ -508,6 +510,8 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
             query["created"]["after"] = dxpy.utils.normalize_time_input(created_after)
         if created_before is not None:
             query["created"]["before"] = dxpy.utils.normalize_time_input(created_before)
+    if region is not None:
+        query['region'] = region
     if billed_to is not None:
         query['billTo'] = billed_to
     if limit is not None:
