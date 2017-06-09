@@ -141,7 +141,7 @@ def _download_compressed_dxfile(dxfile, filename):
     deez_local_path = os.path.join(deez_dir, dxfile.name)+".dz"
     dxpy.download_dxfile(dxfile.get_id(), deez_local_path, ignore_deez=True)
 
-    get_bam_cmd="deez -h -r {refpath} --threads `nproc` -c {deez_path} | samtools view -o {filename} -Sb -".format(refpath=reference_local_path, deez_path=deez_local_path, filename=filename)
+    get_bam_cmd="deez -h -r {refpath} --threads 4 -c {deez_path} | samtools view -o {filename} -Sb -".format(refpath=reference_local_path, deez_path=deez_local_path, filename=filename)
     subprocess.check_call(get_bam_cmd, shell=True, executable='/bin/bash')
     subprocess.check_call("rm -r {} {}".format(reference_dir, deez_dir), shell=True)
 
