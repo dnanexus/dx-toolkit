@@ -5638,7 +5638,7 @@ class TestDXClientMembership(DXTestCase):
 
         run(cmd)
         membership_response = self._org_find_members(self.user_id)
-        self.assertEqual(membership_response, exp)
+        self.assertDictContainsSubset(membership_response, exp)
 
     def test_update_membership_negative(self):
         cmd = "dx update member"
@@ -5707,7 +5707,7 @@ class TestDXClientMembership(DXTestCase):
         run(cmd.format(o=self.org_id, u=self.username))
         exp_membership.update(level="MEMBER", projectAccess="CONTRIBUTE", appAccess=False)
         membership = self._org_find_members(self.user_id)
-        self.assertEqual(membership, exp_membership)
+        self.assertDictContainsSubset(membership, exp_membership)
 
         cmd = "dx remove member {o} {u} -y"
         run(cmd.format(o=self.org_id, u=self.username))
@@ -5751,7 +5751,7 @@ class TestDXClientMembership(DXTestCase):
         run(cmd.format(o=self.org_id, u=self.user_id))
         exp_membership.update(level="MEMBER", projectAccess="CONTRIBUTE", appAccess=False)
         membership = self._org_find_members(self.user_id)
-        self.assertEqual(membership, exp_membership)
+        self.assertDictContainsSubset(membership, exp_membership)
 
         cmd = "dx remove member {o} {u} -y"
         run(cmd.format(o=self.org_id, u=self.user_id))
