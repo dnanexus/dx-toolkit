@@ -4550,7 +4550,8 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
                      "level": "MEMBER",
                      "id": self.user_bob,
                      "describe": dxpy.api.user_describe(self.user_bob, query_user_describe)}]
-        self.assertEqual(output, expected)
+        for i in range(len(expected)):
+            self.assertDictContainsSubset(output[i], expected[i])
 
     def test_dx_find_org_projects_invalid(self):
         cmd = "dx find org projects org-irrelevant {opts}"
