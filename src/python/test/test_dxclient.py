@@ -4539,19 +4539,16 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
         expected = [{"appAccess": True,
                      "projectAccess": "ADMINISTER",
                      "level": "ADMIN",
-                     "createProjectsAndApps": True,
                      "allowBillableActivities": True,
                      "id": self.user_alice,
                      "describe": dxpy.api.user_describe(self.user_alice, query_user_describe)},
                     {"appAccess": True,
                      "projectAccess": "CONTRIBUTE",
-                     "createProjectsAndApps": False,
                      "allowBillableActivities": False,
                      "level": "MEMBER",
                      "id": self.user_bob,
                      "describe": dxpy.api.user_describe(self.user_bob, query_user_describe)}]
-        for i in range(len(expected)):
-            self.assertDictContainsSubset(output[i], expected[i])
+        self.assertEqual(output, expected)
 
     def test_dx_find_org_projects_invalid(self):
         cmd = "dx find org projects org-irrelevant {opts}"
@@ -5214,13 +5211,12 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "MEMBER",
             "allowBillableActivities": False,
-            "createProjectsAndApps": False,
             "appAccess": True,
             "projectAccess": "CONTRIBUTE",
             "id": user_id
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
-        self.assertDictContainsSubset(res, exp)
+        self.assertEqual(res, exp)
 
         # Grant default org membership level and permission flags; `username`
         # has uppercase chars.
@@ -5233,13 +5229,12 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "MEMBER",
             "allowBillableActivities": False,
-            "createProjectsAndApps": False,
             "appAccess": True,
             "projectAccess": "CONTRIBUTE",
             "id": user_id
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
-        self.assertDictContainsSubset(res, exp)
+        self.assertEqual(res, exp)
 
         # Grant custom org membership level and permission flags.
         username, email = generate_unique_username_email()
@@ -5250,13 +5245,12 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "MEMBER",
             "allowBillableActivities": True,
-            "createProjectsAndApps": True,
             "appAccess": False,
             "projectAccess": "VIEW",
             "id": user_id
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
-        self.assertDictContainsSubset(res, exp)
+        self.assertEqual(res, exp)
 
         # Grant ADMIN org membership level; ignore all other org permission
         # options.
@@ -5268,13 +5262,12 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "ADMIN",
             "allowBillableActivities": True,
-            "createProjectsAndApps": True,
             "appAccess": True,
             "projectAccess": "ADMINISTER",
             "id": user_id
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
-        self.assertDictContainsSubset(res, exp)
+        self.assertEqual(res, exp)
 
     def test_create_user_account_and_set_bill_to(self):
         first = "Asset"
@@ -5290,13 +5283,12 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "MEMBER",
             "allowBillableActivities": True,
-            "createProjectsAndApps": True,
             "appAccess": True,
             "projectAccess": "VIEW",
             "id": user_id
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
-        self.assertDictContainsSubset(res, exp)
+        self.assertEqual(res, exp)
 
         # Grant ADMIN org membership level.
         username, email = generate_unique_username_email()
@@ -5307,13 +5299,12 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "ADMIN",
             "allowBillableActivities": True,
-            "createProjectsAndApps": True,
             "appAccess": True,
             "projectAccess": "ADMINISTER",
             "id": user_id
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
-        self.assertDictContainsSubset(res, exp)
+        self.assertEqual(res, exp)
 
     def test_create_user_account_and_set_token_duration_negative(self):
         first = "Asset"
