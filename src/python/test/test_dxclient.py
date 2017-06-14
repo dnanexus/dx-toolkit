@@ -4533,25 +4533,21 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
             self.assertRegex(result, pattern)
 
         # Test --json output
-        # TODO: Deprecate 'createProjectsAndApps'
         output = json.loads(run(cmd.format(opts='--json')))
         query_user_describe = {"fields": {"class": True, "first": True, "last": True, "middle": True, "handle": True}}
         expected = [{"appAccess": True,
                      "projectAccess": "ADMINISTER",
                      "level": "ADMIN",
-                     "createProjectsAndApps": True,
                      "allowBillableActivities": True,
                      "id": self.user_alice,
                      "describe": dxpy.api.user_describe(self.user_alice, query_user_describe)},
                     {"appAccess": True,
                      "projectAccess": "CONTRIBUTE",
-                     "createProjectsAndApps": False,
                      "allowBillableActivities": False,
                      "level": "MEMBER",
                      "id": self.user_bob,
                      "describe": dxpy.api.user_describe(self.user_bob, query_user_describe)}]
-        for i in range(len(expected)):
-            self.assertDictContainsSubset(output[i], expected[i])
+        self.assertEqual(output, expected)
 
     def test_dx_find_org_projects_invalid(self):
         cmd = "dx find org projects org-irrelevant {opts}"
@@ -5214,13 +5210,12 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "MEMBER",
             "allowBillableActivities": False,
-            "createProjectsAndApps": False,
             "appAccess": True,
             "projectAccess": "CONTRIBUTE",
             "id": user_id
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
-        self.assertDictContainsSubset(res, exp)
+        self.assertEqual(res, exp)
 
         # Grant default org membership level and permission flags; `username`
         # has uppercase chars.
@@ -5233,13 +5228,12 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "MEMBER",
             "allowBillableActivities": False,
-            "createProjectsAndApps": False,
             "appAccess": True,
             "projectAccess": "CONTRIBUTE",
             "id": user_id
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
-        self.assertDictContainsSubset(res, exp)
+        self.assertEqual(res, exp)
 
         # Grant custom org membership level and permission flags.
         username, email = generate_unique_username_email()
@@ -5250,13 +5244,12 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "MEMBER",
             "allowBillableActivities": True,
-            "createProjectsAndApps": True,
             "appAccess": False,
             "projectAccess": "VIEW",
             "id": user_id
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
-        self.assertDictContainsSubset(res, exp)
+        self.assertEqual(res, exp)
 
         # Grant ADMIN org membership level; ignore all other org permission
         # options.
@@ -5268,13 +5261,12 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "ADMIN",
             "allowBillableActivities": True,
-            "createProjectsAndApps": True,
             "appAccess": True,
             "projectAccess": "ADMINISTER",
             "id": user_id
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
-        self.assertDictContainsSubset(res, exp)
+        self.assertEqual(res, exp)
 
     def test_create_user_account_and_set_bill_to(self):
         first = "Asset"
@@ -5290,13 +5282,12 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "MEMBER",
             "allowBillableActivities": True,
-            "createProjectsAndApps": True,
             "appAccess": True,
             "projectAccess": "VIEW",
             "id": user_id
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
-        self.assertDictContainsSubset(res, exp)
+        self.assertEqual(res, exp)
 
         # Grant ADMIN org membership level.
         username, email = generate_unique_username_email()
@@ -5307,13 +5298,12 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "ADMIN",
             "allowBillableActivities": True,
-            "createProjectsAndApps": True,
             "appAccess": True,
             "projectAccess": "ADMINISTER",
             "id": user_id
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
-        self.assertDictContainsSubset(res, exp)
+        self.assertEqual(res, exp)
 
     def test_create_user_account_and_set_token_duration_negative(self):
         first = "Asset"
@@ -5381,11 +5371,10 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
-                          "createProjectsAndApps": True,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
-        self.assertDictContainsSubset(membership, exp_membership)
+        self.assertEqual(membership, exp_membership)
 
         self._remove_user(self.user_id)
 
@@ -5393,11 +5382,10 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": False,
-                          "createProjectsAndApps": False,
                           "appAccess": True,
                           "projectAccess": "CONTRIBUTE"}
         membership = self._org_find_members(self.user_id)
-        self.assertDictContainsSubset(membership, exp_membership)
+        self.assertEqual(membership, exp_membership)
 
     def test_add_membership_with_options(self):
         cmd = "dx add member {o} {u} --level {l}"
@@ -5407,11 +5395,10 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
-                          "createProjectsAndApps": True,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
-        self.assertDictContainsSubset(membership, exp_membership)
+        self.assertEqual(membership, exp_membership)
 
         self._remove_user(self.user_id)
 
@@ -5420,11 +5407,10 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": True,
-                          "createProjectsAndApps": True,
                           "appAccess": False,
                           "projectAccess": "NONE"}
         membership = self._org_find_members(self.user_id)
-        self.assertDictContainsSubset(membership, exp_membership)
+        self.assertEqual(membership, exp_membership)
 
     def test_add_membership_negative(self):
         cmd = "dx add member"
@@ -5451,11 +5437,10 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
-                          "createProjectsAndApps": True,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
-        self.assertDictContainsSubset(membership, exp_membership)
+        self.assertEqual(membership, exp_membership)
 
         run("dx remove member {o} {u} -y".format(o=self.org_id, u=self.username))
         with self.assertRaises(IndexError):
@@ -5467,11 +5452,10 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
-                          "createProjectsAndApps": True,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
-        self.assertDictContainsSubset(membership, exp_membership)
+        self.assertEqual(membership, exp_membership)
 
         dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(
             o=self.org_id, u=self.username), logfile=sys.stderr)
@@ -5512,11 +5496,10 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
-                          "createProjectsAndApps": True,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
-        self.assertDictContainsSubset(membership, exp_membership)
+        self.assertEqual(membership, exp_membership)
 
         project_id_1 = "project-000000000000000000000001"
         prev_bill_to_1 = dxpy.api.project_describe(project_id_1, {"fields": {"billTo": True}})["billTo"]
@@ -5572,34 +5555,31 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
-                          "createProjectsAndApps": True,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
-        self.assertDictContainsSubset(membership, exp_membership)
+        self.assertEqual(membership, exp_membership)
 
         run("dx update member {o} {u} --level MEMBER --allow-billable-activities false --project-access VIEW --app-access true".format(
             o=self.org_id, u=self.username))
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": False,
-                          "createProjectsAndApps": False,
                           "projectAccess": "VIEW",
                           "appAccess": True}
         membership = self._org_find_members(self.user_id)
-        self.assertDictContainsSubset(membership, exp_membership)
+        self.assertEqual(membership, exp_membership)
 
         run("dx update member {o} {u} --allow-billable-activities true --app-access false".format(
             o=self.org_id, u=self.username))
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": True,
-                          "createProjectsAndApps": True,
                           "projectAccess": "VIEW",
                           "appAccess": False}
 
         membership = self._org_find_members(self.user_id)
-        self.assertDictContainsSubset(membership, exp_membership)
+        self.assertEqual(membership, exp_membership)
 
     def test_update_membership_to_member_without_membership_flags(self):
         cmd = "dx update member {o} {u} --level MEMBER".format(o=self.org_id, u=self.username)
@@ -5609,32 +5589,29 @@ class TestDXClientMembership(DXTestCase):
         exp = {"id": self.user_id,
                "level": "ADMIN",
                "allowBillableActivities": True,
-               "createProjectsAndApps": True,
                "projectAccess": "ADMINISTER",
                "appAccess": True}
         membership_response = self._org_find_members(self.user_id)
-        self.assertDictContainsSubset(membership_response, exp)
+        self.assertEqual(membership_response, exp)
 
         run(cmd)
         exp = {"id": self.user_id,
                "level": "MEMBER",
                "allowBillableActivities": False,
-               "createProjectsAndApps": False,
                "projectAccess": "CONTRIBUTE",
                "appAccess": True}
         membership_response = self._org_find_members(self.user_id)
-        self.assertDictContainsSubset(membership_response, exp)
+        self.assertEqual(membership_response, exp)
 
         # MEMBER to MEMBER.
         run(cmd + " --allow-billable-activities true")
         exp = {"id": self.user_id,
                "level": "MEMBER",
                "allowBillableActivities": True,
-               "createProjectsAndApps": True,
                "projectAccess": "CONTRIBUTE",
                "appAccess": True}
         membership_response = self._org_find_members(self.user_id)
-        self.assertDictContainsSubset(membership_response, exp)
+        self.assertEqual(membership_response, exp)
 
         run(cmd)
         membership_response = self._org_find_members(self.user_id)
@@ -5680,28 +5657,26 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": False,
-                          "createProjectsAndApps": False,
                           "appAccess": True,
                           "projectAccess": "UPLOAD"}
         membership = self._org_find_members(self.user_id)
-        self.assertDictContainsSubset(membership, exp_membership)
+        self.assertEqual(membership, exp_membership)
 
         cmd = "dx update member {o} {u} --level MEMBER --allow-billable-activities true"
         run(cmd.format(o=self.org_id, u=self.username))
-        exp_membership.update(allowBillableActivities=True, createProjectsAndApps=True)
+        exp_membership.update(allowBillableActivities=True)
         membership = self._org_find_members(self.user_id)
-        self.assertDictContainsSubset(membership, exp_membership)
+        self.assertEqual(membership, exp_membership)
 
         cmd = "dx update member {o} {u} --level ADMIN"
         run(cmd.format(o=self.org_id, u=self.username))
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
-                          "createProjectsAndApps": True,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
-        self.assertDictContainsSubset(membership, exp_membership)
+        self.assertEqual(membership, exp_membership)
 
         cmd = "dx update member {o} {u} --level MEMBER --allow-billable-activities true --project-access CONTRIBUTE --app-access false"
         run(cmd.format(o=self.org_id, u=self.username))
@@ -5724,28 +5699,26 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": False,
-                          "createProjectsAndApps": False,
                           "appAccess": True,
                           "projectAccess": "UPLOAD"}
         membership = self._org_find_members(self.user_id)
-        self.assertDictContainsSubset(membership, exp_membership)
+        self.assertEqual(membership, exp_membership)
 
         cmd = "dx update member {o} {u} --level MEMBER --allow-billable-activities true"
         run(cmd.format(o=self.org_id, u=self.user_id))
-        exp_membership.update(allowBillableActivities=True, createProjectsAndApps=True)
+        exp_membership.update(allowBillableActivities=True)
         membership = self._org_find_members(self.user_id)
-        self.assertDictContainsSubset(membership, exp_membership)
+        self.assertEqual(membership, exp_membership)
 
         cmd = "dx update member {o} {u} --level ADMIN"
         run(cmd.format(o=self.org_id, u=self.user_id))
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
-                          "createProjectsAndApps": True,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
-        self.assertDictContainsSubset(membership, exp_membership)
+        self.assertEqual(membership, exp_membership)
 
         cmd = "dx update member {o} {u} --level MEMBER --allow-billable-activities true --project-access CONTRIBUTE --app-access false"
         run(cmd.format(o=self.org_id, u=self.user_id))
