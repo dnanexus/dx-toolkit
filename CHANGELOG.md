@@ -8,7 +8,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* A `region` parameter can now be passed to `dxpy.find_data_objects()` and `dxpy.find_projects()` 
+* A `region` parameter can now be passed to `dxpy.find_data_objects()` and `dxpy.find_projects()`
+
+### Fixed
+
+* `dx-docker` now no longer bind mounts `$HOME` and `/tmp` into the guest as this is consistent with Docker
 
 ## [224.0] - beta
 
