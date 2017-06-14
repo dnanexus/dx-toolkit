@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [Unreleased]
 
+### Added
+
+* A `region` parameter can now be passed to `dxpy.find_data_objects()` and `dxpy.find_projects()` 
+
 ## [224.0] - beta
 
 ### Fixed
