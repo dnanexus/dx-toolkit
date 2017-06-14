@@ -113,7 +113,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
                       link=None, project=None, folder=None, recurse=None,
                       modified_after=None, modified_before=None,
                       created_after=None, created_before=None,
-                      describe=False, limit=None, level=None,
+                      describe=False, limit=None, level=None, region=None,
                       return_handler=False, first_page_size=100,
                       **kwargs):
     """
@@ -160,6 +160,8 @@ def find_data_objects(classname=None, state=None, visibility=None,
         things, be used to customize the set of fields that is returned)
     :type describe: bool or dict
     :param level: The minimum permissions level for which results should be returned (one of "VIEW", "UPLOAD", "CONTRIBUTE", or "ADMINISTER")
+    :param region: Filter on result set by the given region(s).
+    :type region: string or list of strings
     :type level: string
     :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
     :type limit: int
@@ -256,6 +258,8 @@ def find_data_objects(classname=None, state=None, visibility=None,
         query["describe"] = describe
     if level is not None:
         query['level'] = level
+    if region is not None:
+        query['region'] = region
     if limit is not None:
         query["limit"] = limit
 
