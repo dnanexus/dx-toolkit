@@ -4,7 +4,7 @@ This change log spiritually adheres to [these guidelines](http://keepachangelog.
 
 Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Security
 
-## [Unreleased]
+## [225.0] - beta
 
 ### Added
 
@@ -14,7 +14,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * `dx-docker` now no longer bind mounts `$HOME` and `/tmp` into the guest as this is consistent with Docker
 
-## [224.0] - beta
+## [224.0] - stable
 
 ### Fixed
 
