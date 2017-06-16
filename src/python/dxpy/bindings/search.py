@@ -747,7 +747,7 @@ def org_find_members(org_id=None, level=None, describe=False):
 
 
 def org_find_projects(org_id=None, name=None, name_mode='exact', ids=None, properties=None, tags=None, describe=False,
-                      public=None, created_after=None, created_before=None, containsPHI=None):
+                      public=None, created_after=None, created_before=None, region=None, containsPHI=None):
     """
     :param org_id: ID of the organization
     :type org_id: string
@@ -776,6 +776,8 @@ def org_find_projects(org_id=None, name=None, name_mode='exact', ids=None, prope
     :param created_before: Timestamp before which each result was created
         (see note accompanying :meth:`find_data_objects()` for interpretation)
     :type created_before: int or string
+    :param region: If specified, only returns projects where the project is in the given region.
+    :type region: string
     :param containsPHI: If set to true, only returns projects that contain PHI.
         If set to false, only returns projects that do not contain PHI.
     :type containsPHI: boolean
@@ -816,6 +818,8 @@ def org_find_projects(org_id=None, name=None, name_mode='exact', ids=None, prope
             query["created"]["after"] = dxpy.utils.normalize_time_input(created_after)
         if created_before is not None:
             query["created"]["before"] = dxpy.utils.normalize_time_input(created_before)
+    if region is not None:
+        query['region'] = region
     if containsPHI is not None:
         query["containsPHI"] = containsPHI
 

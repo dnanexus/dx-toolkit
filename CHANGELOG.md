@@ -4,6 +4,12 @@ This change log spiritually adheres to [these guidelines](http://keepachangelog.
 
 Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Security
 
+## Unreleased
+
+### Added
+
+* A `region` parameter can now be passed to `dx find projects`, `dx find data`, `dx find org projects`
+
 ## [225.0] - beta
 
 ### Added

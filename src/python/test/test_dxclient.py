@@ -4058,6 +4058,14 @@ class TestDXClientFind(DXTestCase):
                 run('dx find data --brief --folder ' + test_projectid + ':' + test_dirname + ' --path ' +
                     test_projectid + ':' + test_dirname)
 
+    def test_dx_find_data_by_region(self):
+        with temporary_project("p_azure", region="azure:westus") as p_azure:
+            record_id = dxpy.new_dxrecord(project=p_azure.get_id(), close=True).get_id()
+            self.assertIn(record_id,
+                          run("dx find data --all-projects --brief --region azure:westus"))
+            self.assertNotIn(record_id,
+                          run("dx find data --all-projects --brief --region aws:us-east-1"))
+
     def test_dx_find_projects(self):
         unique_project_name = 'dx find projects test ' + str(time.time())
         with temporary_project(unique_project_name) as unique_project:
@@ -4082,6 +4090,23 @@ class TestDXClientFind(DXTestCase):
                              pipes.quote(created_project_name)), unique_project.get_id() + '\n')
             self.assertEqual(run("dx find projects --created-after=" + str(int(time.time() + 1000) * 1000) + " --name "
                              + pipes.quote(created_project_name)), "")
+
+    def test_dx_find_projects_by_region(self):
+        awseast = "aws:us-east-1"
+        azurewest = "azure:westus"
+        created_project_name = 'dx find projects test ' + str(time.time())
+        with temporary_project(created_project_name, region=awseast) as unique_project:
+            self.assertEqual(run("dx find projects --region {} --brief --name {}".format(
+                                 awseast, pipes.quote(created_project_name))),
+                             unique_project.get_id() + '\n')
+            self.assertIn(unique_project.get_id(),
+                          run("dx find projects --region {} --brief".format(awseast)))
+            self.assertNotIn(unique_project.get_id(),
+                             run("dx find projects --region {} --brief".format(azurewest)))
+
+        with temporary_project(created_project_name, region=azurewest) as unique_project:
+            self.assertIn(unique_project.get_id(),
+                          run("dx find projects --region {} --brief".format(azurewest)))
 
     def test_dx_find_projects_by_tag(self):
         other_project_id = run("dx new project other --brief").strip()
@@ -4632,6 +4657,11 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
             output = run("dx find org projects org-piratelabs --property {p1} --property {p2} --brief".format(
                          p1='property-1', p2='property-3')).strip().split("\n")
             self.assertItemsEqual(output, [""])
+
+            # With --region
+            self.assertIn(project1_id,
+                          run("dx find org projects org-piratelabs --brief --region aws:us-east-1"))
+            self.assertFalse(run("dx find org projects org-piratelabs --brief --region azure:westus"))
 
     def test_dx_find_org_projects_public(self):
         with temporary_project() as p1, temporary_project() as p2:

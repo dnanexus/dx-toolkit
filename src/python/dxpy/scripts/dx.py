@@ -2268,6 +2268,7 @@ def find_data(args):
                                          modified_before=args.mod_before,
                                          created_after=args.created_after,
                                          created_before=args.created_before,
+                                         region=args.region,
                                          describe=describe_input)
         if args.json:
             print(json.dumps(list(results), indent=4))
@@ -2298,6 +2299,7 @@ def find_projects(args):
                                      public=(args.public if args.public else None),
                                      created_after=args.created_after,
                                      created_before=args.created_before,
+                                     region=args.region,
                                      containsPHI=args.containsPHI)
     except:
         err_exit()
@@ -4942,6 +4944,8 @@ parser_find_data.add_argument('--mod-after', help='Date (e.g. 2012-01-01) or int
 parser_find_data.add_argument('--mod-before', help='Date (e.g. 2012-01-01) or integer timestamp before which the object was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
 parser_find_data.add_argument('--created-after', help='Date (e.g. 2012-01-01) or integer timestamp after which the object was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
 parser_find_data.add_argument('--created-before', help='Date (e.g. 2012-01-01) or integer timestamp before which the object was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_data.add_argument('--region', help='Restrict the search to the provided region')
+
 parser_find_data.set_defaults(func=find_data)
 register_parser(parser_find_data, subparsers_action=subparsers_find, categories=('data', 'metadata'))
 
@@ -4965,6 +4969,7 @@ parser_find_projects.add_argument('--created-after',
 parser_find_projects.add_argument('--created-before',
                                   help='Date (e.g. 2012-01-01) or integer timestamp after which the project was ' +
                                   'created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_projects.add_argument('--region', help='Restrict the search to the provided region')
 parser_find_projects.set_defaults(func=find_projects)
 register_parser(parser_find_projects, subparsers_action=subparsers_find, categories='data')
 
@@ -5012,6 +5017,7 @@ find_org_projects_public.add_argument('--public-only', dest='public', help='Incl
 find_org_projects_public.add_argument('--private-only', dest='public', help='Include only private projects', action='store_false', default=None)
 parser_find_org_projects.add_argument('--created-after', help='Date (e.g. 2012-01-31) or integer timestamp after which the project was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y). Integer timestamps will be parsed as milliseconds since epoch.')
 parser_find_org_projects.add_argument('--created-before', help='Date (e.g. 2012-01-31) or integer timestamp before which the project was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y). Integer timestamps will be parsed as milliseconds since epoch.')
+parser_find_org_projects.add_argument('--region', help='Restrict the search to the provided region')
 parser_find_org_projects.set_defaults(func=org_find_projects)
 register_parser(parser_find_org_projects, subparsers_action=subparsers_find_org, categories=('data', 'org'))
 
