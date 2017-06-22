@@ -1,3 +1,9 @@
+dx-toolkit (0.226.0) precise; urgency=low
+
+  *  Added A region parameter can now be passed to dx find projects, dx find data, dx find org projects
+
+ -- Nicolas Bock <nbock@dnanexus.com>  Thu, 22 Jun 2017 18:36:08 +0000
+
 dx-toolkit (0.225.0) precise; urgency=low
 
   * Added A region parameter can now be passed to dxpy.find_data_objects() and dxpy.find_projects()
