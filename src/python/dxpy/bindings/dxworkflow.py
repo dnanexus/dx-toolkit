@@ -28,6 +28,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import re
 import dxpy
+from ..utils import instance_type_to_sys_reqs
 from ..bindings import DXDataObject, DXExecutable, DXAnalysis
 from ..exceptions import DXError
 from ..compat import basestring
@@ -241,7 +242,7 @@ class DXWorkflow(DXDataObject, DXExecutable):
         if stage_input is not None:
             add_stage_input["input"] = stage_input
         if instance_type is not None:
-            add_stage_input["systemRequirements"] = self._inst_type_to_sys_reqs(instance_type)
+            add_stage_input["systemRequirements"] = instance_type_to_sys_reqs(instance_type)
         self._add_edit_version_to_request(add_stage_input, edit_version)
         try:
             result = dxpy.api.workflow_add_stage(self._dxid, add_stage_input, **kwargs)
@@ -415,7 +416,7 @@ class DXWorkflow(DXDataObject, DXExecutable):
         if stage_input:
             update_stage_input["input"] = stage_input
         if instance_type is not None:
-            update_stage_input["systemRequirements"] = self._inst_type_to_sys_reqs(instance_type)
+            update_stage_input["systemRequirements"] = instance_type_to_sys_reqs(instance_type)
         if update_stage_input:
             update_input = {"stages": {stage_id: update_stage_input}}
             self._add_edit_version_to_request(update_input, edit_version)
@@ -456,7 +457,7 @@ class DXWorkflow(DXDataObject, DXExecutable):
             for stage, value in kwargs['stage_instance_types'].items():
                 if stage != '*':
                     stage = self._get_stage_id(stage)
-                run_input['stageSystemRequirements'][stage] = DXExecutable._inst_type_to_sys_reqs(value)
+                run_input['stageSystemRequirements'][stage] = instance_type_to_sys_reqs(value)
 
         if kwargs.get('stage_folders') is not None:
             run_input['stageFolders'] = {}

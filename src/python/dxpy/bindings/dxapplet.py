@@ -28,7 +28,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import dxpy
 from . import DXDataObject, DXJob
-from ..utils import merge
+from ..utils import merge, instance_type_to_sys_reqs
 from ..exceptions import DXError
 from ..compat import basestring
 
@@ -40,17 +40,6 @@ class DXExecutable:
     '''
     def __init__(self, *args, **kwargs):
         raise NotImplementedError("This class is a mix-in. Use DXApp or DXApplet instead.")
-
-    @staticmethod
-    def _inst_type_to_sys_reqs(instance_type):
-        if isinstance(instance_type, basestring):
-            # All entry points should use this instance type
-            return {"*": {"instanceType": instance_type}}
-        elif isinstance(instance_type, dict):
-            # Map of entry point to instance type
-            return {fn: {"instanceType": fn_inst} for fn, fn_inst in instance_type.items()}
-        else:
-            raise DXError('Expected instance_type field to be either a string or a dict')
 
     @staticmethod
     def _get_run_input_common_fields(executable_input, **kwargs):
@@ -67,7 +56,7 @@ class DXExecutable:
                 run_input[arg] = kwargs[arg]
 
         if kwargs.get('instance_type') is not None:
-            run_input["systemRequirements"] = DXExecutable._inst_type_to_sys_reqs(kwargs['instance_type'])
+            run_input["systemRequirements"] = instance_type_to_sys_reqs(kwargs['instance_type'])
 
         if kwargs.get('depends_on') is not None:
             run_input["dependsOn"] = []

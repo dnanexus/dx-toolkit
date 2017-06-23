@@ -633,11 +633,13 @@ class TestDXJobutilNewJob(DXTestCase):
             # depends-on - array of strings
             ("--depends-on foo bar baz", {"dependsOn": ["foo", "bar", "baz"]}),
             # instance type: single instance - string
-            ("--instance-type foo_bar_baz", {"systemRequirements": "foo_bar_baz"}),
+            ("--instance-type foo_bar_baz",
+             {"systemRequirements": {"entrypointname": { "instanceType": "foo_bar_baz" }}}),
             # instance type: mapping
             ("--instance-type " +
-                pipes.quote(json.dumps({"main": "mem2_hdd2_x2", "other_function": "mem2_hdd2_x1"})),
-                {"systemRequirements": {"main": "mem2_hdd2_x2", "other_function": "mem2_hdd2_x1"}}),
+                pipes.quote(json.dumps({"main": "mem2_hdd2_x2" , "other_function": "mem2_hdd2_x1" })),
+                {"systemRequirements": {"main": { "instanceType": "mem2_hdd2_x2" },
+                                        "other_function": { "instanceType": "mem2_hdd2_x1" }}}),
             # properties - mapping
             ("--property foo=foo_value --property bar=bar_value",
                 {"properties": {"foo": "foo_value", "bar": "bar_value"}}),
