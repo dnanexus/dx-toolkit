@@ -26,7 +26,7 @@ languages.
 Installing the toolkit from source
 ----------------------------------
 
-Install any missing software dependencies. View the ([Readme on Github](https://github.com/dnanexus/dx-toolkit/blob/master/Readme.md#installing-the-toolkit-from-source) for a list of the dependencies needed for your OS and version.
+Install any missing software dependencies. View the [Readme on Github](https://github.com/dnanexus/dx-toolkit/blob/master/Readme.md#installing-the-toolkit-from-source) for a list of the dependencies needed for your OS and version.
 
 Reporting Bugs
 --------------
