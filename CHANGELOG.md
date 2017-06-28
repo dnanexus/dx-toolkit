@@ -6,11 +6,27 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+*  dx-jobutil-new-job now properly supports instance type
+
+## Changed
+
+* Installation instructions now centralized on Github page
+* Incrementally upgraded dependencies for Java bindings
+
+## Added
+
+* Helper script to check TLS 1.2 support
+
+
+## [226.0] - beta
+
 ### Added
 
 * A `region` parameter can now be passed to `dx find projects`, `dx find data`, `dx find org projects`
 
-## [225.0] - beta
+## [225.0] - 2017-06-22 - stable
 
 ### Added
 
@@ -20,7 +36,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * `dx-docker` now no longer bind mounts `$HOME` and `/tmp` into the guest as this is consistent with Docker
 
-## [224.0] - stable
+## [224.0] - 2017-06-08
 
 ### Fixed
 
@@ -31,7 +47,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Client support for partial folder deletion
 
-## [223.0] - 2017-06-02 - stable
+## [223.0] - 2017-06-02
 
 ### Added
 
