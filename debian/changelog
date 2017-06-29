@@ -1,3 +1,12 @@
+dx-toolkit (0.227.0) precise; urgency=low
+
+  * Fixed: dx-jobutil-new-job now properly supports instance type 
+  * Changed: Installation instructions now centralized on Github page
+  * Changed: Incrementally upgraded dependencies for Java bindings
+  * Added: Helper script to check TLS 1.2 support
+
+ -- Hamed Haddadian <HAMEDH@DNANEXUS.COM>  Thu, 29 Jun 2017 18:29:35 +0000
+
 dx-toolkit (0.225.0) precise; urgency=low
 
   * Added A region parameter can now be passed to dxpy.find_data_objects() and dxpy.find_projects()
