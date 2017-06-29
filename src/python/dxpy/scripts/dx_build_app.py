@@ -832,6 +832,13 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 regional_options[region] = {"applet": applet_ids_by_region[region]}
                 if region in additional_resources_by_region:
                     regional_options[region]["resources"] = additional_resources_by_region[region]
+
+            # add pricingPolicy separately for better readability
+            if "regionalOptions" in app_json:
+                for region, region_config in app_json["regionalOptions"].items():
+                    if "pricingPolicy" in region_config:
+                        regional_options[region]["pricingPolicy"] = region_config["pricingPolicy"]
+
             app_id = dxpy.app_builder.create_app_multi_region(regional_options,
                                                               applet_name,
                                                               src_dir,
