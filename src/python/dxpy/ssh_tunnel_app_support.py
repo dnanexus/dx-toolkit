@@ -19,7 +19,7 @@ import subprocess
 import dxpy
 
 from sys import platform
-NOTEBOOK_APP = 'app-notebook_server'
+NOTEBOOK_APP = 'app-_notebook_server'
 LOUPE_APP = 'app-10x_loupe_server'
 SERVER_READY_TAG = 'server_running'
 SLEEP_PERIOD = 5
@@ -30,6 +30,14 @@ def setup_ssh_tunnel(job_id, local_port, remote_port):
 
 
 def poll_for_server_running(job_id):
+    sys.stdout.write('Waiting for server in {0} to initialize ...'.format(job_id))
+    sys.stdout.flush()
+    desc = dxpy.describe(job_id)
+    while(SERVER_READY_TAG not in desc['tags'] and desc['state'] != 'failed'):
+        subprocess.check_call('sleep {0}'.format(SLEEP_PERIOD), shell=True)
+        sys.stdout.write('.')
+        sys.stdout.flush()
+        desc = dxpy.describe(job_id)
     sys.stdout.write('Waiting for server in {0} to initialize ...'.format(job_id))
     sys.stdout.flush()
     desc = dxpy.describe(job_id)
@@ -57,6 +65,8 @@ def run_notebook(args):
         cmd += '-iinstall_data_science_packages=true '
     if args.spark:
         cmd += '-iinstall_spark=true '
+    if args.snapshot:
+        cmd += '-isnapshot={0} '.format(args.snapshot.replace(' ', '\\ '))
 
     cmd = cmd.format(NOTEBOOK_APP, args.notebook_type, input_files, args.timeout, args.instance_type)
     job_id = subprocess.check_output(cmd, shell=True).strip()

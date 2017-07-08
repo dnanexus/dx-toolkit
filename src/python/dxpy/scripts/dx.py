@@ -5074,6 +5074,7 @@ parser_notebook.add_argument('notebook_type', help='Type of notebook to launch',
 parser_notebook.add_argument('notebook_files', help='Files to include on notebook instance', default=[], nargs=argparse.REMAINDER).completer = DXPathCompleter(classes=['file'])
 parser_notebook.add_argument('--spark', help='Install spark infrastructure.', action='store_true', default=False)
 parser_notebook.add_argument('--port', help='local port to use to access the notebook.', default='2001')
+parser_notebook.add_argument('--snapshot', help='A snapshot file to reform on the server.').completer = DXPathCompleter(classes=['file'])
 parser_notebook.add_argument('--timeout', help='How long to keep the notebook open (smhwMy).', default='1h')
 parser_notebook.add_argument('--ds-packages', help='Install data science packages.', action='store_true')
 parser_notebook.add_argument('-q', '--quiet', help='Do not launch web browser.', action='store_false', dest='open_server')
