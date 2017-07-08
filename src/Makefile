@@ -252,10 +252,8 @@ coverage_python:
 test_python:
 	../build/run_python_integration_tests.py
 
-# mvn will compile the Java files, but it doesn't know how to generate the API
-# wrappers and toolkit release file.
-test_java: java
-	(cd java; mvn test)
+test_java:
+	../build/run_java_integration_tests.py
 
 # Installation
 # ============

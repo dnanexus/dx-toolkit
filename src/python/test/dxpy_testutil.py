@@ -428,6 +428,45 @@ class DXTestCase(unittest.TestCase):
             self.assertFalse(True, error_string)
 
 
+class DXTestCaseBuildWorkflows(DXTestCase):
+    """
+    This class adds methods to ``DXTestCase`` related to workflow creation and
+    workflow destruction.
+    """
+    base_workflow_spec = {
+        "name": "my_workflow",
+        "outputFolder": "/"
+    }
+
+    def setUp(self):
+        super(DXTestCaseBuildWorkflows, self).setUp()
+        self.temp_file_path = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_file_path)
+        super(DXTestCaseBuildWorkflows, self).tearDown()
+
+    def write_workflow_directory(self, workflow_name, dxworkflow_str,
+                                 readme_content="Workflow doc", build_basic=False):
+        # Note: if called twice with the same workflow_name, will overwrite
+        # the dxworkflow.json and code file (if specified) but will not
+        # remove any other files that happened to be present
+        try:
+            os.mkdir(os.path.join(self.temp_file_path, workflow_name))
+        except OSError as e:
+            if e.errno != 17:  # directory already exists
+                raise e
+        if dxworkflow_str is not None:
+            with open(os.path.join(self.temp_file_path, workflow_name, 'dxworkflow.json'), 'wb') as manifest:
+                manifest.write(dxworkflow_str.encode())
+        elif build_basic:
+            with open(os.path.join(self.temp_file_path, workflow_name, 'dxworkflow.json'), 'wb') as manifest:
+                manifest.write(self.base_workflow_spec)
+        with open(os.path.join(self.temp_file_path, workflow_name, 'Readme.md'), 'w') as readme_file:
+            readme_file.write(readme_content)
+        return os.path.join(self.temp_file_path, workflow_name)
+
+
 class DXTestCaseBuildApps(DXTestCase):
     """
     This class adds methods to ``DXTestCase`` related to app creation,

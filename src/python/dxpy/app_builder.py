@@ -546,7 +546,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
             applet_spec["runSpec"]["assetDepends"].extend(regional_options["assetDepends"])
 
     # Inline Readme.md and Readme.developer.md
-    _inline_documentation_files(applet_spec, src_dir)
+    dxpy.executable_builder.inline_documentation_files(applet_spec, src_dir)
 
     # Inline the code of the program
     if "file" in applet_spec["runSpec"]:
@@ -741,7 +741,7 @@ def _create_app(applet_or_regional_options, app_name, src_dir, publish=False, se
     app_spec.update(applet_or_regional_options, name=app_name)
 
     # Inline Readme.md and Readme.developer.md
-    _inline_documentation_files(app_spec, src_dir)
+    dxpy.executable_builder.inline_documentation_files(app_spec, src_dir)
 
     if billTo:
         app_spec["billTo"] = billTo

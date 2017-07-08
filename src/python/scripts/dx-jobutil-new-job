@@ -21,7 +21,7 @@ import os
 import json
 import argparse
 from dxpy.utils.printing import *
-from dxpy.utils import merge
+from dxpy.utils import merge, instance_type_to_sys_reqs
 from dxpy.cli.exec_io import *
 from dxpy.cli import try_call
 from dxpy.cli.parsers import (exec_input_args, process_instance_type_arg, instance_type_arg, process_properties_args, property_args, tag_args, extra_args, process_extra_args)
@@ -51,7 +51,7 @@ def get_job_new_input(args):
 
     if args.instance_type is not None:
         try_call(process_instance_type_arg, args, False)
-        job_new_input["systemRequirements"] = args.instance_type
+        job_new_input["systemRequirements"] = instance_type_to_sys_reqs(args.instance_type, args.function)
 
     if args.properties is not None:
         try_call(process_properties_args, args)

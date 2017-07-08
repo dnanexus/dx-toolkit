@@ -16,7 +16,7 @@ main() {
 
     for i in ${!files[@]}
     do
-        process_jobs[$i]=$(dx-jobutil-new-job process -iprocess_input:file="${files[$i]}")
+        process_jobs[$i]=$(dx-jobutil-new-job --instance-type mem1_ssd1_x2 process -iprocess_input:file="${files[$i]}")
     done
 
     postprocess=$(dx-jobutil-new-job postprocess -ipp_input0:file="${process_jobs[0]}":p_output -ipp_input1:file="${process_jobs[1]}":p_output)

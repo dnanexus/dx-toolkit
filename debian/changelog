@@ -1,3 +1,49 @@
+dx-toolkit (0.227.0) precise; urgency=low
+
+  * Fixed: dx-jobutil-new-job now properly supports instance type 
+  * Changed: Installation instructions now centralized on Github page
+  * Changed: Incrementally upgraded dependencies for Java bindings
+  * Added: Helper script to check TLS 1.2 support
+
+ -- Hamed Haddadian <HAMEDH@DNANEXUS.COM>  Thu, 29 Jun 2017 18:29:35 +0000
+
+dx-toolkit (0.225.0) precise; urgency=low
+
+  * Added A region parameter can now be passed to dxpy.find_data_objects() and dxpy.find_projects()
+  * Fixed dx-docker now no longer bind mounts $HOME and /tmp into the guest as this is consistent with Docker
+
+ -- Geet Duggal <gduggal@dnanexus.com>  Thu, 15 Jun 2017 16:38:38 +0000
+
+dx-toolkit (0.224.0) precise; urgency=low
+
+  * Fixed: Python 3 compatibility with `dx-app-wizard`
+  * Fixed: `dx get` does not redundantly inline description and developerNotes in dxapp.json
+  * Added: Client support for partial folder deletion
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 02 Jun 2017 15:53:38 +0000
+
+dx-toolkit (0.223.0) precise; urgency=low
+
+  * Add methods __next__() and next() to DXFile to complete iteration interface (thanks to Eric Talevich!)
+
+ -- Aleksandra Zalcman <azalcman@dnanexus.com>  Thu, 25 May 2017 18:29:42 +0000
+
+dx-toolkit (0.222.0) precise; urgency=low
+
+  * Fixed --bill-to option is utilized when building multi-region apps with dx build
+
+
+ -- Hamed Haddadian <HAMEDH@DNANEXUS.COM>  Thu, 18 May 2017 18:48:00 +0000
+
+dx-toolkit (0.221.0) precise; urgency=low
+
+  * Changed: Mac install no longer uses virtualenv. Instead, we ask users to install desired version of Python
+  * Fixed: dx-docker bug where environment variables passed in through the CLI do not get set within container
+  * Added: dx build creates a workflow on the platform based on the workflow's local source directory
+  * Removed: the deprecated dx-build-app and dx-build-applet scripts (that were replaced with dx build) were removed
+
+ -- Nicolas Bock <nbock@dnanexus.com>  Thu, 11 May 2017 18:03:24 +0000
+
 dx-toolkit (0.220.0) precise; urgency=low
 
   * Fixed: Bug introduced in release 204.0: including app resources fails
