@@ -58,7 +58,7 @@ else
   export PATH="${DNANEXUS_HOME}/bin:$PATH"
   export CLASSPATH="${DNANEXUS_HOME}/lib/java/*:${CLASSPATH}"
 
-  if [ "$RHEL_MAJOR_VERSION" == "7" ]; then
+  if [ "$RHEL_MAJOR_VERSION" = "7" ]; then
     export PYTHONPATH="${DNANEXUS_HOME}/share/dnanexus/lib/python2.7/site-packages:${DNANEXUS_HOME}/lib64/python2.7/site-packages:$PYTHONPATH"
   else
     export PYTHONPATH="${DNANEXUS_HOME}/share/dnanexus/lib/python2.7/site-packages:${DNANEXUS_HOME}/lib/python:$PYTHONPATH"
