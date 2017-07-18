@@ -35,6 +35,7 @@ import dxpy_testutil as testutil
 from dxpy.exceptions import (DXAPIError, DXFileError, DXError, DXJobFailureError, ResourceNotFound)
 from dxpy.utils import pretty_print, warn, Nonce
 from dxpy.utils.resolver import resolve_path, resolve_existing_path, ResolutionError, is_project_explicit
+import dxpy.app_builder as app_builder
 
 def get_objects_from_listf(listf):
     objects = []
@@ -101,7 +102,7 @@ class TestDXProject(unittest.TestCase):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test user')
     def test_invite_without_email(self):
-        user_id = 'user-000000000000000000000001'
+        user_id = 'user-bob'
         dxproject = dxpy.DXProject(self.proj_id)
 
         # Check that user is not already invited to project
@@ -1262,6 +1263,12 @@ def main():
 
 class TestDXWorkflow(unittest.TestCase):
     default_inst_type = "mem2_hdd2_x2"
+    codeSpec = '''
+@dxpy.entry_point('main')
+def main(number):
+    raise # Ensure that the applet fails
+'''
+
     def setUp(self):
         setUpTempProjects(self)
 
@@ -1295,11 +1302,7 @@ class TestDXWorkflow(unittest.TestCase):
                      inputSpec=[{"name": "number", "class": "int"},
                                 {"name": "othernumber", "class": "int"}],
                      outputSpec=[{"name": "number", "class": "int"}],
-                     runSpec={"code": '''
-@dxpy.entry_point('main')
-def main(number):
-    raise # Ensure that the applet fails
-''',
+                     runSpec={"code": self.codeSpec,
                                "interpreter": "python2.7"})
         stage_id = dxpy.api.workflow_add_stage(dxworkflow.get_id(),
                                                {"editVersion": 0,
@@ -1445,11 +1448,7 @@ def main(number):
                      dxapi="1.04",
                      inputSpec=[{"name": "number", "class": "int"}],
                      outputSpec=[{"name": "number", "class": "int"}],
-                     runSpec={"code": '''
-@dxpy.entry_point('main')
-def main(number):
-    raise # Ensure that the applet fails
-''',
+                     runSpec={"code": self.codeSpec,
                                "interpreter": "python2.7"})
         dxworkflow.add_stage(dxapplet, name='stagename')
 
@@ -1458,10 +1457,11 @@ def main(number):
         self.assertRaisesRegexp(DXError, 'more than once',
                                 dxworkflow.run, {"0.number": 32, "stagename.number": 42})
         # Bad stage name
-        self.assertRaisesRegexp(DXError, 'nor found as a stage name',
+        self.assertRaisesRegexp(DXError, 'could not be found as a stage ID nor as a stage name',
                                 dxworkflow.run, {"nonexistentstage.number": 32})
 
     def test_new_dxworkflow(self):
+        # empty workflow
         blankworkflow = dxpy.new_dxworkflow()
         self.assertIsInstance(blankworkflow, dxpy.DXWorkflow)
         desc = blankworkflow.describe()
@@ -1469,14 +1469,47 @@ def main(number):
         self.assertEqual(desc['summary'], '')
         self.assertEqual(desc['description'], '')
         self.assertEqual(desc['outputFolder'], None)
+        self.assertEqual(desc['stages'], [])
 
-        dxworkflow = dxpy.new_dxworkflow(title='mytitle', summary='mysummary', description='mydescription', output_folder="/foo")
+        # workflow with metadata
+        dxapplet = dxpy.DXApplet()
+        dxapplet.new(name="test_applet",
+                     dxapi="1.04",
+                     inputSpec=[],
+                     outputSpec=[],
+                     runSpec={"code": '', "interpreter": "bash"})
+
+        stage0 = {'id': 'stage_0',
+                  'name': 'stage_0_name',
+                  'executable': dxapplet.get_id(),
+                  'folder': "/stage_0_output",
+                  'executionPolicy': {'restartOn': {}, 'onNonRestartableFailure': 'failStage'},
+                  'systemRequirements': {'main': {'instanceType': self.default_inst_type}}}
+        stage1 = {'id': 'stage_1',
+                  'executable': dxapplet.get_id()}
+
+        dxworkflow = dxpy.new_dxworkflow(title='mytitle', summary='mysummary',
+                                         description='mydescription', output_folder="/foo",
+                                         stages=[stage0, stage1])
+        stage_with_generated_id = dxworkflow.add_stage(dxapplet, name="stagename_generated_id", folder="foo")
+        stage_with_user_id = dxworkflow.add_stage(dxapplet, stage_id="my_id", name="stagename_user_id", folder="foo")
+
         self.assertIsInstance(dxworkflow, dxpy.DXWorkflow)
         desc = dxworkflow.describe()
         self.assertEqual(desc['title'], 'mytitle')
         self.assertEqual(desc['summary'], 'mysummary')
         self.assertEqual(desc['description'], 'mydescription')
         self.assertEqual(desc['outputFolder'], '/foo')
+        self.assertEqual(len(desc['stages']), 4)
+        self.assertEqual(desc['stages'][0]['id'], 'stage_0')
+        self.assertEqual(desc['stages'][0]['name'], 'stage_0_name')
+        self.assertEqual(desc['stages'][1]['id'], 'stage_1')
+        self.assertEqual(desc['stages'][1]['name'], None)
+        self.assertEqual(desc['stages'][2]['id'], stage_with_generated_id)
+        self.assertEqual(desc['stages'][2]['name'], 'stagename_generated_id')
+        self.assertEqual(desc['stages'][3]['id'], stage_with_user_id)
+        self.assertEqual(stage_with_user_id, 'my_id')
+        self.assertEqual(desc['stages'][3]['name'], 'stagename_user_id')
 
         secondworkflow = dxpy.new_dxworkflow(init_from=dxworkflow)
         self.assertIsInstance(secondworkflow, dxpy.DXWorkflow)
@@ -1486,6 +1519,16 @@ def main(number):
         self.assertEqual(desc['summary'], 'mysummary')
         self.assertEqual(desc['description'], 'mydescription')
         self.assertEqual(desc['outputFolder'], '/foo')
+        self.assertEqual(len(desc['stages']), 4)
+        self.assertEqual(desc['stages'][0]['id'], 'stage_0')
+        self.assertEqual(desc['stages'][0]['name'], 'stage_0_name')
+        self.assertEqual(desc['stages'][1]['id'], 'stage_1')
+        self.assertEqual(desc['stages'][1]['name'], None)
+        self.assertEqual(desc['stages'][2]['id'], stage_with_generated_id)
+        self.assertEqual(desc['stages'][2]['name'], 'stagename_generated_id')
+        self.assertEqual(desc['stages'][3]['id'], stage_with_user_id)
+        self.assertEqual(stage_with_user_id, 'my_id')
+        self.assertEqual(desc['stages'][3]['name'], 'stagename_user_id')
 
     def test_add_move_remove_stages(self):
         dxworkflow = dxpy.new_dxworkflow()
@@ -1541,7 +1584,7 @@ def main(number):
         self.assertEqual(dxworkflow.editVersion, 5)
         self.assertEqual(len(dxworkflow.stages), 1)
         self.assertEqual(dxworkflow.stages[0]["id"], second_stage)
-        with self.assertRaises(DXAPIError):
+        with self.assertRaises(DXError):
             dxworkflow.remove_stage(first_stage) # should already have been removed
         removed_stage = dxworkflow.remove_stage(second_stage, edit_version=5)
         self.assertEqual(removed_stage, second_stage)
@@ -2807,6 +2850,22 @@ class TestIdempotentRequests(unittest.TestCase):
         with self.assertRaises(DXAPIError):
             input_params.update({"name": "another_test_org"})
             dxpy.api.org_new(input_params=input_params)
+
+
+class TestAppBuilderUtils(unittest.TestCase):
+    def test_assert_consistent_regions(self):
+        assert_consistent_regions = app_builder.assert_consistent_regions
+
+        # These calls should not raise exceptions.
+
+        assert_consistent_regions(None, None)
+        assert_consistent_regions(None, ["aws:us-east-1"])
+        assert_consistent_regions({"aws:us-east-1": None}, None)
+        # The actual key-value pairs are irrelevant.
+        assert_consistent_regions({"aws:us-east-1": None}, ["aws:us-east-1"])
+
+        with self.assertRaises(app_builder.AppBuilderException):
+            assert_consistent_regions({"aws:us-east-1": None}, ["azure:westus"])
 
 
 if __name__ == '__main__':

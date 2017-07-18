@@ -1,3 +1,32 @@
+DNAnexus Upload Agent 1.5.27 <support@dnanexus.com>, 2017-Jun-02
+----------------------------------------------------------------
+  *
+
+DNAnexus Upload Agent 1.5.26 <support@dnanexus.com>, 2017-May-18
+----------------------------------------------------------------
+  *
+
+DNAnexus Upload Agent 1.5.25 <support@dnanexus.com>, 2017-Apr-13
+----------------------------------------------------------------
+  * Fixed typo in log output
+
+DNAnexus Upload Agent 1.5.24 <support@dnanexus.com>, 2017-Mar-16
+----------------------------------------------------------------
+  * Build on Windows without recompiling C++ dependencies
+
+DNAnexus Upload Agent 1.5.23 <support@dnanexus.com>, 2017-Mar-02
+----------------------------------------------------------------
+  * Fix recursive filed upload on Windows
+
+DNAnexus Upload Agent 1.5.22 <support@dnanexus.com>, 2017-Feb-23
+----------------------------------------------------------------
+  * Fix Upload agent now does not gzip compress .gz files on Ubuntu 14.04
+  * Fix Minor log message fix if file is already uploaded
+
+DNAnexus Upload Agent 1.5.21 <support@dnanexus.com>, 2017-Feb-02
+----------------------------------------------------------------
+  * Add support to build of upload agent on RHEL7
+
 DNAnexus Upload Agent 1.5.20 <support@dnanexus.com>, 2016-Oct-20
 ----------------------------------------------------------------
   * Add option to read data from stdin

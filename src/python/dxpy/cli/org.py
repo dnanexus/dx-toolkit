@@ -269,6 +269,7 @@ def org_find_projects(args):
                                          public=args.public,
                                          created_after=args.created_after,
                                          created_before=args.created_before,
+                                         region=args.region,
                                          containsPHI=args.containsPHI)
     except:
         err_exit()

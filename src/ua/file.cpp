@@ -132,7 +132,7 @@ void File::init(const bool tryResuming) {
   //dx::JSON properties(dx::JSON_OBJECT);
 
   // Add property {FILE_SIGNATURE_PROPERTY: "<size> <modified time stamp> <toCompress> <chunkSize> <name of file>"
-  properties[FILE_SIGNATURE_PROPERTY] = File::createResumeInfoString(size, modifiedTimestamp, toCompress, chunkSize, fs::canonical(p).string());
+  properties[FILE_SIGNATURE_PROPERTY] = File::createResumeInfoString(size, modifiedTimestamp, toCompress, chunkSize, fs::canonical(p).generic_string());
 
   DXLOG(logINFO) << "Resume info string: '" << properties[FILE_SIGNATURE_PROPERTY].get<string>() << "'"; 
   dx::JSON findResult;
@@ -152,10 +152,19 @@ void File::init(const bool tryResuming) {
         isRemoteFileOpen = true;
       }
       DXLOG(logINFO) << "A resume target is found .. " << endl;
-      DXLOG(logUSERINFO)
-        << "Signature of file " << localFile << " matches remote file " << findResult[0]["describe"]["name"].get<string>() 
-        << " (" << fileID << "), which is " << completePercentage << "% complete. Will resume uploading to it." << endl;
-      DXLOG(logINFO) << "Remote resume target is in state: \"" << state << "\"";
+      if (isRemoteFileOpen) {
+        DXLOG(logUSERINFO)
+          << "Signature of file " << localFile << " matches remote file " << findResult[0]["describe"]["name"].get<string>() 
+          << " (" << fileID << "), which is " << completePercentage << "% complete. Will resume uploading to it." << endl;
+        DXLOG(logINFO) << "Remote resume target is in state: \"" << state << "\"";
+      }
+      else {
+        DXLOG(logUSERINFO)
+          << "Signature of file " << localFile << " matches remote file " << findResult[0]["describe"]["name"].get<string>() 
+          << " (" << fileID << "), which is " << completePercentage << "% complete. Will not resume uploading it." << endl;
+        DXLOG(logINFO) << "Remote resume target is in state: \"" << state << "\"";
+      }
+
     }
     if (findResult.size() > 1) {
       ostringstream oss;

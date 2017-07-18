@@ -21,6 +21,7 @@ DNANEXUS_HOME = $(CURDIR)/../..
 VERSION := $(shell cat $(DNANEXUS_HOME)/build/info/ua_version || echo 'UNKNOWN_VERSION')
 DXTOOLKIT_GITVERSION := $(shell cat $(DNANEXUS_HOME)/build/info/version || echo 'UNKNOWN_VERSION')
 CENTOS_MAJOR_VERSION := $(shell grep -o "CentOS release [0-9]\+" /etc/issue | sed -e "s/CentOS release //")
+RHEL_MAJOR_VERSION := $(shell test -e /etc/redhat-release && (grep -o "Red Hat Enterprise Linux .* release [0-9]\+" /etc/redhat-release | sed -e "s/Red Hat Enterprise Linux .* release //"))
 
 curl_dir = $(DNANEXUS_HOME)/src/curl/stage
 cares_dir = $(DNANEXUS_HOME)/src/c-ares/stage
@@ -41,7 +42,7 @@ VPATH = $(dxjson_dir):$(dxhttp_dir):$(dxcpp_dir):$(ua_dir)
 CFLAGS = -O3 -Wall -Wextra -Werror=return-type -Wno-switch -pedantic
 CXXFLAGS = $(CFLAGS)
 CXXFLAGS += -D_FILE_OFFSET_BITS=64 -DUAVERSION=\"$(VERSION)\" -DDXTOOLKIT_GITVERSION=\"$(DXTOOLKIT_GITVERSION)\"
-CXXFLAGS += -I$(libmagic_dir)/include -I$(openssl_dir)/include -I$(curl_dir)/include -I$(cares_dir)/include -I$(boost_dir) -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir) -I$(ua_dir)
+CXXFLAGS += -isystem $(libmagic_dir)/include -isystem $(openssl_dir)/include -isystem $(curl_dir)/include -isystem $(cares_dir)/include -I$(boost_dir) -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir) -I$(ua_dir)
 ifeq ($(CENTOS_MAJOR_VERSION), 5)
 	CXXFLAGS += -DOLD_KERNEL_SUPPORT=1
 endif
@@ -62,6 +63,7 @@ endif
 # We use the -std=gnu++0x flag instead of c++0x for Windows compilation, because
 # c++0x mode turns on the __STRICT_ANSI__ flag, which forbids functions such as fseeko64() (which we use)
 ifeq ($(OS), Windows_NT)
+	CPPFLAGS = -DWINVER=0x0501
 	CXXFLAGS += -DWINDOWS_BUILD=1 -DPSAPI_VERSION=1 -std=gnu++0x
 	LDFLAGS += -lws2_32 -lregex -lgnurx.dll -lshlwapi -lpsapi
 	LDFLAGS += -lcurl.dll -lcares.dll -lboost_program_options-mt.dll -lboost_filesystem-mt.dll -lboost_system-mt.dll -lboost_thread-mt.dll -lboost_regex-mt.dll
@@ -74,6 +76,9 @@ else
 		ifeq ($(CC), clang)
 			CXXFLAGS += -stdlib=libc++
 		endif
+        else ifeq ($(RHEL_MAJOR_VERSION), 7)
+		CXXFLAGS += -DLINUX_BUILD=1 -std=c++0x
+		LDFLAGS += -lrt -static
 	else
 		CXXFLAGS += -DLINUX_BUILD=1 -std=c++0x
 		LDFLAGS += -lrt -lidn -static
@@ -102,7 +107,7 @@ dist: all
 	rm -rf dist $(D)-*
 	mkdir -p dist
 ifeq ($(OS), Windows_NT)
-	install ../file/magic/magic.mgc dist/
+	install $(libmagic_dir)/../magic/magic.mgc dist/
 	install {$(curl_dir),$(cares_dir),$(libmagic_dir),$(openssl_dir)/stage}/bin/*.dll $(boost_dir)/stage/lib/*-mt.dll dist/
 	for lib in zlib1 libgcc_s_dw2-1 libstdc++-6 libgnurx-0; do \
 	    install "$$(which $$lib.dll)" dist/; \

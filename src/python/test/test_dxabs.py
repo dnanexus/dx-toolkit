@@ -80,16 +80,19 @@ class TestDXFile(unittest.TestCase):
 
     def test_upload_download_large_file_size_dxfile(self):
         test_file_name = os.path.join(self.tempdir, 'large_file')
+        hundredMB = 1024*1024*100
         with open(test_file_name, 'w') as test_file:
             with open("/dev/urandom", 'r') as random_input:
-                test_file.write(random_input.read(8196384))
+                test_file.write(random_input.read(hundredMB + 4002080))
 
-        myfile = dxpy.upload_local_file(test_file_name, project=self.proj_id, wait_on_close=True)
+        myfile = dxpy.upload_local_file(test_file_name, project=self.proj_id,
+                                        write_buffer_size=hundredMB, wait_on_close=True)
         self.assertTrue(myfile.closed())
 
         # Check file was split up into parts appropriately
+        # 104857600 (or 100 MB) is the maximum size for a single part
         parts = myfile.describe(fields={"parts": True})['parts']
-        self.assertEquals(parts['1']['size'], 4194304)
+        self.assertEquals(parts['1']['size'], hundredMB)
         self.assertEquals(parts['2']['size'], 4002080)
 
         self.assertEqual(myfile.describe()["name"], 'large_file')

@@ -321,6 +321,9 @@ class DXFile(DXDataObject):
         if _buffer:
             yield _buffer
 
+    next = next
+    __next__ = next
+            
     def set_ids(self, dxid, project=None):
         '''
         :param dxid: Object ID

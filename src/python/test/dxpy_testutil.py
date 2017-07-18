@@ -33,8 +33,8 @@ TEST_AZURE = ((os.environ.get('DXTEST_AZURE', '').startswith('azure:') and os.en
               (os.environ.get('DXTEST_AZURE') and 'azure:westus'))
 TEST_ISOLATED_ENV = _run_all_tests or 'DXTEST_ISOLATED_ENV' in os.environ
 TEST_ENV = _run_all_tests or 'DXTEST_ENV' in os.environ
+TEST_DX_DOCKER = 'DXTEST_DOCKER' in os.environ
 TEST_FUSE = _run_all_tests or 'DXTEST_FUSE' in os.environ
-TEST_GTABLE = _run_all_tests or 'DXTEST_GTABLE' in os.environ
 TEST_HTTP_PROXY = _run_all_tests or 'DXTEST_HTTP_PROXY' in os.environ
 TEST_NO_RATE_LIMITS = _run_all_tests or 'DXTEST_NO_RATE_LIMITS' in os.environ
 TEST_RUN_JOBS = _run_all_tests or 'DXTEST_RUN_JOBS' in os.environ
@@ -426,6 +426,45 @@ class DXTestCase(unittest.TestCase):
                 error_string += "Keys missing from superset: {}\n".format(m)
 
             self.assertFalse(True, error_string)
+
+
+class DXTestCaseBuildWorkflows(DXTestCase):
+    """
+    This class adds methods to ``DXTestCase`` related to workflow creation and
+    workflow destruction.
+    """
+    base_workflow_spec = {
+        "name": "my_workflow",
+        "outputFolder": "/"
+    }
+
+    def setUp(self):
+        super(DXTestCaseBuildWorkflows, self).setUp()
+        self.temp_file_path = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_file_path)
+        super(DXTestCaseBuildWorkflows, self).tearDown()
+
+    def write_workflow_directory(self, workflow_name, dxworkflow_str,
+                                 readme_content="Workflow doc", build_basic=False):
+        # Note: if called twice with the same workflow_name, will overwrite
+        # the dxworkflow.json and code file (if specified) but will not
+        # remove any other files that happened to be present
+        try:
+            os.mkdir(os.path.join(self.temp_file_path, workflow_name))
+        except OSError as e:
+            if e.errno != 17:  # directory already exists
+                raise e
+        if dxworkflow_str is not None:
+            with open(os.path.join(self.temp_file_path, workflow_name, 'dxworkflow.json'), 'wb') as manifest:
+                manifest.write(dxworkflow_str.encode())
+        elif build_basic:
+            with open(os.path.join(self.temp_file_path, workflow_name, 'dxworkflow.json'), 'wb') as manifest:
+                manifest.write(self.base_workflow_spec)
+        with open(os.path.join(self.temp_file_path, workflow_name, 'Readme.md'), 'w') as readme_file:
+            readme_file.write(readme_content)
+        return os.path.join(self.temp_file_path, workflow_name)
 
 
 class DXTestCaseBuildApps(DXTestCase):

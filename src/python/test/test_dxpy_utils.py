@@ -143,7 +143,7 @@ class TestDXExecDependsUtils(unittest.TestCase):
                 {"name": "asset.east", "id": {"$dnanexus_link": "file-asseteast"}}
             ],
 
-            "aws:us-west-1": [
+            "azure:westus": [
                 {"name": "asset.west", "id": {"$dnanexus_link": "file-assetwest"}}
             ]
         }
@@ -153,7 +153,7 @@ class TestDXExecDependsUtils(unittest.TestCase):
             # Asserts that we attempted to download the correct file.
             edi.install()
         edi = self.get_edi({"bundledDependsByRegion": bundled_depends_by_region},
-                           job_desc={"region": "aws:us-west-1"})
+                           job_desc={"region": "azure:westus"})
         with self.assertRaisesRegexp(DXError, 'file-assetwest'):
             edi.install()
         with self.assertRaisesRegexp(KeyError, 'aws:cn-north-1'):
@@ -250,7 +250,7 @@ class TestDXExecDependsUtils(unittest.TestCase):
 
         # Job describe dict may specify or omit "region" if
         # "bundledDependsByRegion" is not in run specification.
-        edi = self.get_edi({}, job_desc={"region": "aws:us-west-1"})
+        edi = self.get_edi({}, job_desc={"region": "azure:westus"})
         edi.install()
 
         edi = self.get_edi({}, job_desc={})

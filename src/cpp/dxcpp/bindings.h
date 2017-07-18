@@ -316,7 +316,6 @@ namespace dx {
 
 #include "bindings/dxrecord.h"
 #include "bindings/dxfile.h"
-#include "bindings/dxgtable.h"
 #include "bindings/dxjob.h"
 #include "bindings/dxapplet.h"
 #include "bindings/dxapp.h"

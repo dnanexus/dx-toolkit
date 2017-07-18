@@ -38,6 +38,11 @@ fi
 
 while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
 
+# Get RHEL version
+if [ -e /etc/redhat-release ] ; then
+  RHEL_MAJOR_VERSION=$(grep -o "Red Hat Enterprise Linux .* release [0-9]\+" /etc/redhat-release | sed -e "s/Red Hat Enterprise Linux .* release //")
+fi
+
 export DNANEXUS_HOME="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 # Detect system installation of dx-toolkit
@@ -51,8 +56,13 @@ if [ "$DNANEXUS_HOME" = "/etc/profile.d" ]; then
 else
 
   export PATH="${DNANEXUS_HOME}/bin:$PATH"
-  export PYTHONPATH="${DNANEXUS_HOME}/share/dnanexus/lib/python2.7/site-packages:${DNANEXUS_HOME}/lib/python:$PYTHONPATH"
   export CLASSPATH="${DNANEXUS_HOME}/lib/java/*:${CLASSPATH}"
+
+  if [ "$RHEL_MAJOR_VERSION" == "7" ]; then
+    export PYTHONPATH="${DNANEXUS_HOME}/share/dnanexus/lib/python2.7/site-packages:${DNANEXUS_HOME}/lib64/python2.7/site-packages:$PYTHONPATH"
+  else
+    export PYTHONPATH="${DNANEXUS_HOME}/share/dnanexus/lib/python2.7/site-packages:${DNANEXUS_HOME}/lib/python:$PYTHONPATH"
+  fi
 
 fi
 
@@ -81,23 +91,4 @@ eval "$(register-python-argcomplete dx|sed 's/-o default//')"
 
 if [[ -z "$DX_SECURITY_CONTEXT" && -n "$DX_AUTH_TOKEN" ]]; then
     export DX_SECURITY_CONTEXT="{\"auth_token_type\":\"Bearer\",\"auth_token\":\"$DX_AUTH_TOKEN\"}"
-fi
-
-if [[ $OSTYPE == "darwin"* ]]; then
-    # On the first run, create a virtualenv for Mac-specific needs;
-    # skip to activating it when it already exists.
-    VIRTUALENV_DIR="$DNANEXUS_HOME/dxenv"
-
-    if [ ! -d "$VIRTUALENV_DIR" ]; then
-        virtualenv "$VIRTUALENV_DIR"
-        source "$VIRTUALENV_DIR/bin/activate"
-        
-        # Install ndg-httpsclient in the env to provide TLS 1.2 support
-        # Install all tar packages only for osx python virtual environment
-        PYTHON_PKG_DIR="$DNANEXUS_HOME"/osx-python-packages/
-        pip install --no-cache-dir --no-index --find-links="$PYTHON_PKG_DIR" ndg-httpsclient
-        
-    else
-        source "$VIRTUALENV_DIR/bin/activate"
-    fi
 fi

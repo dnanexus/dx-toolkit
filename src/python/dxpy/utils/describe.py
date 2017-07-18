@@ -905,7 +905,26 @@ def print_ls_l_header():
     print(get_ls_l_header())
 
 
+def get_ls_l_desc_fields():
+    return {
+        'id': True,
+        'class': True,
+        'folder': True,
+        'length': True,
+        'modified': True,
+        'name': True,
+        'project': True,
+        'size': True,
+        'state': True
+    }
+
+
 def get_ls_l_desc(desc, include_folder=False, include_project=False):
+    """
+    desc must have at least all the fields given by get_ls_l_desc_fields.
+    """
+    # If you make this method consume an additional field, you must add it to
+    # get_ls_l_desc_fields above.
     if 'state' in desc:
         state_len = len(desc['state'])
         if desc['state'] != 'closed':

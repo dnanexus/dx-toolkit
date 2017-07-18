@@ -35,6 +35,7 @@ UNAME := $(shell uname)
 CENTOS_MAJOR_VERSION := $(shell test -e /etc/issue && (grep -o "CentOS release [0-9]\+" /etc/issue | sed -e "s/CentOS release //"))
 FEDORA_MAJOR_VERSION := $(shell test -e /etc/issue && (grep -o "Fedora release [0-9]\+" /etc/issue | sed -e "s/Fedora release //"))
 UBUNTU_VERSION := $(shell test -e /etc/issue && (grep -o "Ubuntu [0-9]\+\.[0-9]\+" /etc/issue | sed -e "s/Ubuntu //"))
+RHEL_MAJOR_VERSION := $(shell test -e /etc/redhat-release && (grep -o "Red Hat Enterprise Linux .* release [0-9]\+" /etc/redhat-release | sed -e "s/Red Hat Enterprise Linux .* release //"))
 
 ifndef CCACHE_DISABLE
 	export PATH := /usr/lib/ccache:$(PATH)
@@ -132,11 +133,18 @@ endif
 
 # Get the short toolkit version string, resembling v0.195.0
 GIT_TOOLKIT_VERSION_SHORT := $(shell git describe --abbrev=0)
+# IF upload agent is built, dlls will be placed here, can be overriden with argument
+# e.g. `make DLL_DEPS_FOLDER=C:\\toolkit-deps\\ pynsist_installer`
+DLL_DEPS_FOLDER = '../../src/ua/dist/'
 
-pynsist_installer: toolkit_version $(DNANEXUS_HOME)/bin/dx dx-verify-file jq ua
+pynsist_installer: toolkit_version $(DNANEXUS_HOME)/bin/dx dx-verify-file jq
+
 	# Create installer.cfg and insert the toolkit version string
 	export GIT_TOOLKIT_VERSION_SHORT=$(GIT_TOOLKIT_VERSION_SHORT) ; \
 	    sed s/TEMPLATE_STRING_TOOLKIT_VERSION/$${GIT_TOOLKIT_VERSION_SHORT}/ "$(DNANEXUS_HOME)"/build/pynsist_files/installer.cfg.template > "$(DNANEXUS_HOME)"/build/pynsist_files/installer.cfg
+	# Insert dll foldername
+	export DLL_DEPS_FOLDER=$(DLL_DEPS_FOLDER) ; \
+		sed --in-place "s~DLL_DEPS_FOLDER~$${DLL_DEPS_FOLDER}~" "$(DNANEXUS_HOME)"/build/pynsist_files/installer.cfg
 
 	# Copy wheel file into place without changing its filename
 	export DXPY_WHEEL_FILENAME=$$(basename $(DNANEXUS_HOME)/src/python/dist/dxpy-*.whl) ; \
@@ -176,11 +184,6 @@ endif
 	# On OS X, install the gnureadline package and download other osx specific packages
 ifeq ($(UNAME), Darwin)
 	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; pip install --no-cache-dir --prefix="$(DNANEXUS_HOME)" -r python/requirements_readline.txt
-	# Download ndg-httpsclient for cryptography
-	pip download --no-cache-dir -d "$(DNANEXUS_HOME)"/osx-python-packages -r python/requirements_osx.txt
-	# For OS X < 10.10 download cryptography.whl and cffi.whl
-	pip download --no-cache-dir --no-deps -d "$(DNANEXUS_HOME)"/osx-python-packages --platform macosx_10_6_intel --only-binary=:all: cryptography
-	pip download --no-cache-dir --no-deps -d "$(DNANEXUS_HOME)"/osx-python-packages --platform macosx_10_6_intel --only-binary=:all: cffi
 endif
 
 	# Build the dxpy wheel and move it into place
@@ -249,10 +252,8 @@ coverage_python:
 test_python:
 	../build/run_python_integration_tests.py
 
-# mvn will compile the Java files, but it doesn't know how to generate the API
-# wrappers and toolkit release file.
-test_java: java
-	(cd java; mvn test)
+test_java:
+	../build/run_java_integration_tests.py
 
 # Installation
 # ============
@@ -353,10 +354,10 @@ build_git:
 	(cd git && autoreconf --install && ./configure && $(MAKE) && $(MAKE) install)
 	(cd ../build/bin && ln -s ../../src/git/git)
 
-OPENSSL_PV=1.0.1f
-OPENSSL_SHA=9ef09e97dfc9f14ac2c042f3b7e301098794fc0f
+OPENSSL_PV=1.0.2g
+OPENSSL_SHA=36af23887402a5ea4ebef91df8e61654906f58f2
 openssl: shasum
-	if [[ "$(OS)" == Windows_NT || "$(UNAME)" == Darwin || "$(CENTOS_MAJOR_VERSION)" == "5" ]]; then \
+	if [[ "$(OS)" == Windows_NT || "$(UNAME)" == Darwin || "$(CENTOS_MAJOR_VERSION)" == "5" || "$(RHEL_MAJOR_VERSION)" == "7" ]]; then \
 	    $(MAKE) build_openssl; \
 	fi
 
@@ -438,6 +439,9 @@ else ifeq ($(UNAME), Darwin)
 else ifeq ($(CENTOS_MAJOR_VERSION), 5)
 	CURL_WITH_SSL=--with-ssl=$$(pwd)/../openssl/stage
 	CURL_SHARED_LIBS=--enable-shared=no
+else ifeq ($(RHEL_MAJOR_VERSION), 7)
+	CURL_WITH_SSL=--with-ssl=$$(pwd)/../openssl/stage
+	CURL_SHARED_LIBS=--enable-shared=no
 else
 	CURL_WITH_SSL=--with-ssl
 	CURL_SHARED_LIBS=--enable-shared=no
@@ -456,8 +460,8 @@ curl/stage/lib/libcurl.la: shasum openssl
 	    --enable-static=yes $(CURL_SHARED_LIBS) $(CURL_WITH_SSL) --prefix=/
 	$(MAKE) -C curl install DESTDIR="$(DNANEXUS_HOME)/src/curl/stage"
 
-CARES_PV=1.10.0
-CARES_SHA=e44e6575d5af99cb3a38461486e1ee8b49810eb5
+CARES_PV=1.12.0
+CARES_SHA=8abfce61d2d788fb60a3441d05275162a460cbed
 c-ares/stage/lib/libcares.la: shasum
 	mkdir -p c-ares
 	curl ${UBUNTU_MIRROR}/pool/main/c/c-ares/c-ares_${CARES_PV}.orig.tar.gz > c-ares-${CARES_PV}.tar.gz
@@ -466,14 +470,14 @@ c-ares/stage/lib/libcares.la: shasum
 	cd c-ares; ./configure --prefix=/
 	$(MAKE) -C c-ares install DESTDIR="$(DNANEXUS_HOME)/src/c-ares/stage"
 
-FILE_PV=5.09
-FILE_SHA=9d905f9e50033c3f5be3728473cbb709a41550fb
+FILE_PV=5.29
+FILE_SHA=86a2ad5745f1ce98ab810f6dc09f6f71406cfc16
 file/stage/lib/libmagic.la: shasum
 	mkdir -p file
-	curl ${UBUNTU_MIRROR}/pool/main/f/file/file_${FILE_PV}.orig.tar.gz > file-${FILE_PV}.tar.gz
-	[[ $$(shasum file-${FILE_PV}.tar.gz|cut -f 1 -d ' ') == $(FILE_SHA) ]]
-	tar -xzf file-${FILE_PV}.tar.gz -C file --strip-components=1
-	cd file; ./configure --prefix=/
+	curl ${UBUNTU_MIRROR}/pool/main/f/file/file_${FILE_PV}.orig.tar.xz > file-${FILE_PV}.tar.xz
+	[[ $$(shasum file-${FILE_PV}.tar.xz|cut -f 1 -d ' ') == $(FILE_SHA) ]]
+	tar -xf file-${FILE_PV}.tar.xz -C file --strip-components=1
+	cd file; ./configure --enable-static=yes --prefix=/
 	$(MAKE) -C file install DESTDIR="$(DNANEXUS_HOME)/src/file/stage"
 
 # Bundled utilities

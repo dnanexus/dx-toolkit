@@ -102,8 +102,8 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
     :param append: If True, appends to the local file (default is to truncate local file if it exists)
     :type append: boolean
     :param project: project to use as context for this download (may affect
-            which billing account is billed for this download). If None, no
-            project hint is supplied to the API server.
+            which billing account is billed for this download). If None or
+            DXFile.NO_PROJECT_HINT, no project hint is supplied to the API server.
     :type project: str or None
 
 
@@ -165,7 +165,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
     if isinstance(dxid, DXFile):
         dxfile = dxid
     else:
-        dxfile = DXFile(dxid, mode="r")
+        dxfile = DXFile(dxid, mode="r", project=(project if project != DXFile.NO_PROJECT_HINT else None))
 
     dxfile_desc = dxfile.describe(fields={"parts"}, default_fields=True, **kwargs)
     parts = dxfile_desc["parts"]
@@ -503,7 +503,7 @@ def list_subfolders(project, path, recurse=True):
         return (f for f in project_folders if f.startswith(path) and '/' not in f[len(path)+1:])
 
 def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxfile.DEFAULT_BUFFER_SIZE,
-        **kwargs):
+                    show_progress=False, **kwargs):
     '''
     :param project: Project ID to use as context for this download.
     :type project: string
@@ -552,8 +552,9 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
         ensure_local_dir(compose_local_dir(normalized_dest_dir, normalized_folder, remote_subfolder))
 
     # Downloading files
+    describe_input = dict(fields=dict(folder=True, name=True, id=True))
     for remote_file in dxpy.search.find_data_objects(classname='file', state='closed', project=project,
-                                                     folder=normalized_folder, recurse=True, describe=True):
+                                                     folder=normalized_folder, recurse=True, describe=describe_input):
         local_filename = os.path.join(compose_local_dir(normalized_dest_dir,
                                                         normalized_folder,
                                                         remote_file['describe']['folder']),
@@ -566,4 +567,5 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
                      ("" if remote_file['describe']['folder'] == "/" else remote_file['describe']['folder']),
                      remote_file['describe']['name'],
                      local_filename)
-        download_dxfile(remote_file['describe']['id'], local_filename, chunksize=chunksize, project=project, **kwargs)
+        download_dxfile(remote_file['describe']['id'], local_filename, chunksize=chunksize, project=project,
+                        show_progress=show_progress, **kwargs)

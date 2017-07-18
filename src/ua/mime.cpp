@@ -361,6 +361,7 @@ bool isCompressed(const std::string& mimeType) {
   const char* compressed_mime_types[] = {
     "application/x-bzip2",
     "application/zip",
+    "application/gzip",
     "application/x-gzip",
     "application/x-lzip",
     "application/x-lzma",

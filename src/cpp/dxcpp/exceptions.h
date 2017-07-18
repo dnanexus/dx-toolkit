@@ -33,7 +33,6 @@ namespace dx {
   namespace DXErrorTypes {
     static const std::string DEFAULT_ERROR = "DXDefaultError";
     static const std::string DXFILE_ERROR = "DXFileError";
-    static const std::string DXGTABLE_ERROR = "DXGTableError";
     static const std::string DXAPP_ERROR = "DXAppError";
     static const std::string DXJOB_ERROR = "DXJobError";
     static const std::string DXCONNECTION_ERROR = "DXConnectionError";
@@ -99,15 +98,6 @@ namespace dx {
     DXFileError(const std::string &msg, const std::string &type=DXErrorTypes::DXFILE_ERROR): DXError(msg, type) { }
     
     virtual ~DXFileError() throw() { }
-  };
-
-  //! Represents errors relating to the DXGTable class.
-  class DXGTableError: public DXError {
-  public:
-    DXGTableError(): DXError("Unknown error occured while using DXGTable class.") { }
-    DXGTableError(const std::string &msg, const std::string &type=DXErrorTypes::DXGTABLE_ERROR): DXError(msg, type) { }
-
-    virtual ~DXGTableError() throw() { }
   };
 
   //! Represents errors relating to the DXApp class.
