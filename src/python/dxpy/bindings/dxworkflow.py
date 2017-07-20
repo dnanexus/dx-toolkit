@@ -127,30 +127,13 @@ class DXWorkflow(DXDataObject, DXExecutable):
                         dx_hash["initializeFrom"]["project"] = kwargs["init_from"].get_proj_id()
             del kwargs["init_from"]
 
-        if "title" in kwargs:
-            if kwargs["title"] is not None:
-                dx_hash["title"] = kwargs["title"]
-            del kwargs["title"]
-
-        if "summary" in kwargs:
-            if kwargs["summary"] is not None:
-                dx_hash["summary"] = kwargs["summary"]
-            del kwargs["summary"]
-
-        if "description" in kwargs:
-            if kwargs["description"] is not None:
-                dx_hash["description"] = kwargs["description"]
-            del kwargs["description"]
-
-        if "output_folder" in kwargs:
-            if kwargs["output_folder"] is not None:
-                dx_hash["outputFolder"] = kwargs["output_folder"]
-            del kwargs["output_folder"]
-
-        if "stages" in kwargs:
-            if kwargs["stages"] is not None:
-                dx_hash["stages"] = kwargs["stages"]
-            del kwargs["stages"]
+        _set_dx_hash_with("title", kwargs, dx_hash)
+        _set_dx_hash_with("summary", kwargs, dx_hash)
+        _set_dx_hash_with("description", kwargs, dx_hash)
+        _set_dx_hash_with("output_folder", kwargs, dx_hash)
+        _set_dx_hash_with("stages", kwargs, dx_hash)
+        _set_dx_hash_with("workflowInputSpec", kwargs, dx_hash)
+        _set_dx_hash_with("workflowOutputSpec", kwargs, dx_hash)
 
         resp = dxpy.api.workflow_new(dx_hash, **kwargs)
         self.set_ids(resp["id"], dx_hash["project"])
@@ -473,6 +456,12 @@ class DXWorkflow(DXDataObject, DXExecutable):
             ]
 
         return run_input
+
+    def _set_dx_hash_with(input_param, kwargs, dx_hash):
+        if input_param in kwargs:
+            if kwargs[input_param] is not None:
+                dx_hash[input_param] = kwargs[input_param]
+            del kwargs[input_param]
 
     def _get_required_keys(self):
         return _workflow_required_keys

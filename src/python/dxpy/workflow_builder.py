@@ -151,7 +151,8 @@ def _get_validated_json(json_spec, args):
         return
 
     # print ignored keys if present in json_spec
-    supported_keys = set(["project", "folder", "name", "outputFolder", "stages"])
+    supported_keys = set(["project", "folder", "name", "outputFolder", "stages",
+                          "workflowInputSpec", "workflowOutputSpec"])
     unsupported_keys = _get_unsupported_keys(json_spec.keys(), supported_keys)
     if len(unsupported_keys) > 0:
         print("Warning: the following root level fields are not supported and will be ignored: {}"
@@ -183,7 +184,8 @@ def _create_workflow(json_spec):
     """
     try:
         workflow_id = dxpy.api.workflow_new(json_spec)["id"]
-        dxpy.api.workflow_close(workflow_id)
+        #TODO: Ola: remove before merging to master!
+        #dxpy.api.workflow_close(workflow_id)
     except dxpy.exceptions.DXAPIError as e:
         raise e
     return workflow_id
