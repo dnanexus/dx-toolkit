@@ -56,6 +56,13 @@ def new_workflow(args):
             # But if not, just use the value directly
             pass
 
+    if 'stages' in args:
+        stages = args.stages
+    if 'workflow_input_spec' in args:
+        workflow_input_spec = args.workflow_input_spec
+    if 'workflow_output_spec' in args:
+        workflow_output_spec = args.workflow_output_spec
+
     try:
         dxworkflow = dxpy.new_dxworkflow(title=args.title, summary=args.summary,
                                          description=args.description,
@@ -64,7 +71,9 @@ def new_workflow(args):
                                          tags=args.tags, types=args.types,
                                          hidden=args.hidden, properties=args.properties,
                                          details=args.details,
-                                         folder=folder,
+                                         folder=folder, stages=stages,
+                                         workflow_input_spec=workflow_input_spec,
+                                         workflow_output_spec=workflow_output_spec.
                                          parents=args.parents, init_from=init_from)
         if args.brief:
             print(dxworkflow.get_id())

@@ -107,17 +107,22 @@ class DXWorkflow(DXDataObject, DXExecutable):
         :type output_folder: string
         :param stages: Stages of the workflow (optional)
         :type stages: array of dictionaries
+        :param workflow_intput_spec: Explicit input specification of the workflow (optional)
+        :type workflow_intput_spec: array of dictionaries
+        :param workflow_output_spec: Explicit output specification of the workflow (optional)
+        :type workflow_output_spec: array of dictionaries
         :param init_from: Another analysis workflow object handler or and analysis (string or handler) from which to initialize the metadata (optional)
         :type init_from: :class:`~dxpy.bindings.dxworkflow.DXWorkflow`, :class:`~dxpy.bindings.dxanalysis.DXAnalysis`, or string (for analysis IDs only)
 
         Create a new remote workflow object.
         """
 
-        def _set_dx_hash_with(input_param, kwargs, dx_hash):
-            if input_param in kwargs:
-                if kwargs[input_param] is not None:
-                    dx_hash[input_param] = kwargs[input_param]
-                del kwargs[input_param]
+        def _set_dx_hash_with(kwargs, dxhash, key, new_key=None):
+            new_key = key if new_key is None else new_key
+            if key in kwargs:
+                if kwargs[key] is not None:
+                    dxhash[new_key] = kwargs[key]
+                del kwargs[key]
 
         if "init_from" in kwargs:
             if kwargs["init_from"] is not None:
@@ -133,13 +138,13 @@ class DXWorkflow(DXDataObject, DXExecutable):
                         dx_hash["initializeFrom"]["project"] = kwargs["init_from"].get_proj_id()
             del kwargs["init_from"]
 
-        _set_dx_hash_with("title", kwargs, dx_hash)
-        _set_dx_hash_with("summary", kwargs, dx_hash)
-        _set_dx_hash_with("description", kwargs, dx_hash)
-        _set_dx_hash_with("output_folder", kwargs, dx_hash)
-        _set_dx_hash_with("stages", kwargs, dx_hash)
-        _set_dx_hash_with("workflowInputSpec", kwargs, dx_hash)
-        _set_dx_hash_with("workflowOutputSpec", kwargs, dx_hash)
+        _set_dx_hash_with(kwargs, dx_hash, "title", )
+        _set_dx_hash_with(kwargs, dx_hash, "summary")
+        _set_dx_hash_with(kwargs, dx_hash, "description")
+        _set_dx_hash_with(kwargs, dx_hash, "output_folder", "outputFolder")
+        _set_dx_hash_with(kwargs, dx_hash, "stages")
+        _set_dx_hash_with(kwargs, dx_hash, "workflow_input_spec", "workflowInputSpec")
+        _set_dx_hash_with(kwargs, dx_hash, "workflow_output_spec", "workflowOutputSpec")
 
         resp = dxpy.api.workflow_new(dx_hash, **kwargs)
         self.set_ids(resp["id"], dx_hash["project"])
@@ -292,8 +297,10 @@ class DXWorkflow(DXDataObject, DXExecutable):
             self.describe() # update cached describe
 
     def update(self, title=None, unset_title=False, summary=None, description=None,
-               output_folder=None, unset_output_folder=False, stages=None,
-               edit_version=None, **kwargs):
+               output_folder=None, unset_output_folder=False,
+               workflow_input_spec=None, unset_workflow_input_spec=False,
+               workflow_output_spec=None, unset_workflow_output_spec=False,
+               stages=None, edit_version=None, **kwargs):
         '''
         :param title: workflow title to set; cannot be provided with *unset_title* set to True
         :type title: string
@@ -309,6 +316,10 @@ class DXWorkflow(DXDataObject, DXExecutable):
         :type unset_folder: boolean
         :param stages: updates to the stages to make; see API documentation for /workflow-xxxx/update for syntax of this field; use :meth:`update_stage()` to update a single stage
         :type stages: dict
+        :param workflow_input_spec: updates to the workflow input to make; see API documentation for /workflow-xxxx/update for syntax of this field; use :meth:`update_workflow_input_spec()` to update a single stage
+        :type workflow_input_spec: dict
+        :param workflow_output_spec: updates to the workflow output to make; see API documentation for /workflow-xxxx/update for syntax of this field; use :meth:`update_workflow_output_spec()` to update a single stage
+        :type workflow_output_spec: dict
         :param edit_version: if provided, the edit version of the workflow that should be modified; if not provided, the current edit version will be used (optional)
         :type edit_version: int
 
@@ -333,6 +344,14 @@ class DXWorkflow(DXDataObject, DXExecutable):
             update_input["outputFolder"] = None
         if stages is not None:
             update_input["stages"] = stages
+        if workflow_input_spec is not None:
+            update_input["workflow_input_spec"] = workflow_input_spec
+        elif unset_workflow_input_spec:
+            update_input["workflow_input_spec"] = None
+        if workflow_output_spec is not None:
+            update_input["workflow_output_spec"] = workflow_output_spec
+        elif unset_workflow_output_spec:
+            update_input["workflow_output_spec"] = None
 
         # only perform update if there are changes to make
         if update_input:
