@@ -389,8 +389,6 @@ array:boolean  array:int      boolean        hash           string''')
     # print('\n' + BOLD('Linux version: '))
     app_json['runSpec']['distribution'] = 'Ubuntu'
     app_json['runSpec']['release'] = '14.04'
-    print(fill('Your app has been configured to run on Ubuntu 14.04. To use Ubuntu 12.04, edit the ' +
-               BOLD('runSpec.release') + ' field of your dxapp.json.'))
 
     #################
     # WRITING FILES #
