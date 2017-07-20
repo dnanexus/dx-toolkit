@@ -184,8 +184,7 @@ def _create_workflow(json_spec):
     """
     try:
         workflow_id = dxpy.api.workflow_new(json_spec)["id"]
-        #TODO: Ola: remove before merging to master!
-        #dxpy.api.workflow_close(workflow_id)
+        dxpy.api.workflow_close(workflow_id)
     except dxpy.exceptions.DXAPIError as e:
         raise e
     return workflow_id
