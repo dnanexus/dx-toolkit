@@ -113,6 +113,12 @@ class DXWorkflow(DXDataObject, DXExecutable):
         Create a new remote workflow object.
         """
 
+        def _set_dx_hash_with(input_param, kwargs, dx_hash):
+            if input_param in kwargs:
+                if kwargs[input_param] is not None:
+                    dx_hash[input_param] = kwargs[input_param]
+                del kwargs[input_param]
+
         if "init_from" in kwargs:
             if kwargs["init_from"] is not None:
                 if not (isinstance(kwargs["init_from"], (DXWorkflow, DXAnalysis)) or \
@@ -456,12 +462,6 @@ class DXWorkflow(DXDataObject, DXExecutable):
             ]
 
         return run_input
-
-    def _set_dx_hash_with(input_param, kwargs, dx_hash):
-        if input_param in kwargs:
-            if kwargs[input_param] is not None:
-                dx_hash[input_param] = kwargs[input_param]
-            del kwargs[input_param]
 
     def _get_required_keys(self):
         return _workflow_required_keys

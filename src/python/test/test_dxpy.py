@@ -1465,6 +1465,7 @@ def main(number):
         blankworkflow = dxpy.new_dxworkflow()
         self.assertIsInstance(blankworkflow, dxpy.DXWorkflow)
         desc = blankworkflow.describe()
+        print(desc)
         self.assertEqual(desc['title'], blankworkflow.get_id())
         self.assertEqual(desc['summary'], '')
         self.assertEqual(desc['description'], '')
@@ -1472,76 +1473,6 @@ def main(number):
         self.assertEqual(desc['stages'], [])
         self.assertEqual(desc['workflowInputSpec'], None)
         self.assertEqual(desc['workflowOutputSpec'], None)
-
-        # workflow with metadata
-        dxapplet = dxpy.DXApplet()
-        dxapplet.new(name="test_applet",
-                     dxapi="1.04",
-                     inputSpec=[],
-                     outputSpec=[],
-                     runSpec={"code": '', "interpreter": "bash"})
-
-        stage0 = {'id': 'stage_0',
-                  'name': 'stage_0_name',
-                  'executable': dxapplet.get_id(),
-                  'folder': "/stage_0_output",
-                  'executionPolicy': {'restartOn': {}, 'onNonRestartableFailure': 'failStage'},
-                  'systemRequirements': {'main': {'instanceType': self.default_inst_type}}}
-        stage1 = {'id': 'stage_1',
-                  'executable': dxapplet.get_id()}
-
-        dxworkflow = dxpy.new_dxworkflow(title='mytitle', summary='mysummary',
-                                         description='mydescription', output_folder="/foo",
-                                         stages=[stage0, stage1])
-        stage_with_generated_id = dxworkflow.add_stage(dxapplet, name="stagename_generated_id", folder="foo")
-        stage_with_user_id = dxworkflow.add_stage(dxapplet, stage_id="my_id", name="stagename_user_id", folder="foo")
-
-        self.assertIsInstance(dxworkflow, dxpy.DXWorkflow)
-        desc = dxworkflow.describe()
-        self.assertEqual(desc['title'], 'mytitle')
-        self.assertEqual(desc['summary'], 'mysummary')
-        self.assertEqual(desc['description'], 'mydescription')
-        self.assertEqual(desc['outputFolder'], '/foo')
-        self.assertEqual(len(desc['stages']), 4)
-        self.assertEqual(desc['stages'][0]['id'], 'stage_0')
-        self.assertEqual(desc['stages'][0]['name'], 'stage_0_name')
-        self.assertEqual(desc['stages'][1]['id'], 'stage_1')
-        self.assertEqual(desc['stages'][1]['name'], None)
-        self.assertEqual(desc['stages'][2]['id'], stage_with_generated_id)
-        self.assertEqual(desc['stages'][2]['name'], 'stagename_generated_id')
-        self.assertEqual(desc['stages'][3]['id'], stage_with_user_id)
-        self.assertEqual(stage_with_user_id, 'my_id')
-        self.assertEqual(desc['stages'][3]['name'], 'stagename_user_id')
-
-        secondworkflow = dxpy.new_dxworkflow(init_from=dxworkflow)
-        self.assertIsInstance(secondworkflow, dxpy.DXWorkflow)
-        self.assertNotEqual(dxworkflow.get_id(), secondworkflow.get_id())
-        desc = secondworkflow.describe()
-        self.assertEqual(desc['title'], 'mytitle')
-        self.assertEqual(desc['summary'], 'mysummary')
-        self.assertEqual(desc['description'], 'mydescription')
-        self.assertEqual(desc['outputFolder'], '/foo')
-        self.assertEqual(len(desc['stages']), 4)
-        self.assertEqual(desc['stages'][0]['id'], 'stage_0')
-        self.assertEqual(desc['stages'][0]['name'], 'stage_0_name')
-        self.assertEqual(desc['stages'][1]['id'], 'stage_1')
-        self.assertEqual(desc['stages'][1]['name'], None)
-        self.assertEqual(desc['stages'][2]['id'], stage_with_generated_id)
-        self.assertEqual(desc['stages'][2]['name'], 'stagename_generated_id')
-        self.assertEqual(desc['stages'][3]['id'], stage_with_user_id)
-        self.assertEqual(stage_with_user_id, 'my_id')
-        self.assertEqual(desc['stages'][3]['name'], 'stagename_user_id')
-
-    def test_new_dxworkflow(self):
-        # empty workflow
-        blankworkflow = dxpy.new_dxworkflow()
-        self.assertIsInstance(blankworkflow, dxpy.DXWorkflow)
-        desc = blankworkflow.describe()
-        self.assertEqual(desc['title'], blankworkflow.get_id())
-        self.assertEqual(desc['summary'], '')
-        self.assertEqual(desc['description'], '')
-        self.assertEqual(desc['outputFolder'], None)
-        self.assertEqual(desc['stages'], [])
 
         # workflow with metadata
         dxapplet = dxpy.DXApplet()

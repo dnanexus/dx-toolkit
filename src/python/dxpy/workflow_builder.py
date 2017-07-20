@@ -151,8 +151,7 @@ def _get_validated_json(json_spec, args):
         return
 
     # print ignored keys if present in json_spec
-    supported_keys = set(["project", "folder", "name", "outputFolder", "stages",
-                          "workflowInputSpec", "workflowOutputSpec"])
+    supported_keys = set(["project", "folder", "name", "outputFolder", "stages"])
     unsupported_keys = _get_unsupported_keys(json_spec.keys(), supported_keys)
     if len(unsupported_keys) > 0:
         print("Warning: the following root level fields are not supported and will be ignored: {}"
