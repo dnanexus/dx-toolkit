@@ -73,7 +73,7 @@ def new_workflow(args):
                                          details=args.details,
                                          folder=folder, stages=stages,
                                          workflow_input_spec=workflow_input_spec,
-                                         workflow_output_spec=workflow_output_spec.
+                                         workflow_output_spec=workflow_output_spec,
                                          parents=args.parents, init_from=init_from)
         if args.brief:
             print(dxworkflow.get_id())
