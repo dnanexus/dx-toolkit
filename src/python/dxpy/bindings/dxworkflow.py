@@ -501,9 +501,10 @@ class DXWorkflow(DXDataObject, DXExecutable):
         * "stageID.name" where *stageID* is the stage ID, and *name*
           is the name of the input within the stage
 
-        * "name" where *name* is the name of an input that has been
-          exported for the workflow (this name will appear as a key in
-          the "inputSpec" of this workflow's description if it has
+        * "name" where *name* is the name of a workflow level input
+          (defined in workflowInputSpec) or the name of that has been
+          exported for the workflow (this name will appear as a key
+          in the "inputSpec" of this workflow's description if it has
           been exported for this purpose)
 
         '''
