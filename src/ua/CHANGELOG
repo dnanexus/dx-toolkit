@@ -1,3 +1,15 @@
+DNAnexus Upload Agent 1.5.27 <support@dnanexus.com>, 2017-Jun-02
+----------------------------------------------------------------
+  *
+
+DNAnexus Upload Agent 1.5.26 <support@dnanexus.com>, 2017-May-18
+----------------------------------------------------------------
+  *
+
+DNAnexus Upload Agent 1.5.25 <support@dnanexus.com>, 2017-Apr-13
+----------------------------------------------------------------
+  * Fixed typo in log output
+
 DNAnexus Upload Agent 1.5.24 <support@dnanexus.com>, 2017-Mar-16
 ----------------------------------------------------------------
   * Build on Windows without recompiling C++ dependencies

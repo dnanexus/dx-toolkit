@@ -283,6 +283,7 @@ contains_phi.add_argument('--phi', dest='containsPHI', choices=["true", "false"]
 
 def _parse_inst_type(thing):
     if thing.strip().startswith('{'):
+        # expects a map of entry point to instance type
         try:
             return json.loads(thing)
         except ValueError:

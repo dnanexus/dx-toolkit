@@ -5,6 +5,7 @@
 import argparse
 import sys
 import os
+import errno
 import subprocess
 import pprint
 import json
@@ -46,7 +47,9 @@ def shell_suppress(cmd, ignore_error=False):
 def makedirs(path):
     try:
         os.makedirs(path)
-    except:  # If the directory already exists, continue gracefully
+    except OSError as e:  # If the directory already exists, continue gracefully
+        if e.errno != errno.EEXIST:
+            raise
         pass
 
 parser = argparse.ArgumentParser()
@@ -244,13 +247,30 @@ def run(args):
     default_homedir_env = "HOME=/root"
     env = ["env", "-i", default_homedir_env]
     if 'app' in imagemeta and 'environment' in imagemeta['app']:
-        env.extend(args.env + [var['name'] +"="+var['value']  for var in imagemeta['app']['environment']])
+        env.extend([var['name'] +"="+var['value']  for var in imagemeta['app']['environment']] + args.env)
 
     if args.rm and not args.quiet:
         sys.stderr.write(dxpy.utils.printing.YELLOW("--rm: Note that by default the container is not preserved after execution\n"))
 
+    # A list of dirs and files of the host rootfs that will be accessible in the confined
+    # environment just as if they were part of the guest rootfs. This list is based on the
+    # proot -R option: https://github.com/proot-me/PRoot/blob/master/doc/proot/manual.txt
+    to_mount = [ '/etc/host.conf', '/etc/hosts', '/etc/mtab', '/etc/networks', '/etc/passwd',
+                 '/etc/group', '/etc/nsswitch.conf', '/etc/resolv.conf', '/etc/localtime',
+                 '/dev/', '/sys/', '/proc/', '/run/', '/var/run/dbus/system_bus_socket']
+    bounded_dirs = []
+    for b in to_mount:
+        bounded_dirs.append('-b')
+        bounded_dirs.append(b)
+
     # TODO: implement some form of nested subprocesses to avoid quoting command array if possible
-    proot_cmd =  ["proot", "-R", "{tmpdir}/rootfs".format(tmpdir=tmpdir)] + volume + ["-w", workdir] + env + ["/bin/sh", "-c"] + [" ".join(("'"+x+"'" for x in container_cmd))]
+    proot_cmd =  ["proot", '-r', '{tmpdir}/rootfs'.format(tmpdir=tmpdir)] + \
+                 bounded_dirs + \
+                 volume + \
+                 ["-w", workdir] + \
+                 env + ["/bin/sh", "-c"] + \
+                 [" ".join(("'"+x+"'" for x in container_cmd))]
+
     shell(proot_cmd)
     if not args.rootfs:
         shutil.rmtree(tmpdir)
@@ -280,7 +300,7 @@ def local_image_to_aci(image, tmpdir, dirprefix, alternative_export=False):
         elif any(image == digest for digest in digest_list if digest.strip()):
             sys.stderr.write(dxpy.utils.printing.YELLOW("Digest: {} found in local docker cache\n".format(image)))
             return True
-        else:    
+        else:
             return False
 
     # We have observed an instance where the Docker CLI and docker2aci do not properly export a rootfs.  Here is a hopefully temporary workaround

@@ -34,6 +34,7 @@ import os, time
 import dxpy
 from . import DXObject, DXDataObject, DXJobFailureError, verify_string_dxid
 from ..exceptions import DXError
+from ..utils import instance_type_to_sys_reqs
 from ..utils.local_exec_utils import queue_entry_point
 from ..compat import basestring
 
@@ -159,12 +160,7 @@ class DXJob(DXObject):
             if properties is not None:
                 req_input["properties"] = properties
             if instance_type is not None:
-                if isinstance(instance_type, basestring):
-                    req_input["systemRequirements"] = {fn_name: {"instanceType": instance_type}}
-                elif isinstance(instance_type, dict):
-                    req_input["systemRequirements"] = {stage: {"instanceType": stage_inst} for stage, stage_inst in instance_type.items()}
-                else:
-                    raise DXError('Expected instance_type field to be either a string or a dict')
+                req_input["systemRequirements"] = instance_type_to_sys_reqs(instance_type, fn_name)
             if depends_on is not None:
                 req_input["dependsOn"] = final_depends_on
             if details is not None:

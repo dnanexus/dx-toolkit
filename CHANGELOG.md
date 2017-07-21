@@ -4,11 +4,130 @@ This change log spiritually adheres to [these guidelines](http://keepachangelog.
 
 Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Security
 
-## [Unreleased]
+## Unreleased
 
-## [215.0] - beta
+### Fixed
+
+*  dx-jobutil-new-job now properly supports instance type
+
+## Changed
+
+* Installation instructions now centralized on Github page
+* Incrementally upgraded dependencies for Java bindings
 
 ## Added
+
+* Helper script to check TLS 1.2 support
+
+
+## [226.0] - beta
+
+### Added
+
+* A `region` parameter can now be passed to `dx find projects`, `dx find data`, `dx find org projects`
+
+## [225.0] - 2017-06-22 - stable
+
+### Added
+
+* A `region` parameter can now be passed to `dxpy.find_data_objects()` and `dxpy.find_projects()`
+
+### Fixed
+
+* `dx-docker` now no longer bind mounts `$HOME` and `/tmp` into the guest as this is consistent with Docker
+
+## [224.0] - 2017-06-08
+
+### Fixed
+
+* Python 3 compatibility with `dx-app-wizard`
+* `dx get` does not redundantly inline description and developerNotes in dxapp.json any more
+
+### Added
+
+* Client support for partial folder deletion
+
+## [223.0] - 2017-06-02
+
+### Added
+
+* Add methods `__next__()` and `next()` to DXFile to complete iteration interface (thanks to Eric Talevich!)
+
+## [222.0] - 2017-05-25
+
+### Fixed
+
+* `--bill-to` option is utilized when building multi-region apps with `dx build`
+
+## [221.0] - 2017-05-18
+
+### Changed
+
+* Mac install no longer uses virtualenv. Instead, we ask users to install desired version of Python
+
+### Fixed
+
+* dx-docker bug where environment variables passed in through the CLI do not get set within container
+
+### Added
+
+* `dx build` creates a workflow on the platform based on the workflow's local source directory
+
+### Removed
+
+* the deprecated `dx-build-app` and `dx-build-applet` scripts (that were replaced with `dx build`) were removed
+
+## [220.0] - 2017-05-11
+
+### Fixed
+
+* Bug introduced in release 204.0: including app resources fails
+
+### Added
+
+* Ability to specify additional resources for multi-region apps
+
+### Changed
+
+* `dx ls -l` and friends now request only needed describe fields 
+
+## [219.0] - 2017-04-28
+
+### Added
+
+* Ability to specify bundledDepends and assetDepends for multi-region apps
+
+## [218.0]
+
+### Changed
+
+* Use DNAnexus DockerHub repo for dx-docker tests
+
+### Fixed
+
+* Issue where selecting from exactly 10 projects resulted in a stacktrace error
+
+### Added
+
+* `dx get workflow-xxxx` creates a local representation of a workflow
+
+## [217.0] - 2017-04-13 
+
+No significant changes. 
+
+## [216.1] - 2017-04-06
+
+### Fixed
+
+* Python 3 compatibility with `repr` import
+
+## [216.0]
+
+No significant changes.
+
+## [215.0]
+
+### Added
 
 * dx-docker test suite to toolkit
 * Retry download of Docker image if there is transient network failure

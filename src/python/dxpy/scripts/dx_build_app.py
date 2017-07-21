@@ -30,133 +30,25 @@ import shutil
 import tempfile
 import time
 from datetime import datetime
-import dxpy, dxpy.app_builder
+import dxpy
+import dxpy.app_builder
+import dxpy.workflow_builder
+import dxpy.executable_builder
 from .. import logger
 
 from ..utils import json_load_raise_on_duplicates
 from ..utils.resolver import resolve_path, check_folder_exists, ResolutionError, is_container_id
 from ..utils.completer import LocalCompleter
 from ..app_categories import APP_CATEGORIES
-from ..cli import try_call
 from ..exceptions import err_exit
 from ..utils.printing import BOLD
 from ..compat import open, USING_PYTHON2, decode_command_line_args, basestring
 
 decode_command_line_args()
 
-parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
-
 APP_VERSION_RE = re.compile("^([1-9][0-9]*|0)\.([1-9][0-9]*|0)\.([1-9][0-9]*|0)(-[-0-9A-Za-z]+(\.[-0-9A-Za-z]+)*)?(\+[-0-9A-Za-z]+(\.[-0-9A-Za-z]+)*)?$")
 
-app_options = parser.add_argument_group('options for creating apps', '(Only valid when --app/--create-app is specified)')
-applet_options = parser.add_argument_group('options for creating applets', '(Only valid when --app/--create-app is NOT specified)')
-
-# COMMON OPTIONS
-parser.add_argument("--ensure-upload", help="If specified, will bypass computing checksum of " +
-                                            "resources directory and upload it unconditionally; " +
-                                            "by default, will compute checksum and upload only if " +
-                                            "it differs from a previously uploaded resources bundle.",
-                    action="store_true")
-parser.add_argument("--force-symlinks", help="If specified, will not attempt to dereference "+
-                                            "symbolic links pointing outside of the resource " +
-                                            "directory.  By default, any symlinks within the resource " +
-                                            "directory are kept as links while links to files " +
-                                            "outside the resource directory are dereferenced (note "+
-                                            "that links to directories outside of the resource directory " +
-                                            "will cause an error).",
-                    action="store_true")
-
-src_dir_action = parser.add_argument("src_dir", help="App or applet source directory (default: current directory)", nargs='?')
-src_dir_action.completer = LocalCompleter()
-
-parser.set_defaults(mode="app")
-parser.add_argument("--app", "--create-app", help="Create an app (otherwise, creates an applet)", action="store_const",
-                    dest="mode", const="app")
-parser.add_argument("--create-applet", help=argparse.SUPPRESS, action="store_const", dest="mode", const="applet")
-
-applet_options.add_argument("-d", "--destination", help="Specifies the destination project, destination folder, and/or name for the applet, in the form [PROJECT_NAME_OR_ID:][/[FOLDER/][NAME]]. Overrides the project, folder, and name fields of the dxapp.json, if they were supplied.", default='.')
-
-# --[no-]dry-run
-#
-# The --dry-run flag can be used to see the applet spec that would be
-# provided to /applet/new, for debugging purposes. However, the output
-# would deviate from that of a real run in the following ways:
-#
-# * Any bundled resources are NOT uploaded and are not reflected in the
-#   app(let) spec.
-# * No temporary project is created (if building an app) and the
-#   "project" field is not set in the app spec.
-parser.set_defaults(dry_run=False)
-parser.add_argument("--dry-run", "-n", help="Do not create an app(let): only perform local checks and compilation steps, and show the spec of the app(let) that would have been created.", action="store_true", dest="dry_run")
-parser.add_argument("--no-dry-run", help=argparse.SUPPRESS, action="store_false", dest="dry_run")
-
-# --[no-]publish
-app_options.set_defaults(publish=False)
-app_options.add_argument("--publish", help="Publish the resulting app and make it the default.", action="store_true",
-                         dest="publish")
-app_options.add_argument("--no-publish", help=argparse.SUPPRESS, action="store_false", dest="publish")
-
-# --[no-]remote
-parser.set_defaults(remote=False)
-parser.add_argument("--remote", help="Build the app remotely by uploading the source directory to the DNAnexus Platform and building it there. This option is useful if you would otherwise need to cross-compile the app(let) to target the Execution Environment.", action="store_true", dest="remote")
-parser.add_argument("--no-watch", help="Don't watch the real-time logs of the remote builder. (This option only applicable if --remote was specified).", action="store_false", dest="watch")
-parser.add_argument("--no-remote", help=argparse.SUPPRESS, action="store_false", dest="remote")
-
-applet_options.add_argument("-f", "--overwrite", help="Remove existing applet(s) of the same name in the destination folder.",
-                            action="store_true", default=False)
-applet_options.add_argument("-a", "--archive", help="Archive existing applet(s) of the same name in the destination folder.",
-                            action="store_true", default=False)
-parser.add_argument("-v", "--version", help="Override the version number supplied in the manifest.", default=None,
-                    dest="version_override", metavar='VERSION')
-app_options.add_argument("-b", "--bill-to", help="Entity (of the form user-NAME or org-ORGNAME) to bill for the app.",
-                         default=None, dest="bill_to", metavar='USER_OR_ORG')
-
-# --[no-]check-syntax
-parser.set_defaults(check_syntax=True)
-parser.add_argument("--check-syntax", help=argparse.SUPPRESS, action="store_true", dest="check_syntax")
-parser.add_argument("--no-check-syntax", help="Warn but do not fail when syntax problems are found (default is to fail on such errors)", action="store_false", dest="check_syntax")
-
-# --[no-]version-autonumbering
-app_options.set_defaults(version_autonumbering=True)
-app_options.add_argument("--version-autonumbering", help=argparse.SUPPRESS, action="store_true", dest="version_autonumbering")
-app_options.add_argument("--no-version-autonumbering", help="Only attempt to create the version number supplied in the manifest (that is, do not try to create an autonumbered version such as 1.2.3+git.ab1b1c1d if 1.2.3 already exists and is published).", action="store_false", dest="version_autonumbering")
-# --[no-]update
-app_options.set_defaults(update=True)
-app_options.add_argument("--update", help=argparse.SUPPRESS, action="store_true", dest="update")
-app_options.add_argument("--no-update", help="Never update an existing unpublished app in place.", action="store_false", dest="update")
-# --[no-]dx-toolkit-autodep
-parser.set_defaults(dx_toolkit_autodep="stable")
-parser.add_argument("--dx-toolkit-legacy-git-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="git")
-parser.add_argument("--dx-toolkit-stable-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="stable")
-parser.add_argument("--dx-toolkit-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="stable")
-parser.add_argument("--no-dx-toolkit-autodep", help="Do not auto-insert the dx-toolkit dependency (default is to add it if it would otherwise be absent from the runSpec)", action="store_false", dest="dx_toolkit_autodep")
-
-# --[no-]parallel-build
-parser.set_defaults(parallel_build=True)
-parser.add_argument("--parallel-build", help=argparse.SUPPRESS, action="store_true", dest="parallel_build")
-parser.add_argument("--no-parallel-build", help="Build with " + BOLD("make") + " instead of " + BOLD("make -jN") + ".", action="store_false",
-                    dest="parallel_build")
-
-app_options.set_defaults(use_temp_build_project=True)
-# Original help: "When building an app, build its applet in the current project instead of a temporary project".
-app_options.add_argument("--no-temp-build-project", help=argparse.SUPPRESS, action="store_false", dest="use_temp_build_project")
-
-# --yes
-app_options.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation for potentially dangerous operations', action='store_false')
-
-# --[no-]json (undocumented): dumps the JSON describe of the app or
-# applet that was created. Useful for tests.
-parser.set_defaults(json=False)
-parser.add_argument("--json", help=argparse.SUPPRESS, action="store_true", dest="json")
-parser.add_argument("--no-json", help=argparse.SUPPRESS, action="store_false", dest="json")
-
-parser.add_argument("--extra-args", help="Arguments (in JSON format) to pass to the /applet/new API method, overriding all other settings")
-parser.add_argument("--run", help="Run the app or applet after building it (options following this are passed to "+BOLD("dx run")+"; run at high priority by default)", nargs=argparse.REMAINDER)
-
-# --region
-app_options.add_argument("--region", action="append", help="Enable the app in this region. This flag can be specified multiple times to enable the app in multiple regions. If --region is not specified, then the enabled region(s) will be determined by 'regionalOptions' in dxapp.json, or the project context.")
-
-
+parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
 class DXSyntaxError(Exception):
     def __init__(self, message):
@@ -190,28 +82,7 @@ def _get_version_suffix(src_dir, version):
     return _get_timestamp_version_suffix(version)
 
 def parse_destination(dest_str):
-    """
-    Parses dest_str, which is (roughly) of the form
-    PROJECT:/FOLDER/NAME, and returns a tuple (project, folder, name)
-    """
-    # Interpret strings of form "project-XXXX" (no colon) as project. If
-    # we pass these through to resolve_path they would get interpreted
-    # as folder names...
-    if is_container_id(dest_str):
-        return (dest_str, None, None)
-
-    # ...otherwise, defer to resolver.resolve_path. This handles the
-    # following forms:
-    #
-    # /FOLDER/
-    # /ENTITYNAME
-    # /FOLDER/ENTITYNAME
-    # [PROJECT]:
-    # [PROJECT]:/FOLDER/
-    # [PROJECT]:/ENTITYNAME
-    # [PROJECT]:/FOLDER/ENTITYNAME
-    return try_call(resolve_path, dest_str)
-
+    return dxpy.executable_builder.get_parsed_destination(dest_str)
 
 def _check_suggestions(app_json, publish=False):
     """
@@ -646,11 +517,13 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
     elif mode == "app":
         using_temp_project_for_remote_build = True
         try:
+            project_input = {}
+            project_input["name"] = "dx-build-app --remote temporary project"
+            if bill_to_override:
+                project_input["billTo"] = bill_to_override
             if region:
-                build_project_id = dxpy.api.project_new({"name": "dx-build-app --remote temporary project",
-                                                         "region": region})["id"]
-            else:
-                build_project_id = dxpy.api.project_new({"name": "dx-build-app --remote temporary project"})["id"]
+                project_input["region"] = region
+            build_project_id = dxpy.api.project_new(project_input)["id"]
         except:
             err_exit()
 
@@ -780,8 +653,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     override_folder = None
     override_applet_name = None
 
-    requested_regional_options = dxpy.app_builder.get_regional_options(app_json)
-    enabled_regions = dxpy.app_builder.get_enabled_regions(requested_regional_options, region)
+    enabled_regions = dxpy.app_builder.get_enabled_regions(app_json, region)
 
     # Cannot build multi-region app if `use_temp_build_project` is falsy.
     if enabled_regions is not None and len(enabled_regions) > 1 and not use_temp_build_project:
@@ -800,9 +672,13 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             # Create temporary projects in each enabled region.
             try:
                 for region in enabled_regions:
-                    working_project = dxpy.api.project_new({
+                    project_input = {
                         "name": "Temporary build project for dx-build-app in {r}".format(r=region),
-                        "region": region})["id"]
+                        "region": region
+                    }
+                    if bill_to_override:
+                        project_input["billTo"] = bill_to_override
+                    working_project = dxpy.api.project_new(project_input)["id"]
                     projects_by_region[region] = working_project
                     logger.debug("Created temporary project %s to build in" % (working_project,))
             except:
@@ -813,7 +689,10 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
         else:
             # Create a temp project
             try:
-                working_project = dxpy.api.project_new({"name": "Temporary build project for dx-build-app"})["id"]
+                project_input = {"name": "Temporary build project for dx-build-app"}
+                if bill_to_override:
+                    project_input["billTo"] = bill_to_override
+                working_project = dxpy.api.project_new(project_input)["id"]
             except:
                 err_exit()
             region = dxpy.api.project_describe(working_project,
@@ -877,6 +756,14 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
         if projects_by_region is None:
             raise AssertionError("'projects_by_region' should not be None at this point")
 
+        # "resources" can be used only with an app enabled in a single region and when
+        # "regionalOptions" field is not specified.
+        if "resources" in app_json and ("regionalOptions" in app_json or len(projects_by_region) > 1):
+            error_message = "dxapp.json cannot contain a top-level \"resources\" field "
+            error_message += "when the \"regionalOptions\" field is used or when "
+            error_message += "the app is enabled in multiple regions"
+            raise dxpy.app_builder.AppBuilderException(error_message)
+
         resources_bundles_by_region = {}
         for region, project in projects_by_region.items():
             resources_bundles_by_region[region] = dxpy.app_builder.upload_resources(
@@ -932,9 +819,19 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             if not version_override and do_version_autonumbering:
                 try_versions.append(version + _get_version_suffix(src_dir, version))
 
+            additional_resources_by_region = {}
+            if "regionalOptions" in app_json:
+                for region, region_config in app_json["regionalOptions"].items():
+                    if "resources" in region_config:
+                        additional_resources_by_region[region] = region_config["resources"]
+            elif "resources" in app_json:
+                additional_resources_by_region[projects_by_region.keys()[0]] = app_json["resources"]
+
             regional_options = {}
             for region in projects_by_region:
                 regional_options[region] = {"applet": applet_ids_by_region[region]}
+                if region in additional_resources_by_region:
+                    regional_options[region]["resources"] = additional_resources_by_region[region]
             app_id = dxpy.app_builder.create_app_multi_region(regional_options,
                                                               applet_name,
                                                               src_dir,
@@ -1072,6 +969,21 @@ def _build_app(args, extra_args):
                                  region=region, watch=args.watch, **more_kwargs)
 
 
+def build(args):
+    executable_id = _build_app(args,
+                               json.loads(args.extra_args) if args.extra_args else {})
+    if args.run is not None:
+        if executable_id is None:
+            raise AssertionError('Expected executable_id to be set here')
+
+        try:
+            subprocess.check_call(['dx', 'run', executable_id, '--priority', 'high'] + args.run)
+        except subprocess.CalledProcessError as e:
+            sys.exit(e.returncode)
+        except:
+            err_exit()
+
+
 def main(**kwargs):
     """
     Entry point for dx-build-app(let).
@@ -1088,52 +1000,7 @@ def main(**kwargs):
             logging.warn('Warning: dx-build-app has been replaced with "dx build --create-app". Please update your scripts.')
         elif sys.argv[0].endswith('dx-build-applet'):
             logging.warn('Warning: dx-build-applet has been replaced with "dx build". Please update your scripts.')
-
-    if len(kwargs) == 0:
-        args = parser.parse_args()
-    else:
-        args = parser.parse_args(**kwargs)
-
-    if dxpy.AUTH_HELPER is None and not args.dry_run:
-        parser.error('Authentication required to build an executable on the platform; please run "dx login" first')
-
-    if args.src_dir is None:
-        args.src_dir = os.getcwd()
-        if USING_PYTHON2:
-            args.src_dir = args.src_dir.decode(sys.getfilesystemencoding())
-
-    if args.mode == "app" and args.destination != '.':
-        parser.error("--destination cannot be used when creating an app (only an applet)")
-
-    if args.mode == "applet" and args.region:
-        parser.error("--region cannot be used when creating an applet (only an app)")
-
-    if args.overwrite and args.archive:
-        parser.error("Options -f/--overwrite and -a/--archive cannot be specified together")
-
-    if args.run is not None and args.dry_run:
-        parser.error("Options --dry-run and --run cannot be specified together")
-
-    if args.run and args.remote and args.mode == 'app':
-        parser.error("Options --remote, --app, and --run cannot all be specified together. Try removing --run and then separately invoking dx run.")
-
-    executable_id = _build_app(args,
-                               json.loads(args.extra_args) if args.extra_args else {})
-
-    if args.run is not None:
-
-        if executable_id is None:
-            raise AssertionError('Expected executable_id to be set here')
-
-        try:
-            subprocess.check_call(['dx', 'run', executable_id, '--priority', 'high'] + args.run)
-        except subprocess.CalledProcessError as e:
-            sys.exit(e.returncode)
-        except:
-            err_exit()
-
-    return
-
+        exit(0)
 
 if __name__ == '__main__':
     main()

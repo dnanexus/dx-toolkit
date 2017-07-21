@@ -367,7 +367,7 @@ array:boolean  array:int      boolean        hash           string''')
     print('')
     print(BOLD('Common instance types:'))
     print(format_table(InstanceTypesCompleter.preferred_instance_types.values(),
-                       column_names=InstanceTypesCompleter.instance_types.values()[0]._fields))
+                       column_names=list(InstanceTypesCompleter.instance_types.values())[0]._fields))
     print(fill(BOLD('Default instance type:') + ' The instance type you select here will apply to all entry points in ' +
                'your app unless you override it. See ' +
                BOLD('https://wiki.dnanexus.com/API-Specification-v1.0.0/Instance-Types') + ' for more information.'))

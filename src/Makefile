@@ -184,11 +184,6 @@ endif
 	# On OS X, install the gnureadline package and download other osx specific packages
 ifeq ($(UNAME), Darwin)
 	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; pip install --no-cache-dir --prefix="$(DNANEXUS_HOME)" -r python/requirements_readline.txt
-	# Download ndg-httpsclient for cryptography
-	pip download --no-cache-dir -d "$(DNANEXUS_HOME)"/osx-python-packages -r python/requirements_osx.txt
-	# For OS X < 10.10 download cryptography.whl and cffi.whl
-	pip download --no-cache-dir --no-deps -d "$(DNANEXUS_HOME)"/osx-python-packages --platform macosx_10_6_intel --only-binary=:all: cryptography
-	pip download --no-cache-dir --no-deps -d "$(DNANEXUS_HOME)"/osx-python-packages --platform macosx_10_6_intel --only-binary=:all: cffi
 endif
 
 	# Build the dxpy wheel and move it into place
@@ -257,10 +252,8 @@ coverage_python:
 test_python:
 	../build/run_python_integration_tests.py
 
-# mvn will compile the Java files, but it doesn't know how to generate the API
-# wrappers and toolkit release file.
-test_java: java
-	(cd java; mvn test)
+test_java:
+	../build/run_java_integration_tests.py
 
 # Installation
 # ============

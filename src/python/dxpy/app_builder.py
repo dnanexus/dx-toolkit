@@ -467,15 +467,6 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     """
     applet_spec = _get_applet_spec(src_dir)
 
-    system_requirements = get_regional_system_requirements_by_project(applet_spec, project, dry_run)
-    if system_requirements is None:
-        # The top-level "systemRequirements", if present, will be respected.
-        pass
-    else:
-        # Override the top-level "systemRequirements" in memory.
-        # TODO: Assert that "systemRequirements" is not set at the top level?
-        applet_spec["runSpec"]["systemRequirements"] = system_requirements
-
     if project is None:
         dest_project = applet_spec['project']
     else:
@@ -533,11 +524,32 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     # -----
     # Override various fields from the pristine dxapp.json
 
+    # Carry region-specific values from regionalOptions into the main
+    # runSpec
+    applet_spec["runSpec"].setdefault("bundledDepends", [])
+    applet_spec["runSpec"].setdefault("assetDepends", [])
+    if not dry_run:
+        region = dxpy.api.project_describe(project, input_params={"fields": {"region": True}})["region"]
+        regional_options = applet_spec.get('regionalOptions', {}).get(region, {})
+
+        # We checked earlier that if region-specific values for the
+        # fields below are given, the same fields are not also specified
+        # in the top-level runSpec. So the operations below should not
+        # result in any user-supplied settings being clobbered.
+
+        if 'systemRequirements' in regional_options:
+            applet_spec["runSpec"]["systemRequirements"] = regional_options['systemRequirements']
+
+        if 'bundledDepends' in regional_options:
+            applet_spec["runSpec"]["bundledDepends"].extend(regional_options["bundledDepends"])
+        if 'assetDepends' in regional_options:
+            applet_spec["runSpec"]["assetDepends"].extend(regional_options["assetDepends"])
+
     # Inline Readme.md and Readme.developer.md
-    _inline_documentation_files(applet_spec, src_dir)
+    dxpy.executable_builder.inline_documentation_files(applet_spec, src_dir)
 
     # Inline the code of the program
-    if "runSpec" in applet_spec and "file" in applet_spec["runSpec"]:
+    if "file" in applet_spec["runSpec"]:
         # Put it into runSpec.code instead
         with open(os.path.join(src_dir, applet_spec["runSpec"]["file"])) as code_fh:
             applet_spec["runSpec"]["code"] = code_fh.read()
@@ -545,52 +557,50 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
 
     # Attach bundled resources to the app
     if uploaded_resources is not None:
-        applet_spec["runSpec"].setdefault("bundledDepends", [])
         applet_spec["runSpec"]["bundledDepends"].extend(uploaded_resources)
 
-    if "runSpec" in applet_spec and "assetDepends" in applet_spec["runSpec"]:
-        # Check that the assetDepends is a list and contains a hash for each item in the list
-        asset_depends = applet_spec["runSpec"]["assetDepends"]
-        if type(asset_depends) is not list or any(type(dep) is not dict for dep in asset_depends):
-            raise AppBuilderException("Expected runSpec.assetDepends to be an array of objects")
-        for asset in asset_depends:
-            asset_project = asset.get("project", None)
-            asset_folder = asset.get("folder", '/')
-            if "id" in asset:
-                asset_record = dxpy.DXRecord(asset["id"]).describe(fields={'details'}, default_fields=True)
-            elif "name" in asset and asset_project is not None and "version" in asset:
-                asset_record = dxpy.find_one_data_object(zero_ok=True, classname="record", typename="AssetBundle",
-                                                         name=asset["name"], properties=dict(version=asset["version"]),
-                                                         project=asset_project, folder=asset_folder,
-                                                         describe={"defaultFields": True, "fields": {"details": True}},
-                                                         state="closed")
-            else:
-                raise AppBuilderException("Each runSpec.assetDepends element must have either {'id'} or "
-                                          "{'name', 'project' and 'version'} field(s).")
+    # Validate and process assetDepends
+    asset_depends = applet_spec["runSpec"]["assetDepends"]
+    if type(asset_depends) is not list or any(type(dep) is not dict for dep in asset_depends):
+        raise AppBuilderException("Expected runSpec.assetDepends to be an array of objects")
+    for asset in asset_depends:
+        asset_project = asset.get("project", None)
+        asset_folder = asset.get("folder", '/')
+        if "id" in asset:
+            asset_record = dxpy.DXRecord(asset["id"]).describe(fields={'details'}, default_fields=True)
+        elif "name" in asset and asset_project is not None and "version" in asset:
+            asset_record = dxpy.find_one_data_object(zero_ok=True, classname="record", typename="AssetBundle",
+                                                     name=asset["name"], properties=dict(version=asset["version"]),
+                                                     project=asset_project, folder=asset_folder,
+                                                     describe={"defaultFields": True, "fields": {"details": True}},
+                                                     state="closed")
+        else:
+            raise AppBuilderException("Each runSpec.assetDepends element must have either {'id'} or "
+                                      "{'name', 'project' and 'version'} field(s).")
 
-            if asset_record:
-                if "id" in asset:
-                    asset_details = asset_record["details"]
-                else:
-                    asset_details = asset_record["describe"]["details"]
-                if "archiveFileId" in asset_details:
-                    archive_file_id = asset_details["archiveFileId"]
-                else:
-                    raise AppBuilderException("The required field 'archiveFileId' was not found in "
-                                              "the details of the asset bundle %s " % asset_record["id"])
-                archive_file_name = dxpy.DXFile(archive_file_id).describe()["name"]
-                bundle_depends = {
-                    "name": archive_file_name,
-                    "id": archive_file_id
-                }
-                applet_spec["runSpec"]["bundledDepends"].append(bundle_depends)
-                # If the file is not found in the applet destination project, clone it from the asset project
-                if (not dry_run and
-                        dxpy.DXRecord(dxid=asset_record["id"], project=dest_project).describe()["project"] != dest_project):
-                    dxpy.DXRecord(asset_record["id"], project=asset_record["project"]).clone(dest_project)
+        if asset_record:
+            if "id" in asset:
+                asset_details = asset_record["details"]
             else:
-                raise AppBuilderException("No asset bundle was found that matched the specification %s"
-                                          % (json.dumps(asset)))
+                asset_details = asset_record["describe"]["details"]
+            if "archiveFileId" in asset_details:
+                archive_file_id = asset_details["archiveFileId"]
+            else:
+                raise AppBuilderException("The required field 'archiveFileId' was not found in "
+                                          "the details of the asset bundle %s " % asset_record["id"])
+            archive_file_name = dxpy.DXFile(archive_file_id).describe()["name"]
+            bundle_depends = {
+                "name": archive_file_name,
+                "id": archive_file_id
+            }
+            applet_spec["runSpec"]["bundledDepends"].append(bundle_depends)
+            # If the file is not found in the applet destination project, clone it from the asset project
+            if (not dry_run and
+                    dxpy.DXRecord(dxid=asset_record["id"], project=dest_project).describe()["project"] != dest_project):
+                dxpy.DXRecord(asset_record["id"], project=asset_record["project"]).clone(dest_project)
+        else:
+            raise AppBuilderException("No asset bundle was found that matched the specification %s"
+                                      % (json.dumps(asset)))
 
     # Include the DNAnexus client libraries as an execution dependency, if they are not already
     # there
@@ -726,12 +736,12 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
 def _create_app(applet_or_regional_options, app_name, src_dir, publish=False, set_default=False, billTo=None,
                 try_versions=None, try_update=True, confirm=True):
     app_spec = _get_app_spec(src_dir)
-    logger.info("Will create app with spec: %s" % (app_spec,))
+    logger.info("Will create app with spec: %s" % (json.dumps(app_spec),))
 
     app_spec.update(applet_or_regional_options, name=app_name)
 
     # Inline Readme.md and Readme.developer.md
-    _inline_documentation_files(app_spec, src_dir)
+    dxpy.executable_builder.inline_documentation_files(app_spec, src_dir)
 
     if billTo:
         app_spec["billTo"] = billTo
@@ -898,39 +908,6 @@ def _create_app(applet_or_regional_options, app_name, src_dir, publish=False, se
     return app_id
 
 
-def get_regional_options(app_spec):
-    """Gets the regional options specified in dxapp.json. This function is
-    agnostic to apps versus applets.
-    """
-    regional_options = app_spec.get("regionalOptions")
-    if regional_options is None:
-        return None
-    if not isinstance(regional_options, dict):
-        raise AppBuilderException("The field 'regionalOptions' in dxapp.json must be a mapping")
-    if len(regional_options.keys()) < 1:
-        raise AppBuilderException("The field 'regionalOptions' in dxapp.json must be a non-empty mapping")
-    return regional_options
-
-
-def get_regional_system_requirements_by_project(executable_spec, project, dry_run):
-    """Gets the regional system requirements based on the region of the
-    specified project, if possible. Current-schema dxapp.json may contain
-    system requirements by region. Old-schema dxapp.json do not contain
-    regional options at all.
-    """
-    if dry_run:
-        return None
-
-    region = dxpy.api.project_describe(project, input_params={"fields": {"region": True}})["region"]
-    # We cannot assume that "regional_options" is None here even though this
-    # function is only called at app creation time because we need to be
-    # backward compatible with old-schema dxapp.json files.
-    regional_options = get_regional_options(executable_spec)
-    if regional_options is None:
-        return None
-    return regional_options[region].get("systemRequirements")
-
-
 def assert_consistent_regions(from_app_spec, from_command_line):
     """
     :param from_app_spec: The regional options specified in dxapp.json.
@@ -945,14 +922,48 @@ def assert_consistent_regions(from_app_spec, from_command_line):
         raise dxpy.app_builder.AppBuilderException("--region and the 'regionalOptions' key in dxapp.json do not agree")
 
 
-def get_enabled_regions(from_app_spec, from_command_line):
+def get_enabled_regions(app_spec, from_command_line):
+    """Returns a list of the regions in which the app should be enabled.
+
+    Also validates that app_spec['regionalOptions'], if supplied, is
+    well-formed.
+
+    :param app_spec: app specification
+    :type app_spec: dict
+    :param from_command_line: The regions specified on the command-line
+      via --region
+    :type from_command_line: list or None
+
     """
-    :param from_app_spec: The regional options specified in dxapp.json.
-    :type from_app_spec: dict or None.
-    :param from_command_line: The regional options specified on the
-    command-line via --region.
-    :type from_command_line: list or None.
-    """
+    from_app_spec = app_spec.get('regionalOptions')
+
+    if from_app_spec is not None:
+        if not isinstance(from_app_spec, dict):
+            raise dxpy.app_builder.AppBuilderException("The field 'regionalOptions' in dxapp.json must be a mapping")
+        if not from_app_spec:
+            raise dxpy.app_builder.AppBuilderException(
+                "The field 'regionalOptions' in dxapp.json must be a non-empty mapping")
+        regional_options_list = list(from_app_spec.items())
+        for region, opts_for_region in regional_options_list:
+            if not isinstance(opts_for_region, dict):
+                raise dxpy.app_builder.AppBuilderException("The field 'regionalOptions['" + region +
+                                                           "']' in dxapp.json must be a mapping")
+            if set(opts_for_region.keys()) != set(regional_options_list[0][1].keys()):
+                if set(opts_for_region.keys()) - set(regional_options_list[0][1].keys()):
+                    with_key, without_key = region, regional_options_list[0][0]
+                    key_name = next(iter(set(opts_for_region.keys()) - set(regional_options_list[0][1].keys())))
+                else:
+                    with_key, without_key = regional_options_list[0][0], region
+                    key_name = next(iter(set(regional_options_list[0][1].keys()) - set(opts_for_region.keys())))
+                raise dxpy.app_builder.AppBuilderException(
+                    "All regions in regionalOptions must specify the same options; " +
+                    "%s was given for %s but not for %s" % (key_name, with_key, without_key)
+                )
+            for key in opts_for_region:
+                if key in app_spec.get('runSpec', {}):
+                    raise dxpy.app_builder.AppBuilderException(
+                        key + " cannot be given in both runSpec and in regional options for " + region)
+
     assert_consistent_regions(from_app_spec, from_command_line)
 
     enabled_regions = None

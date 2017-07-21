@@ -157,7 +157,8 @@ stage 'Build'
                     cd dx-toolkit
                     
                     git checkout \$commit_hash
-
+                    export LC_ALL=en.UTF-8
+                    
                     export CPATH=/opt/local/include
                     export CC=clang
                     export CXX=clang++

@@ -141,11 +141,10 @@ import threading
 from collections import namedtuple
 
 from . import exceptions
-from .compat import USING_PYTHON2, BadStatusLine, StringIO, bytes
+from .compat import USING_PYTHON2, BadStatusLine, StringIO, bytes, Repr
 from .utils.printing import BOLD, BLUE, YELLOW, GREEN, RED, WHITE
 
 from random import randint
-from repr import Repr
 from requests.auth import AuthBase
 from requests.packages import urllib3
 from requests.packages.urllib3.packages.ssl_match_hostname import match_hostname

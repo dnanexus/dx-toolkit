@@ -32,7 +32,7 @@ import requests
 
 import dxpy
 from dxpy.scripts import dx_build_app
-from dxpy_testutil import (DXTestCase, DXTestCaseBuildApps, check_output, temporary_project,
+from dxpy_testutil import (DXTestCase, DXTestCaseBuildApps, DXTestCaseBuildWorkflows, check_output, temporary_project,
                            select_project, cd, override_environment, generate_unique_username_email,
                            without_project_context, without_auth, as_second_user, chdir, run, DXCalledProcessError)
 import dxpy_testutil as testutil
@@ -227,10 +227,6 @@ class TestDXClient(DXTestCase):
         run("dx find executions --project :")
         run("dx find analyses --project :")
         run("dx find data --project :")
-
-    def test_tree(self):
-        # TODO: add some assertions
-        run("dx tree")
 
     def test_windows_pager(self):
         with self.assertRaises(DXCalledProcessError):
@@ -551,7 +547,9 @@ class TestDXClient(DXTestCase):
         self.assertNotRegex(desc_output, field_regexp("Archival state", "null"))
         self.assertNotRegex(desc_output, field_regexp("Archival progress", "null"))
         self.assertRegex(desc_output, field_regexp("Data usage", "0.00 GB"))
-        self.assertRegex(desc_output, field_regexp("Storage cost", "$0.000/month"))
+        self.assertRegex(desc_output,
+                         field_regexp("Storage cost", "$0.000/month"),
+                         "No storage cost shown, does this account have billing information supplied?")
         self.assertRegex(desc_output, field_regexp("Sponsored egress", "0.00 GB used of 0.00 GB total"))
         self.assertRegex(desc_output, field_regexp("At spending limit?", "false"))
         self.assertRegex(desc_output, field_regexp("Properties", "-"))
@@ -2962,7 +2960,7 @@ def main():
         self.assertEqual(applet_job.describe()['state'], 'done')
 
 
-class TestDXClientWorkflow(DXTestCase):
+class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
     default_inst_type = "mem2_hdd2_x2"
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
@@ -3147,6 +3145,7 @@ class TestDXClientWorkflow(DXTestCase):
                                          "runSpec": {"interpreter": "bash",
                                                      "code": ""}
                                          })['id']
+
         workflow_id = run("dx new workflow myworkflow --brief").strip()
         stage_ids = [run("dx add stage myworkflow myapplet --name 'an=awful=name' --brief").strip(),
                      run("dx add stage myworkflow myapplet --name 'second' --brief").strip()]
@@ -3453,11 +3452,13 @@ class TestDXClientWorkflow(DXTestCase):
             run("dx remove stage /myworkflow 5")
 
         # remove some bad stage ID
-        with self.assertSubprocessFailure(stderr_regexp="nor found as a stage name", exit_code=3):
+        with self.assertSubprocessFailure(
+                stderr_regexp="could not be found as a stage ID nor as a stage name",
+                exit_code=3):
             run("dx remove stage /myworkflow badstageID")
 
         # remove nonexistent stage
-        with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp="DXError", exit_code=3):
             run("dx remove stage /myworkflow stage-123456789012345678901234")
 
     def test_dx_update_workflow(self):
@@ -3593,13 +3594,210 @@ class TestDXClientWorkflow(DXTestCase):
             run("dx update stage /myworkflow 5 --name foo")
 
         # remove some bad stage ID
-        with self.assertSubprocessFailure(stderr_regexp="nor found as a stage name", exit_code=3):
-            run("dx update stage /myworkflow badstageID --name foo")
+        with self.assertSubprocessFailure(
+                stderr_regexp="could not be found as a stage ID nor as a stage name",
+                exit_code=3):
+            run("dx update stage /myworkflow bad.stageID --name foo")
 
         # remove nonexistent stage
-        with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp="DXError", exit_code=3):
             run("dx update stage /myworkflow stage-123456789012345678901234 --name foo")
 
+    def test_dx_build_workflow(self):
+        applet_id = dxpy.api.applet_new({"name": "my_first_applet",
+                                         "project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "inputSpec": [{"name": "number", "class": "int"}],
+                                         "outputSpec": [{"name": "number", "class": "int"}],
+                                         "runSpec": {"interpreter": "bash",
+                                                     "code": "exit 0"}
+                                         })['id']
+
+        stage0 = {"id": "stage_0",
+                        "name": "stage_0_name",
+                        "executable": applet_id,
+                        "input": {"number": 123456},
+                        "folder": "/stage_0_output",
+                        "executionPolicy": {"restartOn": {}, "onNonRestartableFailure": "failStage"},
+                        "systemRequirements": {"main": {"instanceType": self.default_inst_type}}}
+        stage1 = {"id": "stage_1",
+                        "executable": applet_id,
+                        "input": {"number": {"$dnanexus_link": {"stage": "stage_0",
+                                                                "outputField": "number"}}}}
+
+        workflow_spec = {"name": "my_workflow",
+                        "outputFolder": "/",
+                        "stages": [stage0, stage1]}
+
+        workflow_dir = self.write_workflow_directory("dxbuilt_workflow",
+                                                     json.dumps(workflow_spec),
+                                                     readme_content="Workflow Readme")
+
+        new_workflow = json.loads(run("dx build --json " + workflow_dir))
+        wf_describe = dxpy.get_handler(new_workflow["id"]).describe()
+        self.assertEqual(wf_describe["class"], "workflow")
+        self.assertEqual(wf_describe["id"], new_workflow["id"])
+        self.assertEqual(wf_describe["editVersion"], 0)
+        self.assertEqual(wf_describe["name"], "my_workflow")
+        self.assertEqual(wf_describe["state"], "closed")
+        self.assertEqual(wf_describe["outputFolder"], "/")
+        self.assertEqual(wf_describe["project"], self.project)
+        self.assertEqual(wf_describe["description"], "Workflow Readme")
+        self.assertEqual(len(wf_describe["stages"]), 2)
+        self.assertEqual(wf_describe["stages"][0]["id"], "stage_0")
+        self.assertEqual(wf_describe["stages"][0]["name"], "stage_0_name")
+        self.assertEqual(wf_describe["stages"][0]["executable"], applet_id)
+        self.assertEqual(wf_describe["stages"][0]["executionPolicy"]["restartOn"], {})
+        self.assertEqual(wf_describe["stages"][0]["executionPolicy"]["onNonRestartableFailure"],
+            "failStage")
+        self.assertEqual(wf_describe["stages"][0]["systemRequirements"]["main"]["instanceType"],
+            self.default_inst_type)
+        self.assertEqual(wf_describe["stages"][1]["id"], "stage_1")
+        self.assertIsNone(wf_describe["stages"][1]["name"])
+        self.assertEqual(wf_describe["stages"][1]["executable"], applet_id)
+
+    def test_dx_build_workflow_with_destination(self):
+        workflow_spec = {"name": "my_workflow"}
+        workflow_dir = self.write_workflow_directory("dxbuilt_workflow",
+                                                     json.dumps(workflow_spec))
+        # PROJECT
+        new_workflow = json.loads(run("dx build --json --destination {dest} {src_dir}".format(
+                                      dest=self.project, src_dir=workflow_dir)))
+        wf_describe = dxpy.get_handler(new_workflow["id"]).describe()
+        self.assertEqual(wf_describe["id"], new_workflow["id"])
+        self.assertEqual(wf_describe["project"], self.project)
+        self.assertEqual(wf_describe["folder"], "/")
+        self.assertEqual(wf_describe["name"], "my_workflow")
+
+        # /ENTITYNAME
+        destination = "/{entityname}".format(entityname="overriding_wf_name")
+        new_workflow = json.loads(run("dx build --json -d {dest} {src_dir}".format(
+                                      dest=destination, src_dir=workflow_dir)))
+        wf_describe = dxpy.get_handler(new_workflow["id"]).describe()
+        self.assertEqual(wf_describe["id"], new_workflow["id"])
+        self.assertEqual(wf_describe["project"], self.project)
+        self.assertEqual(wf_describe["folder"], "/")
+        self.assertEqual(wf_describe["name"], "overriding_wf_name")
+
+        # /FOLDER/
+        dest_folder = "/foo"
+        create_folder_in_project(self.project, dest_folder)
+        destination = "{folder}/".format(folder=dest_folder)
+        new_workflow = json.loads(run("dx build --json --destination {dest} {src_dir}".format(
+                                      dest=destination, src_dir=workflow_dir)))
+        wf_describe = dxpy.get_handler(new_workflow["id"]).describe()
+        self.assertEqual(wf_describe["id"], new_workflow["id"])
+        self.assertEqual(wf_describe["project"], self.project)
+        self.assertEqual(wf_describe["folder"], dest_folder)
+        self.assertEqual(wf_describe["name"], "my_workflow")
+
+        # PROJECT:/FOLDER/ENTITYNAME
+        dest_folder = "/wf_dest_folder"
+        dest_name = "overriding_wf_name"
+        create_folder_in_project(self.project, dest_folder)
+        destination = "{project}:{folder}/{entityname}".format(project=self.project,
+                                                                folder=dest_folder,
+                                                                entityname=dest_name)
+        new_workflow = json.loads(run("dx build --json --destination {dest} {src_dir}".format(
+                                      dest=destination, src_dir=workflow_dir)))
+        wf_describe = dxpy.get_handler(new_workflow["id"]).describe()
+        self.assertEqual(wf_describe["id"], new_workflow["id"])
+        self.assertEqual(wf_describe["project"], self.project)
+        self.assertEqual(wf_describe["folder"], dest_folder)
+        self.assertEqual(wf_describe["name"], dest_name)
+
+        # Error: No such folder
+        dest_folder = "/no_such_folder"
+        destination = "{project}:{folder}/".format(project=self.project, folder=dest_folder)
+        with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
+            run("dx build --json --destination {dest} {src_dir}".format(dest=destination, src_dir=workflow_dir))
+
+        # Error: Project not specified
+        with without_project_context():
+            with self.assertSubprocessFailure(stderr_regexp='expected the path to be qualified with a project',
+                                              exit_code=3):
+                new_workflow = run("dx build --json {src_dir}".format(src_dir=workflow_dir))
+
+    def test_dx_build_get_build_workflow(self):
+        # When building and getting a workflow multiple times we should
+        # obtain functionally identical workflows, ie. identical dxworkflow.json specs.
+        workflow_name = "orig_workflow_name"
+        applet_id = dxpy.api.applet_new({"name": "my_first_applet",
+                                         "project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "inputSpec": [{"name": "number", "class": "int"}],
+                                         "outputSpec": [{"name": "number", "class": "int"}],
+                                         "runSpec": {"interpreter": "bash",
+                                                     "code": "exit 0"}
+                                         })['id']
+        stage0 = {"id": "stage_0",
+                        "name": "stage_0_name",
+                        "executable": applet_id,
+                        "input": {"number": 123456},
+                        "folder": "/stage_0_output"}
+        stage1 = {"id": "stage_1",
+                        "executable": applet_id,
+                        "input": {"number": {"$dnanexus_link": {"stage": "stage_0",
+                                                                "outputField": "number"}}}}
+        workflow_spec = {
+            "name": workflow_name,
+            "outputFolder": "/",
+            "stages": [stage0, stage1]
+        }
+
+        # 1. Build
+        workflow_dir = self.write_workflow_directory("workflow_cycle",
+                                                     json.dumps(workflow_spec),
+                                                     readme_content="Workflow Cycle Readme")
+        workflow_01 = json.loads(run("dx build --json " + workflow_dir))
+        wf_describe_01 = dxpy.get_handler(workflow_01["id"]).describe()
+        self.assertEqual(wf_describe_01["id"], workflow_01["id"])
+
+        # 2. Get and compare with the initial workflow
+        with chdir(tempfile.mkdtemp()):
+            run("dx get {workflow_id}".format(workflow_id=workflow_01["id"]))
+            self.assertTrue(os.path.exists(os.path.join(workflow_name, "dxworkflow.json")))
+            self.assertTrue(os.path.exists(os.path.join(workflow_name, "Readme.md")))
+            workflow_metadata = open(os.path.join(workflow_name, "dxworkflow.json")).read()
+            output_json = json.loads(workflow_metadata, object_pairs_hook=collections.OrderedDict)
+            self.assertEqual(output_json, workflow_spec)
+
+            # 3. Build again and compare with the initial workflow
+            os.chdir(workflow_name) # move to the directory created with dx get
+            workflow_02 = json.loads(run("dx build --json"))
+            wf_describe_02 = dxpy.get_handler(workflow_02["id"]).describe()
+            self.assertEqual(wf_describe_02["class"], "workflow")
+            self.assertEqual(wf_describe_02["id"], workflow_02["id"])
+            self.assertEqual(wf_describe_02["editVersion"], 0)
+            self.assertEqual(wf_describe_02["name"], workflow_name)
+            self.assertEqual(wf_describe_02["state"], "closed")
+            self.assertEqual(wf_describe_02["outputFolder"], "/")
+            self.assertEqual(wf_describe_02["project"], self.project)
+            self.assertEqual(wf_describe_02["description"], "Workflow Cycle Readme")
+            self.assertEqual(len(wf_describe_02["stages"]), 2)
+            self.assertEqual(wf_describe_02["stages"][0]["id"], "stage_0")
+            self.assertEqual(wf_describe_02["stages"][0]["name"], "stage_0_name")
+            self.assertEqual(wf_describe_02["stages"][0]["executable"], applet_id)
+            self.assertEqual(wf_describe_02["stages"][0]["input"]["number"], 123456)
+            self.assertEqual(wf_describe_02["stages"][1]["id"], "stage_1")
+            self.assertIsNone(wf_describe_02["stages"][1]["name"])
+            self.assertEqual(wf_describe_02["stages"][1]["executable"], applet_id)
+
+    def test_build_worklow_malformed_dxworkflow_json(self):
+        workflow_dir = self.write_workflow_directory("dxbuilt_workflow", "{")
+        with self.assertSubprocessFailure(stderr_regexp='Could not parse dxworkflow\.json file', exit_code=3):
+            run("dx build " + workflow_dir)
+
+    # def test_build_worklow_warnings(self):
+    #     applet_id = dxpy.api.applet_new({"name": "my_first_applet",
+    #                                      "project": self.project,
+    #                                      "dxapi": "1.0.0",
+    #                                      "inputSpec": [],
+    #                                      "outputSpec": [],
+    #                                      "runSpec": {"interpreter": "bash",
+    #                                                  "code": "exit 0"}
+    #                                      })['id']
+    #     #TODO: finish this test
 
 class TestDXClientFind(DXTestCase):
 
@@ -3615,6 +3813,13 @@ class TestDXClientFind(DXTestCase):
         for category in APP_CATEGORIES:
             self.assertIn(category, category_help)
         run("dx find apps --category foo") # any category can be searched
+
+    def test_dx_find_data_formatted(self):
+        record_id = dxpy.new_dxrecord(project=self.project, name="find_data_formatting", close=True).get_id()
+        self.assertRegexpMatches(
+            run("dx find data --name " + "find_data_formatting").strip(),
+            r"^closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+/find_data_formatting \(" + record_id + "\)$"
+        )
 
     def test_dx_find_data_by_name(self):
         record_id = dxpy.new_dxrecord(name="find_data_by_name").get_id()
@@ -3853,6 +4058,14 @@ class TestDXClientFind(DXTestCase):
                 run('dx find data --brief --folder ' + test_projectid + ':' + test_dirname + ' --path ' +
                     test_projectid + ':' + test_dirname)
 
+    def test_dx_find_data_by_region(self):
+        with temporary_project("p_azure", region="azure:westus") as p_azure:
+            record_id = dxpy.new_dxrecord(project=p_azure.get_id(), close=True).get_id()
+            self.assertIn(record_id,
+                          run("dx find data --all-projects --brief --region azure:westus"))
+            self.assertNotIn(record_id,
+                          run("dx find data --all-projects --brief --region aws:us-east-1"))
+
     def test_dx_find_projects(self):
         unique_project_name = 'dx find projects test ' + str(time.time())
         with temporary_project(unique_project_name) as unique_project:
@@ -3877,6 +4090,23 @@ class TestDXClientFind(DXTestCase):
                              pipes.quote(created_project_name)), unique_project.get_id() + '\n')
             self.assertEqual(run("dx find projects --created-after=" + str(int(time.time() + 1000) * 1000) + " --name "
                              + pipes.quote(created_project_name)), "")
+
+    def test_dx_find_projects_by_region(self):
+        awseast = "aws:us-east-1"
+        azurewest = "azure:westus"
+        created_project_name = 'dx find projects test ' + str(time.time())
+        with temporary_project(created_project_name, region=awseast) as unique_project:
+            self.assertEqual(run("dx find projects --region {} --brief --name {}".format(
+                                 awseast, pipes.quote(created_project_name))),
+                             unique_project.get_id() + '\n')
+            self.assertIn(unique_project.get_id(),
+                          run("dx find projects --region {} --brief".format(awseast)))
+            self.assertNotIn(unique_project.get_id(),
+                             run("dx find projects --region {} --brief".format(azurewest)))
+
+        with temporary_project(created_project_name, region=azurewest) as unique_project:
+            self.assertIn(unique_project.get_id(),
+                          run("dx find projects --region {} --brief".format(azurewest)))
 
     def test_dx_find_projects_by_tag(self):
         other_project_id = run("dx new project other --brief").strip()
@@ -4328,19 +4558,16 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
             self.assertRegex(result, pattern)
 
         # Test --json output
-        # TODO: Deprecate 'createProjectsAndApps'
         output = json.loads(run(cmd.format(opts='--json')))
         query_user_describe = {"fields": {"class": True, "first": True, "last": True, "middle": True, "handle": True}}
         expected = [{"appAccess": True,
                      "projectAccess": "ADMINISTER",
                      "level": "ADMIN",
-                     "createProjectsAndApps": True,
                      "allowBillableActivities": True,
                      "id": self.user_alice,
                      "describe": dxpy.api.user_describe(self.user_alice, query_user_describe)},
                     {"appAccess": True,
                      "projectAccess": "CONTRIBUTE",
-                     "createProjectsAndApps": False,
                      "allowBillableActivities": False,
                      "level": "MEMBER",
                      "id": self.user_bob,
@@ -4430,6 +4657,11 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
             output = run("dx find org projects org-piratelabs --property {p1} --property {p2} --brief".format(
                          p1='property-1', p2='property-3')).strip().split("\n")
             self.assertItemsEqual(output, [""])
+
+            # With --region
+            self.assertIn(project1_id,
+                          run("dx find org projects org-piratelabs --brief --region aws:us-east-1"))
+            self.assertFalse(run("dx find org projects org-piratelabs --brief --region azure:westus"))
 
     def test_dx_find_org_projects_public(self):
         with temporary_project() as p1, temporary_project() as p2:
@@ -5008,7 +5240,6 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "MEMBER",
             "allowBillableActivities": False,
-            "createProjectsAndApps": False,
             "appAccess": True,
             "projectAccess": "CONTRIBUTE",
             "id": user_id
@@ -5027,7 +5258,6 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "MEMBER",
             "allowBillableActivities": False,
-            "createProjectsAndApps": False,
             "appAccess": True,
             "projectAccess": "CONTRIBUTE",
             "id": user_id
@@ -5044,7 +5274,6 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "MEMBER",
             "allowBillableActivities": True,
-            "createProjectsAndApps": True,
             "appAccess": False,
             "projectAccess": "VIEW",
             "id": user_id
@@ -5062,7 +5291,6 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "ADMIN",
             "allowBillableActivities": True,
-            "createProjectsAndApps": True,
             "appAccess": True,
             "projectAccess": "ADMINISTER",
             "id": user_id
@@ -5084,7 +5312,6 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "MEMBER",
             "allowBillableActivities": True,
-            "createProjectsAndApps": True,
             "appAccess": True,
             "projectAccess": "VIEW",
             "id": user_id
@@ -5101,7 +5328,6 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "ADMIN",
             "allowBillableActivities": True,
-            "createProjectsAndApps": True,
             "appAccess": True,
             "projectAccess": "ADMINISTER",
             "id": user_id
@@ -5175,7 +5401,6 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
-                          "createProjectsAndApps": True,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
@@ -5187,7 +5412,6 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": False,
-                          "createProjectsAndApps": False,
                           "appAccess": True,
                           "projectAccess": "CONTRIBUTE"}
         membership = self._org_find_members(self.user_id)
@@ -5201,7 +5425,6 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
-                          "createProjectsAndApps": True,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
@@ -5214,7 +5437,6 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": True,
-                          "createProjectsAndApps": True,
                           "appAccess": False,
                           "projectAccess": "NONE"}
         membership = self._org_find_members(self.user_id)
@@ -5245,7 +5467,6 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
-                          "createProjectsAndApps": True,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
@@ -5261,7 +5482,6 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
-                          "createProjectsAndApps": True,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
@@ -5274,7 +5494,7 @@ class TestDXClientMembership(DXTestCase):
         dx_rm_member_int.expect("Please confirm")
 
         membership = self._org_find_members(self.user_id)
-        self.assertEqual(membership, exp_membership)
+        self.assertDictContainsSubset(membership, exp_membership)
 
         dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(
             o=self.org_id, u=self.username), logfile=sys.stderr)
@@ -5282,7 +5502,7 @@ class TestDXClientMembership(DXTestCase):
         dx_rm_member_int.sendintr()
 
         membership = self._org_find_members(self.user_id)
-        self.assertEqual(membership, exp_membership)
+        self.assertDictContainsSubset(membership, exp_membership)
 
         dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(
             o=self.org_id, u=self.username), logfile=sys.stderr)
@@ -5291,7 +5511,7 @@ class TestDXClientMembership(DXTestCase):
         dx_rm_member_int.expect("Aborting removal")
 
         membership = self._org_find_members(self.user_id)
-        self.assertEqual(membership, exp_membership)
+        self.assertDictContainsSubset(membership, exp_membership)
 
         dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(
             o=self.org_id, u=self.username))
@@ -5306,7 +5526,6 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
-                          "createProjectsAndApps": True,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
@@ -5366,7 +5585,6 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
-                          "createProjectsAndApps": True,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
@@ -5377,7 +5595,6 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": False,
-                          "createProjectsAndApps": False,
                           "projectAccess": "VIEW",
                           "appAccess": True}
         membership = self._org_find_members(self.user_id)
@@ -5388,7 +5605,6 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": True,
-                          "createProjectsAndApps": True,
                           "projectAccess": "VIEW",
                           "appAccess": False}
 
@@ -5403,7 +5619,6 @@ class TestDXClientMembership(DXTestCase):
         exp = {"id": self.user_id,
                "level": "ADMIN",
                "allowBillableActivities": True,
-               "createProjectsAndApps": True,
                "projectAccess": "ADMINISTER",
                "appAccess": True}
         membership_response = self._org_find_members(self.user_id)
@@ -5413,7 +5628,6 @@ class TestDXClientMembership(DXTestCase):
         exp = {"id": self.user_id,
                "level": "MEMBER",
                "allowBillableActivities": False,
-               "createProjectsAndApps": False,
                "projectAccess": "CONTRIBUTE",
                "appAccess": True}
         membership_response = self._org_find_members(self.user_id)
@@ -5424,7 +5638,6 @@ class TestDXClientMembership(DXTestCase):
         exp = {"id": self.user_id,
                "level": "MEMBER",
                "allowBillableActivities": True,
-               "createProjectsAndApps": True,
                "projectAccess": "CONTRIBUTE",
                "appAccess": True}
         membership_response = self._org_find_members(self.user_id)
@@ -5432,7 +5645,7 @@ class TestDXClientMembership(DXTestCase):
 
         run(cmd)
         membership_response = self._org_find_members(self.user_id)
-        self.assertEqual(membership_response, exp)
+        self.assertDictContainsSubset(membership_response, exp)
 
     def test_update_membership_negative(self):
         cmd = "dx update member"
@@ -5474,7 +5687,6 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": False,
-                          "createProjectsAndApps": False,
                           "appAccess": True,
                           "projectAccess": "UPLOAD"}
         membership = self._org_find_members(self.user_id)
@@ -5482,7 +5694,7 @@ class TestDXClientMembership(DXTestCase):
 
         cmd = "dx update member {o} {u} --level MEMBER --allow-billable-activities true"
         run(cmd.format(o=self.org_id, u=self.username))
-        exp_membership.update(allowBillableActivities=True, createProjectsAndApps=True)
+        exp_membership.update(allowBillableActivities=True)
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
@@ -5491,7 +5703,6 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
-                          "createProjectsAndApps": True,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
@@ -5501,7 +5712,7 @@ class TestDXClientMembership(DXTestCase):
         run(cmd.format(o=self.org_id, u=self.username))
         exp_membership.update(level="MEMBER", projectAccess="CONTRIBUTE", appAccess=False)
         membership = self._org_find_members(self.user_id)
-        self.assertEqual(membership, exp_membership)
+        self.assertDictContainsSubset(membership, exp_membership)
 
         cmd = "dx remove member {o} {u} -y"
         run(cmd.format(o=self.org_id, u=self.username))
@@ -5518,7 +5729,6 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": False,
-                          "createProjectsAndApps": False,
                           "appAccess": True,
                           "projectAccess": "UPLOAD"}
         membership = self._org_find_members(self.user_id)
@@ -5526,7 +5736,7 @@ class TestDXClientMembership(DXTestCase):
 
         cmd = "dx update member {o} {u} --level MEMBER --allow-billable-activities true"
         run(cmd.format(o=self.org_id, u=self.user_id))
-        exp_membership.update(allowBillableActivities=True, createProjectsAndApps=True)
+        exp_membership.update(allowBillableActivities=True)
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
@@ -5535,7 +5745,6 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
-                          "createProjectsAndApps": True,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
@@ -5545,7 +5754,7 @@ class TestDXClientMembership(DXTestCase):
         run(cmd.format(o=self.org_id, u=self.user_id))
         exp_membership.update(level="MEMBER", projectAccess="CONTRIBUTE", appAccess=False)
         membership = self._org_find_members(self.user_id)
-        self.assertEqual(membership, exp_membership)
+        self.assertDictContainsSubset(membership, exp_membership)
 
         cmd = "dx remove member {o} {u} -y"
         run(cmd.format(o=self.org_id, u=self.user_id))
@@ -6170,8 +6379,10 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
 
-    def test_build_single_region_app_with_regional_options(self):
-        app_name = "asset_{t}_single_region_app".format(t=int(time.time()))
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create apps')
+    def test_build_app_with_regional_options(self):
+        app_name = "app_regional_options"
         app_spec = {
             "name": app_name,
             "dxapi": "1.0.0",
@@ -6185,7 +6396,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         new_app = json.loads(run("dx build --create-app --json " + app_dir))
         app_describe = json.loads(run("dx describe --json " + new_app["id"]))
         self.assertEqual(app_describe["class"], "app")
-        self.assertEqual(app_describe["id"], app_describe["id"])
+        self.assertEqual(app_describe["id"], new_app["id"])
         self.assertEqual(app_describe["version"], "1.0.0")
         self.assertEqual(app_describe["name"], app_name)
         self.assertFalse("published" in app_describe)
@@ -6195,10 +6406,27 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create apps')
+    def test_build_app_with_resources(self):
+        region = "aws:us-east-1"
+        with temporary_project(region=region) as tmp_project:
+            file_id = create_file_in_project("abc", tmp_project.get_id())
+            app_name = "app_resources"
+            app_spec = dict(self.base_app_spec, name=app_name,
+                            resources=tmp_project.get_id())
+            app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+            new_app = json.loads(run("dx build --create-app --json " + app_dir))
+            self.assertIn("regionalOptions", new_app)
+            self.assertIn(region, new_app["regionalOptions"])
+            app_container = new_app["regionalOptions"][region]["resources"]
+            container_content = dxpy.api.container_list_folder(app_container, {"folder": "/"})
+            self.assertIn(file_id, [item["id"] for item in container_content["objects"]])
+
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
-    def test_build_multi_region_app_with_regional_options(self):
-        app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
+    def test_build_multi_region_app(self):
+        app_name = "multi_region_app"
         app_spec = dict(self.base_app_spec, name=app_name,
                         regionalOptions={"aws:us-east-1": {},
                                          "azure:westus": {}})
@@ -6217,42 +6445,106 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
 
+    def create_asset(self, tarball_name, proj):
+        asset_archive = dxpy.upload_string("foo", name=tarball_name, project=proj.get_id())
+        asset_archive.wait_on_close()
+        asset = dxpy.new_dxrecord(
+            project=proj.get_id(),
+            details={"archiveFileId": {"$dnanexus_link": asset_archive.get_id()}},
+            properties={"version": "0.0.1"}
+        )
+        asset.close()
+        return asset.get_id()
+
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
-    def test_build_multi_region_app_with_system_requirements(self):
-        app_name = "asset_{t}_multi_region_app_with_regional_system_requirements".format(t=int(time.time()))
+    def test_build_multi_region_app_with_regional_options(self):
+        app_name = "multi_region_app_with_regional_options"
 
-        aws_us_east_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x1"))
-        aws_us_west_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x2"))
-        azure_westus_system_requirements = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
-        app_spec = dict(self.base_app_spec, name=app_name,
-                        regionalOptions={"aws:us-east-1": dict(systemRequirements=aws_us_east_system_requirements),
-                                         "aws:us-west-1": dict(systemRequirements=aws_us_west_system_requirements),
-                                         "azure:westus": dict(systemRequirements=azure_westus_system_requirements)})
-        app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
-        app_id = json.loads(run("dx build --create-app --json " + app_dir))["id"]
+        with temporary_project(region="aws:us-east-1") as aws_proj:
+            with temporary_project(region="azure:westus") as azure_proj:
+                aws_bundled_dep = dxpy.upload_string("foo", project=aws_proj.get_id())
+                aws_bundled_dep.close()
+                azure_bundled_dep = dxpy.upload_string("foo", project=azure_proj.get_id())
+                azure_bundled_dep.close()
 
-        app_desc_res = dxpy.api.app_describe(app_id)
-        self.assertEqual(app_desc_res["class"], "app")
-        self.assertEqual(app_desc_res["id"], app_id)
-        self.assertEqual(app_desc_res["version"], "1.0.0")
-        self.assertEqual(app_desc_res["name"], app_name)
+                aws_asset = self.create_asset("aws_asset.tar.gz", aws_proj)
+                azure_asset = self.create_asset("azure_asset.tar.gz", azure_proj)
 
-        self.assertIn("regionalOptions", app_desc_res)
-        regional_options = app_desc_res["regionalOptions"]
-        self.assertItemsEqual(regional_options.keys(), app_spec["regionalOptions"].keys())
+                aws_sys_reqs = dict(main=dict(instanceType="mem2_hdd2_x1"))
+                azure_sys_reqs = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
 
-        applet_aws_us_east = regional_options["aws:us-east-1"]["applet"]
-        self.assertEqual(dxpy.api.applet_describe(applet_aws_us_east)["runSpec"]["systemRequirements"],
-                         aws_us_east_system_requirements)
+                aws_file_id = create_file_in_project("aws_file", aws_proj.get_id())
+                azure_file_id_a = create_file_in_project("azure_a", azure_proj.get_id())
+                azure_file_id_b = create_file_in_project("azure_b", azure_proj.get_id())
+                app_spec = dict(
+                    self.base_app_spec,
+                    name=app_name,
+                    regionalOptions={
+                        "aws:us-east-1": dict(
+                            systemRequirements=aws_sys_reqs,
+                            bundledDepends=[{"name": "aws.tar.gz",
+                                             "id": {"$dnanexus_link": aws_bundled_dep.get_id()}}],
+                            assetDepends=[{"id": aws_asset}],
+                            resources=aws_proj.get_id()
+                        ),
+                        "azure:westus": dict(
+                            systemRequirements=azure_sys_reqs,
+                            bundledDepends=[{"name": "azure.tar.gz",
+                                             "id": {"$dnanexus_link": azure_bundled_dep.get_id()}}],
+                            assetDepends=[{"id": azure_asset}],
+                            resources=[azure_file_id_a, azure_file_id_b]
+                        )
+                    }
+                )
+                app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+                app_id = json.loads(run("dx build --create-app --json " + app_dir))["id"]
 
-        applet_aws_us_west = regional_options["aws:us-west-1"]["applet"]
-        self.assertEqual(dxpy.api.applet_describe(applet_aws_us_west)["runSpec"]["systemRequirements"],
-                         aws_us_west_system_requirements)
+                app_desc_res = dxpy.api.app_describe(app_id)
+                self.assertEqual(app_desc_res["class"], "app")
+                self.assertEqual(app_desc_res["id"], app_id)
+                self.assertEqual(app_desc_res["version"], "1.0.0")
+                self.assertEqual(app_desc_res["name"], app_name)
 
-        applet_azure_westus = regional_options["azure:westus"]["applet"]
-        self.assertEqual(dxpy.api.applet_describe(applet_azure_westus)["runSpec"]["systemRequirements"],
-                         azure_westus_system_requirements)
+                self.assertIn("regionalOptions", app_desc_res)
+                regional_options = app_desc_res["regionalOptions"]
+                self.assertItemsEqual(regional_options.keys(), app_spec["regionalOptions"].keys())
+
+                aws_applet = regional_options["aws:us-east-1"]["applet"]
+                self.assertEqual(dxpy.api.applet_describe(aws_applet)["runSpec"]["systemRequirements"],
+                                 aws_sys_reqs)
+
+                azure_applet = regional_options["azure:westus"]["applet"]
+                self.assertEqual(dxpy.api.applet_describe(azure_applet)["runSpec"]["systemRequirements"],
+                                 azure_sys_reqs)
+
+                # Given an asset ID, returns the bundledDepends spec that the
+                # inclusion of that asset would have generated
+                def get_asset_spec(asset_id):
+                    tarball_id = dxpy.DXRecord(asset_id).describe(
+                       fields={'details'})["details"]["archiveFileId"]["$dnanexus_link"]
+                    tarball_name = dxpy.DXFile(tarball_id).describe()["name"]
+                    return {"name": tarball_name, "id": {"$dnanexus_link": tarball_id}}
+
+                # Make sure the bundledDepends are the same as what we put
+                # in: explicit bundledDepends first, then assets
+                self.assertEqual(
+                    app_desc_res["runSpec"]["bundledDependsByRegion"],
+                    {region: opts["bundledDepends"] + [get_asset_spec(opts["assetDepends"][0]["id"])]
+                     for region, opts in app_spec["regionalOptions"].items()}
+                )
+
+                # Make sure additional resources were cloned to the app containers
+                # in the specified regions
+                aws_container = regional_options["aws:us-east-1"]["resources"]
+                aws_obj_id_list = dxpy.api.container_list_folder(aws_container, {"folder": "/"})
+                self.assertIn(aws_file_id, [item["id"] for item in aws_obj_id_list["objects"]])
+
+                azure_container = regional_options["azure:westus"]["resources"]
+                azure_container_list = dxpy.api.container_list_folder(azure_container, {"folder": "/"})
+                azure_obj_id_list = [item["id"] for item in azure_container_list["objects"]]
+                self.assertIn(azure_file_id_a, azure_obj_id_list)
+                self.assertIn(azure_file_id_b, azure_obj_id_list)
 
     def test_build_applets_using_multi_region_dxapp_json(self):
         app_name = "asset_{t}_multi_region_dxapp_json_with_regional_system_requirements".format(t=int(time.time()))
@@ -6290,6 +6582,35 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
+
+    def test_build_multi_region_app_with_resources_failure(self):
+        error_message = "dxapp.json cannot contain a top-level \"resources\" field "
+        error_message += "when the \"regionalOptions\" field is used or when "
+        error_message += "the app is enabled in multiple regions"
+        region_0 = "aws:us-east-1"
+        region_1 = "azure:westus"
+        with temporary_project(region=region_0) as tmp_project:
+            # Build an app with top-level "resources" and enable it in multiple regions
+            # with --region
+            app_name = "asset_{t}_multi_region_app_resources".format(t=int(time.time()))
+            app_spec = dict(self.base_app_spec, name=app_name,
+                            resources=tmp_project.get_id())
+            app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+            cmd = "dx build --create-app --json --region {} --region {} {}".format(
+                   region_0, region_1, app_dir)
+            with self.assertRaisesRegexp(DXCalledProcessError, error_message):
+                run(cmd)
+
+            # Build an app where both top-level "resources" and "regionalOptions" are set
+            app_name = "asset_{t}_multi_region_app_resources".format(t=int(time.time()))
+            app_spec_resources_regionalOpts = dict(self.base_app_spec, name=app_name,
+                            resources = tmp_project.get_id(),
+                            regionalOptions={region_0: dict(resources=tmp_project.get_id())})
+            app_dir = self.write_app_directory(app_name,
+                                               json.dumps(app_spec_resources_regionalOpts),
+                                               "code.py")
+            with self.assertRaisesRegexp(DXCalledProcessError, error_message):
+                run("dx build --create-app --json " + app_dir)
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
@@ -6342,8 +6663,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
-    def test_build_multi_region_app_regional_options_do_not_match(self):
-        # Regional options in dxapp.json does not match the ones specified on
+    def test_build_multi_region_app_regions_do_not_match(self):
+        # Regions specified in dxapp.json do not match the ones specified on
         # command-line.
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
         app_spec = dict(self.base_app_spec, name=app_name, regionalOptions={"aws:us-east-1": {}})
@@ -6360,6 +6681,83 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
         with self.assertSubprocessFailure(stderr_regexp="regionalOptions", exit_code=3):
             run("dx build --create-app --region azure:westus --region aws:us-east-2 --json " + app_dir)
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
+                         'skipping test that would create apps')
+    def test_build_multi_region_app_with_malformed_regional_options(self):
+        app_name = "multi_region_app_with_malformed_regional_options"
+
+        with temporary_project(region="aws:us-east-1") as aws_proj:
+            with temporary_project(region="azure:westus") as azure_proj:
+                aws_bundled_dep = dxpy.upload_string("foo", project=aws_proj.get_id())
+                aws_bundled_dep.close()
+                azure_bundled_dep = dxpy.upload_string("foo", project=azure_proj.get_id())
+                azure_bundled_dep.close()
+
+                aws_asset = self.create_asset("aws_asset.tar.gz", aws_proj)
+                azure_asset = self.create_asset("azure_asset.tar.gz", azure_proj)
+
+                aws_sys_reqs = dict(main=dict(instanceType="mem2_hdd2_x1"))
+                azure_sys_reqs = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
+
+                app_spec = dict(
+                    self.base_app_spec,
+                    name=app_name,
+                    title="title",
+                    summary="summary",
+                    description="description.",
+                    regionalOptions={
+                        "aws:us-east-1": dict(
+                            systemRequirements=aws_sys_reqs,
+                            bundledDepends=[{"name": "aws.tar.gz",
+                                             "id": {"$dnanexus_link": aws_bundled_dep.get_id()}}],
+                            assetDepends=[{"id": aws_asset}]
+                        ),
+                        "azure:westus": dict(
+                            systemRequirements=azure_sys_reqs,
+                            bundledDepends=[{"name": "azure.tar.gz",
+                                             "id": {"$dnanexus_link": azure_bundled_dep.get_id()}}],
+                            assetDepends=[{"id": azure_asset}]
+                        )
+                    }
+                )
+
+                # Build an app spec that looks like {region-A: {foo: ..., bar:
+                # ...}, region-B: {foo: ...}} and make sure it is rejected
+                for region_to_remove, key_to_remove in (("azure:westus", "systemRequirements"),
+                                                        ("aws:us-east-1", "bundledDepends"),
+                                                        ("azure:westus", "assetDepends")):
+                    # Remove one of the regionalOptions keys from one of the
+                    # regions
+                    app_spec_without_regional_option = dict(app_spec)
+                    app_spec_without_regional_option['regionalOptions'] = dict(app_spec['regionalOptions'])
+                    app_spec_without_regional_option['regionalOptions'][region_to_remove] = (
+                       dict(app_spec['regionalOptions'][region_to_remove]))
+                    del app_spec_without_regional_option['regionalOptions'][region_to_remove][key_to_remove]
+
+                    app_dir = self.write_app_directory(app_name,
+                                                       json.dumps(app_spec_without_regional_option),
+                                                       "code.py")
+                    with self.assertSubprocessFailure(
+                           stderr_regexp=key_to_remove + " was given for [-a-z0-9:]+ but not for " +
+                           region_to_remove):
+                        run("dx build --create-app --json " + app_dir)
+
+                # Build an app spec where some of the keys in the
+                # regionalOptions also appear in the runSpec, and make sure it
+                # is rejected
+                for key_to_add in ("systemRequirements", "bundledDepends", "assetDepends"):
+                    app_spec_with_redundant_option = dict(app_spec)
+                    app_spec_with_redundant_option['runSpec'] = dict(app_spec['runSpec'])
+                    app_spec_with_redundant_option['runSpec'][key_to_add] = (
+                        app_spec['regionalOptions']['aws:us-east-1'][key_to_add])
+
+                    app_dir = self.write_app_directory(app_name,
+                                                       json.dumps(app_spec_with_redundant_option),
+                                                       "code.py")
+                    with self.assertSubprocessFailure(
+                            stderr_regexp=key_to_add + " cannot be given in both runSpec and in regional options"):
+                        run("dx build --create-app --json " + app_dir)
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
@@ -6507,6 +6905,31 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
         with self.assertRaisesRegexp(subprocess.CalledProcessError, "InvalidInput"):
             run("dx build --create-app --region aws:not-a-region --json " + app_dir)
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create apps')
+    def test_build_app_with_bill_to(self):
+        alice_id = "user-alice"
+        org_id = "org-piratelabs"
+
+        # --bill-to is not specified with dx build
+        app_name = "app_build_local_bill_to_user"
+        app_spec = dict(self.base_app_spec,
+                        name=app_name,
+                        regionalOptions={"aws:us-east-1": {}, "azure:westus": {}})
+        app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+        new_app = json.loads(run("dx build --app --json " + app_dir))
+        self.assertEqual(new_app["billTo"], alice_id)
+
+        # --bill-to is specified, but the billTo entity (org-piratelabs) does not have azure:westus
+        # in their "permittedRegions".
+        app_name = "app_build_local_bill_to_org_fails"
+        app_spec = dict(self.base_app_spec,
+                        name=app_name,
+                        regionalOptions={"aws:us-east-1": {}, "azure:westus": {}})
+        app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+        with self.assertRaisesRegexp(DXCalledProcessError, "PermissionDenied"):
+            run("dx build --app --bill-to {} --json {}".format(org_id, app_dir))
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
@@ -7850,6 +8273,88 @@ def main(in1):
 
 
 class TestDXGetExecutables(DXTestCaseBuildApps):
+    def test_get_workflow(self):
+        workflow_id = run("dx new workflow get_workflow --brief").strip()
+        applet_01_id = dxpy.api.applet_new({"name": "myapplet_01",
+                                            "project": self.project,
+                                            "dxapi": "1.0.0",
+                                            "inputSpec": [{"name": "my_number_in_01", "class": "int"}],
+                                            "outputSpec": [{"name": "my_number_out_01", "class": "int"}],
+                                            "runSpec": {"interpreter": "bash", "code": "exit 0"}})['id']
+        applet_02_id = dxpy.api.applet_new({"name": "myapplet_02",
+                                            "project": self.project,
+                                            "dxapi": "1.0.0",
+                                            "inputSpec": [{"name": "my_number_in_02", "class": "int"}],
+                                            "outputSpec": [{"name": "my_number_out_02", "class": "int"}],
+                                            "runSpec": {"interpreter": "bash", "code": "exit 0"}})['id']
+        stage_01_name = "Stage 1 name"
+        stage_01_id = dxpy.api.workflow_add_stage(workflow_id,
+                                                  {"editVersion": 0, "executable": applet_01_id,
+                                                   "name": stage_01_name})['stage']
+        bound_input = {"my_number_in_02": {
+                       "$dnanexus_link": {"stage": stage_01_id, "outputField": "my_number_out_01"}}}
+        stage_02_name = "Stage 2 name"
+        stage_02_id = dxpy.api.workflow_add_stage(workflow_id,
+                                                  {"editVersion": 1, "executable": applet_02_id,
+                                                   "input": bound_input, "name": stage_02_name})['stage']
+
+        output_workflow_spec = {
+            "name": "get_workflow",
+            "outputFolder": None,
+            "stages": [{
+              "id": stage_01_id,
+              "name": stage_01_name,
+              "executable": applet_01_id
+            }, {
+              "id": stage_02_id,
+              "name": stage_02_name,
+              "executable": applet_02_id,
+              "input": bound_input
+          }]
+        }
+        with chdir(tempfile.mkdtemp()):
+            run("dx get {workflow_id}".format(workflow_id=workflow_id))
+            self.assertTrue(os.path.exists(os.path.join("get_workflow", "dxworkflow.json")))
+
+            workflow_metadata = open(os.path.join("get_workflow", "dxworkflow.json")).read()
+            output_json = json.loads(workflow_metadata, object_pairs_hook=collections.OrderedDict)
+            self.assertEqual(output_workflow_spec, output_json)
+
+            # Target workflow does not exist
+            with self.assertSubprocessFailure(stderr_regexp='Unable to resolve', exit_code=3):
+                run("dx get path_does_not_exist")
+
+            # -o dest (dest does not exist yet)
+            run("dx get -o dest get_workflow")
+            self.assertTrue(os.path.exists("dest"))
+            self.assertTrue(os.path.exists(os.path.join("dest", "dxworkflow.json")))
+
+            # -o -
+            with self.assertSubprocessFailure(stderr_regexp='cannot be dumped to stdout', exit_code=3):
+                run("dx get -o - " + workflow_id)
+
+            # -o dir (such that dir/workflow_name is empty)
+            os.mkdir('destdir')
+            os.mkdir(os.path.join('destdir', 'get_workflow'))
+            run("dx get -o destdir get_workflow")  # Also tests getting by name
+            self.assertTrue(os.path.exists(os.path.join("destdir", "get_workflow", "dxworkflow.json")))
+
+            # -o dir (such that dir/workflow_name is not empty)
+            os.mkdir('destdir_nonempty')
+            os.mkdir(os.path.join('destdir_nonempty', 'get_workflow'))
+            with open(os.path.join('destdir_nonempty', 'get_workflow', 'myfile'), 'w') as f:
+                f.write('content')
+            get_workflow_error = 'path "destdir_nonempty/get_workflow" already exists'
+            with self.assertSubprocessFailure(stderr_regexp=get_workflow_error, exit_code=3):
+                run("dx get -o destdir_nonempty get_workflow")
+
+            # -o dir (such that dir/workflow_name is a file)
+            os.mkdir('destdir_withfile')
+            with open(os.path.join('destdir_withfile', 'get_workflow'), 'w') as f:
+                f.write('content')
+            with self.assertSubprocessFailure(stderr_regexp='already exists', exit_code=3):
+                run("dx get -o destdir_withfile get_workflow")
+
     def test_get_applet(self):
         # TODO: not sure why self.assertEqual doesn't consider
         # assertEqual to pass unless the strings here are unicode strings
@@ -7925,6 +8430,9 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
             output_json = json.loads(applet_metadata)
             self.assertEqual(output_app_spec, output_json)
             self.assertNotIn("bundledDepends", output_json["runSpec"])
+
+            self.assertNotIn("description", output_json)
+            self.assertNotIn("developerNotes", output_json)
 
             self.assertEqual("Description\n", open(os.path.join("get_applet", "Readme.md")).read())
             self.assertEqual("Developer notes\n",
@@ -8165,6 +8673,9 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
                                  for (k, v) in app_spec.iteritems()
                                  if k not in black_list)
 
+        self.assertNotIn("description", output_json)
+        self.assertNotIn("developerNotes", output_json)
+
         self.assertDictSubsetOf(filtered_app_spec, output_json)
 
         self.assertFileContentsEqualsString([name, "src",
@@ -8369,10 +8880,8 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
         app_name = "asset_{t}_multi_region_app_with_regional_system_requirements".format(t=int(time.time()))
 
         aws_us_east_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x1"))
-        aws_us_west_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x2"))
         azure_westus_system_requirements = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
         regional_options = {"aws:us-east-1": dict(systemRequirements=aws_us_east_system_requirements),
-                            "aws:us-west-1": dict(systemRequirements=aws_us_west_system_requirements),
                             "azure:westus": dict(systemRequirements=azure_westus_system_requirements)}
 
         app_id, _ = self.make_app(app_name, regional_options=regional_options)
@@ -8656,6 +9165,32 @@ class TestDXCp(DXTestCase):
 
         #cleanup
         rm_project(proj_id)
+
+
+class TestDXLs(DXTestCase):
+    def test_regular_output(self):
+        dxpy.new_dxrecord(project=self.project, name="foo", close=True)
+        o = run("dx ls")
+        self.assertEqual(o.strip(), "foo")
+
+    def test_long_output(self):
+        rec = dxpy.new_dxrecord(project=self.project, name="foo", close=True)
+        o = run("dx ls -l")
+        #                             state    modified                              name      id
+        self.assertRegexpMatches(o, r"closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+foo \(" + rec.get_id() + "\)")
+
+
+class TestDXTree(DXTestCase):
+    def test_regular_output(self):
+        dxpy.new_dxrecord(project=self.project, name="foo", close=True)
+        o = run("dx tree")
+        self.assertEqual(o.strip(), '.\n└── foo')
+
+    def test_tree(self):
+        rec = dxpy.new_dxrecord(project=self.project, name="foo", close=True)
+        o = run("dx tree -l")
+        self.assertRegexpMatches(o.strip(),
+                                 r".\n└── closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+foo \(" + rec.get_id() + "\)")
 
 
 if __name__ == '__main__':

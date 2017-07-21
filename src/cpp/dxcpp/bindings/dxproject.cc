@@ -23,7 +23,7 @@ namespace dx {
     if (folders) {
       return projectDescribe(getID(), string("{\"folders\": true}"));
     }
-    //else 
+    //else
     return projectDescribe(getID(), string("{}"));
   }
 
@@ -69,9 +69,16 @@ namespace dx {
 
   void DXContainer::removeFolder(const string &folder, const bool recurse) const {
     string input = recurse ?
-      "{\"folder\": \"" + folder + "\", \"recurse\": true}" :
-      "{\"folder\": \"" + folder + "\"}";
-    projectRemoveFolder(getID(), input);
+      "{\"folder\": \"" + folder + "\", \"partial\": true, \"recurse\": true}" :
+      "{\"folder\": \"" + folder + "\", \"partial\": true}";
+    bool completed = false;
+    while(!completed) {
+      JSON response = projectRemoveFolder(getID(), input);
+      if (!response.has("completed")) {
+        throw DXError("Error removing folder");
+      }
+      completed = response["completed"];
+    }
   }
 
   // Objects-specific
