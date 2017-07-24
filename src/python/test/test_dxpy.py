@@ -1291,8 +1291,7 @@ def main(number):
                 dxanalysis = dxpy.DXAnalysis()
                 dxanalysis.set_id(bad_value)
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
-                         'skipping test that would run a job')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
     def test_run_workflow_and_analysis_metadata(self):
         dxworkflow = dxpy.DXWorkflow(dxpy.api.workflow_new({"project": self.proj_id,
                                                             "outputFolder": "/output"})['id'])
@@ -1331,6 +1330,44 @@ def main(number):
         analysis_desc = dxanalysis.describe()
         self.assertEqual(analysis_desc["tags"], ["foo"])
         self.assertEqual(analysis_desc["properties"], {"foo": "bar"})
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
+    def test_run_workflow_with_explicit_input(self):
+        dxapplet = dxpy.DXApplet()
+        dxapplet.new(name="test_applet",
+                     dxapi="1.04",
+                     inputSpec=[{"name": "number", "class": "int"}],
+                     outputSpec=[{"name": "number", "class": "int"}],
+                     runSpec={"code": self.codeSpec, "interpreter": "python2.7"})
+
+        stage0 = {'id': 'stage_0', 'executable': dxapplet.get_id(),
+                  'input': {'number': {'$dnanexus_link': {'workflowInputField': 'foo'}}}}
+        dxworkflow = dxpy.new_dxworkflow(stages=[stage0],
+                                         workflow_input_spec=[{'name': 'foo', 'class': 'int'}])
+
+        # run open workflow
+        dxanalysis = dxworkflow.run({'foo': 101})
+        dxanalysis.terminate()
+        with self.assertRaises(DXJobFailureError):
+            dxanalysis.wait_on_done(timeout=20)
+        analysis_desc = dxanalysis.describe()
+        self.assertEqual(analysis_desc['input'].get('stage_0.number'), 101)
+        dxjob = dxpy.DXJob(analysis_desc['stages'][0]['execution']['id'])
+        # print(dxjob.describe())
+        # self.assertEqual(dxjob.describe()['input'].get('number'), 101)
+
+        # run closed workflow (the workflow has workflowInputSpec so input values
+        # can only be passed via workflow-level input (can't be passed to stage-level inputs))
+        dxworkflow.close()
+        self.assertRaisesRegexp(DXError, 'is private and cannot be overridden',
+                                dxworkflow.run, {'stage_0.number': 1})
+        dxanalysis = dxworkflow.run({'foo': 202})
+        dxanalysis.terminate()
+        with self.assertRaises(DXJobFailureError):
+            dxanalysis.wait_on_done(timeout=20)
+        analysis_desc = dxanalysis.describe()
+        self.assertEqual(analysis_desc['input'].get('stage_0.number'), 202)
+        dxjob = dxpy.DXJob(analysis_desc['stages'][0]['execution']['id'])
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
     def test_run_workflow_with_instance_type(self):
