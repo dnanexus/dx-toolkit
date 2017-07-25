@@ -350,13 +350,13 @@ class DXWorkflow(DXDataObject, DXExecutable):
         if stages is not None:
             update_input["stages"] = stages
         if workflow_input_spec is not None:
-            update_input["workflow_input_spec"] = workflow_input_spec
+            update_input["workflowInputSpec"] = workflow_input_spec
         elif unset_workflow_input_spec:
-            update_input["workflow_input_spec"] = None
+            update_input["workflowInputSpec"] = None
         if workflow_output_spec is not None:
-            update_input["workflow_output_spec"] = workflow_output_spec
+            update_input["workflowOutputSpec"] = workflow_output_spec
         elif unset_workflow_output_spec:
-            update_input["workflow_output_spec"] = None
+            update_input["workflowOutputSpec"] = None
 
         # only perform update if there are changes to make
         if update_input:

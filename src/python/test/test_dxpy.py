@@ -1353,8 +1353,7 @@ def main(number):
         analysis_desc = dxanalysis.describe()
         self.assertEqual(analysis_desc['input'].get('stage_0.number'), 101)
         dxjob = dxpy.DXJob(analysis_desc['stages'][0]['execution']['id'])
-        # print(dxjob.describe())
-        # self.assertEqual(dxjob.describe()['input'].get('number'), 101)
+        self.assertEqual(dxjob.describe()['input'].get('number'), 101)
 
         # run closed workflow (the workflow has workflowInputSpec so input values
         # can only be passed via workflow-level input (can't be passed to stage-level inputs))
@@ -1368,6 +1367,7 @@ def main(number):
         analysis_desc = dxanalysis.describe()
         self.assertEqual(analysis_desc['input'].get('stage_0.number'), 202)
         dxjob = dxpy.DXJob(analysis_desc['stages'][0]['execution']['id'])
+        self.assertEqual(dxjob.describe()['input'].get('number'), 202)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
     def test_run_workflow_with_instance_type(self):
@@ -1695,6 +1695,8 @@ def main(number):
         for metadata in ['title', 'summary', 'description']:
             self.assertEqual(getattr(dxworkflow, metadata), metadata.capitalize())
         self.assertEqual(dxworkflow.outputFolder, '/bar/baz')
+        self.assertEqual(dxworkflow.workflowInputSpec, wf_input)
+        self.assertEqual(dxworkflow.workflowOutputSpec, wf_output)
 
         # use unset_title
         dxworkflow.update(unset_title=True, edit_version=1)
