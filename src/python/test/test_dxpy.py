@@ -1529,7 +1529,8 @@ def main(number):
                      runSpec={"code": '', "interpreter": "bash"})
 
         wf_input = [{'name': 'foo', 'class': 'int'}]
-        wf_output = [{'name': 'bar', 'class': 'int'}]
+        wf_output = [{'name': 'bar', 'class': 'int',
+                      'outputSource': {'$dnanexus_link': {'stage': 'stage_0', 'outputField': 'in'}}}]
         stage_to_wf_link = {'in': {'$dnanexus_link': {'workflowInputField': 'foo'}}}
 
         stage0 = {'id': 'stage_0',
@@ -1698,7 +1699,7 @@ def main(number):
 
         # update title, summary, description, outputFolder by value
         wf_input = [{'name': 'foo', 'class': 'int'}]
-        wf_output = [{'name': 'bar', 'class': 'int'}]
+        wf_output = None
         dxworkflow.update(title='Title', summary='Summary', description='Description', output_folder='/bar/baz',
                           workflow_input_spec=wf_input, workflow_output_spec=wf_output)
         self.assertEqual(dxworkflow.editVersion, 1)

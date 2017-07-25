@@ -2962,8 +2962,9 @@ def main():
 
 class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
     default_inst_type = "mem2_hdd2_x2"
+    wf_input = [{"name": "foo", "class": "int"}]
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
+    #@unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
     def test_dx_run_workflow(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
@@ -2982,8 +2983,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertIn('foo', analysis_desc)
         analysis_desc = json.loads(run("dx describe " + analysis_id + " --json"))
         time.sleep(2) # May need to wait for job to be created in the system
-        job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
-        self.assertIn(' number = 32', job_desc)
+        #job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
+        #self.assertIn(' number = 32', job_desc)
 
         # Test setting tags and properties on analysis
         run("dx tag " + analysis_id + " foo bar foo")
@@ -3021,6 +3022,22 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertNotIn(workflow_id, new_workflow_desc)
         self.assertIn(analysis_id, new_workflow_desc)
         self.assertIn(stage_id, new_workflow_desc)
+
+        # Setting the input linking to workflowInputSpec
+        dxpy.api.workflow_update(workflow_id,
+                                 {"editVersion": 2,
+                                  "workflowInputSpec": self.wf_input,
+                                  "stages": {stage_id: {'input': {'number': {'$dnanexus_link': {'workflowInputField': 'foo'}}}}}})
+        run("dx describe " + workflow_id)
+        analysis_id = run("dx run " + workflow_id + " -ifoo=474 -y --brief")
+        self.assertTrue(analysis_id.startswith('analysis-'))
+        analysis_desc = run("dx describe " + analysis_id)
+        self.assertIn('foo', analysis_desc)
+        analysis_desc = json.loads(run("dx describe --json " + analysis_id ))
+        self.assertTrue(analysis_desc["runInput"], {"foo": 747})
+        time.sleep(2) # May need to wait for job to be created in the system
+        #job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
+        #self.assertIn(' number = 474', job_desc)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
     def test_dx_run_clone_analysis(self):
@@ -3334,6 +3351,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         desc = run("dx describe " + workflow_id)
         self.assertIn("Input Spec", desc)
         self.assertIn("Output Spec", desc)
+        self.assertIn("Workflow Input Spec", desc)
+        self.assertIn("Workflow Output Spec", desc)
         applet_id = dxpy.api.applet_new({"name": "myapplet",
                                          "project": self.project,
                                          "dxapi": "1.0.0",
@@ -3608,7 +3627,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "project": self.project,
                                          "dxapi": "1.0.0",
                                          "inputSpec": [{"name": "number", "class": "int"}],
-                                         "outputSpec": [{"name": "number", "class": "int"}],
+                                         "outputSpec": [{"name": "number", "class": "int", }],
                                          "runSpec": {"interpreter": "bash",
                                                      "code": "exit 0"}
                                          })['id']
@@ -3624,10 +3643,16 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                         "executable": applet_id,
                         "input": {"number": {"$dnanexus_link": {"stage": "stage_0",
                                                                 "outputField": "number"}}}}
+        wf_input = [{"name": "foo", "class": "int"}]
+        wf_output = [{"name": "bar", "class": "int", "outputSource":
+                        {"$dnanexus_link": {"stage": "stage_0", "outputField": "number"}}}]
 
         workflow_spec = {"name": "my_workflow",
                         "outputFolder": "/",
-                        "stages": [stage0, stage1]}
+                        "stages": [stage0, stage1],
+                        "workflowInputSpec": wf_input,
+                        "workflowOutputSpec": wf_output
+                        }
 
         workflow_dir = self.write_workflow_directory("dxbuilt_workflow",
                                                      json.dumps(workflow_spec),
@@ -3655,6 +3680,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertEqual(wf_describe["stages"][1]["id"], "stage_1")
         self.assertIsNone(wf_describe["stages"][1]["name"])
         self.assertEqual(wf_describe["stages"][1]["executable"], applet_id)
+        self.assertEqual(wf_describe["workflowInputSpec"], wf_input)
+        self.assertEqual(wf_describe["workflowOutputSpec"], wf_output)
 
     def test_dx_build_workflow_with_destination(self):
         workflow_spec = {"name": "my_workflow"}
@@ -3742,7 +3769,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         workflow_spec = {
             "name": workflow_name,
             "outputFolder": "/",
-            "stages": [stage0, stage1]
+            "stages": [stage0, stage1],
+            "workflowInputSpec": [{"name": "foo", "class": "int"}]
         }
 
         # 1. Build
@@ -3782,22 +3810,13 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
             self.assertEqual(wf_describe_02["stages"][1]["id"], "stage_1")
             self.assertIsNone(wf_describe_02["stages"][1]["name"])
             self.assertEqual(wf_describe_02["stages"][1]["executable"], applet_id)
+            self.assertEqual(wf_describe_02["workflowInputSpec"], [{"name": "foo", "class": "int"}])
+            self.assertIsNone(wf_describe_02["workflowOutputSpec"])
 
     def test_build_worklow_malformed_dxworkflow_json(self):
         workflow_dir = self.write_workflow_directory("dxbuilt_workflow", "{")
         with self.assertSubprocessFailure(stderr_regexp='Could not parse dxworkflow\.json file', exit_code=3):
             run("dx build " + workflow_dir)
-
-    # def test_build_worklow_warnings(self):
-    #     applet_id = dxpy.api.applet_new({"name": "my_first_applet",
-    #                                      "project": self.project,
-    #                                      "dxapi": "1.0.0",
-    #                                      "inputSpec": [],
-    #                                      "outputSpec": [],
-    #                                      "runSpec": {"interpreter": "bash",
-    #                                                  "code": "exit 0"}
-    #                                      })['id']
-    #     #TODO: finish this test
 
 class TestDXClientFind(DXTestCase):
 

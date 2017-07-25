@@ -1356,6 +1356,7 @@ def workflow_update(object_id, input_params={}, always_retry=True, **kwargs):
 
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Fupdate
     """
+    # print("NEW input_params_cp", input_params)
     return DXHTTPRequest('/%s/update' % object_id, input_params, always_retry=always_retry, **kwargs)
 
 def workflow_update_stage_executable(object_id, input_params={}, always_retry=True, **kwargs):
@@ -1373,5 +1374,5 @@ def workflow_new(input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow%2Fnew
     """
     input_params_cp = Nonce.update_nonce(input_params)
+    # print("NEW input_params_cp", input_params_cp)
     return DXHTTPRequest('/workflow/new', input_params_cp, always_retry=always_retry, **kwargs)
-

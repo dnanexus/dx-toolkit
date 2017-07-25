@@ -64,7 +64,7 @@ def _write_simple_file(filename, content):
 def _dump_workflow(workflow_obj, describe_output=[]):
     dxworkflow_json = collections.OrderedDict()
     for key in workflow_obj._get_required_keys():
-        if key in describe_output:
+        if key in describe_output and describe_output[key] is not None:
             dxworkflow_json[key] = describe_output[key]
 
     stages = describe_output["stages"]

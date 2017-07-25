@@ -36,7 +36,7 @@ from ..compat import basestring
 ##############
 # DXWorkflow #
 ##############
-_workflow_required_keys = ['name', 'outputFolder']
+_workflow_required_keys = ['name', 'outputFolder', 'workflowInputSpec', 'workflowOutputSpec']
 _workflow_stage_keys = ['id', 'name', 'executable', 'folder', 'input', 'executionPolicy', 'systemRequirements']
 
 def new_dxworkflow(title=None, summary=None, description=None, output_folder=None, init_from=None, **kwargs):
@@ -355,6 +355,7 @@ class DXWorkflow(DXDataObject, DXExecutable):
             update_input["workflowInputSpec"] = None
         if workflow_output_spec is not None:
             update_input["workflowOutputSpec"] = workflow_output_spec
+            print("update_input", update_input["workflowOutputSpec"])
         elif unset_workflow_output_spec:
             update_input["workflowOutputSpec"] = None
 
@@ -437,6 +438,9 @@ class DXWorkflow(DXDataObject, DXExecutable):
                 dxpy.api.workflow_update(self._dxid, update_input, **kwargs)
             finally:
                 self.describe() # update cached describe
+
+    def is_locked(self):
+        return self._desc['workflowInputSpec'] is not None and self._desc['state'] == 'closed'
 
     def _get_input_name(self, input_str):
         '''
