@@ -5080,7 +5080,7 @@ parser_notebook.add_argument('--ds-packages', help='Install data science package
 parser_notebook.add_argument('-q', '--quiet', help='Do not launch web browser.', action='store_false', dest='open_server')
 parser_notebook.add_argument('--instance-type', help='Instance type to run the notebook on.', default='mem1_ssd1_x4')
 parser_notebook.set_defaults(func=run_notebook)
-register_parser(parser_notebook, categories='data')
+register_parser(parser_notebook, categories='data', add_help=False)
 
 from ..ssh_tunnel_app_support import run_loupe
 parser_loupe_viewer = subparsers.add_parser('loupe-viewer', help='Launch the Loupe viewer for 10x data on DNAnexus.',
@@ -5093,7 +5093,7 @@ parser_loupe_viewer.add_argument('--timeout', help='How long to keep the Loupe v
 parser_loupe_viewer.add_argument('-q', '--quiet', help='Do not launch web browser.', action='store_false', dest='open_server')
 parser_loupe_viewer.add_argument('--instance-type', help='Instance type to run the Loupe viewer on.', default='mem1_ssd1_x4')
 parser_loupe_viewer.set_defaults(func=run_loupe)
-register_parser(parser_loupe_viewer, categories='data')
+register_parser(parser_loupe_viewer, categories='data', add_help=False)
 
 #####################################
 # api
