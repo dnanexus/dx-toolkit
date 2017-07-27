@@ -1,3 +1,9 @@
+dx-toolkit (0.228.0) precise; urgency=low
+
+  * No significant changes
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 13 Jul 2017 18:30:11 +0000
+
 dx-toolkit (0.227.0) precise; urgency=low
 
   * Fixed: dx-jobutil-new-job now properly supports instance type 

@@ -6,27 +6,39 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Default to 14.04 release for all instance types in `dx-app-wizard`
+
+## [228.0] - beta
+
+* No significant changes
+
+## [227.1] - 2017-07-20 - stable
+
+* Point release to fix release version issues
+
+## [227.0] - 2017-07-13
+
 ### Fixed
 
 *  dx-jobutil-new-job now properly supports instance type
 
-## Changed
+### Changed
 
 * Installation instructions now centralized on Github page
 * Incrementally upgraded dependencies for Java bindings
 
-## Added
-
-* Helper script to check TLS 1.2 support
-
-
-## [226.0] - beta
-
 ### Added
 
+* Helper script to check TLS 1.2 support
 * A `region` parameter can now be passed to `dx find projects`, `dx find data`, `dx find org projects`
 
-## [225.0] - 2017-06-22 - stable
+## [226.0] - 2017-06-29
+
+* No significant changes
+
+## [225.0] - 2017-06-22
 
 ### Added
 
