@@ -6,15 +6,17 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [229.0] - beta
+
 ### Changed
 
 * Default to 14.04 release for all instance types in `dx-app-wizard`
 
-## [228.0] - beta
+## [228.0] - 2017-07-27 - stable
 
 * No significant changes
 
-## [227.1] - 2017-07-20 - stable
+## [227.1] - 2017-07-20
 
 * Point release to fix release version issues
 
