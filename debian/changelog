@@ -1,3 +1,9 @@
+dx-toolkit (0.229.0) precise; urgency=low
+
+  * Changed: Default to 14.04 release for all instance types in dx-app-wizard. 
+
+ -- Nicolas Bock <nbock@dnanexus.com>  Thu, 27 Jul 2017 21:45:38 +0000
+
 dx-toolkit (0.228.0) precise; urgency=low
 
   * No significant changes
