@@ -151,7 +151,7 @@ def _download_compressed_dxfile(dxfile, filename):
         get_ref_cmd="dx download file-F14vvvj08zYx5GBb3yg1V4kZ -o {}".format(reference_local_path)
         subprocess.check_call(get_ref_cmd, shell=True, executable='/bin/bash')
 
-        get_bam_cmd="gx bam -d -ref {reference} -bam {filename} -cbam {compressed_path} -nt `nproc`".format(refference=reference_local_path, filename=filename, compressed_path=data_local_path)
+        get_bam_cmd="gx bam -d -ref {reference} -bam {filename} -cbam {compressed_path} -nt `nproc`".format(reference=reference_local_path, filename=filename, compressed_path=data_local_path)
         subprocess.check_call(get_bam_cmd, shell=True, executable='/bin/bash')
 
     subprocess.check_call("rm -r {} {}".format(reference_dir, data_dir), shell=True)
