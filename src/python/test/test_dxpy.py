@@ -195,12 +195,9 @@ class TestDXProject(unittest.TestCase):
         self.assertEqual(desc["description"], "new description")
         self.assertTrue("created" in desc)
 
-        dxproject.update(restricted=False)
+        dxproject.update(restricted=False, download_restricted=False)
         desc = dxproject.describe()
         self.assertEqual(desc["restricted"], False)
-
-        dxproject.update(download_restricted=False)
-        desc = dxproject.describe()
         self.assertEqual(desc["downloadRestricted"], False)
 
     def test_new_list_remove_folders(self):
