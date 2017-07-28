@@ -296,7 +296,7 @@ class DXProject(DXContainer):
         :type protected: boolean
         :param restricted: If provided, whether the project should be restricted
         :type restricted: boolean
-        :param download_restricted: If provided, whether the project should be download restricted
+        :param download_restricted: If provided, whether external downloads should be restricted
         :type download_restricted: boolean
         :param contains_phi: If provided, whether the project should be marked as containing protected health information (PHI)
         :type contains_phi: boolean
@@ -352,7 +352,7 @@ class DXProject(DXContainer):
         :type protected: boolean
         :param restricted: If provided, whether the project should be restricted
         :type restricted: boolean
-        :param download_restricted: If provided, whether the project should be download restricted
+        :param download_restricted: If provided, whether external downloads should be restricted
         :type download_restricted: boolean
         :param version: If provided, the update will only occur if the value matches the current project's version number
         :type version: int
