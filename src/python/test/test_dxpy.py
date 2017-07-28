@@ -130,6 +130,7 @@ class TestDXProject(unittest.TestCase):
             self.assertEqual(desc["description"], "")
             self.assertEqual(desc["protected"], False)
             self.assertEqual(desc["restricted"], False)
+            self.assertEqual(desc["downloadRestricted"], False)
             self.assertEqual(desc["containsPHI"], False)
             self.assertEqual(desc["tags"], [])
             prop = dxpy.api.project_describe(dxproject.get_id(),
@@ -138,6 +139,7 @@ class TestDXProject(unittest.TestCase):
             modified_proj_id = dxproject.new(name="newprojname2",
                                              protected=True,
                                              restricted=True,
+                                             download_restricted=True,
                                              description="new description",
                                              properties={"prop1": "val1"},
                                              tags=["tag1", "tag2", "tag3"])
@@ -147,8 +149,9 @@ class TestDXProject(unittest.TestCase):
                 self.assertNotEqual(desc2["id"], desc["id"])
                 self.assertEqual(desc2["id"], modified_proj_id)
                 self.assertEqual(desc2["name"], "newprojname2")
-                self.assertEqual(desc2["restricted"], True)
                 self.assertEqual(desc2["protected"], True)
+                self.assertEqual(desc2["restricted"], True)
+                self.assertEqual(desc2["downloadRestricted"], True)
                 self.assertEqual(desc2["description"], "new description")
                 self.assertEqual(desc2["tags"], ["tag1", "tag2", "tag3"])
                 prop2 = dxpy.api.project_describe(dxproject.get_id(),
@@ -177,18 +180,25 @@ class TestDXProject(unittest.TestCase):
 
     def test_update_describe(self):
         dxproject = dxpy.DXProject()
-        dxproject.update(name="newprojname", protected=True, restricted=True, description="new description")
+        dxproject.update(name="newprojname",
+                         protected=True,
+                         restricted=True,
+                         download_restricted=True,
+                         description="new description")
         desc = dxproject.describe()
         self.assertEqual(desc["id"], self.proj_id)
         self.assertEqual(desc["class"], "project")
         self.assertEqual(desc["name"], "newprojname")
         self.assertEqual(desc["protected"], True)
         self.assertEqual(desc["restricted"], True)
+        self.assertEqual(desc["downloadRestricted"], True)
         self.assertEqual(desc["description"], "new description")
         self.assertTrue("created" in desc)
-        dxproject.update(restricted=False)
+
+        dxproject.update(restricted=False, download_restricted=False)
         desc = dxproject.describe()
         self.assertEqual(desc["restricted"], False)
+        self.assertEqual(desc["downloadRestricted"], False)
 
     def test_new_list_remove_folders(self):
         dxproject = dxpy.DXProject()

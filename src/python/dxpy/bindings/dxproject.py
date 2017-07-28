@@ -283,7 +283,7 @@ class DXProject(DXContainer):
     _class = "project"
 
     def new(self, name, summary=None, description=None, protected=None,
-            restricted=None, contains_phi=None, tags=None,
+            restricted=None, download_restricted=None, contains_phi=None, tags=None,
             properties=None, bill_to=None, **kwargs):
         """
         :param name: The name of the project
@@ -296,6 +296,8 @@ class DXProject(DXContainer):
         :type protected: boolean
         :param restricted: If provided, whether the project should be restricted
         :type restricted: boolean
+        :param download_restricted: If provided, whether external downloads should be restricted
+        :type download_restricted: boolean
         :param contains_phi: If provided, whether the project should be marked as containing protected health information (PHI)
         :type contains_phi: boolean
         :param tags: If provided, tags to associate with the project
@@ -322,6 +324,8 @@ class DXProject(DXContainer):
             input_hash["protected"] = protected
         if restricted is not None:
             input_hash["restricted"] = restricted
+        if download_restricted is not None:
+            input_hash["downloadRestricted"] = download_restricted
         if contains_phi is not None:
             input_hash["containsPHI"] = contains_phi
         if bill_to is not None:
@@ -336,7 +340,7 @@ class DXProject(DXContainer):
         return self._dxid
 
     def update(self, name=None, summary=None, description=None, protected=None,
-               restricted=None, version=None, **kwargs):
+               restricted=None, download_restricted=None, version=None, **kwargs):
         """
         :param name: If provided, the new project name
         :type name: string
@@ -348,6 +352,8 @@ class DXProject(DXContainer):
         :type protected: boolean
         :param restricted: If provided, whether the project should be restricted
         :type restricted: boolean
+        :param download_restricted: If provided, whether external downloads should be restricted
+        :type download_restricted: boolean
         :param version: If provided, the update will only occur if the value matches the current project's version number
         :type version: int
 
@@ -369,6 +375,8 @@ class DXProject(DXContainer):
             update_hash["protected"] = protected
         if restricted is not None:
             update_hash["restricted"] = restricted
+        if download_restricted is not None:
+            update_hash["downloadRestricted"] = download_restricted
         if version is not None:
             update_hash["version"] = version
         dxpy.api.project_update(self._dxid, update_hash, **kwargs)
