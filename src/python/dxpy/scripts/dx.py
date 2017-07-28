@@ -4372,6 +4372,8 @@ parser_update_project.add_argument('--protected', choices=["true", "false"],
                                    help="Whether the project should be PROTECTED")
 parser_update_project.add_argument('--restricted', choices=["true", "false"],
                                    help="Whether the project should be RESTRICTED")
+parser_update_project.add_argument('--download-restricted', choices=["true", "false"],
+                                   help="Whether the project should be DOWNLOAD RESTRICTED")
 parser_update_project.add_argument('--containsPHI', choices=["true"],
                                    help="Flag to tell if project contains PHI")
 parser_update_project.add_argument('--bill-to', help="Update the user or org ID of the billing account", type=str)
