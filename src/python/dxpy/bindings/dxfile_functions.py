@@ -173,11 +173,8 @@ def _download_dxfile(dxid, filename, part_retry_counter,
     - Exception raised for other errors
     '''
 
-    # Check if this file should get deez-decompressed
-    if kwargs.get("ignore_deez"):
-        kwargs.pop("ignore_deez")
-    else:
-        dxfile = dxpy.DXFile(dxid)
+    dxfile = dxpy.DXFile(dxid)
+    if 'compressed-with' in dxfile.get_details():
         _download_compressed_dxfile(dxfile, filename)
         return True
 
