@@ -2899,6 +2899,7 @@ SPECIFYING JSON INPUT
     print(fill('JSON input can be used directly using the -j/--input-json or -f/--input-json-file flags.  When running an ' + BOLD('app') + ' or ' + BOLD('applet') + ', the keys should be the input field names for the app or applet.  When running a ' + BOLD('workflow') + ', the keys should be the input field names for each stage, prefixed by the stage key and a period, e.g. "1.reads" for the "reads" input of stage "1".', initial_indent='  ', subsequent_indent='  ') + '\n')
     parser.exit(0)
 
+
 def run(args):
     if args.help:
         print_run_help(args.executable, args.alias)
@@ -5065,6 +5066,36 @@ parser_find_orgs_with_billable_activities.add_argument("--with-billable-activiti
 parser_find_orgs_with_billable_activities.add_argument("--without-billable-activities", dest="with_billable_activities", action="store_false", help="Restrict the result set to contain only orgs in which the requesting user **cannot** perform billable activities; mutually exclusive with --with-billable-activities")
 parser_find_orgs.set_defaults(func=find_orgs, with_billable_activities=None)
 register_parser(parser_find_orgs, subparsers_action=subparsers_find, categories="org")
+
+from ..ssh_tunnel_app_support import run_notebook
+parser_notebook = subparsers.add_parser('notebook', help='Launch a web notebook inside DNAnexus.',
+                                        description='Launch a web notebook inside DNAnexus.',
+                                        formatter_class=argparse.RawTextHelpFormatter,
+                                        prog='dx notebook')
+parser_notebook.add_argument('notebook_type', help='Type of notebook to launch', choices=['jupyter', 'rstudio'])
+parser_notebook.add_argument('notebook_files', help='Files to include on notebook instance', default=[], nargs=argparse.REMAINDER).completer = DXPathCompleter(classes=['file'])
+parser_notebook.add_argument('--spark', help='Install spark infrastructure.', action='store_true', default=False)
+parser_notebook.add_argument('--port', help='local port to use to access the notebook.', default='2001')
+parser_notebook.add_argument('--snapshot', help='A snapshot file to reform on the server.').completer = DXPathCompleter(classes=['file'])
+parser_notebook.add_argument('--timeout', help='How long to keep the notebook open (smhwMy).', default='1h')
+parser_notebook.add_argument('--ds-packages', help='Install data science packages.', action='store_true')
+parser_notebook.add_argument('-q', '--quiet', help='Do not launch web browser.', action='store_false', dest='open_server')
+parser_notebook.add_argument('--instance-type', help='Instance type to run the notebook on.', default='mem1_ssd1_x4')
+parser_notebook.set_defaults(func=run_notebook)
+register_parser(parser_notebook, categories='data', add_help=False)
+
+from ..ssh_tunnel_app_support import run_loupe
+parser_loupe_viewer = subparsers.add_parser('loupe-viewer', help='Launch the Loupe viewer for 10x data on DNAnexus.',
+                                            description='Launch the Loupe viewer for 10x data on DNAnexus.',
+                                            formatter_class=argparse.RawTextHelpFormatter,
+                                            prog='dx loupe-viewer')
+parser_loupe_viewer.add_argument('loupe_files', help='Files to include in loupe viewer', default=[], nargs=argparse.REMAINDER).completer = DXPathCompleter(classes=['file'])
+parser_loupe_viewer.add_argument('--port', help='local port to use to access the Loupe viewer.', default='2001')
+parser_loupe_viewer.add_argument('--timeout', help='How long to keep the Loupe viewer open (smhwMy).', default='1h')
+parser_loupe_viewer.add_argument('-q', '--quiet', help='Do not launch web browser.', action='store_false', dest='open_server')
+parser_loupe_viewer.add_argument('--instance-type', help='Instance type to run the Loupe viewer on.', default='mem1_ssd1_x4')
+parser_loupe_viewer.set_defaults(func=run_loupe)
+register_parser(parser_loupe_viewer, categories='data', add_help=False)
 
 #####################################
 # api
