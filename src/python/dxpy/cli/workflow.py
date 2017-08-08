@@ -63,8 +63,7 @@ def new_workflow(args):
                                          project=project, name=name,
                                          tags=args.tags, types=args.types,
                                          hidden=args.hidden, properties=args.properties,
-                                         details=args.details,
-                                         folder=folder,
+                                         details=args.details, folder=folder,
                                          parents=args.parents, init_from=init_from)
         if args.brief:
             print(dxworkflow.get_id())
