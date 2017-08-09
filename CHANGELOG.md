@@ -6,6 +6,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Initial 'dx notebook' commit
+* Python bindings for workflow-level input and output
+* Support for the 'downloadRestricted' flag
+
 ## [229.0] - beta
 
 ### Changed
