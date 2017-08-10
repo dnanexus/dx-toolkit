@@ -205,6 +205,19 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
         result = remote_job.describe()
         self.assertEqual(result["output"]["out1"], 140)
 
+    def test_dx_verify_build_app(self):
+        appdir = create_app_dir()
+        print("Setting current project to", self.project)
+        dxpy.WORKSPACE_ID = self.project
+        dxpy.PROJECT_CONTEXT_ID = self.project
+        bundled_resources = dxpy.app_builder.upload_resources(appdir)
+        applet_id, _ignored_applet_spec = dxpy.app_builder.upload_applet(appdir, bundled_resources, overwrite=True, dx_toolkit_autodep=False)
+        app_obj = dxpy.DXApplet(applet_id)
+        try:
+            app_obj.describe()
+        except dxpy.exceptions.ResourceNotFound as dxrne:
+            self.fail(dxrne.error_message())
+
     def test_file_download(self):
         '''
         This test assumes a well-formed input spec and tests that the

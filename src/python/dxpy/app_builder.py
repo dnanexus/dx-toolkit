@@ -45,6 +45,7 @@ import tarfile
 import stat
 
 import dxpy
+import dxpy.executable_builder
 from . import logger
 from .utils import merge
 from .utils.printing import fill
@@ -422,31 +423,6 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
     else:
         return []
 
-def _inline_documentation_files(app_spec, src_dir):
-    """
-    Modifies the provided app_spec dict (which may be an app or applet
-    spec, actually) to inline the contents of the readme file into
-    "description" and the developer readme into "developerNotes".
-    """
-    # Inline description from a readme file
-    if 'description' not in app_spec:
-        readme_filename = None
-        for filename in 'README.md', 'Readme.md', 'readme.md':
-            if os.path.exists(os.path.join(src_dir, filename)):
-                readme_filename = filename
-                break
-        if readme_filename is not None:
-            with open(os.path.join(src_dir, readme_filename)) as fh:
-                app_spec['description'] = fh.read()
-
-    # Inline developerNotes from Readme.developer.md
-    if 'developerNotes' not in app_spec:
-        for filename in 'README.developer.md', 'Readme.developer.md', 'readme.developer.md':
-            if os.path.exists(os.path.join(src_dir, filename)):
-                with open(os.path.join(src_dir, filename)) as fh:
-                    app_spec['developerNotes'] = fh.read()
-                break
-
 
 def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, archive=False, project=None, override_folder=None, override_name=None, dx_toolkit_autodep="stable", dry_run=False, **kwargs):
     """
@@ -529,7 +505,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     applet_spec["runSpec"].setdefault("bundledDepends", [])
     applet_spec["runSpec"].setdefault("assetDepends", [])
     if not dry_run:
-        region = dxpy.api.project_describe(project, input_params={"fields": {"region": True}})["region"]
+        region = dxpy.api.project_describe(dest_project, input_params={"fields": {"region": True}})["region"]
         regional_options = applet_spec.get('regionalOptions', {}).get(region, {})
 
         # We checked earlier that if region-specific values for the
