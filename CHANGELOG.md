@@ -4,7 +4,7 @@ This change log spiritually adheres to [these guidelines](http://keepachangelog.
 
 Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Security
 
-## Unreleased
+## [230.0] - beta
 
 ### Added
 
@@ -12,13 +12,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Python bindings for workflow-level input and output
 * Support for the 'downloadRestricted' flag
 
-## [229.0] - beta
+## [229.0] - 2017.08.10 - stable
 
 ### Changed
 
 * Default to 14.04 release for all instance types in `dx-app-wizard`
 
-## [228.0] - 2017-07-27 - stable
+## [228.0] - 2017-07-27
 
 * No significant changes
 
