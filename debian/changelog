@@ -1,3 +1,11 @@
+dx-toolkit (0.230.0) precise; urgency=low
+
+  * Added : Initial 'dx notebook' commit
+  * Added : Python bindings for workflow-level input and output
+  * Added : Support for the 'downloadRestricted' flagX
+
+ -- Hamed Haddadian <HAMEDH@DNANEXUS.COM>  Thu, 10 Aug 2017 18:37:47 +0000
+
 dx-toolkit (0.229.0) precise; urgency=low
 
   * Changed: Default to 14.04 release for all instance types in dx-app-wizard. 
