@@ -205,6 +205,17 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
         result = remote_job.describe()
         self.assertEqual(result["output"]["out1"], 140)
 
+    def test_dx_build_app_locally_using_app_builder(self):
+        appdir = create_app_dir()
+        print("Setting current project to", self.project)
+        dxpy.WORKSPACE_ID = self.project
+        dxpy.PROJECT_CONTEXT_ID = self.project
+        bundled_resources = dxpy.app_builder.upload_resources(appdir)
+        applet_id, _ignored_applet_spec = dxpy.app_builder.upload_applet(appdir, bundled_resources, overwrite=True, dx_toolkit_autodep=False)
+        app_obj = dxpy.DXApplet(applet_id)
+        self.assertEqual(app_obj.describe()['id'], app_obj.get_id())
+
+
     def test_file_download(self):
         '''
         This test assumes a well-formed input spec and tests that the
