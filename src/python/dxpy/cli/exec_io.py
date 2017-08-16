@@ -472,8 +472,8 @@ class ExecutableInputs(object):
 
     def _update_requires_resolution_inputs(self):
         """
-        Updates self.inputs with resolved input values that were provided as paths to items
-        that require resolutions, eg. paths or job/analyses ids
+        Updates self.inputs with resolved input values (the input values that were provided
+        as paths to items that require resolutions, eg. folder or job/analyses ids)
         """
         input_paths = [quad[1] for quad in self.requires_resolution]
         results = resolve_multiple_existing_paths(input_paths)

@@ -355,7 +355,6 @@ class DXWorkflow(DXDataObject, DXExecutable):
             update_input["workflowInputSpec"] = None
         if workflow_output_spec is not None:
             update_input["workflowOutputSpec"] = workflow_output_spec
-            print("update_input", update_input["workflowOutputSpec"])
         elif unset_workflow_output_spec:
             update_input["workflowOutputSpec"] = None
 

@@ -2964,7 +2964,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
     default_inst_type = "mem2_hdd2_x2"
     wf_input = [{"name": "foo", "class": "int"}]
 
-    #@unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
     def test_dx_run_workflow(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
@@ -2983,8 +2983,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertIn('foo', analysis_desc)
         analysis_desc = json.loads(run("dx describe " + analysis_id + " --json"))
         time.sleep(2) # May need to wait for job to be created in the system
-        #job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
-        #self.assertIn(' number = 32', job_desc)
+        job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
+        self.assertIn(' number = 32', job_desc)
 
         # Test setting tags and properties on analysis
         run("dx tag " + analysis_id + " foo bar foo")
@@ -3036,8 +3036,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         analysis_desc = json.loads(run("dx describe --json " + analysis_id ))
         self.assertTrue(analysis_desc["runInput"], {"foo": 747})
         time.sleep(2) # May need to wait for job to be created in the system
-        #job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
-        #self.assertIn(' number = 474', job_desc)
+        job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
+        self.assertIn(' number = 474', job_desc)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
     def test_dx_run_clone_analysis(self):
