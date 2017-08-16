@@ -6,6 +6,9 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+* CLI support for workflow lockdown
+
 ### Removed
 
 * Deprecated `dx-mount` 
