@@ -755,7 +755,7 @@ class ExecutableInputs(object):
                 except:
                     raise DXCLIError('An input was found that did not conform to the syntax: -i<input name>=<input value>')
                 if '.' in name and self._accept_only_workflow_level_inputs():
-                    raise DXCLIError('An input was found is being passed to stage instead of to the workflow level')
+                    raise DXCLIError('The input with a key '+ name + ' was passed to a stage but the workflow accepts inputs only on the workflow level')
                 self.add(self.executable._get_input_name(name) if \
                          self._desc.get('class') == 'workflow' else name, value)
             self._update_requires_resolution_inputs()

@@ -2962,7 +2962,6 @@ def main():
 
 class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
     default_inst_type = "mem2_hdd2_x2"
-    wf_input = [{"name": "foo", "class": "int"}]
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
     def test_dx_run_workflow(self):
@@ -2975,11 +2974,11 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          })['id']
         workflow_id = run("dx new workflow myworkflow --output-folder /foo --brief").strip()
         stage_id = dxpy.api.workflow_add_stage(workflow_id,
-                                               {"editVersion": 0, "executable": applet_id})['stage']
+                                               {"id": "stage_0", "editVersion": 0, "executable": applet_id})['stage']
         analysis_id = run("dx run " + workflow_id + " -i0.number=32 -y --brief").strip()
         self.assertTrue(analysis_id.startswith('analysis-'))
         analysis_desc = run("dx describe " + analysis_id)
-        self.assertIn(stage_id + '.number = 32', analysis_desc)
+        self.assertIn('stage_0.number = 32', analysis_desc)
         self.assertIn('foo', analysis_desc)
         analysis_desc = json.loads(run("dx describe " + analysis_id + " --json"))
         time.sleep(2) # May need to wait for job to be created in the system
@@ -3026,8 +3025,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         # Setting the input linking to workflowInputSpec
         dxpy.api.workflow_update(workflow_id,
                                  {"editVersion": 2,
-                                  "workflowInputSpec": self.wf_input,
-                                  "stages": {stage_id: {'input': {'number': {'$dnanexus_link': {'workflowInputField': 'foo'}}}}}})
+                                  "workflowInputSpec": [{"name": "foo", "class": "int"}],
+                                  "stages": {'stage_0': {'input': {'number': {'$dnanexus_link': {'workflowInputField': 'foo'}}}}}})
         run("dx describe " + workflow_id)
         analysis_id = run("dx run " + workflow_id + " -ifoo=474 -y --brief")
         self.assertTrue(analysis_id.startswith('analysis-'))
@@ -3038,6 +3037,11 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         time.sleep(2) # May need to wait for job to be created in the system
         job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
         self.assertIn(' number = 474', job_desc)
+
+        # Inputs can only be passed as workflow inputs
+        error_mesg = 'The input.+was passed to a stage but the workflow accepts inputs only on the workflow level'
+        with self.assertSubprocessFailure(stderr_regexp=error_mesg, exit_code=3):
+            run("dx run " + workflow_id + " -istage_0.number=32")
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
     def test_dx_run_clone_analysis(self):
@@ -3627,7 +3631,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "project": self.project,
                                          "dxapi": "1.0.0",
                                          "inputSpec": [{"name": "number", "class": "int"}],
-                                         "outputSpec": [{"name": "number", "class": "int", }],
+                                         "outputSpec": [{"name": "number", "class": "int"}],
                                          "runSpec": {"interpreter": "bash",
                                                      "code": "exit 0"}
                                          })['id']
@@ -8319,7 +8323,6 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
 
         output_workflow_spec = {
             "name": "get_workflow",
-            "outputFolder": None,
             "stages": [{
               "id": stage_01_id,
               "name": stage_01_name,
