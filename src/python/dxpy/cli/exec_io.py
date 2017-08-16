@@ -23,6 +23,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 # TODO: refactor all dx run helper functions here
 
 import os, sys, json, collections, pipes
+from ..bindings.dxworkflow import DXWorkflow
 
 import dxpy
 from . import INTERACTIVE_CLI
@@ -410,9 +411,9 @@ class ExecutableInputs(object):
     def __init__(self, executable=None, input_name_prefix=None, input_spec=None):
         self.executable = executable
         self._desc = {} if self.executable is None else executable.describe()
-        self.input_spec = collections.OrderedDict() if 'inputSpec' in self._desc or input_spec else None
         self.required_inputs, self.optional_inputs, self.array_inputs = [], [], set()
         self.input_name_prefix = input_name_prefix
+        self.inputs = OrderedDefaultdict(list)
 
         # List of tuples (input name, input value, input class, index), where input name and input value are
         # propagated from command-line (input class is propagated from the input spec, and may be None if no input
@@ -421,6 +422,10 @@ class ExecutableInputs(object):
         # input name). If input class is truthy, then the index is 0. Otherwise, if input name will have only a
         # single input value instead of a list of input values, then index is -1.
         self.requires_resolution = []
+
+        # update input_spec passed to the constructor and initizalize
+        # self.input_spec, self.optional_inputs, self.required_inputs, self.array_inputs
+        self.input_spec = collections.OrderedDict() if 'inputSpec' in self._desc or input_spec else None
 
         if input_spec is None:
             input_spec = self._desc.get('inputSpec', [])
@@ -431,18 +436,33 @@ class ExecutableInputs(object):
             inaccessible_stages = [stage['id'] for stage in self._desc['stages'] if stage['accessible'] is False]
             raise DXCLIError('The workflow ' + self._desc['id'] + ' has the following inaccessible stage(s): ' + ', '.join(inaccessible_stages))
 
-        for spec_atom in input_spec:
-            if spec_atom['class'].startswith('array:'):
-                self.array_inputs.add(spec_atom['name'])
-            self.input_spec[spec_atom['name']] = spec_atom
-            if "default" in spec_atom or spec_atom.get("optional") == True:
-                self.optional_inputs.append(spec_atom['name'])
-            else:
-                self.required_inputs.append(spec_atom['name'])
+        # Workflow-level inputs (defined in workflowInputSpec)
+        #  i. The workflow has no workflowInputSpec
+        #   * The inputs can be passed to stages directly
+        # ii. The workflow has workflowInputSpec (in a closed or open state)
+        #   * Only inputs defined in workflowInputSpec can be passed to the workflow,
+        #     using workflow-level input names
+        if self._accept_only_workflow_level_inputs():
+            input_spec = self._desc.get('workflowInputSpec', [])
 
-        self.inputs = OrderedDefaultdict(list)
+        for spec_atom in input_spec:
+            input_name = spec_atom['name']
+            if spec_atom['class'].startswith('array:'):
+                self.array_inputs.add(input_name)
+            self.input_spec[input_name] = spec_atom
+            if self._is_input_optional(spec_atom):
+                self.optional_inputs.append(input_name)
+            else:
+                self.required_inputs.append(input_name)
+
+    def _accept_only_workflow_level_inputs(self):
+        is_workflow_input_locked = isinstance(self.executable, DXWorkflow) and self.executable.is_locked()
+        return is_workflow_input_locked or self._desc.get('workflowInputSpec') is not None
 
     def update(self, new_inputs, strip_prefix=True):
+        """
+        Updates the inputs dictionary with the key/value pairs from new_inputs, overwriting existing keys.
+        """
         if strip_prefix and self.input_name_prefix is not None:
             for i in new_inputs:
                 if i.startswith(self.input_name_prefix):
@@ -451,6 +471,10 @@ class ExecutableInputs(object):
             self.inputs.update(new_inputs)
 
     def _update_requires_resolution_inputs(self):
+        """
+        Updates self.inputs with resolved input values (the input values that were provided
+        as paths to items that require resolutions, eg. folder or job/analyses ids)
+        """
         input_paths = [quad[1] for quad in self.requires_resolution]
         results = resolve_multiple_existing_paths(input_paths)
         for input_name, input_value, input_class, input_index in self.requires_resolution:
@@ -730,6 +754,8 @@ class ExecutableInputs(object):
                     value = keyeqval[first_eq_pos + 1:]
                 except:
                     raise DXCLIError('An input was found that did not conform to the syntax: -i<input name>=<input value>')
+                if '.' in name and self._accept_only_workflow_level_inputs():
+                    raise DXCLIError('The input with a key '+ name + ' was passed to a stage but the workflow accepts inputs only on the workflow level')
                 self.add(self.executable._get_input_name(name) if \
                          self._desc.get('class') == 'workflow' else name, value)
             self._update_requires_resolution_inputs()
@@ -749,12 +775,5 @@ class ExecutableInputs(object):
                 if missing_required_inputs:
                     raise DXCLIError('Some inputs (%s) are missing, and interactive mode is not available' % (', '.join(missing_required_inputs)))
 
-        # if self.required_input_specs is not None and (len(self.required_input_specs) > 0 or len(self.optional_input_specs) > 0):
-        #     if sys.stdout.isatty():
-        #         self.prompt_for_missing()
-        # elif self.required_input_specs is not None:
-        #     if not args.brief:
-        #         print fill('No input given, and applet/app takes in no inputs.  Skipping interactive mode for input selection.')
-        # else:
-        #     if not args.brief:
-        #         print fill('No input given, and applet has no input specification.  Skipping interactive mode for input selection (no input parameters will be set).  To provide input parameters anyway, please specify them explicitly using one of the input flags.')
+    def _is_input_optional(self, spec_atom):
+        return spec_atom.get("optional") == True or 'default' in spec_atom

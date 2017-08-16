@@ -2616,28 +2616,36 @@ def uninstall(args):
         else:
             err_exit('Could not find the app', 3)
 
-
-def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None,
-            is_the_only_job=True):
-    # following may throw if the executable is a workflow with no
+def _get_input_for_run(args, executable, preset_inputs=None, input_name_prefix=None):
+    """
+    Returns an input dictionary that can passed to executable.run()
+    """
+    # The following may throw if the executable is a workflow with no
     # input spec available (because a stage is inaccessible)
     exec_inputs = try_call(ExecutableInputs, executable, input_name_prefix=input_name_prefix)
 
+    # Use input and system requirements from a cloned execution
     if args.input_json is None and args.filename is None:
         # --input-json and --input-json-file completely override input
         # from the cloned job
         exec_inputs.update(args.input_from_clone, strip_prefix=False)
 
-    if args.sys_reqs_from_clone and not isinstance(args.instance_type, basestring):
-        args.instance_type = dict({stage: reqs['instanceType'] for stage, reqs in args.sys_reqs_from_clone.items()},
-                                  **(args.instance_type or {}))
-
+    # Update with inputs passed to the this function
     if preset_inputs is not None:
         exec_inputs.update(preset_inputs, strip_prefix=False)
 
+    # Update with inputs passed with -i, --input_json, --input_json_file, etc.
     try_call(exec_inputs.update_from_args, args)
 
-    input_json = exec_inputs.inputs
+    return exec_inputs.inputs
+
+def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None,
+            is_the_only_job=True):
+    input_json = _get_input_for_run(args, executable, preset_inputs)
+
+    if args.sys_reqs_from_clone and not isinstance(args.instance_type, basestring):
+        args.instance_type = dict({stage: reqs['instanceType'] for stage, reqs in args.sys_reqs_from_clone.items()},
+                                  **(args.instance_type or {}))
 
     if args.debug_on:
         if 'All' in args.debug_on:
@@ -2662,6 +2670,7 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
         "extra_args": args.extra_args
     }
 
+    # Print inputs used for the run
     if not args.brief:
         print()
         print('Using input JSON:')
@@ -2733,6 +2742,8 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
     if not args.brief:
         print(fill("Calling " + executable.get_id() + " with output destination " + dest_proj + ":" + dest_path,
                    subsequent_indent='  ') + '\n')
+
+    # Run the executable
     try:
         dxexecution = executable.run(input_json, **run_kwargs)
         if not args.brief:

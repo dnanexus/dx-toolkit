@@ -1374,4 +1374,3 @@ def workflow_new(input_params={}, always_retry=True, **kwargs):
     """
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/workflow/new', input_params_cp, always_retry=always_retry, **kwargs)
-

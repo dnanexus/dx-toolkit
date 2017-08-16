@@ -36,8 +36,8 @@ from ..compat import basestring
 ##############
 # DXWorkflow #
 ##############
-_workflow_required_keys = ['name', 'outputFolder']
-_workflow_stage_keys = ['id', 'name', 'executable', 'folder', 'input', 'executionPolicy', 'systemRequirements']
+_dxworkflow_json_keys = ['name', 'outputFolder', 'workflowInputSpec', 'workflowOutputSpec']
+_dxworkflow_json_stage_keys = ['id', 'name', 'executable', 'folder', 'input', 'executionPolicy', 'systemRequirements']
 
 def new_dxworkflow(title=None, summary=None, description=None, output_folder=None, init_from=None, **kwargs):
     '''
@@ -438,6 +438,9 @@ class DXWorkflow(DXDataObject, DXExecutable):
             finally:
                 self.describe() # update cached describe
 
+    def is_locked(self):
+        return self._desc['workflowInputSpec'] is not None and self._desc['state'] == 'closed'
+
     def _get_input_name(self, input_str):
         '''
         :param input_str: A string of one of the forms: "<exported input field name>", "<explicit workflow input field name>", "<stage ID>.<input field name>", "<stage index>.<input field name>", "<stage name>.<input field name>"
@@ -487,11 +490,11 @@ class DXWorkflow(DXDataObject, DXExecutable):
 
         return run_input
 
-    def _get_required_keys(self):
-        return _workflow_required_keys
+    def get_dxworkflow_json_keys(self):
+        return _dxworkflow_json_keys
 
-    def _get_stage_keys(self):
-        return _workflow_stage_keys
+    def get_dxworkflow_json_stage_keys(self):
+        return _dxworkflow_json_stage_keys
 
     def _run_impl(self, run_input, **kwargs):
         return DXAnalysis(dxpy.api.workflow_run(self._dxid, run_input, **kwargs)["id"])
