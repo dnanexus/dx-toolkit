@@ -6,14 +6,17 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [231.0] - beta
+
 ### Added
+
 * CLI support for workflow lockdown
 
 ### Removed
 
 * Deprecated `dx-mount` 
 
-## [230.0] - beta
+## [230.0] - 2017.08.17 - stable
 
 ### Added
 
