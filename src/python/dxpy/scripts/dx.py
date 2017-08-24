@@ -4157,6 +4157,7 @@ parser_build_asset.add_argument("--json", help=fill("Show ID of resulting asset 
                                 action="store_true", dest="json")
 parser_build_asset.add_argument("--no-watch", help=fill("Don't watch the real-time logs of the asset-builder job."),
                                 action="store_false", dest="watch")
+parser_build_asset.add_argument("--priority", choices=['normal', 'high'], help=argparse.SUPPRESS)
 parser_build_asset.set_defaults(func=build_asset)
 register_parser(parser_build_asset)
 
