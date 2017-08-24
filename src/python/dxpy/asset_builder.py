@@ -204,6 +204,9 @@ def build_asset(args):
             "input": input_hash
             }
 
+        if args.priority is not None:
+            builder_run_options["priority"] = args.priority
+
         # Add the default destination project to app run options, if it is not run from a job
         if not dxpy.JOB_ID:
             builder_run_options["project"] = dest_project_name
