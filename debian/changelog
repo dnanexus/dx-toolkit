@@ -1,3 +1,9 @@
+dx-toolkit (0.232.0) precise; urgency=low
+
+  * No significant changes
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 24 Aug 2017 17:41:10 +0000
+
 dx-toolkit (0.231.0) precise; urgency=low
 
   * Added: CLI support for workflow lockdown
