@@ -6,20 +6,20 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [233.0] - beta
+
 ### Added
 
 * Priority arg to `build_asset`
 * Pass region-specific pricing policy in dxapp.json
 
+## [232.1] - 2017.08.31 - stable
+
 ## Fixed
 
-* Fix running workflows built without explicit IO
+* Execution of old workflows built without explicit IO
 
-## [232.0] - beta
-
-* No significant changes
-
-## [231.0] - 2017.08.24 - stable
+## [231.0] - 2017.08.24 
 
 ### Added
 
@@ -29,7 +29,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Deprecated `dx-mount` 
 
-## [230.0] - 2017.08.17 - stable
+## [230.0] - 2017.08.17
 
 ### Added
 
@@ -37,7 +37,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Python bindings for workflow-level input and output
 * Support for the 'downloadRestricted' flag
 
-## [229.0] - 2017.08.10 - stable
+## [229.0] - 2017.08.10
 
 ### Changed
 
