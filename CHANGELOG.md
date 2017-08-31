@@ -11,6 +11,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Priority arg to `build_asset`
 * Pass region-specific pricing policy in dxapp.json
 
+## Fixed
+
+* Fix running workflows built without explicit IO
+
 ## [232.0] - beta
 
 * No significant changes
