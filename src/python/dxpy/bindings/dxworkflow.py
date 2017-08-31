@@ -439,7 +439,7 @@ class DXWorkflow(DXDataObject, DXExecutable):
                 self.describe() # update cached describe
 
     def is_locked(self):
-        return self._desc['workflowInputSpec'] is not None and self._desc['state'] == 'closed'
+        return self._desc.get('workflowInputSpec') is not None and self._desc.get('state') == 'closed'
 
     def _get_input_name(self, input_str):
         '''
