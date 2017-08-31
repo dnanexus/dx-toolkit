@@ -1,3 +1,10 @@
+dx-toolkit (0.233.0) precise; urgency=low
+
+  * Added priority arg to build_asset
+  * Added region-specific pricing policy in dxapp.json
+
+ -- Geet Duggal <gduggal@dnanexus.com>  Thu, 31 Aug 2017 19:18:11 +0000
+
 dx-toolkit (0.232.0) precise; urgency=low
 
   * No significant changes
@@ -21,7 +28,7 @@ dx-toolkit (0.230.0) precise; urgency=low
 
 dx-toolkit (0.229.0) precise; urgency=low
 
-  * Changed: Default to 14.04 release for all instance types in dx-app-wizard. 
+  * Changed: Default to 14.04 release for all instance types in dx-app-wizard.
 
  -- Nicolas Bock <nbock@dnanexus.com>  Thu, 27 Jul 2017 21:45:38 +0000
 
@@ -33,7 +40,7 @@ dx-toolkit (0.228.0) precise; urgency=low
 
 dx-toolkit (0.227.0) precise; urgency=low
 
-  * Fixed: dx-jobutil-new-job now properly supports instance type 
+  * Fixed: dx-jobutil-new-job now properly supports instance type
   * Changed: Installation instructions now centralized on Github page
   * Changed: Incrementally upgraded dependencies for Java bindings
   * Added: Helper script to check TLS 1.2 support
