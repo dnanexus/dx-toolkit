@@ -456,8 +456,7 @@ class ExecutableInputs(object):
                 self.required_inputs.append(input_name)
 
     def _accept_only_workflow_level_inputs(self):
-        is_workflow_input_locked = isinstance(self.executable, DXWorkflow) and self.executable.is_locked()
-        return is_workflow_input_locked or self._desc.get('workflowInputSpec') is not None
+        return self._desc.get('workflowInputSpec') is not None
 
     def update(self, new_inputs, strip_prefix=True):
         """
