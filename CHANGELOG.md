@@ -15,7 +15,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [232.1] - 2017.08.31 - stable
 
-## Fixed
+### Fixed
 
 * Execution of old workflows built without explicit IO
 
