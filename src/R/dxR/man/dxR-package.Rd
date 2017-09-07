@@ -9,7 +9,7 @@
 }
 \details{
   \tabular{ll}{ Package: \tab dxR\cr Type: \tab Package\cr
-  Version: \tab 0.233.0\cr License: \tab Apache License (==
+  Version: \tab 0.234.0\cr License: \tab Apache License (==
   2.0)\cr }
 }
 \author{
