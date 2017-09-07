@@ -436,14 +436,14 @@ class ExecutableInputs(object):
             inaccessible_stages = [stage['id'] for stage in self._desc['stages'] if stage['accessible'] is False]
             raise DXCLIError('The workflow ' + self._desc['id'] + ' has the following inaccessible stage(s): ' + ', '.join(inaccessible_stages))
 
-        # Workflow-level inputs (defined in workflowInputSpec)
-        #  i. The workflow has no workflowInputSpec
+        # Workflow-level inputs (defined in inputs)
+        #  i. The workflow has no inputs
         #   * The inputs can be passed to stages directly
-        # ii. The workflow has workflowInputSpec (in a closed or open state)
-        #   * Only inputs defined in workflowInputSpec can be passed to the workflow,
+        # ii. The workflow has inputs (in a closed or open state)
+        #   * Only inputs defined in inputs can be passed to the workflow,
         #     using workflow-level input names
         if self._accept_only_workflow_level_inputs():
-            input_spec = self._desc.get('workflowInputSpec', [])
+            input_spec = self._desc.get('inputs', [])
 
         for spec_atom in input_spec:
             input_name = spec_atom['name']
@@ -456,7 +456,7 @@ class ExecutableInputs(object):
                 self.required_inputs.append(input_name)
 
     def _accept_only_workflow_level_inputs(self):
-        return self._desc.get('workflowInputSpec') is not None
+        return self._desc.get('inputs') is not None
 
     def update(self, new_inputs, strip_prefix=True):
         """

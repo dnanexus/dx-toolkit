@@ -1341,7 +1341,7 @@ def main(number):
         self.assertEqual(analysis_desc["tags"], ["foo"])
         self.assertEqual(analysis_desc["properties"], {"foo": "bar"})
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
+    #@unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
     def test_run_workflow_with_explicit_input(self):
         dxapplet = dxpy.DXApplet()
         dxapplet.new(name="test_applet",
@@ -1362,10 +1362,10 @@ def main(number):
             dxanalysis.wait_on_done(timeout=20)
         analysis_desc = dxanalysis.describe()
         self.assertEqual(analysis_desc['input'].get('stage_0.number'), 101)
-        dxjob = dxpy.DXJob(analysis_desc['stages'][0]['execution']['id'])
-        self.assertEqual(dxjob.describe()['input'].get('number'), 101)
+        # dxjob = dxpy.DXJob(analysis_desc['stages'][0]['execution']['id'])
+        # self.assertEqual(dxjob.describe()['input'].get('number'), 101)
 
-        # run closed workflow (the workflow has workflowInputSpec so input values
+        # run closed workflow (the workflow has inputs so input values
         # can only be passed via workflow-level input (can't be passed to stage-level inputs))
         dxworkflow.close()
         self.assertRaisesRegexp(DXError, 'is private and cannot be overridden',
@@ -1376,8 +1376,8 @@ def main(number):
             dxanalysis.wait_on_done(timeout=20)
         analysis_desc = dxanalysis.describe()
         self.assertEqual(analysis_desc['input'].get('stage_0.number'), 202)
-        dxjob = dxpy.DXJob(analysis_desc['stages'][0]['execution']['id'])
-        self.assertEqual(dxjob.describe()['input'].get('number'), 202)
+        # dxjob = dxpy.DXJob(analysis_desc['stages'][0]['execution']['id'])
+        # self.assertEqual(dxjob.describe()['input'].get('number'), 202)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
     def test_run_workflow_with_instance_type(self):
@@ -1517,8 +1517,8 @@ def main(number):
         self.assertEqual(desc['description'], '')
         self.assertEqual(desc['outputFolder'], None)
         self.assertEqual(desc['stages'], [])
-        self.assertEqual(desc['workflowInputSpec'], None)
-        self.assertEqual(desc['workflowOutputSpec'], None)
+        self.assertEqual(desc['inputs'], None)
+        self.assertEqual(desc['outputs'], None)
 
         # workflow with metadata
         dxapplet = dxpy.DXApplet()
@@ -1556,8 +1556,8 @@ def main(number):
         self.assertEqual(desc['summary'], 'mysummary')
         self.assertEqual(desc['description'], 'mydescription')
         self.assertEqual(desc['outputFolder'], '/foo')
-        self.assertEqual(desc['workflowInputSpec'], wf_input)
-        self.assertEqual(desc['workflowOutputSpec'], wf_output)
+        self.assertEqual(desc['inputs'], wf_input)
+        self.assertEqual(desc['outputs'], wf_output)
         self.assertEqual(len(desc['stages']), 4)
         self.assertEqual(desc['stages'][0]['id'], 'stage_0')
         self.assertEqual(desc['stages'][0]['name'], 'stage_0_name')
@@ -1579,8 +1579,8 @@ def main(number):
         self.assertEqual(desc['summary'], 'mysummary')
         self.assertEqual(desc['description'], 'mydescription')
         self.assertEqual(desc['outputFolder'], '/foo')
-        self.assertEqual(desc['workflowInputSpec'], wf_input)
-        self.assertEqual(desc['workflowOutputSpec'], wf_output)
+        self.assertEqual(desc['inputs'], wf_input)
+        self.assertEqual(desc['outputs'], wf_output)
         self.assertEqual(len(desc['stages']), 4)
         self.assertEqual(desc['stages'][0]['id'], 'stage_0')
         self.assertEqual(desc['stages'][0]['name'], 'stage_0_name')
@@ -1706,8 +1706,8 @@ def main(number):
         for metadata in ['title', 'summary', 'description']:
             self.assertEqual(getattr(dxworkflow, metadata), metadata.capitalize())
         self.assertEqual(dxworkflow.outputFolder, '/bar/baz')
-        self.assertEqual(dxworkflow.workflowInputSpec, wf_input)
-        self.assertEqual(dxworkflow.workflowOutputSpec, wf_output)
+        self.assertEqual(dxworkflow.inputs, wf_input)
+        self.assertEqual(dxworkflow.outputs, wf_output)
 
         # use unset_title
         dxworkflow.update(unset_title=True, edit_version=1)
@@ -1722,12 +1722,12 @@ def main(number):
         # use unset_workflow_input_spec
         dxworkflow.update(unset_workflow_input_spec=True, edit_version=3)
         self.assertEqual(dxworkflow.editVersion, 4)
-        self.assertIsNone(dxworkflow.workflowInputSpec)
+        self.assertIsNone(dxworkflow.inputs)
 
         # use unset_workflow_output_spec
         dxworkflow.update(unset_workflow_output_spec=True, edit_version=4)
         self.assertEqual(dxworkflow.editVersion, 5)
-        self.assertIsNone(dxworkflow.workflowOutputSpec)
+        self.assertIsNone(dxworkflow.outputs)
 
         # can't provide both title and unset_title=True
         with self.assertRaises(DXError):

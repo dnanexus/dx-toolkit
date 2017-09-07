@@ -3051,9 +3051,9 @@ def run(args):
 
     handler = try_call(get_exec_handler, args.executable, args.alias)
 
-    if args.depends_on and isinstance(handler, dxpy.DXWorkflow):
-        err_exit(exception=DXParserError("-d/--depends-on cannot be supplied when running workflows."),
-                 expected_exceptions=(DXParserError,))
+    # if args.depends_on and isinstance(handler, dxpy.DXWorkflow):
+    #     err_exit(exception=DXParserError("-d/--depends-on cannot be supplied when running workflows."),
+    #              expected_exceptions=(DXParserError,))
 
     # if the destination project has still not been set, use the
     # current project

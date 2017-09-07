@@ -36,7 +36,7 @@ from ..compat import basestring
 ##############
 # DXWorkflow #
 ##############
-_dxworkflow_json_keys = ['name', 'outputFolder', 'workflowInputSpec', 'workflowOutputSpec']
+_dxworkflow_json_keys = ['name', 'outputFolder', 'inputs', 'outputs']
 _dxworkflow_json_stage_keys = ['id', 'name', 'executable', 'folder', 'input', 'executionPolicy', 'systemRequirements']
 
 def new_dxworkflow(title=None, summary=None, description=None, output_folder=None, init_from=None, **kwargs):
@@ -143,8 +143,8 @@ class DXWorkflow(DXDataObject, DXExecutable):
         _set_dx_hash(kwargs, dx_hash, "description")
         _set_dx_hash(kwargs, dx_hash, "output_folder", "outputFolder")
         _set_dx_hash(kwargs, dx_hash, "stages")
-        _set_dx_hash(kwargs, dx_hash, "workflow_input_spec", "workflowInputSpec")
-        _set_dx_hash(kwargs, dx_hash, "workflow_output_spec", "workflowOutputSpec")
+        _set_dx_hash(kwargs, dx_hash, "workflow_input_spec", "inputs")
+        _set_dx_hash(kwargs, dx_hash, "workflow_output_spec", "outputs")
 
         resp = dxpy.api.workflow_new(dx_hash, **kwargs)
         self.set_ids(resp["id"], dx_hash["project"])
@@ -350,13 +350,13 @@ class DXWorkflow(DXDataObject, DXExecutable):
         if stages is not None:
             update_input["stages"] = stages
         if workflow_input_spec is not None:
-            update_input["workflowInputSpec"] = workflow_input_spec
+            update_input["inputs"] = workflow_input_spec
         elif unset_workflow_input_spec:
-            update_input["workflowInputSpec"] = None
+            update_input["inputs"] = None
         if workflow_output_spec is not None:
-            update_input["workflowOutputSpec"] = workflow_output_spec
+            update_input["outputs"] = workflow_output_spec
         elif unset_workflow_output_spec:
-            update_input["workflowOutputSpec"] = None
+            update_input["outputs"] = None
 
         # only perform update if there are changes to make
         if update_input:
@@ -439,7 +439,7 @@ class DXWorkflow(DXDataObject, DXExecutable):
                 self.describe() # update cached describe
 
     def is_locked(self):
-        return self._desc.get('workflowInputSpec') is not None and self._desc.get('state') == 'closed'
+        return self._desc.get('inputs') is not None and self._desc.get('state') == 'closed'
 
     def _get_input_name(self, input_str):
         '''
@@ -529,7 +529,7 @@ class DXWorkflow(DXDataObject, DXExecutable):
           is the name of the input within the stage
 
         * "name" where *name* is the name of a workflow level input
-          (defined in workflowInputSpec) or the name that has been
+          (defined in inputs) or the name that has been
           exported for the workflow (this name will appear as a key
           in the "inputSpec" of this workflow's description if it has
           been exported for this purpose)

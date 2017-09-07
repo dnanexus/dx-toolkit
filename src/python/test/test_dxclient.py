@@ -3022,10 +3022,10 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertIn(analysis_id, new_workflow_desc)
         self.assertIn(stage_id, new_workflow_desc)
 
-        # Setting the input linking to workflowInputSpec
+        # Setting the input linking to inputs
         dxpy.api.workflow_update(workflow_id,
                                  {"editVersion": 2,
-                                  "workflowInputSpec": [{"name": "foo", "class": "int"}],
+                                  "inputs": [{"name": "foo", "class": "int"}],
                                   "stages": {'stage_0': {'input': {'number': {'$dnanexus_link': {'workflowInputField': 'foo'}}}}}})
         run("dx describe " + workflow_id)
         analysis_id = run("dx run " + workflow_id + " -ifoo=474 -y --brief")
@@ -3654,8 +3654,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         workflow_spec = {"name": "my_workflow",
                         "outputFolder": "/",
                         "stages": [stage0, stage1],
-                        "workflowInputSpec": wf_input,
-                        "workflowOutputSpec": wf_output
+                        "inputs": wf_input,
+                        "outputs": wf_output
                         }
 
         workflow_dir = self.write_workflow_directory("dxbuilt_workflow",
@@ -3684,8 +3684,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertEqual(wf_describe["stages"][1]["id"], "stage_1")
         self.assertIsNone(wf_describe["stages"][1]["name"])
         self.assertEqual(wf_describe["stages"][1]["executable"], applet_id)
-        self.assertEqual(wf_describe["workflowInputSpec"], wf_input)
-        self.assertEqual(wf_describe["workflowOutputSpec"], wf_output)
+        self.assertEqual(wf_describe["inputs"], wf_input)
+        self.assertEqual(wf_describe["outputs"], wf_output)
 
     def test_dx_build_workflow_with_destination(self):
         workflow_spec = {"name": "my_workflow"}
@@ -3774,7 +3774,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
             "name": workflow_name,
             "outputFolder": "/",
             "stages": [stage0, stage1],
-            "workflowInputSpec": [{"name": "foo", "class": "int"}]
+            "inputs": [{"name": "foo", "class": "int"}]
         }
 
         # 1. Build
@@ -3814,8 +3814,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
             self.assertEqual(wf_describe_02["stages"][1]["id"], "stage_1")
             self.assertIsNone(wf_describe_02["stages"][1]["name"])
             self.assertEqual(wf_describe_02["stages"][1]["executable"], applet_id)
-            self.assertEqual(wf_describe_02["workflowInputSpec"], [{"name": "foo", "class": "int"}])
-            self.assertIsNone(wf_describe_02["workflowOutputSpec"])
+            self.assertEqual(wf_describe_02["inputs"], [{"name": "foo", "class": "int"}])
+            self.assertIsNone(wf_describe_02["outputs"])
 
     def test_build_worklow_malformed_dxworkflow_json(self):
         workflow_dir = self.write_workflow_directory("dxbuilt_workflow", "{")
