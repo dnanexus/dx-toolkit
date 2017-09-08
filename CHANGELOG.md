@@ -6,14 +6,18 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [233.0] - beta
+## [234.0] - beta
+
+* No significant changes
+
+## [233.0] - 2017.09.07 - stable
 
 ### Added
 
 * Priority arg to `build_asset`
 * Pass region-specific pricing policy in dxapp.json
 
-## [232.1] - 2017.08.31 - stable
+## [232.1] - 2017.08.31
 
 ### Fixed
 
