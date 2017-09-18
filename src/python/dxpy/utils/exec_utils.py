@@ -302,6 +302,9 @@ class DXExecDependencyInstaller(object):
                                    self.run_spec.get("execDepends", []),
                                    self.run_spec.get("dependencies", [])):
             self._validate_dependency(dep)
+            # Ignore dx-toolkit from execdepends
+            if dep["name"] == "dx-toolkit":
+                continue
             if "stages" in dep and self.stage not in dep["stages"]:
                 self.log("Skipping dependency {} because it is inactive in stage (function) {}".format(dep["name"],
                                                                                                        self.stage))
