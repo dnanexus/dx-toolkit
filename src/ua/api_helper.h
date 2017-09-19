@@ -42,6 +42,8 @@ void checkForUpdates();
 
 std::string getProjectName(const std::string &projectID);
 
+dx::JSON getPlatformInputHash();
+
 #define FILE_SIGNATURE_PROPERTY ".system-fileSignature"
 
 #endif
