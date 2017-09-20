@@ -2190,7 +2190,7 @@ def find_executions(args):
                 # If an analysis with cached children, also insert those
                 if execution_desc['class'] == 'analysis':
                     for stage_desc in execution_desc['stages']:
-                        if stage_desc['execution']['parentAnalysis'] != execution_result['id'] and \
+                        if 'parentAnalysis' in stage['execution'] and stage_desc['execution']['parentAnalysis'] != execution_result['id'] and \
                            (args.classname != 'analysis' or stage_desc['execution']['class'] == 'analysis'):
                             # this is a cached stage (with a different parent)
                             executions_by_parent[execution_result['id']].append(stage_desc['execution']['id'])
