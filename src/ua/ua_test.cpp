@@ -20,8 +20,10 @@
 // since opt::setApiserverDxConfig() changes the value of dx::config::*, based on command line args
 
 #include <string>
+#include <time.h>
 #include "ua_test.h"
 #include "dxcpp/dxcpp.h"
+#include "dxjson/dxjson.h"
 #include "api_helper.h"
 #include "options.h"
 #include "api.h"
@@ -41,9 +43,10 @@ void runTests()
 {
   version();
   printEnvironmentInfo(false);
+  testSystemGreet();
   testWhoAmI();
   currentProject();
-  proxySettings();  
+  proxySettings();
   osInfo();
   certificateFile();
   resolveAmazonS3();
@@ -77,7 +80,7 @@ void osInfo(){
   struct utsname uts;
   uname(&uts);
   cout << "Operating System:" << endl
-       << "  Name:    " << uts.sysname << endl 
+       << "  Name:    " << uts.sysname << endl
        << "  Release: " << uts.release << endl
        << "  Version: " << uts.version << endl
        << "  Machine: " << uts.machine << endl;
@@ -102,13 +105,13 @@ void currentProject() {
   string projID = CURRENT_PROJECT();
   try {
     if (projID.empty()) {
-      cout << "  Current Project: None" << endl;
+      cout << "Current Project: None" << endl;
     } else {
       string projName = getProjectName(projID);
-      cout << "  Current Project: " << projName << " (" << projID << ")" << endl;
+      cout << "Current Project: " << projName << " (" << projID << ")" << endl;
     }
   } catch (DXAPIError &e) {
-    cout << "  Current Project: "<< " (" << projID << ")" << e.what() << endl;
+    cout << "Current Project: "<< " (" << projID << ")" << e.what() << endl;
   }
 }
 
@@ -149,13 +152,53 @@ void certificateFile() {
 }
 
 void testWhoAmI(){
-  cout << "  Current User: ";
+  cout << "Current User: ";
   try {
     JSON res = systemWhoami(string("{}"), false);
     cout  << res["id"].get<string>() << endl;
   } catch(DXAPIError &e) {
     cout << "Error contacting the api: " << e.what() << endl;
   } catch (DXConnectionError &e) {
+    cout << "Error contacting the api: " << e.what() << endl;
+  } catch (JSONException &e) {
+    cout << "Error contacting the api: " << e.what() << endl;
+  } catch (...) {
+    cout << "Error contacting the api." << endl;
+  }
+}
+
+void testSystemGreet() {
+  try {
+    JSON inp = getPlatformInputHash();
+    JSON res = systemGreet(inp, false);
+    if (res["update"]["available"].get<bool>() == false) {
+      cout << "Your copy of Upload Agent is up to date." << endl;
+    } else {
+      string ver = res["update"]["version"].get<string>();
+      cout << "A new version is available: " << ver << endl;
+    }
+
+    const JSON &messageArray = res["messages"];
+
+    cout << "System Messages:" << endl << endl;
+    if (messageArray.size() == 0) {
+      cout << "  There are currently no system messages." << endl;
+    } else {
+      for (JSON::const_array_iterator it = messageArray.array_begin(); it < messageArray.array_end(); ++it) {
+        const JSON &message = *it;
+        const string title = message["title"].get<string>();
+        const string body = message["body"].get<string>();
+        const time_t date = message["date"].get<time_t>();
+        cout << "Date: " << ctime(&date);
+        cout << "Subject: " << title << endl;
+        cout << body << endl << endl;
+      }
+    }
+  } catch(DXAPIError &e) {
+    cout << "Error contacting the api: " << e.what() << endl;
+  } catch (DXConnectionError &e) {
+    cout << "Error contacting the api: " << e.what() << endl;
+  } catch (JSONException &e) {
     cout << "Error contacting the api: " << e.what() << endl;
   } catch (...) {
     cout << "Error contacting the api." << endl;

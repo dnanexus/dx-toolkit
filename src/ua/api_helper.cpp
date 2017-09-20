@@ -34,18 +34,7 @@ JSON securityContext(const string &authToken) {
   return ctx;
 }
 
-/*
- * Calls the /system/greet route to get update info. This also serves to
- * verify that we can connect to the API server, and that the
- * authentication token is valid.
- *
- * - If the API call fails with a known error, we report it and exit.
- * - If the API call fails with an unknown error, we proceed (after logging the failure if verbose mode is on)
- * - If UA is up to date, we log this fact if verbose mode is on
- * - If a required update is available, we throw runtime_error()
- * - If a recommended update is available, we print the info on stderr (irresepctive of verbose mode status)
- */
-void checkForUpdates() {
+JSON getPlatformInputHash() {
   JSON inp(JSON_HASH);
   inp["client"] = "dnanexus-upload-agent";
   inp["version"] = UAVERSION;
@@ -64,7 +53,22 @@ void checkForUpdates() {
   if (!platform.empty()) {
     inp["platform"] = platform;
   }
+  return inp;
+}
 
+/*
+ * Calls the /system/greet route to get update info. This also serves to
+ * verify that we can connect to the API server, and that the
+ * authentication token is valid.
+ *
+ * - If the API call fails with a known error, we report it and exit.
+ * - If the API call fails with an unknown error, we proceed (after logging the failure if verbose mode is on)
+ * - If UA is up to date, we log this fact if verbose mode is on
+ * - If a required update is available, we throw runtime_error()
+ * - If a recommended update is available, we print the info on stderr (irresepctive of verbose mode status)
+ */
+void checkForUpdates() {
+  JSON inp = getPlatformInputHash();
   JSON res;
   DXLOG(logINFO) << "Checking for updates (calling /system/greet), inp = '" << inp.toString() << "' ...";
   try {

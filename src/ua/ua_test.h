@@ -25,6 +25,7 @@ void proxySettings();
 void currentProject();
 void certificateFile();
 void testWhoAmI();
+void testSystemGreet();
 void contactGoogle();
 void resolveAmazonS3();
 #endif
