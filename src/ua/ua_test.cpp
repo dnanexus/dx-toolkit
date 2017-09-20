@@ -161,7 +161,7 @@ void testWhoAmI(){
   } catch (DXConnectionError &e) {
     cout << "Error contacting the api: " << e.what() << endl;
   } catch (JSONException &e) {
-    cout << "Error contacting the api " << e.what() << endl;
+    cout << "Error contacting the api: " << e.what() << endl;
   } catch (...) {
     cout << "Error contacting the api." << endl;
   }
@@ -199,7 +199,7 @@ void testSystemGreet() {
   } catch (DXConnectionError &e) {
     cout << "Error contacting the api: " << e.what() << endl;
   } catch (JSONException &e) {
-    cout << "Error contacting the api " << e.what() << endl;
+    cout << "Error contacting the api: " << e.what() << endl;
   } catch (...) {
     cout << "Error contacting the api." << endl;
   }
