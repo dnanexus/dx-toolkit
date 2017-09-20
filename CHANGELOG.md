@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
 * ua --test now displays system messages coming from the apiserver.
 
 ## [234.0] - beta
