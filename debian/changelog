@@ -1,3 +1,9 @@
+dx-toolkit (0.235.0) precise; urgency=low
+
+  * Added ua --test now displays system messages coming from the apiserver
+
+ -- Hamed Haddadian <HAMEDH@DNANEXUS.COM>  Thu, 21 Sep 2017 18:28:19 +0000
+
 dx-toolkit (0.234.0) precise; urgency=low
 
   * No significant changes
