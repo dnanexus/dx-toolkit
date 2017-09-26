@@ -164,6 +164,13 @@ class BadJSONInReply(ValueError):
     for this are the network connection breaking, or overload on the server.
     '''
 
+class InvalidTLSProtocol(DXError):
+    '''
+    Raised when the connection to the server was reset due to an ssl protocol not supported.
+    Only connections with TLS v1.2 will be accepted.
+    '''
+    def __init__(self, args):
+        self.message = "Invalid TLS protocol, please make sure your system supports TLS v1.2\n" + args
 
 class UrllibInternalError(AttributeError):
     '''

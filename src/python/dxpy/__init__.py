@@ -590,6 +590,11 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 # If another thread closed the pool before the request was
                 # started, will throw ClosedPoolError
                 raise exceptions.UrllibInternalError("ClosedPoolError")
+            except urllib3.exceptions.ProtocolError:
+                # If the protocol error is 'connection reset by peer', most likely it is an
+                # error in the ssl handshake due to unsupported TLS protocol.
+                if 'Connection reset by peer' in exception_msg:
+                    raise exceptions.InvalidTLSProtocol(exception_msg)
 
             _raise_error_for_testing(try_index, method)
             req_id = response.headers.get("x-request-id", "unavailable")
