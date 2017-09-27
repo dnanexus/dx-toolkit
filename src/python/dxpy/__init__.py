@@ -593,6 +593,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             except urllib3.exceptions.ProtocolError:
                 # If the protocol error is 'connection reset by peer', most likely it is an
                 # error in the ssl handshake due to unsupported TLS protocol.
+                exception_msg = _extract_msg_from_last_exception()
                 if 'Connection reset by peer' in exception_msg:
                     raise exceptions.InvalidTLSProtocol(exception_msg)
 
