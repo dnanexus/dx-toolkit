@@ -365,8 +365,11 @@ array:boolean  array:int      boolean        hash           string''')
     print('')
     print(BOLD('System Requirements'))
     print('')
-    print(BOLD('Common instance types:'))
-    print(format_table(InstanceTypesCompleter.preferred_instance_types.values(),
+    print(BOLD('Common AWS instance types:'))
+    print(format_table(InstanceTypesCompleter.aws_preferred_instance_types.values(),
+                       column_names=list(InstanceTypesCompleter.instance_types.values())[0]._fields))
+    print(BOLD('Common Azure instance types:'))
+    print(format_table(InstanceTypesCompleter.azure_preferred_instance_types.values(),
                        column_names=list(InstanceTypesCompleter.instance_types.values())[0]._fields))
     print(fill(BOLD('Default instance type:') + ' The instance type you select here will apply to all entry points in ' +
                'your app unless you override it. See ' +
