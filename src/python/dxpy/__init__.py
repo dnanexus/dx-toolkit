@@ -690,7 +690,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             _get_pool_manager(**pool_args).clear()
             success = False
             exception_msg = _extract_msg_from_last_exception()
-            if isinstance(e, _expected_exceptions) and not isinstance(e, exceptions.InvalidTLSProtocol):
+            if isinstance(e, _expected_exceptions):
                 # Total number of allowed tries is the initial try PLUS
                 # up to (max_retries) subsequent retries.
                 total_allowed_tries = max_retries + 1
