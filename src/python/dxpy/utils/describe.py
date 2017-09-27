@@ -571,7 +571,7 @@ def get_col_str(col_desc):
 
 def print_data_obj_desc(desc, verbose=False):
     recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputSpec', 'outputSpec', 'runSpec', 'summary', 'dxapi', 'access', 'createdBy', 'summary', 'sponsored', 'developerNotes',
-                         'stages', 'workflowInputSpec', 'workflowOutputSpec', 'latestAnalysis', 'editVersion', 'outputFolder', 'initializedFrom']
+                         'stages', 'inputs', 'outputs', 'latestAnalysis', 'editVersion', 'outputFolder', 'initializedFrom']
 
     def get_advanced_inputs():
         details = desc.get("details")
@@ -628,10 +628,10 @@ def print_data_obj_desc(desc, verbose=False):
         print_nofill_field("Input Spec", get_io_spec(desc['inputSpec'], skip_fields=get_advanced_inputs()))
     if "outputSpec" in desc and desc['outputSpec'] is not None:
         print_nofill_field("Output Spec", get_io_spec(desc['outputSpec']))
-    if "workflowInputSpec" in desc:
-        print_nofill_field("Workflow Input Spec", get_io_spec(desc['workflowInputSpec']))
-    if "workflowOutputSpec" in desc:
-        print_nofill_field("Workflow Output Spec", get_io_spec(desc['workflowOutputSpec']))
+    if "inputs" in desc:
+        print_nofill_field("Workflow Inputs", get_io_spec(desc['inputs']))
+    if "outputs" in desc:
+        print_nofill_field("Workflow Outputs", get_io_spec(desc['outputs']))
     if 'runSpec' in desc:
         print_field("Interpreter", desc["runSpec"]["interpreter"])
         if "resources" in desc['runSpec']:
