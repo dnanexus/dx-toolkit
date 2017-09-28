@@ -1,3 +1,10 @@
+dx-toolkit (0.236.0) precise; urgency=low
+
+  * Added: Azure instance types to the list of available types in 'dx-app-wizard'
+  * Changed: References to workflow 'inputs' and 'outputs' (sync API server changes)
+
+ -- Aleksandra Zalcman <azalcman@dnanexus.com>  Thu, 28 Sep 2017 20:41:05 +0000
+
 dx-toolkit (0.235.0) precise; urgency=low
 
   * Added ua --test now displays system messages coming from the apiserver
