@@ -1,3 +1,7 @@
+DNAnexus Upload Agent 1.5.29 <support@dnanexus.com>, 2017-Sep-28
+----------------------------------------------------------------
+  * test now displays system messages coming from the apiserver 
+
 DNAnexus Upload Agent 1.5.28 <support@dnanexus.com>, 2017-Sep-21
 ----------------------------------------------------------------
   *
