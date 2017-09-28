@@ -3022,28 +3022,26 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertIn(analysis_id, new_workflow_desc)
         self.assertIn(stage_id, new_workflow_desc)
 
-        #TODO: Workflow API changed; uncomment after replacing workflowInputSpec with inputs
-        # and workflowOutputSpec with outputs
-        # # Setting the input linking to workflowInputSpec
-        # dxpy.api.workflow_update(workflow_id,
-        #                          {"editVersion": 2,
-        #                           "workflowInputSpec": [{"name": "foo", "class": "int"}],
-        #                           "stages": {'stage_0': {'input': {'number': {'$dnanexus_link': {'workflowInputField': 'foo'}}}}}})
-        # run("dx describe " + workflow_id)
-        # analysis_id = run("dx run " + workflow_id + " -ifoo=474 -y --brief")
-        # self.assertTrue(analysis_id.startswith('analysis-'))
-        # analysis_desc = run("dx describe " + analysis_id)
-        # self.assertIn('foo', analysis_desc)
-        # analysis_desc = json.loads(run("dx describe --json " + analysis_id ))
-        # self.assertTrue(analysis_desc["runInput"], {"foo": 747})
-        # time.sleep(2) # May need to wait for job to be created in the system
-        # job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
-        # self.assertIn(' number = 474', job_desc)
-        #
-        # # Inputs can only be passed as workflow inputs
-        # error_mesg = 'The input.+was passed to a stage but the workflow accepts inputs only on the workflow level'
-        # with self.assertSubprocessFailure(stderr_regexp=error_mesg, exit_code=3):
-        #     run("dx run " + workflow_id + " -istage_0.number=32")
+        # Setting the input linking to inputs
+        dxpy.api.workflow_update(workflow_id,
+                                 {"editVersion": 2,
+                                  "inputs": [{"name": "foo", "class": "int"}],
+                                  "stages": {'stage_0': {'input': {'number': {'$dnanexus_link': {'workflowInputField': 'foo'}}}}}})
+        run("dx describe " + workflow_id)
+        analysis_id = run("dx run " + workflow_id + " -ifoo=474 -y --brief")
+        self.assertTrue(analysis_id.startswith('analysis-'))
+        analysis_desc = run("dx describe " + analysis_id)
+        self.assertIn('foo', analysis_desc)
+        analysis_desc = json.loads(run("dx describe --json " + analysis_id ))
+        self.assertTrue(analysis_desc["runInput"], {"foo": 747})
+        time.sleep(2) # May need to wait for job to be created in the system
+        job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
+        self.assertIn(' number = 474', job_desc)
+
+        # Inputs can only be passed as workflow inputs
+        error_mesg = 'The input.+was passed to a stage but the workflow accepts inputs only on the workflow level'
+        with self.assertSubprocessFailure(stderr_regexp=error_mesg, exit_code=3):
+            run("dx run " + workflow_id + " -istage_0.number=32")
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
     def test_dx_run_clone_analysis(self):
@@ -3357,10 +3355,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         desc = run("dx describe " + workflow_id)
         self.assertIn("Input Spec", desc)
         self.assertIn("Output Spec", desc)
-        #TODO: Workflow API changed; uncomment after replacing workflowInputSpec with inputs
-        # and workflowOutputSpec with outputs
-        # self.assertIn("Workflow Input Spec", desc)
-        # self.assertIn("Workflow Output Spec", desc)
+        self.assertIn("Workflow Inputs", desc)
+        self.assertIn("Workflow Outputs", desc)
         applet_id = dxpy.api.applet_new({"name": "myapplet",
                                          "project": self.project,
                                          "dxapi": "1.0.0",
@@ -3658,8 +3654,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         workflow_spec = {"name": "my_workflow",
                         "outputFolder": "/",
                         "stages": [stage0, stage1],
-                        "workflowInputSpec": wf_input,
-                        "workflowOutputSpec": wf_output
+                        "inputs": wf_input,
+                        "outputs": wf_output
                         }
 
         workflow_dir = self.write_workflow_directory("dxbuilt_workflow",
@@ -3688,10 +3684,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertEqual(wf_describe["stages"][1]["id"], "stage_1")
         self.assertIsNone(wf_describe["stages"][1]["name"])
         self.assertEqual(wf_describe["stages"][1]["executable"], applet_id)
-        #TODO: Workflow API changed; uncomment after replacing workflowInputSpec with inputs
-        # and workflowOutputSpec with outputs
-        # self.assertEqual(wf_describe["workflowInputSpec"], wf_input)
-        # self.assertEqual(wf_describe["workflowOutputSpec"], wf_output)
+        self.assertEqual(wf_describe["inputs"], wf_input)
+        self.assertEqual(wf_describe["outputs"], wf_output)
 
     def test_dx_build_workflow_with_destination(self):
         workflow_spec = {"name": "my_workflow"}
@@ -3755,7 +3749,6 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                               exit_code=3):
                 new_workflow = run("dx build --json {src_dir}".format(src_dir=workflow_dir))
 
-    @unittest.skip("Workflow API changed; unskip after replacing workflowInputSpec with inputs")
     def test_dx_build_get_build_workflow(self):
         # When building and getting a workflow multiple times we should
         # obtain functionally identical workflows, ie. identical dxworkflow.json specs.
@@ -3781,7 +3774,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
             "name": workflow_name,
             "outputFolder": "/",
             "stages": [stage0, stage1],
-            "workflowInputSpec": [{"name": "foo", "class": "int"}]
+            "inputs": [{"name": "foo", "class": "int"}]
         }
 
         # 1. Build
@@ -3821,8 +3814,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
             self.assertEqual(wf_describe_02["stages"][1]["id"], "stage_1")
             self.assertIsNone(wf_describe_02["stages"][1]["name"])
             self.assertEqual(wf_describe_02["stages"][1]["executable"], applet_id)
-            self.assertEqual(wf_describe_02["workflowInputSpec"], [{"name": "foo", "class": "int"}])
-            self.assertIsNone(wf_describe_02["workflowOutputSpec"])
+            self.assertEqual(wf_describe_02["inputs"], [{"name": "foo", "class": "int"}])
+            self.assertIsNone(wf_describe_02["outputs"])
 
     def test_build_worklow_malformed_dxworkflow_json(self):
         workflow_dir = self.write_workflow_directory("dxbuilt_workflow", "{")
