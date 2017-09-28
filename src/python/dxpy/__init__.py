@@ -137,6 +137,7 @@ import mmap
 import requests
 import socket
 import threading
+import subprocess
 
 from collections import namedtuple
 
@@ -452,6 +453,19 @@ def _debug_print_response(debug_level, seq_num, time_started, req_id, response_s
               file=sys.stderr)
 
 
+def _test_tls_version():
+    tls12_check_script = os.path.join(os.getenv("DNANEXUS_HOME"), "build", "tls12check.py")
+    if not os.path.exists(tls12_check_script):
+        return
+
+    try:
+        subprocess.check_output(['python', tls12_check_script])
+    except subprocess.CalledProcessError as e:
+        if e.returncode == 1:
+            print (e.output)
+            raise exceptions.InvalidTLSProtocol
+
+
 def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                   timeout=DEFAULT_TIMEOUT,
                   use_compression=None, jsonify_data=True, want_full_response=False,
@@ -590,12 +604,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 # If another thread closed the pool before the request was
                 # started, will throw ClosedPoolError
                 raise exceptions.UrllibInternalError("ClosedPoolError")
-            except urllib3.exceptions.ProtocolError:
-                # If the protocol error is 'connection reset by peer', most likely it is an
-                # error in the ssl handshake due to unsupported TLS protocol.
-                exception_msg = _extract_msg_from_last_exception()
-                if 'Connection reset by peer' in exception_msg:
-                    raise exceptions.InvalidTLSProtocol(exception_msg)
 
             _raise_error_for_testing(try_index, method)
             req_id = response.headers.get("x-request-id", "unavailable")
@@ -746,6 +754,12 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             # retryable. Print the latest error and propagate it back to the caller.
             if not isinstance(e, exceptions.DXAPIError):
                 logger.error("[%s] %s %s: %s.", time.ctime(), method, _url, exception_msg)
+
+            if isinstance(e, urllib3.exceptions.ProtocolError) and \
+                'Connection reset by peer' in exception_msg:
+                # If the protocol error is 'connection reset by peer', most likely it is an
+                # error in the ssl handshake due to unsupported TLS protocol.
+                _test_tls_version()
 
             # Retries have been exhausted, and we are unable to get a full
             # buffer from the data source. Raise a special exception.

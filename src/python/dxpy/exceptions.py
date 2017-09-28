@@ -169,12 +169,11 @@ class InvalidTLSProtocol(DXAPIError):
     Raised when the connection to the server was reset due to an ssl protocol not supported.
     Only connections with TLS v1.2 will be accepted.
     '''
-    def __init__(self, msg):
-        self.msg = msg
+    def __init__(self):
+        pass
 
     def error_message(self):
-        output = self.msg
-        output += "\nPlease refer to our blog post at https://goo.gl/zdc7MR regarding upgrading to TLS 1.2."
+        output = "Please refer to our blog post at https://blog.dnanexus.com/2017-09-23-upgrading-tls/ regarding upgrading to TLS 1.2."
         return output
 
     def __str__(self):
