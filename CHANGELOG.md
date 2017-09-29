@@ -6,20 +6,22 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [236.0] - beta
+
 ### Added
 
-* Add Azure instance types to the list of available types in `dx-app-wizard` 
-* ua --test now displays system messages coming from the apiserver.
+* Azure instance types to the list of available types in `dx-app-wizard` 
+* ua -- test now displays system messages coming from the apiserver.
 
 ### Changed
 
-* Update references to workflow `inputs` and `outputs` to keep them in sync API server changes
+* Update references to workflow `inputs` and `outputs` to keep them in sync with API changes
 
-## [234.0] - beta
+## [235.1] - 2017.09.28 - stable
 
 * No significant changes
 
-## [233.0] - 2017.09.07 - stable
+## [233.0] - 2017.09.07
 
 ### Added
 
