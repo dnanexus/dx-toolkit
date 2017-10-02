@@ -75,8 +75,6 @@ def run_notebook(args):
 
     if args.notebook_type == 'jupyter':
         remote_port = 8888
-    elif args.notebook_type == 'rstudio':
-        remote_port = 8787
 
     setup_ssh_tunnel(job_id, args.port, remote_port)
 
