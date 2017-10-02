@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* New InvalidTLSProtocol Exception raised when connection fails due to wrong TLS protocol.
+
 ## [236.0] - beta
 
 ### Added
