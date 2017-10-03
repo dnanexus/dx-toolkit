@@ -41,7 +41,7 @@ except:
     pass
 
 IO_NAME_PATTERN = re.compile('^[a-zA-Z_][0-9a-zA-Z_]*$')
-
+DEFAULT_REGION = 'aws:us-east-1'
 API_VERSION = '1.0.0'
 
 parser = argparse.ArgumentParser(description="Create a source code directory for a DNAnexus app.  You will be prompted for various metadata for the app as well as for its input and output specifications.")
@@ -378,9 +378,11 @@ array:boolean  array:int      boolean        hash           string''')
     instance_type = prompt_for_var('Choose an instance type for your app',
                                    default=InstanceTypesCompleter.default_instance_type.Name,
                                    choices=list(InstanceTypesCompleter.instance_types))
-    app_json['runSpec'].setdefault('systemRequirements', {})
-    app_json['runSpec']['systemRequirements'].setdefault('*', {})
-    app_json['runSpec']['systemRequirements']['*']['instanceType'] = instance_type
+    app_json['regionalOptions'] = OrderedDict({})
+    app_json['regionalOptions'][DEFAULT_REGION] = OrderedDict({})
+    app_json['regionalOptions'][DEFAULT_REGION].setdefault('systemRequirements', {})
+    app_json['regionalOptions'][DEFAULT_REGION]['systemRequirements'].setdefault('*', {})
+    app_json['regionalOptions'][DEFAULT_REGION]['systemRequirements']['*']['instanceType'] = instance_type
 
     ######################
     # HARDCODED DEFAULTS #
