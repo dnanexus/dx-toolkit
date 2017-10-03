@@ -800,6 +800,7 @@ class TestDXClient(DXTestCase):
                 sleep_applet = dxpy.api.applet_new(dict(name="sleep",
                                                         runSpec={"code": "sleep 1200",
                                                                  "interpreter": "bash",
+                                                                 "distribution": "Ubuntu", "release": "14.04",
                                                                  "execDepends": [{"name": "dx-toolkit"}],
                                                                  "systemRequirements": {"*": {"instanceType": instance_type}}},
                                                         inputSpec=[], outputSpec=[],
@@ -895,13 +896,13 @@ class TestDXClient(DXTestCase):
         dxpy.config["DX_PROJECT_CONTEXT_ID"] = project
         with self.configure_ssh() as wd:
             launch_squid()
-            applet_json = dict(name="sleep",
+            applet_json = dict(self.base_app_spec, name="sleep",
                                runSpec={"code": "sleep 6000",
                                         "interpreter": "bash",
+                                        "distribution": "Ubuntu",
+                                        "release": "14.04",
                                         "execDepends": [{"name": "dx-toolkit"}],
                                         "systemRequirements": {"*": {"instanceType": instance_type}}},
-                               inputSpec=[], outputSpec=[],
-                               dxapi="1.0.0", version="1.0.0",
                                project=project)
             sleep_applet = dxpy.api.applet_new(applet_json)["id"]
 
@@ -1001,11 +1002,10 @@ class TestDXClient(DXTestCase):
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_run_debug_on(self):
         with self.configure_ssh() as wd:
-            crash_applet = dxpy.api.applet_new(dict(name="crash",
+            crash_applet = dxpy.api.applet_new(dict(self.base_app_spec, name="crash",
                                                     runSpec={"code": "exit 5", "interpreter": "bash",
+                                                             "distribution": "Ubuntu", "release": "14.04",
                                                              "execDepends": [{"name": "dx-toolkit"}]},
-                                                    inputSpec=[], outputSpec=[],
-                                                    dxapi="1.0.0", version="1.0.0",
                                                     project=self.project))["id"]
 
             job_id = run("dx run {} --yes --brief --debug-on AppInternalError".format(crash_applet),
@@ -1028,11 +1028,10 @@ class TestDXClient(DXTestCase):
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_run_debug_on_all(self):
         with self.configure_ssh() as wd:
-            crash_applet = dxpy.api.applet_new(dict(name="crash",
+            crash_applet = dxpy.api.applet_new(dict(self.base_app_spec, name="crash",
                                                 runSpec={"code": "exit 5", "interpreter": "bash",
+                                                         "distribution": "Ubuntu", "release": "14.04",
                                                          "execDepends": [{"name": "dx-toolkit"}]},
-                                                inputSpec=[], outputSpec=[],
-                                                dxapi="1.0.0", version="1.0.0",
                                                 project=self.project))["id"]
 
             job_id = run("dx run {} --yes --brief --debug-on All".format(crash_applet),
@@ -1482,7 +1481,7 @@ dxpy.run()
                         "dxapi": "1.0.0",
                         "inputSpec": [],
                         "outputSpec": [{"name": test_file_name, "class": "file"}],
-                        "runSpec": {"code": code_str, "interpreter": "python2.7"},
+                        "runSpec": {"code": code_str, "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04"},
                         "version": "1.0.0"}
             applet_id = dxpy.api.applet_new(app_spec)['id']
             applet = dxpy.DXApplet(applet_id)
@@ -1876,7 +1875,7 @@ class TestDXClientDownloadDataEgressBilling(DXTestCase):
                 "dxapi": "0.0.1",
                 "inputSpec": [{"name": "infile", "class": "file"}],
                 "outputSpec": [{"name": "outfile", "class": "file"}],
-                "runSpec": {"interpreter": "bash",
+                "runSpec": {"interpreter": "bash", "distribution": "Ubuntu", "release": "14.04",
                             "code": """
 dx-jobutil-add-output outfile `dx-jobutil-parse-link "$infile"`
 """
@@ -1960,6 +1959,8 @@ class TestDXClientDescribe(DXTestCase):
                                          "inputSpec": [],
                                          "outputSpec": [],
                                          "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "code": ""},
                                          "name": "applet_to_delete"})['id']
         app_new_output = dxpy.api.app_new({"name": "app_to_delete",
@@ -2004,6 +2005,8 @@ class TestDXClientRun(DXTestCase):
                 {"name": "outrecord", "class": "record"},
             ],
             "runSpec": {"interpreter": "bash",
+                        "distribution": "Ubuntu",
+                        "release": "14.04",
                         "code": """
 dx-jobutil-add-output outint $int0
 dx-jobutil-add-output outstring $string0
@@ -2109,6 +2112,8 @@ dx-jobutil-add-output outrecord $record0
                 {"name": "outrecord", "class": "record"},
             ],
             "runSpec": {"interpreter": "bash",
+                        "distribution": "Ubuntu",
+                        "release": "14.04",
                         "code": """
 record_id=`dx new record --close --brief`
 dx-jobutil-add-output outint 32
@@ -2186,6 +2191,8 @@ dx-jobutil-add-output outrecord $record_id
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
                                          "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "code": "echo 'hello'"}
                                          })['id']
         record_id0 = dxpy.api.record_new({"project": self.project,
@@ -2269,6 +2276,8 @@ dx-jobutil-add-output outrecord $record_id
                                          ],
                                          "outputSpec": [],
                                          "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "code": "echo 'hello'"}
                                          })['id']
 
@@ -2359,6 +2368,8 @@ dx-jobutil-add-output outrecord $record_id
                                          "inputSpec": [],
                                          "outputSpec": [],
                                          "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "code": "echo 'hello'"}
                                          })['id']
 
@@ -2385,6 +2396,8 @@ dx-jobutil-add-output outrecord $record_id
                                          "inputSpec": [],
                                          "outputSpec": [],
                                          "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "code": "echo 'hello'"}
                                          })['id']
 
@@ -2422,6 +2435,8 @@ dx-jobutil-add-output outrecord $record_id
                                          "inputSpec": [],
                                          "outputSpec": [],
                                          "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "code": "echo 'hello'"},
                                          "hidden": True,
                                          "name": applet_name})['id']
@@ -2456,6 +2471,8 @@ dx-jobutil-add-output outrecord $record_id
                                                         {"name": "record_array",
                                                          "class": "array:record"}],
                                          "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "bundledDepends": [],
                                                      "execDepends": [],
                                                      "code": '''
@@ -2510,6 +2527,8 @@ dx-jobutil-add-output record_array $second_record --array
                                          "name": "myapplet",
                                          "dxapi": "1.0.0",
                                          "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "code": ""},
                                          "access": {"project": "VIEW",
                                                     "allProjects": "VIEW",
@@ -2554,6 +2573,8 @@ dx-jobutil-add-output record_array $second_record --array
         extra_perms_applet = dxpy.api.applet_new({"project": self.project,
                                                   "dxapi": "1.0.0",
                                                   "runSpec": {"interpreter": "bash",
+                                                              "distribution": "Ubuntu",
+                                                              "release": "14.04",
                                                               "code": ""},
                                                   "access": {"developer": True,
                                                              "project": "UPLOAD",
@@ -2580,6 +2601,8 @@ dx-jobutil-add-output record_array $second_record --array
                                                   "inputSpec": [],
                                                   "outputSpec": [],
                                                   "runSpec": {"interpreter": "bash",
+                                                              "distribution": "Ubuntu",
+                                                              "release": "14.04",
                                                               "code": ""},
                                                   "access": {"allProjects": "CONTRIBUTE"}})["id"]
         # no warning when running at high priority
@@ -2624,6 +2647,8 @@ dx-jobutil-add-output record_array $second_record --array
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
                                          "runSpec": {"interpreter": "bash",
+                                                    "distribution": "Ubuntu",
+                                                    "release": "14.04",
                                                      "code": "echo 'hello'"}
                                          })['id']
         property_names = ["$my.prop", "secoиdprop", "тhird prop"]
@@ -2670,6 +2695,8 @@ dx-jobutil-add-output record_array $second_record --array
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
                                          "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "code": "echo 'hello'"}
                                          })['id']
         job_id = run("dx run " + applet_id + " -inumber=32 --name overwritten_name " +
@@ -2691,10 +2718,14 @@ dx-jobutil-add-output record_array $second_record --array
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
                                          "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "code": "echo 'hello'"}
                                          })['id']
         other_applet_id = dxpy.api.applet_new({"project": self.project,
                                                "dxapi": "1.0.0",
+                                               "distribution": "Ubuntu",
+                                               "release": "14.04",
                                                "runSpec": {"interpreter": "bash",
                                                            "code": "echo 'hello'"}
                                            })['id']
@@ -2859,6 +2890,8 @@ dx-jobutil-add-output record_array $second_record --array
                                          "inputSpec": [{"name": "array", "class": "array:int"}],
                                          "outputSpec": [{"name": "array", "class": "array:int"}],
                                          "runSpec": {"interpreter": "python2.7",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "code": '''#!/usr/bin/env python
 
 @dxpy.entry_point('main')
@@ -2907,6 +2940,8 @@ def main(array):
                                          "inputSpec": [],
                                          "outputSpec": [],
                                          "runSpec": {"interpreter": "python2.7",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "code": '''#!/usr/bin/env python
 
 @dxpy.entry_point('main')
@@ -2945,6 +2980,8 @@ def main():
                     "dxapi": "1.0.0",
                     "runSpec": {
                                 "interpreter": "bash",
+                                "distribution": "Ubuntu",
+                                "release": "14.04",
                                 "code": "echo 'hello'",
                                 "bundledDepends": [{"name": bundle_name,
                                                     "id": {"$dnanexus_link": bundle_file.get_id()}}]
@@ -2970,6 +3007,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "inputSpec": [{"name": "number", "class": "int"}],
                                          "outputSpec": [{"name": "number", "class": "int"}],
                                          "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "code": "exit 1"}
                                          })['id']
         workflow_id = run("dx new workflow myworkflow --output-folder /foo --brief").strip()
@@ -3052,6 +3091,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
             "inputSpec": [{"name": "number", "class": "int"}],
             "outputSpec": [{"name": "number", "class": "int"}],
             "runSpec": {"interpreter": "bash",
+                        "distribution": "Ubuntu",
+                        "release": "14.04",
                         "code": "dx-jobutil-add-output number 32"}
         })
 
@@ -3127,6 +3168,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "inputSpec": [{"name": "number", "class": "int"}],
                                          "outputSpec": [{"name": "number", "class": "int"}],
                                          "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "code": "dx-jobutil-add-output number 32"}
                                          })['id']
         workflow_id = run("dx new workflow myworkflow --brief").strip()
@@ -3164,6 +3207,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "inputSpec": [],
                                          "outputSpec": [],
                                          "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "code": ""}
                                          })['id']
 
@@ -3214,6 +3259,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "inputSpec": [],
                                          "outputSpec": [],
                                          "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "code": ""}
                                          })['id']
         workflow_id = run("dx new workflow myworkflow --brief").strip()
@@ -3262,6 +3309,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "inputSpec": [{"name": "number", "class": "int"}],
                                          "outputSpec": [{"name": "number", "class": "int"}],
                                          "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "code": "exit 1"}
                                          })['id']
         workflow_id = run("dx new workflow myworkflow --brief").strip()
@@ -3313,7 +3362,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "dxapi": "1.0.0",
                                          "inputSpec": [],
                                          "outputSpec": [],
-                                         "runSpec": {"interpreter": "bash", "code": ""}
+                                         "runSpec": {"interpreter": "bash", "code": "", "distribution": "Ubuntu", "release": "14.04"}
                                          })['id']
         run("dx add stage wØrkflØwname " + applet_id)
 
@@ -3363,6 +3412,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "inputSpec": [{"name": "number", "class": "int"}],
                                          "outputSpec": [{"name": "number", "class": "int"}],
                                          "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "code": "exit 0"}
                                          })['id']
         first_stage = run("dx add stage " + workflow_id + " -inumber=10 " + applet_id +
@@ -3380,6 +3431,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "inputSpec": [{"name": "number", "class": "int"}],
                                          "outputSpec": [{"name": "number", "class": "int"}],
                                          "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "code": "exit 0"}
                                          })['id']
         stage_ids = []
@@ -3543,6 +3596,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "inputSpec": [{"name": "number", "class": "int"}],
                                          "outputSpec": [{"name": "number", "class": "int"}],
                                          "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "code": "exit 0"}
                                          })['id']
         stage_id = run("dx add stage " + workflow_id + " " + applet_id + " --brief").strip()
@@ -3552,6 +3607,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                                "inputSpec": [],
                                                "outputSpec": [],
                                                "runSpec": {"interpreter": "bash",
+                                                           "distribution": "Ubuntu",
+                                                           "release": "14.04",
                                                            "code": "exit 0"}
                                            })['id']
 
@@ -3633,6 +3690,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "inputSpec": [{"name": "number", "class": "int"}],
                                          "outputSpec": [{"name": "number", "class": "int"}],
                                          "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "code": "exit 0"}
                                          })['id']
 
@@ -3759,6 +3818,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "inputSpec": [{"name": "number", "class": "int"}],
                                          "outputSpec": [{"name": "number", "class": "int"}],
                                          "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "code": "exit 0"}
                                          })['id']
         stage0 = {"id": "stage_0",
@@ -4227,6 +4288,8 @@ class TestDXClientFind(DXTestCase):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
                                          "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "code": "echo 'hello'"}
                                          })['id']
         property_names = ["$my.prop", "secoиdprop", "тhird prop"]
@@ -4267,6 +4330,7 @@ class TestDXClientFind(DXTestCase):
                      outputSpec=[{"name": "mappings", "class": "record"}],
                      runSpec={"code": "def main(): pass",
                               "interpreter": "python2.7",
+                              "distribution": "Ubuntu", "release": "14.04",
                               "execDepends": [{"name": "python-numpy"}]})
         dxrecord = dxpy.new_dxrecord()
         dxrecord.close()
@@ -4376,6 +4440,8 @@ class TestDXClientFind(DXTestCase):
                             outputSpec=[],
                             runSpec={"code": "sleep 1200",
                                      "interpreter": "bash",
+                                     "distribution": "Ubuntu",
+                                     "release": "14.04",
                                      "execDepends": [{"name": "dx-toolkit"}]},
                             project=temp_proj_id)
 
@@ -4388,6 +4454,7 @@ class TestDXClientFind(DXTestCase):
                          outputSpec=[],
                          runSpec={"code": "dx run " + dxworkflow.get_id() + " --project " + temp_proj_id,
                                   "interpreter": "bash",
+                                  "distribution": "Ubuntu", "release": "14.04",
                                   "execDepends": [{"name": "dx-toolkit"}]},
                          project=temp_proj_id)
 
@@ -5942,28 +6009,14 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertTrue(dx_build_app.APP_VERSION_RE.match('22.0.999-rc.1+git.abcdef') is not None)
 
     def test_version_suffixes(self):
-        app_spec = {
-            "name": "test_versioning_åpp",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="test_versioning_åpp")
         app_dir = self.write_app_directory("test_versioning_app", json.dumps(app_spec), "code.py")
         self.assertTrue(dx_build_app._get_version_suffix(app_dir, '1.0.0').startswith('+build.'))
         self.assertTrue(dx_build_app._get_version_suffix(app_dir, '1.0.0+git.abcdef')
                         .startswith('.build.'))
 
     def test_build_applet(self):
-        app_spec = {
-            "name": "minimal_applet",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="minimal_applet")
         app_dir = self.write_app_directory("minimal_åpplet", json.dumps(app_spec), "code.py")
         new_applet = json.loads(run("dx build --json " + app_dir))
         applet_describe = dxpy.get_handler(new_applet["id"]).describe()
@@ -5973,17 +6026,9 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     def test_build_applet_ignores_regional_options_in_dxapp(self):
         name = "asset_applet_{t}".format(t=int(time.time() * 1000))
-        app_spec = {
-            "name": name,
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0",
-
-            # Will be ignored when building applets.
-            "regionalOptions": {"aws:us-east-1": {}}
-            }
+        app_spec = dict(self.base_app_spec, name=name,
+                       # Will be ignored when building applets.
+                       regionalOptions = {"aws:us-east-1": {}})
         app_dir = self.write_app_directory(name, json.dumps(app_spec), "code.py")
         new_applet = json.loads(run("dx build --json " + app_dir))
         applet_describe = dxpy.get_handler(new_applet["id"]).describe()
@@ -5996,14 +6041,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
     def test_dx_build_applet_dxapp_json_created_with_makefile(self):
         app_name = "nodxapp_applet"
         app_dir = self.write_app_directory(app_name, None, "code.py")
-        app_spec = {
-            "name": app_name,
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name=app_name)
         makefile_str = "dxapp.json:\n\tcp temp_dxapp.json dxapp.json\n"
         with open(os.path.join(app_dir, 'temp_dxapp.json'), 'wb') as manifest:
             manifest.write(json.dumps(app_spec).encode())
@@ -6015,15 +6053,9 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         run("dx clearenv")
 
         # Case: Missing title, summary, description.
-        app_spec = {
-            "name": "dx_build_applet_missing_fields",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0",
-            "categories": ["Annotation"]
-            }
+        app_spec = dict(self.base_app_spec,
+                        name="dx_build_applet_missing_fields",
+                        categories=["Annotation"])
         app_dir = self.write_app_directory("dx_build_applet_missing_fields", json.dumps(app_spec), "code.py")
         args = ['dx', 'build', app_dir]
         p = subprocess.Popen(args, stderr=subprocess.PIPE)
@@ -6031,19 +6063,13 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertFalse(err.startswith("WARNING"))
 
         # Case: Usage of period at end of summary.
-        app_spec = {
-            "name": "dx_build_applet_summary_with_period",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0",
-            "title": "Title",
-            "summary": "Summary without period",
-            "description": "Description with period.",
-            "categories": ["Annotation"]
-            }
-        app_dir = self.write_app_directory("dx_build_applet_summary_with_period", json.dumps(app_spec), "code.py")
+        app_spec = dict(self.base_app_spec,
+                        name="dx_build_applet_summary_without_period",
+                        title="Title",
+                        summary="Summary without period",
+                        description="Description with period.",
+                        categories=["Annotation"])
+        app_dir = self.write_app_directory("dx_build_applet_summary_without_period", json.dumps(app_spec), "code.py")
         args = ['dx', 'build', app_dir]
         p = subprocess.Popen(args, stderr=subprocess.PIPE)
         out, err = p.communicate()
@@ -6051,18 +6077,12 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
         # Case: Usage of unknown categories.
         unknown_category = "asdf1234"
-        app_spec = {
-            "name": "dx_build_applet_unknown_cat",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0",
-            "title": "Title",
-            "summary": "Summary without period",
-            "description": "Description without period",
-            "categories": [unknown_category]
-            }
+        app_spec = dict(self.base_app_spec,
+                        name="dx_build_applet_unknown_cat",
+                        title="Title",
+                        summary="Summary without period",
+                        description="Description without period",
+                        categories=[unknown_category])
         app_dir = self.write_app_directory("dx_build_applet_unknown_cat", json.dumps(app_spec), "code.py")
         args = ['dx', 'build', app_dir]
         p = subprocess.Popen(args, stderr=subprocess.PIPE)
@@ -6070,14 +6090,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertFalse(err.startswith("WARNING"))
 
     def test_build_applet_dry_run(self):
-        app_spec = {
-            "name": "minimal_applet_dry_run",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="minimal_applet_dry_run")
         app_dir = self.write_app_directory("minimal_applet_dry_run", json.dumps(app_spec), "code.py")
         with self.assertSubprocessFailure(stderr_regexp='cannot be specified together', exit_code=2):
             run("dx build --dry-run " + app_dir + " --run -y --brief")
@@ -6086,14 +6099,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
     def test_build_applet_and_run_immediately(self):
-        app_spec = {
-            "name": "minimal_applet_to_run",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="minimal_applet_to_run")
         app_dir = self.write_app_directory("minimal_åpplet_to_run", json.dumps(app_spec), "code.py")
         job_id = run("dx build " + app_dir + ' --run -y --brief').strip()
         job_desc = json.loads(run('dx describe --json ' + job_id))
@@ -6111,14 +6117,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
     def test_remote_build_applet_and_run_immediately(self):
-        app_spec = {
-            "name": "minimal_remote_build_applet_to_run",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="minimal_remote_build_applet_to_run")
         app_dir = self.write_app_directory("minimal_remote_build_åpplet_to_run", json.dumps(app_spec),
                                            "code.py")
         job_name = ("remote_build_test_run_" + str(int(time.time() * 1000)) + "_" +
@@ -6132,14 +6131,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
     @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps and run jobs')
     def test_remote_build_app(self):
-        app_spec = {
-            "name": "minimal_remote_build_app",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="minimal_remote_build_app")
         app_dir = self.write_app_directory("minimal_remote_build_åpp", json.dumps(app_spec), "code.py")
         run("dx build --remote --app " + app_dir)
 
@@ -6161,14 +6153,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
     @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps and run jobs')
     def test_remote_build_applet(self):
-        app_spec = {
-            "name": "minimal_remote_build_applet",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="minimal_remote_build_applet")
         app_dir = self.write_app_directory("minimal_remote_build_åpplet", json.dumps(app_spec), "code.py")
         run("dx build --remote " + app_dir)
 
@@ -6189,27 +6174,13 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     def test_cannot_remote_build_multi_region_app(self):
         app_name = "asset_{t}_remote_multi_region_app".format(t=int(time.time()))
-        app_spec = {
-            "name": app_name,
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name=app_name)
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
         with self.assertSubprocessFailure(stderr_regexp='--region.*once for remote', exit_code=2):
             run("dx build --remote --app --region aws:us-east-1 --region azure:westus " + app_dir)
 
     def test_remote_build_app_and_run_immediately(self):
-        app_spec = {
-            "name": "minimal_remote_build_app_to_run",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="minimal_remote_build_app_to_run")
         app_dir = self.write_app_directory("minimal_remote_build_åpp_to_run", json.dumps(app_spec),
                                            "code.py")
         # Not supported yet
@@ -6267,14 +6238,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
     def test_build_app_warnings(self):
-        app_spec = {
-            "name": "Foo",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "foo"
-            }
+        app_spec = dict(self.base_app_spec, name="Foo", version="foo")
         app_dir = self.write_app_directory("test_build_app_warnings", json.dumps(app_spec), "code.py")
         app_unexpected_warnings = ["missing a name",
                                    "should be a short phrase not ending in a period",
@@ -6380,14 +6344,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
     def test_build_single_region_app_without_regional_options(self):
         # Backwards-compatible.
         app_name = "asset_{t}_single_region_app".format(t=int(time.time()))
-        app_spec = {
-            "name": app_name,
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name=app_name)
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
         new_app = json.loads(run("dx build --create-app --json " + app_dir))
         app_describe = json.loads(run("dx describe --json " + new_app["id"]))
@@ -6406,15 +6363,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                          'skipping test that would create apps')
     def test_build_app_with_regional_options(self):
         app_name = "app_regional_options"
-        app_spec = {
-            "name": app_name,
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0",
-            "regionalOptions": {"aws:us-east-1": {}}
-            }
+        app_spec = dict(self.base_app_spec, name=app_name, regionalOptions={"aws:us-east-1": {}})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
         new_app = json.loads(run("dx build --create-app --json " + app_dir))
         app_describe = json.loads(run("dx describe --json " + new_app["id"]))
@@ -6639,16 +6588,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                          'skipping test that would create apps')
     def test_update_multi_region_app(self):
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
-        app_spec = {
-            "name": app_name,
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0",
-            "regionalOptions": {"aws:us-east-1": {},
-                                "azure:westus": {}}
-            }
+        app_spec = dict(self.base_app_spec, name=app_name, regionalOptions = {"aws:us-east-1": {}, "azure:westus": {}})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
         app_new_res = json.loads(run("dx build --create-app --json " + app_dir))
@@ -6816,14 +6756,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
     def test_build_app_and_update_code(self):
-        app_spec = {
-            "name": "update_app_code",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="update_app_code")
         app_dir = self.write_app_directory("update_app_code", json.dumps(app_spec), "code.py", code_content="'v1'\n")
         json.loads(run("dx build --create-app --json " + app_dir))
 
@@ -6844,15 +6777,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
     def test_build_app_and_pretend_to_update_devs(self):
-        app_spec = {
-            "name": "test_build_app_and_pretend_to_update_devs",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0",
-            "developers": ['user-dnanexus']
-            }
+        app_spec = dict(self.base_app_spec, name="test_build_app_and_pretend_to_update_devs",
+                        developers = ['user-dnanexus'])
         app_dir = self.write_app_directory("test_build_app_and_pretend_to_update_devs",
                                            json.dumps(app_spec), "code.py")
 
@@ -6865,14 +6791,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
     def test_build_app_and_update_devs(self):
-        app_spec = {
-            "name": "test_build_app_and_update_devs",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="test_build_app_and_update_devs")
         app_dir = self.write_app_directory("test_build_app_and_update_devs", json.dumps(app_spec),
                                            "code.py")
 
@@ -6913,14 +6832,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
     def test_build_app_with_region(self):
-        app_spec = {
-            "name": "minimal_app_regions",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="minimal_app_regions")
         app_dir = self.write_app_directory("minimal_app_regions", json.dumps(app_spec), "code.py")
         new_app = json.loads(run("dx build --create-app --region aws:us-east-1 --json " + app_dir))
         app_describe = json.loads(run("dx describe --json " + new_app["id"]))
@@ -6957,17 +6869,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
     def test_invalid_project_context(self):
-        app_spec = {
-            "name": "invalid_project_context",
-            "dxapi": "1.0.0",
-            "runSpec": {
-                "file": "code.py",
-                "interpreter": "python2.7"
-                },
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="invalid_project_context")
         app_dir = self.write_app_directory("invalid_project_context", json.dumps(app_spec), "code.py")
         # Set the project context to a nonexistent project. This
         # shouldn't have any effect since building an app is supposed to
@@ -6993,15 +6895,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             run("dx build --json " + app_dir)
 
     def test_invalid_authorized_users(self):
-        app_spec = {
-            "name": "invalid_authorized_users",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0",
-            "authorizedUsers": "PUBLIC"
-            }
+        app_spec = dict(self.base_app_spec, name="invalid_authorized_users", authorizedUsers="PUBLIC")
         app_dir = self.write_app_directory("invalid_authorized_users", json.dumps(app_spec), "code.py")
         with self.assertSubprocessFailure(stderr_regexp='Expected authorizedUsers to be a list of strings'):
             run("dx build --json " + app_dir)
@@ -7013,51 +6907,29 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             run("dx build --json " + app_dir)
 
     def test_duplicate_keys_in_spec(self):
-        app_spec = {
-            "name": "test_duplicate_keys_in_spec",
-            "dxapi": "1.0.0",
-            "runSpec": {
-                "file": "code.py",
-                "interpreter": "python2.7"
-            },
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="test_duplicate_keys_in_spec")
         spec = json.dumps(app_spec).replace('"file": "code.py"', '"file": "code.py", "file": "code.py"')
         app_dir = self.write_app_directory("duplicate_keys_in_spec", spec, "code.py")
         with self.assertSubprocessFailure(stderr_regexp="duplicate key: "):
             run("dx build --json " + app_dir)
 
     def test_deps_without_network_access(self):
-        app_spec = {
-            "name": "test_deps_without_network_access",
-            "dxapi": "1.0.0",
-            "runSpec": {
-                "file": "code.py",
-                "interpreter": "python2.7",
-                "execDepends": [{"name": "ddd", "package_manager": "pip"}]
-                },
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="test_deps_without_network_access",
+                        runSpec={"execDepends": [{"name": "ddd", "package_manager": "pip"}],
+                                 "file": "code.py",
+                                 "interpreter": "python2.7",
+                                 "distribution": "Ubuntu",
+                                 "release": "14.04"})
         app_dir = self.write_app_directory("deps_without_network_access", json.dumps(app_spec),
                                            "code.py")
+
         with self.assertSubprocessFailure(stderr_regexp=("runSpec.execDepends specifies non-APT " +
                                                          "dependencies, but no network access spec " +
                                                          "is given")):
             run("dx build --json " + app_dir)
 
     def test_overwrite_applet(self):
-        app_spec = {
-            "name": "applet_overwriting",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="applet_overwriting")
         app_dir = self.write_app_directory("applet_overwriting", json.dumps(app_spec), "code.py")
         applet_id = json.loads(run("dx build --json " + app_dir))["id"]
         # Verify that we can succeed by writing to a different folder.
@@ -7072,15 +6944,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             run("dx describe " + applet_id)
 
     def test_overwrite_multiple_applets(self):
-        app_spec = {
-            "name": "applet_overwriting",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
-
+        app_spec = dict(self.base_app_spec, name="applet_overwriting")
         app_dir = self.write_app_directory("applet_overwriting", json.dumps(app_spec), "code.py")
 
         # Create two applets in different directories, but with the same name
@@ -7114,28 +6978,11 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         # Verify that the newly created applet exists
         run("dx describe " + app_final_spec["id"])
 
-
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
     def test_update_app_categories(self):
-        app1_spec = {
-            "name": "update_app_categories",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0",
-            "categories": ["A"]
-            }
-        app2_spec = {
-            "name": "update_app_categories",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.1",
-            "categories": ["B"]
-            }
+        app1_spec = dict(self.base_app_spec, name="update_app_categories", categories=["A"])
+        app2_spec = dict(self.base_app_spec, name="update_app_categories", categories=["B"])
         app_dir = self.write_app_directory("update_app_categories", json.dumps(app1_spec), "code.py")
         app_id = json.loads(run("dx build --create-app --json " + app_dir))['id']
         self.assertEquals(json.loads(run("dx api " + app_id + " listCategories"))["categories"], ['A'])
@@ -7146,32 +6993,9 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
     def test_update_app_authorized_users(self):
-        app0_spec = {
-            "name": "update_app_authorized_users",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "0.0.1"
-            }
-        app1_spec = {
-            "name": "update_app_authorized_users",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0",
-            "authorizedUsers": []
-            }
-        app2_spec = {
-            "name": "update_app_authorized_users",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.1",
-            "authorizedUsers": ["user-eve"]
-            }
+        app0_spec = dict(self.base_app_spec, name="update_app_authorized_users")
+        app1_spec = dict(self.base_app_spec, name="update_app_authorized_users", authorizedUsers=[])
+        app2_spec = dict(self.base_app_spec, name="update_app_authorized_users", authorizedUsers=["user-eve"])
         app_dir = self.write_app_directory("update_app_authorized_users", json.dumps(app0_spec),
                                            "code.py")
         app_id = json.loads(run("dx build --create-app --json " + app_dir))['id']
@@ -7205,14 +7029,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         except:
             app_id = None
         if app_id is None:
-            app_spec = {
-                "name": "test_dx_users",
-                "dxapi": "1.0.0",
-                "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-                "inputSpec": [],
-                "outputSpec": [],
-                "version": "0.0.1"
-                }
+            app_spec = dict(self.base_app_spec, name="test_dx_users", version="0.0.1")
             app_dir = self.write_app_directory("test_dx_users", json.dumps(app_spec), "code.py")
             app_id = json.loads(run("dx build --create-app --json " + app_dir))['id']
         # don't use "app-" prefix, duplicate and multiple members are fine
@@ -7265,14 +7082,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         except:
             app_id = None
         if app_id is None:
-            app_spec = {
-                "name": "test_dx_developers",
-                "dxapi": "1.0.0",
-                "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-                "inputSpec": [],
-                "outputSpec": [],
-                "version": "0.0.1"
-                }
+            app_spec = dict(self.base_app_spec, name="test_dx_developers", version="0.0.1")
             app_dir = self.write_app_directory("test_dx_developers", json.dumps(app_spec), "code.py")
             app_desc = json.loads(run("dx build --create-app --json " + app_dir))
             app_id = app_desc['id']
@@ -7315,14 +7125,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
     def test_build_app_autonumbering(self):
-        app_spec = {
-            "name": "build_app_autonumbering",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="build_app_autonumbering")
         app_dir = self.write_app_directory("build_app_autonumbering", json.dumps(app_spec), "code.py")
         run("dx build --create-app --json --publish " + app_dir)
         with self.assertSubprocessFailure(stderr_regexp="Could not create"):
@@ -7330,14 +7133,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         run("dx build --create-app --json " + app_dir) # Creates autonumbered version
 
     def test_build_failure(self):
-        app_spec = {
-            "name": "build_failure",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="build_failure")
         app_dir = self.write_app_directory("build_failure", json.dumps(app_spec), "code.py")
         with open(os.path.join(app_dir, 'Makefile'), 'w') as makefile:
             makefile.write("all:\n\texit 7")
@@ -7348,14 +7144,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             run("dx build --no-parallel-build " + app_dir)
 
     def test_syntax_checks(self):
-        app_spec = {
-            "name": "syntax_checks",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="syntax_checks")
         app_dir = self.write_app_directory("syntax_checks",
                                            json.dumps(app_spec),
                                            code_filename="code.py",
@@ -7370,7 +7159,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         app_spec = {
             "name": "build_applet_remote",
             "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "runSpec": {"file": "code.py", "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04"},
             "inputSpec": [
                 {"name": "in1", "class": "int"},
             ],
@@ -7380,10 +7169,10 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "version": "1.0.0"
             }
         app_code = """import dxpy
-@dxpy.entry_point("main")
-def main(in1):
-    return {"out1": in1 + 1}
-"""
+# @dxpy.entry_point("main")
+# def main(in1):
+#     return {"out1": in1 + 1}
+# """
         app_dir = self.write_app_directory(
             'build_applet_remote', json.dumps(app_spec), code_filename='code.py', code_content=app_code)
         remote_build_output = run('dx build --remote ' + app_dir).strip().split('\n')[-1]
@@ -7401,7 +7190,7 @@ def main(in1):
         app_spec = {
             "name": "applet_help",
             "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "runSpec": {"file": "code.py", "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04"},
             "inputSpec": [
                 {"name": "reads", "class": "array:gtable", "type": "LetterReads", "label": "Reads",
                  "help": "One or more Reads table objects."},
@@ -7427,14 +7216,7 @@ def main(in1):
     def test_upload_resources(self):
         run("dx mkdir /subfolder")
         cd("/subfolder")
-        app_spec = {
-            "name": "upload_resources",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="upload_resources")
         app_dir = self.write_app_directory("upload_app_resources", json.dumps(app_spec), "code.py")
         os.mkdir(os.path.join(app_dir, 'resources'))
         with open(os.path.join(app_dir, 'resources', 'test.txt'), 'w') as resources_file:
@@ -7478,14 +7260,7 @@ def main(in1):
         return res_temp_dir
 
     def test_upload_resources_symlink(self):
-        app_spec = {
-            "name": "upload_resources_symlink",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-        }
+        app_spec = dict(self.base_app_spec, name="upload_resources_symlink")
         test_symlink_dir = "upload_resources_symlink"
         os.mkdir(os.path.join(self.temp_file_path, test_symlink_dir))
         app_dir = self.write_app_directory(os.path.join(self.temp_file_path, test_symlink_dir, 'app'), json.dumps(app_spec), "code.py")
@@ -7730,14 +7505,7 @@ def main(in1):
         shutil.rmtree(res_temp_dir)
 
     def test_upload_resources_permissions(self):
-        app_spec = {
-            "name": "upload_resources_permissions",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-        }
+        app_spec = dict(self.base_app_spec, name="upload_resources_permissions")
         test_perms_dir = "upload_resources_permissions"
         os.mkdir(os.path.join(self.temp_file_path, test_perms_dir))
         app_dir = self.write_app_directory(os.path.join(self.temp_file_path, test_perms_dir, 'app'), json.dumps(app_spec), "code.py")
@@ -7821,14 +7589,7 @@ def main(in1):
 
 
     def test_upload_resources_advanced(self):
-        app_spec = {
-            "name": "upload_resources_advanced",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="upload_resources_advanced")
         app_dir = self.write_app_directory("upload_åpp_resources_advanced", json.dumps(app_spec), "code.py")
         os.mkdir(os.path.join(app_dir, 'resources'))
 
@@ -7936,14 +7697,7 @@ def main(in1):
         # symlink change and NOT create a new tarball, so we won't test that
 
     def test_archive_in_another_project(self):
-        app_spec = {
-            "name": "archive_in_another_project",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="archive_in_another_project")
         app_dir = self.write_app_directory("archive_in_another_project", json.dumps(app_spec), "code.py")
 
         with temporary_project("Temporary working project", select=True) as temp_project:
@@ -7955,44 +7709,20 @@ def main(in1):
                              new_applet)
 
     def test_categories_propagated_to_tags(self):
-        app_spec = {
-            "name": "categories_propagated_to_tags",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0",
-            "tags": ["mytag"],
-            "categories": ["Import"]
-            }
+        app_spec = dict(self.base_app_spec, name="update_app_categories", categories=["Import"], tags=["mytag"])
         app_dir = self.write_app_directory("categories_propagated_to_tags", json.dumps(app_spec), "code.py")
         applet_id = json.loads(run("dx build --json -d categories1 " + app_dir))["id"]
         self.assertEqual(set(dxpy.DXApplet(applet_id).describe()["tags"]),
                          set(["mytag", "Import"]))
 
-        app_spec2 = {
-            "name": "categories_propagated_to_tags",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0",
-            "categories": ["Import"]
-            }
+        app_spec2 = dict(self.base_app_spec, name="update_app_categories", categories=["Import"])
         app_dir2 = self.write_app_directory("categories_propagated_to_tags", json.dumps(app_spec2), "code.py")
         applet_id2 = json.loads(run("dx build --json -d categories2 " + app_dir2))["id"]
         self.assertEqual(set(dxpy.DXApplet(applet_id2).describe()["tags"]),
                          set(["Import"]))
 
     def test_bundled_depends_reuse(self):
-        app_spec = {
-            "name": "bundled_depends_reuse",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="bundled_depends_reuse")
         app_dir = self.write_app_directory("bundled_depends_reuse", json.dumps(app_spec), "code.py")
         os.mkdir(os.path.join(app_dir, 'resources'))
         with open(os.path.join(app_dir, 'resources', 'foo.txt'), 'w') as file_in_resources:
@@ -8024,14 +7754,7 @@ def main(in1):
         )
 
     def test_bundled_depends_reuse_with_force(self):
-        app_spec = {
-            "name": "bundled_depends_reuse_with_force",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="bundled_depends_reuse_with_force")
         app_dir = self.write_app_directory("bundled_depends_reuse_with_force", json.dumps(app_spec), "code.py")
         os.mkdir(os.path.join(app_dir, 'resources'))
         with open(os.path.join(app_dir, 'resources', 'foo.txt'), 'w') as file_in_resources:
@@ -8056,14 +7779,7 @@ def main(in1):
 
     @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
     def test_build_without_context(self):
-        app_spec = {
-            "name": "applet_without_context",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="applet_without_context")
         app_dir = self.write_app_directory("applet_without_context", json.dumps(app_spec), "code.py")
 
         # Without project context, cannot create new object without
@@ -8088,19 +7804,9 @@ def main(in1):
         record_properties = {"version": "0.0.1"}
         dxpy.new_dxrecord(project=self.project, types=["AssetBundle"], details=record_details, name=record_name,
                           properties=record_properties, close=True)
-
-        app_spec = {
-            "name": "asset_depends",
-            "dxapi": "1.0.0",
-            "runSpec": {
-                "file": "code.py",
-                "interpreter": "python2.7",
-                "assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project}]
-            },
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="asset_depends",
+                        runSpec = {"assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project}],
+                                   "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
         app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
         asset_applet = json.loads(run("dx build --json {app_dir}".format(app_dir=app_dir)))["id"]
 
@@ -8122,18 +7828,9 @@ def main(in1):
         record = dxpy.new_dxrecord(project=self.project, types=["AssetBundle"], details=record_details,
                                    name=record_name, properties=record_properties, close=True)
 
-        app_spec = {
-            "name": "asset_depends",
-            "dxapi": "1.0.0",
-            "runSpec": {
-                "file": "code.py",
-                "interpreter": "python2.7",
-                "assetDepends": [{"id": record.get_id()}]
-            },
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="asset_depends",
+                        runSpec={"assetDepends": [{"id": record.get_id()}],
+                                 "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
         app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
         asset_applet = json.loads(run("dx build --json {app_dir}".format(app_dir=app_dir)))["id"]
         self.assertEquals(
@@ -8154,18 +7851,9 @@ def main(in1):
         dxpy.new_dxrecord(project=self.project, types=["AssetBundle"], details=record_details, name=record_name,
                           properties=record_properties, close=True)
 
-        app_spec = {
-            "name": "asset_depends",
-            "dxapi": "1.0.0",
-            "runSpec": {
-                "file": "code.py",
-                "interpreter": "python2.7",
-                "assetDepends": [{"name": record_name, "version": "0.1.1", "project": self.project}]
-            },
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="asset_depends",
+                       runSpec={"assetDepends": [{"name": record_name, "version": "0.1.1", "project": self.project}],
+                                "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
         app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
         with self.assertSubprocessFailure(stderr_regexp="No asset bundle was found", exit_code=3):
             run("dx build --json {app_dir}".format(app_dir=app_dir))
@@ -8183,18 +7871,9 @@ def main(in1):
         dxpy.new_dxrecord(project=self.project, types=["AssetBundle"], details=record_details, name=record_name,
                           properties=record_properties, close=True)
 
-        app_spec = {
-            "name": "asset_depends",
-            "dxapi": "1.0.0",
-            "runSpec": {
-                "file": "code.py",
-                "interpreter": "python2.7",
-                "assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project}]
-            },
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="asset_depends",
+                        runSpec={"assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project}],
+                                 "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
         app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
         with self.assertSubprocessFailure(stderr_regexp="The required field 'archiveFileId'", exit_code=3):
             run("dx build --json {app_dir}".format(app_dir=app_dir))
@@ -8214,18 +7893,10 @@ def main(in1):
 
         # create an applet with assetDepends in a different project
         with temporary_project('test_select_project', select=True):
-            app_spec = {
-                "name": "asset_depends",
-                "dxapi": "1.0.0",
-                "runSpec": {
-                    "file": "code.py",
-                    "interpreter": "python2.7",
-                    "assetDepends": [{"id": record.get_id()}]
-                },
-                "inputSpec": [],
-                "outputSpec": [],
-                "version": "1.0.0"
-                }
+            app_spec = dict(self.base_app_spec, name="asset_depends",
+                            runSpec={"assetDepends": [{"id": record.get_id()}],
+                                      "file": "code.py", "distribution": "Ubuntu", "release": "14.04",
+                                      "interpreter": "python2.7"})
             app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
             run("dx build --json {app_dir}".format(app_dir=app_dir))
             temp_record_id = run("dx ls {asset} --brief".format(asset=record_name)).strip()
@@ -8251,7 +7922,7 @@ def main(in1):
             app_spec = dict(self.base_app_spec,
                             name=app_name,
                             runSpec={"file": "code.py",
-                                     "interpreter": "python2.7",
+                                     "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04",
                                      "assetDepends": [{"id": record.get_id()}]})
             app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
             run("dx build --dry-run {app_dir}".format(app_dir=app_dir))
@@ -8272,18 +7943,9 @@ def main(in1):
         dxpy.new_dxrecord(project=self.project, types=["AssetBundle"], details=record_details, name=record_name,
                           properties=record_properties, close=True)
 
-        app_spec = {
-            "name": "asset_depends",
-            "dxapi": "1.0.0",
-            "runSpec": {
-                "file": "code.py",
-                "interpreter": "python2.7",
-                "assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project}]
-            },
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(self.base_app_spec, name="asset_depends",
+                        runSpec={"assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project}],
+                                  "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
         app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
         asset_applet = json.loads(run("dx build --json {app_dir}".format(app_dir=app_dir)))["id"]
 
@@ -8303,13 +7965,15 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
                                             "dxapi": "1.0.0",
                                             "inputSpec": [{"name": "my_number_in_01", "class": "int"}],
                                             "outputSpec": [{"name": "my_number_out_01", "class": "int"}],
-                                            "runSpec": {"interpreter": "bash", "code": "exit 0"}})['id']
+                                            "runSpec": {"interpreter": "bash", "code": "exit 0",
+                                                        "distribution": "Ubuntu", "release": "14.04"}})['id']
         applet_02_id = dxpy.api.applet_new({"name": "myapplet_02",
                                             "project": self.project,
                                             "dxapi": "1.0.0",
                                             "inputSpec": [{"name": "my_number_in_02", "class": "int"}],
                                             "outputSpec": [{"name": "my_number_out_02", "class": "int"}],
-                                            "runSpec": {"interpreter": "bash", "code": "exit 0"}})['id']
+                                            "runSpec": {"interpreter": "bash", "code": "exit 0",
+                                                        "distribution": "Ubuntu", "release": "14.04"}})['id']
         stage_01_name = "Stage 1 name"
         stage_01_id = dxpy.api.workflow_add_stage(workflow_id,
                                                   {"editVersion": 0, "executable": applet_01_id,
@@ -8383,7 +8047,11 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
         app_spec = {
             "name": "get_applet",
             "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "runSpec": {
+              "file": "code.py",
+              "interpreter": "python2.7",
+              "distribution": "Ubuntu",
+              "release": "14.04"},
             "inputSpec": [{
                 "name": "in1",
                 "help": "A help for in1 input param",
@@ -8413,7 +8081,8 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
         # description and developerNotes should be un-inlined back to files
         output_app_spec = dict((k, v) for (k, v) in app_spec.iteritems() if k not in ('description',
                                                                                       'developerNotes'))
-        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7"}
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
+                                      "distribution": "Ubuntu", "release": "14.04"}
 
         app_dir = self.write_app_directory("get_åpplet", json.dumps(app_spec), "code.py",
                                            code_content="import os\n")
@@ -8524,7 +8193,7 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
         app_spec = {
             "name": "get_applet",
             "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "runSpec": {"file": "code.py", "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04"},
             "inputSpec": [{"name": "in1", "class": "file"}],
             "outputSpec": [{"name": "out1", "class": "file"}],
             "description": "Description\n",
@@ -8537,7 +8206,8 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
         # description and developerNotes should be un-inlined back to files
         output_app_spec = dict((k, v) for (k, v) in app_spec.iteritems() if k not in ('description',
                                                                                       'developerNotes'))
-        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7"}
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
+                                      "distribution": "Ubuntu", "release": "14.04"}
 
         app_dir = self.write_app_directory("get_åpplet", json.dumps(app_spec), "code.py",
                                            code_content="import os\n")
@@ -8565,15 +8235,10 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
         # When retrieving the applet, we'll get back an empty list for
         # types, tags, etc. Those should not be written back to the
         # dxapp.json so as not to pollute it.
-        app_spec = {
-            "name": "get_applet_field_cleanup",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": []
-            }
+        app_spec = dict(self.base_applet_spec, name="get_applet_field_cleanup")
         output_app_spec = app_spec.copy()
-        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7"}
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
+                                      "distribution": "Ubuntu", "release": "14.04"}
 
         app_dir = self.write_app_directory("get_åpplet_field_cleanup", json.dumps(app_spec), "code.py",
                                            code_content="import os\n")
@@ -8593,15 +8258,10 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
     def test_get_applet_on_windows(self):
         # This test is to verify that "dx get applet" works correctly on windows,
         # making sure the resource directory is downloaded.
-        app_spec = {
-            "name": "get_applet_windows",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [],
-            "outputSpec": []
-            }
+        app_spec = dict(self.base_applet_spec, name="get_applet_windows")
         output_app_spec = app_spec.copy()
-        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7"}
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
+                                      "distribution": "Ubuntu", "release": "14.04"}
 
         app_dir = self.write_app_directory("get_åpplet_windows", json.dumps(app_spec), "code.py",
                                            code_content="import os\n")
@@ -8632,7 +8292,8 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
             "name": name,
             "title": "Sir",
             "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "runSpec": {"file": "code.py", "interpreter": "python2.7",
+                        "distribution": "Ubuntu", "release": "14.04"},
             "inputSpec": [{"name": "in1", "class": "file"}],
             "outputSpec": [{"name": "out1", "class": "file"}],
             "description": "Description\n",
@@ -8646,7 +8307,8 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
         output_app_spec = dict((k, v)
                                for (k, v) in app_spec.iteritems()
                                if k not in ('description', 'developerNotes'))
-        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7"}
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
+                                      "distribution": "Ubuntu", "release": "14.04"}
 
         app_dir = self.write_app_directory(name,
                                            json.dumps(app_spec),
@@ -8806,7 +8468,7 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
         output_app_spec = dict((k, v)
                                for (k, v) in app_spec.iteritems()
                                if k not in ('description', 'developerNotes'))
-        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7"}
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04"}
 
         app_dir = self.write_app_directory(app_name,
                                            json.dumps(app_spec),
