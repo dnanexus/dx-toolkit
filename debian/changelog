@@ -1,3 +1,9 @@
+dx-toolkit (0.236.2) precise; urgency=low
+
+  * Changed: execDepends ignore of dx-toolkit and jq
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 04 Oct 2017 18:40:49 +0000
+
 dx-toolkit (0.236.1) precise; urgency=low
 
   * Revert ignore of dx-toolkit in execDepends
