@@ -1,3 +1,9 @@
+dx-toolkit (0.235.2) precise; urgency=low
+
+  * Revert ignore of dx-toolkit in execDepends
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 04 Oct 2017 00:55:16 +0000
+
 dx-toolkit (0.235.1) precise; urgency=low
 
   * Added ua --test now displays system messages coming from the apiserver
