@@ -1,3 +1,9 @@
+dx-toolkit (0.236.1) precise; urgency=low
+
+  * Revert ignore of dx-toolkit in execDepends
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 04 Oct 2017 00:54:39 +0000
+
 dx-toolkit (0.236.0) precise; urgency=low
 
   * Added: Azure instance types to the list of available types in 'dx-app-wizard'
