@@ -1,3 +1,9 @@
+dx-toolkit (0.237.0) precise; urgency=low
+
+  * Changed: dx-toolkit installation in job container
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 04 Oct 2017 18:38:42 +0000
+
 dx-toolkit (0.236.0) precise; urgency=low
 
   * Added: Azure instance types to the list of available types in 'dx-app-wizard'
