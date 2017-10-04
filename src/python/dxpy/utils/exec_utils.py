@@ -305,8 +305,8 @@ class DXExecDependencyInstaller(object):
 
             dep_type = self._get_dependency_type(dep)
 
-            # Ignore dx-toolkit from execdepends
-            if dep["name"] == "dx-toolkit" and dep_type == "apt":
+            # Ignore dx-toolkit and jq from execDepends. They do not play nice
+            if dep["name"] in ("dx-toolkit", "jq") and dep_type == "apt":
                 continue
                 
             if "stages" in dep and self.stage not in dep["stages"]:
