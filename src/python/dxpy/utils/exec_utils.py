@@ -302,12 +302,19 @@ class DXExecDependencyInstaller(object):
                                    self.run_spec.get("execDepends", []),
                                    self.run_spec.get("dependencies", [])):
             self._validate_dependency(dep)
+
+            dep_type = self._get_dependency_type(dep)
+
+            # Ignore dx-toolkit and jq from execDepends. They do not play nice
+            if dep["name"] in ("dx-toolkit", "jq") and dep_type == "apt":
+                continue
+                
             if "stages" in dep and self.stage not in dep["stages"]:
                 self.log("Skipping dependency {} because it is inactive in stage (function) {}".format(dep["name"],
                                                                                                        self.stage))
                 continue
 
-            dep_type = self._get_dependency_type(dep)
+            
             if len(self.dep_groups) == 0 or self.dep_groups[-1]["type"] != dep_type or dep_type not in self.group_pms:
                 self.dep_groups.append({"type": dep_type, "deps": [], "index": len(self.dep_groups)})
             self.dep_groups[-1]["deps"].append(dep)
