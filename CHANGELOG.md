@@ -6,11 +6,30 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* dx-toolkit and apt conflict with argcomplete
+
+### Added
+
+* dx-clone-asset script
+
+## [237.0] - beta
+
 ### Added
 
 * New InvalidTLSProtocol Exception raised when connection fails due to wrong TLS protocol.
 
-## [236.0] - beta
+### Changed
+
+* Remove rstudio option for `dx notebook`
+
+## [236.2] - 2017.10.4 - stable
+
+
+### Fixed
+
+* dx-toolkit and apt conflict with jq
 
 ### Added
 
