@@ -473,13 +473,19 @@ class DXTestCaseBuildApps(DXTestCase):
     app destruction, and extraction of app data as local files.
     """
 
-    base_app_spec = {
+    base_applet_spec = {
         "dxapi": "1.0.0",
-        "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+        "runSpec": {
+          "file": "code.py",
+          "interpreter": "python2.7",
+          "distribution": "Ubuntu",
+          "release": "14.04"
+          },
         "inputSpec": [],
-        "outputSpec": [],
-        "version": "1.0.0"
+        "outputSpec": []
     }
+
+    base_app_spec = dict(base_applet_spec, version="1.0.0")
 
     def setUp(self):
         super(DXTestCaseBuildApps, self).setUp()
