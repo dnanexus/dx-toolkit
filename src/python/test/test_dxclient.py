@@ -1481,7 +1481,8 @@ dxpy.run()
                         "dxapi": "1.0.0",
                         "inputSpec": [],
                         "outputSpec": [{"name": test_file_name, "class": "file"}],
-                        "runSpec": {"code": code_str, "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04"},
+                        "runSpec": {"code": code_str, "interpreter": "python2.7",
+                                    "distribution": "Ubuntu", "release": "14.04"},
                         "version": "1.0.0"}
             applet_id = dxpy.api.applet_new(app_spec)['id']
             applet = dxpy.DXApplet(applet_id)
@@ -3362,7 +3363,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "dxapi": "1.0.0",
                                          "inputSpec": [],
                                          "outputSpec": [],
-                                         "runSpec": {"interpreter": "bash", "code": "", "distribution": "Ubuntu", "release": "14.04"}
+                                         "runSpec": {"interpreter": "bash", "code": "",
+                                                     "distribution": "Ubuntu", "release": "14.04"}
                                          })['id']
         run("dx add stage wØrkflØwname " + applet_id)
 
@@ -6142,7 +6144,10 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "name": "minimal_remote_build_app_trusty",
             "dxapi": "1.0.0",
             # Use a package specific to trusty but not in precise as part of the execdepends to ensure it is installed properly
-            "runSpec": {"file": "code.py", "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04", "buildDepends": [{"name": "postgresql-9.3"}], "systemRequirements": {"*": {"instanceType": "mem1_ssd1_x4"}}},
+            "runSpec": {"file": "code.py", "interpreter": "python2.7",
+                        "distribution": "Ubuntu", "release": "14.04",
+                        "buildDepends": [{"name": "postgresql-9.3"}],
+                        "systemRequirements": {"*": {"instanceType": "mem1_ssd1_x4"}}},
             "inputSpec": [],
             "outputSpec": [],
             "version": "1.0.0"
@@ -6164,7 +6169,10 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "name": "minimal_remote_build_applet_trusty",
             "dxapi": "1.0.0",
             # Use a package specific to trusty but not in precise as part of the execdepends to ensure it is installed properly
-            "runSpec": {"file": "code.py", "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04", "buildDepends": [{"name": "postgresql-9.3"}], "systemRequirements": {"*": {"instanceType": "mem1_ssd1_x4"}}},
+            "runSpec": {"file": "code.py", "interpreter": "python2.7",
+                        "distribution": "Ubuntu", "release": "14.04",
+                        "buildDepends": [{"name": "postgresql-9.3"}],
+                        "systemRequirements": {"*": {"instanceType": "mem1_ssd1_x4"}}},
             "inputSpec": [],
             "outputSpec": [],
             "version": "1.0.0"
@@ -6193,7 +6201,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "summary": "a summary sentence.",
             "description": "foo",
             "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "runSpec": {"file": "code.py", "interpreter": "python2.7",
+                        "distribution": "Ubuntu", "release": "14.04"},
             "inputSpec": [{"name": "34", "class": "int"}],
             "outputSpec": [{"name": "92", "class": "string"}],
             "version": "1.0.0",
@@ -6271,7 +6280,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         app_spec = {
             "name": "test_build_app_suggestions",
             "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "runSpec": {"file": "code.py", "interpreter": "python2.7",
+                        "distribution": "Ubuntu", "release": "14.04"},
             "inputSpec": [{"name": "testname", "class": "file", "suggestions": []}],
             "outputSpec": [],
             "version": "0.0.1"
@@ -6315,7 +6325,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
     def test_build_app_suggestions_success(self):
         app_spec = {"name": "test_build_app_suggestions",
                     "dxapi": "1.0.0",
-                    "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+                    "runSpec": {"file": "code.py", "interpreter": "python2.7",
+                                "distribution": "Ubuntu", "release": "14.04"},
                     "inputSpec": [{"name": "testname", "class": "gtable", "suggestions": []}],
                     "outputSpec": [], "version": "0.0.1"}
 
@@ -6884,6 +6895,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "runSpec": {
                 "file": "code.py",
                 "interpreter": "python2.7",
+                "distribution": "Ubuntu", "release": "14.04",
                 "execDepends": {"name": "oops"}
                 },
             "inputSpec": [],
@@ -8456,7 +8468,8 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
             "name": app_name,
             "title": "Sir",
             "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "runSpec": {"file": "code.py", "interpreter": "python2.7",
+                        "distribution": "Ubuntu", "release": "14.04"},
             "inputSpec": [{"name": "in1", "class": "file"}],
             "outputSpec": [{"name": "out1", "class": "file"}],
             "description": "Description\n",
@@ -8468,7 +8481,8 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
         output_app_spec = dict((k, v)
                                for (k, v) in app_spec.iteritems()
                                if k not in ('description', 'developerNotes'))
-        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04"}
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
+                                      "distribution": "Ubuntu", "release": "14.04"}
 
         app_dir = self.write_app_directory(app_name,
                                            json.dumps(app_spec),
@@ -8512,7 +8526,8 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
             "name": name,
             "title": name,
             "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "runSpec": {"file": "code.py", "interpreter": "python2.7",
+                        "distribution": "Ubuntu", "release": "14.04"},
             "inputSpec": [],
             "outputSpec": [],
             "description": "Description\n",

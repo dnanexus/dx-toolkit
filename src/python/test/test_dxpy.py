@@ -1215,6 +1215,7 @@ def main():
     pass
 ''',
                               "interpreter": "python2.7",
+                              "distribution": "Ubuntu", "release": "14.04",
                               "execDepends": [{"name": "python-numpy"}]})
         dxrecord = dxpy.new_dxrecord()
         dxrecord.close()
@@ -1312,7 +1313,8 @@ def main(number):
                                 {"name": "othernumber", "class": "int"}],
                      outputSpec=[{"name": "number", "class": "int"}],
                      runSpec={"code": self.codeSpec,
-                               "interpreter": "python2.7"})
+                              "distribution": "Ubuntu", "release": "14.04",
+                              "interpreter": "python2.7"})
         stage_id = dxpy.api.workflow_add_stage(dxworkflow.get_id(),
                                                {"editVersion": 0,
                                                 "name": "stagename",
@@ -1348,7 +1350,8 @@ def main(number):
                      dxapi="1.04",
                      inputSpec=[{"name": "number", "class": "int"}],
                      outputSpec=[{"name": "number", "class": "int"}],
-                     runSpec={"code": self.codeSpec, "interpreter": "python2.7"})
+                     runSpec={"code": self.codeSpec, "interpreter": "python2.7",
+                              "distribution": "Ubuntu", "release": "14.04"})
 
         stage0 = {'id': 'stage_0', 'executable': dxapplet.get_id(),
                   'input': {'number': {'$dnanexus_link': {'workflowInputField': 'foo'}}}}
@@ -1388,6 +1391,7 @@ def main(number):
                      inputSpec=[],
                      outputSpec=[],
                      runSpec={"code": '',
+                              "distribution": "Ubuntu", "release": "14.04",
                               "interpreter": "bash"})
         stage_id = dxpy.api.workflow_add_stage(dxworkflow.get_id(),
                                                {"editVersion": 0,
@@ -1429,7 +1433,8 @@ def main(number):
                      dxapi="1.04",
                      inputSpec=[],
                      outputSpec=[],
-                     runSpec={"code": '', "interpreter": "bash"})
+                     runSpec={"code": '', "interpreter": "bash",
+                              "distribution": "Ubuntu", "release": "14.04"})
         dxworkflow.add_stage(dxapplet, name="stagename", folder="foo")
         second_stage_id = dxworkflow.add_stage(dxapplet, name="otherstagename", folder="/myoutput")
 
@@ -1469,7 +1474,7 @@ def main(number):
                      dxapi="1.04",
                      inputSpec=[],
                      outputSpec=[],
-                     runSpec={"code": '', "interpreter": "bash"})
+                     runSpec={"code": '', "interpreter": "bash", "distribution": "Ubuntu", "release": "14.04"})
         stage_id = dxworkflow.add_stage(dxapplet, name="stagename", folder="foo")
 
         # make initial analysis
@@ -1496,7 +1501,8 @@ def main(number):
                      inputSpec=[{"name": "number", "class": "int"}],
                      outputSpec=[{"name": "number", "class": "int"}],
                      runSpec={"code": self.codeSpec,
-                               "interpreter": "python2.7"})
+                              "interpreter": "python2.7",
+                              "distribution": "Ubuntu", "release": "14.04"})
         dxworkflow.add_stage(dxapplet, name='stagename')
 
         # Can't specify the same input more than once (with a
@@ -1526,7 +1532,8 @@ def main(number):
                      dxapi="1.04",
                      inputSpec=[{'name': 'in', 'class': 'int'}],
                      outputSpec=[],
-                     runSpec={"code": '', "interpreter": "bash"})
+                     runSpec={"code": '', "interpreter": "bash",
+                              "distribution": "Ubuntu", "release": "14.04"})
 
         wf_input = [{'name': 'foo', 'class': 'int'}]
         wf_output = [{'name': 'bar', 'class': 'int',
@@ -1598,7 +1605,8 @@ def main(number):
         dxapplet.new(dxapi="1.0.0",
                      inputSpec=[{"name": "my_input", "class": "string"}],
                      outputSpec=[],
-                     runSpec={"code": "", "interpreter": "bash"})
+                     runSpec={"code": "", "interpreter": "bash",
+                              "distribution": "Ubuntu", "release": "14.04"})
         # Add stages
         first_stage = dxworkflow.add_stage(dxapplet, name='stagename', folder="/outputfolder",
                                            stage_input={"my_input": "hello world"},
@@ -1663,7 +1671,8 @@ def main(number):
         dxapplet.new(dxapi="1.0.0",
                      inputSpec=[{"name": "my_input", "class": "string"}],
                      outputSpec=[],
-                     runSpec={"code": "", "interpreter": "bash"})
+                     runSpec={"code": "", "interpreter": "bash"
+                              "distribution": "Ubuntu", "release": "14.04"})
         # Add stages
         first_stage = dxworkflow.add_stage(dxapplet, name='stagename', folder="/outputfolder",
                                            stage_input={"my_input": "hello world"})
@@ -1738,7 +1747,8 @@ def main(number):
         dxapplet.new(dxapi="1.0.0",
                      inputSpec=[{"name": "my_input", "class": "string"}],
                      outputSpec=[],
-                     runSpec={"code": "", "interpreter": "bash"})
+                     runSpec={"code": "", "interpreter": "bash",
+                              "distribution": "Ubuntu", "release": "14.04"})
         stage = dxworkflow.add_stage(dxapplet, name='stagename', folder="/outputfolder",
                                      stage_input={"my_input": "hello world"})
         self.assertEqual(dxworkflow.editVersion, 6)
@@ -1763,7 +1773,8 @@ def main(number):
         dxapplet.new(dxapi="1.0.0",
                      inputSpec=[{"name": "my_input", "class": "string"}],
                      outputSpec=[],
-                     runSpec={"code": "", "interpreter": "bash"})
+                     runSpec={"code": "", "interpreter": "bash",
+                              "distribution": "Ubuntu", "release": "14.04"})
         # Add a stage
         stage = dxworkflow.add_stage(dxapplet, name='stagename', folder="/outputfolder",
                                      stage_input={"my_input": "hello world"},
@@ -1807,7 +1818,8 @@ def main(number):
         second_applet.new(dxapi="1.0.0",
                           inputSpec=[{"name": "my_new_input", "class": "string"}],
                           outputSpec=[],
-                          runSpec={"code": "", "interpreter": "bash"})
+                          runSpec={"code": "", "interpreter": "bash",
+                                   "distribution": "Ubuntu", "release": "14.04"})
 
         # Incompatible executable
         try:
@@ -1869,6 +1881,7 @@ class TestDXApp(unittest.TestCase):
                      outputSpec=[{"name": "mappings", "class": "record"}],
                      runSpec={"code": "def main(): pass",
                               "interpreter": "python2.7",
+                              "distribution": "Ubuntu", "release": "14.04",
                               "execDepends": [{"name": "python-numpy"}]})
         dxapp = dxpy.DXApp()
         my_userid = dxpy.whoami()
@@ -1914,6 +1927,7 @@ class TestDXApp(unittest.TestCase):
                      outputSpec=[{"name": "mappings", "class": "record"}],
                      runSpec={"code": "def main(): pass",
                               "interpreter": "python2.7",
+                              "distribution": "Ubuntu", "release": "14.04",
                               "execDepends": [{"name": "python-numpy"}]})
         dxapp = dxpy.DXApp()
         my_userid = dxpy.whoami()
@@ -2154,6 +2168,7 @@ class TestDXSearch(unittest.TestCase):
                      outputSpec=[{"name": "mappings", "class": "record"}],
                      runSpec={"code": "def main(): pass",
                               "interpreter": "python2.7",
+                              "distribution": "Ubuntu", "release": "14.04",
                               "execDepends": [{"name": "python-numpy"}]})
         dxrecord = dxpy.new_dxrecord()
         dxrecord.close()
@@ -2748,7 +2763,7 @@ class TestIdempotentRequests(unittest.TestCase):
         tearDownTempProjects(self)
 
     code = '''@dxpy.entry_point('main')\ndef main():\n    pass'''
-    run_spec = {"code": code, "interpreter": "python2.7"}
+    run_spec = {"code": code, "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04"}
 
     # Create an applet using DXApplet.new
     def create_applet(self, name="app_name"):
