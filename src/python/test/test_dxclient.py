@@ -2725,10 +2725,10 @@ dx-jobutil-add-output record_array $second_record --array
                                          })['id']
         other_applet_id = dxpy.api.applet_new({"project": self.project,
                                                "dxapi": "1.0.0",
-                                               "distribution": "Ubuntu",
-                                               "release": "14.04",
                                                "runSpec": {"interpreter": "bash",
-                                                           "code": "echo 'hello'"}
+                                                           "code": "echo 'hello'",
+                                                           "distribution": "Ubuntu",
+                                                           "release": "14.04"}
                                            })['id']
 
         def check_new_job_metadata(new_job_desc, cloned_job_desc, overridden_fields=[]):

@@ -161,7 +161,9 @@ class TestDXTabCompletion(unittest.TestCase):
 
     def test_applet_completion(self):
         dxapplet = dxpy.DXApplet()
-        dxapplet.new(runSpec={"code": "placeholder", "interpreter": "bash"},
+        run_spec = {"code": "placeholder", "interpreter": "bash",
+                    "distribution": "Ubuntu", "release": "14.04"}
+        dxapplet.new(runSpec=run_spec,
                      dxapi="1.0.0",
                      name="my applet")
 
@@ -171,7 +173,7 @@ class TestDXTabCompletion(unittest.TestCase):
         self.assert_completion("dx ls ", "my applet ")
 
         # not available to run when hidden
-        dxapplet.new(runSpec={"code": "placeholder", "interpreter": "bash"},
+        dxapplet.new(runSpec=run_spec,
                      dxapi="1.0.0",
                      name="hidden",
                      hidden=True)

@@ -1671,7 +1671,7 @@ def main(number):
         dxapplet.new(dxapi="1.0.0",
                      inputSpec=[{"name": "my_input", "class": "string"}],
                      outputSpec=[],
-                     runSpec={"code": "", "interpreter": "bash"
+                     runSpec={"code": "", "interpreter": "bash",
                               "distribution": "Ubuntu", "release": "14.04"})
         # Add stages
         first_stage = dxworkflow.add_stage(dxapplet, name='stagename', folder="/outputfolder",

@@ -322,7 +322,8 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
         dxpy.api.applet_new({"project": dxpy.WORKSPACE_ID,
                              "name": "anapplet",
                              "dxapi": "1.0.0",
-                             "runSpec": {"code": "", "interpreter": "bash"}})['id']
+                             "runSpec": {"code": "", "interpreter": "bash",
+                                         "distribution": "Ubuntu", "release": "14.04"}})['id']
         dxpy.upload_string("foo", name="afile")
         dxrecord = dxpy.new_dxrecord(name="arecord")
         dxrecord.close()
@@ -395,7 +396,8 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
         app_spec = {
             "name": "test_run_locally_without_auth",
             "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "runSpec": {"file": "code.py", "interpreter": "python2.7",
+                        "distribution": "Ubuntu", "release": "14.04"},
             "inputSpec": [{"name": "foo", "class": "file"}],
             "outputSpec": [],
             "version": "1.0.0"
@@ -415,7 +417,8 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
         app_spec = {
             "name": "test_run_locally_invalid_interpreter",
             "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python"},
+            "runSpec": {"file": "code.py", "interpreter": "python",
+                        "distribution": "Ubuntu", "release": "14.04"},
             "inputSpec": [],
             "outputSpec": [],
             "version": "1.0.0"

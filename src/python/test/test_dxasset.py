@@ -230,6 +230,8 @@ class TestDXBuildAsset(DXTestCase):
             "runSpec": {
                 "code": code_str,
                 "interpreter": "bash",
+                "distribution": "Ubuntu",
+                "release": "14.04",
                 "assetDepends":  [{"id": asset_bundle_id}]
             },
             "inputSpec": [],
@@ -283,7 +285,9 @@ class TestDXBuildAsset(DXTestCase):
             "dxapi": "1.0.0",
             "runSpec": {
                 "code": code_str,
-                "interpreter": "bash"
+                "interpreter": "bash",
+                "distribution": "Ubuntu",
+                "release": "14.04"
             },
             "inputSpec": [{"name": "asset_conf", "class": "file"}],
             "outputSpec": [],
@@ -333,6 +337,8 @@ class TestDXBuildAsset(DXTestCase):
             "runSpec": {
                 "code": code_str,
                 "interpreter": "bash",
+                "distribution": "Ubuntu",
+                "release": "14.04",
                 "assetDepends":  [{"id": asset_bundle_id}],
                 "bundledDepends": [{"name": bundle_name, "id": {"$dnanexus_link": bundle_file.get_id()}}]
             },
