@@ -322,7 +322,8 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
         dxpy.api.applet_new({"project": dxpy.WORKSPACE_ID,
                              "name": "anapplet",
                              "dxapi": "1.0.0",
-                             "runSpec": {"code": "", "interpreter": "bash"}})['id']
+                             "runSpec": {"code": "", "interpreter": "bash",
+                                         "distribution": "Ubuntu", "release": "14.04"}})['id']
         dxpy.upload_string("foo", name="afile")
         dxrecord = dxpy.new_dxrecord(name="arecord")
         dxrecord.close()
@@ -392,14 +393,8 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
     @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
     def test_dx_run_app_locally_without_auth(self):
         temp_file_path = tempfile.mkdtemp()
-        app_spec = {
-            "name": "test_run_locally_without_auth",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
-            "inputSpec": [{"name": "foo", "class": "file"}],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(testutil.DXTestCaseBuildApps.base_app_spec, name="test_run_locally_without_auth",
+                        inputSpec = [{"name": "foo", "class": "file"}])
         app_dir_path = os.path.join(temp_file_path, app_spec['name'])
         os.mkdir(app_dir_path)
         with open(os.path.join(app_dir_path, 'dxapp.json'), 'w') as manifest:
@@ -412,14 +407,10 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
 
     def test_dx_run_app_locally_invalid_interpreter(self):
         temp_file_path = tempfile.mkdtemp()
-        app_spec = {
-            "name": "test_run_locally_invalid_interpreter",
-            "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python"},
-            "inputSpec": [],
-            "outputSpec": [],
-            "version": "1.0.0"
-            }
+        app_spec = dict(testutil.DXTestCaseBuildApps.base_app_spec,
+                        name="test_run_locally_invalid_interpreter",
+                        runSpec = {"file": "code.py", "interpreter": "python",
+                                    "distribution": "Ubuntu", "release": "14.04"})
         app_dir_path = os.path.join(temp_file_path, app_spec['name'])
         os.mkdir(app_dir_path)
         with open(os.path.join(app_dir_path, 'dxapp.json'), 'w') as manifest:
