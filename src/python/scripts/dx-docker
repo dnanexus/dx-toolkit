@@ -278,7 +278,7 @@ def run(args):
     with os.fdopen(tempsh_file_descriptor, 'w') as tmpsh:
         lines = ['#!/bin/sh']
         lines.extend(env[2:])
-        lines.append(' '.join(container_cmd))
+        lines.append(subprocess.list2cmdline(container_cmd))
         tmpsh.write('\n'.join(lines))
 
     os.chmod(tempsh_file_path, 0o777)
