@@ -167,6 +167,7 @@ parser_run.add_argument("-w", "--workdir",  help="Working directory")
 parser_run.add_argument("-q", "--quiet",  action='store_true', help="Suppress printing of image metadata")
 parser_run.add_argument("--rootfs",  help="Use directory pointed to here for rootfs instead of extracting the image (for expert use/development purposes)")
 parser_run.add_argument("--rm",  action="store_true", help="Automatically remove the container when it exits")
+parser_run.add_argument("--user",  help="User to execute command as: *currently ignored*")
 parser_run.add_argument("image", help="image name")
 parser_run.add_argument("command", help="command to run within container", nargs=argparse.REMAINDER, default=[])
 def run(args):
@@ -251,7 +252,11 @@ def run(args):
 
     if args.rm and not args.quiet:
         sys.stderr.write(dxpy.utils.printing.YELLOW("--rm: Note that by default the container is not preserved after execution\n"))
+        
+    if args.user and not args.quiet:
+        sys.stderr.write(dxpy.utils.printing.YELLOW("--user: Note that the current implementation ignores the user command\n"))
 
+        
     # A list of dirs and files of the host rootfs that will be accessible in the confined
     # environment just as if they were part of the guest rootfs. This list is based on the
     # proot -R option: https://github.com/proot-me/PRoot/blob/master/doc/proot/manual.txt
