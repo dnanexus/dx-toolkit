@@ -896,13 +896,15 @@ class TestDXClient(DXTestCase):
         dxpy.config["DX_PROJECT_CONTEXT_ID"] = project
         with self.configure_ssh() as wd:
             launch_squid()
-            applet_json = dict(self.base_app_spec, name="sleep",
+            applet_json = dict(name="sleep",
                                runSpec={"code": "sleep 6000",
                                         "interpreter": "bash",
                                         "distribution": "Ubuntu",
                                         "release": "14.04",
                                         "execDepends": [{"name": "dx-toolkit"}],
                                         "systemRequirements": {"*": {"instanceType": instance_type}}},
+                               inputSpec=[], outputSpec=[],
+                               dxapi="1.0.0", version="1.0.0",
                                project=project)
             sleep_applet = dxpy.api.applet_new(applet_json)["id"]
 
@@ -1002,10 +1004,12 @@ class TestDXClient(DXTestCase):
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_run_debug_on(self):
         with self.configure_ssh() as wd:
-            crash_applet = dxpy.api.applet_new(dict(self.base_app_spec, name="crash",
+            crash_applet = dxpy.api.applet_new(dict(name="crash",
                                                     runSpec={"code": "exit 5", "interpreter": "bash",
                                                              "distribution": "Ubuntu", "release": "14.04",
                                                              "execDepends": [{"name": "dx-toolkit"}]},
+                                                    inputSpec=[], outputSpec=[],
+                                                    dxapi="1.0.0", version="1.0.0",
                                                     project=self.project))["id"]
 
             job_id = run("dx run {} --yes --brief --debug-on AppInternalError".format(crash_applet),
@@ -1028,11 +1032,13 @@ class TestDXClient(DXTestCase):
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_run_debug_on_all(self):
         with self.configure_ssh() as wd:
-            crash_applet = dxpy.api.applet_new(dict(self.base_app_spec, name="crash",
-                                                runSpec={"code": "exit 5", "interpreter": "bash",
+            crash_applet = dxpy.api.applet_new(dict(name="crash",
+                                                    runSpec={"code": "exit 5", "interpreter": "bash",
                                                          "distribution": "Ubuntu", "release": "14.04",
                                                          "execDepends": [{"name": "dx-toolkit"}]},
-                                                project=self.project))["id"]
+                                                    inputSpec=[], outputSpec=[],
+                                                    dxapi="1.0.0", version="1.0.0",
+                                                    project=self.project))["id"]
 
             job_id = run("dx run {} --yes --brief --debug-on All".format(crash_applet),
                          env=override_environment(HOME=wd)).strip()
@@ -7181,10 +7187,10 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "version": "1.0.0"
             }
         app_code = """import dxpy
-# @dxpy.entry_point("main")
-# def main(in1):
-#     return {"out1": in1 + 1}
-# """
+@dxpy.entry_point("main")
+def main(in1):
+    return {"out1": in1 + 1}
+"""
         app_dir = self.write_app_directory(
             'build_applet_remote', json.dumps(app_spec), code_filename='code.py', code_content=app_code)
         remote_build_output = run('dx build --remote ' + app_dir).strip().split('\n')[-1]
