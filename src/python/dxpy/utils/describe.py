@@ -624,14 +624,18 @@ def print_data_obj_desc(desc, verbose=False):
         print_json_field("Access", desc["access"])
     if 'dxapi' in desc:
         print_field("API version", desc["dxapi"])
-    if "inputSpec" in desc and desc['inputSpec'] is not None:
+
+    # In case of a workflow: do not display "Input/Output Specs" that show stages IO
+    # when the workflow has workflow-level input/output fields defined.
+    if desc.get('inputSpec') is not None and desc.get('inputs') is None:
         print_nofill_field("Input Spec", get_io_spec(desc['inputSpec'], skip_fields=get_advanced_inputs()))
-    if "outputSpec" in desc and desc['outputSpec'] is not None:
+    if desc.get('outputSpec') is not None and desc.get('outputs') is None:
         print_nofill_field("Output Spec", get_io_spec(desc['outputSpec']))
-    if "inputs" in desc:
+    if  desc.get('inputs') is not None:
         print_nofill_field("Workflow Inputs", get_io_spec(desc['inputs']))
-    if "outputs" in desc:
+    if  desc.get('outputs') is not None:
         print_nofill_field("Workflow Outputs", get_io_spec(desc['outputs']))
+
     if 'runSpec' in desc:
         print_field("Interpreter", desc["runSpec"]["interpreter"])
         if "resources" in desc['runSpec']:
