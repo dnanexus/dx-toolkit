@@ -2807,13 +2807,23 @@ def print_run_help(executable="", alias=None):
         if isinstance(handler, dxpy.bindings.DXApp):
             exec_help += "See the app page for more information:\n  https://platform.dnanexus.com/app/" + exec_desc['name'] +"\n\n"
 
+        if exec_desc.get('inputs') is not None:
+            exec_help += "The workflow is locked - input values should be passed to workflow-level input fields\n\n"
+
         exec_help += BOLD("Inputs:")
         advanced_inputs_help = "Advanced Inputs:"
-        if 'inputSpec' in exec_desc:
-            if len(exec_desc['inputSpec']) == 0:
+        if exec_desc.get('inputs') is not None or 'inputSpec' in exec_desc:
+            input_spec = []
+            if exec_desc.get('inputs') is not None:
+                # workflow-level inputs were defined for the workflow
+                input_spec = exec_desc['inputs']
+            elif 'inputSpec' in exec_desc:
+                input_spec = exec_desc['inputSpec']
+
+            if len(input_spec) == 0:
                 exec_help += " <none>\n"
             else:
-                for group, params in group_array_by_field(exec_desc['inputSpec']).items():
+                for group, params in group_array_by_field(input_spec).items():
                     if group is not None:
                         exec_help += "\n " + BOLD(group)
                     for param in params:
@@ -2848,11 +2858,18 @@ def print_run_help(executable="", alias=None):
         exec_help += "\n"
 
         exec_help += BOLD("Outputs:")
-        if 'outputSpec' in exec_desc:
-            if len(exec_desc['outputSpec']) == 0:
+        if exec_desc.get('outputs') is not None or 'outputSpec' in exec_desc:
+            output_spec = []
+            if exec_desc.get('outputs') is not None:
+                # workflow-level outputs were defined for the workflow
+                output_spec = exec_desc['outputs']
+            elif 'outputSpec' in exec_desc:
+                output_spec = exec_desc['outputSpec']
+
+            if len(output_spec) == 0:
                 exec_help += " <none>\n"
             else:
-                for param in exec_desc['outputSpec']:
+                for param in output_spec:
                     exec_help += "\n  "
                     exec_help += UNDERLINE(param.get('label', param['name'])) + ": "
                     exec_help += get_io_desc(param) + "\n"
@@ -2904,6 +2921,11 @@ def print_run_input_help():
     print('''
     Syntax :  -i<stage key>.<input name>=<input value>
     Example:  dx run my_workflow -i1.reads="My reads file"
+''')
+    print(fill('If the ' + BOLD('workflow') + ' is locked, which means it has explicit, workflow-level inputs, input values must be passed to these workflow-level input fields using the <workflow input name>=<value> syntax:', initial_indent='  ', subsequent_indent='  '))
+    print('''
+    Syntax :  -i<workflow input name>=<input value>
+    Example:  dx run my_workflow -ireads="My reads file"
 
 SPECIFYING JSON INPUT
 ''')
