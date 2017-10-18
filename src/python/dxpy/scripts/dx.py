@@ -2807,9 +2807,6 @@ def print_run_help(executable="", alias=None):
         if isinstance(handler, dxpy.bindings.DXApp):
             exec_help += "See the app page for more information:\n  https://platform.dnanexus.com/app/" + exec_desc['name'] +"\n\n"
 
-        if exec_desc.get('inputs') is not None:
-            exec_help += "The workflow is locked - input values should be passed to workflow-level input fields\n\n"
-
         exec_help += BOLD("Inputs:")
         advanced_inputs_help = "Advanced Inputs:"
         if exec_desc.get('inputs') is not None or 'inputSpec' in exec_desc:
