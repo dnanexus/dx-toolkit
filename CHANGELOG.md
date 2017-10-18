@@ -13,6 +13,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * dx-clone-asset script
+* `dx-docker`: ignore user argument if given 
+
+### Changed
+
+* app building tests now include `runSpec.release` and `runSpec.distribution` in app specs
+* `dx-docker`: better handling of quotes
 
 ## [237.0] - beta
 
