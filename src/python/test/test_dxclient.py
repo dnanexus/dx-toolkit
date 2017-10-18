@@ -3415,7 +3415,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         desc = run("dx describe " + workflow_id)
         self.assertIn("Input Spec", desc)
         self.assertIn("Output Spec", desc)
-        # For locked workflows (with explicit inputs and outputs) these two
+        # For workflows with explicit inputs and outputs, these two
         # fields will replace Input Spec and Output Spec
         self.assertNotIn("Workflow Inputs", desc)
         self.assertNotIn("Workflow Outputs", desc)
