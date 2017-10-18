@@ -2919,7 +2919,7 @@ def print_run_input_help():
     Syntax :  -i<stage key>.<input name>=<input value>
     Example:  dx run my_workflow -i1.reads="My reads file"
 ''')
-    print(fill('If the ' + BOLD('workflow') + ' is locked, which means it has explicit, workflow-level inputs, input values must be passed to these workflow-level input fields using the <workflow input name>=<value> syntax:', initial_indent='  ', subsequent_indent='  '))
+    print(fill('If the ' + BOLD('workflow') + ' has explicit, workflow-level inputs, input values must be passed to these workflow-level input fields using the <workflow input name>=<value> syntax:', initial_indent='  ', subsequent_indent='  '))
     print('''
     Syntax :  -i<workflow input name>=<input value>
     Example:  dx run my_workflow -ireads="My reads file"
