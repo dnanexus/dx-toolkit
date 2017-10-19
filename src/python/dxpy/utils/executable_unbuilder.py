@@ -235,26 +235,22 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output=[]):
     # "bundledDependsByRegion".
     dxapp_json["runSpec"].pop("bundledDependsByRegion", None)
 
-    # For an app, "dx build" parses the "regionalOptions" key from
-    # dxapp.json into the "regionalOptions" field in the body of the
+    # "dx build" parses the "regionalOptions" key from dxapp.json into the
+    # "regionalOptions" field in the body of the
     # /app/new (or /app-x/update) request. "dx get" should parse the
-    # "systemRequirementsByRegion" field from the response of /app-x/get into the
-    # "regionalOptions" key in dxapp.json.
+    # "systemRequirementsByRegion" field from the response of /app-x/get,
+    # /applet-x/get into the "regionalOptions" key in dxapp.json.
     if "systemRequirementsByRegion" in dxapp_json['runSpec']:
         dxapp_json["regionalOptions"] = {}
         for region in dxapp_json['runSpec']["systemRequirementsByRegion"]:
             dxapp_json["regionalOptions"][region] = _get_sysrequirements_for_region(region, dxapp_json)
 
-    # runSpec.systemRequirements was deprecated and replaced with
-    # runSpec.appletSystemRequirements, as it is only used when building
-    # applets. When building apps, system requirements will be read from
-    # regionalOptions.$.systemRequirements
-    if 'systemRequirements' in dxapp_json["runSpec"]:
-        dxapp_json["runSpec"]["appletSystemRequirements"] = dxapp_json["runSpec"].pop("systemRequirements")
-
-    # runSpec.systemRequirementsByRegion is not a part of the dxapp.json spec
+    # systemRequirements is stored in regionalOptions
     if 'systemRequirementsByRegion' in dxapp_json["runSpec"]:
         del dxapp_json["runSpec"]["systemRequirementsByRegion"]
+
+    if 'systemRequirements' in dxapp_json["runSpec"]:
+        del dxapp_json["runSpec"]["systemRequirements"]
 
     # Cleanup of empty elements. Be careful not to let this step
     # introduce any semantic changes to the app specification. For

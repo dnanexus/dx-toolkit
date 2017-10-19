@@ -578,13 +578,11 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
             raise AppBuilderException("No asset bundle was found that matched the specification %s"
                                       % (json.dumps(asset)))
 
-    # runSpec.systemRequirements was deprecated and replaced with
-    # runSpec.appletSystemRequirements in dxapp.json, as it is only used when building
-    # applets. When building apps, system requirements will be read from
-    # regionalOptions.$.systemRequirements
-
-    if 'appletSystemRequirements' in applet_spec["runSpec"]:
-        applet_spec["runSpec"]["systemRequirements"] = applet_spec["runSpec"].pop("appletSystemRequirements")
+    # runSpec.systemRequirements was deprecated; systemRequirements should now
+    # be defined in regionalOptions.R.systemRequirements in dxapp.json
+    # this is left for backwards-compatibility
+    if 'systemRequirements' in applet_spec["runSpec"]:
+        applet_spec["runSpec"]["systemRequirements"] = applet_spec["runSpec"].pop("systemRequirements")
 
     # Include the DNAnexus client libraries as an execution dependency, if they are not already
     # there
