@@ -3067,13 +3067,16 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertNotIn(workflow_id, new_workflow_desc)
         self.assertIn(analysis_id, new_workflow_desc)
         self.assertIn(stage_id, new_workflow_desc)
-
         # Setting the input linking to inputs
         dxpy.api.workflow_update(workflow_id,
                                  {"editVersion": 2,
                                   "inputs": [{"name": "foo", "class": "int"}],
                                   "stages": {'stage_0': {'input': {'number': {'$dnanexus_link': {'workflowInputField': 'foo'}}}}}})
-        run("dx describe " + workflow_id)
+        updated_workflow_desc = run("dx describe " + workflow_id)
+        self.assertIn("Workflow Inputs", updated_workflow_desc)
+        self.assertNotIn("Workflow Outputs", updated_workflow_desc)
+        self.assertNotIn("Input Spec", updated_workflow_desc)
+        self.assertIn("Output Spec", updated_workflow_desc)
         analysis_id = run("dx run " + workflow_id + " -ifoo=474 -y --brief")
         self.assertTrue(analysis_id.startswith('analysis-'))
         analysis_desc = run("dx describe " + analysis_id)
@@ -3412,8 +3415,10 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         desc = run("dx describe " + workflow_id)
         self.assertIn("Input Spec", desc)
         self.assertIn("Output Spec", desc)
-        self.assertIn("Workflow Inputs", desc)
-        self.assertIn("Workflow Outputs", desc)
+        # For workflows with explicit inputs and outputs, these two
+        # fields will replace Input Spec and Output Spec
+        self.assertNotIn("Workflow Inputs", desc)
+        self.assertNotIn("Workflow Outputs", desc)
         applet_id = dxpy.api.applet_new({"name": "myapplet",
                                          "project": self.project,
                                          "dxapi": "1.0.0",
