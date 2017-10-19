@@ -16,60 +16,105 @@
 
 import sys
 import subprocess
+import time
 import dxpy
+from .utils.printing import (RED, BOLD)
+from .exceptions import err_exit
+from .utils.resolver import get_app_from_path
 
 from sys import platform
-NOTEBOOK_APP = 'app-_notebook_server'
-LOUPE_APP = 'app-10x_loupe_server'
+NOTEBOOK_APP = '_notebook_server'
+LOUPE_APP = '_10x_loupe_server'
 SERVER_READY_TAG = 'server_running'
 SLEEP_PERIOD = 5
 
 def setup_ssh_tunnel(job_id, local_port, remote_port):
-    cmd = 'dx ssh --suppress-running-check {0}  -o "StrictHostKeyChecking no" -f -L {1}:localhost:{2} -N'.format(job_id, local_port, remote_port)
-    subprocess.check_call(cmd, shell=True)
+    """
+    Setup an ssh tunnel to the given job-id.  This will establish
+    the port over the given local_port to the given remote_port
+    and then exit, keeping the tunnel in place until the job is 
+    terminated.
+    """
+    cmd = ['dx', 'ssh', '--suppress-running-check', job_id, '-o', 'StrictHostKeyChecking no']
+    cmd += ['-f', '-L', '{0}:localhost:{1}'.format(local_port, remote_port), '-N']
+    subprocess.check_call(cmd)
 
 
 def poll_for_server_running(job_id):
+    """
+    Poll for the job to start running and post the SERVER_READY_TAG.
+    """
     sys.stdout.write('Waiting for server in {0} to initialize ...'.format(job_id))
     sys.stdout.flush()
     desc = dxpy.describe(job_id)
+    # Keep checking until the server has begun or it has failed.
     while(SERVER_READY_TAG not in desc['tags'] and desc['state'] != 'failed'):
-        subprocess.check_call('sleep {0}'.format(SLEEP_PERIOD), shell=True)
+        time.sleep(SLEEP_PERIOD)
         sys.stdout.write('.')
         sys.stdout.flush()
         desc = dxpy.describe(job_id)
-    sys.stdout.write('Waiting for server in {0} to initialize ...'.format(job_id))
-    sys.stdout.flush()
-    desc = dxpy.describe(job_id)
-    while(SERVER_READY_TAG not in desc['tags'] and desc['state'] != 'failed'):
-        subprocess.check_call('sleep {0}'.format(SLEEP_PERIOD), shell=True)
-        sys.stdout.write('.')
-        sys.stdout.flush()
-        desc = dxpy.describe(job_id)
+
+    # If the server job failed, provide friendly advice. 
+    if desc['state'] == 'failed':
+        msg = RED('Error:') + ' Server failed to run.\n'
+        msg += 'You may want to check the job logs by running:'
+        msg += BOLD('dx watch {0}'.format(job_id))
+        err_exit(msg)
 
 
 def multi_platform_open(cmd):
+    """
+    Take the given command and use the OS to automatically open the appropriate
+    resource.  For instance, if a URL is provided, this will have the OS automatically
+    open the URL in the default web browser.
+    """
     if platform == "linux" or platform == "linux2":
-        cmd = 'xdg-open {0}'.format(cmd)
+        cmd = ['xdg-open', cmd]
     elif platform == "darwin":
-        cmd = 'open {0}'.format(cmd)
+        cmd = ['open', cmd]
     elif platform == "win32":
-        cmd = 'start {0}'.format(cmd)
-    subprocess.check_call(cmd, shell=True)
+        cmd = ['start', cmd]
+    subprocess.check_call(cmd)
 
 
-def run_notebook(args):
-    input_files = ' '.join(['-iinput_files={0}'.format(f.replace(' ', '\\ ')) for f in args.notebook_files])
-    cmd = 'dx run {0} -inotebook_type={1} {2} -itimeout={3} -y --brief --allow-ssh --instance-type {4} '
-    if args.ds_packages:
-        cmd += '-iinstall_data_science_packages=true '
+def get_notebook_app_versions():
+    """
+    Get the valid version numbers of the notebook app.
+    """
+    notebook_apps = dxpy.find_apps(name=NOTEBOOK_APP, all_versions=True)
+    versions = [str(dxpy.describe(app['id'])['version']) for app in notebook_apps]
+    return versions
+
+
+def run_notebook(args, ssh_config_check):
+    """
+    Launch the notebook server.
+    """
+    # Check that ssh is setup.  Currently notebooks require ssh for tunelling.
+    ssh_config_check()
+
+    # If the user requested a specific version of the notebook server,
+    # get the executable id.
+    if args.version is not None:
+        executable = get_app_from_path('app-{0}/{1}'.format(NOTEBOOK_APP, args.version))
+        if executable is not None and 'id' in executable:
+            executable = executable['id']
+        else:
+            msg = RED('Warning:') + ' Invalid notebook version: {0}\nValid versions are: '.format(args.version)
+            msg += BOLD('{0}'.format(str(get_notebook_app_versions())))
+            err_exit(msg)
+    else:
+        executable = 'app-{0}'.format(NOTEBOOK_APP)
+    executable = 'applet-F7Z21Pj0JzjgbFbXJ2BvBXGj'
+    # Compose the command to launch the notebook
+    cmd = ['dx', 'run', executable, '-inotebook_type={0}'.format(args.notebook_type)]
+    cmd += ['-iinput_files={0}'.format(f) for f in args.notebook_files]
+    cmd += ['-itimeout={0}'.format(args.timeout), '-y', '--brief', '--allow-ssh', '--instance-type', args.instance_type]
     if args.spark:
-        cmd += '-iinstall_spark=true '
+        cmd += ['-iinstall_spark=true']
     if args.snapshot:
-        cmd += '-isnapshot={0} '.format(args.snapshot.replace(' ', '\\ '))
-
-    cmd = cmd.format(NOTEBOOK_APP, args.notebook_type, input_files, args.timeout, args.instance_type)
-    job_id = subprocess.check_output(cmd, shell=True).strip()
+        cmd += ['-isnapshot={0}'.format(args.snapshot)]
+    job_id = subprocess.check_output(cmd).strip()
 
     poll_for_server_running(job_id)
 
@@ -83,11 +128,12 @@ def run_notebook(args):
         print 'A web browser should have opened to connect you to your notebook.'
     print 'If no browser appears, or if you need to reopen a browser at any point, you should be able to point your browser to http://localhost:{0}'.format(args.port)
 
+
 def run_loupe(args):
-    input_files = ' '.join(['-iloupe_files={0}'.format(f.replace(' ', '\\ ')) for f in args.loupe_files])
-    cmd = 'dx run {0} {1} -itimeout={2} -y --brief --allow-ssh --instance-type {3} '
-    cmd = cmd.format(LOUPE_APP, input_files, args.timeout, args.instance_type)
-    job_id = subprocess.check_output(cmd, shell=True).strip()
+    cmd = ['dx', 'run', 'app-{0}'.format(LOUPE_APP)]
+    cmd += ['-iloupe_files={0}'.format(f) for f in args.loupe_files]
+    cmd += ['-itimeout={0}'.format(args.timeout, '-y', '--brief', '--allow-ssh', '--instance-type', args.instance_type)]
+    job_id = subprocess.check_output(cmd).strip()
 
     poll_for_server_running(job_id)
 
