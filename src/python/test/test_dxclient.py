@@ -6031,88 +6031,6 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEqual(applet_describe["class"], "applet")
         self.assertEqual(applet_describe["id"], applet_describe["id"])
         self.assertEqual(applet_describe["name"], "minimal_applet")
-    #
-    # def test_dx_build_get_build_applet(self):
-    #
-    #     def _build(dxapp_json, app_or_applet):
-    #         """Builds an app/applet"""
-    #
-    #     def _get(dxid):
-    #         """Returns the name of created source directory"""
-    #
-    #     def _get_spec():
-    #         return {"name": name,
-    #                 "project": self.project,
-    #                 "dxapi": "1.0.0",
-    #                 "version": "1.0.0",
-    #                 "inputSpec": [{"name": "number", "class": "int"}],
-    #                 "outputSpec": [{"name": "number", "class": "int"}],
-    #                 "runSpec": {
-    #                     "interpreter": "bash",
-    #                     "code": "exit 0"}
-    #         }
-    #
-    #     # build app, get
-    #         # build applet
-    #         # build app
-    #
-    #     # build applet, get
-    #         # build applet
-    #         # build app
-    #
-    #     # 1. Build
-    #     workflow_dir = self.write_workflow_directory("workflow_cycle",
-    #                                                  json.dumps(workflow_spec),
-    #                                                  readme_content="Workflow Cycle Readme")
-    #     workflow_01 = json.loads(run("dx build --json " + workflow_dir))
-    #     wf_describe_01 = dxpy.get_handler(workflow_01["id"]).describe()
-    #     self.assertEqual(wf_describe_01["id"], workflow_01["id"])
-    #
-    #     # 2. Get and compare with the initial workflow
-    #     with chdir(tempfile.mkdtemp()):
-    #         run("dx get {workflow_id}".format(workflow_id=workflow_01["id"]))
-    #         self.assertTrue(os.path.exists(os.path.join(workflow_name, "dxworkflow.json")))
-    #         self.assertTrue(os.path.exists(os.path.join(workflow_name, "Readme.md")))
-    #         workflow_metadata = open(os.path.join(workflow_name, "dxworkflow.json")).read()
-    #         output_json = json.loads(workflow_metadata, object_pairs_hook=collections.OrderedDict)
-    #         self.assertEqual(output_json, workflow_spec)
-    #
-    #         # 3. Build again and compare with the initial workflow
-    #         os.chdir(workflow_name) # move to the directory created with dx get
-    #         workflow_02 = json.loads(run("dx build --json"))
-    #         wf_describe_02 = dxpy.get_handler(workflow_02["id"]).describe()
-    #         self.assertEqual(wf_describe_02["class"], "workflow")
-    #         self.assertEqual(wf_describe_02["id"], workflow_02["id"])
-    #         self.assertEqual(wf_describe_02["editVersion"], 0)
-    #         self.assertEqual(wf_describe_02["name"], workflow_name)
-    #         self.assertEqual(wf_describe_02["state"], "closed")
-    #         self.assertEqual(wf_describe_02["outputFolder"], "/")
-    #         self.assertEqual(wf_describe_02["project"], self.project)
-    #         self.assertEqual(wf_describe_02["description"], "Workflow Cycle Readme")
-    #         self.assertEqual(len(wf_describe_02["stages"]), 2)
-    #         self.assertEqual(wf_describe_02["stages"][0]["id"], "stage_0")
-    #         self.assertEqual(wf_describe_02["stages"][0]["name"], "stage_0_name")
-    #         self.assertEqual(wf_describe_02["stages"][0]["executable"], applet_id)
-    #         self.assertEqual(wf_describe_02["stages"][0]["input"]["number"], 123456)
-    #         self.assertEqual(wf_describe_02["stages"][1]["id"], "stage_1")
-    #         self.assertIsNone(wf_describe_02["stages"][1]["name"])
-    #         self.assertEqual(wf_describe_02["stages"][1]["executable"], applet_id)
-
-    def test_build_applet_accepts_regional_options_in_dxapp(self):
-        name = "asset_applet_{t}".format(t=int(time.time() * 1000))
-        sysreq_spec = {"aws:us-east-1": {"systemRequirements": {"*": {"instanceType": "mem1_ssd1_x8"}}}}
-        app_spec = dict(self.base_app_spec, name=name,
-                       regionalOptions = sysreq_spec)
-        app_dir = self.write_app_directory(name, json.dumps(app_spec), "code.py")
-        new_applet = json.loads(run("dx build --json " + app_dir))
-        applet_describe = dxpy.get_handler(new_applet["id"]).describe()
-        self.assertEqual(applet_describe["class"], "applet")
-        self.assertEqual(applet_describe["id"], applet_describe["id"])
-        self.assertEqual(applet_describe["name"], name)
-        # We already know this via the API, but here goes.
-        self.assertNotIn("regionalOptions", applet_describe)
-        self.assertEqual(applet_describe["runSpec"]["systemRequirementsByRegion"],
-            {'aws:us-east-1': {'*': {'instanceType': 'mem1_ssd1_x8'}}})
 
     def test_dx_build_applet_dxapp_json_created_with_makefile(self):
         app_name = "nodxapp_applet"
@@ -6428,7 +6346,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                          'skipping test that would create apps')
     def test_build_single_region_app_without_regional_options(self):
         # Backwards-compatible.
-        app_name = "asset_{t}_single_region_app".format(t=int(time.time()))
+        app_name = "app_{t}_single_region".format(t=int(time.time()))
         app_spec = dict(self.base_app_spec, name=app_name)
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
         new_app = json.loads(run("dx build --create-app --json " + app_dir))
@@ -6608,9 +6526,9 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
         aws_us_east_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x1"))
         azure_westus_system_requirements = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
-        # regionalOptions will be accepted but only the region in which
-        # the applet is actually built will be read (and returned in systemRequirementsByRegion),
-        # other regions' configs will be ignored
+        # regionalOptions will be accepted but only the region in which the applet is
+        # actually built will be read (and returned in describe output in
+        # systemRequirementsByRegion), other regions' configs will be ignored
         app_spec = dict(self.base_app_spec, name=app_name,
                         regionalOptions={"aws:us-east-1": dict(systemRequirements=aws_us_east_system_requirements),
                                          "azure:westus": dict(systemRequirements=azure_westus_system_requirements)})
@@ -8335,6 +8253,7 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
         output_app_spec = app_spec.copy()
         output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
                                       "distribution": "Ubuntu", "release": "14.04"}
+        output_app_spec["regionalOptions"] =  {u'aws:us-east-1': {u'systemRequirements': {}}}
 
         app_dir = self.write_app_directory("get_åpplet_field_cleanup", json.dumps(app_spec), "code.py",
                                            code_content="import os\n")
@@ -8358,6 +8277,7 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
         output_app_spec = app_spec.copy()
         output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
                                       "distribution": "Ubuntu", "release": "14.04"}
+        output_app_spec["regionalOptions"] =  {u'aws:us-east-1': {u'systemRequirements': {}}}
 
         app_dir = self.write_app_directory("get_åpplet_windows", json.dumps(app_spec), "code.py",
                                            code_content="import os\n")
@@ -8528,6 +8448,50 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
 
         self._test_get_app("get_app_open_source_published_no_authusers", True, True, [])
         self._test_get_app("get_app_published_no_authusers", False, True, [])
+
+    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
+    def test_dx_cross_get_and_build_app_and_applet(self):
+        sysreq_spec = {"aws:us-east-1": {"systemRequirements": {"*": {"instanceType": "mem1_ssd1_x8"}}}}
+
+        def _build(name, atype):
+            app_spec = dict(self.base_app_spec, name=name, regionalOptions=sysreq_spec)
+            app_dir = self.write_app_directory(name, json.dumps(app_spec), "code.py")
+            atype = '--app' if atype == 'app' else ''
+            json.loads(run("dx build --json {} {}".format(atype, app_dir)))
+
+        def _get_and_build(name, atype):
+            with chdir(tempfile.mkdtemp()):
+                run("dx get {}".format('app-' + name if atype == 'app' else name))
+                dxapp_json = json.loads(open(os.path.join(name, "dxapp.json")).read())
+                self.assertNotIn("systemRequirements", dxapp_json['runSpec'])
+                self.assertNotIn("systemRequirementsByRegion", dxapp_json['runSpec'])
+                self.assertEqual(dxapp_json["regionalOptions"], sysreq_spec)
+
+                # we need to stick in 'version' to dxapp,json to build an app
+                dxapp_json["version"] = "1.0.0"
+                with open(os.path.join(name, "dxapp.json"), 'w') as dxapp_json_file_2:
+                    dxapp_json_file_2.write(json.dumps(dxapp_json, ensure_ascii=False))
+
+                # build app from the new source dir, created with 'dx get'
+                new_app = json.loads(run("dx build --json --app {}".format(name)))
+                app_desc = dxpy.get_handler(new_app["id"]).describe()
+                self.assertEqual(app_desc["class"], "app")
+                self.assertEqual(app_desc["id"], new_app["id"])
+                self.assertEqual(app_desc["name"], name)
+
+                # build applet from the new source dir, created with 'dx get'
+                new_applet = json.loads(run("dx build --json -a {}".format(name)))
+                applet_desc = dxpy.get_handler(new_applet["id"]).describe()
+                self.assertEqual(applet_desc["class"], "applet")
+                self.assertEqual(applet_desc["id"], new_applet["id"])
+                self.assertEqual(applet_desc["name"], name)
+
+        _build('app_cycle', 'app')
+        _get_and_build('app_cycle', 'app')
+
+        _build('applet_cycle', 'applet')
+        _get_and_build('applet_cycle', 'applet')
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
     def test_get_app_by_name(self):
