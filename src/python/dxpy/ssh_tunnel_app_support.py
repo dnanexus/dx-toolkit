@@ -105,7 +105,6 @@ def run_notebook(args, ssh_config_check):
             err_exit(msg)
     else:
         executable = 'app-{0}'.format(NOTEBOOK_APP)
-    executable = 'applet-F7Z21Pj0JzjgbFbXJ2BvBXGj'
     # Compose the command to launch the notebook
     cmd = ['dx', 'run', executable, '-inotebook_type={0}'.format(args.notebook_type)]
     cmd += ['-iinput_files={0}'.format(f) for f in args.notebook_files]
