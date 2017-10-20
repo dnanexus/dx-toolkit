@@ -117,7 +117,7 @@ def run_notebook(args, ssh_config_check):
 
     poll_for_server_running(job_id)
 
-    if args.notebook_type == 'jupyter':
+    if args.notebook_type in {'jupyter', 'jupyter_lab', 'jupyter_notebook'}:
         remote_port = 8888
 
     setup_ssh_tunnel(job_id, args.port, remote_port)
