@@ -6543,6 +6543,17 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                 sysreq_by_region = applet_desc["runSpec"]["systemRequirementsByRegion"]
                 self.assertEqual(sysreq_by_region.keys(), [region])
 
+    def test_cannot_build_applet_with_mismatching_regional_options(self):
+        app_name = "applet_{t}_with_regional_system_requirements".format(t=int(time.time()))
+        aws_us_east_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x1"))
+        app_spec = dict(self.base_app_spec, name=app_name,
+                        regionalOptions={"aws:us-east-1": dict(systemRequirements=aws_us_east_system_requirements)})
+        app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+
+        with temporary_project(region="azure:westus", select=True):
+            with self.assertRaisesRegexp(DXCalledProcessError, "do not contain a region of the destination project"):
+                run("dx build --json " + app_dir)
+
     def test_build_multi_region_app_without_regional_options(self):
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
         app_spec = dict(self.base_app_spec, name=app_name)
@@ -8627,7 +8638,7 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
     def test_get_preserves_system_requirements(self):
-        app_name = "asset_{t}_multi_region_app_with_regional_system_requirements".format(t=int(time.time()))
+        app_name = "app_{t}_multi_region_app_with_regional_system_requirements".format(t=int(time.time()))
 
         aws_us_east_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x1"))
         azure_westus_system_requirements = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))

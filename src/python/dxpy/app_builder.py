@@ -508,6 +508,11 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
         region = dxpy.api.project_describe(dest_project, input_params={"fields": {"region": True}})["region"]
         regional_options = applet_spec.get('regionalOptions', {}).get(region, {})
 
+        # if regionalOptions contain at least one region, they must include
+        # the region of the target project
+        if len(applet_spec.get('regionalOptions', {})) != 0 and region not in applet_spec.get('regionalOptions', {}):
+            raise AppBuilderException("\"regionalOptions\" do not contain a region of the destination project")
+
         # We checked earlier that if region-specific values for the
         # fields below are given, the same fields are not also specified
         # in the top-level runSpec. So the operations below should not
@@ -577,12 +582,6 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
         else:
             raise AppBuilderException("No asset bundle was found that matched the specification %s"
                                       % (json.dumps(asset)))
-
-    # runSpec.systemRequirements was deprecated; systemRequirements should now
-    # be defined in regionalOptions.R.systemRequirements in dxapp.json
-    # this is left for backwards-compatibility
-    if 'systemRequirements' in applet_spec["runSpec"]:
-        applet_spec["runSpec"]["systemRequirements"] = applet_spec["runSpec"].pop("systemRequirements")
 
     # Include the DNAnexus client libraries as an execution dependency, if they are not already
     # there
@@ -942,7 +941,7 @@ def get_enabled_regions(app_spec, from_command_line):
                     "%s was given for %s but not for %s" % (key_name, with_key, without_key)
                 )
             for key in opts_for_region:
-                if key in app_spec.get('runSpec', {}) and key != 'systemRequirements':
+                if key in app_spec.get('runSpec', {}):
                     raise dxpy.app_builder.AppBuilderException(
                         key + " cannot be given in both runSpec and in regional options for " + region)
 
