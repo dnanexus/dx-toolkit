@@ -384,6 +384,7 @@ array:boolean  array:int      boolean        hash           string''')
     if instance_type in InstanceTypesCompleter.azure_preferred_instance_types.values():
         target_region = DEFAULT_REGION_AZURE
 
+    app_json['regionalOptions'] = OrderedDict({})
     app_json['regionalOptions'][target_region] = OrderedDict({})
     app_json['regionalOptions'][target_region].setdefault('systemRequirements', {})
     app_json['regionalOptions'][target_region]['systemRequirements'].setdefault('*', {})
