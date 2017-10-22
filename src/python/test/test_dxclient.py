@@ -6551,7 +6551,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
         with temporary_project(region="azure:westus", select=True):
-            with self.assertRaisesRegexp(DXCalledProcessError, "do not contain a region of the destination project"):
+            with self.assertRaisesRegexp(DXCalledProcessError, "do not contain this region"):
                 run("dx build --json " + app_dir)
 
     def test_build_multi_region_app_without_regional_options(self):

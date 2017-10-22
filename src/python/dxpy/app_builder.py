@@ -511,7 +511,9 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
         # if regionalOptions contain at least one region, they must include
         # the region of the target project
         if len(applet_spec.get('regionalOptions', {})) != 0 and region not in applet_spec.get('regionalOptions', {}):
-            raise AppBuilderException("\"regionalOptions\" do not contain a region of the destination project")
+            err_mesg = "destination project is in region {} but \"regionalOptions\" do not contain this region. ".format(region)
+            err_mesg += "Please, update your \"regionalOptions\" specification"
+            raise AppBuilderException(err_mesg)
 
         # We checked earlier that if region-specific values for the
         # fields below are given, the same fields are not also specified
