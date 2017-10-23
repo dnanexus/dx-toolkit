@@ -154,7 +154,7 @@ public class DXWorkflowTest {
 
         DXApplet applet = DXApplet.newApplet().setProject(testProject)
                 .setName("applet_for_java_test")
-                .setRunSpecification(RunSpecification.newRunSpec("bash", code).build())
+                .setRunSpecification(RunSpecification.newRunSpec("bash", code, "Ubuntu", "14.04").build())
                 .setInputSpecification(ImmutableList.of(inputString, inputRecord))
                 .setOutputSpecification(ImmutableList.of(outputRecord)).build();
 
@@ -205,7 +205,7 @@ public class DXWorkflowTest {
         String code = "dx-jobutil-add-output sum `echo $((ai + bi))` --class=int\n";
         DXApplet applet = DXApplet.newApplet().setProject(testProject)
             .setName("applet_add_java")
-            .setRunSpecification(RunSpecification.newRunSpec("bash", code).build())
+            .setRunSpecification(RunSpecification.newRunSpec("bash", code, "Ubuntu", "14.04").build())
             .setInputSpecification(ImmutableList.of(inputA, inputB))
             .setOutputSpecification(ImmutableList.of(outputSum)).build();
 

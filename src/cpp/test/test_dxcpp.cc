@@ -59,6 +59,8 @@ void createANewApplet(DXApplet &apl) {
   applet_details["outputSpec"] = JSON::parse("[{\"name\":\"message\", \"class\":\"string\"}]");
   applet_details["runSpec"]["code"] = "#!/bin/bash\n\n#main() {\necho '{\"message\": \"hello world!\"}' > job_output.json \n#}";
   applet_details["runSpec"]["interpreter"] = "bash";
+  applet_details["runSpec"]["release"] = "14.04";
+  applet_details["runSpec"]["distribution"] = "Ubuntu";
   applet_details["dxapi"] = "1.0.0";
   apl.create(applet_details);
 }
@@ -182,6 +184,8 @@ TEST(Idempotency, appletNew) {
   inputParams["outputSpec"] = JSON::parse("[{\"name\":\"message\", \"class\":\"string\"}]");
   inputParams["runSpec"]["code"] = "#!/bin/bash\n\n#main() {\necho '{\"message\": \"hello world!\"}' > job_output.json \n#}";
   inputParams["runSpec"]["interpreter"] = "bash";
+  inputParams["runSpec"]["release"] = "14.04";
+  inputParams["runSpec"]["distribution"] = "Ubuntu";
   inputParams["dxapi"] = "1.0.0";
   inputParams["project"] = config::CURRENT_PROJECT();
   inputParams["nonce"] = Nonce::nonce();

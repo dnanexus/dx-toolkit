@@ -65,7 +65,10 @@ public class IdempotencyTest {
                   .put("project", testProject.getId())
                   .put("inputSpec", inputSpec)
                   .put("runSpec",
-                          DXJSON.getObjectBuilder().put("interpreter", "bash")
+                          DXJSON.getObjectBuilder()
+                                  .put("distribution", "Ubuntu")
+                                  .put("release", "14.04")
+                                  .put("interpreter", "bash")
                                   .put("code", "#!/bin/bash\n\necho hello world!").build())
                   .put("outputSpec", DXJSON.getArrayBuilder().build()).put("dxapi", "1.0.0").build();
 
@@ -121,7 +124,10 @@ public class IdempotencyTest {
                   .put("project", testProject.getId())
                   .put("inputSpec", DXJSON.getArrayBuilder().build())
                   .put("runSpec",
-                          DXJSON.getObjectBuilder().put("interpreter", "bash")
+                          DXJSON.getObjectBuilder()
+                                  .put("distribution", "Ubuntu")
+                                  .put("release", "14.04")
+                                  .put("interpreter", "bash")
                                   .put("code", "#!/bin/bash\n\necho hello world!").build()).put("dxapi", "1.0.0")
                   .put("nonce", Nonce.nonce()).build();
 
@@ -152,7 +158,10 @@ public class IdempotencyTest {
                 .put("project", testProject.getId())
                 .put("inputSpec", inputSpec)
                 .put("runSpec",
-                        DXJSON.getObjectBuilder().put("interpreter", "bash")
+                        DXJSON.getObjectBuilder()
+                                .put("distribution", "Ubuntu")
+                                .put("release", "14.04")
+                                .put("interpreter", "bash")
                                 .put("code", "#!/bin/bash\n\necho hello world!").build()).put("dxapi", "1.0.0")
                 .build();
 

@@ -135,7 +135,7 @@ public class DXAppletTest {
                     @Override
                     public DXApplet.Builder getBuilder() {
                         return DXApplet.newApplet().setRunSpecification(
-                                RunSpecification.newRunSpec("bash", "false;").build());
+                                RunSpecification.newRunSpec("bash", "false;", "Ubuntu", "14.04").build());
                     }
                 });
     }
@@ -146,10 +146,10 @@ public class DXAppletTest {
     @Test
     public void testCreateAppletSerialization() throws IOException {
         Assert.assertEquals(
-                DXJSON.parseJson("{\"project\":\"project-000011112222333344445555\", \"dxapi\": \"1.0.0\", \"name\": \"foo\", \"runSpec\": {\"interpreter\": \"bash\", \"code\": \"false;\"}}"),
+                DXJSON.parseJson("{\"project\":\"project-000011112222333344445555\", \"dxapi\": \"1.0.0\", \"name\": \"foo\", \"runSpec\": {\"interpreter\": \"bash\", \"code\": \"false;\", \"distribution\": \"Ubuntu\", \"release\": \"14.04\"}}"),
                 MAPPER.valueToTree(DXApplet.newApplet()
                         .setProject(DXProject.getInstance("project-000011112222333344445555"))
-                        .setRunSpecification(RunSpecification.newRunSpec("bash", "false;").build())
+                        .setRunSpecification(RunSpecification.newRunSpec("bash", "false;", "Ubuntu", "14.04").build())
                         .setName("foo").buildRequestHash()));
     }
 
@@ -157,7 +157,7 @@ public class DXAppletTest {
     public void testCreateAppletSimple() {
         DXApplet a =
                 DXApplet.newApplet().setProject(testProject)
-                        .setRunSpecification(RunSpecification.newRunSpec("bash", "false;").build())
+                        .setRunSpecification(RunSpecification.newRunSpec("bash", "false;", "Ubuntu", "14.04").build())
                         .build();
 
         DXApplet.Describe d = a.describe();
@@ -182,7 +182,7 @@ public class DXAppletTest {
                 .setSummary("mysummary")
                 .setDescription("mydescription")
                 .setRunSpecification(
-                        RunSpecification.newRunSpec("bash", "false;").build())
+                        RunSpecification.newRunSpec("bash", "false;", "Ubuntu", "14.04").build())
                 .setInputSpecification(ImmutableList.of(input1, input2))
                 .setOutputSpecification(ImmutableList.of(output1))
                 .build();
@@ -274,7 +274,7 @@ public class DXAppletTest {
                                 .setSummary("mysummary")
                                 .setDescription("mydescription")
                                 .setRunSpecification(
-                                        RunSpecification.newRunSpec("bash", "false;").build())
+                                        RunSpecification.newRunSpec("bash", "false;", "Ubuntu", "14.04").build())
                                 .setInputSpecification(ImmutableList.of(input1, input2))
                                 .setOutputSpecification(ImmutableList.of(output1));
                     }
@@ -288,6 +288,8 @@ public class DXAppletTest {
         Assert.assertEquals(DataObjectState.CLOSED, d.getState());
         Assert.assertEquals("bash", d.getRunSpecification().getInterpreter());
         Assert.assertEquals(null, d.getRunSpecification().getCode());
+        Assert.assertEquals("Ubuntu", d.getRunSpecification().getDistribution());
+        Assert.assertEquals("14.04", d.getRunSpecification().getRelease());
         Assert.assertEquals(testProject, d.getProject());
         Assert.assertEquals(2, d.getInputSpecification().size());
         Assert.assertEquals("input_string", d.getInputSpecification().get(0).getName());
@@ -309,7 +311,7 @@ public class DXAppletTest {
     public void testDescribeWithOptions() {
         DXApplet a =
                 DXApplet.newApplet().setProject(testProject).setTitle("appletTitle")
-                        .setRunSpecification(RunSpecification.newRunSpec("bash", "false;").build())
+                        .setRunSpecification(RunSpecification.newRunSpec("bash", "false;", "Ubuntu", "14.04").build())
                         .build();
 
         DXApplet.Describe d = a.describe(DescribeOptions.get());
@@ -370,7 +372,7 @@ public class DXAppletTest {
                 "dx-jobutil-add-output output_record `dx-jobutil-parse-link \"$input_record\"` --class=record\n";
         DXApplet applet =
                 DXApplet.newApplet().setProject(testProject).setName("simple_test_java_app")
-                        .setRunSpecification(RunSpecification.newRunSpec("bash", code).build())
+                        .setRunSpecification(RunSpecification.newRunSpec("bash", code, "Ubuntu", "14.04").build())
                         .setInputSpecification(ImmutableList.of(input1, input2))
                         .setOutputSpecification(ImmutableList.of(output1)).build();
 
