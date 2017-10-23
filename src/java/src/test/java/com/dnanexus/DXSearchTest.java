@@ -87,7 +87,7 @@ public class DXSearchTest {
         String code = "\n";
         DXApplet applet =
                 DXApplet.newApplet().setProject(testProject).setName("simple_test_java_app")
-                        .setRunSpecification(RunSpecification.newRunSpec("bash", code).build())
+                        .setRunSpecification(RunSpecification.newRunSpec("bash", code, "Ubuntu", "14.04").build())
                         .setInputSpecification(ImmutableList.of(input1))
                         .setOutputSpecification(ImmutableList.<OutputParameter>of()).build();
         return applet;
@@ -271,7 +271,7 @@ public class DXSearchTest {
         DXFile file = DXFile.newFile().setProject(testProject).setName("afile").build();
         DXApplet applet =
                 DXApplet.newApplet().setProject(testProject).setName("anapplet")
-                        .setRunSpecification(RunSpecification.newRunSpec("bash", "").build())
+                        .setRunSpecification(RunSpecification.newRunSpec("bash", "", "Ubuntu", "14.04").build())
                         .build();
         DXWorkflow workflow =
                 DXWorkflow.newWorkflow().setProject(testProject).setName("aworkflow").build();
@@ -526,7 +526,7 @@ public class DXSearchTest {
         DXFile.newFile().setProject(testProject).setName("file1").putProperty("sampleId", "2345")
                 .build();
         DXApplet.newApplet().setProject(testProject).setName("applet1")
-                .setRunSpecification(RunSpecification.newRunSpec("bash", "").build()).build();
+                .setRunSpecification(RunSpecification.newRunSpec("bash", "", "Ubuntu", "14.04").build()).build();
         DXWorkflow.newWorkflow().setProject(testProject).setName("workflow1").build();
 
         DXRecord recordResult =

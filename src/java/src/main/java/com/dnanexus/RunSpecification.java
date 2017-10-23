@@ -35,10 +35,14 @@ public class RunSpecification {
 
         private String interpreter;
         private String code;
+        private String distribution;
+        private String release;
 
-        private Builder(String interpreter, String code) {
+        private Builder(String interpreter, String code, String distribution, String release) {
             this.interpreter = interpreter;
             this.code = code;
+            this. distribution = distribution;
+            this.release = release;
         }
 
         /**
@@ -54,16 +58,18 @@ public class RunSpecification {
     }
 
     /**
-     * Returns a builder initialized to create a run specification with the given interpreter and
-     * entry point code.
+     * Returns a builder initialized to create a run specification with the given interpreter,
+     * entry point code, distribution and releae.
      *
      * @param interpreter interpreter name, e.g. "bash" or "python2.7"
      * @param code entry point code
+     * @param distribution OS distribution, e.g. "Ubuntu"
+     * @param release OS release, e.g. "14.04"
      *
      * @return Builder object
      */
-    public static Builder newRunSpec(String interpreter, String code) {
-        return new Builder(interpreter, code);
+    public static Builder newRunSpec(String interpreter, String code, String distribution, String release) {
+        return new Builder(interpreter, code, distribution, release);
     }
 
     @JsonProperty
@@ -72,6 +78,12 @@ public class RunSpecification {
     @JsonProperty
     private String interpreter;
 
+    @JsonProperty
+    private String distribution;
+
+    @JsonProperty
+    private String release;
+
     private RunSpecification() {
         // No-arg constructor for Jackson deserialization
     }
@@ -79,6 +91,8 @@ public class RunSpecification {
     private RunSpecification(Builder builder) {
         this.code = builder.code;
         this.interpreter = builder.interpreter;
+        this.distribution = builder.distribution;
+        this.release = builder.release;
     }
 
     /**
@@ -99,4 +113,21 @@ public class RunSpecification {
         return interpreter;
     }
 
+    /**
+     * Returns the distribution for the applet.
+     *
+     * @return the distribution
+     */
+    public String getDistribution() {
+        return distribution;
+    }
+
+    /**
+     * Returns the release for the applet.
+     *
+     * @return the release
+     */
+    public String getRelease() {
+        return release;
+    }
 }
