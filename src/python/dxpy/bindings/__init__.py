@@ -587,15 +587,12 @@ class DXDataObject(DXObject):
                               **kwargs)
 
 
-    def clone(self, project, folder="/", include_hidden_links=True,
-              **kwargs):
+    def clone(self, project, folder="/", **kwargs):
         '''
         :param project: Destination project ID
         :type project: string
         :param folder: Folder route to which to move the object
         :type folder: string
-        :param include_hidden_links: If True, hidden objects linked to by this object are also cloned into the destination project
-        :type include_hidden_links: boolean
         :raises: :exc:`~dxpy.exceptions.DXError` if no project is associated with the object
         :returns: An object handler for the new cloned object
         :rtype: :class:`DXDataObject`
@@ -612,8 +609,7 @@ class DXDataObject(DXObject):
         dxpy.api.project_clone(self._proj,
                                {"objects": [self._dxid],
                                 "project": project,
-                                "destination": folder,
-                                "includeHiddenLinks": include_hidden_links},
+                                "destination": folder},
                                **kwargs)
         cloned_copy = copy.copy(self)
         cloned_copy.set_ids(cloned_copy.get_id(), project)
