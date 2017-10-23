@@ -110,10 +110,6 @@ Then:
 
 Notes:
 
-  - On CentOS/RHEL 5.x, one of the utilities, `dx-contigset-to-fasta`,
-    will not function correctly, as some of the library versions are too
-    old.
-
   - Tested on CentOS 5.4 and CentOS 6.2.
 
 ### OS X

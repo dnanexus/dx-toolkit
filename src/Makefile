@@ -64,7 +64,7 @@ else
 	MAYBE_SUDO='sudo'
 endif
 
-all: api_wrappers cpp src_libs python dx-contigset-to-fasta dx-verify-file jq dx-docker
+all: api_wrappers cpp src_libs python dx-verify-file jq dx-docker
 
 # Don't try to initialize the submodule in source distributions, it should
 # already be there and ready to build.
@@ -216,9 +216,6 @@ R: api_wrappers toolkit_version
 
 # Tools
 # =====
-
-dx-contigset-to-fasta: api_wrappers
-	$(MAKE) -C dx-contigset-to-fasta install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
 
 dx-verify-file: api_wrappers
 	$(MAKE) -C dx-verify-file install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
@@ -520,7 +517,6 @@ endif
 distclean: clean
 
 clean:
-	$(MAKE) -C dx-contigset-to-fasta clean
 	$(MAKE) -C dx-verify-file clean
 	$(MAKE) -C ua clean
 	-find ../bin -type f \( -name jq -or -name dx -or -name 'dx-*' \) -not -name 'dx-unpack*' -delete
@@ -534,4 +530,4 @@ clean:
 	-rm -rf boost c-ares curl file openssl
 	-$(MAKE) -C jq clean
 
-.PHONY: all toolkit_version api_wrappers src_libs python pynsist_installer java dx-contigset-to-fasta ua test test_python install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R boost boost_build install_sysdeps
+.PHONY: all toolkit_version api_wrappers src_libs python pynsist_installer java ua test test_python install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R boost boost_build install_sysdeps
