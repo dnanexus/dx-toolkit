@@ -62,7 +62,6 @@ dxR.Rcheck
 /bin/dx-spans-to-bed
 /bin/dx-variants-to-vcf
 /bin/dx-verify-file
-/bin/dx-workflow-to-applet
 /bin/dx-print-bash-vars
 /bin/activate-global-python-argcomplete
 /bin/coverage*
