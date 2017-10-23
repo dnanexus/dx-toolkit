@@ -2017,24 +2017,12 @@ def export_sam(args):
     from dxpy.scripts import dx_mappings_to_sam
     dx_mappings_to_sam.main()
 
-def export_csv(args):
-    sys.argv = [sys.argv[0] + ' export csv'] + args.exporter_args
-    from dxpy.scripts import dx_gtable_to_csv
-    dx_gtable_to_csv.main()
-
-def export_tsv(args):
-    sys.argv = [sys.argv[0] + ' export tsv'] + args.exporter_args
-    from dxpy.scripts import dx_gtable_to_tsv
-    dx_gtable_to_tsv.main()
-
 def export_vcf(args):
     sys.argv = [sys.argv[0] + ' export vcf'] + args.exporter_args
     from dxpy.scripts import dx_variants_to_vcf
     dx_variants_to_vcf.main()
 
 exporters = {
-    "tsv": export_tsv,
-    "csv": export_csv,
     "fastq": export_fastq,
     "sam": export_sam,
     "vcf": export_vcf,

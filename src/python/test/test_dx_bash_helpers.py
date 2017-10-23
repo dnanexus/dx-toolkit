@@ -411,7 +411,7 @@ class TestDXBashHelpersBenchmark(DXTestCase):
 
 class TestDXJobutilAddOutput(DXTestCase):
     dummy_hash = "123456789012345678901234"
-    data_obj_classes = ['file', 'record', 'gtable', 'applet', 'workflow']
+    data_obj_classes = ['file', 'record', 'applet', 'workflow']
     dummy_ids = [obj_class + '-' + dummy_hash for obj_class in data_obj_classes]
     dummy_job_id = "job-" + dummy_hash
     dummy_analysis_id = "analysis-123456789012345678901234"

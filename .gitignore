@@ -50,8 +50,6 @@ dxR.Rcheck
 /bin/dx-genes-to-gff
 /bin/dx-genes-to-gtf
 /bin/dx-get-job-streams
-/bin/dx-gtable-to-csv
-/bin/dx-gtable-to-tsv
 /bin/dx-jobutil-*
 /bin/dx-log-stream
 /bin/dx-mappings-to-fastq
