@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [238.0] - beta
+
 ### Fixed
 
 * dx-toolkit and apt conflict with argcomplete
@@ -20,7 +22,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * app building tests now include `runSpec.release` and `runSpec.distribution` in app specs
 * `dx-docker`: better handling of quotes
 
-## [237.0] - beta
+## [237.0] - 2017.10.19 - stable
 
 ### Added
 
@@ -30,7 +32,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Remove rstudio option for `dx notebook`
 
-## [236.2] - 2017.10.4 - stable
+## [236.2] - 2017.10.4
 
 
 ### Fixed
