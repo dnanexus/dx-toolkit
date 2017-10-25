@@ -3,7 +3,9 @@
   "summary" : "benchmark for dx-upload and dx-download",
   "runSpec": {
     "file": "run.sh",
-    "interpreter": "bash"
+    "interpreter": "bash",
+    "distribution": "Ubuntu",
+    "release": "14.04"
   },
   "inputSpec": [
     {"name": "parallel", "class": "boolean", "optional": true},

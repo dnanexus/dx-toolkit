@@ -3,7 +3,9 @@
   "summary" : "file optional input",
   "runSpec": {
     "file": "run.sh",
-    "interpreter": "bash"
+    "interpreter": "bash",
+    "distribution": "Ubuntu",
+    "release": "14.04"
   },
   "inputSpec": [
     {"name": "create_seq3", "class" : "boolean" }

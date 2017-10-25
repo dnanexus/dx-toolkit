@@ -3,7 +3,9 @@
   "summary" : "prefix_patterns",
   "runSpec": {
     "file": "run.sh",
-    "interpreter": "bash"
+    "interpreter": "bash",
+    "distribution": "Ubuntu",
+    "release": "14.04"
   },
   "inputSpec": [
     {
