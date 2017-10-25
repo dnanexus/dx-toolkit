@@ -6,6 +6,17 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Update run input help and describe messages for locked workflows
+* Warn when old, top-level pricing policy scheme is used in dxapp.json
+
+### Removed
+
+* `dx-gtable-to-csv` and `dx-gtable-to-tsv` scripts
+* `dx-workflow-to-applet` script
+* `include_hidden_links` parameter from clone()
+
 ## [238.0] - beta
 
 ### Fixed
