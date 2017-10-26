@@ -27,7 +27,7 @@ stage 'Build'
                     commit_hash=\"${env.commit_hash}\"
                     working_dir=\$(pwd)
                     mkdir \$commit_hash
-                    docker run -v \$working_dir/\$commit_hash:/\$commit_hash --rm dnanexus/dx-toolkit:14.04 /bin/bash -c \"git clone https://github.com/dnanexus/dx-toolkit.git; cd dx-toolkit; \\
+                    docker run -v \$working_dir/\$commit_hash:/\$commit_hash --rm ${docker_registry}/dnanexus/dx-toolkit:14.04 /bin/bash -c \"git clone https://github.com/dnanexus/dx-toolkit.git; cd dx-toolkit; \\
                         git checkout \$commit_hash; make toolkit_version git_submodules; rm -rf .git src/jq/.git; cd ..; \\
                         tar -czf dx-toolkit-\$commit_hash-source.tar.gz dx-toolkit; \\
                         tar -C dx-toolkit/src/R -czf dxR_\$commit_hash.tar.gz dxR; \\
@@ -44,7 +44,7 @@ stage 'Build'
                     commit_hash=\"${env.commit_hash}\"
                     mkdir \$commit_hash
                     working_dir=\$(pwd)
-                    docker run -v \$working_dir/\$commit_hash:/\$commit_hash --rm dnanexus/dx-toolkit:14.04 /bin/bash -c \"git clone https://github.com/dnanexus/dx-toolkit.git; cd dx-toolkit; \\
+                    docker run -v \$working_dir/\$commit_hash:/\$commit_hash --rm ${docker_registry}/dnanexus/dx-toolkit:14.04 /bin/bash -c \"git clone https://github.com/dnanexus/dx-toolkit.git; cd dx-toolkit; \\
                         git checkout \$commit_hash; build/package.sh ubuntu-14.04-amd64; \\
                         mv dx-toolkit-*.tar.gz /\$commit_hash/\"
                     """
@@ -59,7 +59,7 @@ stage 'Build'
                     commit_hash=\"${env.commit_hash}\"
                     mkdir \$commit_hash
                     working_dir=\$(pwd)
-                    docker run -v \$working_dir/\$commit_hash:/\$commit_hash --rm dnanexus/dx-toolkit:12.04 /bin/bash -xc \"git clone https://github.com/dnanexus/dx-toolkit.git; cd dx-toolkit; \\
+                    docker run -v \$working_dir/\$commit_hash:/\$commit_hash --rm ${docker_registry}/dnanexus/dx-toolkit:12.04 /bin/bash -xc \"git clone https://github.com/dnanexus/dx-toolkit.git; cd dx-toolkit; \\
                         git checkout \$commit_hash; build/package.sh ubuntu-12.04-amd64; \\
                         mv dx-toolkit-*.tar.gz /\$commit_hash/\"
                     """
@@ -74,7 +74,7 @@ stage 'Build'
                     commit_hash=\"${env.commit_hash}\"
                     mkdir \$commit_hash
                     working_dir=\$(pwd)
-                    docker run -v \$working_dir/\$commit_hash:/\$commit_hash --rm dnanexus/dx-toolkit:centos6 \\
+                    docker run -v \$working_dir/\$commit_hash:/\$commit_hash --rm ${docker_registry}/dnanexus/dx-toolkit:centos6 \\
                         /bin/bash -xc \"git clone https://github.com/dnanexus/dx-toolkit.git; \\
                         cd dx-toolkit; git checkout \$commit_hash; build/package.sh centos-amd64; \\
                         mv dx-toolkit-*.tar.gz /\$commit_hash/\"
@@ -90,7 +90,7 @@ stage 'Build'
                     commit_hash=\"${env.commit_hash}\"
                     mkdir \$commit_hash
                     working_dir=\$(pwd)
-                    docker run -v \$working_dir/\$commit_hash:/\$commit_hash --rm dnanexus/dx-toolkit:14.04-i386 \\
+                    docker run -v \$working_dir/\$commit_hash:/\$commit_hash --rm ${docker_registry}/dnanexus/dx-toolkit:14.04-i386 \\
                         /bin/bash -xc \"git clone https://github.com/dnanexus/dx-toolkit.git; \\
                         cd dx-toolkit; git checkout \$commit_hash; build/package.sh ubuntu-14.04-i386; \\
                         mv dx-toolkit-*.tar.gz /\$commit_hash/\"
@@ -106,7 +106,7 @@ stage 'Build'
                     commit_hash=\"${env.commit_hash}\"
                     mkdir \$commit_hash
                     working_dir=\$(pwd)
-                    docker run -v \$working_dir/\$commit_hash:/\$commit_hash --rm dnanexus/dx-toolkit:12.04-i386 \\
+                    docker run -v \$working_dir/\$commit_hash:/\$commit_hash --rm ${docker_registry}/dnanexus/dx-toolkit:12.04-i386 \\
                         /bin/bash -xc \"git clone https://github.com/dnanexus/dx-toolkit.git; \\
                         cd dx-toolkit; git checkout \$commit_hash; build/package.sh ubuntu-12.04-i386; \\
                         mv dx-toolkit-*.tar.gz /\$commit_hash/\"
@@ -122,7 +122,7 @@ stage 'Build'
                     commit_hash=\"${env.commit_hash}\"
                     working_dir=\$(pwd)
                     mkdir -p \$working_dir/\$commit_hash/precise
-                    docker run -v \$working_dir/\$commit_hash/precise:/\$commit_hash/precise --rm dnanexus/dx-toolkit:12.04 \\
+                    docker run -v \$working_dir/\$commit_hash/precise:/\$commit_hash/precise --rm ${docker_registry}/dnanexus/dx-toolkit:12.04 \\
                         /bin/bash -xc \"git clone https://github.com/dnanexus/dx-toolkit.git; \\
                         cd dx-toolkit; git checkout \$commit_hash; build/build-dx-toolkit-debs.sh; \\
                         mv /*.{changes,deb,dsc,tar.gz} /\$commit_hash/precise\"
@@ -138,7 +138,7 @@ stage 'Build'
                     commit_hash=\"${env.commit_hash}\"
                     working_dir=\$(pwd)
                     mkdir -p \$working_dir/\$commit_hash/trusty
-                    docker run -v \$working_dir/\$commit_hash/trusty:/\$commit_hash/trusty --rm dnanexus/dx-toolkit:14.04 \\
+                    docker run -v \$working_dir/\$commit_hash/trusty:/\$commit_hash/trusty --rm ${docker_registry}/dnanexus/dx-toolkit:14.04 \\
                         /bin/bash -xc \"git clone https://github.com/dnanexus/dx-toolkit.git; \\
                         cd dx-toolkit; git checkout \$commit_hash; build/build-dx-toolkit-debs.sh; \\
                         mv /*.{changes,deb,dsc,tar.gz} /\$commit_hash/trusty\"
