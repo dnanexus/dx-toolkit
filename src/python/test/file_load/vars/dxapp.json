@@ -3,7 +3,9 @@
   "summary" : "testing bash variable generation",
   "runSpec": {
     "file": "run.sh",
-    "interpreter": "bash"
+    "interpreter": "bash",
+    "distribution": "Ubuntu",
+    "release": "14.04"
   },
   "inputSpec": [
     {"name": "seq1", "class": "file"},
