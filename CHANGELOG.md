@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [239.0] - beta
+
 ### Changed
 
 * Update run input help and describe messages for locked workflows
@@ -17,7 +19,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx-workflow-to-applet` script
 * `include_hidden_links` parameter from clone()
 
-## [238.0] - beta
+## [238.1] - 2017.10.27 - stable
 
 ### Fixed
 
@@ -27,13 +29,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * dx-clone-asset script
 * `dx-docker`: ignore user argument if given 
+* TLS documentation
 
 ### Changed
 
 * app building tests now include `runSpec.release` and `runSpec.distribution` in app specs
 * `dx-docker`: better handling of quotes
 
-## [237.0] - 2017.10.19 - stable
+## [237.0] - 2017.10.19
 
 ### Added
 
