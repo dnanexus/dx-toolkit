@@ -1,3 +1,13 @@
+dx-toolkit (0.239.0) precise; urgency=low
+
+  * Changed: Update run input help and describe messages for locked workflows
+  * Changed: Warn when old, top-level pricing policy scheme is used in dxapp.json
+  * Removed: dx-gtable-to-csv and dx-gtable-to-tsv scripts
+  * Removed: dx-workflow-to-applet script
+  * Removed: include_hidden_links parameter from clone()
+
+ -- Geet Duggal <gduggal@dnanexus.com>  Fri, 27 Oct 2017 17:40:24 +0000
+
 dx-toolkit (0.238.0) precise; urgency=low
 
   * Fixed: dx-toolkit and apt conflict with argcomplete
