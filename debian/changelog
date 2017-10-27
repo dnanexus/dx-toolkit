@@ -1,3 +1,9 @@
+dx-toolkit (0.238.1) precise; urgency=low
+
+  * Added: TLS documentation
+
+ -- Geet Duggal <gduggal@dnanexus.com>  Fri, 27 Oct 2017 17:43:24 +0000
+
 dx-toolkit (0.238.0) precise; urgency=low
 
   * Fixed: dx-toolkit and apt conflict with argcomplete
