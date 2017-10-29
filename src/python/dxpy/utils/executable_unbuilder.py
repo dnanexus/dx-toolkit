@@ -238,7 +238,7 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output=[]):
     if "systemRequirementsByRegion" in dxapp_json['runSpec']:
         dxapp_json["regionalOptions"] = {}
         for region in dxapp_json['runSpec']["systemRequirementsByRegion"]:
-            dxapp_json["regionalOptions"][region] =
+            dxapp_json["regionalOptions"][region] = \
                 dict(systemRequirements=dxapp_json['runSpec']['systemRequirementsByRegion'][region])
 
     # systemRequirementsByRegion data is stored in regionalOptions,
