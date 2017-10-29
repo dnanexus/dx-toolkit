@@ -8469,7 +8469,7 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
             app_spec = dict(self.base_app_spec, name=name, regionalOptions=sysreq_spec)
             app_dir = self.write_app_directory(name, json.dumps(app_spec), "code.py")
             atype = '--app' if atype == 'app' else ''
-            json.loads(run("dx build --json {} {}".format(atype, app_dir)))
+            run("dx build {} {}".format(atype, app_dir))
 
         def _get_and_build(name, atype):
             with chdir(tempfile.mkdtemp()):
