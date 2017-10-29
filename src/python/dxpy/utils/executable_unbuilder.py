@@ -83,11 +83,6 @@ def _dump_workflow(workflow_obj, describe_output=[]):
     if readme:
         _write_simple_file("Readme.md", readme)
 
-
-def _get_sysrequirements_for_region(region, dxapp_json):
-    return dict(systemRequirements=dxapp_json['runSpec']['systemRequirementsByRegion'][region])
-
-
 def _dump_app_or_applet(executable, omit_resources=False, describe_output=[]):
     info = executable.get()
 
@@ -243,7 +238,8 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output=[]):
     if "systemRequirementsByRegion" in dxapp_json['runSpec']:
         dxapp_json["regionalOptions"] = {}
         for region in dxapp_json['runSpec']["systemRequirementsByRegion"]:
-            dxapp_json["regionalOptions"][region] = _get_sysrequirements_for_region(region, dxapp_json)
+            dxapp_json["regionalOptions"][region] =
+                dict(systemRequirements=dxapp_json['runSpec']['systemRequirementsByRegion'][region])
 
     # systemRequirementsByRegion data is stored in regionalOptions,
     # systemRequirements is ignored

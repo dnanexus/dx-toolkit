@@ -506,7 +506,6 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     applet_spec["runSpec"].setdefault("assetDepends", [])
     if not dry_run:
         region = dxpy.api.project_describe(dest_project, input_params={"fields": {"region": True}})["region"]
-        regional_options = applet_spec.get('regionalOptions', {}).get(region, {})
 
         # if regionalOptions contain at least one region, they must include
         # the region of the target project
@@ -514,6 +513,8 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
             err_mesg = "destination project is in region {} but \"regionalOptions\" do not contain this region. ".format(region)
             err_mesg += "Please, update your \"regionalOptions\" specification"
             raise AppBuilderException(err_mesg)
+
+        regional_options = applet_spec.get('regionalOptions', {}).get(region, {})
 
         # We checked earlier that if region-specific values for the
         # fields below are given, the same fields are not also specified
