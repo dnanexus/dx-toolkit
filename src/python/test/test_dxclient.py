@@ -6037,20 +6037,6 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEqual(applet_describe["id"], applet_describe["id"])
         self.assertEqual(applet_describe["name"], "minimal_applet")
 
-    def test_build_applet_ignores_regional_options_in_dxapp(self):
-        name = "asset_applet_{t}".format(t=int(time.time() * 1000))
-        app_spec = dict(self.base_app_spec, name=name,
-                       # Will be ignored when building applets.
-                       regionalOptions = {"aws:us-east-1": {}})
-        app_dir = self.write_app_directory(name, json.dumps(app_spec), "code.py")
-        new_applet = json.loads(run("dx build --json " + app_dir))
-        applet_describe = dxpy.get_handler(new_applet["id"]).describe()
-        self.assertEqual(applet_describe["class"], "applet")
-        self.assertEqual(applet_describe["id"], applet_describe["id"])
-        self.assertEqual(applet_describe["name"], name)
-        # We already know this via the API, but here goes.
-        self.assertNotIn("regionalOptions", applet_describe)
-
     def test_dx_build_applet_dxapp_json_created_with_makefile(self):
         app_name = "nodxapp_applet"
         app_dir = self.write_app_directory(app_name, None, "code.py")
@@ -6365,7 +6351,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                          'skipping test that would create apps')
     def test_build_single_region_app_without_regional_options(self):
         # Backwards-compatible.
-        app_name = "asset_{t}_single_region_app".format(t=int(time.time()))
+        app_name = "app_{t}_single_region".format(t=int(time.time()))
         app_spec = dict(self.base_app_spec, name=app_name)
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
         new_app = json.loads(run("dx build --create-app --json " + app_dir))
@@ -6541,10 +6527,13 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                 self.assertIn(azure_file_id_b, azure_obj_id_list)
 
     def test_build_applets_using_multi_region_dxapp_json(self):
-        app_name = "asset_{t}_multi_region_dxapp_json_with_regional_system_requirements".format(t=int(time.time()))
+        app_name = "applet_{t}_multi_region_dxapp_json_with_regional_system_requirements".format(t=int(time.time()))
 
         aws_us_east_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x1"))
         azure_westus_system_requirements = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
+        # regionalOptions will be accepted but only the region in which the applet is
+        # actually built will be read (and returned in describe output in
+        # systemRequirementsByRegion), other regions' configs will be ignored
         app_spec = dict(self.base_app_spec, name=app_name,
                         regionalOptions={"aws:us-east-1": dict(systemRequirements=aws_us_east_system_requirements),
                                          "azure:westus": dict(systemRequirements=azure_westus_system_requirements)})
@@ -6556,6 +6545,19 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                 applet_desc = dxpy.api.applet_describe(applet_id)
                 bundled_depends_by_region = applet_desc["runSpec"]["bundledDependsByRegion"]
                 self.assertEqual(bundled_depends_by_region.keys(), [region])
+                sysreq_by_region = applet_desc["runSpec"]["systemRequirementsByRegion"]
+                self.assertEqual(sysreq_by_region.keys(), [region])
+
+    def test_cannot_build_applet_with_mismatching_regional_options(self):
+        app_name = "applet_{t}_with_regional_system_requirements".format(t=int(time.time()))
+        aws_us_east_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x1"))
+        app_spec = dict(self.base_app_spec, name=app_name,
+                        regionalOptions={"aws:us-east-1": dict(systemRequirements=aws_us_east_system_requirements)})
+        app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+
+        with temporary_project(region="azure:westus", select=True):
+            with self.assertRaisesRegexp(DXCalledProcessError, "do not contain this region"):
+                run("dx build --json " + app_dir)
 
     def test_build_multi_region_app_without_regional_options(self):
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
@@ -8107,6 +8109,8 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
         output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
                                       "distribution": "Ubuntu", "release": "14.04"}
 
+        output_app_spec["regionalOptions"] = {"aws:us-east-1": {"systemRequirements": {}}}
+
         app_dir = self.write_app_directory("get_åpplet", json.dumps(app_spec), "code.py",
                                            code_content="import os\n")
         os.mkdir(os.path.join(app_dir, "resources"))
@@ -8144,6 +8148,9 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
             output_json = json.loads(applet_metadata)
             self.assertEqual(output_app_spec, output_json)
             self.assertNotIn("bundledDepends", output_json["runSpec"])
+            self.assertNotIn("systemRequirementsByRegion", output_json["runSpec"])
+
+            self.assertIn("regionalOptions", output_json)
 
             self.assertNotIn("description", output_json)
             self.assertNotIn("developerNotes", output_json)
@@ -8262,6 +8269,7 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
         output_app_spec = app_spec.copy()
         output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
                                       "distribution": "Ubuntu", "release": "14.04"}
+        output_app_spec["regionalOptions"] =  {u'aws:us-east-1': {u'systemRequirements': {}}}
 
         app_dir = self.write_app_directory("get_åpplet_field_cleanup", json.dumps(app_spec), "code.py",
                                            code_content="import os\n")
@@ -8285,6 +8293,7 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
         output_app_spec = app_spec.copy()
         output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
                                       "distribution": "Ubuntu", "release": "14.04"}
+        output_app_spec["regionalOptions"] =  {u'aws:us-east-1': {u'systemRequirements': {}}}
 
         app_dir = self.write_app_directory("get_åpplet_windows", json.dumps(app_spec), "code.py",
                                            code_content="import os\n")
@@ -8383,6 +8392,9 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
         self.assertNotIn("description", output_json)
         self.assertNotIn("developerNotes", output_json)
 
+        self.assertNotIn("systemRequirements", output_json["runSpec"])
+        self.assertNotIn("systemRequirementsByRegion", output_json["runSpec"])
+
         self.assertDictSubsetOf(filtered_app_spec, output_json)
 
         self.assertFileContentsEqualsString([name, "src",
@@ -8452,6 +8464,50 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
 
         self._test_get_app("get_app_open_source_published_no_authusers", True, True, [])
         self._test_get_app("get_app_published_no_authusers", False, True, [])
+
+    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
+    def test_dx_cross_get_and_build_app_and_applet(self):
+        sysreq_spec = {"aws:us-east-1": {"systemRequirements": {"*": {"instanceType": "mem1_ssd1_x8"}}}}
+
+        def _build(name, atype):
+            app_spec = dict(self.base_app_spec, name=name, regionalOptions=sysreq_spec)
+            app_dir = self.write_app_directory(name, json.dumps(app_spec), "code.py")
+            atype = '--app' if atype == 'app' else ''
+            run("dx build {} {}".format(atype, app_dir))
+
+        def _get_and_build(name, atype):
+            with chdir(tempfile.mkdtemp()):
+                run("dx get {}".format('app-' + name if atype == 'app' else name))
+                dxapp_json = json.loads(open(os.path.join(name, "dxapp.json")).read())
+                self.assertNotIn("systemRequirements", dxapp_json['runSpec'])
+                self.assertNotIn("systemRequirementsByRegion", dxapp_json['runSpec'])
+                self.assertEqual(dxapp_json["regionalOptions"], sysreq_spec)
+
+                # we need to stick in 'version' to dxapp,json to build an app
+                dxapp_json["version"] = "1.0.0"
+                with open(os.path.join(name, "dxapp.json"), 'w') as dxapp_json_file_2:
+                    dxapp_json_file_2.write(json.dumps(dxapp_json, ensure_ascii=False))
+
+                # build app from the new source dir, created with 'dx get'
+                new_app = json.loads(run("dx build --json --app {}".format(name)))
+                app_desc = dxpy.get_handler(new_app["id"]).describe()
+                self.assertEqual(app_desc["class"], "app")
+                self.assertEqual(app_desc["id"], new_app["id"])
+                self.assertEqual(app_desc["name"], name)
+
+                # build applet from the new source dir, created with 'dx get'
+                new_applet = json.loads(run("dx build --json -a {}".format(name)))
+                applet_desc = dxpy.get_handler(new_applet["id"]).describe()
+                self.assertEqual(applet_desc["class"], "applet")
+                self.assertEqual(applet_desc["id"], new_applet["id"])
+                self.assertEqual(applet_desc["name"], name)
+
+        _build('app_cycle', 'app')
+        _get_and_build('app_cycle', 'app')
+
+        _build('applet_cycle', 'applet')
+        _get_and_build('applet_cycle', 'applet')
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
     def test_get_app_by_name(self):
@@ -8587,7 +8643,7 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
     def test_get_preserves_system_requirements(self):
-        app_name = "asset_{t}_multi_region_app_with_regional_system_requirements".format(t=int(time.time()))
+        app_name = "app_{t}_multi_region_app_with_regional_system_requirements".format(t=int(time.time()))
 
         aws_us_east_system_requirements = dict(main=dict(instanceType="mem2_hdd2_x1"))
         azure_westus_system_requirements = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
