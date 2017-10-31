@@ -19,7 +19,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, io, time, subprocess, glob, logging
+import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, io, time, subprocess, glob, logging, functools
 import shlex # respects quoted substrings when splitting
 
 import requests
@@ -5091,16 +5091,17 @@ parser_notebook = subparsers.add_parser('notebook', help='Launch a web notebook 
                                         description='Launch a web notebook inside DNAnexus.',
                                         formatter_class=argparse.RawTextHelpFormatter,
                                         prog='dx notebook')
-parser_notebook.add_argument('notebook_type', help='Type of notebook to launch', choices=['jupyter'])
-parser_notebook.add_argument('notebook_files', help='Files to include on notebook instance', default=[], nargs=argparse.REMAINDER).completer = DXPathCompleter(classes=['file'])
+parser_notebook.add_argument('notebook_type', help='Type of notebook to launch', choices=['jupyter_lab', 'jupyter_notebook', 'jupyter'])
+parser_notebook.add_argument('--notebook_files', help='Files to include on notebook instance', default=[], nargs='*').completer = DXPathCompleter(classes=['file'])
 parser_notebook.add_argument('--spark', help='Install spark infrastructure.', action='store_true', default=False)
 parser_notebook.add_argument('--port', help='local port to use to access the notebook.', default='2001')
 parser_notebook.add_argument('--snapshot', help='A snapshot file to reform on the server.').completer = DXPathCompleter(classes=['file'])
 parser_notebook.add_argument('--timeout', help='How long to keep the notebook open (smhwMy).', default='1h')
-parser_notebook.add_argument('--ds-packages', help='Install data science packages.', action='store_true')
 parser_notebook.add_argument('-q', '--quiet', help='Do not launch web browser.', action='store_false', dest='open_server')
+parser_notebook.add_argument('--version', help='What version of the notebook app to launch.', default=None)
 parser_notebook.add_argument('--instance-type', help='Instance type to run the notebook on.', default='mem1_ssd1_x4')
-parser_notebook.set_defaults(func=run_notebook)
+notebook_with_ssh_config_check = functools.partial(run_notebook, ssh_config_check=verify_ssh_config)
+parser_notebook.set_defaults(func=notebook_with_ssh_config_check)
 register_parser(parser_notebook, categories='data', add_help=False)
 
 from ..ssh_tunnel_app_support import run_loupe
