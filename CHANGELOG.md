@@ -6,6 +6,28 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Warning when `runSpec.release` is not specified with a note it will be required in the future
+
+### Changed
+
+* `dx-app-wizard` and `dx get` specify systemRequirements in `regionalOptions` and not in `runSpec` of `dxapp.json`
+* multiple updates to jupyter notebook support
+
+### Deprecated
+
+* setting `systemRequirements` in `runSpec` of `dxapp.json`
+
+### Removed
+
+* `dx-configset-to-fasta` script
+
+### Fixed
+
+* `dx-clone-asset` sets the default regions to be all regions that user has access to and skips redundant cloning to current region
+* `dx build` now works seamlessly across apps and applets
+
 ## [239.0] - beta
 
 ### Changed
