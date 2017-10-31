@@ -44,7 +44,6 @@ dxR.Rcheck
 /bin/dx-build-applet
 /bin/dx-build-asset
 /bin/dx-build-report-html
-/bin/dx-contigset-to-fasta
 /bin/dx-docker
 /bin/dx-fetch-bundled-depends
 /bin/dx-genes-to-gff

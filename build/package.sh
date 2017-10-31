@@ -37,7 +37,7 @@ cd "${DNANEXUS_HOME}"
 make clean
 make
 rm Makefile
-rm -rf debian src/{java,javascript,R,ua,python/build,{dx-verify-file,dx-contigset-to-fasta}/build} build/*_env share/dnanexus/lib/javascript
+rm -rf debian src/{java,javascript,R,ua,python/build,{dx-verify-file}/build} build/*_env share/dnanexus/lib/javascript
 mv build/Prebuilt-Readme.md Readme.md
 
 "$(dirname $0)/fix_shebang_lines.sh" bin "/usr/bin/env python2.7"
