@@ -9,6 +9,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * Warning when `runSpec.release` is not specified with a note it will be required in the future
+* Numerous enhancements to Jupyter notebook support (see https://github.com/dnanexus/dx-toolkit/commit/7ecbcb6b75118c0acd27f7a7cfe37d0a19e6d6c3 for more information)
 
 ### Changed
 
