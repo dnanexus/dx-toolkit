@@ -1,3 +1,15 @@
+dx-toolkit (0.240.0) precise; urgency=low
+
+  * Added: Warning when runSpec.release is not specified with a note it will be required in the future
+  * Added: Numerous enhancements to Jupyter notebook support
+  * Changed: dx-app-wizard and dx get specify systemRequirements in regionalOptions and not in runSpec of dxapp.json
+  * Deprecated: setting systemRequirements in runSpec of dxapp.json
+  * Removed: dx-configset-to-fasta script
+  * Fixed: dx-clone-asset sets the default regions to be all regions that user has access to and skips redundant cloning to current region
+  * Fixed: dx build now works seamlessly across apps and applets
+
+ -- Nicolas Bock <nbock@dnanexus.com>  Thu, 02 Nov 2017 19:31:06 +0000
+
 dx-toolkit (0.239.0) precise; urgency=low
 
   * Changed: Update run input help and describe messages for locked workflows
