@@ -363,9 +363,9 @@ def _verify_app_source_dir_impl(src_dir, temp_dir, mode, enforce=True):
                 raise dxpy.app_builder.AppBuilderException('authorizedUsers field contains an entry which is not either the string "PUBLIC" or a user or org ID')
 
     if "pricingPolicy" in manifest:
-        warn_message = "\"pricingPolicy\" at the top level is not accepted. It must be specified "
-        warn_message += "under the \"regionalOptions\" field in all enabled regions of the app"
-        logger.warn(warn_message)
+        error_message = "\"pricingPolicy\" at the top level is not accepted. It must be specified "
+        error_message += "under the \"regionalOptions\" field in all enabled regions of the app"
+        raise dxpy.app_builder.AppBuilderException(error_message)
 
     # Check all other files that are going to be in the resources tree.
     # For these we detect the language based on the filename extension.
