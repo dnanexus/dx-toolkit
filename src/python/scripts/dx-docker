@@ -252,11 +252,11 @@ def run(args):
 
     if args.rm and not args.quiet:
         sys.stderr.write(dxpy.utils.printing.YELLOW("--rm: Note that by default the container is not preserved after execution\n"))
-        
+
     if args.user and not args.quiet:
         sys.stderr.write(dxpy.utils.printing.YELLOW("--user: Note that the current implementation ignores the user command\n"))
 
-        
+
     # A list of dirs and files of the host rootfs that will be accessible in the confined
     # environment just as if they were part of the guest rootfs. This list is based on the
     # proot -R option: https://github.com/proot-me/PRoot/blob/master/doc/proot/manual.txt
@@ -271,35 +271,15 @@ def run(args):
         bounded_dirs.append(b)
 
     # TODO: implement some form of nested subprocesses to avoid quoting command array if possible
-    #proot_cmd =  ["proot", '-r', '{tmpdir}/rootfs'.format(tmpdir=tmpdir)] + \
-    #             bounded_dirs + \
-    #             volume + \
-    #             ["-w", workdir] + \
-    #             env + ["/bin/sh", "-c"] + \
-    #             [" ".join(("'"+x+"'" for x in container_cmd))]
-
-
-    tempsh_file_descriptor, tempsh_file_path = tempfile.mkstemp(suffix='.sh')
-    with os.fdopen(tempsh_file_descriptor, 'w') as tmpsh:
-        lines = ['#!/bin/sh']
-        lines.extend(env[2:])
-        lines.append(subprocess.list2cmdline(container_cmd))
-        tmpsh.write('\n'.join(lines))
-
-    os.chmod(tempsh_file_path, 0o777)
-
-
-    # Note that we assume /dx-docker-runme.sh doesn't already exist in the container
-    bounded_dirs.extend(['-b', tempsh_file_path + ':/dx-docker-runme.sh'])
-
     proot_cmd =  ["proot", '-r', '{tmpdir}/rootfs'.format(tmpdir=tmpdir)] + \
                  bounded_dirs + \
                  volume + \
                  ["-w", workdir] + \
-                 ['/dx-docker-runme.sh']
+                 env + ["/bin/sh", "-c"] + \
+                 [subprocess.list2cmdline(container_cmd)]
+
 
     shell(proot_cmd)
-    os.unlink(tempsh_file_path)
     if not args.rootfs:
         shutil.rmtree(tmpdir)
 parser_run.set_defaults(func=run)
