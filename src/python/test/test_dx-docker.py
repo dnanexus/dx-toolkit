@@ -191,3 +191,6 @@ class TestDXDocker(DXTestCase):
 
     def test_dx_docker_working_dir_override(self):
         run("dx-docker run -v $PWD:/tmp -w /tmp quay.io/ucsc_cgl/samtools faidx test.fa")
+
+    def test_complex_quote(self):
+        run('dx-docker run python:2-slim /bin/sh -c "echo \'{"foo": {"location": "file:///"}}\' > /dev/stdout"')
