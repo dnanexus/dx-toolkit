@@ -238,6 +238,9 @@ def run(args):
          cmd = json.loads(annotations['cmd'])
 
     container_cmd = entrypoint + cmd
+    if len(container_cmd) == 0:
+        raise Exception("Empty command. Must supply a command to run within the container")
+
 
     workdir = "/"
     if 'app' in imagemeta and 'workingDirectory' in imagemeta['app']:
