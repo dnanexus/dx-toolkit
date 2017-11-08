@@ -244,6 +244,15 @@ def _get_proxy_info(url):
 
     return proxy_info
 
+def _get_env_var_proxy(print_proxy=False):
+  proxy_tuple = ('http_proxy', 'HTTP_PROXY', 'https_proxy', 'HTTPS_PROXY')
+  proxy = None
+  for env_proxy in proxy_tuple:
+    if env_proxy in os.environ:
+      proxy = os.environ[env_proxy]
+  if print_proxy:
+    print('Using env variable %s=%s as proxy' % (env_proxy,proxy))
+  return proxy
 
 def _get_pool_manager(verify, cert_file, key_file):
     global _pool_manager
@@ -255,8 +264,8 @@ def _get_pool_manager(verify, cert_file, key_file):
     if cert_file is None and verify is None and 'DX_CA_CERT' not in os.environ:
         with _pool_mutex:
             if _pool_manager is None:
-                if 'HTTPS_PROXY' in os.environ:
-                    proxy_params = _get_proxy_info(os.environ['HTTPS_PROXY'])
+                if _get_env_var_proxy():
+                    proxy_params = _get_proxy_info(_get_env_var_proxy(print_proxy=True))
                     default_pool_args.update(proxy_params)
                     _pool_manager = urllib3.ProxyManager(**default_pool_args)
                 else:
@@ -272,8 +281,8 @@ def _get_pool_manager(verify, cert_file, key_file):
         if verify is False or os.environ.get('DX_CA_CERT') == 'NOVERIFY':
             pool_args.update(cert_reqs=ssl.CERT_NONE, ca_certs=None)
             urllib3.disable_warnings()
-        if 'HTTPS_PROXY' in os.environ:
-            proxy_params = _get_proxy_info(os.environ['HTTPS_PROXY'])
+        if _get_env_var_proxy():
+            proxy_params = _get_proxy_info(_get_env_var_proxy(print_proxy=True))
             pool_args.update(proxy_params)
             return urllib3.ProxyManager(**pool_args)
         else:
