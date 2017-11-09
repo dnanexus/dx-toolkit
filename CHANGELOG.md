@@ -6,6 +6,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* `dx-docker`: cleanup of quote code (regression fix)
+* Accept 'http_proxy', 'HTTP_PROXY', 'https_proxy', 'HTTPS_PROXY' for proxy environmental variables
+* Error out instead of warning when old pricing scheme is used in dxapp.json
+
+## [240.0] - beta
+
 ### Added
 
 * Warning when `runSpec.release` is not specified with a note it will be required in the future
@@ -29,7 +37,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx-clone-asset` sets the default regions to be all regions that user has access to and skips redundant cloning to current region
 * `dx build` now works seamlessly across apps and applets
 
-## [239.0] - beta
+## [239.0] - 2017.11.02 - stable
 
 ### Changed
 
@@ -42,7 +50,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx-workflow-to-applet` script
 * `include_hidden_links` parameter from clone()
 
-## [238.1] - 2017.10.27 - stable
+## [238.1] - 2017.10.27
 
 ### Fixed
 
