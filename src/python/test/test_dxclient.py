@@ -4465,7 +4465,7 @@ class TestDXClientFind(DXTestCase):
                          dxapi="1.0.0",
                          inputSpec=[],
                          outputSpec=[],
-                         runSpec={"code": "dx run " + dxworkflow.get_id() + " --project " + temp_proj_id,
+                         runSpec={"code": "dx run " + dxworkflow.get_id() + " --priority high --project " + temp_proj_id,
                                   "interpreter": "bash",
                                   "distribution": "Ubuntu", "release": "14.04",
                                   "execDepends": [{"name": "dx-toolkit"}]},
