@@ -2554,15 +2554,18 @@ dx-jobutil-add-output record_array $second_record --array
 
         # --watch implies --priority high
         try:
-            dx_run_output = run("dx run myapplet -y --watch")
+            dx_run_output = run("dx run myapplet -y --watch --brief")
         except subprocess.CalledProcessError:
             # ignore any watching errors; just want to test requested
             # priority
             pass
+        print(dx_run_output)
         watched_job_id = dx_run_output.split('\n')[0]
+        print(watched_job_id)
         watched_job_desc = dxpy.describe(watched_job_id)
         self.assertEqual(watched_job_desc['applet'], applet_id)
         self.assertEqual(watched_job_desc['priority'], 'high')
+        run("dx find jobs")
 
         # errors
         with self.assertSubprocessFailure(exit_code=2):
