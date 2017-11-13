@@ -139,7 +139,7 @@ def get_aci(image, imgname, prefix="", quiet=False):
 
     img_dirname = prefix+CACHE_DIR
     makedirs(img_dirname)
-    os.rename(glob.glob(tmpdir+"/*.aci")[0], img_dirname+"/"+urllib.quote_plus(image)+".aci")
+    shutil.move(glob.glob(tmpdir+"/*.aci")[0], img_dirname+"/"+urllib.quote_plus(image)+".aci")
     shutil.rmtree(tmpdir)
 
 def register_docker_subcommand(cmd):
