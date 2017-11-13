@@ -2635,7 +2635,10 @@ dx-jobutil-add-output record_array $second_record --array
         for string in ["WARNING", "developer", "Internet", "write access"]:
             self.assertNotIn(string, dx_run_output)
         # and check that priority was set properly
-        analysis_id = next(dxpy.find_executions(classname='analysis', limit=1))['id']
+        # expected to find a line: "Analysis ID: analysis-xxxx" in dx_run_output
+        analysis_id_line = "".join([i for i in dx_run_output.split('\n') if i.startswith("Analysis ID")])
+        self.assertIn("analysis-", analysis_id_line)
+        analysis_id = analysis_id_line.split(":")[1].strip()
         self.assertEqual(dxpy.describe(analysis_id)["priority"], "high")
 
         # get warnings when run at normal priority
@@ -2645,7 +2648,10 @@ dx-jobutil-add-output record_array $second_record --array
         for string in ["developer", "Internet"]:
             self.assertNotIn(string, dx_run_output)
         # and check that priority was set properly
-        analysis_id = next(dxpy.find_executions(classname='analysis', limit=1))['id']
+        # expected to find a line: "Analysis ID: analysis-xxxx" in dx_run_output
+        analysis_id_line = "".join([i for i in dx_run_output.split('\n') if i.startswith("Analysis ID")])
+        self.assertIn("analysis-", analysis_id_line)
+        analysis_id = analysis_id_line.split(":")[1].strip()
         self.assertEqual(dxpy.describe(analysis_id)["priority"], "normal")
 
     def test_dx_run_tags_and_properties(self):
