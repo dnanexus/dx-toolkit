@@ -2530,6 +2530,14 @@ dx-jobutil-add-output record_array $second_record --array
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
     def test_dx_run_priority(self):
+        ### Helper functions
+        def _get_analysis_id(dx_run_output):
+            # expected to find a line: "Analysis ID: analysis-xxxx" in dx_run_output
+            analysis_id_line = "".join([i for i in dx_run_output.split('\n') if i.startswith("Analysis ID")])
+            self.assertIn("analysis-", analysis_id_line)
+            return analysis_id_line.split(":")[1].strip()
+        ###
+
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "name": "myapplet",
                                          "dxapi": "1.0.0",
@@ -2635,10 +2643,7 @@ dx-jobutil-add-output record_array $second_record --array
         for string in ["WARNING", "developer", "Internet", "write access"]:
             self.assertNotIn(string, dx_run_output)
         # and check that priority was set properly
-        # expected to find a line: "Analysis ID: analysis-xxxx" in dx_run_output
-        analysis_id_line = "".join([i for i in dx_run_output.split('\n') if i.startswith("Analysis ID")])
-        self.assertIn("analysis-", analysis_id_line)
-        analysis_id = analysis_id_line.split(":")[1].strip()
+        analysis_id = _get_analysis_id(dx_run_output)
         self.assertEqual(dxpy.describe(analysis_id)["priority"], "high")
 
         # get warnings when run at normal priority
@@ -2648,10 +2653,7 @@ dx-jobutil-add-output record_array $second_record --array
         for string in ["developer", "Internet"]:
             self.assertNotIn(string, dx_run_output)
         # and check that priority was set properly
-        # expected to find a line: "Analysis ID: analysis-xxxx" in dx_run_output
-        analysis_id_line = "".join([i for i in dx_run_output.split('\n') if i.startswith("Analysis ID")])
-        self.assertIn("analysis-", analysis_id_line)
-        analysis_id = analysis_id_line.split(":")[1].strip()
+        analysis_id = _get_analysis_id(dx_run_output)
         self.assertEqual(dxpy.describe(analysis_id)["priority"], "normal")
 
     def test_dx_run_tags_and_properties(self):
