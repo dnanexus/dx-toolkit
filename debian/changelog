@@ -1,3 +1,9 @@
+dx-toolkit (0.240.1) precise; urgency=low
+
+  * Fixed: dx-docker: cleanup of the quote code (regression fix)
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 15 Nov 2017 19:36:23 +0000
+
 dx-toolkit (0.240.0) precise; urgency=low
 
   * Added: Warning when runSpec.release is not specified with a note it will be required in the future
