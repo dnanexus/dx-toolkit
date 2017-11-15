@@ -8,15 +8,18 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Changed
 
-* `dx-docker`: cleanup of quote code (regression fix)
+* `dx-docker`: cleanup of the quote code (regression fix)
+* `dx-docker`: use `shutil.move()` instead of `os.rename()` with the aci image
 * Accept 'http_proxy', 'HTTP_PROXY', 'https_proxy', 'HTTPS_PROXY' for proxy environmental variables
-* Error out instead of warning when old pricing scheme is used in dxapp.json
+* Error out instead of warning when old pricing scheme is used in `dxapp.json`
+* Fix certain tests flakiness
+
 
 ## [240.0] - beta
 
 ### Added
 
-* Warning when `runSpec.release` is not specified with a note it will be required in the future
+* Warning when `runSpec.release` is not specified in `dxapp.json` with a note it will be required in the future
 * Numerous enhancements to Jupyter notebook support (see https://github.com/dnanexus/dx-toolkit/commit/7ecbcb6b75118c0acd27f7a7cfe37d0a19e6d6c3 for more information)
 
 ### Changed
