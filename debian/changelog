@@ -1,3 +1,13 @@
+dx-toolkit (0.241.0) precise; urgency=low
+
+  * Added: Accept 'http_proxy', 'HTTP_PROXY', 'https_proxy', 'HTTPS_PROXY' for proxy environmental variables
+  * Changed: dx-docker: use shutil.move() instead of os.rename() with the aci image
+  * Fixed: Error out instead of warning when old pricing scheme is used in dxapp.json
+  * Fixed: dx-docker: cleanup of the quote code (regression fix)
+  * Fixed: Certain tests flakiness
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 15 Nov 2017 19:34:20 +0000
+
 dx-toolkit (0.240.0) precise; urgency=low
 
   * Added: Warning when runSpec.release is not specified with a note it will be required in the future
