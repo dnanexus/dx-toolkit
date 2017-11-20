@@ -21,4 +21,4 @@ while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
 root="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 make -C $root/../src api_wrappers toolkit_version
-(cd $root/../src/python; python setup.py sdist upload -s -i 2F7B9277)
+(cd $root/../src/python; /usr/bin/python setup.py sdist; twine upload dist/*  -s -i 2F7B9277)
