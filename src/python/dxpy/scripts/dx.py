@@ -2555,8 +2555,6 @@ def list_users(args):
 def add_developers(args):
     app_desc = try_call(resolve_app, args.app)
     args.developers = process_list_of_usernames(args.developers)
-    if any(entity.startswith('org-') for entity in args.developers):
-        err_exit('Error: organizations as developers of an app is currently unsupported', code=3)
     try:
         dxpy.api.app_add_developers(app_desc['id'], input_params={"developers": args.developers})
     except:
