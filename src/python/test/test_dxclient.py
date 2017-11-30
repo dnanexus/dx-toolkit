@@ -7121,6 +7121,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             my_userid = app_desc["createdBy"]
         developers = run("dx list developers app-test_dx_developers").strip()
         self.assertEqual(developers, my_userid)
+        
         # use hash ID
         run("dx add developers " + app_id + " eve")
         developers = run("dx list developers app-test_dx_developers").strip().split("\n")
@@ -7149,10 +7150,6 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         run('dx remove developers test_dx_developers org-nonexistentorg')
         run('dx remove developers test_dx_developers nonexistentuser')
         run('dx remove developers test_dx_developers piratelabs')
-
-        # Raise an error if you try to add an org developer (currently unsupported by the API)
-        with self.assertSubprocessFailure(stderr_regexp='unsupported', exit_code=3):
-            run('dx add developers test_dx_developers org-piratelabs')
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')

@@ -2555,8 +2555,6 @@ def list_users(args):
 def add_developers(args):
     app_desc = try_call(resolve_app, args.app)
     args.developers = process_list_of_usernames(args.developers)
-    if any(entity.startswith('org-') for entity in args.developers):
-        err_exit('Error: organizations as developers of an app is currently unsupported', code=3)
     try:
         dxpy.api.app_add_developers(app_desc['id'], input_params={"developers": args.developers})
     except:
@@ -2566,8 +2564,8 @@ def list_developers(args):
     app_desc = try_call(resolve_app, args.app)
 
     try:
-        for user in dxpy.api.app_list_developers(app_desc['id'])['developers']:
-            print(user)
+        for developer in dxpy.api.app_list_developers(app_desc['id'])['developers']:
+            print(developer)
     except:
         err_exit()
 
@@ -4172,7 +4170,7 @@ register_parser(parser_build_asset)
 # add
 #####################################
 parser_add = subparsers.add_parser('add', help='Add one or more items to a list',
-                                   description='Use this command with one of the availabile subcommands to perform various actions such as adding other users to the list of developers or authorized users of an app',
+                                   description='Use this command with one of the availabile subcommands to perform various actions such as adding other users or orgs to the list of developers or authorized users of an app',
                                    prog='dx add')
 subparsers_add = parser_add.add_subparsers(parser_class=DXArgumentParser)
 subparsers_add.metavar = 'list_type'
@@ -4189,10 +4187,10 @@ parser_add_users.set_defaults(func=add_users)
 register_parser(parser_add_users, subparsers_action=subparsers_add, categories='exec')
 
 parser_add_developers = subparsers_add.add_parser('developers', help='Add developers for an app',
-                                                  description='Add users to the list of developers for an app.  Developers are able to build and publish new versions of the app, and add or remove others from the list of developers and authorized users.',
+                                                  description='Add users or orgs to the list of developers for an app.  Developers are able to build and publish new versions of the app, and add or remove others from the list of developers and authorized users.',
                                                   prog='dx add developers', parents=[env_args])
 parser_add_developers.add_argument('app', help='Name or ID of an app').completer = DXAppCompleter(installed=True)
-parser_add_developers.add_argument('developers', metavar='developer', help='One or more users to add',
+parser_add_developers.add_argument('developers', metavar='developer', help='One or more users or orgs to add',
                               nargs='+')
 parser_add_developers.set_defaults(func=add_developers)
 register_parser(parser_add_developers, subparsers_action=subparsers_add, categories='exec')
@@ -4279,7 +4277,7 @@ parser_remove_users.set_defaults(func=remove_users)
 register_parser(parser_remove_users, subparsers_action=subparsers_remove, categories='exec')
 
 parser_remove_developers = subparsers_remove.add_parser('developers', help='Remove developers for an app',
-                                                        description='Remove users from the list of developers for an app.  Developers are able to build and publish new versions of the app, and add or remove others from the list of developers and authorized users.',
+                                                        description='Remove users or orgs from the list of developers for an app.  Developers are able to build and publish new versions of the app, and add or remove others from the list of developers and authorized users.',
                                                         prog='dx remove developers', parents=[env_args])
 parser_remove_developers.add_argument('app', help='Name or ID of an app').completer = DXAppCompleter(installed=True)
 parser_remove_developers.add_argument('developers', metavar='developer', help='One or more users to remove',
