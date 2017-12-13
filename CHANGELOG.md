@@ -8,6 +8,16 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Changed
 
+* Use twine for pypy uploads
+
+### Fixed
+
+* Error that blocks org from being added as developers
+
+## [241.0] - beta 
+
+### Changed
+
 * `dx-docker`: cleanup of the quote code (regression fix)
 * `dx-docker`: use `shutil.move()` instead of `os.rename()` with the aci image
 * Accept 'http_proxy', 'HTTP_PROXY', 'https_proxy', 'HTTPS_PROXY' for proxy environmental variables
@@ -15,7 +25,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Fix certain tests flakiness
 
 
-## [240.0] - beta
+## [240.1] - 2017.11.15 - stable
 
 ### Added
 
