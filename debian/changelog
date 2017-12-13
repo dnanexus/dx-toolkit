@@ -1,3 +1,10 @@
+dx-toolkit (0.242.0) precise; urgency=low
+
+  * Changed: Use twine for pypy upload
+  * Fixed: Error that blocks org from being added as developers
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 13 Dec 2017 20:14:40 +0000
+
 dx-toolkit (0.241.0) precise; urgency=low
 
   * Added: Accept 'http_proxy', 'HTTP_PROXY', 'https_proxy', 'HTTPS_PROXY' for proxy environmental variables
