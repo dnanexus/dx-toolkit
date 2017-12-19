@@ -2785,6 +2785,14 @@ def print_run_help(executable="", alias=None):
             exec_details = handler.get_details()
         advanced_inputs = exec_details.get("advancedInputs", []) if isinstance(exec_details, dict) else []
         exec_help += exec_desc.get('title', exec_desc['name']) + '\n\n'
+        if isinstance(handler, dxpy.bindings.DXApp):
+            exec_help += BOLD("Version: ")
+            exec_help += exec_desc.get('version')
+            if int(exec_desc.get('published', -1)) > -1:
+                exec_help += " (published)"
+            else:
+                exec_help += " (unpublished)"
+            exec_help += '\n\n'
         summary = exec_desc.get('summary', '')
         if summary != '':
             exec_help += fill(summary) + "\n\n"
