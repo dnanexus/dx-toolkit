@@ -6,6 +6,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* App version and published/unpublished note to `dx run -h <app>`
+
+## [242.0] - beta 
+
 ### Changed
 
 * Use twine for pypy uploads
@@ -14,7 +20,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Error that blocks org from being added as developers
 
-## [241.0] - beta 
+## [241.0] - stable 
 
 ### Changed
 
@@ -25,7 +31,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Fix certain tests flakiness
 
 
-## [240.1] - 2017.11.15 - stable
+## [240.1] - 2017.11.15
 
 ### Added
 
@@ -50,7 +56,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx-clone-asset` sets the default regions to be all regions that user has access to and skips redundant cloning to current region
 * `dx build` now works seamlessly across apps and applets
 
-## [239.0] - 2017.11.02 - stable
+## [239.0] - 2017.11.02
 
 ### Changed
 
