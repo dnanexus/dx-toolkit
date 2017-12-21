@@ -1995,6 +1995,7 @@ def upload_one(args):
                                             project=project,
                                             properties=args.properties,
                                             details=args.details,
+                                            multithread=(False if args.single_thread else True),
                                             folder=folder,
                                             parents=args.parents,
                                             show_progress=args.show_progress)
@@ -3939,6 +3940,7 @@ parser_upload.add_argument('--wait', help='Wait until the file has finished clos
 parser_upload.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress',
                            action='store_false', default=sys.stderr.isatty())
 parser_upload.add_argument('--buffer-size', help='Set the write buffer size (in bytes)', dest='write_buffer_size')
+parser_upload.add_argument('--single-thread', help='Upload in one thread', action='store_true')
 parser_upload.set_defaults(func=upload, mute=False)
 register_parser(parser_upload, categories='data')
 

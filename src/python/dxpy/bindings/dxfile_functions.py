@@ -288,7 +288,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
 
         return True
 
-def upload_local_file(filename=None, file=None, media_type=None, keep_open=False,
+def upload_local_file(filename=None, file=None, media_type=None, keep_open=False, multithread=True,
                       wait_on_close=False, use_existing_dxfile=None, show_progress=False,
                       write_buffer_size=None, **kwargs):
     '''
@@ -425,7 +425,7 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
         if len(buf) == 0:
             break
 
-        handler.write(buf, report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
+        handler.write(buf, multithread=multithread, report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
 
     if filename is not None:
         fd.close()
