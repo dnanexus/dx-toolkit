@@ -553,11 +553,15 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
         if "id" in asset:
             asset_record = dxpy.DXRecord(asset["id"]).describe(fields={'details'}, default_fields=True)
         elif "name" in asset and asset_project is not None and "version" in asset:
-            asset_record = dxpy.find_one_data_object(zero_ok=True, classname="record", typename="AssetBundle",
-                                                     name=asset["name"], properties=dict(version=asset["version"]),
-                                                     project=asset_project, folder=asset_folder,
-                                                     describe={"defaultFields": True, "fields": {"details": True}},
-                                                     state="closed")
+            try:
+                asset_record = dxpy.find_one_data_object(zero_ok=True, classname="record", typename="AssetBundle",
+                                                         name=asset["name"], properties=dict(version=asset["version"]),
+                                                         project=asset_project, folder=asset_folder, recurse=False,
+                                                         describe={"defaultFields": True, "fields": {"details": True}},
+                                                         state="closed", more_ok=False)
+            except DXSearchError:
+                msg = "Found more than one asset record that matches: name={0}, folder={1} in project={2}."
+                raise AppBuilderException(msg.format(asset["name"], asset_folder, asset_project)
         else:
             raise AppBuilderException("Each runSpec.assetDepends element must have either {'id'} or "
                                       "{'name', 'project' and 'version'} field(s).")
