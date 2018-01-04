@@ -7121,7 +7121,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             my_userid = app_desc["createdBy"]
         developers = run("dx list developers app-test_dx_developers").strip()
         self.assertEqual(developers, my_userid)
-        
+
         # use hash ID
         run("dx add developers " + app_id + " eve")
         developers = run("dx list developers app-test_dx_developers").strip().split("\n")
@@ -7828,13 +7828,25 @@ def main(in1):
                                         name=asset_name)
 
         # create a record with details to the hidden asset
+        create_folder_in_project(self.project, "/record_subfolder")
         record_name = "asset-record"
         record_details = {"archiveFileId": {"$dnanexus_link": asset_file.get_id()}}
         record_properties = {"version": "0.0.1"}
-        dxpy.new_dxrecord(project=self.project, types=["AssetBundle"], details=record_details, name=record_name,
-                          properties=record_properties, close=True)
+        dxpy.new_dxrecord(project=self.project, folder="/record_subfolder", types=["AssetBundle"],
+                          details=record_details, name=record_name, properties=record_properties, close=True)
+
+        # failure: asset will not be searched in folders recursively
+        with self.assertSubprocessFailure(stderr_regexp="No asset bundle was found", exit_code=3):
+            app_spec = dict(self.base_app_spec, name="asset_depends",
+                            runSpec = {"assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project}],
+                                       "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
+            app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
+            asset_applet = json.loads(run("dx build --json {app_dir}".format(app_dir=app_dir)))["id"]
+            run("dx build --json {app_dir}".format(app_dir=app_dir))
+
+        # success: asset found
         app_spec = dict(self.base_app_spec, name="asset_depends",
-                        runSpec = {"assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project}],
+                        runSpec = {"assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project, "folder": "/record_subfolder"}],
                                    "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
         app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
         asset_applet = json.loads(run("dx build --json {app_dir}".format(app_dir=app_dir)))["id"]
@@ -7843,6 +7855,18 @@ def main(in1):
             dxpy.DXApplet(asset_applet).describe()['runSpec']['bundledDepends'][0],
             {'id': {'$dnanexus_link': asset_file.get_id()}, 'name': asset_name}
         )
+
+        # failure: multiple assets with the same name
+        dxpy.new_dxrecord(project=self.project, folder="/record_subfolder", types=["AssetBundle"],
+                          details=record_details, name=record_name, properties=record_properties, close=True)
+        with self.assertSubprocessFailure(stderr_regexp="Found more than one asset record that matches", exit_code=3):
+            app_spec = dict(self.base_app_spec, name="asset_depends_fail",
+                            runSpec = {"assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project, "folder": "/record_subfolder"}],
+                                       "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
+            app_dir = self.write_app_directory("asset_depends_fail", json.dumps(app_spec), "code.py")
+            asset_applet = json.loads(run("dx build --json {app_dir}".format(app_dir=app_dir)))["id"]
+            run("dx build --json {app_dir}".format(app_dir=app_dir))
+
 
     def test_asset_depends_using_id(self):
         # upload a tar.gz file and mark it hidden
