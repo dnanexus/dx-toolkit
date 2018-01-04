@@ -559,9 +559,9 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                                                          project=asset_project, folder=asset_folder, recurse=False,
                                                          describe={"defaultFields": True, "fields": {"details": True}},
                                                          state="closed", more_ok=False)
-            except DXSearchError:
+            except dxpy.exceptions.DXSearchError:
                 msg = "Found more than one asset record that matches: name={0}, folder={1} in project={2}."
-                raise AppBuilderException(msg.format(asset["name"], asset_folder, asset_project)
+                raise AppBuilderException(msg.format(asset["name"], asset_folder, asset_project))
         else:
             raise AppBuilderException("Each runSpec.assetDepends element must have either {'id'} or "
                                       "{'name', 'project' and 'version'} field(s).")
