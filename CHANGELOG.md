@@ -10,6 +10,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * App version and published/unpublished note to `dx run -h <app>`
 
+### Changed
+
+* Recursive search for asset in a path is disabled, and we strictly enforce only one matching asset name
+
 ## [242.0] - beta 
 
 ### Changed
