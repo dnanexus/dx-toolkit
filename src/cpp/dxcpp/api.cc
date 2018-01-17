@@ -539,6 +539,102 @@ namespace dx {
     return containerRenameFolder(object_id, input_params.toString(), safe_to_retry);
   }
 
+  JSON databaseAddTags(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/addTags"), input_params, safe_to_retry);
+  }
+
+  JSON databaseAddTags(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return databaseAddTags(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON databaseAddTypes(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/addTypes"), input_params, safe_to_retry);
+  }
+
+  JSON databaseAddTypes(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return databaseAddTypes(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON databaseDescribe(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params, safe_to_retry);
+  }
+
+  JSON databaseDescribe(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return databaseDescribe(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON databaseGetDetails(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/getDetails"), input_params, safe_to_retry);
+  }
+
+  JSON databaseGetDetails(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return databaseGetDetails(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON databaseListProjects(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/listProjects"), input_params, safe_to_retry);
+  }
+
+  JSON databaseListProjects(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return databaseListProjects(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON databaseRelocate(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/relocate"), input_params, safe_to_retry);
+  }
+
+  JSON databaseRelocate(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return databaseRelocate(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON databaseRemoveTags(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTags"), input_params, safe_to_retry);
+  }
+
+  JSON databaseRemoveTags(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return databaseRemoveTags(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON databaseRemoveTypes(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTypes"), input_params, safe_to_retry);
+  }
+
+  JSON databaseRemoveTypes(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return databaseRemoveTypes(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON databaseRename(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/rename"), input_params, safe_to_retry);
+  }
+
+  JSON databaseRename(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return databaseRename(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON databaseSetDetails(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/setDetails"), input_params, safe_to_retry);
+  }
+
+  JSON databaseSetDetails(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return databaseSetDetails(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON databaseSetProperties(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/setProperties"), input_params, safe_to_retry);
+  }
+
+  JSON databaseSetProperties(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return databaseSetProperties(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON databaseSetVisibility(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/setVisibility"), input_params, safe_to_retry);
+  }
+
+  JSON databaseSetVisibility(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return databaseSetVisibility(object_id, input_params.toString(), safe_to_retry);
+  }
+
   JSON fileAddTags(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest(std::string("/") + object_id + std::string("/addTags"), input_params, safe_to_retry);
   }
