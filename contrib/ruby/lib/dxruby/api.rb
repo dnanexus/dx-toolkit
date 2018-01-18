@@ -433,7 +433,7 @@ module DX
       return DX::http_request("/#{object_id}/listProjects", input_params, opts)
     end
 
-    # Invokes the /database/relocate API method.
+    # Invokes the /database-xxxx/relocate API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Frelocate
     def self.database_relocate(object_id, input_params={}, opts={})
