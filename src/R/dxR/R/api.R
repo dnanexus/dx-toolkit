@@ -1761,7 +1761,7 @@ databaseListProjects <- function(objectID,
 
 ##' databaseRelocate API wrapper
 ##'
-##' This function makes an API call to the \code{/database/relocate} API
+##' This function makes an API call to the \code{/database-xxxx/relocate} API
 ##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
 ##' function which makes POST HTTP requests to the API server.
 ##'
