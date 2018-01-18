@@ -445,7 +445,7 @@
         }
     ],
     [
-        "/database/relocate",
+        "/database-xxxx/relocate",
         "databaseRelocate(req, objectId)",
         {
             "objectMethod": true,
