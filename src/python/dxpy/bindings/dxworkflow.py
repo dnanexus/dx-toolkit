@@ -107,9 +107,9 @@ class DXWorkflow(DXDataObject, DXExecutable):
         :type output_folder: string
         :param stages: Stages of the workflow (optional)
         :type stages: array of dictionaries
-        :param workflow_intput_spec: Explicit input specification of the workflow (optional)
-        :type workflow_intput_spec: array of dictionaries
-        :param workflow_outputs: Explicit output specification of the workflow (optional)
+        :param workflow_inputs: Workflow-level input specification (optional)
+        :type workflow_inputs: array of dictionaries
+        :param workflow_outputs: Workflow-level output specification (optional)
         :type workflow_outputs: array of dictionaries
         :param init_from: Another analysis workflow object handler or and analysis (string or handler) from which to initialize the metadata (optional)
         :type init_from: :class:`~dxpy.bindings.dxworkflow.DXWorkflow`, :class:`~dxpy.bindings.dxanalysis.DXAnalysis`, or string (for analysis IDs only)
