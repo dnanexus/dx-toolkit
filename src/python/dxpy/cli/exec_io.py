@@ -30,7 +30,7 @@ from . import INTERACTIVE_CLI
 from ..exceptions import DXCLIError, DXError
 from ..utils.printing import (RED, GREEN, WHITE, BOLD, ENDC, UNDERLINE, fill)
 from ..utils.describe import (get_find_executions_string, get_ls_l_desc, get_ls_l_desc_fields, parse_typespec)
-from ..utils.resolver import (get_first_pos_of_char, is_hashid, is_job_id, is_localjob_id, paginate_and_pick, pick,
+from ..utils.resolver import (parse_input_keyval, is_hashid, is_job_id, is_localjob_id, paginate_and_pick, pick,
                               resolve_existing_path, resolve_multiple_existing_paths, split_unescaped, is_analysis_id)
 from ..utils import OrderedDefaultdict
 from ..compat import input, str, shlex, basestring, USING_PYTHON2
@@ -745,14 +745,7 @@ class ExecutableInputs(object):
 
         if args.input is not None:
             for keyeqval in args.input:
-                try:
-                    first_eq_pos = get_first_pos_of_char('=', keyeqval)
-                    if first_eq_pos == -1:
-                        raise
-                    name = split_unescaped('=', keyeqval)[0]
-                    value = keyeqval[first_eq_pos + 1:]
-                except:
-                    raise DXCLIError('An input was found that did not conform to the syntax: -i<input name>=<input value>')
+                name, value = parse_input_keyval(keyeqval)
                 if '.' in name and self._accept_only_workflow_level_inputs():
                     raise DXCLIError('The input with a key '+ name + ' was passed to a stage but the workflow accepts inputs only on the workflow level')
                 self.add(self.executable._get_input_name(name) if \

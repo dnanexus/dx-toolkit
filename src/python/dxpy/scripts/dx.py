@@ -23,6 +23,7 @@ import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashli
 import shlex # respects quoted substrings when splitting
 
 import requests
+import csv
 
 logging.basicConfig(level=logging.INFO)
 
@@ -63,7 +64,7 @@ from ..utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id
                               is_analysis_id, get_last_pos_of_char, resolve_container_id_or_name, resolve_path,
                               resolve_existing_path, get_app_from_path, resolve_app, get_exec_handler,
                               split_unescaped, ResolutionError, resolve_to_objects_or_project, is_project_explicit,
-                              object_exists_in_project, is_jbor_str)
+                              object_exists_in_project, is_jbor_str, parse_input_keyval)
 from ..utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, LocalCompleter,
                                ListCompleter, MultiCompleter)
 from ..utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_header,
@@ -3444,6 +3445,41 @@ def upgrade(args):
     except:
         err_exit()
 
+def generate_batch_inputs(args):
+    # Internally restricted maximum batch size for a CSV
+    MAX_BATCH_SIZE = 500
+    project, folder, _none = try_call(resolve_path, args.path, expected='folder')
+
+    # Parse input values
+    keyvals = [parse_input_keyval(keyeqval) for keyeqval in args.input]
+
+    # Call API for batch expansion
+    try:
+       api_result = dxpy.api.system_generate_batch_inputs({"project-id":  project, "folder": folder, "inputs": dict(keyvals)})
+    except:
+       err_exit()
+
+    # Group expansion by MAX_BATCH_SIZE using handy generator
+    def chunks(l, n):
+        for i in range(0, len(l), n):
+            yield l[i:i + n]
+
+    batches = list(chunks(api_result, MAX_BATCH_SIZE))
+
+    # Output CSV Batch
+    for i,batch in enumerate(batches):
+        def flatten_batch(b):
+            return [b['pattern']] + # Pattern used to match the batch
+                   [ival for iname, ival in sorted(b['inputs'].items())] + # Inputs
+                   [any([x is None for x in b['inputs'].values()])] # Incomplete set of inputs?
+
+        with open("{}.{:04d}.csv".format(args.output_prefix, i), 'wb') as csvfile:
+            batchwriter = csv.writer(csvfile)
+            # Write headers of CSV
+            batchwriter.writerow(['pattern'] + sorted(batch['inputs'].keys()) + ['incomplete?'])
+            for bi in batch:
+                batchwriter.writerow(flatten_batch(bi))
+
 def print_help(args):
     if args.command_or_category is None:
         parser_help.print_help()
@@ -5161,6 +5197,20 @@ parser_upgrade = subparsers.add_parser('upgrade', help='Upgrade dx-toolkit (the 
 parser_upgrade.add_argument('args', nargs='*')
 parser_upgrade.set_defaults(func=upgrade)
 register_parser(parser_upgrade)
+
+#####################################
+# generate_batch_inputs
+#####################################
+
+parser_generate_batch_inputs = subparsers.add_parser('generate_batch_inputs', help='Generate a batch plan (one or more CSV files) for batch execution',
+                                       description='Generate a table of input files matching desired regular expressions for each input.',
+                                       prog='dx generate_batch_inputs')
+parser_generate_batch_inputs.add_argument('-i', '--input', help=fill('An input to be batch-processed "-i<input name>=<input pattern>" where <input_pattern> is a regular expression with a group corresponding to the desired region to match (e.g. -iinputa=SRR(.*)_1.gz -iinputb=SRR(.*)_2.gz'), width_adjustment=-24), action='append')
+parser_generate_batch_inputs.add_argument('--path', help='Project and/or folder in which to restrict the results',
+                              metavar='PROJECT:FOLDER', default='').completer = DXPathCompleter(expected='folder')
+parser_generate_batch_inputs.add_argument('-o', '--output_prefix', help='Prefix for output file', default="dx_batch")
+parser_generate_batch_inputs.set_defaults(func=generate_batch_inputs)
+register_parser(parser_generate_batch_inputs)
 
 #####################################
 # help
