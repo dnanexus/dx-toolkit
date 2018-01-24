@@ -53,7 +53,7 @@ from ..cli.org import (get_org_invite_args, add_membership, remove_membership, u
 from ..exceptions import (err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions,
                           format_exception)
 from ..utils import warn, group_array_by_field, normalize_timedelta, normalize_time_input
-from ..utils.batch_utils import (batch_run, batch_expand_args)
+from ..utils.batch_utils import (batch_run, batch_launch_args)
 
 from ..app_categories import APP_CATEGORIES
 from ..utils.printing import (CYAN, BLUE, YELLOW, GREEN, RED, WHITE, UNDERLINE, BOLD, ENDC, DNANEXUS_LOGO,
@@ -2681,19 +2681,19 @@ def run_one(args, executable, dest_proj, dest_path, input_json, run_kwargs):
 
 
 def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_kwargs):
-    if args.wait:
-        raise Exception("Waiting for a batch execution is not supported")
-    if args.watch:
-        raise Exception("Watch is not supported for batch execution")
+    if (args.wait or
+        args.watch or
+        args.ssh or
+        args.ssh_proxy):
+        raise Exception("Options wait, watch, ssh, ssh_proxy do not work with batch execution")
 
-    expanded_inputs_json = batch_expand_args(executable, input_json, args.batch_csv)
+    launch_args = batch_launch_args(executable, input_json, args.batch_csv)
 
-    # Print inputs used for the run
     if not args.brief:
-        #print()
-        #print('Using input JSON:')
-        #print(json.dumps(input_json, indent=4))
-        # TODO: print all the table rows we are going to run
+        # print all the table rows we are going to run
+        print('Calling executable with arguments:')
+        for d in launch_args:
+            print(json.dumps(d, indent=4))
         print()
 
     # Ask for confirmation if a tty and if input was not given as a
@@ -2707,7 +2707,7 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
                    subsequent_indent='  ') + '\n')
 
     # Run the executable on all the input dictionaries
-    return run_batch(executable, expanded_inputs_json, run_kwargs)
+    return batch_run(executable, launch_args, run_kwargs)
 
 
 def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None):
@@ -4545,7 +4545,7 @@ parser_run.add_argument('--ssh-proxy', metavar=('<address>:<port>'),
 parser_run.add_argument('--debug-on', action='append', choices=['AppError', 'AppInternalError', 'ExecutionError', 'All'],
                         help=fill("Configure the job to hold for debugging when any of the listed errors occur",
                                   width_adjustment=-24))
-parser_run.add_argument('--batch-csv', dest='batch_csv', nargs=1, metavar="FILE",
+parser_run.add_argument('--batch-csv', dest='batch_csv', metavar="FILE",
                         help=fill('A file in comma separated value (csv) format, with a subset ' +
                                   'of the executable input arguments. A subjob will be launched ' +
                                   'for each table row.',
