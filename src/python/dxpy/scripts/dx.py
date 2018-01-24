@@ -3446,39 +3446,68 @@ def upgrade(args):
         err_exit()
 
 def generate_batch_inputs(args):
+    def eprint(*args, **kwargs):
+        print(*args, file=sys.stderr, **kwargs)
+
     # Internally restricted maximum batch size for a CSV
     MAX_BATCH_SIZE = 500
     project, folder, _none = try_call(resolve_path, args.path, expected='folder')
 
     # Parse input values
-    keyvals = [parse_input_keyval(keyeqval) for keyeqval in args.input]
+    input_dict = dict([parse_input_keyval(keyeqval) for keyeqval in args.input])
 
     # Call API for batch expansion
     try:
-       api_result = dxpy.api.system_generate_batch_inputs({"project-id":  project, "folder": folder, "inputs": dict(keyvals)})
+       api_result = dxpy.api.system_generate_batch_inputs({"project-id":  project, "folder": folder, "inputs": input_dict})
     except:
        err_exit()
 
-    # Group expansion by MAX_BATCH_SIZE using handy generator
     def chunks(l, n):
         for i in range(0, len(l), n):
             yield l[i:i + n]
 
-    batches = list(chunks(api_result, MAX_BATCH_SIZE))
+    successful = [b for b in api_result if not b['error']]
+    errors = [b for b in api_result if b['error']]
+
+    batches = list(chunks(successful, MAX_BATCH_SIZE))
+
+    eprint("Found {num_success} valid batch IDs matching desired pattern.".format(num_success=len(successful)))
+    eprint("Creating {num_batches} batch files each with at most {max} batch IDs.".format(num_batches=len(batches), max=MAX_BATCH_SIZE))
+
+    input_names = input_dict.keys()
 
     # Output CSV Batch
+    eprint("Successfully created batch files:")
     for i,batch in enumerate(batches):
         def flatten_batch(b):
-            return [b['pattern']] + # Pattern used to match the batch
-                   [ival for iname, ival in sorted(b['inputs'].items())] + # Inputs
-                   [any([x is None for x in b['inputs'].values()])] # Incomplete set of inputs?
+            return [b['batch-id']] + # Pattern used to match this particular run in the batch
+                   [ival['name'] for iname, ival in sorted(b['inputs'].items())] + # Input names
+                   [ival['id'] for iname, ival in sorted(b['inputs'].items())]  # Input IDs
 
-        with open("{}.{:04d}.csv".format(args.output_prefix, i), 'wb') as csvfile:
+        batch_fname = "{}.{:04d}.csv".format(args.output_prefix, i)
+        with open(batch_fname, 'wb') as csvfile:
             batchwriter = csv.writer(csvfile)
             # Write headers of CSV
-            batchwriter.writerow(['pattern'] + sorted(batch['inputs'].keys()) + ['incomplete?'])
+            batchwriter.writerow(['pattern'] + [iname+"_filename" for iname in input_names] + [iname+"_id" for iname in input_names]  )
             for bi in batch:
                 batchwriter.writerow(flatten_batch(bi))
+            eprint(batch_fname)
+
+
+    for bi in errors:
+        eprint("ERROR processing batch ID {id}".format(id=bi['batch-id']))
+        input_names_i = sorted(bi['inputs'].keys())
+        if input_names !=  input_names_i:
+            eprint("    Mismatched set of input names.")
+            eprint("    Provided input names: {provided}".format(provided=input_names))
+            eprint("    Matched input names: {provided}".format(provided=input_names))
+        for input_name, matches in bi['inputs']:
+            if len(matches['ids']) > 1:
+                eprint("Input {iname} is associated with a file name that matches multiple IDs:".format(iname=input_name))
+                eprint("    {fname} => {ids}".format(fname=matches['name'], ", ".join(matches['ids'])))
+
+    if len(errors) > 0:
+        err_exit("ERROR: Found {num_errors} batch IDs with incomplete or ambiguous results.  Details above.".format(num_errors=len(errors)), 3)
 
 def print_help(args):
     if args.command_or_category is None:
