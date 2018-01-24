@@ -8,6 +8,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
+* API wrappers for `applet-xxxx/validateBatch`
 * App version and published/unpublished note to `dx run -h <app>`
 
 ### Changed
