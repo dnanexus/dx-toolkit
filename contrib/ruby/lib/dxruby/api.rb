@@ -282,6 +282,12 @@ module DX
       return DX::http_request("/#{object_id}/rename", input_params, opts)
     end
 
+    # Invokes the /applet-xxxx/validateBatch API method.
+    def self.applet_validate_batch(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/validateBatch", input_params, opts)
+    end
+
     # Invokes the /applet-xxxx/run API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fapplet-xxxx%2Frun
