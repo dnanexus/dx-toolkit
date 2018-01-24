@@ -290,6 +290,15 @@
         }
     ],
     [
+        "/applet-xxxx/validateBatch",
+        "appletValidateBatch(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fapplet-xxxx%2FvalidateBatch"
+        }
+    ],
+    [
         "/applet-xxxx/run",
         "appletRun(req, objectId)",
         {
