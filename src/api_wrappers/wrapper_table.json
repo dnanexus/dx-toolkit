@@ -290,6 +290,15 @@
         }
     ],
     [
+        "/applet-xxxx/validateBatch",
+        "appletValidateBatch(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
         "/applet-xxxx/run",
         "appletRun(req, objectId)",
         {
