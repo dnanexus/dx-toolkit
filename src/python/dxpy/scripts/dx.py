@@ -3449,7 +3449,7 @@ def generate_batch_inputs(args):
     def eprint(*args, **kwargs):
         print(*args, file=sys.stderr, **kwargs)
 
-    # Internally restricted maximum batch size for a CSV
+    # Internally restricted maximum batch size for a TSV
     MAX_BATCH_SIZE = 500
     project, folder, _none = try_call(resolve_path, args.path, expected='folder')
 
@@ -3458,7 +3458,7 @@ def generate_batch_inputs(args):
 
     # Call API for batch expansion
     try:
-       api_result = dxpy.api.system_generate_batch_inputs({"project-id":  project, "folder": folder, "inputs": input_dict})
+       api_result = dxpy.api.system_generate_batch_inputs({"project":  project, "folder": folder, "inputs": input_dict})
     except:
        err_exit()
 
@@ -3466,48 +3466,47 @@ def generate_batch_inputs(args):
         for i in range(0, len(l), n):
             yield l[i:i + n]
 
-    successful = [b for b in api_result if not b['error']]
-    errors = [b for b in api_result if b['error']]
+    successful = [b for b in api_result if 'error' not in b]
+    errors = [b for b in api_result if 'error' in b]
 
     batches = list(chunks(successful, MAX_BATCH_SIZE))
 
     eprint("Found {num_success} valid batch IDs matching desired pattern.".format(num_success=len(successful)))
-    eprint("Creating {num_batches} batch files each with at most {max} batch IDs.".format(num_batches=len(batches), max=MAX_BATCH_SIZE))
 
     input_names = input_dict.keys()
 
-    # Output CSV Batch
-    eprint("Successfully created batch files:")
+    # Output TSV Batch
     for i,batch in enumerate(batches):
         def flatten_batch(b):
-            return [b['batch-id']] + # Pattern used to match this particular run in the batch
-                   [ival['name'] for iname, ival in sorted(b['inputs'].items())] + # Input names
-                   [ival['id'] for iname, ival in sorted(b['inputs'].items())]  # Input IDs
+            return [b['batchPattern']] + [ival['name'] for iname, ival in sorted(b['inputs'].items())] + [ival['ids'][0] for iname, ival in sorted(b['inputs'].items())]  
 
-        batch_fname = "{}.{:04d}.csv".format(args.output_prefix, i)
+        batch_fname = "{}.{:04d}.tsv".format(args.output_prefix, i)
         with open(batch_fname, 'wb') as csvfile:
-            batchwriter = csv.writer(csvfile)
-            # Write headers of CSV
-            batchwriter.writerow(['pattern'] + [iname+"_filename" for iname in input_names] + [iname+"_id" for iname in input_names]  )
+            batchwriter = csv.writer(csvfile, delimiter='\t'.encode('ascii'))
+            # Write headers of TSV
+            batchwriter.writerow(['batch ID'] + [iname for iname in input_names] + [iname+" ID" for iname in input_names]  )
             for bi in batch:
                 batchwriter.writerow(flatten_batch(bi))
-            eprint(batch_fname)
+            eprint("Created batch file {}".format(batch_fname))
 
 
+    eprint("")
     for bi in errors:
-        eprint("ERROR processing batch ID {id}".format(id=bi['batch-id']))
+        eprint("ERROR processing batch ID matching pattern \"{id}\"".format(id=bi['batchPattern']))
         input_names_i = sorted(bi['inputs'].keys())
         if input_names !=  input_names_i:
             eprint("    Mismatched set of input names.")
-            eprint("    Provided input names: {provided}".format(provided=input_names))
-            eprint("    Matched input names: {provided}".format(provided=input_names))
-        for input_name, matches in bi['inputs']:
+            eprint("        Required input names: {required}".format(required=", ".join(input_names)))
+            eprint("        Matched input names: {matched}".format(matched=", ".join(input_names_i)))
+        for input_name, matches in bi['inputs'].items():
             if len(matches['ids']) > 1:
                 eprint("Input {iname} is associated with a file name that matches multiple IDs:".format(iname=input_name))
-                eprint("    {fname} => {ids}".format(fname=matches['name'], ", ".join(matches['ids'])))
+                eprint("    {fname} => {ids}".format(fname=matches['name'], ids=", ".join(matches['ids'])))
+	eprint("")
 
+    eprint("CREATED {num_batches} batch files each with at most {max} batch IDs.".format(num_batches=len(batches), max=MAX_BATCH_SIZE))
     if len(errors) > 0:
-        err_exit("ERROR: Found {num_errors} batch IDs with incomplete or ambiguous results.  Details above.".format(num_errors=len(errors)), 3)
+        err_exit("ERROR SUMMARY: Found {num_errors} batch IDs with incomplete or ambiguous results.  Details above.".format(num_errors=len(errors)), 3)
 
 def print_help(args):
     if args.command_or_category is None:
@@ -5231,10 +5230,10 @@ register_parser(parser_upgrade)
 # generate_batch_inputs
 #####################################
 
-parser_generate_batch_inputs = subparsers.add_parser('generate_batch_inputs', help='Generate a batch plan (one or more CSV files) for batch execution',
+parser_generate_batch_inputs = subparsers.add_parser('generate_batch_inputs', help='Generate a batch plan (one or more TSV files) for batch execution',
                                        description='Generate a table of input files matching desired regular expressions for each input.',
                                        prog='dx generate_batch_inputs')
-parser_generate_batch_inputs.add_argument('-i', '--input', help=fill('An input to be batch-processed "-i<input name>=<input pattern>" where <input_pattern> is a regular expression with a group corresponding to the desired region to match (e.g. -iinputa=SRR(.*)_1.gz -iinputb=SRR(.*)_2.gz'), width_adjustment=-24), action='append')
+parser_generate_batch_inputs.add_argument('-i', '--input', help=fill('An input to be batch-processed "-i<input name>=<input pattern>" where <input_pattern> is a regular expression with a group corresponding to the desired region to match (e.g. -iinputa=SRR(.*)_1.gz -iinputb=SRR(.*)_2.gz', width_adjustment=-24), action='append')
 parser_generate_batch_inputs.add_argument('--path', help='Project and/or folder in which to restrict the results',
                               metavar='PROJECT:FOLDER', default='').completer = DXPathCompleter(expected='folder')
 parser_generate_batch_inputs.add_argument('-o', '--output_prefix', help='Prefix for output file', default="dx_batch")
