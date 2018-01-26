@@ -3458,7 +3458,7 @@ def generate_batch_inputs(args):
 
     # Call API for batch expansion
     try:
-       api_result = dxpy.api.system_generate_batch_inputs({"project":  project, "folder": folder, "inputs": input_dict})
+       api_result = dxpy.api.system_generate_batch_inputs({"project":  project, "folder": folder, "inputs": input_dict})['batchInputs']
     except:
        err_exit()
 
