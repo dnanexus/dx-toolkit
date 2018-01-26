@@ -153,7 +153,7 @@ def batch_launch_args(executable, input_json, batch_csv_file):
         elif (col_name in input_classes and
               input_classes[col_name] == 'file'):
             idx = _search_column_id(col_name, header_line)
-            column_indexes[idx] = col_name
+            index_2_column[idx] = col_name
     if batch_index is None:
         raise Exception("Could not find column {}".format(BATCH_ID))
 
