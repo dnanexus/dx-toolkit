@@ -2689,12 +2689,12 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
         args.ssh_proxy):
         raise Exception("Options wait, watch, ssh, ssh_proxy do not work with batch execution")
 
-    launch_args = batch_launch_args(executable, input_json, args.batch_csv)
+    b_args = batch_launch_args(executable, input_json, args.batch_csv)
 
     if not args.brief:
         # print all the table rows we are going to run
         print('Calling executable with arguments:')
-        for d in launch_args:
+        for d in b_args["launch_args"]:
             print(json.dumps(d, indent=4))
         print()
 
@@ -2709,7 +2709,7 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
                    subsequent_indent='  ') + '\n')
 
     # Run the executable on all the input dictionaries
-    return batch_run(executable, launch_args, run_kwargs)
+    return batch_run(executable, b_args, run_kwargs)
 
 
 def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None):

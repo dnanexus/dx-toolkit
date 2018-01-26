@@ -138,87 +138,100 @@ def batch_launch_args(executable, input_json, batch_csv_file):
             else:
                 lines.append(line)
     # Get the classes for the executable inputs
-    input_klasses = _get_types_for_inputs(executable)
+    input_classes = _get_types_for_inputs(executable)
 
     # which columns to use. Note that a file input uses two columns.
     # For example, argument 'pair1' exposes two columns {'pair1, 'pair1 ID'}.
     batch_index = None
-    column_indexes = {}
+    index_2_column = {}
     for i, col_name in enumerate(header_line):
         if col_name == BATCH_ID:
             batch_index = i
-        elif (col_name in input_klasses and
-              input_klasses[col_name] != 'file'):
-            column_indexes[col_name] = i
-        elif (col_name in input_klasses and
-              input_klasses[col_name] == 'file'):
-            column_indexes[col_name] = _search_column_id(col_name, header_line)
-    print("column_classes={}".format(column_classes))
+        elif (col_name in input_classes and
+              input_classes[col_name] != 'file'):
+            index_2_column[i] = col_name
+        elif (col_name in input_classes and
+              input_classes[col_name] == 'file'):
+            idx = _search_column_id(col_name, header_line)
+            column_indexes[idx] = col_name
+    if batch_index is None:
+        raise Exception("Could not find column {}".format(BATCH_ID))
 
     # A dictionary of inputs. Each column in the CSV file is mapped to a row.
     # {
     #    "a": [{dnanexus_link: "file-xxxx"}, {dnanexus_link: "file-yyyy"}, ....],
     #    "b": [1,null, ...]
     # }
-    raise Exception("WIP. This section isn't quite right")
     columns={}
     all_files=[]
     for line in lines:
         for i, val in enumerate(line):
-            if i in column_indexes:
-                col_name = header_line[i]
-                col_class = column_classes[col_name]
-                val = val.strip()
-                val_w_correct_type, ref_files = _type_convert(val, col_class)
-                all_files += ref_files
-                if col_name in columns:
-                    columns[col_name].append(val_w_correct_type)
-                else:
-                    columns[col_name] = [val_w_correct_type]
-    print("columns=")
-    print(columns)
-    print("")
+            if i not in index_2_column:
+                continue
+            col_name = index_2_column[i]
+            klass = input_classes[col_name]
+            val_w_correct_type, ref_files = _type_convert(val.strip(), klass)
+            all_files += ref_files
+            if col_name in columns:
+                columns[col_name].append(val_w_correct_type)
+            else:
+                columns[col_name] = [val_w_correct_type]
+
+    # Create an array of batch_ids
+    batch_ids = []
+    for line in lines:
+        for i, val in enumerate(line):
+            if i == batch_index:
+                batch_ids.append(val.strip())
 
     # call validate
     #
     # Output: list of dictionaries, each dictionary corresponds to expanded batch call
-    launch_args = dxpy.api.applet_validate_batch(executable.get_id(),
-                                                 { "batchInput": columns,
-                                                   "commonInput": input_json,
-                                                   "files": all_files,
-                                                   "instanceTypes": [] })
-
-    print("launch_args")
-    print(launch_args)
-    print("")
+    expanded_args = dxpy.api.applet_validate_batch(executable.get_id(),
+                                                   { "batchInput": columns,
+                                                     "commonInput": input_json,
+                                                     "files": all_files,
+                                                     "instanceTypes": [] })
 
     ## future proofing
-    if isinstance(launch_args, dict):
-        assert('expandedBatchInput' in launch_args)
-        return launch_args['expandedBatchInput']
+    if isinstance(expanded_args, dict):
+        assert('expandedBatchInput' in expanded_args)
+        launch_args = expanded_args['expandedBatchInput']
     else:
-        return launch_args
+        launch_args = expanded_args
+    if len(launch_args) != len(batch_ids):
+        raise Exception("Mismatch in number of launch_args vs. batch_ids ({} != {})"
+                        .format(len(launch_args), len(batch_ids)))
+
+    return { "launch_args": launch_args,
+             "batch_ids": batch_ids }
 
 #
 # executable: applet, app, or workflow
 # launch_args: array of dictionaries, each of which contains all arguments needed to
 #     invoke the executable.
 #
-# TODO: where do we call validate?
-#       add property(s) to execution
-#       make this a root execution
-def batch_run(executable, launch_args, run_kwargs):
+def batch_run(executable, b_args, run_kwargs):
+    run_args = run_kwargs.copy()
     exec_name = executable.describe()["name"]
+    launch_args = b_args["launch_args"]
+    batch_ids = b_args["batch_ids"]
     exec_ids = []
-    for input_json in launch_args:
-        batch_id = launch_args["batch_id"]
+    for idx, input_json in enumerate(launch_args):
+        batch_id = batch_ids[idx]
         name = "{}-{}".format(exec_name, batch_id)
         properties = {
-            'batch-id': batch_id
+            'batch-id': batch_id,
             'batch-name': name
         }
         try:
-            dxexecution = executable.run(input_json, **run_kwargs)
+            run_args['name'] = name
+            if ('properties' in run_args and
+                run_args['properties'] is not None):
+                run_args['properties'].update(properties)
+            else:
+                run_args['properties'] = properties
+            dxexecution = executable.run(input_json, **run_args)
             exec_ids.append(dxexecution.get_id())
         except Exception:
             err_exit()
