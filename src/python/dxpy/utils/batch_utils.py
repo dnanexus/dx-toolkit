@@ -30,11 +30,11 @@ from ..exceptions import err_exit, DXError
 
 # Informational columns in the CSV file, which we want to ignore
 # TODO: are these the correct names?
-INFO_COLUMNS = ["pattern", "error", "batch_id"]
+BATCH_ID = "batch ID"
 
 # Figure out the type for each input, by describing the
 # executable
-def _get_type_for_columns(executable, input_keys):
+def _get_types_for_inputs(executable):
     exec_desc = executable.describe()
     input_spec = []
     if 'inputs' in exec_desc:
@@ -47,21 +47,73 @@ def _get_type_for_columns(executable, input_keys):
 
     input_key_classes={}
     for arg_desc in input_spec:
-        if arg_desc['name'] in input_keys:
-            input_key_classes[arg_desc['name']] = arg_desc['class']
+        input_key_classes[arg_desc['name']] = arg_desc['class']
 
     return input_key_classes
 
 # val: a value of type string, that needs to be converted
 # col_class: the class of the executable argument
 #
-def _type_convert(val, klass):
+# return:
+#   - the value in the correct type
+#   - any platform files referenced in the type
+def _type_convert_primitive(val, klass):
+    retval = None
+    ref_files = []
     if klass == 'string':
-        return val
+        retval = val
     elif klass == 'int':
-        return int(val)
+        retval = int(val)
+    elif klass == "boolean":
+        retval = bool(val)
+    elif klass == 'float':
+        retval = float(val)
+    elif klass == 'hash':
+        retval = json.loads(val)
+    elif klass == 'file':
+        if not val.startswith("file-"):
+            raise Exception("Malformed file {}, must start with 'file-'".format(val))
+        retval = dxpy.dxlink(val)
+        ref_files.append(retval)
     else:
         raise Exception("class {} not currently supported".format(klass))
+    return retval, ref_files
+
+# An array type, such as array:file
+def _type_convert_array(val, klass):
+    inner_type = klass.split(":")[1]
+    len_val = len(val)
+    if (len_val < 2 or
+        val[0] != '[' or
+        val[len_val-1] != ']'):
+        raise Exception("Malformed array {}".format(val))
+    val_strip_brackets = val[1:(len_val-1)]
+    retval = []
+    ref_files = []
+    elements = [e.strip() for e in val_strip_brackets.split(',')]
+    for e in elements:
+        e_with_type,files = _type_convert_primitive(e, inner_type)
+        retval.append(e_with_type)
+        ref_files += files
+    return retval, ref_files
+
+def _type_convert(val, klass):
+    try:
+        if klass.startswith("array:"):
+            return _type_convert_array(val, klass)
+        else:
+            # A primitive type, like {int, float, file, hash}
+            return _type_convert_primitive(val, klass)
+    except Exception:
+        raise Exception("value={} cannot be converted into class {}".format(val, klass))
+
+# For a column that represents files, assume it is named "pair", look for
+# the index of column "pair ID".
+def _search_column_id(col_name, header_line):
+    for i, col_name2 in enumerate(header_line):
+        if col_name2 == (col_name + " ID"):
+            return i
+    raise Exception("Could not find a column with file IDs for {}".format(col_name))
 
 # Parse the CSV file. Create a dictionary with the input arguments for
 # each invocation. Return an array of dictionaries.
@@ -70,44 +122,82 @@ def _type_convert(val, klass):
 #   remove informational columns
 #   create a dictionary of inputs we can pass to the executable
 #
+# Example CSV input:
+# batch ID, pair1,       pair1 ID, pair2,       pair2 ID
+# 23,       SRR123_1.gz, file-XXX, SRR223_2.gz, file-YYY
+#
 def batch_launch_args(executable, input_json, batch_csv_file):
     header_line = []
     lines = []
     with open(batch_csv_file, "rb") as f:
-        reader = csv.reader(f, delimiter=str(u','))
+        reader = csv.reader(f, delimiter=str(u'\t'))
         for i, line in enumerate(reader):
             if i == 0:
                 for column_name in line:
                     header_line.append(column_name.strip())
             else:
                 lines.append(line)
-    # which columns to use
-    column_names=[]
-    column_nums=[]
-    for i, key in enumerate(header_line):
-        if key not in INFO_COLUMNS:
-            column_nums.append(i)
-            column_names.append(key)
-    # Get the dx:type for each column
-    column_classes = _get_type_for_columns(executable, column_names)
+    # Get the classes for the executable inputs
+    input_klasses = _get_types_for_inputs(executable)
+
+    # which columns to use. Note that a file input uses two columns.
+    # For example, argument 'pair1' exposes two columns {'pair1, 'pair1 ID'}.
+    batch_index = None
+    column_indexes = {}
+    for i, col_name in enumerate(header_line):
+        if col_name == BATCH_ID:
+            batch_index = i
+        elif (col_name in input_klasses and
+              input_klasses[col_name] != 'file'):
+            column_indexes[col_name] = i
+        elif (col_name in input_klasses and
+              input_klasses[col_name] == 'file'):
+            column_indexes[col_name] = _search_column_id(col_name, header_line)
     print("column_classes={}".format(column_classes))
 
-    # a dictionary with input arguments for each job invocation
-    launch_args=[]
+    # A dictionary of inputs. Each column in the CSV file is mapped to a row.
+    # {
+    #    "a": [{dnanexus_link: "file-xxxx"}, {dnanexus_link: "file-yyyy"}, ....],
+    #    "b": [1,null, ...]
+    # }
+    raise Exception("WIP. This section isn't quite right")
+    columns={}
+    all_files=[]
     for line in lines:
-        d_args = {}
         for i, val in enumerate(line):
-            if i in column_nums:
+            if i in column_indexes:
                 col_name = header_line[i]
                 col_class = column_classes[col_name]
                 val = val.strip()
-                d_args[col_name] = _type_convert(val, col_class)
-        # Add all the common arguments
-        for k,v in input_json.items():
-            d_args[k] = v
-        launch_args.append(d_args)
-    # it would be nice to call validate at this point
-    return launch_args
+                val_w_correct_type, ref_files = _type_convert(val, col_class)
+                all_files += ref_files
+                if col_name in columns:
+                    columns[col_name].append(val_w_correct_type)
+                else:
+                    columns[col_name] = [val_w_correct_type]
+    print("columns=")
+    print(columns)
+    print("")
+
+    # call validate
+    #
+    # Output: list of dictionaries, each dictionary corresponds to expanded batch call
+    launch_args = dxpy.api.applet_validate_batch(executable.get_id(),
+                                                 { "batchInput": columns,
+                                                   "commonInput": input_json,
+                                                   "files": all_files,
+                                                   "instanceTypes": [] })
+
+    print("launch_args")
+    print(launch_args)
+    print("")
+
+    ## future proofing
+    if isinstance(launch_args, dict):
+        assert('expandedBatchInput' in launch_args)
+        return launch_args['expandedBatchInput']
+    else:
+        return launch_args
 
 #
 # executable: applet, app, or workflow
@@ -118,12 +208,18 @@ def batch_launch_args(executable, input_json, batch_csv_file):
 #       add property(s) to execution
 #       make this a root execution
 def batch_run(executable, launch_args, run_kwargs):
+    exec_name = executable.describe()["name"]
     exec_ids = []
     for input_json in launch_args:
+        batch_id = launch_args["batch_id"]
+        name = "{}-{}".format(exec_name, batch_id)
+        properties = {
+            'batch-id': batch_id
+            'batch-name': name
+        }
         try:
             dxexecution = executable.run(input_json, **run_kwargs)
             exec_ids.append(dxexecution.get_id())
         except Exception:
             err_exit()
-
     return exec_ids

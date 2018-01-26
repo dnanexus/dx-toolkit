@@ -2622,7 +2622,9 @@ def _get_input_for_run(args, executable, preset_inputs=None, input_name_prefix=N
         exec_inputs.update(preset_inputs, strip_prefix=False)
 
     # Update with inputs passed with -i, --input_json, --input_json_file, etc.
-    try_call(exec_inputs.update_from_args, args)
+    # If batch_csv is set, do not prompt for missing arguments
+    require_all_inputs = (args.batch_csv is None)
+    try_call(exec_inputs.update_from_args, args, require_all_inputs)
 
     return exec_inputs.inputs
 
