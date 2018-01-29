@@ -8990,12 +8990,12 @@ class TestDXTree(DXTestCase):
 class TestDXGenerateBatchInputs(DXTestCase):
     # More advanced corner cases of generateBatchInputs API calls performed in API unit tests
     def test_example_matches(self):
-       # Upload test files to the project
-        files = "RP10B_S1_R1_001.fastq.gz RP10B_S1_R2_001.fastq.gz RP10T_S5_R1_001.fastq.gz RP10T_S5_R2_001.fastq.gz RP15B_S4_R1_002.fastq.gz RP15B_S4_R2_002.fastq.gz RP15T_S8_R1_0
+        # Upload test files to the project
+        files = "IM425B_S1_R1_001.fastq.gz IM425B_S1_R2_001.fastq.gz IM425T_S5_R1_001.fastq.gz IM425T_S5_R2_001.fastq.gz IM442B_S4_R1_002.fastq.gz IM442B_S4_R2_002.fastq.gz IM442T_S8_R1_002.fastq.gz IM442T_S8_R2_002.fastq.gz SRR123_1.gz SRR223_2.gz SRR2223_2.gz SRR_1.gz SRR_1.gz"
         run("touch {}".format(files))
         run("dx upload --brief {}".format(files))
 
-       # Test for basic working TSV and stderr output
+        # Test for basic working TSV and stderr output
         readpair_test_stderr = run("dx generate_batch_inputs -ipair1='RP(.*)_R1_(.*).fastq.gz' -ipair2='RP(.*)_R2_(.*).fastq.gz' 2>&1")
         expected_readpair_test_stderr = """
         Found 4 valid batch IDs matching desired pattern.
