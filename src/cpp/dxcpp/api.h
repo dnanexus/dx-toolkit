@@ -160,6 +160,9 @@ namespace dx {
   JSON appletRename(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON appletRename(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
+  JSON appletValidateBatch(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON appletValidateBatch(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
   JSON appletRun(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=false);
   JSON appletRun(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=false);
 

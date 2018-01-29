@@ -287,6 +287,12 @@ def applet_rename(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/rename' % object_id, input_params, always_retry=always_retry, **kwargs)
 
+def applet_validate_batch(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /applet-xxxx/validateBatch API method.
+    """
+    return DXHTTPRequest('/%s/validateBatch' % object_id, input_params, always_retry=always_retry, **kwargs)
+
 def applet_run(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /applet-xxxx/run API method.

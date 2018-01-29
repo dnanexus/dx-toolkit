@@ -1,3 +1,10 @@
+dx-toolkit (0.243.0) precise; urgency=low
+
+  * Changed: Recursive search for asset in a path is disabled, and we strictly enforce only one matching asset name
+  * Added: App version and published/unpublished note to dx run -h <app> 
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 24 Jan 2018 18:56:12 +0000
+
 dx-toolkit (0.242.0) precise; urgency=low
 
   * Changed: Use twine for pypy upload

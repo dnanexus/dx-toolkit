@@ -348,6 +348,13 @@ sub appletRename($;$%) {
 }
 
 
+sub appletValidateBatch($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/validateBatch', $input_params, %kwargs);
+}
+
+
 sub appletRun($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;

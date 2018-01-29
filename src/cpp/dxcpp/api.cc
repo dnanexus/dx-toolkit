@@ -417,6 +417,14 @@ namespace dx {
     return appletRename(object_id, input_params.toString(), safe_to_retry);
   }
 
+  JSON appletValidateBatch(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/validateBatch"), input_params, safe_to_retry);
+  }
+
+  JSON appletValidateBatch(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return appletValidateBatch(object_id, input_params.toString(), safe_to_retry);
+  }
+
   JSON appletRun(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest(std::string("/") + object_id + std::string("/run"), input_params, safe_to_retry);
   }
