@@ -9029,7 +9029,7 @@ class TestDXRunBatch(DXTestCase):
                          "distribution": "Ubuntu",
                          "release": "14.04" }
         })
-        o2 = run("dx run {} --batch-csv={}".format(applet["id"], arg_table))
+        o2 = run("dx run {} --batch-tsv={}".format(applet["id"], arg_table))
         print(o2)
 
     def test_files(self):
@@ -9069,7 +9069,7 @@ class TestDXRunBatch(DXTestCase):
                          "distribution": "Ubuntu",
                          "release": "14.04" }
         })
-        o = run("dx run {} --batch-csv={} -y".format(applet["id"], arg_table))
+        o = run("dx run {} --batch-tsv={} -y".format(applet["id"], arg_table))
         print(o)
 
 

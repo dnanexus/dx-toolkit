@@ -2622,8 +2622,8 @@ def _get_input_for_run(args, executable, preset_inputs=None, input_name_prefix=N
         exec_inputs.update(preset_inputs, strip_prefix=False)
 
     # Update with inputs passed with -i, --input_json, --input_json_file, etc.
-    # If batch_csv is set, do not prompt for missing arguments
-    require_all_inputs = (args.batch_csv is None)
+    # If batch_tsv is set, do not prompt for missing arguments
+    require_all_inputs = (args.batch_tsv is None)
     try_call(exec_inputs.update_from_args, args, require_all_inputs)
 
     return exec_inputs.inputs
@@ -2689,7 +2689,7 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
         args.ssh_proxy):
         raise Exception("Options wait, watch, ssh, ssh_proxy do not work with batch execution")
 
-    b_args = batch_launch_args(executable, input_json, args.batch_csv)
+    b_args = batch_launch_args(executable, input_json, args.batch_tsv)
 
     if not args.brief:
         # print all the table rows we are going to run
@@ -2712,6 +2712,9 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
     return batch_run(executable, b_args, run_kwargs)
 
 
+# Shared code for running an executable ("dx run executable"). At the end of this method,
+# there is a fork between the case of a single executable, and a batch run.
+#
 def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None):
     input_json = _get_input_for_run(args, executable, preset_inputs)
 
@@ -2800,7 +2803,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
                 # method is not yet available
                 pass
 
-    if args.batch_csv is None:
+    if args.batch_tsv is None:
         run_one(args, executable, dest_proj, dest_path, input_json, run_kwargs)
     else:
         run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_kwargs)
@@ -4547,8 +4550,8 @@ parser_run.add_argument('--ssh-proxy', metavar=('<address>:<port>'),
 parser_run.add_argument('--debug-on', action='append', choices=['AppError', 'AppInternalError', 'ExecutionError', 'All'],
                         help=fill("Configure the job to hold for debugging when any of the listed errors occur",
                                   width_adjustment=-24))
-parser_run.add_argument('--batch-csv', dest='batch_csv', metavar="FILE",
-                        help=fill('A file in comma separated value (csv) format, with a subset ' +
+parser_run.add_argument('--batch-tsv', dest='batch_tsv', metavar="FILE",
+                        help=fill('A file in tab separated value (tsv) format, with a subset ' +
                                   'of the executable input arguments. A subjob will be launched ' +
                                   'for each table row.',
                                   width_adjustment=-24))

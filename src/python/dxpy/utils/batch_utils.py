@@ -20,6 +20,8 @@ a set of data samples.
 """
 
 from __future__ import print_function, unicode_literals, division, absolute_import
+
+from collections import defaultdict
 import csv
 import dxpy
 import json
@@ -28,7 +30,7 @@ from ..compat import open
 from ..exceptions import err_exit, DXError
 
 
-# Informational columns in the CSV file, which we want to ignore
+# Informational columns in the TSV file, which we want to ignore
 # TODO: are these the correct names?
 BATCH_ID = "batch ID"
 
@@ -115,21 +117,21 @@ def _search_column_id(col_name, header_line):
             return i
     raise Exception("Could not find a column with file IDs for {}".format(col_name))
 
-# Parse the CSV file. Create a dictionary with the input arguments for
+# Parse the TSV file. Create a dictionary with the input arguments for
 # each invocation. Return an array of dictionaries.
 #
 # For each line, except the header:
 #   remove informational columns
 #   create a dictionary of inputs we can pass to the executable
 #
-# Example CSV input:
+# Example TSV input:
 # batch ID, pair1,       pair1 ID, pair2,       pair2 ID
 # 23,       SRR123_1.gz, file-XXX, SRR223_2.gz, file-YYY
 #
-def batch_launch_args(executable, input_json, batch_csv_file):
+def batch_launch_args(executable, input_json, batch_tsv_file):
     header_line = []
     lines = []
-    with open(batch_csv_file, "rb") as f:
+    with open(batch_tsv_file, "rb") as f:
         reader = csv.reader(f, delimiter=str(u'\t'))
         for i, line in enumerate(reader):
             if i == 0:
@@ -157,12 +159,12 @@ def batch_launch_args(executable, input_json, batch_csv_file):
     if batch_index is None:
         raise Exception("Could not find column {}".format(BATCH_ID))
 
-    # A dictionary of inputs. Each column in the CSV file is mapped to a row.
+    # A dictionary of inputs. Each column in the TSV file is mapped to a row.
     # {
     #    "a": [{dnanexus_link: "file-xxxx"}, {dnanexus_link: "file-yyyy"}, ....],
     #    "b": [1,null, ...]
     # }
-    columns={}
+    columns=defaultdict(list)
     all_files=[]
     for line in lines:
         for i, val in enumerate(line):
@@ -172,17 +174,10 @@ def batch_launch_args(executable, input_json, batch_csv_file):
             klass = input_classes[col_name]
             val_w_correct_type, ref_files = _type_convert(val.strip(), klass)
             all_files += ref_files
-            if col_name in columns:
-                columns[col_name].append(val_w_correct_type)
-            else:
-                columns[col_name] = [val_w_correct_type]
+            columns[col_name].append(val_w_correct_type)
 
     # Create an array of batch_ids
-    batch_ids = []
-    for line in lines:
-        for i, val in enumerate(line):
-            if i == batch_index:
-                batch_ids.append(val.strip())
+    batch_ids = [line[batch_index].strip() for line in lines]
 
     # call validate
     #
@@ -195,8 +190,8 @@ def batch_launch_args(executable, input_json, batch_csv_file):
 
     ## future proofing
     if isinstance(expanded_args, dict):
-        assert('expandedBatchInput' in expanded_args)
-        launch_args = expanded_args['expandedBatchInput']
+        assert('expandedBatch' in expanded_args)
+        launch_args = expanded_args['expandedBatch']
     else:
         launch_args = expanded_args
     if len(launch_args) != len(batch_ids):
@@ -224,13 +219,12 @@ def batch_run(executable, b_args, run_kwargs):
             'batch-id': batch_id,
             'batch-name': name
         }
+        run_args['name'] = name
+        if run_args.get('properties') is not None:
+            run_args['properties'].update(properties)
+        else:
+            run_args['properties'] = properties
         try:
-            run_args['name'] = name
-            if ('properties' in run_args and
-                run_args['properties'] is not None):
-                run_args['properties'].update(properties)
-            else:
-                run_args['properties'] = properties
             dxexecution = executable.run(input_json, **run_args)
             exec_ids.append(dxexecution.get_id())
         except Exception:
