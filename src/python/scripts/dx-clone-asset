@@ -70,7 +70,7 @@ def _find_asset_project(region):
         projects = subprocess.check_output(cmd.format(project_name, region), shell=True).strip()
         if projects == '':
             cmd = 'dx new project --region "{0}" "{1}" --brief '
-            project = subprocess.check_output(cmd.format(region, project_name), shell=True).strip()
+            return subprocess.check_output(cmd.format(region, project_name), shell=True).strip()
         else:
             projects = projects.split('\n')
             return projects[0]
