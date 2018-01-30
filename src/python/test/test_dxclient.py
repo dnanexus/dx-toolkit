@@ -8987,6 +8987,93 @@ class TestDXTree(DXTestCase):
                                  r".\n└── closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+foo \(" + rec.get_id() + "\)")
 
 
+@unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                     'skipping test that would run jobs')
+class TestDXRunBatch(DXTestCase):
+    def test_basic(self):
+        # write python code into code.py file
+        tmp_path = tempfile.mkdtemp()
+        code_path = os.path.join(tmp_path, 'code.py')
+        with open(code_path, 'wb') as f:
+            f.write("@dxpy.entry_point('main')\n")
+            f.write("def main(**job_inputs):\n")
+            f.write("\toutput = {}\n")
+            f.write("\toutput['thresholds'] = job_inputs['thresholds']\n")
+            f.write("\toutput['pie'] = job_inputs['pie'] + 1\n")
+            f.write("\toutput['misc'] = {'n': 'non', 'y': 'oui'}\n")
+            f.write("\treturn output\n")
+            f.write("\n")
+            f.write("dxpy.run()\n")
+        code = open(code_path, 'r').read()
+
+        # write arguments table
+        arg_table = os.path.join(tmp_path, 'table.csv')
+        with open(arg_table, 'wb') as csvfile:
+            writer = csv.writer(csvfile, delimiter=(u"\t").encode('utf-8'))
+            header = ["batch ID", "thresholds", "pie", "misc"]
+            writer.writerow(header)
+            writer.writerow(["SRR_1", "[10,81]", "3.12", "{}"])
+
+        applet = dxpy.api.applet_new({
+            "name": "copy_all",
+            "project": self.project,
+            "dxapi": "1.0.0",
+            "inputSpec": [ { "name": "thresholds", "class": "array:int"},
+                           { "name": "pie", "class": "float" },
+                           { "name": "misc", "class": "hash" } ],
+            "outputSpec": [ { "name": "thresholds", "class": "array:int" },
+                            { "name": "pie", "class": "float" },
+                            { "name": "misc", "class": "hash" } ],
+            "runSpec": { "interpreter": "python2.7",
+                         "code": code,
+                         "distribution": "Ubuntu",
+                         "release": "14.04" }
+        })
+        o2 = run("dx run {} --batch-csv={}".format(applet["id"], arg_table))
+        print(o2)
+
+    def test_files(self):
+        # Create file with junk content
+        dxfile = dxpy.upload_string("xxyyzz", project=self.project,
+                                    wait_on_close=True, name="bubbles")
+
+        # write python code into code.py file
+        tmp_path = tempfile.mkdtemp()
+        code_path = os.path.join(tmp_path, 'code.py')
+        with open(code_path, 'wb') as f:
+            f.write("@dxpy.entry_point('main')\n")
+            f.write("def main(**job_inputs):\n")
+            f.write("\toutput = {}\n")
+            f.write("\toutput['plant'] = job_inputs['plant']\n")
+            f.write("\treturn output\n")
+            f.write("\n")
+            f.write("dxpy.run()\n")
+        code = open(code_path, 'r').read()
+
+        # write arguments table
+        arg_table = os.path.join(tmp_path, 'table.csv')
+        with open(arg_table, 'wb') as csvfile:
+            writer = csv.writer(csvfile, delimiter=(u"\t").encode('utf-8'))
+            header = ["batch ID", "plant", "plant ID"]
+            writer.writerow(header)
+            writer.writerow(["SRR_1", "bubbles", dxfile.get_id()])
+
+        applet = dxpy.api.applet_new({
+            "name": "copy_file",
+            "project": self.project,
+            "dxapi": "1.0.0",
+            "inputSpec": [ { "name": "plant", "class": "file" } ],
+            "outputSpec": [ { "name": "plant", "class": "file" } ],
+            "runSpec": { "interpreter": "python2.7",
+                         "code": code,
+                         "distribution": "Ubuntu",
+                         "release": "14.04" }
+        })
+        o = run("dx run {} --batch-csv={} -y".format(applet["id"], arg_table))
+        print(o)
+
+
+
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
         sys.stderr.write('WARNING: env var DXTEST_FULL is not set; tests that create apps or run jobs will not be run\n')
