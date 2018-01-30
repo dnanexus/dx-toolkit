@@ -3475,7 +3475,7 @@ def generate_batch_inputs(args):
 
     input_names = input_dict.keys()
 
-    # Output TSV Batch
+    # Output TSV Batch.  This procedure generates a TSV file with file names and IDs grouped by pattern
     for i,batch in enumerate(batches):
         def flatten_batch(b):
             return [b['batchPattern']] + [ival['name'] for iname, ival in sorted(b['inputs'].items())] + [ival['ids'][0] for iname, ival in sorted(b['inputs'].items())]  
