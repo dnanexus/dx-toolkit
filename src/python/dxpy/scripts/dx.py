@@ -2686,8 +2686,9 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
     if (args.wait or
         args.watch or
         args.ssh or
-        args.ssh_proxy):
-        raise Exception("Options wait, watch, ssh, ssh_proxy do not work with batch execution")
+        args.ssh_proxy or
+        args.clone):
+        raise Exception("Options {wait, watch, ssh, ssh_proxy, clone} do not work with batch execution")
 
     b_args = batch_launch_args(executable, input_json, args.batch_tsv)
 
