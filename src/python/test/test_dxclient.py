@@ -8991,7 +8991,7 @@ class TestDXGenerateBatchInputs(DXTestCase):
     # More advanced corner cases of generateBatchInputs API calls performed in API unit tests
     def test_example_matches(self):
         # Upload test files to the project
-        files = "RP10B_S1_R1_001.fastq.gz RP10B_S1_R2_001.fastq.gz RP10T_S5_R1_001.fastq.gz RP10T_S5_R2_001.fastq.gz RP15B_S4_R1_002.fastq.gz RP15B_S4_R2_002.fastq.gz RP15T_S8_R1_002.fastq.gz RP15T_S8_R2_002.fastq.gz SRR123_1.gz SRR223_2.gz SRR2223_2.gz SRR_1.gz SRR_1.gz"
+        files = "RP10B_S1_R1_001.fastq.gz RP10B_S1_R2_001.fastq.gz RP10T_S5_R1_001.fastq.gz RP10T_S5_R2_001.fastq.gz RP15B_S4_R1_002.fastq.gz RP15B_S4_R2_002.fastq.gz RP15T_S8_R1_002.fastq.gz RP15T_S8_R2_002.fastq.gz SRR123_1.gz SRR223_2.gz SRR2223_2.gz SRR1_1.gz SRR1_1.gz"
         run("touch {}".format(files))
         run("dx upload --brief {}".format(files))
 
@@ -9005,7 +9005,7 @@ class TestDXGenerateBatchInputs(DXTestCase):
         """
         self.assertEqual(readpair_test_stderr.strip(), textwrap.dedent(expected_readpair_test_stderr).strip())
 
-       expected_readpair_test_tsv_cut = '''
+        expected_readpair_test_tsv_cut = '''
         10B_S1\tRP10B_S1_R1_001.fastq.gz\tRP10B_S1_R2_001.fastq.gz
         10T_S5\tRP10T_S5_R1_001.fastq.gz\tRP10T_S5_R2_001.fastq.gz
         15B_S4\tRP15B_S4_R1_002.fastq.gz\tRP15B_S4_R2_002.fastq.gz
@@ -9013,7 +9013,7 @@ class TestDXGenerateBatchInputs(DXTestCase):
         batch ID\tpair1\tpair2
         '''
 
-       readpair_test_tsv_cut = run("cut -f1-3 dx_batch.0000.tsv | sort")
+        readpair_test_tsv_cut = run("cut -f1-3 dx_batch.0000.tsv | sort")
         self.assertEqual(readpair_test_tsv_cut.strip(), textwrap.dedent(expected_readpair_test_tsv_cut).strip())
 
 
@@ -9038,7 +9038,7 @@ class TestDXGenerateBatchInputs(DXTestCase):
                 Required input names: pair1, pair2
                 Matched input names: pair1
         Input pair1 is associated with a file name that matches multiple IDs:
-       """
+        """
         self.assertTrue(cornercase_test_stderr.startswith(textwrap.dedent(expected_cornercase_test_stderr).strip()))
 
 
