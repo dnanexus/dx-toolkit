@@ -9029,8 +9029,10 @@ class TestDXRunBatch(DXTestCase):
                          "distribution": "Ubuntu",
                          "release": "14.04" }
         })
-        o2 = run("dx run {} --batch-tsv={}".format(applet["id"], arg_table))
-        print(o2)
+        job_id = run("dx run {} --batch-tsv={} --yes --brief"
+                     .format(applet["id"], arg_table)).strip()
+        job_desc = dxpy.api.job_describe(job_id)
+        self.assertEquals(job_desc["executableName"], 'copy_all')
 
     def test_files(self):
         # Create file with junk content
@@ -9069,9 +9071,10 @@ class TestDXRunBatch(DXTestCase):
                          "distribution": "Ubuntu",
                          "release": "14.04" }
         })
-        o = run("dx run {} --batch-tsv={} -y".format(applet["id"], arg_table))
-        print(o)
-
+        job_id = run("dx run {} --batch-tsv={} --yes --brief"
+                     .format(applet["id"], arg_table)).strip()
+        job_desc = dxpy.api.job_describe(job_id)
+        self.assertEquals(job_desc["executableName"], 'copy_file')
 
 
 if __name__ == '__main__':

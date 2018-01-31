@@ -133,12 +133,9 @@ def batch_launch_args(executable, input_json, batch_tsv_file):
     lines = []
     with open(batch_tsv_file, "rb") as f:
         reader = csv.reader(f, delimiter=str(u'\t'))
-        for i, line in enumerate(reader):
-            if i == 0:
-                for column_name in line:
-                    header_line.append(column_name.strip())
-            else:
-                lines.append(line)
+        header_line = next(reader)
+        lines = list(reader)
+
     # Get the classes for the executable inputs
     input_classes = _get_types_for_inputs(executable)
 
@@ -226,7 +223,8 @@ def batch_run(executable, b_args, run_kwargs):
             run_args['properties'] = properties
         try:
             dxexecution = executable.run(input_json, **run_args)
-            exec_ids.append(dxexecution.get_id())
+            job_id = dxexecution.get_id()
+            exec_ids.append(job_id)
         except Exception:
             err_exit()
     return exec_ids

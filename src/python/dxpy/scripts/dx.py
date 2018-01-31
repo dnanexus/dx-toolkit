@@ -2694,7 +2694,7 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
 
     if not args.brief:
         # print all the table rows we are going to run
-        print('Calling executable with arguments:')
+        print('Batch run, calling executable with arguments:')
         for d in b_args["launch_args"]:
             print(json.dumps(d, indent=4))
         print()
@@ -2711,7 +2711,6 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
 
     # Run the executable on all the input dictionaries
     return batch_run(executable, b_args, run_kwargs)
-
 
 # Shared code for running an executable ("dx run executable"). At the end of this method,
 # there is a fork between the case of a single executable, and a batch run.
@@ -2805,10 +2804,10 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
                 pass
 
     if args.batch_tsv is None:
-        run_one(args, executable, dest_proj, dest_path, input_json, run_kwargs)
+        return run_one(args, executable, dest_proj, dest_path, input_json, run_kwargs)
     else:
-        run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_kwargs)
-
+        exec_ids = run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_kwargs)
+        return (",".join(exec_ids))
 
 def print_run_help(executable="", alias=None):
     if executable == "":
@@ -3137,7 +3136,8 @@ def run(args):
 
     process_instance_type_arg(args, is_workflow)
 
-    run_body(args, handler, dest_proj, dest_path)
+    retval= run_body(args, handler, dest_proj, dest_path)
+    print(retval)
 
 def terminate(args):
     for jobid in args.jobid:
@@ -4553,7 +4553,7 @@ parser_run.add_argument('--debug-on', action='append', choices=['AppError', 'App
                                   width_adjustment=-24))
 parser_run.add_argument('--batch-tsv', dest='batch_tsv', metavar="FILE",
                         help=fill('A file in tab separated value (tsv) format, with a subset ' +
-                                  'of the executable input arguments. A subjob will be launched ' +
+                                  'of the executable input arguments. A job will be launched ' +
                                   'for each table row.',
                                   width_adjustment=-24))
 parser_run.add_argument('--input-help',
