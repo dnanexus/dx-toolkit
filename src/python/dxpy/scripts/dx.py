@@ -2804,10 +2804,12 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
                 pass
 
     if args.batch_tsv is None:
-        return run_one(args, executable, dest_proj, dest_path, input_json, run_kwargs)
+        dx_exec = run_one(args, executable, dest_proj, dest_path, input_json, run_kwargs)
+        print(dx_exec.get_id())
     else:
-        exec_ids = run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_kwargs)
-        return (",".join(exec_ids))
+        dx_execs = run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_kwargs)
+        exec_ids = [dxe.get_id() for dxe in dx_execs]
+        print(",".join(exec_ids))
 
 def print_run_help(executable="", alias=None):
     if executable == "":
@@ -3136,8 +3138,7 @@ def run(args):
 
     process_instance_type_arg(args, is_workflow)
 
-    retval= run_body(args, handler, dest_proj, dest_path)
-    print(retval)
+    run_body(args, handler, dest_proj, dest_path)
 
 def terminate(args):
     for jobid in args.jobid:

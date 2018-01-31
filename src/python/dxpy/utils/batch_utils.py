@@ -208,7 +208,7 @@ def batch_run(executable, b_args, run_kwargs):
     exec_name = executable.describe()["name"]
     launch_args = b_args["launch_args"]
     batch_ids = b_args["batch_ids"]
-    exec_ids = []
+    executions = []
     for idx, input_json in enumerate(launch_args):
         batch_id = batch_ids[idx]
         name = "{}-{}".format(exec_name, batch_id)
@@ -223,8 +223,7 @@ def batch_run(executable, b_args, run_kwargs):
             run_args['properties'] = properties
         try:
             dxexecution = executable.run(input_json, **run_args)
-            job_id = dxexecution.get_id()
-            exec_ids.append(job_id)
+            executions.append(dxexecution)
         except Exception:
             err_exit()
-    return exec_ids
+    return executions

@@ -9033,6 +9033,9 @@ class TestDXRunBatch(DXTestCase):
                      .format(applet["id"], arg_table)).strip()
         job_desc = dxpy.api.job_describe(job_id)
         self.assertEquals(job_desc["executableName"], 'copy_all')
+        self.assertEquals(job_desc["input"], { "thresholds": [10,81],
+                                               "misc": {},
+                                               "pie": 3.12 })
 
     def test_files(self):
         # Create file with junk content
@@ -9075,6 +9078,7 @@ class TestDXRunBatch(DXTestCase):
                      .format(applet["id"], arg_table)).strip()
         job_desc = dxpy.api.job_describe(job_id)
         self.assertEquals(job_desc["executableName"], 'copy_file')
+        self.assertEquals(job_desc["input"], { "plant": {"$dnanexus_link": dxfile.get_id() }})
 
 
 if __name__ == '__main__':
