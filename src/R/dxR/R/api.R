@@ -865,6 +865,47 @@ appRun <- function(appNameOrID, alias=NULL,
                 alwaysRetry=alwaysRetry)
 }
 
+##' appValidateBatch API wrapper
+##'
+##' This function makes an API call to the \code{/app-xxxx/validateBatch} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param appNameOrID An app identifier using either the name of an app
+##' ("app-name") or its full ID ("app-xxxx")
+##' @param alias If an app name is given for \code{appNameOrID}, this can be
+##' provided to specify a version or tag (if not provided, the "default" tag is
+##' used).
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/validateBatch}
+appValidateBatch <- function(appNameOrID, alias=NULL,
+                             inputParams=emptyNamedList, jsonifyData=TRUE,
+                             alwaysRetry=TRUE) {
+  if (is.null(alias)) {
+    fullyQualifiedVersion <- paste('/', appNameOrID, sep='')
+  } else {
+    fullyQualifiedVersion <- paste('/', appNameOrID, '/', alias, sep='')
+  }
+  resource <- paste(fullyQualifiedVersion, '/', 'validateBatch', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
 ##' appUninstall API wrapper
 ##'
 ##' This function makes an API call to the \code{/app-xxxx/uninstall} API
@@ -1226,6 +1267,7 @@ appletRename <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method\%3A-\%2Fapplet-xxxx\%2FvalidateBatch}
 appletValidateBatch <- function(objectID,
                                 inputParams=emptyNamedList,
                                 jsonifyData=TRUE,
@@ -5345,6 +5387,39 @@ workflowRun <- function(objectID,
                         jsonifyData=TRUE,
                         alwaysRetry=FALSE) {
   resource <- paste('/', objectID, '/', 'run', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' workflowValidateBatch API wrapper
+##'
+##' This function makes an API call to the \code{/workflow-xxxx/validateBatch} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method\%3A-\%2Fworkflow-xxxx\%2FvalidateBatch}
+workflowValidateBatch <- function(objectID,
+                                  inputParams=emptyNamedList,
+                                  jsonifyData=TRUE,
+                                  alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'validateBatch', sep='')
   dxHTTPRequest(resource,
                 inputParams,
                 jsonifyData=jsonifyData,

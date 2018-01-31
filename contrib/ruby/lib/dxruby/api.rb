@@ -200,6 +200,15 @@ module DX
       return DX::http_request("/#{fully_qualified_version}/run", input_params, opts)
     end
 
+    # Invokes the /app-xxxx/validateBatch API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/validateBatch
+    def self.app_validate_batch(app_name_or_id, app_alias=nil, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
+      return DX::http_request("/#{fully_qualified_version}/validateBatch", input_params, opts)
+    end
+
     # Invokes the /app-xxxx/uninstall API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/uninstall
@@ -283,6 +292,8 @@ module DX
     end
 
     # Invokes the /applet-xxxx/validateBatch API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fapplet-xxxx%2FvalidateBatch
     def self.applet_validate_batch(object_id, input_params={}, opts={})
       opts = { "always_retry" => true }.merge(opts)
       return DX::http_request("/#{object_id}/validateBatch", input_params, opts)
@@ -1310,6 +1321,14 @@ module DX
     def self.workflow_run(object_id, input_params={}, opts={})
       opts = { "always_retry" => false }.merge(opts)
       return DX::http_request("/#{object_id}/run", input_params, opts)
+    end
+
+    # Invokes the /workflow-xxxx/validateBatch API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FvalidateBatch
+    def self.workflow_validate_batch(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/validateBatch", input_params, opts)
     end
 
     # Invokes the /workflow-xxxx/setDetails API method.
