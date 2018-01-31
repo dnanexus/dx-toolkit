@@ -6,16 +6,19 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+* API wrappers for `[applet,app,workflow]-xxxx/validateBatch`
+
+## [243.0] - beta
+
 ### Added
 
-* API wrappers for `applet-xxxx/validateBatch`
 * App version and published/unpublished note to `dx run -h <app>`
 
 ### Changed
 
 * Recursive search for asset in a path is disabled, and we strictly enforce only one matching asset name
 
-## [242.0] - beta 
+## [242.0] - 2018.01.25 - stable 
 
 ### Changed
 
