@@ -6,7 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
 * API wrappers for `[applet,app,workflow]-xxxx/validateBatch`
+
+### Fixed
+
+* Issue where dx-clone-asset doesn't create projects in different regions if they don't already exist
 
 ## [243.0] - beta
 
