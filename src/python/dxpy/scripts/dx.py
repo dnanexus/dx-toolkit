@@ -2710,7 +2710,7 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
                    subsequent_indent='  ') + '\n')
 
     # Run the executable on all the input dictionaries
-    exec_ids = batch_run(executable, b_args, run_kwargs)
+    dx_execs = batch_run(executable, b_args, run_kwargs)
     exec_ids = [dxe.get_id() for dxe in dx_execs]
     print(",".join(exec_ids))
     sys.stdout.flush()
