@@ -2710,7 +2710,10 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
                    subsequent_indent='  ') + '\n')
 
     # Run the executable on all the input dictionaries
-    return batch_run(executable, b_args, run_kwargs)
+    exec_ids = batch_run(executable, b_args, run_kwargs)
+    exec_ids = [dxe.get_id() for dxe in dx_execs]
+    print(",".join(exec_ids))
+    sys.stdout.flush()
 
 # Shared code for running an executable ("dx run executable"). At the end of this method,
 # there is a fork between the case of a single executable, and a batch run.
@@ -2804,12 +2807,9 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
                 pass
 
     if args.batch_tsv is None:
-        dx_exec = run_one(args, executable, dest_proj, dest_path, input_json, run_kwargs)
-        print(dx_exec.get_id())
+        run_one(args, executable, dest_proj, dest_path, input_json, run_kwargs)
     else:
-        dx_execs = run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_kwargs)
-        exec_ids = [dxe.get_id() for dxe in dx_execs]
-        print(",".join(exec_ids))
+        run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_kwargs)
 
 def print_run_help(executable="", alias=None):
     if executable == "":
