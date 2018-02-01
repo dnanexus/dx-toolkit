@@ -1,7 +1,14 @@
+dx-toolkit (0.244.0) precise; urgency=low
+
+  * Added API wrappers for [applet,app,workflow]-xxxx/validateBatch
+  * Fixed Issue where dx-clone-asset doesn't create projects in different regions if they don't already exist
+
+ -- Geet Duggal <gduggal@dnanexus.com>  Thu, 01 Feb 2018 17:53:48 +0000
+
 dx-toolkit (0.243.0) precise; urgency=low
 
   * Changed: Recursive search for asset in a path is disabled, and we strictly enforce only one matching asset name
-  * Added: App version and published/unpublished note to dx run -h <app> 
+  * Added: App version and published/unpublished note to dx run -h <app>
 
  -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 24 Jan 2018 18:56:12 +0000
 
