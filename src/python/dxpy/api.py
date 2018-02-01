@@ -204,6 +204,15 @@ def app_run(app_name_or_id, alias=None, input_params={}, always_retry=True, **kw
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/run' % fully_qualified_version, input_params_cp, always_retry=always_retry, **kwargs)
 
+def app_validate_batch(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /app-xxxx/validateBatch API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/validateBatch
+    """
+    fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/validateBatch' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+
 def app_uninstall(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /app-xxxx/uninstall API method.
@@ -290,6 +299,8 @@ def applet_rename(object_id, input_params={}, always_retry=True, **kwargs):
 def applet_validate_batch(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /applet-xxxx/validateBatch API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fapplet-xxxx%2FvalidateBatch
     """
     return DXHTTPRequest('/%s/validateBatch' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1323,6 +1334,14 @@ def workflow_run(object_id, input_params={}, always_retry=True, **kwargs):
     """
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/%s/run' % object_id, input_params_cp, always_retry=always_retry, **kwargs)
+
+def workflow_validate_batch(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /workflow-xxxx/validateBatch API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FvalidateBatch
+    """
+    return DXHTTPRequest('/%s/validateBatch' % object_id, input_params, always_retry=always_retry, **kwargs)
 
 def workflow_set_details(object_id, input_params={}, always_retry=True, **kwargs):
     """

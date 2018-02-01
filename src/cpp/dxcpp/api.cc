@@ -320,6 +320,22 @@ namespace dx {
     return appRunWithAlias(app_name, app_alias, input_params_cp.toString(), safe_to_retry);
   }
 
+  JSON appValidateBatch(const std::string &app_id_or_name, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/validateBatch"), input_params, safe_to_retry);
+  }
+
+  JSON appValidateBatch(const std::string &app_id_or_name, const JSON &input_params, const bool safe_to_retry) {
+    return appValidateBatch(app_id_or_name, input_params.toString(), safe_to_retry);
+  }
+
+  JSON appValidateBatchWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params, const bool safe_to_retry) {
+    return appValidateBatch(app_name + std::string("/") + app_alias, input_params, safe_to_retry);
+  }
+
+  JSON appValidateBatchWithAlias(const std::string &app_name, const std::string &app_alias, const JSON &input_params, const bool safe_to_retry) {
+    return appValidateBatchWithAlias(app_name, app_alias, input_params.toString(), safe_to_retry);
+  }
+
   JSON appUninstall(const std::string &app_id_or_name, const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/uninstall"), input_params, safe_to_retry);
   }
@@ -1470,6 +1486,14 @@ namespace dx {
   JSON workflowRun(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
     JSON input_params_cp = Nonce::updateNonce(input_params);
     return workflowRun(object_id, input_params_cp.toString(), safe_to_retry);
+  }
+
+  JSON workflowValidateBatch(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/validateBatch"), input_params, safe_to_retry);
+  }
+
+  JSON workflowValidateBatch(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return workflowValidateBatch(object_id, input_params.toString(), safe_to_retry);
   }
 
   JSON workflowSetDetails(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
