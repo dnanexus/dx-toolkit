@@ -134,7 +134,8 @@ def _download_compressed_dxfile(dxfile, filename):
     details = dxfile.get_details()
     data_dir = tempfile.mkdtemp()
     data_local_path = os.path.join(data_dir, dxfile.name)+".compressed"
-    dxpy.download_dxfile(dxfile.get_id(), data_local_path, ignore_compression=True)
+    if details['compressed-with'] == 'DeeZ':
+        dxpy.download_dxfile(dxfile.get_id(), data_local_path, ignore_compression=True)
     reference_dxid = details['reference']
     reference_name = dxpy.DXFile(reference_dxid).name.replace(".gz", "")
     reference_local_path = os.path.join(reference_dir, reference_name)
@@ -145,7 +146,7 @@ def _download_compressed_dxfile(dxfile, filename):
         get_bam_cmd="deez -h -r {refpath} --threads 4 -c {deez_path} | samtools view -o {filename} -Sb -".format(refpath=reference_local_path, deez_path=data_local_path, filename=filename)
         subprocess.check_call(get_bam_cmd, shell=True, executable='/bin/bash')
     elif details['compressed-with'] == 'gx':
-        get_bam_cmd="gx bam -d -fasta {reference} -bam {filename} -cram {compressed_path} -nt `nproc`".format(reference=reference_local_path, filename=filename, compressed_path=data_local_path)
+        get_bam_cmd="dx cat {fid} | gx bam -d -fasta {reference} -bam {filename} -nt `nproc`".format(fid=dxfile.get_id(), reference=reference_local_path, filename=filename, compressed_path=data_local_path)
         subprocess.check_call(get_bam_cmd, shell=True, executable='/bin/bash')
 
     subprocess.check_call("rm -r {} {}".format(reference_dir, data_dir), shell=True)
