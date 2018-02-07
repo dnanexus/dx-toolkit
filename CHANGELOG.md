@@ -6,6 +6,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Batch runner CLI
+
+### Changed
+
+* Updated c-ares and file packages (related to upload agent builds)
+
 ## [244.0] - 2018.02.01 - beta
 
 ### Added
