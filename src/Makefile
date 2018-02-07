@@ -467,8 +467,8 @@ c-ares/stage/lib/libcares.la: shasum
 	cd c-ares; ./configure --prefix=/
 	$(MAKE) -C c-ares install DESTDIR="$(DNANEXUS_HOME)/src/c-ares/stage"
 
-FILE_PV=5.29
-FILE_SHA=86a2ad5745f1ce98ab810f6dc09f6f71406cfc16
+FILE_PV=5.32
+FILE_SHA=6a84bddca6fa9bcf6882832ccece38cf22b9b600
 file/stage/lib/libmagic.la: shasum
 	mkdir -p file
 	curl ${UBUNTU_MIRROR}/pool/main/f/file/file_${FILE_PV}.orig.tar.xz > file-${FILE_PV}.tar.xz
