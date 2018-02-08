@@ -68,7 +68,7 @@ To recover the original filenames, you can use the output of "dx describe "$vari
         ul_files_str = "\n" if init_inputs_str != '' else ""
         ul_files_str += fill('''The following line(s) use the dx command-line tool to upload your file outputs after you have created them on the local file system.  It assumes that you have used the output field name for the filename for each output, but you can change that behavior to suit your needs.  Run "dx upload -h" to see more options to set metadata.''',
                              initial_indent='    # ', subsequent_indent='    # ', width=80) + '\n\n'
-        ul_files_str += "\n".join(['    {name}=$(dx upload {name} --brief)'.format(name=name) for name in file_output_names]) + "\n"
+        ul_files_str += "\n".join(['    {name}=$(dx upload {name} --brief --wait)'.format(name=name) for name in file_output_names]) + "\n"
 
     if 'outputSpec' in app_json and app_json['outputSpec']:
         outputs_str = "\n" + fill('''The following line(s) use the utility dx-jobutil-add-output to format
