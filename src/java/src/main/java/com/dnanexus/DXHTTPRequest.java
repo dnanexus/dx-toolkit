@@ -24,6 +24,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -150,7 +151,9 @@ public class DXHTTPRequest {
         this.securityContext = env.getSecurityContextJson();
         this.apiserver = env.getApiserverPath();
         this.disableRetry = env.isRetryDisabled();
-        this.httpclient = HttpClientBuilder.create().setUserAgent(USER_AGENT).build();
+        //These timeouts prevent stuck of requests
+        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(env.getConnectionTimeout()).setSocketTimeout(env.getSocketTimeout()).build();
+        this.httpclient = HttpClientBuilder.create().setUserAgent(USER_AGENT).setDefaultRequestConfig(requestConfig).build();
     }
 
     /**
