@@ -1,3 +1,10 @@
+dx-toolkit (0.245.0) precise; urgency=low
+
+  * Added: Batch runner LI
+  * Changed: Updated c-ares and file packages (related to upload agent builds)
+
+ -- Aleksandra Zalcman <azalcman@dnanexus.com>  Thu, 08 Feb 2018 17:21:49 +0000
+
 dx-toolkit (0.244.0) precise; urgency=low
 
   * Added API wrappers for [applet,app,workflow]-xxxx/validateBatch
