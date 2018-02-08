@@ -8,13 +8,19 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
+* `socketTimeout` and `connectionTimeout` parameters to JAVA `DXEnvironment` (thanks, @pkokoshnikov)
+
+## [245.0] - 2018.02.08 - beta
+
+### Added
+
 * Batch runner CLI
 
 ### Changed
 
 * Updated c-ares and file packages (related to upload agent builds)
 
-## [244.0] - 2018.02.01 - beta
+## [244.0] - 2018.02.08 - stable
 
 ### Added
 
@@ -24,7 +30,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Issue where dx-clone-asset doesn't create projects in different regions if they don't already exist
 
-## [243.0] - 2018.02.01 - stable
+## [243.0] - 2018.02.01
 
 ### Added
 
