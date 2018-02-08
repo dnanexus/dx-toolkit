@@ -126,7 +126,7 @@ def get_strings(app_json,
     if file_output_names:
         ul_files_str = "\n" + fill('''The following line(s) use the Python bindings to upload your file outputs after you have created them on the local file system.  It assumes that you have used the output field name for the filename for each output, but you can change that behavior to suit your needs.''', initial_indent="    # ", subsequent_indent="    # ", width=80)
         ul_files_str +='\n\n    '
-        ul_files_str += "\n    ".join(['{name} = dxpy.upload_local_file("{name}")'.format(name=name) for name in file_output_names]) + '\n'
+        ul_files_str += "\n    ".join(['{name} = dxpy.upload_local_file("{name}", wait_on_close=True)'.format(name=name) for name in file_output_names]) + '\n'
 
     if 'outputSpec' in app_json and app_json['outputSpec']:
         outputs_str = "    " + "\n    ".join(['output["{name}"] = {value}'.format(name=param["name"], value=get_output_fmt(param)) for param in app_json['outputSpec']]) + '\n'
