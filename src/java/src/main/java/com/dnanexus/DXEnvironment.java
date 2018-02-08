@@ -90,6 +90,8 @@ public class DXEnvironment {
         private String workspaceId;
         private String projectContextId;
         private boolean disableRetry;
+        private int socketTimeout;
+        private int connectionTimeout;
 
         /**
          * Initializes a Builder object using JSON config in the file
@@ -151,6 +153,12 @@ public class DXEnvironment {
                     if (getTextValue(jsonConfig, "DX_PROJECT_CONTEXT_ID") != null) {
                         projectContextId = getTextValue(jsonConfig, "DX_PROJECT_CONTEXT_ID");
                     }
+                    if (getIntValue(jsonConfig, "DX_SOCKET_TIMEOUT") != 0) {
+                        socketTimeout = getIntValue(jsonConfig, "DX_SOCKET_TIMEOUT");
+                    }
+                    if (getIntValue(jsonConfig, "DX_CONNECTION_TIMEOUT") != 0) {
+                        connectionTimeout = getIntValue(jsonConfig, "DX_CONNECTION_TIMEOUT");
+                    }
                 } catch (IOException e) {
                     System.err.println("WARNING: JSON config file " + jsonConfigFile.getPath()
                             + " could not be parsed, skipping it");
@@ -180,6 +188,12 @@ public class DXEnvironment {
             if (sysEnv.containsKey("DX_PROJECT_CONTEXT_ID")) {
                 projectContextId = sysEnv.get("DX_PROJECT_CONTEXT_ID");
             }
+            if (sysEnv.containsKey("DX_SOCKET_TIMEOUT")) {
+                socketTimeout = Integer.valueOf(sysEnv.get("DX_SOCKET_TIMEOUT"));
+            }
+            if (sysEnv.containsKey("DX_CONNECTION_TIMEOUT")) {
+                connectionTimeout = Integer.valueOf(sysEnv.get("DX_CONNECTION_TIMEOUT"));
+            }
 
             try {
                 if (securityContextTxt != null) {
@@ -200,7 +214,8 @@ public class DXEnvironment {
          */
         public DXEnvironment build() {
             return new DXEnvironment(apiserverHost, apiserverPort, apiserverProtocol,
-                    securityContext, jobId, workspaceId, projectContextId, disableRetry);
+                                     securityContext, jobId, workspaceId, projectContextId, disableRetry,
+                                     socketTimeout, connectionTimeout);
         }
 
         /**
@@ -316,6 +331,30 @@ public class DXEnvironment {
             return this;
         }
 
+
+        /**
+         * Sets connection timeout of HTTP requests.
+         *
+         * @param connectionTimeout integer
+         *
+         * @return the same Builder object
+         */
+        public Builder setConnectionTimeout(int connectionTimeout) {
+            this.connectionTimeout = connectionTimeout;
+            return this;
+        }
+
+        /**
+         * Sets socket timeout of HTTP requests.
+         *
+         * @param socketTimeout integer
+         *
+         * @return the same Builder object
+         */
+        public Builder setSocketTimeout(int socketTimeout) {
+            this.socketTimeout = socketTimeout;
+            return this;
+        }
     }
 
     private final String apiserverHost;
@@ -326,6 +365,8 @@ public class DXEnvironment {
     private final String workspaceId;
     private final String projectContextId;
     private final boolean disableRetry;
+    private int socketTimeout;
+    private int connectionTimeout;
 
     private static final JsonFactory jsonFactory = new MappingJsonFactory();
     /**
@@ -348,10 +389,18 @@ public class DXEnvironment {
         }
         return value.asText();
     }
+    
+    private static int getIntValue(JsonNode jsonNode, String key) {
+        JsonNode value = jsonNode.get(key);
+        if (value == null || value.isNull()) {
+            return 0;
+        }
+        return value.asInt();
+    }
 
     private DXEnvironment(String apiserverHost, String apiserverPort, String apiserverProtocol,
-            JsonNode securityContext, String jobId, String workspaceId, String projectContextId, boolean
-            disableRetry) {
+                          JsonNode securityContext, String jobId, String workspaceId, String projectContextId, boolean
+            disableRetry, int socketTimeout, int connectionTimeout) {
         this.apiserverHost = apiserverHost;
         this.apiserverPort = apiserverPort;
         this.apiserverProtocol = apiserverProtocol;
@@ -360,6 +409,8 @@ public class DXEnvironment {
         this.workspaceId = workspaceId;
         this.projectContextId = projectContextId;
         this.disableRetry = disableRetry;
+        this.socketTimeout = socketTimeout;
+        this.connectionTimeout = connectionTimeout;
 
         // TODO: additional validation on the project/workspace, and check that
         // apiserverProtocol is either "http" or "https".
@@ -444,5 +495,19 @@ public class DXEnvironment {
      */
     public boolean isRetryDisabled() {
         return this.disableRetry;
+    }
+
+    /**
+     * Returns socket read timeout for http client
+     */
+    public int getSocketTimeout() {
+        return this.socketTimeout;
+    }
+
+    /**
+     * Returns connection read timeout for http client
+     */
+    public int getConnectionTimeout() {
+        return this.connectionTimeout;
     }
 }
