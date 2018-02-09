@@ -479,6 +479,31 @@ def database_set_visibility(object_id, input_params={}, always_retry=True, **kwa
     """
     return DXHTTPRequest('/%s/setVisibility' % object_id, input_params, always_retry=always_retry, **kwargs)
 
+def database_update(object_id, input_params={}, always_retry=False, **kwargs):
+    """
+    Invokes the /database-xxxx/update API method.
+
+    For more info, see: REMOVE!!!
+    """
+    return DXHTTPRequest('/%s/update' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def database_find_by_name(input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /database/findByName API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Ffile%2FfindByName
+    """
+    return DXHTTPRequest('/database/findByName', input_params, always_retry=always_retry, **kwargs)
+
+def database_new(input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /database/new API method.
+
+    For more info, see: REMOVE!!!!
+    """
+    input_params_cp = Nonce.update_nonce(input_params)
+    return DXHTTPRequest('/database/new', input_params_cp, always_retry=always_retry, **kwargs)
+
 def file_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/addTags API method.
