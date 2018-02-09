@@ -489,6 +489,30 @@ module DX
       return DX::http_request("/#{object_id}/setVisibility", input_params, opts)
     end
 
+    # Invokes the /database-xxxx/update API method.
+    #
+    # For more info, see: REMOVE!!!
+    def self.database_update(object_id, input_params={}, opts={})
+      opts = { "always_retry" => false }.merge(opts)
+      return DX::http_request("/#{object_id}/update", input_params, opts)
+    end
+
+    # Invokes the /database/findByName API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Ffile%2FfindByName
+    def self.database_find_by_name(input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/database/findByName", input_params, opts)
+    end
+
+    # Invokes the /database/new API method.
+    #
+    # For more info, see: REMOVE!!!!
+    def self.database_new(input_params={}, opts={})
+      opts = { "always_retry" => false }.merge(opts)
+      return DX::http_request("/database/new", input_params, opts)
+    end
+
     # Invokes the /file-xxxx/addTags API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags

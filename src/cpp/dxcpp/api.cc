@@ -635,6 +635,31 @@ namespace dx {
     return databaseSetVisibility(object_id, input_params.toString(), safe_to_retry);
   }
 
+  JSON databaseUpdate(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/update"), input_params, safe_to_retry);
+  }
+
+  JSON databaseUpdate(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return databaseUpdate(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON databaseFindByName(const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest("/database/findByName", input_params, safe_to_retry);
+  }
+
+  JSON databaseFindByName(const JSON &input_params, const bool safe_to_retry) {
+    return databaseFindByName(input_params.toString(), safe_to_retry);
+  }
+
+  JSON databaseNew(const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest("/database/new", input_params, safe_to_retry);
+  }
+
+  JSON databaseNew(const JSON &input_params, const bool safe_to_retry) {
+    JSON input_params_cp = Nonce::updateNonce(input_params);
+    return databaseNew(input_params_cp.toString(), safe_to_retry);
+  }
+
   JSON fileAddTags(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest(std::string("/") + object_id + std::string("/addTags"), input_params, safe_to_retry);
   }
