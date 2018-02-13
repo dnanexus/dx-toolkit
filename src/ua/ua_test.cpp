@@ -210,7 +210,7 @@ void contactGoogle() {
   try {
     string url = "http://www.google.com/";
     HttpRequest req = HttpRequest::request(dx::HTTP_GET, url);
-    if (req.responseCode == 200) {
+    if (req.responseCode == 200 || req.responseCode == 302) {
       cout << "  Successfully contacted google.com over http: (" << req.responseCode << ")" << endl;
     } else {
       cout << "  Unable to contact google.com over http: (" << req.responseCode << ")" << endl;
@@ -224,7 +224,7 @@ void contactGoogle() {
   try {
     string url = "https://www.google.com/";
     HttpRequest req = HttpRequest::request(dx::HTTP_GET, url);
-    if (req.responseCode == 200) {
+    if (req.responseCode == 200 || req.responseCode == 302) {
       cout << "  Successfully contacted google.com over https: (" << req.responseCode << ")" << endl;
     } else {
       cout << "  Unable to contact google.com over https: (" << req.responseCode << ")" << endl;
