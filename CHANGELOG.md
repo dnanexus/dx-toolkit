@@ -9,6 +9,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * `socketTimeout` and `connectionTimeout` parameters to JAVA `DXEnvironment` (thanks, @pkokoshnikov)
+* Generate batch inputs CLI
+
+### Changed
+
+* Accept 302 as a success for `ua --test`
 
 ## [245.0] - 2018.02.08 - beta
 
