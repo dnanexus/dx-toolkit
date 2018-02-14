@@ -199,6 +199,15 @@
         }
     ],
     [
+        "/app-xxxx/validateBatch",
+        "appValidateBatch(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/validateBatch"
+        }
+    ],
+    [
         "/app-xxxx/uninstall",
         "appUninstall(req, objectId)",
         {
@@ -295,7 +304,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fapplet-xxxx%2FvalidateBatch"
         }
     ],
     [
@@ -1482,6 +1491,15 @@
             "retryable": false,
             "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Frun",
             "acceptNonce": true
+        }
+    ],
+    [
+        "/workflow-xxxx/validateBatch",
+        "workflowValidateBatch(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FvalidateBatch"
         }
     ],
     [

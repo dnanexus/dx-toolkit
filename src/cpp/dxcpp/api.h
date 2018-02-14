@@ -126,6 +126,11 @@ namespace dx {
   JSON appRunWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool safe_to_retry=false);
   JSON appRunWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool safe_to_retry=false);
 
+  JSON appValidateBatch(const std::string &app_id_or_name, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON appValidateBatch(const std::string &app_id_or_name, const dx::JSON &input_params, const bool safe_to_retry=true);
+  JSON appValidateBatchWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON appValidateBatchWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool safe_to_retry=true);
+
   JSON appUninstall(const std::string &app_id_or_name, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON appUninstall(const std::string &app_id_or_name, const dx::JSON &input_params, const bool safe_to_retry=true);
   JSON appUninstallWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool safe_to_retry=true);
@@ -555,6 +560,9 @@ namespace dx {
 
   JSON workflowRun(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=false);
   JSON workflowRun(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=false);
+
+  JSON workflowValidateBatch(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON workflowValidateBatch(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
   JSON workflowSetDetails(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON workflowSetDetails(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);

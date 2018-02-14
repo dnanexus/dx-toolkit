@@ -457,8 +457,8 @@ curl/stage/lib/libcurl.la: shasum openssl
 	    --enable-static=yes $(CURL_SHARED_LIBS) $(CURL_WITH_SSL) --prefix=/
 	$(MAKE) -C curl install DESTDIR="$(DNANEXUS_HOME)/src/curl/stage"
 
-CARES_PV=1.12.0
-CARES_SHA=8abfce61d2d788fb60a3441d05275162a460cbed
+CARES_PV=1.13.0
+CARES_SHA=dde50284cc3d505fb2463ff6276e61d5531b1d68
 c-ares/stage/lib/libcares.la: shasum
 	mkdir -p c-ares
 	curl ${UBUNTU_MIRROR}/pool/main/c/c-ares/c-ares_${CARES_PV}.orig.tar.gz > c-ares-${CARES_PV}.tar.gz
@@ -467,8 +467,8 @@ c-ares/stage/lib/libcares.la: shasum
 	cd c-ares; ./configure --prefix=/
 	$(MAKE) -C c-ares install DESTDIR="$(DNANEXUS_HOME)/src/c-ares/stage"
 
-FILE_PV=5.29
-FILE_SHA=86a2ad5745f1ce98ab810f6dc09f6f71406cfc16
+FILE_PV=5.32
+FILE_SHA=6a84bddca6fa9bcf6882832ccece38cf22b9b600
 file/stage/lib/libmagic.la: shasum
 	mkdir -p file
 	curl ${UBUNTU_MIRROR}/pool/main/f/file/file_${FILE_PV}.orig.tar.xz > file-${FILE_PV}.tar.xz

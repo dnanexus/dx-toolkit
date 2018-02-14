@@ -54,6 +54,7 @@ from ..cli.org import (get_org_invite_args, add_membership, remove_membership, u
 from ..exceptions import (err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions,
                           format_exception)
 from ..utils import warn, group_array_by_field, normalize_timedelta, normalize_time_input
+from ..utils.batch_utils import (batch_run, batch_launch_args)
 
 from ..app_categories import APP_CATEGORIES
 from ..utils.printing import (CYAN, BLUE, YELLOW, GREEN, RED, WHITE, UNDERLINE, BOLD, ENDC, DNANEXUS_LOGO,
@@ -2622,12 +2623,103 @@ def _get_input_for_run(args, executable, preset_inputs=None, input_name_prefix=N
         exec_inputs.update(preset_inputs, strip_prefix=False)
 
     # Update with inputs passed with -i, --input_json, --input_json_file, etc.
-    try_call(exec_inputs.update_from_args, args)
+    # If batch_tsv is set, do not prompt for missing arguments
+    require_all_inputs = (args.batch_tsv is None)
+    try_call(exec_inputs.update_from_args, args, require_all_inputs)
 
     return exec_inputs.inputs
 
-def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None,
-            is_the_only_job=True):
+def run_one(args, executable, dest_proj, dest_path, input_json, run_kwargs):
+    # Print inputs used for the run
+    if not args.brief:
+        print()
+        print('Using input JSON:')
+        print(json.dumps(input_json, indent=4))
+        print()
+
+    # Ask for confirmation if a tty and if input was not given as a
+    # single JSON.
+    if args.confirm and INTERACTIVE_CLI:
+        if not prompt_for_yn('Confirm running the executable with this input', default=True):
+            parser.exit(0)
+
+    if not args.brief:
+        print(fill("Calling " + executable.get_id() + " with output destination " + dest_proj + ":" + dest_path,
+                   subsequent_indent='  ') + '\n')
+
+    # Run the executable
+    try:
+        dxexecution = executable.run(input_json, **run_kwargs)
+        if not args.brief:
+            print(dxexecution._class.capitalize() + " ID: " + dxexecution.get_id())
+        else:
+            print(dxexecution.get_id())
+        sys.stdout.flush()
+
+        if args.wait:
+            dxexecution.wait_on_done()
+        elif args.confirm and INTERACTIVE_CLI and not (args.watch or args.ssh) and isinstance(dxexecution, dxpy.DXJob):
+            answer = input("Watch launched job now? [Y/n] ")
+            if len(answer) == 0 or answer.lower()[0] == 'y':
+                args.watch = True
+
+        if isinstance(dxexecution, dxpy.DXJob):
+            if args.watch:
+                watch_args = parser.parse_args(['watch', dxexecution.get_id()])
+                print('')
+                print('Job Log')
+                print('-------')
+                watch(watch_args)
+            elif args.ssh:
+                if args.ssh_proxy:
+                    ssh_args = parser.parse_args(
+                        ['ssh', '--ssh-proxy', args.ssh_proxy, dxexecution.get_id()])
+                else:
+                    ssh_args = parser.parse_args(['ssh', dxexecution.get_id()])
+                ssh(ssh_args, ssh_config_verified=True)
+    except Exception:
+        err_exit()
+
+    return dxexecution
+
+
+def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_kwargs):
+    if (args.wait or
+        args.watch or
+        args.ssh or
+        args.ssh_proxy or
+        args.clone):
+        raise Exception("Options {wait, watch, ssh, ssh_proxy, clone} do not work with batch execution")
+
+    b_args = batch_launch_args(executable, input_json, args.batch_tsv)
+
+    if not args.brief:
+        # print all the table rows we are going to run
+        print('Batch run, calling executable with arguments:')
+        for d in b_args["launch_args"]:
+            print(json.dumps(d, indent=4))
+        print()
+
+    # Ask for confirmation if a tty and if input was not given as a
+    # single JSON.
+    if args.confirm and INTERACTIVE_CLI:
+        if not prompt_for_yn('Confirm running the executable with this input', default=True):
+            parser.exit(0)
+
+    if not args.brief:
+        print(fill("Calling " + executable.get_id() + " with output destination " + dest_proj + ":" + dest_path,
+                   subsequent_indent='  ') + '\n')
+
+    # Run the executable on all the input dictionaries
+    dx_execs = batch_run(executable, b_args, run_kwargs)
+    exec_ids = [dxe.get_id() for dxe in dx_execs]
+    print(",".join(exec_ids))
+    sys.stdout.flush()
+
+# Shared code for running an executable ("dx run executable"). At the end of this method,
+# there is a fork between the case of a single executable, and a batch run.
+#
+def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None):
     input_json = _get_input_for_run(args, executable, preset_inputs)
 
     if args.sys_reqs_from_clone and not isinstance(args.instance_type, basestring):
@@ -2656,39 +2748,6 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
         "rerun_stages": args.rerun_stages,
         "extra_args": args.extra_args
     }
-
-    # Print inputs used for the run
-    if not args.brief:
-        print()
-        print('Using input JSON:')
-        print(json.dumps(input_json, indent=4))
-        print()
-        if isinstance(executable, dxpy.DXWorkflow):
-            try:
-                dry_run = dxpy.api.workflow_dry_run(executable.get_id(),
-                                                    executable._get_run_input(input_json, **run_kwargs))
-                # print which stages are getting rerun
-                # Note: information may be out of date if the dryRun
-                # is performed too soon after the candidate execution
-                # has been constructed (and the jobs have not yet been
-                # created in the system); this errs on the side of
-                # assuming such stages will be re-run.
-                num_cached_stages = len([stage for stage in dry_run['stages'] if
-                                         'parentAnalysis' in stage['execution'] and
-                                         stage['execution']['parentAnalysis'] != dry_run['id']])
-                if num_cached_stages > 0:
-                    print(fill('The following ' + str(num_cached_stages) + ' stage(s) will reuse results from a previous analysis:'))
-                    for i, stage in enumerate(dry_run['stages']):
-                        if 'parentAnalysis' in stage['execution'] and \
-                           stage['execution']['parentAnalysis'] != dry_run['id']:
-                            stage_name = stage['execution']['name']
-                            print('  Stage ' + str(i) + ': ' + stage_name + \
-                                  ' (' + stage['execution']['id'] + ')')
-                    print()
-            except DXAPIError:
-                # Just don't print anything for now if the dryRun
-                # method is not yet available
-                pass
 
     if args.priority == "normal" and not args.brief:
         special_access = set()
@@ -2720,50 +2779,38 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
                        "been written to behave well when restarted."))
             print()
 
-    # Ask for confirmation if a tty and if input was not given as a
-    # single JSON.
-    if args.confirm and INTERACTIVE_CLI:
-        if not prompt_for_yn('Confirm running the executable with this input', default=True):
-            parser.exit(0)
-
     if not args.brief:
-        print(fill("Calling " + executable.get_id() + " with output destination " + dest_proj + ":" + dest_path,
-                   subsequent_indent='  ') + '\n')
+        if isinstance(executable, dxpy.DXWorkflow):
+            try:
+                dry_run = dxpy.api.workflow_dry_run(executable.get_id(),
+                                                    executable._get_run_input(input_json, **run_kwargs))
+                # print which stages are getting rerun
+                # Note: information may be out of date if the dryRun
+                # is performed too soon after the candidate execution
+                # has been constructed (and the jobs have not yet been
+                # created in the system); this errs on the side of
+                # assuming such stages will be re-run.
+                num_cached_stages = len([stage for stage in dry_run['stages'] if
+                                         'parentAnalysis' in stage['execution'] and
+                                         stage['execution']['parentAnalysis'] != dry_run['id']])
+                if num_cached_stages > 0:
+                    print(fill('The following ' + str(num_cached_stages) + ' stage(s) will reuse results from a previous analysis:'))
+                    for i, stage in enumerate(dry_run['stages']):
+                        if 'parentAnalysis' in stage['execution'] and \
+                           stage['execution']['parentAnalysis'] != dry_run['id']:
+                            stage_name = stage['execution']['name']
+                            print('  Stage ' + str(i) + ': ' + stage_name + \
+                                  ' (' + stage['execution']['id'] + ')')
+                    print()
+            except DXAPIError:
+                # Just don't print anything for now if the dryRun
+                # method is not yet available
+                pass
 
-    # Run the executable
-    try:
-        dxexecution = executable.run(input_json, **run_kwargs)
-        if not args.brief:
-            print(dxexecution._class.capitalize() + " ID: " + dxexecution.get_id())
-        else:
-            print(dxexecution.get_id())
-        sys.stdout.flush()
-
-        if args.wait and is_the_only_job:
-            dxexecution.wait_on_done()
-        elif args.confirm and INTERACTIVE_CLI and not (args.watch or args.ssh) and isinstance(dxexecution, dxpy.DXJob):
-            answer = input("Watch launched job now? [Y/n] ")
-            if len(answer) == 0 or answer.lower()[0] == 'y':
-                args.watch = True
-
-        if is_the_only_job and isinstance(dxexecution, dxpy.DXJob):
-            if args.watch:
-                watch_args = parser.parse_args(['watch', dxexecution.get_id()])
-                print('')
-                print('Job Log')
-                print('-------')
-                watch(watch_args)
-            elif args.ssh:
-                if args.ssh_proxy:
-                    ssh_args = parser.parse_args(
-                        ['ssh', '--ssh-proxy', args.ssh_proxy, dxexecution.get_id()])
-                else:
-                    ssh_args = parser.parse_args(['ssh', dxexecution.get_id()])
-                ssh(ssh_args, ssh_config_verified=True)
-    except Exception:
-        err_exit()
-
-    return dxexecution
+    if args.batch_tsv is None:
+        run_one(args, executable, dest_proj, dest_path, input_json, run_kwargs)
+    else:
+        run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_kwargs)
 
 def print_run_help(executable="", alias=None):
     if executable == "":
@@ -3092,7 +3139,7 @@ def run(args):
 
     process_instance_type_arg(args, is_workflow)
 
-    run_one(args, handler, dest_proj, dest_path)
+    run_body(args, handler, dest_proj, dest_path)
 
 def terminate(args):
     for jobid in args.jobid:
@@ -4568,6 +4615,11 @@ parser_run.add_argument('--ssh-proxy', metavar=('<address>:<port>'),
                                   width_adjustment=-24))
 parser_run.add_argument('--debug-on', action='append', choices=['AppError', 'AppInternalError', 'ExecutionError', 'All'],
                         help=fill("Configure the job to hold for debugging when any of the listed errors occur",
+                                  width_adjustment=-24))
+parser_run.add_argument('--batch-tsv', dest='batch_tsv', metavar="FILE",
+                        help=fill('A file in tab separated value (tsv) format, with a subset ' +
+                                  'of the executable input arguments. A job will be launched ' +
+                                  'for each table row.',
                                   width_adjustment=-24))
 parser_run.add_argument('--input-help',
                         help=fill('Print help and examples for how to specify inputs',

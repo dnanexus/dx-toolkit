@@ -8,14 +8,39 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* API wrappers for `applet-xxxx/validateBatch`
+* `socketTimeout` and `connectionTimeout` parameters to JAVA `DXEnvironment` (thanks, @pkokoshnikov)
+
+## [245.0] - 2018.02.08 - beta
+
+### Added
+
+* Batch runner CLI
+
+### Changed
+
+* Updated c-ares and file packages (related to upload agent builds)
+
+## [244.0] - 2018.02.08 - stable
+
+### Added
+
+* API wrappers for `[applet,app,workflow]-xxxx/validateBatch`
+
+### Fixed
+
+* Issue where dx-clone-asset doesn't create projects in different regions if they don't already exist
+
+## [243.0] - 2018.02.01
+
+### Added
+
 * App version and published/unpublished note to `dx run -h <app>`
 
 ### Changed
 
 * Recursive search for asset in a path is disabled, and we strictly enforce only one matching asset name
 
-## [242.0] - beta 
+## [242.0] - 2018.01.25 
 
 ### Changed
 
