@@ -1147,6 +1147,14 @@ module DX
       return DX::http_request("/system/findOrgs", input_params, opts)
     end
 
+    # Invokes the /system/generateBatchInputs API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/generateBatchInputs
+    def self.system_generate_batch_inputs(input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/system/generateBatchInputs", input_params, opts)
+    end
+
     # Invokes the /system/globalSearch API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/globalSearch

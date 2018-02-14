@@ -1277,6 +1277,15 @@
         }
     ],
     [
+        "/system/generateBatchInputs",
+        "systemGenerateBatchInputs(req)",
+        {
+            "objectMethod": false,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/generateBatchInputs"
+        }
+    ],
+    [
         "/system/globalSearch",
         "systemGlobalSearch(req)",
         {

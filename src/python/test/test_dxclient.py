@@ -29,6 +29,7 @@ import string
 from contextlib import contextmanager
 import pexpect
 import requests
+import textwrap
 
 import dxpy
 from dxpy.scripts import dx_build_app
@@ -8985,6 +8986,61 @@ class TestDXTree(DXTestCase):
         o = run("dx tree -l")
         self.assertRegexpMatches(o.strip(),
                                  r".\n└── closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+foo \(" + rec.get_id() + "\)")
+
+class TestDXGenerateBatchInputs(DXTestCase):
+    # More advanced corner cases of generateBatchInputs API calls performed in API unit tests
+    def test_example_matches(self):
+        # Upload test files to the project
+        files = "RP10B_S1_R1_001.fastq.gz RP10B_S1_R2_001.fastq.gz RP10T_S5_R1_001.fastq.gz RP10T_S5_R2_001.fastq.gz RP15B_S4_R1_002.fastq.gz RP15B_S4_R2_002.fastq.gz RP15T_S8_R1_002.fastq.gz RP15T_S8_R2_002.fastq.gz SRR123_1.gz SRR223_2.gz SRR2223_2.gz SRR1_1.gz SRR1_1.gz"
+        run("touch {}".format(files))
+        run("dx upload --brief {}".format(files))
+
+        # Test for basic working TSV and stderr output
+        readpair_test_stderr = run("dx generate_batch_inputs -ipair1='RP(.*)_R1_(.*).fastq.gz' -ipair2='RP(.*)_R2_(.*).fastq.gz' 2>&1")
+        expected_readpair_test_stderr = """
+        Found 4 valid batch IDs matching desired pattern.
+        Created batch file dx_batch.0000.tsv
+
+        CREATED 1 batch files each with at most 500 batch IDs.
+        """
+        self.assertEqual(readpair_test_stderr.strip(), textwrap.dedent(expected_readpair_test_stderr).strip())
+
+        expected_readpair_test_tsv_cut = '''
+        10B_S1\tRP10B_S1_R1_001.fastq.gz\tRP10B_S1_R2_001.fastq.gz
+        10T_S5\tRP10T_S5_R1_001.fastq.gz\tRP10T_S5_R2_001.fastq.gz
+        15B_S4\tRP15B_S4_R1_002.fastq.gz\tRP15B_S4_R2_002.fastq.gz
+        15T_S8\tRP15T_S8_R1_002.fastq.gz\tRP15T_S8_R2_002.fastq.gz
+        batch ID\tpair1\tpair2
+        '''
+
+        readpair_test_tsv_cut = run("cut -f1-3 dx_batch.0000.tsv | sort")
+        self.assertEqual(readpair_test_tsv_cut.strip(), textwrap.dedent(expected_readpair_test_tsv_cut).strip())
+
+
+        try:
+            cornercase_test_stderr = run("dx generate_batch_inputs -ipair1='SRR1(.*)_1.gz' -ipair2='SRR2(.*)_2.gz' 2>&1")
+            raise Exception("Expected test to return non-zero exit code, but it did not.")
+        except Exception, e:
+            cornercase_test_stderr = str(e.output)
+
+
+        expected_cornercase_test_stderr = """
+        Found 1 valid batch IDs matching desired pattern.
+        Created batch file dx_batch.0000.tsv
+
+        ERROR processing batch ID matching pattern "223"
+            Mismatched set of input names.
+                Required input names: pair1, pair2
+                Matched input names: pair2
+
+        ERROR processing batch ID matching pattern ""
+            Mismatched set of input names.
+                Required input names: pair1, pair2
+                Matched input names: pair1
+        Input pair1 is associated with a file name that matches multiple IDs:
+        """
+        self.assertTrue(cornercase_test_stderr.startswith(textwrap.dedent(expected_cornercase_test_stderr).strip()))
+
 
 
 @unittest.skipUnless(testutil.TEST_RUN_JOBS,

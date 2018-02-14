@@ -1158,6 +1158,14 @@ def system_find_orgs(input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/system/findOrgs', input_params, always_retry=always_retry, **kwargs)
 
+def system_generate_batch_inputs(input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /system/generateBatchInputs API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/generateBatchInputs
+    """
+    return DXHTTPRequest('/system/generateBatchInputs', input_params, always_retry=always_retry, **kwargs)
+
 def system_global_search(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/globalSearch API method.

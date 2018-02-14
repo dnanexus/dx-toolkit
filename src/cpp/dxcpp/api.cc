@@ -1303,6 +1303,14 @@ namespace dx {
     return systemFindOrgs(input_params.toString(), safe_to_retry);
   }
 
+  JSON systemGenerateBatchInputs(const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest("/system/generateBatchInputs", input_params, safe_to_retry);
+  }
+
+  JSON systemGenerateBatchInputs(const JSON &input_params, const bool safe_to_retry) {
+    return systemGenerateBatchInputs(input_params.toString(), safe_to_retry);
+  }
+
   JSON systemGlobalSearch(const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest("/system/globalSearch", input_params, safe_to_retry);
   }

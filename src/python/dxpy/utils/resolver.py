@@ -1240,3 +1240,16 @@ def resolve_to_objects_or_project(path, all_matching_results=False):
                                   if you were attempting to refer to a project by name,
                                   please append a colon ":" to indicate that it is a project.''')
     return project, folderpath, entity_results
+
+# Generic function to parse an input key-value pair of the form '-ikey=val'
+# e.g. returns ("key", "val") in the example above
+def parse_input_keyval(keyeqval):
+    try:
+        first_eq_pos = get_first_pos_of_char('=', keyeqval)
+        if first_eq_pos == -1:
+            raise
+        name = split_unescaped('=', keyeqval)[0]
+        value = keyeqval[first_eq_pos + 1:]
+        return (name, value)
+    except:
+        raise DXCLIError('An input was found that did not conform to the syntax: -i<input name>=<input value>')

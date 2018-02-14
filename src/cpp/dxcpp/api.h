@@ -489,6 +489,9 @@ namespace dx {
   JSON systemFindOrgs(const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON systemFindOrgs(const dx::JSON &input_params, const bool safe_to_retry=true);
 
+  JSON systemGenerateBatchInputs(const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON systemGenerateBatchInputs(const dx::JSON &input_params, const bool safe_to_retry=true);
+
   JSON systemGlobalSearch(const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON systemGlobalSearch(const dx::JSON &input_params, const bool safe_to_retry=true);
 
