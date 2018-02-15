@@ -69,7 +69,7 @@ def extract_aci(acifile):
     shell_suppress(["tar", "-xf", acifile, "--exclude", "rootfs/dev/*", "-C", tmpdir], ignore_error=True)
     return tmpdir
 
-def retry(tries=3, delay=1, backoff=2, retry_on_exceptions=None):
+def retry(tries=8, delay=1, backoff=2, retry_on_exceptions=None):
     '''A decorator that retries a function until it completes without throwing an exception.'''
 
     if tries < 0:
