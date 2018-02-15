@@ -1,3 +1,11 @@
+dx-toolkit (0.246.0) precise; urgency=low
+
+  * Added: socketTimeout and connectionTimeout parameters to JAVA DXEnvironment (thanks, @pkokoshnikov)
+  * Added: Generate batch inputs CLI
+  * Changed: Accept 302 as a success for ua --test
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 15 Feb 2018 19:34:09 +0000
+
 dx-toolkit (0.245.0) precise; urgency=low
 
   * Added: Batch runner LI

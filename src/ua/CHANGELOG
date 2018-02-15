@@ -1,3 +1,7 @@
+DNAnexus Upload Agent 1.5.30 <support@dnanexus.com>, 2018-Feb-15
+----------------------------------------------------------------
+  * Accept 302 as a success for ua --test
+
 DNAnexus Upload Agent 1.5.29 <support@dnanexus.com>, 2017-Sep-28
 ----------------------------------------------------------------
   *
