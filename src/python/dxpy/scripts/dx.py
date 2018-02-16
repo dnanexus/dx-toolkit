@@ -2963,7 +2963,7 @@ def print_run_input_help():
     Example:  dx run my_workflow -i0.reads="My reads file"
 ''')
 
-    print(fill('<stage key> may be either the ID of the stage, name of the stage, or the number of the stage in the workflow (0 indicates first stage)', initial_indent='  ', subsequent_indent='  '))
+    print(fill('<stage key> may be either the ID of the stage, name of the stage, or the number of the stage in the workflow (0 indicates first stage)'))
 
     print(fill('If the ' + BOLD('workflow') + ' has explicit, workflow-level inputs, input values must be passed to these workflow-level input fields using the <workflow input name>=<value> syntax:', initial_indent='  ', subsequent_indent='  '))
     print('''
