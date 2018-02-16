@@ -4,6 +4,7 @@ from __future__ import print_function
 import argparse
 import subprocess
 import multiprocessing
+import traceback
 import time
 import functools
 import sys
@@ -36,7 +37,8 @@ def _parse_args():
                     help='Record-id of asset to clone.',
                     required=True)
     ap.add_argument('--regions',
-                    help='Regions to clone asset into.  Permitted regions are:\n[{0}]'.format(', '.join(SUPPORTED_REGIONS)),
+                    help='Regions to clone asset into.  Permitted regions are:\n[{supported_regions}]'.format(
+                        supported_regions=', '.join(SUPPORTED_REGIONS)),
                     choices=SUPPORTED_REGIONS,
                     default=SUPPORTED_REGIONS,
                     nargs='+',
@@ -57,25 +59,27 @@ def _parse_args():
 
 def _find_asset_project(region):
     """
-    Returns the asset project for the given region, or None if a problem arrises.
+    Returns the asset project for the given region, or None if a problem arises.
     """
-    project_name = '{0} {1}'.format(ASSET_PROJECT_PREFIX, region)
+    project_name = '{project_prefix} {region}'.format(
+        project_prefix=ASSET_PROJECT_PREFIX, region=region)
 
     # Try to find the asset project for the given region.
     # If more than 1 project with the asset project name is found
     # for the given region, or if no project is found and one
     # can't be created, return None indicating there was a problem.
     try:
-        cmd = 'dx find projects --level CONTRIBUTE --name "{0}" --region "{1}" --brief '
-        projects = subprocess.check_output(cmd.format(project_name, region), shell=True).strip()
+        cmd = 'dx find projects --level CONTRIBUTE --name "{proj_name}" --region "{region}" --brief '
+        projects = subprocess.check_output(
+            cmd.format(proj_name=project_name, region=region), shell=True).strip()
         if projects == '':
-            cmd = 'dx new project --region "{0}" "{1}" --brief '
-            return subprocess.check_output(cmd.format(region, project_name), shell=True).strip()
+            cmd = 'dx new project --region "{region}" "{proj_name}" --brief '
+            return subprocess.check_output(cmd.format(region=region, proj_name=project_name), shell=True).strip()
         else:
             projects = projects.split('\n')
             return projects[0]
-    except subprocess.CalledProcessError as cpe:
-        print(repr(cpe))
+    except subprocess.CalledProcessError:
+        traceback.print_exc()
 
     return None
 
@@ -97,27 +101,29 @@ def _clone_asset_into_region(region, record_name, asset_properties, asset_file_n
 
     # Now try to run the CLONE_ASSET_APP num_retries + 1 times.
     curr_try = 0
+    record_id = None
     while curr_try <= num_retries:
         cmd = ['dx', 'run', CLONE_ASSET_APP_NAME, '--project', project_id, '-iurl=' + url, '-irecord_name=' + record_name]
         cmd += ['-iasset_file_name=' + asset_file_name, '-iasset_properties=' + json.dumps(asset_properties), '--brief']
         job = subprocess.check_output(cmd).strip()
-        print('{0}: {1}'.format(region, job), file=sys.stderr)
+        print('{region}: {job_id}'.format(region=region, job_id=job), file=sys.stderr)
         try:
-            cmd = 'dx wait {0} '.format(job)
+            cmd = 'dx wait {job_id} '.format(job_id=job)
             subprocess.check_output(cmd, shell=True)
-        except subprocess.CalledProcessError as cpe:
-            print(repr(cpe))
-            pass
-        cmd = 'dx describe {0} --json '.format(job)
+        except subprocess.CalledProcessError:
+            traceback.print_exc()
+
+        cmd = 'dx describe {job_id} --json '.format(job_id=job)
         job_desc = json.loads(subprocess.check_output(cmd, shell=True).strip())
 
         if job_desc['state'] == 'done':
-            q.put(region)
+            record_id = job_desc['output']['asset_bundle']
             return {region: job_desc['output']['asset_bundle']}
 
         curr_try += 1
 
-    return {region: None}
+    q.put(region)
+    return {region: record_id}
 
 
 def clone_asset(record_id, regions, num_retries=0, priority=None):
@@ -136,7 +142,7 @@ def clone_asset(record_id, regions, num_retries=0, priority=None):
     regions = set(regions) - set([curr_region])
     app_supported_regions = set(CLONE_ASSET_APP.describe()['regionalOptions'].keys())
     if len(regions - app_supported_regions) > 0:
-        print('Currently no support for the following region(s): [{0}]'.format(', '.join(regions - app_supported_regions)), file=sys.stderr)
+        print('Currently no support for the following region(s): [{regions}]'.format(regions=', '.join(regions - app_supported_regions)), file=sys.stderr)
         sys.exit(1)
 
     # Get information about the asset
@@ -162,7 +168,7 @@ def clone_asset(record_id, regions, num_retries=0, priority=None):
 
     # Get and return the results
     remaining_regions = regions
-    print('Waiting on region(s): {0} '.format(' '.join(remaining_regions)))
+    print('Waiting on region(s): {regions} '.format(regions=' '.join(remaining_regions)))
     while True:
         if results.ready():
             break
@@ -171,7 +177,7 @@ def clone_asset(record_id, regions, num_retries=0, priority=None):
                 for i in xrange(q.qsize()):
                     received = set([q.get()])
                     remaining_regions = remaining_regions - received
-                print('\nWaiting on region(s): {0} '.format(' '.join(remaining_regions)))
+                print('\nWaiting on region(s): {regions} '.format(regions=' '.join(remaining_regions)))
             sys.stdout.write('.')
             sys.stdout.flush()
             time.sleep(SLEEP_TIME)
@@ -194,7 +200,7 @@ def main(record, regions, num_retries=0, priority=None):
 
     for region in record_ids:
         record_id = 'Failed' if record_ids[region] is None else record_ids[region]
-        print('{0}:\t{1}'.format(region, record_id))
+        print('{region}:\t{record_id}'.format(region=region, record_id=record_id))
 
 
 if __name__ == '__main__':
