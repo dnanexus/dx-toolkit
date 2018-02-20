@@ -2957,10 +2957,14 @@ def print_run_input_help():
               # Extracts second element of array output
 ''')
     print(fill('When executing ' + BOLD('workflows') + ', stage inputs can be specified using the <stage key>.<input name>=<value> syntax:', initial_indent='  ', subsequent_indent='  '))
+
     print('''
     Syntax :  -i<stage key>.<input name>=<input value>
-    Example:  dx run my_workflow -i1.reads="My reads file"
+    Example:  dx run my_workflow -i0.reads="My reads file"
 ''')
+
+    print(fill('<stage key> may be either the ID of the stage, name of the stage, or the number of the stage in the workflow (0 indicates first stage)'))
+
     print(fill('If the ' + BOLD('workflow') + ' has explicit, workflow-level inputs, input values must be passed to these workflow-level input fields using the <workflow input name>=<value> syntax:', initial_indent='  ', subsequent_indent='  '))
     print('''
     Syntax :  -i<workflow input name>=<input value>
@@ -2968,7 +2972,7 @@ def print_run_input_help():
 
 SPECIFYING JSON INPUT
 ''')
-    print(fill('JSON input can be used directly using the -j/--input-json or -f/--input-json-file flags.  When running an ' + BOLD('app') + ' or ' + BOLD('applet') + ', the keys should be the input field names for the app or applet.  When running a ' + BOLD('workflow') + ', the keys should be the input field names for each stage, prefixed by the stage key and a period, e.g. "1.reads" for the "reads" input of stage "1".', initial_indent='  ', subsequent_indent='  ') + '\n')
+    print(fill('JSON input can be used directly using the -j/--input-json or -f/--input-json-file flags.  When running an ' + BOLD('app') + ' or ' + BOLD('applet') + ', the keys should be the input field names for the app or applet.  When running a ' + BOLD('workflow') + ', the keys should be the input field names for each stage, prefixed by the stage key and a period, e.g. "my_stage.reads" for the "reads" input of stage "my_stage".', initial_indent='  ', subsequent_indent='  ') + '\n')
     parser.exit(0)
 
 
