@@ -557,6 +557,104 @@ sub databaseNew(;$%) {
 }
 
 
+sub databasetypeAddTags($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/addTags', $input_params, %kwargs);
+}
+
+
+sub databasetypeAddTypes($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/addTypes', $input_params, %kwargs);
+}
+
+
+sub databasetypeClose($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/close', $input_params, %kwargs);
+}
+
+
+sub databasetypeDescribe($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
+}
+
+
+sub databasetypeGetDetails($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/getDetails', $input_params, %kwargs);
+}
+
+
+sub databasetypeListProjects($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/listProjects', $input_params, %kwargs);
+}
+
+
+sub databasetypeRemoveTags($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeTags', $input_params, %kwargs);
+}
+
+
+sub databasetypeRemoveTypes($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeTypes', $input_params, %kwargs);
+}
+
+
+sub databasetypeRename($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/rename', $input_params, %kwargs);
+}
+
+
+sub databasetypeSetDetails($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setDetails', $input_params, %kwargs);
+}
+
+
+sub databasetypeSetProperties($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setProperties', $input_params, %kwargs);
+}
+
+
+sub databasetypeSetVisibility($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setVisibility', $input_params, %kwargs);
+}
+
+
+sub databasetypeUpdate($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/update', $input_params, %kwargs);
+}
+
+
+sub databasetypeNew(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/databasetype/new', $input_params, %kwargs);
+}
+
+
 sub fileAddTags($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
