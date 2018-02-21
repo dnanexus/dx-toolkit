@@ -554,6 +554,133 @@
         }
     ],
     [
+        "/databasetype-xxxx/addTags",
+        "databasetypeAddTags(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags"
+        }
+    ],
+    [
+        "/databasetype-xxxx/addTypes",
+        "databasetypeAddTypes(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes"
+        }
+    ],
+    [
+        "/databasetype-xxxx/close",
+        "databasetypeClose(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": false,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method%3A-%2Fdatabasetype-xxxx%2Fclose"
+        }
+    ],
+    [
+        "/databasetype-xxxx/describe",
+        "databasetypeDescribe(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method%3A-%2Fdatabasetype-xxxx%2Fdescribe"
+        }
+    ],
+    [
+        "/databasetype-xxxx/getDetails",
+        "databasetypeGetDetails(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails"
+        }
+    ],
+    [
+        "/databasetype-xxxx/listProjects",
+        "databasetypeListProjects(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects"
+        }
+    ],
+    [
+        "/databasetype-xxxx/removeTags",
+        "databasetypeRemoveTags(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags"
+        }
+    ],
+    [
+        "/databasetype-xxxx/removeTypes",
+        "databasetypeRemoveTypes(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes"
+        }
+    ],
+    [
+        "/databasetype-xxxx/rename",
+        "databasetypeRename(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename"
+        }
+    ],
+    [
+        "/databasetype-xxxx/setDetails",
+        "databasetypeSetDetails(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails"
+        }
+    ],
+    [
+        "/databasetype-xxxx/setProperties",
+        "databasetypeSetProperties(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties"
+        }
+    ],
+    [
+        "/databasetype-xxxx/setVisibility",
+        "databasetypeSetVisibility(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility"
+        }
+    ],
+    [
+        "/databasetype-xxxx/update",
+        "databasetypeUpdate(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": false,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method%3A-%2Fdatabasetype-xxxx%2Fupdate"
+        }
+    ],
+    [
+        "/databasetype/new",
+        "databasetypeNew(req)",
+        {
+            "objectMethod": false,
+            "retryable": false,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method%3A-%2Fdatabasetype%2Fnew",
+            "acceptNonce": true
+        }
+    ],
+    [
         "/file-xxxx/addTags",
         "fileAddTags(req, objectId)",
         {
