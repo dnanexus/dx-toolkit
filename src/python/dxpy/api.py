@@ -504,6 +504,119 @@ def database_new(input_params={}, always_retry=True, **kwargs):
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/database/new', input_params_cp, always_retry=always_retry, **kwargs)
 
+def databasetype_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /databasetype-xxxx/addTags API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags
+    """
+    return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def databasetype_add_types(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /databasetype-xxxx/addTypes API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes
+    """
+    return DXHTTPRequest('/%s/addTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def databasetype_close(object_id, input_params={}, always_retry=False, **kwargs):
+    """
+    Invokes the /databasetype-xxxx/close API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method%3A-%2Fdatabasetype-xxxx%2Fclose
+    """
+    return DXHTTPRequest('/%s/close' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def databasetype_describe(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /databasetype-xxxx/describe API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method%3A-%2Fdatabasetype-xxxx%2Fdescribe
+    """
+    return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def databasetype_get_details(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /databasetype-xxxx/getDetails API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails
+    """
+    return DXHTTPRequest('/%s/getDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def databasetype_list_projects(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /databasetype-xxxx/listProjects API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects
+    """
+    return DXHTTPRequest('/%s/listProjects' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def databasetype_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /databasetype-xxxx/removeTags API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags
+    """
+    return DXHTTPRequest('/%s/removeTags' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def databasetype_remove_types(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /databasetype-xxxx/removeTypes API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes
+    """
+    return DXHTTPRequest('/%s/removeTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def databasetype_rename(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /databasetype-xxxx/rename API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename
+    """
+    return DXHTTPRequest('/%s/rename' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def databasetype_set_details(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /databasetype-xxxx/setDetails API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails
+    """
+    return DXHTTPRequest('/%s/setDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def databasetype_set_properties(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /databasetype-xxxx/setProperties API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties
+    """
+    return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def databasetype_set_visibility(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /databasetype-xxxx/setVisibility API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility
+    """
+    return DXHTTPRequest('/%s/setVisibility' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def databasetype_update(object_id, input_params={}, always_retry=False, **kwargs):
+    """
+    Invokes the /databasetype-xxxx/update API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method%3A-%2Fdatabasetype-xxxx%2Fupdate
+    """
+    return DXHTTPRequest('/%s/update' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def databasetype_new(input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /databasetype/new API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method%3A-%2Fdatabasetype%2Fnew
+    """
+    input_params_cp = Nonce.update_nonce(input_params)
+    return DXHTTPRequest('/databasetype/new', input_params_cp, always_retry=always_retry, **kwargs)
+
 def file_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/addTags API method.
