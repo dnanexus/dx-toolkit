@@ -2004,7 +2004,7 @@ def upload_one(args):
                                             folder=folder,
                                             parents=args.parents,
                                             show_progress=args.show_progress,
-                                            multithread=multithread)
+                                            multithread=args.multithread)
             if args.wait:
                 dxfile._wait_on_close()
             if args.brief:
