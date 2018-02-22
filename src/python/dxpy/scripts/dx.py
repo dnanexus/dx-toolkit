@@ -1936,6 +1936,10 @@ def upload(args, **kwargs):
     elif args.path is None:
         args.path = args.output
 
+    # multithread was enabled by default so we had to expose
+    # the `--singlethread` option for `dx upload`
+    args.multithread = not args.singlethread
+
     if len(args.filename) > 1 and args.path is not None and not args.path.endswith("/"):
         # When called as "dx upload x --dest /y", we upload to "/y"; with --dest "/y/", we upload to "/y/x".
         # Called as "dx upload x y --dest /z", z is implicitly a folder, so append a slash to avoid incorrect path
@@ -1961,8 +1965,6 @@ def upload_one(args):
         project, folder, name = try_call(resolve_path, args.path)
         if name is None and args.filename != '-':
             name = os.path.basename(args.filename)
-
-    multithread = !args.singlethread
 
     if os.path.isdir(args.filename):
         if not args.recursive:
@@ -4057,7 +4059,7 @@ parser_upload.add_argument('--wait', help='Wait until the file has finished clos
 parser_upload.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress',
                            action='store_false', default=sys.stderr.isatty())
 parser_upload.add_argument('--buffer-size', help='Set the write buffer size (in bytes)', dest='write_buffer_size')
-parser_upload.add_argument('--singlethread', help='Send synchronous upload requests', dest='singlethread', action='store_true')
+parser_upload.add_argument('--singlethread', help='Enable singlethreaded uploading', dest='singlethread', action='store_true')
 parser_upload.set_defaults(func=upload, mute=False)
 register_parser(parser_upload, categories='data')
 
