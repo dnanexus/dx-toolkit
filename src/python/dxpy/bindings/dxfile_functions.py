@@ -290,7 +290,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
 
 def upload_local_file(filename=None, file=None, media_type=None, keep_open=False,
                       wait_on_close=False, use_existing_dxfile=None, show_progress=False,
-                      write_buffer_size=None, **kwargs):
+                      write_buffer_size=None, multithread=True, **kwargs):
     '''
     :param filename: Local filename
     :type filename: string
@@ -306,6 +306,8 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     :type wait_on_close: boolean
     :param use_existing_dxfile: Instead of creating a new file object, upload to the specified file
     :type use_existing_dxfile: :class:`~dxpy.bindings.dxfile.DXFile`
+    :param multithread: If True, sends multiple write requests asynchronously
+    :type multithread: boolean
     :returns: Remote file handler
     :rtype: :class:`~dxpy.bindings.dxfile.DXFile`
 
@@ -425,7 +427,10 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
         if len(buf) == 0:
             break
 
-        handler.write(buf, report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
+        handler.write(buf,
+                      report_progress_fn=report_progress if show_progress else None,
+                      multithread=multithread,
+                      **remaining_kwargs)
 
     if filename is not None:
         fd.close()
