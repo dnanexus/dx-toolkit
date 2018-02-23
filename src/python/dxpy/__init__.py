@@ -740,8 +740,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
                     # Unprocessable entity, request has semantical errors
                     if reponse.status == 422:
-                        logger.warn("Not retrying due to 422 HTTP error (request contains semantical errors). " +
-                              "Request Method and URL: {}, {}, Request Time={} Request ID={}".format(_method, _url, time_started, req_id))
                         ok_to_retry = False
 
                 if ok_to_retry:
