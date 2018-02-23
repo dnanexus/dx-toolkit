@@ -738,6 +738,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                                         "Request Time=%f Request ID=%s", exception_msg, time_started, req_id)
                         ok_to_retry = True
 
+                    # Unprocessable entity, request has semantical errors
+                    if reponse.status == 422:
+                        ok_to_retry = False
+
                 if ok_to_retry:
                     if rewind_input_buffer_offset is not None:
                         data.seek(rewind_input_buffer_offset)
