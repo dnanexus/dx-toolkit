@@ -739,7 +739,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                         ok_to_retry = True
 
                     # Unprocessable entity, request has semantical errors
-                    if response.status == 422:
+                    if response is not None and response.status == 422:
                         ok_to_retry = False
 
                 if ok_to_retry:
