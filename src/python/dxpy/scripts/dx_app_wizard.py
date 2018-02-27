@@ -381,7 +381,7 @@ array:boolean  array:int      boolean        hash           string''')
                                    choices=list(InstanceTypesCompleter.instance_types))
 
     target_region = DEFAULT_REGION_AWS
-    if instance_type in InstanceTypesCompleter.azure_preferred_instance_types.values():
+    if instance_type in InstanceTypesCompleter.azure_preferred_instance_types.keys():
         target_region = DEFAULT_REGION_AZURE
 
     app_json['regionalOptions'] = OrderedDict({})
