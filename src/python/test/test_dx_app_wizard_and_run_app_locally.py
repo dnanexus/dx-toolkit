@@ -40,7 +40,7 @@ def run(command, **kwargs):
 
 supported_languages = ['Python', 'bash']
 
-def run_dx_app_wizard():
+def run_dx_app_wizard(instance_type=None):
     old_cwd = os.getcwd()
     tempdir = tempfile.mkdtemp(prefix='Программа')
     os.chdir(tempdir)
@@ -98,7 +98,10 @@ def run_dx_app_wizard():
         wizard.sendline("t1.микро")
         wizard.expect("Error: unrecognized response, expected one of")
         wizard.expect("Choose an instance type for your app")
-        wizard.sendline()
+        if instance_type is not None:
+            wizard.sendline(instance_type)
+        else:
+            wizard.sendline()
         wizard.expect("App directory created")
         wizard.close()
 
@@ -170,6 +173,12 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
         self.assertEqual(dxapp_json['runSpec']['distribution'], 'Ubuntu')
         self.assertEqual(dxapp_json['runSpec']['release'], '14.04')
         self.assertEqual(dxapp_json['runSpec']['timeoutPolicy']['*']['hours'], 24)
+
+    def test_dx_app_wizard_with_azure_instance_type(self):
+        appdir = run_dx_app_wizard("azure:mem1_ssd1_x2")
+        dxapp_json = json.load(open(os.path.join(appdir, 'dxapp.json')))
+        self.assertEqual(dxapp_json['regionalOptions']['azure:westus']['systemRequirements']['*']['instanceType'],
+                         "azure:mem1_ssd1_x2")
 
     def test_dx_run_app_locally_interactively(self):
         appdir = create_app_dir()
