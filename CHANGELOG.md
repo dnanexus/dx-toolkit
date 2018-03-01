@@ -6,6 +6,17 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Updated
+
+* Clarify documentation of stage key for `dx run`
+
+### Fixed
+
+* c-ares package version for upload agent build
+* bug with Azure instance type selection in `dx-app-wizard`
+
+## [246.0] - beta
+
 ### Added
 
 * `socketTimeout` and `connectionTimeout` parameters to JAVA `DXEnvironment` (thanks, @pkokoshnikov)
@@ -15,7 +26,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Accept 302 as a success for `ua --test`
 
-## [245.0] - 2018.02.08 - beta
+## [245.0] - 2018.02.15 - stable
 
 ### Added
 
@@ -25,7 +36,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Updated c-ares and file packages (related to upload agent builds)
 
-## [244.0] - 2018.02.08 - stable
+## [244.0] - 2018.02.08
 
 ### Added
 
