@@ -83,7 +83,7 @@ def validate_conf(asset_conf):
     if 'release' not in asset_conf:
         asset_conf['release'] = "12.04"
     elif asset_conf['release'] not in ['16.04', '14.04', '12.04']:
-        raise AssetBuilderException('The "release" field value should be either "12.04" (DEPRACATED), "14.04", "16.04".')
+        raise AssetBuilderException('The "release" field value should be either "12.04" (DEPRECATED), "14.04", "16.04".')
     if 'version' not in asset_conf:
         raise AssetBuilderException('The asset configuration does not contain the required field "version". ')
     if 'title' not in asset_conf:
