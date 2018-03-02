@@ -88,7 +88,7 @@ def retry(tries=3, delay=1, backoff=2, retry_on_exceptions=None):
                 try:
                     f(*args, **kwargs)
                 except retry_on_exceptions as retry_exception:
-                    sys.stderr.write(dxpy.utils.printing.YELLOW("Error. Retrying in {} s.\n".format(mdelay)))
+                    sys.stderr.write(dxpy.utils.printing.YELLOW("Error. Retrying in {mdelay} s. Attempt {k} out of {n}.\n".format(mdelay=mdelay, k=i+1, n=tries)))
                     time.sleep(mdelay)
                     mdelay *= backoff
                     if i == tries - 1:
@@ -151,7 +151,7 @@ def register_docker_subcommand(cmd):
 parser_pull = subparsers.add_parser('pull', help="Pulls a docker image for use in DNAnexus")
 parser_pull.add_argument("image", help="image name")
 parser_pull.add_argument("-q", "--quiet", action='store_true', help="Suppress printing pull progress to stderr")
-@retry()
+@retry(tries=8)
 def pull(args):
     if not os.path.isdir(CACHE_DIR):
         makedirs(CACHE_DIR)
