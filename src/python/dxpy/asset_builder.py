@@ -32,6 +32,7 @@ import dxpy
 
 ASSET_BUILDER_PRECISE = "app-create_asset_precise"
 ASSET_BUILDER_TRUSTY = "app-create_asset_trusty"
+ASSET_BUILDER_XENIAL = "app-create_asset_xenial"
 
 
 class AssetBuilderException(Exception):
@@ -220,6 +221,8 @@ def build_asset(args):
             app_run_result = dxpy.api.app_run(ASSET_BUILDER_PRECISE, input_params=builder_run_options)
         elif asset_conf['release'] == "14.04":
             app_run_result = dxpy.api.app_run(ASSET_BUILDER_TRUSTY, input_params=builder_run_options)
+        elif asset_conf['release'] == "16.04":
+            app_run_result = dxpy.api.app_run(ASSET_BUILDER_XENIAL, input_params=builder_run_options)
 
         job_id = app_run_result["id"]
 
