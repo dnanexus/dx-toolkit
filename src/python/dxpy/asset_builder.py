@@ -79,9 +79,10 @@ def validate_conf(asset_conf):
     """
     if 'name' not in asset_conf:
         raise AssetBuilderException('The asset configuration does not contain the required field "name".')
+    # TODO: this default is not a good idea, and we will have to remove it once we ask customers to always provide release
     if 'release' not in asset_conf:
         asset_conf['release'] = "12.04"
-    elif asset_conf['release'] != '12.04' and asset_conf['release'] != '14.04':
+    elif asset_conf['release'] not in ['12.04', '14.04', '16.04']:
         raise AssetBuilderException('The "release" field value should be either "12.04" or "14.04".')
     if 'version' not in asset_conf:
         raise AssetBuilderException('The asset configuration does not contain the required field "version". ')
