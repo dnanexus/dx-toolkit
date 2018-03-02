@@ -15,6 +15,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * c-ares package version for upload agent build
 * bug with Azure instance type selection in `dx-app-wizard`
 
+### Added
+
+* Asset builder support for Ubuntu 16.04
+
 ## [246.0] - beta
 
 ### Added
