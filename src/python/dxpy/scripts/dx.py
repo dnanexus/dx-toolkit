@@ -1936,8 +1936,9 @@ def upload(args, **kwargs):
     elif args.path is None:
         args.path = args.output
 
-    # multithread was enabled by default so we had to expose
-    # the `--singlethread` option for `dx upload`
+    # multithread is an argument taken by DXFile.write() but we
+    # have to expose a `--singlethread` option for `dx upload` since
+    # it has multithreaded upload set by default
     args.multithread = not args.singlethread
 
     if len(args.filename) > 1 and args.path is not None and not args.path.endswith("/"):
