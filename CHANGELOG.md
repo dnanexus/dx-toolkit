@@ -10,6 +10,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Clarify documentation of stage key for `dx run`
 * Asset builder support for Ubuntu 16.04
+* `--singlethread` parameter for `dx upload`
 
 ### Changed
 

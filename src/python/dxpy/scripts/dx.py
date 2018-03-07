@@ -1936,6 +1936,11 @@ def upload(args, **kwargs):
     elif args.path is None:
         args.path = args.output
 
+    # multithread is an argument taken by DXFile.write() but we
+    # have to expose a `--singlethread` option for `dx upload` since
+    # it has multithreaded upload set by default
+    args.multithread = not args.singlethread
+
     if len(args.filename) > 1 and args.path is not None and not args.path.endswith("/"):
         # When called as "dx upload x --dest /y", we upload to "/y"; with --dest "/y/", we upload to "/y/x".
         # Called as "dx upload x y --dest /z", z is implicitly a folder, so append a slash to avoid incorrect path
@@ -1999,7 +2004,8 @@ def upload_one(args):
                                             details=args.details,
                                             folder=folder,
                                             parents=args.parents,
-                                            show_progress=args.show_progress)
+                                            show_progress=args.show_progress,
+                                            multithread=args.multithread)
             if args.wait:
                 dxfile._wait_on_close()
             if args.brief:
@@ -3529,7 +3535,7 @@ def generate_batch_inputs(args):
     # Output TSV Batch.  This procedure generates a TSV file with file names and IDs grouped by pattern
     for i,batch in enumerate(batches):
         def flatten_batch(b):
-            return [b['batchPattern']] + [ival['name'] for iname, ival in sorted(b['inputs'].items())] + [ival['ids'][0] for iname, ival in sorted(b['inputs'].items())]  
+            return [b['batchPattern']] + [ival['name'] for iname, ival in sorted(b['inputs'].items())] + [ival['ids'][0] for iname, ival in sorted(b['inputs'].items())]
 
         batch_fname = "{}.{:04d}.tsv".format(args.output_prefix, i)
         with open(batch_fname, 'wb') as csvfile:
@@ -4054,6 +4060,7 @@ parser_upload.add_argument('--wait', help='Wait until the file has finished clos
 parser_upload.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress',
                            action='store_false', default=sys.stderr.isatty())
 parser_upload.add_argument('--buffer-size', help='Set the write buffer size (in bytes)', dest='write_buffer_size')
+parser_upload.add_argument('--singlethread', help='Enable singlethreaded uploading', dest='singlethread', action='store_true')
 parser_upload.set_defaults(func=upload, mute=False)
 register_parser(parser_upload, categories='data')
 

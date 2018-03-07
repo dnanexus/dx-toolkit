@@ -323,7 +323,7 @@ class DXFile(DXDataObject):
 
     next = next
     __next__ = next
-            
+
     def set_ids(self, dxid, project=None):
         '''
         :param dxid: Object ID
@@ -466,6 +466,8 @@ class DXFile(DXDataObject):
         '''
         :param data: Data to be written
         :type data: str or mmap object
+        :param multithread: If True, sends multiple write requests asynchronously
+        :type multithread: boolean
 
         Writes the data *data* to the file.
 
