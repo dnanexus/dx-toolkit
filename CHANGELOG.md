@@ -6,18 +6,20 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-### Updated
+### Added
 
 * Clarify documentation of stage key for `dx run`
+* Asset builder support for Ubuntu 16.04
+
+### Changed
+
+* `dx-docker pull` retries more often
 
 ### Fixed
 
 * c-ares package version for upload agent build
-* bug with Azure instance type selection in `dx-app-wizard`
-
-### Added
-
-* Asset builder support for Ubuntu 16.04
+* Bug with Azure instance type selection in `dx-app-wizard`
+* Do not retry code `422` in dxpy
 
 ## [246.0] - beta
 
