@@ -1,3 +1,15 @@
+dx-toolkit (0.247.0) precise; urgency=low
+
+  * Added: Clarify documentation of stage key for dx run
+  * Added: Asset builder support for Ubuntu 16.04
+  * Added: --singlethread parameter for dx upload
+  * Changed: dx-docker pull retries more often
+  * Fixed: c-ares package version for upload agent build
+  * Fixed: Bug with Azure instance type selection in dx-app-wizard
+  * Fixed: Do not retry code 422 in dxpy
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 08 Mar 2018 16:42:17 +0000
+
 dx-toolkit (0.246.0) precise; urgency=low
 
   * Added: socketTimeout and connectionTimeout parameters to JAVA DXEnvironment (thanks, @pkokoshnikov)
