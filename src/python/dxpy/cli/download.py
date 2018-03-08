@@ -19,9 +19,13 @@ This module handles download commands for the dx command-line client.
 '''
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os
-import sys
 import collections
+import os
+import subprocess
+import sys
+import tempfile
+import warnings
+
 import dxpy
 from ..utils.resolver import (resolve_existing_path, get_first_pos_of_char, is_project_explicit,
                               object_exists_in_project, is_jbor_str)
@@ -29,6 +33,65 @@ from ..exceptions import err_exit
 from . import try_call
 from dxpy.utils.printing import (fill)
 from dxpy.utils import pathmatch
+
+# download [url] to local file [filename]
+def _download_slow(filename, url):
+    import requests
+    print('Beginning file download with requests')
+    if os.path.exists(filename):
+        os.remove(filename)
+
+    r = requests.get(url)
+    with open(filename, 'wb') as f:
+        f.write(r.content)
+
+        # Retrieve HTTP meta-data
+        print(r.status_code)
+        print(r.headers['content-type'])
+        print(r.encoding)
+
+
+# Check if a program (wget, curl, etc.) is on the path, and
+# can be called.
+def _is_on_path(program):
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    for path in os.environ["PATH"].split(os.pathsep):
+        exe_file = os.path.join(path, program)
+        if is_exe(exe_file):
+            return True
+    return False
+
+
+# [dxid] is a symbolic link. Create a preauthenticated URL,
+# and download it
+def _download_symbolic_link(dxid, project):
+    dxfile = dxpy.DXFile(dxid)
+    url, _headers = dxfile.get_download_url(preauthenticated=True,
+                                            duration=1*3600,
+                                            project=project)
+    if _is_on_path("curl"):
+        # Haven't figured out how to get resumable downloads.
+        # The flag "-C -" should work, but it doesn't.
+        cmdline = ["curl",  "--retry 5", "--retry-delay 5", "-L",
+                   "-o", dxid, url]
+    elif _is_on_path("wget"):
+        cmdline = ["wget", "--continue", "--tries=5", "-O", dxid, url]
+    else:
+        # Perhaps we should implement a simple fallback option with requests, that will
+        # be reasonable for small files.
+        _download_slow(dxid, url)
+        return
+
+    tool = cmdline[0]
+    try:
+        print("Downloading symbolic link with " + tool)
+        print(" ".join(cmdline))
+        subprocess.check_call(cmdline)
+    except subprocess.CalledProcessError:
+        err_exit("Failed to call " + tool, expected_exceptions=(subprocess.CalledProcessError, ))
+
 
 
 def download_one_file(project, file_desc, dest_filename, args):
@@ -49,11 +112,16 @@ def download_one_file(project, file_desc, dest_filename, args):
     except AttributeError:
         show_progress = False
 
-    try:
-        dxpy.download_dxfile(file_desc['id'], dest_filename, show_progress=show_progress, project=project)
-    except:
-        err_exit()
+    dxid = file_desc['id']
+    if 'drive' not in file_desc:
+        # a regular file
+        try:
+            dxpy.download_dxfile(dxid, dest_filename, show_progress=show_progress, project=project)
+            return
+        except:
+            err_exit()
 
+    _download_symbolic_link(dxid, project)
 
 def _ensure_local_dir(d):
     if not os.path.isdir(d):
