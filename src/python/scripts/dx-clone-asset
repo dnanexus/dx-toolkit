@@ -118,7 +118,7 @@ def _clone_asset_into_region(region, record_name, asset_properties, asset_file_n
 
         if job_desc['state'] == 'done':
             record_id = job_desc['output']['asset_bundle']
-            return {region: job_desc['output']['asset_bundle']}
+            break
 
         curr_try += 1
 
