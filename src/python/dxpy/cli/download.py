@@ -34,23 +34,6 @@ from . import try_call
 from dxpy.utils.printing import (fill)
 from dxpy.utils import pathmatch
 
-# download [url] to local file [filename]
-def _download_slow(filename, url):
-    import requests
-    print('Beginning file download with requests')
-    if os.path.exists(filename):
-        os.remove(filename)
-
-    r = requests.get(url)
-    with open(filename, 'wb') as f:
-        f.write(r.content)
-
-        # Retrieve HTTP meta-data
-        print(r.status_code)
-        print(r.headers['content-type'])
-        print(r.encoding)
-
-
 # Check if a program (wget, curl, etc.) is on the path, and
 # can be called.
 def _is_on_path(program):
@@ -71,27 +54,34 @@ def _download_symbolic_link(dxid, project):
     url, _headers = dxfile.get_download_url(preauthenticated=True,
                                             duration=1*3600,
                                             project=project)
-    if _is_on_path("curl"):
-        # Haven't figured out how to get resumable downloads.
-        # The flag "-C -" should work, but it doesn't.
-        cmdline = ["curl",  "--retry 5", "--retry-delay 5", "-L",
-                   "-o", dxid, url]
-    elif _is_on_path("wget"):
-        cmdline = ["wget", "--continue", "--tries=5", "-O", dxid, url]
-    else:
-        # Perhaps we should implement a simple fallback option with requests, that will
-        # be reasonable for small files.
-        _download_slow(dxid, url)
-        return
 
-    tool = cmdline[0]
+    # Follow the redirection
+    import requests
+    print('Following redirect for ' + url)
+
+    r = requests.get(url, allow_redirects=False)
+    if r.status_code != 302:
+        err_exit(fill('Error: symbolic link URL was not a redirect'))
+    url = r.headers['Location']
+
+    if not _is_on_path("curl"):
+        err_exit("curl is not installed on this system")
+
+#    cmdline = ["curl", "--retry 5", "--retry-delay 5", "-L"]
+    cmdline = ["curl", "-L"]
+    if os.path.isfile(dxid):
+        # file already exists. TODO: resume upload.
+        # Currently, remove it.
+        #cmdline += ["-C", "-"]
+        os.remove(dxid)
+    cmdline += ["-o", dxid, '\"' + url + '\"']
+
     try:
-        print("Downloading symbolic link with " + tool)
+        print("Downloading symbolic link with curl")
         print(" ".join(cmdline))
         subprocess.check_call(cmdline)
     except subprocess.CalledProcessError:
-        err_exit("Failed to call " + tool, expected_exceptions=(subprocess.CalledProcessError, ))
-
+        err_exit("Failed to call crul", expected_exceptions=(subprocess.CalledProcessError, ))
 
 
 def download_one_file(project, file_desc, dest_filename, args):
