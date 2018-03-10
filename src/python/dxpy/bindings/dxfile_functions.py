@@ -26,6 +26,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os, sys, math, mmap, stat
 import hashlib
+import requests
 import traceback
 import warnings
 from collections import defaultdict
@@ -123,6 +124,32 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
                                    show_progress=show_progress, project=project, **kwargs)
 
 
+def _print_progress(filename, bytes_downloaded, file_size, action="Downloaded"):
+    num_ticks = 60
+
+    effective_file_size = file_size or 1
+    if bytes_downloaded > effective_file_size:
+        effective_file_size = bytes_downloaded
+
+    ticks = int(round((bytes_downloaded / float(effective_file_size)) * num_ticks))
+    percent = int(math.floor((bytes_downloaded / float(effective_file_size)) * 100))
+
+    fmt = "[{done}{pending}] {action} {done_bytes:,}{remaining} bytes ({percent}%) {name}"
+    # Erase the line and return the cursor to the start of the line.
+    # The following VT100 escape sequence will erase the current line.
+    sys.stderr.write("\33[2K")
+    sys.stderr.write(fmt.format(action=action,
+                                done=("=" * (ticks - 1) + ">") if ticks > 0 else "",
+                                pending=" " * (num_ticks - ticks),
+                                done_bytes=bytes_downloaded,
+                                remaining=" of {size:,}".format(size=file_size) if file_size else "",
+                                percent=percent,
+                                name=filename))
+    sys.stderr.flush()
+    sys.stderr.write("\r")
+    sys.stderr.flush()
+
+
 def _download_dxfile(dxid, filename, part_retry_counter,
                      chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
                      project=None, **kwargs):
@@ -135,31 +162,6 @@ def _download_dxfile(dxid, filename, part_retry_counter,
     - False means the download was stopped because of a retryable error
     - Exception raised for other errors
     '''
-    def print_progress(bytes_downloaded, file_size, action="Downloaded"):
-        num_ticks = 60
-
-        effective_file_size = file_size or 1
-        if bytes_downloaded > effective_file_size:
-            effective_file_size = bytes_downloaded
-
-        ticks = int(round((bytes_downloaded / float(effective_file_size)) * num_ticks))
-        percent = int(math.floor((bytes_downloaded / float(effective_file_size)) * 100))
-
-        fmt = "[{done}{pending}] {action} {done_bytes:,}{remaining} bytes ({percent}%) {name}"
-        # Erase the line and return the cursor to the start of the line.
-        # The following VT100 escape sequence will erase the current line.
-        sys.stderr.write("\33[2K")
-        sys.stderr.write(fmt.format(action=action,
-                                    done=("=" * (ticks - 1) + ">") if ticks > 0 else "",
-                                    pending=" " * (num_ticks - ticks),
-                                    done_bytes=bytes_downloaded,
-                                    remaining=" of {size:,}".format(size=file_size) if file_size else "",
-                                    percent=percent,
-                                    name=filename))
-        sys.stderr.flush()
-        sys.stderr.write("\r")
-        sys.stderr.flush()
-
     _bytes = 0
 
     if isinstance(dxid, DXFile):
@@ -186,7 +188,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
             fh = open(filename, "wb")
 
     if show_progress:
-        print_progress(0, None)
+        _print_progress(filename, 0, None)
 
     def get_chunk(part_id_to_get, start, end):
         url, headers = dxfile.get_download_url(project=project, **kwargs)
@@ -244,7 +246,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
                         last_verified_pos = fh.tell()
                         if show_progress:
                             _bytes += part_info["size"]
-                            print_progress(_bytes, file_size, action="Verified")
+                            _print_progress(filename, _bytes, file_size, action="Verified")
             except (IOError, DXFileError) as e:
                 logger.debug(e)
             fh.seek(last_verified_pos)
@@ -252,7 +254,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
             if last_verified_part is not None:
                 del parts_to_get[:parts_to_get.index(last_verified_part)+1]
             if show_progress and len(parts_to_get) < len(parts):
-                print_progress(last_verified_pos, file_size, action="Resuming at")
+                _print_progress(filename, last_verified_pos, file_size, action="Resuming at")
             logger.debug("Verified %s/%d downloaded parts", last_verified_part, len(parts_to_get))
 
         try:
@@ -270,10 +272,142 @@ def _download_dxfile(dxid, filename, part_retry_counter,
                 fh.write(chunk_data)
                 if show_progress:
                     _bytes += len(chunk_data)
-                    print_progress(_bytes, file_size)
+                    _print_progress(filename, _bytes, file_size)
             verify_part(cur_part, got_bytes, hasher)
             if show_progress:
-                print_progress(_bytes, file_size, action="Completed")
+                _print_progress(filename, _bytes, file_size, action="Completed")
+        except DXFileError:
+            print(traceback.format_exc(), file=sys.stderr)
+            part_retry_counter[cur_part] -= 1
+            if part_retry_counter[cur_part] > 0:
+                print("Retrying {} ({} tries remain for part {})".format(dxfile.get_id(), part_retry_counter[cur_part], cur_part),
+                      file=sys.stderr)
+                return False
+            raise
+
+        if show_progress:
+            sys.stderr.write("\n")
+
+        return True
+
+
+def download_symlink(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, show_progress=False,
+                     project=None, **kwargs):
+    '''
+    :param dxid: DNAnexus file ID or DXFile (file handler) object
+    :type dxid: string or DXFile
+    :param filename: Local filename
+    :type filename: string
+    :param project: project to use as context for this download (may affect
+            which billing account is billed for this download). If None or
+            DXFile.NO_PROJECT_HINT, no project hint is supplied to the API server.
+    :type project: str or None
+
+    Downloads the remote object referenced by a symbolic link and saves it to *filename*.
+
+    Example::
+
+        download_url(file-xxxx, "localfilename.txt")
+
+    '''
+    # [dxid] is a symbolic link. Create a preauthenticated URL,
+    # and download it
+    dxfile = dxpy.DXFile(dxid)
+    url, _headers = dxfile.get_download_url(preauthenticated=True,
+                                            duration=1*3600,
+                                            project=project)
+
+    # Follow the redirection
+    r = requests.get(url, allow_redirects=False)
+    if r.status_code != 302:
+        err_exit(fill('Error: symbolic link URL was not a redirect'))
+    url = r.headers['Location']
+
+    # retry the inner loop while there are retriable errors
+    part_retry_counter = defaultdict(lambda: 3)
+    success = False
+    while not success:
+        success = _download_url(url, _headers, filename, part_retry_counter, dxfile._http_threadpool,
+                                chunksize=chunksize,
+                                show_progress=show_progress, project=project, **kwargs)
+
+def _download_url(url, headers, filename, part_retry_counter, http_threadpool,
+                  chunksize=dxfile.DEFAULT_BUFFER_SIZE, show_progress=False,
+                  project=None, **kwargs):
+    '''
+    Core of url download logic. Download *url* and store it in
+    a local file *filename*.
+
+    The return value is as follows:
+    - True means the download was successfully completed
+    - False means the download was stopped because of a retryable error
+    - Exception raised for other errors
+    '''
+    resGet = requests.get(url,stream=True)
+    file_size = int(resGet.headers['Content-length'])
+    part_size = chunksize
+
+    # Cover the file with parts. Here parts are the same as chunks.
+    num_parts = int((file_size + part_size -1)/part_size)
+    def gen_part(part_id):
+        start_pos = part_id * part_size
+        end_pos = min(start_pos + part_size -1, file_size)
+        return {"start": start_pos,
+                "size": end_pos - start_pos}
+    parts = list(map(gen_part, range(0, num_parts)))
+
+    try:
+        fh = open(filename, "rb+")
+        resume = True
+    except IOError:
+        fh = open(filename, "wb")
+        resume = False
+
+    if resume:
+        # We already downloaded the beginning of the file, resume
+        # the download. Trim the file to a round number of chunks.
+        local_file_len = os.stat(filename).st_size
+        last_pos = (int(local_file_len / part_size)) * part_size
+        fh.seek(last_pos)
+        fh.truncate()
+    else:
+        last_pos = 0
+
+    if show_progress:
+        _print_progress(filename, 0, None)
+
+    parts_to_get = list(filter((lambda part_info: part_info["start"] >= last_pos),
+                               parts))
+
+    def get_chunk(part_id_to_get, start, end):
+        # If we're fetching the whole object in one shot, avoid setting the Range header to take advantage of gzip
+        # transfer compression
+        sub_range = False
+        if len(parts) > 1 or (start > 0) or (end - start + 1 < parts[part_id_to_get]["size"]):
+            sub_range = True
+        data = dxpy._dxhttp_read_range(url, headers, start, end, FILE_REQUEST_TIMEOUT, sub_range)
+        return part_id_to_get, data
+
+    def chunk_requests():
+        for part_id in range(0, len(parts_to_get)):
+            part_info = parts[part_id]
+            part_end = min(part_info["start"] + part_size, part_info["start"] + part_info["size"]) - 1
+            yield get_chunk, [part_id, part_info["start"], part_end], {}
+
+    _bytes = last_pos
+    with fh:
+        try:
+            # Main loop. In parallel: download chunks, and write them to disk.
+            get_first_chunk_sequentially = (file_size > 128 * 1024 and last_verified_pos == 0 and dxpy.JOB_ID)
+            for cur_part, part_data in response_iterator(chunk_requests(),
+                                                         http_threadpool,
+                                                         do_first_task_sequentially=get_first_chunk_sequentially):
+                fh.write(part_data)
+                if show_progress:
+                    _bytes += len(part_data)
+                    _print_progress(filename, _bytes, file_size)
+            if show_progress:
+                _print_progress(filename, _bytes, file_size, action="Completed")
         except DXFileError:
             print(traceback.format_exc(), file=sys.stderr)
             part_retry_counter[cur_part] -= 1

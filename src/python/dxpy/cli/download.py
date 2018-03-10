@@ -21,10 +21,8 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import collections
 import os
-import subprocess
 import sys
 import tempfile
-import warnings
 
 import dxpy
 from ..utils.resolver import (resolve_existing_path, get_first_pos_of_char, is_project_explicit,
@@ -33,56 +31,6 @@ from ..exceptions import err_exit
 from . import try_call
 from dxpy.utils.printing import (fill)
 from dxpy.utils import pathmatch
-
-# Check if a program (wget, curl, etc.) is on the path, and
-# can be called.
-def _is_on_path(program):
-    def is_exe(fpath):
-        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-
-    for path in os.environ["PATH"].split(os.pathsep):
-        exe_file = os.path.join(path, program)
-        if is_exe(exe_file):
-            return True
-    return False
-
-
-# [dxid] is a symbolic link. Create a preauthenticated URL,
-# and download it
-def _download_symbolic_link(dxid, project):
-    dxfile = dxpy.DXFile(dxid)
-    url, _headers = dxfile.get_download_url(preauthenticated=True,
-                                            duration=1*3600,
-                                            project=project)
-
-    # Follow the redirection
-    import requests
-    print('Following redirect for ' + url)
-
-    r = requests.get(url, allow_redirects=False)
-    if r.status_code != 302:
-        err_exit(fill('Error: symbolic link URL was not a redirect'))
-    url = r.headers['Location']
-
-    if not _is_on_path("curl"):
-        err_exit("curl is not installed on this system")
-
-#    cmdline = ["curl", "--retry 5", "--retry-delay 5", "-L"]
-    cmdline = ["curl", "-L"]
-    if os.path.isfile(dxid):
-        # file already exists. TODO: resume upload.
-        # Currently, remove it.
-        #cmdline += ["-C", "-"]
-        os.remove(dxid)
-    cmdline += ["-o", dxid, '\"' + url + '\"']
-
-    try:
-        print("Downloading symbolic link with curl")
-        print(" ".join(cmdline))
-        subprocess.check_call(cmdline)
-    except subprocess.CalledProcessError:
-        err_exit("Failed to call crul", expected_exceptions=(subprocess.CalledProcessError, ))
-
 
 def download_one_file(project, file_desc, dest_filename, args):
     if not args.overwrite:
@@ -111,7 +59,7 @@ def download_one_file(project, file_desc, dest_filename, args):
         except:
             err_exit()
 
-    _download_symbolic_link(dxid, project)
+    dxpy.download_symlink(dxid, dxid, show_progress=show_progress, project=project)
 
 def _ensure_local_dir(d):
     if not os.path.isdir(d):
