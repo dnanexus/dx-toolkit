@@ -59,7 +59,11 @@ def download_one_file(project, file_desc, dest_filename, args):
         except:
             err_exit()
 
-    dxpy.download_symlink(dxid, dxid, show_progress=show_progress, project=project)
+    # A symbolic link. Get the MD5 checksum, if we have it
+    md5 = None
+    if 'md5' in file_desc:
+        md5 = file_desc['md5']
+    dxpy.download_symlink(dxid, dxid, md5digest=md5, show_progress=show_progress, project=project)
 
 def _ensure_local_dir(d):
     if not os.path.isdir(d):

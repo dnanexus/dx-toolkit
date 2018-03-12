@@ -291,8 +291,8 @@ def _download_dxfile(dxid, filename, part_retry_counter,
         return True
 
 
-def download_symlink(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, show_progress=False,
-                     project=None, **kwargs):
+def download_symlink(dxid, filename, md5digest=None, chunksize=dxfile.DEFAULT_BUFFER_SIZE,
+                     show_progress=False, project=None, **kwargs):
     '''
     :param dxid: DNAnexus file ID or DXFile (file handler) object
     :type dxid: string or DXFile
@@ -304,6 +304,7 @@ def download_symlink(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, show_
     :type project: str or None
 
     Downloads the remote object referenced by a symbolic link and saves it to *filename*.
+    If the md5 checksum is specified, verify it.
 
     Example::
 
@@ -327,12 +328,41 @@ def download_symlink(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, show_
     part_retry_counter = defaultdict(lambda: 3)
     success = False
     while not success:
-        success = _download_url(url, _headers, filename, part_retry_counter, dxfile._http_threadpool,
-                                chunksize=chunksize,
+        success = _download_url(url, _headers, filename, md5digest,
+                                part_retry_counter, dxfile._http_threadpool, chunksize=chunksize,
                                 show_progress=show_progress, project=project, **kwargs)
 
-def _download_url(url, headers, filename, part_retry_counter, http_threadpool,
-                  chunksize=dxfile.DEFAULT_BUFFER_SIZE, show_progress=False,
+    if md5digest is not None:
+        hasher = _calc_file_md5(filename)
+        if hasher.hexdigest() != md5digest:
+            raise DXFileError("Checksum mismatch when verifying downloaded file {}".format(filename))
+
+
+def _calc_file_md5(filename):
+    chunk_size = 1024 * 1024
+    _bytes = 0
+    file_size = os.stat(filename).st_size
+    bytes_to_read = file_size
+    hasher = hashlib.md5()
+    try:
+        with open(filename, "r") as fh:
+            while bytes_to_read > 0:
+                crnt_len = min(chunk_size, bytes_to_read)
+                chunk = fh.read(crnt_len)
+                if len(chunk) < crnt_len:
+                    raise DXFileError("Local data for file {} is truncated".format(filename))
+                hasher.update(chunk)
+                bytes_to_read -= crnt_len
+                if show_progress:
+                    _bytes += crnt_len_bytes
+                    _print_progress(filename, _bytes, file_size, action="Verified")
+    except (IOError, DXFileError) as e:
+        logger.debug(e)
+        raise DXFileError("IO error when verifying downloaded file {}".format(filename))
+    return hasher
+
+def _download_url(url, headers, filename, md5digest,
+                  part_retry_counter, http_threadpool, chunksize, show_progress=False,
                   project=None, **kwargs):
     '''
     Core of url download logic. Download *url* and store it in
@@ -347,15 +377,6 @@ def _download_url(url, headers, filename, part_retry_counter, http_threadpool,
     file_size = int(resGet.headers['Content-length'])
     part_size = chunksize
 
-    # Cover the file with parts. Here parts are the same as chunks.
-    num_parts = int((file_size + part_size -1)/part_size)
-    def gen_part(part_id):
-        start_pos = part_id * part_size
-        end_pos = min(start_pos + part_size -1, file_size)
-        return {"start": start_pos,
-                "size": end_pos - start_pos}
-    parts = list(map(gen_part, range(0, num_parts)))
-
     try:
         fh = open(filename, "rb+")
         resume = True
@@ -365,19 +386,25 @@ def _download_url(url, headers, filename, part_retry_counter, http_threadpool,
 
     if resume:
         # We already downloaded the beginning of the file, resume
-        # the download. Trim the file to a round number of chunks.
-        local_file_len = os.stat(filename).st_size
-        last_pos = (int(local_file_len / part_size)) * part_size
+        # the download.
+        last_pos = os.stat(filename).st_size
         fh.seek(last_pos)
-        fh.truncate()
     else:
         last_pos = 0
 
     if show_progress:
-        _print_progress(filename, 0, None)
+        _print_progress(filename, last_pos, None)
 
-    parts_to_get = list(filter((lambda part_info: part_info["start"] >= last_pos),
-                               parts))
+    # Cover the missing region of the file with parts. Here parts are the same as chunks.
+    first_part_id = int(last_pos/part_size)
+    last_part_id = int((file_size + part_size -1)/part_size)
+    def gen_part(part_id):
+        start_pos = max(part_id * part_size, last_pos)
+        end_pos = min(start_pos + part_size -1, file_size)
+        return {"start": start_pos,
+                "size": end_pos - start_pos}
+    parts = list(map(gen_part,
+                     range(first_part_id, last_part_id)))
 
     def get_chunk(part_id_to_get, start, end):
         # If we're fetching the whole object in one shot, avoid setting the Range header to take advantage of gzip
@@ -389,7 +416,7 @@ def _download_url(url, headers, filename, part_retry_counter, http_threadpool,
         return part_id_to_get, data
 
     def chunk_requests():
-        for part_id in range(0, len(parts_to_get)):
+        for part_id in range(0, len(parts)):
             part_info = parts[part_id]
             part_end = min(part_info["start"] + part_size, part_info["start"] + part_info["size"]) - 1
             yield get_chunk, [part_id, part_info["start"], part_end], {}
@@ -398,10 +425,10 @@ def _download_url(url, headers, filename, part_retry_counter, http_threadpool,
     with fh:
         try:
             # Main loop. In parallel: download chunks, and write them to disk.
-            get_first_chunk_sequentially = (file_size > 128 * 1024 and last_verified_pos == 0 and dxpy.JOB_ID)
-            for cur_part, part_data in response_iterator(chunk_requests(),
-                                                         http_threadpool,
-                                                         do_first_task_sequentially=get_first_chunk_sequentially):
+            get_first_chunk_sequentially = (file_size > 128 * 1024 and last_pos == 0 and dxpy.JOB_ID)
+            for crnt_part, part_data in response_iterator(chunk_requests(),
+                                                          http_threadpool,
+                                                          do_first_task_sequentially=get_first_chunk_sequentially):
                 fh.write(part_data)
                 if show_progress:
                     _bytes += len(part_data)
@@ -410,9 +437,10 @@ def _download_url(url, headers, filename, part_retry_counter, http_threadpool,
                 _print_progress(filename, _bytes, file_size, action="Completed")
         except DXFileError:
             print(traceback.format_exc(), file=sys.stderr)
-            part_retry_counter[cur_part] -= 1
-            if part_retry_counter[cur_part] > 0:
-                print("Retrying {} ({} tries remain for part {})".format(dxfile.get_id(), part_retry_counter[cur_part], cur_part),
+            part_retry_counter[crnt_part] -= 1
+            if part_retry_counter[crnt_part] > 0:
+                print("Retrying {} ({} tries remain for part {})".format(dxfile.get_id(),
+                                                                         part_retry_counter[crnt_part], crnt_part),
                       file=sys.stderr)
                 return False
             raise
