@@ -40,6 +40,7 @@ from ..compat import BytesIO, basestring
 DXFILE_HTTP_THREADS = min(cpu_count(), 8)
 MIN_BUFFER_SIZE = 1024*1024
 DEFAULT_BUFFER_SIZE = 1024*1024*16
+SYMLINK_BUFFER_SIZE = MIN_BUFFER_SIZE
 if dxpy.JOB_ID:
     # Increase HTTP request buffer size when we are running within the
     # platform.
@@ -323,7 +324,7 @@ class DXFile(DXDataObject):
 
     next = next
     __next__ = next
-            
+
     def set_ids(self, dxid, project=None):
         '''
         :param dxid: Object ID

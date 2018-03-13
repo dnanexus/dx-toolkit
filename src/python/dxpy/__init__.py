@@ -345,7 +345,7 @@ def _extract_msg_from_last_exception():
         # '}')
         return last_error.error_message()
     else:
-        return traceback.format_exc().splitlines()[-1].strip()
+        return traceback.format_exc().encode('utf-8').splitlines()[-1].strip()
 
 
 def _calculate_retry_delay(response, num_attempts):

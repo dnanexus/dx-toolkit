@@ -291,8 +291,31 @@ def _download_dxfile(dxid, filename, part_retry_counter,
         return True
 
 
-def download_symlink(dxid, filename, md5digest=None, chunksize=dxfile.DEFAULT_BUFFER_SIZE,
+def download_symlink(dxid, filename, md5digest=None, chunksize=dxfile.SYMLINK_BUFFER_SIZE,
                      show_progress=False, project=None, **kwargs):
+    '''
+    Downloads a symblic link, and verifies the checksum if provided.
+    '''
+    success = False
+    num_tries = 0
+    while (not success and num_tries < 3):
+        num_tries += 1
+        if num_tries > 1:
+            print("Retry {} symbolic link download".format(num_tries))
+        success = _download_symlink(dxid, filename, md5digest=md5digest, chunksize=chunksize,
+                                    show_progress=show_progress, project=project, **kwargs)
+    if not success:
+        raise DXFileError("Error downloading symbolic link")
+
+    # The file has been downloaded, now verify the checksum
+    if md5digest is not None:
+        hasher = _calc_file_md5(filename, chunksize)
+        if hasher.hexdigest() != md5digest:
+            raise DXFileError("Checksum mismatch when verifying downloaded file {}".format(filename))
+
+
+def _download_symlink(dxid, filename, md5digest=None, chunksize=dxfile.SYMLINK_BUFFER_SIZE,
+                      show_progress=False, project=None, **kwargs):
     '''
     :param dxid: DNAnexus file ID or DXFile (file handler) object
     :type dxid: string or DXFile
@@ -304,7 +327,7 @@ def download_symlink(dxid, filename, md5digest=None, chunksize=dxfile.DEFAULT_BU
     :type project: str or None
 
     Downloads the remote object referenced by a symbolic link and saves it to *filename*.
-    If the md5 checksum is specified, verify it.
+    Return true if successful, false otherwise.
 
     Example::
 
@@ -321,25 +344,23 @@ def download_symlink(dxid, filename, md5digest=None, chunksize=dxfile.DEFAULT_BU
     # Follow the redirection
     r = requests.get(url, allow_redirects=False)
     if r.status_code != 302:
-        err_exit(fill('Error: symbolic link URL was not a redirect'))
+        raise DXFileError("symbolic link URL was not a redirect")
     url = r.headers['Location']
 
     # retry the inner loop while there are retriable errors
     part_retry_counter = defaultdict(lambda: 3)
     success = False
-    while not success:
-        success = _download_url(url, _headers, filename, md5digest,
-                                part_retry_counter, dxfile._http_threadpool, chunksize=chunksize,
-                                show_progress=show_progress, project=project, **kwargs)
+    try:
+        while not success:
+            success = _download_url(url, _headers, filename, md5digest,
+                                    part_retry_counter, dxfile._http_threadpool, chunksize=chunksize,
+                                    show_progress=show_progress, project=project, **kwargs)
+        return True
+    except:
+        return False
 
-    if md5digest is not None:
-        hasher = _calc_file_md5(filename)
-        if hasher.hexdigest() != md5digest:
-            raise DXFileError("Checksum mismatch when verifying downloaded file {}".format(filename))
 
-
-def _calc_file_md5(filename):
-    chunk_size = 1024 * 1024
+def _calc_file_md5(filename, chunksize):
     _bytes = 0
     file_size = os.stat(filename).st_size
     bytes_to_read = file_size
@@ -347,7 +368,7 @@ def _calc_file_md5(filename):
     try:
         with open(filename, "r") as fh:
             while bytes_to_read > 0:
-                crnt_len = min(chunk_size, bytes_to_read)
+                crnt_len = min(chunksize, bytes_to_read)
                 chunk = fh.read(crnt_len)
                 if len(chunk) < crnt_len:
                     raise DXFileError("Local data for file {} is truncated".format(filename))
@@ -361,6 +382,18 @@ def _calc_file_md5(filename):
         raise DXFileError("IO error when verifying downloaded file {}".format(filename))
     return hasher
 
+
+# Try two ways of getting the size, GET and HEAD.
+def _query_file_size(url):
+    r = requests.get(url, stream=True)
+    if r.status_code // 100 != 2:
+        print("download_url {}".format(url))
+        raise DXFileError('Could not retrieve size of symlink remote object, status={}'.format(r.status_code))
+    if 'Content-length' not in r.headers:
+        raise DXFileError('Size was not returned in response headers')
+    return int(r.headers['Content-length'])
+
+
 def _download_url(url, headers, filename, md5digest,
                   part_retry_counter, http_threadpool, chunksize, show_progress=False,
                   project=None, **kwargs):
@@ -373,8 +406,7 @@ def _download_url(url, headers, filename, md5digest,
     - False means the download was stopped because of a retryable error
     - Exception raised for other errors
     '''
-    resGet = requests.get(url,stream=True)
-    file_size = int(resGet.headers['Content-length'])
+    file_size = _query_file_size(url)
     part_size = chunksize
 
     try:
@@ -436,7 +468,10 @@ def _download_url(url, headers, filename, md5digest,
             if show_progress:
                 _print_progress(filename, _bytes, file_size, action="Completed")
         except DXFileError:
-            print(traceback.format_exc(), file=sys.stderr)
+            try:
+                print(traceback.format_exc().encode('utf-8').strip(), file=sys.stderr)
+            except:
+                pass
             part_retry_counter[crnt_part] -= 1
             if part_retry_counter[crnt_part] > 0:
                 print("Retrying {} ({} tries remain for part {})".format(dxfile.get_id(),
