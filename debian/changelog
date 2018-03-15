@@ -1,3 +1,9 @@
+dx-toolkit (0.248.0) precise; urgency=low
+
+  * Fixed: dx-clone-asset SSL error 
+
+ -- Aleksandra Zalcman <azalcman@dnanexus.com>  Thu, 15 Mar 2018 16:19:38 +0000
+
 dx-toolkit (0.247.0) precise; urgency=low
 
   * Added: Clarify documentation of stage key for dx run
