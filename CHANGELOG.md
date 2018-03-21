@@ -6,11 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [248.0] - beta
+
 ### Fixed
 
 * `dx-clone-asset` SSL error
 
-## [247.0] - beta
+## [247.0] - stable
 
 ### Added
 
@@ -28,7 +30,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Bug with Azure instance type selection in `dx-app-wizard`
 * Do not retry code `422` in dxpy
 
-## [246.0] - 2018.03.14 - stable
+## [246.0] - 2018.03.14
 
 ### Added
 
