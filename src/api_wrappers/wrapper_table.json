@@ -554,6 +554,152 @@
         }
     ],
     [
+        "/globalworkflow-xxxx/addAuthorizedUsers",
+        "globalWorkflowAddAuthorizedUsers(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/globalworkflow-xxxx/addCategories",
+        "globalWorkflowAddCategories(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/globalworkflow-xxxx/addDevelopers",
+        "globalWorkflowAddDevelopers(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/globalworkflow-xxxx/addTags",
+        "globalWorkflowAddTags(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/globalworkflow-xxxx/delete",
+        "globalWorkflowDelete(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/globalworkflow-xxxx/describe",
+        "globalWorkflowDescribe(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/globalworkflow-xxxx/listAuthorizedUsers",
+        "globalWorkflowListAuthorizedUsers(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/globalworkflow-xxxx/listCategories",
+        "globalWorkflowListCategories(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/globalworkflow-xxxx/listDevelopers",
+        "globalWorkflowListDevelopers(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/globalworkflow-xxxx/publish",
+        "globalWorkflowPublish(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/globalworkflow-xxxx/removeAuthorizedUsers",
+        "globalWorkflowRemoveAuthorizedUsers(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/globalworkflow-xxxx/removeCategories",
+        "globalWorkflowRemoveCategories(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/globalworkflow-xxxx/removeDevelopers",
+        "globalWorkflowRemoveDevelopers(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/globalworkflow-xxxx/run",
+        "globalWorkflowRun(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": false,
+            "acceptNonce": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/globalworkflow-xxxx/update",
+        "globalWorkflowUpdate(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/globalworkflow/new",
+        "globalWorkflowNew(req)",
+        {
+            "objectMethod": false,
+            "retryable": false,
+            "acceptNonce": true,
+            "wikiLink": null
+        }
+    ],
+    [
         "/gtable-xxxx/addRows",
         "gtableAddRows(req, objectId)",
         {

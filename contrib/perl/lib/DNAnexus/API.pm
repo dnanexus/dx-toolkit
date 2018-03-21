@@ -557,6 +557,118 @@ sub fileNew(;$%) {
 }
 
 
+sub globalWorkflowAddAuthorizedUsers($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/addAuthorizedUsers', $input_params, %kwargs);
+}
+
+
+sub globalWorkflowAddCategories($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/addCategories', $input_params, %kwargs);
+}
+
+
+sub globalWorkflowAddDevelopers($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/addDevelopers', $input_params, %kwargs);
+}
+
+
+sub globalWorkflowAddTags($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/addTags', $input_params, %kwargs);
+}
+
+
+sub globalWorkflowDelete($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/delete', $input_params, %kwargs);
+}
+
+
+sub globalWorkflowDescribe($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
+}
+
+
+sub globalWorkflowListAuthorizedUsers($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/listAuthorizedUsers', $input_params, %kwargs);
+}
+
+
+sub globalWorkflowListCategories($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/listCategories', $input_params, %kwargs);
+}
+
+
+sub globalWorkflowListDevelopers($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/listDevelopers', $input_params, %kwargs);
+}
+
+
+sub globalWorkflowPublish($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/publish', $input_params, %kwargs);
+}
+
+
+sub globalWorkflowRemoveAuthorizedUsers($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeAuthorizedUsers', $input_params, %kwargs);
+}
+
+
+sub globalWorkflowRemoveCategories($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeCategories', $input_params, %kwargs);
+}
+
+
+sub globalWorkflowRemoveDevelopers($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeDevelopers', $input_params, %kwargs);
+}
+
+
+sub globalWorkflowRun($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/run', $input_params, %kwargs);
+}
+
+
+sub globalWorkflowUpdate($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/update', $input_params, %kwargs);
+}
+
+
+sub globalWorkflowNew(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/globalworkflow/new', $input_params, %kwargs);
+}
+
+
 sub gtableAddRows($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
@@ -1342,4 +1454,5 @@ sub workflowNew(;$%) {
 
 
 our @ISA = "Exporter";
-our @EXPORT_OK = qw(analysisAddTags analysisDescribe analysisRemoveTags analysisSetProperties analysisTerminate appAddAuthorizedUsers appAddCategories appAddDevelopers appAddTags appDelete appDescribe appGet appInstall appListAuthorizedUsers appListCategories appListDevelopers appPublish appRemoveAuthorizedUsers appRemoveCategories appRemoveDevelopers appRemoveTags appRun appValidateBatch appUninstall appUpdate appNew appletAddTags appletDescribe appletGet appletGetDetails appletListProjects appletRemoveTags appletRename appletValidateBatch appletRun appletSetProperties appletNew containerClone containerDescribe containerDestroy containerListFolder containerMove containerNewFolder containerRemoveFolder containerRemoveObjects containerRenameFolder fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload fileNew gtableAddRows gtableAddTags gtableAddTypes gtableClose gtableDescribe gtableGet gtableGetDetails gtableListProjects gtableNextPart gtableRemoveTags gtableRemoveTypes gtableRename gtableSetDetails gtableSetProperties gtableSetVisibility gtableNew jobAddTags jobDescribe jobGetLog jobRemoveTags jobSetProperties jobTerminate jobNew notificationsGet notificationsMarkRead orgDescribe orgFindMembers orgFindProjects orgFindApps orgInvite orgRemoveMember orgSetMemberAccess orgUpdate orgNew projectAddTags projectClone projectDecreasePermissions projectDescribe projectDestroy projectInvite projectLeave projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectRemoveTags projectRenameFolder projectSetProperties projectTransfer projectUpdate projectUpdateSponsorship projectNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility recordNew systemDescribeDataObjects systemDescribeExecutions systemDescribeProjects systemFindAffiliates systemFindApps systemFindDataObjects systemResolveDataObjects systemFindExecutions systemFindAnalyses systemFindJobs systemFindProjects systemFindUsers systemFindProjectMembers systemFindOrgs systemGlobalSearch systemGreet systemHeaders systemShortenURL systemWhoami userDescribe userUpdate workflowAddStage workflowAddTags workflowAddTypes workflowClose workflowDescribe workflowDryRun workflowGetDetails workflowIsStageCompatible workflowListProjects workflowMoveStage workflowOverwrite workflowRemoveStage workflowRemoveTags workflowRemoveTypes workflowRename workflowRun workflowValidateBatch workflowSetDetails workflowSetProperties workflowSetStageInputs workflowSetVisibility workflowUpdate workflowUpdateStageExecutable workflowNew);
+our @EXPORT_OK = qw(analysisAddTags analysisDescribe analysisRemoveTags analysisSetProperties analysisTerminate appAddAuthorizedUsers appAddCategories appAddDevelopers appAddTags appDelete appDescribe appGet appInstall appListAuthorizedUsers appListCategories appListDevelopers appPublish appRemoveAuthorizedUsers appRemoveCategories appRemoveDevelopers appRemoveTags appRun appValidateBatch appUninstall appUpdate appNew appletAddTags appletDescribe appletGet appletGetDetails appletListProjects appletRemoveTags appletRename appletValidateBatch appletRun appletSetProperties appletNew containerClone containerDescribe containerDestroy containerListFolder containerMove containerNewFolder containerRemoveFolder containerRemoveObjects containerRenameFolder fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload fileNew globalWorkflowAddAuthorizedUsers globalWorkflowAddCategories globalWorkflowAddDevelopers globalWorkflowAddTags globalWorkflowDelete globalWorkflowDescribe globalWorkflowListAuthorizedUsers globalWorkflowListCategories globalWorkflowListDevelopers globalWorkflowPublish globalWorkflowRemoveAuthorizedUsers globalWorkflowRemoveCategories globalWorkflowRemoveDevelopers globalWorkflowRun globalWorkflowUpdate globalWorkflowNew gtableAddRows gtableAddTags gtableAddTypes gtableClose gtableDescribe gtableGet gtableGetDetails gtableListProjects gtableNextPart gtableRemoveTags gtableRemoveTypes gtableRename gtableSetDetails gtableSetProperties gtableSetVisibility gtableNew jobAddTags jobDescribe jobGetLog jobRemoveTags jobSetProperties jobTerminate jobNew notificationsGet notificationsMarkRead orgDescribe orgFindMembers orgFindProjects orgFindApps orgInvite orgRemoveMember orgSetMemberAccess orgUpdate orgNew projectAddTags projectClone projectDecreasePermissions projectDescribe projectDestroy projectInvite projectLeave projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectRemoveTags projectRenameFolder projectSetProperties projectTransfer projectUpdate projectUpdateSponsorship projectNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility recordNew systemDescribeDataObjects systemDescribeExecutions systemDescribeProjects systemFindAffiliates systemFindApps systemFindDataObjects systemResolveDataObjects systemFindExecutions systemFindAnalyses systemFindJobs systemFindProjects systemFindUsers systemFindProjectMembers systemFindOrgs systemGenerateBatchInputs systemGlobalSearch systemGreet systemHeaders systemShortenURL systemWhoami userDescribe userUpdate workflowAddStage workflowAddTags workflowAddTypes workflowClose workflowDescribe workflowDryRun workflowGetDetails workflowIsStageCompatible workflowListProjects workflowMoveStage workflowOverwrite workflowRemoveStage workflowRemoveTags workflowRemoveTypes workflowRename workflowRun workflowValidateBatch workflowSetDetails workflowSetProperties workflowSetStageInputs workflowSetVisibility workflowUpdate workflowUpdateStageExecutable workflowNew);
+
