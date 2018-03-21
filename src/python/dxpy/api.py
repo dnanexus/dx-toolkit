@@ -539,12 +539,6 @@ def global_workflow_add_developers(object_id, input_params={}, always_retry=True
     """
     return DXHTTPRequest('/%s/addDevelopers' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def global_workflow_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
-    """
-    Invokes the /globalworkflow-xxxx/addTags API method.
-    """
-    return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
-
 def global_workflow_delete(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/delete API method.

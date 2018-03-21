@@ -258,9 +258,6 @@ namespace dx {
   JSON globalWorkflowAddDevelopers(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON globalWorkflowAddDevelopers(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
-  JSON globalWorkflowAddTags(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON globalWorkflowAddTags(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
   JSON globalWorkflowDelete(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON globalWorkflowDelete(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 

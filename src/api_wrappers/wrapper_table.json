@@ -581,15 +581,6 @@
         }
     ],
     [
-        "/globalworkflow-xxxx/addTags",
-        "globalWorkflowAddTags(req, objectId)",
-        {
-            "objectMethod": true,
-            "retryable": true,
-            "wikiLink": null
-        }
-    ],
-    [
         "/globalworkflow-xxxx/delete",
         "globalWorkflowDelete(req, objectId)",
         {

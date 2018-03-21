@@ -531,12 +531,6 @@ module DX
       return DX::http_request("/#{object_id}/addDevelopers", input_params, opts)
     end
 
-    # Invokes the /globalworkflow-xxxx/addTags API method.
-    def self.global_workflow_add_tags(object_id, input_params={}, opts={})
-      opts = { "always_retry" => true }.merge(opts)
-      return DX::http_request("/#{object_id}/addTags", input_params, opts)
-    end
-
     # Invokes the /globalworkflow-xxxx/delete API method.
     def self.global_workflow_delete(object_id, input_params={}, opts={})
       opts = { "always_retry" => true }.merge(opts)
