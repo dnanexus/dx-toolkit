@@ -521,90 +521,104 @@ def file_new(input_params={}, always_retry=True, **kwargs):
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/file/new', input_params_cp, always_retry=always_retry, **kwargs)
 
-def global_workflow_add_authorized_users(object_id, input_params={}, always_retry=True, **kwargs):
+def global_workflow_add_authorized_users(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/addAuthorizedUsers API method.
     """
-    return DXHTTPRequest('/%s/addAuthorizedUsers' % object_id, input_params, always_retry=always_retry, **kwargs)
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/addAuthorizedUsers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
-def global_workflow_add_categories(object_id, input_params={}, always_retry=True, **kwargs):
+def global_workflow_add_categories(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/addCategories API method.
     """
-    return DXHTTPRequest('/%s/addCategories' % object_id, input_params, always_retry=always_retry, **kwargs)
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/addCategories' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
-def global_workflow_add_developers(object_id, input_params={}, always_retry=True, **kwargs):
+def global_workflow_add_developers(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/addDevelopers API method.
     """
-    return DXHTTPRequest('/%s/addDevelopers' % object_id, input_params, always_retry=always_retry, **kwargs)
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/addDevelopers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
-def global_workflow_delete(object_id, input_params={}, always_retry=True, **kwargs):
+def global_workflow_delete(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/delete API method.
     """
-    return DXHTTPRequest('/%s/delete' % object_id, input_params, always_retry=always_retry, **kwargs)
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/delete' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
-def global_workflow_describe(object_id, input_params={}, always_retry=True, **kwargs):
+def global_workflow_describe(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/describe API method.
     """
-    return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/describe' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
-def global_workflow_list_authorized_users(object_id, input_params={}, always_retry=True, **kwargs):
+def global_workflow_list_authorized_users(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/listAuthorizedUsers API method.
     """
-    return DXHTTPRequest('/%s/listAuthorizedUsers' % object_id, input_params, always_retry=always_retry, **kwargs)
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/listAuthorizedUsers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
-def global_workflow_list_categories(object_id, input_params={}, always_retry=True, **kwargs):
+def global_workflow_list_categories(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/listCategories API method.
     """
-    return DXHTTPRequest('/%s/listCategories' % object_id, input_params, always_retry=always_retry, **kwargs)
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/listCategories' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
-def global_workflow_list_developers(object_id, input_params={}, always_retry=True, **kwargs):
+def global_workflow_list_developers(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/listDevelopers API method.
     """
-    return DXHTTPRequest('/%s/listDevelopers' % object_id, input_params, always_retry=always_retry, **kwargs)
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/listDevelopers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
-def global_workflow_publish(object_id, input_params={}, always_retry=True, **kwargs):
+def global_workflow_publish(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/publish API method.
     """
-    return DXHTTPRequest('/%s/publish' % object_id, input_params, always_retry=always_retry, **kwargs)
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/publish' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
-def global_workflow_remove_authorized_users(object_id, input_params={}, always_retry=True, **kwargs):
+def global_workflow_remove_authorized_users(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/removeAuthorizedUsers API method.
     """
-    return DXHTTPRequest('/%s/removeAuthorizedUsers' % object_id, input_params, always_retry=always_retry, **kwargs)
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/removeAuthorizedUsers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
-def global_workflow_remove_categories(object_id, input_params={}, always_retry=True, **kwargs):
+def global_workflow_remove_categories(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/removeCategories API method.
     """
-    return DXHTTPRequest('/%s/removeCategories' % object_id, input_params, always_retry=always_retry, **kwargs)
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/removeCategories' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
-def global_workflow_remove_developers(object_id, input_params={}, always_retry=True, **kwargs):
+def global_workflow_remove_developers(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/removeDevelopers API method.
     """
-    return DXHTTPRequest('/%s/removeDevelopers' % object_id, input_params, always_retry=always_retry, **kwargs)
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/removeDevelopers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
-def global_workflow_run(object_id, input_params={}, always_retry=True, **kwargs):
+def global_workflow_run(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/run API method.
     """
     input_params_cp = Nonce.update_nonce(input_params)
-    return DXHTTPRequest('/%s/run' % object_id, input_params_cp, always_retry=always_retry, **kwargs)
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/run' % fully_qualified_version, input_params_cp, always_retry=always_retry, **kwargs)
 
-def global_workflow_update(object_id, input_params={}, always_retry=True, **kwargs):
+def global_workflow_update(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/update API method.
     """
-    return DXHTTPRequest('/%s/update' % object_id, input_params, always_retry=always_retry, **kwargs)
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/update' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
 def global_workflow_new(input_params={}, always_retry=True, **kwargs):
     """
