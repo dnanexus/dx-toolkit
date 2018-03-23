@@ -430,8 +430,8 @@ class DXTestCase(unittest.TestCase):
 
 class DXTestCaseBuildWorkflows(DXTestCase):
     """
-    This class adds methods to ``DXTestCase`` related to workflow creation and
-    workflow destruction.
+    This class adds methods to ``DXTestCase`` related to (global) workflow
+    creation and destruction.
     """
     base_workflow_spec = {
         "name": "my_workflow",
@@ -466,6 +466,61 @@ class DXTestCaseBuildWorkflows(DXTestCase):
             readme_file.write(readme_content)
         return os.path.join(self.temp_file_path, workflow_name)
 
+    def create_workflow_spec(self, project_id):
+        applet_id = dxpy.api.applet_new({"name": "my_first_applet",
+                                         "project": project_id,
+                                         "dxapi": "1.0.0",
+                                         "inputSpec": [{"name": "number", "class": "int"}],
+                                         "outputSpec": [{"name": "number", "class": "int"}],
+                                         "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
+                                                     "code": "exit 0"}
+                                         })['id']
+        workflow_spec = {"name": "my_workflow",
+                         "project": project_id,
+                         "stages": [{"id": "stage_0",
+                                     "name": "stage_0_name",
+                                     "executable": applet_id,
+                                     "input": {"number": {"$dnanexus_link": {"workflowInputField": "foo"}}},
+                                     "folder": "/stage_0_output",
+                                     "executionPolicy": {"restartOn": {}, "onNonRestartableFailure": "failStage"},
+                                     "systemRequirements": {"main": {"instanceType": "mem1_ssd1_x2"}}},
+                                    {"id": "stage_1",
+                                     "executable": applet_id,
+                                     "input": {"number": {"$dnanexus_link": {"stage": "stage_0",
+                                                                             "outputField": "number"}}}}],
+                         "workflow_inputs": [{"name": "foo", "class": "int"}],
+                         "workflow_outputs": [{"name": "bar", "class": "int", "outputSource":
+                                              {"$dnanexus_link": {"stage": "stage_0", "outputField": "number"}}}]
+                        }
+        return workflow_spec
+
+    def create_workflow(self, project_id, workflow_spec=None):
+        if not workflow_spec:
+              workflow_spec = self.create_workflow_spec(project_id)
+        dxworkflow = dxpy.DXWorkflow()
+        dxworkflow.new(**workflow_spec)
+        return dxworkflow
+
+    def create_global_workflow_spec(self, project_id, name, version, workflow_spec=None):
+        dxworkflow = self.create_workflow(project_id, workflow_spec)
+        dxglobalworkflow_spec = {
+            "name": name,
+            "version": version,
+            "regionalOptions": {
+                "aws:us-east-1": {
+                     "workflow": dxworkflow.get_id()
+                }
+            }
+        }
+        return dxglobalworkflow_spec
+
+    def create_global_workflow(self, project_id, name, version, workflow_spec=None):
+        spec = self.create_global_workflow_spec(project_id, name, version, workflow_spec)
+        dxglobalworkflow = dxpy.DXGlobalWorkflow()
+        dxglobalworkflow.new(**spec)
+        return dxglobalworkflow
 
 class DXTestCaseBuildApps(DXTestCase):
     """

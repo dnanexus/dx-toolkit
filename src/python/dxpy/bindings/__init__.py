@@ -657,6 +657,7 @@ from .dxjob import DXJob, new_dxjob
 from .dxanalysis import DXAnalysis
 from .dxapplet import DXExecutable, DXApplet
 from .dxapp import DXApp
+from .dxglobalworkflow import DXGlobalWorkflow
 from .dxworkflow import DXWorkflow, new_dxworkflow
 from .auth import user_info, whoami
 from .dxdataobject_functions import dxlink, is_dxlink, get_dxlink_ids, get_handler, describe, get_details, remove
