@@ -221,7 +221,7 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output=[]):
 
     # Remove dx-toolkit from execDepends
     dx_toolkit = {"name": "dx-toolkit", "package_manager": "apt"}
-    if dx_toolkit in dxapp_json["runSpec"]["execDepends"]:
+    if dx_toolkit in dxapp_json["runSpec"].get("execDepends", ()):
         dxapp_json["runSpec"]["execDepends"].remove(dx_toolkit)
 
     # Remove "bundledDependsByRegion" field from "runSpec". This utility
