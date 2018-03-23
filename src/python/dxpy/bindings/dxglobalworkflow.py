@@ -34,7 +34,6 @@ from ..compat import basestring
 class DXGlobalWorkflow(DXObject, DXExecutable):
     '''
     Remote global workflow object handler.
-
     '''
 
     _class = "globalworkflow"
