@@ -122,14 +122,10 @@ class DXGlobalWorkflow(DXObject, DXExecutable):
         '''
         :param fields: Hash where the keys are field names that should be returned, and values should be set to True (default is that all fields are returned)
         :type fields: dict
-        :returns: Description of the remote app object
+        :returns: Description of the remote global workflow object
         :rtype: dict
 
-        Returns a dict with a description of the app. The result
-        includes the key-value pairs as specified in the API
-        documentation for the `/globalworkflow-xxxx/describe
-        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%253A-%252Fapp-xxxx%255B%252Fyyyy%255D%252Fdescribe>`_
-        method.
+        Returns a dict with a description of the workflow.
 
         '''
         describe_input = {}
