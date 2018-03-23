@@ -1960,6 +1960,73 @@ class TestDXApp(unittest.TestCase):
         with self.assertRaises(DXAPIError):
             dxpy.DXApp(name="test_add_and_remove_tags_app", alias="oink").applet
 
+@unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                     'skipping test that would create a global workflow')
+class TestDXGlobalWorkflow(testutil.DXTestCaseBuildWorkflows):
+    def setUp(self):
+        setUpTempProjects(self)
+
+    def tearDown(self):
+        tearDownTempProjects(self)
+
+    def test_init_and_set_id(self):
+        for good_values in [("globalworkflow-aB3456789012345678901234", None, None),
+                            (None, 'name', 'tag'),
+                            (None, 'name', None),
+                            (None, None, None)]:
+            dxgw = dxpy.DXGlobalWorkflow(*good_values)
+            dxgw.set_id(*good_values)
+        for bad_values in [("foo", None, None),
+                           ("globalworkflow-aB3456789012345678901234", 'name', None),
+                           ("globalworkflow-aB3456789012345678901234", None, 'tag'),
+                           ("globalworkflow-aB3456789012345678901234", 'name', 'tag'),
+                           ("project-123456789012345678901234", None, None),
+                           (3, None, None),
+                           ({}, None, None),
+                           ("globalworkflow-aB34567890123456789012345", None, None),
+                           ("globalworkflow-aB345678901234567890123", None, None),
+                           (None, 3, None),
+                           (None, 'name', {})]:
+            with self.assertRaises(DXError):
+                dxpy.DXGlobalWorkflow(*bad_values)
+            with self.assertRaises(DXError):
+                dxgw = dxpy.DXGlobalWorkflow()
+                dxgw.set_id(*bad_values)
+
+    def test_create_globalworkflow(self):
+        gw_spec = self.create_global_workflow_spec(self.proj_id, "gwf_name", "0.0.1")
+        dxgwf = dxpy.DXGlobalWorkflow()
+        dxgwf.new(**gw_spec)
+
+        desc = dxgwf.describe()
+        self.assertEqual(desc["name"], "gwf_name")
+        self.assertEqual(desc["version"], "0.0.1")
+        self.assertTrue("0.0.1" in desc["aliases"])
+        self.assertTrue("default" in desc["aliases"])
+        dxsamegwf = dxpy.DXGlobalWorkflow(name="gwf_name")
+        samegwfdesc = dxsamegwf.describe()
+        self.assertEqual(desc, samegwfdesc)
+        dxanothersamegwf = dxpy.DXGlobalWorkflow(name="gwf_name", alias="0.0.1")
+        anothersamegwfdesc = dxanothersamegwf.describe()
+        self.assertEqual(desc, anothersamegwfdesc)
+
+        # test fields parameter for describe (different cases for when
+        # the handler was created different ways and therefore
+        # sometimes doesn't have the _dxid field)
+        smaller_desc = dxgwf.describe(fields={"name": True, "version": True})
+        self.assertEqual(len(smaller_desc), 2)
+        self.assertEqual(smaller_desc['name'], 'gwf_name')
+        self.assertEqual(smaller_desc['version'], '0.0.1')
+
+        smaller_desc = dxsamegwf.describe(fields={"name": True, "version": True})
+        self.assertEqual(len(smaller_desc), 2)
+        self.assertEqual(smaller_desc['name'], 'gwf_name')
+        self.assertEqual(smaller_desc['version'], '0.0.1')
+
+        smaller_desc = dxanothersamegwf.describe(fields={"name": True, "version": True})
+        self.assertEqual(len(smaller_desc), 2)
+        self.assertEqual(smaller_desc['name'], 'gwf_name')
+        self.assertEqual(smaller_desc['version'], '0.0.1')
 
 class TestDXSearch(unittest.TestCase):
     def setUp(self):
