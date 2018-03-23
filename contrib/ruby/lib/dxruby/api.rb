@@ -513,6 +513,96 @@ module DX
       return DX::http_request("/file/new", input_params, opts)
     end
 
+    # Invokes the /globalworkflow-xxxx/addAuthorizedUsers API method.
+    def self.global_workflow_add_authorized_users(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/addAuthorizedUsers", input_params, opts)
+    end
+
+    # Invokes the /globalworkflow-xxxx/addCategories API method.
+    def self.global_workflow_add_categories(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/addCategories", input_params, opts)
+    end
+
+    # Invokes the /globalworkflow-xxxx/addDevelopers API method.
+    def self.global_workflow_add_developers(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/addDevelopers", input_params, opts)
+    end
+
+    # Invokes the /globalworkflow-xxxx/delete API method.
+    def self.global_workflow_delete(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/delete", input_params, opts)
+    end
+
+    # Invokes the /globalworkflow-xxxx/describe API method.
+    def self.global_workflow_describe(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/describe", input_params, opts)
+    end
+
+    # Invokes the /globalworkflow-xxxx/listAuthorizedUsers API method.
+    def self.global_workflow_list_authorized_users(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/listAuthorizedUsers", input_params, opts)
+    end
+
+    # Invokes the /globalworkflow-xxxx/listCategories API method.
+    def self.global_workflow_list_categories(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/listCategories", input_params, opts)
+    end
+
+    # Invokes the /globalworkflow-xxxx/listDevelopers API method.
+    def self.global_workflow_list_developers(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/listDevelopers", input_params, opts)
+    end
+
+    # Invokes the /globalworkflow-xxxx/publish API method.
+    def self.global_workflow_publish(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/publish", input_params, opts)
+    end
+
+    # Invokes the /globalworkflow-xxxx/removeAuthorizedUsers API method.
+    def self.global_workflow_remove_authorized_users(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/removeAuthorizedUsers", input_params, opts)
+    end
+
+    # Invokes the /globalworkflow-xxxx/removeCategories API method.
+    def self.global_workflow_remove_categories(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/removeCategories", input_params, opts)
+    end
+
+    # Invokes the /globalworkflow-xxxx/removeDevelopers API method.
+    def self.global_workflow_remove_developers(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/removeDevelopers", input_params, opts)
+    end
+
+    # Invokes the /globalworkflow-xxxx/run API method.
+    def self.global_workflow_run(object_id, input_params={}, opts={})
+      opts = { "always_retry" => false }.merge(opts)
+      return DX::http_request("/#{object_id}/run", input_params, opts)
+    end
+
+    # Invokes the /globalworkflow-xxxx/update API method.
+    def self.global_workflow_update(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/update", input_params, opts)
+    end
+
+    # Invokes the /globalworkflow/new API method.
+    def self.global_workflow_new(input_params={}, opts={})
+      opts = { "always_retry" => false }.merge(opts)
+      return DX::http_request("/globalworkflow/new", input_params, opts)
+    end
+
     # Invokes the /gtable-xxxx/addRows API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2FaddRows

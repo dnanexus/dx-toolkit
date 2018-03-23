@@ -249,6 +249,51 @@ namespace dx {
   JSON fileNew(const std::string &input_params="{}", const bool safe_to_retry=false);
   JSON fileNew(const dx::JSON &input_params, const bool safe_to_retry=false);
 
+  JSON globalWorkflowAddAuthorizedUsers(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON globalWorkflowAddAuthorizedUsers(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON globalWorkflowAddCategories(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON globalWorkflowAddCategories(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON globalWorkflowAddDevelopers(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON globalWorkflowAddDevelopers(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON globalWorkflowDelete(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON globalWorkflowDelete(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON globalWorkflowDescribe(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON globalWorkflowDescribe(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON globalWorkflowListAuthorizedUsers(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON globalWorkflowListAuthorizedUsers(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON globalWorkflowListCategories(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON globalWorkflowListCategories(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON globalWorkflowListDevelopers(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON globalWorkflowListDevelopers(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON globalWorkflowPublish(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON globalWorkflowPublish(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON globalWorkflowRemoveAuthorizedUsers(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON globalWorkflowRemoveAuthorizedUsers(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON globalWorkflowRemoveCategories(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON globalWorkflowRemoveCategories(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON globalWorkflowRemoveDevelopers(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON globalWorkflowRemoveDevelopers(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON globalWorkflowRun(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=false);
+  JSON globalWorkflowRun(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=false);
+
+  JSON globalWorkflowUpdate(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON globalWorkflowUpdate(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON globalWorkflowNew(const std::string &input_params="{}", const bool safe_to_retry=false);
+  JSON globalWorkflowNew(const dx::JSON &input_params, const bool safe_to_retry=false);
+
   JSON gtableAddRows(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON gtableAddRows(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 

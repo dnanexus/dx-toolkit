@@ -521,6 +521,112 @@ def file_new(input_params={}, always_retry=True, **kwargs):
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/file/new', input_params_cp, always_retry=always_retry, **kwargs)
 
+def global_workflow_add_authorized_users(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /globalworkflow-xxxx/addAuthorizedUsers API method.
+    """
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/addAuthorizedUsers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+
+def global_workflow_add_categories(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /globalworkflow-xxxx/addCategories API method.
+    """
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/addCategories' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+
+def global_workflow_add_developers(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /globalworkflow-xxxx/addDevelopers API method.
+    """
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/addDevelopers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+
+def global_workflow_delete(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /globalworkflow-xxxx/delete API method.
+    """
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/delete' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+
+def global_workflow_describe(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /globalworkflow-xxxx/describe API method.
+    """
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/describe' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+
+def global_workflow_list_authorized_users(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /globalworkflow-xxxx/listAuthorizedUsers API method.
+    """
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/listAuthorizedUsers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+
+def global_workflow_list_categories(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /globalworkflow-xxxx/listCategories API method.
+    """
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/listCategories' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+
+def global_workflow_list_developers(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /globalworkflow-xxxx/listDevelopers API method.
+    """
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/listDevelopers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+
+def global_workflow_publish(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /globalworkflow-xxxx/publish API method.
+    """
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/publish' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+
+def global_workflow_remove_authorized_users(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /globalworkflow-xxxx/removeAuthorizedUsers API method.
+    """
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/removeAuthorizedUsers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+
+def global_workflow_remove_categories(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /globalworkflow-xxxx/removeCategories API method.
+    """
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/removeCategories' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+
+def global_workflow_remove_developers(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /globalworkflow-xxxx/removeDevelopers API method.
+    """
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/removeDevelopers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+
+def global_workflow_run(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /globalworkflow-xxxx/run API method.
+    """
+    input_params_cp = Nonce.update_nonce(input_params)
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/run' % fully_qualified_version, input_params_cp, always_retry=always_retry, **kwargs)
+
+def global_workflow_update(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /globalworkflow-xxxx/update API method.
+    """
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/update' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+
+def global_workflow_new(input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /globalworkflow/new API method.
+    """
+    input_params_cp = Nonce.update_nonce(input_params)
+    return DXHTTPRequest('/globalworkflow/new', input_params_cp, always_retry=always_retry, **kwargs)
+
 def gtable_add_rows(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /gtable-xxxx/addRows API method.
