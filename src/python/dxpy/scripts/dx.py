@@ -2550,7 +2550,7 @@ def build(args):
             build_parser.error("Options --remote, --app, and --run cannot all be specified together. Try removing --run and then separately invoking dx run.")
 
         # options not supported by workflow building
-        if args.mode == "workflow":
+        if args.mode in ("workflow"):
             unsupported_options = {
                 '--ensure-upload': args.ensure_upload,
                 '--force-symlinks': args.force_symlinks,
@@ -2591,11 +2591,11 @@ def build(args):
 
         if args.mode in ("app", "applet"):
             dx_build_app.build(args)
-        elif args.mode == "workflow":
+        elif args.mode in ("workflow", "globalworkflow"):
             workflow_builder.build(args, build_parser)
         else:
-            msg = "Unrecognized mode. Accepted options: --app, --applet, --workflow."
-            msg += " If not provided, an attempt is made to build either an applet or a workflow, depending on"
+            msg = "Unrecognized mode. Accepted options: --app, --applet, --workflow, --globalworkflow."
+            msg += " If not provided, an attempt is made to build either an applet or a (global) workflow, depending on"
             msg += " whether a dxapp.json or dxworkflow.json file is found in the source directory, respectively."
             build_parser.error(msg)
     except Exception as e:
@@ -4256,6 +4256,8 @@ src_dir_action.completer = LocalCompleter()
 build_parser.add_argument("--app", "--create-app", help="Create an app.", action="store_const", dest="mode", const="app")
 build_parser.add_argument("--create-applet", help=argparse.SUPPRESS, action="store_const", dest="mode", const="applet")
 build_parser.add_argument("--workflow", "--create-workflow", help="Create a workflow.", action="store_const", dest="mode", const="workflow")
+
+build_parser.add_argument("--globalworkflow", "--create-globalworkflow", help="Create a global workflow.", action="store_const", dest="mode", const="globalworkflow")
 
 applet_and_workflow_options.add_argument("-d", "--destination", help="Specifies the destination project, destination folder, and/or name for the applet, in the form [PROJECT_NAME_OR_ID:][/[FOLDER/][NAME]]. Overrides the project, folder, and name fields of the dxapp.json or dxworkflow.json, if they were supplied.", default='.')
 

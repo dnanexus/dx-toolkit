@@ -27,11 +27,15 @@ onto the platform.
 '''
 
 from __future__ import print_function, unicode_literals, division, absolute_import
+import os
+import re
 
 from .utils.resolver import resolve_path, is_container_id
 from .cli import try_call
-import os
+import dxpy
 
+GLOBAL_EXEC_NAME_RE = re.compile("^[a-zA-Z0-9._\-]+$")
+GLOBAL_EXEC_VERSION_RE = re.compile("^([1-9][0-9]*|0)\.([1-9][0-9]*|0)\.([1-9][0-9]*|0)(-[-0-9A-Za-z]+(\.[-0-9A-Za-z]+)*)?(\+[-0-9A-Za-z]+(\.[-0-9A-Za-z]+)*)?$")
 
 def get_parsed_destination(dest_str):
     """
@@ -81,3 +85,14 @@ def inline_documentation_files(json_spec, src_dir):
                 with open(os.path.join(src_dir, filename)) as fh:
                     json_spec['developerNotes'] = fh.read()
                 break
+
+
+def delete_temporary_projects(projects):
+    """
+    Destroys all projects from the list.
+    """
+    for project in projects:
+        try:
+            dxpy.api.project_destroy(project)
+        except Exception:
+            pass

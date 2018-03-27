@@ -441,6 +441,8 @@ class DXTestCaseBuildWorkflows(DXTestCase):
     def setUp(self):
         super(DXTestCaseBuildWorkflows, self).setUp()
         self.temp_file_path = tempfile.mkdtemp()
+        self.test_applet_id = self.create_applet(self.project)
+        self.dxworkflow_spec = self.create_dxworkflow_spec()
 
     def tearDown(self):
         shutil.rmtree(self.temp_file_path)
@@ -466,8 +468,8 @@ class DXTestCaseBuildWorkflows(DXTestCase):
             readme_file.write(readme_content)
         return os.path.join(self.temp_file_path, workflow_name)
 
-    def create_workflow_spec(self, project_id):
-        applet_id = dxpy.api.applet_new({"name": "my_first_applet",
+    def create_applet(self, project_id):
+        return dxpy.api.applet_new({"name": "my_first_applet",
                                          "project": project_id,
                                          "dxapi": "1.0.0",
                                          "inputSpec": [{"name": "number", "class": "int"}],
@@ -477,17 +479,19 @@ class DXTestCaseBuildWorkflows(DXTestCase):
                                                      "release": "14.04",
                                                      "code": "exit 0"}
                                          })['id']
+
+    def create_workflow_spec(self, project_id):
         workflow_spec = {"name": "my_workflow",
                          "project": project_id,
                          "stages": [{"id": "stage_0",
                                      "name": "stage_0_name",
-                                     "executable": applet_id,
+                                     "executable": self.test_applet_id,
                                      "input": {"number": {"$dnanexus_link": {"workflowInputField": "foo"}}},
                                      "folder": "/stage_0_output",
                                      "executionPolicy": {"restartOn": {}, "onNonRestartableFailure": "failStage"},
                                      "systemRequirements": {"main": {"instanceType": "mem1_ssd1_x2"}}},
                                     {"id": "stage_1",
-                                     "executable": applet_id,
+                                     "executable": self.test_applet_id,
                                      "input": {"number": {"$dnanexus_link": {"stage": "stage_0",
                                                                              "outputField": "number"}}}}],
                          "workflow_inputs": [{"name": "foo", "class": "int"}],
@@ -521,6 +525,22 @@ class DXTestCaseBuildWorkflows(DXTestCase):
         dxglobalworkflow = dxpy.DXGlobalWorkflow()
         dxglobalworkflow.new(**spec)
         return dxglobalworkflow
+
+    def create_dxworkflow_spec(self):
+        return {"name": "my_workflow",
+                "version": "0.0.1",
+                "stages": [{"id": "stage_0",
+                            "name": "stage_0_name",
+                            "executable": self.test_applet_id,
+                            "input": {"number": 777},
+                            "folder": "/stage_0_output",
+                            "executionPolicy": {"restartOn": {}, "onNonRestartableFailure": "failStage"},
+                            "systemRequirements": {"main": {"instanceType": "mem1_ssd1_x2"}}},
+                           {"id": "stage_1",
+                            "executable": self.test_applet_id,
+                            "input": {"number": {"$dnanexus_link": {"stage": "stage_0",
+                                                                             "outputField": "number"}}}}]}
+
 
 class DXTestCaseBuildApps(DXTestCase):
     """
