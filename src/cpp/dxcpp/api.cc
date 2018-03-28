@@ -1361,6 +1361,14 @@ namespace dx {
     return systemFindDataObjects(input_params.toString(), safe_to_retry);
   }
 
+  JSON systemFindGlobalWorkflows(const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest("/system/findGlobalWorkflows", input_params, safe_to_retry);
+  }
+
+  JSON systemFindGlobalWorkflows(const JSON &input_params, const bool safe_to_retry) {
+    return systemFindGlobalWorkflows(input_params.toString(), safe_to_retry);
+  }
+
   JSON systemResolveDataObjects(const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest("/system/resolveDataObjects", input_params, safe_to_retry);
   }
