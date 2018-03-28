@@ -27062,6 +27062,165 @@ public final class DXAPI {
     }
 
     /**
+     * Invokes the systemFindGlobalWorkflows method with an empty input, deserializing to an object of the specified class.
+     *
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemFindGlobalWorkflows(Class<T> outputClass) {
+        return systemFindGlobalWorkflows(mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the systemFindGlobalWorkflows method with an empty input using the specified environment, deserializing to an object of the specified class.
+     *
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemFindGlobalWorkflows(Class<T> outputClass, DXEnvironment env) {
+        return systemFindGlobalWorkflows(mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the systemFindGlobalWorkflows method with the specified input, deserializing to an object of the specified class.
+     *
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemFindGlobalWorkflows(Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/system/findGlobalWorkflows", input, RetryStrategy.SAFE_TO_RETRY),
+                outputClass);
+    }
+    /**
+     * Invokes the systemFindGlobalWorkflows method with the specified input using the specified environment, deserializing to an object of the specified class.
+     *
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemFindGlobalWorkflows(Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest(env).request("/system/findGlobalWorkflows", input, RetryStrategy.SAFE_TO_RETRY),
+                outputClass);
+    }
+
+    /**
+     * Invokes the systemFindGlobalWorkflows method.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemFindGlobalWorkflows(Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemFindGlobalWorkflows() {
+        return systemFindGlobalWorkflows(mapper.createObjectNode());
+    }
+    /**
+     * Invokes the systemFindGlobalWorkflows method with the specified input parameters.
+     *
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemFindGlobalWorkflows(Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemFindGlobalWorkflows(JsonNode inputParams) {
+        return new DXHTTPRequest().request("/system/findGlobalWorkflows", inputParams, RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the systemFindGlobalWorkflows method with the specified environment.
+     *
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemFindGlobalWorkflows(Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemFindGlobalWorkflows(DXEnvironment env) {
+        return systemFindGlobalWorkflows(mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the systemFindGlobalWorkflows method with the specified environment and input parameters.
+     *
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemFindGlobalWorkflows(Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemFindGlobalWorkflows(JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/system/findGlobalWorkflows", inputParams, RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
      * Invokes the systemResolveDataObjects method with an empty input, deserializing to an object of the specified class.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/resolveDataObjects">API specification</a>.

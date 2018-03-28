@@ -510,6 +510,9 @@ namespace dx {
   JSON systemFindDataObjects(const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON systemFindDataObjects(const dx::JSON &input_params, const bool safe_to_retry=true);
 
+  JSON systemFindGlobalWorkflows(const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON systemFindGlobalWorkflows(const dx::JSON &input_params, const bool safe_to_retry=true);
+
   JSON systemResolveDataObjects(const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON systemResolveDataObjects(const dx::JSON &input_params, const bool safe_to_retry=true);
 

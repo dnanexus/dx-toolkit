@@ -1342,6 +1342,15 @@
         }
     ],
     [
+        "/system/findGlobalWorkflows",
+        "systemFindGlobalWorkflows(req)",
+        {
+            "objectMethod": false,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
         "/system/resolveDataObjects",
         "systemResolveDataObjects(req)",
         {
