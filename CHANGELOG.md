@@ -6,6 +6,16 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* zsh support
+* API wrappers for global workflow routes
+* Basic Python bindings for global workflow
+
+### Fixed
+
+* dx get applet without execDepends
+
 ## [248.0] - beta
 
 ### Fixed
