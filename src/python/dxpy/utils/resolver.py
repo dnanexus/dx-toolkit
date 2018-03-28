@@ -143,7 +143,7 @@ class ResolutionError(DXError):
         return self.msg
 
 data_obj_pattern = re.compile('^(record|gtable|applet|file|workflow)-[0-9A-Za-z]{24}$')
-hash_pattern = re.compile('^(record|gtable|app|applet|workflow|job|analysis|project|container|file)-[0-9A-Za-z]{24}$')
+hash_pattern = re.compile('^(record|gtable|app|applet|workflow|globalworkflow|job|analysis|project|container|file)-[0-9A-Za-z]{24}$')
 nohash_pattern = re.compile('^(user|org|app|team)-')
 jbor_pattern = re.compile('^(job|analysis)-[0-9A-Za-z]{24}:[a-zA-Z_][0-9a-zA-Z_]*$')
 
@@ -697,6 +697,7 @@ def _check_resolution_needed(path, project, folderpath, entity_name, expected_cl
                 describe['project'] = dxpy.WORKSPACE_ID
         try:
             desc = dxpy.DXHTTPRequest('/' + entity_name + '/describe', describe)
+            desc = dxpy.append_underlying_workflow_describe(desc)
         except Exception as details:
             if 'project' in describe:
                 # Now try it without the hint

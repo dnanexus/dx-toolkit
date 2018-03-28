@@ -976,6 +976,23 @@ def _set_retry_response(response):
 def _get_retry_response():
     return _retry_response
 
+def append_underlying_workflow_describe(globalworkflow_desc):
+    """
+    Adds the "workflowDescribe" field to the config for each region of
+    the global workflow. The value is the description of an underlying
+    workflow in that region.
+    """
+    if not globalworkflow_desc or \
+            not globalworkflow_desc['id'].startswith('globalworkflow') or \
+            not 'regionalOptions' in globalworkflow_desc:
+        return globalworkflow_desc
+
+    for region, config in globalworkflow_desc['regionalOptions'].items():
+        workflow_id = config['workflow']
+        workflow_desc = dxpy.api.workflow_describe(workflow_id)
+        globalworkflow_desc['regionalOptions'][region]['workflowDescribe'] = workflow_desc
+    return globalworkflow_desc
+
 
 from .utils.config import DXConfig as _DXConfig
 config = _DXConfig()
