@@ -419,3 +419,20 @@ class DXProject(DXContainer):
         """
 
         dxpy.api.project_destroy(self._dxid, **kwargs)
+
+    def set_properties(self, properties, **kwargs):
+        """
+        :param properties: Property names and values given as key-value pairs of strings
+        :type properties: dict
+
+        Given key-value pairs in *properties* for property names and
+        values, the properties are set on the project for the given
+        property names. Any property with a value of :const:`None`
+        indicates the property will be deleted.
+
+        .. note:: Any existing properties not mentioned in *properties*
+           are not modified by this method.
+
+        """
+
+        return dxpy.api.project_set_properties(self._dxid, {"properties": properties}, **kwargs)
