@@ -11,6 +11,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * zsh support
 * API wrappers for global workflow routes
 * Basic Python bindings for global workflow
+* `set_properties()` method to DXProject
 
 ### Fixed
 
