@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [249.0] - beta
+
 ### Added
 
 * zsh support
@@ -17,13 +19,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * dx get applet without execDepends
 
-## [248.0] - beta
+## [248.0] - 2018.03.29 - stable
 
 ### Fixed
 
 * `dx-clone-asset` SSL error
 
-## [247.0] - stable
+## [247.0] - 2018.03.14
 
 ### Added
 
