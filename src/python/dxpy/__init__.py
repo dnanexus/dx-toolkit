@@ -983,7 +983,7 @@ def append_underlying_workflow_describe(globalworkflow_desc):
     workflow in that region.
     """
     if not globalworkflow_desc or \
-            not globalworkflow_desc['id'].startswith('globalworkflow') or \
+            globalworkflow_desc['class'] != 'globalworkflow' or \
             not 'regionalOptions' in globalworkflow_desc:
         return globalworkflow_desc
 

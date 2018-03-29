@@ -690,7 +690,7 @@ def print_data_obj_desc(desc, verbose=False):
     # In case of a workflow: do not display "Input/Output Specs" that show stages IO
     # when the workflow has workflow-level input/output fields defined.
     if desc.get('inputSpec') is not None and desc.get('inputs') is None:
-        print_nofill_field("Input Spec", get_io_spec(desc['inputSpec'], skip_fields=get_advanced_inputs()))
+        print_nofill_field("Input Spec", get_io_spec(desc['inputSpec'], skip_fields=get_advanced_inputs(desc, verbose)))
     if desc.get('outputSpec') is not None and desc.get('outputs') is None:
         print_nofill_field("Output Spec", get_io_spec(desc['outputSpec']))
     if  desc.get('inputs') is not None:
