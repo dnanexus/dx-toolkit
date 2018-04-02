@@ -29,7 +29,7 @@ elif user_description['billTo'].startswith('org-'):
 
 
 def _get_public_asset_projects():
-    projects = dxpy.find_projects(name='^'+GLOBAL_ASSET_PROJECT_PREFIX, name_mode='regexp', public=True, return_handler=True)
+    projects = dxpy.find_projects(name='^'+GLOBAL_ASSET_PROJECT_PREFIX, name_mode='regexp', public=True, return_handler=True, level='UPLOAD')
     project_by_region = {}
     for project in projects:
         # Note: if there is more than one project that matches the GLOBAL_ASSET_PROJECT_PREFIX in a given region
