@@ -1083,7 +1083,7 @@ def describe(args):
 
     def describe_global_executable(json_output, args, exec_type):
         """
-        Describes a global executable, i.e.e either app or global workflow
+        Describes a global executable, i.e. either app or global workflow
         depending on the provided exec_type. Appends the result to json_output.
         Returns True if any matches were found
         """
@@ -1111,7 +1111,7 @@ def describe(args):
 
     def find_global_executable(json_output, args):
         """
-        Makes a find_apps API call and, if no matches are found, find_global_workflows call.
+        Makes a find_apps API call and, if no matches are found, a find_global_workflows call.
         Since these two objects share namespace, either app or a global workflow will be
         found, not both. The results are appended to json_output and printed to STDOUT.
         """
