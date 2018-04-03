@@ -528,7 +528,9 @@ class DXTestCaseBuildWorkflows(DXTestCase):
 
     def create_dxworkflow_spec(self):
         return {"name": "my_workflow",
+                "title": "This is a beautiful workflow",
                 "version": "0.0.1",
+                "dxapi": "1.0.0",
                 "stages": [{"id": "stage_0",
                             "name": "stage_0_name",
                             "executable": self.test_applet_id,

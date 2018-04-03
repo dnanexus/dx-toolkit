@@ -1,0 +1,42 @@
+{
+  "name": "gwf_to_get",
+  "title": "gwf_to_get",
+  "dxapi": "1.0.0",
+  "version": "0.0.1",
+  "stages": [
+    {
+      "id": "stage_0",
+      "name": "stage_0_name",
+      "executable": "applet-FF226b80p0xg6yvG7g0ybx5x",
+      "folder": "/stage_0_output",
+      "input": {
+        "number": {
+          "$dnanexus_link": {
+            "workflowInputField": "foo"
+          }
+        }
+      },
+      "executionPolicy": {
+        "onNonRestartableFailure": "failStage",
+        "restartOn": {}
+      },
+      "systemRequirements": {
+        "main": {
+          "instanceType": "mem1_ssd1_x2"
+        }
+      }
+    },
+    {
+      "id": "stage_1",
+      "executable": "applet-FF226b80p0xg6yvG7g0ybx5x",
+      "input": {
+        "number": {
+          "$dnanexus_link": {
+            "outputField": "number",
+            "stage": "stage_0"
+          }
+        }
+      }
+    }
+  ]
+}

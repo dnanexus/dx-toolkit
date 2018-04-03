@@ -3868,6 +3868,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                                                 "outputField": "number"}}}}
         workflow_spec = {
             "name": workflow_name,
+            "title": workflow_name,
             "outputFolder": "/",
             "stages": [stage0, stage1],
             "inputs": [{"name": "foo", "class": "int"}]
@@ -6123,6 +6124,7 @@ class TestHTTPProxySupport(DXTestCase):
     def tearDown(self):
         self.proxy_process.terminate()
 
+
 class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
@@ -6154,6 +6156,7 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
     def test_build_workflow_warnings(self):
         gwf_name = "Test_build_workflow_warnings".format(t=int(time.time()))
         dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name, version="foo")
+        del dxworkflow_json['title']
         workflow_dir = self.write_workflow_directory("test_build_workflow_warnings",
                                                      json.dumps(dxworkflow_json))
 
@@ -6212,6 +6215,7 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
                                                      json.dumps(dxworkflow_json))
         new_gwf = json.loads(run("dx build --globalworkflow --bill-to {} --json {}".format(org_id, workflow_dir)))
         self.assertEqual(new_gwf["billTo"], org_id)
+
 
 class TestDXBuildApp(DXTestCaseBuildApps):
     def run_and_assert_stderr_matches(self, cmd, stderr_regexp):
@@ -8214,8 +8218,8 @@ def main(in1):
             temp_asset_fid = run("dx ls {asset} --brief".format(asset=asset_name)).strip()
             self.assertEquals(temp_asset_fid, asset_file.get_id())
 
+class TestDXGetWorkflows(DXTestCaseBuildWorkflows):
 
-class TestDXGetExecutables(DXTestCaseBuildApps):
     def test_get_workflow(self):
         workflow_id = run("dx new workflow get_workflow --brief").strip()
         applet_01_id = dxpy.api.applet_new({"name": "myapplet_01",
@@ -8245,6 +8249,7 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
 
         output_workflow_spec = {
             "name": "get_workflow",
+            "title": "get_workflow",
             "stages": [{
               "id": stage_01_id,
               "name": stage_01_name,
@@ -8298,6 +8303,70 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
                 f.write('content')
             with self.assertSubprocessFailure(stderr_regexp='already exists', exit_code=3):
                 run("dx get -o destdir_withfile get_workflow")
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create global workflows')
+    def test_get_global_workflow(self):
+        gwf_name = "test_get_global_workflow"
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name, version="0.0.7")
+        workflow_dir = self.write_workflow_directory(gwf_name,
+                                                     json.dumps(dxworkflow_json),
+                                                     readme_content="Workflow Get and Readme Please")
+        built_workflow = json.loads(run("dx build --globalworkflow {} --json".format(workflow_dir)))
+
+        identifiers = [built_workflow["id"],
+                       "globalworkflow-" + gwf_name,
+                       # TODO: enable once dx get can be used with non-prefixed app & global workflow name
+                       # TODO: (which works for dx describe)
+                       #gwf_name,
+                       #gwf_name + "/0.0.7"
+                      ]
+        for identifier in identifiers:
+            with chdir(tempfile.mkdtemp()):
+                run("dx get {wfidentifier}".format(wfidentifier=identifier))
+                self.assertTrue(os.path.exists(os.path.join(gwf_name, "dxworkflow.json")))
+                workflow_metadata = open(os.path.join(gwf_name, "dxworkflow.json")).read()
+                output_json = json.loads(workflow_metadata, object_pairs_hook=collections.OrderedDict)
+                self.assertEqual(dxworkflow_json, output_json)
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create global workflows')
+    def test_dx_cross_get_and_build_workflows(self):
+
+        def _build(name, atype):
+            dxworkflow_json = dict(self.dxworkflow_spec, name=name)
+            workflow_dir = self.write_workflow_directory(name,
+                                                         json.dumps(dxworkflow_json),
+                                                         readme_content="Workflow Get and Readme Please")
+            built_workflow = json.loads(run("dx build --{} {} --json".format(atype, workflow_dir)))
+            self.assertEqual(built_workflow["name"], name)
+
+        def _get_and_build(name, atype):
+            with chdir(tempfile.mkdtemp()):
+                run("dx get {}".format('globalworkflow-' + name if atype == 'globalworkflow' else name))
+                dxworkflow_json = json.loads(open(os.path.join(name, "dxworkflow.json")).read())
+                self.assertIn("name", dxworkflow_json)
+
+                # we need to stick in 'version' to dxworkflow.json to build an global workflow
+                dxworkflow_json["version"] = "1.0.0"
+                with open(os.path.join(name, "dxworkflow.json"), 'w') as dxapp_json_file_2:
+                    dxapp_json_file_2.write(json.dumps(dxworkflow_json, ensure_ascii=False))
+
+                # build global workflow from the new source dir, created with 'dx get'
+                new_gwf = json.loads(run("dx build --json --globalworkflow {}".format(name)))
+                self.assertEqual(new_gwf["class"], "globalworkflow")
+                self.assertEqual(new_gwf["name"], name)
+
+                # build regular workflow from the new source dir, created with 'dx get'
+                new_workflow = json.loads(run("dx build --json {}".format(name)))
+                self.assertEqual(new_workflow["class"], "workflow")
+                self.assertEqual(new_workflow["name"], name)
+
+        _build('globalworkflow_cycle', 'globalworkflow')
+        _get_and_build('globalworkflow_cycle', 'globalworkflow')
+
+        _build('workflow_cycle', 'workflow')
+        _get_and_build('workflow_cycle', 'workflow')
+
+class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
 
     def test_get_applet(self):
         # TODO: not sure why self.assertEqual doesn't consider
@@ -8723,17 +8792,13 @@ class TestDXGetExecutables(DXTestCaseBuildApps):
                     dxapp_json_file_2.write(json.dumps(dxapp_json, ensure_ascii=False))
 
                 # build app from the new source dir, created with 'dx get'
-                new_app = json.loads(run("dx build --json --app {}".format(name)))
-                app_desc = dxpy.get_handler(new_app["id"]).describe()
+                app_desc = json.loads(run("dx build --json --app {}".format(name)))
                 self.assertEqual(app_desc["class"], "app")
-                self.assertEqual(app_desc["id"], new_app["id"])
                 self.assertEqual(app_desc["name"], name)
 
                 # build applet from the new source dir, created with 'dx get'
-                new_applet = json.loads(run("dx build --json -a {}".format(name)))
-                applet_desc = dxpy.get_handler(new_applet["id"]).describe()
+                applet_desc = json.loads(run("dx build --json -a {}".format(name)))
                 self.assertEqual(applet_desc["class"], "applet")
-                self.assertEqual(applet_desc["id"], new_applet["id"])
                 self.assertEqual(applet_desc["name"], name)
 
         _build('app_cycle', 'app')

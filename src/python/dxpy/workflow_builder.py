@@ -228,12 +228,12 @@ def _get_validated_json(json_spec, args):
     # print ignored keys if present in json_spec
     # TODO: add "regionalOptions" to supported_keys when building multi-region workflows is enabled
     supported_keys = {"project", "folder", "name", "outputFolder", "stages",
-                      "inputs", "outputs", "version", "title", "summary", "categories",
-                      "dxapi"}
+                      "inputs", "outputs", "version", "title", "summary", "categories"}
     unsupported_keys = _get_unsupported_keys(json_spec.keys(), supported_keys)
     if len(unsupported_keys) > 0:
-        print("Warning: the following root level fields are not supported and will be ignored: {}"
-              .format(", ".join(unsupported_keys)))
+        logger.warn(
+            "Warning: the following root level fields are not supported and will be ignored: {}"
+                .format(", ".join(unsupported_keys)))
 
     dxpy.executable_builder.inline_documentation_files(json_spec, args.src_dir)
 
@@ -272,9 +272,8 @@ def _build_underlying_workflows(json_spec, args):
     Returns a tuple of dictionaries: workflow IDs by region and project IDs by region.
     The caller is responsible for destroying the projects if this method returns properly.
     """
-    # TODO: Initially a global workflow can be enabled in one region only, the region of the
-    # underlying workflow ( the region of the current project). It will be expanded in
-    # the future to build in all regions.
+    # TODO: initially a global workflow can be enabled in one region only,
+    # the region of the underlying workflow
     projects_by_region, workflows_by_region = {}, {}  # IDs by region
 
     # Create a temp project
