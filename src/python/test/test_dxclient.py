@@ -1959,6 +1959,7 @@ class TestDXClientDescribe(DXTestCase):
         )
         self.assertTrue("billTo" in cli_user_desc_json)
         self.assertEqual(cli_user_desc_json.get("billTo"), user_id)
+        print("DNA_API_REQ_USR_MGMT_003")
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
