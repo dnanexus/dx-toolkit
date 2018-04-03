@@ -2595,7 +2595,7 @@ def build(args):
             workflow_builder.build(args, build_parser)
         else:
             msg = "Unrecognized mode. Accepted options: --app, --applet, --workflow, --globalworkflow."
-            msg += " If not provided, an attempt is made to build either an applet or a (global) workflow, depending on"
+            msg += " If not provided, an attempt is made to build either an applet or a workflow, depending on"
             msg += " whether a dxapp.json or dxworkflow.json file is found in the source directory, respectively."
             build_parser.error(msg)
     except Exception as e:
