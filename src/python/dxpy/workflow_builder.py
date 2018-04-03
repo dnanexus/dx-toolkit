@@ -115,17 +115,17 @@ def _set_categories_on_workflow(global_workflow_id, categories_to_set):
     Note: Categories are set on the workflow series level,
     i.e. the same set applies to all versions.
     """
-    #TODO
-    # assert(isinstance(global_workflow_id, basestring))
     assert(isinstance(categories_to_set, list))
 
     existing_categories = dxpy.api.global_workflow_list_categories(global_workflow_id)['categories']
     categories_to_add = set(categories_to_set).difference(set(existing_categories))
     categories_to_remove = set(existing_categories).difference(set(categories_to_set))
     if categories_to_add:
-        dxpy.api.global_workflow_add_categories(global_workflow_id, input_params={'categories': list(categories_to_add)})
+        dxpy.api.global_workflow_add_categories(global_workflow_id,
+                                                input_params={'categories': list(categories_to_add)})
     if categories_to_remove:
-        dxpy.api.global_workflow_remove_categories(global_workflow_id, input_params={'categories': list(categories_to_remove)})
+        dxpy.api.global_workflow_remove_categories(global_workflow_id,
+                                                   input_params={'categories': list(categories_to_remove)})
 
 
 def _get_validated_stage(stage, stage_index):
@@ -136,7 +136,7 @@ def _get_validated_stage(stage, stage_index):
 
     # print ignored keys if present in json_spec
     supported_keys = {"id", "input", "executable", "name", "folder",
-                          "input", "executionPolicy", "systemRequirements"}
+                      "executionPolicy", "systemRequirements"}
     unsupported_keys = _get_unsupported_keys(stage.keys(), supported_keys)
     if len(unsupported_keys) > 0:
         print("Warning: the following stage fields are not supported and will be ignored: {}"
@@ -149,7 +149,7 @@ def _get_validated_stages(stages):
     """
     Validates stages of the workflow as a list of dictionaries.
     """
-    if not isinstance(stages, list): # or not all(stages, lambda x: isinstance(x, dictionary)):
+    if not isinstance(stages, list):
         raise WorkflowBuilderException("Stages must be specified as a list of dictionaries")
     validated_stages = []
     for index, stage in enumerate(stages):
@@ -208,6 +208,9 @@ def _validate_json_for_global_workflow(json_spec, args):
     #     if not isinstance(regOptions, dict):
     #          raise WorkflowBuilderException("The field 'regionalOptions' in dxworkflow.json must be a mapping")
 
+    if args.bill_to:
+        json_spec["billTo"] = args.bill_to
+
 def _get_validated_json(json_spec, args):
     """
     Validates dxworkflow.json and returns the json that can be sent with the
@@ -249,8 +252,15 @@ def _get_validated_json(json_spec, args):
 
     return json_spec
 
+def _build_regular_workflow(json_spec):
+    """
+    Precondition: json_spec must be validated
+    """
+    workflow_id = dxpy.api.workflow_new(json_spec)["id"]
+    dxpy.api.workflow_close(workflow_id)
+    return workflow_id
 
-def _build_underlying_workflows(json_spec, bill_to_override=None):
+def _build_underlying_workflows(json_spec, args):
     """
     Creates a workflow in a temporary project for each enabled region.
     Returns a tuple of dictionaries: workflow IDs by region and project IDs by region.
@@ -258,28 +268,26 @@ def _build_underlying_workflows(json_spec, bill_to_override=None):
     """
     # TODO: initially a global workflow can be enabled in one region only,
     # the region of the underlying workflow
-    projects_by_region = {}
-    workflows_by_region = {}
+    projects_by_region, workflows_by_region = {}, {}  # IDs by region
 
     # Create a temp project
     try:
         project_input = {"name": "Temporary build project for dx build global worklow"}
-        if bill_to_override:
-            project_input["billTo"] = bill_to_override
+        if args.bill_to:
+            project_input["billTo"] = args.bill_to
         working_project = dxpy.api.project_new(project_input)["id"]
     except:
         err_exit()
     region = dxpy.api.project_describe(working_project,
                                        input_params={"fields": {"region": True}})["region"]
     projects_by_region[region] = working_project
-    logger.debug("Created temporary project %s to build in" % (working_project,))
+    logger.debug("Created temporary project {} to build in".format(working_project))
 
     # Create a project-based workflow in each temporary project
     try:
         for region, project in projects_by_region.items():
             json_spec['project'] = project
-            workflow_id = dxpy.api.workflow_new(json_spec)["id"]
-            dxpy.api.workflow_close(workflow_id)
+            workflow_id = _build_regular_workflow(json_spec)
             logger.debug("Created workflow " + workflow_id + " successfully")
             workflows_by_region[region] = workflow_id
     except:
@@ -291,59 +299,60 @@ def _build_underlying_workflows(json_spec, bill_to_override=None):
     return workflows_by_region, projects_by_region
 
 
-def _create_global(json_spec, bill_to_override=None):
+def _build_global_workflow(json_spec, args):
     """
     Creates a workflow in a temporary project for each enabled region
     and builds a global workflow on the platform based on these workflows.
     """
-    workflow_ids_by_region, project_ids_by_region = {}, {}
+    workflows_by_region, projects_by_region = {}, {}  # IDs by region
     try:
-        workflow_ids_by_region, project_ids_by_region = \
-            _build_underlying_workflows(json_spec, bill_to_override)
-        regionalOptions = {}
-        for region, workflow_id in workflow_ids_by_region.items():
-            regionalOptions[region] = {'workflow': workflow_id}
-        json_spec.update({'regionalOptions': regionalOptions})
+        # prepare "regionalOptions" field for the globalworkflow/new input
+        workflows_by_region, projects_by_region = \
+            _build_underlying_workflows(json_spec, args)
+        regional_options = {}
+        for region, workflow_id in workflows_by_region.items():
+            regional_options[region] = {'workflow': workflow_id}
+        json_spec.update({'regionalOptions': regional_options})
 
-        # Leave only fields that are used to build and configure the workflow
+        # leave only fields that are actually used to build the workflow
         gwf_supported_keys = {"name", "version", "title", "summary",
                               "regionalOptions", "categories"}
         gwf_provided_keys = gwf_supported_keys.intersection(set(json_spec.keys()))
         gwf_final_json_spec = {}
         for key in gwf_provided_keys:
             gwf_final_json_spec[key] = json_spec[key]
-        logger.info("Will create global workflow with spec: %s" % (json.dumps(gwf_final_json_spec),))
+        logger.info("Will create global workflow with spec: {}".format(json.dumps(gwf_final_json_spec)))
 
         global_workflow_id = dxpy.api.global_workflow_new(gwf_final_json_spec)["id"]
     finally:
         # Clean up
-        if project_ids_by_region:
-            dxpy.executable_builder.delete_temporary_projects(project_ids_by_region.values())
+        if projects_by_region:
+            dxpy.executable_builder.delete_temporary_projects(projects_by_region.values())
 
-    # Set any additional fields on the ccreated workflow
+    # Set any additional fields on the created workflow
     try:
         _set_categories_on_workflow(global_workflow_id, gwf_final_json_spec.get("categories", []))
     except:
-        logger.warn("The workflow {} was created but setting categories failed".format(global_workflow_id))
+        logger.warn(
+            "The workflow {n}/{v} was created but setting categories failed".format(n=json_spec['name'],
+                                                                                    v=json_spec['version']))
         raise
 
     return global_workflow_id
 
 
-def _create_workflow(json_spec, args):
+def _build_workflow(json_spec, args):
     """
     Creates a workflow on the platform.
     Returns the workflow ID, or None if the workflow cannot be created.
     """
     try:
         if args.mode == 'workflow':
-            workflow_id = dxpy.api.workflow_new(json_spec)["id"]
-            dxpy.api.workflow_close(workflow_id)
+            workflow_id = _build_regular_workflow(json_spec)
         elif args.mode == 'globalworkflow':
-            workflow_id = _create_global(json_spec,
-                                         bill_to_override=None) #TODO: billto
+            workflow_id = _build_global_workflow(json_spec, args)
         else:
-            raise WorkflowBuilderException("Unrecognized workflow type: {}".format(mode))
+            raise WorkflowBuilderException("Unrecognized workflow type: {}".format(args.mode))
     except dxpy.exceptions.DXAPIError as e:
         raise e
     return workflow_id
@@ -372,7 +381,7 @@ def build(args, parser):
     try:
         json_spec = _parse_executable_spec(args.src_dir, "dxworkflow.json", parser)
         validated_spec = _get_validated_json(json_spec, args)
-        workflow_id = _create_workflow(validated_spec, args)
+        workflow_id = _build_workflow(validated_spec, args)
         _print_output(workflow_id, args)
     except WorkflowBuilderException as e:
         print("Error: %s" % (e.message,), file=sys.stderr)
