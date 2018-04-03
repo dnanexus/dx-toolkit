@@ -320,8 +320,9 @@ def _build_global_workflow(json_spec, args):
         json_spec.update({'regionalOptions': regional_options})
 
         # leave only fields that are actually used to build the workflow
-        gwf_supported_keys = {"name", "version", "title", "summary",
-                              "regionalOptions", "categories"}
+        gwf_supported_keys = {"name", "version", "title", "summary", "description",
+                              "developerNotes", "regionalOptions", "categories", "billTo",
+                              "dxapi"}
         gwf_provided_keys = gwf_supported_keys.intersection(set(json_spec.keys()))
         gwf_final_json_spec = {}
         for key in gwf_provided_keys:
