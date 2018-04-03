@@ -502,6 +502,11 @@ def print_project_desc(desc, verbose=False):
         if field not in recognized_fields:
             print_json_field(field, desc[field])
 
+def get_advanced_inputs(desc, verbose):
+    details = desc.get("details")
+    if not verbose and isinstance(details, dict):
+        return details.get("advancedInputs", [])
+    return []
 
 def print_app_desc(desc, verbose=False):
     recognized_fields = ['id', 'class', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'resources', 'billTo', 'installed', 'openSource', 'summary', 'applet', 'installs', 'billing', 'details', 'developerNotes',
@@ -566,18 +571,75 @@ def print_app_desc(desc, verbose=False):
         if field not in recognized_fields:
             print_json_field(field, desc[field])
 
+def print_globalworkflow_desc(desc, verbose=False):
+    recognized_fields = ['id', 'class', 'name', 'version', 'aliases', 'createdBy', 'created',
+                         'modified', 'deleted', 'published', 'title', 'description',
+                         'categories', 'dxapi', 'billTo', 'summary', 'billing', 'developerNotes',
+                         'authorizedUsers', 'regionalOptions']
+
+    print_field("ID", desc["id"])
+    print_field("Class", desc["class"])
+    if 'billTo' in desc:
+        print_field("Billed to", desc['billTo'][5 if desc['billTo'].startswith('user-') else 0:])
+    print_field("Name", desc["name"])
+    print_field("Version", desc["version"])
+    print_list_field("Aliases", desc["aliases"])
+    print_field("Created by", desc["createdBy"][5 if desc['createdBy'].startswith('user-') else 0:])
+    print_field("Created", render_timestamp(desc['created']))
+    print_field("Last modified", render_timestamp(desc['modified']))
+    # print_json_field('Open source', desc['openSource'])
+    # print_json_field('Deleted', desc['deleted'])
+    if not desc.get('deleted', False):
+        advanced_inputs = []
+        if 'published' not in desc or desc["published"] < 0:
+            print_field("Published", "-")
+        else:
+            print_field("Published", render_timestamp(desc['published']))
+        if "title" in desc and desc['title'] is not None:
+            print_field("Title", desc["title"])
+        if "subtitle" in desc and desc['subtitle'] is not None:
+            print_field("Subtitle", desc["subtitle"])
+        if 'summary' in desc and desc['summary'] is not None:
+            print_field("Summary", desc['summary'])
+        print_list_field("Categories", desc["categories"])
+        if 'details' in desc:
+            print_json_field("Details", desc["details"])
+        print_field("API version", desc["dxapi"])
+
+        # Additionally, print inputs, outputs, stages of the underlying workflow
+        # from the region of the current workspace
+        current_project = dxpy.WORKSPACE_ID
+        if current_project:
+            region = dxpy.api.project_describe(current_project, input_params={"fields": {"region": True}})["region"]
+            if region and region in desc['regionalOptions']:
+                workflow_desc = desc['regionalOptions'][region]['workflowDescribe']
+                print_field("Workflow region", region)
+                if 'id' in workflow_desc:
+                    print_field("Workflow ID", workflow_desc['id'])
+                if workflow_desc.get('inputSpec') is not None and workflow_desc.get('inputs') is None:
+                    print_nofill_field("Input Spec", get_io_spec(workflow_desc['inputSpec'], skip_fields=get_advanced_inputs(workflow_desc, verbose)))
+                if workflow_desc.get('outputSpec') is not None and workflow_desc.get('outputs') is None:
+                    print_nofill_field("Output Spec", get_io_spec(workflow_desc['outputSpec']))
+                if  workflow_desc.get('inputs') is not None:
+                    print_nofill_field("Workflow Inputs", get_io_spec(workflow_desc['inputs']))
+                if  workflow_desc.get('outputs') is not None:
+                    print_nofill_field("Workflow Outputs", get_io_spec(workflow_desc['outputs']))
+                if 'stages' in workflow_desc:
+                    for i, stage in enumerate(workflow_desc["stages"]):
+                        render_stage("Stage " + str(i), stage)
+    if 'authorizedUsers' in desc:
+        print_list_field('AuthorizedUsers', desc["authorizedUsers"])
+
+    for field in desc:
+        if field not in recognized_fields:
+            print_json_field(field, desc[field])
+
 def get_col_str(col_desc):
     return col_desc['name'] + DELIMITER(" (") + col_desc['type'] + DELIMITER(")")
 
 def print_data_obj_desc(desc, verbose=False):
     recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputSpec', 'outputSpec', 'runSpec', 'summary', 'dxapi', 'access', 'createdBy', 'summary', 'sponsored', 'developerNotes',
                          'stages', 'inputs', 'outputs', 'latestAnalysis', 'editVersion', 'outputFolder', 'initializedFrom']
-
-    def get_advanced_inputs():
-        details = desc.get("details")
-        if not verbose and isinstance(details, dict):
-            return details.get("advancedInputs", [])
-        return []
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -628,7 +690,7 @@ def print_data_obj_desc(desc, verbose=False):
     # In case of a workflow: do not display "Input/Output Specs" that show stages IO
     # when the workflow has workflow-level input/output fields defined.
     if desc.get('inputSpec') is not None and desc.get('inputs') is None:
-        print_nofill_field("Input Spec", get_io_spec(desc['inputSpec'], skip_fields=get_advanced_inputs()))
+        print_nofill_field("Input Spec", get_io_spec(desc['inputSpec'], skip_fields=get_advanced_inputs(desc, verbose)))
     if desc.get('outputSpec') is not None and desc.get('outputs') is None:
         print_nofill_field("Output Spec", get_io_spec(desc['outputSpec']))
     if  desc.get('inputs') is not None:
@@ -880,6 +942,8 @@ def print_desc(desc, verbose=False):
         print_project_desc(desc, verbose=verbose)
     elif desc['class'] == 'app':
         print_app_desc(desc, verbose=verbose)
+    elif desc['class'] == 'globalworkflow':
+        print_globalworkflow_desc(desc, verbose=verbose)
     elif desc['class'] in ['job', 'analysis']:
         print_execution_desc(desc)
     elif desc['class'] == 'user':

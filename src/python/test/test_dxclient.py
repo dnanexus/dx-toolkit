@@ -1911,7 +1911,7 @@ dx-jobutil-add-output outfile `dx-jobutil-parse-link "$infile"`
                 self.assertEqual(self.get_billed_project(), proj1.get_id())
 
 
-class TestDXClientDescribe(DXTestCase):
+class TestDXClientDescribe(DXTestCaseBuildWorkflows):
     def test_projects(self):
         run("dx describe :")
         run("dx describe " + self.project)
@@ -1983,6 +1983,19 @@ class TestDXClientDescribe(DXTestCase):
 
         run("dx describe " + app_new_output2["id"])
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create global workflows')
+    def test_describe_global_workflow(self):
+        gwf = self.create_global_workflow(self.project, "gwf_describe", "0.0.1")
+        by_id = run('dx describe {}'.format(gwf.get_id()))
+        by_name = run('dx describe gwf_describe')
+        by_prefixed_name = run('dx describe globalworkflow-gwf_describe')
+        self.assertEquals(by_id, by_name, by_prefixed_name)
+        self.assertIn("gwf_describe", by_id)
+        self.assertIn(gwf.get_id(), by_id)
+        self.assertIn("Workflow Inputs", by_id)
+        self.assertIn("Workflow Outputs", by_id)
+        self.assertIn("Billed to", by_id)
 
 class TestDXClientRun(DXTestCase):
     def setUp(self):

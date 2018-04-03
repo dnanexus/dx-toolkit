@@ -1080,6 +1080,62 @@ def tree(args):
         err_exit()
 
 def describe(args):
+
+    def describe_global_executable(json_output, args, exec_type):
+        """
+        Describes a global executable, i.e. either app or global workflow
+        depending on the provided exec_type. Appends the result to json_output.
+        Returns True if any matches were found
+        """
+        assert(exec_type in ('app', 'globalworkflow'))
+        found_match = False
+
+        try:
+            if exec_type == 'app':
+                desc = dxpy.api.app_describe(args.path)
+            else:
+                desc = dxpy.api.global_workflow_describe(args.path)
+                desc = dxpy.append_underlying_workflow_describe(desc)
+            if args.json:
+                json_output.append(desc)
+            elif args.name:
+                print(desc['name'])
+            else:
+                print(get_result_str())
+                print_desc(desc, args.verbose)
+            found_match = True
+        except dxpy.DXAPIError as details:
+            if details.code != requests.codes.not_found:
+                raise
+        return found_match
+
+    def find_global_executable(json_output, args):
+        """
+        Makes a find_apps API call and, if no matches are found, a find_global_workflows call.
+        Since these two objects share namespace, either app or a global workflow will be
+        found, not both. The results are appended to json_output and printed to STDOUT.
+        """
+
+        def append_to_output_json_and_print(result):
+            if args.json:
+                json_output.append(result['describe'])
+            elif args.name:
+                print(result['describe']['name'])
+            else:
+                print(get_result_str())
+                print_desc(result['describe'], args.verbose)
+
+        found_match = False
+        for result in dxpy.find_apps(name=args.path, describe=True):
+            append_to_output_json_and_print(result)
+            found_match = True
+        if not found_match:
+            for result in dxpy.find_global_workflows(name=args.path, describe=True):
+                result['describe'] = dxpy.append_underlying_workflow_describe(result['describe'])
+                append_to_output_json_and_print(result)
+                found_match = True
+        return found_match
+
     try:
         if len(args.path) == 0:
             raise DXCLIError('Must provide a nonempty string to be described')
@@ -1181,31 +1237,13 @@ def describe(args):
 
         if not is_hashid(args.path) and ':' not in args.path:
 
-            # Could be an app name
-            if args.path.startswith('app-'):
-                try:
-                    desc = dxpy.api.app_describe(args.path)
-                    if args.json:
-                        json_output.append(desc)
-                    elif args.name:
-                        print(desc['name'])
-                    else:
-                        print(get_result_str())
-                        print_desc(desc, args.verbose)
-                    found_match = True
-                except dxpy.DXAPIError as details:
-                    if details.code != requests.codes.not_found:
-                        raise
+            # Could be a name of an app or a global workflow
+            if args.path.startswith('app-') or args.path.startswith('globalworkflow-'):
+                found = describe_global_executable(json_output, args, args.path.partition('-')[0])
             else:
-                for result in dxpy.find_apps(name=args.path, describe=True):
-                    if args.json:
-                        json_output.append(result['describe'])
-                    elif args.name:
-                        print(result['describe']['name'])
-                    else:
-                        print(get_result_str())
-                        print_desc(result['describe'], args.verbose)
-                    found_match = True
+                found = find_global_executable(json_output, args)
+            if found:
+                found_match = True
 
             if args.path.startswith('user-'):
                 # User
@@ -2301,54 +2339,88 @@ def find_projects(args):
         err_exit()
     format_find_results(args, results)
 
+def find_apps_result(args):
+    raw_results = dxpy.find_apps(name=args.name, name_mode='glob', category=args.category,
+                                 all_versions=args.all,
+                                 published=(not args.unpublished),
+                                 billed_to=args.billed_to,
+                                 created_by=args.creator,
+                                 developer=args.developer,
+                                 created_after=args.created_after,
+                                 created_before=args.created_before,
+                                 modified_after=args.mod_after,
+                                 modified_before=args.mod_before,
+                                 describe={"fields": {"name": True,
+                                                      "installed": args.installed,
+                                                      "title": not args.brief,
+                                                      "version": not args.brief,
+                                                      "published": args.verbose,
+                                                      "billTo": not args.brief}})
 
-def find_apps(args):
+    if args.installed:
+        maybe_filtered_by_install = (result for result in raw_results if result['describe']['installed'])
+    else:
+        maybe_filtered_by_install = raw_results
+
+    if args.brief:
+        results = ({"id": result['id']} for result in maybe_filtered_by_install)
+    else:
+        results = sorted(maybe_filtered_by_install, key=lambda result: result['describe']['name'])
+    return results
+
+def find_global_workflows_result(args):
+    raw_results = dxpy.find_global_workflows(name=args.name, name_mode='glob', category=args.category,
+                                 all_versions=args.all,
+                                 published=(not args.unpublished),
+                                 billed_to=args.billed_to,
+                                 created_by=args.creator,
+                                 developer=args.developer,
+                                 created_after=args.created_after,
+                                 created_before=args.created_before,
+                                 modified_after=args.mod_after,
+                                 modified_before=args.mod_before,
+                                 describe={"fields": {"name": True,
+                                                      "title": not args.brief,
+                                                      "version": not args.brief,
+                                                      "published": args.verbose,
+                                                      "billTo": not args.brief}})
+
+    if args.brief:
+        results = ({"id": result['id']} for result in raw_results)
+    else:
+        results = sorted(raw_results, key=lambda result: result['describe']['name'])
+    return results
+
+def print_find_results(results, args):
     def maybe_x(result):
         return DNANEXUS_X() if result['describe']['billTo'] == 'org-dnanexus' else ' '
 
+    if args.json:
+        print(json.dumps(list(results), indent=4))
+        return
+    if args.brief:
+        for result in results:
+            print(result['id'])
+    elif not args.verbose:
+        for result in results:
+            print(maybe_x(result) + DELIMITER(" ") + result['describe'].get('title', result['describe']['name']) + DELIMITER(' (') + result["describe"]["name"] + DELIMITER("), v") + result["describe"]["version"])
+    else:
+        for result in results:
+            print(maybe_x(result) + DELIMITER(" ") + result["id"] + DELIMITER(" ") + result['describe'].get('title', result['describe']['name']) + DELIMITER(' (') + result["describe"]["name"] + DELIMITER('), v') + result['describe']['version'] + DELIMITER(" (") + ("published" if result["describe"].get("published", 0) > 0 else "unpublished") + DELIMITER(")"))
+
+def find_apps(args):
     try:
-        raw_results = dxpy.find_apps(name=args.name, name_mode='glob', category=args.category,
-                                     all_versions=args.all,
-                                     published=(not args.unpublished),
-                                     billed_to=args.billed_to,
-                                     created_by=args.creator,
-                                     developer=args.developer,
-                                     created_after=args.created_after,
-                                     created_before=args.created_before,
-                                     modified_after=args.mod_after,
-                                     modified_before=args.mod_before,
-                                     describe={"fields": {"name": True,
-                                                          "installed": args.installed,
-                                                          "title": not args.brief,
-                                                          "version": not args.brief,
-                                                          "published": args.verbose,
-                                                          "billTo": not args.brief}})
-
-        if args.installed:
-            maybe_filtered_by_install = (result for result in raw_results if result['describe']['installed'])
-        else:
-            maybe_filtered_by_install = raw_results
-
-        if args.brief:
-            results = ({"id": result['id']} for result in maybe_filtered_by_install)
-        else:
-            results = sorted(maybe_filtered_by_install, key=lambda result: result['describe']['name'])
-
-        if args.json:
-            print(json.dumps(list(results), indent=4))
-            return
-        if args.brief:
-            for result in results:
-                print(result['id'])
-        elif not args.verbose:
-            for result in results:
-                print(maybe_x(result) + DELIMITER(" ") + result['describe'].get('title', result['describe']['name']) + DELIMITER(' (') + result["describe"]["name"] + DELIMITER("), v") + result["describe"]["version"])
-        else:
-            for result in results:
-                print(maybe_x(result) + DELIMITER(" ") + result["id"] + DELIMITER(" ") + result['describe'].get('title', result['describe']['name']) + DELIMITER(' (') + result["describe"]["name"] + DELIMITER('), v') + result['describe']['version'] + DELIMITER(" (") + ("published" if result["describe"].get("published", 0) > 0 else "unpublished") + DELIMITER(")"))
+        results = find_apps_result(args)
+        print_find_results(results, args)
     except:
         err_exit()
 
+def find_global_workflows(args):
+    try:
+        results = find_global_workflows_result(args)
+        print_find_results(results, args)
+    except:
+        err_exit()
 
 def update_project(args):
     input_params = get_update_project_args(args)
