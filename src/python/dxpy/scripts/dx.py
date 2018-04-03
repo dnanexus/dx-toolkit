@@ -2550,7 +2550,7 @@ def build(args):
             build_parser.error("Options --remote, --app, and --run cannot all be specified together. Try removing --run and then separately invoking dx run.")
 
         # options not supported by workflow building
-        if args.mode in ("workflow"):
+        if args.mode == "workflow":
             unsupported_options = {
                 '--ensure-upload': args.ensure_upload,
                 '--force-symlinks': args.force_symlinks,

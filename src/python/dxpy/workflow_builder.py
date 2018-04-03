@@ -194,7 +194,6 @@ def _validate_json_for_global_workflow(json_spec, args):
     if json_spec['name'] != json_spec['name'].lower():
         logger.warn('workflow name "{}" should be all lowercase'.format(json_spec['name']))
 
-
     if 'version' not in json_spec:
         raise WorkflowBuilderException(
             "dxworkflow.json contains no 'version' field, but it is required to build a global workflow")
