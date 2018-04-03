@@ -181,6 +181,10 @@ def _validate_json_for_global_workflow(json_spec, args):
     Since building a global workflow is done after all the underlying workflows
     are built, which may be time-consuming, we validate as much as possible here.
     """
+    # TODO: verify the billTo can build the workflow
+    # TODO: if the global workflow build fails add an option to interactively change billto
+    # TODO: (or other simple fields) instead of failing altogether
+    # TODO: get a confirmation before building a workflow that may be costly
     if 'name' not in json_spec:
         raise WorkflowBuilderException(
             "dxworkflow.json contains no 'name' field, but it is required to build a global workflow")
@@ -202,20 +206,10 @@ def _validate_json_for_global_workflow(json_spec, args):
         if json_spec['summary'].endswith('.'):
             logger.warn("summary {} should be a short phrase not ending in a period".format(json_spec['summary'],))
 
-    # TODO: regionalOptions will be ignored in the initial version
-    # if 'regionalOptions' in json_spec:
-    #     reg_options = json_spec['regionalOptions']
-    #     if not isinstance(reg_options, dict):
-    #          raise WorkflowBuilderException("The field 'regionalOptions' in dxworkflow.json must be a mapping")
-
     if args.bill_to:
         json_spec["billTo"] = args.bill_to
-        # TODO: verify this billTo can build the workflow
 
-    dxpy.executable_builder.verify_executable_writable('globalworkflow-' + json_spec['name'])
-
-    if 'project' in json_spec:
-        logger.warn('the field "project" is ignored when building a global workflow')
+    dxpy.executable_builder.verify_developer_rights('globalworkflow-' + json_spec['name'])
 
 
 def _get_validated_json(json_spec, args):

@@ -6051,33 +6051,29 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create global worklows')
     def test_build_workflow_warnings(self):
-        gwf_name = "test_build_workflow_warnings".format(t=int(time.time()))
-        dxworkflow_json = dict(self.dxworkflow_spec, name="Foo", version="foo")
-        app_dir = self.write_app_directory("test_build_workflow_warnings",
-                                           json.dumps(dxworkflow_json))
+        gwf_name = "Test_build_workflow_warnings".format(t=int(time.time()))
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name, version="foo")
+        app_dir = self.write_workflow_directory("test_build_workflow_warnings",
+                                                json.dumps(dxworkflow_json))
 
-        app_unexpected_warnings = ["missing a name",
-                                   "should be a short phrase not ending in a period",
-                                #    '"description" field shadows file',
-                                #    '"description" field should be written in complete sentences',
-                                #    'unrecognized category'
-                                  ]
-        app_expected_warnings = [
-        "should be all lowercase",
-                                 "does not match containing directory",
-                                 "missing a title",
-                                 "missing a summary",
-                                 "missing a description",
-                                 "should be semver compliant"]
+        unexpected_warnings = ["missing a name",
+                               "should be a short phrase not ending in a period"]
+        expected_warnings = [
+                             "should be all lowercase",
+                             "does not match containing directory",
+                             "missing a title",
+                             "missing a summary",
+                             # "missing a description",
+                             "should be semver compliant"]
         try:
             # Expect "dx build" to succeed, exit with error code to
             # grab stderr.
-            run("dx build --app " + app_dir + " && exit 28")
+            run("dx build --globalworkflow " + app_dir + " && exit 28")
         except subprocess.CalledProcessError as err:
             self.assertEqual(err.returncode, 28)
-            for warning in app_unexpected_warnings:
+            for warning in unexpected_warnings:
                 self.assertNotIn(warning, err.stderr)
-            for warning in app_expected_warnings:
+            for warning in expected_warnings:
                 self.assertIn(warning, err.stderr)
 
 class TestDXBuildApp(DXTestCaseBuildApps):

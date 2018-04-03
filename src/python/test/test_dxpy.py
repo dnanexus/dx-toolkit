@@ -1965,9 +1965,11 @@ class TestDXApp(unittest.TestCase):
 class TestDXGlobalWorkflow(testutil.DXTestCaseBuildWorkflows):
     def setUp(self):
         setUpTempProjects(self)
+        super(TestDXGlobalWorkflow, self).setUp()
 
     def tearDown(self):
         tearDownTempProjects(self)
+        super(TestDXGlobalWorkflow, self).tearDown()
 
     def test_init_and_set_id(self):
         for good_values in [("globalworkflow-aB3456789012345678901234", None, None),

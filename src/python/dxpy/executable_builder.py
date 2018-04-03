@@ -98,7 +98,7 @@ def delete_temporary_projects(projects):
             pass
 
 
-def verify_executable_writable(prefixed_name):
+def verify_developer_rights(prefixed_name):
     assert(prefixed_name.startswith('app-') or prefixed_name.startswith('globalworkflow-'))
 
     if prefixed_name.partition('-')[0] == 'app':

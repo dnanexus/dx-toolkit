@@ -627,7 +627,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     _check_suggestions(app_json, publish=publish)
     _verify_app_source_dir(src_dir, mode, enforce=do_check_syntax)
     if mode == "app" and not dry_run:
-        dxpy.executable_builder.verify_executable_writable('app-' + app_json['name'])
+        dxpy.executable_builder.verify_developer_rights('app-' + app_json['name'])
 
     working_project = None
     using_temp_project = False
@@ -912,7 +912,7 @@ def _build_app(args, extra_args):
             _check_suggestions(app_json, publish=args.publish)
             _verify_app_source_dir(args.src_dir, args.mode)
             if args.mode == "app" and not args.dry_run:
-                dxpy.executable_builder.verify_executable_writable('app-' + app_json['name'])
+                dxpy.executable_builder.verify_developer_rights('app-' + app_json['name'])
         except dxpy.app_builder.AppBuilderException as e:
             print("Error: %s" % (e.message,), file=sys.stderr)
             sys.exit(3)
