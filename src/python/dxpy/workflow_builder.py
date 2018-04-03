@@ -204,12 +204,19 @@ def _validate_json_for_global_workflow(json_spec, args):
 
     # TODO: regionalOptions will be ignored in the initial version
     # if 'regionalOptions' in json_spec:
-    #     regOptions = json_spec['regionalOptions']
-    #     if not isinstance(regOptions, dict):
+    #     reg_options = json_spec['regionalOptions']
+    #     if not isinstance(reg_options, dict):
     #          raise WorkflowBuilderException("The field 'regionalOptions' in dxworkflow.json must be a mapping")
 
     if args.bill_to:
         json_spec["billTo"] = args.bill_to
+        # TODO: verify this billTo can build the workflow
+
+    dxpy.executable_builder.verify_executable_writable('globalworkflow-' + json_spec['name'])
+
+    if 'project' in json_spec:
+        logger.warn('the field "project" is ignored when building a global workflow')
+
 
 def _get_validated_json(json_spec, args):
     """
@@ -222,8 +229,7 @@ def _get_validated_json(json_spec, args):
         return
 
     # print ignored keys if present in json_spec
-    # TODO: add "regionalOptions" to supported_keys when building
-    # multi-region workflows is enabled
+    # TODO: add "regionalOptions" to supported_keys when building multi-region workflows is enabled
     supported_keys = {"project", "folder", "name", "outputFolder", "stages",
                       "inputs", "outputs", "version", "title", "summary", "categories"}
     unsupported_keys = _get_unsupported_keys(json_spec.keys(), supported_keys)
@@ -252,6 +258,7 @@ def _get_validated_json(json_spec, args):
 
     return json_spec
 
+
 def _build_regular_workflow(json_spec):
     """
     Precondition: json_spec must be validated
@@ -259,6 +266,7 @@ def _build_regular_workflow(json_spec):
     workflow_id = dxpy.api.workflow_new(json_spec)["id"]
     dxpy.api.workflow_close(workflow_id)
     return workflow_id
+
 
 def _build_underlying_workflows(json_spec, args):
     """

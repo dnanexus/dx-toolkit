@@ -411,26 +411,6 @@ def _verify_app_source_dir(src_dir, mode, enforce=True):
     finally:
         shutil.rmtree(temp_dir)
 
-def _verify_app_writable(app_name):
-    app_name_already_exists = True
-    try:
-        is_developer = dxpy.api.app_describe('app-' + app_name)['isDeveloperFor']
-    except dxpy.exceptions.DXAPIError as e:
-        if e.name == 'ResourceNotFound':
-            app_name_already_exists = False
-        elif e.name == 'PermissionDenied':
-            raise dxpy.app_builder.AppBuilderException('An app with the given name already exists and you are not a developer of that app')
-        else:
-            raise e
-
-    if not app_name_already_exists:
-        # This app doesn't exist yet so its creation will succeed
-        # (or at least, not fail on the basis of the ACL).
-        return
-
-    if not is_developer:
-        raise dxpy.app_builder.AppBuilderException('You are not a developer for app {app}'.format(app=app_name))
-
 def _parse_app_spec(src_dir):
     """Returns the parsed contents of dxapp.json.
 
@@ -647,7 +627,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     _check_suggestions(app_json, publish=publish)
     _verify_app_source_dir(src_dir, mode, enforce=do_check_syntax)
     if mode == "app" and not dry_run:
-        _verify_app_writable(app_json['name'])
+        dxpy.executable_builder.verify_executable_writable('app-' + app_json['name'])
 
     working_project = None
     using_temp_project = False
@@ -932,7 +912,7 @@ def _build_app(args, extra_args):
             _check_suggestions(app_json, publish=args.publish)
             _verify_app_source_dir(args.src_dir, args.mode)
             if args.mode == "app" and not args.dry_run:
-                _verify_app_writable(app_json['name'])
+                dxpy.executable_builder.verify_executable_writable('app-' + app_json['name'])
         except dxpy.app_builder.AppBuilderException as e:
             print("Error: %s" % (e.message,), file=sys.stderr)
             sys.exit(3)
