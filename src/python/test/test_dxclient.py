@@ -3923,14 +3923,115 @@ class TestDXClientFind(DXTestCase):
         self.assertEqual(set(execid.strip() for execid in run(cmd).splitlines()),
                          set(ids))
 
-    def test_dx_find_apps(self):
+    def test_dx_find_apps_and_globalworkflows_category(self):
         # simple test here does not assume anything about apps that do
         # or do not exist
         from dxpy.app_categories import APP_CATEGORIES
-        category_help = run("dx find apps --category-help")
+
+        category_help_apps = run("dx find apps --category-help")
         for category in APP_CATEGORIES:
-            self.assertIn(category, category_help)
+            self.assertIn(category, category_help_apps)
         run("dx find apps --category foo") # any category can be searched
+
+        category_help_workflows = run("dx find globalworkflows --category-help")
+        for category in APP_CATEGORIES:
+            self.assertIn(category, category_help_workflows)
+        run("dx find globalworkflows --category foo") # any category can be searched
+
+    def test_dx_find_globalworkflows(self):
+        org_id = "org-piratelabs"
+        test_applet_id = dxpy.api.applet_new({"name": "my_find_applet",
+                                              "dxapi": "1.0.0",
+                                              "project": self.project,
+                                              "inputSpec": [],
+                                              "outputSpec": [],
+                                              "runSpec": {"interpreter": "bash",
+                                                          "distribution": "Ubuntu",
+                                                          "release": "14.04",
+                                                          "code": "exit 0"}
+                                              })['id']
+
+        workflow_spec = {"stages": [{"id": "stage_0", "executable": test_applet_id}]}
+        dxworkflow = dxpy.DXWorkflow()
+        dxworkflow.new(**workflow_spec)
+        dxglobalworkflow_spec = {
+            "name": "gwf_find",
+            "version": "0.0.1",
+            "regionalOptions": {
+                "aws:us-east-1": {
+                     "workflow": dxworkflow.get_id()
+                }
+            }
+        }
+
+        # Create a few global workflows
+
+        # 1. Workflow with an org billTo
+        # version 0.0.1
+        gwf_find_billto = "gwf_find_billto"
+        spec = dict(dxglobalworkflow_spec, name=gwf_find_billto, bill_to=org_id, version="0.0.1")
+        dxgwf = dxpy.DXGlobalWorkflow()
+        dxgwf.new(**spec)
+        desc = dxgwf.describe()
+        self.assertEqual(desc["billTo"], org_id)
+        # version 0.0.2
+        spec = dict(dxglobalworkflow_spec, name=gwf_find_billto, bill_to=org_id, version="0.0.2")
+        dxgwf = dxpy.DXGlobalWorkflow()
+        dxgwf.new(**spec)
+        desc = dxgwf.describe()
+        self.assertEqual(desc["version"], "0.0.2")
+
+        # 2. Published workflow
+        gwf_find_published_1 = "gwf_find_published_1"
+        spec = dict(dxglobalworkflow_spec, name=gwf_find_published_1, version="0.0.3")
+        dxgwf = dxpy.DXGlobalWorkflow()
+        dxgwf.new(**spec)
+        dxgwf.publish()
+        desc = dxgwf.describe()
+        self.assertTrue(desc["published"] > 0)
+
+        # 3. Published workflow
+        gwf_find_published_2 = "gwf_find_published_2"
+        spec = dict(dxglobalworkflow_spec, name=gwf_find_published_2, version="0.0.4")
+        dxgwf = dxpy.DXGlobalWorkflow()
+        dxgwf.new(**spec)
+        dxgwf.publish()
+        desc = dxgwf.describe()
+        self.assertTrue(desc["published"] > 0)
+
+        # Tests
+
+        # find only published
+        output = run("dx find globalworkflows")
+        self.assertIn(gwf_find_published_1, output)
+        self.assertIn(gwf_find_published_2, output)
+        self.assertNotIn(gwf_find_billto, output)
+
+        # find only unpublished
+        output = run("dx find globalworkflows --unpublished")
+        self.assertIn(gwf_find_billto, output)
+        self.assertNotIn(gwf_find_published_1, output)
+        self.assertNotIn(gwf_find_published_2, output)
+
+        # find by billTo
+        output = run("dx find globalworkflows --unpublished --billed-to " + org_id)
+        self.assertIn(gwf_find_billto, output)
+        self.assertNotIn(gwf_find_published_1, output)
+        self.assertNotIn(gwf_find_published_2, output)
+
+        # find by name
+        output = run("dx find globalworkflows --name " + gwf_find_published_1)
+        self.assertIn(gwf_find_published_1, output)
+        self.assertNotIn(gwf_find_published_2, output)
+        self.assertNotIn(gwf_find_billto, output)
+
+        # find all versions
+        output = run("dx find globalworkflows --unpublished --all")
+        self.assertNotIn(gwf_find_published_1, output)
+        self.assertNotIn(gwf_find_published_2, output)
+        self.assertIn(gwf_find_billto, output)
+        self.assertIn("0.0.1", output)
+        self.assertIn("0.0.2", output)
 
     def test_dx_find_data_formatted(self):
         record_id = dxpy.new_dxrecord(project=self.project, name="find_data_formatting", close=True).get_id()
