@@ -6424,6 +6424,36 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             container_content = dxpy.api.container_list_folder(app_container, {"folder": "/"})
             self.assertIn(file_id, [item["id"] for item in container_content["objects"]])
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create apps')
+    def test_build_cluster_app_bootstrap_script_inlined(self):
+        app_name = "cluster_app"
+        cluster_spec = {"type": "spark",
+                        "version": "2.2.0",
+                        "initialInstanceCount": 5,
+                        "bootstrapScript": "clusterBootstrap.py"}
+        app_spec = dict(self.base_app_spec, name=app_name,
+                        regionalOptions = {
+                            "aws:us-east-1": {
+                                "systemRequirements": {
+                                    "cluster_1": {
+                                        "instanceType": "mem2_hdd2_x1",
+                                        "clusterSpec": cluster_spec
+                                    },
+                                    "cluster_2": {
+                                        "instanceType": "mem2_hdd2_x4",
+                                        "clusterSpec": cluster_spec
+                                    }
+                                }
+                            }})
+        app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+        self.write_app_directory(app_name, json.dumps(app_spec), "clusterBootstrap.py", code_content="testing")
+        app_id = json.loads(run("dx build --create-app --json " + app_dir))["id"]
+        app_desc_res = json.loads(run("dx describe --json " + app_id))
+        sys_reqs_res = app_desc_res["runSpec"]["systemRequirements"]
+        self.assertEqual(sys_reqs_res["cluster_1"]["clusterSpec"]["bootstrapScript"], "testing")
+        self.assertEqual(sys_reqs_res["cluster_2"]["clusterSpec"]["bootstrapScript"], "testing")
+
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
     def test_build_multi_region_app(self):
