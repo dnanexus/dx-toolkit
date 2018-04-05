@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added 
+
+*  Support for `dx describe` for global workflows
+
 ## [249.0] - beta
 
 ### Added
