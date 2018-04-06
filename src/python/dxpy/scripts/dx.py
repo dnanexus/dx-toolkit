@@ -3697,9 +3697,15 @@ class PrintDXVersion(argparse.Action):
 
 class PrintCategoryHelp(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
+
+        if parser.prog == "dx find globalworkflows":
+            exectype = "workflows"
+        else:
+            exectype = "apps"
+
         print('usage: ' + parser.prog + ' --category CATEGORY')
         print()
-        print(fill('List only the apps that belong to a particular category by providing a category name.'))
+        print(fill('List only the {et} that belong to a particular category by providing a category name.'.format(et=exectype)))
         print()
         print('Common category names include:')
         print('  ' + '\n  '.join(sorted(APP_CATEGORIES)))
@@ -5097,6 +5103,32 @@ parser_find_apps.add_argument('--mod-after', help='Date (e.g. 2012-01-01) or int
 parser_find_apps.add_argument('--mod-before', help='Date (e.g. 2012-01-01) or integer timestamp before which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
 parser_find_apps.set_defaults(func=find_apps)
 register_parser(parser_find_apps, subparsers_action=subparsers_find, categories='exec')
+
+parser_find_globalworkflows = subparsers_find.add_parser(
+    'globalworkflows',
+    help=fill('List available global workflows'),
+    description=fill('Finds global workflows subject to the given search parameters. Use --category to restrict by a category; '
+                     'common categories are available as tab completions and can be listed with --category-help.'),
+    parents=[stdout_args, json_arg, delim_arg, env_args],
+    prog='dx find globalworkflows'
+)
+parser_find_globalworkflows.add_argument('--name', help='Name of the workflow')
+parser_find_globalworkflows.add_argument('--category', help='Category of the workflow').completer = ListCompleter(APP_CATEGORIES)
+parser_find_globalworkflows.add_argument('--category-help',
+                              help='Print a list of common global workflow categories',
+                              nargs=0,
+                              action=PrintCategoryHelp)
+parser_find_globalworkflows.add_argument('-a', '--all', help='Return all versions of each workflow', action='store_true')
+parser_find_globalworkflows.add_argument('--unpublished', help='Return only unpublished workflows (if omitted, returns only published workflows)', action='store_true')
+parser_find_globalworkflows.add_argument('--billed-to', help='User or organization responsible for the workflow')
+parser_find_globalworkflows.add_argument('--creator', help='Creator of the workflow version')
+parser_find_globalworkflows.add_argument('--developer', help='Developer of the workflow')
+parser_find_globalworkflows.add_argument('--created-after', help='Date (e.g. 2012-01-01) or integer timestamp after which the workflow version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_globalworkflows.add_argument('--created-before', help='Date (e.g. 2012-01-01) or integer timestamp before which the workflow version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_globalworkflows.add_argument('--mod-after', help='Date (e.g. 2012-01-01) or integer timestamp after which the workflow was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_globalworkflows.add_argument('--mod-before', help='Date (e.g. 2012-01-01) or integer timestamp before which the workflow was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_globalworkflows.set_defaults(func=find_global_workflows)
+register_parser(parser_find_globalworkflows, subparsers_action=subparsers_find, categories='exec')
 
 parser_find_jobs = subparsers_find.add_parser(
     'jobs',
