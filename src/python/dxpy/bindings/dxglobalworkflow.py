@@ -114,6 +114,10 @@ class DXGlobalWorkflow(DXObject, DXExecutable):
             dx_hash[field] = kwargs[field]
             del kwargs[field]
 
+        if "bill_to" in kwargs:
+            dx_hash['billTo'] = kwargs['bill_to']
+            del kwargs["bill_to"]
+
         resp = dxpy.api.global_workflow_new(dx_hash, **kwargs)
         self.set_id(dxid=resp["id"])
 
