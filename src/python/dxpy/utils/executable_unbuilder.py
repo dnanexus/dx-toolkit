@@ -66,7 +66,7 @@ def _dump_workflow(workflow_obj, describe_output={}):
         """
         If the workflow object is global, returns the describe output of one of
         its underlying workflows, i.e. the one from the region of the current
-        project context. Otherwise, returns describe_output.
+        project context. Otherwise, returns the describe_output.
         """
         workflow_describe = {}
         if isinstance(workflow_obj, dxpy.DXGlobalWorkflow):
@@ -95,6 +95,9 @@ def _dump_workflow(workflow_obj, describe_output={}):
     #   from the region of the current project context
     # * if this is a regular, project-based workflow, we will just use
     #   its description (the describe_output that we already have)
+    # Underlying workflows are workflows stored in resource containers
+    # of the global workflow (one per each region the global workflow is
+    # enabled in). #TODO: add a link to documentation.
     workflow_describe = _get_workflow_describe()
     for key in ('inputs', 'outputs'):
         if key in describe_output and describe_output[key] is not None:
