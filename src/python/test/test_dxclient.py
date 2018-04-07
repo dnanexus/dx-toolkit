@@ -3939,6 +3939,8 @@ class TestDXClientFind(DXTestCase):
             self.assertIn(category, category_help_workflows)
         run("dx find globalworkflows --category foo") # any category can be searched
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that requires presence of test org and creates global workflows')
     def test_dx_find_globalworkflows(self):
         org_id = "org-piratelabs"
         test_applet_id = dxpy.api.applet_new({"name": "my_find_applet",
