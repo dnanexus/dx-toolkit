@@ -272,7 +272,7 @@ def _build_underlying_workflows(json_spec, args):
     Returns a tuple of dictionaries: workflow IDs by region and project IDs by region.
     The caller is responsible for destroying the projects if this method returns properly.
     """
-    # TODO: initially a global workflow can be enabled in one region only, the region of the
+    # TODO: Initially a global workflow can be enabled in one region only, the region of the
     # underlying workflow ( the region of the current project). It will be expanded in
     # the future to build in all regions.
     projects_by_region, workflows_by_region = {}, {}  # IDs by region
