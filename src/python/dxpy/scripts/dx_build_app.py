@@ -46,8 +46,6 @@ from ..compat import open, USING_PYTHON2, decode_command_line_args, basestring
 
 decode_command_line_args()
 
-APP_VERSION_RE = re.compile("^([1-9][0-9]*|0)\.([1-9][0-9]*|0)\.([1-9][0-9]*|0)(-[-0-9A-Za-z]+(\.[-0-9A-Za-z]+)*)?(\+[-0-9A-Za-z]+(\.[-0-9A-Za-z]+)*)?$")
-
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
 class DXSyntaxError(Exception):
@@ -201,7 +199,7 @@ def _lint(dxapp_json_filename, mode):
         logger.warn('app is missing a name, please add one in the "name" field of dxapp.json')
 
     if 'version' in app_spec:
-        if not APP_VERSION_RE.match(app_spec['version']):
+        if not dxpy.executable_builder.GLOBAL_EXEC_VERSION_RE.match(app_spec['version']):
             logger.warn('"version" %s should be semver compliant (e.g. of the form X.Y.Z)' % (app_spec['version'],))
 
     # Note that identical checks are performed on the server side (and
@@ -413,26 +411,6 @@ def _verify_app_source_dir(src_dir, mode, enforce=True):
     finally:
         shutil.rmtree(temp_dir)
 
-def _verify_app_writable(app_name):
-    app_name_already_exists = True
-    try:
-        is_developer = dxpy.api.app_describe('app-' + app_name)['isDeveloperFor']
-    except dxpy.exceptions.DXAPIError as e:
-        if e.name == 'ResourceNotFound':
-            app_name_already_exists = False
-        elif e.name == 'PermissionDenied':
-            raise dxpy.app_builder.AppBuilderException('An app with the given name already exists and you are not a developer of that app')
-        else:
-            raise e
-
-    if not app_name_already_exists:
-        # This app doesn't exist yet so its creation will succeed
-        # (or at least, not fail on the basis of the ACL).
-        return
-
-    if not is_developer:
-        raise dxpy.app_builder.AppBuilderException('You are not a developer for app {app}'.format(app=app_name))
-
 def _parse_app_spec(src_dir):
     """Returns the parsed contents of dxapp.json.
 
@@ -637,14 +615,6 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
         shutil.rmtree(temp_dir)
 
 
-def delete_temporary_projects(projects):
-    for project in projects:
-        try:
-            dxpy.api.project_destroy(project)
-        except Exception:
-            pass
-
-
 def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publish=False, destination_override=None,
                              version_override=None, bill_to_override=None, use_temp_build_project=True,
                              do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
@@ -657,7 +627,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     _check_suggestions(app_json, publish=publish)
     _verify_app_source_dir(src_dir, mode, enforce=do_check_syntax)
     if mode == "app" and not dry_run:
-        _verify_app_writable(app_json['name'])
+        dxpy.executable_builder.verify_developer_rights('app-' + app_json['name'])
 
     working_project = None
     using_temp_project = False
@@ -695,7 +665,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             except:
                 # A /project/new request may fail if the requesting user is
                 # not authorized to create projects in a certain region.
-                delete_temporary_projects(projects_by_region.values())
+                dxpy.executable_builder.delete_temporary_projects(projects_by_region.values())
                 err_exit()
         else:
             # Create a temp project
@@ -879,7 +849,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     finally:
         # Clean up after ourselves.
         if using_temp_project:
-            delete_temporary_projects(projects_by_region.values())
+            dxpy.executable_builder.delete_temporary_projects(projects_by_region.values())
 
 
 def _build_app(args, extra_args):
@@ -942,7 +912,7 @@ def _build_app(args, extra_args):
             _check_suggestions(app_json, publish=args.publish)
             _verify_app_source_dir(args.src_dir, args.mode)
             if args.mode == "app" and not args.dry_run:
-                _verify_app_writable(app_json['name'])
+                dxpy.executable_builder.verify_developer_rights('app-' + app_json['name'])
         except dxpy.app_builder.AppBuilderException as e:
             print("Error: %s" % (e.message,), file=sys.stderr)
             sys.exit(3)

@@ -32,6 +32,7 @@ import requests
 import textwrap
 
 import dxpy
+import dxpy.executable_builder
 from dxpy.scripts import dx_build_app
 from dxpy_testutil import (DXTestCase, DXTestCaseBuildApps, DXTestCaseBuildWorkflows, check_output, temporary_project,
                            select_project, cd, override_environment, generate_unique_username_email,
@@ -6122,6 +6123,95 @@ class TestHTTPProxySupport(DXTestCase):
     def tearDown(self):
         self.proxy_process.terminate()
 
+class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create global workflows')
+    def test_build_single_region_workflow(self):
+        gwf_name = "gwf_{t}_single_region".format(t=int(time.time()))
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
+        workflow_dir = self.write_workflow_directory(gwf_name,
+                                                     json.dumps(dxworkflow_json),
+                                                     readme_content="Workflow Readme Please")
+
+        gwf = json.loads(run("dx build --create-globalworkflow --json " + workflow_dir))
+        gwf_describe = json.loads(run("dx describe --json " + gwf["id"]))
+        self.assertEqual(gwf_describe["class"], "globalworkflow")
+        self.assertEqual(gwf_describe["id"], gwf_describe["id"])
+        self.assertEqual(gwf_describe["version"], "0.0.1")
+        self.assertEqual(gwf_describe["name"], gwf_name)
+        self.assertFalse("published" in gwf_describe)
+        self.assertIn("regionalOptions", gwf_describe)
+        self.assertItemsEqual(gwf_describe["regionalOptions"].keys(), ["aws:us-east-1"])
+
+        # We can also create a regular workflow from this dxworkflow.json
+        wf = json.loads(run("dx build --json " + workflow_dir))
+        wf_describe = json.loads(run("dx describe --json " + wf["id"]))
+        self.assertEqual(wf_describe["class"], "workflow")
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create global workflows')
+    def test_build_workflow_warnings(self):
+        gwf_name = "Test_build_workflow_warnings".format(t=int(time.time()))
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name, version="foo")
+        workflow_dir = self.write_workflow_directory("test_build_workflow_warnings",
+                                                     json.dumps(dxworkflow_json))
+
+        unexpected_warnings = ["missing a name",
+                               "should be a short phrase not ending in a period"]
+        expected_warnings = [
+                             "should be all lowercase",
+                             "does not match containing directory",
+                             "missing a title",
+                             "missing a summary",
+                             # "missing a description",
+                             "should be semver compliant"]
+        try:
+            # Expect "dx build" to succeed, exit with error code to
+            # grab stderr.
+            run("dx build --globalworkflow " + workflow_dir + " && exit 28")
+        except subprocess.CalledProcessError as err:
+            self.assertEqual(err.returncode, 28)
+            for warning in unexpected_warnings:
+                self.assertNotIn(warning, err.stderr)
+            for warning in expected_warnings:
+                self.assertIn(warning, err.stderr)
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create global workflows')
+    def test_build_workflow_invalid_project_context(self):
+        gwf_name = "invalid_project_context_{t}".format(t=int(time.time()))
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
+        workflow_dir = self.write_workflow_directory(gwf_name,
+                                                     json.dumps(dxworkflow_json))
+
+        # Set the project context to a nonexistent project. This
+        # shouldn't have any effect since building a global workflow
+        # is supposed to be hygienic.
+        env = override_environment(DX_PROJECT_CONTEXT_ID='project-B00000000000000000000000')
+        run("dx build --create-globalworkflow --json " + workflow_dir, env=env)
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create global workflows')
+    def test_build_workflow_with_bill_to(self):
+        alice_id = "user-alice"
+        org_id = "org-piratelabs"
+
+        # --bill-to is not specified with dx build
+        gwf_name = "globalworkflow_build_bill_to_user"
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
+        workflow_dir = self.write_workflow_directory(gwf_name,
+                                                     json.dumps(dxworkflow_json))
+        new_gwf = json.loads(run("dx build --globalworkflow --json " + workflow_dir))
+        self.assertEqual(new_gwf["billTo"], alice_id)
+
+        # --bill-to is set to org with dx build
+        gwf_name = "globalworkflow_build_bill_to_org"
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
+        workflow_dir = self.write_workflow_directory(gwf_name,
+                                                     json.dumps(dxworkflow_json))
+        new_gwf = json.loads(run("dx build --globalworkflow --bill-to {} --json {}".format(org_id, workflow_dir)))
+        self.assertEqual(new_gwf["billTo"], org_id)
 
 class TestDXBuildApp(DXTestCaseBuildApps):
     def run_and_assert_stderr_matches(self, cmd, stderr_regexp):
@@ -6134,14 +6224,14 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         run("dx build -h", env=env)
 
     def test_accepts_semver(self):
-        self.assertTrue(dx_build_app.APP_VERSION_RE.match('3.1.41') is not None)
-        self.assertTrue(dx_build_app.APP_VERSION_RE.match('3.1.41-rc.1') is not None)
-        self.assertFalse(dx_build_app.APP_VERSION_RE.match('3.1.41-rc.1.') is not None)
-        self.assertFalse(dx_build_app.APP_VERSION_RE.match('3.1.41-rc..1') is not None)
-        self.assertTrue(dx_build_app.APP_VERSION_RE.match('22.0.999+git.abcdef') is not None)
-        self.assertFalse(dx_build_app.APP_VERSION_RE.match('22.0.999+git.abcdef$') is not None)
-        self.assertFalse(dx_build_app.APP_VERSION_RE.match('22.0.999+git.abcdef.') is not None)
-        self.assertTrue(dx_build_app.APP_VERSION_RE.match('22.0.999-rc.1+git.abcdef') is not None)
+        self.assertTrue(dxpy.executable_builder.GLOBAL_EXEC_VERSION_RE.match('3.1.41') is not None)
+        self.assertTrue(dxpy.executable_builder.GLOBAL_EXEC_VERSION_RE.match('3.1.41-rc.1') is not None)
+        self.assertFalse(dxpy.executable_builder.GLOBAL_EXEC_VERSION_RE.match('3.1.41-rc.1.') is not None)
+        self.assertFalse(dxpy.executable_builder.GLOBAL_EXEC_VERSION_RE.match('3.1.41-rc..1') is not None)
+        self.assertTrue(dxpy.executable_builder.GLOBAL_EXEC_VERSION_RE.match('22.0.999+git.abcdef') is not None)
+        self.assertFalse(dxpy.executable_builder.GLOBAL_EXEC_VERSION_RE.match('22.0.999+git.abcdef$') is not None)
+        self.assertFalse(dxpy.executable_builder.GLOBAL_EXEC_VERSION_RE.match('22.0.999+git.abcdef.') is not None)
+        self.assertTrue(dxpy.executable_builder.GLOBAL_EXEC_VERSION_RE.match('22.0.999-rc.1+git.abcdef') is not None)
 
     def test_version_suffixes(self):
         app_spec = dict(self.base_app_spec, name="test_versioning_åpp")
