@@ -470,15 +470,15 @@ class DXTestCaseBuildWorkflows(DXTestCase):
 
     def create_applet(self, project_id):
         return dxpy.api.applet_new({"name": "my_first_applet",
-                                         "project": project_id,
-                                         "dxapi": "1.0.0",
-                                         "inputSpec": [{"name": "number", "class": "int"}],
-                                         "outputSpec": [{"name": "number", "class": "int"}],
-                                         "runSpec": {"interpreter": "bash",
-                                                     "distribution": "Ubuntu",
-                                                     "release": "14.04",
-                                                     "code": "exit 0"}
-                                         })['id']
+                                    "project": project_id,
+                                    "dxapi": "1.0.0",
+                                    "inputSpec": [{"name": "number", "class": "int"}],
+                                    "outputSpec": [{"name": "number", "class": "int"}],
+                                    "runSpec": {"interpreter": "bash",
+                                                "distribution": "Ubuntu",
+                                                "release": "14.04",
+                                                "code": "exit 0"}
+                                   })['id']
 
     def create_workflow_spec(self, project_id):
         workflow_spec = {"name": "my_workflow",
