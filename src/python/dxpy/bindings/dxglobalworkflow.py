@@ -142,3 +142,14 @@ class DXGlobalWorkflow(DXObject, DXExecutable):
                                                            input_params=describe_input, **kwargs)
 
         return self._desc
+
+    def publish(self, **kwargs):
+        """
+        Publishes the global workflow, so all users can find it and use it on the platform.
+
+        The current user must be a developer of the workflow.
+        """
+        if self._dxid is not None:
+            return dxpy.api.global_workflow_publish(self._dxid, **kwargs)
+        else:
+            return dxpy.api.global_workflow_publish('globalworkflow-' + self._name, alias=self._alias, **kwargs)
