@@ -1826,7 +1826,11 @@ def get_workflow(entity_result, args):
                                   args)
     from dxpy.utils.executable_unbuilder import dump_executable
     print("Downloading workflow data", file=sys.stderr)
-    dx_obj = dxpy.DXWorkflow(obj_id)
+
+    if entity_result['describe']['class'] == 'workflow':
+        dx_obj = dxpy.DXWorkflow(obj_id)
+    else:
+        dx_obj = dxpy.DXGlobalWorkflow(obj_id)
     describe_output = entity_result['describe']
     dump_executable(dx_obj, output_path, omit_resources=True, describe_output=describe_output)
 
@@ -1835,6 +1839,10 @@ def get(args):
     # Decide what to do based on entity's class
     if not is_hashid(args.path) and ':' not in args.path and args.path.startswith('app-'):
         desc = dxpy.api.app_describe(args.path)
+        entity_result = {"id": desc["id"], "describe": desc}
+    elif not is_hashid(args.path) and ':' not in args.path and args.path.startswith('globalworkflow-'):
+        desc = dxpy.api.global_workflow_describe(args.path)
+        desc = dxpy.append_underlying_workflow_describe(desc)
         entity_result = {"id": desc["id"], "describe": desc}
     else:
         project, _folderpath, entity_result = try_call(resolve_existing_path,
@@ -1857,7 +1865,7 @@ def get(args):
         get_applet(project, entity_result, args)
     elif entity_result_class == 'app':
         get_app(entity_result, args)
-    elif entity_result_class == 'workflow':
+    elif entity_result_class in ('workflow', 'globalworkflow'):
         get_workflow(entity_result, args)
     else:
         err_exit('Error: The given object is of class ' + entity_result['describe']['class'] +

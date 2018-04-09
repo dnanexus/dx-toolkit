@@ -36,8 +36,6 @@ from ..compat import basestring
 ##############
 # DXWorkflow #
 ##############
-_dxworkflow_json_keys = ['name', 'outputFolder', 'inputs', 'outputs']
-_dxworkflow_json_stage_keys = ['id', 'name', 'executable', 'folder', 'input', 'executionPolicy', 'systemRequirements']
 
 def new_dxworkflow(title=None, summary=None, description=None, output_folder=None, init_from=None, **kwargs):
     '''
@@ -489,12 +487,6 @@ class DXWorkflow(DXDataObject, DXExecutable):
             ]
 
         return run_input
-
-    def get_dxworkflow_json_keys(self):
-        return _dxworkflow_json_keys
-
-    def get_dxworkflow_json_stage_keys(self):
-        return _dxworkflow_json_stage_keys
 
     def _run_impl(self, run_input, **kwargs):
         return DXAnalysis(dxpy.api.workflow_run(self._dxid, run_input, **kwargs)["id"])

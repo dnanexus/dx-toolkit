@@ -61,29 +61,65 @@ def _write_simple_file(filename, content):
         f.write(content)
 
 
-def _dump_workflow(workflow_obj, describe_output=[]):
+def _dump_workflow(workflow_obj, describe_output={}):
+    def _get_workflow_describe():
+        """
+        If the workflow object is global, returns the describe output of one of
+        its underlying workflows, i.e. the one from the region of the current
+        project context. Otherwise, returns the describe_output.
+        """
+        workflow_describe = {}
+        if isinstance(workflow_obj, dxpy.DXGlobalWorkflow):
+            current_project = dxpy.WORKSPACE_ID
+            if current_project:
+                region = dxpy.api.project_describe(current_project,
+                                                   input_params={"fields": {"region": True}})["region"]
+                workflow_describe = describe_output['regionalOptions'][region]['workflowDescribe']
+        else:
+            workflow_describe = describe_output
+        return workflow_describe
+
+    dxworkflow_json_keys = ['name', 'title', 'summary', 'dxapi', 'version',
+                            'outputFolder']
+    dxworkflow_json_stage_keys = ['id', 'name', 'executable', 'folder', 'input',
+                                  'executionPolicy', 'systemRequirements']
+
     dxworkflow_json = collections.OrderedDict()
-    for key in workflow_obj.get_dxworkflow_json_keys():
-        if key in describe_output and describe_output[key] is not None:
+    for key in dxworkflow_json_keys:
+        if key in describe_output and describe_output[key]:
             dxworkflow_json[key] = describe_output[key]
 
-    stages = describe_output["stages"]
+    # Add inputs, outputs, stages. These fields contain region-specific values
+    # e.g. files or applets, that's why:
+    # * if the workflow is global, we will unpack the underlying workflow
+    #   from the region of the current project context
+    # * if this is a regular, project-based workflow, we will just use
+    #   its description (the describe_output that we already have)
+    # Underlying workflows are workflows stored in resource containers
+    # of the global workflow (one per each region the global workflow is
+    # enabled in). #TODO: add a link to documentation.
+    workflow_describe = _get_workflow_describe()
+    for key in ('inputs', 'outputs'):
+        if key in describe_output and describe_output[key] is not None:
+            dxworkflow_json[key] = describe_output[key]
+    stages = workflow_describe.get("stages", ())
     new_stages = []
     for stage in stages:
         new_stage = collections.OrderedDict()
-        for key in workflow_obj.get_dxworkflow_json_stage_keys():
+        for key in dxworkflow_json_stage_keys:
             if key in stage and stage[key]:
                 new_stage[key] = stage[key]
         new_stages.append(new_stage)
     dxworkflow_json["stages"] = new_stages
 
-    # Write dxworkflow.json and Readme.md
+    # Create dxworkflow.json, Readme.md files
     _write_json_file("dxworkflow.json", dxworkflow_json)
     readme = describe_output.get("description", "")
     if readme:
         _write_simple_file("Readme.md", readme)
 
-def _dump_app_or_applet(executable, omit_resources=False, describe_output=[]):
+
+def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
     info = executable.get()
 
     if info["runSpec"]["interpreter"] == "bash":
@@ -270,7 +306,7 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output=[]):
     if devnotes:
         _write_simple_file("Readme.developer.md", devnotes)
 
-def dump_executable(executable, destination_directory, omit_resources=False, describe_output=[]):
+def dump_executable(executable, destination_directory, omit_resources=False, describe_output={}):
     """
     Reconstitutes an app, applet, or a workflow into a directory that would
     create a functionally identical executable if "dx build" were run on it.
@@ -278,7 +314,7 @@ def dump_executable(executable, destination_directory, omit_resources=False, des
     executable.
 
     :param executable: executable, i.e. app, applet, or workflow, to be dumped
-    :type executable: DXExecutable (only DXApp, DXApplet or DXWorkflow now)
+    :type executable: DXExecutable (either of: DXApp, DXApplet, DXWorkflow, DXGlobalWorkflow)
     :param destination_directory: an existing, empty, and writable directory
     :type destination_directory: str
     :param omit_resources: if True, executable's resources will not be downloaded
@@ -289,7 +325,8 @@ def dump_executable(executable, destination_directory, omit_resources=False, des
     try:
         old_cwd = os.getcwd()
         os.chdir(destination_directory)
-        if isinstance(executable, dxpy.DXWorkflow):
+        if isinstance(executable, dxpy.DXWorkflow) or \
+           isinstance(executable, dxpy.DXGlobalWorkflow):
             _dump_workflow(executable, describe_output)
         else:
             _dump_app_or_applet(executable, omit_resources, describe_output)

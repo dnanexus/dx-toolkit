@@ -228,12 +228,12 @@ def _get_validated_json(json_spec, args):
     # print ignored keys if present in json_spec
     # TODO: add "regionalOptions" to supported_keys when building multi-region workflows is enabled
     supported_keys = {"project", "folder", "name", "outputFolder", "stages",
-                      "inputs", "outputs", "version", "title", "summary", "categories",
-                      "dxapi"}
+                      "inputs", "outputs", "version", "title", "summary", "categories", "dxapi"}
     unsupported_keys = _get_unsupported_keys(json_spec.keys(), supported_keys)
     if len(unsupported_keys) > 0:
-        print("Warning: the following root level fields are not supported and will be ignored: {}"
-              .format(", ".join(unsupported_keys)))
+        logger.warn(
+            "Warning: the following root level fields are not supported and will be ignored: {}"
+                .format(", ".join(unsupported_keys)))
 
     dxpy.executable_builder.inline_documentation_files(json_spec, args.src_dir)
 
