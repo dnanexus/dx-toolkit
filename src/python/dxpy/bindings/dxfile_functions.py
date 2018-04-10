@@ -162,7 +162,7 @@ def _verify(filename, md5digest):
 def _download_symbolic_link(dxid, md5digest, project, dest_filename):
     dxfile = dxpy.DXFile(dxid)
     url, _headers = dxfile.get_download_url(preauthenticated=True,
-                                            duration=1*3600,
+                                            duration=6*3600,
                                             project=project)
  
     # Follow the redirection
