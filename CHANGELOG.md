@@ -6,11 +6,21 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Support for dx find global workflows
+* Initial support for dx build global workflow
+* Publish method to global workflow bindings
+* Support for dx get global workflow
+* `dx download symlink`
+
+## [250.0] - beta
+
 ### Added 
 
 *  Support for `dx describe` for global workflows
 
-## [249.0] - beta
+## [249.0] -2018.04.05 - stable 
 
 ### Added
 
