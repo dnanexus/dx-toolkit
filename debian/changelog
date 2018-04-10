@@ -1,3 +1,9 @@
+dx-toolkit (0.250.2) precise; urgency=low
+
+  * Fixed: dx download symlink
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 10 Apr 2018 21:37:51 +0000
+
 dx-toolkit (0.250.1) precise; urgency=low
 
   * dx download symlink
