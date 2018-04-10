@@ -162,20 +162,17 @@ def _verify(filename, md5digest):
 def _download_symbolic_link(dxid, md5digest, project, dest_filename):
     dxfile = dxpy.DXFile(dxid)
     url, _headers = dxfile.get_download_url(preauthenticated=True,
-                                            duration=1*3600,
+                                            duration=6*3600,
                                             project=project)
  
     # Follow the redirection
-    import requests
     print('Following redirect for ' + url)
-
-    r = requests.get(url, allow_redirects=False)
 
     wget_exe = _which("wget")
     if wget_exe is None:
         err_exit("wget is not installed on this system")
 
-    cmd = ["wget", "--continue", "--tries=5", "--quiet"]
+    cmd = ["wget", "--tries=5", "--quiet"]
     if os.path.isfile(dxid):
         # file already exists, resume upload.
         cmd += ["--continue"]
