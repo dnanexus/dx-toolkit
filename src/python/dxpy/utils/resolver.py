@@ -144,7 +144,7 @@ class ResolutionError(DXError):
 
 data_obj_pattern = re.compile('^(record|gtable|applet|file|workflow)-[0-9A-Za-z]{24}$')
 hash_pattern = re.compile('^(record|gtable|app|applet|workflow|globalworkflow|job|analysis|project|container|file)-[0-9A-Za-z]{24}$')
-nohash_pattern = re.compile('^(user|org|app|team)-')
+nohash_pattern = re.compile('^(user|org|app|globalworkflow|team)-')
 jbor_pattern = re.compile('^(job|analysis)-[0-9A-Za-z]{24}:[a-zA-Z_][0-9a-zA-Z_]*$')
 
 def is_hashid(string):
@@ -1016,8 +1016,16 @@ def resolve_multiple_existing_paths(paths):
 def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_classes=None, allow_mult=False,
                           describe=True, all_mult=False, allow_empty_string=True, visibility="either"):
     '''
+    :param expected: one of the following: "folder", "entity", or None to indicate
+                     whether the expected path is a folder, a data object, or either
+    :type expected: string or None
     :param ask_to_resolve: Whether picking may be necessary (if true, a list is returned; if false, only one result is returned)
     :type ask_to_resolve: boolean
+    :param expected_classes: A list of expected classes the entity is allowed
+                             to belong to if it is an ID (e.g. "record",
+                             "file", "job"); if None, then entity_name may be
+                             any data object class
+    :type expected_classes: list or None
     :param allow_mult: Whether to allow the user to select multiple results from the same path
     :type allow_mult: boolean
     :param describe: Input hash to describe call for the results, or True if no describe input
@@ -1130,13 +1138,47 @@ def get_app_from_path(path):
         alias = path[path.find('/') + 1:]
         path = path[:path.find('/')]
     try:
-        if alias is None:
-            desc = dxpy.DXHTTPRequest('/' + path + '/describe', {})
-        else:
-            desc = dxpy.DXHTTPRequest('/' + path + '/' + alias + '/describe', {})
-        return desc
+        return dxpy.api.app_describe(path, alias=alias)
     except dxpy.DXAPIError:
         return None
+
+def get_global_workflow_from_path(path):
+    '''
+    :param path: A string to attempt to resolve to a global workflow object
+    :type path: string
+    :returns: The describe hash of the global workflow object if found, or None otherwise
+    :rtype: dict or None
+
+    This method parses a string that is expected to perhaps refer to
+    a global workflow object.  If found, its describe hash will be returned.
+    For more information on the contents of this hash, see the API
+    documentation. [TODO: external link here]
+
+    '''
+    alias = None
+    if not path.startswith('globalworkflow-'):
+        path = 'globalworkflow-' + path
+    if '/' in path:
+        alias = path[path.find('/') + 1:]
+        path = path[:path.find('/')]
+
+    try:
+        return dxpy.api.global_workflow_describe(path, alias=alias)
+    except dxpy.DXAPIError:
+        return None
+
+def get_global_exec_from_path(path):
+    if path.startswith('app-'):
+        return get_app_from_path(path)
+    elif path.startswith('globalworkflow-'):
+        return get_global_workflow_from_path(path)
+
+    # If the path doesn't include a prefix, we must try describing
+    # as an app and, if that fails, as a global workflow
+    desc = get_app_from_path(path)
+    if not desc:
+        desc = get_global_workflow_from_path(path)
+    return desc
 
 def resolve_app(path):
     '''
@@ -1157,6 +1199,53 @@ def resolve_app(path):
     else:
         return desc
 
+def resolve_global_workflow(path):
+    '''
+    :param path: A string which is supposed to identify a global workflow
+    :type path: string
+    :returns: The describe hash of the global workflow object
+    :raises: :exc:`ResolutionError` if it cannot be found
+
+    *path* is expected to have one of the following forms:
+
+    - hash ID, e.g. "globalworkflow-F85Z6bQ0xku1PKY6FjGQ011J"
+    - named ID, e.g. "globalworkflow-myworkflow"
+    - named ID with alias (version or tag), e.g. "globalworkflow-myworkflow/1.2.0"
+    '''
+    desc = get_global_workflow_from_path(path)
+    if desc is None:
+        raise ResolutionError('The given path "' + path + '" could not be resolved to an accessible global workflow')
+    else:
+        return desc
+
+def resolve_global_executable(path):
+    """
+    :param path: A string which is supposed to identify a global executable (app or workflow)
+    :type path: string
+    :returns: The describe hash of the global executable object (app or workflow)
+    :raises: :exc:`ResolutionError` if it cannot be found
+
+    *path* is expected to have one of the following forms:
+
+    - hash ID, e.g. "globalworkflow-F85Z6bQ0xku1PKY6FjGQ011J", "app-FBZ3f200yfzkKYyp9JkFVQ97"
+    - named ID, e.g. "app-myapp", "globalworkflow-myworkflow"
+    - named ID with alias (version or tag), e.g. "app-myapp/1.2.0", "globalworkflow-myworkflow/1.2.0"
+    """
+    # First, check if the prefix is provided, then we don't have to resolve the name
+    if path.startswith('app-'):
+        return resolve_app(path)
+    elif path.startswith('globalworkflow-'):
+        return resolve_global_workflow(path)
+
+    # If the path doesn't include a prefix, we must try describing
+    # as an app and, if that fails, as a global workflow
+    desc = get_app_from_path(path)
+    if not desc:
+        desc = get_global_workflow_from_path(path)
+    if desc is None:
+        raise ResolutionError('The given path "' + path + '" could not be resolved to an accessible global executable (app or workflow)')
+    return desc
+
 def get_exec_handler(path, alias=None):
     handler = None
     def get_handler_from_desc(desc):
@@ -1164,11 +1253,15 @@ def get_exec_handler(path, alias=None):
             return dxpy.DXApplet(desc['id'], project=desc['project'])
         elif desc['class'] == 'app':
             return dxpy.DXApp(dxid=desc['id'])
-        else:
+        elif desc['class'] == 'workflow':
             return dxpy.DXWorkflow(desc['id'], project=desc['project'])
+        else:
+            return dxpy.DXGlobalWorkflow(dxid=desc['id'])
+
+    # First attempt to resolve a global executable: app or global workflow
+    global_exec_desc = get_global_exec_from_path(path)
 
     if alias is None:
-        app_desc = get_app_from_path(path)
         try:
             # Look for applets and workflows
             _project, _folderpath, entity_results = resolve_existing_path(path,
@@ -1183,35 +1276,37 @@ def get_exec_handler(path, alias=None):
                 if len(entity_results) == 0:
                     entity_results = None
         except ResolutionError:
-            if app_desc is None:
+            if global_exec_desc is None:
                 raise
             else:
                 entity_results = None
 
-        if entity_results is not None and len(entity_results) == 1 and app_desc is None:
+        if entity_results is not None and len(entity_results) == 1 and global_exec_desc is None:
             handler = get_handler_from_desc(entity_results[0]['describe'])
-        elif entity_results is None and app_desc is not None:
-            handler = get_handler_from_desc(app_desc)
+        elif entity_results is None and global_exec_desc is not None:
+            handler = get_handler_from_desc(global_exec_desc)
         elif entity_results is not None:
             if not INTERACTIVE_CLI:
                 raise ResolutionError('Found multiple executables with the path ' + path)
             print('Found multiple executables with the path ' + path)
             choice_descriptions = [get_ls_l_desc(r['describe']) for r in entity_results]
-            if app_desc is not None:
-                choice_descriptions.append('app-' + app_desc['name'] + ', version ' + app_desc['version'])
+            if global_exec_desc is not None:
+                choice_descriptions.append(
+                    '{prefix}-{name}, version {version}'.format(
+                        prefix=global_exec_desc['class'],
+                        name=global_exec_desc['name'],
+                        version=global_exec_desc['version']))
             choice = pick(choice_descriptions)
             if choice < len(entity_results):
-                # all applet/workflow choices show up before the app,
+                # all applet/workflow choices show up before the global app/workflow,
                 # of which there is always at most one possible choice
                 handler = get_handler_from_desc(entity_results[choice]['describe'])
             else:
-                handler = get_handler_from_desc(app_desc)
+                handler = get_handler_from_desc(global_exec_desc)
         else:
             raise ResolutionError("No matches found for " + path)
     else:
-        if path.startswith('app-'):
-            path = path[4:]
-        handler = dxpy.DXApp(name=path, alias=alias)
+        handler = get_handler_from_desc(global_exec_desc)
     return handler
 
 def resolve_to_objects_or_project(path, all_matching_results=False):

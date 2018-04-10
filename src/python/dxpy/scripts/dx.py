@@ -63,7 +63,7 @@ from ..utils.printing import (CYAN, BLUE, YELLOW, GREEN, RED, WHITE, UNDERLINE, 
 from ..utils.pretty_print import format_tree, format_table
 from ..utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id,
                               is_analysis_id, get_last_pos_of_char, resolve_container_id_or_name, resolve_path,
-                              resolve_existing_path, get_app_from_path, resolve_app, get_exec_handler,
+                              resolve_existing_path, get_app_from_path, resolve_app, resolve_global_executable, get_exec_handler,
                               split_unescaped, ResolutionError, resolve_to_objects_or_project, is_project_explicit,
                               object_exists_in_project, is_jbor_str, parse_input_keyval)
 from ..utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, LocalCompleter,
@@ -2618,26 +2618,39 @@ def process_list_of_usernames(thing):
             for name in thing]
 
 def add_users(args):
-    app_desc = try_call(resolve_app, args.app)
+    desc = try_call(resolve_global_executable, args.app)
     args.users = process_list_of_usernames(args.users)
+
     try:
-        dxpy.api.app_add_authorized_users(app_desc['id'], input_params={"authorizedUsers": args.users})
+        if desc['class'] == 'app':
+            dxpy.api.app_add_authorized_users(desc['id'], input_params={"authorizedUsers": args.users})
+        else:
+            dxpy.api.global_workflow_add_authorized_users(desc['id'], input_params={"authorizedUsers": args.users})
     except:
         err_exit()
 
 def remove_users(args):
-    app_desc = try_call(resolve_app, args.app)
+    desc = try_call(resolve_global_executable, args.app)
     args.users = process_list_of_usernames(args.users)
 
     try:
-        dxpy.api.app_remove_authorized_users(app_desc['id'], input_params={"authorizedUsers": args.users})
+        if desc['class'] == 'app':
+            dxpy.api.app_remove_authorized_users(desc['id'], input_params={"authorizedUsers": args.users})
+        else:
+            dxpy.api.global_workflow_remove_authorized_users(desc['id'], input_params={"authorizedUsers": args.users})
     except:
         err_exit()
 
 def list_users(args):
-    app_desc = try_call(resolve_app, args.app)
+    desc = try_call(resolve_global_executable, args.app)
 
-    for user in app_desc['authorizedUsers']:
+    #TODO: simplify when we add "authorizedUsers" to the describe output of global workflows
+    if desc['class'] == 'app':
+        users = desc['authorizedUsers']
+    else:
+        users = dxpy.api.global_workflow_list_authorized_users(desc['id'])['authorizedUsers']
+
+    for user in users:
         print(user)
 
 def add_developers(args):
@@ -2692,7 +2705,7 @@ def uninstall(args):
 
 def _get_input_for_run(args, executable, preset_inputs=None, input_name_prefix=None):
     """
-    Returns an input dictionary that can passed to executable.run()
+    Returns an input dictionary that can be passed to executable.run()
     """
     # The following may throw if the executable is a workflow with no
     # input spec available (because a stage is inaccessible)
@@ -2804,7 +2817,6 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
 
 # Shared code for running an executable ("dx run executable"). At the end of this method,
 # there is a fork between the case of a single executable, and a batch run.
-#
 def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None):
     input_json = _get_input_for_run(args, executable, preset_inputs)
 
@@ -3202,7 +3214,8 @@ def run(args):
 
     handler = try_call(get_exec_handler, args.executable, args.alias)
 
-    if args.depends_on and isinstance(handler, dxpy.DXWorkflow):
+    if args.depends_on and \
+            (isinstance(handler, dxpy.DXWorkflow) or isinstance(handler, dxpy.DXGlobalWorkflow)):
         err_exit(exception=DXParserError("-d/--depends-on cannot be supplied when running workflows."),
                  expected_exceptions=(DXParserError,))
 
@@ -3228,7 +3241,6 @@ def run(args):
             dest_path = dxpy.config.get('DX_CLI_WD', u'/')
 
     process_instance_type_arg(args, is_workflow)
-
     run_body(args, handler, dest_proj, dest_path)
 
 def terminate(args):
