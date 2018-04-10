@@ -67,41 +67,6 @@ def _verify(filename, md5digest):
         err_exit("Checksum doesn't match " + actual_md5 + "  expected:" + md5digest)
     print("Checksum correct")
 
-# [dxid] is a symbolic link. Create a preauthenticated URL,
-# and download it
-def _download_symbolic_link(dxid, md5digest, project):
-    dxfile = dxpy.DXFile(dxid)
-    url, _headers = dxfile.get_download_url(preauthenticated=True,
-                                            duration=1*3600,
-                                            project=project)
-
-    # Follow the redirection
-    import requests
-    print('Following redirect for ' + url)
-
-    r = requests.get(url, allow_redirects=False)
-    if r.status_code != 302:
-        err_exit(fill('Error: symbolic link URL was not a redirect'))
-    url = r.headers['Location']
-
-    wget_exe = _which("wget")
-    if wget_exe is None:
-        err_exit("wget is not installed on this system")
-
-    cmd = ["wget", "--continue", "--tries=5"]
-    if os.path.isfile(dxid):
-        # file already exists, resume upload.
-        cmd += ["--continue"]
-    cmd += ["-O", dxid, url]
-
-    try:
-        print("Downloading symbolic link with wget")
-        subprocess.check_call(cmd)
-    except subprocess.CalledProcessError:
-        err_exit("Failed to call wget: " + str(cmd))
-
-    if md5digest is not None:
-        _verify(dxid, md5digest)
 
 def download_one_file(project, file_desc, dest_filename, args):
     if not args.overwrite:
@@ -121,21 +86,12 @@ def download_one_file(project, file_desc, dest_filename, args):
     except AttributeError:
         show_progress = False
 
-    dxid = file_desc['id']
-    if 'drive' not in file_desc:
-        # a regular file
-        try:
-            dxpy.download_dxfile(dxid, dest_filename, show_progress=show_progress, project=project)
-            return
-        except:
-            err_exit()
+    try:
+        dxpy.download_dxfile(file_desc['id'], dest_filename, show_progress=show_progress, project=project)
+        return
+    except:
+        err_exit()
 
-    # A symbolic link. Get the MD5 checksum, if we have it
-    if 'md5' in file_desc:
-        md5 = file_desc['md5']
-    else:
-        md5 = None
-    _download_symbolic_link(dxid, md5, project)
 
 
 def _ensure_local_dir(d):
