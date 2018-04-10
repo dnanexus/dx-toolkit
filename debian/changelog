@@ -1,3 +1,37 @@
+dx-toolkit (0.250.0) precise; urgency=low
+
+  * Added: Support for dx describe for global workflows
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 05 Apr 2018 16:40:25 +0000
+
+dx-toolkit (0.249.0) precise; urgency=low
+
+  * Added: zsh support
+  * Added: API wrappers for global workflow routes
+  * Added: Basic Python bindings for global workflow
+  * Added: set_properties() method to DXProject
+  * Fixed: dx get applet without execDepends
+
+ -- Aleksandra Zalcman <azalcman@dnanexus.com>  Thu, 29 Mar 2018 14:15:06 +0000
+
+dx-toolkit (0.248.0) precise; urgency=low
+
+  * Fixed: dx-clone-asset SSL error 
+
+ -- Aleksandra Zalcman <azalcman@dnanexus.com>  Thu, 15 Mar 2018 16:19:38 +0000
+
+dx-toolkit (0.247.0) precise; urgency=low
+
+  * Added: Clarify documentation of stage key for dx run
+  * Added: Asset builder support for Ubuntu 16.04
+  * Added: --singlethread parameter for dx upload
+  * Changed: dx-docker pull retries more often
+  * Fixed: c-ares package version for upload agent build
+  * Fixed: Bug with Azure instance type selection in dx-app-wizard
+  * Fixed: Do not retry code 422 in dxpy
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 08 Mar 2018 16:42:17 +0000
+
 dx-toolkit (0.246.0) precise; urgency=low
 
   * Added: socketTimeout and connectionTimeout parameters to JAVA DXEnvironment (thanks, @pkokoshnikov)

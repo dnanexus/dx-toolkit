@@ -1080,6 +1080,62 @@ def tree(args):
         err_exit()
 
 def describe(args):
+
+    def describe_global_executable(json_output, args, exec_type):
+        """
+        Describes a global executable, i.e. either app or global workflow
+        depending on the provided exec_type. Appends the result to json_output.
+        Returns True if any matches were found
+        """
+        assert(exec_type in ('app', 'globalworkflow'))
+        found_match = False
+
+        try:
+            if exec_type == 'app':
+                desc = dxpy.api.app_describe(args.path)
+            else:
+                desc = dxpy.api.global_workflow_describe(args.path)
+                desc = dxpy.append_underlying_workflow_describe(desc)
+            if args.json:
+                json_output.append(desc)
+            elif args.name:
+                print(desc['name'])
+            else:
+                print(get_result_str())
+                print_desc(desc, args.verbose)
+            found_match = True
+        except dxpy.DXAPIError as details:
+            if details.code != requests.codes.not_found:
+                raise
+        return found_match
+
+    def find_global_executable(json_output, args):
+        """
+        Makes a find_apps API call and, if no matches are found, a find_global_workflows call.
+        Since these two objects share namespace, either app or a global workflow will be
+        found, not both. The results are appended to json_output and printed to STDOUT.
+        """
+
+        def append_to_output_json_and_print(result):
+            if args.json:
+                json_output.append(result['describe'])
+            elif args.name:
+                print(result['describe']['name'])
+            else:
+                print(get_result_str())
+                print_desc(result['describe'], args.verbose)
+
+        found_match = False
+        for result in dxpy.find_apps(name=args.path, describe=True):
+            append_to_output_json_and_print(result)
+            found_match = True
+        if not found_match:
+            for result in dxpy.find_global_workflows(name=args.path, describe=True):
+                result['describe'] = dxpy.append_underlying_workflow_describe(result['describe'])
+                append_to_output_json_and_print(result)
+                found_match = True
+        return found_match
+
     try:
         if len(args.path) == 0:
             raise DXCLIError('Must provide a nonempty string to be described')
@@ -1181,31 +1237,13 @@ def describe(args):
 
         if not is_hashid(args.path) and ':' not in args.path:
 
-            # Could be an app name
-            if args.path.startswith('app-'):
-                try:
-                    desc = dxpy.api.app_describe(args.path)
-                    if args.json:
-                        json_output.append(desc)
-                    elif args.name:
-                        print(desc['name'])
-                    else:
-                        print(get_result_str())
-                        print_desc(desc, args.verbose)
-                    found_match = True
-                except dxpy.DXAPIError as details:
-                    if details.code != requests.codes.not_found:
-                        raise
+            # Could be a name of an app or a global workflow
+            if args.path.startswith('app-') or args.path.startswith('globalworkflow-'):
+                found = describe_global_executable(json_output, args, args.path.partition('-')[0])
             else:
-                for result in dxpy.find_apps(name=args.path, describe=True):
-                    if args.json:
-                        json_output.append(result['describe'])
-                    elif args.name:
-                        print(result['describe']['name'])
-                    else:
-                        print(get_result_str())
-                        print_desc(result['describe'], args.verbose)
-                    found_match = True
+                found = find_global_executable(json_output, args)
+            if found:
+                found_match = True
 
             if args.path.startswith('user-'):
                 # User
@@ -1788,7 +1826,11 @@ def get_workflow(entity_result, args):
                                   args)
     from dxpy.utils.executable_unbuilder import dump_executable
     print("Downloading workflow data", file=sys.stderr)
-    dx_obj = dxpy.DXWorkflow(obj_id)
+
+    if entity_result['describe']['class'] == 'workflow':
+        dx_obj = dxpy.DXWorkflow(obj_id)
+    else:
+        dx_obj = dxpy.DXGlobalWorkflow(obj_id)
     describe_output = entity_result['describe']
     dump_executable(dx_obj, output_path, omit_resources=True, describe_output=describe_output)
 
@@ -1797,6 +1839,10 @@ def get(args):
     # Decide what to do based on entity's class
     if not is_hashid(args.path) and ':' not in args.path and args.path.startswith('app-'):
         desc = dxpy.api.app_describe(args.path)
+        entity_result = {"id": desc["id"], "describe": desc}
+    elif not is_hashid(args.path) and ':' not in args.path and args.path.startswith('globalworkflow-'):
+        desc = dxpy.api.global_workflow_describe(args.path)
+        desc = dxpy.append_underlying_workflow_describe(desc)
         entity_result = {"id": desc["id"], "describe": desc}
     else:
         project, _folderpath, entity_result = try_call(resolve_existing_path,
@@ -1819,7 +1865,7 @@ def get(args):
         get_applet(project, entity_result, args)
     elif entity_result_class == 'app':
         get_app(entity_result, args)
-    elif entity_result_class == 'workflow':
+    elif entity_result_class in ('workflow', 'globalworkflow'):
         get_workflow(entity_result, args)
     else:
         err_exit('Error: The given object is of class ' + entity_result['describe']['class'] +
@@ -1936,6 +1982,11 @@ def upload(args, **kwargs):
     elif args.path is None:
         args.path = args.output
 
+    # multithread is an argument taken by DXFile.write() but we
+    # have to expose a `--singlethread` option for `dx upload` since
+    # it has multithreaded upload set by default
+    args.multithread = not args.singlethread
+
     if len(args.filename) > 1 and args.path is not None and not args.path.endswith("/"):
         # When called as "dx upload x --dest /y", we upload to "/y"; with --dest "/y/", we upload to "/y/x".
         # Called as "dx upload x y --dest /z", z is implicitly a folder, so append a slash to avoid incorrect path
@@ -1999,7 +2050,8 @@ def upload_one(args):
                                             details=args.details,
                                             folder=folder,
                                             parents=args.parents,
-                                            show_progress=args.show_progress)
+                                            show_progress=args.show_progress,
+                                            multithread=args.multithread)
             if args.wait:
                 dxfile._wait_on_close()
             if args.brief:
@@ -2295,54 +2347,88 @@ def find_projects(args):
         err_exit()
     format_find_results(args, results)
 
+def find_apps_result(args):
+    raw_results = dxpy.find_apps(name=args.name, name_mode='glob', category=args.category,
+                                 all_versions=args.all,
+                                 published=(not args.unpublished),
+                                 billed_to=args.billed_to,
+                                 created_by=args.creator,
+                                 developer=args.developer,
+                                 created_after=args.created_after,
+                                 created_before=args.created_before,
+                                 modified_after=args.mod_after,
+                                 modified_before=args.mod_before,
+                                 describe={"fields": {"name": True,
+                                                      "installed": args.installed,
+                                                      "title": not args.brief,
+                                                      "version": not args.brief,
+                                                      "published": args.verbose,
+                                                      "billTo": not args.brief}})
 
-def find_apps(args):
+    if args.installed:
+        maybe_filtered_by_install = (result for result in raw_results if result['describe']['installed'])
+    else:
+        maybe_filtered_by_install = raw_results
+
+    if args.brief:
+        results = ({"id": result['id']} for result in maybe_filtered_by_install)
+    else:
+        results = sorted(maybe_filtered_by_install, key=lambda result: result['describe']['name'])
+    return results
+
+def find_global_workflows_result(args):
+    raw_results = dxpy.find_global_workflows(name=args.name, name_mode='glob', category=args.category,
+                                 all_versions=args.all,
+                                 published=(not args.unpublished),
+                                 billed_to=args.billed_to,
+                                 created_by=args.creator,
+                                 developer=args.developer,
+                                 created_after=args.created_after,
+                                 created_before=args.created_before,
+                                 modified_after=args.mod_after,
+                                 modified_before=args.mod_before,
+                                 describe={"fields": {"name": True,
+                                                      "title": not args.brief,
+                                                      "version": not args.brief,
+                                                      "published": args.verbose,
+                                                      "billTo": not args.brief}})
+
+    if args.brief:
+        results = ({"id": result['id']} for result in raw_results)
+    else:
+        results = sorted(raw_results, key=lambda result: result['describe']['name'])
+    return results
+
+def print_find_results(results, args):
     def maybe_x(result):
         return DNANEXUS_X() if result['describe']['billTo'] == 'org-dnanexus' else ' '
 
+    if args.json:
+        print(json.dumps(list(results), indent=4))
+        return
+    if args.brief:
+        for result in results:
+            print(result['id'])
+    elif not args.verbose:
+        for result in results:
+            print(maybe_x(result) + DELIMITER(" ") + result['describe'].get('title', result['describe']['name']) + DELIMITER(' (') + result["describe"]["name"] + DELIMITER("), v") + result["describe"]["version"])
+    else:
+        for result in results:
+            print(maybe_x(result) + DELIMITER(" ") + result["id"] + DELIMITER(" ") + result['describe'].get('title', result['describe']['name']) + DELIMITER(' (') + result["describe"]["name"] + DELIMITER('), v') + result['describe']['version'] + DELIMITER(" (") + ("published" if result["describe"].get("published", 0) > 0 else "unpublished") + DELIMITER(")"))
+
+def find_apps(args):
     try:
-        raw_results = dxpy.find_apps(name=args.name, name_mode='glob', category=args.category,
-                                     all_versions=args.all,
-                                     published=(not args.unpublished),
-                                     billed_to=args.billed_to,
-                                     created_by=args.creator,
-                                     developer=args.developer,
-                                     created_after=args.created_after,
-                                     created_before=args.created_before,
-                                     modified_after=args.mod_after,
-                                     modified_before=args.mod_before,
-                                     describe={"fields": {"name": True,
-                                                          "installed": args.installed,
-                                                          "title": not args.brief,
-                                                          "version": not args.brief,
-                                                          "published": args.verbose,
-                                                          "billTo": not args.brief}})
-
-        if args.installed:
-            maybe_filtered_by_install = (result for result in raw_results if result['describe']['installed'])
-        else:
-            maybe_filtered_by_install = raw_results
-
-        if args.brief:
-            results = ({"id": result['id']} for result in maybe_filtered_by_install)
-        else:
-            results = sorted(maybe_filtered_by_install, key=lambda result: result['describe']['name'])
-
-        if args.json:
-            print(json.dumps(list(results), indent=4))
-            return
-        if args.brief:
-            for result in results:
-                print(result['id'])
-        elif not args.verbose:
-            for result in results:
-                print(maybe_x(result) + DELIMITER(" ") + result['describe'].get('title', result['describe']['name']) + DELIMITER(' (') + result["describe"]["name"] + DELIMITER("), v") + result["describe"]["version"])
-        else:
-            for result in results:
-                print(maybe_x(result) + DELIMITER(" ") + result["id"] + DELIMITER(" ") + result['describe'].get('title', result['describe']['name']) + DELIMITER(' (') + result["describe"]["name"] + DELIMITER('), v') + result['describe']['version'] + DELIMITER(" (") + ("published" if result["describe"].get("published", 0) > 0 else "unpublished") + DELIMITER(")"))
+        results = find_apps_result(args)
+        print_find_results(results, args)
     except:
         err_exit()
 
+def find_global_workflows(args):
+    try:
+        results = find_global_workflows_result(args)
+        print_find_results(results, args)
+    except:
+        err_exit()
 
 def update_project(args):
     input_params = get_update_project_args(args)
@@ -2513,10 +2599,10 @@ def build(args):
 
         if args.mode in ("app", "applet"):
             dx_build_app.build(args)
-        elif args.mode == "workflow":
+        elif args.mode in ("workflow", "globalworkflow"):
             workflow_builder.build(args, build_parser)
         else:
-            msg = "Unrecognized mode. Accepted options: --app, --applet, --workflow."
+            msg = "Unrecognized mode. Accepted options: --app, --applet, --workflow, --globalworkflow."
             msg += " If not provided, an attempt is made to build either an applet or a workflow, depending on"
             msg += " whether a dxapp.json or dxworkflow.json file is found in the source directory, respectively."
             build_parser.error(msg)
@@ -3529,7 +3615,7 @@ def generate_batch_inputs(args):
     # Output TSV Batch.  This procedure generates a TSV file with file names and IDs grouped by pattern
     for i,batch in enumerate(batches):
         def flatten_batch(b):
-            return [b['batchPattern']] + [ival['name'] for iname, ival in sorted(b['inputs'].items())] + [ival['ids'][0] for iname, ival in sorted(b['inputs'].items())]  
+            return [b['batchPattern']] + [ival['name'] for iname, ival in sorted(b['inputs'].items())] + [ival['ids'][0] for iname, ival in sorted(b['inputs'].items())]
 
         batch_fname = "{}.{:04d}.tsv".format(args.output_prefix, i)
         with open(batch_fname, 'wb') as csvfile:
@@ -3619,9 +3705,15 @@ class PrintDXVersion(argparse.Action):
 
 class PrintCategoryHelp(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
+
+        if parser.prog == "dx find globalworkflows":
+            exectype = "workflows"
+        else:
+            exectype = "apps"
+
         print('usage: ' + parser.prog + ' --category CATEGORY')
         print()
-        print(fill('List only the apps that belong to a particular category by providing a category name.'))
+        print(fill('List only the {et} that belong to a particular category by providing a category name.'.format(et=exectype)))
         print()
         print('Common category names include:')
         print('  ' + '\n  '.join(sorted(APP_CATEGORIES)))
@@ -4054,6 +4146,7 @@ parser_upload.add_argument('--wait', help='Wait until the file has finished clos
 parser_upload.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress',
                            action='store_false', default=sys.stderr.isatty())
 parser_upload.add_argument('--buffer-size', help='Set the write buffer size (in bytes)', dest='write_buffer_size')
+parser_upload.add_argument('--singlethread', help='Enable singlethreaded uploading', dest='singlethread', action='store_true')
 parser_upload.set_defaults(func=upload, mute=False)
 register_parser(parser_upload, categories='data')
 
@@ -4177,6 +4270,8 @@ src_dir_action.completer = LocalCompleter()
 build_parser.add_argument("--app", "--create-app", help="Create an app.", action="store_const", dest="mode", const="app")
 build_parser.add_argument("--create-applet", help=argparse.SUPPRESS, action="store_const", dest="mode", const="applet")
 build_parser.add_argument("--workflow", "--create-workflow", help="Create a workflow.", action="store_const", dest="mode", const="workflow")
+
+build_parser.add_argument("--globalworkflow", "--create-globalworkflow", help="Create a global workflow.", action="store_const", dest="mode", const="globalworkflow")
 
 applet_and_workflow_options.add_argument("-d", "--destination", help="Specifies the destination project, destination folder, and/or name for the applet, in the form [PROJECT_NAME_OR_ID:][/[FOLDER/][NAME]]. Overrides the project, folder, and name fields of the dxapp.json or dxworkflow.json, if they were supplied.", default='.')
 
@@ -5018,6 +5113,32 @@ parser_find_apps.add_argument('--mod-after', help='Date (e.g. 2012-01-01) or int
 parser_find_apps.add_argument('--mod-before', help='Date (e.g. 2012-01-01) or integer timestamp before which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
 parser_find_apps.set_defaults(func=find_apps)
 register_parser(parser_find_apps, subparsers_action=subparsers_find, categories='exec')
+
+parser_find_globalworkflows = subparsers_find.add_parser(
+    'globalworkflows',
+    help=fill('List available global workflows'),
+    description=fill('Finds global workflows subject to the given search parameters. Use --category to restrict by a category; '
+                     'common categories are available as tab completions and can be listed with --category-help.'),
+    parents=[stdout_args, json_arg, delim_arg, env_args],
+    prog='dx find globalworkflows'
+)
+parser_find_globalworkflows.add_argument('--name', help='Name of the workflow')
+parser_find_globalworkflows.add_argument('--category', help='Category of the workflow').completer = ListCompleter(APP_CATEGORIES)
+parser_find_globalworkflows.add_argument('--category-help',
+                              help='Print a list of common global workflow categories',
+                              nargs=0,
+                              action=PrintCategoryHelp)
+parser_find_globalworkflows.add_argument('-a', '--all', help='Return all versions of each workflow', action='store_true')
+parser_find_globalworkflows.add_argument('--unpublished', help='Return only unpublished workflows (if omitted, returns only published workflows)', action='store_true')
+parser_find_globalworkflows.add_argument('--billed-to', help='User or organization responsible for the workflow')
+parser_find_globalworkflows.add_argument('--creator', help='Creator of the workflow version')
+parser_find_globalworkflows.add_argument('--developer', help='Developer of the workflow')
+parser_find_globalworkflows.add_argument('--created-after', help='Date (e.g. 2012-01-01) or integer timestamp after which the workflow version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_globalworkflows.add_argument('--created-before', help='Date (e.g. 2012-01-01) or integer timestamp before which the workflow version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_globalworkflows.add_argument('--mod-after', help='Date (e.g. 2012-01-01) or integer timestamp after which the workflow was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_globalworkflows.add_argument('--mod-before', help='Date (e.g. 2012-01-01) or integer timestamp before which the workflow was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_globalworkflows.set_defaults(func=find_global_workflows)
+register_parser(parser_find_globalworkflows, subparsers_action=subparsers_find, categories='exec')
 
 parser_find_jobs = subparsers_find.add_parser(
     'jobs',

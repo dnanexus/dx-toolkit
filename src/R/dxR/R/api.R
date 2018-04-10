@@ -2157,6 +2157,480 @@ fileNew <- function(inputParams=emptyNamedList,
   dxHTTPRequest('/file/new', inputParams, jsonifyData=jsonifyData, alwaysRetry=alwaysRetry)
 }
 
+##' globalWorkflowAddAuthorizedUsers API wrapper
+##'
+##' This function makes an API call to the \code{/globalworkflow-xxxx/addAuthorizedUsers} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+globalWorkflowAddAuthorizedUsers <- function(objectID,
+                                             inputParams=emptyNamedList,
+                                             jsonifyData=TRUE,
+                                             alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'addAuthorizedUsers', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' globalWorkflowAddCategories API wrapper
+##'
+##' This function makes an API call to the \code{/globalworkflow-xxxx/addCategories} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+globalWorkflowAddCategories <- function(objectID,
+                                        inputParams=emptyNamedList,
+                                        jsonifyData=TRUE,
+                                        alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'addCategories', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' globalWorkflowAddDevelopers API wrapper
+##'
+##' This function makes an API call to the \code{/globalworkflow-xxxx/addDevelopers} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+globalWorkflowAddDevelopers <- function(objectID,
+                                        inputParams=emptyNamedList,
+                                        jsonifyData=TRUE,
+                                        alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'addDevelopers', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' globalWorkflowDelete API wrapper
+##'
+##' This function makes an API call to the \code{/globalworkflow-xxxx/delete} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+globalWorkflowDelete <- function(objectID,
+                                 inputParams=emptyNamedList,
+                                 jsonifyData=TRUE,
+                                 alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'delete', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' globalWorkflowDescribe API wrapper
+##'
+##' This function makes an API call to the \code{/globalworkflow-xxxx/describe} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+globalWorkflowDescribe <- function(objectID,
+                                   inputParams=emptyNamedList,
+                                   jsonifyData=TRUE,
+                                   alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'describe', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' globalWorkflowListAuthorizedUsers API wrapper
+##'
+##' This function makes an API call to the \code{/globalworkflow-xxxx/listAuthorizedUsers} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+globalWorkflowListAuthorizedUsers <- function(objectID,
+                                              inputParams=emptyNamedList,
+                                              jsonifyData=TRUE,
+                                              alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'listAuthorizedUsers', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' globalWorkflowListCategories API wrapper
+##'
+##' This function makes an API call to the \code{/globalworkflow-xxxx/listCategories} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+globalWorkflowListCategories <- function(objectID,
+                                         inputParams=emptyNamedList,
+                                         jsonifyData=TRUE,
+                                         alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'listCategories', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' globalWorkflowListDevelopers API wrapper
+##'
+##' This function makes an API call to the \code{/globalworkflow-xxxx/listDevelopers} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+globalWorkflowListDevelopers <- function(objectID,
+                                         inputParams=emptyNamedList,
+                                         jsonifyData=TRUE,
+                                         alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'listDevelopers', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' globalWorkflowPublish API wrapper
+##'
+##' This function makes an API call to the \code{/globalworkflow-xxxx/publish} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+globalWorkflowPublish <- function(objectID,
+                                  inputParams=emptyNamedList,
+                                  jsonifyData=TRUE,
+                                  alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'publish', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' globalWorkflowRemoveAuthorizedUsers API wrapper
+##'
+##' This function makes an API call to the \code{/globalworkflow-xxxx/removeAuthorizedUsers} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+globalWorkflowRemoveAuthorizedUsers <- function(objectID,
+                                                inputParams=emptyNamedList,
+                                                jsonifyData=TRUE,
+                                                alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'removeAuthorizedUsers', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' globalWorkflowRemoveCategories API wrapper
+##'
+##' This function makes an API call to the \code{/globalworkflow-xxxx/removeCategories} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+globalWorkflowRemoveCategories <- function(objectID,
+                                           inputParams=emptyNamedList,
+                                           jsonifyData=TRUE,
+                                           alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'removeCategories', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' globalWorkflowRemoveDevelopers API wrapper
+##'
+##' This function makes an API call to the \code{/globalworkflow-xxxx/removeDevelopers} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+globalWorkflowRemoveDevelopers <- function(objectID,
+                                           inputParams=emptyNamedList,
+                                           jsonifyData=TRUE,
+                                           alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'removeDevelopers', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' globalWorkflowRun API wrapper
+##'
+##' This function makes an API call to the \code{/globalworkflow-xxxx/run} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+globalWorkflowRun <- function(objectID,
+                              inputParams=emptyNamedList,
+                              jsonifyData=TRUE,
+                              alwaysRetry=FALSE) {
+  resource <- paste('/', objectID, '/', 'run', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' globalWorkflowUpdate API wrapper
+##'
+##' This function makes an API call to the \code{/globalworkflow-xxxx/update} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+globalWorkflowUpdate <- function(objectID,
+                                 inputParams=emptyNamedList,
+                                 jsonifyData=TRUE,
+                                 alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'update', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' globalWorkflowNew API wrapper
+##'
+##' This function makes an API call to the \code{/globalworkflow/new} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+globalWorkflowNew <- function(inputParams=emptyNamedList,
+                              jsonifyData=TRUE,
+                              alwaysRetry=FALSE) {
+  dxHTTPRequest('/globalworkflow/new', inputParams, jsonifyData=jsonifyData, alwaysRetry=alwaysRetry)
+}
+
 ##' gtableAddRows API wrapper
 ##'
 ##' This function makes an API call to the \code{/gtable-xxxx/addRows} API
@@ -4450,6 +4924,32 @@ systemFindDataObjects <- function(inputParams=emptyNamedList,
                                   jsonifyData=TRUE,
                                   alwaysRetry=TRUE) {
   dxHTTPRequest('/system/findDataObjects', inputParams, jsonifyData=jsonifyData, alwaysRetry=alwaysRetry)
+}
+
+##' systemFindGlobalWorkflows API wrapper
+##'
+##' This function makes an API call to the \code{/system/findGlobalWorkflows} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+systemFindGlobalWorkflows <- function(inputParams=emptyNamedList,
+                                      jsonifyData=TRUE,
+                                      alwaysRetry=TRUE) {
+  dxHTTPRequest('/system/findGlobalWorkflows', inputParams, jsonifyData=jsonifyData, alwaysRetry=alwaysRetry)
 }
 
 ##' systemResolveDataObjects API wrapper

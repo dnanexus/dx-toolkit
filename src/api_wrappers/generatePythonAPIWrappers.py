@@ -49,11 +49,11 @@ object_method_template = '''def {wrapper_method_name}(object_id, input_params={{
     return DXHTTPRequest('/%s/{api_method_name}' % object_id, {input_params}, always_retry=always_retry, **kwargs)
 '''
 
-app_object_method_template = '''def {wrapper_method_name}(app_name_or_id, alias=None, input_params={{}}, always_retry={retry}, **kwargs):
+globalexec_object_method_template = '''def {wrapper_method_name}({name_or_id}, alias=None, input_params={{}}, always_retry={retry}, **kwargs):
     """
-    Invokes the /app-xxxx/{api_method_name} API method.{wiki_ref}
+    Invokes the /{exec_type}-xxxx/{api_method_name} API method.{wiki_ref}
     """{nonce_code}
-    fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
+    fully_qualified_version = {name_or_id} + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/{api_method_name}' % fully_qualified_version, {input_params}, always_retry=always_retry, **kwargs)
 '''
 
@@ -89,9 +89,12 @@ def make_object_method(wrapper_method_name, api_method_name, route, accept_nonce
                                          input_params=make_input_params(accept_nonce))
 
 
-def make_app_object_method(wrapper_method_name, api_method_name, accept_nonce, retry=False, url=None):
-    return app_object_method_template.format(wrapper_method_name=wrapper_method_name,
+def make_app_or_globalworkflow_object_method(wrapper_method_name, api_method_name, exec_type,
+                                             accept_nonce, retry=False, url=None, name_or_id="name_or_id"):
+    return globalexec_object_method_template.format(wrapper_method_name=wrapper_method_name,
                                              api_method_name=api_method_name,
+                                             name_or_id=name_or_id,
+                                             exec_type=exec_type,
                                              retry=retry,
                                              wiki_ref=make_wiki_ref(url),
                                              nonce_code=make_nonce_code(accept_nonce),
@@ -114,8 +117,17 @@ for method in json.loads(sys.stdin.read()):
     if (opts['objectMethod']):
         root, oid_route, api_method_name = route.split("/")
         if oid_route == 'app-xxxx':
-            print(make_app_object_method(wrapper_method_name,
+            print(make_app_or_globalworkflow_object_method(wrapper_method_name,
                                          api_method_name,
+                                         "app",
+                                         accept_nonce,
+                                         retry=retry,
+                                         url=opts.get('wikiLink', None),
+                                         name_or_id="app_name_or_id"))
+        elif oid_route == 'globalworkflow-xxxx':
+            print(make_app_or_globalworkflow_object_method(wrapper_method_name,
+                                         api_method_name,
+                                         "globalworkflow",
                                          accept_nonce,
                                          retry=retry,
                                          url=opts.get('wikiLink', None)))

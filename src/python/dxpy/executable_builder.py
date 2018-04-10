@@ -27,11 +27,15 @@ onto the platform.
 '''
 
 from __future__ import print_function, unicode_literals, division, absolute_import
+import os
+import re
 
 from .utils.resolver import resolve_path, is_container_id
 from .cli import try_call
-import os
+import dxpy
 
+GLOBAL_EXEC_NAME_RE = re.compile("^[a-zA-Z0-9._\-]+$")
+GLOBAL_EXEC_VERSION_RE = re.compile("^([1-9][0-9]*|0)\.([1-9][0-9]*|0)\.([1-9][0-9]*|0)(-[-0-9A-Za-z]+(\.[-0-9A-Za-z]+)*)?(\+[-0-9A-Za-z]+(\.[-0-9A-Za-z]+)*)?$")
 
 def get_parsed_destination(dest_str):
     """
@@ -81,3 +85,51 @@ def inline_documentation_files(json_spec, src_dir):
                 with open(os.path.join(src_dir, filename)) as fh:
                     json_spec['developerNotes'] = fh.read()
                 break
+
+
+def delete_temporary_projects(projects):
+    """
+    Destroys all projects from the list.
+    """
+    for project in projects:
+        try:
+            dxpy.api.project_destroy(project)
+        except Exception:
+            pass
+
+
+def verify_developer_rights(prefixed_name):
+    assert(prefixed_name.startswith('app-') or prefixed_name.startswith('globalworkflow-'))
+
+    if prefixed_name.partition('-')[0] == 'app':
+        exception_type = dxpy.app_builder.AppBuilderException
+        describe_method = dxpy.api.app_describe
+        exception_msg = \
+            'An app with the given name already exists and you are not a developer of that app'
+    else:
+        exception_type = dxpy.workflow_builder.WorkflowBuilderException
+        describe_method = dxpy.api.global_workflow_describe
+        exception_msg = \
+            'A global workflow with the given name already exists and you are not a developer of that workflow'
+
+    name_already_exists = True
+    is_developer = False
+    try:
+        is_developer = describe_method(prefixed_name,
+                                       input_params={"fields": {"isDeveloperFor": True}})["isDeveloperFor"]
+    except dxpy.exceptions.DXAPIError as e:
+        if e.name == 'ResourceNotFound':
+            name_already_exists = False
+        elif e.name == 'PermissionDenied':
+            raise exception_type(exception_msg)
+        else:
+            raise e
+
+    if not name_already_exists:
+        # This app/workflow doesn't exist yet so its creation will succeed
+        # (or at least, not fail on the basis of the ACL).
+        return
+
+    if not is_developer:
+        name_without_prefix = prefixed_name.partition('-')[2]
+        raise exception_type('You are not a developer for {n}'.format(n=name_without_prefix))

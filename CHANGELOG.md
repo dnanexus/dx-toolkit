@@ -6,10 +6,36 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added 
+
+*  Support for `dx describe` for global workflows
+
+## [249.0] - beta
+
+### Added
+
+* zsh support
+* API wrappers for global workflow routes
+* Basic Python bindings for global workflow
+* `set_properties()` method to DXProject
+
+### Fixed
+
+* dx get applet without execDepends
+
+## [248.0] - 2018.03.29 - stable
+
+### Fixed
+
+* `dx-clone-asset` SSL error
+
+## [247.0] - 2018.03.14
+
 ### Added
 
 * Clarify documentation of stage key for `dx run`
 * Asset builder support for Ubuntu 16.04
+* `--singlethread` parameter for `dx upload`
 
 ### Changed
 
@@ -21,7 +47,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Bug with Azure instance type selection in `dx-app-wizard`
 * Do not retry code `422` in dxpy
 
-## [246.0] - beta
+## [246.0] - 2018.03.14
 
 ### Added
 
@@ -32,7 +58,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Accept 302 as a success for `ua --test`
 
-## [245.0] - 2018.02.15 - stable
+## [245.0] - 2018.02.15
 
 ### Added
 

@@ -660,6 +660,128 @@ namespace dx {
     return fileNew(input_params_cp.toString(), safe_to_retry);
   }
 
+  JSON globalWorkflowAddAuthorizedUsers(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/addAuthorizedUsers"), input_params, safe_to_retry);
+  }
+
+  JSON globalWorkflowAddAuthorizedUsers(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return globalWorkflowAddAuthorizedUsers(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON globalWorkflowAddCategories(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/addCategories"), input_params, safe_to_retry);
+  }
+
+  JSON globalWorkflowAddCategories(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return globalWorkflowAddCategories(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON globalWorkflowAddDevelopers(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/addDevelopers"), input_params, safe_to_retry);
+  }
+
+  JSON globalWorkflowAddDevelopers(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return globalWorkflowAddDevelopers(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON globalWorkflowDelete(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/delete"), input_params, safe_to_retry);
+  }
+
+  JSON globalWorkflowDelete(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return globalWorkflowDelete(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON globalWorkflowDescribe(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params, safe_to_retry);
+  }
+
+  JSON globalWorkflowDescribe(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return globalWorkflowDescribe(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON globalWorkflowListAuthorizedUsers(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/listAuthorizedUsers"), input_params, safe_to_retry);
+  }
+
+  JSON globalWorkflowListAuthorizedUsers(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return globalWorkflowListAuthorizedUsers(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON globalWorkflowListCategories(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/listCategories"), input_params, safe_to_retry);
+  }
+
+  JSON globalWorkflowListCategories(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return globalWorkflowListCategories(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON globalWorkflowListDevelopers(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/listDevelopers"), input_params, safe_to_retry);
+  }
+
+  JSON globalWorkflowListDevelopers(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return globalWorkflowListDevelopers(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON globalWorkflowPublish(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/publish"), input_params, safe_to_retry);
+  }
+
+  JSON globalWorkflowPublish(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return globalWorkflowPublish(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON globalWorkflowRemoveAuthorizedUsers(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/removeAuthorizedUsers"), input_params, safe_to_retry);
+  }
+
+  JSON globalWorkflowRemoveAuthorizedUsers(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return globalWorkflowRemoveAuthorizedUsers(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON globalWorkflowRemoveCategories(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/removeCategories"), input_params, safe_to_retry);
+  }
+
+  JSON globalWorkflowRemoveCategories(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return globalWorkflowRemoveCategories(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON globalWorkflowRemoveDevelopers(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/removeDevelopers"), input_params, safe_to_retry);
+  }
+
+  JSON globalWorkflowRemoveDevelopers(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return globalWorkflowRemoveDevelopers(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON globalWorkflowRun(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/run"), input_params, safe_to_retry);
+  }
+
+  JSON globalWorkflowRun(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    JSON input_params_cp = Nonce::updateNonce(input_params);
+    return globalWorkflowRun(object_id, input_params_cp.toString(), safe_to_retry);
+  }
+
+  JSON globalWorkflowUpdate(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/update"), input_params, safe_to_retry);
+  }
+
+  JSON globalWorkflowUpdate(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return globalWorkflowUpdate(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON globalWorkflowNew(const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest("/globalworkflow/new", input_params, safe_to_retry);
+  }
+
+  JSON globalWorkflowNew(const JSON &input_params, const bool safe_to_retry) {
+    JSON input_params_cp = Nonce::updateNonce(input_params);
+    return globalWorkflowNew(input_params_cp.toString(), safe_to_retry);
+  }
+
   JSON gtableAddRows(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest(std::string("/") + object_id + std::string("/addRows"), input_params, safe_to_retry);
   }
@@ -1237,6 +1359,14 @@ namespace dx {
 
   JSON systemFindDataObjects(const JSON &input_params, const bool safe_to_retry) {
     return systemFindDataObjects(input_params.toString(), safe_to_retry);
+  }
+
+  JSON systemFindGlobalWorkflows(const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest("/system/findGlobalWorkflows", input_params, safe_to_retry);
+  }
+
+  JSON systemFindGlobalWorkflows(const JSON &input_params, const bool safe_to_retry) {
+    return systemFindGlobalWorkflows(input_params.toString(), safe_to_retry);
   }
 
   JSON systemResolveDataObjects(const std::string &input_params, const bool safe_to_retry) {
