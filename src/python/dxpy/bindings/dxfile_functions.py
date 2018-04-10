@@ -166,10 +166,7 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
                                             project=project)
  
     # Follow the redirection
-    import requests
     print('Following redirect for ' + url)
-
-    r = requests.get(url, allow_redirects=False)
 
     wget_exe = _which("wget")
     if wget_exe is None:
