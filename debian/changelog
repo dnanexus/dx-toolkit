@@ -1,3 +1,13 @@
+dx-toolkit (0.251.0) precise; urgency=low
+
+  * Added: Support for dx find global workflows
+  * Added: Initial support for dx build global workflow
+  * Added: Publish method to global workflow bindings
+  * Added: Support for dx get global workflow
+  * Added: dx download symlink
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 10 Apr 2018 14:55:36 +0000
+
 dx-toolkit (0.250.0) precise; urgency=low
 
   * Added: Support for dx describe for global workflows
