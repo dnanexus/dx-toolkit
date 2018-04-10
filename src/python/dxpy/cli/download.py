@@ -19,9 +19,13 @@ This module handles download commands for the dx command-line client.
 '''
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os
-import sys
 import collections
+import os
+import subprocess
+import sys
+import tempfile
+import warnings
+
 import dxpy
 from ..utils.resolver import (resolve_existing_path, get_first_pos_of_char, is_project_explicit,
                               object_exists_in_project, is_jbor_str)
@@ -29,6 +33,39 @@ from ..exceptions import err_exit
 from . import try_call
 from dxpy.utils.printing import (fill)
 from dxpy.utils import pathmatch
+
+# Check if a program (wget, curl, etc.) is on the path, and
+# can be called.
+def _which(program):
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    for path in os.environ["PATH"].split(os.pathsep):
+        exe_file = os.path.join(path, program)
+        if is_exe(exe_file):
+            return exe_file
+    return None
+
+# Caluclate the md5 checkum for [filename], and raise
+# an exception if the checksum is wrong.
+def _verify(filename, md5digest):
+    md5sum_exe = _which("md5sum")
+    if md5sum_exe is None:
+        err_exit("md5sum is not installed on this system")
+    cmd = [md5sum_exe, "-b", filename]
+    try:
+        print("Calculating checksum")
+        cmd_out = subprocess.check_output(cmd)
+    except subprocess.CalledProcessError:
+        err_exit("Failed to run md5sum: " + str(cmd))
+
+    line = cmd_out.strip().split()
+    if len(line) != 2:
+        err_exit("md5sum returned weird results: " + str(line))
+    actual_md5 = line[0]
+    if actual_md5 != md5digest:
+        err_exit("Checksum doesn't match " + actual_md5 + "  expected:" + md5digest)
+    print("Checksum correct")
 
 
 def download_one_file(project, file_desc, dest_filename, args):
@@ -51,8 +88,10 @@ def download_one_file(project, file_desc, dest_filename, args):
 
     try:
         dxpy.download_dxfile(file_desc['id'], dest_filename, show_progress=show_progress, project=project)
+        return
     except:
         err_exit()
+
 
 
 def _ensure_local_dir(d):
