@@ -23,13 +23,14 @@ DXGlobalWorkflow Handler
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import dxpy
-from . import DXObject, DXExecutable, DXJob, verify_string_dxid
+from . import DXObject, DXAnalysis, DXExecutable, verify_string_dxid
 from ..exceptions import DXError
 from ..compat import basestring
 
 ####################
 # DXGlobalWorkflow #
 ####################
+
 
 class DXGlobalWorkflow(DXObject, DXExecutable):
     '''
@@ -42,6 +43,11 @@ class DXGlobalWorkflow(DXObject, DXExecutable):
         DXObject.__init__(self)
         if dxid is not None or name is not None:
             self.set_id(dxid=dxid, name=name, alias=alias)
+
+        # caches for underlying workflow instances and descriptions per region
+        # (they are immutable for a given global workflow)
+        self._workflows_by_region = {}
+        self._workflow_desc_by_region = {}
 
     def set_id(self, dxid=None, name=None, alias=None):
         '''
@@ -153,3 +159,153 @@ class DXGlobalWorkflow(DXObject, DXExecutable):
             return dxpy.api.global_workflow_publish(self._dxid, **kwargs)
         else:
             return dxpy.api.global_workflow_publish('globalworkflow-' + self._name, alias=self._alias, **kwargs)
+
+    def describe_underlying_workflow(self, region, describe_output=None):
+        """
+        :param region: region name
+        :type region: string
+        :param describe_output: description of a global workflow
+        :type describe_output: dict
+        :returns: object description of a workflow
+        :rtype: : dict
+
+        Returns an object description of an underlying workflow from a given region.
+        """
+        assert(describe_output is None or describe_output.get('class', '') == 'globalworkflow')
+
+        if region is None:
+            raise DXError(
+                'DXGlobalWorkflow: region must be provided to get an underlying workflow')
+
+        # Perhaps we have cached it already
+        if region in self._workflow_desc_by_region:
+            return self._workflow_desc_by_region[region]
+
+        if not describe_output:
+            describe_output = self.describe()
+
+        if region not in describe_output['regionalOptions'].keys():
+            raise DXError('DXGlobalWorkflow: the global workflow {} is not enabled in region {}'.format(
+                self.get_id(), region))
+
+        underlying_workflow_id = describe_output['regionalOptions'][region]['workflow']
+        dxworkflow = dxpy.DXWorkflow(underlying_workflow_id)
+        dxworkflow_desc = dxworkflow.describe()
+        self._workflow_desc_by_region = dxworkflow_desc
+        return dxworkflow_desc
+
+    def get_underlying_workflow(self, region, describe_output=None):
+        """
+        :param region: region name
+        :type region: string
+        :param describe_output: description of a global workflow
+        :type describe_output: dict
+        :returns: object handler of a workflow
+        :rtype: :class:`~dxpy.bindings.dxworkflow.DXWorkflow`
+
+        Returns an object handler of an underlying workflow from a given region.
+        """
+        assert(describe_output is None or describe_output.get('class') == 'globalworkflow')
+
+        if region is None:
+            raise DXError(
+                'DXGlobalWorkflow: region must be provided to get an underlying workflow')
+
+        # Perhaps we have cached it already
+        if region in self._workflows_by_region:
+            return self._workflows_by_region[region]
+
+        if not describe_output:
+            describe_output = self.describe()
+
+        if region not in describe_output['regionalOptions'].keys():
+            raise DXError('DXGlobalWorkflow: the global workflow {} is not enabled in region {}'.format(
+                self.get_id(), region))
+
+        underlying_workflow_id = describe_output['regionalOptions'][region]['workflow']
+        self._workflow_desc_by_region = dxpy.DXWorkflow(underlying_workflow_id)
+        return dxpy.DXWorkflow(underlying_workflow_id)
+
+    def append_underlying_workflow_desc(self, describe_output, region):
+        """
+        :param region: region name
+        :type region: string
+        :param describe_output: description of a global workflow
+        :type describe_output: dict
+        :returns: object description of the global workflow
+        :rtype: : dict
+
+        Appends stages, inputs, outputs and other workflow-specific metadata to a global workflow describe output.
+
+        Note: global workflow description does not contain functional metadata (stages, IO), since this data
+        is region-specific (due to applets and bound inputs) and so reside only in region-specific underlying
+        workflows. We add them to global_workflow_desc so that it can be used for a workflow or a global workflow
+        """
+        assert(describe_output is None or describe_output.get('class') == 'globalworkflow')
+
+        underlying_workflow_desc = self.describe_underlying_workflow(region,
+                                                                     describe_output=describe_output)
+        for field in ['inputs', 'outputs', 'inputSpec', 'outputSpec', 'stages']:
+            describe_output[field] = underlying_workflow_desc[field]
+        return describe_output
+
+    def _get_input_name(self, input_str, region=None, describe_output=None):
+        dxworkflow = self.get_underlying_workflow(region, describe_output=describe_output)
+        return dxworkflow._get_input_name(input_str)
+
+    def _get_run_input(self, workflow_input, project=None, **kwargs):
+        """
+        Checks the region in which the global workflow is run
+        and returns the input associated with the underlying workflow
+        from that region.
+        """
+        region = dxpy.api.project_describe(project,
+                                           input_params={"fields": {"region": True}})["region"]
+        dxworkflow = self.get_underlying_workflow(region)
+        return dxworkflow._get_run_input(workflow_input, **kwargs)
+
+    def _run_impl(self, run_input, **kwargs):
+        if self._dxid is not None:
+            return DXAnalysis(dxpy.api.global_workflow_run(self._dxid, input_params=run_input, **kwargs)["id"])
+        else:
+            return DXAnalysis(dxpy.api.global_workflow_run('globalworkflow-' + self._name, alias=self._alias,
+                                                           input_params=run_input,
+                                                           **kwargs)["id"])
+
+    def run(self, workflow_input, *args, **kwargs):
+        '''
+        :param workflow_input: Dictionary of the workflow's input arguments; see below for more details
+        :type workflow_input: dict
+        :param instance_type: Instance type on which all stages' jobs will be run, or a dict mapping function names to instance types. These may be overridden on a per-stage basis if stage_instance_types is specified.
+        :type instance_type: string or dict
+        :param stage_instance_types: A dict mapping stage IDs, names, or indices to either a string (representing an instance type to be used for all functions in that stage), or a dict mapping function names to instance types.
+        :type stage_instance_types: dict
+        :param stage_folders: A dict mapping stage IDs, names, indices, and/or the string "*" to folder values to be used for the stages' output folders (use "*" as the default for all unnamed stages)
+        :type stage_folders: dict
+        :param rerun_stages: A list of stage IDs, names, indices, and/or the string "*" to indicate which stages should be run even if there are cached executions available
+        :type rerun_stages: list of strings
+        :returns: Object handler of the newly created analysis
+        :rtype: :class:`~dxpy.bindings.dxanalysis.DXAnalysis`
+
+        Run the workflow. See :meth:`dxpy.bindings.dxapplet.DXExecutable.run` for additional args.
+
+        When providing input for the workflow, keys should be of one of the following forms:
+
+        * "N.name" where *N* is the stage number, and *name* is the
+          name of the input, e.g. "0.reads" if the first stage takes
+          in an input called "reads"
+
+        * "stagename.name" where *stagename* is the stage name, and
+          *name* is the name of the input within the stage
+
+        * "stageID.name" where *stageID* is the stage ID, and *name*
+          is the name of the input within the stage
+
+        * "name" where *name* is the name of a workflow level input
+          (defined in inputs) or the name that has been
+          exported for the workflow (this name will appear as a key
+          in the "inputSpec" of this workflow's description if it has
+          been exported for this purpose)
+
+        '''
+        return super(DXGlobalWorkflow, self).run(workflow_input, *args, **kwargs)

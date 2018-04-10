@@ -408,9 +408,12 @@ def get_optional_input_str(param_desc):
     return param_desc.get('label', param_desc['name']) + ' (' + param_desc['name'] + ')'
 
 class ExecutableInputs(object):
-    def __init__(self, executable=None, input_name_prefix=None, input_spec=None):
+    def __init__(self, executable=None, input_name_prefix=None, input_spec=None, active_region=None):
         self.executable = executable
-        self._desc = {} if self.executable is None else executable.describe()
+        self.region = active_region
+
+        self._desc = self.get_executable_description()
+
         self.required_inputs, self.optional_inputs, self.array_inputs = [], [], set()
         self.input_name_prefix = input_name_prefix
         self.inputs = OrderedDefaultdict(list)
@@ -430,16 +433,16 @@ class ExecutableInputs(object):
         if input_spec is None:
             input_spec = self._desc.get('inputSpec', [])
 
-        if input_spec is None and self._desc['class'] == 'workflow':
+        if input_spec is None and self._desc['class'] in ('workflow', 'globalworkflow'):
             # this is only the case if it's a workflow with an
             # inaccessible stage
             inaccessible_stages = [stage['id'] for stage in self._desc['stages'] if stage['accessible'] is False]
             raise DXCLIError('The workflow ' + self._desc['id'] + ' has the following inaccessible stage(s): ' + ', '.join(inaccessible_stages))
 
-        # Workflow-level inputs (defined in inputs)
-        #  i. The workflow has no inputs
+        # Workflow-level inputs (defined in "inputs")
+        #  i. If the workflow has no "inputs"
         #   * The inputs can be passed to stages directly
-        # ii. The workflow has inputs (in a closed or open state)
+        # ii. If the workflow has "inputs" (in a closed or open state)
         #   * Only inputs defined in inputs can be passed to the workflow,
         #     using workflow-level input names
         if self._accept_only_workflow_level_inputs():
@@ -457,6 +460,16 @@ class ExecutableInputs(object):
 
     def _accept_only_workflow_level_inputs(self):
         return self._desc.get('inputs') is not None
+
+    def get_executable_description(self):
+        if self.executable is None:
+            return {}
+        elif isinstance(self.executable, dxpy.DXGlobalWorkflow):
+            global_workflow_desc = self.executable.describe()
+            return self.executable.append_underlying_workflow_desc(global_workflow_desc, self.region)
+        else:
+            return self.executable.describe()
+
 
     def update(self, new_inputs, strip_prefix=True):
         """
@@ -748,8 +761,8 @@ class ExecutableInputs(object):
                 name, value = parse_input_keyval(keyeqval)
                 if '.' in name and self._accept_only_workflow_level_inputs():
                     raise DXCLIError('The input with a key '+ name + ' was passed to a stage but the workflow accepts inputs only on the workflow level')
-                self.add(self.executable._get_input_name(name) if \
-                         self._desc.get('class') == 'workflow' else name, value)
+                self.add(self.executable._get_input_name(name, region=args.region, describe_output=self._desc) if \
+                         self._desc.get('class') in ('workflow', 'globalworkflow') else name, value)
             self._update_requires_resolution_inputs()
 
         if self.input_spec is None:

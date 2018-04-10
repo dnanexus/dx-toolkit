@@ -3025,7 +3025,6 @@ def main():
         applet_job.wait_on_done()
         self.assertEqual(applet_job.describe()['state'], 'done')
 
-
 class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
     default_inst_type = "mem2_hdd2_x2"
 
@@ -3918,6 +3917,36 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         workflow_dir = self.write_workflow_directory("dxbuilt_workflow", "{")
         with self.assertSubprocessFailure(stderr_regexp='Could not parse dxworkflow\.json file', exit_code=3):
             run("dx build " + workflow_dir)
+
+
+class TestDXClientGlobalWorkflow(DXTestCaseBuildWorkflows):
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_ISOLATED_ENV,
+                         "skipping test that would run build global workflows and run jobs")
+    def test_dx_run_global_workflow(self):
+        gwf_name = "gwf_{t}_single_region".format(t=int(time.time()))
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name, version="1.0.0")
+        workflow_dir = self.write_workflow_directory(gwf_name,
+                                                     json.dumps(dxworkflow_json),
+                                                     readme_content="Workflow Readme Please")
+        run('dx build --globalworkflow ' + workflow_dir)
+
+        analysis_id = run("dx run globalworkflow-" + gwf_name + " -i0.number=32 -y --brief").strip()
+        self.assertTrue(analysis_id.startswith('analysis-'))
+        analysis_desc = run("dx describe " + analysis_id)
+        self.assertIn('stage_0.number = 32', analysis_desc)
+        analysis_desc = json.loads(run("dx describe " + analysis_id + " --json"))
+        time.sleep(2) # May need to wait for job to be created in the system
+        job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
+        self.assertIn(' number = 32', job_desc)
+
+        # Test "dx run --help"
+        help_out = run("dx run globalworkflow-" + gwf_name + " --help")
+        self.assertIn(gwf_name, help_out)
+        self.assertIn("unpublished", help_out)
+        self.assertIn("1.0.0", help_out)
+        self.assertIn("Inputs", help_out)
+        self.assertIn("Outputs", help_out)
 
 class TestDXClientFind(DXTestCase):
 
@@ -9101,6 +9130,7 @@ class TestTcshEnvironment(unittest.TestCase):
         tcsh.sendline("dx")
         tcsh.expect("dx is a command-line client")
 
+
 class TestDXScripts(DXTestCase):
     def test_minimal_invocation(self):
         # For dxpy scripts that have no other tests, these dummy calls
@@ -9308,6 +9338,7 @@ class TestDXTree(DXTestCase):
         self.assertRegexpMatches(o.strip(),
                                  r".\n└── closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+foo \(" + rec.get_id() + "\)")
 
+
 class TestDXGenerateBatchInputs(DXTestCase):
     # More advanced corner cases of generateBatchInputs API calls performed in API unit tests
     def test_example_matches(self):
@@ -9361,7 +9392,6 @@ class TestDXGenerateBatchInputs(DXTestCase):
         Input pair1 is associated with a file name that matches multiple IDs:
         """
         self.assertTrue(cornercase_test_stderr.startswith(textwrap.dedent(expected_cornercase_test_stderr).strip()))
-
 
 
 @unittest.skipUnless(testutil.TEST_RUN_JOBS,
