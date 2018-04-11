@@ -6218,6 +6218,56 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         new_gwf = json.loads(run("dx build --globalworkflow --bill-to {} --json {}".format(org_id, workflow_dir)))
         self.assertEqual(new_gwf["billTo"], org_id)
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create global workflows')
+    def test_dx_add_list_remove_users_of_global_workflows(self):
+        """
+        This test is for some other dx subcommands, but it's in this
+        test suite to take advantage of workflow-building methods.
+        """
+        # Only create if it's not available already (makes
+        # local testing easier)
+        try:
+            workflow_desc = dxpy.api.global_workflow_describe("globalworkflow-test_dx_users", {})
+            workflow_id = workflow_desc["id"]
+            # reset users to empty list
+            run("dx remove users globalworkflow-test_dx_users " + " ".join(workflow_desc["authorizedUsers"]))
+        except:
+            workflow_id = None
+        if workflow_id is None:
+            gwf_name = "wf_test_dx_users"
+            dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
+            workflow_dir = self.write_workflow_directory(gwf_name,
+                                                         json.dumps(dxworkflow_json))
+            workflow_id = json.loads(run("dx build --create-globalworkflow --json " + workflow_dir))['id']
+        # don't use "globalworkflow-" prefix, duplicate and multiple members are fine
+        run("dx add users wf_test_dx_users eve user-eve org-piratelabs")
+        users = run("dx list users globalworkflow-wf_test_dx_users").strip().split("\n")
+        self.assertEqual(len(users), 2)
+        self.assertIn("user-eve", users)
+        self.assertIn("org-piratelabs", users)
+        run("dx remove users wf_test_dx_users eve org-piratelabs")
+        # use version string
+        run("dx list users globalworkflow-wf_test_dx_users/0.0.1")
+
+        # bad paths and exit codes
+        with self.assertSubprocessFailure(stderr_regexp='could not be resolved', exit_code=3):
+            run('dx add users nonexistentgwf user-eve')
+        with self.assertSubprocessFailure(stderr_regexp='could not be resolved', exit_code=3):
+            run('dx list users globalworkflow-nonexistentgwf')
+        with self.assertSubprocessFailure(stderr_regexp='could not be resolved', exit_code=3):
+            run('dx remove users globalworkflow-nonexistentgwf/1.0.0 user-eve')
+        with self.assertSubprocessFailure(stderr_regexp='ResourceNotFound', exit_code=3):
+            run('dx add users wf_test_dx_users org-nonexistentorg')
+        with self.assertSubprocessFailure(stderr_regexp='ResourceNotFound', exit_code=3):
+            run('dx add users wf_test_dx_users nonexistentuser')
+        with self.assertSubprocessFailure(stderr_regexp='ResourceNotFound', exit_code=3):
+            run('dx add users wf_test_dx_users piratelabs')
+
+        # ResourceNotFound is not thrown when removing things
+        run('dx remove users wf_test_dx_users org-nonexistentorg')
+        run('dx remove users wf_test_dx_users nonexistentuser')
+        run('dx remove users wf_test_dx_users piratelabs')
 
 class TestDXBuildApp(DXTestCaseBuildApps):
     def run_and_assert_stderr_matches(self, cmd, stderr_regexp):
@@ -7257,7 +7307,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
-    def test_dx_add_list_remove_users(self):
+    def test_dx_add_list_remove_users_of_apps(self):
         '''
         This test is for some other dx subcommands, but it's in this
         test suite to take advantage of app-building methods.
