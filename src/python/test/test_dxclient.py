@@ -6220,7 +6220,7 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create global workflows')
-    def test_dx_add_list_remove_users_of_workflows(self):
+    def test_dx_add_list_remove_users_of_global_workflows(self):
         """
         This test is for some other dx subcommands, but it's in this
         test suite to take advantage of workflow-building methods.
@@ -6248,7 +6248,7 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         self.assertIn("org-piratelabs", users)
         run("dx remove users wf_test_dx_users eve org-piratelabs")
         # use version string
-        run("dx list users globalworkflow-wf_test_dx_users/0.0.1").strip()
+        run("dx list users globalworkflow-wf_test_dx_users/0.0.1")
 
         # bad paths and exit codes
         with self.assertSubprocessFailure(stderr_regexp='could not be resolved', exit_code=3):

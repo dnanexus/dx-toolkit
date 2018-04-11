@@ -1255,8 +1255,10 @@ def get_exec_handler(path, alias=None):
             return dxpy.DXApp(dxid=desc['id'])
         elif desc['class'] == 'workflow':
             return dxpy.DXWorkflow(desc['id'], project=desc['project'])
-        else:
+        elif desc['class'] == 'globalworkflow':
             return dxpy.DXGlobalWorkflow(dxid=desc['id'])
+        else:
+            raise DXError('The executable class {} is not supported'.format(desc['class']))
 
     # First attempt to resolve a global executable: app or global workflow
     global_exec_desc = get_global_exec_from_path(path)
