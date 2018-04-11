@@ -641,13 +641,14 @@ def update_traceability_matrix(id_array):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            try:
-                retval = func(*args, **kwargs)
-                for tid in id_array:
-                    print("{}\t{}".format(tid, "PASSED"))
-            except Exception as e:
-                for tid in id_array:
-                    print("{}\t{}".format(tid, "FAILED"))
-                raise
+            with open("{}.traceability.tsv".format(os.path.splitext(os.path.basename(__file__))[0]), "w+") as f:
+                try:
+                    retval = func(*args, **kwargs)
+                    for tid in id_array:
+                        f.write("{}\t{}\n".format(tid, "PASSED"))
+                except Exception as e:
+                    for tid in id_array:
+                        f.write("{}\t{}\n".format(tid, "FAILED"))
+                    raise
         return wrapper
     return decorator
