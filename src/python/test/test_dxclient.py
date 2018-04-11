@@ -30,6 +30,7 @@ from contextlib import contextmanager
 import pexpect
 import requests
 import textwrap
+import pytest
 
 import dxpy
 import dxpy.executable_builder
@@ -75,11 +76,14 @@ def list_folder(proj_id, path):
     return output
 
 
+
 class TestDXTestUtils(DXTestCase):
     def test_temporary_project(self):
         with temporary_project('test_temporary_project', select=True):
             self.assertEquals('test_temporary_project:/', run('dx pwd').strip())
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_SELECT_PROJECT"])
     def test_select_project(self):
         test_dirname = '/test_folder'
         with temporary_project('test_select_project') as temp_project:
