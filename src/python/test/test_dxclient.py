@@ -6427,32 +6427,53 @@ class TestDXBuildApp(DXTestCaseBuildApps):
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
     def test_build_cluster_app_bootstrap_script_inlined(self):
+        # TODO: test that app builds successfully if no bootstrapScript is provided
         app_name = "cluster_app"
-        cluster_spec = {"type": "spark",
-                        "version": "2.2.0",
-                        "initialInstanceCount": 5,
-                        "bootstrapScript": "clusterBootstrap.py"}
+        cluster_spec_with_bootstrap = {"type": "spark",
+                                       "version": "2.2.0",
+                                       "initialInstanceCount": 5,
+                                       "bootstrapScript": "clusterBootstrap.py"}
+        cluster_spec_no_bootstrap = {"type": "spark",
+                                     "version": "2.2.0",
+                                     "initialInstanceCount": 10}
+        bootstrap_code = "testing"
+        # TODO: add another region and add an entry point with no cluster
+        # TODO: add a script with bad syntax (e.g. wrong language)
         app_spec = dict(self.base_app_spec, name=app_name,
                         regionalOptions = {
                             "aws:us-east-1": {
                                 "systemRequirements": {
                                     "cluster_1": {
                                         "instanceType": "mem2_hdd2_x1",
-                                        "clusterSpec": cluster_spec
+                                        "clusterSpec": cluster_spec_with_bootstrap
                                     },
                                     "cluster_2": {
                                         "instanceType": "mem2_hdd2_x4",
-                                        "clusterSpec": cluster_spec
+                                        "clusterSpec": cluster_spec_no_bootstrap
+                                    },
+                                    "cluster_3": {
+                                        "instanceType": "mem2_hdd2_x1",
+                                        "clusterSpec": cluster_spec_with_bootstrap
+                                    }
+                                }
+                            },
+                            "azure:westus": {
+                                "systemRequirements": {
+                                    "cluster_1": {
+                                        "instanceType": "azure:mem1_ssd1_x2",
+                                        "clusterSpec": cluster_spec_with_bootstrap
                                     }
                                 }
                             }})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
-        self.write_app_directory(app_name, json.dumps(app_spec), "clusterBootstrap.py", code_content="testing")
+        self.write_app_directory(app_name, json.dumps(app_spec), "clusterBootstrap.py", code_content=bootstrap_code)
         app_id = json.loads(run("dx build --create-app --json " + app_dir))["id"]
         app_desc_res = json.loads(run("dx describe --json " + app_id))
         sys_reqs_res = app_desc_res["runSpec"]["systemRequirements"]
-        self.assertEqual(sys_reqs_res["cluster_1"]["clusterSpec"]["bootstrapScript"], "testing")
-        self.assertEqual(sys_reqs_res["cluster_2"]["clusterSpec"]["bootstrapScript"], "testing")
+        self.assertEqual(sys_reqs_res["cluster_1"]["clusterSpec"]["bootstrapScript"], bootstrap_code)
+        self.assertEqual(sys_reqs_res["cluster_3"]["clusterSpec"]["bootstrapScript"], bootstrap_code)
+        self.assertFalse("bootstrapScript" in sys_reqs_res["cluster_2"]["clusterSpec"])
+        self.assertEqual(app_desc_res["runSpec"]['systemRequirementsByRegion']["azure:westus"]["cluster_1"]["clusterSpec"]["bootstrapScript"], bootstrap_code)
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')

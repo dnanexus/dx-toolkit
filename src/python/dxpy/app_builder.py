@@ -539,14 +539,21 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
             applet_spec["runSpec"]["code"] = code_fh.read()
             del applet_spec["runSpec"]["file"]
 
-    # If this is a cluster applet, inline all provided bootstrapScript code
+    # If this is applet requires a cluster, inline any bootstrapScript code that may be provided.
+    # bootstrapScript is an *optional* clusterSpec parameter.
     # NOTE: assumes bootstrapScript is always provided as a filename
     if "systemRequirements" in applet_spec["runSpec"]:
         sys_reqs = applet_spec["runSpec"]["systemRequirements"]
         for entry_point in sys_reqs:
-            if "clusterSpec" in sys_reqs[entry_point]:
-                with open(os.path.join(src_dir, sys_reqs[entry_point]["clusterSpec"]["bootstrapScript"])) as code_fh:
+            try:
+                bootstrapScript = os.path.join(src_dir, sys_reqs[entry_point]["clusterSpec"]["bootstrapScript"])
+                with open(bootstrapScript) as code_fh:
                     sys_reqs[entry_point]["clusterSpec"]["bootstrapScript"] = code_fh.read()
+            except KeyError:
+                # either no "clusterSpec" or no "bootstrapScript" within "clusterSpec"
+                continue
+            except IOError:
+                raise AppBuilderException("The clusterSpec \"bootstrapScript\" could not be read.")
 
     # Attach bundled resources to the app
     if uploaded_resources is not None:
