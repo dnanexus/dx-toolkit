@@ -35,7 +35,7 @@ from .. import logger
 from . import dxfile, DXFile
 from .dxfile import FILE_REQUEST_TIMEOUT
 from ..compat import open
-from ..exceptions import DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, DXIncompleteReadsError
+from ..exceptions import DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, DXIncompleteReadsError, err_exit
 from ..utils import response_iterator
 import subprocess
 
