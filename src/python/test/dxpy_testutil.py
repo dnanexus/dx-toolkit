@@ -641,7 +641,7 @@ def update_traceability_matrix(id_array):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            with open("{}.traceability.tsv".format(os.path.splitext(os.path.basename(__file__))[0]), "w+") as f:
+            with open("{}.traceability.tsv".format(os.path.splitext(os.path.basename(__file__))[0]), "a") as f:
                 try:
                     retval = func(*args, **kwargs)
                     for tid in id_array:
