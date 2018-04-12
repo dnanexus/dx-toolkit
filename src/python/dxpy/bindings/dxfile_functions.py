@@ -181,8 +181,8 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
     try:
         print("Downloading symbolic link with wget")
         subprocess.check_call(cmd)
-    except subprocess.CalledProcessError:
-        err_exit("Failed to call wget: " + str(cmd))
+    except subprocess.CalledProcessError as e:
+        err_exit("Failed to call wget: \n" + " ".join(cmd) + "\n" + e.output.strip()))
 
     if md5digest is not None:
         _verify(dest_filename, md5digest)
