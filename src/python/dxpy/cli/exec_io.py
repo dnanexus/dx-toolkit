@@ -409,6 +409,19 @@ def get_optional_input_str(param_desc):
 
 class ExecutableInputs(object):
     def __init__(self, executable=None, input_name_prefix=None, input_spec=None, active_region=None):
+        """
+        :param executable: Executable object handler
+        :type executable: :class:`~dxpy.bindings.dxapplet.DXApplet`,
+                          :class:`~dxpy.bindings.dxapp.DXApp`,
+                          :class:`~dxpy.bindings.dxworkflow.DXWorkflow`
+                          :class:`~dxpy.bindings.dxglobalworkflow.DXGlobalWorkflow`
+        :param input_name_prefix: A prefix set on an input field name
+        :type input_name_prefix: string
+        :param input_spec: Input specification
+        :type input_spec: dict
+        :param active_region: The region in which the executable is run, determined by the destination project context.
+        :type active_region: string
+        """
         self.executable = executable
         self.region = active_region
 
@@ -426,7 +439,7 @@ class ExecutableInputs(object):
         # single input value instead of a list of input values, then index is -1.
         self.requires_resolution = []
 
-        # update input_spec passed to the constructor and initizalize
+        # update input_spec passed to the constructor and initialize
         # self.input_spec, self.optional_inputs, self.required_inputs, self.array_inputs
         self.input_spec = collections.OrderedDict() if 'inputSpec' in self._desc or input_spec else None
 
