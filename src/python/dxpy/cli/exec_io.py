@@ -413,7 +413,7 @@ class ExecutableInputs(object):
         :param executable: Executable object handler
         :type executable: :class:`~dxpy.bindings.dxapplet.DXApplet`,
                           :class:`~dxpy.bindings.dxapp.DXApp`,
-                          :class:`~dxpy.bindings.dxworkflow.DXWorkflow`
+                          :class:`~dxpy.bindings.dxworkflow.DXWorkflow`,
                           :class:`~dxpy.bindings.dxglobalworkflow.DXGlobalWorkflow`
         :param input_name_prefix: A prefix set on an input field name
         :type input_name_prefix: string
