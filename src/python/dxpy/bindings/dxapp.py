@@ -172,6 +172,7 @@ class DXApp(DXObject, DXExecutable):
         is called.
 
         '''
+        #TODO: add support for regionalOptions (and deprecate top-level applet and resources)
         dx_hash = {}
         if 'applet' not in kwargs and 'initializeFrom' not in kwargs:
             raise DXError("%s: One of the keyword arguments %s and %s is required" % (self.__class__.__name__, 'applet', 'initializeFrom'))
