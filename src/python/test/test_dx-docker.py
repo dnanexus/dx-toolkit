@@ -92,6 +92,8 @@ class TestDXDocker(DXTestCase):
         with self.assertSubprocessFailure(exit_code=1, stderr_regexp='Failed to obtain image'):
             run("dx-docker pull busyboxasdf")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_APP_RUN_DOCKER_CONTAINERS"])
     def test_dx_docker_basic_commands(self):
         run("dx-docker run ubuntu:14.04 ls --color")
         run("dx-docker run ubuntu:15.04 ls")

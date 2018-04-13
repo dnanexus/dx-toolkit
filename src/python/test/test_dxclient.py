@@ -2011,6 +2011,8 @@ class TestDXClientRun(DXTestCase):
         dxpy.api.project_destroy(self.other_proj_id, {'terminateJobs': True})
         super(TestDXClientRun, self).tearDown()
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_APP_RUN_APPLET"])
     def test_dx_run_applet_with_input_spec(self):
         record = dxpy.new_dxrecord(name="my_record")
 
@@ -4989,6 +4991,8 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
             self.assertTrue(len(res) == 1, "Expected to find one project")
             self.assertEqual(res[0], project1_id)
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_APP_LIST_APPS_ORG"])
     def test_dx_find_org_apps(self):
         # Create a number of apps, some billed to self.org_id ("org-piratelabs")
         num_org_apps = 3
@@ -6300,6 +6304,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertTrue(dx_build_app._get_version_suffix(app_dir, '1.0.0+git.abcdef')
                         .startswith('.build.'))
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_APP_UPLOAD_BUILD_NEW_APPLET"])
     def test_build_applet(self):
         app_spec = dict(self.base_app_spec, name="minimal_applet")
         app_dir = self.write_app_directory("minimal_åpplet", json.dumps(app_spec), "code.py")
@@ -7309,6 +7315,10 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEquals(json.loads(run("dx api " + app_id +
                                          " listAuthorizedUsers"))["authorizedUsers"], ["user-eve"])
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_APP_ADD_AUTHORIZED_USERS_APP",
+                                          "DNA_CLI_APP_LIST_AUTHORIZED_USERS_APP",
+                                          "DNA_CLI_APP_REMOVE_AUTHORIZED_USERS_APP"])
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
     def test_dx_add_list_remove_users_of_apps(self):
@@ -7358,6 +7368,10 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         run('dx remove users test_dx_users nonexistentuser')
         run('dx remove users test_dx_users piratelabs')
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_APP_ADD_DEVELOPERS_APP",
+                                          "DNA_CLI_APP_LIST_DEVELOPERS_APP",
+                                          "DNA_CLI_APP_REMOVE_DEVELOPERS_APP"])
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
     def test_dx_add_list_remove_developers(self):
@@ -8937,6 +8951,10 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
                     break
             self.assertTrue(seenResources)
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_APP_LIST_AVAILABLE_APPS",
+                                          "DNA_CLI_APP_INSTALL_APP",
+                                          "DNA_CLI_APP_UNINSTALL_APP"])
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_MULTIPLE_USERS,
                          'skipping test that would create apps and another user')
     def test_uninstall_app(self):
