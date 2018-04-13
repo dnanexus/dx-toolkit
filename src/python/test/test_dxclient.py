@@ -3941,6 +3941,97 @@ class TestDXClientFind(DXTestCase):
         run("dx find globalworkflows --category foo") # any category can be searched
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that requires presence of test org and creates apps')
+    def test_dx_find_apps(self):
+        org_id = "org-piratelabs"
+        test_applet_id = dxpy.api.applet_new({"name": "my_find_applet",
+                                              "dxapi": "1.0.0",
+                                              "project": self.project,
+                                              "inputSpec": [],
+                                              "outputSpec": [],
+                                              "runSpec": {"interpreter": "bash",
+                                                          "distribution": "Ubuntu",
+                                                          "release": "14.04",
+                                                          "code": "exit 0"}
+                                              })['id']
+
+        dxapp_spec = {
+            "name": "app_find",
+            "version": "0.0.1",
+            "applet": test_applet_id
+        }
+
+        # Create a few apps
+
+        # 1. App with an org billTo
+        # version 0.0.1
+        app_find_billto = "app_find_billto"
+        spec = dict(dxapp_spec, name=app_find_billto, bill_to=org_id, version="0.0.1")
+        dxapp = dxpy.DXApp()
+        print(dxapp_spec)
+        dxapp.new(**spec)
+        desc = dxapp.describe()
+        self.assertEqual(desc["billTo"], org_id)
+        # version 0.0.2
+        spec = dict(dxapp_spec, name=app_find_billto, bill_to=org_id, version="0.0.2")
+        dxapp = dxpy.DXApp()
+        dxapp.new(**spec)
+        desc = dxapp.describe()
+        self.assertEqual(desc["version"], "0.0.2")
+
+        # 2. Published app
+        app_find_published_1 = "app_find_published_1"
+        spec = dict(dxapp_spec, name=app_find_published_1, version="0.0.3")
+        dxapp = dxpy.DXApp()
+        dxapp.new(**spec)
+        dxapp.publish()
+        desc = dxapp.describe()
+        self.assertTrue(desc["published"] > 0)
+
+        # 3. Published app
+        app_find_published_2 = "app_find_published_2"
+        spec = dict(dxapp_spec, name=app_find_published_2, version="0.0.4")
+        dxapp = dxpy.DXApp()
+        dxapp.new(**spec)
+        dxapp.publish()
+        desc = dxapp.describe()
+        self.assertTrue(desc["published"] > 0)
+
+        # Tests
+
+        # find only published
+        output = run("dx find apps")
+        self.assertIn(app_find_published_1, output)
+        self.assertIn(app_find_published_2, output)
+        self.assertNotIn(app_find_billto, output)
+
+        # find only unpublished
+        output = run("dx find apps --unpublished")
+        self.assertIn(app_find_billto, output)
+        self.assertNotIn(app_find_published_1, output)
+        self.assertNotIn(app_find_published_2, output)
+
+        # find by billTo
+        output = run("dx find apps --unpublished --billed-to " + org_id)
+        self.assertIn(app_find_billto, output)
+        self.assertNotIn(app_find_published_1, output)
+        self.assertNotIn(app_find_published_2, output)
+
+        # find by name
+        output = run("dx find apps --name " + app_find_published_1)
+        self.assertIn(app_find_published_1, output)
+        self.assertNotIn(app_find_published_2, output)
+        self.assertNotIn(app_find_billto, output)
+
+        # find all versions
+        output = run("dx find apps --unpublished --all")
+        self.assertNotIn(app_find_published_1, output)
+        self.assertNotIn(app_find_published_2, output)
+        self.assertIn(app_find_billto, output)
+        self.assertIn("0.0.1", output)
+        self.assertIn("0.0.2", output)
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that requires presence of test org and creates global workflows')
     def test_dx_find_globalworkflows(self):
         org_id = "org-piratelabs"
