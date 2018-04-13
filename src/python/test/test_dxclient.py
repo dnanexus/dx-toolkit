@@ -3972,7 +3972,6 @@ class TestDXClientFind(DXTestCase):
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that requires presence of test org and creates apps')
     def test_dx_find_apps(self):
-        org_id = "org-piratelabs"
         test_applet_id = dxpy.api.applet_new({"name": "my_find_applet",
                                               "dxapi": "1.0.0",
                                               "project": self.project,
@@ -3992,17 +3991,15 @@ class TestDXClientFind(DXTestCase):
 
         # Create a few apps
 
-        # 1. App with an org billTo
+        # 1. Unpublished app
         # version 0.0.1
-        app_find_billto = "app_find_billto"
-        spec = dict(dxapp_spec, name=app_find_billto, bill_to=org_id, version="0.0.1")
+        app_find = "app_find_unpublished"
+        spec = dict(dxapp_spec, name=app_find, version="0.0.1")
         dxapp = dxpy.DXApp()
         print(dxapp_spec)
         dxapp.new(**spec)
-        desc = dxapp.describe()
-        self.assertEqual(desc["billTo"], org_id)
         # version 0.0.2
-        spec = dict(dxapp_spec, name=app_find_billto, bill_to=org_id, version="0.0.2")
+        spec = dict(dxapp_spec, name=app_find, version="0.0.2")
         dxapp = dxpy.DXApp()
         dxapp.new(**spec)
         desc = dxapp.describe()
@@ -4032,17 +4029,11 @@ class TestDXClientFind(DXTestCase):
         output = run("dx find apps")
         self.assertIn(app_find_published_1, output)
         self.assertIn(app_find_published_2, output)
-        self.assertNotIn(app_find_billto, output)
+        self.assertNotIn(app_find, output)
 
         # find only unpublished
         output = run("dx find apps --unpublished")
-        self.assertIn(app_find_billto, output)
-        self.assertNotIn(app_find_published_1, output)
-        self.assertNotIn(app_find_published_2, output)
-
-        # find by billTo
-        output = run("dx find apps --unpublished --billed-to " + org_id)
-        self.assertIn(app_find_billto, output)
+        self.assertIn(app_find, output)
         self.assertNotIn(app_find_published_1, output)
         self.assertNotIn(app_find_published_2, output)
 
@@ -4050,13 +4041,13 @@ class TestDXClientFind(DXTestCase):
         output = run("dx find apps --name " + app_find_published_1)
         self.assertIn(app_find_published_1, output)
         self.assertNotIn(app_find_published_2, output)
-        self.assertNotIn(app_find_billto, output)
+        self.assertNotIn(app_find, output)
 
         # find all versions
         output = run("dx find apps --unpublished --all")
         self.assertNotIn(app_find_published_1, output)
         self.assertNotIn(app_find_published_2, output)
-        self.assertIn(app_find_billto, output)
+        self.assertIn(app_find, output)
         self.assertIn("0.0.1", output)
         self.assertIn("0.0.2", output)
 
