@@ -1842,7 +1842,6 @@ def get(args):
         entity_result = {"id": desc["id"], "describe": desc}
     elif not is_hashid(args.path) and ':' not in args.path and args.path.startswith('globalworkflow-'):
         desc = dxpy.api.global_workflow_describe(args.path)
-        desc = dxpy.append_underlying_workflow_describe(desc)
         entity_result = {"id": desc["id"], "describe": desc}
     else:
         project, _folderpath, entity_result = try_call(resolve_existing_path,
@@ -2709,7 +2708,10 @@ def _get_input_for_run(args, executable, preset_inputs=None, input_name_prefix=N
     """
     # The following may throw if the executable is a workflow with no
     # input spec available (because a stage is inaccessible)
-    exec_inputs = try_call(ExecutableInputs, executable, input_name_prefix=input_name_prefix)
+    exec_inputs = try_call(ExecutableInputs,
+                           executable,
+                           input_name_prefix=input_name_prefix,
+                           active_region=args.region)
 
     # Use input and system requirements from a cloned execution
     if args.input_json is None and args.filename is None:
@@ -2916,22 +2918,41 @@ def print_run_help(executable="", alias=None):
     else:
         exec_help = 'usage: dx run ' + executable + ('' if alias is None else ' --alias ' + alias)
         handler = try_call(get_exec_handler, executable, alias)
-        try:
-            exec_desc = handler.describe()
-        except:
-            err_exit()
+
+        is_app = isinstance(handler, dxpy.bindings.DXApp)
+        is_global_workflow = isinstance(handler, dxpy.bindings.DXGlobalWorkflow)
+
+        exec_desc = handler.describe()
+        if is_global_workflow:
+            current_project = dxpy.WORKSPACE_ID
+            if not current_project:
+                err_exit(exception=DXCLIError(
+                    'A project must be selected. You can use "dx select" to select a project'))
+            current_region = dxpy.api.project_describe(current_project,
+                                                       input_params={"fields": {"region": True}})["region"]
+            if current_region not in exec_desc['regionalOptions']:
+                err_exit(exception=DXCLIError(
+                    'The global workflow is not enabled in the current region. ' +
+                    'Please run "dx select" to set the working project from one of the regions ' +
+                    'the workflow is enabled in: {}'.format(
+                       ",".join(exec_desc['regionalOptions'].keys()))
+                ))
+            exec_desc = handler.append_underlying_workflow_desc(exec_desc, current_region)
 
         exec_help += ' [-iINPUT_NAME=VALUE ...]\n\n'
 
-        if isinstance(handler, dxpy.bindings.DXApp):
+        if is_app:
             exec_help += BOLD("App: ")
-            exec_details = exec_desc['details']
+            exec_details = exec_desc.get('details', '')
+        elif is_global_workflow:
+            exec_help += BOLD("Global workflow: ")
+            exec_details = exec_desc.get('details', '')
         else:
             exec_help += BOLD(exec_desc['class'].capitalize() + ": ")
             exec_details = handler.get_details()
         advanced_inputs = exec_details.get("advancedInputs", []) if isinstance(exec_details, dict) else []
         exec_help += exec_desc.get('title', exec_desc['name']) + '\n\n'
-        if isinstance(handler, dxpy.bindings.DXApp):
+        if is_app or is_global_workflow:
             exec_help += BOLD("Version: ")
             exec_help += exec_desc.get('version')
             if int(exec_desc.get('published', -1)) > -1:
@@ -2939,12 +2960,13 @@ def print_run_help(executable="", alias=None):
             else:
                 exec_help += " (unpublished)"
             exec_help += '\n\n'
-        summary = exec_desc.get('summary', '')
+        summary = exec_desc.get('summary', '') or ''
         if summary != '':
             exec_help += fill(summary) + "\n\n"
 
         # Contact URL here
-        if isinstance(handler, dxpy.bindings.DXApp):
+        #TODO: add a similar note for a global workflow
+        if is_app:
             exec_help += "See the app page for more information:\n  https://platform.dnanexus.com/app/" + exec_desc['name'] +"\n\n"
 
         exec_help += BOLD("Inputs:")
@@ -3230,6 +3252,13 @@ def run(args):
             ))
 
     is_workflow = isinstance(handler, dxpy.DXWorkflow)
+    is_global_workflow = isinstance(handler, dxpy.DXGlobalWorkflow)
+
+    # Get region from the project context
+    args.region = None
+    if is_global_workflow:
+        args.region = dxpy.api.project_describe(dest_proj,
+                                                input_params={"fields": {"region": True}})["region"]
 
     # if the destination path has still not been set, use the current
     # directory as the default; but only do this if not running a
@@ -4654,7 +4683,7 @@ register_parser(parser_uninstall, categories='exec')
 # run
 #####################################
 parser_run = subparsers.add_parser('run', help='Run an applet, app, or workflow', add_help=False,
-                                   description=(fill('Run an applet, app, or workflow.  To see a list of executables you can run, hit <TAB> twice after "dx run" or run "' + BOLD('dx find apps') + '" to see a list of available apps.') + '\n\n' + fill('If any inputs are required but not specified, an interactive mode for selecting inputs will be launched.  Inputs can be set in multiple ways.  Run "' + BOLD('dx run --input-help') + '" for more details.') + '\n\n' + fill('Run "' + BOLD('dx run --instance-type-help') + '" to see a list of specifications for computers available to run executables.')),
+                                   description=(fill('Run an applet, app, or workflow.  To see a list of executables you can run, hit <TAB> twice after "dx run" or run "' + BOLD('dx find apps') + '" or "' + BOLD('dx find globalworkflows') + '" to see a list of available apps and global workflows.') + '\n\n' + fill('If any inputs are required but not specified, an interactive mode for selecting inputs will be launched.  Inputs can be set in multiple ways.  Run "' + BOLD('dx run --input-help') + '" for more details.') + '\n\n' + fill('Run "' + BOLD('dx run --instance-type-help') + '" to see a list of specifications for computers available to run executables.')),
                                    prog='dx run',
                                    formatter_class=argparse.RawTextHelpFormatter,
                                    parents=[exec_input_args, stdout_args, env_args, extra_args,
