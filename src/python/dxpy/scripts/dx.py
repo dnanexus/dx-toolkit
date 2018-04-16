@@ -3698,6 +3698,17 @@ def generate_batch_inputs(args):
     if len(errors) > 0:
         err_exit("ERROR SUMMARY: Found {num_errors} batch IDs with incomplete or ambiguous results.  Details above.".format(num_errors=len(errors)), 3)
 
+def publish(args):
+    desc = try_call(resolve_global_executable, args.executable)
+
+    try:
+        if desc['class'] == 'app':
+            dxpy.api.app_publish(desc['id'], input_params={"makeDefault": args.make_default})
+        else:
+            dxpy.api.global_workflow_publish(desc['id'], input_params={"makeDefault": args.make_default})
+    except:
+        err_exit()
+
 def print_help(args):
     if args.command_or_category is None:
         parser_help.print_help()
@@ -5469,6 +5480,21 @@ parser_generate_batch_inputs.add_argument('--path', help='Project and/or folder 
 parser_generate_batch_inputs.add_argument('-o', '--output_prefix', help='Prefix for output file', default="dx_batch")
 parser_generate_batch_inputs.set_defaults(func=generate_batch_inputs)
 register_parser(parser_generate_batch_inputs)
+
+#####################################
+# publish
+#####################################
+parser_publish = subparsers.add_parser('publish', help='Publish an app or a global workflow',
+                                   description='Release a version of the executable (app or global workflow) to authorized users.',
+                                   prog='dx publish')
+parser_publish.add_argument('executable',
+                            help='ID or name and version of an app/global workflow, e.g. myqc/1.0.0').completer = DXPathCompleter(classes=['app', 'globalworkflow'])
+parser_publish.add_argument('--make_default',
+                            help='Set a "default" alias on the published version',
+                            action='store_true', dest='make_default')
+parser_publish.set_defaults(func=publish)
+register_parser(parser_publish)
+
 
 #####################################
 # help

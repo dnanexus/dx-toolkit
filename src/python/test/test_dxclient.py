@@ -6438,6 +6438,34 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         run('dx remove developers wf_test_dx_developers nonexistentuser')
         run('dx remove developers wf_test_dx_developers piratelabs')
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create global workflows')
+    def test_dx_publish_global_workflow(self):
+        gwf_name = "dx_publish_wf"
+
+        def _create_global_workflow(version):
+            dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name, version=version)
+            workflow_dir = self.write_workflow_directory(gwf_name, json.dumps(dxworkflow_json))
+            desc = json.loads(run("dx build --globalworkflow {wf_dir} --json".format(wf_dir=workflow_dir)))
+            return desc
+
+        # create two versions
+        _create_global_workflow("1.0.0")
+        desc = _create_global_workflow("2.0.0")
+        self.assertFalse("default" in desc["aliases"])
+
+        # publish version 2.0.0 with no "--make_default" flag
+        run("dx publish {name}/{version}".format(name=gwf_name, version="2.0.0"))
+        published_desc = json.loads(run("dx describe globalworkflow-{name}/{version} --json".format(name=gwf_name,
+                                                                                                    version="2.0.0")))
+        self.assertTrue("published" in published_desc)
+        self.assertFalse("default" in published_desc["aliases"])
+
+        with self.assertSubprocessFailure(stderr_regexp="already published",
+                                          exit_code=3):
+            run("dx publish {name}/{version}".format(name=gwf_name, version="2.0.0"))
+
+
 class TestDXBuildApp(DXTestCaseBuildApps):
     def run_and_assert_stderr_matches(self, cmd, stderr_regexp):
         with self.assertSubprocessFailure(stderr_regexp=stderr_regexp, exit_code=28):
@@ -8438,6 +8466,36 @@ def main(in1):
             # check that asset_file is also cloned to this project
             temp_asset_fid = run("dx ls {asset} --brief".format(asset=asset_name)).strip()
             self.assertEquals(temp_asset_fid, asset_file.get_id())
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create app')
+    def test_dx_publish_app(self):
+        app_name = "dx_publish_app"
+        def _create_app(version):
+            app_spec = dict(self.base_app_spec, name=app_name, version=version)
+            app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+            desc = json.loads(run("dx build --app {app_dir} --json".format(app_dir=app_dir)))
+            return desc
+
+        desc = _create_app("1.0.0")
+        self.assertFalse("published" in desc)
+        run("dx publish {name}".format(name=app_name))
+        published_desc = json.loads(run("dx describe {name} --json".format(name=app_name)))
+        self.assertTrue("published" in published_desc)
+
+        # with --make_default flag
+        _create_app("2.0.0")
+        run("dx publish {name}/{version} --make_default".format(name=app_name,
+                                                                version="2.0.0"))
+        published_desc = json.loads(run("dx describe app-{name}/{version} --json".format(name=app_name,
+                                                                                         version="2.0.0")))
+        self.assertTrue("published" in published_desc)
+        self.assertTrue("default" in published_desc["aliases"])
+
+        with self.assertSubprocessFailure(stderr_regexp="InvalidState: Cannot publish the app; already published",
+                                          exit_code=3):
+            run("dx publish {name}".format(name=app_name))
+
 
 class TestDXGetWorkflows(DXTestCaseBuildWorkflows):
 
