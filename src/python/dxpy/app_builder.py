@@ -546,8 +546,8 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
         sys_reqs = applet_spec["runSpec"]["systemRequirements"]
         for entry_point in sys_reqs:
             try:
-                bootstrapScript = os.path.join(src_dir, sys_reqs[entry_point]["clusterSpec"]["bootstrapScript"])
-                with open(bootstrapScript) as code_fh:
+                bootstrap_script = os.path.join(src_dir, sys_reqs[entry_point]["clusterSpec"]["bootstrapScript"])
+                with open(bootstrap_script) as code_fh:
                     sys_reqs[entry_point]["clusterSpec"]["bootstrapScript"] = code_fh.read()
             except KeyError:
                 # either no "clusterSpec" or no "bootstrapScript" within "clusterSpec"

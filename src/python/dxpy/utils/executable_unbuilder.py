@@ -101,9 +101,12 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output=[]):
     with open(script, "w") as f:
         f.write(info["runSpec"]["code"])
 
-    # Used to unpack cluster bootstrapScript(s) if they exist for this app(let)
     def make_cluster_bootstrap_script_file(region, entry_point, code, suffix):
-        script_name = "src/" + region + "_" + entry_point + "_" + "clusterBootstrap.%s" % suffix
+        """
+        Writes the string `code` into a file at the relative path
+        "src/<region>_<entry_point>_clusterBootstrap.<suffix>"
+        """
+        script_name = "src/%s_%s_clusterBootstrap.%s" % (region, entry_point, suffix)
         with open(script_name, "w") as f:
             f.write(code)
         return script_name

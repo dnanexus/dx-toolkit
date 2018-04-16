@@ -6479,14 +6479,13 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         def build_and_verify_bootstrap_script_inlined(app_dir):
             # build cluster app with multiple bootstrap scripts and regions
             # expect bootstrap scripts to be inlined in the app doc
-            app_id = json.loads(run("dx build --create-app --json " + app_dir))["id"]
-            app_desc_res = json.loads(run("dx describe --json " + app_id))
-            sys_reqs_res = app_desc_res["runSpec"]["systemRequirements"]
-            self.assertEqual(sys_reqs_res["main"]["clusterSpec"]["bootstrapScript"], bootstrap_code_aws)
-            self.assertEqual(sys_reqs_res["cluster_3"]["clusterSpec"]["bootstrapScript"], bootstrap_code_aws)
-            self.assertFalse("bootstrapScript" in sys_reqs_res["cluster_2"]["clusterSpec"])
-            self.assertEqual(app_desc_res["runSpec"]['systemRequirementsByRegion']["azure:westus"]["main"]["clusterSpec"]["bootstrapScript"], bootstrap_code_azure)
-            return app_id
+            app_doc = json.loads(run("dx build --create-app --json " + app_dir))
+            sys_reqs = app_doc["runSpec"]["systemRequirements"]
+            self.assertEqual(sys_reqs["main"]["clusterSpec"]["bootstrapScript"], bootstrap_code_aws)
+            self.assertEqual(sys_reqs["cluster_3"]["clusterSpec"]["bootstrapScript"], bootstrap_code_aws)
+            self.assertFalse("bootstrapScript" in sys_reqs["cluster_2"]["clusterSpec"])
+            self.assertEqual(app_doc["runSpec"]['systemRequirementsByRegion']["azure:westus"]["main"]["clusterSpec"]["bootstrapScript"], bootstrap_code_azure)
+            return app_doc["id"]
 
         app_id = build_and_verify_bootstrap_script_inlined(app_dir)
 
