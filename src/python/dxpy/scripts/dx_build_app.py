@@ -417,18 +417,16 @@ def _verify_app_source_dir_impl(src_dir, temp_dir, mode, enforce=True):
 
 
 def _get_all_cluster_bootstrap_script_names(manifest):
-    script_names = []
-
+    # runSpec.systemRequirements is deprecated. Enforce use of regionalOptions.
     if 'systemRequirements' in manifest['runSpec']:
         sys_reqs = manifest['runSpec']['systemRequirements']
         for entry_point in sys_reqs:
-            try:
-                filename = sys_reqs[entry_point]['clusterSpec']['bootstrapScript']
-                script_names.append(filename)
-            except KeyError:
-                # either no "clusterSpec" or no "bootstrapScript" within "clusterSpec"
-                continue
+            if 'clusterSpec' in sys_reqs[entry_point]:
+                err_msg = "\"clusterSpec\" in \"runSpec.systemRequirements\" is not accepted."
+                err_msg += " It must be specified in \"systemRequirements\" under the \"regionalOptions\" field in all enabled regions of the app."
+                raise dxpy.app_builder.AppBuilderException(err_msg)
 
+    script_names = []
     if 'regionalOptions' in manifest:
         for region in manifest['regionalOptions']:
             if 'systemRequirements' in manifest['regionalOptions'][region]:

@@ -6439,6 +6439,16 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                                      "initialInstanceCount": 10}
         bootstrap_code_aws = "def improper():\nprint 'oops'" # syntax error
         bootstrap_code_azure = "import os\n"
+
+        # cluster spec must be specified under "regionalOptions"
+        non_regional_app_spec = dict(self.base_app_spec, name=app_name)
+        non_regional_app_spec["runSpec"]["systemRequirements"] = dict(
+            main=dict(instanceType="mem2_hdd2_x1", clusterSpec=cluster_spec_with_bootstrap_aws)
+        )
+        app_dir = self.write_app_directory(app_name, json.dumps(non_regional_app_spec), "code.py")
+        with self.assertSubprocessFailure(stderr_regexp="clusterSpec.*must be specified.*under the \"regionalOptions\" field"):
+            run("dx build " + app_dir)
+
         app_spec = dict(self.base_app_spec, name=app_name,
                         regionalOptions = {
                             "aws:us-east-1": {
@@ -6465,6 +6475,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                                     }
                                 }
                             }})
+        del app_spec["runSpec"]["systemRequirements"]
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
         self.write_app_directory(app_name, json.dumps(app_spec), "clusterBootstrapAws.py", code_content=bootstrap_code_aws)
         self.write_app_directory(app_name, json.dumps(app_spec), "clusterBootstrapAzure.py", code_content=bootstrap_code_azure)
