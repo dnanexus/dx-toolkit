@@ -6380,6 +6380,64 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         run('dx remove users wf_test_dx_users nonexistentuser')
         run('dx remove users wf_test_dx_users piratelabs')
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create global workflows')
+    def test_dx_add_list_remove_developers_of_global_workflows(self):
+        '''
+        This test is for some other dx subcommands, but it's in this
+        test suite to take advantage of workflow-building methods.
+        '''
+        # Only create if it's not available already (makes
+        # local testing easier)
+        try:
+            workflow_desc = dxpy.api.global_workflow_describe("globalworkflow-wf_test_dx_developers", {})
+            workflow_id = workflow_desc["id"]
+            my_userid = workflow_desc["createdBy"]
+            developers = dxpy.api.global_workflow_list_developers("globalworkflow-wf_test_dx_developers", {})["developers"]
+            # reset developers to default list
+            if len(developers) != 1:
+                run("dx remove developers globalworkflow-wf_test_dx_developers " +
+                    " ".join([dev for dev in developers if dev != my_userid]))
+        except:
+            workflow_id = None
+        if workflow_id is None:
+            gwf_name = "wf_test_dx_developers"
+            dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
+            workflow_dir = self.write_workflow_directory(gwf_name,
+                                                         json.dumps(dxworkflow_json))
+            workflow_desc = json.loads(run("dx build --create-globalworkflow --json " + workflow_dir))
+            workflow_id = workflow_desc['id']
+            my_userid = workflow_desc["createdBy"]
+        developers = run("dx list developers globalworkflow-wf_test_dx_developers").strip()
+        self.assertEqual(developers, my_userid)
+
+        # use hash ID
+        run("dx add developers " + workflow_id + " eve")
+        developers = run("dx list developers globalworkflow-wf_test_dx_developers").strip().split("\n")
+        self.assertEqual(len(developers), 2)
+        self.assertIn(my_userid, developers)
+        # don't use "globalworkflow-" prefix, duplicate, multiple, and non- members are fine
+        run("dx remove developers wf_test_dx_developers PUBLIC eve user-eve org-piratelabs")
+        developers = run("dx list developers globalworkflow-wf_test_dx_developers").strip()
+        self.assertEqual(developers, my_userid)
+        # use version string
+        run("dx list developers globalworkflow-wf_test_dx_developers/0.0.1")
+
+        # bad paths and exit codes
+        with self.assertSubprocessFailure(stderr_regexp='could not be resolved', exit_code=3):
+            run('dx list developers globalworkflow-nonexistent')
+        with self.assertSubprocessFailure(stderr_regexp='could not be resolved', exit_code=3):
+            run('dx remove developers globalworkflow-nonexistent/1.0.0 eve')
+        with self.assertSubprocessFailure(stderr_regexp='ResourceNotFound', exit_code=3):
+            run('dx add developers wf_test_dx_developers nonexistentuser')
+        with self.assertSubprocessFailure(stderr_regexp='ResourceNotFound', exit_code=3):
+            run('dx add developers wf_test_dx_developers piratelabs')
+
+        # ResourceNotFound is not thrown when removing things
+        run('dx remove developers wf_test_dx_developers org-nonexistentorg')
+        run('dx remove developers wf_test_dx_developers nonexistentuser')
+        run('dx remove developers wf_test_dx_developers piratelabs')
+
 class TestDXBuildApp(DXTestCaseBuildApps):
     def run_and_assert_stderr_matches(self, cmd, stderr_regexp):
         with self.assertSubprocessFailure(stderr_regexp=stderr_regexp, exit_code=28):
@@ -7467,7 +7525,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
-    def test_dx_add_list_remove_developers(self):
+    def test_dx_add_list_remove_developers_of_apps(self):
         '''
         This test is for some other dx subcommands, but it's in this
         test suite to take advantage of app-building methods.

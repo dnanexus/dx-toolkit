@@ -2653,28 +2653,40 @@ def list_users(args):
         print(user)
 
 def add_developers(args):
-    app_desc = try_call(resolve_app, args.app)
+    desc = try_call(resolve_global_executable, args.app)
     args.developers = process_list_of_usernames(args.developers)
+
     try:
-        dxpy.api.app_add_developers(app_desc['id'], input_params={"developers": args.developers})
+        if desc['class'] == 'app':
+            dxpy.api.list_add_developers(desc['id'], input_params={"developers": args.developers})
+        else:
+            dxpy.api.global_workflow_add_developers(desc['id'], input_params={"developers": args.developers})
     except:
         err_exit()
 
 def list_developers(args):
-    app_desc = try_call(resolve_app, args.app)
+    desc = try_call(resolve_global_executable, args.app)
 
     try:
-        for developer in dxpy.api.app_list_developers(app_desc['id'])['developers']:
-            print(developer)
+        if desc['class'] == 'app':
+            developers = dxpy.api.app_list_developers(desc['id'])['developers']
+        else:
+            developers = dxpy.api.global_workflow_list_developers(desc['id'])['developers']
+
+        for d in developers:
+            print(d)
     except:
         err_exit()
 
 def remove_developers(args):
-    app_desc = try_call(resolve_app, args.app)
+    desc = try_call(resolve_global_executable, args.app)
     args.developers = process_list_of_usernames(args.developers)
 
     try:
-        dxpy.api.app_remove_developers(app_desc['id'], input_params={"developers": args.developers})
+        if desc['class'] == 'app':
+            dxpy.api.app_remove_developers(desc['id'], input_params={"developers": args.developers})
+        else:
+            dxpy.api.global_workflow_remove_developers(desc['id'], input_params={"developers": args.developers})
     except:
         err_exit()
 
