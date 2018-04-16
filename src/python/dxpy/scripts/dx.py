@@ -2658,7 +2658,7 @@ def add_developers(args):
 
     try:
         if desc['class'] == 'app':
-            dxpy.api.list_add_developers(desc['id'], input_params={"developers": args.developers})
+            dxpy.api.app_add_developers(desc['id'], input_params={"developers": args.developers})
         else:
             dxpy.api.global_workflow_add_developers(desc['id'], input_params={"developers": args.developers})
     except:
