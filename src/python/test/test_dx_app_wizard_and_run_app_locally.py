@@ -40,6 +40,8 @@ def run(command, **kwargs):
 
 supported_languages = ['Python', 'bash']
 
+@pytest.mark.TRACEABILITY_MATRIX
+@testutil.update_traceability_matrix(["DNA_CLI_HELP_CREATE_APP_WIZARD"])
 def run_dx_app_wizard(instance_type=None):
     old_cwd = os.getcwd()
     tempdir = tempfile.mkdtemp(prefix='Программа')

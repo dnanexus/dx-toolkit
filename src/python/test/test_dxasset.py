@@ -105,6 +105,8 @@ class TestDXBuildAsset(DXTestCase):
             run("dx build_asset " + asset_dir)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_BUILD_ASSET"])
     def test_build_asset_with_valid_dxasset(self):
         asset_spec = {
             "name": "asset_library_name",

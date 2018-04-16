@@ -32,6 +32,8 @@ import dxpy_testutil as testutil
 from dxpy.exceptions import DXJobFailureError
 from dxpy.bindings.download_all_inputs import _get_num_parallel_threads
 
+@pytest.mark.TRACEABILITY_MATRIX
+@testutil.update_traceability_matrix(["DNA_CLI_HELP_PROVIDE_BASH_HELPER_COMMANDS"])
 def run(command, **kwargs):
     try:
         if isinstance(command, list) or isinstance(command, tuple):
