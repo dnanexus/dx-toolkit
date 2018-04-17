@@ -110,6 +110,16 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
     with open(script, "w") as f:
         f.write(info["runSpec"]["code"])
 
+    def make_cluster_bootstrap_script_file(region, entry_point, code, suffix):
+        """
+        Writes the string `code` into a file at the relative path
+        "src/<region>_<entry_point>_clusterBootstrap.<suffix>"
+        """
+        script_name = "src/%s_%s_clusterBootstrap.%s" % (region, entry_point, suffix)
+        with open(script_name, "w") as f:
+            f.write(code)
+        return script_name
+
     # Get all the asset bundles
     asset_depends = []
     deps_to_remove = []
@@ -247,8 +257,23 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
     if "systemRequirementsByRegion" in dxapp_json['runSpec']:
         dxapp_json["regionalOptions"] = {}
         for region in dxapp_json['runSpec']["systemRequirementsByRegion"]:
+            region_sys_reqs = dxapp_json['runSpec']['systemRequirementsByRegion'][region]
+
+            # handle cluster bootstrap scripts if any are present
+            for entry_point in region_sys_reqs:
+                try:
+                    bootstrap_script = region_sys_reqs[entry_point]['clusterSpec']['bootstrapScript']
+                    filename = make_cluster_bootstrap_script_file(region,
+                                                                  entry_point,
+                                                                  bootstrap_script,
+                                                                  suffix)
+                    region_sys_reqs[entry_point]['clusterSpec']['bootstrapScript'] = filename
+                except KeyError:
+                    # either no "clusterSpec" or no "bootstrapScript" within "clusterSpec"
+                    continue
+
             dxapp_json["regionalOptions"][region] = \
-                dict(systemRequirements=dxapp_json['runSpec']['systemRequirementsByRegion'][region])
+                dict(systemRequirements=region_sys_reqs)
 
     # systemRequirementsByRegion data is stored in regionalOptions,
     # systemRequirements is ignored

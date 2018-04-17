@@ -340,6 +340,20 @@ def _verify_app_source_dir_impl(src_dir, temp_dir, mode, enforce=True):
                 except DXSyntaxError:
                     raise dxpy.app_builder.AppBuilderException('Code in runSpec.code has syntax errors, see above for details. Rerun with --no-check-syntax to proceed anyway.')
 
+            cluster_bootstrap_scripts = _get_all_cluster_bootstrap_script_names(manifest)
+            for filename in cluster_bootstrap_scripts:
+                abs_filename = os.path.abspath(os.path.join(src_dir, filename))
+                try:
+                    _check_file_syntax(abs_filename,
+                                       temp_dir,
+                                       override_lang=manifest['runSpec']['interpreter'],
+                                       enforce=enforce)
+                except IOError as e:
+                    raise dxpy.app_builder.AppBuilderException(
+                        'Could not open cluster bootstrap script %r. The problem was: %s' % (abs_filename, e))
+                except DXSyntaxError:
+                    raise dxpy.app_builder.AppBuilderException('Code in cluster bootstrapScript %r has syntax errors, see above for details. Rerun with --no-check-syntax to proceed anyway.' % filename)
+
         if 'execDepends' in manifest['runSpec']:
             if not isinstance(manifest['runSpec']['execDepends'], list):
                 raise dxpy.app_builder.AppBuilderException('Expected runSpec.execDepends to be an array. Rerun with --no-check-syntax to proceed anyway.')
@@ -399,6 +413,31 @@ def _verify_app_source_dir_impl(src_dir, temp_dir, mode, enforce=True):
         files_str = files_with_problems[0] if len(files_with_problems) == 1 else (files_with_problems[0] + " and " + str(len(files_with_problems) - 1) + " other file" + ("s" if len(files_with_problems) > 2 else ""))
         logging.warn('%s contained syntax errors, see above for details' % (files_str,))
 
+
+def _get_all_cluster_bootstrap_script_names(manifest):
+    # runSpec.systemRequirements is deprecated. Enforce use of regionalOptions.
+    if 'systemRequirements' in manifest['runSpec']:
+        sys_reqs = manifest['runSpec']['systemRequirements']
+        for entry_point in sys_reqs:
+            if 'clusterSpec' in sys_reqs[entry_point]:
+                err_msg = "\"clusterSpec\" in \"runSpec.systemRequirements\" is not accepted."
+                err_msg += " It must be specified in \"systemRequirements\" under the \"regionalOptions\" field in all enabled regions of the app."
+                raise dxpy.app_builder.AppBuilderException(err_msg)
+
+    script_names = []
+    if 'regionalOptions' in manifest:
+        for region in manifest['regionalOptions']:
+            if 'systemRequirements' in manifest['regionalOptions'][region]:
+                sys_reqs = manifest['regionalOptions'][region]['systemRequirements']
+                for entry_point in sys_reqs:
+                    try:
+                        filename = sys_reqs[entry_point]['clusterSpec']['bootstrapScript']
+                        script_names.append(filename)
+                    except KeyError:
+                        # either no "clusterSpec" or no "bootstrapScript" within "clusterSpec"
+                        continue
+
+    return script_names
 
 def _verify_app_source_dir(src_dir, mode, enforce=True):
     """Performs syntax and lint checks on the app source.
