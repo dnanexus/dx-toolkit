@@ -9654,10 +9654,9 @@ class TestDXGenerateBatchInputs(DXTestCase):
 
 
 class TestDXRun(DXTestCase):
-    def test_dx_run_app(self):
     @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps and run jobs')
-    def test_remote_build_app(self):
+    def test_dx_run_app(self):
         app_name = "app_{t}_dx_run_test".format(t=int(time.time()))
         app_spec = dict(self.base_app_spec, name=app_name)
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
