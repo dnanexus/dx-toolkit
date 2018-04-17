@@ -3935,6 +3935,9 @@ class TestDXClientGlobalWorkflow(DXTestCaseBuildWorkflows):
         self.assertTrue(analysis_id.startswith('analysis-'))
         analysis_desc = run("dx describe " + analysis_id)
         self.assertIn('stage_0.number = 32', analysis_desc)
+        self.assertIn('Global workflow', analysis_desc)
+        self.assertIn(gwf_name, analysis_desc)
+
         analysis_desc = json.loads(run("dx describe " + analysis_id + " --json"))
         time.sleep(2) # May need to wait for job to be created in the system
         job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
