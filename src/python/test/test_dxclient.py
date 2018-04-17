@@ -9661,7 +9661,7 @@ class TestDXRun(DXTestCase):
         app_spec = dict(self.base_app_spec, name=app_name)
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
         new_app = json.loads(run("dx build --create-app --json " + app_dir))
-        run("dx run {} --yes --wait --watch".format(app)_name)).strip()
+        run("dx run {} --yes --wait --watch".format(app_name))
 
 
 @unittest.skipUnless(testutil.TEST_RUN_JOBS,
