@@ -4411,6 +4411,17 @@ class TestDXClientFind(DXTestCase):
             self.assertEqual(len(json_output), 1)
             self.assertEqual(json_output[0]['id'], unique_project.get_id())
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that depends on a public project only defined in the nucleus integration tests')
+    def test_dx_find_public_projects(self):
+        unique_project_name = 'dx find public projects test ' + str(time.time())
+        with temporary_project(unique_project_name) as unique_project:
+            # Check that the temporary project doesn't appear in the list of public apps
+            self.assertNotIn(run("dx find projects --public"),
+                             unique_project.get_id() + ' : ' + unique_project_name + ' (ADMINISTER)\n')
+            # Check that a known public app appears in the list of public apps
+            self.assertIn("public-test-project (ADMINISTER)", run("dx find projects --public"))
+
     def test_dx_find_projects_by_created(self):
         created_project_name = 'dx find projects test ' + str(time.time())
         with temporary_project(created_project_name) as unique_project:
