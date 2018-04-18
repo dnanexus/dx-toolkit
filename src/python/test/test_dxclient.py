@@ -6454,6 +6454,10 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         desc = _create_global_workflow("2.0.0")
         self.assertFalse("default" in desc["aliases"])
 
+        # version must be explicitly specified
+        with self.assertSubprocessFailure(stderr_regexp="Version is required", exit_code=3):
+            run("dx publish {name}".format(name=gwf_name))
+
         # publish version 2.0.0 with no "--make_default" flag
         run("dx publish {name}/{version}".format(name=gwf_name, version="2.0.0"))
         published_desc = json.loads(run("dx describe globalworkflow-{name}/{version} --json".format(name=gwf_name,
@@ -6461,8 +6465,7 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         self.assertTrue("published" in published_desc)
         self.assertFalse("default" in published_desc["aliases"])
 
-        with self.assertSubprocessFailure(stderr_regexp="already published",
-                                          exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp="already published", exit_code=3):
             run("dx publish {name}/{version}".format(name=gwf_name, version="2.0.0"))
 
 
@@ -8479,7 +8482,7 @@ def main(in1):
 
         desc = _create_app("1.0.0")
         self.assertFalse("published" in desc)
-        run("dx publish {name}".format(name=app_name))
+        run("dx publish {name}/{alias}".format(name=app_name, alias="default"))
         published_desc = json.loads(run("dx describe {name} --json".format(name=app_name)))
         self.assertTrue("published" in published_desc)
 
@@ -8494,7 +8497,7 @@ def main(in1):
 
         with self.assertSubprocessFailure(stderr_regexp="InvalidState: Cannot publish the app; already published",
                                           exit_code=3):
-            run("dx publish {name}".format(name=app_name))
+            run("dx publish {name}/{version}".format(name=app_name, version="2.0.0"))
 
 
 class TestDXGetWorkflows(DXTestCaseBuildWorkflows):

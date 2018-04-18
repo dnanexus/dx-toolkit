@@ -3699,7 +3699,7 @@ def generate_batch_inputs(args):
         err_exit("ERROR SUMMARY: Found {num_errors} batch IDs with incomplete or ambiguous results.  Details above.".format(num_errors=len(errors)), 3)
 
 def publish(args):
-    desc = try_call(resolve_global_executable, args.executable)
+    desc = try_call(resolve_global_executable, args.executable, is_version_required=True)
 
     try:
         if desc['class'] == 'app':
