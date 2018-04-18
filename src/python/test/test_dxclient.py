@@ -9699,7 +9699,7 @@ class TestDXUpdateApp(DXTestCase):
         # Increment version of app and build/publish again
         dxapp_spec_2 = {
             "name": "app_update_test",
-            "version": "0.0.2,
+            "version": "0.0.2",
             "applet": test_applet_id
         }
         spec_2 = dict(dxapp_spec_2, name=app_update_published_name, version="0.0.1")
