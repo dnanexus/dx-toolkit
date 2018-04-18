@@ -1187,6 +1187,19 @@ class TestDXMv(DXTestCase):
         dxpy.find_one_data_object(name="b", project=self.project, zero_ok=False)
         self.assertEqual(dxpy.find_one_data_object(name="a", project=self.project, zero_ok=True), None)
 
+    def test_dx_mv_folder(self):
+        folder_name = "/test_folder"
+        folder_name_2 = "/test_folder_2"
+
+        # make folder
+        create_folder_in_project(self.project, folder_name)
+        self.assertIn(folder_name, list_folder(self.project, "/")['folders'])
+
+        # mv (rename) folder and make sure it appears (and old folder name doesn't)
+        run("dx mv '{0}' {1}".format(folder_name, folder_name_2))
+        self.assertIn(folder_name_2, list_folder(self.project, "/")['folders'])
+        self.assertNotIn(folder_name, list_folder(self.project, "/")['folders'])
+
 
 class TestDXRename(DXTestCase):
     def test_rename(self):
@@ -9665,6 +9678,7 @@ class TestDXUpdateApp(DXTestCaseBuildApps):
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that creates apps')
     def test_update_app(self):
+        # Build and publish app with initial version
         app_spec = {
             "name": "test_app_update",
             "dxapi": "1.0.0",
@@ -9673,8 +9687,6 @@ class TestDXUpdateApp(DXTestCaseBuildApps):
             "inputSpec": [],
             "outputSpec": [],
             "version": "0.0.1"}
-
-        # check when project not public and we publish app, also check app build with a valid suggestion
         app_dir = self.write_app_directory("test_app_update", json.dumps(app_spec), "code.py")
         result = run("dx build --app --publish " + app_dir, also_return_stderr=True)
         app_id = json.loads(result[0])['id']
@@ -9691,7 +9703,6 @@ class TestDXUpdateApp(DXTestCaseBuildApps):
             "inputSpec": [],
             "outputSpec": [],
             "version": "0.0.2"}
-
         app_dir_2 = self.write_app_directory("test_app_update_2", json.dumps(app_spec_2), "code.py")
         result_2 = run("dx build --app --publish " + app_dir_2, also_return_stderr=True)
         app_id_2 = json.loads(result_2[0])['id']
