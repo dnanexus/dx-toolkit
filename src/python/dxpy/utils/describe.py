@@ -790,6 +790,8 @@ def print_execution_desc(desc):
         print_field('Resources', desc['resources'])
     if "app" in desc:
         print_field("App", desc["app"])
+    elif desc.get("executable", "").startswith("globalworkflow"):
+        print_field("Workflow", desc["executable"])
     elif "applet" in desc:
         print_field("Applet", desc["applet"])
     elif "workflow" in desc:
