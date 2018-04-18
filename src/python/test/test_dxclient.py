@@ -9697,10 +9697,10 @@ class TestDXUpdateApp(DXTestCaseBuildApps):
 
         app_dir_2 = self.write_app_directory("test_app_update_2", json.dumps(app_spec_2), "code.py")
         result_2 = run("dx build --app --publish " + app_dir_2, also_return_stderr=True)
-        print(result)
-        #if len(result) == 2:
+        print(result_2)
+        #if len(result_2) == 2:
         #    self.assertIn('NOT PUBLIC!', result[1])
-        app_id_2 = json.loads(result[0])['id']
+        app_id_2 = json.loads(result_2[0])['id']
         app_2 = dxpy.describe(app_id_2)
         self.assertEqual(app_2['name'], app_spec_2['name'])
         self.assertEqual(app_2['version'], "0.0.2")
