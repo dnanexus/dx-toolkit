@@ -9702,8 +9702,8 @@ class TestDXUpdateApp(DXTestCaseBuildApps):
         #    self.assertIn('NOT PUBLIC!', result[1])
         app_id_2 = json.loads(result[0])['id']
         app_2 = dxpy.describe(app_id_2)
-        self.assertEqual(app['name'], app_spec['name'])
-        self.assertEqual(app['version'], "0.0.2")
+        self.assertEqual(app_2['name'], app_spec_2['name'])
+        self.assertEqual(app_2['version'], "0.0.2")
 
 
 @unittest.skipUnless(testutil.TEST_RUN_JOBS,
