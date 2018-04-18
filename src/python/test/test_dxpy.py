@@ -3029,6 +3029,14 @@ class TestAppBuilderUtils(unittest.TestCase):
             assert_consistent_regions({"aws:us-east-1": None}, ["azure:westus"])
 
 
+class TestApiWrappers(unittest.TestCase):
+    def test_system_greet(self):
+        greeting = dxpy.api.system_greet(
+            {'client': 'dxclient', 'version': 'v'+dxpy.TOOLKIT_VERSION},
+            auth=None)
+        assert 'messages' in greeting
+
+
 if __name__ == '__main__':
     if dxpy.AUTH_HELPER is None:
         sys.exit(1, 'Error: Need to be logged in to run these tests')

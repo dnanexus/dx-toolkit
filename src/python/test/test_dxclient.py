@@ -1187,6 +1187,19 @@ class TestDXMv(DXTestCase):
         dxpy.find_one_data_object(name="b", project=self.project, zero_ok=False)
         self.assertEqual(dxpy.find_one_data_object(name="a", project=self.project, zero_ok=True), None)
 
+    def test_dx_mv_folder(self):
+        folder_name = "/test_folder"
+        folder_name_2 = "/test_folder_2"
+
+        # make folder
+        create_folder_in_project(self.project, folder_name)
+        self.assertIn(folder_name, list_folder(self.project, "/")['folders'])
+
+        # mv (rename) folder and make sure it appears (and old folder name doesn't)
+        run("dx mv '{0}' {1}".format(folder_name, folder_name_2))
+        self.assertIn(folder_name_2, list_folder(self.project, "/")['folders'])
+        self.assertNotIn(folder_name, list_folder(self.project, "/")['folders'])
+
 
 class TestDXRename(DXTestCase):
     def test_rename(self):
@@ -9712,6 +9725,51 @@ class TestDXGenerateBatchInputs(DXTestCase):
         Input pair1 is associated with a file name that matches multiple IDs:
         """
         self.assertTrue(cornercase_test_stderr.startswith(textwrap.dedent(expected_cornercase_test_stderr).strip()))
+
+
+class TestDXRun(DXTestCase):
+    @unittest.skipUnless(testutil.TEST_WITH_SMOKETEST_APP,
+                         'skipping test that requires the smoketest app')
+    def test_dx_run_app(self):
+        app_name = "app-dnanexus_smoke_test"
+        run("dx run {} -isubjobs=1 --yes --wait --watch".format(app_name))
+
+
+class TestDXUpdateApp(DXTestCaseBuildApps):
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that creates apps')
+    def test_update_app(self):
+        # Build and publish app with initial version
+        app_spec = {
+            "name": "test_app_update",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7",
+                        "distribution": "Ubuntu", "release": "14.04"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "0.0.1"}
+        app_dir = self.write_app_directory("test_app_update", json.dumps(app_spec), "code.py")
+        result = run("dx build --app --publish " + app_dir, also_return_stderr=True)
+        app_id = json.loads(result[0])['id']
+        app = dxpy.describe(app_id)
+        self.assertEqual(app['name'], app_spec['name'])
+        self.assertEqual(app['version'], "0.0.1")
+
+        # Rebuild and publish app with new version
+        app_spec_2 = {
+            "name": "test_app_update",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7",
+                        "distribution": "Ubuntu", "release": "14.04"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "0.0.2"}
+        app_dir_2 = self.write_app_directory("test_app_update_2", json.dumps(app_spec_2), "code.py")
+        result_2 = run("dx build --app --publish " + app_dir_2, also_return_stderr=True)
+        app_id_2 = json.loads(result_2[0])['id']
+        app_2 = dxpy.describe(app_id_2)
+        self.assertEqual(app_2['name'], app_spec_2['name'])
+        self.assertEqual(app_2['version'], "0.0.2")
 
 
 @unittest.skipUnless(testutil.TEST_RUN_JOBS,
