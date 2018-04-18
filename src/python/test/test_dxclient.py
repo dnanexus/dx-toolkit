@@ -9653,15 +9653,12 @@ class TestDXGenerateBatchInputs(DXTestCase):
         self.assertTrue(cornercase_test_stderr.startswith(textwrap.dedent(expected_cornercase_test_stderr).strip()))
 
 
-class TestDXRun(DXTestCaseBuildApps):
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_ISOLATED_ENV,
-                         'skipping test that would create apps and run jobs')
+class TestDXRun(DXTestCase):
+    @unittest.skipUnless(testutil.TEST_WITH_SMOKETEST_APP,
+                         'skipping test that requires the smoketest app')
     def test_dx_run_app(self):
-        app_name = "app_{t}_dx_run_test".format(t=int(time.time()))
-        app_spec = dict(self.base_app_spec, name=app_name)
-        app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
-        new_app = json.loads(run("dx build --create-app --json " + app_dir))
-        run("dx run {} --yes --wait --watch".format(app_name))
+        app_name = "app-dnanexus_smoke_test"
+        run("dx run {} -isubjobs=1 --yes --wait --watch".format(app_name))
 
 
 @unittest.skipUnless(testutil.TEST_RUN_JOBS,
