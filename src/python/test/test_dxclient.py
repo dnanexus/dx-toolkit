@@ -9661,7 +9661,7 @@ class TestDXRun(DXTestCase):
         run("dx run {} -isubjobs=1 --yes --wait --watch".format(app_name))
 
 
-class TestDXUpdateApp(DXTestCase):
+class TestDXUpdateApp(DXTestCaseBuildApps):
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that creates apps')
     def test_update_app(self):
