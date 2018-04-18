@@ -9661,6 +9661,56 @@ class TestDXRun(DXTestCase):
         run("dx run {} -isubjobs=1 --yes --wait --watch".format(app_name))
 
 
+class TestDXUpdateApp(DXTestCase):
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that creates apps')
+    def test_update_app(self):
+        test_applet_id = dxpy.api.applet_new({"name": "my_update_test_applet",
+                                              "dxapi": "1.0.0",
+                                              "project": self.project,
+                                              "inputSpec": [],
+                                              "outputSpec": [],
+                                              "runSpec": {"interpreter": "bash",
+                                                          "distribution": "Ubuntu",
+                                                          "release": "14.04",
+                                                          "code": "exit 0"}
+                                              })['id']
+
+        dxapp_spec = {
+            "name": "app_update_test",
+            "version": "0.0.1",
+            "applet": test_applet_id
+        }
+
+        # Create published app
+        app_update_published_name = "app_update_published_name"
+        spec = dict(dxapp_spec, name=app_update_published_name, version="0.0.1")
+        dxapp = dxpy.DXApp()
+        dxapp.new(**spec)
+        dxapp.publish()
+        desc = dxapp.describe()
+        self.assertTrue(desc["published"] > 0)
+        self.assertTrue(desc["version"] == "0.0.1")
+
+        # Ensure app can be found by name
+        output = run("dx find apps --name " + app_update_published_name)
+        self.assertIn(app_update_published_name, output)
+
+        # Increment version of app and build/publish again
+        dxapp_spec_2 = {
+            "name": "app_update_test",
+            "version": "0.0.2,
+            "applet": test_applet_id
+        }
+        spec_2 = dict(dxapp_spec_2, name=app_update_published_name, version="0.0.1")
+        dxapp_2 = dxpy.DXApp()
+        dxapp_2.new(**spec_2)
+        dxapp_2.publish()
+        desc_2 = dxapp_2.describe()
+        self.assertTrue(desc["published"] > 0)
+        self.assertTrue(desc["version"] == "0.0.2")
+
+
 @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                      'skipping test that would run jobs')
 class TestDXRunBatch(DXTestCase):
