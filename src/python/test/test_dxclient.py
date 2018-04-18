@@ -9653,7 +9653,7 @@ class TestDXGenerateBatchInputs(DXTestCase):
         self.assertTrue(cornercase_test_stderr.startswith(textwrap.dedent(expected_cornercase_test_stderr).strip()))
 
 
-class TestDXRun(DXTestCase):
+class TestDXRun(DXTestCaseBuildApps):
     @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps and run jobs')
     def test_dx_run_app(self):
