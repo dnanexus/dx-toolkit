@@ -902,7 +902,7 @@ class TestDXClient(DXTestCase):
                 dx2.expect("Terminated job", timeout=60)
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_EXE_CONNECT_RUNNING_JOB", ""])
+    @testutil.update_traceability_matrix(["DNA_CLI_EXE_CONNECT_RUNNING_JOB"])
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_ssh(self):
         self._test_dx_ssh(self.project, "mem2_hdd2_x1")
@@ -1168,7 +1168,6 @@ class TestDXClient(DXTestCase):
         dx_login.expect("dx: Incorrect username and/or password")
         dx_login.close()
         self.assertEqual(dx_login.exitstatus, EXPECTED_ERR_EXIT_STATUS)
-        run("dx logout")
 
     def test_dx_with_bad_job_id_env(self):
         env = override_environment(DX_JOB_ID="foobar")

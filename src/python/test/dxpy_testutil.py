@@ -641,15 +641,17 @@ def update_traceability_matrix(id_array):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            with open("{}.traceability.tsv".format(os.path.splitext(os.path.basename(__file__))[0]), "a") as f:
+            daystr = datetime.datetime.today().strftime('%Y%m%d')
+            with open("{}.traceability.{}.tsv".format(os.path.splitext(os.path.basename(__file__))[0], daystr), "a") as f:
+                secstr = datetime.datetime.today().strftime('%Y%m%d%H%M%S')
                 try:
                     retval = func(*args, **kwargs)
                     for tid in id_array:
-                        f.write("{}\t{}\n".format(tid, "PASSED"))
+                        f.write("{}\t{}\t{}\n".format(tid, "PASS", secstr))
                     return retval
                 except Exception as e:
                     for tid in id_array:
-                        f.write("{}\t{}\n".format(tid, "FAILED"))
+                        f.write("{}\t{}\t{}\n".format(tid, "FAIL", secstr))
                     raise
         return wrapper
     return decorator
