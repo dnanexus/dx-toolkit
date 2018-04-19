@@ -1,3 +1,18 @@
+dx-toolkit (0.252.0) precise; urgency=low
+
+  * Added: Print proper dx describe analysis of a global workflow
+  * Added: dx publish command
+  * Added: inline cluster bootstrap script
+  * Added: dx run for global workflows
+  * Added: dx find apps tests
+  * Added: resolve paths for global workflows
+  * Added: add, remove, list users for global workflows
+  * Added: add, remove, list developers for global workflows
+  * Added: public project test
+  * Added: API tests
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 19 Apr 2018 17:23:07 +0000
+
 dx-toolkit (0.251.0) precise; urgency=low
 
   * Added: Support for dx find global workflows
