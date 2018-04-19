@@ -231,7 +231,7 @@ class TestDXClient(DXTestCase):
 
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_HELP_UPGRADE"])
-    def test_dx(self):
+    def test_dx_upgrade(self):
         run("dx upgrade")
 
     @pytest.mark.TRACEABILITY_MATRIX
