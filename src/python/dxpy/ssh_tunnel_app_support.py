@@ -32,7 +32,7 @@ def setup_ssh_tunnel(job_id, local_port, remote_port):
     """
     Setup an ssh tunnel to the given job-id.  This will establish
     the port over the given local_port to the given remote_port
-    and then exit, keeping the tunnel in place until the job is 
+    and then exit, keeping the tunnel in place until the job is
     terminated.
     """
     cmd = ['dx', 'ssh', '--suppress-running-check', job_id, '-o', 'StrictHostKeyChecking no']
@@ -54,7 +54,7 @@ def poll_for_server_running(job_id):
         sys.stdout.flush()
         desc = dxpy.describe(job_id)
 
-    # If the server job failed, provide friendly advice. 
+    # If the server job failed, provide friendly advice.
     if desc['state'] == 'failed':
         msg = RED('Error:') + ' Server failed to run.\n'
         msg += 'You may want to check the job logs by running:'
@@ -92,6 +92,8 @@ def run_notebook(args, ssh_config_check):
     """
     # Check that ssh is setup.  Currently notebooks require ssh for tunelling.
     ssh_config_check()
+    if args.only_check_config:
+        return
 
     # If the user requested a specific version of the notebook server,
     # get the executable id.
@@ -105,6 +107,7 @@ def run_notebook(args, ssh_config_check):
             err_exit(msg)
     else:
         executable = 'app-{0}'.format(NOTEBOOK_APP)
+
     # Compose the command to launch the notebook
     cmd = ['dx', 'run', executable, '-inotebook_type={0}'.format(args.notebook_type)]
     cmd += ['-iinput_files={0}'.format(f) for f in args.notebook_files]
