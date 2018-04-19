@@ -1114,13 +1114,10 @@ class TestDXClient(DXTestCase):
             return dx_setenv
 
         dx_setenv = get_dx_setenv()
-        dx_setenv.expect('API server protocol (choose "http" or "https") [https]:')
-        dx_setenv.sendline("")
-        dx_setenv.expect("API server host [api.dnanexus.com]:")
-        dx_setenv.sendline("")
-        dx_setenv.expect("API server port [443]:")
-        dx_setenv.sendline("")
-        dx_login.close()
+        dx_setenv.sendline()
+        dx_setenv.sendline()
+        dx_setenv.sendline()
+        dx_setenv.close()
 
 
     @pytest.mark.TRACEABILITY_MATRIX
