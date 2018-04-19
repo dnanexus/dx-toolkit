@@ -1114,7 +1114,7 @@ class TestDXClient(DXTestCase):
             return dx_setenv
 
         dx_setenv = get_dx_setenv()
-        dx_setenv.expect("API server protocol (choose "http" or "https") [https]:")
+        dx_setenv.expect('API server protocol (choose "http" or "https") [https]:')
         dx_setenv.sendline("")
         dx_setenv.expect("API server host [api.dnanexus.com]:")
         dx_setenv.sendline("")
