@@ -26,6 +26,7 @@ import json
 import sys
 import shutil
 import subprocess
+import pytest
 
 import dxpy
 import dxpy_testutil as testutil
