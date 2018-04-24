@@ -588,9 +588,8 @@ def print_globalworkflow_desc(desc, verbose=False):
     print_field("Created", render_timestamp(desc['created']))
     print_field("Last modified", render_timestamp(desc['modified']))
     # print_json_field('Open source', desc['openSource'])
-    # print_json_field('Deleted', desc['deleted'])
+    print_json_field('Deleted', desc.get('deleted', False))
     if not desc.get('deleted', False):
-        advanced_inputs = []
         if 'published' not in desc or desc["published"] < 0:
             print_field("Published", "-")
         else:
