@@ -576,7 +576,7 @@ def print_globalworkflow_desc(desc, verbose=False):
                          'modified', 'deleted', 'published', 'title', 'description',
                          'categories', 'dxapi', 'billTo', 'summary', 'billing', 'developerNotes',
                          'authorizedUsers', 'regionalOptions']
-
+    is_locked_workflow = False
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
     if 'billTo' in desc:
@@ -621,6 +621,7 @@ def print_globalworkflow_desc(desc, verbose=False):
                 if workflow_desc.get('outputSpec') is not None and workflow_desc.get('outputs') is None:
                     print_nofill_field("Output Spec", get_io_spec(workflow_desc['outputSpec']))
                 if  workflow_desc.get('inputs') is not None:
+                    is_locked_workflow = True
                     print_nofill_field("Workflow Inputs", get_io_spec(workflow_desc['inputs']))
                 if  workflow_desc.get('outputs') is not None:
                     print_nofill_field("Workflow Outputs", get_io_spec(workflow_desc['outputs']))
@@ -629,6 +630,9 @@ def print_globalworkflow_desc(desc, verbose=False):
                         render_stage("Stage " + str(i), stage)
     if 'authorizedUsers' in desc:
         print_list_field('AuthorizedUsers', desc["authorizedUsers"])
+
+    if is_locked_workflow:
+        print_locked_workflow_note()
 
     for field in desc:
         if field not in recognized_fields:
@@ -639,8 +643,9 @@ def get_col_str(col_desc):
 
 def print_data_obj_desc(desc, verbose=False):
     recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputSpec', 'outputSpec', 'runSpec', 'summary', 'dxapi', 'access', 'createdBy', 'summary', 'sponsored', 'developerNotes',
-                         'stages', 'inputs', 'outputs', 'latestAnalysis', 'editVersion', 'outputFolder', 'initializedFrom']
+                         'stages', 'inputs', 'outputs', 'latestAnalysis', 'editVersion', 'outputFolder', 'initializedFrom', 'temporary']
 
+    is_locked_workflow = False
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
     if 'project' in desc:
@@ -694,6 +699,7 @@ def print_data_obj_desc(desc, verbose=False):
     if desc.get('outputSpec') is not None and desc.get('outputs') is None:
         print_nofill_field("Output Spec", get_io_spec(desc['outputSpec']))
     if  desc.get('inputs') is not None:
+        is_locked_workflow = True
         print_nofill_field("Workflow Inputs", get_io_spec(desc['inputs']))
     if  desc.get('outputs') is not None:
         print_nofill_field("Workflow Outputs", get_io_spec(desc['outputs']))
@@ -748,6 +754,8 @@ def print_data_obj_desc(desc, verbose=False):
             else: # Unhandled prettifying
                 print_json_field(field, desc[field])
 
+    if is_locked_workflow:
+        print_locked_workflow_note()
 
 def printable_ssh_host_key(ssh_host_key):
     try:
@@ -1104,3 +1112,7 @@ def get_find_executions_string(desc, has_children, single_result=False, show_out
                                                                                      subsequent_indent=prefix.lstrip('\n'))
 
     return result
+
+def print_locked_workflow_note():
+    print_field('Note',
+                'This workflow has an explicit input specification (i.e. it is locked), and as such stage inputs cannot be modified at run-time.')
