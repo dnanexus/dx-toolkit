@@ -29,6 +29,7 @@ import dxpy_testutil as testutil
 import dxpy
 from dxpy.scripts import dx_build_app
 from dxpy.utils.completer import InstanceTypesCompleter
+import pytest
 
 
 def run(command, **kwargs):
