@@ -648,11 +648,11 @@ def update_traceability_matrix(id_array):
                 try:
                     retval = func(*args, **kwargs)
                     for tid in id_array:
-                        f.write("{}\t{}\t{}\n".format(tid, "PASS", secstr))
+                        f.write("{}\,{},{}\n".format(tid, "PASS", secstr))
                     return retval
                 except Exception as e:
                     for tid in id_array:
-                        f.write("{}\t{}\t{}\n".format(tid, "FAIL", secstr))
+                        f.write("{},{},{}\n".format(tid, "FAIL", secstr))
                     raise
         return wrapper
     return decorator
