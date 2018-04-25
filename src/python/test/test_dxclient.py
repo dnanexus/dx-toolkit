@@ -3144,6 +3144,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
     default_inst_type = "mem2_hdd2_x2"
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_WORKFLOW_RUN"])
     def test_dx_run_workflow(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
@@ -4181,6 +4183,8 @@ class TestDXClientFind(DXTestCase):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that requires presence of test org and creates global workflows')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_WORKFLOW_LIST_AVAILABLE_WORKFLOWS_GLOBALWF"])
     def test_dx_find_globalworkflows(self):
         org_id = "org-piratelabs"
         test_applet_id = dxpy.api.applet_new({"name": "my_find_applet",
@@ -6502,6 +6506,10 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create global workflows')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_WORKFLOW_REMOVE_AUTHORIZED_USERS_GLOBALWF",
+                                          "DNA_CLI_WORKFLOW_LIST_AUTHORIZED_USERS_GLOBALWF",
+                                          "DNA_CLI_WORKFLOW_ADD_AUTHORIZED_USERS_GLOBALWF"])
     def test_dx_add_list_remove_users_of_global_workflows(self):
         """
         This test is for some other dx subcommands, but it's in this
@@ -6551,6 +6559,10 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         run('dx remove users wf_test_dx_users nonexistentuser')
         run('dx remove users wf_test_dx_users piratelabs')
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_WORKFLOW_ADD_DEVELOPERS_GLOBALWF",
+                                          "DNA_CLI_WORKFLOW_LIST_DEVELOPERS_GLOBALWF",
+                                          "DNA_CLI_WORKFLOW_REMOVE_DEVELOPERS_GLOBALWF"])
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create global workflows')
     def test_dx_add_list_remove_developers_of_global_workflows(self):
@@ -6609,6 +6621,9 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         run('dx remove developers wf_test_dx_developers nonexistentuser')
         run('dx remove developers wf_test_dx_developers piratelabs')
 
+
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_WORKFLOW_PUBLISH_GLOBALWF"])
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create global workflows')
     def test_dx_publish_global_workflow(self):
@@ -8761,6 +8776,8 @@ def main(in1):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create app')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_PUBLISH_APP"])
     def test_dx_publish_app(self):
         app_name = "dx_publish_app"
         def _create_app(version):
