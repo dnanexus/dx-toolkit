@@ -62,23 +62,6 @@ def _write_simple_file(filename, content):
 
 
 def _dump_workflow(workflow_obj, describe_output={}):
-    def _get_workflow_describe():
-        """
-        If the workflow object is global, returns the describe output of one of
-        its underlying workflows, i.e. the one from the region of the current
-        project context. Otherwise, returns the describe_output.
-        """
-        workflow_describe = {}
-        if isinstance(workflow_obj, dxpy.DXGlobalWorkflow):
-            current_project = dxpy.WORKSPACE_ID
-            if current_project:
-                region = dxpy.api.project_describe(current_project,
-                                                   input_params={"fields": {"region": True}})["region"]
-                workflow_describe = describe_output['regionalOptions'][region]['workflowDescribe']
-        else:
-            workflow_describe = describe_output
-        return workflow_describe
-
     dxworkflow_json_keys = ['name', 'title', 'summary', 'dxapi', 'version',
                             'outputFolder']
     dxworkflow_json_stage_keys = ['id', 'name', 'executable', 'folder', 'input',
@@ -89,20 +72,10 @@ def _dump_workflow(workflow_obj, describe_output={}):
         if key in describe_output and describe_output[key]:
             dxworkflow_json[key] = describe_output[key]
 
-    # Add inputs, outputs, stages. These fields contain region-specific values
-    # e.g. files or applets, that's why:
-    # * if the workflow is global, we will unpack the underlying workflow
-    #   from the region of the current project context
-    # * if this is a regular, project-based workflow, we will just use
-    #   its description (the describe_output that we already have)
-    # Underlying workflows are workflows stored in resource containers
-    # of the global workflow (one per each region the global workflow is
-    # enabled in). #TODO: add a link to documentation.
-    workflow_describe = _get_workflow_describe()
     for key in ('inputs', 'outputs'):
         if key in describe_output and describe_output[key] is not None:
             dxworkflow_json[key] = describe_output[key]
-    stages = workflow_describe.get("stages", ())
+    stages = describe_output.get("stages", ())
     new_stages = []
     for stage in stages:
         new_stage = collections.OrderedDict()
@@ -136,6 +109,16 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
     os.mkdir("src")
     with open(script, "w") as f:
         f.write(info["runSpec"]["code"])
+
+    def make_cluster_bootstrap_script_file(region, entry_point, code, suffix):
+        """
+        Writes the string `code` into a file at the relative path
+        "src/<region>_<entry_point>_clusterBootstrap.<suffix>"
+        """
+        script_name = "src/%s_%s_clusterBootstrap.%s" % (region, entry_point, suffix)
+        with open(script_name, "w") as f:
+            f.write(code)
+        return script_name
 
     # Get all the asset bundles
     asset_depends = []
@@ -274,8 +257,23 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
     if "systemRequirementsByRegion" in dxapp_json['runSpec']:
         dxapp_json["regionalOptions"] = {}
         for region in dxapp_json['runSpec']["systemRequirementsByRegion"]:
+            region_sys_reqs = dxapp_json['runSpec']['systemRequirementsByRegion'][region]
+
+            # handle cluster bootstrap scripts if any are present
+            for entry_point in region_sys_reqs:
+                try:
+                    bootstrap_script = region_sys_reqs[entry_point]['clusterSpec']['bootstrapScript']
+                    filename = make_cluster_bootstrap_script_file(region,
+                                                                  entry_point,
+                                                                  bootstrap_script,
+                                                                  suffix)
+                    region_sys_reqs[entry_point]['clusterSpec']['bootstrapScript'] = filename
+                except KeyError:
+                    # either no "clusterSpec" or no "bootstrapScript" within "clusterSpec"
+                    continue
+
             dxapp_json["regionalOptions"][region] = \
-                dict(systemRequirements=dxapp_json['runSpec']['systemRequirementsByRegion'][region])
+                dict(systemRequirements=region_sys_reqs)
 
     # systemRequirementsByRegion data is stored in regionalOptions,
     # systemRequirements is ignored
@@ -325,8 +323,25 @@ def dump_executable(executable, destination_directory, omit_resources=False, des
     try:
         old_cwd = os.getcwd()
         os.chdir(destination_directory)
-        if isinstance(executable, dxpy.DXWorkflow) or \
-           isinstance(executable, dxpy.DXGlobalWorkflow):
+        if isinstance(executable, dxpy.DXWorkflow):
+            _dump_workflow(executable, describe_output)
+        elif isinstance(executable, dxpy.DXGlobalWorkflow):
+            # Add inputs, outputs, stages. These fields contain region-specific values
+            # e.g. files or applets, that's why:
+            # * if the workflow is global, we will unpack the underlying workflow
+            #   from the region of the current project context
+            # * if this is a regular, project-based workflow, we will just use
+            #   its description (the describe_output that we already have)
+            # Underlying workflows are workflows stored in resource containers
+            # of the global workflow (one per each region the global workflow is
+            # enabled in). #TODO: add a link to documentation.
+            current_project = dxpy.WORKSPACE_ID
+            if not current_project:
+                raise DXError(
+                    'A project needs to be selected to "dx get" a global workflow. You can use "dx select" to select a project')
+            region = dxpy.api.project_describe(current_project,
+                                               input_params={"fields": {"region": True}})["region"]
+            describe_output = executable.append_underlying_workflow_desc(describe_output, region)
             _dump_workflow(executable, describe_output)
         else:
             _dump_app_or_applet(executable, omit_resources, describe_output)

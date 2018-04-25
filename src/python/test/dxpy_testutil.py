@@ -42,6 +42,7 @@ TEST_NO_RATE_LIMITS = _run_all_tests or 'DXTEST_NO_RATE_LIMITS' in os.environ
 TEST_RUN_JOBS = _run_all_tests or 'DXTEST_RUN_JOBS' in os.environ
 TEST_TCSH = _run_all_tests or 'DXTEST_TCSH' in os.environ
 TEST_WITH_AUTHSERVER = _run_all_tests or 'DXTEST_WITH_AUTHSERVER' in os.environ
+TEST_WITH_SMOKETEST_APP = _run_all_tests or 'DXTEST_WITH_SMOKETEST_APP' in os.environ
 TEST_ONLY_MASTER = 'DX_RUN_NEXT_TESTS' in os.environ
 TEST_MULTIPLE_USERS = _run_all_tests or 'DXTEST_SECOND_USER' in os.environ
 

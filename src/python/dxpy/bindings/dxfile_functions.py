@@ -35,7 +35,7 @@ from .. import logger
 from . import dxfile, DXFile
 from .dxfile import FILE_REQUEST_TIMEOUT
 from ..compat import open
-from ..exceptions import DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, DXIncompleteReadsError
+from ..exceptions import DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, DXIncompleteReadsError, err_exit
 from ..utils import response_iterator
 import subprocess
 
@@ -180,9 +180,12 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
 
     try:
         print("Downloading symbolic link with wget")
-        subprocess.check_call(cmd)
-    except subprocess.CalledProcessError:
-        err_exit("Failed to call wget: " + str(cmd))
+        subprocess.check_call(cmd, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        msg = ""
+        if e and e.output:
+            msg = e.output.strip()
+        err_exit("Failed to call wget: {cmd}\n{msg}\n".format(cmd=str(cmd), msg=msg))
 
     if md5digest is not None:
         _verify(dest_filename, md5digest)

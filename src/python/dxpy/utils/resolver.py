@@ -1218,10 +1218,12 @@ def resolve_global_workflow(path):
     else:
         return desc
 
-def resolve_global_executable(path):
+def resolve_global_executable(path, is_version_required=False):
     """
     :param path: A string which is supposed to identify a global executable (app or workflow)
     :type path: string
+    :param is_version_required: If set to True, the path has to specify a specific version/alias, e.g. "myapp/1.0.0"
+    :type is_version_required: boolean
     :returns: The describe hash of the global executable object (app or workflow)
     :raises: :exc:`ResolutionError` if it cannot be found
 
@@ -1229,8 +1231,12 @@ def resolve_global_executable(path):
 
     - hash ID, e.g. "globalworkflow-F85Z6bQ0xku1PKY6FjGQ011J", "app-FBZ3f200yfzkKYyp9JkFVQ97"
     - named ID, e.g. "app-myapp", "globalworkflow-myworkflow"
-    - named ID with alias (version or tag), e.g. "app-myapp/1.2.0", "globalworkflow-myworkflow/1.2.0"
+    - named ID with alias (version or tag), e.g. "myapp/1.2.0", "myworkflow/1.2.0"
+    - named ID with prefix and with alias (version or tag), e.g. "app-myapp/1.2.0", "globalworkflow-myworkflow/1.2.0"
     """
+    if is_version_required and "/" not in path:
+        raise ResolutionError('Version is required, e.g. "myexec/1.0.0"'.format())
+
     # First, check if the prefix is provided, then we don't have to resolve the name
     if path.startswith('app-'):
         return resolve_app(path)
@@ -1243,7 +1249,8 @@ def resolve_global_executable(path):
     if not desc:
         desc = get_global_workflow_from_path(path)
     if desc is None:
-        raise ResolutionError('The given path "' + path + '" could not be resolved to an accessible global executable (app or workflow)')
+        raise ResolutionError(
+            'The given path "' + path + '" could not be resolved to an accessible global executable (app or workflow)')
     return desc
 
 def get_exec_handler(path, alias=None):

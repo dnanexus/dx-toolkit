@@ -6,21 +6,52 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Remove the "temporary" field from `dx describe workflow-xxxx`
+
+### Added
+
+* "Deleted" field to `dx describe globalworkflow-xxxx` 
+* a note to `dx describe` that the workflow is locked
+
+## [252.0] - beta
+
+### Added
+
+* Print proper dx describe analysis of a global workflow
+* `dx publish`   command
+* inline cluster bootstrap script
+* dx run for global workflows
+* dx find apps tests
+* resolve paths for global workflows
+* add, remove, list users for global workflows
+* add, remove, list developers for global workflows
+* public project test
+* API tests
+
+## [251.2] - 2018.04.19 - stable
+
 ### Added
 
 * Support for dx find global workflows
 * Initial support for dx build global workflow
 * Publish method to global workflow bindings
 * Support for dx get global workflow
-* `dx download symlink`
 
-## [250.0] - beta
+## [250.3] - 2018.04.12
+
+### Fixed
+
+* `dx download` for symlinks
+
+## [250.0]
 
 ### Added 
 
 *  Support for `dx describe` for global workflows
 
-## [249.0] -2018.04.05 - stable 
+## [249.0] -2018.04.05 
 
 ### Added
 
@@ -33,7 +64,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * dx get applet without execDepends
 
-## [248.0] - 2018.03.29 - stable
+## [248.0] - 2018.03.29
 
 ### Fixed
 

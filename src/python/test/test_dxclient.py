@@ -1271,6 +1271,19 @@ class TestDXMv(DXTestCase):
         dxpy.find_one_data_object(name="b", project=self.project, zero_ok=False)
         self.assertEqual(dxpy.find_one_data_object(name="a", project=self.project, zero_ok=True), None)
 
+    def test_dx_mv_folder(self):
+        folder_name = "/test_folder"
+        folder_name_2 = "/test_folder_2"
+
+        # make folder
+        create_folder_in_project(self.project, folder_name)
+        self.assertIn(folder_name, list_folder(self.project, "/")['folders'])
+
+        # mv (rename) folder and make sure it appears (and old folder name doesn't)
+        run("dx mv '{0}' {1}".format(folder_name, folder_name_2))
+        self.assertIn(folder_name_2, list_folder(self.project, "/")['folders'])
+        self.assertNotIn(folder_name, list_folder(self.project, "/")['folders'])
+
 
 class TestDXRename(DXTestCase):
     @pytest.mark.TRACEABILITY_MATRIX
@@ -3127,7 +3140,6 @@ def main():
         applet_job.wait_on_done()
         self.assertEqual(applet_job.describe()['state'], 'done')
 
-
 class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
     default_inst_type = "mem2_hdd2_x2"
 
@@ -4031,6 +4043,39 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         with self.assertSubprocessFailure(stderr_regexp='Could not parse dxworkflow\.json file', exit_code=3):
             run("dx build " + workflow_dir)
 
+
+class TestDXClientGlobalWorkflow(DXTestCaseBuildWorkflows):
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_ISOLATED_ENV,
+                         "skipping test that would run build global workflows and run jobs")
+    def test_dx_run_global_workflow(self):
+        gwf_name = "gwf_{t}_single_region".format(t=int(time.time()))
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name, version="1.0.0")
+        workflow_dir = self.write_workflow_directory(gwf_name,
+                                                     json.dumps(dxworkflow_json),
+                                                     readme_content="Workflow Readme Please")
+        run('dx build --globalworkflow ' + workflow_dir)
+
+        analysis_id = run("dx run globalworkflow-" + gwf_name + " -i0.number=32 -y --brief").strip()
+        self.assertTrue(analysis_id.startswith('analysis-'))
+        analysis_desc = run("dx describe " + analysis_id)
+        self.assertIn('stage_0.number = 32', analysis_desc)
+        self.assertIn('globalworkflow-', analysis_desc)
+        self.assertIn(gwf_name, analysis_desc)
+
+        analysis_desc = json.loads(run("dx describe " + analysis_id + " --json"))
+        time.sleep(2) # May need to wait for job to be created in the system
+        job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
+        self.assertIn(' number = 32', job_desc)
+
+        # Test "dx run --help"
+        help_out = run("dx run globalworkflow-" + gwf_name + " --help")
+        self.assertIn(gwf_name, help_out)
+        self.assertIn("unpublished", help_out)
+        self.assertIn("1.0.0", help_out)
+        self.assertIn("Inputs", help_out)
+        self.assertIn("Outputs", help_out)
+
 class TestDXClientFind(DXTestCase):
 
     def assert_cmd_gives_ids(self, cmd, ids):
@@ -4051,6 +4096,88 @@ class TestDXClientFind(DXTestCase):
         for category in APP_CATEGORIES:
             self.assertIn(category, category_help_workflows)
         run("dx find globalworkflows --category foo") # any category can be searched
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that requires presence of test org and creates apps')
+    def test_dx_find_apps(self):
+        test_applet_id = dxpy.api.applet_new({"name": "my_find_applet",
+                                              "dxapi": "1.0.0",
+                                              "project": self.project,
+                                              "inputSpec": [],
+                                              "outputSpec": [],
+                                              "runSpec": {"interpreter": "bash",
+                                                          "distribution": "Ubuntu",
+                                                          "release": "14.04",
+                                                          "code": "exit 0"}
+                                              })['id']
+
+        dxapp_spec = {
+            "name": "app_find",
+            "version": "0.0.1",
+            "applet": test_applet_id
+        }
+
+        # Create a few apps
+
+        # 1. Unpublished app
+        # version 0.0.1
+        app_find = "app_find_unpublished"
+        spec = dict(dxapp_spec, name=app_find, version="0.0.1")
+        dxapp = dxpy.DXApp()
+        print(dxapp_spec)
+        dxapp.new(**spec)
+        # version 0.0.2
+        spec = dict(dxapp_spec, name=app_find, version="0.0.2")
+        dxapp = dxpy.DXApp()
+        dxapp.new(**spec)
+        desc = dxapp.describe()
+        self.assertEqual(desc["version"], "0.0.2")
+
+        # 2. Published app
+        app_find_published_1 = "app_find_published_1"
+        spec = dict(dxapp_spec, name=app_find_published_1, version="0.0.3")
+        dxapp = dxpy.DXApp()
+        dxapp.new(**spec)
+        dxapp.publish()
+        desc = dxapp.describe()
+        self.assertTrue(desc["published"] > 0)
+
+        # 3. Published app
+        app_find_published_2 = "app_find_published_2"
+        spec = dict(dxapp_spec, name=app_find_published_2, version="0.0.4")
+        dxapp = dxpy.DXApp()
+        dxapp.new(**spec)
+        dxapp.publish()
+        desc = dxapp.describe()
+        self.assertTrue(desc["published"] > 0)
+
+        # Tests
+
+        # find only published
+        output = run("dx find apps")
+        self.assertIn(app_find_published_1, output)
+        self.assertIn(app_find_published_2, output)
+        self.assertNotIn(app_find, output)
+
+        # find only unpublished
+        output = run("dx find apps --unpublished")
+        self.assertIn(app_find, output)
+        self.assertNotIn(app_find_published_1, output)
+        self.assertNotIn(app_find_published_2, output)
+
+        # find by name
+        output = run("dx find apps --name " + app_find_published_1)
+        self.assertIn(app_find_published_1, output)
+        self.assertNotIn(app_find_published_2, output)
+        self.assertNotIn(app_find, output)
+
+        # find all versions
+        output = run("dx find apps --unpublished --all")
+        self.assertNotIn(app_find_published_1, output)
+        self.assertNotIn(app_find_published_2, output)
+        self.assertIn(app_find, output)
+        self.assertIn("0.0.1", output)
+        self.assertIn("0.0.2", output)
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that requires presence of test org and creates global workflows')
@@ -4415,6 +4542,17 @@ class TestDXClientFind(DXTestCase):
             json_output = json.loads(run("dx find projects --json --name " + pipes.quote(unique_project_name)))
             self.assertEqual(len(json_output), 1)
             self.assertEqual(json_output[0]['id'], unique_project.get_id())
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that depends on a public project only defined in the nucleus integration tests')
+    def test_dx_find_public_projects(self):
+        unique_project_name = 'dx find public projects test ' + str(time.time())
+        with temporary_project(unique_project_name) as unique_project:
+            # Check that the temporary project doesn't appear in the list of public apps
+            self.assertNotIn(run("dx find projects --public"),
+                             unique_project.get_id() + ' : ' + unique_project_name + ' (ADMINISTER)\n')
+            # Check that a known public app appears in the list of public apps
+            self.assertIn("public-test-project (ADMINISTER)", run("dx find projects --public"))
 
     def test_dx_find_projects_by_created(self):
         created_project_name = 'dx find projects test ' + str(time.time())
@@ -6413,6 +6551,95 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         run('dx remove users wf_test_dx_users nonexistentuser')
         run('dx remove users wf_test_dx_users piratelabs')
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create global workflows')
+    def test_dx_add_list_remove_developers_of_global_workflows(self):
+        '''
+        This test is for some other dx subcommands, but it's in this
+        test suite to take advantage of workflow-building methods.
+        '''
+        # Only create if it's not available already (makes
+        # local testing easier)
+        try:
+            workflow_desc = dxpy.api.global_workflow_describe("globalworkflow-wf_test_dx_developers", {})
+            workflow_id = workflow_desc["id"]
+            my_userid = workflow_desc["createdBy"]
+            developers = dxpy.api.global_workflow_list_developers("globalworkflow-wf_test_dx_developers", {})["developers"]
+            # reset developers to default list
+            if len(developers) != 1:
+                run("dx remove developers globalworkflow-wf_test_dx_developers " +
+                    " ".join([dev for dev in developers if dev != my_userid]))
+        except:
+            workflow_id = None
+        if workflow_id is None:
+            gwf_name = "wf_test_dx_developers"
+            dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
+            workflow_dir = self.write_workflow_directory(gwf_name,
+                                                         json.dumps(dxworkflow_json))
+            workflow_desc = json.loads(run("dx build --create-globalworkflow --json " + workflow_dir))
+            workflow_id = workflow_desc['id']
+            my_userid = workflow_desc["createdBy"]
+        developers = run("dx list developers globalworkflow-wf_test_dx_developers").strip()
+        self.assertEqual(developers, my_userid)
+
+        # use hash ID
+        run("dx add developers " + workflow_id + " eve")
+        developers = run("dx list developers globalworkflow-wf_test_dx_developers").strip().split("\n")
+        self.assertEqual(len(developers), 2)
+        self.assertIn(my_userid, developers)
+        # don't use "globalworkflow-" prefix, duplicate, multiple, and non- members are fine
+        run("dx remove developers wf_test_dx_developers PUBLIC eve user-eve org-piratelabs")
+        developers = run("dx list developers globalworkflow-wf_test_dx_developers").strip()
+        self.assertEqual(developers, my_userid)
+        # use version string
+        run("dx list developers globalworkflow-wf_test_dx_developers/0.0.1")
+
+        # bad paths and exit codes
+        with self.assertSubprocessFailure(stderr_regexp='could not be resolved', exit_code=3):
+            run('dx list developers globalworkflow-nonexistent')
+        with self.assertSubprocessFailure(stderr_regexp='could not be resolved', exit_code=3):
+            run('dx remove developers globalworkflow-nonexistent/1.0.0 eve')
+        with self.assertSubprocessFailure(stderr_regexp='ResourceNotFound', exit_code=3):
+            run('dx add developers wf_test_dx_developers nonexistentuser')
+        with self.assertSubprocessFailure(stderr_regexp='ResourceNotFound', exit_code=3):
+            run('dx add developers wf_test_dx_developers piratelabs')
+
+        # ResourceNotFound is not thrown when removing things
+        run('dx remove developers wf_test_dx_developers org-nonexistentorg')
+        run('dx remove developers wf_test_dx_developers nonexistentuser')
+        run('dx remove developers wf_test_dx_developers piratelabs')
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create global workflows')
+    def test_dx_publish_global_workflow(self):
+        gwf_name = "dx_publish_wf"
+
+        def _create_global_workflow(version):
+            dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name, version=version)
+            workflow_dir = self.write_workflow_directory(gwf_name, json.dumps(dxworkflow_json))
+            desc = json.loads(run("dx build --globalworkflow {wf_dir} --json".format(wf_dir=workflow_dir)))
+            return desc
+
+        # create two versions
+        _create_global_workflow("1.0.0")
+        desc = _create_global_workflow("2.0.0")
+        self.assertFalse("default" in desc["aliases"])
+
+        # version must be explicitly specified
+        with self.assertSubprocessFailure(stderr_regexp="Version is required", exit_code=3):
+            run("dx publish {name}".format(name=gwf_name))
+
+        # publish version 2.0.0 with no "--make_default" flag
+        run("dx publish {name}/{version}".format(name=gwf_name, version="2.0.0"))
+        published_desc = json.loads(run("dx describe globalworkflow-{name}/{version} --json".format(name=gwf_name,
+                                                                                                    version="2.0.0")))
+        self.assertTrue("published" in published_desc)
+        self.assertFalse("default" in published_desc["aliases"])
+
+        with self.assertSubprocessFailure(stderr_regexp="already published", exit_code=3):
+            run("dx publish {name}/{version}".format(name=gwf_name, version="2.0.0"))
+
+
 class TestDXBuildApp(DXTestCaseBuildApps):
     def run_and_assert_stderr_matches(self, cmd, stderr_regexp):
         with self.assertSubprocessFailure(stderr_regexp=stderr_regexp, exit_code=28):
@@ -6816,6 +7043,114 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             app_container = new_app["regionalOptions"][region]["resources"]
             container_content = dxpy.api.container_list_folder(app_container, {"folder": "/"})
             self.assertIn(file_id, [item["id"] for item in container_content["objects"]])
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create apps')
+    def test_build_and_get_cluster_app_bootstrap_script_inlined(self):
+        app_name = "cluster_app"
+        cluster_spec_with_bootstrap_aws = {"type": "spark",
+                                           "version": "2.2.0",
+                                           "initialInstanceCount": 5,
+                                           "bootstrapScript": "clusterBootstrapAws.py"}
+        cluster_spec_with_bootstrap_azure = cluster_spec_with_bootstrap_aws.copy()
+        cluster_spec_with_bootstrap_azure['bootstrapScript'] = "clusterBootstrapAzure.py"
+        cluster_spec_no_bootstrap = {"type": "spark",
+                                     "version": "2.2.0",
+                                     "initialInstanceCount": 10}
+        bootstrap_code_aws = "def improper():\nprint 'oops'" # syntax error
+        bootstrap_code_azure = "import os\n"
+
+        # cluster spec must be specified under "regionalOptions"
+        non_regional_app_spec = dict(self.base_app_spec, name=app_name)
+        non_regional_app_spec["runSpec"]["systemRequirements"] = dict(
+            main=dict(instanceType="mem2_hdd2_x1", clusterSpec=cluster_spec_with_bootstrap_aws)
+        )
+        app_dir = self.write_app_directory(app_name, json.dumps(non_regional_app_spec), "code.py")
+        with self.assertSubprocessFailure(stderr_regexp="clusterSpec.*must be specified.*under the \"regionalOptions\" field"):
+            run("dx build " + app_dir)
+
+        app_spec = dict(self.base_app_spec, name=app_name,
+                        regionalOptions = {
+                            "aws:us-east-1": {
+                                "systemRequirements": {
+                                    "main": {
+                                        "instanceType": "mem2_hdd2_x1",
+                                        "clusterSpec": cluster_spec_with_bootstrap_aws
+                                    },
+                                    "cluster_2": {
+                                        "instanceType": "mem2_hdd2_x4",
+                                        "clusterSpec": cluster_spec_no_bootstrap
+                                    },
+                                    "cluster_3": {
+                                        "instanceType": "mem2_hdd2_x1",
+                                        "clusterSpec": cluster_spec_with_bootstrap_aws
+                                    }
+                                }
+                            },
+                            "azure:westus": {
+                                "systemRequirements": {
+                                    "main": {
+                                        "instanceType": "azure:mem1_ssd1_x2",
+                                        "clusterSpec": cluster_spec_with_bootstrap_azure
+                                    }
+                                }
+                            }})
+        del app_spec["runSpec"]["systemRequirements"]
+        app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+        self.write_app_directory(app_name, json.dumps(app_spec), "clusterBootstrapAws.py", code_content=bootstrap_code_aws)
+        self.write_app_directory(app_name, json.dumps(app_spec), "clusterBootstrapAzure.py", code_content=bootstrap_code_azure)
+
+        # confirm syntax checking
+        with self.assertSubprocessFailure(stderr_regexp="Code in cluster bootstrapScript \\S+ has syntax errors"):
+            run("dx build " + app_dir)
+        # get rid of syntax error
+        bootstrap_code_aws = "import sys\n"
+        self.write_app_directory(app_name, json.dumps(app_spec), "clusterBootstrapAws.py", code_content=bootstrap_code_aws)
+
+        def build_and_verify_bootstrap_script_inlined(app_dir):
+            # build cluster app with multiple bootstrap scripts and regions
+            # expect bootstrap scripts to be inlined in the app doc
+            app_doc = json.loads(run("dx build --create-app --json " + app_dir))
+            sys_reqs = app_doc["runSpec"]["systemRequirements"]
+            self.assertEqual(sys_reqs["main"]["clusterSpec"]["bootstrapScript"], bootstrap_code_aws)
+            self.assertEqual(sys_reqs["cluster_3"]["clusterSpec"]["bootstrapScript"], bootstrap_code_aws)
+            self.assertFalse("bootstrapScript" in sys_reqs["cluster_2"]["clusterSpec"])
+            self.assertEqual(app_doc["runSpec"]['systemRequirementsByRegion']["azure:westus"]["main"]["clusterSpec"]["bootstrapScript"], bootstrap_code_azure)
+            return app_doc["id"]
+
+        app_id = build_and_verify_bootstrap_script_inlined(app_dir)
+
+        # get same cluster app
+        # expect each bootstrap script to be in its own file referenced by the corresponding entry point
+        with chdir(tempfile.mkdtemp()):
+            run("dx get " + app_id)
+            self.assertTrue(os.path.exists("cluster_app"))
+            self.assertTrue(os.path.exists(os.path.join("cluster_app", "dxapp.json")))
+            dxapp_json = json.loads(open(os.path.join("cluster_app", "dxapp.json")).read())
+            aws_sys_reqs = dxapp_json["regionalOptions"]["aws:us-east-1"]["systemRequirements"]
+            azure_sys_reqs = dxapp_json["regionalOptions"]["azure:westus"]["systemRequirements"]
+
+            # bootstrap script names should now be: <region>_<entry-point>_clusterBootstrap.<lang>
+            self.assertEqual(aws_sys_reqs["main"]["clusterSpec"]["bootstrapScript"],
+                             "src/aws:us-east-1_main_clusterBootstrap.py")
+            with open("cluster_app/src/aws:us-east-1_main_clusterBootstrap.py") as f:
+                self.assertEqual(f.read(), bootstrap_code_aws)
+
+            # this clusterSpec had no bootstrapScript
+            self.assertFalse("bootstrapScript" in aws_sys_reqs["cluster_2"]["clusterSpec"])
+
+            self.assertEqual(aws_sys_reqs["cluster_3"]["clusterSpec"]["bootstrapScript"],
+                             "src/aws:us-east-1_cluster_3_clusterBootstrap.py")
+            with open("cluster_app/src/aws:us-east-1_cluster_3_clusterBootstrap.py") as f:
+                self.assertEqual(f.read(), bootstrap_code_aws)
+
+            self.assertEqual(azure_sys_reqs["main"]["clusterSpec"]["bootstrapScript"],
+                             "src/azure:westus_main_clusterBootstrap.py")
+            with open("cluster_app/src/azure:westus_main_clusterBootstrap.py") as f:
+                self.assertEqual(f.read(), bootstrap_code_azure)
+
+            # now rebuild with the result of `dx get` and verify that we get the same result
+            build_and_verify_bootstrap_script_inlined("cluster_app")
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
@@ -7510,7 +7845,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                                           "DNA_CLI_APP_REMOVE_DEVELOPERS_APP"])
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
-    def test_dx_add_list_remove_developers(self):
+    def test_dx_add_list_remove_developers_of_apps(self):
         '''
         This test is for some other dx subcommands, but it's in this
         test suite to take advantage of app-building methods.
@@ -8424,6 +8759,36 @@ def main(in1):
             temp_asset_fid = run("dx ls {asset} --brief".format(asset=asset_name)).strip()
             self.assertEquals(temp_asset_fid, asset_file.get_id())
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create app')
+    def test_dx_publish_app(self):
+        app_name = "dx_publish_app"
+        def _create_app(version):
+            app_spec = dict(self.base_app_spec, name=app_name, version=version)
+            app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+            desc = json.loads(run("dx build --app {app_dir} --json".format(app_dir=app_dir)))
+            return desc
+
+        desc = _create_app("1.0.0")
+        self.assertFalse("published" in desc)
+        run("dx publish {name}/{alias}".format(name=app_name, alias="default"))
+        published_desc = json.loads(run("dx describe {name} --json".format(name=app_name)))
+        self.assertTrue("published" in published_desc)
+
+        # with --make_default flag
+        _create_app("2.0.0")
+        run("dx publish {name}/{version} --make_default".format(name=app_name,
+                                                                version="2.0.0"))
+        published_desc = json.loads(run("dx describe app-{name}/{version} --json".format(name=app_name,
+                                                                                         version="2.0.0")))
+        self.assertTrue("published" in published_desc)
+        self.assertTrue("default" in published_desc["aliases"])
+
+        with self.assertSubprocessFailure(stderr_regexp="InvalidState: Cannot publish the app; already published",
+                                          exit_code=3):
+            run("dx publish {name}/{version}".format(name=app_name, version="2.0.0"))
+
+
 class TestDXGetWorkflows(DXTestCaseBuildWorkflows):
 
     def test_get_workflow(self):
@@ -9261,6 +9626,7 @@ class TestTcshEnvironment(unittest.TestCase):
         tcsh.sendline("dx")
         tcsh.expect("dx is a command-line client")
 
+
 class TestDXScripts(DXTestCase):
     def test_minimal_invocation(self):
         # For dxpy scripts that have no other tests, these dummy calls
@@ -9471,6 +9837,7 @@ class TestDXTree(DXTestCase):
         self.assertRegexpMatches(o.strip(),
                                  r".\n└── closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+foo \(" + rec.get_id() + "\)")
 
+
 class TestDXGenerateBatchInputs(DXTestCase):
     # More advanced corner cases of generateBatchInputs API calls performed in API unit tests
     def test_example_matches(self):
@@ -9525,6 +9892,50 @@ class TestDXGenerateBatchInputs(DXTestCase):
         """
         self.assertTrue(cornercase_test_stderr.startswith(textwrap.dedent(expected_cornercase_test_stderr).strip()))
 
+
+class TestDXRun(DXTestCase):
+    @unittest.skipUnless(testutil.TEST_WITH_SMOKETEST_APP,
+                         'skipping test that requires the smoketest app')
+    def test_dx_run_app(self):
+        app_name = "app-dnanexus_smoke_test"
+        run("dx run {} -isubjobs=1 --yes --wait --watch".format(app_name))
+
+
+class TestDXUpdateApp(DXTestCaseBuildApps):
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that creates apps')
+    def test_update_app(self):
+        # Build and publish app with initial version
+        app_spec = {
+            "name": "test_app_update",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7",
+                        "distribution": "Ubuntu", "release": "14.04"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "0.0.1"}
+        app_dir = self.write_app_directory("test_app_update", json.dumps(app_spec), "code.py")
+        result = run("dx build --app --publish " + app_dir, also_return_stderr=True)
+        app_id = json.loads(result[0])['id']
+        app = dxpy.describe(app_id)
+        self.assertEqual(app['name'], app_spec['name'])
+        self.assertEqual(app['version'], "0.0.1")
+
+        # Rebuild and publish app with new version
+        app_spec_2 = {
+            "name": "test_app_update",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7",
+                        "distribution": "Ubuntu", "release": "14.04"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "0.0.2"}
+        app_dir_2 = self.write_app_directory("test_app_update_2", json.dumps(app_spec_2), "code.py")
+        result_2 = run("dx build --app --publish " + app_dir_2, also_return_stderr=True)
+        app_id_2 = json.loads(result_2[0])['id']
+        app_2 = dxpy.describe(app_id_2)
+        self.assertEqual(app_2['name'], app_spec_2['name'])
+        self.assertEqual(app_2['version'], "0.0.2")
 
 
 @unittest.skipUnless(testutil.TEST_RUN_JOBS,

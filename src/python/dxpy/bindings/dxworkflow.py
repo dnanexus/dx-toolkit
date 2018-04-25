@@ -439,7 +439,7 @@ class DXWorkflow(DXDataObject, DXExecutable):
     def is_locked(self):
         return self._desc.get('inputs') is not None and self._desc.get('state') == 'closed'
 
-    def _get_input_name(self, input_str):
+    def _get_input_name(self, input_str, region=None, describe_output=None):
         '''
         :param input_str: A string of one of the forms: "<exported input field name>", "<explicit workflow input field name>", "<stage ID>.<input field name>", "<stage index>.<input field name>", "<stage name>.<input field name>"
         :type input_str: string
