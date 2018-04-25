@@ -573,6 +573,8 @@ class TestDXClient(DXTestCase):
         my_properties = dxpy.api.project_describe(self.project, {"properties": True})['properties']
         self.assertEqual(my_properties["bar"], "")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_VIEW_PROJECT_SETTINGS"])
     def test_dx_describe_project(self):
         # Look for field name, some number of spaces, and then the value
         field_regexp = lambda fieldname, value: \
@@ -740,7 +742,7 @@ class TestDXClient(DXTestCase):
                 dxpy.api.user_update(user_id, {"sshPublicKey": original_ssh_public_key})
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_AUTH_CONFIGURE_SSH"])
+    @testutil.update_traceability_matrix(["DNA_CLI_AUTH_CONFIGURE_SSH", "DNA_API_USR_MGMT_ADD_SSH_KEY"])
     def test_dx_ssh_config(self):
         original_ssh_public_key = None
         try:
@@ -1242,7 +1244,7 @@ class TestDXNewRecord(DXTestCase):
 class TestDXWhoami(DXTestCase):
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_USR_MGMT_PRINT_CURRENT_USER"])
+    @testutil.update_traceability_matrix(["DNA_CLI_USR_MGMT_PRINT_CURRENT_USER", "DNA_API_USR_MGMT_WHOAMI"])
     def test_dx_whoami_name(self):
         whoami_output = run("dx whoami").strip()
         self.assertEqual(whoami_output, dxpy.api.user_describe(dxpy.whoami())['handle'])
@@ -2030,6 +2032,8 @@ class TestDXClientDescribe(DXTestCaseBuildWorkflows):
 
         run("dx describe " + self.project + " --project-context-id foo")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_USR_MGMT_USER_DESCRIBE"])
     def test_user_describe_self_shows_bill_to(self):
         ## Verify `billTo` from /user-xxxx/describe.
         user_id = dxpy.whoami()
@@ -5413,6 +5417,8 @@ class TestDXClientOrg(DXTestCase):
 
 
 class TestDXClientNewProject(DXTestCase):
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_CREATE_PROJECT"])
     def test_dx_new_project_with_region(self):
         project_id = run("dx new project --brief --region aws:us-east-1 ProjectInUSEast").strip()
         self.assertEquals(dxpy.api.project_describe(project_id, {})['region'], "aws:us-east-1")
@@ -5422,7 +5428,7 @@ class TestDXClientNewProject(DXTestCase):
             run("dx new project --brief --region aws:not-a-region InvalidRegionProject")
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_CREATE_NEW_PROJECT"])
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_CREATE_NEW_PROJECT", "DNA_API_USR_MGMT_SET_BILLING_ACCOUNT"])
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that requires presence of test org')
     def test_dx_create_new_project_with_bill_to(self):

@@ -2159,6 +2159,8 @@ class TestDXSearch(unittest.TestCase):
         finally:
             dxpy.WORKSPACE_ID = old_workspace
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_VIEW_PROJECT_LIST"])
     def test_find_projects(self):
         dxproject = dxpy.DXProject()
         results = list(dxpy.find_projects())
