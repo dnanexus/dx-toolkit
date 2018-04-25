@@ -6,6 +6,17 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Remove the "temporary" field from `dx describe workflow-xxxx`
+
+### Added
+
+* "Deleted" field to `dx describe globalworkflow-xxxx` 
+* a note to `dx describe` that the workflow is locked
+
+## [252.0] - beta
+
 ### Added
 
 * Print proper dx describe analysis of a global workflow
@@ -19,7 +30,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * public project test
 * API tests
 
-## [251.2] - beta
+## [251.2] - 2018.04.19 - stable
 
 ### Added
 
@@ -28,7 +39,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Publish method to global workflow bindings
 * Support for dx get global workflow
 
-## [250.3] - 2018.04.12 - stable
+## [250.3] - 2018.04.12
 
 ### Fixed
 
