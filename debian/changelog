@@ -1,3 +1,11 @@
+dx-toolkit (0.253.0) precise; urgency=low
+
+  * Changed: Remove the "temporary" field from dx describe workflow-xxxx
+  * Added: "Deleted" field to dx describe globalworkflow-xxxx
+  * Added: a note to dx describe that the workflow is locked
+
+ -- Geet Duggal <gduggal@dnanexus.com>  Thu, 26 Apr 2018 17:50:01 +0000
+
 dx-toolkit (0.252.0) precise; urgency=low
 
   * Added: Print proper dx describe analysis of a global workflow
@@ -41,7 +49,7 @@ dx-toolkit (0.249.0) precise; urgency=low
 
 dx-toolkit (0.248.0) precise; urgency=low
 
-  * Fixed: dx-clone-asset SSL error 
+  * Fixed: dx-clone-asset SSL error
 
  -- Aleksandra Zalcman <azalcman@dnanexus.com>  Thu, 15 Mar 2018 16:19:38 +0000
 
