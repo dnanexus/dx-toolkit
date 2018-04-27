@@ -3412,7 +3412,8 @@ def watch(args):
     job_describe = dxpy.describe(args.jobid)
     if 'outputReusedFrom' in job_describe and job_describe['outputReusedFrom'] is not None:
       args.jobid = job_describe['outputReusedFrom']
-      print("Output reused from %s" %(args.jobid))
+      if not args.quiet:
+        print("Output reused from %s" %(args.jobid))
 
     log_client = DXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=msg_callback,
                                       msg_output_format=args.format, print_job_info=args.job_info)
