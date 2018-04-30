@@ -230,11 +230,6 @@ class TestDXClient(DXTestCase):
         run("dx help")
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_HELP_UPGRADE"])
-    def test_dx_upgrade(self):
-        run("dx upgrade")
-
-    @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_PRINT_PART_FILE"])
     def test_head(self):
         dxpy.upload_string("abcd\n", project=self.project, name="foo", wait_on_close=True)
