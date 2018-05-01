@@ -24,6 +24,7 @@ import shutil
 import string
 import subprocess
 import platform
+import pytest
 import re
 
 import requests
