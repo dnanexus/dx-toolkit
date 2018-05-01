@@ -1166,6 +1166,7 @@ class TestDXWhoami(DXTestCase):
     def test_dx_whoami_name(self):
         whoami_output = run("dx whoami").strip()
         self.assertEqual(whoami_output, dxpy.api.user_describe(dxpy.whoami())['handle'])
+        print("DNA_API_REQ_USR_MGMT_001")
     def test_dx_whoami_id(self):
         whoami_output = run("dx whoami --id").strip()
         self.assertEqual(whoami_output, dxpy.whoami())
@@ -1972,6 +1973,7 @@ class TestDXClientDescribe(DXTestCaseBuildWorkflows):
         )
         self.assertTrue("billTo" in cli_user_desc_json)
         self.assertEqual(cli_user_desc_json.get("billTo"), user_id)
+        print("DNA_API_REQ_USR_MGMT_003")
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
