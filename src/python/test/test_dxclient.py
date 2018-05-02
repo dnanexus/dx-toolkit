@@ -1192,7 +1192,7 @@ class TestDXClient(DXTestCase):
 class TestDXNewRecord(DXTestCase):
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_CREATE_NEW_RECORD", "DNA_CLI_DATA_OBJ_SET_VISIBILITY"])
+    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_CREATE_NEW_RECORD", "DNA_CLI_DATA_OBJ_SET_VISIBILITY","DNA_API_PROJ_CREATE_DATA_OBJECT"])
     def test_new_record_basic(self):
         run("dx new record -o :foo --verbose")
         record_id = run("dx new record -o :foo2 --brief --visibility hidden --property foo=bar " +
