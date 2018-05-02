@@ -41,7 +41,7 @@ def run():
         #    cmd += ['-v'] + args.tests
         #else:
         #    cmd += ['discover', '--start-directory', '.', '--verbose']
-        cmd = ['py.test', '-vv', '-s', '-m', 'TRACEABILITY_MATRIX', 'src/python/test/']
+        cmd = ['py.test', '-vv', '-s', '-m', 'TRACEABILITY_MATRIX', 'test/']
 
         subproc_env = dict(os.environ)
 
