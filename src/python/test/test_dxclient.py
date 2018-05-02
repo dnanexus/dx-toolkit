@@ -6345,6 +6345,8 @@ class TestDXClientUpdateProject(DXTestCase):
             else:
                 self.assertEqual(result[item], update_items[item])
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_RENAME_PROJECT"])
     def test_update_project_by_name(self):
         describe_input = {}
         describe_input['name'] = 'true'
