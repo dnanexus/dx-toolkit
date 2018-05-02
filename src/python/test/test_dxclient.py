@@ -133,6 +133,8 @@ class TestDXRemove(DXTestCase):
         with self.assertSubprocessFailure(exit_code=3):
             run("dx rm nonexistent")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_VIEW_FOLDERS"])
     def test_remove_folders(self):
         folder_name = "/test_folder"
         record_name = "test_folder"
