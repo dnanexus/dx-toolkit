@@ -743,7 +743,9 @@ class TestDXClient(DXTestCase):
                 dxpy.api.user_update(user_id, {"sshPublicKey": original_ssh_public_key})
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_AUTH_CONFIGURE_SSH", "DNA_API_USR_MGMT_ADD_SSH_KEY"])
+    @testutil.update_traceability_matrix(["DNA_CLI_AUTH_CONFIGURE_SSH",
+                                          "DNA_API_USR_MGMT_ADD_SSH_KEY",
+                                          "DNA_API_EXE_ENABLE_SSH_ACCESS"])
     def test_dx_ssh_config(self):
         original_ssh_public_key = None
         try:
@@ -1054,6 +1056,8 @@ class TestDXClient(DXTestCase):
             dxpy.api.project_destroy(azure_project, {"terminateJobs": True})
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_EXE_ENABLE_DEBUG_HOLD"])
     def test_dx_run_debug_on(self):
         with self.configure_ssh() as wd:
             crash_applet = dxpy.api.applet_new(dict(name="crash",
@@ -2076,6 +2080,8 @@ class TestDXClientDescribe(DXTestCaseBuildWorkflows):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_APP_DELETE"])
     def test_describe_deleted_app(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
@@ -4104,6 +4110,8 @@ class TestDXClientFind(DXTestCase):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that requires presence of test org and creates apps')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_APP_PUBLISH"])
     def test_dx_find_apps(self):
         test_applet_id = dxpy.api.applet_new({"name": "my_find_applet",
                                               "dxapi": "1.0.0",
@@ -4725,7 +4733,10 @@ class TestDXClientFind(DXTestCase):
                              property_names[1] + "'=badvalue").strip(), "")
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_EXE_LIST_ANALYSES", "DNA_CLI_EXE_LIST_EXECUTIONS", "DNA_CLI_EXE_LIST_JOBS"])
+    @testutil.update_traceability_matrix(["DNA_CLI_EXE_LIST_ANALYSES",
+                                          "DNA_CLI_EXE_LIST_EXECUTIONS",
+                                          "DNA_CLI_EXE_LIST_JOBS",
+                                          "DNA_API_EXE_FIND"])
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping test that would run a job')
     def test_find_executions(self):
@@ -5025,7 +5036,8 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
             run("dx find org members org-piratelabs --level")
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_ORG_LIST_MEMBERS"])
+    @testutil.update_traceability_matrix(["DNA_CLI_ORG_LIST_MEMBERS",
+                                          "DNA_API_ORG_FIND_MEMBERS"])
     def test_dx_find_org_members(self):
         org_members = [self.user_alice, self.user_bob]  # sorted ascending by user ID
         org_members.sort()
@@ -5100,7 +5112,8 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
             run(cmd.format(opts="--phi"))
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_ORG_LIST_PROJECTS"])
+    @testutil.update_traceability_matrix(["DNA_CLI_ORG_LIST_PROJECTS",
+                                          "DNA_API_ORG_FIND_PROJECTS"])
     def test_dx_find_org_projects(self):
         with temporary_project() as project_1, temporary_project() as project_2:
             project1_id = project_1.get_id()
@@ -5261,7 +5274,8 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
             self.assertEqual(res[0], project1_id)
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_APP_LIST_APPS_ORG"])
+    @testutil.update_traceability_matrix(["DNA_CLI_APP_LIST_APPS_ORG",
+                                          "DNA_API_ORG_FIND_APPS"])
     def test_dx_find_org_apps(self):
         # Create a number of apps, some billed to self.org_id ("org-piratelabs")
         num_org_apps = 3
@@ -5326,7 +5340,9 @@ class TestDXClientOrg(DXTestCase):
             run('dx new org --member-list-visibility NONE')
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_ORG_CREATE"])
+    @testutil.update_traceability_matrix(["DNA_CLI_ORG_CREATE",
+                                          "DNA_API_ORG_CREATE",
+                                          "DNA_API_ORG_DESCRIBE"])
     def test_create_new_org(self):
         # Basic test with only required input args; optional input arg defaults propagated properly.
         org_handle = TestDXClientOrg.get_unique_org_handle()
@@ -5579,7 +5595,9 @@ class TestDXClientNewProject(DXTestCase):
             run("dx new project --brief --region aws:not-a-region InvalidRegionProject")
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_CREATE_NEW_PROJECT", "DNA_API_USR_MGMT_SET_BILLING_ACCOUNT"])
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_CREATE_NEW_PROJECT",
+                                          "DNA_API_USR_MGMT_SET_BILLING_ACCOUNT",
+                                          "DNA_API_ORG_ALLOW_BILLABLE_ACTIVITIES"])
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that requires presence of test org')
     def test_dx_create_new_project_with_bill_to(self):
@@ -5741,6 +5759,9 @@ class TestDXClientNewUser(DXTestCase):
                                          "last": last,
                                          "middle": middle})
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_ORG_FIND_MEMBERS",
+                                          "DNA_API_ORG_ADD_USER"])
     def test_create_user_account_and_invite_to_org(self):
         # TODO: Test --no-email flag.
 
@@ -5980,7 +6001,8 @@ class TestDXClientMembership(DXTestCase):
             run(" ".join([cmd, self.org_id, self.username, "--level ADMIN"]))
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_ORG_REMOVE_MEMBER"])
+    @testutil.update_traceability_matrix(["DNA_CLI_ORG_REMOVE_MEMBER",
+                                          "DNA_API_ORG_REMOVE_USER"])
     def test_remove_membership_default(self):
         self._add_user(self.user_id)
 
@@ -6099,7 +6121,8 @@ class TestDXClientMembership(DXTestCase):
                 run(" ".join([cmd, invalid_opts]))
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_ORG_UPDATE_USER_MEMBERSHIP"])
+    @testutil.update_traceability_matrix(["DNA_CLI_ORG_UPDATE_USER_MEMBERSHIP",
+                                          "DNA_API_ORG_CHANGE_USER_PERMISSIONS"])
     def test_update_membership_positive(self):
         # default test
         self._add_user(self.user_id)
@@ -7646,6 +7669,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_APP_CREATE"])
     def test_build_app_with_bill_to(self):
         alice_id = "user-alice"
         org_id = "org-piratelabs"
@@ -7796,6 +7821,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEquals(json.loads(run("dx api " + app_id + " listCategories"))["categories"], ['B'])
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_APP_LIST_AUTHORIZED_USERS","DNA_API_APP_ADD_AUTHORIZED_USER"])
     def test_update_app_authorized_users(self):
         app0_spec = dict(self.base_app_spec, name="update_app_authorized_users")
         app1_spec = dict(self.base_app_spec, name="update_app_authorized_users", authorizedUsers=[])
@@ -7872,7 +7899,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_APP_ADD_DEVELOPERS_APP",
                                           "DNA_CLI_APP_LIST_DEVELOPERS_APP",
-                                          "DNA_CLI_APP_REMOVE_DEVELOPERS_APP"])
+                                          "DNA_CLI_APP_REMOVE_DEVELOPERS_APP",
+                                          "DNA_API_APP_ADD_DEVELOPER"])
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
     def test_dx_add_list_remove_developers_of_apps(self):
@@ -9942,6 +9970,8 @@ class TestDXRun(DXTestCase):
 class TestDXUpdateApp(DXTestCaseBuildApps):
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that creates apps')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_APP_UPDATE"])
     def test_update_app(self):
         # Build and publish app with initial version
         app_spec = {

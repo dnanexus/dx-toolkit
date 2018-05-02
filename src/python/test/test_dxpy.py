@@ -3039,6 +3039,8 @@ class TestAppBuilderUtils(unittest.TestCase):
 
 
 class TestApiWrappers(unittest.TestCase):
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_MSG_SYSTEM_GREET"])
     def test_system_greet(self):
         greeting = dxpy.api.system_greet(
             {'client': 'dxclient', 'version': 'v'+dxpy.TOOLKIT_VERSION},
