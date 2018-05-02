@@ -134,7 +134,7 @@ class TestDXRemove(DXTestCase):
             run("dx rm nonexistent")
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_API_PROJ_VIEW_FOLDERS"])
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_VIEW_FOLDERS","DNA_API_PROJ_REMOVE_FOLDER"])
     def test_remove_folders(self):
         folder_name = "/test_folder"
         record_name = "test_folder"
