@@ -29,6 +29,7 @@ onto the platform.
 from __future__ import print_function, unicode_literals, division, absolute_import
 import os
 import re
+import collections
 
 from .utils.resolver import resolve_path, is_container_id
 from .cli import try_call
@@ -99,6 +100,12 @@ def delete_temporary_projects(projects):
 
 
 def verify_developer_rights(prefixed_name):
+    """
+    Checks if the current user is a developer of the app or global workflow
+    with the given name. If the app/global workflow exists and the user has
+    developer rights to it, the function returns a named tuple representing
+    the executable that was queried.
+    """
     assert(prefixed_name.startswith('app-') or prefixed_name.startswith('globalworkflow-'))
 
     if prefixed_name.partition('-')[0] == 'app':
@@ -114,9 +121,17 @@ def verify_developer_rights(prefixed_name):
 
     name_already_exists = True
     is_developer = False
+    version = None
+    executable_id = None
+    FoundExecutable = collections.namedtuple('FoundExecutable', ['name', 'version', 'id'])
     try:
-        is_developer = describe_method(prefixed_name,
-                                       input_params={"fields": {"isDeveloperFor": True}})["isDeveloperFor"]
+        describe_output = describe_method(prefixed_name,
+                                          input_params={"fields": {"isDeveloperFor": True,
+                                                                   "version": True,
+                                                                   "id": True}})
+        is_developer = describe_output['isDeveloperFor']
+        version = describe_output['version']
+        executable_id = describe_output['id']
     except dxpy.exceptions.DXAPIError as e:
         if e.name == 'ResourceNotFound':
             name_already_exists = False
@@ -128,8 +143,10 @@ def verify_developer_rights(prefixed_name):
     if not name_already_exists:
         # This app/workflow doesn't exist yet so its creation will succeed
         # (or at least, not fail on the basis of the ACL).
-        return
+        return FoundExecutable(name=None, version=None, id=None)
 
+    name_without_prefix = prefixed_name.partition('-')[2]
     if not is_developer:
-        name_without_prefix = prefixed_name.partition('-')[2]
         raise exception_type('You are not a developer for {n}'.format(n=name_without_prefix))
+
+    return FoundExecutable(name=name_without_prefix, version=version, id=executable_id)
