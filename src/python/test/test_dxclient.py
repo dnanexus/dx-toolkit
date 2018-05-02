@@ -4212,6 +4212,7 @@ class TestDXClientFind(DXTestCase):
         workflow_spec = {"stages": [{"id": "stage_0", "executable": test_applet_id}]}
         dxworkflow = dxpy.DXWorkflow()
         dxworkflow.new(**workflow_spec)
+        dxworkflow._close(dxworkflow.get_id())
         dxglobalworkflow_spec = {
             "name": "gwf_find",
             "version": "0.0.1",
