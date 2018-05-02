@@ -69,5 +69,4 @@ def run():
         os.unlink(site_customize_filename)
 
 if __name__ == '__main__':
-    args = parser.parse_args()
     run()
