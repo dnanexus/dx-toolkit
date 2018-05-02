@@ -9694,6 +9694,8 @@ class TestDXCp(DXTestCase):
 
     # create new file with the same name in the target
     #    dx cp  proj-1111:/file-1111   proj-2222:/
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_VIEW_DATA_IN_FOLDER"])
     def test_file_with_same_name(self):
         create_folder_in_project(self.proj_id1, "/earthsea")
         create_folder_in_project(self.proj_id2, "/earthsea")
