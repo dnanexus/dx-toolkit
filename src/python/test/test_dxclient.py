@@ -4680,6 +4680,8 @@ class TestDXClientFind(DXTestCase):
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_VIEW_EXECUTIONS"])
     def test_dx_find_jobs_by_tags_and_properties(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
