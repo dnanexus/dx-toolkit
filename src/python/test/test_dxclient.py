@@ -597,7 +597,7 @@ class TestDXClient(DXTestCase):
         self.assertRegex(desc_output, field_regexp("Archival progress", "null"))
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_DELETE"])
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_DELETE","DNA_API_PROJ_DELETE_PROJECT"])
     def test_dx_remove_project_by_name(self):
         # TODO: this test makes no use of the DXTestCase-provided
         # project.
