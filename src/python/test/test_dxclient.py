@@ -526,7 +526,7 @@ class TestDXClient(DXTestCase):
         self.assertEqual(my_properties["bar"], "")
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_SET_PROPERTIES"])
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_SET_PROPERTIES","DNA_API_PROJ_ADD_PROPERTIES"])
     def test_dx_project_properties(self):
         property_names = ["$my.prop", "secoиdprop", "тhird prop"]
         property_values = ["$hello.world", "Σ2,n", "stuff"]
