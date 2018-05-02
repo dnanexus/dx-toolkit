@@ -631,7 +631,7 @@ class TestDXClient(DXTestCase):
             self.assertEqual(conf[user_id], 'VIEW')
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_CLOSE", "DNA_CLI_DATA_OBJ_COPY", "DNA_CLI_PROJ_LIST_FOLDERS_OR_OBJECTS"])
+    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_CLOSE", "DNA_CLI_DATA_OBJ_COPY", "DNA_CLI_PROJ_LIST_FOLDERS_OR_OBJECTS","DNA_API_PROJ_COPY_DATA"])
     def test_dx_cp(self):
         project_name = "test_dx_cp_" + str(random.randint(0, 1000000)) + "_" + str(int(time.time() * 1000))
         dest_project_id = run("dx new project {name} --brief".format(name=project_name)).strip()
