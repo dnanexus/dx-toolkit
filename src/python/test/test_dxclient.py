@@ -4540,6 +4540,8 @@ class TestDXClientFind(DXTestCase):
             self.assertNotIn(record_id,
                           run("dx find data --all-projects --brief --region aws:us-east-1"))
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_LIST_PROJECTS"])
     def test_dx_find_projects(self):
         unique_project_name = 'dx find projects test ' + str(time.time())
         with temporary_project(unique_project_name) as unique_project:
