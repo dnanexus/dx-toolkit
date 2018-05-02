@@ -1,8 +1,6 @@
 #!/bin/bash -ex
 
-'''
-Runs Python integration tests tagged for inclusion in the traceability matrix.
-'''
+# Runs Python integration tests tagged for inclusion in the traceability matrix.
 
 MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TOOLKIT_ROOT_DIR="${MY_DIR}/.."
