@@ -437,7 +437,7 @@ class TestDXClient(DXTestCase):
             run("dx untag nonexistent atag")
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_TAG", "DNA_CLI_PROJ_UNTAG"])
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_TAG", "DNA_CLI_PROJ_UNTAG","DNA_API_PROJ_ADD_TAGS"])
     def test_dx_project_tagging(self):
         the_tags = ["$my.tag", "secoиdtag", "тhird тagggg"]
         # tag
