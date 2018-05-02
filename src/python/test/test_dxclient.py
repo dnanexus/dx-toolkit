@@ -122,7 +122,7 @@ class TestDXTestUtils(DXTestCase):
 
 class TestDXRemove(DXTestCase):
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_REMOVE"])
+    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_REMOVE","DNA_API_DATA_OBJ_CREATE_NEW_DATA_OBJECT","DNA_API_DATA_OBJ_REMOVE_DATA_OBJECT"])
     def test_remove_objects(self):
         dxpy.new_dxrecord(name="my record")
         dxpy.find_one_data_object(name="my record", project=self.project, zero_ok=False)
@@ -398,6 +398,8 @@ class TestDXClient(DXTestCase):
             self.assertTrue(os.path.exists('foo'))
             run("diff -q foo foo.json")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_DATA_OBJ_ALTER_TAGS"])
     def test_dx_object_tagging(self):
         the_tags = ["Σ1=n", "helloo0", "ωω"]
         # tag
@@ -437,7 +439,7 @@ class TestDXClient(DXTestCase):
             run("dx untag nonexistent atag")
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_TAG", "DNA_CLI_PROJ_UNTAG","DNA_API_PROJ_ADD_TAGS"])
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_TAG", "DNA_CLI_PROJ_UNTAG","DNA_API_PROJ_ADD_TAGS","DNA_API_PROJ_REMOVE_TAGS"])
     def test_dx_project_tagging(self):
         the_tags = ["$my.tag", "secoиdtag", "тhird тagggg"]
         # tag
@@ -526,7 +528,7 @@ class TestDXClient(DXTestCase):
         self.assertEqual(my_properties["bar"], "")
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_SET_PROPERTIES","DNA_API_PROJ_ADD_PROPERTIES"])
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_SET_PROPERTIES","DNA_API_PROJ_ADD_PROPERTIES","DNA_API_PROJ_REMOVE_PROPERTIES"])
     def test_dx_project_properties(self):
         property_names = ["$my.prop", "secoиdprop", "тhird prop"]
         property_values = ["$hello.world", "Σ2,n", "stuff"]
@@ -1192,7 +1194,7 @@ class TestDXClient(DXTestCase):
 class TestDXNewRecord(DXTestCase):
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_CREATE_NEW_RECORD", "DNA_CLI_DATA_OBJ_SET_VISIBILITY","DNA_API_PROJ_CREATE_DATA_OBJECT"])
+    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_CREATE_NEW_RECORD", "DNA_CLI_DATA_OBJ_SET_VISIBILITY"])
     def test_new_record_basic(self):
         run("dx new record -o :foo --verbose")
         record_id = run("dx new record -o :foo2 --brief --visibility hidden --property foo=bar " +
@@ -1288,7 +1290,7 @@ class TestDXMv(DXTestCase):
 
 class TestDXRename(DXTestCase):
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_RENAME_PROJECT"])
+    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_RENAME_PROJECT","DNA_API_DATA_OBJ_RENAME_DATA_OBJECT"])
     def test_rename(self):
         my_record = dxpy.new_dxrecord(name="my record").get_id()
         self.assertEquals(dxpy.describe(my_record)["name"], "my record")
@@ -1313,7 +1315,7 @@ class TestDXClientUploadDownload(DXTestCase):
         run("rm -rf {wd}".format(wd=wd))
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_DOWNLOAD_FILES", "DNA_CLI_DATA_OBJ_UPLOAD_FILES", "DNA_CLI_DATA_OBJ_WAIT"])
+    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_DOWNLOAD_FILES", "DNA_CLI_DATA_OBJ_UPLOAD_FILES", "DNA_CLI_DATA_OBJ_WAIT","DNA_API_DATA_OBJ_DOWNLOAD","DNA_API_DATA_OBJ_UPLOAD_TO_OPEN_FILE"])
     def test_dx_upload_download(self):
         with self.assertSubprocessFailure(stderr_regexp='expected the path to be a non-empty string',
                                           exit_code=3):
@@ -2120,7 +2122,7 @@ class TestDXClientRun(DXTestCase):
         super(TestDXClientRun, self).tearDown()
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_APP_RUN_APPLET"])
+    @testutil.update_traceability_matrix(["DNA_CLI_APP_RUN_APPLET","DNA_API_DATA_OBJ_RUN_APPLET"])
     def test_dx_run_applet_with_input_spec(self):
         record = dxpy.new_dxrecord(name="my_record")
 
@@ -4304,6 +4306,8 @@ class TestDXClientFind(DXTestCase):
             self.assertEqual(run("dx find data --brief --class " + classname).strip(),
                              self.project + ':' + ids[classname])
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_DATA_OBJ_SEARCH_ACROSS_PROJECTS"])
     def test_dx_find_data_by_tag(self):
         record_ids = [run("dx new record --brief --tag Ψ --tag foo --tag baz").strip(),
                       run("dx new record --brief --tag Ψ --tag foo --tag bar").strip()]
@@ -7014,6 +7018,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_APP_DESCRIBE"])
     def test_build_single_region_app_without_regional_options(self):
         # Backwards-compatible.
         app_name = "app_{t}_single_region".format(t=int(time.time()))
@@ -9483,7 +9489,9 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_APP_LIST_AVAILABLE_APPS",
                                           "DNA_CLI_APP_INSTALL_APP",
-                                          "DNA_CLI_APP_UNINSTALL_APP"])
+                                          "DNA_CLI_APP_UNINSTALL_APP",
+                                          "DNA_API_APP_INSTALL",
+                                          "DNA_API_APP_UNINSTALL"])
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_MULTIPLE_USERS,
                          'skipping test that would create apps and another user')
     def test_uninstall_app(self):
@@ -9924,6 +9932,8 @@ class TestDXGenerateBatchInputs(DXTestCase):
 class TestDXRun(DXTestCase):
     @unittest.skipUnless(testutil.TEST_WITH_SMOKETEST_APP,
                          'skipping test that requires the smoketest app')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_APP_RUN"])
     def test_dx_run_app(self):
         app_name = "app-dnanexus_smoke_test"
         run("dx run {} -isubjobs=1 --yes --wait --watch".format(app_name))

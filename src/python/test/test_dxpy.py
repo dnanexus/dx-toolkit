@@ -676,6 +676,8 @@ class TestDXFile(unittest.TestCase):
         dxfile.write("Haha")
         # No assertion here, but this should print an error
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_DATA_OBJ_GENERATE_DOWNLOAD_URL"])
     def test_download_url_helper(self):
         dxfile = dxpy.upload_string(self.foo_str, wait_on_close=True)
         opts = {"preauthenticated": True, "filename": "foo"}
@@ -973,6 +975,8 @@ class TestDXRecord(unittest.TestCase):
         self.assertEqual(first_desc["tags"], second_desc["tags"])
         self.assertFalse(first_desc["types"] == second_desc["types"])
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_DATA_OBJ_VIEW_DATA_OF_RECORD"])
     def test_describe_dxrecord(self):
         dxrecord = dxpy.new_dxrecord()
         desc = dxrecord.describe()
@@ -2534,6 +2538,8 @@ class TestDataobjectFunctions(unittest.TestCase):
         self.assertEqual(handler._name, "swiss-army-knife")
         self.assertEqual(handler._alias, "1.0.0")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_DATA_OBJ_VIEW_DETAILS","DNA_API_DATA_OBJ_VIEW_CONTAINING_PROJECT","DNA_API_DATA_OBJ_DESCRIBE"])
     def test_describe_data_objects(self):
         objects = []
         types = []
