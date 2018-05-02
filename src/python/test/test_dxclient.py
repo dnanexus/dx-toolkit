@@ -4544,6 +4544,8 @@ class TestDXClientFind(DXTestCase):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that depends on a public project only defined in the nucleus integration tests')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_VIEW_PUBLIC_PROJECTS"])
     def test_dx_find_public_projects(self):
         unique_project_name = 'dx find public projects test ' + str(time.time())
         with temporary_project(unique_project_name) as unique_project:
