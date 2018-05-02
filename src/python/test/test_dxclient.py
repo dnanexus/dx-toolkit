@@ -6356,6 +6356,8 @@ class TestDXClientUpdateProject(DXTestCase):
         result = self.project_describe(describe_input)
         self.assertEqual(result['name'], new_name)
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_ENABLE_PROTECTED_OPTION"])
     def test_update_booleans(self):
         update_items = {'protected': 'true',
                         'restricted': 'true'}
