@@ -8,6 +8,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Changed
 
+* A workflow must be closed before initializing a global workflow from it (test updates for API changes)
+
+## [253.0] - 2018.04.26 - beta
+
+### Changed
+
 * Remove the "temporary" field from `dx describe workflow-xxxx`
 
 ### Added
@@ -15,7 +21,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * "Deleted" field to `dx describe globalworkflow-xxxx` 
 * a note to `dx describe` that the workflow is locked
 
-## [252.0] - beta
+## [252.0] - 2018.04.26 - stable
 
 ### Added
 
