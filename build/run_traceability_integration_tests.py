@@ -41,7 +41,7 @@ def run():
         #    cmd += ['-v'] + args.tests
         #else:
         #    cmd += ['discover', '--start-directory', '.', '--verbose']
-        cmd = ['py.test', '-vv', '-s', '-m', 'TRACEABILITY_MATRIX', 'test/']
+        cmd = ['py.test', '-vv', '-s', '-m', 'TRACEABILITY_MATRIX', 'src/python/test/']
 
         subproc_env = dict(os.environ)
 
@@ -52,7 +52,7 @@ def run():
         subproc_env[str('COVERAGE_FILE')] = str(os.path.join(PYTHON_DIR, '.coverage'))
 
         try:
-            subprocess.check_call(cmd, cwd=PYTHON_TEST_DIR, env=subproc_env)
+            subprocess.check_call(cmd, cwd=TOOLKIT_ROOT_DIR, env=subproc_env)
         except subprocess.CalledProcessError as e:
             print('*** unittest invocation failed with code %d' % (e.returncode,), file=sys.stderr)
             sys.exit(1)
