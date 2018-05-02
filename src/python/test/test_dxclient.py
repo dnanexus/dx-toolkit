@@ -611,7 +611,7 @@ class TestDXClient(DXTestCase):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test user')
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_API_PROJ_VIEW_SHAREES"])
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_VIEW_SHAREES","DNA_API_PROJ_ADD_USERS"])
     def test_dx_project_invite_without_email(self):
         user_id = 'user-bob'
         with temporary_project() as unique_project:
