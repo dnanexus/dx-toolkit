@@ -5,7 +5,7 @@
 MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TOOLKIT_ROOT_DIR="${MY_DIR}/.."
 export DNANEXUS_INSTALL_PYTHON_TEST_DEPS="yes"
-export DX_USER_CONF_DIR = ${TOOLKIT_ROOT_DIR}/dnanexus_config_relocated
+export DX_USER_CONF_DIR="${TOOLKIT_ROOT_DIR}/dnanexus_config_relocated"
 
 make python
 
