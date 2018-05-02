@@ -1277,7 +1277,7 @@ class TestDXMv(DXTestCase):
         self.assertEqual(dxpy.find_one_data_object(name="a", project=self.project, zero_ok=True), None)
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_API_PROJ_RENAME_FOLDER"])
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_RENAME_FOLDER", "DNA_CLI_PROJ_MOVE_OR_RENAME_OBJECTS"])
     def test_dx_mv_folder(self):
         folder_name = "/test_folder"
         folder_name_2 = "/test_folder_2"
