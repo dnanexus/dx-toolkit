@@ -129,6 +129,7 @@ def verify_developer_rights(prefixed_name):
                                           input_params={"fields": {"isDeveloperFor": True,
                                                                    "version": True,
                                                                    "id": True}})
+        print(describe_output)
         is_developer = describe_output['isDeveloperFor']
         version = describe_output['version']
         executable_id = describe_output['id']

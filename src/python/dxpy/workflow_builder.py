@@ -132,14 +132,16 @@ def _set_categories_on_workflow(global_workflow_id, categories_to_set):
                                                    input_params={'categories': list(categories_to_remove)})
 
 
-def _version_exists(json_spec, name, version):
+def _version_exists(json_spec, name=None, version=None):
     """
     Returns True if a global workflow with the given name and version
     already exists in the platform and the user has developer rights
-    to the workflow.
+    to the workflow. "name" and "version" can be passed if we already
+    made a described call on the global workflow and so know the
+    requested name and version already exist.
     """
-    requested_version = json_spec['version']
     requested_name = json_spec['name']
+    requested_version = json_spec['version']
 
     if requested_name == name and requested_version == version:
         return True
@@ -149,7 +151,9 @@ def _version_exists(json_spec, name, version):
                                                             alias=json_spec['version'],
                                                             input_params={"fields": {"name": True,
                                                                                      "version": True}})
-            return desc_output['name'] == name and desc_output['version'] == version
+            print(json_spec['name'], json_spec['version'])
+            print(name, version)
+            return desc_output['name'] == json_spec['name'] and desc_output['version'] == json_spec['version']
         except dxpy.exceptions.DXAPIError:
             return False
         except:
@@ -318,8 +322,6 @@ def _build_underlying_workflows(json_spec, args):
     # underlying workflow (the region of the current project). It will be expanded in
     # the future to build in all regions.
 
-    json_spec = _get_validated_json(json_spec, args)
-
     projects_by_region, workflows_by_region = {}, {}  # IDs by region
 
     # Create a temp project
@@ -356,7 +358,6 @@ def _build_global_workflow(json_spec, args):
     Creates a workflow in a temporary project for each enabled region
     and builds a global workflow on the platform based on these workflows.
     """
-    json_spec = _get_validated_json(json_spec, args)
 
     workflows_by_region, projects_by_region = {}, {}  # IDs by region
     try:
@@ -376,7 +377,14 @@ def _build_global_workflow(json_spec, args):
         gwf_final_json_spec = {}
         for key in gwf_provided_keys:
             gwf_final_json_spec[key] = json_spec[key]
-        logger.info("Will create global workflow with spec: {}".format(json.dumps(gwf_final_json_spec)))
+
+        # we don't want to print the whole documentation to the screen so we'll remove these fields
+        print_spec = copy.deepcopy(gwf_final_json_spec)
+        if "description" in gwf_final_json_spec:
+            del print_spec["description"]
+        if "developerNotes" in gwf_final_json_spec:
+            del print_spec["developerNotes"]
+        logger.info("Will create global workflow with spec: {}".format(json.dumps(print_spec)))
 
         global_workflow_id = dxpy.api.global_workflow_new(gwf_final_json_spec)["id"]
     finally:
@@ -441,11 +449,12 @@ def _update_global_workflow(json_spec, args, global_workflow_id):
 
 def _build_or_update_workflow(json_spec, args):
     """
-    Creates a workflow on the platform.
+    Creates or updates a workflow on the platform.
     Returns the workflow ID, or None if the workflow cannot be created.
     """
     try:
         if args.mode == 'workflow':
+            json_spec = _get_validated_json(json_spec, args)
             workflow_id = _build_regular_workflow(json_spec)
         elif args.mode == 'globalworkflow':
             # Verify if the global workflow already exists and if the user has developer rights to it
@@ -459,6 +468,7 @@ def _build_or_update_workflow(json_spec, args):
                                                      existing_workflow.version):
                 workflow_id = _update_global_workflow(json_spec, args, existing_workflow.id)
             else:
+                json_spec = _get_validated_json(json_spec, args)
                 workflow_id = _build_global_workflow(json_spec, args)
         else:
             raise WorkflowBuilderException("Unrecognized workflow type: {}".format(args.mode))
