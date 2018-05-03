@@ -516,7 +516,7 @@ module DX
     # Invokes the /databasetype/newSpot API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method%3A-%2Fdatabasetype%2FnewSpot
-    def self.databasetype_new(input_params={}, opts={})
+    def self.databasetype_new_spot(input_params={}, opts={})
       opts = { "always_retry" => false }.merge(opts)
       return DX::http_request("/databasetype/newSpot", input_params, opts)
     end

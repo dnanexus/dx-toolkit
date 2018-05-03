@@ -2706,7 +2706,7 @@ databaseNew <- function(inputParams=emptyNamedList,
   dxHTTPRequest('/database/new', inputParams, jsonifyData=jsonifyData, alwaysRetry=alwaysRetry)
 }
 
-##' databasetypeNew API wrapper
+##' databasetypeNewSpot API wrapper
 ##'
 ##' This function makes an API call to the \code{/databasetype/newSpot} API
 ##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
@@ -2727,9 +2727,9 @@ databaseNew <- function(inputParams=emptyNamedList,
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
 ##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method\%3A-\%2Fdatabasetype\%2FnewSpot}
-databasetypeNew <- function(inputParams=emptyNamedList,
-                            jsonifyData=TRUE,
-                            alwaysRetry=FALSE) {
+databasetypeNewSpot <- function(inputParams=emptyNamedList,
+                                jsonifyData=TRUE,
+                                alwaysRetry=FALSE) {
   dxHTTPRequest('/databasetype/newSpot', inputParams, jsonifyData=jsonifyData, alwaysRetry=alwaysRetry)
 }
 
