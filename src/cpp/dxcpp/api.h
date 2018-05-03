@@ -249,45 +249,6 @@ namespace dx {
   JSON databaseNew(const std::string &input_params="{}", const bool safe_to_retry=false);
   JSON databaseNew(const dx::JSON &input_params, const bool safe_to_retry=false);
 
-  JSON databasetypeAddTags(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON databasetypeAddTags(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON databasetypeAddTypes(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON databasetypeAddTypes(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON databasetypeClose(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=false);
-  JSON databasetypeClose(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=false);
-
-  JSON databasetypeDescribe(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON databasetypeDescribe(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON databasetypeGetDetails(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON databasetypeGetDetails(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON databasetypeListProjects(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON databasetypeListProjects(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON databasetypeRemoveTags(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON databasetypeRemoveTags(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON databasetypeRemoveTypes(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON databasetypeRemoveTypes(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON databasetypeRename(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON databasetypeRename(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON databasetypeSetDetails(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON databasetypeSetDetails(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON databasetypeSetProperties(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON databasetypeSetProperties(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON databasetypeSetVisibility(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON databasetypeSetVisibility(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON databasetypeUpdate(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=false);
-  JSON databasetypeUpdate(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=false);
-
   JSON databasetypeNew(const std::string &input_params="{}", const bool safe_to_retry=false);
   JSON databasetypeNew(const dx::JSON &input_params, const bool safe_to_retry=false);
 
@@ -554,6 +515,9 @@ namespace dx {
 
   JSON recordClose(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON recordClose(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON recordDashboardUrl(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON recordDashboardUrl(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
   JSON recordDescribe(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON recordDescribe(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
