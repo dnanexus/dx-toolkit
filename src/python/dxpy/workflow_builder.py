@@ -137,8 +137,8 @@ def _version_exists(json_spec, name=None, version=None):
     Returns True if a global workflow with the given name and version
     already exists in the platform and the user has developer rights
     to the workflow. "name" and "version" can be passed if we already
-    made a described call on the global workflow and so know the
-    requested name and version already exist.
+    made a "describe" API call on the global workflow and so know the
+    requested name and version already exists.
     """
     requested_name = json_spec['name']
     requested_version = json_spec['version']
@@ -151,8 +151,6 @@ def _version_exists(json_spec, name=None, version=None):
                                                             alias=json_spec['version'],
                                                             input_params={"fields": {"name": True,
                                                                                      "version": True}})
-            print(json_spec['name'], json_spec['version'])
-            print(name, version)
             return desc_output['name'] == json_spec['name'] and desc_output['version'] == json_spec['version']
         except dxpy.exceptions.DXAPIError:
             return False
@@ -285,7 +283,8 @@ def _get_validated_json(json_spec, args):
 def _get_validated_json_for_build_or_update(json_spec, args):
     """
     Validates those fields that can be used when either building 
-    a new version or updating an existing version.
+    a new version (of a local, project-based workflow) or updating
+    an existing version (of a global workflow).
     """
     validated = copy.deepcopy(json_spec)
 
