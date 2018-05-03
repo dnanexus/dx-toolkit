@@ -537,101 +537,10 @@ sub databaseNew(;$%) {
 }
 
 
-sub databasetypeAddTags($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/addTags', $input_params, %kwargs);
-}
-
-
-sub databasetypeAddTypes($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/addTypes', $input_params, %kwargs);
-}
-
-
-sub databasetypeClose($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/close', $input_params, %kwargs);
-}
-
-
-sub databasetypeDescribe($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
-}
-
-
-sub databasetypeGetDetails($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/getDetails', $input_params, %kwargs);
-}
-
-
-sub databasetypeListProjects($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/listProjects', $input_params, %kwargs);
-}
-
-
-sub databasetypeRemoveTags($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/removeTags', $input_params, %kwargs);
-}
-
-
-sub databasetypeRemoveTypes($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/removeTypes', $input_params, %kwargs);
-}
-
-
-sub databasetypeRename($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/rename', $input_params, %kwargs);
-}
-
-
-sub databasetypeSetDetails($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/setDetails', $input_params, %kwargs);
-}
-
-
-sub databasetypeSetProperties($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/setProperties', $input_params, %kwargs);
-}
-
-
-sub databasetypeSetVisibility($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/setVisibility', $input_params, %kwargs);
-}
-
-
-sub databasetypeUpdate($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/update', $input_params, %kwargs);
-}
-
-
 sub databasetypeNew(;$%) {
     my ($input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/databasetype/new', $input_params, %kwargs);
+    return DXHTTPRequest('/databasetype/newSpot', $input_params, %kwargs);
 }
 
 
@@ -1132,6 +1041,13 @@ sub recordClose($;$%) {
 }
 
 
+sub recordDashboardUrl($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/dashboardUrl', $input_params, %kwargs);
+}
+
+
 sub recordDescribe($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
@@ -1511,5 +1427,5 @@ sub workflowNew(;$%) {
 
 
 our @ISA = "Exporter";
-our @EXPORT_OK = qw(analysisAddTags analysisDescribe analysisRemoveTags analysisSetProperties analysisTerminate appAddAuthorizedUsers appAddCategories appAddDevelopers appAddTags appDelete appDescribe appGet appInstall appListAuthorizedUsers appListCategories appListDevelopers appPublish appRemoveAuthorizedUsers appRemoveCategories appRemoveDevelopers appRemoveTags appRun appUninstall appUpdate appNew appletAddTags appletDescribe appletGet appletGetDetails appletListProjects appletRemoveTags appletRename appletRun appletSetProperties appletNew containerClone containerDescribe containerDestroy containerListFolder containerMove containerNewFolder containerRemoveFolder containerRemoveObjects containerRenameFolder databaseAddTags databaseAddTypes databaseDescribe databaseGetDetails databaseListProjects databaseRelocate databaseRemoveTags databaseRemoveTypes databaseRename databaseSetDetails databaseSetProperties databaseSetVisibility databaseUpdate databaseFindByName databaseNew databasetypeAddTags databasetypeAddTypes databasetypeClose databasetypeDescribe databasetypeGetDetails databasetypeListProjects databasetypeRemoveTags databasetypeRemoveTypes databasetypeRename databasetypeSetDetails databasetypeSetProperties databasetypeSetVisibility databasetypeUpdate databasetypeNew fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload fileNew gtableAddRows gtableAddTags gtableAddTypes gtableClose gtableDescribe gtableGet gtableGetDetails gtableListProjects gtableNextPart gtableRemoveTags gtableRemoveTypes gtableRename gtableSetDetails gtableSetProperties gtableSetVisibility gtableNew jobAddTags jobDescribe jobGetLog jobRemoveTags jobSetProperties jobTerminate jobNew notificationsGet notificationsMarkRead orgDescribe orgFindMembers orgFindProjects orgFindApps orgInvite orgRemoveMember orgSetMemberAccess orgUpdate orgNew projectAddTags projectClone projectDecreasePermissions projectDescribe projectDestroy projectInvite projectLeave projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectRemoveTags projectRenameFolder projectSetProperties projectTransfer projectUpdate projectUpdateSponsorship projectNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility recordNew systemDescribeDataObjects systemDescribeExecutions systemDescribeProjects systemFindAffiliates systemFindApps systemFindDataObjects systemResolveDataObjects systemFindExecutions systemFindAnalyses systemFindJobs systemFindProjects systemFindUsers systemFindProjectMembers systemFindOrgs systemGlobalSearch systemGreet systemHeaders systemShortenURL systemWhoami userDescribe userUpdate workflowAddStage workflowAddTags workflowAddTypes workflowClose workflowDescribe workflowDryRun workflowGetDetails workflowIsStageCompatible workflowListProjects workflowMoveStage workflowOverwrite workflowRemoveStage workflowRemoveTags workflowRemoveTypes workflowRename workflowRun workflowSetDetails workflowSetProperties workflowSetStageInputs workflowSetVisibility workflowUpdate workflowUpdateStageExecutable workflowNew);
+our @EXPORT_OK = qw(analysisAddTags analysisDescribe analysisRemoveTags analysisSetProperties analysisTerminate appAddAuthorizedUsers appAddCategories appAddDevelopers appAddTags appDelete appDescribe appGet appInstall appListAuthorizedUsers appListCategories appListDevelopers appPublish appRemoveAuthorizedUsers appRemoveCategories appRemoveDevelopers appRemoveTags appRun appUninstall appUpdate appNew appletAddTags appletDescribe appletGet appletGetDetails appletListProjects appletRemoveTags appletRename appletRun appletSetProperties appletNew containerClone containerDescribe containerDestroy containerListFolder containerMove containerNewFolder containerRemoveFolder containerRemoveObjects containerRenameFolder databaseAddTags databaseAddTypes databaseDescribe databaseGetDetails databaseListProjects databaseRelocate databaseRemoveTags databaseRemoveTypes databaseRename databaseSetDetails databaseSetProperties databaseSetVisibility databaseUpdate databaseFindByName databaseNew databasetypeNew fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload fileNew gtableAddRows gtableAddTags gtableAddTypes gtableClose gtableDescribe gtableGet gtableGetDetails gtableListProjects gtableNextPart gtableRemoveTags gtableRemoveTypes gtableRename gtableSetDetails gtableSetProperties gtableSetVisibility gtableNew jobAddTags jobDescribe jobGetLog jobRemoveTags jobSetProperties jobTerminate jobNew notificationsGet notificationsMarkRead orgDescribe orgFindMembers orgFindProjects orgFindApps orgInvite orgRemoveMember orgSetMemberAccess orgUpdate orgNew projectAddTags projectClone projectDecreasePermissions projectDescribe projectDestroy projectInvite projectLeave projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectRemoveTags projectRenameFolder projectSetProperties projectTransfer projectUpdate projectUpdateSponsorship projectNew recordAddTags recordAddTypes recordClose recordDashboardUrl recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility recordNew systemDescribeDataObjects systemDescribeExecutions systemDescribeProjects systemFindAffiliates systemFindApps systemFindDataObjects systemResolveDataObjects systemFindExecutions systemFindAnalyses systemFindJobs systemFindProjects systemFindUsers systemFindProjectMembers systemFindOrgs systemGlobalSearch systemGreet systemHeaders systemShortenURL systemWhoami userDescribe userUpdate workflowAddStage workflowAddTags workflowAddTypes workflowClose workflowDescribe workflowDryRun workflowGetDetails workflowIsStageCompatible workflowListProjects workflowMoveStage workflowOverwrite workflowRemoveStage workflowRemoveTags workflowRemoveTypes workflowRename workflowRun workflowSetDetails workflowSetProperties workflowSetStageInputs workflowSetVisibility workflowUpdate workflowUpdateStageExecutable workflowNew);
 
