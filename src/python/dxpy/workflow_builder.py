@@ -442,7 +442,8 @@ def _update_global_workflow(json_spec, args, global_workflow_id):
         global_workflow_id = dxpy.api.global_workflow_update('globalworkflow-' + json_spec['name'],
                                                              alias=json_spec['version'],
                                                              input_params=non_empty_fields)['id']
-
+    else:
+        logger.info("Skipping making updates")
     return global_workflow_id
 
 
