@@ -513,116 +513,12 @@ module DX
       return DX::http_request("/database/new", input_params, opts)
     end
 
-    # Invokes the /databasetype-xxxx/addTags API method.
+    # Invokes the /databasetype/newSpot API method.
     #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags
-    def self.databasetype_add_tags(object_id, input_params={}, opts={})
-      opts = { "always_retry" => true }.merge(opts)
-      return DX::http_request("/#{object_id}/addTags", input_params, opts)
-    end
-
-    # Invokes the /databasetype-xxxx/addTypes API method.
-    #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes
-    def self.databasetype_add_types(object_id, input_params={}, opts={})
-      opts = { "always_retry" => true }.merge(opts)
-      return DX::http_request("/#{object_id}/addTypes", input_params, opts)
-    end
-
-    # Invokes the /databasetype-xxxx/close API method.
-    #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method%3A-%2Fdatabasetype-xxxx%2Fclose
-    def self.databasetype_close(object_id, input_params={}, opts={})
-      opts = { "always_retry" => false }.merge(opts)
-      return DX::http_request("/#{object_id}/close", input_params, opts)
-    end
-
-    # Invokes the /databasetype-xxxx/describe API method.
-    #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method%3A-%2Fdatabasetype-xxxx%2Fdescribe
-    def self.databasetype_describe(object_id, input_params={}, opts={})
-      opts = { "always_retry" => true }.merge(opts)
-      return DX::http_request("/#{object_id}/describe", input_params, opts)
-    end
-
-    # Invokes the /databasetype-xxxx/getDetails API method.
-    #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails
-    def self.databasetype_get_details(object_id, input_params={}, opts={})
-      opts = { "always_retry" => true }.merge(opts)
-      return DX::http_request("/#{object_id}/getDetails", input_params, opts)
-    end
-
-    # Invokes the /databasetype-xxxx/listProjects API method.
-    #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects
-    def self.databasetype_list_projects(object_id, input_params={}, opts={})
-      opts = { "always_retry" => true }.merge(opts)
-      return DX::http_request("/#{object_id}/listProjects", input_params, opts)
-    end
-
-    # Invokes the /databasetype-xxxx/removeTags API method.
-    #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags
-    def self.databasetype_remove_tags(object_id, input_params={}, opts={})
-      opts = { "always_retry" => true }.merge(opts)
-      return DX::http_request("/#{object_id}/removeTags", input_params, opts)
-    end
-
-    # Invokes the /databasetype-xxxx/removeTypes API method.
-    #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes
-    def self.databasetype_remove_types(object_id, input_params={}, opts={})
-      opts = { "always_retry" => true }.merge(opts)
-      return DX::http_request("/#{object_id}/removeTypes", input_params, opts)
-    end
-
-    # Invokes the /databasetype-xxxx/rename API method.
-    #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename
-    def self.databasetype_rename(object_id, input_params={}, opts={})
-      opts = { "always_retry" => true }.merge(opts)
-      return DX::http_request("/#{object_id}/rename", input_params, opts)
-    end
-
-    # Invokes the /databasetype-xxxx/setDetails API method.
-    #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails
-    def self.databasetype_set_details(object_id, input_params={}, opts={})
-      opts = { "always_retry" => true }.merge(opts)
-      return DX::http_request("/#{object_id}/setDetails", input_params, opts)
-    end
-
-    # Invokes the /databasetype-xxxx/setProperties API method.
-    #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties
-    def self.databasetype_set_properties(object_id, input_params={}, opts={})
-      opts = { "always_retry" => true }.merge(opts)
-      return DX::http_request("/#{object_id}/setProperties", input_params, opts)
-    end
-
-    # Invokes the /databasetype-xxxx/setVisibility API method.
-    #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility
-    def self.databasetype_set_visibility(object_id, input_params={}, opts={})
-      opts = { "always_retry" => true }.merge(opts)
-      return DX::http_request("/#{object_id}/setVisibility", input_params, opts)
-    end
-
-    # Invokes the /databasetype-xxxx/update API method.
-    #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method%3A-%2Fdatabasetype-xxxx%2Fupdate
-    def self.databasetype_update(object_id, input_params={}, opts={})
-      opts = { "always_retry" => false }.merge(opts)
-      return DX::http_request("/#{object_id}/update", input_params, opts)
-    end
-
-    # Invokes the /databasetype/new API method.
-    #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method%3A-%2Fdatabasetype%2Fnew
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method%3A-%2Fdatabasetype%2FnewSpot
     def self.databasetype_new(input_params={}, opts={})
       opts = { "always_retry" => false }.merge(opts)
-      return DX::http_request("/databasetype/new", input_params, opts)
+      return DX::http_request("/databasetype/newSpot", input_params, opts)
     end
 
     # Invokes the /file-xxxx/addTags API method.
@@ -1323,6 +1219,14 @@ module DX
     def self.record_close(object_id, input_params={}, opts={})
       opts = { "always_retry" => true }.merge(opts)
       return DX::http_request("/#{object_id}/close", input_params, opts)
+    end
+
+    # Invokes the /record-xxxx/dashboardUrl API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord-xxxx%2FdashboardUrl
+    def self.record_dashboard_url(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/dashboardUrl", input_params, opts)
     end
 
     # Invokes the /record-xxxx/describe API method.
