@@ -249,8 +249,8 @@ namespace dx {
   JSON databaseNew(const std::string &input_params="{}", const bool safe_to_retry=false);
   JSON databaseNew(const dx::JSON &input_params, const bool safe_to_retry=false);
 
-  JSON databasetypeNew(const std::string &input_params="{}", const bool safe_to_retry=false);
-  JSON databasetypeNew(const dx::JSON &input_params, const bool safe_to_retry=false);
+  JSON databasetypeNewSpot(const std::string &input_params="{}", const bool safe_to_retry=false);
+  JSON databasetypeNewSpot(const dx::JSON &input_params, const bool safe_to_retry=false);
 
   JSON fileAddTags(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON fileAddTags(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);

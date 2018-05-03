@@ -555,7 +555,7 @@
     ],
     [
         "/databasetype/newSpot",
-        "databasetypeNew(req)",
+        "databasetypeNewSpot(req)",
         {
             "objectMethod": false,
             "retryable": false,

@@ -521,7 +521,7 @@ def database_new(input_params={}, always_retry=True, **kwargs):
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/database/new', input_params_cp, always_retry=always_retry, **kwargs)
 
-def databasetype_new(input_params={}, always_retry=False, **kwargs):
+def databasetype_new_spot(input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /databasetype/newSpot API method.
 

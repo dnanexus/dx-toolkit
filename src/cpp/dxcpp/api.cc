@@ -660,12 +660,12 @@ namespace dx {
     return databaseNew(input_params_cp.toString(), safe_to_retry);
   }
 
-  JSON databasetypeNew(const std::string &input_params, const bool safe_to_retry) {
+  JSON databasetypeNewSpot(const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest("/databasetype/newSpot", input_params, safe_to_retry);
   }
 
-  JSON databasetypeNew(const JSON &input_params, const bool safe_to_retry) {
-    return databasetypeNew(input_params.toString(), safe_to_retry);
+  JSON databasetypeNewSpot(const JSON &input_params, const bool safe_to_retry) {
+    return databasetypeNewSpot(input_params.toString(), safe_to_retry);
   }
 
   JSON fileAddTags(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {

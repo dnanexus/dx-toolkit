@@ -11311,7 +11311,7 @@ public final class DXAPI {
     }
 
     /**
-     * Invokes the databasetypeNew method with an empty input, deserializing to an object of the specified class.
+     * Invokes the databasetypeNewSpot method with an empty input, deserializing to an object of the specified class.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method%3A-%2Fdatabasetype%2FnewSpot">API specification</a>.
      *
@@ -11326,11 +11326,11 @@ public final class DXAPI {
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      */
-    public static <T> T databasetypeNew(Class<T> outputClass) {
-        return databasetypeNew(mapper.createObjectNode(), outputClass);
+    public static <T> T databasetypeNewSpot(Class<T> outputClass) {
+        return databasetypeNewSpot(mapper.createObjectNode(), outputClass);
     }
     /**
-     * Invokes the databasetypeNew method with an empty input using the specified environment, deserializing to an object of the specified class.
+     * Invokes the databasetypeNewSpot method with an empty input using the specified environment, deserializing to an object of the specified class.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method%3A-%2Fdatabasetype%2FnewSpot">API specification</a>.
      *
@@ -11346,11 +11346,11 @@ public final class DXAPI {
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      */
-    public static <T> T databasetypeNew(Class<T> outputClass, DXEnvironment env) {
-        return databasetypeNew(mapper.createObjectNode(), outputClass, env);
+    public static <T> T databasetypeNewSpot(Class<T> outputClass, DXEnvironment env) {
+        return databasetypeNewSpot(mapper.createObjectNode(), outputClass, env);
     }
     /**
-     * Invokes the databasetypeNew method with the specified input, deserializing to an object of the specified class.
+     * Invokes the databasetypeNewSpot method with the specified input, deserializing to an object of the specified class.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method%3A-%2Fdatabasetype%2FnewSpot">API specification</a>.
      *
@@ -11366,14 +11366,14 @@ public final class DXAPI {
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      */
-    public static <T> T databasetypeNew(Object inputObject, Class<T> outputClass) {
+    public static <T> T databasetypeNewSpot(Object inputObject, Class<T> outputClass) {
         JsonNode input = mapper.valueToTree(inputObject);
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/databasetype/newSpot", input, RetryStrategy.UNSAFE_TO_RETRY),
                 outputClass);
     }
     /**
-     * Invokes the databasetypeNew method with the specified input using the specified environment, deserializing to an object of the specified class.
+     * Invokes the databasetypeNewSpot method with the specified input using the specified environment, deserializing to an object of the specified class.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method%3A-%2Fdatabasetype%2FnewSpot">API specification</a>.
      *
@@ -11390,7 +11390,7 @@ public final class DXAPI {
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      */
-    public static <T> T databasetypeNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
+    public static <T> T databasetypeNewSpot(Object inputObject, Class<T> outputClass, DXEnvironment env) {
         JsonNode input = mapper.valueToTree(inputObject);
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest(env).request("/databasetype/newSpot", input, RetryStrategy.UNSAFE_TO_RETRY),
@@ -11398,7 +11398,7 @@ public final class DXAPI {
     }
 
     /**
-     * Invokes the databasetypeNew method.
+     * Invokes the databasetypeNewSpot method.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method%3A-%2Fdatabasetype%2FnewSpot">API specification</a>.
      *
@@ -11411,14 +11411,14 @@ public final class DXAPI {
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      *
-     * @deprecated Use {@link #databasetypeNew(Class)} instead and supply your own class to deserialize to.
+     * @deprecated Use {@link #databasetypeNewSpot(Class)} instead and supply your own class to deserialize to.
      */
     @Deprecated
-    public static JsonNode databasetypeNew() {
-        return databasetypeNew(mapper.createObjectNode());
+    public static JsonNode databasetypeNewSpot() {
+        return databasetypeNewSpot(mapper.createObjectNode());
     }
     /**
-     * Invokes the databasetypeNew method with the specified input parameters.
+     * Invokes the databasetypeNewSpot method with the specified input parameters.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method%3A-%2Fdatabasetype%2FnewSpot">API specification</a>.
      *
@@ -11433,14 +11433,14 @@ public final class DXAPI {
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      *
-     * @deprecated Use {@link #databasetypeNew(Object, Class)} instead and supply your own class to deserialize to.
+     * @deprecated Use {@link #databasetypeNewSpot(Object, Class)} instead and supply your own class to deserialize to.
      */
     @Deprecated
-    public static JsonNode databasetypeNew(JsonNode inputParams) {
+    public static JsonNode databasetypeNewSpot(JsonNode inputParams) {
         return new DXHTTPRequest().request("/databasetype/newSpot", inputParams, RetryStrategy.UNSAFE_TO_RETRY);
     }
     /**
-     * Invokes the databasetypeNew method with the specified environment.
+     * Invokes the databasetypeNewSpot method with the specified environment.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method%3A-%2Fdatabasetype%2FnewSpot">API specification</a>.
      *
@@ -11455,14 +11455,14 @@ public final class DXAPI {
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      *
-     * @deprecated Use {@link #databasetypeNew(Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     * @deprecated Use {@link #databasetypeNewSpot(Class, DXEnvironment)} instead and supply your own class to deserialize to.
      */
     @Deprecated
-    public static JsonNode databasetypeNew(DXEnvironment env) {
-        return databasetypeNew(mapper.createObjectNode(), env);
+    public static JsonNode databasetypeNewSpot(DXEnvironment env) {
+        return databasetypeNewSpot(mapper.createObjectNode(), env);
     }
     /**
-     * Invokes the databasetypeNew method with the specified environment and input parameters.
+     * Invokes the databasetypeNewSpot method with the specified environment and input parameters.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method%3A-%2Fdatabasetype%2FnewSpot">API specification</a>.
      *
@@ -11478,10 +11478,10 @@ public final class DXAPI {
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      *
-     * @deprecated Use {@link #databasetypeNew(Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     * @deprecated Use {@link #databasetypeNewSpot(Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
      */
     @Deprecated
-    public static JsonNode databasetypeNew(JsonNode inputParams, DXEnvironment env) {
+    public static JsonNode databasetypeNewSpot(JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/databasetype/newSpot", inputParams, RetryStrategy.UNSAFE_TO_RETRY);
     }
 
