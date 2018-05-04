@@ -684,6 +684,14 @@ namespace dx {
     return globalWorkflowAddDevelopers(object_id, input_params.toString(), safe_to_retry);
   }
 
+  JSON globalWorkflowAddTags(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/addTags"), input_params, safe_to_retry);
+  }
+
+  JSON globalWorkflowAddTags(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return globalWorkflowAddTags(object_id, input_params.toString(), safe_to_retry);
+  }
+
   JSON globalWorkflowDelete(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest(std::string("/") + object_id + std::string("/delete"), input_params, safe_to_retry);
   }
@@ -754,6 +762,14 @@ namespace dx {
 
   JSON globalWorkflowRemoveDevelopers(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
     return globalWorkflowRemoveDevelopers(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON globalWorkflowRemoveTags(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTags"), input_params, safe_to_retry);
+  }
+
+  JSON globalWorkflowRemoveTags(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return globalWorkflowRemoveTags(object_id, input_params.toString(), safe_to_retry);
   }
 
   JSON globalWorkflowRun(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {

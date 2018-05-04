@@ -524,6 +524,8 @@ def file_new(input_params={}, always_retry=True, **kwargs):
 def global_workflow_add_authorized_users(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/addAuthorizedUsers API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addAuthorizedUsers
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/addAuthorizedUsers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -531,6 +533,8 @@ def global_workflow_add_authorized_users(name_or_id, alias=None, input_params={}
 def global_workflow_add_categories(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/addCategories API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addCategories
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/addCategories' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -538,13 +542,26 @@ def global_workflow_add_categories(name_or_id, alias=None, input_params={}, alwa
 def global_workflow_add_developers(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/addDevelopers API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addDevelopers
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/addDevelopers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
+def global_workflow_add_tags(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /globalworkflow-xxxx/addTags API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addTags
+    """
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/addTags' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+
 def global_workflow_delete(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/delete API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/delete
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/delete' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -552,6 +569,8 @@ def global_workflow_delete(name_or_id, alias=None, input_params={}, always_retry
 def global_workflow_describe(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/describe API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/describe
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/describe' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -559,6 +578,8 @@ def global_workflow_describe(name_or_id, alias=None, input_params={}, always_ret
 def global_workflow_list_authorized_users(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/listAuthorizedUsers API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listAuthorizedUsers
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/listAuthorizedUsers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -566,6 +587,8 @@ def global_workflow_list_authorized_users(name_or_id, alias=None, input_params={
 def global_workflow_list_categories(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/listCategories API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listCategories
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/listCategories' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -573,6 +596,8 @@ def global_workflow_list_categories(name_or_id, alias=None, input_params={}, alw
 def global_workflow_list_developers(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/listDevelopers API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listDevelopers
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/listDevelopers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -580,6 +605,8 @@ def global_workflow_list_developers(name_or_id, alias=None, input_params={}, alw
 def global_workflow_publish(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/publish API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/publish
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/publish' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -587,6 +614,8 @@ def global_workflow_publish(name_or_id, alias=None, input_params={}, always_retr
 def global_workflow_remove_authorized_users(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/removeAuthorizedUsers API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeAuthorizedUsers
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/removeAuthorizedUsers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -594,6 +623,8 @@ def global_workflow_remove_authorized_users(name_or_id, alias=None, input_params
 def global_workflow_remove_categories(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/removeCategories API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeCategories
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/removeCategories' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -601,13 +632,26 @@ def global_workflow_remove_categories(name_or_id, alias=None, input_params={}, a
 def global_workflow_remove_developers(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/removeDevelopers API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeDevelopers
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/removeDevelopers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
+def global_workflow_remove_tags(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /globalworkflow-xxxx/removeTags API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeTags
+    """
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/removeTags' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+
 def global_workflow_run(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/run API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/run
     """
     input_params_cp = Nonce.update_nonce(input_params)
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
@@ -616,6 +660,8 @@ def global_workflow_run(name_or_id, alias=None, input_params={}, always_retry=Tr
 def global_workflow_update(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow-xxxx/update API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/update
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/update' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -623,6 +669,8 @@ def global_workflow_update(name_or_id, alias=None, input_params={}, always_retry
 def global_workflow_new(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow/new API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow/new
     """
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/globalworkflow/new', input_params_cp, always_retry=always_retry, **kwargs)
