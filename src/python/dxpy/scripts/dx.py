@@ -3703,13 +3703,13 @@ def publish(args):
         else:
             dxpy.api.global_workflow_publish(desc['id'], input_params={"makeDefault": args.make_default})
 
-        eprint("Published {} successfully".format(args.executable))
+        eprint("Published {} successfully".format(desc['name']))
 
         if desc['authorizedUsers']:
             eprint("It is now available to the authorized users: {}".format(", ".join(desc['authorizedUsers'])))
-            eprint("You can add or remove users with:")
+	else:
+            eprint("You can add authorized users with:")
             eprint("  dx add users {} user-xxxx".format(desc['name']))
-            eprint("  dx remove users {} user-yyyy".format(desc['name']))
     except:
         err_exit()
 
