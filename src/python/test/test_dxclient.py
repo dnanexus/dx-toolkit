@@ -5760,8 +5760,7 @@ class TestDXClientNewUser(DXTestCase):
                                          "middle": middle})
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_API_ORG_FIND_MEMBERS",
-                                          "DNA_API_ORG_ADD_USER"])
+    @testutil.update_traceability_matrix(["DNA_API_ORG_ADD_USER"])
     def test_create_user_account_and_invite_to_org(self):
         # TODO: Test --no-email flag.
 
