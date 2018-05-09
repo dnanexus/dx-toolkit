@@ -508,6 +508,7 @@ class DXTestCaseBuildWorkflows(DXTestCase):
               workflow_spec = self.create_workflow_spec(project_id)
         dxworkflow = dxpy.DXWorkflow()
         dxworkflow.new(**workflow_spec)
+        dxworkflow._close(dxworkflow.get_id())
         return dxworkflow
 
     def create_global_workflow_spec(self, project_id, name, version, workflow_spec=None):

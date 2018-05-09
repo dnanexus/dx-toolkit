@@ -528,7 +528,7 @@ class TestDXClient(DXTestCase):
         self.assertEqual(my_properties["bar"], "")
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_SET_PROPERTIES","DNA_API_PROJ_ADD_PROPERTIES","DNA_API_PROJ_REMOVE_PROPERTIES"])
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_SET_PROPERTIES","DNA_API_PROJ_ADD_PROPERTIES","DNA_API_PROJ_REMOVE_PROPERTIES", "DNA_CLI_PROJ_UNSET_PROPERTIES"])
     def test_dx_project_properties(self):
         property_names = ["$my.prop", "secoиdprop", "тhird prop"]
         property_values = ["$hello.world", "Σ2,n", "stuff"]
@@ -1277,7 +1277,7 @@ class TestDXMv(DXTestCase):
         self.assertEqual(dxpy.find_one_data_object(name="a", project=self.project, zero_ok=True), None)
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_API_PROJ_RENAME_FOLDER"])
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_RENAME_FOLDER", "DNA_CLI_PROJ_MOVE_OR_RENAME_OBJECTS"])
     def test_dx_mv_folder(self):
         folder_name = "/test_folder"
         folder_name_2 = "/test_folder_2"
@@ -4109,7 +4109,7 @@ class TestDXClientFind(DXTestCase):
         run("dx find globalworkflows --category foo") # any category can be searched
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
-                         'skipping test that requires presence of test org and creates apps')
+                         'skipping test that creates apps')
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_API_APP_PUBLISH"])
     def test_dx_find_apps(self):
@@ -4137,7 +4137,6 @@ class TestDXClientFind(DXTestCase):
         app_find = "app_find_unpublished"
         spec = dict(dxapp_spec, name=app_find, version="0.0.1")
         dxapp = dxpy.DXApp()
-        print(dxapp_spec)
         dxapp.new(**spec)
         # version 0.0.2
         spec = dict(dxapp_spec, name=app_find, version="0.0.2")
@@ -4193,11 +4192,10 @@ class TestDXClientFind(DXTestCase):
         self.assertIn("0.0.2", output)
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
-                         'skipping test that requires presence of test org and creates global workflows')
+                         'skipping test that creates global workflows')
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_WORKFLOW_LIST_AVAILABLE_WORKFLOWS_GLOBALWF"])
     def test_dx_find_globalworkflows(self):
-        org_id = "org-piratelabs"
         test_applet_id = dxpy.api.applet_new({"name": "my_find_applet",
                                               "dxapi": "1.0.0",
                                               "project": self.project,
@@ -4212,6 +4210,7 @@ class TestDXClientFind(DXTestCase):
         workflow_spec = {"stages": [{"id": "stage_0", "executable": test_applet_id}]}
         dxworkflow = dxpy.DXWorkflow()
         dxworkflow.new(**workflow_spec)
+        dxworkflow._close(dxworkflow.get_id())
         dxglobalworkflow_spec = {
             "name": "gwf_find",
             "version": "0.0.1",
@@ -4224,16 +4223,14 @@ class TestDXClientFind(DXTestCase):
 
         # Create a few global workflows
 
-        # 1. Workflow with an org billTo
+        # 1. Unpublished workflow
         # version 0.0.1
-        gwf_find_billto = "gwf_find_billto"
-        spec = dict(dxglobalworkflow_spec, name=gwf_find_billto, bill_to=org_id, version="0.0.1")
+        gwf_find = "gwf_find_unpublished"
+        spec = dict(dxglobalworkflow_spec, name=gwf_find, version="0.0.1")
         dxgwf = dxpy.DXGlobalWorkflow()
         dxgwf.new(**spec)
-        desc = dxgwf.describe()
-        self.assertEqual(desc["billTo"], org_id)
         # version 0.0.2
-        spec = dict(dxglobalworkflow_spec, name=gwf_find_billto, bill_to=org_id, version="0.0.2")
+        spec = dict(dxglobalworkflow_spec, name=gwf_find, version="0.0.2")
         dxgwf = dxpy.DXGlobalWorkflow()
         dxgwf.new(**spec)
         desc = dxgwf.describe()
@@ -4263,17 +4260,11 @@ class TestDXClientFind(DXTestCase):
         output = run("dx find globalworkflows")
         self.assertIn(gwf_find_published_1, output)
         self.assertIn(gwf_find_published_2, output)
-        self.assertNotIn(gwf_find_billto, output)
+        self.assertNotIn(gwf_find, output)
 
         # find only unpublished
         output = run("dx find globalworkflows --unpublished")
-        self.assertIn(gwf_find_billto, output)
-        self.assertNotIn(gwf_find_published_1, output)
-        self.assertNotIn(gwf_find_published_2, output)
-
-        # find by billTo
-        output = run("dx find globalworkflows --unpublished --billed-to " + org_id)
-        self.assertIn(gwf_find_billto, output)
+        self.assertIn(gwf_find, output)
         self.assertNotIn(gwf_find_published_1, output)
         self.assertNotIn(gwf_find_published_2, output)
 
@@ -4281,13 +4272,13 @@ class TestDXClientFind(DXTestCase):
         output = run("dx find globalworkflows --name " + gwf_find_published_1)
         self.assertIn(gwf_find_published_1, output)
         self.assertNotIn(gwf_find_published_2, output)
-        self.assertNotIn(gwf_find_billto, output)
+        self.assertNotIn(gwf_find, output)
 
         # find all versions
         output = run("dx find globalworkflows --unpublished --all")
         self.assertNotIn(gwf_find_published_1, output)
         self.assertNotIn(gwf_find_published_2, output)
-        self.assertIn(gwf_find_billto, output)
+        self.assertIn(gwf_find, output)
         self.assertIn("0.0.1", output)
         self.assertIn("0.0.2", output)
 
@@ -4549,6 +4540,8 @@ class TestDXClientFind(DXTestCase):
             self.assertNotIn(record_id,
                           run("dx find data --all-projects --brief --region aws:us-east-1"))
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_LIST_PROJECTS"])
     def test_dx_find_projects(self):
         unique_project_name = 'dx find projects test ' + str(time.time())
         with temporary_project(unique_project_name) as unique_project:
@@ -8819,7 +8812,7 @@ def main(in1):
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create app')
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_PUBLISH_APP"])
+    @testutil.update_traceability_matrix(["DNA_CLI_APP_PUBLISH"])
     def test_dx_publish_app(self):
         app_name = "dx_publish_app"
         def _create_app(version):
