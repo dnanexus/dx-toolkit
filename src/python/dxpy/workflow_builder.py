@@ -25,8 +25,12 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import os
 import sys
 import json
+import copy
 
 import dxpy
+from .cli import INTERACTIVE_CLI
+from .utils.printing import fill
+from .compat import input
 from .utils import json_load_raise_on_duplicates
 from .exceptions import err_exit
 from . import logger
@@ -128,6 +132,32 @@ def _set_categories_on_workflow(global_workflow_id, categories_to_set):
                                                    input_params={'categories': list(categories_to_remove)})
 
 
+def _version_exists(json_spec, name=None, version=None):
+    """
+    Returns True if a global workflow with the given name and version
+    already exists in the platform and the user has developer rights
+    to the workflow. "name" and "version" can be passed if we already
+    made a "describe" API call on the global workflow and so know the
+    requested name and version already exists.
+    """
+    requested_name = json_spec['name']
+    requested_version = json_spec['version']
+
+    if requested_name == name and requested_version == version:
+        return True
+    else:
+        try:
+            desc_output = dxpy.api.global_workflow_describe('globalworkflow-' + json_spec['name'],
+                                                            alias=json_spec['version'],
+                                                            input_params={"fields": {"name": True,
+                                                                                     "version": True}})
+            return desc_output['name'] == json_spec['name'] and desc_output['version'] == json_spec['version']
+        except dxpy.exceptions.DXAPIError:
+            return False
+        except:
+            raise
+
+
 def _get_validated_stage(stage, stage_index):
     # required keys
     if 'executable' not in stage:
@@ -200,19 +230,8 @@ def _validate_json_for_global_workflow(json_spec, args):
     if not dxpy.executable_builder.GLOBAL_EXEC_VERSION_RE.match(json_spec['version']):
         logger.warn('"version" {} should be semver compliant (e.g. of the form X.Y.Z)'.format(json_spec['version']))
 
-    if 'title' not in json_spec:
-        logger.warn("dxworkflow.json is missing a title, please add one in the 'title' field")
-
-    if 'summary' not in json_spec:
-        logger.warn("dxworkflow.json is missing a summary, please add one in the 'summary' field")
-    else:
-        if json_spec['summary'].endswith('.'):
-            logger.warn("summary {} should be a short phrase not ending in a period".format(json_spec['summary'],))
-
     if args.bill_to:
         json_spec["billTo"] = args.bill_to
-
-    dxpy.executable_builder.verify_developer_rights('globalworkflow-' + json_spec['name'])
 
 
 def _get_validated_json(json_spec, args):
@@ -225,36 +244,62 @@ def _get_validated_json(json_spec, args):
     if not args:
         return
 
+    validated_spec = copy.deepcopy(json_spec)
+
     # print ignored keys if present in json_spec
     # TODO: add "regionalOptions" to supported_keys when building multi-region workflows is enabled
     supported_keys = {"project", "folder", "name", "outputFolder", "stages",
                       "inputs", "outputs", "version", "title", "summary", "categories", "dxapi"}
-    unsupported_keys = _get_unsupported_keys(json_spec.keys(), supported_keys)
+    unsupported_keys = _get_unsupported_keys(validated_spec.keys(), supported_keys)
     if len(unsupported_keys) > 0:
         logger.warn(
             "Warning: the following root level fields are not supported and will be ignored: {}"
                 .format(", ".join(unsupported_keys)))
 
-    dxpy.executable_builder.inline_documentation_files(json_spec, args.src_dir)
 
-    if 'stages' in json_spec:
-        json_spec['stages'] = _get_validated_stages(json_spec['stages'])
+    if 'stages' in validated_spec:
+        validated_spec['stages'] = _get_validated_stages(validated_spec['stages'])
 
-    if 'name' in json_spec:
-        if args.src_dir != json_spec['name']:
+    if 'name' in validated_spec:
+        if args.src_dir != validated_spec['name']:
             logger.warn(
-                'workflow name "%s" does not match containing directory "%s"' % (json_spec['name'], args.src_dir))
+                'workflow name "%s" does not match containing directory "%s"' % (validated_spec['name'], args.src_dir))
+
+    validated_documentation_fields = _get_validated_json_for_build_or_update(validated_spec, args)
+    validated_spec.update(validated_documentation_fields)
 
     # Project-based workflow specific validation
     if args.mode == 'workflow':
         validated = _validate_json_for_regular_workflow(json_spec, args)
-        json_spec.update(validated)
+        validated_spec.update(validated)
 
     # Global workflow specific validation
     if args.mode == 'globalworkflow':
-        _validate_json_for_global_workflow(json_spec, args)
+        _validate_json_for_global_workflow(validated_spec, args)
 
-    return json_spec
+    return validated_spec
+
+
+def _get_validated_json_for_build_or_update(json_spec, args):
+    """
+    Validates those fields that can be used when either building 
+    a new version (of a local, project-based workflow) or updating
+    an existing version (of a global workflow).
+    """
+    validated = copy.deepcopy(json_spec)
+
+    dxpy.executable_builder.inline_documentation_files(validated, args.src_dir)
+
+    if 'title' not in json_spec:
+        logger.warn("dxworkflow.json is missing a title, please add one in the 'title' field")
+
+    if 'summary' not in json_spec:
+        logger.warn("dxworkflow.json is missing a summary, please add one in the 'summary' field")
+    else:
+        if json_spec['summary'].endswith('.'):
+            logger.warn("summary {} should be a short phrase not ending in a period".format(json_spec['summary'],))
+
+    return validated
 
 
 def _build_regular_workflow(json_spec):
@@ -273,13 +318,14 @@ def _build_underlying_workflows(json_spec, args):
     The caller is responsible for destroying the projects if this method returns properly.
     """
     # TODO: Initially a global workflow can be enabled in one region only, the region of the
-    # underlying workflow ( the region of the current project). It will be expanded in
+    # underlying workflow (the region of the current project). It will be expanded in
     # the future to build in all regions.
+
     projects_by_region, workflows_by_region = {}, {}  # IDs by region
 
     # Create a temp project
     try:
-        project_input = {"name": "Temporary build project for dx build global worklow"}
+        project_input = {"name": "Temporary build project for dx build global workflow"}
         if args.bill_to:
             project_input["billTo"] = args.bill_to
         working_project = dxpy.api.project_new(project_input)["id"]
@@ -311,6 +357,7 @@ def _build_global_workflow(json_spec, args):
     Creates a workflow in a temporary project for each enabled region
     and builds a global workflow on the platform based on these workflows.
     """
+
     workflows_by_region, projects_by_region = {}, {}  # IDs by region
     try:
         # prepare "regionalOptions" field for the globalworkflow/new input
@@ -329,7 +376,14 @@ def _build_global_workflow(json_spec, args):
         gwf_final_json_spec = {}
         for key in gwf_provided_keys:
             gwf_final_json_spec[key] = json_spec[key]
-        logger.info("Will create global workflow with spec: {}".format(json.dumps(gwf_final_json_spec)))
+
+        # we don't want to print the whole documentation to the screen so we'll remove these fields
+        print_spec = copy.deepcopy(gwf_final_json_spec)
+        if "description" in gwf_final_json_spec:
+            del print_spec["description"]
+        if "developerNotes" in gwf_final_json_spec:
+            del print_spec["developerNotes"]
+        logger.info("Will create global workflow with spec: {}".format(json.dumps(print_spec)))
 
         global_workflow_id = dxpy.api.global_workflow_new(gwf_final_json_spec)["id"]
     finally:
@@ -349,16 +403,73 @@ def _build_global_workflow(json_spec, args):
     return global_workflow_id
 
 
-def _build_workflow(json_spec, args):
+def _update_global_workflow(json_spec, args, global_workflow_id):
+
+    def skip_update():
+        skip_update = False
+        if non_empty_fields:
+            update_message = "The global workflow {}/{} exists so we will update the following fields for this version: {}.".format(
+                json_spec["name"], json_spec["version"], ", ".join(non_empty_fields))
+
+            if args.confirm:
+                if INTERACTIVE_CLI:
+                    try:
+                        print('***')
+                        print(fill('INFO: ' + update_message))
+                        print('***')
+                        value = input('Confirm making these updates [y/N]: ')
+                    except KeyboardInterrupt:
+                        value = 'n'
+                    if not value.lower().startswith('y'):
+                        skip_update = True
+                else:
+                    # Default to NOT updating if operating without a TTY.
+                    logger.warn(
+                        'skipping requested change to update a global workflow version. Rerun "dx build" interactively or pass --yes to confirm this change.')
+                    skip_update = True
+            else:
+                logger.info(update_message)
+        else:
+            skip_update = True
+            logger.info("Nothing to update")
+        return skip_update
+
+    update_spec = dict((k, v) for k, v in json_spec.items() if k in ['title', 'summary', 'description', 'developerNotes'])
+    validated_spec = _get_validated_json_for_build_or_update(update_spec, args)
+    non_empty_fields = dict((k, v) for k, v in validated_spec.items() if v)
+
+    if not skip_update():
+        global_workflow_id = dxpy.api.global_workflow_update('globalworkflow-' + json_spec['name'],
+                                                             alias=json_spec['version'],
+                                                             input_params=non_empty_fields)['id']
+    else:
+        logger.info("Skipping making updates")
+    return global_workflow_id
+
+
+def _build_or_update_workflow(json_spec, args):
     """
-    Creates a workflow on the platform.
+    Creates or updates a workflow on the platform.
     Returns the workflow ID, or None if the workflow cannot be created.
     """
     try:
         if args.mode == 'workflow':
+            json_spec = _get_validated_json(json_spec, args)
             workflow_id = _build_regular_workflow(json_spec)
         elif args.mode == 'globalworkflow':
-            workflow_id = _build_global_workflow(json_spec, args)
+            # Verify if the global workflow already exists and if the user has developer rights to it
+            # If the global workflow name doesn't exist, the user is free to build it
+            # If the name does exist two things can be done:
+            # * either update the requested version, if this version already exists
+            # * or create the version if it doesn't exist
+            existing_workflow = dxpy.executable_builder.verify_developer_rights('globalworkflow-' + json_spec['name'])
+            if existing_workflow and _version_exists(json_spec,
+                                                     existing_workflow.name,
+                                                     existing_workflow.version):
+                workflow_id = _update_global_workflow(json_spec, args, existing_workflow.id)
+            else:
+                json_spec = _get_validated_json(json_spec, args)
+                workflow_id = _build_global_workflow(json_spec, args)
         else:
             raise WorkflowBuilderException("Unrecognized workflow type: {}".format(args.mode))
     except dxpy.exceptions.DXAPIError as e:
@@ -388,8 +499,7 @@ def build(args, parser):
 
     try:
         json_spec = _parse_executable_spec(args.src_dir, "dxworkflow.json", parser)
-        validated_spec = _get_validated_json(json_spec, args)
-        workflow_id = _build_workflow(validated_spec, args)
+        workflow_id = _build_or_update_workflow(json_spec, args)
         _print_output(workflow_id, args)
     except WorkflowBuilderException as e:
         print("Error: %s" % (e.message,), file=sys.stderr)

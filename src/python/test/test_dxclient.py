@@ -3964,6 +3964,29 @@ class TestDXClientGlobalWorkflow(DXTestCaseBuildWorkflows):
         self.assertIn("Inputs", help_out)
         self.assertIn("Outputs", help_out)
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         "skipping test that would build global workflows")
+    def test_dx_update_global_workflow(self):
+        gwf_name = "gwf_{t}_for_update".format(t=int(time.time()))
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name, version="1.1.1", )
+        workflow_dir = self.write_workflow_directory(gwf_name,
+                                                     json.dumps(dxworkflow_json),
+                                                     readme_content="Workflow Readme Please")
+        gwf_id = json.loads(run('dx build --globalworkflow ' + workflow_dir))["id"]
+
+        # Update the version
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name, version="1.1.1",
+                               title="New title", summary="New summary", inputs=["rubbish"])
+        with open(os.path.join(workflow_dir, "dxworkflow.json"), 'w') as f:
+            f.write(json.dumps(dxworkflow_json, ensure_ascii=False))
+
+        updated_desc = json.loads(run('dx build --globalworkflow ' + workflow_dir + ' -y --json'))
+        self.assertEqual("New title", updated_desc["title"])
+        self.assertEqual("New summary", updated_desc["summary"])
+
+        # The ID should not be updated
+        self.assertEqual(gwf_id, updated_desc["id"])
+
 class TestDXClientFind(DXTestCase):
 
     def assert_cmd_gives_ids(self, cmd, ids):
