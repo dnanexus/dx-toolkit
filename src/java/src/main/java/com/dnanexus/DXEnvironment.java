@@ -19,6 +19,8 @@ package com.dnanexus;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -30,6 +32,7 @@ import com.google.common.base.Preconditions;
  * DNAnexus API server.
  */
 public class DXEnvironment {
+
     /**
      * Builder class for creating DXEnvironment objects.
      *
@@ -142,6 +145,7 @@ public class DXEnvironment {
                     }
                     if (getTextValue(jsonConfig, "DX_SECURITY_CONTEXT") != null) {
                         securityContextTxt = getTextValue(jsonConfig, "DX_SECURITY_CONTEXT");
+                        doDebug("DX_SECURITY_CONTEXT property %s found in environment file: %s", "init", securityContextTxt, jsonConfigFile);
                     }
                     if (getTextValue(jsonConfig, "DX_JOB_ID") != null) {
                         jobId = getTextValue(jsonConfig, "DX_JOB_ID");
@@ -152,6 +156,7 @@ public class DXEnvironment {
                     }
                     if (getTextValue(jsonConfig, "DX_PROJECT_CONTEXT_ID") != null) {
                         projectContextId = getTextValue(jsonConfig, "DX_PROJECT_CONTEXT_ID");
+                        doDebug("DX_PROJECT_CONTEXT_ID property %s found in environment file: %s", "init", projectContextId, jsonConfigFile);
                     }
                     if (getIntValue(jsonConfig, "DX_SOCKET_TIMEOUT") != 0) {
                         socketTimeout = getIntValue(jsonConfig, "DX_SOCKET_TIMEOUT");
@@ -178,6 +183,7 @@ public class DXEnvironment {
             }
             if (sysEnv.containsKey("DX_SECURITY_CONTEXT")) {
                 securityContextTxt = sysEnv.get("DX_SECURITY_CONTEXT");
+                doDebug("DX_SECURITY_CONTEXT env variable found: %s","init", securityContextTxt);
             }
             if (sysEnv.containsKey("DX_JOB_ID")) {
                 jobId = sysEnv.get("DX_JOB_ID");
@@ -187,6 +193,7 @@ public class DXEnvironment {
             }
             if (sysEnv.containsKey("DX_PROJECT_CONTEXT_ID")) {
                 projectContextId = sysEnv.get("DX_PROJECT_CONTEXT_ID");
+                doDebug("DX_PROJECT_CONTEXT_ID env variable found: %s","init", projectContextId);
             }
             if (sysEnv.containsKey("DX_SOCKET_TIMEOUT")) {
                 socketTimeout = Integer.valueOf(sysEnv.get("DX_SOCKET_TIMEOUT"));
@@ -509,5 +516,21 @@ public class DXEnvironment {
      */
     public int getConnectionTimeout() {
         return this.connectionTimeout;
+    }
+
+    private static final Logger LOG = LoggerFactory.getLogger(DXEnvironment.class);
+
+    private static boolean isDebug() {
+        return LOG.isDebugEnabled();
+    }
+
+    private static void doDebug(String msg, String method, Object... args) {
+        if (LOG.isDebugEnabled()) {
+            if (method == null) {
+                LOG.debug(String.format(msg, args));
+            } else {
+                LOG.debug(String.format("[" + method + "] " + msg, args));
+            }
+        }
     }
 }
