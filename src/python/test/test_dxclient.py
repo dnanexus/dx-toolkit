@@ -2665,7 +2665,7 @@ dx-jobutil-add-output record_array $second_record --array
         self.assertNotIn(remote_job_output[0]["$dnanexus_link"], local_output)
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_EXE_WATCH_LOGS"])
+    @testutil.update_traceability_matrix(["DNA_CLI_EXE_WATCH_LOGS", "DNA_CLI_EXE_TERMINATE"])
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
     def test_dx_run_priority(self):
