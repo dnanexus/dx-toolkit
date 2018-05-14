@@ -33,8 +33,6 @@ from dxpy.exceptions import DXJobFailureError
 from dxpy.bindings.download_all_inputs import _get_num_parallel_threads
 import pytest
 
-@pytest.mark.TRACEABILITY_MATRIX
-@testutil.update_traceability_matrix(["DNA_CLI_HELP_PROVIDE_BASH_HELPER_COMMANDS"])
 def run(command, **kwargs):
     try:
         if isinstance(command, list) or isinstance(command, tuple):
@@ -114,6 +112,8 @@ def update_environ(**kwargs):
 
 @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping tests that would run jobs')
 class TestDXBashHelpers(DXTestCase):
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_HELP_PROVIDE_BASH_HELPER_COMMANDS"])
     def test_vars(self):
         '''  Quick test for the bash variables '''
         with temporary_project('TestDXBashHelpers.test_app1 temporary project') as p:
