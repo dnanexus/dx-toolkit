@@ -145,7 +145,7 @@ public class DXEnvironment {
                     }
                     if (getTextValue(jsonConfig, "DX_SECURITY_CONTEXT") != null) {
                         securityContextTxt = getTextValue(jsonConfig, "DX_SECURITY_CONTEXT");
-                        doDebug("DX_SECURITY_CONTEXT property %s found in environment file: %s", "init", securityContextTxt, jsonConfigFile);
+                        doDebug("DX_SECURITY_CONTEXT property found in environment file: %s", "init", jsonConfigFile);
                     }
                     if (getTextValue(jsonConfig, "DX_JOB_ID") != null) {
                         jobId = getTextValue(jsonConfig, "DX_JOB_ID");
@@ -183,7 +183,7 @@ public class DXEnvironment {
             }
             if (sysEnv.containsKey("DX_SECURITY_CONTEXT")) {
                 securityContextTxt = sysEnv.get("DX_SECURITY_CONTEXT");
-                doDebug("DX_SECURITY_CONTEXT env variable found: %s","init", securityContextTxt);
+                doDebug("DX_SECURITY_CONTEXT env variable found", "init");
             }
             if (sysEnv.containsKey("DX_JOB_ID")) {
                 jobId = sysEnv.get("DX_JOB_ID");
