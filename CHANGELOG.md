@@ -6,6 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Cosmetic update to `dx publish`
+
+## [255.0] - beta
+
+
 ### Added
 
 * Support for updating a global workflow
@@ -16,13 +23,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Better checking for inputs and/or inputSpec before batch running workflows
 
-## [254.0] - 2018.05.02 - beta
+## [254.0] - 2018.05.10 - stable
 
 ### Changed
 
 * A workflow must be closed before initializing a global workflow from it (test updates for API changes)
 
-## [253.0] - 2018.05.02 - stable
+## [253.0] - 2018.05.02
 
 ### Changed
 
