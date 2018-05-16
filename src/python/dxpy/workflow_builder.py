@@ -373,19 +373,24 @@ def _build_global_workflow(json_spec, args):
                               "developerNotes", "regionalOptions", "categories", "billTo",
                               "dxapi"}
         gwf_provided_keys = gwf_supported_keys.intersection(set(json_spec.keys()))
-        gwf_final_json_spec = {}
-        for key in gwf_provided_keys:
-            gwf_final_json_spec[key] = json_spec[key]
+        gwf_final_json = dict((k, v) for k, v in json_spec.items() if k in gwf_provided_keys)
 
         # we don't want to print the whole documentation to the screen so we'll remove these fields
-        print_spec = copy.deepcopy(gwf_final_json_spec)
-        if "description" in gwf_final_json_spec:
+        print_spec = copy.deepcopy(gwf_final_json)
+        if "description" in gwf_final_json:
             del print_spec["description"]
-        if "developerNotes" in gwf_final_json_spec:
+        if "developerNotes" in gwf_final_json:
             del print_spec["developerNotes"]
         logger.info("Will create global workflow with spec: {}".format(json.dumps(print_spec)))
 
-        global_workflow_id = dxpy.api.global_workflow_new(gwf_final_json_spec)["id"]
+        # Create a new global workflow version on the platform
+        global_workflow_id = dxpy.api.global_workflow_new(gwf_final_json)["id"]
+
+        logger.info("Uploaded global workflow {n}/{v} successfully".format(n=gwf_final_json["name"],
+                                                                           v=gwf_final_json["version"]))
+        logger.info("You can publish this workflow with:")
+        logger.info("  dx publish {n}/{v} --make_default".format(n=gwf_final_json["name"],
+                                                                 v=gwf_final_json["version"]))
     finally:
         # Clean up
         if projects_by_region:
@@ -393,11 +398,11 @@ def _build_global_workflow(json_spec, args):
 
     # Set any additional fields on the created workflow
     try:
-        _set_categories_on_workflow(global_workflow_id, gwf_final_json_spec.get("categories", []))
+        _set_categories_on_workflow(global_workflow_id, gwf_final_json.get("categories", []))
     except:
         logger.warn(
-            "The workflow {n}/{v} was created but setting categories failed".format(n=json_spec['name'],
-                                                                                    v=json_spec['version']))
+            "The workflow {n}/{v} was created but setting categories failed".format(n=gwf_final_json['name'],
+                                                                                    v=gwf_final_json['version']))
         raise
 
     return global_workflow_id

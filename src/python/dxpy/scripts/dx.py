@@ -134,6 +134,9 @@ class ResultCounter():
         return ('\n' if self.counter > 1 else '') + UNDERLINE() + 'Result ' + \
             str(self.counter) + ':' + ENDC()
 
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
 def get_json_from_stdin():
     user_json_str = input('Type JSON here> ')
     user_json = None
@@ -2642,12 +2645,7 @@ def remove_users(args):
 
 def list_users(args):
     desc = try_call(resolve_global_executable, args.app)
-
-    #TODO: simplify when we add "authorizedUsers" to the describe output of global workflows
-    if desc['class'] == 'app':
-        users = desc['authorizedUsers']
-    else:
-        users = dxpy.api.global_workflow_list_authorized_users(desc['id'])['authorizedUsers']
+    users = desc['authorizedUsers']
 
     for user in users:
         print(user)
@@ -3636,8 +3634,6 @@ def upgrade(args):
         err_exit()
 
 def generate_batch_inputs(args):
-    def eprint(*args, **kwargs):
-        print(*args, file=sys.stderr, **kwargs)
 
     # Internally restricted maximum batch size for a TSV
     MAX_BATCH_SIZE = 500
@@ -3706,6 +3702,15 @@ def publish(args):
             dxpy.api.app_publish(desc['id'], input_params={"makeDefault": args.make_default})
         else:
             dxpy.api.global_workflow_publish(desc['id'], input_params={"makeDefault": args.make_default})
+
+        eprint("Published {} successfully".format(args.executable))
+
+        if desc['authorizedUsers']:
+            eprint("It is now available to the authorized users: {}".format(", ".join(desc['authorizedUsers'])))
+
+        eprint("You can add or remove users with:")
+        eprint("  dx add users {} user-xxxx".format(desc['name']))
+        eprint("  dx remove users {} user-yyyy".format(desc['name']))
     except:
         err_exit()
 
