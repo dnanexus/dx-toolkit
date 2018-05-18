@@ -1234,7 +1234,7 @@ def resolve_global_executable(path, is_version_required=False):
     - named ID with alias (version or tag), e.g. "myapp/1.2.0", "myworkflow/1.2.0"
     - named ID with prefix and with alias (version or tag), e.g. "app-myapp/1.2.0", "globalworkflow-myworkflow/1.2.0"
     """
-    if is_version_required and "/" not in path:
+    if not is_hashid(path) and is_version_required and "/" not in path:
         raise ResolutionError('Version is required, e.g. "myexec/1.0.0"'.format())
 
     # First, check if the prefix is provided, then we don't have to resolve the name

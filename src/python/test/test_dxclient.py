@@ -6509,12 +6509,11 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         with self.assertSubprocessFailure(stderr_regexp="Version is required", exit_code=3):
             run("dx publish {name}".format(name=gwf_name))
 
-        # publish version 2.0.0 with no "--make_default" flag
         run("dx publish {name}/{version}".format(name=gwf_name, version="2.0.0"))
         published_desc = json.loads(run("dx describe globalworkflow-{name}/{version} --json".format(name=gwf_name,
                                                                                                     version="2.0.0")))
         self.assertTrue("published" in published_desc)
-        self.assertFalse("default" in published_desc["aliases"])
+        self.assertTrue("default" in published_desc["aliases"])
 
         with self.assertSubprocessFailure(stderr_regexp="already published", exit_code=3):
             run("dx publish {name}/{version}".format(name=gwf_name, version="2.0.0"))
@@ -8645,16 +8644,22 @@ def main(in1):
         published_desc = json.loads(run("dx describe {name} --json".format(name=app_name)))
         self.assertTrue("published" in published_desc)
 
-        # with --make_default flag
+        # with --no-default flag
         _create_app("2.0.0")
-        run("dx publish {name}/{version} --make_default".format(name=app_name,
-                                                                version="2.0.0"))
+        run("dx publish {name}/{version} --no-default".format(name=app_name,
+                                                              version="2.0.0"))
         published_desc = json.loads(run("dx describe app-{name}/{version} --json".format(name=app_name,
                                                                                          version="2.0.0")))
         self.assertTrue("published" in published_desc)
-        self.assertTrue("default" in published_desc["aliases"])
+        self.assertFalse("default" in published_desc["aliases"])
 
-        with self.assertSubprocessFailure(stderr_regexp="InvalidState: Cannot publish the app; already published",
+        # using the ID
+        desc = _create_app("3.0.0")
+        run("dx publish {}".format(desc['id']))
+        published_desc = json.loads(run("dx describe {} --json".format(desc['id'])))
+        self.assertTrue("published" in published_desc)
+
+        with self.assertSubprocessFailure(stderr_regexp="InvalidState",
                                           exit_code=3):
             run("dx publish {name}/{version}".format(name=app_name, version="2.0.0"))
 
