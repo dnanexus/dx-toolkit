@@ -2178,6 +2178,7 @@ fileNew <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/addAuthorizedUsers}
 globalWorkflowAddAuthorizedUsers <- function(objectID,
                                              inputParams=emptyNamedList,
                                              jsonifyData=TRUE,
@@ -2210,6 +2211,7 @@ globalWorkflowAddAuthorizedUsers <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/addCategories}
 globalWorkflowAddCategories <- function(objectID,
                                         inputParams=emptyNamedList,
                                         jsonifyData=TRUE,
@@ -2242,11 +2244,45 @@ globalWorkflowAddCategories <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/addDevelopers}
 globalWorkflowAddDevelopers <- function(objectID,
                                         inputParams=emptyNamedList,
                                         jsonifyData=TRUE,
                                         alwaysRetry=TRUE) {
   resource <- paste('/', objectID, '/', 'addDevelopers', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' globalWorkflowAddTags API wrapper
+##'
+##' This function makes an API call to the \code{/globalworkflow-xxxx/addTags} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/addTags}
+globalWorkflowAddTags <- function(objectID,
+                                  inputParams=emptyNamedList,
+                                  jsonifyData=TRUE,
+                                  alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'addTags', sep='')
   dxHTTPRequest(resource,
                 inputParams,
                 jsonifyData=jsonifyData,
@@ -2274,6 +2310,7 @@ globalWorkflowAddDevelopers <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/delete}
 globalWorkflowDelete <- function(objectID,
                                  inputParams=emptyNamedList,
                                  jsonifyData=TRUE,
@@ -2306,6 +2343,7 @@ globalWorkflowDelete <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/describe}
 globalWorkflowDescribe <- function(objectID,
                                    inputParams=emptyNamedList,
                                    jsonifyData=TRUE,
@@ -2338,6 +2376,7 @@ globalWorkflowDescribe <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/listAuthorizedUsers}
 globalWorkflowListAuthorizedUsers <- function(objectID,
                                               inputParams=emptyNamedList,
                                               jsonifyData=TRUE,
@@ -2370,6 +2409,7 @@ globalWorkflowListAuthorizedUsers <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/listCategories}
 globalWorkflowListCategories <- function(objectID,
                                          inputParams=emptyNamedList,
                                          jsonifyData=TRUE,
@@ -2402,6 +2442,7 @@ globalWorkflowListCategories <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/listDevelopers}
 globalWorkflowListDevelopers <- function(objectID,
                                          inputParams=emptyNamedList,
                                          jsonifyData=TRUE,
@@ -2434,6 +2475,7 @@ globalWorkflowListDevelopers <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/publish}
 globalWorkflowPublish <- function(objectID,
                                   inputParams=emptyNamedList,
                                   jsonifyData=TRUE,
@@ -2466,6 +2508,7 @@ globalWorkflowPublish <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/removeAuthorizedUsers}
 globalWorkflowRemoveAuthorizedUsers <- function(objectID,
                                                 inputParams=emptyNamedList,
                                                 jsonifyData=TRUE,
@@ -2498,6 +2541,7 @@ globalWorkflowRemoveAuthorizedUsers <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/removeCategories}
 globalWorkflowRemoveCategories <- function(objectID,
                                            inputParams=emptyNamedList,
                                            jsonifyData=TRUE,
@@ -2530,11 +2574,45 @@ globalWorkflowRemoveCategories <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/removeDevelopers}
 globalWorkflowRemoveDevelopers <- function(objectID,
                                            inputParams=emptyNamedList,
                                            jsonifyData=TRUE,
                                            alwaysRetry=TRUE) {
   resource <- paste('/', objectID, '/', 'removeDevelopers', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' globalWorkflowRemoveTags API wrapper
+##'
+##' This function makes an API call to the \code{/globalworkflow-xxxx/removeTags} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/removeTags}
+globalWorkflowRemoveTags <- function(objectID,
+                                     inputParams=emptyNamedList,
+                                     jsonifyData=TRUE,
+                                     alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'removeTags', sep='')
   dxHTTPRequest(resource,
                 inputParams,
                 jsonifyData=jsonifyData,
@@ -2562,6 +2640,7 @@ globalWorkflowRemoveDevelopers <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/run}
 globalWorkflowRun <- function(objectID,
                               inputParams=emptyNamedList,
                               jsonifyData=TRUE,
@@ -2594,6 +2673,7 @@ globalWorkflowRun <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/update}
 globalWorkflowUpdate <- function(objectID,
                                  inputParams=emptyNamedList,
                                  jsonifyData=TRUE,
@@ -2625,6 +2705,7 @@ globalWorkflowUpdate <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow/new}
 globalWorkflowNew <- function(inputParams=emptyNamedList,
                               jsonifyData=TRUE,
                               alwaysRetry=FALSE) {

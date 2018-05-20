@@ -39,10 +39,12 @@ BATCH_ID = "batch ID"
 def _get_types_for_inputs(executable):
     exec_desc = executable.describe()
     input_spec = []
-    if 'inputs' in exec_desc:
+    if ('inputs' in exec_desc and
+        exec_desc['inputs'] is not None):
         # workflow-level inputs were defined for the workflow
         input_spec = exec_desc['inputs']
-    elif 'inputSpec' in exec_desc:
+    elif ('inputSpec' in exec_desc and
+          exec_desc['inputSpec'] is not None):
         input_spec = exec_desc['inputSpec']
     else:
         raise Exception("executable {} does not have an input specification".format(executable.get_id()))

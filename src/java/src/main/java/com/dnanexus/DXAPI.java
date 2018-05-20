@@ -11324,6 +11324,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowAddAuthorizedUsers method with an empty input, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addAuthorizedUsers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      *
@@ -11341,6 +11343,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowAddAuthorizedUsers method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addAuthorizedUsers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -11364,6 +11368,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowAddAuthorizedUsers method with an empty input using the given environment, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addAuthorizedUsers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      * @param env environment object specifying the auth token and remote server and protocol
@@ -11382,6 +11388,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowAddAuthorizedUsers method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addAuthorizedUsers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -11407,6 +11415,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowAddAuthorizedUsers method.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addAuthorizedUsers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      *
      * @return Server response parsed from JSON
@@ -11426,6 +11436,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowAddAuthorizedUsers method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addAuthorizedUsers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -11449,6 +11461,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowAddAuthorizedUsers method with the specified environment.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addAuthorizedUsers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
      *
@@ -11469,6 +11483,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowAddAuthorizedUsers method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addAuthorizedUsers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -11494,6 +11510,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowAddCategories method with an empty input, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addCategories">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      *
@@ -11511,6 +11529,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowAddCategories method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addCategories">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -11534,6 +11554,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowAddCategories method with an empty input using the given environment, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addCategories">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      * @param env environment object specifying the auth token and remote server and protocol
@@ -11552,6 +11574,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowAddCategories method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addCategories">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -11577,6 +11601,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowAddCategories method.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addCategories">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      *
      * @return Server response parsed from JSON
@@ -11596,6 +11622,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowAddCategories method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addCategories">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -11619,6 +11647,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowAddCategories method with the specified environment.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addCategories">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
      *
@@ -11639,6 +11669,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowAddCategories method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addCategories">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -11664,6 +11696,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowAddDevelopers method with an empty input, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addDevelopers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      *
@@ -11681,6 +11715,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowAddDevelopers method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addDevelopers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -11704,6 +11740,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowAddDevelopers method with an empty input using the given environment, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addDevelopers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      * @param env environment object specifying the auth token and remote server and protocol
@@ -11722,6 +11760,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowAddDevelopers method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addDevelopers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -11747,6 +11787,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowAddDevelopers method.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addDevelopers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      *
      * @return Server response parsed from JSON
@@ -11766,6 +11808,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowAddDevelopers method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addDevelopers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -11789,6 +11833,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowAddDevelopers method with the specified environment.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addDevelopers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
      *
@@ -11809,6 +11855,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowAddDevelopers method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addDevelopers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -11832,7 +11880,195 @@ public final class DXAPI {
     }
 
     /**
+     * Invokes the globalWorkflowAddTags method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T globalWorkflowAddTags(String objectId, Class<T> outputClass) {
+        return globalWorkflowAddTags(objectId, mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the globalWorkflowAddTags method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T globalWorkflowAddTags(String objectId, Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/" + objectId + "/" + "addTags",
+                        input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+    /**
+     * Invokes the globalWorkflowAddTags method with an empty input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T globalWorkflowAddTags(String objectId, Class<T> outputClass, DXEnvironment env) {
+        return globalWorkflowAddTags(objectId, mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the globalWorkflowAddTags method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T globalWorkflowAddTags(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+            new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags",
+                    input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+
+    /**
+     * Invokes the globalWorkflowAddTags method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #globalWorkflowAddTags(String, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode globalWorkflowAddTags(String objectId) {
+        return globalWorkflowAddTags(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the globalWorkflowAddTags method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #globalWorkflowAddTags(String, Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode globalWorkflowAddTags(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the globalWorkflowAddTags method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #globalWorkflowAddTags(String, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode globalWorkflowAddTags(String objectId, DXEnvironment env) {
+        return globalWorkflowAddTags(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the globalWorkflowAddTags method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #globalWorkflowAddTags(String, Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode globalWorkflowAddTags(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
      * Invokes the globalWorkflowDelete method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/delete">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
@@ -11851,6 +12087,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowDelete method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/delete">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -11874,6 +12112,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowDelete method with an empty input using the given environment, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/delete">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      * @param env environment object specifying the auth token and remote server and protocol
@@ -11892,6 +12132,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowDelete method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/delete">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -11917,6 +12159,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowDelete method.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/delete">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      *
      * @return Server response parsed from JSON
@@ -11936,6 +12180,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowDelete method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/delete">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -11959,6 +12205,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowDelete method with the specified environment.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/delete">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
      *
@@ -11979,6 +12227,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowDelete method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/delete">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -12004,6 +12254,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowDescribe method with an empty input, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/describe">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      *
@@ -12021,6 +12273,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowDescribe method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/describe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -12044,6 +12298,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowDescribe method with an empty input using the given environment, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/describe">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      * @param env environment object specifying the auth token and remote server and protocol
@@ -12062,6 +12318,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowDescribe method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/describe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -12087,6 +12345,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowDescribe method.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/describe">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      *
      * @return Server response parsed from JSON
@@ -12106,6 +12366,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowDescribe method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/describe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -12129,6 +12391,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowDescribe method with the specified environment.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/describe">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
      *
@@ -12149,6 +12413,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowDescribe method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/describe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -12174,6 +12440,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowListAuthorizedUsers method with an empty input, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listAuthorizedUsers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      *
@@ -12191,6 +12459,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowListAuthorizedUsers method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listAuthorizedUsers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -12214,6 +12484,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowListAuthorizedUsers method with an empty input using the given environment, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listAuthorizedUsers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      * @param env environment object specifying the auth token and remote server and protocol
@@ -12232,6 +12504,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowListAuthorizedUsers method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listAuthorizedUsers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -12257,6 +12531,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowListAuthorizedUsers method.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listAuthorizedUsers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      *
      * @return Server response parsed from JSON
@@ -12276,6 +12552,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowListAuthorizedUsers method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listAuthorizedUsers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -12299,6 +12577,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowListAuthorizedUsers method with the specified environment.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listAuthorizedUsers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
      *
@@ -12319,6 +12599,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowListAuthorizedUsers method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listAuthorizedUsers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -12344,6 +12626,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowListCategories method with an empty input, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listCategories">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      *
@@ -12361,6 +12645,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowListCategories method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listCategories">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -12384,6 +12670,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowListCategories method with an empty input using the given environment, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listCategories">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      * @param env environment object specifying the auth token and remote server and protocol
@@ -12402,6 +12690,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowListCategories method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listCategories">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -12427,6 +12717,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowListCategories method.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listCategories">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      *
      * @return Server response parsed from JSON
@@ -12446,6 +12738,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowListCategories method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listCategories">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -12469,6 +12763,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowListCategories method with the specified environment.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listCategories">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
      *
@@ -12489,6 +12785,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowListCategories method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listCategories">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -12514,6 +12812,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowListDevelopers method with an empty input, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listDevelopers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      *
@@ -12531,6 +12831,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowListDevelopers method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listDevelopers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -12554,6 +12856,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowListDevelopers method with an empty input using the given environment, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listDevelopers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      * @param env environment object specifying the auth token and remote server and protocol
@@ -12572,6 +12876,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowListDevelopers method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listDevelopers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -12597,6 +12903,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowListDevelopers method.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listDevelopers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      *
      * @return Server response parsed from JSON
@@ -12616,6 +12924,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowListDevelopers method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listDevelopers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -12639,6 +12949,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowListDevelopers method with the specified environment.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listDevelopers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
      *
@@ -12659,6 +12971,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowListDevelopers method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listDevelopers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -12684,6 +12998,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowPublish method with an empty input, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/publish">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      *
@@ -12701,6 +13017,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowPublish method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/publish">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -12724,6 +13042,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowPublish method with an empty input using the given environment, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/publish">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      * @param env environment object specifying the auth token and remote server and protocol
@@ -12742,6 +13062,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowPublish method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/publish">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -12767,6 +13089,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowPublish method.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/publish">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      *
      * @return Server response parsed from JSON
@@ -12786,6 +13110,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowPublish method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/publish">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -12809,6 +13135,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowPublish method with the specified environment.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/publish">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
      *
@@ -12829,6 +13157,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowPublish method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/publish">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -12854,6 +13184,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowRemoveAuthorizedUsers method with an empty input, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeAuthorizedUsers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      *
@@ -12871,6 +13203,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowRemoveAuthorizedUsers method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeAuthorizedUsers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -12894,6 +13228,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowRemoveAuthorizedUsers method with an empty input using the given environment, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeAuthorizedUsers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      * @param env environment object specifying the auth token and remote server and protocol
@@ -12912,6 +13248,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowRemoveAuthorizedUsers method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeAuthorizedUsers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -12937,6 +13275,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowRemoveAuthorizedUsers method.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeAuthorizedUsers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      *
      * @return Server response parsed from JSON
@@ -12956,6 +13296,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowRemoveAuthorizedUsers method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeAuthorizedUsers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -12979,6 +13321,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowRemoveAuthorizedUsers method with the specified environment.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeAuthorizedUsers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
      *
@@ -12999,6 +13343,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowRemoveAuthorizedUsers method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeAuthorizedUsers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -13024,6 +13370,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowRemoveCategories method with an empty input, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeCategories">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      *
@@ -13041,6 +13389,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowRemoveCategories method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeCategories">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -13064,6 +13414,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowRemoveCategories method with an empty input using the given environment, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeCategories">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      * @param env environment object specifying the auth token and remote server and protocol
@@ -13082,6 +13434,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowRemoveCategories method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeCategories">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -13107,6 +13461,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowRemoveCategories method.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeCategories">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      *
      * @return Server response parsed from JSON
@@ -13126,6 +13482,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowRemoveCategories method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeCategories">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -13149,6 +13507,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowRemoveCategories method with the specified environment.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeCategories">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
      *
@@ -13169,6 +13529,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowRemoveCategories method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeCategories">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -13194,6 +13556,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowRemoveDevelopers method with an empty input, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeDevelopers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      *
@@ -13211,6 +13575,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowRemoveDevelopers method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeDevelopers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -13234,6 +13600,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowRemoveDevelopers method with an empty input using the given environment, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeDevelopers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      * @param env environment object specifying the auth token and remote server and protocol
@@ -13252,6 +13620,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowRemoveDevelopers method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeDevelopers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -13277,6 +13647,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowRemoveDevelopers method.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeDevelopers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      *
      * @return Server response parsed from JSON
@@ -13296,6 +13668,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowRemoveDevelopers method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeDevelopers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -13319,6 +13693,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowRemoveDevelopers method with the specified environment.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeDevelopers">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
      *
@@ -13339,6 +13715,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowRemoveDevelopers method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeDevelopers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -13362,7 +13740,195 @@ public final class DXAPI {
     }
 
     /**
+     * Invokes the globalWorkflowRemoveTags method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T globalWorkflowRemoveTags(String objectId, Class<T> outputClass) {
+        return globalWorkflowRemoveTags(objectId, mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the globalWorkflowRemoveTags method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T globalWorkflowRemoveTags(String objectId, Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/" + objectId + "/" + "removeTags",
+                        input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+    /**
+     * Invokes the globalWorkflowRemoveTags method with an empty input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T globalWorkflowRemoveTags(String objectId, Class<T> outputClass, DXEnvironment env) {
+        return globalWorkflowRemoveTags(objectId, mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the globalWorkflowRemoveTags method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T globalWorkflowRemoveTags(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+            new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags",
+                    input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+
+    /**
+     * Invokes the globalWorkflowRemoveTags method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #globalWorkflowRemoveTags(String, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode globalWorkflowRemoveTags(String objectId) {
+        return globalWorkflowRemoveTags(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the globalWorkflowRemoveTags method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #globalWorkflowRemoveTags(String, Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode globalWorkflowRemoveTags(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the globalWorkflowRemoveTags method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #globalWorkflowRemoveTags(String, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode globalWorkflowRemoveTags(String objectId, DXEnvironment env) {
+        return globalWorkflowRemoveTags(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the globalWorkflowRemoveTags method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #globalWorkflowRemoveTags(String, Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode globalWorkflowRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
      * Invokes the globalWorkflowRun method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/run">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
@@ -13381,6 +13947,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowRun method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/run">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -13404,6 +13972,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowRun method with an empty input using the given environment, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/run">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      * @param env environment object specifying the auth token and remote server and protocol
@@ -13422,6 +13992,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowRun method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/run">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -13447,6 +14019,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowRun method.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/run">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      *
      * @return Server response parsed from JSON
@@ -13466,6 +14040,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowRun method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/run">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -13489,6 +14065,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowRun method with the specified environment.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/run">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
      *
@@ -13509,6 +14087,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowRun method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/run">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -13534,6 +14114,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowUpdate method with an empty input, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/update">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      *
@@ -13551,6 +14133,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowUpdate method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/update">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -13574,6 +14158,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowUpdate method with an empty input using the given environment, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/update">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      * @param env environment object specifying the auth token and remote server and protocol
@@ -13592,6 +14178,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowUpdate method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/update">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -13617,6 +14205,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowUpdate method.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/update">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      *
      * @return Server response parsed from JSON
@@ -13636,6 +14226,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowUpdate method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/update">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -13659,6 +14251,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowUpdate method with the specified environment.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/update">API specification</a>.
+     *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
      *
@@ -13679,6 +14273,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowUpdate method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/update">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -13704,6 +14300,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowNew method with an empty input, deserializing to an object of the specified class.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow/new">API specification</a>.
+     *
      * @param outputClass class to deserialize the server reponse to
      *
      * @return Server response parsed from JSON
@@ -13720,6 +14318,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowNew method with an empty input using the specified environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow/new">API specification</a>.
      *
      * @param outputClass class to deserialize the server reponse to
      * @param env environment object specifying the auth token and remote server and protocol
@@ -13738,6 +14338,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowNew method with the specified input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow/new">API specification</a>.
      *
      * @param inputObject input object (to be JSON serialized to an input hash)
      * @param outputClass class to deserialize the server reponse to
@@ -13759,6 +14361,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowNew method with the specified input using the specified environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow/new">API specification</a>.
      *
      * @param inputObject input object (to be JSON serialized to an input hash)
      * @param outputClass class to deserialize the server reponse to
@@ -13783,6 +14387,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowNew method.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow/new">API specification</a>.
+     *
      * @return Server response parsed from JSON
      *
      * @throws DXAPIException
@@ -13800,6 +14406,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowNew method with the specified input parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow/new">API specification</a>.
      *
      * @param inputParams input parameters to the API call
      *
@@ -13821,6 +14429,8 @@ public final class DXAPI {
     /**
      * Invokes the globalWorkflowNew method with the specified environment.
      *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow/new">API specification</a>.
+     *
      * @param env environment object specifying the auth token and remote server and protocol
      *
      * @return Server response parsed from JSON
@@ -13840,6 +14450,8 @@ public final class DXAPI {
     }
     /**
      * Invokes the globalWorkflowNew method with the specified environment and input parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow/new">API specification</a>.
      *
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol

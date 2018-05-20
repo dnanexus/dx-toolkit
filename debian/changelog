@@ -1,3 +1,18 @@
+dx-toolkit (0.255.0) precise; urgency=low
+
+  * Added: Support for updating a global workflow
+  * Added: Wiki links to API documentation for API wrappers
+  * Added: addTags/removeTags API wrappers for global workflow
+  * Fixed: Better checking for inputs and/or inputSpec before batch running workflows
+
+ -- Aleksandra Zalcman <azalcman@dnanexus.com>  Thu, 10 May 2018 17:18:02 +0000
+
+dx-toolkit (0.254.0) precise; urgency=low
+
+  * Changed: A workflow must be closed before initializing a global workflow from it (test updates)
+
+ -- Aleksandra Zalcman <azalcman@dnanexus.com>  Thu, 03 May 2018 17:10:38 +0000
+
 dx-toolkit (0.253.0) precise; urgency=low
 
   * Changed: Remove the "temporary" field from dx describe workflow-xxxx

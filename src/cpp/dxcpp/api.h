@@ -258,6 +258,9 @@ namespace dx {
   JSON globalWorkflowAddDevelopers(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON globalWorkflowAddDevelopers(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
+  JSON globalWorkflowAddTags(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON globalWorkflowAddTags(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
   JSON globalWorkflowDelete(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON globalWorkflowDelete(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
@@ -284,6 +287,9 @@ namespace dx {
 
   JSON globalWorkflowRemoveDevelopers(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON globalWorkflowRemoveDevelopers(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON globalWorkflowRemoveTags(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON globalWorkflowRemoveTags(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
   JSON globalWorkflowRun(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=false);
   JSON globalWorkflowRun(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=false);

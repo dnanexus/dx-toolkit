@@ -8,6 +8,31 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Changed
 
+* Cosmetic update to `dx publish`
+
+## [255.0] - beta
+
+
+### Added
+
+* Support for updating a global workflow
+* Wiki links to API documentation for API wrappers
+* addTags/removeTags API wrappers for global workflow
+
+### Fixed
+
+* Better checking for inputs and/or inputSpec before batch running workflows
+
+## [254.0] - 2018.05.10 - stable
+
+### Changed
+
+* A workflow must be closed before initializing a global workflow from it (test updates for API changes)
+
+## [253.0] - 2018.05.02
+
+### Changed
+
 * Remove the "temporary" field from `dx describe workflow-xxxx`
 
 ### Added
@@ -15,7 +40,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * "Deleted" field to `dx describe globalworkflow-xxxx` 
 * a note to `dx describe` that the workflow is locked
 
-## [252.0] - beta
+## [252.0] - 2018.04.26
 
 ### Added
 
@@ -30,7 +55,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * public project test
 * API tests
 
-## [251.2] - 2018.04.19 - stable
+## [251.2] - 2018.04.19
 
 ### Added
 
