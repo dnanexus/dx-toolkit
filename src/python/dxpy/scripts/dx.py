@@ -5494,9 +5494,9 @@ parser_publish = subparsers.add_parser('publish', help='Publish an app or a glob
                                    prog='dx publish')
 parser_publish.add_argument('executable',
                             help='ID or name and version of an app/global workflow, e.g. myqc/1.0.0').completer = DXPathCompleter(classes=['app', 'globalworkflow'])
-parser_publish.add_argument('--make_default',
-                            help='Set a "default" alias on the published version',
-                            action='store_true', dest='make_default')
+parser_publish.add_argument('--no-default',
+                            help='Do not set a "default" alias on the published version',
+                            action='store_false', dest='make_default')
 parser_publish.set_defaults(func=publish)
 register_parser(parser_publish)
 
