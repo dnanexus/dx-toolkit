@@ -9,6 +9,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Changed
 
 * Cosmetic update to `dx publish`
+* `dx publish` now sets the `default` alias on the published version by default
 
 ## [255.0] - beta
 
