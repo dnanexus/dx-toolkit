@@ -25,7 +25,7 @@ import json
 import tempfile
 import shutil
 import pipes
-impot time
+import time
 import dxpy
 from dxpy.utils.completer import InstanceTypesCompleter
 from dxpy_testutil import DXTestCase, check_output, temporary_project, override_environment
