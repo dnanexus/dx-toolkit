@@ -25,6 +25,7 @@ import json
 import tempfile
 import shutil
 import pipes
+impot time
 import dxpy
 from dxpy.utils.completer import InstanceTypesCompleter
 from dxpy_testutil import DXTestCase, check_output, temporary_project, override_environment
@@ -509,7 +510,7 @@ class TestDXJobutilAddOutput(DXTestCase):
                      "\nwait"
 
         run("/bin/bash -c \"" + shell_code + "\"", cwd=temp_dir)
-
+        time.sleep(2)
         with open(job_output_filename) as outputs:
             output_spec = json.loads(outputs.read())
             self.assertEquals(len(output_spec["myarray"]), count)
