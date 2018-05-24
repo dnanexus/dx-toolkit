@@ -1197,14 +1197,6 @@ module DX
       return DX::http_request("/#{object_id}/close", input_params, opts)
     end
 
-    # Invokes the /record-xxxx/dashboardUrl API method.
-    #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord-xxxx%2FdashboardUrl
-    def self.record_dashboard_url(object_id, input_params={}, opts={})
-      opts = { "always_retry" => true }.merge(opts)
-      return DX::http_request("/#{object_id}/dashboardUrl", input_params, opts)
-    end
-
     # Invokes the /record-xxxx/describe API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord-xxxx%2Fdescribe

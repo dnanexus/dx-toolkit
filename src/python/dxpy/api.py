@@ -1225,14 +1225,6 @@ def record_close(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/close' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def record_dashboard_url(object_id, input_params={}, always_retry=True, **kwargs):
-    """
-    Invokes the /record-xxxx/dashboardUrl API method.
-
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord-xxxx%2FdashboardUrl
-    """
-    return DXHTTPRequest('/%s/dashboardUrl' % object_id, input_params, always_retry=always_retry, **kwargs)
-
 def record_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /record-xxxx/describe API method.

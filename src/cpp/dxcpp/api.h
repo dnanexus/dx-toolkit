@@ -507,9 +507,6 @@ namespace dx {
   JSON recordClose(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON recordClose(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
-  JSON recordDashboardUrl(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON recordDashboardUrl(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
   JSON recordDescribe(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON recordDescribe(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 

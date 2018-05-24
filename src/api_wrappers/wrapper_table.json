@@ -1332,15 +1332,6 @@
         }
     ],
     [
-        "/record-xxxx/dashboardUrl",
-        "recordDashboardUrl(req, objectId)",
-        {
-            "objectMethod": true,
-            "retryable": true,
-            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord-xxxx%2FdashboardUrl"
-        }
-    ],
-    [
         "/record-xxxx/describe",
         "recordDescribe(req, objectId)",
         {
