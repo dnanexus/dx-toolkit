@@ -1668,6 +1668,429 @@ containerRenameFolder <- function(objectID,
                 alwaysRetry=alwaysRetry)
 }
 
+##' databaseAddTags API wrapper
+##'
+##' This function makes an API call to the \code{/database-xxxx/addTags} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method\%3A-\%2Fclass-xxxx\%2FaddTags}
+databaseAddTags <- function(objectID,
+                            inputParams=emptyNamedList,
+                            jsonifyData=TRUE,
+                            alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'addTags', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' databaseAddTypes API wrapper
+##'
+##' This function makes an API call to the \code{/database-xxxx/addTypes} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method\%3A-\%2Fclass-xxxx\%2FaddTypes}
+databaseAddTypes <- function(objectID,
+                             inputParams=emptyNamedList,
+                             jsonifyData=TRUE,
+                             alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'addTypes', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' databaseDescribe API wrapper
+##'
+##' This function makes an API call to the \code{/database-xxxx/describe} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method\%3A-\%2Fdatabase-xxxx\%2Fdescribe}
+databaseDescribe <- function(objectID,
+                             inputParams=emptyNamedList,
+                             jsonifyData=TRUE,
+                             alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'describe', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' databaseGetDetails API wrapper
+##'
+##' This function makes an API call to the \code{/database-xxxx/getDetails} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method\%3A-\%2Fclass-xxxx\%2FgetDetails}
+databaseGetDetails <- function(objectID,
+                               inputParams=emptyNamedList,
+                               jsonifyData=TRUE,
+                               alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'getDetails', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' databaseListProjects API wrapper
+##'
+##' This function makes an API call to the \code{/database-xxxx/listProjects} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method\%3A-\%2Fclass-xxxx\%2FlistProjects}
+databaseListProjects <- function(objectID,
+                                 inputParams=emptyNamedList,
+                                 jsonifyData=TRUE,
+                                 alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'listProjects', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' databaseRelocate API wrapper
+##'
+##' This function makes an API call to the \code{/database-xxxx/relocate} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method\%3A-\%2Fdatabase-xxxx\%2Frelocate}
+databaseRelocate <- function(objectID,
+                             inputParams=emptyNamedList,
+                             jsonifyData=TRUE,
+                             alwaysRetry=FALSE) {
+  resource <- paste('/', objectID, '/', 'relocate', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' databaseRemoveTags API wrapper
+##'
+##' This function makes an API call to the \code{/database-xxxx/removeTags} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method\%3A-\%2Fclass-xxxx\%2FremoveTags}
+databaseRemoveTags <- function(objectID,
+                               inputParams=emptyNamedList,
+                               jsonifyData=TRUE,
+                               alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'removeTags', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' databaseRemoveTypes API wrapper
+##'
+##' This function makes an API call to the \code{/database-xxxx/removeTypes} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method\%3A-\%2Fclass-xxxx\%2FremoveTypes}
+databaseRemoveTypes <- function(objectID,
+                                inputParams=emptyNamedList,
+                                jsonifyData=TRUE,
+                                alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'removeTypes', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' databaseRename API wrapper
+##'
+##' This function makes an API call to the \code{/database-xxxx/rename} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method\%3A-\%2Fclass-xxxx\%2Frename}
+databaseRename <- function(objectID,
+                           inputParams=emptyNamedList,
+                           jsonifyData=TRUE,
+                           alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'rename', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' databaseSetDetails API wrapper
+##'
+##' This function makes an API call to the \code{/database-xxxx/setDetails} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method\%3A-\%2Fclass-xxxx\%2FsetDetails}
+databaseSetDetails <- function(objectID,
+                               inputParams=emptyNamedList,
+                               jsonifyData=TRUE,
+                               alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'setDetails', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' databaseSetProperties API wrapper
+##'
+##' This function makes an API call to the \code{/database-xxxx/setProperties} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method\%3A-\%2Fclass-xxxx\%2FsetProperties}
+databaseSetProperties <- function(objectID,
+                                  inputParams=emptyNamedList,
+                                  jsonifyData=TRUE,
+                                  alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'setProperties', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' databaseSetVisibility API wrapper
+##'
+##' This function makes an API call to the \code{/database-xxxx/setVisibility} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method\%3A-\%2Fclass-xxxx\%2FsetVisibility}
+databaseSetVisibility <- function(objectID,
+                                  inputParams=emptyNamedList,
+                                  jsonifyData=TRUE,
+                                  alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'setVisibility', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' databaseFindByName API wrapper
+##'
+##' This function makes an API call to the \code{/database/findByName} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method\%3A-\%2Ffile\%2FfindByName}
+databaseFindByName <- function(inputParams=emptyNamedList,
+                               jsonifyData=TRUE,
+                               alwaysRetry=TRUE) {
+  dxHTTPRequest('/database/findByName', inputParams, jsonifyData=jsonifyData, alwaysRetry=alwaysRetry)
+}
+
 ##' fileAddTags API wrapper
 ##'
 ##' This function makes an API call to the \code{/file-xxxx/addTags} API
@@ -2221,516 +2644,6 @@ globalWorkflowAddCategories <- function(objectID,
                 inputParams,
                 jsonifyData=jsonifyData,
                 alwaysRetry=alwaysRetry)
-}
-
-##' databaseAddTags API wrapper
-##'
-##' This function makes an API call to the \code{/database-xxxx/addTags} API
-##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
-##' function which makes POST HTTP requests to the API server.
-##'
-##' 
-##' @param objectID DNAnexus object ID
-##' @param inputParams Either an R object that will be converted into JSON
-##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
-##' providing the JSON string directly, you must set \code{jsonifyData} to
-##' \code{FALSE}.
-##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
-##' \code{inputParams} to create the JSON string or pass through the value of
-##' \code{inputParams} directly.  (Default is \code{TRUE}.)
-##' @param alwaysRetry Whether to always retry even when no response is
-##' received from the API server
-##' @return If the API call is successful, the parsed JSON of the API server
-##' response is returned (using \code{RJSONIO::fromJSON}).
-##' @export
-##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method\%3A-\%2Fclass-xxxx\%2FaddTags}
-databaseAddTags <- function(objectID,
-                            inputParams=emptyNamedList,
-                            jsonifyData=TRUE,
-                            alwaysRetry=TRUE) {
-  resource <- paste('/', objectID, '/', 'addTags', sep='')
-  dxHTTPRequest(resource,
-                inputParams,
-                jsonifyData=jsonifyData,
-                alwaysRetry=alwaysRetry)
-}
-
-##' databaseAddTypes API wrapper
-##'
-##' This function makes an API call to the \code{/database-xxxx/addTypes} API
-##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
-##' function which makes POST HTTP requests to the API server.
-##'
-##' 
-##' @param objectID DNAnexus object ID
-##' @param inputParams Either an R object that will be converted into JSON
-##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
-##' providing the JSON string directly, you must set \code{jsonifyData} to
-##' \code{FALSE}.
-##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
-##' \code{inputParams} to create the JSON string or pass through the value of
-##' \code{inputParams} directly.  (Default is \code{TRUE}.)
-##' @param alwaysRetry Whether to always retry even when no response is
-##' received from the API server
-##' @return If the API call is successful, the parsed JSON of the API server
-##' response is returned (using \code{RJSONIO::fromJSON}).
-##' @export
-##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method\%3A-\%2Fclass-xxxx\%2FaddTypes}
-databaseAddTypes <- function(objectID,
-                             inputParams=emptyNamedList,
-                             jsonifyData=TRUE,
-                             alwaysRetry=TRUE) {
-  resource <- paste('/', objectID, '/', 'addTypes', sep='')
-  dxHTTPRequest(resource,
-                inputParams,
-                jsonifyData=jsonifyData,
-                alwaysRetry=alwaysRetry)
-}
-
-##' databaseDescribe API wrapper
-##'
-##' This function makes an API call to the \code{/database-xxxx/describe} API
-##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
-##' function which makes POST HTTP requests to the API server.
-##'
-##' 
-##' @param objectID DNAnexus object ID
-##' @param inputParams Either an R object that will be converted into JSON
-##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
-##' providing the JSON string directly, you must set \code{jsonifyData} to
-##' \code{FALSE}.
-##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
-##' \code{inputParams} to create the JSON string or pass through the value of
-##' \code{inputParams} directly.  (Default is \code{TRUE}.)
-##' @param alwaysRetry Whether to always retry even when no response is
-##' received from the API server
-##' @return If the API call is successful, the parsed JSON of the API server
-##' response is returned (using \code{RJSONIO::fromJSON}).
-##' @export
-##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method\%3A-\%2Fdatabase-xxxx\%2Fdescribe}
-databaseDescribe <- function(objectID,
-                             inputParams=emptyNamedList,
-                             jsonifyData=TRUE,
-                             alwaysRetry=TRUE) {
-  resource <- paste('/', objectID, '/', 'describe', sep='')
-  dxHTTPRequest(resource,
-                inputParams,
-                jsonifyData=jsonifyData,
-                alwaysRetry=alwaysRetry)
-}
-
-##' databaseGetDetails API wrapper
-##'
-##' This function makes an API call to the \code{/database-xxxx/getDetails} API
-##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
-##' function which makes POST HTTP requests to the API server.
-##'
-##' 
-##' @param objectID DNAnexus object ID
-##' @param inputParams Either an R object that will be converted into JSON
-##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
-##' providing the JSON string directly, you must set \code{jsonifyData} to
-##' \code{FALSE}.
-##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
-##' \code{inputParams} to create the JSON string or pass through the value of
-##' \code{inputParams} directly.  (Default is \code{TRUE}.)
-##' @param alwaysRetry Whether to always retry even when no response is
-##' received from the API server
-##' @return If the API call is successful, the parsed JSON of the API server
-##' response is returned (using \code{RJSONIO::fromJSON}).
-##' @export
-##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method\%3A-\%2Fclass-xxxx\%2FgetDetails}
-databaseGetDetails <- function(objectID,
-                               inputParams=emptyNamedList,
-                               jsonifyData=TRUE,
-                               alwaysRetry=TRUE) {
-  resource <- paste('/', objectID, '/', 'getDetails', sep='')
-  dxHTTPRequest(resource,
-                inputParams,
-                jsonifyData=jsonifyData,
-                alwaysRetry=alwaysRetry)
-}
-
-##' databaseListProjects API wrapper
-##'
-##' This function makes an API call to the \code{/database-xxxx/listProjects} API
-##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
-##' function which makes POST HTTP requests to the API server.
-##'
-##' 
-##' @param objectID DNAnexus object ID
-##' @param inputParams Either an R object that will be converted into JSON
-##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
-##' providing the JSON string directly, you must set \code{jsonifyData} to
-##' \code{FALSE}.
-##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
-##' \code{inputParams} to create the JSON string or pass through the value of
-##' \code{inputParams} directly.  (Default is \code{TRUE}.)
-##' @param alwaysRetry Whether to always retry even when no response is
-##' received from the API server
-##' @return If the API call is successful, the parsed JSON of the API server
-##' response is returned (using \code{RJSONIO::fromJSON}).
-##' @export
-##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method\%3A-\%2Fclass-xxxx\%2FlistProjects}
-databaseListProjects <- function(objectID,
-                                 inputParams=emptyNamedList,
-                                 jsonifyData=TRUE,
-                                 alwaysRetry=TRUE) {
-  resource <- paste('/', objectID, '/', 'listProjects', sep='')
-  dxHTTPRequest(resource,
-                inputParams,
-                jsonifyData=jsonifyData,
-                alwaysRetry=alwaysRetry)
-}
-
-##' databaseRelocate API wrapper
-##'
-##' This function makes an API call to the \code{/database-xxxx/relocate} API
-##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
-##' function which makes POST HTTP requests to the API server.
-##'
-##' 
-##' @param objectID DNAnexus object ID
-##' @param inputParams Either an R object that will be converted into JSON
-##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
-##' providing the JSON string directly, you must set \code{jsonifyData} to
-##' \code{FALSE}.
-##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
-##' \code{inputParams} to create the JSON string or pass through the value of
-##' \code{inputParams} directly.  (Default is \code{TRUE}.)
-##' @param alwaysRetry Whether to always retry even when no response is
-##' received from the API server
-##' @return If the API call is successful, the parsed JSON of the API server
-##' response is returned (using \code{RJSONIO::fromJSON}).
-##' @export
-##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method\%3A-\%2Fdatabase-xxxx\%2Frelocate}
-databaseRelocate <- function(objectID,
-                             inputParams=emptyNamedList,
-                             jsonifyData=TRUE,
-                             alwaysRetry=FALSE) {
-  resource <- paste('/', objectID, '/', 'relocate', sep='')
-  dxHTTPRequest(resource,
-                inputParams,
-                jsonifyData=jsonifyData,
-                alwaysRetry=alwaysRetry)
-}
-
-##' databaseRemoveTags API wrapper
-##'
-##' This function makes an API call to the \code{/database-xxxx/removeTags} API
-##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
-##' function which makes POST HTTP requests to the API server.
-##'
-##' 
-##' @param objectID DNAnexus object ID
-##' @param inputParams Either an R object that will be converted into JSON
-##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
-##' providing the JSON string directly, you must set \code{jsonifyData} to
-##' \code{FALSE}.
-##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
-##' \code{inputParams} to create the JSON string or pass through the value of
-##' \code{inputParams} directly.  (Default is \code{TRUE}.)
-##' @param alwaysRetry Whether to always retry even when no response is
-##' received from the API server
-##' @return If the API call is successful, the parsed JSON of the API server
-##' response is returned (using \code{RJSONIO::fromJSON}).
-##' @export
-##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method\%3A-\%2Fclass-xxxx\%2FremoveTags}
-databaseRemoveTags <- function(objectID,
-                               inputParams=emptyNamedList,
-                               jsonifyData=TRUE,
-                               alwaysRetry=TRUE) {
-  resource <- paste('/', objectID, '/', 'removeTags', sep='')
-  dxHTTPRequest(resource,
-                inputParams,
-                jsonifyData=jsonifyData,
-                alwaysRetry=alwaysRetry)
-}
-
-##' databaseRemoveTypes API wrapper
-##'
-##' This function makes an API call to the \code{/database-xxxx/removeTypes} API
-##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
-##' function which makes POST HTTP requests to the API server.
-##'
-##' 
-##' @param objectID DNAnexus object ID
-##' @param inputParams Either an R object that will be converted into JSON
-##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
-##' providing the JSON string directly, you must set \code{jsonifyData} to
-##' \code{FALSE}.
-##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
-##' \code{inputParams} to create the JSON string or pass through the value of
-##' \code{inputParams} directly.  (Default is \code{TRUE}.)
-##' @param alwaysRetry Whether to always retry even when no response is
-##' received from the API server
-##' @return If the API call is successful, the parsed JSON of the API server
-##' response is returned (using \code{RJSONIO::fromJSON}).
-##' @export
-##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method\%3A-\%2Fclass-xxxx\%2FremoveTypes}
-databaseRemoveTypes <- function(objectID,
-                                inputParams=emptyNamedList,
-                                jsonifyData=TRUE,
-                                alwaysRetry=TRUE) {
-  resource <- paste('/', objectID, '/', 'removeTypes', sep='')
-  dxHTTPRequest(resource,
-                inputParams,
-                jsonifyData=jsonifyData,
-                alwaysRetry=alwaysRetry)
-}
-
-##' databaseRename API wrapper
-##'
-##' This function makes an API call to the \code{/database-xxxx/rename} API
-##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
-##' function which makes POST HTTP requests to the API server.
-##'
-##' 
-##' @param objectID DNAnexus object ID
-##' @param inputParams Either an R object that will be converted into JSON
-##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
-##' providing the JSON string directly, you must set \code{jsonifyData} to
-##' \code{FALSE}.
-##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
-##' \code{inputParams} to create the JSON string or pass through the value of
-##' \code{inputParams} directly.  (Default is \code{TRUE}.)
-##' @param alwaysRetry Whether to always retry even when no response is
-##' received from the API server
-##' @return If the API call is successful, the parsed JSON of the API server
-##' response is returned (using \code{RJSONIO::fromJSON}).
-##' @export
-##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method\%3A-\%2Fclass-xxxx\%2Frename}
-databaseRename <- function(objectID,
-                           inputParams=emptyNamedList,
-                           jsonifyData=TRUE,
-                           alwaysRetry=TRUE) {
-  resource <- paste('/', objectID, '/', 'rename', sep='')
-  dxHTTPRequest(resource,
-                inputParams,
-                jsonifyData=jsonifyData,
-                alwaysRetry=alwaysRetry)
-}
-
-##' databaseSetDetails API wrapper
-##'
-##' This function makes an API call to the \code{/database-xxxx/setDetails} API
-##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
-##' function which makes POST HTTP requests to the API server.
-##'
-##' 
-##' @param objectID DNAnexus object ID
-##' @param inputParams Either an R object that will be converted into JSON
-##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
-##' providing the JSON string directly, you must set \code{jsonifyData} to
-##' \code{FALSE}.
-##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
-##' \code{inputParams} to create the JSON string or pass through the value of
-##' \code{inputParams} directly.  (Default is \code{TRUE}.)
-##' @param alwaysRetry Whether to always retry even when no response is
-##' received from the API server
-##' @return If the API call is successful, the parsed JSON of the API server
-##' response is returned (using \code{RJSONIO::fromJSON}).
-##' @export
-##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method\%3A-\%2Fclass-xxxx\%2FsetDetails}
-databaseSetDetails <- function(objectID,
-                               inputParams=emptyNamedList,
-                               jsonifyData=TRUE,
-                               alwaysRetry=TRUE) {
-  resource <- paste('/', objectID, '/', 'setDetails', sep='')
-  dxHTTPRequest(resource,
-                inputParams,
-                jsonifyData=jsonifyData,
-                alwaysRetry=alwaysRetry)
-}
-
-##' databaseSetProperties API wrapper
-##'
-##' This function makes an API call to the \code{/database-xxxx/setProperties} API
-##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
-##' function which makes POST HTTP requests to the API server.
-##'
-##' 
-##' @param objectID DNAnexus object ID
-##' @param inputParams Either an R object that will be converted into JSON
-##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
-##' providing the JSON string directly, you must set \code{jsonifyData} to
-##' \code{FALSE}.
-##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
-##' \code{inputParams} to create the JSON string or pass through the value of
-##' \code{inputParams} directly.  (Default is \code{TRUE}.)
-##' @param alwaysRetry Whether to always retry even when no response is
-##' received from the API server
-##' @return If the API call is successful, the parsed JSON of the API server
-##' response is returned (using \code{RJSONIO::fromJSON}).
-##' @export
-##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method\%3A-\%2Fclass-xxxx\%2FsetProperties}
-databaseSetProperties <- function(objectID,
-                                  inputParams=emptyNamedList,
-                                  jsonifyData=TRUE,
-                                  alwaysRetry=TRUE) {
-  resource <- paste('/', objectID, '/', 'setProperties', sep='')
-  dxHTTPRequest(resource,
-                inputParams,
-                jsonifyData=jsonifyData,
-                alwaysRetry=alwaysRetry)
-}
-
-##' databaseSetVisibility API wrapper
-##'
-##' This function makes an API call to the \code{/database-xxxx/setVisibility} API
-##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
-##' function which makes POST HTTP requests to the API server.
-##'
-##' 
-##' @param objectID DNAnexus object ID
-##' @param inputParams Either an R object that will be converted into JSON
-##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
-##' providing the JSON string directly, you must set \code{jsonifyData} to
-##' \code{FALSE}.
-##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
-##' \code{inputParams} to create the JSON string or pass through the value of
-##' \code{inputParams} directly.  (Default is \code{TRUE}.)
-##' @param alwaysRetry Whether to always retry even when no response is
-##' received from the API server
-##' @return If the API call is successful, the parsed JSON of the API server
-##' response is returned (using \code{RJSONIO::fromJSON}).
-##' @export
-##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method\%3A-\%2Fclass-xxxx\%2FsetVisibility}
-databaseSetVisibility <- function(objectID,
-                                  inputParams=emptyNamedList,
-                                  jsonifyData=TRUE,
-                                  alwaysRetry=TRUE) {
-  resource <- paste('/', objectID, '/', 'setVisibility', sep='')
-  dxHTTPRequest(resource,
-                inputParams,
-                jsonifyData=jsonifyData,
-                alwaysRetry=alwaysRetry)
-}
-
-##' databaseUpdate API wrapper
-##'
-##' This function makes an API call to the \code{/database-xxxx/update} API
-##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
-##' function which makes POST HTTP requests to the API server.
-##'
-##' 
-##' @param objectID DNAnexus object ID
-##' @param inputParams Either an R object that will be converted into JSON
-##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
-##' providing the JSON string directly, you must set \code{jsonifyData} to
-##' \code{FALSE}.
-##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
-##' \code{inputParams} to create the JSON string or pass through the value of
-##' \code{inputParams} directly.  (Default is \code{TRUE}.)
-##' @param alwaysRetry Whether to always retry even when no response is
-##' received from the API server
-##' @return If the API call is successful, the parsed JSON of the API server
-##' response is returned (using \code{RJSONIO::fromJSON}).
-##' @export
-##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{REMOVE!!!}
-databaseUpdate <- function(objectID,
-                           inputParams=emptyNamedList,
-                           jsonifyData=TRUE,
-                           alwaysRetry=FALSE) {
-  resource <- paste('/', objectID, '/', 'update', sep='')
-  dxHTTPRequest(resource,
-                inputParams,
-                jsonifyData=jsonifyData,
-                alwaysRetry=alwaysRetry)
-}
-
-##' databaseFindByName API wrapper
-##'
-##' This function makes an API call to the \code{/database/findByName} API
-##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
-##' function which makes POST HTTP requests to the API server.
-##'
-##' 
-##' @param inputParams Either an R object that will be converted into JSON
-##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
-##' providing the JSON string directly, you must set \code{jsonifyData} to
-##' \code{FALSE}.
-##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
-##' \code{inputParams} to create the JSON string or pass through the value of
-##' \code{inputParams} directly.  (Default is \code{TRUE}.)
-##' @param alwaysRetry Whether to always retry even when no response is
-##' received from the API server
-##' @return If the API call is successful, the parsed JSON of the API server
-##' response is returned (using \code{RJSONIO::fromJSON}).
-##' @export
-##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method\%3A-\%2Ffile\%2FfindByName}
-databaseFindByName <- function(inputParams=emptyNamedList,
-                               jsonifyData=TRUE,
-                               alwaysRetry=TRUE) {
-  dxHTTPRequest('/database/findByName', inputParams, jsonifyData=jsonifyData, alwaysRetry=alwaysRetry)
-}
-
-##' databaseNew API wrapper
-##'
-##' This function makes an API call to the \code{/database/new} API
-##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
-##' function which makes POST HTTP requests to the API server.
-##'
-##' 
-##' @param inputParams Either an R object that will be converted into JSON
-##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
-##' providing the JSON string directly, you must set \code{jsonifyData} to
-##' \code{FALSE}.
-##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
-##' \code{inputParams} to create the JSON string or pass through the value of
-##' \code{inputParams} directly.  (Default is \code{TRUE}.)
-##' @param alwaysRetry Whether to always retry even when no response is
-##' received from the API server
-##' @return If the API call is successful, the parsed JSON of the API server
-##' response is returned (using \code{RJSONIO::fromJSON}).
-##' @export
-##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{REMOVE!!!!}
-databaseNew <- function(inputParams=emptyNamedList,
-                        jsonifyData=TRUE,
-                        alwaysRetry=FALSE) {
-  dxHTTPRequest('/database/new', inputParams, jsonifyData=jsonifyData, alwaysRetry=alwaysRetry)
-}
-
-##' databasetypeNewSpot API wrapper
-##'
-##' This function makes an API call to the \code{/databasetype/newSpot} API
-##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
-##' function which makes POST HTTP requests to the API server.
-##'
-##' 
-##' @param inputParams Either an R object that will be converted into JSON
-##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
-##' providing the JSON string directly, you must set \code{jsonifyData} to
-##' \code{FALSE}.
-##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
-##' \code{inputParams} to create the JSON string or pass through the value of
-##' \code{inputParams} directly.  (Default is \code{TRUE}.)
-##' @param alwaysRetry Whether to always retry even when no response is
-##' received from the API server
-##' @return If the API call is successful, the parsed JSON of the API server
-##' response is returned (using \code{RJSONIO::fromJSON}).
-##' @export
-##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method\%3A-\%2Fdatabasetype\%2FnewSpot}
-databasetypeNewSpot <- function(inputParams=emptyNamedList,
-                                jsonifyData=TRUE,
-                                alwaysRetry=FALSE) {
-  dxHTTPRequest('/databasetype/newSpot', inputParams, jsonifyData=jsonifyData, alwaysRetry=alwaysRetry)
 }
 
 ##' globalWorkflowAddDevelopers API wrapper

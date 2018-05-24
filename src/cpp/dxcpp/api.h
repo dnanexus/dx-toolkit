@@ -240,17 +240,8 @@ namespace dx {
   JSON databaseSetVisibility(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON databaseSetVisibility(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
-  JSON databaseUpdate(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=false);
-  JSON databaseUpdate(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=false);
-
   JSON databaseFindByName(const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON databaseFindByName(const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON databaseNew(const std::string &input_params="{}", const bool safe_to_retry=false);
-  JSON databaseNew(const dx::JSON &input_params, const bool safe_to_retry=false);
-
-  JSON databasetypeNewSpot(const std::string &input_params="{}", const bool safe_to_retry=false);
-  JSON databasetypeNewSpot(const dx::JSON &input_params, const bool safe_to_retry=false);
 
   JSON fileAddTags(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON fileAddTags(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
