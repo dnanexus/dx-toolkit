@@ -526,40 +526,12 @@
         }
     ],
     [
-        "/database-xxxx/update",
-        "databaseUpdate(req, objectId)",
-        {
-            "objectMethod": true,
-            "retryable": false,
-            "wikiLink": "REMOVE!!!"
-        }
-    ],
-    [
         "/database/findByName",
         "databaseFindByName(req)",
         {
             "objectMethod": false,
             "retryable": true,
             "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Ffile%2FfindByName"
-        }
-    ],
-    [
-        "/database/new",
-        "databaseNew(req)",
-        {
-            "objectMethod": false,
-            "retryable": false,
-            "wikiLink": "REMOVE!!!!",
-            "acceptNonce": true
-        }
-    ],
-    [
-        "/databasetype/newSpot",
-        "databasetypeNewSpot(req)",
-        {
-            "objectMethod": false,
-            "retryable": false,
-            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Databasetypes#API-method%3A-%2Fdatabasetype%2FnewSpot"
         }
     ],
     [
