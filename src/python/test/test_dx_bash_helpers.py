@@ -67,14 +67,14 @@ def ignore_folders(directory, contents):
 def build_app_with_bash_helpers(app_dir, project_id):
     tempdir = tempfile.mkdtemp()
     try:
-        updated_app_dir = os.path.join(tempdir, os.path.basename(app_dir))
+        updated_app_dir = os.path.abspath(os.path.join(tempdir, os.path.basename(app_dir)))
         shutil.copytree(app_dir, updated_app_dir)
         # Copy the current verion of dx-toolkit. We will build it on the worker
         # and source this version which will overload the stock version of dx-toolkit.
         # This we we can test all bash helpers as they would appear locally with all
         # necessary dependencies
-        dxtoolkit_dir = os.path.join(updated_app_dir, 'resources', 'dxtoolkit')
-        local_dxtoolkit = os.path.join(os.path.dirname(__file__), '..', '..', '..')
+        dxtoolkit_dir = os.path.abspath(os.path.join(updated_app_dir, 'resources', 'dxtoolkit'))
+        local_dxtoolkit = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
         shutil.copytree(local_dxtoolkit, dxtoolkit_dir, ignore=ignore_folders)
 
         # Add lines to the beginning of the job to make and use our new dx-toolkit
