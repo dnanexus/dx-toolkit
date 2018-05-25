@@ -19,19 +19,19 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os
-import unittest
-import json
-import tempfile
-import shutil
-import pipes
 import dxpy
+import dxpy_testutil as testutil
+import json
+import os
+import pipes
+import pytest
+import shutil
+import tempfile
+import unittest
 from dxpy.utils.completer import InstanceTypesCompleter
 from dxpy_testutil import DXTestCase, check_output, temporary_project, override_environment
-import dxpy_testutil as testutil
 from dxpy.exceptions import DXJobFailureError
 from dxpy.bindings.download_all_inputs import _get_num_parallel_threads
-import pytest
 
 def run(command, **kwargs):
     try:
@@ -78,6 +78,8 @@ def build_app_with_bash_helpers(app_dir, project_id):
         local_dxtoolkit = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
         print("local_dxtoolkit is: '{0}'".format(local_dxtoolkit))
         shutil.copytree(local_dxtoolkit, dxtoolkit_dir, ignore=ignore_folders)
+        print("contents of local_dxtoolkit dir: '{0}'".format(os.listdir(local_dxtoolkit)))
+        print("contents of dxtoolkit_dir: '{0}'".format(os.listdir(dxtoolkit_dir)))
 
         # Add lines to the beginning of the job to make and use our new dx-toolkit
         preamble = []
