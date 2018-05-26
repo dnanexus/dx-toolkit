@@ -77,9 +77,7 @@ def build_app_with_bash_helpers(app_dir, project_id):
         print("dxtoolkit_dir is: '{0}'".format(dxtoolkit_dir))
         local_dxtoolkit = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
         print("local_dxtoolkit is: '{0}'".format(local_dxtoolkit))
-        print("ignore_folders is: '{0}'".format(ignore_folders()))
-        #shutil.copytree(local_dxtoolkit, dxtoolkit_dir, ignore=ignore_folders)
-        shutil.copytree(local_dxtoolkit, dxtoolkit_dir, ignore=None)
+        shutil.copytree(local_dxtoolkit, dxtoolkit_dir, ignore=ignore_folders)
         print("contents of local_dxtoolkit dir: '{0}'".format(os.listdir(local_dxtoolkit)))
         print("contents of dxtoolkit_dir: '{0}'".format(os.listdir(dxtoolkit_dir)))
 
