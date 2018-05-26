@@ -58,7 +58,8 @@ LOCAL_UTILS = os.path.join(os.path.dirname(__file__), '..', 'dxpy', 'utils')
 def ignore_folders(directory, contents):
     accepted_bin = ['dx-unpack', 'dx-unpack-file', 'dxfs', 'register-python-argcomplete',
                     'python-argcomplete-check-easy-install-script']
-    if "src/python/test" in directory:
+    # Omit large test dirs
+    if "src/python/test" or "src/cpp/test" in directory:
         return contents
     if "../bin" in directory:
         return [f for f in contents if f not in accepted_bin]
