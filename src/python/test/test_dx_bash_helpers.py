@@ -75,17 +75,12 @@ def build_app_with_bash_helpers(app_dir, project_id):
         # This we we can test all bash helpers as they would appear locally with all
         # necessary dependencies
         dxtoolkit_dir = os.path.abspath(os.path.join(updated_app_dir, 'resources', 'dxtoolkit'))
-        print("dxtoolkit_dir is: '{0}'".format(dxtoolkit_dir))
         local_dxtoolkit = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-        print("local_dxtoolkit is: '{0}'".format(local_dxtoolkit))
         shutil.copytree(local_dxtoolkit, dxtoolkit_dir, ignore=ignore_folders)
-        print("contents of local_dxtoolkit dir: '{0}'".format(os.listdir(local_dxtoolkit)))
-        print("contents of dxtoolkit_dir: '{0}'".format(os.listdir(dxtoolkit_dir)))
 
         # Add lines to the beginning of the job to make and use our new dx-toolkit
         preamble = []
         preamble.append('sudo pip install --upgrade virtualenv\n')
-        preamble.append('ls -la /dxtoolkit\n')
         preamble.append('make -C /dxtoolkit python\n')
         preamble.append('source /dxtoolkit/environment\n')
         # Now find the applet entry point file and prepend the
