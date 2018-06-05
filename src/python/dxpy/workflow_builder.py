@@ -35,6 +35,12 @@ from .utils import json_load_raise_on_duplicates
 from .exceptions import err_exit
 from . import logger
 
+UPDATABLE_GLOBALWF_FIELDS = {'title', 'summary', 'description', 'developerNotes', 'details'}
+GLOBALWF_SUPPORTED_KEYS = {"name", "version", "title", "summary", "description",
+                           "developerNotes", "regionalOptions", "categories", "billTo",
+                           "dxapi", "details"}
+SUPPORTED_KEYS = GLOBALWF_SUPPORTED_KEYS.union({"project", "folder", "outputFolder", "stages",
+                                                "inputs", "outputs"})
 
 class WorkflowBuilderException(Exception):
     """
@@ -230,6 +236,11 @@ def _validate_json_for_global_workflow(json_spec, args):
     if not dxpy.executable_builder.GLOBAL_EXEC_VERSION_RE.match(json_spec['version']):
         logger.warn('"version" {} should be semver compliant (e.g. of the form X.Y.Z)'.format(json_spec['version']))
 
+    if 'details' in json_spec:
+        if not isinstance(json_spec['details'], dict):
+            raise WorkflowBuilderException(
+                'The field "details" must be a dictionary')
+
     if args.bill_to:
         json_spec["billTo"] = args.bill_to
 
@@ -247,10 +258,7 @@ def _get_validated_json(json_spec, args):
     validated_spec = copy.deepcopy(json_spec)
 
     # print ignored keys if present in json_spec
-    # TODO: add "regionalOptions" to supported_keys when building multi-region workflows is enabled
-    supported_keys = {"project", "folder", "name", "outputFolder", "stages",
-                      "inputs", "outputs", "version", "title", "summary", "categories", "dxapi"}
-    unsupported_keys = _get_unsupported_keys(validated_spec.keys(), supported_keys)
+    unsupported_keys = _get_unsupported_keys(validated_spec.keys(), SUPPORTED_KEYS)
     if len(unsupported_keys) > 0:
         logger.warn(
             "Warning: the following root level fields are not supported and will be ignored: {}"
@@ -369,10 +377,7 @@ def _build_global_workflow(json_spec, args):
         json_spec.update({'regionalOptions': regional_options})
 
         # leave only fields that are actually used to build the workflow
-        gwf_supported_keys = {"name", "version", "title", "summary", "description",
-                              "developerNotes", "regionalOptions", "categories", "billTo",
-                              "dxapi"}
-        gwf_provided_keys = gwf_supported_keys.intersection(set(json_spec.keys()))
+        gwf_provided_keys = GLOBALWF_SUPPORTED_KEYS.intersection(set(json_spec.keys()))
         gwf_final_json = dict((k, v) for k, v in json_spec.items() if k in gwf_provided_keys)
 
         # we don't want to print the whole documentation to the screen so we'll remove these fields
@@ -439,7 +444,7 @@ def _update_global_workflow(json_spec, args, global_workflow_id):
             logger.info("Nothing to update")
         return skip_update
 
-    update_spec = dict((k, v) for k, v in json_spec.items() if k in ['title', 'summary', 'description', 'developerNotes'])
+    update_spec = dict((k, v) for k, v in json_spec.items() if k in UPDATABLE_GLOBALWF_FIELDS)
     validated_spec = _get_validated_json_for_build_or_update(update_spec, args)
     non_empty_fields = dict((k, v) for k, v in validated_spec.items() if v)
 

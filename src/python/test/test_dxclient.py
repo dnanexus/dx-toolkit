@@ -3968,21 +3968,26 @@ class TestDXClientGlobalWorkflow(DXTestCaseBuildWorkflows):
                          "skipping test that would build global workflows")
     def test_dx_update_global_workflow(self):
         gwf_name = "gwf_{t}_for_update".format(t=int(time.time()))
-        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name, version="1.1.1", )
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name, version="1.1.1",
+                               details=dict(upstreamLicenses=["GLPv3"]))
         workflow_dir = self.write_workflow_directory(gwf_name,
                                                      json.dumps(dxworkflow_json),
                                                      readme_content="Workflow Readme Please")
-        gwf_id = json.loads(run('dx build --globalworkflow ' + workflow_dir))["id"]
+        gwf_desc = json.loads(run('dx build --globalworkflow ' + workflow_dir + ' --json'))
+        gwf_id = gwf_desc["id"]
+        self.assertEqual({"upstreamLicenses": ["GLPv3"]}, gwf_desc["details"])
 
         # Update the version
         dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name, version="1.1.1",
-                               title="New title", summary="New summary", inputs=["rubbish"])
+                               title="New title", summary="New summary", inputs=["rubbish"],
+                               details=dict(contactEmail="alice@foo.edu"))
         with open(os.path.join(workflow_dir, "dxworkflow.json"), 'w') as f:
             f.write(json.dumps(dxworkflow_json, ensure_ascii=False))
 
         updated_desc = json.loads(run('dx build --globalworkflow ' + workflow_dir + ' -y --json'))
         self.assertEqual("New title", updated_desc["title"])
         self.assertEqual("New summary", updated_desc["summary"])
+        self.assertEqual({"contactEmail":"alice@foo.edu"}, updated_desc["details"])
 
         # The ID should not be updated
         self.assertEqual(gwf_id, updated_desc["id"])
