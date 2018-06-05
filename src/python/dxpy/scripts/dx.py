@@ -2168,7 +2168,10 @@ def find_executions(args):
         return tree, root_string
 
     def process_tree(result, executions_by_parent, execution_descriptions):
-        tree, root = build_tree(result['id'], executions_by_parent, execution_descriptions)
+        is_cached_result = False
+        if 'outputReusedFrom' in result['describe']:
+            is_cached_result = True
+        tree, root = build_tree(result['id'], executions_by_parent, execution_descriptions, is_cached_result)
         if tree:
             print(format_tree(tree[root], root))
 
