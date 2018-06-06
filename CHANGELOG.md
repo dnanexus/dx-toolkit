@@ -9,6 +9,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * `dx watch` support for smart reuse
+* test for `dx watch` job log relay
 
 ## [256.0] - beta
 
