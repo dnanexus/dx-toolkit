@@ -3407,6 +3407,12 @@ def watch(args):
     if not re.match("^job-[0-9a-zA-Z]{24}$", args.jobid):
         err_exit(args.jobid + " does not look like a DNAnexus job ID")
 
+    job_describe = dxpy.describe(args.jobid)
+    if 'outputReusedFrom' in job_describe and job_describe['outputReusedFrom'] is not None:
+      args.jobid = job_describe['outputReusedFrom']
+      if not args.quiet:
+        print("Output reused from %s" %(args.jobid))
+
     log_client = DXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=msg_callback,
                                       msg_output_format=args.format, print_job_info=args.job_info)
 
