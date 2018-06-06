@@ -359,6 +359,28 @@ class TestDXClient(DXTestCase):
         shell.sendline("echo find projects | dx sh")
         shell.expect("project-")
 
+    def test_dx_watch_invalid_auth(self):
+        with without_auth():
+          with self.assertSubprocessFailure(stderr_regexp="PermissionDenied", exit_code=3):
+            run("dx watch job-000000000000000000000001")
+
+        prev_user = os.environ.get('DX_USERNAME')
+        prev_sec_context = os.environ.get('DX_SECURITY_CONTEXT')
+        previous = {"DX_USERNAME": prev_user, "DX_SECURITY_CONTEXT": json.dumps(prev_sec_context)}
+
+        expired_context = {"auth_token": "expiredToken", "auth_token_type": "Bearer"}
+        expired_override = {"DX_USERNAME": "user-alice", "DX_SECURITY_CONTEXT": json.dumps(expired_context)}
+
+        bad_auth_context = {"auth_token": "outside3", "auth_token_type": "Bearer"}
+        bad_auth_override = {"DX_USERNAME": "user-eve", "DX_SECURITY_CONTEXT": json.dumps(bad_auth_context)}
+        try:
+          with self.assertSubprocessFailure(stderr_regexp="InvalidAuthentication", exit_code=3):
+            run("dx watch job-000000000000000000000001", env=override_environment(**expired_override))
+          with self.assertSubprocessFailure(stderr_regexp="PermissionDenied", exit_code=3):
+            run("dx watch job-000000000000000000000001", env=override_environment(**bad_auth_override))
+        finally:
+          override_environment(**previous)
+
     def test_dx_get_record(self):
         with chdir(tempfile.mkdtemp()):
             run("dx new record -o :foo --verbose")
