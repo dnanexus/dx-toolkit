@@ -359,6 +359,7 @@ class TestDXClient(DXTestCase):
         shell.sendline("echo find projects | dx sh")
         shell.expect("project-")
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test user')
     def test_dx_watch_invalid_auth(self):
         with without_auth():
           with self.assertSubprocessFailure(stderr_regexp="PermissionDenied", exit_code=3):
