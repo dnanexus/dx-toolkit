@@ -2156,9 +2156,7 @@ def find_executions(args):
                                                      is_cached_result=is_cached_result)
             tree[root_string] = collections.OrderedDict()
         for child_execution in executions_by_parent.get(root, {}):
-            child_is_cached_result = is_cached_result or \
-                                     (root.startswith('analysis-') and \
-                                      execution_descriptions[child_execution].get('parentAnalysis') != root)
+            child_is_cached_result = is_cached_result or (execution_descriptions[child_execution].get('outputReusedFrom') is not None)
             subtree, _subtree_root = build_tree(child_execution,
                                                 executions_by_parent,
                                                 execution_descriptions,
@@ -2169,7 +2167,7 @@ def find_executions(args):
 
     def process_tree(result, executions_by_parent, execution_descriptions):
         is_cached_result = False
-        if 'outputReusedFrom' in result['describe']:
+        if 'outputReusedFrom' in result and result['outputReusedFrom'] is not None:
             is_cached_result = True
         tree, root = build_tree(result['id'], executions_by_parent, execution_descriptions, is_cached_result)
         if tree:
