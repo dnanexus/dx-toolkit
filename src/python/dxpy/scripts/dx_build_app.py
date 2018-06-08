@@ -876,8 +876,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             else:
                 print("Uploaded app %s/%s (%s) successfully" % (app_describe["name"], app_describe["version"], app_id), file=sys.stderr)
                 print("You can publish this app with:", file=sys.stderr)
-                print("  dx publish {n}/{v} --make_default".format(n=app_describe["name"],
-                                                                   v=app_describe["version"]), file=sys.stderr)
+                print("  dx publish {n}/{v}".format(n=app_describe["name"],
+                                                    v=app_describe["version"]), file=sys.stderr)
 
             return app_describe if return_object_dump else {"id": app_id}
 

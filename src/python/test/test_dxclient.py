@@ -387,6 +387,30 @@ class TestDXClient(DXTestCase):
         shell.sendline("echo find projects | dx sh")
         shell.expect("project-")
 
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test user')
+    def test_dx_watch_invalid_auth(self):
+        with without_auth():
+          with self.assertSubprocessFailure(stderr_regexp="PermissionDenied", exit_code=3):
+            run("dx watch job-000000000000000000000001")
+
+        prev_user = os.environ.get('DX_USERNAME')
+        prev_sec_context = os.environ.get('DX_SECURITY_CONTEXT')
+        previous = {"DX_USERNAME": prev_user, "DX_SECURITY_CONTEXT": json.dumps(prev_sec_context)}
+
+        expired_context = {"auth_token": "expiredToken", "auth_token_type": "Bearer"}
+        expired_override = {"DX_USERNAME": "user-alice", "DX_SECURITY_CONTEXT": json.dumps(expired_context)}
+
+        bad_auth_context = {"auth_token": "outside3", "auth_token_type": "Bearer"}
+        bad_auth_override = {"DX_USERNAME": "user-eve", "DX_SECURITY_CONTEXT": json.dumps(bad_auth_context)}
+        try:
+          with self.assertSubprocessFailure(stderr_regexp="InvalidAuthentication", exit_code=3):
+            run("dx watch job-000000000000000000000001", env=override_environment(**expired_override))
+          with self.assertSubprocessFailure(stderr_regexp="PermissionDenied", exit_code=3):
+            run("dx watch job-000000000000000000000001", env=override_environment(**bad_auth_override))
+        finally:
+          override_environment(**previous)
+
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_DOWNLOAD_RECORDS"])
     def test_dx_get_record(self):
@@ -6695,12 +6719,11 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         with self.assertSubprocessFailure(stderr_regexp="Version is required", exit_code=3):
             run("dx publish {name}".format(name=gwf_name))
 
-        # publish version 2.0.0 with no "--make_default" flag
         run("dx publish {name}/{version}".format(name=gwf_name, version="2.0.0"))
         published_desc = json.loads(run("dx describe globalworkflow-{name}/{version} --json".format(name=gwf_name,
                                                                                                     version="2.0.0")))
         self.assertTrue("published" in published_desc)
-        self.assertFalse("default" in published_desc["aliases"])
+        self.assertTrue("default" in published_desc["aliases"])
 
         with self.assertSubprocessFailure(stderr_regexp="already published", exit_code=3):
             run("dx publish {name}/{version}".format(name=gwf_name, version="2.0.0"))
@@ -8850,16 +8873,22 @@ def main(in1):
         published_desc = json.loads(run("dx describe {name} --json".format(name=app_name)))
         self.assertTrue("published" in published_desc)
 
-        # with --make_default flag
+        # with --no-default flag
         _create_app("2.0.0")
-        run("dx publish {name}/{version} --make_default".format(name=app_name,
-                                                                version="2.0.0"))
+        run("dx publish {name}/{version} --no-default".format(name=app_name,
+                                                              version="2.0.0"))
         published_desc = json.loads(run("dx describe app-{name}/{version} --json".format(name=app_name,
                                                                                          version="2.0.0")))
         self.assertTrue("published" in published_desc)
-        self.assertTrue("default" in published_desc["aliases"])
+        self.assertFalse("default" in published_desc["aliases"])
 
-        with self.assertSubprocessFailure(stderr_regexp="InvalidState: Cannot publish the app; already published",
+        # using the ID
+        desc = _create_app("3.0.0")
+        run("dx publish {}".format(desc['id']))
+        published_desc = json.loads(run("dx describe {} --json".format(desc['id'])))
+        self.assertTrue("published" in published_desc)
+
+        with self.assertSubprocessFailure(stderr_regexp="InvalidState",
                                           exit_code=3):
             run("dx publish {name}/{version}".format(name=app_name, version="2.0.0"))
 

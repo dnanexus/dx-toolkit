@@ -6,11 +6,19 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* `dx watch` support for smart reuse
+* test for `dx watch` job log relay
+
+## [256.0] - beta
+
 ### Changed
 
 * Cosmetic update to `dx publish`
+* `dx publish` now sets the `default` alias on the published version by default
 
-## [255.0] - beta
+## [255.0] - 2018.05.24 - stable
 
 
 ### Added
@@ -23,7 +31,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Better checking for inputs and/or inputSpec before batch running workflows
 
-## [254.0] - 2018.05.10 - stable
+## [254.0] - 2018.05.10
 
 ### Changed
 

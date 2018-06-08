@@ -389,8 +389,8 @@ def _build_global_workflow(json_spec, args):
         logger.info("Uploaded global workflow {n}/{v} successfully".format(n=gwf_final_json["name"],
                                                                            v=gwf_final_json["version"]))
         logger.info("You can publish this workflow with:")
-        logger.info("  dx publish {n}/{v} --make_default".format(n=gwf_final_json["name"],
-                                                                 v=gwf_final_json["version"]))
+        logger.info("  dx publish {n}/{v}".format(n=gwf_final_json["name"],
+                                                  v=gwf_final_json["version"]))
     finally:
         # Clean up
         if projects_by_region:
