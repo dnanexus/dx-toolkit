@@ -19,16 +19,17 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os
-import unittest
-import json
-import tempfile
-import shutil
-import pipes
 import dxpy
+import dxpy_testutil as testutil
+import json
+import os
+import pipes
+import pytest
+import shutil
+import tempfile
+import unittest
 from dxpy.utils.completer import InstanceTypesCompleter
 from dxpy_testutil import DXTestCase, check_output, temporary_project, override_environment
-import dxpy_testutil as testutil
 from dxpy.exceptions import DXJobFailureError
 from dxpy.bindings.download_all_inputs import _get_num_parallel_threads
 
@@ -57,7 +58,8 @@ LOCAL_UTILS = os.path.join(os.path.dirname(__file__), '..', 'dxpy', 'utils')
 def ignore_folders(directory, contents):
     accepted_bin = ['dx-unpack', 'dx-unpack-file', 'dxfs', 'register-python-argcomplete',
                     'python-argcomplete-check-easy-install-script']
-    if "test" in directory:
+    # Omit Python test dir since it's pretty large
+    if "src/python/test" in directory:
         return contents
     if "../bin" in directory:
         return [f for f in contents if f not in accepted_bin]
@@ -66,14 +68,14 @@ def ignore_folders(directory, contents):
 def build_app_with_bash_helpers(app_dir, project_id):
     tempdir = tempfile.mkdtemp()
     try:
-        updated_app_dir = os.path.join(tempdir, os.path.basename(app_dir))
+        updated_app_dir = os.path.abspath(os.path.join(tempdir, os.path.basename(app_dir)))
         shutil.copytree(app_dir, updated_app_dir)
         # Copy the current verion of dx-toolkit. We will build it on the worker
         # and source this version which will overload the stock version of dx-toolkit.
         # This we we can test all bash helpers as they would appear locally with all
         # necessary dependencies
-        dxtoolkit_dir = os.path.join(updated_app_dir, 'resources', 'dxtoolkit')
-        local_dxtoolkit = os.path.join(os.path.dirname(__file__), '..', '..', '..')
+        dxtoolkit_dir = os.path.abspath(os.path.join(updated_app_dir, 'resources', 'dxtoolkit'))
+        local_dxtoolkit = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
         shutil.copytree(local_dxtoolkit, dxtoolkit_dir, ignore=ignore_folders)
 
         # Add lines to the beginning of the job to make and use our new dx-toolkit
@@ -111,6 +113,8 @@ def update_environ(**kwargs):
 
 @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping tests that would run jobs')
 class TestDXBashHelpers(DXTestCase):
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_HELP_PROVIDE_BASH_HELPER_COMMANDS"])
     def test_vars(self):
         '''  Quick test for the bash variables '''
         with temporary_project('TestDXBashHelpers.test_app1 temporary project') as p:

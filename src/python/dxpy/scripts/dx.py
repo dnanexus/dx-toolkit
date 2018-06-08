@@ -5422,6 +5422,7 @@ parser_notebook.add_argument('--timeout', help='How long to keep the notebook op
 parser_notebook.add_argument('-q', '--quiet', help='Do not launch web browser.', action='store_false', dest='open_server')
 parser_notebook.add_argument('--version', help='What version of the notebook app to launch.', default=None)
 parser_notebook.add_argument('--instance-type', help='Instance type to run the notebook on.', default='mem1_ssd1_x4')
+parser_notebook.add_argument('--only_check_config', help='Only check SSH config do not launch app', action='store_true')
 notebook_with_ssh_config_check = functools.partial(run_notebook, ssh_config_check=verify_ssh_config)
 parser_notebook.set_defaults(func=notebook_with_ssh_config_check)
 register_parser(parser_notebook, categories='data', add_help=False)

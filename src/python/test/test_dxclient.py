@@ -30,6 +30,7 @@ from contextlib import contextmanager
 import pexpect
 import requests
 import textwrap
+import pytest
 
 import dxpy
 import dxpy.executable_builder
@@ -75,11 +76,16 @@ def list_folder(proj_id, path):
     return output
 
 
+
 class TestDXTestUtils(DXTestCase):
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_HELP_PRINT_CURRENT_WORKING_DIRECTORY"])
     def test_temporary_project(self):
         with temporary_project('test_temporary_project', select=True):
             self.assertEquals('test_temporary_project:/', run('dx pwd').strip())
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_SELECT", "DNA_CLI_PROJ_CHANGE_WORKING_DIRECTORY"])
     def test_select_project(self):
         test_dirname = '/test_folder'
         with temporary_project('test_select_project') as temp_project:
@@ -115,6 +121,8 @@ class TestDXTestUtils(DXTestCase):
 
 
 class TestDXRemove(DXTestCase):
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_REMOVE","DNA_API_DATA_OBJ_CREATE_NEW_DATA_OBJECT","DNA_API_DATA_OBJ_REMOVE_DATA_OBJECT"])
     def test_remove_objects(self):
         dxpy.new_dxrecord(name="my record")
         dxpy.find_one_data_object(name="my record", project=self.project, zero_ok=False)
@@ -125,6 +133,8 @@ class TestDXRemove(DXTestCase):
         with self.assertSubprocessFailure(exit_code=3):
             run("dx rm nonexistent")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_VIEW_FOLDERS","DNA_API_PROJ_REMOVE_FOLDER"])
     def test_remove_folders(self):
         folder_name = "/test_folder"
         record_name = "test_folder"
@@ -214,11 +224,15 @@ class TestDXClient(DXTestCase):
         version = run("dx --version")
         self.assertIn("dx", version)
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_HELP_DISPLAY_HELP"])
     def test_dx(self):
         with self.assertRaises(subprocess.CalledProcessError):
             run("dx")
         run("dx help")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_PRINT_PART_FILE"])
     def test_head(self):
         dxpy.upload_string("abcd\n", project=self.project, name="foo", wait_on_close=True)
         self.assertEqual("abcd\n", run("dx head foo"))
@@ -253,11 +267,15 @@ class TestDXClient(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
             run("dx api project-эксперимент describe")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_HELP_PRINT_ENVIRONMENT_VARIABLES"])
     def test_dx_env(self):
         run("dx env")
         run("dx env --bash")
         run("dx env --dx-flags")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_HELP_CALL_API_METHOD"])
     def test_dx_api(self):
         with testutil.TemporaryFile() as fd:
             fd.write("{}")
@@ -265,6 +283,8 @@ class TestDXClient(DXTestCase):
             fd.close()
             run("dx api {p} describe --input {fn}".format(p=self.project, fn=fd.name))
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_INVITE_USER"])
     @unittest.skipUnless(testutil.TEST_NO_RATE_LIMITS,
                          'skipping tests that need rate limits to be disabled')
     def test_dx_invite(self):
@@ -275,6 +295,8 @@ class TestDXClient(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp="invalid choice", exit_code=2):
             run(("dx invite alice.nonexistent : ПРОСМОТР").format(p=self.project))
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_REVOKE_USER_PERMISSIONS"])
     @unittest.skipUnless(testutil.TEST_NO_RATE_LIMITS,
                          'skipping tests that need rate limits to be disabled')
     def test_dx_uninvite(self):
@@ -283,6 +305,8 @@ class TestDXClient(DXTestCase):
             with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
                 run(("dx uninvite "+query).format(p=self.project))
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_ADD_TYPES", "DNA_CLI_DATA_OBJ_REMOVE_TYPES"])
     def test_dx_add_rm_types(self):
         run("dx new record Ψ")
         run("dx add_types Ψ abc xyz")
@@ -294,6 +318,8 @@ class TestDXClient(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp="Unable to resolve", exit_code=3):
             run("dx remove_types ΨΨ Ψ")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_GET_DETAILS", "DNA_CLI_DATA_OBJ_SET_DETAILS"])
     def test_dx_set_details(self):
         record_id = run("dx new record Ψ1 --brief").strip()
         run("dx set_details Ψ1 '{\"foo\": \"bar\"}'")
@@ -343,6 +369,8 @@ class TestDXClient(DXTestCase):
             details = dxrecord.get_details()
             self.assertEqual({"foo": "bar"}, details, msg="dx set_details -f - with valid JSON input failed.")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_HELP_EXIT_OUT_INTERACTIVE_SHELL", "DNA_CLI_HELP_DX_SHELL_INTERPRETER"])
     def test_dx_shell(self):
         shell = pexpect.spawn("bash")
         shell.logfile = sys.stdout
@@ -358,6 +386,7 @@ class TestDXClient(DXTestCase):
         shell.sendline("exit")
         shell.sendline("echo find projects | dx sh")
         shell.expect("project-")
+
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test user')
     def test_dx_watch_invalid_auth(self):
@@ -382,6 +411,8 @@ class TestDXClient(DXTestCase):
         finally:
           override_environment(**previous)
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_DOWNLOAD_RECORDS"])
     def test_dx_get_record(self):
         with chdir(tempfile.mkdtemp()):
             run("dx new record -o :foo --verbose")
@@ -391,6 +422,8 @@ class TestDXClient(DXTestCase):
             self.assertTrue(os.path.exists('foo'))
             run("diff -q foo foo.json")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_DATA_OBJ_ALTER_TAGS"])
     def test_dx_object_tagging(self):
         the_tags = ["Σ1=n", "helloo0", "ωω"]
         # tag
@@ -429,6 +462,8 @@ class TestDXClient(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp='Unable to resolve', exit_code=3):
             run("dx untag nonexistent atag")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_TAG", "DNA_CLI_PROJ_UNTAG","DNA_API_PROJ_ADD_TAGS","DNA_API_PROJ_REMOVE_TAGS"])
     def test_dx_project_tagging(self):
         the_tags = ["$my.tag", "secoиdtag", "тhird тagggg"]
         # tag
@@ -516,6 +551,8 @@ class TestDXClient(DXTestCase):
         my_properties = dxpy.api.record_describe(record_id, {"properties": True})['properties']
         self.assertEqual(my_properties["bar"], "")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_SET_PROPERTIES","DNA_API_PROJ_ADD_PROPERTIES","DNA_API_PROJ_REMOVE_PROPERTIES", "DNA_CLI_PROJ_UNSET_PROPERTIES"])
     def test_dx_project_properties(self):
         property_names = ["$my.prop", "secoиdprop", "тhird prop"]
         property_values = ["$hello.world", "Σ2,n", "stuff"]
@@ -559,6 +596,8 @@ class TestDXClient(DXTestCase):
         my_properties = dxpy.api.project_describe(self.project, {"properties": True})['properties']
         self.assertEqual(my_properties["bar"], "")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_VIEW_PROJECT_SETTINGS"])
     def test_dx_describe_project(self):
         # Look for field name, some number of spaces, and then the value
         field_regexp = lambda fieldname, value: \
@@ -583,6 +622,8 @@ class TestDXClient(DXTestCase):
         self.assertRegex(desc_output, field_regexp("Archival state", "live"))
         self.assertRegex(desc_output, field_regexp("Archival progress", "null"))
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_DELETE","DNA_API_PROJ_DELETE_PROJECT"])
     def test_dx_remove_project_by_name(self):
         # TODO: this test makes no use of the DXTestCase-provided
         # project.
@@ -595,6 +636,8 @@ class TestDXClient(DXTestCase):
         self.assertEqual(run("dx find projects --brief --name {name}".format(name=project_name)), "")
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test user')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_VIEW_SHAREES","DNA_API_PROJ_ADD_USERS"])
     def test_dx_project_invite_without_email(self):
         user_id = 'user-bob'
         with temporary_project() as unique_project:
@@ -613,6 +656,8 @@ class TestDXClient(DXTestCase):
             conf = dxpy.api.project_describe(project_id, {'fields': {'permissions': True}})['permissions']
             self.assertEqual(conf[user_id], 'VIEW')
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_CLOSE", "DNA_CLI_DATA_OBJ_COPY", "DNA_CLI_PROJ_LIST_FOLDERS_OR_OBJECTS","DNA_API_PROJ_COPY_DATA"])
     def test_dx_cp(self):
         project_name = "test_dx_cp_" + str(random.randint(0, 1000000)) + "_" + str(int(time.time() * 1000))
         dest_project_id = run("dx new project {name} --brief".format(name=project_name)).strip()
@@ -625,6 +670,8 @@ class TestDXClient(DXTestCase):
         finally:
             run("dx rmproject -y {p}".format(p=dest_project_id))
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_CREATE_NEW_FOLDER"])
     def test_dx_mkdir(self):
         with self.assertRaises(subprocess.CalledProcessError):
             run("dx mkdir mkdirtest/b/c")
@@ -719,6 +766,10 @@ class TestDXClient(DXTestCase):
             if original_ssh_public_key:
                 dxpy.api.user_update(user_id, {"sshPublicKey": original_ssh_public_key})
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_AUTH_CONFIGURE_SSH",
+                                          "DNA_API_USR_MGMT_ADD_SSH_KEY",
+                                          "DNA_API_EXE_ENABLE_SSH_ACCESS"])
     def test_dx_ssh_config(self):
         original_ssh_public_key = None
         try:
@@ -879,6 +930,8 @@ class TestDXClient(DXTestCase):
                 dx2.sendline("y")
                 dx2.expect("Terminated job", timeout=60)
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_EXE_CONNECT_RUNNING_JOB"])
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_ssh(self):
         self._test_dx_ssh(self.project, "mem2_hdd2_x1")
@@ -1027,6 +1080,8 @@ class TestDXClient(DXTestCase):
             dxpy.api.project_destroy(azure_project, {"terminateJobs": True})
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_EXE_ENABLE_DEBUG_HOLD"])
     def test_dx_run_debug_on(self):
         with self.configure_ssh() as wd:
             crash_applet = dxpy.api.applet_new(dict(name="crash",
@@ -1070,7 +1125,34 @@ class TestDXClient(DXTestCase):
             job_desc = dxpy.describe(job_id)
             self.assertEqual(job_desc["debug"]['debugOn'], ['AppError', 'AppInternalError', 'ExecutionError'])
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_HELP_JUPYTER_NOTEBOOK"])
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
+    def test_dx_notebook(self):
+        with self.configure_ssh() as wd:
+            run("dx notebook jupyter_notebook --only_check_config", env=override_environment(HOME=wd))
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_AUTH_SET_ENVIRONMENT"])
+    def test_dx_setenv(self):
+        wd = tempfile.mkdtemp()
+        username = dxpy.user_info()['username']
+
+        def get_dx_setenv(opts=""):
+            dx_setenv = pexpect.spawn("dx setenv" + opts, env=override_environment(HOME=wd))
+            dx_setenv.logfile = sys.stdout
+            dx_setenv.setwinsize(20, 90)
+            return dx_setenv
+
+        dx_setenv = get_dx_setenv()
+        dx_setenv.sendline()
+        dx_setenv.sendline()
+        dx_setenv.sendline()
+        dx_setenv.close()
+
+
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_AUTH_LOGIN", "DNA_CLI_AUTH_LOGOUT"])
     @unittest.skipUnless(testutil.TEST_DX_LOGIN,
                          'This test requires authserver to run, requires dx login to select the right authserver, ' +
                          'and may result in temporary account lockout. TODO: update test instrumentation to allow ' +
@@ -1138,6 +1220,9 @@ class TestDXClient(DXTestCase):
 
 
 class TestDXNewRecord(DXTestCase):
+
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_CREATE_NEW_RECORD", "DNA_CLI_DATA_OBJ_SET_VISIBILITY"])
     def test_new_record_basic(self):
         run("dx new record -o :foo --verbose")
         record_id = run("dx new record -o :foo2 --brief --visibility hidden --property foo=bar " +
@@ -1186,6 +1271,9 @@ class TestDXNewRecord(DXTestCase):
 
 
 class TestDXWhoami(DXTestCase):
+
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_USR_MGMT_PRINT_CURRENT_USER", "DNA_API_USR_MGMT_WHOAMI"])
     def test_dx_whoami_name(self):
         whoami_output = run("dx whoami").strip()
         self.assertEqual(whoami_output, dxpy.api.user_describe(dxpy.whoami())['handle'])
@@ -1195,6 +1283,8 @@ class TestDXWhoami(DXTestCase):
 
 
 class TestDXRmdir(DXTestCase):
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_REMOVE_FOLDER"])
     def test_dx_rmdir(self):
         dxpy.api.project_new_folder(self.project, {"folder": "/mydirectory"})
         self.assertIn("/mydirectory", list_folder(self.project, "/")['folders'])
@@ -1210,6 +1300,8 @@ class TestDXMv(DXTestCase):
         dxpy.find_one_data_object(name="b", project=self.project, zero_ok=False)
         self.assertEqual(dxpy.find_one_data_object(name="a", project=self.project, zero_ok=True), None)
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_RENAME_FOLDER", "DNA_CLI_PROJ_MOVE_OR_RENAME_OBJECTS"])
     def test_dx_mv_folder(self):
         folder_name = "/test_folder"
         folder_name_2 = "/test_folder_2"
@@ -1225,6 +1317,8 @@ class TestDXMv(DXTestCase):
 
 
 class TestDXRename(DXTestCase):
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_RENAME_PROJECT","DNA_API_DATA_OBJ_RENAME_DATA_OBJECT"])
     def test_rename(self):
         my_record = dxpy.new_dxrecord(name="my record").get_id()
         self.assertEquals(dxpy.describe(my_record)["name"], "my record")
@@ -1248,6 +1342,8 @@ class TestDXClientUploadDownload(DXTestCase):
         self.assertEqual(tree1, tree2)
         run("rm -rf {wd}".format(wd=wd))
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_DOWNLOAD_FILES", "DNA_CLI_DATA_OBJ_UPLOAD_FILES", "DNA_CLI_DATA_OBJ_WAIT","DNA_API_DATA_OBJ_DOWNLOAD","DNA_API_DATA_OBJ_UPLOAD_TO_OPEN_FILE"])
     def test_dx_upload_download(self):
         with self.assertSubprocessFailure(stderr_regexp='expected the path to be a non-empty string',
                                           exit_code=3):
@@ -1368,6 +1464,8 @@ class TestDXClientUploadDownload(DXTestCase):
             file_id = run("dx upload --brief --path " + self.project + ":foo /dev/null").strip()
             self.assertEqual(dxpy.DXFile(file_id).name, "foo")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_CREATE_FILE_DOWNLOAD_LINK"])
     def test_dx_make_download_url(self):
         testdir = tempfile.mkdtemp()
         output_testdir = tempfile.mkdtemp()
@@ -1605,6 +1703,8 @@ dxpy.run()
             shutil.rmtree(orig_dir)
 
     # Test download to stdout
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_PRINT_FILES_STDOUT"])
     def test_download_to_stdout(self):
         data = "ABCD"
 
@@ -1616,6 +1716,8 @@ dxpy.run()
             proj_id = temp_project.get_id()
             gen_file("X.txt", proj_id)
             buf = run("dx download -o - X.txt")
+            self.assertEqual(buf, data)
+            buf = run("dx cat X.txt")
             self.assertEqual(buf, data)
 
     def test_dx_download_resume_and_checksum(self):
@@ -1949,6 +2051,8 @@ dx-jobutil-add-output outfile `dx-jobutil-parse-link "$infile"`
 
 
 class TestDXClientDescribe(DXTestCaseBuildWorkflows):
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_DESCRIBE"])
     def test_projects(self):
         run("dx describe :")
         run("dx describe " + self.project)
@@ -1972,6 +2076,8 @@ class TestDXClientDescribe(DXTestCaseBuildWorkflows):
 
         run("dx describe " + self.project + " --project-context-id foo")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_USR_MGMT_USER_DESCRIBE"])
     def test_user_describe_self_shows_bill_to(self):
         ## Verify `billTo` from /user-xxxx/describe.
         user_id = dxpy.whoami()
@@ -1998,6 +2104,8 @@ class TestDXClientDescribe(DXTestCaseBuildWorkflows):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_APP_DELETE"])
     def test_describe_deleted_app(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
@@ -2043,6 +2151,8 @@ class TestDXClientRun(DXTestCase):
         dxpy.api.project_destroy(self.other_proj_id, {'terminateJobs': True})
         super(TestDXClientRun, self).tearDown()
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_APP_RUN_APPLET","DNA_API_DATA_OBJ_RUN_APPLET"])
     def test_dx_run_applet_with_input_spec(self):
         record = dxpy.new_dxrecord(name="my_record")
 
@@ -2578,6 +2688,8 @@ dx-jobutil-add-output record_array $second_record --array
         self.assertIn(remote_job_output[1]["$dnanexus_link"], local_output)
         self.assertNotIn(remote_job_output[0]["$dnanexus_link"], local_output)
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_EXE_WATCH_LOGS", "DNA_CLI_EXE_TERMINATE"])
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
     def test_dx_run_priority(self):
@@ -3065,6 +3177,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
     default_inst_type = "mem2_hdd2_x2"
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_WORKFLOW_RUN"])
     def test_dx_run_workflow(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
@@ -3409,6 +3523,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
             workflow_id = run("dx new workflow --brief " + self.project + ":foo").strip()
             self.assertEqual(dxpy.DXWorkflow(workflow_id).name, "foo")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_WORKFLOW_CREATE_NEW_WORKFLOW"])
     def test_dx_new_workflow(self):
         workflow_id = run("dx new workflow --title=тitle --summary=SΨmmary --brief " +
                           "--description=DΣsc wØrkflØwname --output-folder /wØrkflØwØutput").strip()
@@ -3492,6 +3608,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertIn("Input Spec", desc)
         self.assertIn("default=10", desc)
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_WORKFLOW_ADD_STAGE_WORKFLOW", "DNA_CLI_WORKFLOW_REMOVE_STAGE", "DNA_CLI_WORKFLOW_LIST_STAGES"])
     def test_dx_add_remove_list_stages(self):
         workflow_id = run("dx new workflow myworkflow --title title --brief").strip()
         run("dx describe " + workflow_id)
@@ -3607,6 +3725,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         with self.assertSubprocessFailure(stderr_regexp="DXError", exit_code=3):
             run("dx remove stage /myworkflow stage-123456789012345678901234")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_WORKFLOW_UPDATE_METADATA"])
     def test_dx_update_workflow(self):
         workflow_id = run("dx new workflow myworkflow --brief").strip()
         desc = dxpy.api.workflow_describe(workflow_id)
@@ -3657,6 +3777,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         with self.assertSubprocessFailure(stderr_regexp="no-title", exit_code=2):
             run("dx update workflow myworkflow --output-folder /foo --no-output-folder")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_WORKFLOW_UPDATE_STAGE"])
     def test_dx_update_stage(self):
         workflow_id = run("dx new workflow myworkflow --brief").strip()
         run("dx describe " + workflow_id)
@@ -3753,6 +3875,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         with self.assertSubprocessFailure(stderr_regexp="DXError", exit_code=3):
             run("dx update stage /myworkflow stage-123456789012345678901234 --name foo")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_WORKFLOW_BUILD_NEW_WORKFLOW"])
     def test_dx_build_workflow(self):
         applet_id = dxpy.api.applet_new({"name": "my_first_applet",
                                          "project": self.project,
@@ -4032,7 +4156,9 @@ class TestDXClientFind(DXTestCase):
         run("dx find globalworkflows --category foo") # any category can be searched
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
-                         'skipping test that requires presence of test org and creates apps')
+                         'skipping test that creates apps')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_APP_PUBLISH"])
     def test_dx_find_apps(self):
         test_applet_id = dxpy.api.applet_new({"name": "my_find_applet",
                                               "dxapi": "1.0.0",
@@ -4058,7 +4184,6 @@ class TestDXClientFind(DXTestCase):
         app_find = "app_find_unpublished"
         spec = dict(dxapp_spec, name=app_find, version="0.0.1")
         dxapp = dxpy.DXApp()
-        print(dxapp_spec)
         dxapp.new(**spec)
         # version 0.0.2
         spec = dict(dxapp_spec, name=app_find, version="0.0.2")
@@ -4114,9 +4239,10 @@ class TestDXClientFind(DXTestCase):
         self.assertIn("0.0.2", output)
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
-                         'skipping test that requires presence of test org and creates global workflows')
+                         'skipping test that creates global workflows')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_WORKFLOW_LIST_AVAILABLE_WORKFLOWS_GLOBALWF"])
     def test_dx_find_globalworkflows(self):
-        org_id = "org-piratelabs"
         test_applet_id = dxpy.api.applet_new({"name": "my_find_applet",
                                               "dxapi": "1.0.0",
                                               "project": self.project,
@@ -4144,16 +4270,14 @@ class TestDXClientFind(DXTestCase):
 
         # Create a few global workflows
 
-        # 1. Workflow with an org billTo
+        # 1. Unpublished workflow
         # version 0.0.1
-        gwf_find_billto = "gwf_find_billto"
-        spec = dict(dxglobalworkflow_spec, name=gwf_find_billto, bill_to=org_id, version="0.0.1")
+        gwf_find = "gwf_find_unpublished"
+        spec = dict(dxglobalworkflow_spec, name=gwf_find, version="0.0.1")
         dxgwf = dxpy.DXGlobalWorkflow()
         dxgwf.new(**spec)
-        desc = dxgwf.describe()
-        self.assertEqual(desc["billTo"], org_id)
         # version 0.0.2
-        spec = dict(dxglobalworkflow_spec, name=gwf_find_billto, bill_to=org_id, version="0.0.2")
+        spec = dict(dxglobalworkflow_spec, name=gwf_find, version="0.0.2")
         dxgwf = dxpy.DXGlobalWorkflow()
         dxgwf.new(**spec)
         desc = dxgwf.describe()
@@ -4183,17 +4307,11 @@ class TestDXClientFind(DXTestCase):
         output = run("dx find globalworkflows")
         self.assertIn(gwf_find_published_1, output)
         self.assertIn(gwf_find_published_2, output)
-        self.assertNotIn(gwf_find_billto, output)
+        self.assertNotIn(gwf_find, output)
 
         # find only unpublished
         output = run("dx find globalworkflows --unpublished")
-        self.assertIn(gwf_find_billto, output)
-        self.assertNotIn(gwf_find_published_1, output)
-        self.assertNotIn(gwf_find_published_2, output)
-
-        # find by billTo
-        output = run("dx find globalworkflows --unpublished --billed-to " + org_id)
-        self.assertIn(gwf_find_billto, output)
+        self.assertIn(gwf_find, output)
         self.assertNotIn(gwf_find_published_1, output)
         self.assertNotIn(gwf_find_published_2, output)
 
@@ -4201,13 +4319,13 @@ class TestDXClientFind(DXTestCase):
         output = run("dx find globalworkflows --name " + gwf_find_published_1)
         self.assertIn(gwf_find_published_1, output)
         self.assertNotIn(gwf_find_published_2, output)
-        self.assertNotIn(gwf_find_billto, output)
+        self.assertNotIn(gwf_find, output)
 
         # find all versions
         output = run("dx find globalworkflows --unpublished --all")
         self.assertNotIn(gwf_find_published_1, output)
         self.assertNotIn(gwf_find_published_2, output)
-        self.assertIn(gwf_find_billto, output)
+        self.assertIn(gwf_find, output)
         self.assertIn("0.0.1", output)
         self.assertIn("0.0.2", output)
 
@@ -4218,6 +4336,8 @@ class TestDXClientFind(DXTestCase):
             r"^closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+/find_data_formatting \(" + record_id + "\)$"
         )
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_LIST_DATOBJECTS"])
     def test_dx_find_data_by_name(self):
         record_id = dxpy.new_dxrecord(name="find_data_by_name").get_id()
         self.assertEqual(run("dx find data --brief --name " + "find_data_by_name").strip(),
@@ -4232,6 +4352,8 @@ class TestDXClientFind(DXTestCase):
             self.assertEqual(run("dx find data --brief --class " + classname).strip(),
                              self.project + ':' + ids[classname])
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_DATA_OBJ_SEARCH_ACROSS_PROJECTS"])
     def test_dx_find_data_by_tag(self):
         record_ids = [run("dx new record --brief --tag Ψ --tag foo --tag baz").strip(),
                       run("dx new record --brief --tag Ψ --tag foo --tag bar").strip()]
@@ -4281,6 +4403,8 @@ class TestDXClientFind(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp='nonempty strings', exit_code=3):
             run("dx find data --property =bar")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_AUTH_CLEAR_ENVIRONMENT"])
     def test_dx_find_data_by_scope(self):
         # Name of temporary project to use in test cases.
         test_projectname = 'Test-Project-PTFM-7023'
@@ -4463,6 +4587,8 @@ class TestDXClientFind(DXTestCase):
             self.assertNotIn(record_id,
                           run("dx find data --all-projects --brief --region aws:us-east-1"))
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_LIST_PROJECTS"])
     def test_dx_find_projects(self):
         unique_project_name = 'dx find projects test ' + str(time.time())
         with temporary_project(unique_project_name) as unique_project:
@@ -4476,6 +4602,8 @@ class TestDXClientFind(DXTestCase):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that depends on a public project only defined in the nucleus integration tests')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_VIEW_PUBLIC_PROJECTS"])
     def test_dx_find_public_projects(self):
         unique_project_name = 'dx find public projects test ' + str(time.time())
         with temporary_project(unique_project_name) as unique_project:
@@ -4608,6 +4736,8 @@ class TestDXClientFind(DXTestCase):
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_VIEW_EXECUTIONS"])
     def test_dx_find_jobs_by_tags_and_properties(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
@@ -4642,6 +4772,11 @@ class TestDXClientFind(DXTestCase):
         self.assertEqual(run("dx find jobs --brief --property '" +
                              property_names[1] + "'=badvalue").strip(), "")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_EXE_LIST_ANALYSES",
+                                          "DNA_CLI_EXE_LIST_EXECUTIONS",
+                                          "DNA_CLI_EXE_LIST_JOBS",
+                                          "DNA_API_EXE_FIND"])
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping test that would run a job')
     def test_find_executions(self):
@@ -4850,6 +4985,8 @@ class TestDXClientFind(DXTestCase):
             self.assert_cmd_gives_ids("dx find jobs "+options2, [])
             self.assert_cmd_gives_ids("dx find analyses "+options2, [])
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_ORG_LIST_ORGS"])
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that requires presence of test org')
     def test_find_orgs(self):
@@ -4938,6 +5075,9 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
         with self.assertSubprocessFailure(stderr_regexp='error: argument --level: expected one argument', exit_code=2):
             run("dx find org members org-piratelabs --level")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_ORG_LIST_MEMBERS",
+                                          "DNA_API_ORG_FIND_MEMBERS"])
     def test_dx_find_org_members(self):
         org_members = [self.user_alice, self.user_bob]  # sorted ascending by user ID
         org_members.sort()
@@ -5011,6 +5151,9 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
         with self.assertSubprocessFailure(stderr_regexp='expected one argument', exit_code=2):
             run(cmd.format(opts="--phi"))
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_ORG_LIST_PROJECTS",
+                                          "DNA_API_ORG_FIND_PROJECTS"])
     def test_dx_find_org_projects(self):
         with temporary_project() as project_1, temporary_project() as project_2:
             project1_id = project_1.get_id()
@@ -5170,6 +5313,9 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
             self.assertTrue(len(res) == 1, "Expected to find one project")
             self.assertEqual(res[0], project1_id)
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_APP_LIST_APPS_ORG",
+                                          "DNA_API_ORG_FIND_APPS"])
     def test_dx_find_org_apps(self):
         # Create a number of apps, some billed to self.org_id ("org-piratelabs")
         num_org_apps = 3
@@ -5233,6 +5379,10 @@ class TestDXClientOrg(DXTestCase):
                                      "error: argument --member-list-visibility: invalid choice"):
             run('dx new org --member-list-visibility NONE')
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_ORG_CREATE",
+                                          "DNA_API_ORG_CREATE",
+                                          "DNA_API_ORG_DESCRIBE"])
     def test_create_new_org(self):
         # Basic test with only required input args; optional input arg defaults propagated properly.
         org_handle = TestDXClientOrg.get_unique_org_handle()
@@ -5387,6 +5537,8 @@ class TestDXClientOrg(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp="--project-transfer-ability.*invalid", exit_code=2):
             run("dx update org {o} --project-transfer-ability PUBLIC".format(o=self.org_id))
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_ORG_UPDATE_INFORMATION"])
     def test_org_update(self):
         def get_name_and_policies(org_id=None):
             if org_id is None:
@@ -5472,6 +5624,8 @@ class TestDXClientOrg(DXTestCase):
 
 
 class TestDXClientNewProject(DXTestCase):
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_CREATE_PROJECT"])
     def test_dx_new_project_with_region(self):
         project_id = run("dx new project --brief --region aws:us-east-1 ProjectInUSEast").strip()
         self.assertEquals(dxpy.api.project_describe(project_id, {})['region'], "aws:us-east-1")
@@ -5480,6 +5634,10 @@ class TestDXClientNewProject(DXTestCase):
         with self.assertRaisesRegexp(subprocess.CalledProcessError, "InvalidInput"):
             run("dx new project --brief --region aws:not-a-region InvalidRegionProject")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_CREATE_NEW_PROJECT",
+                                          "DNA_API_USR_MGMT_SET_BILLING_ACCOUNT",
+                                          "DNA_API_ORG_ALLOW_BILLABLE_ACTIVITIES"])
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that requires presence of test org')
     def test_dx_create_new_project_with_bill_to(self):
@@ -5549,6 +5707,8 @@ class TestDXClientNewUser(DXTestCase):
     def tearDown(self):
         super(TestDXClientNewUser, self).tearDown()
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_USR_MGMT_NEW_USER"])
     def test_create_user_account_and_set_bill_to_negative(self):
         username, email = generate_unique_username_email()
         first = "Asset"
@@ -5639,6 +5799,8 @@ class TestDXClientNewUser(DXTestCase):
                                          "last": last,
                                          "middle": middle})
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_ORG_ADD_USER"])
     def test_create_user_account_and_invite_to_org(self):
         # TODO: Test --no-email flag.
 
@@ -5808,6 +5970,8 @@ class TestDXClientMembership(DXTestCase):
         self._remove_user(self.user_id)
         super(TestDXClientMembership, self).tearDown()
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_ORG_ADD_MEMBER"])
     def test_add_membership_default(self):
         cmd = "dx add member {o} {u} --level {l}"
 
@@ -5875,6 +6039,9 @@ class TestDXClientMembership(DXTestCase):
         with self.assertRaisesRegexp(subprocess.CalledProcessError, "DXCLIError"):
             run(" ".join([cmd, self.org_id, self.username, "--level ADMIN"]))
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_ORG_REMOVE_MEMBER",
+                                          "DNA_API_ORG_REMOVE_USER"])
     def test_remove_membership_default(self):
         self._add_user(self.user_id)
 
@@ -5992,6 +6159,9 @@ class TestDXClientMembership(DXTestCase):
             with self.assertRaises(subprocess.CalledProcessError):
                 run(" ".join([cmd, invalid_opts]))
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_ORG_UPDATE_USER_MEMBERSHIP",
+                                          "DNA_API_ORG_CHANGE_USER_PERMISSIONS"])
     def test_update_membership_positive(self):
         # default test
         self._add_user(self.user_id)
@@ -6208,6 +6378,8 @@ class TestDXClientUpdateProject(DXTestCase):
             self.assertEqual(self.project_describe(describe_input)[item],
                              update_items[item])
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_UPDATE_OPTIONS"])
     def test_update_multiple_items(self):
         #Test updating multiple items in a single api call
         update_items = {'name': 'NewProjectName' + str(time.time()),
@@ -6239,6 +6411,8 @@ class TestDXClientUpdateProject(DXTestCase):
             else:
                 self.assertEqual(result[item], update_items[item])
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_RENAME_PROJECT"])
     def test_update_project_by_name(self):
         describe_input = {}
         describe_input['name'] = 'true'
@@ -6250,6 +6424,8 @@ class TestDXClientUpdateProject(DXTestCase):
         result = self.project_describe(describe_input)
         self.assertEqual(result['name'], new_name)
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_ENABLE_PROTECTED_OPTION"])
     def test_update_booleans(self):
         update_items = {'protected': 'true',
                         'restricted': 'true'}
@@ -6405,6 +6581,10 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create global workflows')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_WORKFLOW_REMOVE_AUTHORIZED_USERS_GLOBALWF",
+                                          "DNA_CLI_WORKFLOW_LIST_AUTHORIZED_USERS_GLOBALWF",
+                                          "DNA_CLI_WORKFLOW_ADD_AUTHORIZED_USERS_GLOBALWF"])
     def test_dx_add_list_remove_users_of_global_workflows(self):
         """
         This test is for some other dx subcommands, but it's in this
@@ -6454,6 +6634,10 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         run('dx remove users wf_test_dx_users nonexistentuser')
         run('dx remove users wf_test_dx_users piratelabs')
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_WORKFLOW_ADD_DEVELOPERS_GLOBALWF",
+                                          "DNA_CLI_WORKFLOW_LIST_DEVELOPERS_GLOBALWF",
+                                          "DNA_CLI_WORKFLOW_REMOVE_DEVELOPERS_GLOBALWF"])
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create global workflows')
     def test_dx_add_list_remove_developers_of_global_workflows(self):
@@ -6512,6 +6696,9 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         run('dx remove developers wf_test_dx_developers nonexistentuser')
         run('dx remove developers wf_test_dx_developers piratelabs')
 
+
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_WORKFLOW_PUBLISH_GLOBALWF"])
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create global workflows')
     def test_dx_publish_global_workflow(self):
@@ -6569,6 +6756,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertTrue(dx_build_app._get_version_suffix(app_dir, '1.0.0+git.abcdef')
                         .startswith('.build.'))
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_APP_UPLOAD_BUILD_NEW_APPLET"])
     def test_build_applet(self):
         app_spec = dict(self.base_app_spec, name="minimal_applet")
         app_dir = self.write_app_directory("minimal_åpplet", json.dumps(app_spec), "code.py")
@@ -6890,6 +7079,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_APP_DESCRIBE"])
     def test_build_single_region_app_without_regional_options(self):
         # Backwards-compatible.
         app_name = "app_{t}_single_region".format(t=int(time.time()))
@@ -7516,6 +7707,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_APP_CREATE"])
     def test_build_app_with_bill_to(self):
         alice_id = "user-alice"
         org_id = "org-piratelabs"
@@ -7666,6 +7859,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEquals(json.loads(run("dx api " + app_id + " listCategories"))["categories"], ['B'])
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_APP_LIST_AUTHORIZED_USERS","DNA_API_APP_ADD_AUTHORIZED_USER"])
     def test_update_app_authorized_users(self):
         app0_spec = dict(self.base_app_spec, name="update_app_authorized_users")
         app1_spec = dict(self.base_app_spec, name="update_app_authorized_users", authorizedUsers=[])
@@ -7686,6 +7881,10 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEquals(json.loads(run("dx api " + app_id +
                                          " listAuthorizedUsers"))["authorizedUsers"], ["user-eve"])
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_APP_ADD_AUTHORIZED_USERS_APP",
+                                          "DNA_CLI_APP_LIST_AUTHORIZED_USERS_APP",
+                                          "DNA_CLI_APP_REMOVE_AUTHORIZED_USERS_APP"])
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
     def test_dx_add_list_remove_users_of_apps(self):
@@ -7735,6 +7934,11 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         run('dx remove users test_dx_users nonexistentuser')
         run('dx remove users test_dx_users piratelabs')
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_APP_ADD_DEVELOPERS_APP",
+                                          "DNA_CLI_APP_LIST_DEVELOPERS_APP",
+                                          "DNA_CLI_APP_REMOVE_DEVELOPERS_APP",
+                                          "DNA_API_APP_ADD_DEVELOPER"])
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
     def test_dx_add_list_remove_developers_of_apps(self):
@@ -8653,6 +8857,8 @@ def main(in1):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create app')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_APP_PUBLISH"])
     def test_dx_publish_app(self):
         app_name = "dx_publish_app"
         def _create_app(version):
@@ -8773,6 +8979,8 @@ class TestDXGetWorkflows(DXTestCaseBuildWorkflows):
             with self.assertSubprocessFailure(stderr_regexp='already exists', exit_code=3):
                 run("dx get -o destdir_withfile get_workflow")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_DOWNLOAD_EXECUTABLE"])
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create global workflows')
     def test_get_global_workflow(self):
         gwf_name = "test_get_global_workflow"
@@ -9350,6 +9558,12 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
                     break
             self.assertTrue(seenResources)
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_APP_LIST_AVAILABLE_APPS",
+                                          "DNA_CLI_APP_INSTALL_APP",
+                                          "DNA_CLI_APP_UNINSTALL_APP",
+                                          "DNA_API_APP_INSTALL",
+                                          "DNA_API_APP_UNINSTALL"])
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_MULTIPLE_USERS,
                          'skipping test that would create apps and another user')
     def test_uninstall_app(self):
@@ -9570,6 +9784,8 @@ class TestDXCp(DXTestCase):
 
     # create new file with the same name in the target
     #    dx cp  proj-1111:/file-1111   proj-2222:/
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_VIEW_DATA_IN_FOLDER"])
     def test_file_with_same_name(self):
         create_folder_in_project(self.proj_id1, "/earthsea")
         create_folder_in_project(self.proj_id2, "/earthsea")
@@ -9715,6 +9931,9 @@ class TestDXLs(DXTestCase):
 
 
 class TestDXTree(DXTestCase):
+
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_LIST_FOLDERS_OBJECTS_TREE"])
     def test_regular_output(self):
         dxpy.new_dxrecord(project=self.project, name="foo", close=True)
         o = run("dx tree")
@@ -9785,6 +10004,8 @@ class TestDXGenerateBatchInputs(DXTestCase):
 class TestDXRun(DXTestCase):
     @unittest.skipUnless(testutil.TEST_WITH_SMOKETEST_APP,
                          'skipping test that requires the smoketest app')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_APP_RUN"])
     def test_dx_run_app(self):
         app_name = "app-dnanexus_smoke_test"
         run("dx run {} -isubjobs=1 --yes --wait --watch".format(app_name))
@@ -9793,6 +10014,8 @@ class TestDXRun(DXTestCase):
 class TestDXUpdateApp(DXTestCaseBuildApps):
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that creates apps')
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_APP_UPDATE"])
     def test_update_app(self):
         # Build and publish app with initial version
         app_spec = {
