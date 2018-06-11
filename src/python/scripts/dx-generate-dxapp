@@ -161,10 +161,19 @@ class ArgumentParser(argparse.ArgumentParser):
 
 
 def action_to_dxapp(action, output_parameters, output_parameter_regexp):
+    optional = len(action.option_strings) > 0
+    name = None
+    if optional:
+        for optstr in action.option_strings:
+            if optstr.startswith('--'):
+                name = optstr[2:]
+                break
+    if name is None:
+        name = action.dest
     opt = {
-        "name": action.dest,
-        "label": action.dest,
-        "optional": len(action.option_strings) > 0,
+        "name": name,
+        "label": name,
+        "optional": optional,
         "help": action.help
     }
     is_output = bool(
