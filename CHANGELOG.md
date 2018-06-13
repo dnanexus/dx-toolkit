@@ -12,6 +12,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * decorators for traceability tests
 * `dx watch` support for smart reuse
 * test for `dx watch` job log relay
+* `dx find jobs/executions` support for smart reuse
 
 ## [256.0] - beta
 
