@@ -8,6 +8,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
+* support for setting and updating `details` on global workflows
+* decorators for traceability tests
 * `dx watch` support for smart reuse
 * test for `dx watch` job log relay
 
