@@ -203,7 +203,16 @@ def action_to_dxapp(action, output_parameters, output_parameter_regexp):
     else:
         type_ = type_to_dxapp(action.type)
 
-    is_file = type_ == 'file'
+    is_file = (type_ == 'file') or is_output
+
+    if not is_output and (
+            output_parameters is None and
+            output_parameter_regexp is None and
+            is_file and
+            is_writable(action.type.mode)
+    ):
+        is_output = True
+
     if is_file:
         opt["patterns"] = ["*"]
 
@@ -211,13 +220,6 @@ def action_to_dxapp(action, output_parameters, output_parameter_regexp):
         type_ = "array:{}".format(type_)
 
     opt["type"] = type_
-
-    is_output |= (
-        output_parameters is None and
-        output_parameter_regexp is None and
-        is_file and
-        is_writable(action.type.mode)
-    )
 
     return opt, is_output
 
