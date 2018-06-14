@@ -118,6 +118,7 @@ class ArgumentParser(argparse.ArgumentParser):
             name=self.prog,
             title=self.prog,
             summary=self.description,
+            description=self.description,
             dxapi=API_VERSION,
             version=version,
             inputSpec=input_spec,
@@ -192,18 +193,18 @@ def action_to_dxapp(action, output_parameters, output_parameter_regexp):
             isinstance(action, argparse._StoreTrueAction) or
             isinstance(action, argparse._StoreFalseAction)
     ):
-        type_ = 'boolean'
+        class_ = 'boolean'
     elif isinstance(action, argparse._CountAction):
-        type_ = 'int'
+        class_ = 'int'
     elif (
             isinstance(action, argparse._StoreConstAction) or
             isinstance(action, argparse._AppendConstAction)
     ):
-        type_ = type_to_dxapp(type(action.const))
+        class_ = class_to_dxapp(type(action.const))
     else:
-        type_ = type_to_dxapp(action.type)
+        class_ = class_to_dxapp(action.type)
 
-    is_file = (type_ == 'file') or is_output
+    is_file = (class_ == 'file') or is_output
 
     if not is_output and (
             output_parameters is None and
@@ -217,23 +218,23 @@ def action_to_dxapp(action, output_parameters, output_parameter_regexp):
         opt["patterns"] = ["*"]
 
     if action.nargs not in {None, 0, 1}:
-        type_ = "array:{}".format(type_)
+        class_ = "array:{}".format(class_)
 
-    opt["type"] = type_
+    opt["class"] = class_
 
     return opt, is_output
 
 
-def type_to_dxapp(type_):
+def class_to_dxapp(class_):
     """Convert a type (either primitive or defined in argparse) to a valid dxapp type.
     """
-    if not inspect.isclass(type_):
-        type_ = type(type_)
-    if issubclass(type_, numbers.Integral):
+    if not inspect.isclass(class_):
+        class_ = type(class_)
+    if issubclass(class_, numbers.Integral):
         return 'int'
-    elif issubclass(type_, numbers.Real):
+    elif issubclass(class_, numbers.Real):
         return 'float'
-    elif isinstance(type_, argparse.FileType):
+    elif isinstance(class_, argparse.FileType):
         return 'file'
     else:
         return 'string'
