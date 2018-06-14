@@ -164,19 +164,28 @@ class ArgumentParser(argparse.ArgumentParser):
 def action_to_dxapp(action, output_parameters, output_parameter_regexp):
     optional = len(action.option_strings) > 0
     name = None
+    group = ''
+
     if optional:
         for optstr in action.option_strings:
             if optstr.startswith('--'):
                 name = optstr[2:]
                 break
+
     if name is None:
         name = action.dest
+
+    if isinstance(action.container, argparse._ArgumentGroup):
+        group = action.container.title
+
     opt = {
         "name": name,
         "label": name,
         "optional": optional,
-        "help": action.help
+        "help": action.help,
+        "group": group
     }
+
     is_output = bool(
         (
                 output_parameters is not None and
@@ -200,9 +209,9 @@ def action_to_dxapp(action, output_parameters, output_parameter_regexp):
             isinstance(action, argparse._StoreConstAction) or
             isinstance(action, argparse._AppendConstAction)
     ):
-        class_ = class_to_dxapp(type(action.const))
+        class_ = type_to_dxapp_class(type(action.const))
     else:
-        class_ = class_to_dxapp(action.type)
+        class_ = type_to_dxapp_class(action.type)
 
     is_file = (class_ == 'file') or is_output
 
@@ -225,16 +234,30 @@ def action_to_dxapp(action, output_parameters, output_parameter_regexp):
     return opt, is_output
 
 
-def class_to_dxapp(class_):
+def type_to_dxapp_class(type_):
     """Convert a type (either primitive or defined in argparse) to a valid dxapp type.
+
+    TODO: type_ can be an arbitrary callable. To figure out the class, we could call
+    the callable with different inputs and check whether it throws an exception, and,
+    if not, check the the type of the return value. For example:
+
+    try:
+        val_type = type(type_('1'))
+        if issubclass(val_type, numbers.Integral):
+            return 'int'
+        else:
+            return 'float'
+    except:
+        # it's not numeric
+        pass
     """
-    if not inspect.isclass(class_):
-        class_ = type(class_)
-    if issubclass(class_, numbers.Integral):
+    if not inspect.isclass(type_):
+        type_ = type(type_)
+    if issubclass(type_, numbers.Integral):
         return 'int'
-    elif issubclass(class_, numbers.Real):
+    elif issubclass(type_, numbers.Real):
         return 'float'
-    elif isinstance(class_, argparse.FileType):
+    elif isinstance(type_, argparse.FileType):
         return 'file'
     else:
         return 'string'
