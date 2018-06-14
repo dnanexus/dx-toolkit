@@ -112,8 +112,6 @@ class ArgumentParser(argparse.ArgumentParser):
             else:
                 input_spec.append(opt)
 
-        interpreter = 'python{}'.format('.'.join(str(v) for v in sys.version_info[0:2]))
-
         dxapp = dict(
             name=self.prog,
             title=self.prog,
@@ -129,7 +127,7 @@ class ArgumentParser(argparse.ArgumentParser):
                         "hours": self._args.timeout
                     }
                 },
-                "interpreter": interpreter,
+                "interpreter": self._args.interpreter,
                 "release": self._args.release,
                 "distribution": self._args.distribution,
                 "file": self._args.target_executable or self.prog
@@ -164,7 +162,6 @@ class ArgumentParser(argparse.ArgumentParser):
 def action_to_dxapp(action, output_parameters, output_parameter_regexp):
     optional = len(action.option_strings) > 0
     name = None
-    group = ''
 
     if optional:
         for optstr in action.option_strings:
@@ -175,15 +172,10 @@ def action_to_dxapp(action, output_parameters, output_parameter_regexp):
     if name is None:
         name = action.dest
 
-    if isinstance(action.container, argparse._ArgumentGroup):
-        group = action.container.title
-
     opt = {
         "name": name,
-        "label": name,
         "optional": optional,
         "help": action.help,
-        "group": group
     }
 
     is_output = bool(
@@ -223,13 +215,22 @@ def action_to_dxapp(action, output_parameters, output_parameter_regexp):
     ):
         is_output = True
 
-    if is_file:
-        opt["patterns"] = ["*"]
-
     if action.nargs not in {None, 0, 1}:
         class_ = "array:{}".format(class_)
 
     opt["class"] = class_
+
+    if is_file:
+        opt["patterns"] = ["*"]
+
+    if isinstance(action.container, argparse._ArgumentGroup):
+        opt['group'] = action.container.title
+
+    if not is_output:
+        if action.default is not None:
+            opt['default'] = action.default
+        if action.choices:
+            opt['choices'] = action.choices
 
     return opt, is_output
 
@@ -314,6 +315,9 @@ def main():
     parser.add_argument(
         '-r', '--output-param-regexp', default=None,
         help="Regular expression that identifies output parameter names.")
+    parser.add_argument(
+        '-n', '--interpreter', default='bash', choices=('bash', 'python2.7'),
+        help="Type of script that will wrap the executable.")
     parser.add_argument(
         '-i', '--instance-type', default="mem1_ssd1_x4",
         help="AWS instance type to use.")
