@@ -131,7 +131,7 @@ class ArgumentParser(argparse.ArgumentParser):
                 "interpreter": interpreter,
                 "release": self._args.release,
                 "distribution": self._args.distribution,
-                "file": self.prog  # TODO: this is probably wrong; what to use here?
+                "file": self._args.target_executable or self.prog
             },
             # TODO: make these configurable
             access={
@@ -251,7 +251,7 @@ def argparse_to_dxapp(args):
 
     # Call the main method in target
     target_mod = importlib.import_module(args.target_module)
-    target = getattr(target_mod, args.target_method)
+    target = getattr(target_mod, args.target_function)
     target_args = []
     if args.subcommand:
         target_args = [args.subcommand]
@@ -266,12 +266,22 @@ def argparse_to_dxapp(args):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-m', '--target-module')
-    parser.add_argument('-f', '--target-method', default='main')
+    parser.add_argument(
+        '-m', '--target-module',
+        help="The fully-qualified module that contains the target method.")
+    parser.add_argument(
+        '-f', '--target-function', default='main',
+        help="The main function that is called by the target executable. This should be"
+             "where the ArgumentParser is configured.")
+    parser.add_argument(
+        '-x', '--target-executable', default=None,
+        help="The name of the executable. This is used in the dxapp.json runSpec.")
     parser.add_argument(
         '-s', '--subcommand', default=None,
         help="Subcommand to pass to the target method, if required.")
-    parser.add_argument('-o', '--output-file', default=None)
+    parser.add_argument(
+        '-o', '--output-file', default=None,
+        help="The output dxapp.json file. If not specified, output will go to stdout.")
     parser.add_argument(
         '-p', '--output-params', nargs='+', default=None,
         help="Names of output parameters (in case they can't be autodetected).")
