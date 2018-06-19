@@ -2151,6 +2151,12 @@ class TestDXClientRun(DXTestCase):
         dxpy.api.project_destroy(self.other_proj_id, {'terminateJobs': True})
         super(TestDXClientRun, self).tearDown()
 
+    def test_dx_run_disallow_project_and_folder(self):
+        with self.assertRaisesRegexp(subprocess.CalledProcessError, "Options --project and --folder/--destination cannot be specified together.\nIf specifying both a project and a folder, please include them in the --folder option."):
+            run("dx run bogusapplet --project project-bogus --folder bogusfolder")
+
+
+
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_APP_RUN_APPLET","DNA_API_DATA_OBJ_RUN_APPLET"])
     def test_dx_run_applet_with_input_spec(self):

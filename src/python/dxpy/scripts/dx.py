@@ -3132,9 +3132,9 @@ def run(args):
     dest_proj, dest_path = None, None
 
     if args.project is not None:
-        if args.folder is not None and not args.clone:
+        if args.folder is not None:
             err_exit(exception=DXCLIError(
-                "Options --project and --folder/--destination cannot be specified together"
+                "Options --project and --folder/--destination cannot be specified together.\nIf specifying both a project and a folder, please include them in the --folder option."
             ))
         dest_proj = args.project
 
