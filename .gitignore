@@ -73,6 +73,7 @@ dxR.Rcheck
 /bin/docker2aci
 /bin/dx-docker
 /bin/proot
+/bin/dxWDL.jar
 /src/ua/dist/ua
 /src/ua/dnanexus-upload-agent-*-linux.tar.gz
 /src/ua/dnanexus-upload-agent-*-linux

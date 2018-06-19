@@ -37,6 +37,11 @@ FEDORA_MAJOR_VERSION := $(shell test -e /etc/issue && (grep -o "Fedora release [
 UBUNTU_VERSION := $(shell test -e /etc/issue && (grep -o "Ubuntu [0-9]\+\.[0-9]\+" /etc/issue | sed -e "s/Ubuntu //"))
 RHEL_MAJOR_VERSION := $(shell test -e /etc/redhat-release && (grep -o "Red Hat Enterprise Linux .* release [0-9]\+" /etc/redhat-release | sed -e "s/Red Hat Enterprise Linux .* release //"))
 
+# Set the dxWDL version to download from git
+ifndef DXWDL_VERSION
+	DXWDL_VERSION = 0.66.1
+endif
+
 ifndef CCACHE_DISABLE
 	export PATH := /usr/lib/ccache:$(PATH)
 endif
@@ -64,7 +69,7 @@ else
 	MAYBE_SUDO='sudo'
 endif
 
-all: api_wrappers cpp src_libs python dx-verify-file jq dx-docker
+all: api_wrappers cpp src_libs python dx-verify-file jq dx-docker portablewf
 
 # Don't try to initialize the submodule in source distributions, it should
 # already be there and ready to build.
@@ -236,6 +241,12 @@ else ifeq ($(OS), Windows_NT)
 else
 	curl -k -sL https://dl.dnanex.us/F/D/gzXf3VbVf052FXkKB7yq9PPxGqBKfpbPZPq6V7jx/docker2aci > $(DNANEXUS_HOME)/bin/docker2aci && chmod 777 $(DNANEXUS_HOME)/bin/docker2aci
 endif
+
+# Support for portable workflows, using the dxWDL compiler
+portablewf: $(DNANEXUS_HOME)/bin/dxWDL.jar
+
+$(DNANEXUS_HOME)/bin/dxWDL.jar:
+	curl -L "https://github.com/dnanexus/dxWDL/releases/download/$(DXWDL_VERSION)/dxWDL-$(DXWDL_VERSION).jar" -o $(DNANEXUS_HOME)/bin/dxWDL.jar
 
 # Tests
 # =====
