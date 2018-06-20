@@ -51,9 +51,9 @@ def verify_string_dxid(dxid, expected_classes):
 
         raise DXError('Invalid ID of class %s: %r' % (str_expected_classes, dxid))
 
-def get_random_project(dict_of_projects):
+def get_arbitrary_project(dict_of_projects):
     """
-    Returns a random project ID from the dictionary of projects and/or containers.
+    Returns an arbitrary project ID from the dictionary of projects and/or containers.
     If the list contains both projects and containers, it preferably returns a project.
 
     :param dict_of_projects: a dictionary where keys are project/container IDs and values are the permissions
@@ -305,7 +305,7 @@ class DXDataObject(DXObject):
         self._dxid = dxid
 
         if project is None and self._dxid is not None:
-            self._proj = get_random_project(self.list_projects())
+            self._proj = get_arbitrary_project(self.list_projects())
         elif project is not None:
             verify_string_dxid(project, ['project', 'container'])
             self._proj = project

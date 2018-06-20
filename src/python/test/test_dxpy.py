@@ -570,10 +570,10 @@ class TestDXFile(unittest.TestCase):
             # when making API call
             with testutil.TemporaryFile(close=True) as tmp:
                 os.environ['_DX_DUMP_BILLED_PROJECT'] = tmp.name
-                f3 = dxpy.DXFile(dxid=f.get_id())  # project defaults to project context
+                f3 = dxpy.DXFile(dxid=f.get_id())  # project defaults to an arbitrary project storing with the file
                 f3.read(4)
                 with open(tmp.name, "r") as fd:
-                    self.assertEqual(fd.read(), "")
+                    self.assertIn(fd.read(), [p.get_id(), p2.get_id()])
 
             # Project specified in read() that doesn't contain the file.
             # The call should fail.
@@ -2501,8 +2501,7 @@ class TestDataobjectFunctions(unittest.TestCase):
         dxlink = {'$dnanexus_link': dxrecord.get_id()}
         handler = dxpy.get_handler(dxlink)
         self.assertEqual(handler.get_id(), dxrecord.get_id())
-        # Default project is not going to be the correct one
-        self.assertNotEqual(handler.get_proj_id(), self.proj_id)
+        self.assertEqual(handler.get_proj_id(), self.proj_id)
 
         # Extended DXLink
         dxlink = {'$dnanexus_link': {'id': dxrecord.get_id(),
