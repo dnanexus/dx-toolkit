@@ -2653,7 +2653,7 @@ def compile_destination(args):
     return project + ":" + folder
 
 
-def build_pwf(args):
+def compile(args):
     if dxpy.AUTH_HELPER is None:
         build_parser.error('Authentication required to build an executable on the platform; please run "dx login" first')
     cmdline = ["java", "-jar", TOP_INSTALL_DIR + "/java/dxWDL.jar", "compile", args.sourceFile]
@@ -4539,60 +4539,60 @@ register_parser(parser_build_asset)
 
 
 #####################################
-# build_pwf
+# compile
 #####################################
 
-parser_build_pwf = subparsers.add_parser('build_pwf', help='Compile a WDL workflow or task',
+parser_compile = subparsers.add_parser('compile', help='Compile a WDL workflow or task',
                                          description='Build a workflow and auxiliary applets from a WDL source file',
-                                         prog='dx build_pwf')
+                                         prog='dx compile')
 
 # positional argument -- a file to compile
-parser_build_pwf.add_argument('sourceFile', help='File to compile')
+parser_compile.add_argument('sourceFile', help='File to compile')
 
 # optionals
-parser_build_pwf.add_argument("--archive",
+parser_compile.add_argument("--archive",
                               help=fill("Archive older versions of applets and workflows"),
                               action="store_true",
                               default=False)
-parser_build_pwf.add_argument("--defaults",
+parser_compile.add_argument("--defaults",
                               help=fill("File with Cromwell formatted default values (JSON)"))
-parser_build_pwf.add_argument("-d", "--destination",
+parser_compile.add_argument("-d", "--destination",
                                 help=fill("Specifies the destination project and destination folder,"
                                           "in the form [PROJECT_NAME_OR_ID:][/FOLDER_NAME]"),
                                 default='.')
-parser_build_pwf.add_argument("--extras",
+parser_compile.add_argument("--extras",
                               help=fill("JSON formatted file with extra options, for example, default runtime options for tasks."))
-parser_build_pwf.add_argument("-f", "--force",
+parser_compile.add_argument("-f", "--force",
                               help=fill("Delete existing applets/workflows"),
                               action="store_true",
                               default=False)
-parser_build_pwf.add_argument("--inputs",
+parser_compile.add_argument("--inputs",
                               help=fill("File with Cromwell formatted inputs (JSON)"))
-parser_build_pwf.add_argument("--locked",
+parser_compile.add_argument("--locked",
                               help=fill("Create a locked-down workflow"),
                               action="store_true",
                               default=False)
-parser_build_pwf.add_argument("-p", "--imports",
+parser_compile.add_argument("-p", "--imports",
                               help=fill("Directory to search for imported WDL files"),
                               action='append')
-parser_build_pwf.add_argument("--quiet",
+parser_compile.add_argument("--quiet",
                               help=fill("Do not print warnings or informational output"),
                               action="store_true",
                               default=False)
-parser_build_pwf.add_argument("--reorg",
+parser_compile.add_argument("--reorg",
                               help=fill("Reorganize workflow output files"),
                               action="store_true",
                               default=False)
-parser_build_pwf.add_argument("--runtimeDebugLevel",
+parser_compile.add_argument("--runtimeDebugLevel",
                               help=fill("How much debug information to write to the job log at runtime. Zero means write the minimum, one is the default, and two is for internal debugging."),
                               choices=['0', '1', '2'],
                               default='1')
-parser_build_pwf.add_argument("--verbose",
+parser_compile.add_argument("--verbose",
                               help=fill("Print detailed progress reports"),
                               action="store_true",
                               default=False)
-parser_build_pwf.set_defaults(func=build_pwf)
-register_parser(parser_build_pwf)
+parser_compile.set_defaults(func=compile)
+register_parser(parser_compile)
 
 #####################################
 # add
