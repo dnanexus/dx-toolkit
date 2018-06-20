@@ -80,10 +80,10 @@ def build_app_with_bash_helpers(app_dir, project_id):
 
         # Add lines to the beginning of the job to make and use our new dx-toolkit
         preamble = []
-        preamble.append("cd {appdir}/resources && git clone https://github.com/dnanexus/dx-toolkit.git".format(updated_app_dir))
+        preamble.append("cd {appdir}/resources && git clone https://github.com/dnanexus/dx-toolkit.git".format(appdir=updated_app_dir))
         preamble.append('sudo pip install --upgrade virtualenv\n')
-        preamble.append('make -C {toolkitdir} python\n'.format(dxtoolkit_dir))
-        preamble.append('source {toolkitdir}/environment\n'.format(dxtoolkit_dir))
+        preamble.append('make -C {toolkitdir} python\n'.format(toolkitdir=dxtoolkit_dir))
+        preamble.append('source {toolkitdir}/environment\n'.format(toolkitdir=dxtoolkit_dir))
         # Now find the applet entry point file and prepend the
         # operations above, overwriting it in place.
         dxapp_json = json.load(open(os.path.join(app_dir, 'dxapp.json')))
