@@ -17,6 +17,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Fixed
 
 * unclear behavior when `--clone`, `--folder`, and `--project` are simultaneously provided to `dx run`
+* `DXObject.set_ids()` with project set to None (it is now set to an arbitrary project associated with the file)
 
 ## [256.0] - beta
 
