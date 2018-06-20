@@ -2613,21 +2613,52 @@ def build(args):
         print("Error: %s" % (e.message,), file=sys.stderr)
         err_exit()
 
-def build_pwf(args):
-    sys.argv = ['dx build_pwf'] + sys.argv[2:]
-    #args = parser_build_pwf.parse_args()
 
-#    if dxpy.AUTH_HELPER is None and not args.dry_run:
-    if dxpy.AUTH_HELPER is None and not args.dry_run:
+# Find out the project and folder where to place compilation outputs.
+#
+# There are several legal syntaxes for destination:
+#    project-id:/folder
+#    project-id:
+#    :/folder
+#    /folder
+def compile_destination(args):
+    current_dir = get_pwd().split(':')
+    project = current_dir[0]
+    folder = current_dir[1]
+    d = args.destination
+
+    if (d is not None and
+       d != '.'):
+        if ':' in d:
+            vec = d.split(':')
+            if vec.length == 1:
+                if d.endswith(':'):
+                    project = vec[0]
+                else:
+                    folder = vec[0]
+            if vec.length == 2:
+                project = vec[0]
+                folder = vec[1]
+            if vec.length >= 3:
+                raise DXParserError('Error: invalid path {}'.format(d))
+        else:
+            folder = d
+    if not folder.startswith('/'):
+        raise DXParserError('Error: folder must start with slash {}'.format(d))
+    return project + ":" + folder
+
+def build_pwf(args):
+    if dxpy.AUTH_HELPER is None:
         build_parser.error('Authentication required to build an executable on the platform; please run "dx login" first')
 
     cmdline = ["java", "-jar", "bin/dxWDL.jar", "compile", args.sourceFile]
+
+    destination = compile_destination(args)
+    cmdline += ["--destination", destination]
     if args.archive:
         cmdline.append("--archive")
     if args.defaults is not None:
         cmdline += ["--defaults", args.defaults]
-    if args.destination is not None:
-        cmdline += ["--destination", args.destination]
     if args.extras is not None:
         cmdline += ["--extras", args.extras]
     if args.force:
@@ -2648,11 +2679,11 @@ def build_pwf(args):
         cmdline.append("--verbose")
 
     try:
-        subprocess.check_output(cmdline)
+        output = subprocess.check_output(cmdline)
+        print(output.strip())
     except Exception as e:
         print("Error: %s" % (e.message,), file=sys.stderr)
         err_exit()
-
 
 def process_list_of_usernames(thing):
     return ['user-' + name.lower() if name != 'PUBLIC' and
@@ -4522,7 +4553,7 @@ parser_build_pwf.add_argument("--defaults",
                               help=fill("File with Cromwell formatted default values (JSON)"))
 parser_build_pwf.add_argument("-d", "--destination",
                                 help=fill("Specifies the destination project and destination folder,"
-                                          " in the form [PROJECT_NAME_OR_ID:][FOLDER]"),
+                                          "in the form [PROJECT_NAME_OR_ID:][/FOLDER_NAME]"),
                                 default='.')
 parser_build_pwf.add_argument("--extras",
                               help=fill("JSON formatted file with extra options, for example, default runtime options for tasks."))
