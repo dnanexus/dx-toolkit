@@ -14,6 +14,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * test for `dx watch` job log relay
 * `dx find jobs/executions` support for smart reuse
 
+### Fixed
+
+* unclear behavior when `--clone`, `--folder`, and `--project` are simultaneously provided to `dx run`
+
 ## [256.0] - beta
 
 ### Changed
