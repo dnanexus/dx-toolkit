@@ -570,10 +570,10 @@ class TestDXFile(unittest.TestCase):
             # when making API call
             with testutil.TemporaryFile(close=True) as tmp:
                 os.environ['_DX_DUMP_BILLED_PROJECT'] = tmp.name
-                f3 = dxpy.DXFile(dxid=f.get_id())  # project defaults to project context
+                f3 = dxpy.DXFile(dxid=f.get_id())  # project defaults to an arbitrary project storing with the file
                 f3.read(4)
                 with open(tmp.name, "r") as fd:
-                    self.assertEqual(fd.read(), "")
+                    self.assertIn(fd.read(), [p.get_id(), p2.get_id()])
 
             # Project specified in read() that doesn't contain the file.
             # The call should fail.
@@ -896,6 +896,14 @@ class TestDXRecord(unittest.TestCase):
         self.assertEqual(second_dxrecord.get_proj_id(), self.proj_id)
         dxrecord.remove()
 
+        # set_ids() with default project (should be set to a random
+        # project associated with the data object and not the current workspace project
+        with testutil.temporary_project("Test DXObject project assignment", select=False) as ap:
+            dxrecord = dxpy.new_dxrecord(project=ap.get_id(), name="firstname", tags=["tag"])
+            new_dxrecord_obj = dxpy.DXRecord(dxrecord.get_id())
+            self.assertEqual(new_dxrecord_obj.get_proj_id(), ap.get_id())
+            dxrecord.remove()
+
     def test_create_remove_dxrecord(self):
         '''Create a fresh DXRecord object and check that its ID is
         stored and that the record object has been stored.
@@ -1178,7 +1186,6 @@ class TestDXRecord(unittest.TestCase):
         self.assertIn('modified', describe_with_custom_fields)
         self.assertIn('properties', describe_with_custom_fields)
         self.assertNotIn('details', describe_with_custom_fields)
-
 
 @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
 class TestDXAppletJob(unittest.TestCase):
@@ -2494,8 +2501,7 @@ class TestDataobjectFunctions(unittest.TestCase):
         dxlink = {'$dnanexus_link': dxrecord.get_id()}
         handler = dxpy.get_handler(dxlink)
         self.assertEqual(handler.get_id(), dxrecord.get_id())
-        # Default project is not going to be the correct one
-        self.assertNotEqual(handler.get_proj_id(), self.proj_id)
+        self.assertEqual(handler.get_proj_id(), self.proj_id)
 
         # Extended DXLink
         dxlink = {'$dnanexus_link': {'id': dxrecord.get_id(),
