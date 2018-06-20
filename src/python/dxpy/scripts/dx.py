@@ -77,6 +77,11 @@ try:
 except:
     pass
 
+# The absolute path of the installation directory
+_DX_ABS_PATH = os.path.abspath(__file__)
+TOP_INSTALL_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(_DX_ABS_PATH)))))
+assert(TOP_INSTALL_DIR.endswith("share/dnanexus/lib"))
+
 if '_ARGCOMPLETE' not in os.environ:
     try:
         # Hack: on some operating systems, like Mac, readline spews
@@ -2647,11 +2652,11 @@ def compile_destination(args):
         raise DXParserError('Error: folder must start with slash {}'.format(d))
     return project + ":" + folder
 
+
 def build_pwf(args):
     if dxpy.AUTH_HELPER is None:
         build_parser.error('Authentication required to build an executable on the platform; please run "dx login" first')
-
-    cmdline = ["java", "-jar", "bin/dxWDL.jar", "compile", args.sourceFile]
+    cmdline = ["java", "-jar", TOP_INSTALL_DIR + "/java/dxWDL.jar", "compile", args.sourceFile]
 
     destination = compile_destination(args)
     cmdline += ["--destination", destination]

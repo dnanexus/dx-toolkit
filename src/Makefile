@@ -69,7 +69,7 @@ else
 	MAYBE_SUDO='sudo'
 endif
 
-all: api_wrappers cpp src_libs python dx-verify-file jq dx-docker portablewf
+all: api_wrappers cpp src_libs python dx-verify-file jq dx-docker
 
 # Don't try to initialize the submodule in source distributions, it should
 # already be there and ready to build.
@@ -124,7 +124,7 @@ src_libs: api_wrappers
 
 PYTHON_LIBDIR := $(DNANEXUS_LIBDIR)/python2.7/site-packages
 
-python: api_wrappers toolkit_version $(DNANEXUS_HOME)/bin/dx
+python: api_wrappers toolkit_version portablewf $(DNANEXUS_HOME)/bin/dx
 
 ifeq ($(OS), Windows_NT)
         ACTIVATE=Scripts/activate
@@ -243,10 +243,11 @@ else
 endif
 
 # Support for portable workflows, using the dxWDL compiler
-portablewf: $(DNANEXUS_HOME)/bin/dxWDL.jar
+portablewf: $(DNANEXUS_LIBDIR)/java/dxWDL.jar
 
-$(DNANEXUS_HOME)/bin/dxWDL.jar:
-	curl -L "https://github.com/dnanexus/dxWDL/releases/download/$(DXWDL_VERSION)/dxWDL-$(DXWDL_VERSION).jar" -o $(DNANEXUS_HOME)/bin/dxWDL.jar
+$(DNANEXUS_LIBDIR)/java/dxWDL.jar:
+	mkdir -p $(DNANEXUS_LIBDIR)/java
+	curl -L "https://github.com/dnanexus/dxWDL/releases/download/$(DXWDL_VERSION)/dxWDL-$(DXWDL_VERSION).jar" -o $(DNANEXUS_LIBDIR)/java/dxWDL.jar
 
 # Tests
 # =====
