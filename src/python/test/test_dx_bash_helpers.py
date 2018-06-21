@@ -74,16 +74,15 @@ def build_app_with_bash_helpers(app_dir, project_id):
         # and source this version which will overload the stock version of dx-toolkit.
         # This we we can test all bash helpers as they would appear locally with all
         # necessary dependencies
-        dxtoolkit_dir = os.path.abspath(os.path.join(updated_app_dir, 'resources', 'dx-toolkit'))
-        #local_dxtoolkit = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-        #shutil.copytree(local_dxtoolkit, dxtoolkit_dir)
+        dxtoolkit_dir = os.path.abspath(os.path.join(updated_app_dir, 'resources', 'dxtoolkit'))
+        local_dxtoolkit = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+        shutil.copytree(local_dxtoolkit, dxtoolkit_dir)
 
         # Add lines to the beginning of the job to make and use our new dx-toolkit
         preamble = []
-        preamble.append("cd {appdir}/resources && git clone https://github.com/dnanexus/dx-toolkit.git".format(appdir=updated_app_dir))
         preamble.append('sudo pip install --upgrade virtualenv\n')
-        preamble.append('make -C {toolkitdir} python\n'.format(toolkitdir=dxtoolkit_dir))
-        preamble.append('source {toolkitdir}/environment\n'.format(toolkitdir=dxtoolkit_dir))
+        preamble.append('make -C /dxtoolkit python\n')
+        preamble.append('source /dxtoolkit/environment\n')
         # Now find the applet entry point file and prepend the
         # operations above, overwriting it in place.
         dxapp_json = json.load(open(os.path.join(app_dir, 'dxapp.json')))
