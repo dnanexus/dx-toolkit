@@ -124,7 +124,7 @@ src_libs: api_wrappers
 
 PYTHON_LIBDIR := $(DNANEXUS_LIBDIR)/python2.7/site-packages
 
-python: api_wrappers toolkit_version portablewf $(DNANEXUS_HOME)/bin/dx
+python: api_wrappers toolkit_version $(DNANEXUS_HOME)/bin/dx
 
 ifeq ($(OS), Windows_NT)
         ACTIVATE=Scripts/activate
@@ -172,7 +172,7 @@ pynsist_installer: toolkit_version $(DNANEXUS_HOME)/bin/dx dx-verify-file jq
 	# Copy .exe installer to dx-toolkit root once it's ready
 	cp "$(DNANEXUS_HOME)"/build/pynsist_files/build/nsis/DNAnexus_CLI_"$(GIT_TOOLKIT_VERSION_SHORT)".exe "$(DNANEXUS_HOME)"/dx-toolkit-"$(GIT_TOOLKIT_VERSION_SHORT)".exe
 
-$(DNANEXUS_HOME)/bin/dx: $(shell find python/{dxpy,scripts,requirements*,setup*} -not -name toolkit_version*)
+$(DNANEXUS_HOME)/bin/dx: portablewf $(shell find python/{dxpy,scripts,requirements*,setup*} -not -name toolkit_version*)
 	python -c 'import sys; exit("dx-toolkit is not compatible with Python < 2.7" if sys.version_info < (2, 7) else 0)'
 	rm -rf "$(PYTHON_LIBDIR)" "$(DX_PY_ENV)" python/dist
 	mkdir -p "$$(dirname '$(PYTHON_LIBDIR)')"
@@ -206,6 +206,7 @@ else
 	mv "$(DNANEXUS_HOME)"/lib/python?.?/site-packages "$(PYTHON_LIBDIR)" || mv "$(DNANEXUS_HOME)"/site-packages "$(PYTHON_LIBDIR)"
 endif
 	rm -f "$(DNANEXUS_HOME)/bin/xattr"
+	cp -f "$(DNANEXUS_HOME)"/bin/dxWDL.jar "$(PYTHON_LIBDIR)"/dxpy/scripts/dxWDL.jar
 
 # If running in fakeroot, override some maven settings so that maven can still
 # find a localRepository to write to.
@@ -243,11 +244,12 @@ else
 endif
 
 # Support for portable workflows, using the dxWDL compiler
-portablewf: $(DNANEXUS_LIBDIR)/java/dxWDL.jar
+portablewf: $(DNANEXUS_HOME)/bin/dxWDL.jar
 
-$(DNANEXUS_LIBDIR)/java/dxWDL.jar:
-	mkdir -p $(DNANEXUS_LIBDIR)/java
-	curl -L "https://github.com/dnanexus/dxWDL/releases/download/$(DXWDL_VERSION)/dxWDL-$(DXWDL_VERSION).jar" -o $(DNANEXUS_LIBDIR)/java/dxWDL.jar
+# Download the correct dxWDL version from github, and install it
+$(DNANEXUS_HOME)/bin/dxWDL.jar:
+	curl -L "https://github.com/dnanexus/dxWDL/releases/download/$(DXWDL_VERSION)/dxWDL-$(DXWDL_VERSION).jar" -o $(DNANEXUS_HOME)/bin/dxWDL.jar
+
 
 # Tests
 # =====

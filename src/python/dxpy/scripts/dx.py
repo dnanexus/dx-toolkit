@@ -77,11 +77,6 @@ try:
 except:
     pass
 
-# The absolute path of the installation directory
-_DX_ABS_PATH = os.path.abspath(__file__)
-TOP_INSTALL_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(_DX_ABS_PATH)))))
-assert(TOP_INSTALL_DIR.endswith("share/dnanexus/lib"))
-
 if '_ARGCOMPLETE' not in os.environ:
     try:
         # Hack: on some operating systems, like Mac, readline spews
@@ -2648,18 +2643,65 @@ def compile_destination(args):
                 raise DXParserError('Error: invalid path {}'.format(d))
         else:
             folder = d
+    if folder == "":
+        folder = '/'
     if not folder.startswith('/'):
         raise DXParserError('Error: folder must start with slash {}'.format(d))
     return project + ":" + folder
 
 
+# Convert each unicode character to four hexadecimal digits
+def _unicodeToHex(buf):
+    l = []
+    for ch in buf:
+        codepoint = ord(ch)
+        digits = format(codepoint, '04x')
+        l.append(digits)
+    return "".join(l)
+
+# Make sure java is version 8
+_java_version = None
+_JAVA_VERSION_REQUIRED = "1.8"
+def check_java_version():
+    global _java_version
+    if _java_version is None:
+        try:
+            output = subprocess.check_output(["java", "-version"],
+                                             stderr=subprocess.STDOUT,
+                                             universal_newlines=True)
+        except Exception as e:
+            raise DXError('Could not call the java executable')
+
+        try:
+            first_line = output.split('\n')[0]
+            words = first_line.split()
+            _java_version = words[-1].replace('"', '')
+        except Exception as e:
+            raise DXError('Could not parse java -version output {}'.format(output))
+
+    return _java_version.startswith(_JAVA_VERSION_REQUIRED)
+
 def compile(args):
     if dxpy.AUTH_HELPER is None:
         build_parser.error('Authentication required to build an executable on the platform; please run "dx login" first')
-    cmdline = ["java", "-jar", TOP_INSTALL_DIR + "/java/dxWDL.jar", "compile", args.sourceFile]
+    # The absolute path of the installation directory
+    install_dir = os.path.dirname(os.path.abspath(__file__))
+    dxWDL_jar = os.path.join(install_dir, "dxWDL.jar")
+    if not os.path.exists(dxWDL_jar):
+        raise DXError('Jar file {} does not exist'.format(dxWDL_jar))
+    cmdline = ["java", "-jar", dxWDL_jar, "compile", args.sourceFile]
 
+    check_java_version()
+
+    # The execv call, used by the subprocess python module, does not
+    # accept unicode. Therefore, we encode unicode destinations as
+    # hexadecimal strings.
     destination = compile_destination(args)
-    cmdline += ["--destination", destination]
+    if type(destination) is unicode:
+        cmdline += ["--destination_unicode", _unicodeToHex(destination)]
+    else:
+        cmdline += ["--destination", destination]
+
     if args.archive:
         cmdline.append("--archive")
     if args.defaults is not None:
@@ -2683,8 +2725,12 @@ def compile(args):
     if args.verbose:
         cmdline.append("--verbose")
 
+    # try to make it a "pure" string (?)
+    cmd = str(" ".join(cmdline)).split(" ")
+    sys.stderr.write("cmd = {}".format(cmd))
+    sys.stderr.flush()
     try:
-        output = subprocess.check_output(cmdline)
+        output = subprocess.check_output(cmd)
         print(output.strip())
     except Exception as e:
         print("Error: %s" % (e.message,), file=sys.stderr)

@@ -72,8 +72,10 @@ dxR.Rcheck
 /bin/dx-upload-all-outputs
 /bin/docker2aci
 /bin/dx-docker
-/bin/proot
 /bin/dxWDL.jar
+/bin/easy_install*
+/bin/proot
+/src/python/test/*.traceability.*.csv
 /src/ua/dist/ua
 /src/ua/dnanexus-upload-agent-*-linux.tar.gz
 /src/ua/dnanexus-upload-agent-*-linux
