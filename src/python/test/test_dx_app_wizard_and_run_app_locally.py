@@ -29,7 +29,6 @@ import dxpy_testutil as testutil
 import dxpy
 from dxpy.scripts import dx_build_app
 from dxpy.utils.completer import InstanceTypesCompleter
-import pytest
 
 
 def run(command, **kwargs):
@@ -181,8 +180,6 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
         self.assertEqual(dxapp_json['regionalOptions']['azure:westus']['systemRequirements']['*']['instanceType'],
                          "azure:mem1_ssd1_x2")
 
-    @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_HELP_CREATE_APP_WIZARD"])
     def test_dx_run_app_locally_interactively(self):
         appdir = create_app_dir()
         local_run = pexpect.spawn("dx-run-app-locally {} -iin1=8".format(appdir))

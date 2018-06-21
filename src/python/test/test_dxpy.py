@@ -24,7 +24,6 @@ import shutil
 import string
 import subprocess
 import platform
-import pytest
 import re
 
 import requests
@@ -676,8 +675,6 @@ class TestDXFile(unittest.TestCase):
         dxfile.write("Haha")
         # No assertion here, but this should print an error
 
-    @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_API_DATA_OBJ_GENERATE_DOWNLOAD_URL"])
     def test_download_url_helper(self):
         dxfile = dxpy.upload_string(self.foo_str, wait_on_close=True)
         opts = {"preauthenticated": True, "filename": "foo"}
@@ -983,8 +980,6 @@ class TestDXRecord(unittest.TestCase):
         self.assertEqual(first_desc["tags"], second_desc["tags"])
         self.assertFalse(first_desc["types"] == second_desc["types"])
 
-    @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_API_DATA_OBJ_VIEW_DATA_OF_RECORD"])
     def test_describe_dxrecord(self):
         dxrecord = dxpy.new_dxrecord()
         desc = dxrecord.describe()
@@ -2171,8 +2166,6 @@ class TestDXSearch(unittest.TestCase):
         finally:
             dxpy.WORKSPACE_ID = old_workspace
 
-    @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_API_PROJ_VIEW_PROJECT_LIST"])
     def test_find_projects(self):
         dxproject = dxpy.DXProject()
         results = list(dxpy.find_projects())
@@ -2544,8 +2537,6 @@ class TestDataobjectFunctions(unittest.TestCase):
         self.assertEqual(handler._name, "swiss-army-knife")
         self.assertEqual(handler._alias, "1.0.0")
 
-    @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_API_DATA_OBJ_VIEW_DETAILS","DNA_API_DATA_OBJ_VIEW_CONTAINING_PROJECT","DNA_API_DATA_OBJ_DESCRIBE"])
     def test_describe_data_objects(self):
         objects = []
         types = []
@@ -3045,8 +3036,6 @@ class TestAppBuilderUtils(unittest.TestCase):
 
 
 class TestApiWrappers(unittest.TestCase):
-    @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_API_MSG_SYSTEM_GREET"])
     def test_system_greet(self):
         greeting = dxpy.api.system_greet(
             {'client': 'dxclient', 'version': 'v'+dxpy.TOOLKIT_VERSION},
