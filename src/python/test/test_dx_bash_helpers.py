@@ -76,7 +76,7 @@ def build_app_with_bash_helpers(app_dir, project_id):
         # necessary dependencies
         dxtoolkit_dir = os.path.abspath(os.path.join(updated_app_dir, 'resources', 'dxtoolkit'))
         local_dxtoolkit = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-        shutil.copytree(local_dxtoolkit, dxtoolkit_dir)
+        shutil.copytree(local_dxtoolkit, dxtoolkit_dir, ignore=ignore_folders)
 
         # Add lines to the beginning of the job to make and use our new dx-toolkit
         preamble = []
