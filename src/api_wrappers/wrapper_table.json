@@ -526,15 +526,6 @@
         }
     ],
     [
-        "/database/findByName",
-        "databaseFindByName(req)",
-        {
-            "objectMethod": false,
-            "retryable": true,
-            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Ffile%2FfindByName"
-        }
-    ],
-    [
         "/file-xxxx/addTags",
         "fileAddTags(req, objectId)",
         {
@@ -1510,6 +1501,15 @@
             "objectMethod": false,
             "retryable": true,
             "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindAnalyses"
+        }
+    ],
+    [
+        "/system/findDatabases",
+        "systemFindDatabases(req)",
+        {
+            "objectMethod": false,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases"
         }
     ],
     [

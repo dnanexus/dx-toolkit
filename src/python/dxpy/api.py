@@ -496,14 +496,6 @@ def database_set_visibility(object_id, input_params={}, always_retry=True, **kwa
     """
     return DXHTTPRequest('/%s/setVisibility' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def database_find_by_name(input_params={}, always_retry=True, **kwargs):
-    """
-    Invokes the /database/findByName API method.
-
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Ffile%2FfindByName
-    """
-    return DXHTTPRequest('/database/findByName', input_params, always_retry=always_retry, **kwargs)
-
 def file_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/addTags API method.
@@ -1381,6 +1373,14 @@ def system_find_analyses(input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindAnalyses
     """
     return DXHTTPRequest('/system/findAnalyses', input_params, always_retry=always_retry, **kwargs)
+
+def system_find_databases(input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /system/findDatabases API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases
+    """
+    return DXHTTPRequest('/system/findDatabases', input_params, always_retry=always_retry, **kwargs)
 
 def system_find_jobs(input_params={}, always_retry=True, **kwargs):
     """

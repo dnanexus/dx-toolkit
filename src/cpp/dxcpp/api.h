@@ -240,9 +240,6 @@ namespace dx {
   JSON databaseSetVisibility(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON databaseSetVisibility(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
-  JSON databaseFindByName(const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON databaseFindByName(const dx::JSON &input_params, const bool safe_to_retry=true);
-
   JSON fileAddTags(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON fileAddTags(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
@@ -566,6 +563,9 @@ namespace dx {
 
   JSON systemFindAnalyses(const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON systemFindAnalyses(const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON systemFindDatabases(const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON systemFindDatabases(const dx::JSON &input_params, const bool safe_to_retry=true);
 
   JSON systemFindJobs(const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON systemFindJobs(const dx::JSON &input_params, const bool safe_to_retry=true);

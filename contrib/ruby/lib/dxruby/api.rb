@@ -489,14 +489,6 @@ module DX
       return DX::http_request("/#{object_id}/setVisibility", input_params, opts)
     end
 
-    # Invokes the /database/findByName API method.
-    #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Ffile%2FfindByName
-    def self.database_find_by_name(input_params={}, opts={})
-      opts = { "always_retry" => true }.merge(opts)
-      return DX::http_request("/database/findByName", input_params, opts)
-    end
-
     # Invokes the /file-xxxx/addTags API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags
@@ -1351,6 +1343,14 @@ module DX
     def self.system_find_analyses(input_params={}, opts={})
       opts = { "always_retry" => true }.merge(opts)
       return DX::http_request("/system/findAnalyses", input_params, opts)
+    end
+
+    # Invokes the /system/findDatabases API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases
+    def self.system_find_databases(input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/system/findDatabases", input_params, opts)
     end
 
     # Invokes the /system/findJobs API method.
