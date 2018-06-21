@@ -10775,181 +10775,6 @@ public final class DXAPI {
     }
 
     /**
-     * Invokes the databaseFindByName method with an empty input, deserializing to an object of the specified class.
-     *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Ffile%2FfindByName">API specification</a>.
-     *
-     * @param outputClass class to deserialize the server reponse to
-     *
-     * @return Server response parsed from JSON
-     *
-     * @throws DXAPIException
-     *             If the server returns a complete response with an HTTP status
-     *             code other than 200 (OK).
-     * @throws DXHTTPException
-     *             If an error occurs while making the HTTP request or obtaining
-     *             the response (includes HTTP protocol errors).
-     */
-    public static <T> T databaseFindByName(Class<T> outputClass) {
-        return databaseFindByName(mapper.createObjectNode(), outputClass);
-    }
-    /**
-     * Invokes the databaseFindByName method with an empty input using the specified environment, deserializing to an object of the specified class.
-     *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Ffile%2FfindByName">API specification</a>.
-     *
-     * @param outputClass class to deserialize the server reponse to
-     * @param env environment object specifying the auth token and remote server and protocol
-     *
-     * @return Server response parsed from JSON
-     *
-     * @throws DXAPIException
-     *             If the server returns a complete response with an HTTP status
-     *             code other than 200 (OK).
-     * @throws DXHTTPException
-     *             If an error occurs while making the HTTP request or obtaining
-     *             the response (includes HTTP protocol errors).
-     */
-    public static <T> T databaseFindByName(Class<T> outputClass, DXEnvironment env) {
-        return databaseFindByName(mapper.createObjectNode(), outputClass, env);
-    }
-    /**
-     * Invokes the databaseFindByName method with the specified input, deserializing to an object of the specified class.
-     *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Ffile%2FfindByName">API specification</a>.
-     *
-     * @param inputObject input object (to be JSON serialized to an input hash)
-     * @param outputClass class to deserialize the server reponse to
-     *
-     * @return Server response parsed from JSON
-     *
-     * @throws DXAPIException
-     *             If the server returns a complete response with an HTTP status
-     *             code other than 200 (OK).
-     * @throws DXHTTPException
-     *             If an error occurs while making the HTTP request or obtaining
-     *             the response (includes HTTP protocol errors).
-     */
-    public static <T> T databaseFindByName(Object inputObject, Class<T> outputClass) {
-        JsonNode input = mapper.valueToTree(inputObject);
-        return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/database/findByName", input, RetryStrategy.SAFE_TO_RETRY),
-                outputClass);
-    }
-    /**
-     * Invokes the databaseFindByName method with the specified input using the specified environment, deserializing to an object of the specified class.
-     *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Ffile%2FfindByName">API specification</a>.
-     *
-     * @param inputObject input object (to be JSON serialized to an input hash)
-     * @param outputClass class to deserialize the server reponse to
-     * @param env environment object specifying the auth token and remote server and protocol
-     *
-     * @return Server response parsed from JSON
-     *
-     * @throws DXAPIException
-     *             If the server returns a complete response with an HTTP status
-     *             code other than 200 (OK).
-     * @throws DXHTTPException
-     *             If an error occurs while making the HTTP request or obtaining
-     *             the response (includes HTTP protocol errors).
-     */
-    public static <T> T databaseFindByName(Object inputObject, Class<T> outputClass, DXEnvironment env) {
-        JsonNode input = mapper.valueToTree(inputObject);
-        return DXJSON.safeTreeToValue(
-                new DXHTTPRequest(env).request("/database/findByName", input, RetryStrategy.SAFE_TO_RETRY),
-                outputClass);
-    }
-
-    /**
-     * Invokes the databaseFindByName method.
-     *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Ffile%2FfindByName">API specification</a>.
-     *
-     * @return Server response parsed from JSON
-     *
-     * @throws DXAPIException
-     *             If the server returns a complete response with an HTTP status
-     *             code other than 200 (OK).
-     * @throws DXHTTPException
-     *             If an error occurs while making the HTTP request or obtaining
-     *             the response (includes HTTP protocol errors).
-     *
-     * @deprecated Use {@link #databaseFindByName(Class)} instead and supply your own class to deserialize to.
-     */
-    @Deprecated
-    public static JsonNode databaseFindByName() {
-        return databaseFindByName(mapper.createObjectNode());
-    }
-    /**
-     * Invokes the databaseFindByName method with the specified input parameters.
-     *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Ffile%2FfindByName">API specification</a>.
-     *
-     * @param inputParams input parameters to the API call
-     *
-     * @return Server response parsed from JSON
-     *
-     * @throws DXAPIException
-     *             If the server returns a complete response with an HTTP status
-     *             code other than 200 (OK).
-     * @throws DXHTTPException
-     *             If an error occurs while making the HTTP request or obtaining
-     *             the response (includes HTTP protocol errors).
-     *
-     * @deprecated Use {@link #databaseFindByName(Object, Class)} instead and supply your own class to deserialize to.
-     */
-    @Deprecated
-    public static JsonNode databaseFindByName(JsonNode inputParams) {
-        return new DXHTTPRequest().request("/database/findByName", inputParams, RetryStrategy.SAFE_TO_RETRY);
-    }
-    /**
-     * Invokes the databaseFindByName method with the specified environment.
-     *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Ffile%2FfindByName">API specification</a>.
-     *
-     * @param env environment object specifying the auth token and remote server and protocol
-     *
-     * @return Server response parsed from JSON
-     *
-     * @throws DXAPIException
-     *             If the server returns a complete response with an HTTP status
-     *             code other than 200 (OK).
-     * @throws DXHTTPException
-     *             If an error occurs while making the HTTP request or obtaining
-     *             the response (includes HTTP protocol errors).
-     *
-     * @deprecated Use {@link #databaseFindByName(Class, DXEnvironment)} instead and supply your own class to deserialize to.
-     */
-    @Deprecated
-    public static JsonNode databaseFindByName(DXEnvironment env) {
-        return databaseFindByName(mapper.createObjectNode(), env);
-    }
-    /**
-     * Invokes the databaseFindByName method with the specified environment and input parameters.
-     *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Ffile%2FfindByName">API specification</a>.
-     *
-     * @param inputParams input parameters to the API call
-     * @param env environment object specifying the auth token and remote server and protocol
-     *
-     * @return Server response parsed from JSON
-     *
-     * @throws DXAPIException
-     *             If the server returns a complete response with an HTTP status
-     *             code other than 200 (OK).
-     * @throws DXHTTPException
-     *             If an error occurs while making the HTTP request or obtaining
-     *             the response (includes HTTP protocol errors).
-     *
-     * @deprecated Use {@link #databaseFindByName(Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
-     */
-    @Deprecated
-    public static JsonNode databaseFindByName(JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/database/findByName", inputParams, RetryStrategy.SAFE_TO_RETRY);
-    }
-
-    /**
      * Invokes the fileAddTags method with an empty input, deserializing to an object of the specified class.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
@@ -30762,6 +30587,181 @@ public final class DXAPI {
     @Deprecated
     public static JsonNode systemFindAnalyses(JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/system/findAnalyses", inputParams, RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
+     * Invokes the systemFindDatabases method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
+     *
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemFindDatabases(Class<T> outputClass) {
+        return systemFindDatabases(mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the systemFindDatabases method with an empty input using the specified environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
+     *
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemFindDatabases(Class<T> outputClass, DXEnvironment env) {
+        return systemFindDatabases(mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the systemFindDatabases method with the specified input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
+     *
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemFindDatabases(Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/system/findDatabases", input, RetryStrategy.SAFE_TO_RETRY),
+                outputClass);
+    }
+    /**
+     * Invokes the systemFindDatabases method with the specified input using the specified environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
+     *
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemFindDatabases(Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest(env).request("/system/findDatabases", input, RetryStrategy.SAFE_TO_RETRY),
+                outputClass);
+    }
+
+    /**
+     * Invokes the systemFindDatabases method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemFindDatabases(Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemFindDatabases() {
+        return systemFindDatabases(mapper.createObjectNode());
+    }
+    /**
+     * Invokes the systemFindDatabases method with the specified input parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
+     *
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemFindDatabases(Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemFindDatabases(JsonNode inputParams) {
+        return new DXHTTPRequest().request("/system/findDatabases", inputParams, RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the systemFindDatabases method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
+     *
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemFindDatabases(Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemFindDatabases(DXEnvironment env) {
+        return systemFindDatabases(mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the systemFindDatabases method with the specified environment and input parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
+     *
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemFindDatabases(Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemFindDatabases(JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/system/findDatabases", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**

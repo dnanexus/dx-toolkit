@@ -2064,33 +2064,6 @@ databaseSetVisibility <- function(objectID,
                 alwaysRetry=alwaysRetry)
 }
 
-##' databaseFindByName API wrapper
-##'
-##' This function makes an API call to the \code{/database/findByName} API
-##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
-##' function which makes POST HTTP requests to the API server.
-##'
-##' 
-##' @param inputParams Either an R object that will be converted into JSON
-##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
-##' providing the JSON string directly, you must set \code{jsonifyData} to
-##' \code{FALSE}.
-##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
-##' \code{inputParams} to create the JSON string or pass through the value of
-##' \code{inputParams} directly.  (Default is \code{TRUE}.)
-##' @param alwaysRetry Whether to always retry even when no response is
-##' received from the API server
-##' @return If the API call is successful, the parsed JSON of the API server
-##' response is returned (using \code{RJSONIO::fromJSON}).
-##' @export
-##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method\%3A-\%2Ffile\%2FfindByName}
-databaseFindByName <- function(inputParams=emptyNamedList,
-                               jsonifyData=TRUE,
-                               alwaysRetry=TRUE) {
-  dxHTTPRequest('/database/findByName', inputParams, jsonifyData=jsonifyData, alwaysRetry=alwaysRetry)
-}
-
 ##' fileAddTags API wrapper
 ##'
 ##' This function makes an API call to the \code{/file-xxxx/addTags} API
@@ -5535,6 +5508,33 @@ systemFindAnalyses <- function(inputParams=emptyNamedList,
                                jsonifyData=TRUE,
                                alwaysRetry=TRUE) {
   dxHTTPRequest('/system/findAnalyses', inputParams, jsonifyData=jsonifyData, alwaysRetry=alwaysRetry)
+}
+
+##' systemFindDatabases API wrapper
+##'
+##' This function makes an API call to the \code{/system/findDatabases} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method\%3A-\%2system\%2FfindDatabases}
+systemFindDatabases <- function(inputParams=emptyNamedList,
+                                jsonifyData=TRUE,
+                                alwaysRetry=TRUE) {
+  dxHTTPRequest('/system/findDatabases', inputParams, jsonifyData=jsonifyData, alwaysRetry=alwaysRetry)
 }
 
 ##' systemFindJobs API wrapper

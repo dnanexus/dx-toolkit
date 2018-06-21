@@ -635,14 +635,6 @@ namespace dx {
     return databaseSetVisibility(object_id, input_params.toString(), safe_to_retry);
   }
 
-  JSON databaseFindByName(const std::string &input_params, const bool safe_to_retry) {
-    return DXHTTPRequest("/database/findByName", input_params, safe_to_retry);
-  }
-
-  JSON databaseFindByName(const JSON &input_params, const bool safe_to_retry) {
-    return databaseFindByName(input_params.toString(), safe_to_retry);
-  }
-
   JSON fileAddTags(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest(std::string("/") + object_id + std::string("/addTags"), input_params, safe_to_retry);
   }
@@ -1511,6 +1503,14 @@ namespace dx {
 
   JSON systemFindAnalyses(const JSON &input_params, const bool safe_to_retry) {
     return systemFindAnalyses(input_params.toString(), safe_to_retry);
+  }
+
+  JSON systemFindDatabases(const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest("/system/findDatabases", input_params, safe_to_retry);
+  }
+
+  JSON systemFindDatabases(const JSON &input_params, const bool safe_to_retry) {
+    return systemFindDatabases(input_params.toString(), safe_to_retry);
   }
 
   JSON systemFindJobs(const std::string &input_params, const bool safe_to_retry) {
