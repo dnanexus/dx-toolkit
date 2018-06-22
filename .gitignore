@@ -66,6 +66,8 @@ dxR.Rcheck
 /bin/python-argcomplete-check-easy-install-script
 /bin/register-python-argcomplete
 /bin/jq
+/bin/py.test
+/bin/pytest
 /bin/ua
 /bin/dx-download-all-inputs
 /bin/dx-download-input
