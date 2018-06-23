@@ -123,6 +123,7 @@ src_libs: api_wrappers
 	cp -R -v bash "$(DNANEXUS_LIBDIR)"
 
 PYTHON_LIBDIR := $(DNANEXUS_LIBDIR)/python2.7/site-packages
+JAVA_LIBDIR := $(DNANEXUS_LIBDIR)/java
 
 python: api_wrappers toolkit_version $(DNANEXUS_HOME)/bin/dx
 
@@ -206,7 +207,9 @@ else
 	mv "$(DNANEXUS_HOME)"/lib/python?.?/site-packages "$(PYTHON_LIBDIR)" || mv "$(DNANEXUS_HOME)"/site-packages "$(PYTHON_LIBDIR)"
 endif
 	rm -f "$(DNANEXUS_HOME)/bin/xattr"
-	cp -f "$(DNANEXUS_HOME)"/bin/dxWDL.jar "$(PYTHON_LIBDIR)"/dxpy/scripts/dxWDL.jar
+	mkdir -p "$(JAVA_LIBDIR)"
+	cp -f "$(DNANEXUS_HOME)"/bin/dxWDL.jar "$(JAVA_LIBDIR)"/dxWDL.jar
+	ln -s "$(JAVA_LIBDIR)"/dxWDL.jar "$(PYTHON_LIBDIR)"/dxpy/scripts/dxWDL.jar
 
 # If running in fakeroot, override some maven settings so that maven can still
 # find a localRepository to write to.
@@ -534,7 +537,7 @@ clean:
 	$(MAKE) -C dx-verify-file clean
 	$(MAKE) -C ua clean
 	-find ../bin -type f \( -name jq -or -name dx -or -name 'dx-*' \) -not -name 'dx-unpack*' -delete
-	-rm -f ../bin/docker2aci ../bin/proot
+	-rm -f ../bin/docker2aci ../bin/proot ../bin/dxWDL.jar
 	-rm -rf python/{build,*.{egg,egg-info}}
 	-rm -rf java/target
 	-rm -rf ../lib

@@ -2615,42 +2615,23 @@ def build(args):
 
 
 # Find out the project and folder where to place compilation outputs.
-#
-# There are several legal syntaxes for destination:
-#    project-id:/folder
-#    project-id:
-#    :/folder
-#    /folder
 def compile_destination(args):
-    current_dir = get_pwd().split(':')
-    project = current_dir[0]
-    folder = current_dir[1]
-    d = args.destination
-
-    if (d is not None and
-       d != '.'):
-        if ':' in d:
-            vec = d.split(':')
-            if vec.length == 1:
-                if d.endswith(':'):
-                    project = vec[0]
-                else:
-                    folder = vec[0]
-            if vec.length == 2:
-                project = vec[0]
-                folder = vec[1]
-            if vec.length >= 3:
-                raise DXParserError('Error: invalid path {}'.format(d))
-        else:
-            folder = d
-    if folder == "":
-        folder = '/'
-    if not folder.startswith('/'):
-        raise DXParserError('Error: folder must start with slash {}'.format(d))
-    return project + ":" + folder
+    if args.destination is None:
+        return get_pwd()
+    project_id, folder, _none = try_call(resolve_existing_path,
+                                         args.destination)
+    if folder is not None:
+        return project_id + ":" + folder
+    return project_id
 
 
-# Convert each unicode character to four hexadecimal digits
+# Convert each unicode character to four hexadecimal digits.
+#
+# Note: we have a python unicode string with the destination path. It
+# needs to go through to subprocess, Unix execv, and then the JVM.
+# Many things can go wrong along the way, so we hex encode the
+# destination string. The execv system call doesn't take unicode, so
+# some kind of encoding is required.
 def _unicodeToHex(buf):
     l = []
     for ch in buf:
@@ -2725,12 +2706,8 @@ def compile(args):
     if args.verbose:
         cmdline.append("--verbose")
 
-    # try to make it a "pure" string (?)
-    cmd = str(" ".join(cmdline)).split(" ")
-    sys.stderr.write("cmd = {}".format(cmd))
-    sys.stderr.flush()
     try:
-        output = subprocess.check_output(cmd)
+        output = subprocess.check_output(cmdline)
         print(output.strip())
     except Exception as e:
         print("Error: %s" % (e.message,), file=sys.stderr)
