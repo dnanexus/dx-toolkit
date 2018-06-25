@@ -10155,6 +10155,14 @@ class TestDXRunBatch(DXTestCase):
         self.assertEquals(job_desc["input"], { "plant": {"$dnanexus_link": dxfile.get_id() }})
 
 
+class TestDXCompile(DXTestCase):
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_COMPILE_PORTABLE_WORKFLOW"])
+    def test_compile(self):
+        path = os.path.join(os.path.dirname(__file__), "wdl", "trivial.wdl")
+        trivial_wf = run("dx compile {} --quiet".format(path)).strip()
+        print(trivial_wf)
+
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
         sys.stderr.write('WARNING: env var DXTEST_FULL is not set; tests that create apps or run jobs will not be run\n')

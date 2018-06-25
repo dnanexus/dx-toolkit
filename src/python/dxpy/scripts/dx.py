@@ -2623,6 +2623,106 @@ def build(args):
         print("Error: %s" % (e.message,), file=sys.stderr)
         err_exit()
 
+
+# Find out the project and folder where to place compilation outputs.
+def compile_destination(args):
+    if args.destination is None:
+        return get_pwd()
+    project_id, folder, _none = try_call(resolve_existing_path,
+                                         args.destination)
+    if folder is not None:
+        return project_id + ":" + folder
+    return project_id
+
+
+# Convert each unicode character to four hexadecimal digits.
+#
+# Note: we have a python unicode string with the destination path. It
+# needs to go through to subprocess, Unix execv, and then the JVM.
+# Many things can go wrong along the way, so we hex encode the
+# destination string. The execv system call doesn't take unicode, so
+# some kind of encoding is required.
+def _unicodeToHex(buf):
+    l = []
+    for ch in buf:
+        codepoint = ord(ch)
+        digits = format(codepoint, '04x')
+        l.append(digits)
+    return "".join(l)
+
+# Make sure java is version 8
+_java_version = None
+_JAVA_VERSION_REQUIRED = "1.8"
+def check_java_version():
+    global _java_version
+    if _java_version is None:
+        try:
+            output = subprocess.check_output(["java", "-version"],
+                                             stderr=subprocess.STDOUT,
+                                             universal_newlines=True)
+        except Exception as e:
+            raise DXError('Could not call the java executable')
+
+        try:
+            first_line = output.split('\n')[0]
+            words = first_line.split()
+            _java_version = words[-1].replace('"', '')
+        except Exception as e:
+            raise DXError('Could not parse java -version output {}'.format(output))
+
+    return _java_version.startswith(_JAVA_VERSION_REQUIRED)
+
+def compile(args):
+    if dxpy.AUTH_HELPER is None:
+        build_parser.error('Authentication required to build an executable on the platform; please run "dx login" first')
+    # The absolute path of the installation directory
+    install_dir = os.path.dirname(os.path.abspath(__file__))
+    dxWDL_jar = os.path.join(install_dir, "dxWDL.jar")
+    if not os.path.exists(dxWDL_jar):
+        raise DXError('Jar file {} does not exist'.format(dxWDL_jar))
+    cmdline = ["java", "-jar", dxWDL_jar, "compile", args.sourceFile]
+
+    check_java_version()
+
+    # The execv call, used by the subprocess python module, does not
+    # accept unicode. Therefore, we encode unicode destinations as
+    # hexadecimal strings.
+    destination = compile_destination(args)
+    if type(destination) is unicode:
+        cmdline += ["--destination_unicode", _unicodeToHex(destination)]
+    else:
+        cmdline += ["--destination", destination]
+
+    if args.archive:
+        cmdline.append("--archive")
+    if args.defaults is not None:
+        cmdline += ["--defaults", args.defaults]
+    if args.extras is not None:
+        cmdline += ["--extras", args.extras]
+    if args.force:
+        cmdline.append("--force")
+    if args.inputs is not None:
+        cmdline += ["--inputs", args.inputs]
+    if args.locked:
+        cmdline.append("--locked")
+    if args.imports is not None:
+        cmdline += ["--imports", args.imports]
+    if args.quiet:
+        cmdline.append("--quiet")
+    if args.reorg:
+        cmdline.append("--reorg")
+    if args.runtimeDebugLevel is not None:
+        cmdline += ["--runtimeDebugLevel", args.runtimeDebugLevel]
+    if args.verbose:
+        cmdline.append("--verbose")
+
+    try:
+        output = subprocess.check_output(cmdline)
+        print(output.strip())
+    except Exception as e:
+        print("Error: %s" % (e.message,), file=sys.stderr)
+        err_exit()
+
 def process_list_of_usernames(thing):
     return ['user-' + name.lower() if name != 'PUBLIC' and
             not name.startswith('org-') and
@@ -4469,6 +4569,63 @@ parser_build_asset.add_argument("--no-watch", help=fill("Don't watch the real-ti
 parser_build_asset.add_argument("--priority", choices=['normal', 'high'], help=argparse.SUPPRESS)
 parser_build_asset.set_defaults(func=build_asset)
 register_parser(parser_build_asset)
+
+
+#####################################
+# compile
+#####################################
+
+parser_compile = subparsers.add_parser('compile', help='Compile a WDL workflow or task',
+                                         description='Build a workflow and auxiliary applets from a WDL source file',
+                                         prog='dx compile')
+
+# positional argument -- a file to compile
+parser_compile.add_argument('sourceFile', help='File to compile')
+
+# optionals
+parser_compile.add_argument("--archive",
+                              help=fill("Archive older versions of applets and workflows"),
+                              action="store_true",
+                              default=False)
+parser_compile.add_argument("--defaults",
+                              help=fill("File with Cromwell formatted default values (JSON)"))
+parser_compile.add_argument("-d", "--destination",
+                                help=fill("Specifies the destination project and destination folder,"
+                                          "in the form [PROJECT_NAME_OR_ID:][/FOLDER_NAME]"),
+                                default='.')
+parser_compile.add_argument("--extras",
+                              help=fill("JSON formatted file with extra options, for example, default runtime options for tasks."))
+parser_compile.add_argument("-f", "--force",
+                              help=fill("Delete existing applets/workflows"),
+                              action="store_true",
+                              default=False)
+parser_compile.add_argument("--inputs",
+                              help=fill("File with Cromwell formatted inputs (JSON)"))
+parser_compile.add_argument("--locked",
+                              help=fill("Create a locked-down workflow"),
+                              action="store_true",
+                              default=False)
+parser_compile.add_argument("-p", "--imports",
+                              help=fill("Directory to search for imported WDL files"),
+                              action='append')
+parser_compile.add_argument("--quiet",
+                              help=fill("Do not print warnings or informational output"),
+                              action="store_true",
+                              default=False)
+parser_compile.add_argument("--reorg",
+                              help=fill("Reorganize workflow output files"),
+                              action="store_true",
+                              default=False)
+parser_compile.add_argument("--runtimeDebugLevel",
+                              help=fill("How much debug information to write to the job log at runtime. Zero means write the minimum, one is the default, and two is for internal debugging."),
+                              choices=['0', '1', '2'],
+                              default='1')
+parser_compile.add_argument("--verbose",
+                              help=fill("Print detailed progress reports"),
+                              action="store_true",
+                              default=False)
+parser_compile.set_defaults(func=compile)
+register_parser(parser_compile)
 
 #####################################
 # add
