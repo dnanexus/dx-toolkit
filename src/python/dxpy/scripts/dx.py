@@ -2413,7 +2413,11 @@ def wait(args):
     # and if so gather actual paths on which to wait from the contents 
     # of the file.
     if len(args.path) == 1 and os.path.isfile(args.path[0]):
-        args.path = open(args.path[0]).read().strip().split('\n')
+        try:
+            args.path = open(args.path[0]).read().strip().split('\n')
+        except IOError as e:
+            raise DXCLIError(
+                'Could not open {}. The problem was: {}' % (args.path[0], e))
 
     for path in args.path:
         if is_job_id(path) or is_analysis_id(path):
@@ -4974,7 +4978,7 @@ parser_wait = subparsers.add_parser('wait', help='Wait for data object(s) to clo
                                     description='Polls the state of specified data object(s) or job(s) until they are all in the desired state.  Waits until the "closed" state for a data object, and for any terminal state for a job ("terminated", "failed", or "done").  Exits with a non-zero code if a job reaches a terminal state that is not "done".  Can also provide a local file containing a list of data object(s) or job(s), one per line.',
                                     prog='dx wait',
                                     parents=[env_args])
-path_action = parser_wait.add_argument('path', help='Path to a data object or job ID to wait for', nargs='+')
+path_action = parser_wait.add_argument('path', help='Path to a data object, job ID, or file with IDs to wait for', nargs='+')
 path_action.completer = DXPathCompleter()
 parser_wait.set_defaults(func=wait)
 register_parser(parser_wait, categories=('data', 'metadata', 'exec'))
