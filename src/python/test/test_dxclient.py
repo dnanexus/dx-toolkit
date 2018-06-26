@@ -10156,6 +10156,8 @@ class TestDXRunBatch(DXTestCase):
 
 
 class TestDXCompile(DXTestCase):
+    # TODO - find out why this test fails in Jenkins, at
+    # https://jenkins-vstg.internal.dnanexus.com/view/Traceability/
     #@pytest.mark.TRACEABILITY_MATRIX
     #@testutil.update_traceability_matrix(["DNA_CLI_COMPILE_PORTABLE_WORKFLOW"])
     def test_compile(self):
