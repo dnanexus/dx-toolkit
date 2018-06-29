@@ -39,7 +39,7 @@ RHEL_MAJOR_VERSION := $(shell test -e /etc/redhat-release && (grep -o "Red Hat E
 
 # Set the dxWDL version to download from git
 ifndef DXWDL_VERSION
-	DXWDL_VERSION = 0.68
+	DXWDL_VERSION = 0.68.1
 endif
 
 ifndef CCACHE_DISABLE
