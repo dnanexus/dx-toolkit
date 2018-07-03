@@ -10156,8 +10156,7 @@ class TestDXRunBatch(DXTestCase):
 
 
 class TestDXCompile(DXTestCase):
-    @unittest.skip(testutil.TEST_ISOLATED_ENV,
-                   'skipping test that creates apps')
+    @unittest.skip(testutil.TEST_ISOLATED_ENV)
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_COMPILE_PORTABLE_WORKFLOW"])
     def test_compile(self):
