@@ -13,11 +13,18 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx watch` support for smart reuse
 * test for `dx watch` job log relay
 * `dx find jobs/executions` support for smart reuse
+* ability to provide a file which contains a list of jobs or data objects upon which to `dx wait`
+* `dxWDL` integration (`dx compile` command)
+
+### Changed
+
+* `python-dateutil` version upgrade to 2.5
 
 ### Fixed
 
 * unclear behavior when `--clone`, `--folder`, and `--project` are simultaneously provided to `dx run`
 * `DXObject.set_ids()` with project set to None (it is now set to an arbitrary project associated with the file)
+* bash helpers tests
 
 ## [256.0] - beta
 
