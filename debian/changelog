@@ -1,3 +1,9 @@
+dx-toolkit (0.257.1) precise; urgency=low
+
+  * Fixed: Windows build
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 05 Jul 2018 17:30:36 +0000
+
 dx-toolkit (0.257.0) precise; urgency=low
 
   * Added: Support for setting and updating details on global workflows
