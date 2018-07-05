@@ -1,3 +1,18 @@
+dx-toolkit (0.257.0) precise; urgency=low
+
+  * Added: Support for setting and updating details on global workflows
+  * Added: Decorators for traceability tests
+  * Added: dx watch support for smart reuse
+  * Added: dx find jobs/executions support for smart reuse
+  * Added: Ability to provide a file which contains a list of jobs or data objects upon which to dx wait
+  * Added: dxWDL integration (dx compile command)
+  * Changed: python-dateutil version upgrade to 2.5
+  * Fixed: unclear behavior when --clone, --folder, and --project are simultaneously provided to dx run
+  * Fixed: DXObject.set_ids() with project set to None (it is now set to an arbitrary project associated with the file)
+  * Fixed: bash helpers tests
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 05 Jul 2018 16:30:08 +0000
+
 dx-toolkit (0.256.0) precise; urgency=low
 
   * Changed: Cosmetic update to dx publish
