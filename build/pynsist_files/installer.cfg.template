@@ -56,7 +56,7 @@ files = dnanexus-shell.ps1
     colorama-0.2.4-cp27-none-any.whl > $INSTDIR\\wheelfiles
     futures-3.0.4-py2-none-any.whl > $INSTDIR\\wheelfiles
     psutil-3.3.0-cp27-none-win32.whl > $INSTDIR\\wheelfiles
-    python_dateutil-2.5-py2.py3-none-any.whl > $INSTDIR\\wheelfiles
+    python_dateutil-2.5.0-py2.py3-none-any.whl > $INSTDIR\\wheelfiles
     python_magic-0.4.6-cp27-none-any.whl > $INSTDIR\\wheelfiles
     requests-2.7.0-py2.py3-none-any.whl > $INSTDIR\\wheelfiles
     six-1.10.0-py2.py3-none-any.whl > $INSTDIR\\wheelfiles
