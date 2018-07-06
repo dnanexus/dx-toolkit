@@ -1,0 +1,337 @@
+#!/usr/bin/env python
+"""This script attempts to generate valid dxapp.json by introspecting arguments
+configured in an argparse.ArgumentParser. It monkeypatches ArgumentParser with a
+subclass that overrides parse_args to do the introspection, generate the JSON file,
+and write it to a file or stdout, and then exit.
+"""
+import argparse
+import gettext
+import importlib
+import inspect
+import json
+import numbers
+import os
+import re
+import sys
+
+
+# TODO: the API version should be centralized; look at using e.g. Versioneer
+API_VERSION = '1.0.0'
+
+
+class ArgumentParser(argparse.ArgumentParser):
+    """Subclass of ArgumentParser that overrides parse_args to generate dxapp.json and
+    then immediately exit.
+
+    Old-style super() (which is used in ArgumentParser.__init__) does not play nice
+    with monkeypatching, so we need to override __init__ and explicitly call the
+    appropriate superclass init.
+    """
+    def __init__(self,
+                 prog=None,
+                 usage=None,
+                 description=None,
+                 epilog=None,
+                 parents=None,
+                 formatter_class=argparse.HelpFormatter,
+                 prefix_chars='-',
+                 fromfile_prefix_chars=None,
+                 argument_default=None,
+                 conflict_handler='error',
+                 add_help=True,
+                 allow_abbrev=True):
+
+        argparse._ActionsContainer.__init__(
+            self, description=description,
+            prefix_chars=prefix_chars,
+            argument_default=argument_default,
+            conflict_handler=conflict_handler)
+
+        # default setting for prog
+        if prog is None:
+            prog = os.path.basename(sys.argv[0])
+
+        self.prog = prog
+        self.usage = usage
+        self.epilog = epilog
+        self.formatter_class = formatter_class
+        self.fromfile_prefix_chars = fromfile_prefix_chars
+        self.add_help = add_help
+        self.allow_abbrev = allow_abbrev
+
+        add_group = self.add_argument_group
+        self._positionals = add_group(gettext.gettext('positional arguments'))
+        self._optionals = add_group(gettext.gettext('optional arguments'))
+        self._subparsers = None
+
+        # register types
+        def identity(string):
+            return string
+
+        self.register('type', None, identity)
+
+        # add help argument if necessary
+        # (using explicit default to override global argument_default)
+        default_prefix = '-' if '-' in prefix_chars else prefix_chars[0]
+        if self.add_help:
+            self.add_argument(
+                default_prefix + 'h', default_prefix * 2 + 'help',
+                action='help', default=argparse.SUPPRESS,
+                help=gettext.gettext('show this help message and exit'))
+
+        # add parent arguments and defaults
+        if parents:
+            for parent in parents:
+                self._add_container_actions(parent)
+                try:
+                    defaults = parent._defaults
+                except AttributeError:
+                    pass
+                else:
+                    self._defaults.update(defaults)
+
+    def parse_args(self, *args, **kwargs):
+        """
+        """
+        input_spec = []
+        output_spec = []
+        version = ''
+        actions = self._actions
+        output_parameters = self._args.output_params
+        output_parameter_regexp = self._args.output_param_regexp
+        if output_parameter_regexp is not None:
+            output_parameter_regexp = re.compile(output_parameter_regexp)
+
+        for action in actions:
+            if hasattr(action, 'version'):
+                version = getattr(action, 'version')
+            opt, is_output = action_to_dxapp(
+                action, output_parameters, output_parameter_regexp)
+            if is_output:
+                output_spec.append(opt)
+            else:
+                input_spec.append(opt)
+
+        dxapp = dict(
+            name=self.prog,
+            title=self.prog,
+            summary=self.description,
+            description=self.description,
+            dxapi=API_VERSION,
+            version=version,
+            inputSpec=input_spec,
+            outputSpec=output_spec,
+            runSpec={
+                "timeoutPolicy": {
+                    "*": {
+                        "hours": self._args.timeout
+                    }
+                },
+                "interpreter": self._args.interpreter,
+                "release": self._args.release,
+                "distribution": self._args.distribution,
+                "file": self._args.target_executable or self.prog
+            },
+            # TODO: make these configurable
+            access={
+                "network": ["*"]
+            },
+            regionalOptions={
+                "aws:us-east-1": {
+                    "systemRequirements": {
+                        "*": {
+                            "instanceType": self._args.instance_type
+                        }
+                    }
+                }
+            }
+        )
+
+        # Write to JSON
+        dxapp_json = json.dumps(dxapp, indent=4)
+        if self._args.output_file in (None, '-'):
+            sys.stdout.write(dxapp_json)
+        else:
+            with open(self._args.output_file, 'wt') as out:
+                out.write(dxapp_json)
+
+        # Exit
+        sys.exit()
+
+
+def action_to_dxapp(action, output_parameters, output_parameter_regexp):
+    optional = len(action.option_strings) > 0
+    name = None
+
+    if optional:
+        for optstr in action.option_strings:
+            if optstr.startswith('--'):
+                name = optstr[2:]
+                break
+
+    if name is None:
+        name = action.dest
+
+    opt = {
+        "name": name,
+        "optional": optional,
+        "help": action.help,
+    }
+
+    is_output = bool(
+        (
+                output_parameters is not None and
+                action.dest in output_parameters
+        ) or (
+                output_parameter_regexp is not None and
+                output_parameter_regexp.match(action.dest)
+        )
+    )
+
+    if (
+            isinstance(action, argparse._VersionAction) or
+            isinstance(action, argparse._HelpAction) or
+            isinstance(action, argparse._StoreTrueAction) or
+            isinstance(action, argparse._StoreFalseAction)
+    ):
+        class_ = 'boolean'
+    elif isinstance(action, argparse._CountAction):
+        class_ = 'int'
+    elif (
+            isinstance(action, argparse._StoreConstAction) or
+            isinstance(action, argparse._AppendConstAction)
+    ):
+        class_ = type_to_dxapp_class(type(action.const))
+    else:
+        class_ = type_to_dxapp_class(action.type)
+
+    is_file = (class_ == 'file') or is_output
+
+    if not is_output and (
+            output_parameters is None and
+            output_parameter_regexp is None and
+            is_file and
+            is_writable(action.type.mode)
+    ):
+        is_output = True
+
+    if action.nargs not in {None, 0, 1}:
+        class_ = "array:{}".format(class_)
+
+    opt["class"] = class_
+
+    if is_file:
+        opt["patterns"] = ["*"]
+
+    if isinstance(action.container, argparse._ArgumentGroup):
+        opt['group'] = action.container.title
+
+    if not is_output:
+        if action.default is not None:
+            opt['default'] = action.default
+        if action.choices:
+            opt['choices'] = action.choices
+
+    return opt, is_output
+
+
+def type_to_dxapp_class(type_):
+    """Convert a type (either primitive or defined in argparse) to a valid dxapp type.
+
+    TODO: type_ can be an arbitrary callable. To figure out the class, we could call
+    the callable with different inputs and check whether it throws an exception, and,
+    if not, check the the type of the return value. For example:
+
+    try:
+        val_type = type(type_('1'))
+        if issubclass(val_type, numbers.Integral):
+            return 'int'
+        else:
+            return 'float'
+    except:
+        # it's not numeric
+        pass
+    """
+    if not inspect.isclass(type_):
+        type_ = type(type_)
+    if issubclass(type_, numbers.Integral):
+        return 'int'
+    elif issubclass(type_, numbers.Real):
+        return 'float'
+    elif isinstance(type_, argparse.FileType):
+        return 'file'
+    else:
+        return 'string'
+
+
+def is_writable(mode):
+    return len(set(mode) & set('wax')) > 0
+
+
+def argparse_to_dxapp(args):
+    """Run the target main method after monkeypatching argparse with a subclass of
+    ArgumentParser that introspects all the configured arguments, converts them to
+    dxapp format, writes them to JSON, and exits.
+    """
+    argparse.ArgumentParser = ArgumentParser
+    argparse.ArgumentParser._args = args
+
+    # Call the main method in target
+    target_mod = importlib.import_module(args.target_module)
+    target = getattr(target_mod, args.target_function)
+    target_args = []
+    if args.subcommand:
+        target_args = [args.subcommand]
+        target(target_args)
+    else:
+        try:
+            target()
+        except:
+            # it may want an arg list
+            target(target_args)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-m', '--target-module',
+        help="The fully-qualified module that contains the target method.")
+    parser.add_argument(
+        '-f', '--target-function', default='main',
+        help="The main function that is called by the target executable. This should be"
+             "where the ArgumentParser is configured.")
+    parser.add_argument(
+        '-x', '--target-executable', default=None,
+        help="The name of the executable. This is used in the dxapp.json runSpec.")
+    parser.add_argument(
+        '-s', '--subcommand', default=None,
+        help="Subcommand to pass to the target method, if required.")
+    parser.add_argument(
+        '-o', '--output-file', default=None,
+        help="The output dxapp.json file. If not specified, output will go to stdout.")
+    parser.add_argument(
+        '-p', '--output-params', nargs='+', default=None,
+        help="Names of output parameters (in case they can't be autodetected).")
+    parser.add_argument(
+        '-r', '--output-param-regexp', default=None,
+        help="Regular expression that identifies output parameter names.")
+    parser.add_argument(
+        '-n', '--interpreter', default='bash', choices=('bash', 'python2.7'),
+        help="Type of script that will wrap the executable.")
+    parser.add_argument(
+        '-i', '--instance-type', default="mem1_ssd1_x4",
+        help="AWS instance type to use.")
+    parser.add_argument(
+        '-t', '--timeout', default=48,
+        help="Max runtime of this app (in hours).")
+    parser.add_argument(
+        '--distribution', default="Ubuntu",
+        help="Distribution to use for the machine image.")
+    parser.add_argument(
+        '--release', default="14.04",
+        help="Distribution release to use for the machine image.")
+    argparse_to_dxapp(parser.parse_args())
+
+
+if __name__ == '__main__':
+    main()
