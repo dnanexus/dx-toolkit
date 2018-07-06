@@ -400,6 +400,102 @@ def container_rename_folder(object_id, input_params={}, always_retry=False, **kw
     """
     return DXHTTPRequest('/%s/renameFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
 
+def database_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /database-xxxx/addTags API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags
+    """
+    return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def database_add_types(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /database-xxxx/addTypes API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes
+    """
+    return DXHTTPRequest('/%s/addTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def database_describe(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /database-xxxx/describe API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Fdescribe
+    """
+    return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def database_get_details(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /database-xxxx/getDetails API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails
+    """
+    return DXHTTPRequest('/%s/getDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def database_list_projects(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /database-xxxx/listProjects API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects
+    """
+    return DXHTTPRequest('/%s/listProjects' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def database_relocate(object_id, input_params={}, always_retry=False, **kwargs):
+    """
+    Invokes the /database-xxxx/relocate API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Frelocate
+    """
+    return DXHTTPRequest('/%s/relocate' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def database_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /database-xxxx/removeTags API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags
+    """
+    return DXHTTPRequest('/%s/removeTags' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def database_remove_types(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /database-xxxx/removeTypes API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes
+    """
+    return DXHTTPRequest('/%s/removeTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def database_rename(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /database-xxxx/rename API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename
+    """
+    return DXHTTPRequest('/%s/rename' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def database_set_details(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /database-xxxx/setDetails API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails
+    """
+    return DXHTTPRequest('/%s/setDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def database_set_properties(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /database-xxxx/setProperties API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties
+    """
+    return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def database_set_visibility(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /database-xxxx/setVisibility API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility
+    """
+    return DXHTTPRequest('/%s/setVisibility' % object_id, input_params, always_retry=always_retry, **kwargs)
+
 def file_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/addTags API method.
@@ -1277,6 +1373,14 @@ def system_find_analyses(input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindAnalyses
     """
     return DXHTTPRequest('/system/findAnalyses', input_params, always_retry=always_retry, **kwargs)
+
+def system_find_databases(input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /system/findDatabases API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases
+    """
+    return DXHTTPRequest('/system/findDatabases', input_params, always_retry=always_retry, **kwargs)
 
 def system_find_jobs(input_params={}, always_retry=True, **kwargs):
     """

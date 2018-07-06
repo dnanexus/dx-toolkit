@@ -8543,6 +8543,2238 @@ public final class DXAPI {
     }
 
     /**
+     * Invokes the databaseAddTags method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseAddTags(String objectId, Class<T> outputClass) {
+        return databaseAddTags(objectId, mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the databaseAddTags method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseAddTags(String objectId, Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/" + objectId + "/" + "addTags",
+                        input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+    /**
+     * Invokes the databaseAddTags method with an empty input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseAddTags(String objectId, Class<T> outputClass, DXEnvironment env) {
+        return databaseAddTags(objectId, mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the databaseAddTags method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseAddTags(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+            new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags",
+                    input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+
+    /**
+     * Invokes the databaseAddTags method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseAddTags(String, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseAddTags(String objectId) {
+        return databaseAddTags(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the databaseAddTags method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseAddTags(String, Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseAddTags(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the databaseAddTags method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseAddTags(String, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseAddTags(String objectId, DXEnvironment env) {
+        return databaseAddTags(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the databaseAddTags method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseAddTags(String, Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseAddTags(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
+     * Invokes the databaseAddTypes method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseAddTypes(String objectId, Class<T> outputClass) {
+        return databaseAddTypes(objectId, mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the databaseAddTypes method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseAddTypes(String objectId, Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/" + objectId + "/" + "addTypes",
+                        input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+    /**
+     * Invokes the databaseAddTypes method with an empty input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseAddTypes(String objectId, Class<T> outputClass, DXEnvironment env) {
+        return databaseAddTypes(objectId, mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the databaseAddTypes method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseAddTypes(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+            new DXHTTPRequest(env).request("/" + objectId + "/" + "addTypes",
+                    input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+
+    /**
+     * Invokes the databaseAddTypes method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseAddTypes(String, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseAddTypes(String objectId) {
+        return databaseAddTypes(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the databaseAddTypes method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseAddTypes(String, Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseAddTypes(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addTypes", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the databaseAddTypes method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseAddTypes(String, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseAddTypes(String objectId, DXEnvironment env) {
+        return databaseAddTypes(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the databaseAddTypes method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseAddTypes(String, Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseAddTypes(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTypes", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
+     * Invokes the databaseDescribe method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Fdescribe">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseDescribe(String objectId, Class<T> outputClass) {
+        return databaseDescribe(objectId, mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the databaseDescribe method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Fdescribe">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseDescribe(String objectId, Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/" + objectId + "/" + "describe",
+                        input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+    /**
+     * Invokes the databaseDescribe method with an empty input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Fdescribe">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseDescribe(String objectId, Class<T> outputClass, DXEnvironment env) {
+        return databaseDescribe(objectId, mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the databaseDescribe method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Fdescribe">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseDescribe(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+            new DXHTTPRequest(env).request("/" + objectId + "/" + "describe",
+                    input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+
+    /**
+     * Invokes the databaseDescribe method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Fdescribe">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseDescribe(String, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseDescribe(String objectId) {
+        return databaseDescribe(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the databaseDescribe method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Fdescribe">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseDescribe(String, Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseDescribe(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the databaseDescribe method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Fdescribe">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseDescribe(String, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseDescribe(String objectId, DXEnvironment env) {
+        return databaseDescribe(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the databaseDescribe method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Fdescribe">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseDescribe(String, Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
+     * Invokes the databaseGetDetails method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseGetDetails(String objectId, Class<T> outputClass) {
+        return databaseGetDetails(objectId, mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the databaseGetDetails method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseGetDetails(String objectId, Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/" + objectId + "/" + "getDetails",
+                        input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+    /**
+     * Invokes the databaseGetDetails method with an empty input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseGetDetails(String objectId, Class<T> outputClass, DXEnvironment env) {
+        return databaseGetDetails(objectId, mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the databaseGetDetails method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseGetDetails(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+            new DXHTTPRequest(env).request("/" + objectId + "/" + "getDetails",
+                    input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+
+    /**
+     * Invokes the databaseGetDetails method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseGetDetails(String, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseGetDetails(String objectId) {
+        return databaseGetDetails(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the databaseGetDetails method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseGetDetails(String, Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseGetDetails(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "getDetails", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the databaseGetDetails method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseGetDetails(String, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseGetDetails(String objectId, DXEnvironment env) {
+        return databaseGetDetails(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the databaseGetDetails method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseGetDetails(String, Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseGetDetails(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "getDetails", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
+     * Invokes the databaseListProjects method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseListProjects(String objectId, Class<T> outputClass) {
+        return databaseListProjects(objectId, mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the databaseListProjects method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseListProjects(String objectId, Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/" + objectId + "/" + "listProjects",
+                        input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+    /**
+     * Invokes the databaseListProjects method with an empty input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseListProjects(String objectId, Class<T> outputClass, DXEnvironment env) {
+        return databaseListProjects(objectId, mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the databaseListProjects method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseListProjects(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+            new DXHTTPRequest(env).request("/" + objectId + "/" + "listProjects",
+                    input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+
+    /**
+     * Invokes the databaseListProjects method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseListProjects(String, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseListProjects(String objectId) {
+        return databaseListProjects(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the databaseListProjects method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseListProjects(String, Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseListProjects(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "listProjects", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the databaseListProjects method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseListProjects(String, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseListProjects(String objectId, DXEnvironment env) {
+        return databaseListProjects(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the databaseListProjects method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseListProjects(String, Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseListProjects(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "listProjects", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
+     * Invokes the databaseRelocate method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Frelocate">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseRelocate(String objectId, Class<T> outputClass) {
+        return databaseRelocate(objectId, mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the databaseRelocate method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Frelocate">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseRelocate(String objectId, Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/" + objectId + "/" + "relocate",
+                        input, RetryStrategy.UNSAFE_TO_RETRY), outputClass);
+    }
+    /**
+     * Invokes the databaseRelocate method with an empty input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Frelocate">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseRelocate(String objectId, Class<T> outputClass, DXEnvironment env) {
+        return databaseRelocate(objectId, mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the databaseRelocate method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Frelocate">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseRelocate(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+            new DXHTTPRequest(env).request("/" + objectId + "/" + "relocate",
+                    input, RetryStrategy.UNSAFE_TO_RETRY), outputClass);
+    }
+
+    /**
+     * Invokes the databaseRelocate method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Frelocate">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseRelocate(String, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseRelocate(String objectId) {
+        return databaseRelocate(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the databaseRelocate method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Frelocate">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseRelocate(String, Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseRelocate(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "relocate", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the databaseRelocate method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Frelocate">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseRelocate(String, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseRelocate(String objectId, DXEnvironment env) {
+        return databaseRelocate(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the databaseRelocate method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Frelocate">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseRelocate(String, Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseRelocate(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "relocate", inputParams,
+                RetryStrategy.UNSAFE_TO_RETRY);
+    }
+
+    /**
+     * Invokes the databaseRemoveTags method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseRemoveTags(String objectId, Class<T> outputClass) {
+        return databaseRemoveTags(objectId, mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the databaseRemoveTags method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseRemoveTags(String objectId, Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/" + objectId + "/" + "removeTags",
+                        input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+    /**
+     * Invokes the databaseRemoveTags method with an empty input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseRemoveTags(String objectId, Class<T> outputClass, DXEnvironment env) {
+        return databaseRemoveTags(objectId, mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the databaseRemoveTags method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseRemoveTags(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+            new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags",
+                    input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+
+    /**
+     * Invokes the databaseRemoveTags method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseRemoveTags(String, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseRemoveTags(String objectId) {
+        return databaseRemoveTags(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the databaseRemoveTags method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseRemoveTags(String, Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseRemoveTags(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the databaseRemoveTags method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseRemoveTags(String, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseRemoveTags(String objectId, DXEnvironment env) {
+        return databaseRemoveTags(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the databaseRemoveTags method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseRemoveTags(String, Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
+     * Invokes the databaseRemoveTypes method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseRemoveTypes(String objectId, Class<T> outputClass) {
+        return databaseRemoveTypes(objectId, mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the databaseRemoveTypes method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseRemoveTypes(String objectId, Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes",
+                        input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+    /**
+     * Invokes the databaseRemoveTypes method with an empty input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseRemoveTypes(String objectId, Class<T> outputClass, DXEnvironment env) {
+        return databaseRemoveTypes(objectId, mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the databaseRemoveTypes method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseRemoveTypes(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+            new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTypes",
+                    input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+
+    /**
+     * Invokes the databaseRemoveTypes method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseRemoveTypes(String, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseRemoveTypes(String objectId) {
+        return databaseRemoveTypes(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the databaseRemoveTypes method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseRemoveTypes(String, Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseRemoveTypes(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the databaseRemoveTypes method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseRemoveTypes(String, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseRemoveTypes(String objectId, DXEnvironment env) {
+        return databaseRemoveTypes(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the databaseRemoveTypes method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseRemoveTypes(String, Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseRemoveTypes(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTypes", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
+     * Invokes the databaseRename method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseRename(String objectId, Class<T> outputClass) {
+        return databaseRename(objectId, mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the databaseRename method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseRename(String objectId, Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/" + objectId + "/" + "rename",
+                        input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+    /**
+     * Invokes the databaseRename method with an empty input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseRename(String objectId, Class<T> outputClass, DXEnvironment env) {
+        return databaseRename(objectId, mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the databaseRename method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseRename(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+            new DXHTTPRequest(env).request("/" + objectId + "/" + "rename",
+                    input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+
+    /**
+     * Invokes the databaseRename method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseRename(String, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseRename(String objectId) {
+        return databaseRename(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the databaseRename method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseRename(String, Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseRename(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "rename", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the databaseRename method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseRename(String, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseRename(String objectId, DXEnvironment env) {
+        return databaseRename(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the databaseRename method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseRename(String, Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseRename(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "rename", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
+     * Invokes the databaseSetDetails method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseSetDetails(String objectId, Class<T> outputClass) {
+        return databaseSetDetails(objectId, mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the databaseSetDetails method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseSetDetails(String objectId, Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/" + objectId + "/" + "setDetails",
+                        input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+    /**
+     * Invokes the databaseSetDetails method with an empty input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseSetDetails(String objectId, Class<T> outputClass, DXEnvironment env) {
+        return databaseSetDetails(objectId, mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the databaseSetDetails method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseSetDetails(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+            new DXHTTPRequest(env).request("/" + objectId + "/" + "setDetails",
+                    input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+
+    /**
+     * Invokes the databaseSetDetails method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseSetDetails(String, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseSetDetails(String objectId) {
+        return databaseSetDetails(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the databaseSetDetails method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseSetDetails(String, Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseSetDetails(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setDetails", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the databaseSetDetails method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseSetDetails(String, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseSetDetails(String objectId, DXEnvironment env) {
+        return databaseSetDetails(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the databaseSetDetails method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseSetDetails(String, Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseSetDetails(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setDetails", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
+     * Invokes the databaseSetProperties method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseSetProperties(String objectId, Class<T> outputClass) {
+        return databaseSetProperties(objectId, mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the databaseSetProperties method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseSetProperties(String objectId, Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/" + objectId + "/" + "setProperties",
+                        input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+    /**
+     * Invokes the databaseSetProperties method with an empty input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseSetProperties(String objectId, Class<T> outputClass, DXEnvironment env) {
+        return databaseSetProperties(objectId, mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the databaseSetProperties method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseSetProperties(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+            new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties",
+                    input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+
+    /**
+     * Invokes the databaseSetProperties method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseSetProperties(String, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseSetProperties(String objectId) {
+        return databaseSetProperties(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the databaseSetProperties method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseSetProperties(String, Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseSetProperties(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the databaseSetProperties method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseSetProperties(String, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseSetProperties(String objectId, DXEnvironment env) {
+        return databaseSetProperties(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the databaseSetProperties method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseSetProperties(String, Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseSetProperties(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
+     * Invokes the databaseSetVisibility method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseSetVisibility(String objectId, Class<T> outputClass) {
+        return databaseSetVisibility(objectId, mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the databaseSetVisibility method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseSetVisibility(String objectId, Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility",
+                        input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+    /**
+     * Invokes the databaseSetVisibility method with an empty input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseSetVisibility(String objectId, Class<T> outputClass, DXEnvironment env) {
+        return databaseSetVisibility(objectId, mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the databaseSetVisibility method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T databaseSetVisibility(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+            new DXHTTPRequest(env).request("/" + objectId + "/" + "setVisibility",
+                    input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+
+    /**
+     * Invokes the databaseSetVisibility method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseSetVisibility(String, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseSetVisibility(String objectId) {
+        return databaseSetVisibility(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the databaseSetVisibility method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseSetVisibility(String, Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseSetVisibility(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the databaseSetVisibility method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseSetVisibility(String, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseSetVisibility(String objectId, DXEnvironment env) {
+        return databaseSetVisibility(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the databaseSetVisibility method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #databaseSetVisibility(String, Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode databaseSetVisibility(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setVisibility", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
      * Invokes the fileAddTags method with an empty input, deserializing to an object of the specified class.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
@@ -28355,6 +30587,181 @@ public final class DXAPI {
     @Deprecated
     public static JsonNode systemFindAnalyses(JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/system/findAnalyses", inputParams, RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
+     * Invokes the systemFindDatabases method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
+     *
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemFindDatabases(Class<T> outputClass) {
+        return systemFindDatabases(mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the systemFindDatabases method with an empty input using the specified environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
+     *
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemFindDatabases(Class<T> outputClass, DXEnvironment env) {
+        return systemFindDatabases(mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the systemFindDatabases method with the specified input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
+     *
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemFindDatabases(Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/system/findDatabases", input, RetryStrategy.SAFE_TO_RETRY),
+                outputClass);
+    }
+    /**
+     * Invokes the systemFindDatabases method with the specified input using the specified environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
+     *
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemFindDatabases(Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest(env).request("/system/findDatabases", input, RetryStrategy.SAFE_TO_RETRY),
+                outputClass);
+    }
+
+    /**
+     * Invokes the systemFindDatabases method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemFindDatabases(Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemFindDatabases() {
+        return systemFindDatabases(mapper.createObjectNode());
+    }
+    /**
+     * Invokes the systemFindDatabases method with the specified input parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
+     *
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemFindDatabases(Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemFindDatabases(JsonNode inputParams) {
+        return new DXHTTPRequest().request("/system/findDatabases", inputParams, RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the systemFindDatabases method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
+     *
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemFindDatabases(Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemFindDatabases(DXEnvironment env) {
+        return systemFindDatabases(mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the systemFindDatabases method with the specified environment and input parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
+     *
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemFindDatabases(Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemFindDatabases(JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/system/findDatabases", inputParams, RetryStrategy.SAFE_TO_RETRY);
     }
 
     /**

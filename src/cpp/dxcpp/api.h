@@ -204,6 +204,42 @@ namespace dx {
   JSON containerRenameFolder(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=false);
   JSON containerRenameFolder(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=false);
 
+  JSON databaseAddTags(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON databaseAddTags(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON databaseAddTypes(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON databaseAddTypes(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON databaseDescribe(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON databaseDescribe(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON databaseGetDetails(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON databaseGetDetails(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON databaseListProjects(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON databaseListProjects(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON databaseRelocate(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=false);
+  JSON databaseRelocate(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=false);
+
+  JSON databaseRemoveTags(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON databaseRemoveTags(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON databaseRemoveTypes(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON databaseRemoveTypes(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON databaseRename(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON databaseRename(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON databaseSetDetails(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON databaseSetDetails(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON databaseSetProperties(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON databaseSetProperties(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON databaseSetVisibility(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON databaseSetVisibility(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
   JSON fileAddTags(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON fileAddTags(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
@@ -527,6 +563,9 @@ namespace dx {
 
   JSON systemFindAnalyses(const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON systemFindAnalyses(const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON systemFindDatabases(const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON systemFindDatabases(const dx::JSON &input_params, const bool safe_to_retry=true);
 
   JSON systemFindJobs(const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON systemFindJobs(const dx::JSON &input_params, const bool safe_to_retry=true);
