@@ -10164,6 +10164,13 @@ class TestDXCompile(DXTestCase):
         trivial_wf = run("dx compile {} --quiet".format(path)).strip()
         print(trivial_wf)
 
+class TestDXCompileDxni(DXTestCase):
+    @unittest.skip(testutil.TEST_ISOLATED_ENV)
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_COMPILE_PORTABLE_WORKFLOW_DXNI"])
+    def test_compile_dxni(self):
+        run("dx compile_dxni --recursive /tmp/X.wdl")
+
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
         sys.stderr.write('WARNING: env var DXTEST_FULL is not set; tests that create apps or run jobs will not be run\n')
