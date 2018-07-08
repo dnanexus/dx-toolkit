@@ -915,20 +915,6 @@ def _create_app(applet_or_regional_options, app_name, src_dir, publish=False, se
     return app_id
 
 
-def assert_consistent_regions(from_app_spec, from_command_line):
-    """
-    :param from_app_spec: The regional options specified in dxapp.json.
-    :type from_app_spec: dict or None.
-    :param from_command_line: The regional options specified on the
-    command-line via --region.
-    :type from_command_line: list or None.
-    """
-    if from_app_spec is None or from_command_line is None:
-        return
-    if set(from_app_spec) != set(from_command_line):
-        raise dxpy.app_builder.AppBuilderException("--region and the 'regionalOptions' key in dxapp.json do not agree")
-
-
 def get_enabled_regions(app_spec, from_command_line):
     """Returns a list of the regions in which the app should be enabled.
 
@@ -971,7 +957,7 @@ def get_enabled_regions(app_spec, from_command_line):
                     raise dxpy.app_builder.AppBuilderException(
                         key + " cannot be given in both runSpec and in regional options for " + region)
 
-    assert_consistent_regions(from_app_spec, from_command_line)
+    dxpy.executable_builder.assert_consistent_regions(from_app_spec, from_command_line)
 
     enabled_regions = None
     if from_app_spec is not None:

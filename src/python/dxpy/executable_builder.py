@@ -150,3 +150,17 @@ def verify_developer_rights(prefixed_name):
         raise exception_type('You are not a developer for {n}'.format(n=name_without_prefix))
 
     return FoundExecutable(name=name_without_prefix, version=version, id=executable_id)
+
+
+def assert_consistent_regions(from_spec, from_command_line):
+    """
+    :param from_spec: The regional options specified in dxapp.json or dxworkflow.json
+    :type from_spec: dict or None.
+    :param from_command_line: The regional options specified on the command-line via --region.
+    :type from_command_line: list or None.
+    """
+    if from_spec is None or from_command_line is None:
+        return
+    if set(from_spec) != set(from_command_line):
+        raise dxpy..AppBuilderException("--region and the 'regionalOptions' key in the JSON file do not agree")
+
