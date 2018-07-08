@@ -36,9 +36,8 @@ from .exceptions import err_exit
 from . import logger
 
 UPDATABLE_GLOBALWF_FIELDS = {'title', 'summary', 'description', 'developerNotes', 'details'}
-GLOBALWF_SUPPORTED_KEYS = {"name", "version", "title", "summary", "description",
-                           "developerNotes", "regionalOptions", "categories", "billTo",
-                           "dxapi", "details"}
+GLOBALWF_SUPPORTED_KEYS = UPDATABLE_GLOBALWF_FIELDS.union({"name", "version", , "regionalOptions",
+                                                           "categories", "billTo", "dxapi"})
 SUPPORTED_KEYS = GLOBALWF_SUPPORTED_KEYS.union({"project", "folder", "outputFolder", "stages",
                                                 "inputs", "outputs"})
 
@@ -240,6 +239,13 @@ def _validate_json_for_global_workflow(json_spec, args):
         if not isinstance(json_spec['details'], dict):
             raise WorkflowBuilderException(
                 'The field "details" must be a dictionary')
+
+    if 'regionalOptions' in json_spec:
+        if not (isinstance(json_spec['regionalOptions'], dict)
+                and json_spec['regionalOptions']
+                and not all([isinstance(i, dict) for i in json_spec['regionalOptions'].values()]):
+            raise WorkflowBuilderException(
+                'The field "regionalOptions" must be a non-empty dictionary whose values are dictionaries')
 
     if args.bill_to:
         json_spec["billTo"] = args.bill_to

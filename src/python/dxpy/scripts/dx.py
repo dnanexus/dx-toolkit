@@ -5390,6 +5390,10 @@ parser_find_orgs_with_billable_activities.add_argument("--without-billable-activ
 parser_find_orgs.set_defaults(func=find_orgs, with_billable_activities=None)
 register_parser(parser_find_orgs, subparsers_action=subparsers_find, categories="org")
 
+#####################################
+# notebook
+#####################################
+
 from ..ssh_tunnel_app_support import run_notebook
 parser_notebook = subparsers.add_parser('notebook', help='Launch a web notebook inside DNAnexus.',
                                         description='Launch a web notebook inside DNAnexus.',
