@@ -2708,6 +2708,7 @@ def compile(args):
     if args.imports is not None:
         cmdline += ["--imports", args.imports]
     if args.quiet:
+        args.verbose = False
         cmdline.append("--quiet")
     if args.reorg:
         cmdline.append("--reorg")
@@ -2731,7 +2732,7 @@ def compile_dxni(args):
     dxWDL_jar = os.path.join(install_dir, "dxWDL.jar")
     if not os.path.exists(dxWDL_jar):
         raise DXError('Jar file {} does not exist'.format(dxWDL_jar))
-    cmdline = ["java", "-jar", dxWDL_jar, "dxni", "-o", args.outputFile]
+    cmdline = ["java", "-jar", dxWDL_jar, "dxni", "-o", args.output_file]
 
     check_java_version()
 
@@ -2744,7 +2745,10 @@ def compile_dxni(args):
     else:
         cmdline += ["--destination", destination]
 
+    if args.force:
+        cmdline.append("--force")
     if args.quiet:
+        args.verbose = False
         cmdline.append("--quiet")
     if args.recursive:
         cmdline.append("--recursive")
@@ -4620,8 +4624,7 @@ parser_compile.add_argument('sourceFile', help='File to compile')
 # optionals
 parser_compile.add_argument("--archive",
                               help=fill("Archive older versions of applets and workflows"),
-                              action="store_true",
-                              default=False)
+                              action="store_true")
 parser_compile.add_argument("--defaults",
                               help=fill("File with Cromwell formatted default values (JSON)"))
 parser_compile.add_argument("-d", "--destination",
@@ -4632,33 +4635,28 @@ parser_compile.add_argument("--extras",
                               help=fill("JSON formatted file with extra options, for example, default runtime options for tasks."))
 parser_compile.add_argument("-f", "--force",
                               help=fill("Delete existing applets/workflows"),
-                              action="store_true",
-                              default=False)
+                              action="store_true")
 parser_compile.add_argument("--inputs",
                               help=fill("File with Cromwell formatted inputs (JSON)"))
 parser_compile.add_argument("--locked",
                               help=fill("Create a locked-down workflow"),
-                              action="store_true",
-                              default=False)
+                              action="store_true")
 parser_compile.add_argument("-p", "--imports",
                               help=fill("Directory to search for imported WDL files"),
                               action='append')
 parser_compile.add_argument("--quiet",
                               help=fill("Do not print warnings or informational output"),
-                              action="store_true",
-                              default=False)
+                              action="store_true")
 parser_compile.add_argument("--reorg",
                               help=fill("Reorganize workflow output files"),
-                              action="store_true",
-                              default=False)
+                              action="store_true")
 parser_compile.add_argument("--runtimeDebugLevel",
                               help=fill("How much debug information to write to the job log at runtime. Zero means write the minimum, one is the default, and two is for internal debugging."),
                               choices=['0', '1', '2'],
                               default='1')
 parser_compile.add_argument("--verbose",
-                              help=fill("Print detailed progress reports"),
-                              action="store_true",
-                              default=False)
+                            help=fill("Print detailed progress reports. Ignored if --quiet is used."),
+                            action="store_true")
 parser_compile.set_defaults(func=compile)
 register_parser(parser_compile)
 
@@ -4669,38 +4667,37 @@ register_parser(parser_compile)
 #####################################
 parser_compile_dxni = subparsers.add_parser(
     'compile_dxni',
-    help='Dx Native call Interface',
-    description= fill('Dx Native call Interface. Create stubs for calling dx '
+    help='Dx Native Call Interface',
+    description= fill('Dx native call interface (DxNI). Create stubs for calling dx '
                       'executables (apps/applets/workflows), and store them as WDL '
                       'tasks in a local file. Allows calling existing platform executables '
                       'without modification. Default is to look for applets.'),
     prog= 'dx compile_dxni')
 
 # positional argument: output file
-parser_compile_dxni.add_argument("outputFile",
+parser_compile_dxni.add_argument("output_file",
                                  help= "Destination file for WDL task definitions")
 
 # optionals
 parser_compile_dxni.add_argument("-apps",
                                  help= "Search only for apps",
-                                 action="store_true",
-                                 default=False)
+                                 action="store_true")
 parser_compile_dxni.add_argument("-d", "--destination",
                                  help=fill("Specifies the destination project and destination folder,"
                                            "in the form [PROJECT_NAME_OR_ID:][/FOLDER_NAME]"),
                                  default='.')
+parser_compile_dxni.add_argument("-f", "--force",
+                                 help=fill("Delete output file"),
+                                 action="store_true")
 parser_compile_dxni.add_argument("--quiet",
                                  help=fill("Do not print warnings or informational output"),
-                                 action="store_true",
-                                 default=False)
+                                 action="store_true")
 parser_compile_dxni.add_argument("-r", "--recursive",
                                  help= "Recursive search",
-                                 action="store_true",
-                                 default=False)
+                                 action="store_true")
 parser_compile_dxni.add_argument("--verbose",
-                                 help=fill("Print detailed progress reports"),
-                                 action="store_true",
-                                 default=False)
+                                 help=fill("Print detailed progress reports. Ignored if --quiet is used."),
+                                 action="store_true")
 parser_compile_dxni.set_defaults(func=compile_dxni)
 register_parser(parser_compile_dxni)
 
