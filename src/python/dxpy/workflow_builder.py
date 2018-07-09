@@ -316,10 +316,19 @@ def _get_validated_json_for_build_or_update(json_spec, args):
     return validated
 
 
-def _verify_app_regions_match(enabled_regions, json_spec):
+def _assert_app_regions_match(enabled_regions, json_spec):
     executables = [i.get("executable") for i in json_spec.get("stages")]
     print(executables)
 
+    for exect in executables:
+        if exect.startswith("applet-"):
+            raise WorkflowBuilderException("")
+        elif exect.startswith("app-"):
+            app_regional_options = dxpy.api.global_workflow_describe(exect,
+                                                                     input_params={"fields": {"regionalOptions": True}})
+            app_regions = [i["region"] for i in app_regional_options]
+        elif exect.startswith("workflow-"):
+            _assert_app_regions_match(enabled_regions, json_spec)
 
 
 def _build_regular_workflow(json_spec):
@@ -442,7 +451,7 @@ def _build_global_workflow(json_spec, args):
 
     # Verify all the apps are also enabled in these regions
     # TODO: Add support for multi-region global workflows with applets
-    _verify_app_regions_match(enabled_regions, json_spec)
+    _assert_app_regions_match(enabled_regions, json_spec)
 
     workflows_by_region, projects_by_region = {}, {}  # IDs by region
     try:
