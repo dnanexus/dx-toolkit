@@ -957,7 +957,7 @@ def get_enabled_regions(app_spec, from_command_line):
                     raise dxpy.app_builder.AppBuilderException(
                         key + " cannot be given in both runSpec and in regional options for " + region)
 
-    dxpy.executable_builder.assert_consistent_regions(from_app_spec, from_command_line)
+    dxpy.executable_builder.assert_consistent_regions(from_app_spec, from_command_line,dxpy.app_builder.AppBuilderException)
 
     enabled_regions = None
     if from_app_spec is not None:
