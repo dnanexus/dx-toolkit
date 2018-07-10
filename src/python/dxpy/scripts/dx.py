@@ -3844,7 +3844,7 @@ def generate_batch_inputs(args):
             if len(matches['ids']) > 1:
                 eprint("Input {iname} is associated with a file name that matches multiple IDs:".format(iname=input_name))
                 eprint("    {fname} => {ids}".format(fname=matches['name'], ids=", ".join(matches['ids'])))
-                eprint("")
+        eprint("")
 
     eprint("CREATED {num_batches} batch files each with at most {max} batch IDs.".format(num_batches=len(batches), max=MAX_BATCH_SIZE))
     if len(errors) > 0:
