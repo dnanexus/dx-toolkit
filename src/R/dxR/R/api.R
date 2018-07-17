@@ -1755,7 +1755,7 @@ databaseAddTypes <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method\%3A-\%2Fdatabase-xxxx\%2Fdescribe}
+##' @references API spec documentation: \url{}
 databaseDescribe <- function(objectID,
                              inputParams=emptyNamedList,
                              jsonifyData=TRUE,
@@ -1854,7 +1854,7 @@ databaseListProjects <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method\%3A-\%2Fdatabase-xxxx\%2Frelocate}
+##' @references API spec documentation: \url{}
 databaseRelocate <- function(objectID,
                              inputParams=emptyNamedList,
                              jsonifyData=TRUE,
@@ -5530,7 +5530,7 @@ systemFindAnalyses <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method\%3A-\%2system\%2FfindDatabases}
+##' @references API spec documentation: \url{}
 systemFindDatabases <- function(inputParams=emptyNamedList,
                                 jsonifyData=TRUE,
                                 alwaysRetry=TRUE) {

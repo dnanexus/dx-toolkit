@@ -8917,8 +8917,6 @@ public final class DXAPI {
     /**
      * Invokes the databaseDescribe method with an empty input, deserializing to an object of the specified class.
      *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Fdescribe">API specification</a>.
-     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      *
@@ -8936,8 +8934,6 @@ public final class DXAPI {
     }
     /**
      * Invokes the databaseDescribe method with the given input, deserializing to an object of the specified class.
-     *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -8961,8 +8957,6 @@ public final class DXAPI {
     /**
      * Invokes the databaseDescribe method with an empty input using the given environment, deserializing to an object of the specified class.
      *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Fdescribe">API specification</a>.
-     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      * @param env environment object specifying the auth token and remote server and protocol
@@ -8981,8 +8975,6 @@ public final class DXAPI {
     }
     /**
      * Invokes the databaseDescribe method with the given input using the given environment, deserializing to an object of the specified class.
-     *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -9008,8 +9000,6 @@ public final class DXAPI {
     /**
      * Invokes the databaseDescribe method.
      *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Fdescribe">API specification</a>.
-     *
      * @param objectId ID of the object to operate on
      *
      * @return Server response parsed from JSON
@@ -9029,8 +9019,6 @@ public final class DXAPI {
     }
     /**
      * Invokes the databaseDescribe method with the specified parameters.
-     *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -9054,8 +9042,6 @@ public final class DXAPI {
     /**
      * Invokes the databaseDescribe method with the specified environment.
      *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Fdescribe">API specification</a>.
-     *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
      *
@@ -9076,8 +9062,6 @@ public final class DXAPI {
     }
     /**
      * Invokes the databaseDescribe method with the specified environment and parameters.
-     *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -9475,8 +9459,6 @@ public final class DXAPI {
     /**
      * Invokes the databaseRelocate method with an empty input, deserializing to an object of the specified class.
      *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Frelocate">API specification</a>.
-     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      *
@@ -9494,8 +9476,6 @@ public final class DXAPI {
     }
     /**
      * Invokes the databaseRelocate method with the given input, deserializing to an object of the specified class.
-     *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Frelocate">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -9519,8 +9499,6 @@ public final class DXAPI {
     /**
      * Invokes the databaseRelocate method with an empty input using the given environment, deserializing to an object of the specified class.
      *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Frelocate">API specification</a>.
-     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      * @param env environment object specifying the auth token and remote server and protocol
@@ -9539,8 +9517,6 @@ public final class DXAPI {
     }
     /**
      * Invokes the databaseRelocate method with the given input using the given environment, deserializing to an object of the specified class.
-     *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Frelocate">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -9566,8 +9542,6 @@ public final class DXAPI {
     /**
      * Invokes the databaseRelocate method.
      *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Frelocate">API specification</a>.
-     *
      * @param objectId ID of the object to operate on
      *
      * @return Server response parsed from JSON
@@ -9587,8 +9561,6 @@ public final class DXAPI {
     }
     /**
      * Invokes the databaseRelocate method with the specified parameters.
-     *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Frelocate">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -9612,8 +9584,6 @@ public final class DXAPI {
     /**
      * Invokes the databaseRelocate method with the specified environment.
      *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Frelocate">API specification</a>.
-     *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
      *
@@ -9634,8 +9604,6 @@ public final class DXAPI {
     }
     /**
      * Invokes the databaseRelocate method with the specified environment and parameters.
-     *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Frelocate">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -30592,8 +30560,6 @@ public final class DXAPI {
     /**
      * Invokes the systemFindDatabases method with an empty input, deserializing to an object of the specified class.
      *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
-     *
      * @param outputClass class to deserialize the server reponse to
      *
      * @return Server response parsed from JSON
@@ -30610,8 +30576,6 @@ public final class DXAPI {
     }
     /**
      * Invokes the systemFindDatabases method with an empty input using the specified environment, deserializing to an object of the specified class.
-     *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
      *
      * @param outputClass class to deserialize the server reponse to
      * @param env environment object specifying the auth token and remote server and protocol
@@ -30630,8 +30594,6 @@ public final class DXAPI {
     }
     /**
      * Invokes the systemFindDatabases method with the specified input, deserializing to an object of the specified class.
-     *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
      *
      * @param inputObject input object (to be JSON serialized to an input hash)
      * @param outputClass class to deserialize the server reponse to
@@ -30653,8 +30615,6 @@ public final class DXAPI {
     }
     /**
      * Invokes the systemFindDatabases method with the specified input using the specified environment, deserializing to an object of the specified class.
-     *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
      *
      * @param inputObject input object (to be JSON serialized to an input hash)
      * @param outputClass class to deserialize the server reponse to
@@ -30679,8 +30639,6 @@ public final class DXAPI {
     /**
      * Invokes the systemFindDatabases method.
      *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
-     *
      * @return Server response parsed from JSON
      *
      * @throws DXAPIException
@@ -30698,8 +30656,6 @@ public final class DXAPI {
     }
     /**
      * Invokes the systemFindDatabases method with the specified input parameters.
-     *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
      *
      * @param inputParams input parameters to the API call
      *
@@ -30721,8 +30677,6 @@ public final class DXAPI {
     /**
      * Invokes the systemFindDatabases method with the specified environment.
      *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
-     *
      * @param env environment object specifying the auth token and remote server and protocol
      *
      * @return Server response parsed from JSON
@@ -30742,8 +30696,6 @@ public final class DXAPI {
     }
     /**
      * Invokes the systemFindDatabases method with the specified environment and input parameters.
-     *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases">API specification</a>.
      *
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
