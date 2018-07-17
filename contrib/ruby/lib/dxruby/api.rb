@@ -410,8 +410,6 @@ module DX
     end
 
     # Invokes the /database-xxxx/describe API method.
-    #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Fdescribe
     def self.database_describe(object_id, input_params={}, opts={})
       opts = { "always_retry" => true }.merge(opts)
       return DX::http_request("/#{object_id}/describe", input_params, opts)
@@ -434,8 +432,6 @@ module DX
     end
 
     # Invokes the /database-xxxx/relocate API method.
-    #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Frelocate
     def self.database_relocate(object_id, input_params={}, opts={})
       opts = { "always_retry" => false }.merge(opts)
       return DX::http_request("/#{object_id}/relocate", input_params, opts)
@@ -1346,8 +1342,6 @@ module DX
     end
 
     # Invokes the /system/findDatabases API method.
-    #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2system%2FfindDatabases
     def self.system_find_databases(input_params={}, opts={})
       opts = { "always_retry" => true }.merge(opts)
       return DX::http_request("/system/findDatabases", input_params, opts)
