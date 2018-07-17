@@ -10156,13 +10156,46 @@ class TestDXRunBatch(DXTestCase):
 
 
 class TestDXCompile(DXTestCase):
-    @unittest.skip(testutil.TEST_ISOLATED_ENV)
+    @unittest.skipIf(testutil.TEST_ISOLATED_ENV, "dxWDL is not installed")
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_COMPILE_PORTABLE_WORKFLOW"])
     def test_compile(self):
         path = os.path.join(os.path.dirname(__file__), "wdl", "trivial.wdl")
-        trivial_wf = run("dx compile {} --quiet".format(path)).strip()
-        print(trivial_wf)
+        wfid = run("dx compile {} --quiet".format(path)).strip()
+        wf_desc = dxpy.describe(wfid)
+        self.assertEqual(wf_desc['name'], 'trivial')
+
+class TestDXCompileDxni(DXTestCase):
+    @unittest.skipIf(testutil.TEST_ISOLATED_ENV, "dxWDL is not installed")
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_COMPILE_PORTABLE_WORKFLOW_DXNI"])
+    def test_compile_dxni(self):
+        tmp_path = tempfile.mkdtemp()
+        headers_path = os.path.join(tmp_path, 'headers.wdl')
+
+        # There shouldn't be any applets in the project
+        run("dx compile_dxni --destination {}:/ {}".format(self.project,
+                                                           headers_path))
+        self.assertFalse(os.path.exists(headers_path))
+
+        # Create one applet, check that we can find it
+        applet = dxpy.api.applet_new({
+            "name": "identity",
+            "project": self.project,
+            "dxapi": "1.0.0",
+            "inputSpec": [ { "name": "plant", "class": "file" } ],
+            "outputSpec": [ { "name": "animal", "class": "file" } ],
+            "runSpec": { "interpreter": "python2.7",
+                         "code": "",
+                         "distribution": "Ubuntu",
+                         "release": "14.04" }
+        })
+        run("dx compile_dxni --verbose --destination {}:/ {}".format(self.project,
+                                                           headers_path))
+        self.assertTrue(os.path.exists(headers_path))
+        with open(headers_path, 'r', encoding="utf-8") as fd:
+            headers=fd.read()
+        self.assertTrue("task identity" in headers)
 
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:

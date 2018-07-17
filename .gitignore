@@ -47,6 +47,7 @@ dxR.Rcheck
 /bin/dx-clone-asset
 /bin/dx-docker
 /bin/dx-fetch-bundled-depends
+/bin/dx-generate-dxapp
 /bin/dx-genes-to-gff
 /bin/dx-genes-to-gtf
 /bin/dx-get-job-streams
