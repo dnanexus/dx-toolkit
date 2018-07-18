@@ -2403,13 +2403,6 @@ class TestHTTPResponses(unittest.TestCase):
     def test_bad_host(self):
         # Verify that the exception raised is one that dxpy would
         # consider to be retryable, but truncate the actual retry loop
-        try:
-            dxpy.DXHTTPRequest('http://doesnotresolve.dnanexus.com/', {}, prepend_srv=False, always_retry=False,
-                               max_retries=1)
-        except Exception as e:
-            print(type(e), file=sys.stderr)
-            print(e, file=sys.stderr)
-            print(e.args, file=sys.stderr)
         with self.assertRaises(requests.packages.urllib3.exceptions.NewConnectionError) as exception_cm:
             dxpy.DXHTTPRequest('http://doesnotresolve.dnanexus.com/', {}, prepend_srv=False, always_retry=False,
                                max_retries=1)
