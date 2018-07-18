@@ -327,11 +327,13 @@ def _is_retryable_exception(e):
     have been established, we return False.
 
     """
-    if (isinstance(e, urllib3.exceptions.ProtocolError) or isinstance(e, urllib3.exceptions.NewConnectionError)):
+    if isinstance(e, urllib3.exceptions.ProtocolError):
         e = e.args[1]
     if isinstance(e, (socket.gaierror, socket.herror)):
         return True
     if isinstance(e, socket.error) and e.errno in _RETRYABLE_SOCKET_ERRORS:
+        return True
+    if isinstance(e, urllib3.exceptions.NewConnectionError):
         return True
     return False
 
