@@ -223,6 +223,7 @@ def exit_with_exc_info(code=1, message='', print_tb=False, exception=None):
     sys.exit(code)
 
 network_exceptions = (requests.packages.urllib3.exceptions.ProtocolError,
+                      requests.packages.urllib3.exceptions.NewConnectionError,
                       requests.packages.urllib3.exceptions.DecodeError,
                       requests.packages.urllib3.exceptions.ConnectTimeoutError,
                       requests.packages.urllib3.exceptions.ReadTimeoutError,
