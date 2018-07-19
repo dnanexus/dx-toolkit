@@ -8,6 +8,22 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
+* Database wrappers
+* Support dxni compilation
+
+### Changed
+
+* requests >= 2.8.0
+* psutil >= 3.3.0
+
+### Fixed
+
+* Python 3 incompatibilities
+
+## [257.0] - beta
+
+### Added
+
 * support for setting and updating `details` on global workflows
 * decorators for traceability tests
 * `dx watch` support for smart reuse
