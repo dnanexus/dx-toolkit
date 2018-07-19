@@ -108,7 +108,7 @@ Section "!${PRODUCT_NAME}" sec_app
   DetailPrint "Installing dxpy..."
   ; Install dxpy, its dependencies, and console scripts in $INSTDIR\python27
   ; Use --no-index and a local wheelfiles dir so we don't need Inet access:
-  ExecWait '"C:\Python27\Scripts\pip.exe" install --root "$INSTDIR" --no-index --find-links="$INSTDIR\wheelfiles" "$INSTDIR\wheelfiles\TEMPLATE_STRING_DXPY_WHEEL_FILENAME"' $0
+  ExecWait '"C:\Python27\Scripts\pip.exe" install --root "$INSTDIR" --no-index --find-links="$INSTDIR\wheelfile_depends" "$INSTDIR\wheelfiles\TEMPLATE_STRING_DXPY_WHEEL_FILENAME"' $0
   StrCmp $0 0 pass error 
   pass:
     ;MessageBox MB_OK 'dxpy installed'

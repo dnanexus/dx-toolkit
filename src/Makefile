@@ -157,7 +157,7 @@ pynsist_installer: toolkit_version $(DNANEXUS_HOME)/bin/dx dx-verify-file jq
 	    cp "$(DNANEXUS_HOME)"/src/python/dist/$${DXPY_WHEEL_FILENAME} "$(DNANEXUS_HOME)"/build/pynsist_files/
 
 	# Download the .whl files for each of dxpy's Python dependencies, to bundle with NSIS installer
-	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; python -m pip install --download "$(DNANEXUS_HOME)"/build/pynsist_files -r python/requirements.txt -r python/requirements_windows.txt
+	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; mkdir -p "$(DNANEXUS_HOME)"/build/pynsist_files/wheelfile_depends; python -m pip install --download "$(DNANEXUS_HOME)"/build/pynsist_files/wheelfile_depends -r python/requirements.txt -r python/requirements_windows.txt
 
 	# Insert the wheel filename into installer.cfg
 	export DXPY_WHEEL_FILENAME=$$(basename $(DNANEXUS_HOME)/src/python/dist/dxpy-*.whl) ; \
