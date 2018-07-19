@@ -400,6 +400,8 @@ parser_create_asset = subparsers.add_parser('create-asset', help="Caches a local
 parser_create_asset.add_argument("--output_path", "-o", help="Project ID and path in project to upload image to (defaults to project root)")
 parser_create_asset.add_argument("image", help="image name")
 parser_create_asset.add_argument("--alternative_export", help="EXPERT ONLY: Use alternative method to export Docker image since Docker CLI export sometimes doesn't create the root filesystem properly.", action="store_true")
+parser_create_asset.add_argument("--ubuntu_version", type=str, required=False, default='14.04', help="Ubuntu version")
+parser_create_asset.add_argument("--asset_version", type=str, required=False, default='0.0.1', help="Asset version")
 def create_asset(args):
     register_docker_subcommand("create-asset")
     # Create asset
@@ -414,9 +416,9 @@ def create_asset(args):
     dxasset = { 'name': imagename }
     dxasset['title'] = "DNAnexus asset for Docker image "+args.image
     dxasset['description'] = dxasset['title']
-    dxasset['version'] = "0.0.1"
+    dxasset['version'] = args.asset_version
     dxasset['distribution'] = "Ubuntu"
-    dxasset['release'] = "14.04"
+    dxasset['release'] = args.ubuntu_version
     dxasset['instanceType'] = "mem2_ssd1_x4"
     with open("{}/dxasset.json".format(tmpdir), "w") as f:
         f.write(json.dumps(dxasset))
@@ -448,7 +450,7 @@ def create_asset(args):
     record_properties = {
                           "title": dxasset["title"],
                           "description": dxasset["description"],
-                          "version": "0.0.1",
+                          "version": dxasset['version'],
                           "distribution": dxasset["distribution"],
                           "release": dxasset["release"]
                         }
@@ -468,8 +470,8 @@ def create_asset(args):
         "project": \"{}\",
         "folder": \"{}\",
         "name": \"{}\",
-        "version": "0.0.1"
-    """).format(project_id, folder_path, args.image)+"}\n")
+        "version": \"{}\"
+    """).format(project_id, folder_path, args.image, args.asset_version)+"}\n")
 
     # Remove the temporary directory
     shutil.rmtree(tmpdir)
