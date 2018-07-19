@@ -1,3 +1,13 @@
+dx-toolkit (0.258.0) precise; urgency=low
+
+  * Added: database wrappers
+  * Added: Support dxni compilation
+  * Changed: requests >= 2.8.0
+  * Changed: psutil >= 3.3.0
+  * Fixed: Python 3 incompatibilities
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 19 Jul 2018 22:24:30 +0000
+
 dx-toolkit (0.257.0) precise; urgency=low
 
   * Added: Support for setting and updating details on global workflows
