@@ -2403,7 +2403,7 @@ class TestHTTPResponses(unittest.TestCase):
     def test_bad_host(self):
         # Verify that the exception raised is one that dxpy would
         # consider to be retryable, but truncate the actual retry loop
-        with self.assertRaises(requests.packages.urllib3.exceptions.ProtocolError) as exception_cm:
+        with self.assertRaises(requests.packages.urllib3.exceptions.NewConnectionError) as exception_cm:
             dxpy.DXHTTPRequest('http://doesnotresolve.dnanexus.com/', {}, prepend_srv=False, always_retry=False,
                                max_retries=1)
         self.assertTrue(dxpy._is_retryable_exception(exception_cm.exception))
@@ -2411,7 +2411,7 @@ class TestHTTPResponses(unittest.TestCase):
     def test_connection_refused(self):
         # Verify that the exception raised is one that dxpy would
         # consider to be retryable, but truncate the actual retry loop
-        with self.assertRaises(requests.packages.urllib3.exceptions.ProtocolError) as exception_cm:
+        with self.assertRaises(requests.packages.urllib3.exceptions.NewConnectionError) as exception_cm:
             # Connecting to a port on which there is no server running
             dxpy.DXHTTPRequest('http://localhost:20406', {}, prepend_srv=False, always_retry=False, max_retries=1)
         self.assertTrue(dxpy._is_retryable_exception(exception_cm.exception))
@@ -2428,7 +2428,7 @@ class TestHTTPResponses(unittest.TestCase):
         with self.assertRaises(TypeError):
             dxpy.DXHTTPRequest("/system/whoami", {}, cert="nonexistent")
         if dxpy.APISERVER_PROTOCOL == "https":
-            with self.assertRaisesRegexp((TypeError,SSLError), "file|string"):
+            with self.assertRaisesRegexp((TypeError,SSLError, OpenSSL.SSL.Error), "file|string"):
                 dxpy.DXHTTPRequest("/system/whoami", {}, verify="nonexistent")
             with self.assertRaisesRegexp((SSLError, IOError, OpenSSL.SSL.Error), "file"):
                 dxpy.DXHTTPRequest("/system/whoami", {}, cert_file="nonexistent")

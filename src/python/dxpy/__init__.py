@@ -333,6 +333,8 @@ def _is_retryable_exception(e):
         return True
     if isinstance(e, socket.error) and e.errno in _RETRYABLE_SOCKET_ERRORS:
         return True
+    if isinstance(e, urllib3.exceptions.NewConnectionError):
+        return True
     return False
 
 def _extract_msg_from_last_exception():
