@@ -316,19 +316,42 @@ def _get_validated_json_for_build_or_update(json_spec, args):
     return validated
 
 
-def _assert_app_regions_match(enabled_regions, json_spec):
-    executables = [i.get("executable") for i in json_spec.get("stages")]
-    print(executables)
-
+def _assert_executable_regions_match(workflow_enabled_regions, workflow_spec):
+    executables = [i.get("executable") for i in workflow_spec.get("stages")]
+    all_exec_regions = {}
+    
     for exect in executables:
-        if exect.startswith("applet-"):
-            raise WorkflowBuilderException("")
+        if exect.startswith("applet-") and len(workflow_enabled_regions) > 1:
+            mesg = "Building a global workflow with applets in more than one region is not yet supported."
+            mesg += " The applets must be stored in the enabled region of the global workflow."
+            raise WorkflowBuilderException(mesg)
         elif exect.startswith("app-"):
-            app_regional_options = dxpy.api.global_workflow_describe(exect,
-                                                                     input_params={"fields": {"regionalOptions": True}})
-            app_regions = [i["region"] for i in app_regional_options]
+            app_regional_options = dxpy.api.app_describe(exect,
+                                                         input_params={"fields": {"regionalOptions": True}})
+            all_exec_regions[exect] = set(app_regional_options['regionalOptions'].keys())
+            if not workflow_enabled_regions.issubset(all_exec_regions[exect]):
+                mesg = "The app {} is enabled in regions {} while the workflow - in {}.".format(exect,
+                                                                                                all_exec_regions[exect],
+                                                                                                workflow_enabled_regions)
+                mesg += " If you are a developer of the app, please enable the app in {} to run the workflow in that region.".format(workflow_enabled_regions - all_exec_regions[exect])
+                logger.warn(mesg)
         elif exect.startswith("workflow-"):
-            _assert_app_regions_match(enabled_regions, json_spec)
+             # We recurse to check the regions of the executables of the inner workflow
+            inner_workflow_spec = dxpy.api.workflow_describe(exect)
+            _assert_executable_regions_match(workflow_enabled_regions, inner_workflow_spec)
+        elif exect.startswith("globalworkflow-"):
+            raise WorkflowBuilderException("Building a global workflow with nested global workflows is not yet supported")
+            #TODO: uncomment when this option is supported by the API server
+            # We don't recurse to check the regions of the executables of the global workflow
+            # since it was checked when the inner global workflow was built
+            # gwf_regional_options = dxpy.api.global_workflow_describe(exect,
+            #                                                          input_params={"fields": {"regionalOptions": True}})                                        
+            # all_exec_regions[exect] = set(gwf_regional_options['regionalOptions'].keys())
+            # if not workflow_enabled_regions.issubset(all_exec_regions[exect]):
+            #     mesg = "The executable {} is enabled in more regions than the workflow that is being built.".format(exct)
+            #     mesg += " It will not be possible to run your new workflow in {}".format(
+            #         all_exec_regions[exect] - workflow_enabled_regions)
+            #     logger.warn(mesg)
 
 
 def _build_regular_workflow(json_spec):
@@ -378,12 +401,13 @@ def _get_enabled_regions(from_spec, from_command_line):
             raise(WorkflowBuilderException(msg))
         region = dxpy.api.project_describe(dxpy.WORKSPACE_ID,
                                            input_params={"fields": {"region": True}})["region"]
+
         enabled_regions.append(region)
 
     if not enabled_regions:
         raise AssertionError("This workflow should be enabled in at least one region")
 
-    return enabled_regions
+    return set(enabled_regions)
 
 
 def _create_temporary_projects(enabled_regions, args):
@@ -450,8 +474,8 @@ def _build_global_workflow(json_spec, args):
     enabled_regions = _get_enabled_regions(json_spec.get('regionalOptions'), args.region)
 
     # Verify all the apps are also enabled in these regions
-    # TODO: Add support for multi-region global workflows with applets
-    _assert_app_regions_match(enabled_regions, json_spec)
+    # TODO: Add support for dx building multi-region global workflows with applets
+    _assert_executable_regions_match(enabled_regions, json_spec)
 
     workflows_by_region, projects_by_region = {}, {}  # IDs by region
     try:

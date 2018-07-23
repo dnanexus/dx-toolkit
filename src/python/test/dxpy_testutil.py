@@ -442,6 +442,24 @@ class DXTestCase(DXTestCaseCompat):
             self.assertFalse(True, error_string)
 
 
+    def write_app_directory_in_dir(self, temp_file_path, app_name, dxapp_str, code_filename, code_content):
+        # Note: if called twice with the same app_name, will overwrite
+        # the dxapp.json and code file (if specified) but will not
+        # remove any other files that happened to be present
+        try:
+            os.mkdir(os.path.join(temp_file_path, app_name))
+        except OSError as e:
+            if e.errno != 17:  # directory already exists
+                raise e
+        if dxapp_str is not None:
+            with open(os.path.join(temp_file_path, app_name, 'dxapp.json'), 'wb') as manifest:
+                manifest.write(dxapp_str.encode())
+        if code_filename:
+            with open(os.path.join(temp_file_path, app_name, code_filename), 'w') as code_file:
+                code_file.write(code_content)
+        return os.path.join(temp_file_path, app_name)
+
+
 class DXTestCaseBuildWorkflows(DXTestCase):
     """
     This class adds methods to ``DXTestCase`` related to (global) workflow
@@ -557,6 +575,9 @@ class DXTestCaseBuildWorkflows(DXTestCase):
                             "executable": self.test_applet_id,
                             "input": {"number": {"$dnanexus_link": {"stage": "stage_0",
                                                                              "outputField": "number"}}}}]}
+
+    def write_app_directory(self, app_name, dxapp_str, code_filename=None, code_content="\n"):
+        return self.write_app_directory_in_dir(self.temp_file_path, app_name, dxapp_str, code_filename, code_content)
 
 
 class DXTestCaseBuildApps(DXTestCase):

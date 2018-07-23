@@ -37,6 +37,7 @@ from mock import patch
 
 import dxpy
 import dxpy.executable_builder
+import dxpy.workflow_builder
 from dxpy.scripts import dx_build_app
 from dxpy_testutil import (DXTestCase, DXTestCaseBuildApps, DXTestCaseBuildWorkflows, check_output, temporary_project,
                            select_project, cd, override_environment, generate_unique_username_email,
@@ -4171,6 +4172,74 @@ class TestDXClientGlobalWorkflow(DXTestCaseBuildWorkflows):
 
         # The ID should not be updated
         self.assertEqual(gwf_id, updated_desc["id"])
+
+    def test_build_multi_region_workflow_with_applet(self):
+        gwf_name = "gwf_{t}_multi_region".format(t=int(time.time()))
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
+        dxworkflow_json['regionalOptions'] = {'aws:us-east-1': {},
+                                              'azure:westus': {}}
+        print("dxworkflow_json")
+        print(dxworkflow_json)
+        workflow_dir = self.write_workflow_directory(gwf_name,
+                                                     json.dumps(dxworkflow_json),
+                                                     readme_content="Workflow Readme Please")
+
+        error_msg = "Building a global workflow with applets in more than one region is not yet supported"
+        with self.assertRaisesRegexp(DXCalledProcessError, error_msg):
+            run("dx build --globalworkflow --json " + workflow_dir)
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create global workflows')
+    def test_build_multi_region_workflow_with_apps(self):
+        def create_multi_reg_app():
+            app_spec = {
+              "name": "multi_region_app",
+              "dxapi": "1.0.0",
+              "version": "0.0.111",
+              "runSpec": {
+                "file": "code.py",
+                "interpreter": "python2.7",
+                "distribution": "Ubuntu",
+                "release": "14.04"
+              },
+              "inputSpec": [],
+              "outputSpec": [],
+              "regionalOptions": {"aws:us-east-1": {}}
+            }
+            app_dir = self.write_app_directory("multi_region_app", json.dumps(app_spec), "code.py")
+            app_id = json.loads(run("dx build --create-app --json " + app_dir))["id"]
+            return app_id
+
+        gwf_name = "gwf_{t}_multi_region".format(t=int(time.time()))
+        dxworkflow_json = {"name": gwf_name,
+                           "title": "This is a beautiful workflow",
+                           "version": "0.0.1",
+                           "dxapi": "1.0.0",
+                           "regionalOptions": {'aws:us-east-1': {},
+                                               'azure:westus': {}},
+                           "stages": [{'id': 'stage-0', 'executable': create_multi_reg_app()}]
+        }
+
+        workflow_dir = self.write_workflow_directory(gwf_name,
+                                                     json.dumps(dxworkflow_json),
+                                                     readme_content="Workflow Readme Please")
+
+        try:
+            # Expect "dx build" to succeed, exit with error code to
+            # grab stderr.
+            run("dx build --globalworkflow " + workflow_dir + " && exit 28")
+        except subprocess.CalledProcessError as err:
+            # Check the warning about the fact that the app is enabled in more
+            # regions that the workflow
+            self.assertEqual(err.returncode, 28)
+            self.assertIn("please enable the app", err.stderr)
+
+            # Check the workflow was still enabled in both regions
+            gwf_describe = json.loads(run("dx describe --json globalworkflow-" + gwf_name + "/0.0.1"))
+            self.assertIn("regionalOptions", gwf_describe)
+            self.assertItemsEqual(sorted(gwf_describe["regionalOptions"].keys()), ["aws:us-east-1", "azure:westus"])
+            # gwf = json.loads(run("dx build --globalworkflow --json " + workflow_dir))
+
 
 class TestDXClientFind(DXTestCase):
 
