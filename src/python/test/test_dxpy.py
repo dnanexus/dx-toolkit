@@ -3113,14 +3113,14 @@ class TestAppBuilderUtils(unittest.TestCase):
 
         # These calls should not raise exceptions.
 
-        assert_consistent_regions(None, None)
-        assert_consistent_regions(None, ["aws:us-east-1"])
-        assert_consistent_regions({"aws:us-east-1": None}, None)
+        assert_consistent_regions(None, None, app_builder.AppBuilderException)
+        assert_consistent_regions(None, ["aws:us-east-1"], app_builder.AppBuilderException)
+        assert_consistent_regions({"aws:us-east-1": None}, None, app_builder.AppBuilderException)
         # The actual key-value pairs are irrelevant.
-        assert_consistent_regions({"aws:us-east-1": None}, ["aws:us-east-1"])
+        assert_consistent_regions({"aws:us-east-1": None}, ["aws:us-east-1"], app_builder.AppBuilderException)
 
         with self.assertRaises(app_builder.AppBuilderException):
-            assert_consistent_regions({"aws:us-east-1": None}, ["azure:westus"])
+            assert_consistent_regions({"aws:us-east-1": None}, ["azure:westus"], app_builder.AppBuilderException)
 
 
 class TestApiWrappers(unittest.TestCase):
