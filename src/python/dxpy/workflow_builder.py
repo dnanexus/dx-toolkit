@@ -318,7 +318,6 @@ def _get_validated_json_for_build_or_update(json_spec, args):
 
 def _assert_executable_regions_match(workflow_enabled_regions, workflow_spec):
     executables = [i.get("executable") for i in workflow_spec.get("stages")]
-    all_exec_regions = {}
     
     for exect in executables:
         if exect.startswith("applet-") and len(workflow_enabled_regions) > 1:
@@ -328,12 +327,13 @@ def _assert_executable_regions_match(workflow_enabled_regions, workflow_spec):
         elif exect.startswith("app-"):
             app_regional_options = dxpy.api.app_describe(exect,
                                                          input_params={"fields": {"regionalOptions": True}})
-            all_exec_regions[exect] = set(app_regional_options['regionalOptions'].keys())
-            if not workflow_enabled_regions.issubset(all_exec_regions[exect]):
+            app_regions = set(app_regional_options['regionalOptions'].keys())
+            if not workflow_enabled_regions.issubset(app_regions):
                 mesg = "The app {} is enabled in regions {} while the workflow - in {}.".format(exect,
-                                                                                                all_exec_regions[exect],
+                                                                                                app_regions,
                                                                                                 workflow_enabled_regions)
-                mesg += " If you are a developer of the app, please enable the app in {} to run the workflow in that region.".format(workflow_enabled_regions - all_exec_regions[exect])
+                mesg += " If you are a developer of the app, please enable the app in {} to run the workflow in that region(s).".format(
+                    workflow_enabled_regions - app_regions)
                 logger.warn(mesg)
         elif exect.startswith("workflow-"):
              # We recurse to check the regions of the executables of the inner workflow
@@ -346,11 +346,11 @@ def _assert_executable_regions_match(workflow_enabled_regions, workflow_spec):
             # since it was checked when the inner global workflow was built
             # gwf_regional_options = dxpy.api.global_workflow_describe(exect,
             #                                                          input_params={"fields": {"regionalOptions": True}})                                        
-            # all_exec_regions[exect] = set(gwf_regional_options['regionalOptions'].keys())
-            # if not workflow_enabled_regions.issubset(all_exec_regions[exect]):
+            # exec_regions = set(gwf_regional_options['regionalOptions'].keys())
+            # if not workflow_enabled_regions.issubset(exec_regions):
             #     mesg = "The executable {} is enabled in more regions than the workflow that is being built.".format(exct)
             #     mesg += " It will not be possible to run your new workflow in {}".format(
-            #         all_exec_regions[exect] - workflow_enabled_regions)
+            #         exec_regions - workflow_enabled_regions)
             #     logger.warn(mesg)
 
 
@@ -363,35 +363,15 @@ def _build_regular_workflow(json_spec):
     return workflow_id
 
 
-def _get_enabled_regions(from_spec, from_command_line):
+def _get_enabled_regions(json_spec, from_command_line):
     """
-    Returns a list of regions (region names) in which the global workflow
+    Returns a set of regions (region names) in which the global workflow
     should be enabled.
     """
-   # Verify all regions defined in regionalOptions have the same options
-    if from_spec is not None:
-        regional_options_list = list(from_spec.items())
-        for region, opts_for_region in regional_options_list:
-            if set(opts_for_region.keys()) != set(regional_options_list[0][1].keys()):
-                if set(opts_for_region.keys()) - set(regional_options_list[0][1].keys()):
-                    with_key, without_key = region, regional_options_list[0][0]
-                    key_name = next(iter(set(opts_for_region.keys()) - set(regional_options_list[0][1].keys())))
-                else:
-                    with_key, without_key = regional_options_list[0][0], region
-                    key_name = next(iter(set(regional_options_list[0][1].keys()) - set(opts_for_region.keys())))
-                raise WorkflowBuilderException(
-                    "All regions in regionalOptions must specify the same options; " +
-                    "%s was given for %s but not for %s" % (key_name, with_key, without_key)
-                )
-
-    dxpy.executable_builder.assert_consistent_regions(from_spec, from_command_line, WorkflowBuilderException)
-
-    enabled_regions = None
-    if from_spec is not None:
-        enabled_regions = from_spec.keys()
-    elif from_command_line is not None:
-        enabled_regions = from_command_line
-
+    enabled_regions = dxpy.executable_builder.get_enabled_regions('globalworkflow',
+                                                                  json_spec,
+                                                                  from_command_line,
+                                                                  WorkflowBuilderException)
     if not enabled_regions:
         enabled_regions = []
         if not dxpy.WORKSPACE_ID:
@@ -471,9 +451,9 @@ def _build_global_workflow(json_spec, args):
     and builds a global workflow on the platform based on these workflows.
     """
     # First determine in which regions the global workflow needs to be available
-    enabled_regions = _get_enabled_regions(json_spec.get('regionalOptions'), args.region)
+    enabled_regions = _get_enabled_regions(json_spec, args.region)
 
-    # Verify all the apps are also enabled in these regions
+    # Verify all the stages are also enabled in these regions
     # TODO: Add support for dx building multi-region global workflows with applets
     _assert_executable_regions_match(enabled_regions, json_spec)
 

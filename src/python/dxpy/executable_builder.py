@@ -154,13 +154,78 @@ def verify_developer_rights(prefixed_name):
 
 def assert_consistent_regions(from_spec, from_command_line, builder_exception):
     """
-    :param from_spec: The regional options specified in dxapp.json or dxworkflow.json
-    :type from_spec: dict or None.
-    :param from_command_line: The regional options specified on the command-line via --region.
-    :type from_command_line: list or None.
+    Verifies the regions passed with --region CLI argument and the ones
+    specified in regionalOptions are the same (if both CLI and spec were used)
     """
     if from_spec is None or from_command_line is None:
         return
     if set(from_spec) != set(from_command_line):
         raise builder_exception("--region and the 'regionalOptions' key in the JSON file do not agree")
 
+
+def assert_consistent_reg_options(exec_type, json_spec, executable_builder_exeception):
+    """
+    Validates the "regionalOptions" field and verifies all the regions used
+    in "regionalOptions" have the same options.
+    """
+    reg_options_spec = json_spec.get('regionalOptions')
+    json_fn = 'dxapp.json' if exec_type == 'app' else 'dxworkflow.json'
+
+    if not isinstance(reg_options_spec, dict):
+        raise executable_builder_exeception("The field 'regionalOptions' in  must be a mapping")
+    if not reg_options_spec:
+        raise executable_builder_exeception(
+            "The field 'regionalOptions' in " + json_fn + " must be a non-empty mapping")
+    regional_options_list = list(reg_options_spec.items())
+    for region, opts_for_region in regional_options_list:
+        if not isinstance(opts_for_region, dict):
+            raise executable_builder_exeception("The field 'regionalOptions['" + region +
+                            "']' in " + json_fn + " must be a mapping")
+        if set(opts_for_region.keys()) != set(regional_options_list[0][1].keys()):
+            if set(opts_for_region.keys()) - set(regional_options_list[0][1].keys()):
+                with_key, without_key = region, regional_options_list[0][0]
+                key_name = next(iter(set(opts_for_region.keys()) - set(regional_options_list[0][1].keys())))
+            else:
+                with_key, without_key = regional_options_list[0][0], region
+                key_name = next(iter(set(regional_options_list[0][1].keys()) - set(opts_for_region.keys())))
+            raise executable_builder_exeception(
+                "All regions in regionalOptions must specify the same options; " +
+                "%s was given for %s but not for %s" % (key_name, with_key, without_key)
+            )
+
+        if exec_type == 'app':
+            for key in opts_for_region:
+                if key in json_spec.get('runSpec', {}):
+                    raise executable_builder_exeception(
+                    key + " cannot be given in both runSpec and in regional options for " + region)
+
+def get_enabled_regions(exec_type, json_spec, from_command_line, executable_builder_exeception):
+    """
+    Return a list of regions in which the global executable (app or global workflow)
+    will be enabled, based on the "regionalOption" in their JSON specification
+    and/or --region CLI argument used with "dx build".
+
+    :param exec_type: 'app' or 'globalworkflow'
+    :type json_spec: str.
+    :param json_spec: The contents of dxapp.json or dxworkflow.json
+    :type json_spec: dict or None.
+    :param from_command_line: The regional options specified on the command-line via --region.
+    :type from_command_line: list or None.
+    :param builder_exception: Exception that will be thrown.
+    :type builder_exception: AppBuilderException or WorkflowBuilderException.
+    """
+
+    from_spec = json_spec.get('regionalOptions')
+
+    if from_spec is not None:
+        assert_consistent_reg_options(exec_type, json_spec, executable_builder_exeception)
+
+    assert_consistent_regions(from_spec, from_command_line, executable_builder_exeception)
+
+    enabled_regions = None
+    if from_spec is not None:
+        enabled_regions = from_spec.keys()
+    elif from_command_line is not None:
+        enabled_regions = from_command_line
+
+    return enabled_regions

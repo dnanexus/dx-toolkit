@@ -928,42 +928,7 @@ def get_enabled_regions(app_spec, from_command_line):
     :type from_command_line: list or None
 
     """
-    from_app_spec = app_spec.get('regionalOptions')
-
-    if from_app_spec is not None:
-        if not isinstance(from_app_spec, dict):
-            raise dxpy.app_builder.AppBuilderException("The field 'regionalOptions' in dxapp.json must be a mapping")
-        if not from_app_spec:
-            raise dxpy.app_builder.AppBuilderException(
-                "The field 'regionalOptions' in dxapp.json must be a non-empty mapping")
-        regional_options_list = list(from_app_spec.items())
-        for region, opts_for_region in regional_options_list:
-            if not isinstance(opts_for_region, dict):
-                raise dxpy.app_builder.AppBuilderException("The field 'regionalOptions['" + region +
-                                                           "']' in dxapp.json must be a mapping")
-            if set(opts_for_region.keys()) != set(regional_options_list[0][1].keys()):
-                if set(opts_for_region.keys()) - set(regional_options_list[0][1].keys()):
-                    with_key, without_key = region, regional_options_list[0][0]
-                    key_name = next(iter(set(opts_for_region.keys()) - set(regional_options_list[0][1].keys())))
-                else:
-                    with_key, without_key = regional_options_list[0][0], region
-                    key_name = next(iter(set(regional_options_list[0][1].keys()) - set(opts_for_region.keys())))
-                raise dxpy.app_builder.AppBuilderException(
-                    "All regions in regionalOptions must specify the same options; " +
-                    "%s was given for %s but not for %s" % (key_name, with_key, without_key)
-                )
-            for key in opts_for_region:
-                if key in app_spec.get('runSpec', {}):
-                    raise dxpy.app_builder.AppBuilderException(
-                        key + " cannot be given in both runSpec and in regional options for " + region)
-
-    dxpy.executable_builder.assert_consistent_regions(from_app_spec, from_command_line,dxpy.app_builder.AppBuilderException)
-
-    enabled_regions = None
-    if from_app_spec is not None:
-        enabled_regions = from_app_spec.keys()
-    elif from_command_line is not None:
-        enabled_regions = from_command_line
+    enabled_regions = dxpy.executable_builder.get_enabled_regions('app', app_spec, from_command_line, AppBuilderException)
 
     if enabled_regions is not None and len(enabled_regions) == 0:
         raise AssertionError("This app should be enabled in at least one region")
