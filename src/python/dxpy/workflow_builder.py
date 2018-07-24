@@ -358,10 +358,11 @@ def _build_regular_workflow(json_spec):
     return workflow_id
 
 
-def _get_enabled_regions(json_spec, from_command_line):
+def _get_validated_enabled_regions(json_spec, from_command_line):
     """
     Returns a set of regions (region names) in which the global workflow
-    should be enabled.
+    should be enabled. Also validates and synchronizes the regions
+    passed via CLI argument and in the regionalOptions field.
     """
     enabled_regions = dxpy.executable_builder.get_enabled_regions('globalworkflow',
                                                                   json_spec,
@@ -446,7 +447,7 @@ def _build_global_workflow(json_spec, args):
     and builds a global workflow on the platform based on these workflows.
     """
     # First determine in which regions the global workflow needs to be available
-    enabled_regions = _get_enabled_regions(json_spec, args.region)
+    enabled_regions = _get_validated_enabled_regions(json_spec, args.region)
 
     # Verify all the stages are also enabled in these regions
     # TODO: Add support for dx building multi-region global workflows with applets
