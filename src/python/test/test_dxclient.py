@@ -6667,8 +6667,7 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
             for warning in expected_warnings:
                 self.assertIn(warning, err.stderr)
 
-    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
-                         'skipping test that would create global workflows')
+
     def test_build_workflow_invalid_project_context(self):
         gwf_name = "invalid_project_context_{t}".format(t=int(time.time()))
         dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
@@ -6676,10 +6675,12 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
                                                      json.dumps(dxworkflow_json))
 
         # Set the project context to a nonexistent project. This
-        # shouldn't have any effect since building a global workflow
-        # is supposed to be hygienic.
+        # should result in an error since currently the workflow
+        # will be enabled in the region of the project context
+        # (if regionalOptions or --region are not set)
         env = override_environment(DX_PROJECT_CONTEXT_ID='project-B00000000000000000000000')
-        run("dx build --create-globalworkflow --json " + workflow_dir, env=env)
+        with self.assertRaisesRegexp(subprocess.CalledProcessError, "ResourceNotFound"):
+            run("dx build --create-globalworkflow --json " + workflow_dir, env=env)
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create global workflows')
