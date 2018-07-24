@@ -53,6 +53,8 @@ def makedirs(path):
         pass
 
 parser = argparse.ArgumentParser()
+parser.add_argument("-q", "--quiet", action='store_true', help="Suppress printing pull progress to stderr")
+
 subparsers = parser.add_subparsers()
 
 def get_aci_fname(image):
