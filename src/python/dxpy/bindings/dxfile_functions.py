@@ -168,24 +168,36 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
     # Follow the redirection
     print('Following redirect for ' + url)
 
-    wget_exe = _which("wget")
-    if wget_exe is None:
-        err_exit("wget is not installed on this system")
+    # Check if aria2 present
+    # Use that instead of wget
+    aria2c_exe = _which("aria2c")
+    if aria2c_exe is None:
+        wget_exe = _which("wget")
+        if wget_exe is None:
+            err_exit("wget is not installed on this system")
 
-    cmd = ["wget", "--tries=5", "--quiet"]
-    if os.path.isfile(dxid):
-        # file already exists, resume upload.
-        cmd += ["--continue"]
-    cmd += ["-O", dest_filename, url]
+        cmd = ["wget", "--tries=5", "--quiet"]
+        if os.path.isfile(dxid):
+            # file already exists, resume upload.
+            cmd += ["--continue"]
+        cmd += ["-O", dest_filename, url]
+    else:
+        print("aria2c found in path so using that instead of wget \n")
+        cmd = ["aria2c", "--check-certificate=false", "-s 16", "-x 16"]
+        aria2_dest = sys.argv[4]
+        cmd += ["-o", aria2_dest, url]
 
     try:
-        print("Downloading symbolic link with wget")
+        if aria2c_exe is not None:
+            print("Downloading symbolic link with aria2c")
+        else:
+            print("Downloading symbolic link with wget")
         subprocess.check_call(cmd, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         msg = ""
         if e and e.output:
             msg = e.output.strip()
-        err_exit("Failed to call wget: {cmd}\n{msg}\n".format(cmd=str(cmd), msg=msg))
+        err_exit("Failed to call download: {cmd}\n{msg}\n".format(cmd=str(cmd), msg=msg))
 
     if md5digest is not None:
         _verify(dest_filename, md5digest)
