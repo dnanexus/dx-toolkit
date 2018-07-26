@@ -1,3 +1,9 @@
+dx-toolkit (0.258.1) precise; urgency=low
+
+  * Fixed: Revert project resolution bugfix
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 26 Jul 2018 18:59:12 +0000
+
 dx-toolkit (0.258.0) precise; urgency=low
 
   * Added: database wrappers
