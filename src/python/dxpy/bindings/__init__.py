@@ -51,26 +51,6 @@ def verify_string_dxid(dxid, expected_classes):
 
         raise DXError('Invalid ID of class %s: %r' % (str_expected_classes, dxid))
 
-def get_arbitrary_project(dict_of_projects):
-    """
-    Returns an arbitrary project ID from the dictionary of projects and/or containers.
-    If the list contains both projects and containers, it preferably returns a project.
-
-    :param dict_of_projects: a dictionary where keys are project/container IDs and values are the permissions
-    :type dict_of_projects: dictionary
-    :rtype: string
-    """
-    if not dict_of_projects:
-        return None
-
-    # first check if the list includes any project-xxxx
-    for k in dict_of_projects.keys():
-        if "project-" in k:
-            return k
-
-    # otherwise return the first random container-yyyy
-    return dict_of_projects.keys()[0]
-
 class DXObject(object):
     """Abstract base class for all remote object handlers."""
 
@@ -304,8 +284,8 @@ class DXDataObject(DXObject):
             verify_string_dxid(dxid, self._class)
         self._dxid = dxid
 
-        if project is None and self._dxid is not None:
-            self._proj = get_arbitrary_project(self.list_projects())
+        if project is None:
+            self._proj = dxpy.WORKSPACE_ID
         elif project is not None:
             verify_string_dxid(project, ['project', 'container'])
             self._proj = project
@@ -567,6 +547,7 @@ class DXDataObject(DXObject):
         object and are visible to the requesting user.
 
         """
+
         return self._list_projects(self._dxid, **kwargs)
 
     def remove(self, **kwargs):
