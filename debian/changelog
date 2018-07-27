@@ -1,3 +1,9 @@
+dx-toolkit (0.257.3) precise; urgency=low
+
+  * Fixed: Revert of finding project for data object
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 27 Jul 2018 15:45:04 +0000
+
 dx-toolkit (0.257.1) precise; urgency=low
 
   * Fixed: Windows build
