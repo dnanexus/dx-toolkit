@@ -2661,7 +2661,9 @@ def check_java_version():
                                              stderr=subprocess.STDOUT,
                                              universal_newlines=True)
         except Exception as e:
-            raise DXError('Could not call the java executable')
+            msg = "Could not call the java executable. " + \
+                  "This is probably because java (jdk8) is not installed."
+            raise DXError(fill(msg))
 
         try:
             first_line = output.split('\n')[0]
