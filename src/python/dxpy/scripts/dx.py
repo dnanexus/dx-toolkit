@@ -2492,10 +2492,10 @@ def close(args):
 
 def wait(args):
     had_error = False
-    # If only one path provided, check to see if it is a local file
-    # and if so gather actual paths on which to wait from the contents
-    # of the file.
-    if len(args.path) == 1 and os.path.isfile(args.path[0]):
+    # If only one path was provided, together with the --from-file argument,
+    # check to see if it is a local file and if so gather actual paths
+    # on which to wait from the contents of the file.
+    if args.from_file and len(args.path) == 1 and os.path.isfile(args.path[0]):
         try:
             args.path = open(args.path[0]).read().strip().split('\n')
         except IOError as e:
@@ -5370,11 +5370,12 @@ register_parser(parser_close, categories=('data', 'metadata'))
 # wait
 #####################################
 parser_wait = subparsers.add_parser('wait', help='Wait for data object(s) to close or job(s) to finish',
-                                    description='Polls the state of specified data object(s) or job(s) until they are all in the desired state.  Waits until the "closed" state for a data object, and for any terminal state for a job ("terminated", "failed", or "done").  Exits with a non-zero code if a job reaches a terminal state that is not "done".  Can also provide a local file containing a list of data object(s) or job(s), one per line.',
+                                    description='Polls the state of specified data object(s) or job(s) until they are all in the desired state.  Waits until the "closed" state for a data object, and for any terminal state for a job ("terminated", "failed", or "done").  Exits with a non-zero code if a job reaches a terminal state that is not "done".  Can also provide a local file containing a list of data object(s) or job(s), one per line; the file will be read if "--from-file" argument is added.',
                                     prog='dx wait',
                                     parents=[env_args])
 path_action = parser_wait.add_argument('path', help='Path to a data object, job ID, or file with IDs to wait for', nargs='+')
 path_action.completer = DXPathCompleter()
+parser_wait.add_argument('--from-file', help='Read the list of objects to wait for from the file provided in path', action='store_true')
 parser_wait.set_defaults(func=wait)
 register_parser(parser_wait, categories=('data', 'metadata', 'exec'))
 
