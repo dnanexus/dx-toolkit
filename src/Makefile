@@ -209,7 +209,7 @@ endif
 	rm -f "$(DNANEXUS_HOME)/bin/xattr"
 	mkdir -p "$(JAVA_LIBDIR)"
 	cp -f "$(DNANEXUS_HOME)"/bin/dxWDL.jar "$(JAVA_LIBDIR)"/dxWDL.jar
-	ln -s "$(JAVA_LIBDIR)"/dxWDL.jar "$(PYTHON_LIBDIR)"/dxpy/scripts/dxWDL.jar
+	ln -s ../../../../java/dxWDL.jar "$(PYTHON_LIBDIR)"/dxpy/scripts/dxWDL.jar
 
 # If running in fakeroot, override some maven settings so that maven can still
 # find a localRepository to write to.
