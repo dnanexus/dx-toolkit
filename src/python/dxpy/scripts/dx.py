@@ -5375,7 +5375,7 @@ parser_wait = subparsers.add_parser('wait', help='Wait for data object(s) to clo
                                     parents=[env_args])
 path_action = parser_wait.add_argument('path', help='Path to a data object, job ID, or file with IDs to wait for', nargs='+')
 path_action.completer = DXPathCompleter()
-parser_wait.add_argument('--from-file', help='Read the list of data objects or jobs to close from the file provided in path', action='store_true')
+parser_wait.add_argument('--from-file', help='Read the list of objects to wait for from the file provided in path', action='store_true')
 parser_wait.set_defaults(func=wait)
 register_parser(parser_wait, categories=('data', 'metadata', 'exec'))
 
