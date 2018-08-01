@@ -37,6 +37,21 @@ stage 'Build'
                 deleteDir()
             }
         },
+        "16.04-amd64" : { 
+            node('docker'){
+                deleteDir()
+                sh  """
+                    commit_hash=\"${env.commit_hash}\"
+                    mkdir \$commit_hash
+                    working_dir=\$(pwd)
+                    docker run -v \$working_dir/\$commit_hash:/\$commit_hash --rm dnanexus/dx-toolkit:16.04 /bin/bash -c \"git clone https://github.com/dnanexus/dx-toolkit.git; cd dx-toolkit; \\
+                        git checkout \$commit_hash; build/package.sh ubuntu-16.04-amd64; \\
+                        mv dx-toolkit-*.tar.gz /\$commit_hash/\"
+                    """
+                archive "${env.commit_hash}/dx-toolkit-*.tar.gz"
+                deleteDir()
+            }
+        },
         "14.04-amd64" : { 
             node('docker'){
                 deleteDir()
@@ -144,6 +159,22 @@ stage 'Build'
                         mv /*.{changes,deb,dsc,tar.gz} /\$commit_hash/trusty\"
                     """
                 archive "${env.commit_hash}/trusty/dx*"
+                deleteDir()
+            }
+        },
+        "xenial-deb" : { 
+            node('docker'){
+                deleteDir()
+                sh  """
+                    commit_hash=\"${env.commit_hash}\"
+                    working_dir=\$(pwd)
+                    mkdir -p \$working_dir/\$commit_hash/xenial
+                    docker run -v \$working_dir/\$commit_hash/xenial:/\$commit_hash/xenial --rm dnanexus/dx-toolkit:16.04 \\
+                        /bin/bash -xc \"git clone https://github.com/dnanexus/dx-toolkit.git; \\
+                        cd dx-toolkit; git checkout \$commit_hash; build/build-dx-toolkit-debs.sh; \\
+                        mv /*.{changes,deb,dsc,tar.xz} /\$commit_hash/xenial\"
+                    """
+                archive "${env.commit_hash}/xenial/dx*"
                 deleteDir()
             }
         },
