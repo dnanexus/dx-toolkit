@@ -1,3 +1,12 @@
+dx-toolkit (0.259.0) precise; urgency=low
+
+  * Added: Ubuntu release and asset version as parameters for dx-docker create-asset
+  * Added: Builds for Ubuntu 16.04
+  * Fixed: dx wait where a file with object IDs is provided in path
+  * Fixed: dx compile for debian install dxWDL.jar filepath
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 02 Aug 2018 18:35:25 +0000
+
 dx-toolkit (0.258.0) precise; urgency=low
 
   * Added: database wrappers
