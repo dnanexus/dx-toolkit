@@ -1,3 +1,9 @@
+dx-toolkit (0.258.2) precise; urgency=low
+
+  * Fixed: dx wait where a file with object IDs is provided in path
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 02 Aug 2018 18:36:30 +0000
+
 dx-toolkit (0.258.1) precise; urgency=low
 
   * Fixed: Revert project resolution bugfix
