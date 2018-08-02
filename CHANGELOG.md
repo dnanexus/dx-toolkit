@@ -8,6 +8,18 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
+* Ubuntu release and asset version as parameters for `dx-docker create-asset`
+* Builds for Ubuntu 16.04
+
+### Fixed
+
+* `dx wait` where a file with object IDs is provided in path
+* `dx compile` for debian install dxWDL.jar filepath
+
+## [258.1] - beta
+
+### Added
+
 * Database wrappers
 * Support dxni compilation
 
@@ -20,7 +32,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Python 3 incompatibilities
 
-## [257.0] - beta
+## [257.3] - 2018.07.26 stable
+
+### Fixed
+
+* Revert of finding project for data object
+
+## [257.0]
 
 ### Added
 
@@ -42,15 +60,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `DXObject.set_ids()` with project set to None (it is now set to an arbitrary project associated with the file)
 * bash helpers tests
 
-## [256.0] - beta
+## [256.0]
 
 ### Changed
 
 * Cosmetic update to `dx publish`
 * `dx publish` now sets the `default` alias on the published version by default
 
-## [255.0] - 2018.05.24 - stable
-
+## [255.0] - 2018.05.24
 
 ### Added
 
@@ -203,7 +220,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Error that blocks org from being added as developers
 
-## [241.0] - stable 
+## [241.0]
 
 ### Changed
 
@@ -295,7 +312,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Update references to workflow `inputs` and `outputs` to keep them in sync with API changes
 
-## [235.1] - 2017.09.28 - stable
+## [235.1] - 2017.09.28
 
 * No significant changes
 
@@ -471,7 +488,7 @@ No significant changes.
 * Retry download of Docker image if there is transient network failure
 * Allow image ID as a parameter for `dx-docker`; see wiki documentation for more details
 
-## [214.1] - 2017-03-23 - stable
+## [214.1] - 2017-03-23
 
 ### Fixed
 
