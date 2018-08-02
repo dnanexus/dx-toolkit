@@ -247,11 +247,12 @@ else
 endif
 
 # Support for portable workflows, using the dxWDL compiler
-portablewf: $(DNANEXUS_HOME)/bin/dxWDL.jar
+portablewf: $(DNANEXUS_HOME)/bin/dxWDL-$(DXWDL_VERSION).jar
+	ln -s -f $(DNANEXUS_HOME)/bin/dxWDL-$(DXWDL_VERSION).jar $(DNANEXUS_HOME)/bin/dxWDL.jar
 
 # Download the correct dxWDL version from github, and install it
-$(DNANEXUS_HOME)/bin/dxWDL.jar:
-	curl -L "https://github.com/dnanexus/dxWDL/releases/download/$(DXWDL_VERSION)/dxWDL-$(DXWDL_VERSION).jar" -o $(DNANEXUS_HOME)/bin/dxWDL.jar
+$(DNANEXUS_HOME)/bin/dxWDL-$(DXWDL_VERSION).jar:
+	curl -L "https://github.com/dnanexus/dxWDL/releases/download/$(DXWDL_VERSION)/dxWDL-$(DXWDL_VERSION).jar" -o $(DNANEXUS_HOME)/bin/dxWDL-$(DXWDL_VERSION).jar
 
 
 # Tests
@@ -537,7 +538,7 @@ clean:
 	$(MAKE) -C dx-verify-file clean
 	$(MAKE) -C ua clean
 	-find ../bin -type f \( -name jq -or -name dx -or -name 'dx-*' \) -not -name 'dx-unpack*' -delete
-	-rm -f ../bin/docker2aci ../bin/proot ../bin/dxWDL.jar
+	-rm -f ../bin/docker2aci ../bin/proot ../bin/dxWDL*.jar
 	-rm -rf python/{build,*.{egg,egg-info}}
 	-rm -rf java/target
 	-rm -rf ../lib
