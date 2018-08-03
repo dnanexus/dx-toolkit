@@ -155,7 +155,7 @@ stage 'Build'
                     mkdir -p \$working_dir/\$commit_hash/trusty
                     docker run -v \$working_dir/\$commit_hash/trusty:/\$commit_hash/trusty --rm dnanexus/dx-toolkit:14.04 \\
                         /bin/bash -xc \"git clone https://github.com/dnanexus/dx-toolkit.git; \\
-                        cd dx-toolkit; git checkout \$commit_hash; build/build-dx-toolkit-debs.sh; \\
+                        cd dx-toolkit; git checkout \$commit_hash; build/build-dx-toolkit-debs.sh trusty; \\
                         mv /*.{changes,deb,dsc,tar.gz} /\$commit_hash/trusty\"
                     """
                 archive "${env.commit_hash}/trusty/dx*"
@@ -171,7 +171,7 @@ stage 'Build'
                     mkdir -p \$working_dir/\$commit_hash/xenial
                     docker run -v \$working_dir/\$commit_hash/xenial:/\$commit_hash/xenial --rm dnanexus/dx-toolkit:16.04 \\
                         /bin/bash -xc \"git clone https://github.com/dnanexus/dx-toolkit.git; \\
-                        cd dx-toolkit; git checkout \$commit_hash; build/build-dx-toolkit-debs.sh; \\
+                        cd dx-toolkit; git checkout \$commit_hash; build/build-dx-toolkit-debs.sh xenial; \\
                         mv /*.{changes,deb,dsc,tar.xz} /\$commit_hash/xenial\"
                     """
                 archive "${env.commit_hash}/xenial/dx*"
