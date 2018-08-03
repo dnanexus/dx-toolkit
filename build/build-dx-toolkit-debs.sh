@@ -44,7 +44,7 @@ debuild --no-lintian --no-tgz-check -us -uc
 
 if [ -n "$TARGET_RELEASE" ]; then
 	# Replace distribution in .changes
-	sed -i -e "s/$DEFAULT_RELEASE/$TARGET_RELEASE/g" $(find /dx-*.changes -type f)
+	sed -i -e "s/$DEFAULT_RELEASE/$TARGET_RELEASE/g" $(find / -maxdepth 1 -name "dx-*.changes" -type f)
 	# Rename all output files for this build's ubuntu release target
-	rename "s/$DEFAULT_RELEASE/$TARGET_RELEASE/g" $(find /dx* -type f)
+	rename "s/$DEFAULT_RELEASE/$TARGET_RELEASE/g" $(find / -maxdepth 1 -name "dx*" -type f)
 fi
