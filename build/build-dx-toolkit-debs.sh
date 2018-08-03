@@ -19,14 +19,14 @@
 
 DEFAULT_RELEASE="precise"
 TARGET_RELEASE=""
-
-if [[ $1 == "trusty" ]] || [[ $1 == "xenial" ]]; then
-    TARGET_RELEASE=$1
-else
-    echo "Unsupported target release codename: $1"
-    exit 1
+if [[ $# -eq 1 ]] ; then
+    if [[ $1 == "trusty" ]] || [[ $1 == "xenial" ]]; then
+        TARGET_RELEASE=$1
+    else
+        echo "Unsupported target release codename: $1"
+        exit 1
+    fi
 fi
-
 
 # Resolve symlinks so we can find the package root
 SOURCE="${BASH_SOURCE[0]}"
