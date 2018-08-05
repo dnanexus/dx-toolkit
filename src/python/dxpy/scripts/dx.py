@@ -5034,6 +5034,10 @@ parser_run.add_argument('--ssh-proxy', metavar=('<address>:<port>'),
 parser_run.add_argument('--debug-on', action='append', choices=['AppError', 'AppInternalError', 'ExecutionError', 'All'],
                         help=fill("Configure the job to hold for debugging when any of the listed errors occur",
                                   width_adjustment=-24))
+parser_run.add_argument('--ignore-reuse',
+                        help=fill("Disable job reuse for execution",
+                                  width_adjustment=-24),
+                        action='store_true')
 parser_run.add_argument('--batch-tsv', dest='batch_tsv', metavar="FILE",
                         help=fill('A file in tab separated value (tsv) format, with a subset ' +
                                   'of the executable input arguments. A job will be launched ' +
