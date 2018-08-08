@@ -1,3 +1,9 @@
+dx-toolkit (0.260.0-precise) precise; urgency=low
+
+  * Changed: dxWDL version 0.74
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 08 Aug 2018 18:28:19 +0000
+
 dx-toolkit (0.259.0) precise; urgency=low
 
   * Added: Ubuntu release and asset version as parameters for dx-docker create-asset
