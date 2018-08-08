@@ -20,11 +20,14 @@ Utilities shared by dxpy modules.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import warnings
+import warnings, sys
 
 with warnings.catch_warnings():
-    warnings.filterwarnings("ignore",category=CryptographyDeprecationWarning)
-    import os, json, collections, concurrent.futures, traceback, sys, time, gc
+    v = sys.version_info
+    # Filter crypto depracation warnings if Python version is <= 2.7.6 to avoid cluttered screens
+    if v[0] <= 2 and v[1] <= 7 and v[2] <= 6:
+        warnings.filterwarnings("ignore",category=CryptographyDeprecationWarning)
+    import os, json, collections, concurrent.futures, traceback, time, gc
     from multiprocessing import cpu_count
     import dateutil.parser
     from .. import logger
