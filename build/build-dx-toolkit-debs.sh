@@ -16,6 +16,18 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+
+DEFAULT_RELEASE="precise"
+TARGET_RELEASE=""
+if [[ $# -eq 1 ]] ; then
+    if [[ $1 == "trusty" ]] || [[ $1 == "xenial" ]]; then
+        TARGET_RELEASE=$1
+    else
+        echo "Unsupported target release codename: $1"
+        exit 1
+    fi
+fi
+
 # Resolve symlinks so we can find the package root
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
@@ -29,3 +41,10 @@ cd "$root/.."
 git reset --hard
 git clean -dxf
 debuild --no-lintian --no-tgz-check -us -uc
+
+if [ -n "$TARGET_RELEASE" ]; then
+	# Replace distribution in .changes
+	sed -i -e "s/$DEFAULT_RELEASE/$TARGET_RELEASE/g" $(find / -maxdepth 1 -name "dx-*.changes" -type f)
+	# Rename all output files for this build's ubuntu release target
+	rename "s/$DEFAULT_RELEASE/$TARGET_RELEASE/g" $(find / -maxdepth 1 -name "dx*" -type f)
+fi
