@@ -6,6 +6,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* dxWDL version 0.74
+
+## [259.0] - beta
+
 ### Added
 
 * Ubuntu release and asset version as parameters for `dx-docker create-asset`
@@ -16,7 +22,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx wait` where a file with object IDs is provided in path
 * `dx compile` for debian install dxWDL.jar filepath
 
-## [258.1] - beta
+## [258.1] - 2018.08.06 stable
 
 ### Added
 
@@ -32,7 +38,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Python 3 incompatibilities
 
-## [257.3] - 2018.07.26 stable
+## [257.3] - 2018.07.26
 
 ### Fixed
 
