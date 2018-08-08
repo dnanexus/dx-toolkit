@@ -3001,6 +3001,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "details": args.details,
         "depends_on": args.depends_on or None,
         "allow_ssh": args.allow_ssh,
+        "ignore_reuse": args.ignore_reuse or None,
         "debug": {"debugOn": args.debug_on} if args.debug_on else None,
         "delay_workspace_destruction": args.delay_workspace_destruction,
         "priority": ("high" if args.watch else args.priority),
