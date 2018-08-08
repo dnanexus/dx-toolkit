@@ -20,15 +20,19 @@ Utilities shared by dxpy modules.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, json, collections, concurrent.futures, traceback, sys, time, gc
-from multiprocessing import cpu_count
-import dateutil.parser
-from .. import logger
-from ..compat import basestring, THREAD_TIMEOUT_MAX
-from ..exceptions import DXError
-import numbers
-import binascii
-import random
+import warnings
+
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore",category=CryptographyDeprecationWarning)
+    import os, json, collections, concurrent.futures, traceback, sys, time, gc
+    from multiprocessing import cpu_count
+    import dateutil.parser
+    from .. import logger
+    from ..compat import basestring, THREAD_TIMEOUT_MAX
+    from ..exceptions import DXError
+    import numbers
+    import binascii
+    import random
 
 def _force_quit(signum, frame):
     # traceback.print_stack(frame)
