@@ -3001,6 +3001,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "details": args.details,
         "depends_on": args.depends_on or None,
         "allow_ssh": args.allow_ssh,
+        "ignore_reuse": args.ignore_reuse or None,
         "debug": {"debugOn": args.debug_on} if args.debug_on else None,
         "delay_workspace_destruction": args.delay_workspace_destruction,
         "priority": ("high" if args.watch else args.priority),
@@ -5034,6 +5035,10 @@ parser_run.add_argument('--ssh-proxy', metavar=('<address>:<port>'),
 parser_run.add_argument('--debug-on', action='append', choices=['AppError', 'AppInternalError', 'ExecutionError', 'All'],
                         help=fill("Configure the job to hold for debugging when any of the listed errors occur",
                                   width_adjustment=-24))
+parser_run.add_argument('--ignore-reuse',
+                        help=fill("Disable job reuse for execution",
+                                  width_adjustment=-24),
+                        action='store_true')
 parser_run.add_argument('--batch-tsv', dest='batch_tsv', metavar="FILE",
                         help=fill('A file in tab separated value (tsv) format, with a subset ' +
                                   'of the executable input arguments. A job will be launched ' +
