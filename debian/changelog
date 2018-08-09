@@ -1,4 +1,4 @@
-dx-toolkit (0.260.0-precise) precise; urgency=low
+dx-toolkit (0.260.0) precise; urgency=low
 
   * Changed: dxWDL version 0.74
 
