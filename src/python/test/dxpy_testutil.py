@@ -563,7 +563,8 @@ class DXTestCaseBuildApps(DXTestCase):
           "release": "14.04"
           },
         "inputSpec": [],
-        "outputSpec": []
+        "outputSpec": [],
+        "ignoreReuse": False
     }
 
     base_app_spec = dict(base_applet_spec, version="1.0.0")
