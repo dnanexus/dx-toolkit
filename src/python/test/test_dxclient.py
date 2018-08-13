@@ -9092,6 +9092,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             "tags": ["bar"],
             "properties": {"sample_id": "123456"},
             "details": {"key1": "value1"},
+            "ignoreReuse": False
             }
         # description and developerNotes should be un-inlined back to files
         output_app_spec = dict((k, v) for (k, v) in app_spec.iteritems() if k not in ('description',
