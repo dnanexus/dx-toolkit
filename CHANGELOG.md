@@ -6,11 +6,18 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* `dx run --ignore-reuse` to disable job reuse for job
+* `ignoreReuse` key in dxapp.json
+
+## [260.0] - beta
+
 ### Changed
 
 * dxWDL version 0.74
 
-## [259.0] - beta
+## [259.0] - 2018.08.09 stable
 
 ### Added
 
@@ -22,7 +29,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx wait` where a file with object IDs is provided in path
 * `dx compile` for debian install dxWDL.jar filepath
 
-## [258.1] - 2018.08.06 stable
+## [258.1] - 2018.08.06 
 
 ### Added
 
