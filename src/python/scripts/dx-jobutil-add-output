@@ -140,7 +140,7 @@ elif args.classname == 'analysisref':
         parser.exit(3, fill('Value could not be parsed as an analysis reference with format <analysis ID>:<analysis output field name>') + '\n')
 
 
-
+# Note, this operation is not immune to race conditions, see: https://linux.die.net/man/2/fcntl
 @contextmanager
 def flock(fd):
     fcntl.flock(fd, fcntl.LOCK_EX)
