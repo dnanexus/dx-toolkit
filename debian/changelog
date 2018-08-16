@@ -1,3 +1,10 @@
+dx-toolkit (0.261.0) precise; urgency=low
+
+  * Added: `dx run --ignore-reuse` to ignore job reuse
+  * Added: 'ignoreReuse' key in dxapp.json
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 16 Aug 2018 15:09:07 +0000
+
 dx-toolkit (0.260.0) precise; urgency=low
 
   * Changed: dxWDL version 0.74
