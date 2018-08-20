@@ -6,18 +6,28 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Windows install Python version upgrade to 2.7.15
+
+### Fixed
+
+* Windows installation
+
+## [261.0] - beta
+
 ### Added
 
 * `dx run --ignore-reuse` to disable job reuse for job
 * `ignoreReuse` key in dxapp.json
 
-## [260.0] - beta
+## [260.0] - 2018.08.17 stable
 
 ### Changed
 
 * dxWDL version 0.74
 
-## [259.0] - 2018.08.09 stable
+## [259.0] - 2018.08.09 
 
 ### Added
 
