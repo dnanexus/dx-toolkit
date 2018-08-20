@@ -149,12 +149,15 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
                 asset_record = dxpy.DXRecord(asset_record_id)
                 if asset_record:
                     try:
-                        asset_depends.append({"name": asset_record.describe().get("name"),
+                        asset_json = {"name": asset_record.describe().get("name"),
                                               "project": asset_record.get_proj_id(),
                                               "folder": asset_record.describe().get("folder"),
                                               "version": asset_record.describe(fields={"properties": True}
                                                                                )["properties"]["version"]
-                                              })
+                                              }
+                        if dep.get("stages"):
+                            asset_json["stages"] = dep["stages"]
+                        asset_depends.append(asset_json)
                         deps_to_remove.append(dep)
                     except DXError:
                         print("Describe failed on the assetDepends record object with ID - " +
