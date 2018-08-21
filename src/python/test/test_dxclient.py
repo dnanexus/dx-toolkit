@@ -4591,7 +4591,7 @@ class TestDXClientFind(DXTestCase):
                     test_projectid + ':' + test_dirname)
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
-                         'skipping test that takes a long time outside local environment')
+                         'skipping test that can take a long time outside local environment')
     def test_dx_find_data_by_region(self):
         with temporary_project("p_azure", region="azure:westus") as p_azure:
             record_id = dxpy.new_dxrecord(project=p_azure.get_id(), close=True).get_id()
