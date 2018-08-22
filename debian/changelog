@@ -1,3 +1,10 @@
+dx-toolkit (0.262.0) precise; urgency=low
+
+  * Changed: Windows install Python version upgrade to 2.7.15
+  * Removed: 12.04 builds for i386, amd64
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 22 Aug 2018 16:09:34 +0000
+
 dx-toolkit (0.261.0) precise; urgency=low
 
   * Added: `dx run --ignore-reuse` to ignore job reuse
