@@ -3829,7 +3829,7 @@ def generate_batch_inputs(args):
         with open(batch_fname, 'wb') as csvfile:
             batchwriter = csv.writer(csvfile, delimiter='\t'.encode('ascii'))
             # Write headers of TSV
-            batchwriter.writerow(['batch ID'] + [iname for iname in input_names] + [iname+" ID" for iname in input_names]  )
+            batchwriter.writerow(['batch ID'] + [iname for iname in sorted(input_names)] + [iname+" ID" for iname in sorted(input_names)]  )
             for bi in batch:
                 batchwriter.writerow(flatten_batch(bi))
             eprint("Created batch file {}".format(batch_fname))
