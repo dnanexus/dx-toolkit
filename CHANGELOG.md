@@ -6,6 +6,18 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Sort inputs in `dx generate_batch_inputs`
+
+## [262.0] - beta
+
+### Removed
+
+* 12.04 builds
+
+## [261.1] - 2018.08.24 stable 
+
 ### Changed
 
 * Windows install Python version upgrade to 2.7.15
@@ -14,14 +26,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Windows installation
 
-## [261.0] - beta
+## [261.0] 
 
 ### Added
 
 * `dx run --ignore-reuse` to disable job reuse for job
 * `ignoreReuse` key in dxapp.json
 
-## [260.0] - 2018.08.17 stable
+## [260.0] - 2018.08.17
 
 ### Changed
 
