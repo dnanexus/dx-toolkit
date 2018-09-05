@@ -162,13 +162,14 @@ def describe(id_or_link, **kwargs):
         describe(["file-1234", "workflow-5678"])
 
     Note: If id_or_link is a list and **kwargs contains a "fields" parameter, these
-    fields will be returned in the response for each data object, in addition to the
+    fields will be returned in the response for each data object in addition to the
     fields included by default. Additionally, describe options can be provided for
     each data object class in the "classDescribeOptions" kwargs argument. See
     https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/describeDataObjects
     for input parameters used with the multiple object describe method.
     '''
     # If this is a list, extract the ids.
+    # TODO: modify the procedure to use project ID when possible
     if isinstance(id_or_link, basestring) or is_dxlink(id_or_link):
         handler = get_handler(id_or_link)
         return handler.describe(**kwargs)
