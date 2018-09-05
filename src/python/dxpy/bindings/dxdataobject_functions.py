@@ -147,15 +147,29 @@ def get_handler(id_or_link, project=None):
 def describe(id_or_link, **kwargs):
     '''
     :param id_or_link: String containing an object ID or dict containing a DXLink,
-                       or a list of object ID's or dict's containing a DXLink.
+                       or a list of object IDs or dicts containing a DXLink.
 
     Given an object ID, calls :meth:`~dxpy.bindings.DXDataObject.describe` on the object.
 
     Example::
 
         describe("file-1234")
+
+    Given a list of object IDs, calls :meth:`~dxpy.api.system_describe_data_objects`.
+
+    Example::
+
+        describe(["file-1234", "workflow-5678"])
+
+    Note: If id_or_link is a list and **kwargs contains a "fields" parameter, these
+    fields will be returned in the response for each data object in addition to the
+    fields included by default. Additionally, describe options can be provided for
+    each data object class in the "classDescribeOptions" kwargs argument. See
+    https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/describeDataObjects
+    for input parameters used with the multiple object describe method.
     '''
     # If this is a list, extract the ids.
+    # TODO: modify the procedure to use project ID when possible
     if isinstance(id_or_link, basestring) or is_dxlink(id_or_link):
         handler = get_handler(id_or_link)
         return handler.describe(**kwargs)
@@ -170,7 +184,19 @@ def describe(id_or_link, **kwargs):
                 else:
                     link = link['$dnanexus_link']['id']
             links.append(link)
-        data_object_descriptions = dxpy.api.system_describe_data_objects({'objects': links})
+
+        # Prepare input to system_describe_data_objects, the same fields will be passed
+        # for all data object classes; if a class doesn't include a field in its describe
+        # output, it will be ignored
+        describe_input = \
+            dict([(field, True) for field in kwargs['fields']]) if kwargs.get('fields', []) else True
+        describe_links_input = [{'id': link, 'describe': describe_input} for link in links]
+        bulk_describe_input = {'objects': describe_links_input}
+
+        if 'classDescribeOptions' in kwargs:
+            bulk_describe_input['classDescribeOptions'] = kwargs['classDescribeOptions']
+
+        data_object_descriptions = dxpy.api.system_describe_data_objects(bulk_describe_input)
         return [desc['describe'] for desc in data_object_descriptions['results']]
 
 def get_details(id_or_link, **kwargs):
