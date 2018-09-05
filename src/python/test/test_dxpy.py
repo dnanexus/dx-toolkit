@@ -2575,6 +2575,16 @@ class TestDataobjectFunctions(unittest.TestCase):
             self.assertNotIn("properties", desc[i])
             self.assertNotIn("details", desc[i])
 
+        desc_with_fields = dxpy.describe(ids, fields={'properties', 'class', 'details'})
+        self.assertEqual(len(ids), len(desc_with_fields))
+        for i in xrange(len(desc_with_fields)):
+            self.assertEqual(desc_with_fields[i]["id"], ids[i])
+            self.assertEqual(desc_with_fields[i]["class"], types[i])
+            self.assertIn("properties", desc_with_fields[i])
+            self.assertIn("details", desc_with_fields[i])
+
+        desc_empty = dxpy.describe([])
+        self.assertEqual(0, len(desc_empty))
 
 class TestResolver(testutil.DXTestCase):
     def setUp(self):
