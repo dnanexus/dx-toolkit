@@ -8,15 +8,21 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Fixed
 
+* `dxpy.describe()` used with a list of object IDs and an additional `fields` argument
+
+## [263.0] - 2018.08.30 beta
+
+### Fixed
+
 * Sort inputs in `dx generate_batch_inputs`
 
-## [262.0] - beta
+## [262.0] - 2018.08.30 stable
 
 ### Removed
 
 * 12.04 builds
 
-## [261.1] - 2018.08.24 stable 
+## [261.1] - 2018.08.24
 
 ### Changed
 
