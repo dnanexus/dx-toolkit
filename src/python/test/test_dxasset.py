@@ -249,6 +249,60 @@ class TestDXBuildAsset(DXTestCase):
         self.assertEqual(applet_job.describe()['state'], 'done')
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
+    def test_build_and_use_asset_with_stages(self):
+        asset_spec = {
+            "name": "asset library name with space",
+            "title": "A human readable name",
+            "description": "A detailed description about the asset",
+            "version": "0.0.1",
+            "distribution": "Ubuntu",
+            "release": "14.04"
+        }
+        asset_dir = self.write_asset_directory("build_and_use_asset", json.dumps(asset_spec), "resources")
+
+        run("mkdir -p " + os.path.join(asset_dir, "resources/usr/local/bin"))
+        run("mkdir -p " + os.path.join(asset_dir, "resources/home/dnanexus"))
+        with open(os.path.join(asset_dir, "resources/home/dnanexus", 'file_inside_asset.txt'), 'wb') as manifest:
+            manifest.write("echo 'hi'".encode())
+        with open(os.path.join(asset_dir, "resources/usr/local/bin", 'test.sh'), 'wb') as manifest:
+            manifest.write("echo 'hi'".encode())
+        run("chmod +x " + os.path.join(asset_dir, "resources/usr/local/bin", 'test.sh'))
+
+        asset_bundle_id = json.loads(run('dx build_asset --json ' + asset_dir))['id']
+        code_str = """#!/bin/bash
+                    main(){
+                        test.sh
+                        dx-jobutil-new-job stage_without_asset
+                    }
+                    stage_without_asset(){
+                        if [[ -e file_inside_asset.txt ]]; then
+                            echo "file should not be here"
+                            sys.exit(1)
+                        fi
+                    }
+                    """
+        app_spec = {
+            "name": "asset_depends",
+            "dxapi": "1.0.0",
+            "runSpec": {
+                "code": code_str,
+                "interpreter": "bash",
+                "distribution": "Ubuntu",
+                "release": "14.04",
+                "assetDepends":  [{"id": asset_bundle_id, "stages": ["main"]}]
+            },
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+        }
+        app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec))
+        asset_applet_id = json.loads(run("dx build --json {app_dir}".format(app_dir=app_dir)))["id"]
+        asset_applet = dxpy.DXApplet(asset_applet_id)
+        applet_job = asset_applet.run({})
+        applet_job.wait_on_done()
+        self.assertEqual(applet_job.describe()['state'], 'done')
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
     def test_build_asset_with_invalid_instance_type(self):
         asset_spec = {
             "name": "asset_library_name",
