@@ -277,7 +277,7 @@ class TestDXBuildAsset(DXTestCase):
                     stage_without_asset(){
                         if [[ -e file_inside_asset.txt ]]; then
                             echo "file should not be here"
-                            sys.exit(1)
+                            exit 1
                         fi
                     }
                     """
