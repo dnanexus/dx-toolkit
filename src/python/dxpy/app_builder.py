@@ -566,6 +566,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     for asset in asset_depends:
         asset_project = asset.get("project", None)
         asset_folder = asset.get("folder", '/')
+        asset_stages = asset.get("stages", None)
         if "id" in asset:
             asset_record = dxpy.DXRecord(asset["id"]).describe(fields={'details'}, default_fields=True)
         elif "name" in asset and asset_project is not None and "version" in asset:
@@ -597,6 +598,8 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                 "name": archive_file_name,
                 "id": archive_file_id
             }
+            if asset_stages:
+                bundle_depends["stages"] = asset_stages
             applet_spec["runSpec"]["bundledDepends"].append(bundle_depends)
             # If the file is not found in the applet destination project, clone it from the asset project
             if (not dry_run and
