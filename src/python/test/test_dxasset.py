@@ -115,7 +115,7 @@ class TestDXBuildAsset(DXTestCase):
             "description": "A detailed description about the asset",
             "version": "0.0.1",
             "distribution": "Ubuntu",
-            "release": "12.04",
+            "release": "14.04",
             "instanceType": "mem1_ssd1_x2",
             "execDepends": [{"name": "python-numpy"}]
         }
@@ -134,7 +134,7 @@ class TestDXBuildAsset(DXTestCase):
             "description": "A detailed description about the asset",
             "version": "0.0.1",
             "distribution": "Ubuntu",
-            "release": "12.04",
+            "release": "14.04",
             "execDepends": [{"name": "python-numpy"}]
         }
         asset_dir = self.write_asset_directory("asset_with_valid_destination", json.dumps(asset_spec))
@@ -155,7 +155,7 @@ class TestDXBuildAsset(DXTestCase):
             "description": "A detailed description about the asset",
             "version": "0.0.1",
             "distribution": "Ubuntu",
-            "release": "12.04"
+            "release": "14.04"
         }
         asset_dir = self.write_asset_directory("asset_with_invalid_destination", json.dumps(asset_spec))
         with self.assertSubprocessFailure(stderr_regexp='Could not find a project named', exit_code=3):
@@ -167,7 +167,7 @@ class TestDXBuildAsset(DXTestCase):
             "description": "A detailed description about the asset",
             "version": "0.0.1",
             "distribution": "Ubuntu",
-            "release": "12.04"
+            "release": "14.04"
         }
         asset_dir = self.write_asset_directory("asset_with_missing_fields", json.dumps(asset_spec))
         with self.assertSubprocessFailure(stderr_regexp='The asset configuration does not contain', exit_code=1):
@@ -181,7 +181,7 @@ class TestDXBuildAsset(DXTestCase):
             "description": "A detailed description about the asset",
             "version": "0.0.1",
             "distribution": "Ubuntu",
-            "release": "12.04"
+            "release": "14.04"
         }
         asset_dir = self.write_asset_directory("asset_with_resources", json.dumps(asset_spec), "resources")
         asset_bundle_id = json.loads(run('dx build_asset --json ' + asset_dir))['id']
@@ -196,7 +196,7 @@ class TestDXBuildAsset(DXTestCase):
             "description": "A detailed description about the asset",
             "version": "0.0.1",
             "distribution": "Ubuntu",
-            "release": "12.04"
+            "release": "14.04"
         }
         asset_dir = self.write_asset_directory("asset_with_invalid_makefile", json.dumps(asset_spec),
                                                None, "echo")
@@ -212,7 +212,7 @@ class TestDXBuildAsset(DXTestCase):
             "description": "A detailed description about the asset",
             "version": "0.0.1",
             "distribution": "Ubuntu",
-            "release": "12.04"
+            "release": "14.04"
         }
         asset_dir = self.write_asset_directory("build_and_use_asset", json.dumps(asset_spec), "resources")
 
@@ -256,7 +256,7 @@ class TestDXBuildAsset(DXTestCase):
             "description": "A detailed description about the asset",
             "version": "0.0.1",
             "distribution": "Ubuntu",
-            "release": "12.04",
+            "release": "14.04",
             "instanceType": "mem1_ssd1_x3"
         }
         asset_dir = self.write_asset_directory("build_asset_with_invalid_instance_type", json.dumps(asset_spec))
@@ -273,7 +273,7 @@ class TestDXBuildAsset(DXTestCase):
             "description": " A detailed description about the asset",
             "version": "0.0.1",
             "distribution": "Ubuntu",
-            "release": "12.04"
+            "release": "14.04"
         }
         asset_dir = self.write_asset_directory("test_build_asset_inside_job", json.dumps(asset_spec))
         asset_conf_file_id = run("dx upload " + os.path.join(asset_dir, "dxasset.json") + " --brief --wait").strip()
@@ -375,7 +375,7 @@ class TestDXBuildAsset(DXTestCase):
             "description": "A detailed description about the asset",
             "version": "0.0.1",
             "distribution": "Ubuntu",
-            "release": "12.04"
+            "release": "14.04"
         }
         asset_dir = self.write_asset_directory("set_tarball_property", json.dumps(asset_spec))
         asset_bundle_id = json.loads(run('dx build_asset --json ' + asset_dir))['id']
