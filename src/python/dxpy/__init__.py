@@ -609,6 +609,9 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     return i
 
                 _headers = {ensure_ascii(k): ensure_ascii(v) for k, v in _headers.items()}
+                if (sys.version_info > (3, 0)): 
+                    _headers.pop(b'host', None)
+                    _headers.pop(b'content-length', None)
                 response = pool_manager.request(_method, _url, headers=_headers, body=body,
                                                 timeout=timeout, retries=False, **kwargs)
             except urllib3.exceptions.ClosedPoolError:
