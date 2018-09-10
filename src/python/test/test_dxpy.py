@@ -1348,8 +1348,10 @@ def main(number):
         self.assertEqual(analysis_desc["tags"], ["foo"])
         self.assertEqual(analysis_desc["properties"], {"foo": "bar"})
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_WORKFLOW_RUN_LOCKED_WORKFLOW"])
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
-    def test_run_workflow_with_explicit_input(self):
+    def test_run_locked_workflow(self):
         dxapplet = dxpy.DXApplet()
         dxapplet.new(name="test_applet",
                      dxapi="1.04",
