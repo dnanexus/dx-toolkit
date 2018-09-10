@@ -76,13 +76,14 @@ def list_folder(proj_id, path):
     return output
 
 
-def test_dxpy_import_stdin_none(monkeypatch):
-    """
-    Ensure that importing dxpy works even if stdin is None.
-    """
-    monkeypatch.setattr(sys, 'stdin', None)
-    del sys.modules['dxpy.cli']
-    from dxpy.cli import INTERACTIVE_CLI
+class TestDXPYImport(object):
+    def test_dxpy_import_stdin_none(self, monkeypatch):
+        """
+        Ensure that importing dxpy works even if stdin is None.
+        """
+        monkeypatch.setattr(sys, 'stdin', None)
+        del sys.modules['dxpy.cli']
+        from dxpy.cli import INTERACTIVE_CLI
 
 
 class TestDXTestUtils(DXTestCase):
