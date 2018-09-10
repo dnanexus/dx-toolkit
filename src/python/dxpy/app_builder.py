@@ -385,7 +385,7 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
                 # compress the file by reading the tar file and passing
                 # it though a GzipFile object, writing the given
                 # block size (by default 8192 bytes) at a time
-                targz_gzf = gzip.GzipFile(fileobj=targz_fh, mode='w')
+                targz_gzf = gzip.GzipFile(fileobj=targz_fh, mode='wb')
                 tar_tmp_fh.seek(0)
                 dat = tar_tmp_fh.read(io.DEFAULT_BUFFER_SIZE)
                 while dat:
