@@ -2620,7 +2620,7 @@ def build(args):
             msg += " whether a dxapp.json or dxworkflow.json file is found in the source directory, respectively."
             build_parser.error(msg)
     except Exception as e:
-        print("Error: %s" % (e.message,), file=sys.stderr)
+        print("Error: {}".format(e), file=sys.stderr)
         err_exit()
 
 
