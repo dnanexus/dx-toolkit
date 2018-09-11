@@ -31,6 +31,7 @@ import pexpect
 import requests
 import textwrap
 import pytest
+from mock import patch
 
 import dxpy
 import dxpy.executable_builder
@@ -76,12 +77,12 @@ def list_folder(proj_id, path):
     return output
 
 
-class TestDXPYImport(object):
-    def test_dxpy_import_stdin_none(self, monkeypatch):
+class TestDXPYImport(unittest.TestCase):
+    @patch('sys.stdin', None)
+    def test_dxpy_import_stdin_none(self):
         """
         Ensure that importing dxpy works even if stdin is None.
         """
-        monkeypatch.setattr(sys, 'stdin', None)
         del sys.modules['dxpy.cli']
         from dxpy.cli import INTERACTIVE_CLI
 
