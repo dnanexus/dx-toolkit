@@ -2274,6 +2274,7 @@ dx-jobutil-add-output outrecord $record0
                                               "job": job_id}}}
         self.assertEquals(job_desc["input"], exp)
 
+
     def test_dx_run_applet_without_input_spec(self):
         record = dxpy.new_dxrecord(name="my_record")
 
@@ -2896,6 +2897,41 @@ dx-jobutil-add-output record_array $second_record --array
         # parsing error
         with self.assertSubprocessFailure(stderr_regexp='JSON', exit_code=3):
             run("dx run " + applet_id + " --extra-args not-a-JSON-string")
+
+    def test_dx_run_applet_with_dependent_inputs(self):
+        record = dxpy.new_dxrecord(name="my_record")
+        record.set_details({
+            "phenotypes": ["a", "b", "c"]
+        })
+
+        applet_id = dxpy.api.applet_new({
+            "project": self.project,
+            "dxapi": "0.0.1",
+            "inputSpec": [
+                {"name": "cohort",
+                 "class": "string",
+                 "choices": {
+                     "inputs": ["cancer_smoke_cohort"],
+                     "fields": ["phenotypes"]
+                 },
+                },
+                {"name": "cancer_smoke_cohort",
+                 "class": "record"
+                }
+            ],
+            "outputSpec": [],
+            "runSpec": {"interpreter": "bash",
+                        "distribution": "Ubuntu",
+                        "release": "14.04",
+                        "code": """import sys"""
+                        }})["id"]
+        applet = dxpy.DXApplet(applet_id)
+
+        # # Run with applet handler.
+
+        # # Run with "dx run".
+
+    
 
     def test_dx_run_clone(self):
         applet_id = dxpy.api.applet_new({"project": self.project,

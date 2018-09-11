@@ -224,6 +224,9 @@ def interactive_help(in_class, param_desc, prompt):
             return shlex.split(result)
 
 def get_input_array(param_desc):
+    print("\n---")
+    print(param_desc)
+    print("---\n")
     in_class = param_desc['class']
     if in_class.startswith("array:"):
         in_class = in_class[6:]
@@ -325,84 +328,6 @@ def format_choices_or_suggestions(header, items, obj_class, initial_indent=' ' *
                     initial_indent=initial_indent,
                     subsequent_indent=subsequent_indent)
 
-def get_input_single(param_desc):
-    in_class = param_desc['class']
-    typespec = param_desc.get('type', None)
-    print('\nInput:   ' + fill(UNDERLINE() + param_desc.get('label', param_desc['name']) + ENDC() + ' (' + param_desc['name'] + ')'))
-    print('Class:   ' + param_desc['class'])
-    if 'type' in param_desc:
-        print('Type(s): ' + parse_typespec(param_desc['type']))
-    if 'suggestions' in param_desc:
-        print(format_choices_or_suggestions('Suggestions:', param_desc['suggestions'], param_desc['class'], initial_indent='', subsequent_indent='  '))
-    if 'choices' in param_desc:
-        print(format_choices_or_suggestions('Choices:', param_desc['choices'], param_desc['class'], initial_indent='', subsequent_indent='  '))
-    print()
-
-    prompt = "Enter {_class} {value} ({hint}'" + WHITE() + BOLD() + '?' + ENDC() + "' for more options)"
-    hint = ''
-    if in_class in dx_data_classes:
-        hint = '<TAB> twice for compatible ' + in_class + 's in current directory, '
-    elif 'suggestions' in param_desc:
-        hint = '<TAB> twice for suggestions, '
-    elif 'choices' in param_desc:
-        hint = '<TAB> twice for choices, '
-    prompt = prompt.format(_class=in_class,
-                           value='ID or path' if in_class in dx_data_classes else 'value',
-                           hint=hint)
-    print(fill(prompt))
-
-    try:
-        import readline
-        if in_class in dx_data_classes:
-            from dxpy.utils.completer import DXPathCompleter
-            readline.set_completer(DXPathCompleter(classes=[in_class],
-                                                   typespec=typespec).complete)
-        elif in_class == 'boolean':
-            from dxpy.utils.completer import ListCompleter
-            readline.set_completer(ListCompleter(completions=['true', 'false']).complete)
-        elif 'suggestions' in param_desc:
-            from dxpy.utils.completer import ListCompleter
-            readline.set_completer(ListCompleter(completions=map(str, param_desc['suggestions'])).complete)
-        elif 'choices' in param_desc:
-            from dxpy.utils.completer import ListCompleter
-            readline.set_completer(ListCompleter(completions=map(str, param_desc['choices'])).complete)
-        else:
-            from dxpy.utils.completer import NoneCompleter
-            readline.set_completer(NoneCompleter().complete)
-    except:
-        pass
-    try:
-        while True:
-            prompt = param_desc['name'] + ': '
-            user_input = input(prompt)
-            if in_class == 'string':
-                if user_input == '':
-                    user_input = []
-                else:
-                    user_input = [user_input]
-            else:
-                user_input = shlex.split(user_input)
-            while user_input == ["?"]:
-                user_input = interactive_help(in_class, param_desc, prompt)
-            if len(user_input) > 1:
-                print(fill('Error: more than one argument given.  Please quote your entire input or escape your whitespace with a backslash \'\\\'.'))
-                continue
-            elif len(user_input) == 0:
-                user_input = ['']
-            try:
-                value = parse_input_or_jbor(in_class, user_input[0])
-            except ValueError as details:
-                print(fill('Error occurred when parsing for class ' + in_class + ': ' + str(details)))
-                continue
-            except TypeError as details:
-                print(fill('Error occurred when parsing for class ' + in_class + ': ' + str(details)))
-                continue
-            if 'choices' in param_desc and value not in param_desc['choices']:
-                print(fill(RED() + BOLD() + 'Warning:' + ENDC() + ' value "' + str(value) + '" for input ' + WHITE() +
-                           BOLD() + param_desc['name'] + ENDC() + ' is not in the list of choices for that input'))
-            return value
-    except EOFError:
-        raise DXCLIError('Unexpected end of input')
 
 def get_optional_input_str(param_desc):
     return param_desc.get('label', param_desc['name']) + ' (' + param_desc['name'] + ')'
@@ -692,6 +617,8 @@ class ExecutableInputs(object):
             pass
 
     def prompt_for_missing(self, confirm=True):
+        print("HERE WE SHOULD PERHAPS UPDATE CHOICES")
+        print("required inputs", self.required_inputs)
         # No-op if there is no input spec
         if self.input_spec is None:
             return
@@ -701,6 +628,7 @@ class ExecutableInputs(object):
 
         # Select input interactively
         no_prior_inputs = True if len(self.inputs) == 0 else False
+        print("no_prior_inputs", no_prior_inputs)
         for i in self.required_inputs:
             if i not in self.inputs:
                 if len(self.inputs) == 0:
@@ -712,10 +640,11 @@ class ExecutableInputs(object):
         self.uninit_completer()
 
     def prompt_for_input(self, input_name):
+        print("Prompting for input: {}".format(input_name))
         if input_name in self.array_inputs:
             return get_input_array(self.input_spec[input_name])
         else:
-            return get_input_single(self.input_spec[input_name])
+            return self.get_input_single(self.input_spec[input_name])
 
     def prompt_for_optional_inputs(self):
         while True:
@@ -747,6 +676,7 @@ class ExecutableInputs(object):
             except EOFError:
                 return
             try:
+                print("::: Called prompt_for_optional_inputs")
                 self.inputs[self.optional_inputs[opt_num]] = self.prompt_for_input(self.optional_inputs[opt_num])
             except:
                 pass
@@ -795,3 +725,125 @@ class ExecutableInputs(object):
 
     def _is_input_optional(self, spec_atom):
         return spec_atom.get("optional") == True or 'default' in spec_atom
+
+
+    def is_dynamic_choices(self, param_desc):
+        return True
+        # if not isinstance(param_desc['choices'], dict):
+        #     return False
+        # inputs = param_desc['choices'].get('inputs', [])
+        # fields = param_desc['choices'].get('fields', [])
+        # if not (inputs and fields):
+        #     return False
+        # return len(inputs) == len(inputs)
+
+    def get_dependent_choices(self, dep_object, dep_field, field_name):
+        """
+        The dependent 
+        """
+        try:
+            handler = dxpy.get_handler(dep_object)
+            details = handler.get_details()
+            return details.get(dep_field)
+        except:
+            raise DXCLIError("Error while loading dynamic choices for field " + field_name)
+
+    def get_input_single(self, param_desc):
+        in_class = param_desc['class']
+        typespec = param_desc.get('type', None)
+        print('\nInput:   ' + fill(UNDERLINE() + param_desc.get('label', param_desc['name']) + ENDC() + ' (' + param_desc['name'] + ')'))
+        print('Class:   ' + param_desc['class'])
+        if 'type' in param_desc:
+            print('Type(s): ' + parse_typespec(param_desc['type']))
+        if 'suggestions' in param_desc:
+            print(format_choices_or_suggestions('Suggestions:', param_desc['suggestions'], param_desc['class'], initial_indent='', subsequent_indent='  '))
+        if 'choices' in param_desc:
+
+            print("\n\n\n")
+            print("self.inputs" + str(self.inputs))
+            # Choices may have to generated dynamically based on other inputs that were selected
+            # This happens when 'choices' is a dictionary with specific fields
+            regenerated_choices = set()
+            if self.is_dynamic_choices(param_desc):
+                # Check if the apps fields listed in inputs has a set value
+                # If not, prompt for the fields first 
+                dependent_inputs = param_desc['choices']['inputs']
+                dependent_fields = param_desc['choices']['fields']
+                for dep_input in dependent_inputs:
+                    if dep_input not in self.inputs:
+                        # TODO: handle the case where the dependent input was not selected yet!
+                        pass
+                for dep_input_name, dep_field in zip(dependent_inputs, dependent_fields):
+                    dep_object = self.inputs.get(dep_input_name)
+                    new_choices = self.get_dependent_choices(dep_object, dep_field, param_desc['name'])
+                    regenerated_choices.add(new_choices)
+            param_desc['choices'] = list(regenerated_choices)
+
+            print(format_choices_or_suggestions('Choices:', param_desc['choices'], param_desc['class'], initial_indent='', subsequent_indent='  '))
+        print()
+
+        prompt = "Enter {_class} {value} ({hint}'" + WHITE() + BOLD() + '?' + ENDC() + "' for more options)"
+        hint = ''
+        if in_class in dx_data_classes:
+            hint = '<TAB> twice for compatible ' + in_class + 's in current directory, '
+        elif 'suggestions' in param_desc:
+            hint = '<TAB> twice for suggestions, '
+        elif 'choices' in param_desc:
+            hint = '<TAB> twice for choices, '
+        prompt = prompt.format(_class=in_class,
+                            value='ID or path' if in_class in dx_data_classes else 'value',
+                            hint=hint)
+        print(fill(prompt))
+
+        try:
+            import readline
+            if in_class in dx_data_classes:
+                from dxpy.utils.completer import DXPathCompleter
+                readline.set_completer(DXPathCompleter(classes=[in_class],
+                                                    typespec=typespec).complete)
+            elif in_class == 'boolean':
+                from dxpy.utils.completer import ListCompleter
+                readline.set_completer(ListCompleter(completions=['true', 'false']).complete)
+            elif 'suggestions' in param_desc:
+                from dxpy.utils.completer import ListCompleter
+                readline.set_completer(ListCompleter(completions=map(str, param_desc['suggestions'])).complete)
+            elif 'choices' in param_desc:
+                from dxpy.utils.completer import ListCompleter
+                readline.set_completer(ListCompleter(completions=map(str, param_desc['choices'])).complete)
+            else:
+                from dxpy.utils.completer import NoneCompleter
+                readline.set_completer(NoneCompleter().complete)
+        except:
+            pass
+        try:
+            while True:
+                prompt = param_desc['name'] + ': '
+                user_input = input(prompt)
+                if in_class == 'string':
+                    if user_input == '':
+                        user_input = []
+                    else:
+                        user_input = [user_input]
+                else:
+                    user_input = shlex.split(user_input)
+                while user_input == ["?"]:
+                    user_input = interactive_help(in_class, param_desc, prompt)
+                if len(user_input) > 1:
+                    print(fill('Error: more than one argument given.  Please quote your entire input or escape your whitespace with a backslash \'\\\'.'))
+                    continue
+                elif len(user_input) == 0:
+                    user_input = ['']
+                try:
+                    value = parse_input_or_jbor(in_class, user_input[0])
+                except ValueError as details:
+                    print(fill('Error occurred when parsing for class ' + in_class + ': ' + str(details)))
+                    continue
+                except TypeError as details:
+                    print(fill('Error occurred when parsing for class ' + in_class + ': ' + str(details)))
+                    continue
+                if 'choices' in param_desc and value not in param_desc['choices']:
+                    print(fill(RED() + BOLD() + 'Warning:' + ENDC() + ' value "' + str(value) + '" for input ' + WHITE() +
+                            BOLD() + param_desc['name'] + ENDC() + ' is not in the list of choices for that input'))
+                return value
+        except EOFError:
+            raise DXCLIError('Unexpected end of input')

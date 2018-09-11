@@ -2889,7 +2889,6 @@ def _get_input_for_run(args, executable, preset_inputs=None, input_name_prefix=N
     # If batch_tsv is set, do not prompt for missing arguments
     require_all_inputs = (args.batch_tsv is None)
     try_call(exec_inputs.update_from_args, args, require_all_inputs)
-
     return exec_inputs.inputs
 
 def run_one(args, executable, dest_proj, dest_path, input_json, run_kwargs):
@@ -2979,9 +2978,11 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
     print(",".join(exec_ids))
     sys.stdout.flush()
 
-# Shared code for running an executable ("dx run executable"). At the end of this method,
-# there is a fork between the case of a single executable, and a batch run.
 def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None):
+    """
+    Shared code for running an executable ("dx run executable"). At the end of this method,
+    there is a fork between the case of a single executable, and a batch run.
+    """
     input_json = _get_input_for_run(args, executable, preset_inputs)
 
     if args.sys_reqs_from_clone and not isinstance(args.instance_type, basestring):
