@@ -6,17 +6,29 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Pass stages input from assetDepends to bundledDepends
+
+### Fixed
+
+* Python 3 incompatibilites
+* Python 3 `dx upload`
+* `import dxpy` when `sys.stdin` is `None`
+
+## [264.0] - beta
+
 ### Fixed
 
 * `dxpy.describe()` used with a list of object IDs and an additional `fields` argument
 
-## [263.0] - 2018.08.30 beta
+## [263.0] - 2018.08.30 stable
 
 ### Fixed
 
 * Sort inputs in `dx generate_batch_inputs`
 
-## [262.0] - 2018.08.30 stable
+## [262.0] - 2018.08.30 
 
 ### Removed
 
