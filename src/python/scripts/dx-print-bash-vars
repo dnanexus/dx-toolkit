@@ -39,5 +39,5 @@ for key, val in var_defs_hash.iteritems():
     if val_len <= (16 * 1024):
         print("export {}={}".format(key, val))
     else:
-        print("the variable {} is too long ({} bytes), omitting".format(key, val_len),
-              file=sys.stderr)
+        msg = "the variable {} is too long ({} bytes), omitting".format(key, val_len)
+        print("echo {}".format(msg))
