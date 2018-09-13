@@ -35,4 +35,9 @@ job_input_file = file_load_utils.get_input_json_file()
 
 var_defs_hash = file_load_utils.gen_bash_vars(job_input_file)
 for key, val in var_defs_hash.iteritems():
-    print("export {}={}".format(key, val))
+    val_len = len(val)
+    if val_len <= (16 * 1024):
+        print("export {}={}".format(key, val))
+    else:
+        msg = "\"the variable {} is too long ({} bytes), omitting\"".format(key, val_len)
+        print("echo {}".format(msg))
