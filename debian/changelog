@@ -1,3 +1,12 @@
+dx-toolkit (0.265.0) precise; urgency=low
+
+  * Fixed: Python 3 incompatibilites
+  * Fixed: Python 3 `dx upload`
+  * Fixed: `import dxpy` when `sys.stdin` is `None
+  * Added: Pass stages input from assetDepends to bundledDepends
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 13 Sep 2018 20:06:24 +0000
+
 dx-toolkit (0.264.0) precise; urgency=low
 
   * Fixed: Bulk object describe method dxpy.describe()
