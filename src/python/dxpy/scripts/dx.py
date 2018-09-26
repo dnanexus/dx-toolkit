@@ -2974,7 +2974,7 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
                    subsequent_indent='  ') + '\n')
 
     # Run the executable on all the input dictionaries
-    dx_execs = batch_run(executable, b_args, run_kwargs)
+    dx_execs = batch_run(executable, b_args, run_kwargs, args.batch_destination)
     exec_ids = [dxe.get_id() for dxe in dx_execs]
     print(",".join(exec_ids))
     sys.stdout.flush()
@@ -4986,6 +4986,9 @@ parser_run.add_argument('--clone', help=fill('Job or analysis ID or name from wh
 parser_run.add_argument('--alias', '--version', dest='alias',
                         help=fill('Alias (tag) or version of the app to run (default: "default" if an app)', width_adjustment=-24))
 parser_run.add_argument('--destination', '--folder', metavar='PATH', dest='folder', help=fill('The full project:folder path in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
+parser_run.add_argument('--batch-destination', dest='batch_destination',
+                        help=fill('Output results to separate folders, one per batch, using batch ID as the name of the output folder', width_adjustment=-24),
+                        action='store_true')
 parser_run.add_argument('--project', metavar='PROJECT',
                         help=fill('Project name or ID in which to run the executable. This can also ' +
                                   'be specified together with the output folder in --destination.',
