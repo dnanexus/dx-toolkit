@@ -210,7 +210,6 @@ INCOMPLETE_READS_NUM_SUBCHUNKS = 8
 USER_AGENT = "{name}/{version} ({platform})".format(name=__name__,
                                                     version=TOOLKIT_VERSION,
                                                     platform=platform.platform())
-_default_certs = requests.certs.where()
 _default_headers = requests.utils.default_headers()
 _default_timeout = urllib3.util.timeout.Timeout(connect=DEFAULT_TIMEOUT, read=DEFAULT_TIMEOUT)
 _RequestForAuth = namedtuple('_RequestForAuth', 'method url headers')
@@ -258,7 +257,6 @@ def _get_pool_manager(verify, cert_file, key_file):
     global _pool_manager
     default_pool_args = dict(maxsize=32,
                              cert_reqs=ssl.CERT_REQUIRED,
-                             ca_certs=_default_certs,
                              headers=_default_headers,
                              timeout=_default_timeout)
     if cert_file is None and verify is None and 'DX_CA_CERT' not in os.environ:
