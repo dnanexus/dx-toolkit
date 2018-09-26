@@ -122,8 +122,18 @@ src_libs: api_wrappers
 	mkdir -p "$(DNANEXUS_LIBDIR)"
 	cp -R -v bash "$(DNANEXUS_LIBDIR)"
 
-PYTHON_LIBDIR := $(DNANEXUS_LIBDIR)/python2.7/site-packages
+# Extract the two most significant digits the python distribution
+#
+PYTHON_VERSION = $(shell python --version | cut -f 2 -d ' ')
+PYTHON_MAJOR_VERSION = $(shell python --version | cut -f 2 -d ' ' | cut -b 1-1 )
+PYTHON_LIBDIR := $(DNANEXUS_LIBDIR)/python${PYTHON_VERSION}/site-packages
 JAVA_LIBDIR := $(DNANEXUS_LIBDIR)/java
+
+ifeq (${PYTHON_MAJOR_VERSION}, 2)
+	VIRTUAL_ENV=virtualenv
+else
+	VIRTUAL_ENV=python3 -m venv
+endif
 
 python: api_wrappers toolkit_version $(DNANEXUS_HOME)/bin/dx
 
@@ -177,7 +187,7 @@ $(DNANEXUS_HOME)/bin/dx: portablewf $(shell find python/{dxpy,scripts,requiremen
 	python -c 'import sys; exit("dx-toolkit is not compatible with Python < 2.7" if sys.version_info < (2, 7) else 0)'
 	rm -rf "$(PYTHON_LIBDIR)" "$(DX_PY_ENV)" python/dist
 	mkdir -p "$$(dirname '$(PYTHON_LIBDIR)')"
-	virtualenv --python=python "$(DX_PY_ENV)"
+	$(VIRTUAL_ENV) "$(DX_PY_ENV)"
 
 	# Install setuptools and other fundamental packages
 ifeq ($(OS), Windows_NT)
@@ -323,8 +333,8 @@ setup_doc_virtualenv: .setup_doc_virtualenv
 .setup_doc_virtualenv: ../build/doc_build_requirements.txt
 	@if ! which pip > /dev/null; then echo "pip not found, please run apt-get install python-pip"; exit 1; fi
 	@if ! which virtualenv > /dev/null; then echo "virtualenv not found, please run apt-get install python-virtualenv"; exit 1; fi
-	(unset PYTHONPATH; virtualenv ../build/doc_env; source ../build/doc_env/$(ACTIVATE); pip install --find-links=http://dnanexus-pypi2.s3.amazonaws.com/index.html --requirement=../build/doc_build_requirements.txt)
-	virtualenv --relocatable ../build/doc_env
+	(unset PYTHONPATH; $(VIRTUAL_ENV) ../build/doc_env; source ../build/doc_env/$(ACTIVATE); pip install --find-links=http://dnanexus-pypi2.s3.amazonaws.com/index.html --requirement=../build/doc_build_requirements.txt)
+	$(VIRTUAL_ENV) --relocatable ../build/doc_env
 	touch .setup_doc_virtualenv
 
 doc_python: python setup_doc_virtualenv
