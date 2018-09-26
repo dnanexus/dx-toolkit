@@ -204,8 +204,11 @@ def batch_launch_args(executable, input_json, batch_tsv_file):
 # executable: applet, app, or workflow
 # launch_args: array of dictionaries, each of which contains all arguments needed to
 #     invoke the executable.
-#
-def batch_run(executable, b_args, run_kwargs):
+# set_batch_folders: boolean, if True, the results from each batch
+#     run will be placed in a separate output folder named after batch ID.
+#     The folders will be created/used relative to the output folder set with 
+#     the --destination arg
+def batch_run(executable, b_args, run_kwargs, set_batch_folders=False):
     run_args = run_kwargs.copy()
     exec_name = executable.describe()["name"]
     launch_args = b_args["launch_args"]
@@ -223,6 +226,10 @@ def batch_run(executable, b_args, run_kwargs):
             run_args['properties'].update(properties)
         else:
             run_args['properties'] = properties
+
+        if set_batch_folders:
+            run_args['folder'] = run_kwargs['folder'] + "/" + batch_id
+
         try:
             dxexecution = executable.run(input_json, **run_args)
             executions.append(dxexecution)

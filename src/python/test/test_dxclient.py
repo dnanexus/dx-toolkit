@@ -10116,6 +10116,8 @@ class TestDXRunBatch(DXTestCase):
                          "distribution": "Ubuntu",
                          "release": "14.04" }
         })
+
+        # run in batch mode
         job_id = run("dx run {} --batch-tsv={} --yes --brief"
                      .format(applet["id"], arg_table)).strip()
         job_desc = dxpy.api.job_describe(job_id)
@@ -10123,6 +10125,18 @@ class TestDXRunBatch(DXTestCase):
         self.assertEquals(job_desc["input"], { "thresholds": [10,81],
                                                "misc": {},
                                                "pie": 3.12 })
+
+        # run in batch mode with --batch-folders
+        job_id = run("dx run {} --batch-tsv={} --batch-folders --yes --brief"
+                     .format(applet["id"], arg_table)).strip()
+        job_desc = dxpy.api.job_describe(job_id)
+        self.assertEquals(job_desc["folder"], "/SRR_1")
+
+        # run in batch mode with --batch-folders and --destination
+        job_id = run("dx run {} --batch-tsv={} --batch-folders --destination={}:/run_01 --yes --brief"
+                     .format(applet["id"], arg_table, self.project)).strip()
+        job_desc = dxpy.api.job_describe(job_id)
+        self.assertEquals(job_desc["folder"], "/run_01/SRR_1")
 
     def test_files(self):
         # Create file with junk content

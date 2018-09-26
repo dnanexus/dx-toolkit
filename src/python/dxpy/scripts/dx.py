@@ -2974,7 +2974,7 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
                    subsequent_indent='  ') + '\n')
 
     # Run the executable on all the input dictionaries
-    dx_execs = batch_run(executable, b_args, run_kwargs)
+    dx_execs = batch_run(executable, b_args, run_kwargs, args.batch_folders)
     exec_ids = [dxe.get_id() for dxe in dx_execs]
     print(",".join(exec_ids))
     sys.stdout.flush()
@@ -4986,6 +4986,9 @@ parser_run.add_argument('--clone', help=fill('Job or analysis ID or name from wh
 parser_run.add_argument('--alias', '--version', dest='alias',
                         help=fill('Alias (tag) or version of the app to run (default: "default" if an app)', width_adjustment=-24))
 parser_run.add_argument('--destination', '--folder', metavar='PATH', dest='folder', help=fill('The full project:folder path in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
+parser_run.add_argument('--batch-folders', dest='batch_folders',
+                        help=fill('Output results to separate folders, one per batch, using batch ID as the name of the output folder. The batch output folder location will be relative to the path set in --destination', width_adjustment=-24),
+                        action='store_true')
 parser_run.add_argument('--project', metavar='PROJECT',
                         help=fill('Project name or ID in which to run the executable. This can also ' +
                                   'be specified together with the output folder in --destination.',
@@ -5736,8 +5739,8 @@ register_parser(parser_upgrade)
 parser_generate_batch_inputs = subparsers.add_parser('generate_batch_inputs', help='Generate a batch plan (one or more TSV files) for batch execution',
                                        description='Generate a table of input files matching desired regular expressions for each input.',
                                        prog='dx generate_batch_inputs')
-parser_generate_batch_inputs.add_argument('-i', '--input', help=fill('An input to be batch-processed "-i<input name>=<input pattern>" where <input_pattern> is a regular expression with a group corresponding to the desired region to match (e.g. -iinputa=SRR(.*)_1.gz -iinputb=SRR(.*)_2.gz', width_adjustment=-24), action='append')
-parser_generate_batch_inputs.add_argument('--path', help='Project and/or folder in which to restrict the results',
+parser_generate_batch_inputs.add_argument('-i', '--input', help=fill('An input to be batch-processed "-i<input name>=<input pattern>" where <input_pattern> is a regular expression with a group corresponding to the desired region to match (e.g. "-iinputa=SRR(.*)_1.gz" "-iinputb=SRR(.*)_2.gz")', width_adjustment=-24), action='append')
+parser_generate_batch_inputs.add_argument('--path', help='Project and/or folder to which the search for input files will be restricted',
                               metavar='PROJECT:FOLDER', default='').completer = DXPathCompleter(expected='folder')
 parser_generate_batch_inputs.add_argument('-o', '--output_prefix', help='Prefix for output file', default="dx_batch")
 parser_generate_batch_inputs.set_defaults(func=generate_batch_inputs)
