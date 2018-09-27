@@ -37,6 +37,11 @@ FEDORA_MAJOR_VERSION := $(shell test -e /etc/issue && (grep -o "Fedora release [
 UBUNTU_VERSION := $(shell test -e /etc/issue && (grep -o "Ubuntu [0-9]\+\.[0-9]\+" /etc/issue | sed -e "s/Ubuntu //"))
 RHEL_MAJOR_VERSION := $(shell test -e /etc/redhat-release && (grep -o "Red Hat Enterprise Linux .* release [0-9]\+" /etc/redhat-release | sed -e "s/Red Hat Enterprise Linux .* release //"))
 
+# Extract the two most significant digits the python distribution
+#
+PYTHON_VERSION = $(shell python --version | cut -f 2 -d ' ' | cut -b 1-3)
+PYTHON_MAJOR_VERSION = $(shell python --version | cut -f 2 -d ' ' | cut -b 1-1 )
+
 # Set the dxWDL version to download from git
 ifndef DXWDL_VERSION
 	DXWDL_VERSION = 0.74
@@ -122,10 +127,6 @@ src_libs: api_wrappers
 	mkdir -p "$(DNANEXUS_LIBDIR)"
 	cp -R -v bash "$(DNANEXUS_LIBDIR)"
 
-# Extract the two most significant digits the python distribution
-#
-PYTHON_VERSION = $(shell python --version | cut -f 2 -d ' ')
-PYTHON_MAJOR_VERSION = $(shell python --version | cut -f 2 -d ' ' | cut -b 1-1 )
 PYTHON_LIBDIR := $(DNANEXUS_LIBDIR)/python${PYTHON_VERSION}/site-packages
 JAVA_LIBDIR := $(DNANEXUS_LIBDIR)/java
 
@@ -272,7 +273,7 @@ test: test_python
 
 coverage_python:
 	(cd python; export PYTHONPATH="$$PYTHONPATH:$$(echo $$(pwd)/coverage-*.egg)"; \
-	 test/coveragereport.py --strip-prefix="$$(readlink -f $$(pwd))/build/lib.linux-x86_64-2.7" --cover dxpy. --cover scripts --exclude dxpy.packages --exclude EGG-INFO.scripts --exclude test. --exclude setuptools --path-alias "$$(readlink -f $$(pwd)/../../share/dnanexus/lib/python2.7/site-packages/dxpy*.egg)"="$$(readlink -f $$(pwd))" --path-alias "$$(readlink -f $$(pwd)/build/lib.linux-x86_64-2.7)"="$$(readlink -f $$(pwd))")
+	 test/coveragereport.py --strip-prefix="$$(readlink -f $$(pwd))/build/lib.linux-x86_64-${PYTHON_VERSION}" --cover dxpy. --cover scripts --exclude dxpy.packages --exclude EGG-INFO.scripts --exclude test. --exclude setuptools --path-alias "$$(readlink -f $$(pwd)/../../share/dnanexus/lib/python2.7/site-packages/dxpy*.egg)"="$$(readlink -f $$(pwd))" --path-alias "$$(readlink -f $$(pwd)/build/lib.linux-x86_64-2.7)"="$$(readlink -f $$(pwd))")
 
 test_python:
 	../build/run_python_integration_tests.py
@@ -285,7 +286,7 @@ test_java:
 
 base_install: all
 	mkdir -p $(DESTDIR)/$(PREFIX)/bin
-	rm -rf $(DESTDIR)/$(PREFIX)/lib/python2.7/site-packages/dxpy*              # Prevent file-overwriting-dir (or the opposite) problem
+	rm -rf $(DESTDIR)/$(PREFIX)/lib/python${PYTHON_VERSION}/site-packages/dxpy*              # Prevent file-overwriting-dir (or the opposite) problem
 
 	cp -a $(DNANEXUS_HOME)/bin/* $(DESTDIR)/$(PREFIX)/bin/                     # binaries
 
@@ -310,8 +311,8 @@ debian_install: base_install
 	mkdir -p $(DESTDIR)/etc/profile.d                                        # Install environment file into etc
 	install -v -m0644 $(DNANEXUS_HOME)/build/environment.redirector $(DESTDIR)/etc/profile.d/dnanexus.environment
 	install -v -m0644 $(DNANEXUS_HOME)/environment $(DESTDIR)/etc/profile.d/dnanexus.environment.sh
-	cp -a $(DNANEXUS_HOME)/share/dnanexus/lib/python2.7/site-packages/* $(DESTDIR)/$(PREFIX)/share/dnanexus/lib/python2.7/site-packages/
-	ls $(DNANEXUS_HOME)/share/dnanexus/lib/python2.7/site-packages | grep dxpy > $(DESTDIR)/$(PREFIX)/share/dnanexus/lib/python2.7/site-packages/dxpy.pth
+	cp -a $(DNANEXUS_HOME)/share/dnanexus/lib/python${PYTHON_VERSION}/site-packages/* $(DESTDIR)/$(PREFIX)/share/dnanexus/lib/python${PYTHON_VERSION}/site-packages/
+	ls $(DNANEXUS_HOME)/share/dnanexus/lib/python${PYTHON_VERSION}/site-packages | grep dxpy > $(DESTDIR)/$(PREFIX)/share/dnanexus/lib/python${PYTHON_VERSION}/site-packages/dxpy.pth
 
 debian_java_install: java
 	mkdir -p $(DESTDIR)/$(PREFIX)/share/java

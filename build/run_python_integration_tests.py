@@ -49,10 +49,12 @@ def run():
     if sys.platform != "darwin":
         subprocess.check_call(["make", "python", "src_libs"], cwd=TOOLKIT_ROOT_DIR)
 
+    python_version = "python{}.{}".format(sys.version_info.major, sys.version_info.minor)
+
     # Somewhat hacky-- ensures that all subprocess calls to dx-* tools
     # load the coverage instrumentation so that their use of dxpy is
     # reflected in the final report.
-    site_customize_filename = os.path.join(TOOLKIT_ROOT_DIR, 'share', 'dnanexus', 'lib', 'python2.7', 'site-packages', 'sitecustomize.py')
+    site_customize_filename = os.path.join(TOOLKIT_ROOT_DIR, 'share', 'dnanexus', 'lib', python_version, 'site-packages', 'sitecustomize.py')
     with open(site_customize_filename, 'w') as site_customize_file:
         site_customize_file.write("import coverage; coverage.process_startup()\n")
     try:
