@@ -92,7 +92,7 @@ class TestDXTestUtils(DXTestCase):
     @testutil.update_traceability_matrix(["DNA_CLI_HELP_PRINT_CURRENT_WORKING_DIRECTORY"])
     def test_temporary_project(self):
         with temporary_project('test_temporary_project', select=True):
-            self.assertEquals('test_temporary_project:/', run('dx pwd').strip())
+            self.assertEqual('test_temporary_project:/', run('dx pwd').strip())
 
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_PROJ_SELECT", "DNA_CLI_PROJ_CHANGE_WORKING_DIRECTORY"])
@@ -186,16 +186,16 @@ class TestDXRemove(DXTestCase):
 class TestApiDebugOutput(DXTestCase):
     def test_dx_debug_shows_request_id(self):
         (stdout, stderr) = run("_DX_DEBUG=1 dx ls", also_return_stderr=True)
-        self.assertRegexpMatches(stderr, "POST \d{13}-\d{1,6} http",
+        self.assertRegex(stderr, "POST \d{13}-\d{1,6} http",
                                  msg="stderr does not appear to contain request ID")
 
     def test_dx_debug_shows_timestamp(self):
         timestamp_regex = "\[\d{1,15}\.\d{0,8}\]"
 
         (stdout, stderr) = run("_DX_DEBUG=1 dx ls", also_return_stderr=True)
-        self.assertRegexpMatches(stderr, timestamp_regex, msg="Debug log does not contain a timestamp")
+        self.assertRegex(stderr, timestamp_regex, msg="Debug log does not contain a timestamp")
         (stdout, stderr) = run("_DX_DEBUG=2 dx ls", also_return_stderr=True)
-        self.assertRegexpMatches(stderr, timestamp_regex, msg="Debug log does not contain a timestamp")
+        self.assertRegex(stderr, timestamp_regex, msg="Debug log does not contain a timestamp")
 
     def test_dx_debug_shows_request_response(self):
         (stdout, stderr) = run("_DX_DEBUG=1 dx new project --brief dx_debug_test", also_return_stderr=True)
@@ -4352,7 +4352,7 @@ class TestDXClientFind(DXTestCase):
 
     def test_dx_find_data_formatted(self):
         record_id = dxpy.new_dxrecord(project=self.project, name="find_data_formatting", close=True).get_id()
-        self.assertRegexpMatches(
+        self.assertRegex(
             run("dx find data --name " + "find_data_formatting").strip(),
             r"^closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+/find_data_formatting \(" + record_id + "\)$"
         )
@@ -9951,7 +9951,7 @@ class TestDXLs(DXTestCase):
         rec = dxpy.new_dxrecord(project=self.project, name="foo", close=True)
         o = run("dx ls -l")
         #                             state    modified                              name      id
-        self.assertRegexpMatches(o, r"closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+foo \(" + rec.get_id() + "\)")
+        self.assertRegex(o, r"closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+foo \(" + rec.get_id() + "\)")
 
 
 class TestDXTree(DXTestCase):
@@ -9966,8 +9966,8 @@ class TestDXTree(DXTestCase):
     def test_tree(self):
         rec = dxpy.new_dxrecord(project=self.project, name="foo", close=True)
         o = run("dx tree -l")
-        self.assertRegexpMatches(o.strip(),
-                                 r".\n└── closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+foo \(" + rec.get_id() + "\)")
+        self.assertRegex(o.strip(),
+                         r".\n└── closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+foo \(" + rec.get_id() + "\)")
 
 
 class TestDXGenerateBatchInputs(DXTestCase):
