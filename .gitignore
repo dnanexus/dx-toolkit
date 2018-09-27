@@ -79,7 +79,7 @@ dxR.Rcheck
 /bin/easy_install*
 /bin/chardetect
 /bin/proot
-/bin/bpr
+/bin/pbr
 /src/python/test/*.traceability.*.csv
 /src/ua/dist/ua
 /src/ua/dnanexus-upload-agent-*-linux.tar.gz

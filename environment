@@ -45,12 +45,15 @@ fi
 
 export DNANEXUS_HOME="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
+PYTHON_VERSION_NUMBER=$(python --version | cut -f 2 -d ' ' | cut -b 1-3)
+PYTHON_VERSION="python${PYTHON_VERSION_NUMBER}"
+
 # Detect system installation of dx-toolkit
 if [ "$DNANEXUS_HOME" = "/etc/profile.d" ]; then
 
   export DNANEXUS_HOME="/usr/share/dnanexus"
   # Private Python packages. We really ought not pollute PYTHONPATH with these though.
-  export PYTHONPATH="/usr/share/dnanexus/lib/python2.7/site-packages:$PYTHONPATH"
+  export PYTHONPATH="/usr/share/dnanexus/lib/${PYTHON_VERSION}/site-packages:$PYTHONPATH"
   export CLASSPATH="/usr/share/java/dnanexus-api-0.1.0.jar:${CLASSPATH}"
 
 else
@@ -59,9 +62,9 @@ else
   export CLASSPATH="${DNANEXUS_HOME}/lib/java/*:${CLASSPATH}"
 
   if [ "$RHEL_MAJOR_VERSION" = "7" ]; then
-    export PYTHONPATH="${DNANEXUS_HOME}/share/dnanexus/lib/python2.7/site-packages:${DNANEXUS_HOME}/lib64/python2.7/site-packages:$PYTHONPATH"
+    export PYTHONPATH="${DNANEXUS_HOME}/share/dnanexus/lib/${PYTHON_VERSION}/site-packages:${DNANEXUS_HOME}/lib64/python2.7/site-packages:$PYTHONPATH"
   else
-    export PYTHONPATH="${DNANEXUS_HOME}/share/dnanexus/lib/python2.7/site-packages:${DNANEXUS_HOME}/lib/python:$PYTHONPATH"
+    export PYTHONPATH="${DNANEXUS_HOME}/share/dnanexus/lib/${PYTHON_VERSION}/site-packages:${DNANEXUS_HOME}/lib/python:$PYTHONPATH"
   fi
 
 fi
