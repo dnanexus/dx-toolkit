@@ -32,8 +32,8 @@ RHEL_MAJOR_VERSION := $(shell test -e /etc/redhat-release && (grep -o "Red Hat E
 
 # Extract the two most significant digits the python distribution
 #
-PYTHON_VERSION = $(shell python --version | cut -f 2 -d ' ' | cut -b 1-3)
-PYTHON_MAJOR_VERSION = $(shell python --version | cut -f 2 -d ' ' | cut -b 1-1 )
+PYTHON_VERSION = $(shell python --version |& cut -f 2 -d ' ' | cut -b 1-3)
+PYTHON_MAJOR_VERSION = $(shell python --version |& cut -f 2 -d ' ' | cut -b 1-1 )
 
 ifeq (${PYTHON_MAJOR_VERSION}, 2)
 	PIP=pip
