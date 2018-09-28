@@ -96,7 +96,9 @@ def _find(api_method, query, limit, return_handler, first_page_size, **kwargs):
 
         for i in resp["results"]:
             if num_results == limit:
-                raise StopIteration()
+                #raise StopIteration()
+                # python3
+                return
             num_results += 1
             yield format_result(i)
 
@@ -105,7 +107,9 @@ def _find(api_method, query, limit, return_handler, first_page_size, **kwargs):
             query["starting"] = resp["next"]
             query["limit"] = min(query["limit"]*2, 1000)
         else:
-            raise StopIteration()
+            # raise StopIteration()
+            # python3
+            return
 
 def find_data_objects(classname=None, state=None, visibility=None,
                       name=None, name_mode='exact', properties=None,

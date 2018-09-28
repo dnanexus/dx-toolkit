@@ -38,6 +38,8 @@ from dxpy.utils import pretty_print, warn, Nonce
 from dxpy.utils.resolver import resolve_path, resolve_existing_path, ResolutionError, is_project_explicit
 import dxpy.app_builder as app_builder
 
+from dxpy.compat import USING_PYTHON2
+
 def get_objects_from_listf(listf):
     objects = []
     for result in listf["objects"]:
@@ -113,7 +115,7 @@ class TestDXProject(unittest.TestCase):
 
         dxproject.invite(user_id, 'VIEW', send_email=False)
         res = dxpy.api.project_describe(dxproject.get_id(), {'fields': {'permissions': True}})['permissions']
-        self.assertEquals(res[user_id], 'VIEW')
+        self.assertEqual(res[user_id], 'VIEW')
 
     def test_new(self):
         dxproject = dxpy.DXProject()
@@ -342,11 +344,11 @@ class TestDXFileFunctions(unittest.TestCase):
         else:
             env = dict(os.environ, DX_JOB_ID=b'job-00000000000000000000')
         buffer_size = subprocess.check_output(
-            'python -c "import dxpy; print dxpy.bindings.dxfile.DEFAULT_BUFFER_SIZE"', shell=True, env=env)
+            'python -c "import dxpy; print(dxpy.bindings.dxfile.DEFAULT_BUFFER_SIZE)"', shell=True, env=env)
         self.assertEqual(int(buffer_size), 96 * 1024 * 1024)
         del env['DX_JOB_ID']
         buffer_size = subprocess.check_output(
-            'python -c "import dxpy; print dxpy.bindings.dxfile.DEFAULT_BUFFER_SIZE"', shell=True, env=env)
+            'python -c "import dxpy; print(dxpy.bindings.dxfile.DEFAULT_BUFFER_SIZE)"', shell=True, env=env)
         self.assertEqual(int(buffer_size), 16 * 1024 * 1024)
 
     def test_generate_read_requests(self):
@@ -730,8 +732,8 @@ class TestDXFile(unittest.TestCase):
 
         # Check file was split up into parts appropriately
         parts = myfile.describe(fields={"parts": True})['parts']
-        self.assertEquals(parts['1']['size'], 5242880)
-        self.assertEquals(parts['2']['size'], 2952504)
+        self.assertEqual(parts['1']['size'], 5242880)
+        self.assertEqual(parts['2']['size'], 2952504)
 
     def test_download_in_job_env(self):
         os.environ['DX_JOB_ID'] = "fake_job_id"
@@ -783,6 +785,10 @@ class TestFolder(unittest.TestCase):
         os.remove(self.temp_file_path)
         tearDownTempProjects(self)
 
+    def read_entire_file(self, filename):
+        with open(filename, "r") as fd:
+            return fd.read()
+
     def test_download_folder(self):
         dxproject = dxpy.DXProject(self.proj_id)
 
@@ -805,7 +811,7 @@ class TestFolder(unittest.TestCase):
             path.append(f)
             filename = os.path.join(os.path.join(*path), "file_{}.txt".format(i + 1))
             self.assertTrue(os.path.isfile(filename))
-            self.assertEquals("{}-th\n file\n content\n".format(i + 1), open(filename, "r").read())
+            self.assertEqual("{}-th\n file\n content\n".format(i + 1), self.read_entire_file(filename))
         self.assertTrue(os.path.isdir(os.path.join(root_dest_dir, "a", "e", "f", "g")))
         self.assertTrue(os.path.isdir(os.path.join(root_dest_dir, "h", "i", "j", "k")))
 
@@ -817,7 +823,7 @@ class TestFolder(unittest.TestCase):
             path.append(f)
             filename = os.path.join(os.path.join(*path), "file_{}.txt".format(i + 2))
             self.assertTrue(os.path.isfile(filename))
-            self.assertEquals("{}-th\n file\n content\n".format(i + 2), open(filename, "r").read())
+            self.assertEqual("{}-th\n file\n content\n".format(i + 2), self.read_entire_file(filename))
 
         # Checking 2-nd level subdirectory download
         ag = os.path.join(self.temp_dir, "b")
@@ -827,7 +833,7 @@ class TestFolder(unittest.TestCase):
             path.append(f)
             filename = os.path.join(os.path.join(*path), "file_{}.txt".format(i + 3))
             self.assertTrue(os.path.isfile(filename))
-            self.assertEquals("{}-th\n file\n content\n".format(i + 3), open(filename, "r").read())
+            self.assertEqual("{}-th\n file\n content\n".format(i + 3), self.read_entire_file(filename))
 
         # Checking download to existing structure
         dxpy.download_folder(self.proj_id, a_dest_dir, folder="/a", overwrite=True)
@@ -836,7 +842,7 @@ class TestFolder(unittest.TestCase):
             path.append(f)
             filename = os.path.join(os.path.join(*path), "file_{}.txt".format(i + 2))
             self.assertTrue(os.path.isfile(filename))
-            self.assertEquals("{}-th\n file\n content\n".format(i + 2), open(filename, "r").read())
+            self.assertEqual("{}-th\n file\n content\n".format(i + 2), self.read_entire_file(filename))
 
         # Checking download to existing structure fails w/o overwrite flag
         with self.assertRaises(DXFileError):
@@ -905,9 +911,9 @@ class TestDXRecord(unittest.TestCase):
         firstID = firstDXRecord.get_id()
         # test if firstDXRecord._dxid has been set to a valid ID
         try:
-            self.assertRegexpMatches(firstDXRecord.get_id(), "^record-[0-9A-Za-z]{24}",
-                                     'Object ID not of expected form: ' + \
-                                         firstDXRecord.get_id())
+            self.assertRegex(firstDXRecord.get_id(), "^record-[0-9A-Za-z]{24}",
+                             'Object ID not of expected form: ' + \
+                             firstDXRecord.get_id())
         except AttributeError:
             self.fail("dxID was not stored in DXRecord creation")
         # test if firstDXRecord._proj has been set to proj_id
@@ -929,9 +935,9 @@ class TestDXRecord(unittest.TestCase):
         self.assertNotEqual(firstDXRecord.get_id(), secondDXRecord.get_id())
         # test if secondDXRecord._dxid has been set to a valid ID
         try:
-            self.assertRegexpMatches(secondDXRecord.get_id(), "^record-[0-9A-Za-z]{24}",
-                                     'Object ID not of expected form: ' + \
-                                         secondDXRecord.get_id())
+            self.assertRegexp(secondDXRecord.get_id(), "^record-[0-9A-Za-z]{24}",
+                              'Object ID not of expected form: ' + \
+                              secondDXRecord.get_id())
         except AttributeError:
             self.fail("dxID was not stored in DXRecord creation")
         # test if secondDXRecord._proj has been set to second_proj_id
@@ -2044,6 +2050,13 @@ class TestDXSearch(unittest.TestCase):
     def tearDown(self):
         tearDownTempProjects(self)
 
+    def assertListsEqual(self, a, b):
+        if USING_PYTHON2:
+            self.assertItemsEqual(self, a, b)
+        else:
+            #self.assertCountEqual(self, a, b)
+            self.assertEqual(sorted(a), sorted(b))
+
     def test_resolve_data_objects(self):
         # If the project is provided for an object, then it will be used instead of
         # the top-level project specification
@@ -2223,17 +2236,17 @@ class TestDXSearch(unittest.TestCase):
 
         created = dxproject.created
         matching_ids = (result["id"] for result in dxpy.org_find_projects(org_id, created_before=created + 1000))
-        self.assertItemsEqual(matching_ids, org_projects)
+        self.assertListsEqual(matching_ids, org_projects)
 
         matching_ids = (result["id"] for result in dxpy.org_find_projects(org_id, created_after=created - 1000))
-        self.assertItemsEqual(matching_ids, [dxproject.get_id()])
+        self.assertListsEqual(matching_ids, [dxproject.get_id()])
 
         matching_ids = (result["id"] for result in dxpy.org_find_projects(org_id, created_before=created + 1000,
                         created_after=created - 1000))
-        self.assertItemsEqual(matching_ids, [dxproject.get_id()])
+        self.assertListsEqual(matching_ids, [dxproject.get_id()])
 
         matching_ids = (result["id"] for result in dxpy.org_find_projects(org_id, created_before=created - 1000))
-        self.assertItemsEqual(matching_ids, [project_ppb])
+        self.assertListsEqual(matching_ids, [project_ppb])
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
     def test_find_executions(self):
@@ -2562,7 +2575,7 @@ class TestDataobjectFunctions(unittest.TestCase):
         desc = dxpy.describe(ids)
 
         self.assertEqual(len(ids), len(desc))
-        for i in xrange(len(desc)):
+        for i in list(range(len(desc))):
             self.assertEqual(desc[i]["project"], self.proj_id)
             self.assertEqual(desc[i]["id"], ids[i])
             self.assertEqual(desc[i]["class"], types[i])
@@ -2579,7 +2592,7 @@ class TestDataobjectFunctions(unittest.TestCase):
 
         desc_with_fields = dxpy.describe(ids, fields={'properties', 'class', 'details'})
         self.assertEqual(len(ids), len(desc_with_fields))
-        for i in xrange(len(desc_with_fields)):
+        for i in list(range(len(desc_with_fields))):
             self.assertEqual(desc_with_fields[i]["id"], ids[i])
             self.assertEqual(desc_with_fields[i]["class"], types[i])
             self.assertIn("properties", desc_with_fields[i])
@@ -2609,7 +2622,7 @@ class TestResolver(testutil.DXTestCase):
         with testutil.temporary_project(name=temp_proj_name) as p:
             self.assertEqual(resolve_path(""),
                              (self.project, "/a", None))
-            with self.assertRaisesRegexp(ResolutionError, "expected the path to be a non-empty string"):
+            with self.assertRaisesRegex(ResolutionError, "expected the path to be a non-empty string"):
                 resolve_path("", allow_empty_string=False)
             self.assertEqual(resolve_path(":"),
                              (self.project, "/", None))
@@ -2755,11 +2768,11 @@ class TestResolver(testutil.DXTestCase):
             # prompt
 
     def test_resolve_existing_path(self):
-        self.assertEquals(resolve_existing_path(''),
-                          (dxpy.WORKSPACE_ID, "/", None))
+        self.assertEqual(resolve_existing_path(''),
+                         (dxpy.WORKSPACE_ID, "/", None))
         with self.assertRaises(ResolutionError):
             resolve_existing_path('', allow_empty_string=False)
-        self.assertEquals(resolve_existing_path(':'),
+        self.assertEqual(resolve_existing_path(':'),
                           (dxpy.WORKSPACE_ID, "/", None))
 
         dxpy.WORKSPACE_ID = None
@@ -2852,6 +2865,13 @@ class TestIdempotentRequests(unittest.TestCase):
     def tearDown(self):
         tearDownTempProjects(self)
 
+    def assertListsEqual(self, a, b):
+        if USING_PYTHON2:
+            self.assertItemsEqual(self, a, b)
+        else:
+            #self.assertCountEqual(self, a, b)
+            self.assertEqual(sorted(a), sorted(b))
+
     code = '''@dxpy.entry_point('main')\ndef main():\n    pass'''
     run_spec = {"code": code, "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04"}
 
@@ -2879,7 +2899,7 @@ class TestIdempotentRequests(unittest.TestCase):
         input_params = {"project": self.proj_id, "name": "Unique Record"}
 
         records = self.do_retry_http_request(dxpy.api.record_new, kwargs={"input_params": input_params})
-        self.assertItemsEqual(records[0], records[1])
+        self.assertListsEqual(records[0], records[1])
 
         dxrecord = dxpy.api.record_new(input_params=input_params)
         self.assertNotIn(dxrecord, records)
@@ -2902,7 +2922,7 @@ class TestIdempotentRequests(unittest.TestCase):
                         }
 
         applets = self.do_retry_http_request(dxpy.api.applet_new, kwargs={"input_params": input_params})
-        self.assertItemsEqual(applets[0], applets[1])
+        self.assertListsEqual(applets[0], applets[1])
 
         applet = dxpy.api.applet_new(input_params)
         self.assertNotIn(applet, applets)
@@ -2920,7 +2940,7 @@ class TestIdempotentRequests(unittest.TestCase):
         dxapplet = self.create_applet("test_applet")
         input_params = {"applet": dxapplet.get_id(), "version": "0.0.1", "bill_to": userid, "name": "new_app_name"}
         apps = self.do_retry_http_request(dxpy.api.app_new, kwargs={"input_params": input_params})
-        self.assertItemsEqual(apps[0]['id'], apps[1]['id'])
+        self.assertListsEqual(apps[0]['id'], apps[1]['id'])
 
         # A request with the same nonce, but different input, should fail
         input_params = {"applet": dxapplet.get_id(),
@@ -2939,7 +2959,7 @@ class TestIdempotentRequests(unittest.TestCase):
     def test_idempotent_file_creation(self):
         input_params = {"project": self.proj_id, "name": "myFile.txt"}
         files = self.do_retry_http_request(dxpy.api.file_new, kwargs={"input_params": input_params})
-        self.assertItemsEqual(files[0], files[1])
+        self.assertListsEqual(files[0], files[1])
 
         dxfile = dxpy.api.file_new(input_params=input_params)
         self.assertNotIn(dxfile, files)
@@ -2956,7 +2976,7 @@ class TestIdempotentRequests(unittest.TestCase):
     def test_idempotent_workflow_creation(self):
         input_params = {"project": self.proj_id, "name": "The workflow"}
         workflows = self.do_retry_http_request(dxpy.api.workflow_new, kwargs={"input_params": input_params})
-        self.assertItemsEqual(workflows[0], workflows[1])
+        self.assertListsEqual(workflows[0], workflows[1])
 
         dxworkflow = dxpy.api.workflow_new(input_params)
         self.assertNotIn(dxworkflow, workflows)
@@ -2979,7 +2999,7 @@ class TestIdempotentRequests(unittest.TestCase):
         jobs = self.do_retry_http_request(dxpy.api.applet_run,
                                           args=[applet.get_id()],
                                           kwargs={"input_params": input_params})
-        self.assertItemsEqual(jobs[0], jobs[1])
+        self.assertListsEqual(jobs[0], jobs[1])
 
         job = dxpy.api.applet_run(applet.get_id(), input_params=input_params)
         self.assertNotIn(job, jobs)
@@ -3019,7 +3039,7 @@ class TestIdempotentRequests(unittest.TestCase):
     def test_idempotent_org_creation(self):
         input_params = {"name": "test_org", "handle": "some_handle"}
         orgs = self.do_retry_http_request(dxpy.api.org_new, kwargs={"input_params": input_params})
-        self.assertItemsEqual(orgs[0], orgs[1])
+        self.assertListsEqual(orgs[0], orgs[1])
 
         input_params = {"name": "test_org2", "handle": "another_handle"}
         org = dxpy.api.org_new(input_params=input_params)

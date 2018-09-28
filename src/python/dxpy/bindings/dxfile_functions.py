@@ -164,7 +164,7 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
     url, _headers = dxfile.get_download_url(preauthenticated=True,
                                             duration=6*3600,
                                             project=project)
- 
+
     # Follow the redirection
     print('Following redirect for ' + url)
 
@@ -554,7 +554,9 @@ def upload_string(to_upload, media_type=None, keep_open=False, wait_on_close=Fal
     # parameters that are only needed at creation time.
     _, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
 
-    handler.write(to_upload, **remaining_kwargs)
+    # Convert the string to bytes
+    bt = to_upload.encode("utf-8")
+    handler.write(bt, **remaining_kwargs)
 
     if not keep_open:
         handler.close(block=wait_on_close, **remaining_kwargs)
