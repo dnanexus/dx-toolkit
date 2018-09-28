@@ -404,7 +404,7 @@ class DXTestCase(unittest.TestCase):
     def assertDictSubsetOf(self, subset_dict, containing_dict):
         mm_items = []
         mm_missing = []
-        for (key, value) in subset_dict.items():
+        for (key, value) in list(subset_dict.items()):
             if key in containing_dict:
                 if value != containing_dict[key]:
                     mm_items.append(key)
@@ -421,11 +421,11 @@ class DXTestCase(unittest.TestCase):
             error_string += "{}\n\nto be a subset of\n\n{}\n\n".format(subset_json,
                                                                        containing_json)
             if err_items:
-                m = ", ".join(map(lambda x: str(x), mm_items))
+                m = ", ".join([str(x) for x in mm_items])
                 error_string += "Field value mismatch at keys: {}\n".format(m)
 
             if err_missing:
-                m = ", ".join(map(lambda x: str(x), mm_missing))
+                m = ", ".join([str(x) for x in mm_missing])
                 error_string += "Keys missing from superset: {}\n".format(m)
 
             self.assertFalse(True, error_string)
