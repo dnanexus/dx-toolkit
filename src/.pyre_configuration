@@ -1,0 +1,10 @@
+{
+  "source_directories": [
+      "python/dxpy/bindings",
+      "python/dxpy/cli",
+      "python/dxpy/utils"
+  ],
+  "search_path": [
+    "."
+   ]
+}

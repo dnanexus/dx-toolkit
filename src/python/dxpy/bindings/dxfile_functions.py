@@ -34,7 +34,7 @@ import dxpy
 from .. import logger
 from . import dxfile, DXFile
 from .dxfile import FILE_REQUEST_TIMEOUT
-from ..compat import open
+from ..compat import open, USING_PYTHON2
 from ..exceptions import DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, DXIncompleteReadsError, err_exit
 from ..utils import response_iterator
 import subprocess
@@ -553,10 +553,7 @@ def upload_string(to_upload, media_type=None, keep_open=False, wait_on_close=Fal
     # For subsequent API calls, don't supply the dataobject metadata
     # parameters that are only needed at creation time.
     _, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
-
-    # Convert the string to bytes
-    bt = to_upload.encode("utf-8")
-    handler.write(bt, **remaining_kwargs)
+    handler.write(to_upload, **remaining_kwargs)
 
     if not keep_open:
         handler.close(block=wait_on_close, **remaining_kwargs)

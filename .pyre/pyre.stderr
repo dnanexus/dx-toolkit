@@ -1,0 +1,23 @@
+2018-10-01 15:39:25,539 INFO Binary found at /home/orodeh/.local/bin/pyre.bin
+2018-10-01 15:39:25,540 DEBUG Trying with: `/home/orodeh/.local/lib/python3.5/site-packages/pyre_check/pyre_check/typeshed/`
+2018-10-01 15:39:25,540 DEBUG Trying with: `/home/orodeh/.local/lib/python3.5/site-packages/pyre_check/typeshed/`
+2018-10-01 15:39:25,540 DEBUG Trying with: `/home/orodeh/.local/lib/python3.5/pyre_check/typeshed/`
+2018-10-01 15:39:25,540 DEBUG Trying with: `/home/orodeh/.local/lib/pyre_check/typeshed/`
+2018-10-01 15:39:25,540 PROMPT Which directory should pyre be initialized in? (Default: `.`): 
+2018-10-01 15:39:29,488 WARNING Interrupted by user
+
+2018-10-01 15:39:29,489 DEBUG Traceback (most recent call last):
+  File "/home/orodeh/.local/lib/python3.5/site-packages/pyre_check/pyre.py", line 323, in main
+    arguments.command(arguments, configuration, analysis_directory)
+  File "/home/orodeh/.local/lib/python3.5/site-packages/pyre_check/commands/command.py", line 87, in run
+    self._run()
+  File "/home/orodeh/.local/lib/python3.5/site-packages/pyre_check/commands/initialize.py", line 106, in _run
+    configuration = self._get_configuration()
+  File "/home/orodeh/.local/lib/python3.5/site-packages/pyre_check/commands/initialize.py", line 68, in _get_configuration
+    "Which directory should pyre be initialized in?", "."
+  File "/home/orodeh/.local/lib/python3.5/site-packages/pyre_check/log.py", line 252, in get_optional_input
+    result = get_input(prompt, suffix=" (Default: `{}`): ".format(default))
+  File "/home/orodeh/.local/lib/python3.5/site-packages/pyre_check/log.py", line 260, in get_input
+    return input().strip()
+KeyboardInterrupt
+

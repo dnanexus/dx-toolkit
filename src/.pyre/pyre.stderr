@@ -1,0 +1,368 @@
+2018-10-01 13:28:08,452 DEBUG No configuration found at `.pyre_configuration.local`.
+2018-10-01 13:28:08,453 DEBUG Reading configuration `.pyre_configuration`...
+2018-10-01 13:28:08,453 ERROR Configuration file at `.pyre_configuration` is invalid: Expecting value: line 4 column 3 (char 46).
+
+2018-10-01 13:29:12,407 DEBUG No configuration found at `.pyre_configuration.local`.
+2018-10-01 13:29:12,407 DEBUG Reading configuration `.pyre_configuration`...
+2018-10-01 13:29:12,407 DEBUG Found source_directories: `python`
+2018-10-01 13:29:12,408 INFO No binary specified, looking for `pyre.bin` in PATH
+2018-10-01 13:29:12,408 WARNING Could not find `pyre.bin` in PATH
+
+2018-10-01 13:29:12,409 ERROR Invalid configuration: Configuration was not validated
+
+2018-10-01 13:30:19,986 DEBUG No configuration found at `.pyre_configuration.local`.
+2018-10-01 13:30:19,987 DEBUG Reading configuration `.pyre_configuration`...
+2018-10-01 13:30:19,987 DEBUG Found source_directories: `python`
+2018-10-01 13:30:19,987 INFO No binary specified, looking for `pyre.bin` in PATH
+2018-10-01 13:30:19,988 WARNING Could not find `pyre.bin` in PATH
+
+2018-10-01 13:30:19,988 INFO No typeshed specified, looking for it
+2018-10-01 13:30:19,988 DEBUG Trying with: `/home/orodeh/.local/lib/python3.5/site-packages/pyre_check/pyre_check/typeshed/`
+2018-10-01 13:30:19,988 DEBUG Trying with: `/home/orodeh/.local/lib/python3.5/site-packages/pyre_check/typeshed/`
+2018-10-01 13:30:19,988 DEBUG Trying with: `/home/orodeh/.local/lib/python3.5/pyre_check/typeshed/`
+2018-10-01 13:30:19,988 DEBUG Trying with: `/home/orodeh/.local/lib/pyre_check/typeshed/`
+2018-10-01 13:30:19,989 INFO Found: `/home/orodeh/.local/lib/pyre_check/typeshed/`
+2018-10-01 13:30:19,989 ERROR Invalid configuration: Configuration was not validated
+
+2018-10-01 13:32:00,230 DEBUG No configuration found at `.pyre_configuration.local`.
+2018-10-01 13:32:00,231 DEBUG Reading configuration `.pyre_configuration`...
+2018-10-01 13:32:00,231 DEBUG Found source_directories: `python`
+2018-10-01 13:32:00,231 INFO No binary specified, looking for `pyre.bin` in PATH
+2018-10-01 13:32:00,232 INFO Found: `/home/orodeh/.local/bin/pyre.bin`
+2018-10-01 13:32:00,237 DEBUG Running `/home/orodeh/.local/bin/pyre.bin check -logging-sections parser -project-root /home/orodeh/dx-toolkit/src -filter-directories . -workers 1 -typeshed /home/orodeh/.local/lib/pyre_check/typeshed -search-path . /home/orodeh/dx-toolkit/src/python`
+2018-10-01 13:32:00,253 INFO Finding type stubs in `/home/orodeh/dx-toolkit/src/python`...
+2018-10-01 13:32:00,257 INFO Finding type stubs in `/home/orodeh/dx-toolkit/src`...
+2018-10-01 13:32:00,260 INFO Finding type stubs in `/home/orodeh/.local/lib/pyre_check/typeshed/third_party`...
+2018-10-01 13:32:00,263 INFO Finding type stubs in `/home/orodeh/.local/lib/pyre_check/typeshed/stdlib`...
+2018-10-01 13:32:00,271 INFO Finding external sources in `/home/orodeh/dx-toolkit/src`...
+2018-10-01 13:32:00,372 INFO Parsing 830 stubs and external sources...
+2018-10-01 13:32:01,850 ERROR Could not parse file at python/dxpy/templating/templates/python/basic/src/code.py:19:62-19:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 13:32:01,852 ERROR Could not parse file at python/dxpy/templating/templates/python/parallelized/src/code.py:44:62-44:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 13:32:01,953 ERROR Could not parse file at python/dxpy/templating/templates/python/scatter-process-gather/src/code.py:109:62-109:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 13:32:02,246 ERROR Could not parse file at python/build/lib/dxpy/templating/templates/python/basic/src/code.py:19:62-19:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 13:32:02,248 ERROR Could not parse file at python/build/lib/dxpy/templating/templates/python/parallelized/src/code.py:44:62-44:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 13:32:02,349 ERROR Could not parse file at python/build/lib/dxpy/templating/templates/python/scatter-process-gather/src/code.py:109:62-109:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 13:32:02,753 WARNING Could not parse 6 external files due to syntax errors!
+
+2018-10-01 13:32:02,855 PERFORMANCE Stubs parsed: 2.502233s
+2018-10-01 13:32:02,958 INFO Parsing 183 sources in `/home/orodeh/dx-toolkit/src/python`...
+2018-10-01 13:32:03,500 ERROR Could not parse file at python/build/lib/dxpy/templating/templates/python/scatter-process-gather/src/code.py:109:62-109:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 13:32:03,502 ERROR Could not parse file at python/build/lib/dxpy/templating/templates/python/parallelized/src/code.py:44:62-44:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 13:32:03,603 ERROR Could not parse file at python/build/lib/dxpy/templating/templates/python/basic/src/code.py:19:62-19:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 13:32:03,871 ERROR Could not parse file at python/dxpy/templating/templates/python/scatter-process-gather/src/code.py:109:62-109:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 13:32:03,872 ERROR Could not parse file at python/dxpy/templating/templates/python/parallelized/src/code.py:44:62-44:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 13:32:03,973 ERROR Could not parse file at python/dxpy/templating/templates/python/basic/src/code.py:19:62-19:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 13:32:04,422 WARNING Could not parse 6 files due to syntax errors!
+
+2018-10-01 13:32:04,523 PERFORMANCE Sources parsed: 1.567070s
+2018-10-01 13:32:04,580 PERFORMANCE Registered ignores: 0.157809s
+2018-10-01 13:32:04,681 INFO Building type environment...
+2018-10-01 13:32:05,594 PERFORMANCE Full environment built: 1.013824s
+2018-10-01 13:32:05,601 INFO Inferring protocol implementations...
+2018-10-01 13:32:05,611 PERFORMANCE Inferred protocol implementations: 0.007083s
+2018-10-01 13:32:05,712 INFO Adding environment information to shared memory...
+2018-10-01 13:32:05,899 PERFORMANCE Added environment to shared memory: 0.287098s
+2018-10-01 13:32:06,000 MEMORY Shared memory size (size: 17)
+2018-10-01 13:32:06,025 PERFORMANCE Filtered directories: 0.126427s
+2018-10-01 13:32:06,126 INFO Checking 177 sources...
+2018-10-01 13:32:08,889 INFO Processed 60 of 177 sources
+2018-10-01 13:32:10,676 INFO Processed 120 of 177 sources
+2018-10-01 13:32:14,342 INFO Processed 177 of 177 sources
+2018-10-01 13:32:14,430 PERFORMANCE Analyzed sources: 8.316767s
+2018-10-01 13:32:14,526 PERFORMANCE Postprocessed: 0.087857s
+2018-10-01 13:32:14,583 PERFORMANCE Check: 14.278742s
+2018-10-01 13:32:14,611 ERROR Found 405 type errors!
+
+2018-10-01 15:36:23,649 DEBUG No configuration found at `.pyre_configuration.local`.
+2018-10-01 15:36:23,650 DEBUG Reading configuration `.pyre_configuration`...
+2018-10-01 15:36:23,650 ERROR Configuration file at `.pyre_configuration` is invalid: Expecting value: line 8 column 3 (char 129).
+
+2018-10-01 15:36:33,254 DEBUG No configuration found at `.pyre_configuration.local`.
+2018-10-01 15:36:33,255 DEBUG Reading configuration `.pyre_configuration`...
+2018-10-01 15:36:33,255 ERROR Configuration file at `.pyre_configuration` is invalid: Expecting ',' delimiter: line 8 column 3 (char 128).
+
+2018-10-01 15:36:44,106 DEBUG No configuration found at `.pyre_configuration.local`.
+2018-10-01 15:36:44,106 DEBUG Reading configuration `.pyre_configuration`...
+2018-10-01 15:36:44,106 DEBUG Found source_directories: `python/dxpy, python/test`
+2018-10-01 15:36:44,107 INFO No binary specified, looking for `pyre.bin` in PATH
+2018-10-01 15:36:44,107 INFO Found: `/home/orodeh/.local/bin/pyre.bin`
+2018-10-01 15:36:44,110 INFO Constructing shared directory `/home/orodeh/dx-toolkit/src/.pyre/shared_analysis_directory_5962`
+2018-10-01 15:36:44,122 PERFORMANCE Merged analysis directories in 0.014079s
+2018-10-01 15:36:44,128 DEBUG Running `/home/orodeh/.local/bin/pyre.bin check -logging-sections parser -project-root /home/orodeh/dx-toolkit/src -filter-directories . -workers 1 -typeshed /home/orodeh/.local/lib/pyre_check/typeshed -search-path /home/orodeh/.local/lib/pyre_check/typeshed/,. /home/orodeh/dx-toolkit/src/.pyre/shared_analysis_directory_5962`
+2018-10-01 15:36:44,150 INFO Finding type stubs in `/home/orodeh/dx-toolkit/src/.pyre/shared_analysis_directory_5962`...
+2018-10-01 15:36:44,150 INFO Finding type stubs in `/home/orodeh/.local/lib/pyre_check/typeshed`...
+2018-10-01 15:36:44,155 INFO Finding type stubs in `/home/orodeh/dx-toolkit/src`...
+2018-10-01 15:36:44,158 INFO Finding type stubs in `/home/orodeh/.local/lib/pyre_check/typeshed/third_party`...
+2018-10-01 15:36:44,160 INFO Finding type stubs in `/home/orodeh/.local/lib/pyre_check/typeshed/stdlib`...
+2018-10-01 15:36:44,165 INFO Finding external sources in `/home/orodeh/.local/lib/pyre_check/typeshed`...
+2018-10-01 15:36:44,176 INFO Finding external sources in `/home/orodeh/dx-toolkit/src`...
+2018-10-01 15:36:44,278 INFO Parsing 1570 stubs and external sources...
+2018-10-01 15:36:46,347 ERROR Could not parse file at python/dxpy/templating/templates/python/basic/src/code.py:19:62-19:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:36:46,349 ERROR Could not parse file at python/dxpy/templating/templates/python/parallelized/src/code.py:44:62-44:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:36:46,450 ERROR Could not parse file at python/dxpy/templating/templates/python/scatter-process-gather/src/code.py:109:62-109:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:36:46,742 ERROR Could not parse file at python/build/lib/dxpy/templating/templates/python/basic/src/code.py:19:62-19:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:36:46,745 ERROR Could not parse file at python/build/lib/dxpy/templating/templates/python/parallelized/src/code.py:44:62-44:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:36:46,846 ERROR Could not parse file at python/build/lib/dxpy/templating/templates/python/scatter-process-gather/src/code.py:109:62-109:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:36:47,329 ERROR Could not parse file at .pyre/shared_analysis_directory_5962/templating/templates/python/basic/src/code.py:19:62-19:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:36:47,332 ERROR Could not parse file at .pyre/shared_analysis_directory_5962/templating/templates/python/parallelized/src/code.py:44:62-44:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:36:47,433 ERROR Could not parse file at .pyre/shared_analysis_directory_5962/templating/templates/python/scatter-process-gather/src/code.py:109:62-109:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:36:48,256 WARNING Could not parse 9 external files due to syntax errors!
+
+2018-10-01 15:36:48,358 PERFORMANCE Stubs parsed: 4.114630s
+2018-10-01 15:36:48,481 INFO Parsing 97 sources in `/home/orodeh/dx-toolkit/src/.pyre/shared_analysis_directory_5962`...
+2018-10-01 15:36:48,827 ERROR Could not parse file at .pyre/shared_analysis_directory_5962/templating/templates/python/scatter-process-gather/src/code.py:109:62-109:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:36:48,829 ERROR Could not parse file at .pyre/shared_analysis_directory_5962/templating/templates/python/parallelized/src/code.py:44:62-44:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:36:48,930 ERROR Could not parse file at .pyre/shared_analysis_directory_5962/templating/templates/python/basic/src/code.py:19:62-19:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:36:49,341 WARNING Could not parse 3 files due to syntax errors!
+
+2018-10-01 15:36:49,442 PERFORMANCE Sources parsed: 0.961255s
+2018-10-01 15:36:49,449 PERFORMANCE Registered ignores: 0.103421s
+2018-10-01 15:36:49,550 INFO Building type environment...
+2018-10-01 15:36:50,694 PERFORMANCE Full environment built: 1.249421s
+2018-10-01 15:36:50,698 INFO Inferring protocol implementations...
+2018-10-01 15:36:50,713 PERFORMANCE Inferred protocol implementations: 0.004732s
+2018-10-01 15:36:50,814 INFO Adding environment information to shared memory...
+2018-10-01 15:36:51,010 PERFORMANCE Added environment to shared memory: 0.296496s
+2018-10-01 15:36:51,067 MEMORY Shared memory size (size: 23)
+2018-10-01 15:36:51,068 PERFORMANCE Filtered directories: 0.058205s
+2018-10-01 15:36:51,170 INFO Checking 94 sources...
+2018-10-01 15:36:52,127 INFO Processed 48 of 94 sources
+2018-10-01 15:36:54,741 INFO Processed 94 of 94 sources
+2018-10-01 15:36:54,800 PERFORMANCE Analyzed sources: 3.673655s
+2018-10-01 15:36:54,897 PERFORMANCE Postprocessed: 0.059092s
+2018-10-01 15:36:54,957 PERFORMANCE Check: 10.758128s
+2018-10-01 15:36:55,001 ERROR Found 616 type errors!
+
+2018-10-01 15:39:08,517 DEBUG No configuration found at `.pyre_configuration.local`.
+2018-10-01 15:39:08,518 DEBUG Reading configuration `.pyre_configuration`...
+2018-10-01 15:39:08,518 DEBUG Found source_directories: `python/dxpy/bindings, python/dxpy/cli, python/dxpy/utils`
+2018-10-01 15:39:08,518 INFO No binary specified, looking for `pyre.bin` in PATH
+2018-10-01 15:39:08,519 INFO Found: `/home/orodeh/.local/bin/pyre.bin`
+2018-10-01 15:39:08,521 INFO Constructing shared directory `/home/orodeh/dx-toolkit/src/.pyre/shared_analysis_directory_6057`
+2018-10-01 15:39:08,530 PERFORMANCE Merged analysis directories in 0.010023s
+2018-10-01 15:39:08,535 DEBUG Running `/home/orodeh/.local/bin/pyre.bin check -logging-sections parser -project-root /home/orodeh/dx-toolkit/src -filter-directories . -workers 1 -typeshed /home/orodeh/.local/lib/pyre_check/typeshed -search-path . /home/orodeh/dx-toolkit/src/.pyre/shared_analysis_directory_6057`
+2018-10-01 15:39:08,557 INFO Finding type stubs in `/home/orodeh/dx-toolkit/src/.pyre/shared_analysis_directory_6057`...
+2018-10-01 15:39:08,558 INFO Finding type stubs in `/home/orodeh/dx-toolkit/src`...
+2018-10-01 15:39:08,558 INFO Finding type stubs in `/home/orodeh/.local/lib/pyre_check/typeshed/third_party`...
+2018-10-01 15:39:08,562 INFO Finding type stubs in `/home/orodeh/.local/lib/pyre_check/typeshed/stdlib`...
+2018-10-01 15:39:08,571 INFO Finding external sources in `/home/orodeh/dx-toolkit/src`...
+2018-10-01 15:39:08,672 INFO Parsing 869 stubs and external sources...
+2018-10-01 15:39:10,219 ERROR Could not parse file at python/dxpy/templating/templates/python/basic/src/code.py:19:62-19:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:39:10,221 ERROR Could not parse file at python/dxpy/templating/templates/python/parallelized/src/code.py:44:62-44:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:39:10,321 ERROR Could not parse file at python/dxpy/templating/templates/python/scatter-process-gather/src/code.py:109:62-109:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:39:10,610 ERROR Could not parse file at python/build/lib/dxpy/templating/templates/python/basic/src/code.py:19:62-19:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:39:10,612 ERROR Could not parse file at python/build/lib/dxpy/templating/templates/python/parallelized/src/code.py:44:62-44:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:39:10,713 ERROR Could not parse file at python/build/lib/dxpy/templating/templates/python/scatter-process-gather/src/code.py:109:62-109:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:39:11,249 WARNING Could not parse 6 external files due to syntax errors!
+
+2018-10-01 15:39:11,313 PERFORMANCE Stubs parsed: 2.700500s
+2018-10-01 15:39:11,415 INFO Parsing 39 sources in `/home/orodeh/dx-toolkit/src/.pyre/shared_analysis_directory_6057`...
+2018-10-01 15:39:11,621 PERFORMANCE Sources parsed: 0.273533s
+2018-10-01 15:39:11,622 PERFORMANCE Registered ignores: 0.034639s
+2018-10-01 15:39:11,723 INFO Building type environment...
+2018-10-01 15:39:12,294 PERFORMANCE Full environment built: 0.671731s
+2018-10-01 15:39:12,299 INFO Inferring protocol implementations...
+2018-10-01 15:39:12,309 PERFORMANCE Inferred protocol implementations: 0.006009s
+2018-10-01 15:39:12,410 INFO Adding environment information to shared memory...
+2018-10-01 15:39:12,532 PERFORMANCE Added environment to shared memory: 0.222174s
+2018-10-01 15:39:12,559 MEMORY Shared memory size (size: 18)
+2018-10-01 15:39:12,560 PERFORMANCE Filtered directories: 0.027724s
+2018-10-01 15:39:12,660 INFO Checking 39 sources...
+2018-10-01 15:39:13,769 INFO Processed 39 of 39 sources
+2018-10-01 15:39:13,806 PERFORMANCE Analyzed sources: 1.209574s
+2018-10-01 15:39:13,828 PERFORMANCE Postprocessed: 0.036435s
+2018-10-01 15:39:13,868 PERFORMANCE Check: 5.283484s
+2018-10-01 15:39:13,881 ERROR Found 177 type errors!
+
+2018-10-01 15:39:47,803 ERROR A pyre configuration already exists at /home/orodeh/dx-toolkit/src/.pyre_configuration.
+
+2018-10-01 15:41:36,291 DEBUG No configuration found at `.pyre_configuration.local`.
+2018-10-01 15:41:36,291 DEBUG Reading configuration `.pyre_configuration`...
+2018-10-01 15:41:36,292 DEBUG Found source_directories: `python/dxpy/bindings, python/dxpy/cli, python/dxpy/utils`
+2018-10-01 15:41:36,292 INFO No binary specified, looking for `pyre.bin` in PATH
+2018-10-01 15:41:36,292 INFO Found: `/home/orodeh/.local/bin/pyre.bin`
+2018-10-01 15:41:36,294 INFO Constructing shared directory `/home/orodeh/dx-toolkit/src/.pyre/shared_analysis_directory_6174`
+2018-10-01 15:41:36,303 PERFORMANCE Merged analysis directories in 0.009979s
+2018-10-01 15:41:36,308 DEBUG Running `/home/orodeh/.local/bin/pyre.bin check -logging-sections parser -project-root /home/orodeh/dx-toolkit/src -filter-directories . -workers 1 -typeshed /home/orodeh/.local/lib/pyre_check/typeshed -search-path . /home/orodeh/dx-toolkit/src/.pyre/shared_analysis_directory_6174`
+2018-10-01 15:41:36,322 INFO Finding type stubs in `/home/orodeh/dx-toolkit/src/.pyre/shared_analysis_directory_6174`...
+2018-10-01 15:41:36,327 INFO Finding type stubs in `/home/orodeh/dx-toolkit/src`...
+2018-10-01 15:41:36,330 INFO Finding type stubs in `/home/orodeh/.local/lib/pyre_check/typeshed/third_party`...
+2018-10-01 15:41:36,334 INFO Finding type stubs in `/home/orodeh/.local/lib/pyre_check/typeshed/stdlib`...
+2018-10-01 15:41:36,341 INFO Finding external sources in `/home/orodeh/dx-toolkit/src`...
+2018-10-01 15:41:36,443 INFO Parsing 869 stubs and external sources...
+2018-10-01 15:41:37,975 ERROR Could not parse file at python/dxpy/templating/templates/python/basic/src/code.py:19:62-19:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:41:37,977 ERROR Could not parse file at python/dxpy/templating/templates/python/parallelized/src/code.py:44:62-44:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:41:38,079 ERROR Could not parse file at python/dxpy/templating/templates/python/scatter-process-gather/src/code.py:109:62-109:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:41:38,360 ERROR Could not parse file at python/build/lib/dxpy/templating/templates/python/basic/src/code.py:19:62-19:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:41:38,361 ERROR Could not parse file at python/build/lib/dxpy/templating/templates/python/parallelized/src/code.py:44:62-44:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:41:38,463 ERROR Could not parse file at python/build/lib/dxpy/templating/templates/python/scatter-process-gather/src/code.py:109:62-109:62
+  DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
+                                                               ^
+
+2018-10-01 15:41:38,993 WARNING Could not parse 6 external files due to syntax errors!
+
+2018-10-01 15:41:39,058 PERFORMANCE Stubs parsed: 2.671239s
+2018-10-01 15:41:39,160 INFO Parsing 39 sources in `/home/orodeh/dx-toolkit/src/.pyre/shared_analysis_directory_6174`...
+2018-10-01 15:41:39,370 PERFORMANCE Sources parsed: 0.277962s
+2018-10-01 15:41:39,373 PERFORMANCE Registered ignores: 0.034861s
+2018-10-01 15:41:39,474 INFO Building type environment...
+2018-10-01 15:41:40,034 PERFORMANCE Full environment built: 0.663045s
+2018-10-01 15:41:40,041 INFO Inferring protocol implementations...
+2018-10-01 15:41:40,050 PERFORMANCE Inferred protocol implementations: 0.008027s
+2018-10-01 15:41:40,151 INFO Adding environment information to shared memory...
+2018-10-01 15:41:40,273 PERFORMANCE Added environment to shared memory: 0.221981s
+2018-10-01 15:41:40,300 MEMORY Shared memory size (size: 18)
+2018-10-01 15:41:40,301 PERFORMANCE Filtered directories: 0.027982s
+2018-10-01 15:41:40,401 INFO Checking 39 sources...
+2018-10-01 15:41:41,505 INFO Processed 39 of 39 sources
+2018-10-01 15:41:41,539 PERFORMANCE Analyzed sources: 1.204179s
+2018-10-01 15:41:41,561 PERFORMANCE Postprocessed: 0.034482s
+2018-10-01 15:41:41,602 PERFORMANCE Check: 5.243036s
+2018-10-01 15:41:41,615 ERROR Found 177 type errors!
+
+2018-10-01 15:44:02,075 DEBUG No configuration found at `.pyre_configuration.local`.
+2018-10-01 15:44:02,075 DEBUG Reading configuration `.pyre_configuration`...
+2018-10-01 15:44:02,076 DEBUG Found source_directories: `python/dxpy/bindings, python/dxpy/cli, python/dxpy/utils`
+2018-10-01 15:44:02,076 INFO No binary specified, looking for `pyre.bin` in PATH
+2018-10-01 15:44:02,076 INFO Found: `/home/orodeh/.local/bin/pyre.bin`
+2018-10-01 15:44:02,077 INFO No typeshed specified, looking for it
+2018-10-01 15:44:02,077 DEBUG Trying with: `/home/orodeh/.local/lib/python3.5/site-packages/pyre_check/pyre_check/typeshed/`
+2018-10-01 15:44:02,077 DEBUG Trying with: `/home/orodeh/.local/lib/python3.5/site-packages/pyre_check/typeshed/`
+2018-10-01 15:44:02,077 DEBUG Trying with: `/home/orodeh/.local/lib/python3.5/pyre_check/typeshed/`
+2018-10-01 15:44:02,077 DEBUG Trying with: `/home/orodeh/.local/lib/pyre_check/typeshed/`
+2018-10-01 15:44:02,077 INFO Found: `/home/orodeh/.local/lib/pyre_check/typeshed/`
+2018-10-01 15:44:02,079 INFO Constructing shared directory `/home/orodeh/dx-toolkit/src/.pyre/shared_analysis_directory_6228`
+2018-10-01 15:44:02,088 PERFORMANCE Merged analysis directories in 0.009904s
+2018-10-01 15:44:02,093 DEBUG Running `/home/orodeh/.local/bin/pyre.bin check -project-root /home/orodeh/dx-toolkit/src -filter-directories . -workers 1 -typeshed /home/orodeh/.local/lib/pyre_check/typeshed/ -search-path . /home/orodeh/dx-toolkit/src/.pyre/shared_analysis_directory_6228`
+2018-10-01 15:44:02,115 INFO Finding type stubs in `/home/orodeh/dx-toolkit/src/.pyre/shared_analysis_directory_6228`...
+2018-10-01 15:44:02,116 INFO Finding type stubs in `/home/orodeh/dx-toolkit/src`...
+2018-10-01 15:44:02,118 INFO Finding type stubs in `/home/orodeh/.local/lib/pyre_check/typeshed/third_party`...
+2018-10-01 15:44:02,119 INFO Finding type stubs in `/home/orodeh/.local/lib/pyre_check/typeshed/stdlib`...
+2018-10-01 15:44:02,128 INFO Finding external sources in `/home/orodeh/dx-toolkit/src`...
+2018-10-01 15:44:02,230 INFO Parsing 869 stubs and external sources...
+2018-10-01 15:44:04,806 WARNING Could not parse 6 external files due to syntax errors! Run with `--show-parse-errors` for more details.
+
+2018-10-01 15:44:04,869 PERFORMANCE Stubs parsed: 2.699768s
+2018-10-01 15:44:04,971 INFO Parsing 39 sources in `/home/orodeh/dx-toolkit/src/.pyre/shared_analysis_directory_6228`...
+2018-10-01 15:44:05,180 PERFORMANCE Sources parsed: 0.275325s
+2018-10-01 15:44:05,180 PERFORMANCE Registered ignores: 0.035714s
+2018-10-01 15:44:05,282 INFO Building type environment...
+2018-10-01 15:44:05,860 PERFORMANCE Full environment built: 0.679815s
+2018-10-01 15:44:05,865 INFO Inferring protocol implementations...
+2018-10-01 15:44:05,875 PERFORMANCE Inferred protocol implementations: 0.005526s
+2018-10-01 15:44:05,977 INFO Adding environment information to shared memory...
+2018-10-01 15:44:06,101 PERFORMANCE Added environment to shared memory: 0.225204s
+2018-10-01 15:44:06,129 MEMORY Shared memory size (size: 18)
+2018-10-01 15:44:06,129 PERFORMANCE Filtered directories: 0.028668s
+2018-10-01 15:44:06,231 INFO Checking 39 sources...
+2018-10-01 15:44:07,537 INFO Processed 39 of 39 sources
+2018-10-01 15:44:07,577 PERFORMANCE Analyzed sources: 1.408037s
+2018-10-01 15:44:07,599 PERFORMANCE Postprocessed: 0.039836s
+2018-10-01 15:44:07,639 PERFORMANCE Check: 5.495698s
+2018-10-01 15:44:07,651 ERROR Found 182 type errors!
+

@@ -34,7 +34,7 @@ from . import DXDataObject
 from ..exceptions import DXFileError, DXIncompleteReadsError
 from ..utils import warn
 from ..utils.resolver import object_exists_in_project
-from ..compat import BytesIO, basestring
+from ..compat import BytesIO, basestring, USING_PYTHON2
 
 
 DXFILE_HTTP_THREADS = min(cpu_count(), 8)
@@ -462,7 +462,7 @@ class DXFile(DXDataObject):
                                                   self._expected_file_size,
                                                   self._file_is_mmapd)
 
-    def write(self, data, multithread=True, **kwargs):
+    def write(self, data_org, multithread=True, **kwargs):
         '''
         :param data: Data to be written
         :type data: str or mmap object
@@ -477,6 +477,20 @@ class DXFile(DXDataObject):
             does not affect where the next :meth:`write` will occur.
 
         '''
+        assert(isinstance(data_org, str))
+        if USING_PYTHON2:
+            data = data_org
+        else:
+            # In python3, the underlying system methods use the 'bytes' type, not 'string'
+            #
+            # This is, hopefully, a temporary hack. It is not a good idea for two reasons:
+            # 1) Performance, we need to make a pass on the data, and need to allocate
+            #    another buffer of similar size
+            # 2) The types are wrong. The "bytes" type should be visible to the caller
+            #    of the write method, instead of being hidden.
+            data = data_org.encode("utf-8")
+            assert(isinstance(data, bytes))
+
         self._ensure_write_bufsize(**kwargs)
 
         def write_request(data_for_write_req):
@@ -551,7 +565,10 @@ class DXFile(DXDataObject):
             # settings allow last empty part upload, try to upload
             # an empty part (otherwise files with 0 parts cannot be closed).
             try:
-                self.upload_part('', 1, **kwargs)
+                if USING_PYTHON2:
+                    self.upload_part('', 1, **kwargs)
+                else:
+                    self.upload_part(b'', 1, **kwargs)
             except dxpy.exceptions.InvalidState:
                 pass
 
@@ -576,7 +593,7 @@ class DXFile(DXDataObject):
     def upload_part(self, data, index=None, display_progress=False, report_progress_fn=None, **kwargs):
         """
         :param data: Data to be uploaded in this part
-        :type data: str or mmap object
+        :type data: str or mmap object, bytes on python3
         :param index: Index of part to be uploaded; must be in [1, 10000]
         :type index: integer
         :param display_progress: Whether to print "." to stderr when done
@@ -791,7 +808,7 @@ class DXFile(DXDataObject):
             self._request_iterator = None
             raise
 
-    def read(self, length=None, use_compression=None, project=None, **kwargs):
+    def _read2(self, length=None, use_compression=None, project=None, **kwargs):
         '''
         :param length: Maximum number of bytes to be read
         :type length: integer
@@ -874,3 +891,12 @@ class DXFile(DXDataObject):
         # req = urllib2.Request(url, headers=headers)
         # response = urllib2.urlopen(req)
         # return response.read()
+
+    def read(self, length=None, use_compression=None, project=None, **kwargs):
+        data = self._read2(length=length, use_compression=use_compression, project=project, **kwargs)
+        if USING_PYTHON2:
+            return data
+        else:
+            # In python3, the underlying system methods use the 'bytes' type, not 'string'
+            #
+            return data.decode("utf-8")

@@ -609,7 +609,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     return i
 
                 _headers = {ensure_ascii(k): ensure_ascii(v) for k, v in _headers.items()}
-                if (sys.version_info >= (3, 0)): 
+                if (sys.version_info >= (3, 0)):
                     _headers.pop(b'host', None)
                     _headers.pop(b'content-length', None)
                 response = pool_manager.request(_method, _url, headers=_headers, body=body,
@@ -760,8 +760,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                         waiting_msg = 'Waiting %d seconds before retry %d of %d...' % (
                             delay, try_index + 1, max_retries)
 
-                    logger.warn("[%s] %s %s: %s. %s %s",
-                                time.ctime(), method, _url, exception_msg, waiting_msg, range_str)
+                    logger.warning("[%s] %s %s: %s. %s %s",
+                                   time.ctime(), method, _url, exception_msg, waiting_msg, range_str)
                     time.sleep(delay)
                     try_index_including_503 += 1
                     if response is None or response.status != 503:

@@ -618,7 +618,7 @@ class TemporaryFile:
         'close' determines if the file is returned closed or open.
     '''
     def __init__(self, mode='w+b', bufsize=-1, suffix='', prefix='tmp', dir=None, delete=True, close=False):
-        self.temp_file = tempfile.NamedTemporaryFile(mode, bufsize, suffix, prefix, dir, delete=False)
+        self.temp_file = tempfile.NamedTemporaryFile(mode, bufsize, None, None, suffix, prefix, dir, delete=False)
         self.name = self.temp_file.name
         self.delete = delete
         if (close):

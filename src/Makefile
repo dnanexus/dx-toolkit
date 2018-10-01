@@ -24,3 +24,11 @@ else ifeq ($(UNAME), Darwin)
 else
 	include mk/Makefile.linux
 endif
+
+
+# Typecheck python with pyre
+# =====
+py_typecheck:
+	pyre \
+		--typeshed $(HOME)/.local/lib/pyre_check/typeshed \
+		--show-parse-errors check
