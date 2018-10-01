@@ -381,7 +381,8 @@ class TestDXFile(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.foo_file = tempfile.NamedTemporaryFile(delete=False)
-        cls.foo_file.write(cls.foo_str)
+        bt = cls.foo_str.encode("utf-8") # convert from string to bytes
+        cls.foo_file.write(bt)
         cls.foo_file.close()
 
     @classmethod
@@ -935,9 +936,9 @@ class TestDXRecord(unittest.TestCase):
         self.assertNotEqual(firstDXRecord.get_id(), secondDXRecord.get_id())
         # test if secondDXRecord._dxid has been set to a valid ID
         try:
-            self.assertRegexp(secondDXRecord.get_id(), "^record-[0-9A-Za-z]{24}",
-                              'Object ID not of expected form: ' + \
-                              secondDXRecord.get_id())
+            self.assertRegex(secondDXRecord.get_id(), "^record-[0-9A-Za-z]{24}",
+                             'Object ID not of expected form: ' + \
+                             secondDXRecord.get_id())
         except AttributeError:
             self.fail("dxID was not stored in DXRecord creation")
         # test if secondDXRecord._proj has been set to second_proj_id
@@ -1384,7 +1385,7 @@ def main(number):
         # run closed workflow (the workflow has inputs so input values
         # can only be passed via workflow-level input (can't be passed to stage-level inputs))
         dxworkflow.close()
-        self.assertRaisesRegexp(DXError, 'is private and cannot be overridden',
+        self.assertRaisesRegex(DXError, 'is private and cannot be overridden',
                                 dxworkflow.run, {'stage_0.number': 1})
         dxanalysis = dxworkflow.run({'foo': 202})
         dxanalysis.terminate()
@@ -1520,10 +1521,10 @@ def main(number):
 
         # Can't specify the same input more than once (with a
         # stage-specific syntax)
-        self.assertRaisesRegexp(DXError, 'more than once',
+        self.assertRaisesRegex(DXError, 'more than once',
                                 dxworkflow.run, {"0.number": 32, "stagename.number": 42})
         # Bad stage name
-        self.assertRaisesRegexp(DXError, 'could not be found as a stage ID nor as a stage name',
+        self.assertRaisesRegex(DXError, 'could not be found as a stage ID nor as a stage name',
                                 dxworkflow.run, {"nonexistentstage.number": 32})
 
     def test_new_dxworkflow(self):
@@ -1659,7 +1660,7 @@ def main(number):
 
         # Removing stage by name doesn't work when there's more than
         # one of that name
-        self.assertRaisesRegexp(DXError, 'more than one workflow stage was found',
+        self.assertRaisesRegex(DXError, 'more than one workflow stage was found',
                                 dxworkflow.remove_stage, "stagename")
 
         removed_stage = dxworkflow.remove_stage(0)
@@ -2436,9 +2437,9 @@ class TestHTTPResponses(unittest.TestCase):
         with self.assertRaises(TypeError):
             dxpy.DXHTTPRequest("/system/whoami", {}, cert="nonexistent")
         if dxpy.APISERVER_PROTOCOL == "https":
-            with self.assertRaisesRegexp((TypeError,SSLError, OpenSSL.SSL.Error), "file|string"):
+            with self.assertRaisesRegex((TypeError,SSLError, OpenSSL.SSL.Error), "file|string"):
                 dxpy.DXHTTPRequest("/system/whoami", {}, verify="nonexistent")
-            with self.assertRaisesRegexp((SSLError, IOError, OpenSSL.SSL.Error), "file"):
+            with self.assertRaisesRegex((SSLError, IOError, OpenSSL.SSL.Error), "file"):
                 dxpy.DXHTTPRequest("/system/whoami", {}, cert_file="nonexistent")
 
     def test_fake_errors(self):
@@ -2637,7 +2638,7 @@ class TestResolver(testutil.DXTestCase):
             self.assertEqual(resolve_path("job-111111111111111111111111"),
                              (self.project, None, "job-111111111111111111111111"))
 
-            with self.assertRaisesRegexp(ResolutionError, 'foo'):
+            with self.assertRaisesRegex(ResolutionError, 'foo'):
                 resolve_path("project-012301230123012301230123:foo:bar")
             with self.assertRaises(ResolutionError):
                 resolve_path(not_a_project_name + ":")
@@ -2706,23 +2707,23 @@ class TestResolver(testutil.DXTestCase):
 
             # --- test some behavior when workspace is not set ---
             dxpy.WORKSPACE_ID = None
-            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
                 resolve_path("")
-            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
                 resolve_path(":")
-            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
                 resolve_path(":foo")
-            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
                 resolve_path("foo", expected="folder")
             self.assertEqual(resolve_path(temp_proj_name + ":"),
                              (p.get_id(), "/", None))
-            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
                 resolve_path("foo")
-            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
                 resolve_path("../foo")
-            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
                 resolve_path("../../foo")
-            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
                 resolve_path("/foo/bar")
 
             self.assertEqual(resolve_path("file-111111111111111111111111"),

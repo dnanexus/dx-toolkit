@@ -249,10 +249,10 @@ class DXWorkflow(DXDataObject, DXExecutable):
         :returns: Hash of stage descriptor in workflow
         '''
         stage_id = self._get_stage_id(stage)
-        try:
-            return next(stage for stage in self.stages if stage['id'] == stage_id)
-        except StopIteration:
+        result = next((stage for stage in self.stages if stage['id'] == stage_id), None)
+        if result is None:
             raise DXError('The stage ID ' + stage_id + ' could not be found')
+        return result
 
     def remove_stage(self, stage, edit_version=None, **kwargs):
         '''

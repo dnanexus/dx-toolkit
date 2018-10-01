@@ -92,9 +92,16 @@ class DXObject(object):
 
     def __getattr__(self, attr):
         if attr == "__setstate__":
+            # without this, an infinite recursion occurs when copying an object.
+            # https://stackoverflow.com/questions/47299243/recursionerror-when-python-copy-deepcopy
             raise AttributeError(attr)
         if not self._desc:
-            self.describe()
+            try:
+                self.describe()
+            except:
+                # describe can fail if the object has not been created
+                # properly. For example, it has an invalid dxid.
+                raise AttributeError()
         try:
             return self._desc[attr]
         except:

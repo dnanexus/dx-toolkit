@@ -103,16 +103,15 @@ def paginate_and_pick(generator, render_fn=str, filter_fn=None, page_len=10, **p
     while True:
         results = []
         while len(results) < page_len:
-            try:
-                if filter_fn is None:
-                    results.append(next(generator))
-                else:
-                    possible_next = next(generator)
-                    if filter_fn(possible_next):
-                        results.append(possible_next)
-                any_results = True
-            except StopIteration:
+            possible_next = next(generator, None)
+            if possible_next is None:
                 break
+            if filter_fn is None:
+                results.append(possible_next)
+            else:
+                if filter_fn(possible_next):
+                    results.append(possible_next)
+                any_results = True
         if not any_results:
             return "none found"
         elif len(results) == 0:
