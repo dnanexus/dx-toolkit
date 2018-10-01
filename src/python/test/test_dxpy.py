@@ -635,7 +635,10 @@ class TestDXFile(unittest.TestCase):
                 fh.seek(cptr)
                 read_after_seek = fh.read(2 ** 16)
                 self.assertEqual(next_read, read_after_seek)
-                self.assertEqual(next_read, data[first_read_length:first_read_length + 2 ** 16].encode('utf-8'))
+                if USING_PYTHON2:
+                    self.assertEqual(next_read, data[first_read_length:first_read_length + 2 ** 16].encode('utf-8'))
+                else:
+                    self.assertEqual(next_read, data[first_read_length:first_read_length + 2 ** 16])
         finally:
             dxpy.set_job_id(previous_job_id)
 

@@ -87,3 +87,6 @@ dxR.Rcheck
 /src/ua/ua
 test-job-workspaces
 .idea/
+
+# pyre tool for typechecking python --- artifacts
+pyre.stderr

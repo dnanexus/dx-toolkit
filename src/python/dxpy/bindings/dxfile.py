@@ -307,17 +307,33 @@ class DXFile(DXDataObject):
         _buffer = self.read(self._read_bufsize)
         done = False
         while not done:
-            if b"\n" in _buffer:
-                lines = _buffer.splitlines()
-                for i in range(len(lines) - 1):
-                    yield lines[i]
-                _buffer = lines[len(lines) - 1]
-            else:
-                more = self.read(self._read_bufsize)
-                if more == b"":
-                    done = True
+            if USING_PYTHON2:
+                if b"\n" in _buffer:
+                    lines = _buffer.splitlines()
+                    for i in range(len(lines) - 1):
+                        yield lines[i]
+                    _buffer = lines[len(lines) - 1]
                 else:
-                    _buffer = _buffer + more
+                    more = self.read(self._read_bufsize)
+                    if more == b"":
+                        done = True
+                    else:
+                        _buffer = _buffer + more
+            else:
+                # python3 is much stricter about distinguishing
+                # 'bytes' from 'str'.
+                if "\n" in _buffer:
+                    lines = _buffer.splitlines()
+                    for i in range(len(lines) - 1):
+                        yield lines[i]
+                    _buffer = lines[len(lines) - 1]
+                else:
+                    more = self.read(self._read_bufsize)
+                    if more == "":
+                        done = True
+                    else:
+                        _buffer = _buffer + more
+
         if _buffer:
             yield _buffer
 
