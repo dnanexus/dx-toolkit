@@ -39,6 +39,6 @@ if 'DX_JOB_ID' in os.environ:
                 if cur_stage not in dep['stages']:
                     continue
             if dep['id']['$dnanexus_link'].startswith('file-'):
-                print "*** Downloading bundled file", dep['name']
+                print("*** Downloading bundled file", dep['name'])
                 dxpy.download_dxfile(dep['id'], dep['name'])
                 subprocess.check_call(['dx-unpack', dep['name']])

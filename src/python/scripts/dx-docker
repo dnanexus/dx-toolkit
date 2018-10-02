@@ -40,7 +40,7 @@ def shell_suppress(cmd, ignore_error=False):
         if ignore_error:
             pass
         else:
-            print e.output.strip()
+            print(e.output.strip())
             raise
     return out
 
@@ -58,7 +58,7 @@ parser.add_argument("-q", "--quiet", action='store_true', help="Suppress printin
 subparsers = parser.add_subparsers()
 
 def get_aci_fname(image):
-    matching_files = glob.glob("{cachedir}/{image}.aci".format(cachedir=CACHE_DIR, image=urllib.quote_plus(image)))
+    matching_files = glob.glob("{cachedir}/{image}.aci".format(cachedir=CACHE_DIR, image=urllib.parse.quote_plus(image)))
     if len(matching_files) == 0:
         return None
     elif len(matching_files) == 1:
@@ -141,7 +141,7 @@ def get_aci(image, imgname, prefix="", quiet=False):
 
     img_dirname = prefix+CACHE_DIR
     makedirs(img_dirname)
-    shutil.move(glob.glob(tmpdir+"/*.aci")[0], img_dirname+"/"+urllib.quote_plus(image)+".aci")
+    shutil.move(glob.glob(tmpdir+"/*.aci")[0], img_dirname+"/"+urllib.parse.quote_plus(image)+".aci")
     shutil.rmtree(tmpdir)
 
 def register_docker_subcommand(cmd):
@@ -354,7 +354,7 @@ def local_image_to_aci(image, tmpdir, dirprefix, alternative_export=False):
             f.write(json.dumps(manifest))
         shell(["mkdir", "-p", dirprefix+CACHE_DIR])
         sys.stderr.write(dxpy.utils.printing.YELLOW("Creating ACI filesystem bundle for {}\n".format(image)))
-        shell_suppress(["tar", "-C", tmpdir+"/new-aci-template", "-cf", dirprefix+CACHE_DIR+"/"+urllib.quote_plus(image)+".aci", "."], ignore_error=True)
+        shell_suppress(["tar", "-C", tmpdir+"/new-aci-template", "-cf", dirprefix+CACHE_DIR+"/"+urllib.parse.quote_plus(image)+".aci", "."], ignore_error=True)
     # Use Docker and docker2aci to generate an aci
     else:
         sys.stderr.write(dxpy.utils.printing.YELLOW("Exporting Docker image {}\n".format(image)))
@@ -394,7 +394,7 @@ def _upload_file(filename, project_id=None, folder_path=None, wait_on_close=True
     try:
         return dxpy.upload_local_file(filename, wait_on_close=wait_on_close, hidden=hidden, **kwargs).get_id()
     except Exception as e:
-        print "Unable to upload file {}.\n{}.".format(filename, e)
+        print("Unable to upload file {}.\n{}.".format(filename, e))
         sys.exit(1)
 
 

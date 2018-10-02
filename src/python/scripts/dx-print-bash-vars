@@ -34,7 +34,7 @@ args = parser.parse_args()
 job_input_file = file_load_utils.get_input_json_file()
 
 var_defs_hash = file_load_utils.gen_bash_vars(job_input_file)
-for key, val in var_defs_hash.iteritems():
+for key, val in var_defs_hash.items():
     val_len = len(val)
     if val_len <= (16 * 1024):
         print("export {}={}".format(key, val))

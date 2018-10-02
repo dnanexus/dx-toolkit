@@ -78,7 +78,7 @@ if os.environ.get('DX_JOB_ID') is not None:
 
     resp = dxpy.api.job_new(job_new_input)
 
-    print resp["id"]
+    print(resp["id"])
 else:
     from dxpy.utils.local_exec_utils import queue_entry_point
     if args.test is True:
@@ -86,7 +86,7 @@ else:
         print(json.dumps(job_new_input))
         sys.exit(0)
 
-    print queue_entry_point(function=args.function,
+    print(queue_entry_point(function=args.function,
                             input_hash=entry_point_inputs.inputs,
                             depends_on=args.depends_on,
-                            name=args.name)
+                            name=args.name))
