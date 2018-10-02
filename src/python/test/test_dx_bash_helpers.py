@@ -53,6 +53,7 @@ def run(command, **kwargs):
 TEST_APPS = os.path.join(os.path.dirname(__file__), 'file_load')
 LOCAL_SCRIPTS = os.path.join(os.path.dirname(__file__), '..', 'scripts')
 LOCAL_UTILS = os.path.join(os.path.dirname(__file__), '..', 'dxpy', 'utils')
+DUMMY_HASH = "123456789012345678901234"
 
 
 def ignore_folders(directory, contents):
@@ -418,12 +419,10 @@ class TestDXBashHelpersBenchmark(DXTestCase):
     def test_par_1g(self):
         self.run_applet_with_flags(["-iparallel=true"], 10, 1024 * 1024 * 1024)
 
-
 class TestDXJobutilAddOutput(DXTestCase):
-    dummy_hash = "123456789012345678901234"
     data_obj_classes = ['file', 'record', 'applet', 'workflow']
-    dummy_ids = [obj_class + '-' + dummy_hash for obj_class in data_obj_classes]
-    dummy_job_id = "job-" + dummy_hash
+    dummy_ids = [ (obj_class + '-' + DUMMY_HASH) for obj_class in data_obj_classes]
+    dummy_job_id = "job-" + DUMMY_HASH
     dummy_analysis_id = "analysis-123456789012345678901234"
     test_cases = ([["32", 32],
                    ["3.4", 3.4],
@@ -501,7 +500,7 @@ class TestDXJobutilAddOutput(DXTestCase):
                                  ["analysisref", "thing"]] +
                                 [[classname,
                                   "'" +
-                                  json.dumps({"dnanexus_link": classname + "-" + self.dummy_hash}) +
+                                  json.dumps({"dnanexus_link": classname + "-" + DUMMY_HASH}) +
                                   "'"] for classname in self.data_obj_classes])
             for i, tc in enumerate(error_test_cases):
                 with self.assertSubprocessFailure(stderr_regexp='Value could not be parsed',

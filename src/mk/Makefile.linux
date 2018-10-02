@@ -65,8 +65,6 @@ debian_r_install: R
 # Bundled utilities
 # =================
 
-jq: git_submodules ../bin/jq
-
 ../bin/jq: jq/
 	(cd jq; autoreconf --install)
 	$(MAKE) -C jq -j PATH=$$(brew --prefix bison || echo .)/bin:$$PATH

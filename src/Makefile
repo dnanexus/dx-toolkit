@@ -19,16 +19,6 @@ include mk/Makefile.${PLATFORM}
 
 all: api_wrappers cpp src_libs python dx-verify-file jq dx-docker
 
-# Don't try to initialize the submodule in source distributions, it should
-# already be there and ready to build.
-git_submodules:
-	(if [ -d "$(DNANEXUS_HOME)/.git" ]; then \
-	    cd ..; \
-	    git submodule init; \
-	    "`which git-retry || which git`" submodule update; \
-	fi)
-
-
 # Client bindings and wrappers
 # ============================
 
@@ -75,6 +65,7 @@ PYTHON_LIBDIR := $(DNANEXUS_LIBDIR)/python2.7/site-packages
 JAVA_LIBDIR := $(DNANEXUS_LIBDIR)/java
 
 python: api_wrappers toolkit_version $(DNANEXUS_HOME)/bin/dx
+
 
 # If running in fakeroot, override some maven settings so that maven can still
 # find a localRepository to write to.
@@ -338,6 +329,22 @@ file/stage/lib/libmagic.la: shasum
 	tar -xf file-${FILE_PV}.tar.xz -C file --strip-components=1
 	cd file; ./configure --enable-static=yes --prefix=/
 	$(MAKE) -C file install DESTDIR="$(DNANEXUS_HOME)/src/file/stage"
+
+
+# Bundled utilities
+# =================
+
+# Don't try to initialize the submodule in source distributions, it should
+# already be there and ready to build.
+git_submodules:
+	(if [ -d "$(DNANEXUS_HOME)/.git" ]; then \
+	    cd ..; \
+	    git submodule init; \
+	    "`which git-retry || which git`" submodule update; \
+	fi)
+
+
+jq: git_submodules ../bin/jq
 
 
 # Typecheck python with pyre
