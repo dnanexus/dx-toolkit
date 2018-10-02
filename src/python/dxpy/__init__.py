@@ -210,6 +210,7 @@ INCOMPLETE_READS_NUM_SUBCHUNKS = 8
 USER_AGENT = "{name}/{version} ({platform})".format(name=__name__,
                                                     version=TOOLKIT_VERSION,
                                                     platform=platform.platform())
+_default_certs = requests.certs.where()
 _default_headers = requests.utils.default_headers()
 _default_timeout = urllib3.util.timeout.Timeout(connect=DEFAULT_TIMEOUT, read=DEFAULT_TIMEOUT)
 _RequestForAuth = namedtuple('_RequestForAuth', 'method url headers')
@@ -259,6 +260,12 @@ def _get_pool_manager(verify, cert_file, key_file):
                              cert_reqs=ssl.CERT_REQUIRED,
                              headers=_default_headers,
                              timeout=_default_timeout)
+    # Don't define a default CA bundle on Windows platforms - they don't
+    # appear to need one, and using one can sometimes cause verification
+    # failures; see DEVEX-875. Other platforms require a ca_certs bundle:
+    if platform.system() != 'Windows':
+        default_pool_args.update(ca_certs=_default_certs)
+
     if cert_file is None and verify is None and 'DX_CA_CERT' not in os.environ:
         with _pool_mutex:
             if _pool_manager is None:
