@@ -306,8 +306,8 @@ class DXFile(DXDataObject):
     def __iter__(self):
         _buffer = self.read(self._read_bufsize)
         done = False
-        while not done:
-            if USING_PYTHON2:
+        if USING_PYTHON2:
+            while not done:
                 if b"\n" in _buffer:
                     lines = _buffer.splitlines()
                     for i in range(len(lines) - 1):
@@ -319,9 +319,10 @@ class DXFile(DXDataObject):
                         done = True
                     else:
                         _buffer = _buffer + more
-            else:
-                # python3 is much stricter about distinguishing
-                # 'bytes' from 'str'.
+        else:
+            # python3 is much stricter about distinguishing
+            # 'bytes' from 'str'.
+            while not done:
                 if "\n" in _buffer:
                     lines = _buffer.splitlines()
                     for i in range(len(lines) - 1):
@@ -493,9 +494,9 @@ class DXFile(DXDataObject):
             does not affect where the next :meth:`write` will occur.
 
         '''
-        assert(isinstance(data_org, str))
         if USING_PYTHON2:
             data = data_org
+            assert(isinstance(data, str))
         else:
             # In python3, the underlying system methods use the 'bytes' type, not 'string'
             #
@@ -504,7 +505,10 @@ class DXFile(DXDataObject):
             #    another buffer of similar size
             # 2) The types are wrong. The "bytes" type should be visible to the caller
             #    of the write method, instead of being hidden.
-            data = data_org.encode("utf-8")
+            if isinstance(data_org, str):
+                data = data_org.encode("utf-8")
+            else:
+                data = data_org
             assert(isinstance(data, bytes))
 
         self._ensure_write_bufsize(**kwargs)
