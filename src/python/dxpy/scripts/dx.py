@@ -485,19 +485,20 @@ def pick_and_set_project(args):
         results = []
         for _ in range(10):
             try:
-                results.append(next(result_generator))
-                any_results = True
-            except StopIteration:
-                break
+                retval = next(result_generator, None)
             except:
                 err_exit('Error while listing available projects')
+            if retval is None:
+                break
+            results.append(retval)
+            any_results = True
         if not any_results:
             parser.exit(0, '\n' + fill("No projects to choose from.  You can create one with the command " +
                                        BOLD("dx new project") + ".  To pick from projects for which you only have " +
                                        " VIEW permissions, use " + BOLD("dx select --level VIEW") + " or " +
                                        BOLD("dx select --public") + ".") + '\n')
         elif len(results) == 0:
-            err_exit('No projects left to choose from.', 3, expected_exceptions=StopIteration)
+            err_exit('No projects left to choose from.', 3)
 
         if first_pass:
             if not args.public and args.level == "CONTRIBUTE":

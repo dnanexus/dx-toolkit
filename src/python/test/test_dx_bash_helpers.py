@@ -439,7 +439,7 @@ class TestDXJobutilAddOutput(DXTestCase):
                     {"$dnanexus_link": dummy_id}] for dummy_id in dummy_ids])
 
     def test_auto(self):
-        with tempfile.NamedTemporaryFile() as f:
+        with tempfile.NamedTemporaryFile(mode='w+', encoding="utf-8") as f:
             # initialize the file with valid JSON
             f.write('{}')
             f.flush()
@@ -453,7 +453,7 @@ class TestDXJobutilAddOutput(DXTestCase):
                 self.assertEqual(result[str(i)], tc[1])
 
     def test_auto_array(self):
-        with tempfile.NamedTemporaryFile() as f:
+        with tempfile.NamedTemporaryFile(mode='w+', encoding="utf-8") as f:
             # initialize the file with valid JSON
             f.write('{}')
             f.flush()
@@ -468,7 +468,7 @@ class TestDXJobutilAddOutput(DXTestCase):
                 self.assertEqual(result[str(i)], [tc[1], tc[1]])
 
     def test_class_specific(self):
-        with tempfile.NamedTemporaryFile() as f:
+        with tempfile.NamedTemporaryFile(mode='w+', encoding="utf-8") as f:
             # initialize the file with valid JSON
             f.write('{}')
             f.flush()
@@ -485,7 +485,7 @@ class TestDXJobutilAddOutput(DXTestCase):
                 self.assertEqual(result[str(i)], tc[2])
 
     def test_class_parsing_errors(self):
-        with tempfile.NamedTemporaryFile() as f:
+        with tempfile.NamedTemporaryFile(mode='w+', encoding="utf-8") as f:
             # initialize the file with valid JSON
             f.write('{}')
             f.flush()
