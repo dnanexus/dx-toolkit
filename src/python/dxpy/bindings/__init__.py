@@ -96,12 +96,9 @@ class DXObject(object):
             # https://stackoverflow.com/questions/47299243/recursionerror-when-python-copy-deepcopy
             raise AttributeError(attr)
         if not self._desc:
-            try:
-                self.describe()
-            except:
-                # describe can fail if the object has not been created
-                # properly. For example, it has an invalid dxid.
-                raise AttributeError()
+            # describe can fail if the object has not been created
+            # properly. For example, it has an invalid dxid.
+            self.describe()
         try:
             return self._desc[attr]
         except:

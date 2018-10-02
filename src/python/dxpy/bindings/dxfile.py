@@ -479,7 +479,7 @@ class DXFile(DXDataObject):
                                                   self._expected_file_size,
                                                   self._file_is_mmapd)
 
-    def write(self, data_org, multithread=True, **kwargs):
+    def _write2(self, data, multithread=True, **kwargs):
         '''
         :param data: Data to be written
         :type data: str or mmap object
@@ -495,20 +495,9 @@ class DXFile(DXDataObject):
 
         '''
         if USING_PYTHON2:
-            data = data_org
             assert(isinstance(data, str))
         else:
             # In python3, the underlying system methods use the 'bytes' type, not 'string'
-            #
-            # This is, hopefully, a temporary hack. It is not a good idea for two reasons:
-            # 1) Performance, we need to make a pass on the data, and need to allocate
-            #    another buffer of similar size
-            # 2) The types are wrong. The "bytes" type should be visible to the caller
-            #    of the write method, instead of being hidden.
-            if isinstance(data_org, str):
-                data = data_org.encode("utf-8")
-            else:
-                data = data_org
             assert(isinstance(data, bytes))
 
         self._ensure_write_bufsize(**kwargs)
@@ -550,6 +539,44 @@ class DXFile(DXDataObject):
             # TODO: check if repeat string splitting is bad for
             # performance when len(data) >> _write_bufsize
             self.write(data[remaining_space:], **kwargs)
+
+    def write(self, data, multithread=True, **kwargs):
+        '''
+        :param data: Data to be written
+        :type data: str or mmap object
+        :param multithread: If True, sends multiple write requests asynchronously
+        :type multithread: boolean
+
+        Writes the data *data* to the file.
+
+        .. note::
+
+            Writing to remote files is append-only. Using :meth:`seek`
+            does not affect where the next :meth:`write` will occur.
+
+        '''
+        if USING_PYTHON2:
+            self._write2(data, multithread=multithread, **kwargs)
+        else:
+            # In python3, the underlying system methods use the 'bytes' type, not 'string'
+            #
+            # This is, hopefully, a temporary hack. It is not a good idea for two reasons:
+            # 1) Performance, we need to make a pass on the data, and need to allocate
+            #    another buffer of similar size
+            # 2) The types are wrong. The "bytes" type should be visible to the caller
+            #    of the write method, instead of being hidden.
+            if isinstance(data, str):
+                bt = data.encode("utf-8")
+            elif isinstance(data, bytearray):
+                bt = bytes(data)
+            elif isinstance(data, bytes):
+                bt = data
+            elif isinstance(data, mmap.mmap):
+                bt = bytes(data)
+            else:
+                raise DXFileError("Invalid type {} for write data argument".format(type(data)))
+            assert(isinstance(bt, bytes))
+            self._write2(bt, multithread=multithread, **kwargs)
 
     def closed(self, **kwargs):
         '''
@@ -627,6 +654,12 @@ class DXFile(DXDataObject):
         defaults to 1. This probably only makes sense if this is the
         only part to be uploaded.
         """
+        if USING_PYTHON2:
+            assert(isinstance(data, str))
+        else:
+            # In python3, the underlying system methods use the 'bytes' type, not 'string'
+            assert(isinstance(data, bytes))
+
         req_input = {}
         if index is not None:
             req_input["index"] = int(index)

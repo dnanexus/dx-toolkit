@@ -540,7 +540,10 @@ class TestDXFile(unittest.TestCase):
 
             same_dxfile.seek(0, 2)
             buf = same_dxfile.read()
-            self.assertEqual(b"", buf)
+            if USING_PYTHON2:
+                self.assertEqual(b"", buf)
+            else:
+                self.assertEqual("", buf)
 
             same_dxfile.seek(-1, 2)
             buf = same_dxfile.read()
