@@ -1,27 +1,13 @@
 # Copyright 2012-2013, Andrey Kislyuk and argcomplete contributors.
 # Licensed under the Apache License. See https://github.com/kislyuk/argcomplete for more info.
 
-from __future__ import print_function, unicode_literals, division, absolute_import
-
 import os, sys, argparse, contextlib, subprocess, locale, re
 import io
 
 from . import my_shlex as shlex
+import collections
 
 USING_PYTHON2 = True if sys.version_info < (3, 0) else False
-
-if USING_PYTHON2:
-    from cStringIO import StringIO
-    BytesIO = StringIO
-    builtin_str = str
-    bytes = str
-    str = unicode
-    basestring = basestring
-    builtin_int = int
-    int = long
-    open = io.open
-else:
-    basestring = str
 
 sys_encoding = locale.getpreferredencoding()
 
@@ -72,7 +58,7 @@ def split_line(line, point):
     def split_word(word):
         # TODO: make this less ugly
         point_in_word = len(word) + point - lexer.instream.tell()
-        if isinstance(lexer.state, basestring) and lexer.state in lexer.whitespace:
+        if isinstance(lexer.state, str) and lexer.state in lexer.whitespace:
             point_in_word += 1
         if point_in_word > len(word):
             debug("In trailing whitespace")
@@ -181,10 +167,7 @@ class CompletionFinder(object):
         comp_point = int(os.environ['COMP_POINT'])
 
         # Adjust comp_point for wide chars
-        if USING_PYTHON2:
-            comp_point = len(comp_line[:comp_point].decode(sys_encoding))
-        else:
-            comp_point = len(comp_line.encode(sys_encoding)[:comp_point].decode(sys_encoding))
+        comp_point = len(comp_line.encode(sys_encoding)[:comp_point].decode(sys_encoding))
 
         if USING_PYTHON2:
             comp_line = comp_line.decode(sys_encoding)
@@ -193,7 +176,7 @@ class CompletionFinder(object):
 
         if os.environ['_ARGCOMPLETE'] == "2": # Hook recognized the first word as the interpreter
             comp_words.pop(0)
-        debug(u"\nLINE: '{l}'\nPREQUOTE: '{pq}'\nPREFIX: '{p}'".format(l=comp_line, pq=cword_prequote, p=cword_prefix), u"\nSUFFIX: '{s}'".format(s=cword_suffix), u"\nWORDS:", comp_words)
+        debug("\nLINE: '{l}'\nPREQUOTE: '{pq}'\nPREFIX: '{p}'".format(l=comp_line, pq=cword_prequote, p=cword_prefix), "\nSUFFIX: '{s}'".format(s=cword_suffix), "\nWORDS:", comp_words)
 
         active_parsers = [argument_parser]
         parsed_args = argparse.Namespace()
@@ -270,14 +253,14 @@ class CompletionFinder(object):
                 debug("Examining action", action)
                 if isinstance(action, argparse._SubParsersAction):
                     subparser_activated = False
-                    for subparser in action._name_parser_map.values():
+                    for subparser in list(action._name_parser_map.values()):
                         if subparser in active_parsers:
                             subparser_activated = True
                     if subparser_activated:
                         # Parent parser completions are not valid in the subparser, so flush them
                         completions = []
                     else:
-                        completions += [subcmd for subcmd in action.choices.keys() if subcmd.startswith(cword_prefix)]
+                        completions += [subcmd for subcmd in list(action.choices.keys()) if subcmd.startswith(cword_prefix)]
                 elif self.always_complete_options or (len(cword_prefix) > 0 and cword_prefix[0] in parser.prefix_chars):
                     completions += [option for option in action.option_strings if option.startswith(cword_prefix)]
 
@@ -306,7 +289,7 @@ class CompletionFinder(object):
                                 # to it, so give it exclusive control over completions (flush previous completions)
                                 debug("Resetting completions because", active_action, "is unsatisfied")
                                 completions = []
-                        if callable(completer):
+                        if isinstance(completer, collections.Callable):
                             completions += [c for c in completer(prefix=cword_prefix, action=active_action,
                                                                  parsed_args=parsed_args)
                                             if self.validator(c, cword_prefix)]
@@ -366,7 +349,7 @@ class CompletionFinder(object):
         if USING_PYTHON2:
             comp_wordbreaks = comp_wordbreaks.decode(sys_encoding)
 
-        punctuation_chars = u'();<>|&!`'
+        punctuation_chars = '();<>|&!`'
         for char in punctuation_chars:
             if char not in comp_wordbreaks:
                 comp_wordbreaks += char

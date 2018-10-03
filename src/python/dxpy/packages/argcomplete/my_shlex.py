@@ -18,14 +18,9 @@ from collections import deque
 
 # Note: cStringIO is not compatible with Unicode
 try:
-    from StringIO import StringIO
+    from io import StringIO
 except ImportError:
     from io import StringIO
-
-try:
-    basestring
-except NameError:
-    basestring = str
 
 __all__ = ["shlex", "split"]
 
@@ -42,7 +37,7 @@ class UnicodeWordchars:
 class shlex:
     "A lexical analyzer class for simple shell-like syntaxes."
     def __init__(self, instream=None, infile=None, posix=False, punctuation_chars=False):
-        if isinstance(instream, basestring):
+        if isinstance(instream, str):
             instream = StringIO(instream)
         if instream is not None:
             self.instream = instream
@@ -99,7 +94,7 @@ class shlex:
 
     def push_source(self, newstream, newfile=None):
         "Push an input source onto the lexer's input source stack."
-        if isinstance(newstream, basestring):
+        if isinstance(newstream, str):
             newstream = StringIO(newstream)
         self.filestack.appendleft((self.infile, self.instream, self.lineno))
         self.infile = newfile
@@ -271,7 +266,7 @@ class shlex:
         if newfile[0] == '"':
             newfile = newfile[1:-1]
         # This implements cpp-like semantics for relative-path inclusion.
-        if isinstance(self.infile, basestring) and not os.path.isabs(newfile):
+        if isinstance(self.infile, str) and not os.path.isabs(newfile):
             newfile = os.path.join(os.path.dirname(self.infile), newfile)
         return (newfile, open(newfile, "r"))
 
@@ -286,7 +281,7 @@ class shlex:
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         token = self.get_token()
         if token == self.eof:
             raise StopIteration
