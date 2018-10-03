@@ -16,7 +16,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import os, unittest, subprocess
+import os, unittest, subprocess, sys
 from tempfile import NamedTemporaryFile, mkdtemp
 
 import dxpy
@@ -116,6 +116,10 @@ class TestDXTabCompletion(unittest.TestCase):
 
         p = subprocess.Popen('dx', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.communicate()
+
+        # out,err are of type bytes, convert them to strings.
+        out = out.decode(sys.stdin.encoding)
+        err = err.decode(sys.stderr.encoding)
         self.assertIn(stderr_contains, err)
         return out.split(IFS)
 

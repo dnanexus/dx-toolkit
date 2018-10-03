@@ -17,7 +17,6 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import print_function, unicode_literals, division, absolute_import
 
 import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, io, time, subprocess, glob, logging, functools
 import shlex # respects quoted substrings when splitting
@@ -27,7 +26,7 @@ import csv
 
 logging.basicConfig(level=logging.INFO)
 
-from ..compat import (USING_PYTHON2, basestring, str, input, wrap_stdio_in_codecs, decode_command_line_args,
+from ..compat import (USING_PYTHON2, str, str, input, wrap_stdio_in_codecs, decode_command_line_args,
                       unwrap_stream, sys_encoding)
 
 wrap_stdio_in_codecs()
@@ -138,7 +137,7 @@ def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 def get_json_from_stdin():
-    user_json_str = input('Type JSON here> ')
+    user_json_str = eval(input('Type JSON here> '))
     user_json = None
     try:
         user_json = json.loads(user_json_str)
@@ -185,7 +184,7 @@ class DXCLICompleter():
     silent_commands = set(['export'])
 
     def __init__(self):
-        self.commands = [subcmd + ' ' for subcmd in subparsers.choices.keys() if subcmd not in self.silent_commands]
+        self.commands = [subcmd + ' ' for subcmd in list(subparsers.choices.keys()) if subcmd not in self.silent_commands]
         self.matches = []
         self.text = None
 
@@ -306,14 +305,14 @@ def login(args):
                 username = None
                 while not username:
                     if 'DX_USERNAME' in os.environ:
-                        username = input('Username [' + os.environ['DX_USERNAME'] + ']: ') or os.environ['DX_USERNAME']
+                        username = eval(input('Username [' + os.environ['DX_USERNAME'] + ']: ')) or os.environ['DX_USERNAME']
                     else:
-                        username = input('Username: ')
+                        username = eval(input('Username: '))
                 dxpy.config.write("DX_USERNAME", username)
                 with unwrap_stream('stdin'):
                     password = getpass.getpass()
 
-            otp = input('Verification code: ') if get_otp else None
+            otp = eval(input('Verification code: ')) if get_otp else None
             return dict(username=username, password=password, otp=otp)
 
         print('Acquiring credentials from ' + authserver)
@@ -462,7 +461,7 @@ def prompt_for_env_var(prompt_str, env_var_str):
     else:
         prompt += ': '
     while True:
-        value = input(prompt)
+        value = eval(input(prompt))
         if value != '':
             return value
         elif default is not None:
@@ -604,7 +603,7 @@ def env(args):
         print("API server port\t\t" + dxpy.APISERVER_PORT)
         print("Current workspace\t" + str(dxpy.WORKSPACE_ID))
         if "DX_PROJECT_CONTEXT_NAME" in os.environ:
-            print(u'Current workspace name\t"{n}"'.format(n=dxpy.config.get("DX_PROJECT_CONTEXT_NAME")))
+            print('Current workspace name\t"{n}"'.format(n=dxpy.config.get("DX_PROJECT_CONTEXT_NAME")))
         print("Current folder\t\t" + dxpy.config.get("DX_CLI_WD", "None"))
         print("Current user\t\t" + str(os.environ.get("DX_USERNAME")))
 
@@ -618,7 +617,7 @@ def get_pwd():
             except:
                 pass
     if state['currentproj'] is not None:
-        pwd_str = state['currentproj'] + ':' + dxpy.config.get('DX_CLI_WD', u'/')
+        pwd_str = state['currentproj'] + ':' + dxpy.config.get('DX_CLI_WD', '/')
     return pwd_str
 
 def pwd(args):
@@ -867,7 +866,7 @@ def rm(args):
         if entity_results is None:
             if folderpath is not None:
                 if not args.recursive:
-                    print(fill(u'Did not find "' + path + '" as a data object; if it is a folder, cannot remove it without setting the "-r" flag'))
+                    print(fill('Did not find "' + path + '" as a data object; if it is a folder, cannot remove it without setting the "-r" flag'))
                     had_error = True
                     continue
                 else:
@@ -931,7 +930,7 @@ def rmproject(args):
         try:
             proj_desc = dxpy.api.project_describe(proj_id)
             if args.confirm:
-                value = input(fill('About to delete project "' + proj_desc['name'] + '" (' + proj_id + ')') + '\nPlease confirm [y/n]: ')
+                value = eval(input(fill('About to delete project "' + proj_desc['name'] + '" (' + proj_id + ')') + '\nPlease confirm [y/n]: '))
                 if len(value) == 0 or value.lower()[0] != 'y':
                     had_error = True
                     print(fill('Aborting deletion of project "' + proj_desc['name'] + '"'))
@@ -940,7 +939,7 @@ def rmproject(args):
                 dxpy.api.project_destroy(proj_id, {"terminateJobs": not args.confirm})
             except dxpy.DXAPIError as apierror:
                 if apierror.name == 'InvalidState':
-                    value = input(fill('WARNING: there are still unfinished jobs in the project.') + '\nTerminate all jobs and delete the project? [y/n]: ')
+                    value = eval(input(fill('WARNING: there are still unfinished jobs in the project.') + '\nTerminate all jobs and delete the project? [y/n]: '))
                     if len(value) == 0 or value.lower()[0] != 'y':
                         had_error = True
                         print(fill('Aborting deletion of project "' + proj_desc['name'] + '"'))
@@ -1358,7 +1357,7 @@ def new_user(args):
 def new_project(args):
     if args.name == None:
         if INTERACTIVE_CLI:
-            args.name = input("Enter name for new project: ")
+            args.name = eval(input("Enter name for new project: "))
         else:
             err_exit(parser_new_project.format_help() + fill("No project name supplied, and input is not interactive"), 3)
     inputs = {"name": args.name}
@@ -1393,7 +1392,7 @@ def new_record(args):
 
     if args.output is None:
         project = dxpy.WORKSPACE_ID
-        folder = dxpy.config.get('DX_CLI_WD', u'/')
+        folder = dxpy.config.get('DX_CLI_WD', '/')
         name = None
     else:
         project, folder, name = try_call(resolve_path, args.output)
@@ -1420,7 +1419,7 @@ def new_gtable(args):
 
     if args.output is None:
         project = dxpy.WORKSPACE_ID
-        folder = dxpy.config.get('DX_CLI_WD', u'/')
+        folder = dxpy.config.get('DX_CLI_WD', '/')
         name = None
     else:
         project, folder, name = try_call(resolve_path, args.output)
@@ -2009,7 +2008,7 @@ def upload_one(args):
 
     if args.path is None:
         project = dxpy.WORKSPACE_ID
-        folder = dxpy.config.get('DX_CLI_WD', u'/')
+        folder = dxpy.config.get('DX_CLI_WD', '/')
         name = None if args.filename == '-' else os.path.basename(args.filename)
     else:
         project, folder, name = try_call(resolve_path, args.path)
@@ -2035,7 +2034,7 @@ def upload_one(args):
                 sub_args = copy.copy(args)
                 sub_args.mute = True
                 sub_args.filename = os.path.join(args.filename, f)
-                sub_args.path = u"{p}:{f}/{sf}/".format(p=project, f=folder, sf=os.path.basename(args.filename))
+                sub_args.path = "{p}:{f}/{sf}/".format(p=project, f=folder, sf=os.path.basename(args.filename))
                 sub_args.parents = True
                 upload_one(sub_args)
     else:
@@ -2246,7 +2245,7 @@ def find_executions(args):
             # Short-circuit the find_execution API call(s) if there are
             # no root executions (and therefore we would have gotten 0
             # results anyway)
-            if len(roots.keys()) > 0:
+            if len(list(roots.keys())) > 0:
                 for execution_result in dxpy.find_executions(**query):
                     process_execution_result(execution_result)
 
@@ -2592,7 +2591,7 @@ def build(args):
                 #'--[no]update': args.update,
                 '--region': args.region,
                 '--extra-args': args.extra_args}
-            used_unsupported_options = {k: v for k, v in unsupported_options.items() if v}
+            used_unsupported_options = {k: v for k, v in list(unsupported_options.items()) if v}
             if used_unsupported_options:
                 build_parser.error("Options {} are not supported with workflows"
                                    .format(", ".join(used_unsupported_options)))
@@ -2691,7 +2690,7 @@ def compile(args):
     # accept unicode. Therefore, we encode unicode destinations as
     # hexadecimal strings.
     destination = compile_destination(args)
-    if type(destination) is unicode:
+    if type(destination) is str:
         cmdline += ["--destination_unicode", _unicodeToHex(destination)]
     else:
         cmdline += ["--destination", destination]
@@ -2743,7 +2742,7 @@ def compile_dxni(args):
     # accept unicode. Therefore, we encode unicode destinations as
     # hexadecimal strings.
     destination = compile_destination(args)
-    if type(destination) is unicode:
+    if type(destination) is str:
         cmdline += ["--destination_unicode", _unicodeToHex(destination)]
     else:
         cmdline += ["--destination", destination]
@@ -2923,7 +2922,7 @@ def run_one(args, executable, dest_proj, dest_path, input_json, run_kwargs):
         if args.wait:
             dxexecution.wait_on_done()
         elif args.confirm and INTERACTIVE_CLI and not (args.watch or args.ssh) and isinstance(dxexecution, dxpy.DXJob):
-            answer = input("Watch launched job now? [Y/n] ")
+            answer = eval(input("Watch launched job now? [Y/n] "))
             if len(answer) == 0 or answer.lower()[0] == 'y':
                 args.watch = True
 
@@ -2985,8 +2984,8 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
 def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None):
     input_json = _get_input_for_run(args, executable, preset_inputs)
 
-    if args.sys_reqs_from_clone and not isinstance(args.instance_type, basestring):
-        args.instance_type = dict({stage: reqs['instanceType'] for stage, reqs in args.sys_reqs_from_clone.items()},
+    if args.sys_reqs_from_clone and not isinstance(args.instance_type, str):
+        args.instance_type = dict({stage: reqs['instanceType'] for stage, reqs in list(args.sys_reqs_from_clone.items())},
                                   **(args.instance_type or {}))
 
     if args.debug_on:
@@ -3099,7 +3098,7 @@ def print_run_help(executable="", alias=None):
                     'The global workflow is not enabled in the current region. ' +
                     'Please run "dx select" to set the working project from one of the regions ' +
                     'the workflow is enabled in: {}'.format(
-                       ",".join(exec_desc['regionalOptions'].keys()))
+                       ",".join(list(exec_desc['regionalOptions'].keys())))
                 ))
             exec_desc = handler.append_underlying_workflow_desc(exec_desc, current_region)
 
@@ -3146,7 +3145,7 @@ def print_run_help(executable="", alias=None):
             if len(input_spec) == 0:
                 exec_help += " <none>\n"
             else:
-                for group, params in group_array_by_field(input_spec).items():
+                for group, params in list(group_array_by_field(input_spec).items()):
                     if group is not None:
                         exec_help += "\n " + BOLD(group)
                     for param in params:
@@ -3431,7 +3430,7 @@ def run(args):
         if is_workflow:
             dest_path = getattr(handler, 'outputFolder', None)
         if dest_path is None:
-            dest_path = dxpy.config.get('DX_CLI_WD', u'/')
+            dest_path = dxpy.config.get('DX_CLI_WD', '/')
 
     process_instance_type_arg(args, is_workflow)
     run_body(args, handler, dest_proj, dest_path)
@@ -3494,7 +3493,7 @@ def shell(orig_args):
             pwd_str = get_pwd()
             if pwd_str is not None:
                 prompt = pwd_str + prompt
-            cmd = input(prompt)
+            cmd = eval(input(prompt))
         except EOFError:
             print("")
             exit(0)
@@ -3541,7 +3540,7 @@ def watch(args):
         else:
             args.format = BLUE("{job_name}") + " {level_color}{level}" + ENDC() + " {msg}"
         if args.timestamps:
-            args.format = u"{timestamp} " + args.format
+            args.format = "{timestamp} " + args.format
 
         def msg_callback(message):
             message['timestamp'] = str(datetime.datetime.fromtimestamp(message.get('timestamp', 0)//1000))
@@ -3622,7 +3621,7 @@ def ssh_config(args):
                 err_exit("Unable to generate a new SSH key pair", expected_exceptions=(subprocess.CalledProcessError, ))
         else:
             if choice == len(choices) - 1:
-                key_src = input('Enter the location of your SSH key: ')
+                key_src = eval(input('Enter the location of your SSH key: '))
                 pub_key_src = key_src + ".pub"
                 if os.path.exists(key_src) and os.path.exists(pub_key_src):
                     print("Using {} and {} as the key pair".format(key_src, pub_key_src))
@@ -3819,7 +3818,7 @@ def generate_batch_inputs(args):
 
     eprint("Found {num_success} valid batch IDs matching desired pattern.".format(num_success=len(successful)))
 
-    input_names = input_dict.keys()
+    input_names = list(input_dict.keys())
 
     # Output TSV Batch.  This procedure generates a TSV file with file names and IDs grouped by pattern
     for i,batch in enumerate(batches):
@@ -3844,7 +3843,7 @@ def generate_batch_inputs(args):
             eprint("    Mismatched set of input names.")
             eprint("        Required input names: {required}".format(required=", ".join(input_names)))
             eprint("        Matched input names: {matched}".format(matched=", ".join(input_names_i)))
-        for input_name, matches in bi['inputs'].items():
+        for input_name, matches in list(bi['inputs'].items()):
             if len(matches['ids']) > 1:
                 eprint("Input {iname} is associated with a file name that matches multiple IDs:".format(iname=input_name))
                 eprint("    {fname} => {ids}".format(fname=matches['name'], ids=", ".join(matches['ids'])))
@@ -4007,7 +4006,7 @@ class DXArgumentParser(argparse.ArgumentParser):
             raise err
 
     def exit(self, status=0, message=None):
-        if isinstance(status, basestring):
+        if isinstance(status, str):
             message = message + status if message else status
             status = 1
         if message:
@@ -4034,7 +4033,7 @@ def register_parser(parser, subparsers_action=None, categories=('other', ), add_
     name = re.sub('^dx ', '', parser.prog)
     if subparsers_action is None:
         subparsers_action = subparsers
-    if isinstance(categories, basestring):
+    if isinstance(categories, str):
         categories = (categories, )
 
     parser_map[name] = parser
