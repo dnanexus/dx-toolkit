@@ -597,22 +597,20 @@ class DXTestCaseBuildApps(DXTestCase):
         # Note: if called twice with the same app_name, will overwrite
         # the dxapp.json and code file (if specified) but will not
         # remove any other files that happened to be present
+        p = os.path.join(self.temp_file_path, app_name)
+        pb = p.encode("utf-8")
         try:
-            print("type(temp_file_path)={}  type(app_name)={}"
-                  .format(type(self.temp_file_path), type(app_name)))
-            p = os.path.join(self.temp_file_path, app_name)
-            print("type(p)={}".format(type(p)))
-            os.mkdir(p)
+            os.mkdir(pb)
         except OSError as e:
             if e.errno != 17:  # directory already exists
                 raise e
         if dxapp_str is not None:
-            with open(os.path.join(self.temp_file_path, app_name, 'dxapp.json'), 'wb') as manifest:
+            with open(os.path.join(pb, b'dxapp.json'), 'wb') as manifest:
                 manifest.write(dxapp_str.encode())
         if code_filename:
-            with open(os.path.join(self.temp_file_path, app_name, code_filename), 'w') as code_file:
+            with open(os.path.join(pb, code_filename.encode("utf-8")), 'w') as code_file:
                 code_file.write(code_content)
-        return os.path.join(self.temp_file_path, app_name)
+        return p
 
 
 class TemporaryFile:
