@@ -137,7 +137,7 @@ def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 def get_json_from_stdin():
-    user_json_str = eval(input('Type JSON here> '))
+    user_json_str = input('Type JSON here> ')
     user_json = None
     try:
         user_json = json.loads(user_json_str)
@@ -305,14 +305,14 @@ def login(args):
                 username = None
                 while not username:
                     if 'DX_USERNAME' in os.environ:
-                        username = eval(input('Username [' + os.environ['DX_USERNAME'] + ']: ')) or os.environ['DX_USERNAME']
+                        username = input('Username [' + os.environ['DX_USERNAME'] + ']: ') or os.environ['DX_USERNAME']
                     else:
-                        username = eval(input('Username: '))
+                        username = input('Username: ')
                 dxpy.config.write("DX_USERNAME", username)
                 with unwrap_stream('stdin'):
                     password = getpass.getpass()
 
-            otp = eval(input('Verification code: ')) if get_otp else None
+            otp = input('Verification code: ') if get_otp else None
             return dict(username=username, password=password, otp=otp)
 
         print('Acquiring credentials from ' + authserver)
@@ -461,7 +461,7 @@ def prompt_for_env_var(prompt_str, env_var_str):
     else:
         prompt += ': '
     while True:
-        value = eval(input(prompt))
+        value = input(prompt)
         if value != '':
             return value
         elif default is not None:
@@ -930,7 +930,7 @@ def rmproject(args):
         try:
             proj_desc = dxpy.api.project_describe(proj_id)
             if args.confirm:
-                value = eval(input(fill('About to delete project "' + proj_desc['name'] + '" (' + proj_id + ')') + '\nPlease confirm [y/n]: '))
+                value = input(fill('About to delete project "' + proj_desc['name'] + '" (' + proj_id + ')') + '\nPlease confirm [y/n]: ')
                 if len(value) == 0 or value.lower()[0] != 'y':
                     had_error = True
                     print(fill('Aborting deletion of project "' + proj_desc['name'] + '"'))
@@ -939,7 +939,7 @@ def rmproject(args):
                 dxpy.api.project_destroy(proj_id, {"terminateJobs": not args.confirm})
             except dxpy.DXAPIError as apierror:
                 if apierror.name == 'InvalidState':
-                    value = eval(input(fill('WARNING: there are still unfinished jobs in the project.') + '\nTerminate all jobs and delete the project? [y/n]: '))
+                    value = input(fill('WARNING: there are still unfinished jobs in the project.') + '\nTerminate all jobs and delete the project? [y/n]: ')
                     if len(value) == 0 or value.lower()[0] != 'y':
                         had_error = True
                         print(fill('Aborting deletion of project "' + proj_desc['name'] + '"'))
@@ -1357,7 +1357,7 @@ def new_user(args):
 def new_project(args):
     if args.name == None:
         if INTERACTIVE_CLI:
-            args.name = eval(input("Enter name for new project: "))
+            args.name = input("Enter name for new project: ")
         else:
             err_exit(parser_new_project.format_help() + fill("No project name supplied, and input is not interactive"), 3)
     inputs = {"name": args.name}
@@ -2922,7 +2922,7 @@ def run_one(args, executable, dest_proj, dest_path, input_json, run_kwargs):
         if args.wait:
             dxexecution.wait_on_done()
         elif args.confirm and INTERACTIVE_CLI and not (args.watch or args.ssh) and isinstance(dxexecution, dxpy.DXJob):
-            answer = eval(input("Watch launched job now? [Y/n] "))
+            answer = input("Watch launched job now? [Y/n] ")
             if len(answer) == 0 or answer.lower()[0] == 'y':
                 args.watch = True
 
@@ -3493,7 +3493,7 @@ def shell(orig_args):
             pwd_str = get_pwd()
             if pwd_str is not None:
                 prompt = pwd_str + prompt
-            cmd = eval(input(prompt))
+            cmd = input(prompt)
         except EOFError:
             print("")
             exit(0)
@@ -3621,7 +3621,7 @@ def ssh_config(args):
                 err_exit("Unable to generate a new SSH key pair", expected_exceptions=(subprocess.CalledProcessError, ))
         else:
             if choice == len(choices) - 1:
-                key_src = eval(input('Enter the location of your SSH key: '))
+                key_src = input('Enter the location of your SSH key: ')
                 pub_key_src = key_src + ".pub"
                 if os.path.exists(key_src) and os.path.exists(pub_key_src):
                     print("Using {} and {} as the key pair".format(key_src, pub_key_src))
