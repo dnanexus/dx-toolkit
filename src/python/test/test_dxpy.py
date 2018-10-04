@@ -2037,6 +2037,21 @@ class TestDXGlobalWorkflow(testutil.DXTestCaseBuildWorkflows):
         self.assertEqual(smaller_desc['name'], 'gwf_name')
         self.assertEqual(smaller_desc['version'], '0.0.1')
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create a global workflow')
+    def test_dx_find_global_workflows(self):
+        gw_spec = self.create_global_workflow_spec(self.proj_id, "gwf_search", "0.0.1")
+        dxgwf = dxpy.DXGlobalWorkflow()
+        dxgwf.new(**gw_spec)
+
+        results = list(dxpy.search.find_global_workflows(return_handler=True))
+        self.assertEqual(len(results), 1)
+        self.assertTrue(isinstance(results[0], dxpy.DXGlobalWorkflow))
+
+        results = list(dxpy.search.find_global_workflows(describe=True))
+        self.assertEqual("gwf_search", results[0]['describe']["name"])
+
+
 class TestDXSearch(unittest.TestCase):
     def setUp(self):
         setUpTempProjects(self)

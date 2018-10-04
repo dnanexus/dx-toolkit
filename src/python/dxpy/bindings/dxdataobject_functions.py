@@ -102,6 +102,8 @@ def _guess_link_target_type(link):
     class_name = 'DX'+class_name.capitalize()
     if class_name == 'DXGtable':
         class_name = 'DXGTable'
+    if class_name == 'DXGlobalworkflow':
+        class_name = 'DXGlobalWorkflow'
     cls = all_bindings[class_name]
     return cls
 
@@ -111,7 +113,7 @@ def get_handler(id_or_link, project=None):
     :type id_or_link: string or dict
     :param project: String project ID to use as the context if the the object is a data object
     :type project: string
-    :rtype: :class:`~dxpy.bindings.DXObject`
+    :rtype: :class:`~dxpy.bindings.DXObject`, :class:`~dxpy.bindings.DXApp`, or :class:`~dxpy.bindings.DXGlobalWorkflow`
 
     Parses a string or DXLink dict. Creates and returns an object handler for it.
 
@@ -124,7 +126,7 @@ def get_handler(id_or_link, project=None):
     except Exception as e:
         raise DXError("Could not parse link {}: {}".format(id_or_link, e))
 
-    if cls == dxpy.DXApp:
+    if cls in [dxpy.DXApp, dxpy.DXGlobalWorkflow]:
         # This special case should translate identifiers of the form
         # "app-name" or "app-name/version_or_tag" to the appropriate
         # arguments
