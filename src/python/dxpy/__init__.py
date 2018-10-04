@@ -258,9 +258,16 @@ def _get_pool_manager(verify, cert_file, key_file):
     global _pool_manager
     default_pool_args = dict(maxsize=32,
                              cert_reqs=ssl.CERT_REQUIRED,
-                             ca_certs=_default_certs,
                              headers=_default_headers,
                              timeout=_default_timeout)
+    # Don't define a default CA bundle on Windows platforms - urllib3 and
+    # ssl.py take care of loading the default CA list provided by the OS.
+    # Plus, explicitly setting a CA list in the pool manager on Windows
+    # can sometimes cause verification failures; see DEVEX-875.
+    # But non-Windows platforms require setting a ca_certs bundle here:
+    if platform.system() != 'Windows':
+        default_pool_args.update(ca_certs=_default_certs)
+
     if cert_file is None and verify is None and 'DX_CA_CERT' not in os.environ:
         with _pool_mutex:
             if _pool_manager is None:
