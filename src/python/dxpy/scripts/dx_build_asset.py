@@ -16,7 +16,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import print_function, unicode_literals, division, absolute_import
+
 
 import logging
 logging.basicConfig(level=logging.WARNING)
@@ -62,7 +62,7 @@ def parse_asset_spec(src_dir):
         try:
             return json_load_raise_on_duplicates(asset_desc)
         except Exception as e:
-            raise AssetBuilderException("Could not parse dxasset.json file as JSON: " + e.message)
+            raise AssetBuilderException("Could not parse dxasset.json file as JSON: " + e.args)
 
 def validate_conf(asset_conf):
     """
@@ -180,7 +180,7 @@ def dx_run_app(json_file_id, make_file_id, asset_file_id, app_name):
         job_out = subprocess.check_output(cmd)
         return job_out.strip()
     except subprocess.CalledProcessError as cp:
-        raise AssetBuilderException("Failed to run the command: " + str(cmd) + cp.message)
+        raise AssetBuilderException("Failed to run the command: " + str(cmd) + cp.args)
     except OSError:
         raise AssetBuilderException("Failed to run the tar command: " + str(cmd))
 

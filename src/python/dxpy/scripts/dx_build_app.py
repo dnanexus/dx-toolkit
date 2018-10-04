@@ -16,7 +16,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import print_function, unicode_literals, division, absolute_import
+
 
 import logging
 logging.basicConfig(level=logging.WARNING)
@@ -42,7 +42,7 @@ from ..utils.completer import LocalCompleter
 from ..app_categories import APP_CATEGORIES
 from ..exceptions import err_exit
 from ..utils.printing import BOLD
-from ..compat import open, USING_PYTHON2, decode_command_line_args, basestring
+from ..compat import open, USING_PYTHON2, decode_command_line_args
 
 decode_command_line_args()
 
@@ -128,7 +128,7 @@ def _check_suggestions(app_json, publish=False):
                                 if e.code == 404:
                                     logger.warn('Suggested project {name} does not exist, or not accessible by user'.format(
                                                  name=suggestion['value']['$dnanexus_link']['project']))
-                    elif isinstance(suggestion['value']['$dnanexus_link'], basestring):
+                    elif isinstance(suggestion['value']['$dnanexus_link'], str):
                         if suggestion['value']['$dnanexus_link'].startswith(('file-', 'record-', 'gtable-')):
                             try:
                                 dnanexus_link = dxpy.describe(suggestion['value']['$dnanexus_link'])
@@ -368,10 +368,10 @@ def _verify_app_source_dir_impl(src_dir, temp_dir, mode, enforce=True):
                     raise dxpy.app_builder.AppBuilderException(msg)
 
     if 'authorizedUsers' in manifest:
-        if not isinstance(manifest['authorizedUsers'], list) or isinstance(manifest['authorizedUsers'], basestring):
+        if not isinstance(manifest['authorizedUsers'], list) or isinstance(manifest['authorizedUsers'], str):
             raise dxpy.app_builder.AppBuilderException('Expected authorizedUsers to be a list of strings')
         for thing in manifest['authorizedUsers']:
-            if thing != 'PUBLIC' and (not isinstance(thing, basestring) or not re.match("^(org-|user-)", thing)):
+            if thing != 'PUBLIC' and (not isinstance(thing, str) or not re.match("^(org-|user-)", thing)):
                 raise dxpy.app_builder.AppBuilderException('authorizedUsers field contains an entry which is not either the string "PUBLIC" or a user or org ID')
 
     if "pricingPolicy" in manifest:
@@ -464,7 +464,7 @@ def _parse_app_spec(src_dir):
         try:
             return json_load_raise_on_duplicates(app_desc)
         except Exception as e:
-            raise dxpy.app_builder.AppBuilderException("Could not parse dxapp.json file as JSON: " + e.message)
+            raise dxpy.app_builder.AppBuilderException("Could not parse dxapp.json file as JSON: " + e.args)
 
 def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
                       version_override=None, bill_to_override=None, dx_toolkit_autodep="stable",
@@ -704,7 +704,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             except:
                 # A /project/new request may fail if the requesting user is
                 # not authorized to create projects in a certain region.
-                dxpy.executable_builder.delete_temporary_projects(projects_by_region.values())
+                dxpy.executable_builder.delete_temporary_projects(list(projects_by_region.values()))
                 err_exit()
         else:
             # Create a temp project
@@ -785,7 +785,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             raise dxpy.app_builder.AppBuilderException(error_message)
 
         resources_bundles_by_region = {}
-        for region, project in projects_by_region.items():
+        for region, project in list(projects_by_region.items()):
             resources_bundles_by_region[region] = dxpy.app_builder.upload_resources(
                 src_dir,
                 project=project,
@@ -796,7 +796,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
         # TODO: Clean up these applets if the app build fails.
         applet_ids_by_region = {}
         try:
-            for region, project in projects_by_region.items():
+            for region, project in list(projects_by_region.items()):
                 applet_id, applet_spec = dxpy.app_builder.upload_applet(
                     src_dir,
                     resources_bundles_by_region[region],
@@ -818,7 +818,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             # using_temp_project, the entire project gets destroyed at
             # the end, so we don't bother.
             if not using_temp_project:
-                for region, project in projects_by_region.items():
+                for region, project in list(projects_by_region.items()):
                     objects_to_delete = [dxpy.get_dxlink_ids(bundled_resource_obj['id'])[0] for bundled_resource_obj in resources_bundles_by_region[region]]
                     if objects_to_delete:
                         dxpy.api.project_remove_objects(
@@ -841,11 +841,11 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
 
             additional_resources_by_region = {}
             if "regionalOptions" in app_json:
-                for region, region_config in app_json["regionalOptions"].items():
+                for region, region_config in list(app_json["regionalOptions"].items()):
                     if "resources" in region_config:
                         additional_resources_by_region[region] = region_config["resources"]
             elif "resources" in app_json:
-                additional_resources_by_region[projects_by_region.keys()[0]] = app_json["resources"]
+                additional_resources_by_region[list(projects_by_region.keys())[0]] = app_json["resources"]
 
             regional_options = {}
             for region in projects_by_region:
@@ -855,7 +855,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
 
             # add pricingPolicy separately for better readability
             if "regionalOptions" in app_json:
-                for region, region_config in app_json["regionalOptions"].items():
+                for region, region_config in list(app_json["regionalOptions"].items()):
                     if "pricingPolicy" in region_config:
                         regional_options[region]["pricingPolicy"] = region_config["pricingPolicy"]
 
@@ -889,7 +889,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     finally:
         # Clean up after ourselves.
         if using_temp_project:
-            dxpy.executable_builder.delete_temporary_projects(projects_by_region.values())
+            dxpy.executable_builder.delete_temporary_projects(list(projects_by_region.values()))
 
 
 def _build_app(args, extra_args):
@@ -933,7 +933,7 @@ def _build_app(args, extra_args):
         except dxpy.app_builder.AppBuilderException as e:
             # AppBuilderException represents errors during app or applet building
             # that could reasonably have been anticipated by the user.
-            print("Error: %s" % (e.message,), file=sys.stderr)
+            print("Error: %s" % (e.args,), file=sys.stderr)
             sys.exit(3)
         except dxpy.exceptions.DXAPIError as e:
             print("Error: %s" % (e,), file=sys.stderr)
@@ -954,7 +954,7 @@ def _build_app(args, extra_args):
             if args.mode == "app" and not args.dry_run:
                 dxpy.executable_builder.verify_developer_rights('app-' + app_json['name'])
         except dxpy.app_builder.AppBuilderException as e:
-            print("Error: %s" % (e.message,), file=sys.stderr)
+            print("Error: %s" % (e.args,), file=sys.stderr)
             sys.exit(3)
 
         # The following flags might be useful in conjunction with

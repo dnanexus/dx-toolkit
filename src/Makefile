@@ -61,7 +61,7 @@ src_libs: api_wrappers
 	mkdir -p "$(DNANEXUS_LIBDIR)"
 	cp -R -v bash "$(DNANEXUS_LIBDIR)"
 
-PYTHON_LIBDIR := $(DNANEXUS_LIBDIR)/python2.7/site-packages
+PYTHON_LIBDIR := $(DNANEXUS_LIBDIR)/python${PYTHON_VERSION}/site-packages
 JAVA_LIBDIR := $(DNANEXUS_LIBDIR)/java
 
 python: api_wrappers toolkit_version $(DNANEXUS_HOME)/bin/dx
@@ -119,7 +119,7 @@ test: test_python
 
 coverage_python:
 	(cd python; export PYTHONPATH="$$PYTHONPATH:$$(echo $$(pwd)/coverage-*.egg)"; \
-	 test/coveragereport.py --strip-prefix="$$(readlink -f $$(pwd))/build/lib.linux-x86_64-${PYTHON_VERSION}" --cover dxpy. --cover scripts --exclude dxpy.packages --exclude EGG-INFO.scripts --exclude test. --exclude setuptools --path-alias "$$(readlink -f $$(pwd)/../../share/dnanexus/lib/python2.7/site-packages/dxpy*.egg)"="$$(readlink -f $$(pwd))" --path-alias "$$(readlink -f $$(pwd)/build/lib.linux-x86_64-${PYTHON_VERSION})"="$$(readlink -f $$(pwd))")
+	 test/coveragereport.py --strip-prefix="$$(readlink -f $$(pwd))/build/lib.linux-x86_64-${PYTHON_VERSION}" --cover dxpy. --cover scripts --exclude dxpy.packages --exclude EGG-INFO.scripts --exclude test. --exclude setuptools --path-alias "$$(readlink -f $$(pwd)/../../share/dnanexus/lib/python${PYTHON_VERSION}/site-packages/dxpy*.egg)"="$$(readlink -f $$(pwd))" --path-alias "$$(readlink -f $$(pwd)/build/lib.linux-x86_64-${PYTHON_VERSION})"="$$(readlink -f $$(pwd))")
 
 test_python:
 	../build/run_python_integration_tests.py
@@ -133,7 +133,7 @@ test_java:
 
 base_install: all
 	mkdir -p $(DESTDIR)/$(PREFIX)/bin
-	rm -rf $(DESTDIR)/$(PREFIX)/lib/python2.7/site-packages/dxpy*              # Prevent file-overwriting-dir (or the opposite) problem
+	rm -rf $(DESTDIR)/$(PREFIX)/lib/python${PYTHON_VERSION}/site-packages/dxpy*              # Prevent file-overwriting-dir (or the opposite) problem
 
 	cp -a $(DNANEXUS_HOME)/bin/* $(DESTDIR)/$(PREFIX)/bin/                     # binaries
 
