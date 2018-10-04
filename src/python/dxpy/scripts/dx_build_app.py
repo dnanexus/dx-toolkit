@@ -464,7 +464,7 @@ def _parse_app_spec(src_dir):
         try:
             return json_load_raise_on_duplicates(app_desc)
         except Exception as e:
-            raise dxpy.app_builder.AppBuilderException("Could not parse dxapp.json file as JSON: " + e.args)
+            raise dxpy.app_builder.AppBuilderException("Could not parse dxapp.json file as JSON: " + str(e.args))
 
 def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
                       version_override=None, bill_to_override=None, dx_toolkit_autodep="stable",

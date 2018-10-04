@@ -129,15 +129,18 @@ def chdir(dirname=None):
 
 def run(command, **kwargs):
     print("$ %s" % (command,))
-    if platform.system() == 'Windows':
-        # Before running unicode command strings here via subprocess, avoid
-        # letting Python 2.7 on Windows default to encoding the string with
-        # the ascii codec - use the preferred encoding of the OS instead
-        # (which will likely be 'cp1252'):
-        command_encoded = command.encode(locale.getpreferredencoding())
-        output = check_output(command_encoded, shell=True, **kwargs)
-    else:
-        output = check_output(command, shell=True, **kwargs)
+    if (isinstance(command, str)):
+        # convert to bytes if needed
+        if platform.system() == 'Windows':
+            # Before running unicode command strings here via subprocess, avoid
+            # letting Python 2.7 on Windows default to encoding the string with
+            # the ascii codec - use the preferred encoding of the OS instead
+            # (which will likely be 'cp1252'):
+            command = command.encode(locale.getpreferredencoding())
+        else:
+            command = command.encode("utf-8")
+    assert(isinstance(command, bytes))
+    output = check_output(command, shell=True, **kwargs)
     print(output)
     return output
 
