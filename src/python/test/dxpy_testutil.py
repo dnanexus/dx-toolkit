@@ -598,7 +598,11 @@ class DXTestCaseBuildApps(DXTestCase):
         # the dxapp.json and code file (if specified) but will not
         # remove any other files that happened to be present
         try:
-            os.mkdir(os.path.join(self.temp_file_path, app_name))
+            print("type(temp_file_path)={}  type(app_name)={}"
+                  .format(type(self.temp_file_path), type(app_name)))
+            p = os.path.join(self.temp_file_path, app_name)
+            print("type(p)={}".format(type(p)))
+            os.mkdir(p)
         except OSError as e:
             if e.errno != 17:  # directory already exists
                 raise e
