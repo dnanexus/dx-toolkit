@@ -235,7 +235,7 @@ class DXContainer(DXObject):
                    always_retry=force,  # api call is idempotent under 'force' semantics
                    **kwargs)
 
-    def clone(self, container, destination="/", objects=[], folders=[], **kwargs):
+    def clone(self, container, destination="/", objects=[], folders=[], parents=False, **kwargs):
         """
         :param container: Destination container ID
         :type container: string
@@ -245,6 +245,8 @@ class DXContainer(DXObject):
         :type objects: list of strings
         :param folders: List of full paths to folders to move
         :type folders: list of strings
+        :param parents: Whether the destination folder and/or parent folders should be created if they do not exist
+        :type parents: boolean
 
         Clones (copies) the specified objects and folders in the
         container into the folder *destination* in the container
@@ -266,7 +268,8 @@ class DXContainer(DXObject):
                           {"objects": objects,
                            "folders": folders,
                            "project": container,
-                           "destination": destination},
+                           "destination": destination,
+                           "parents": parents},
                           **kwargs)
 
 #############
