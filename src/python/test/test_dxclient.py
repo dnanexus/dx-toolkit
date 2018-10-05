@@ -338,7 +338,7 @@ class TestDXClient(DXTestCase):
 
     def test_dx_set_details_with_file(self):
         # Create temporary JSON file with valid JSON.
-        with tempfile.NamedTemporaryFile() as tmp_file, tempfile.NamedTemporaryFile() as tmp_invalid_file:
+        with tempfile.NamedTemporaryFile(mode='w+') as tmp_file, tempfile.NamedTemporaryFile(mode='w+') as tmp_invalid_file:
             tmp_file.write('{\"foo\": \"bar\"}')
             tmp_file.flush()
 
@@ -378,15 +378,15 @@ class TestDXClient(DXTestCase):
             details = dxrecord.get_details()
             self.assertEqual({"foo": "bar"}, details, msg="dx set_details -f - with valid JSON input failed.")
 
-    @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_HELP_EXIT_OUT_INTERACTIVE_SHELL", "DNA_CLI_HELP_DX_SHELL_INTERPRETER"])
+#    @pytest.mark.TRACEABILITY_MATRIX
+#    @testutil.update_traceability_matrix(["DNA_CLI_HELP_EXIT_OUT_INTERACTIVE_SHELL", "DNA_CLI_HELP_DX_SHELL_INTERPRETER"])
     def test_dx_shell(self):
-        shell = pexpect.spawn("bash")
+        shell = pexpect.spawnu("bash")
         shell.logfile = sys.stdout
         shell.sendline("dx sh")
         shell.expect(">")
         shell.sendline("Ψ 'Ψ Ψ'")
-        shell.expect("invalid choice: Ψ".encode(sys_encoding))
+        shell.expect("invalid choice: Ψ")
         shell.expect(">")
         shell.sendline("env")
         shell.expect("Current user")

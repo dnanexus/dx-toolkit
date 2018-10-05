@@ -129,21 +129,17 @@ def chdir(dirname=None):
 
 def run(command, **kwargs):
     print("$ %s" % (command,))
-    if (isinstance(command, str)):
-        # convert to bytes if needed
-        if platform.system() == 'Windows':
-            # Before running unicode command strings here via subprocess, avoid
-            # letting Python 2.7 on Windows default to encoding the string with
-            # the ascii codec - use the preferred encoding of the OS instead
-            # (which will likely be 'cp1252'):
-            command = command.encode(locale.getpreferredencoding())
-        else:
-            command = command.encode("utf-8")
-    assert(isinstance(command, bytes))
-    output = check_output(command, shell=True, **kwargs)
+    if platform.system() == 'Windows':
+        # Before running unicode command strings here via subprocess, avoid
+        # letting Python 2.7 on Windows default to encoding the string with
+        # the ascii codec - use the preferred encoding of the OS instead
+        # (which will likely be 'cp1252'):
+        command_encoded = command.encode(locale.getpreferredencoding())
+        output = check_output(command_encoded, shell=True, **kwargs)
+    else:
+        output = check_output(command, shell=True, **kwargs)
     print(output)
     return output
-
 
 @contextmanager
 def temporary_project(name='dx client tests temporary project', cleanup=True, reclaim_permissions=False, select=False,
@@ -622,8 +618,8 @@ class TemporaryFile:
         in Windows, where the OS does not allow multiple handles to a single file. The parameter
         'close' determines if the file is returned closed or open.
     '''
-    def __init__(self, mode='w+b', bufsize=-1, suffix='', prefix='tmp', dir=None, delete=True, close=False):
-        self.temp_file = tempfile.NamedTemporaryFile(mode, bufsize, None, None, suffix, prefix, dir, delete=False)
+    def __init__(self, mode='w+', bufsize=-1, suffix='', prefix='tmp', dir=None, delete=True, close=False):
+        self.temp_file = tempfile.NamedTemporaryFile(mode, bufsize, "utf-8", None, suffix, prefix, dir, delete=False)
         self.name = self.temp_file.name
         self.delete = delete
         if (close):
