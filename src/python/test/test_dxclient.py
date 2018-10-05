@@ -6958,7 +6958,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "categories": ["foo", "Import", "Export"]
             }
         app_dir = self.write_app_directory("test_build_åpplet_warnings", json.dumps(app_spec), "code.py")
-        with open(os.path.join(app_dir, 'Readme.md').encode("utf-8"), 'w') as readme:
+        with open(os.path.join(app_dir, 'Readme.md'), 'w') as readme:
             readme.write('a readme file')
         applet_expected_warnings = ["missing a name",
                                     'input 0 has illegal name',
@@ -8131,13 +8131,8 @@ def main(in1):
               the temp directory (when extract_resources is True), or
             - returns the ID of the resource bundle (when extract_resources is False)
         """
-        if isinstance(app_dir, str):
-            app_dir = app_dir.encode("utf-8")
-        if isinstance(args, str):
-            args = args.encode("utf-8")
-
         # create applet and get the resource_file id
-        new_applet = json.loads(run(b"dx build -f --json " + args + b" " + app_dir))
+        new_applet = json.loads(run("dx build -f --json " + args + " " + app_dir))
         applet_describe = dxpy.api.applet_describe(new_applet["id"])
         resources_file = applet_describe['runSpec']['bundledDepends'][0]['id']['$dnanexus_link']
         id1 = dxpy.api.file_describe(resources_file)['id']
@@ -8493,32 +8488,32 @@ def main(in1):
     def test_upload_resources_advanced(self):
         app_spec = dict(self.base_app_spec, name="upload_resources_advanced")
         app_dir = self.write_app_directory("upload_åpp_resources_advanced", json.dumps(app_spec), "code.py")
-        os.mkdir(os.path.join(app_dir, 'resources').encode("utf-8"))
+        os.mkdir(os.path.join(app_dir, 'resources'))
 
-        with open(os.path.join(app_dir, 'test_file1.txt').encode("utf-8"), 'w') as file1:
+        with open(os.path.join(app_dir, 'test_file1.txt'), 'w') as file1:
             file1.write('test_file1\n')  # Not in resources folder, so will not affect checksum
-        with open(os.path.join(app_dir, 'resources', 'test_file2.txt').encode("utf-8"), 'w') as resources_file2:
+        with open(os.path.join(app_dir, 'resources', 'test_file2.txt'), 'w') as resources_file2:
             resources_file2.write('test_file2\n')
 
         # Create symbolic link to test_file1.txt
-        if 'symbolic_link' in os.listdir(os.path.join(app_dir, 'resources').encode("utf-8")):
-            os.remove(os.path.join(app_dir, 'resources', 'symbolic_link').encode("utf-8"))
-        os.symlink(os.path.join(app_dir, 'test_file1.txt').encode("utf-8"),
-                   os.path.join(app_dir, 'resources', 'symbolic_link').encode("utf-8"))
+        if 'symbolic_link' in os.listdir(os.path.join(app_dir, 'resources')):
+            os.remove(os.path.join(app_dir, 'resources', 'symbolic_link'))
+        os.symlink(os.path.join(app_dir, 'test_file1.txt'),
+                   os.path.join(app_dir, 'resources', 'symbolic_link'))
 
         id1 = self._build_check_resources(app_dir, "--force-symlinks", False)
 
         # Remove test_file1.txt, even though symbolic_link points to it. Removal itself will not affect checksum
-        os.remove(os.path.join(app_dir, b'test_file1.txt'))
+        os.remove(os.path.join(app_dir, 'test_file1.txt'))
 
         id2 = self._build_check_resources(app_dir, "--force-symlinks", False)
 
         self.assertEqual(id1, id2)  # No upload happened
 
         # Make symbolic_link point to test_file2.txt, giving it a different modification time
-        os.remove(os.path.join(app_dir, 'resources', 'symbolic_link').encode("utf-8"))
-        os.symlink(os.path.join(app_dir, 'resources', 'test_file2.txt').encode("utf-8"),
-                   os.path.join(app_dir, 'resources', 'symbolic_link').encode("utf-8"))
+        os.remove(os.path.join(app_dir, 'resources', 'symbolic_link'))
+        os.symlink(os.path.join(app_dir, 'resources', 'test_file2.txt'),
+                   os.path.join(app_dir, 'resources', 'symbolic_link'))
 
         id3 = self._build_check_resources(app_dir, "--force-symlinks", False)
 
@@ -8537,35 +8532,35 @@ def main(in1):
         # Test the behavior without --force-symlinks
 
         # First, let's clean up the old resources directory
-        shutil.rmtree(os.path.join(app_dir, b'resources'))
-        os.mkdir(os.path.join(app_dir, b'resources'))
+        shutil.rmtree(os.path.join(app_dir, 'resources'))
+        os.mkdir(os.path.join(app_dir, 'resources'))
 
         # create a couple files both inside and outside the directory
-        with open(os.path.join(app_dir, 'outside_file1.txt').encode("utf-8"), 'w') as fn:
+        with open(os.path.join(app_dir, 'outside_file1.txt'), 'w') as fn:
             fn.write('test_file1\n')
-        with open(os.path.join(app_dir, 'outside_file2.txt').encode("utf-8"), 'w') as fn:
+        with open(os.path.join(app_dir, 'outside_file2.txt'), 'w') as fn:
             fn.write('test_file2\n')
-        with open(os.path.join(app_dir, 'resources', 'inside_file1.txt').encode("utf-8"), 'w') as fn:
+        with open(os.path.join(app_dir, 'resources', 'inside_file1.txt'), 'w') as fn:
             fn.write('test_file1\n')
-        with open(os.path.join(app_dir, 'resources', 'inside_file2.txt').encode("utf-8"), 'w') as fn:
+        with open(os.path.join(app_dir, 'resources', 'inside_file2.txt'), 'w') as fn:
             fn.write('test_file2\n')
 
-        os.symlink(os.path.join(app_dir, 'outside_file1.txt').encode("utf-8"),
-                   os.path.join(app_dir, 'outside_link').encode("utf-8"))
+        os.symlink(os.path.join(app_dir, 'outside_file1.txt'),
+                   os.path.join(app_dir, 'outside_link'))
 
         # First, testing dereferencing of links
         # Create a link to be dereferenced
-        if 'symbolic_link' in os.listdir(os.path.join(app_dir, 'resources').encode("utf-8"):
-            os.remove(os.path.join(app_dir, 'resources', 'symbolic_link').encode("utf-8"))
+        if 'symbolic_link' in os.listdir(os.path.join(app_dir, 'resources')):
+            os.remove(os.path.join(app_dir, 'resources', 'symbolic_link'))
 
         # NOTE: we're going to have to use a link to a link in order to avoid modifying the directory mtime
-        os.symlink(os.path.join(app_dir, 'outside_link').encode("utf-8"),
-                   os.path.join(app_dir, 'resources', 'symbolic_link').encode("utf-8"))
+        os.symlink(os.path.join(app_dir, 'outside_link'),
+                   os.path.join(app_dir, 'resources', 'symbolic_link'))
 
         idr1 = self._build_check_resources(app_dir, "", False)
 
         # Update the link target; modify target mtime
-        with open(os.path.join(app_dir, 'outside_file1.txt').encode("utf-8"), 'w') as fn:
+        with open(os.path.join(app_dir, 'outside_file1.txt'), 'w') as fn:
             fn.write('test_file1 Update!\n')
 
         idr2 = self._build_check_resources(app_dir, "", False)
@@ -8573,9 +8568,9 @@ def main(in1):
         self.assertNotEqual(idr1, idr2) # Upload should happen
 
         # Change link destination; target mtime change
-        os.remove(os.path.join(app_dir, 'outside_link').encode("utf-8"))
-        os.symlink(os.path.join(app_dir, 'outside_file2.txt').encode("utf-8"),
-                   os.path.join(app_dir, 'outside_link').encode("utf-8"))
+        os.remove(os.path.join(app_dir, 'outside_link'))
+        os.symlink(os.path.join(app_dir, 'outside_file2.txt'),
+                   os.path.join(app_dir, 'outside_link'))
 
         idr3 = self._build_check_resources(app_dir, "", False)
 
@@ -8583,11 +8578,11 @@ def main(in1):
         self.assertNotEqual(idr2, idr3)
 
         # Add another link the the chain, but eventual destination doesn't change
-        os.remove(os.path.join(app_dir, 'outside_link').encode("utf-8"))
-        os.symlink(os.path.join(app_dir, 'outside_file2.txt').encode("utf-8"),
-                   os.path.join(app_dir, 'outside_link_1').encode("utf-8"))
-        os.symlink(os.path.join(app_dir, 'outside_link_1').encode("utf-8"),
-                   os.path.join(app_dir, b'outside_link').encode("utf-8"))
+        os.remove(os.path.join(app_dir, 'outside_link'))
+        os.symlink(os.path.join(app_dir, 'outside_file2.txt'),
+                   os.path.join(app_dir, 'outside_link_1'))
+        os.symlink(os.path.join(app_dir, 'outside_link_1'),
+                   os.path.join(app_dir, 'outside_link'))
 
         idr4 = self._build_check_resources(app_dir, "", False)
 
