@@ -381,7 +381,7 @@ class TestDXClient(DXTestCase):
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_HELP_EXIT_OUT_INTERACTIVE_SHELL", "DNA_CLI_HELP_DX_SHELL_INTERPRETER"])
     def test_dx_shell(self):
-        shell = pexpect.spawn("bash", timeout=3, encoding='utf-8')
+        shell = pexpect.spawn("bash", encoding='utf-8')
         shell.logfile = sys.stdout
         shell.sendline("dx sh")
         shell.expect(">")
