@@ -2555,6 +2555,17 @@ class TestDataobjectFunctions(unittest.TestCase):
         self.assertEqual(handler._name, "swiss-army-knife")
         self.assertEqual(handler._alias, "1.0.0")
 
+        gwf_id = "globalworkflow-123456789012345678901234"
+        handler = dxpy.get_handler(gwf_id)
+        self.assertEqual(handler._dxid, gwf_id)
+        self.assertIsNone(handler._name)
+        self.assertIsNone(handler._alias)
+
+        handler = dxpy.get_handler("globalworkflow-my-workflow/1.0.0")
+        self.assertIsNone(handler._dxid)
+        self.assertEqual(handler._name, "my-workflow")
+        self.assertEqual(handler._alias, "1.0.0")
+
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_API_DATA_OBJ_VIEW_DETAILS","DNA_API_DATA_OBJ_VIEW_CONTAINING_PROJECT","DNA_API_DATA_OBJ_DESCRIBE"])
     def test_describe_data_objects(self):

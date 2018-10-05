@@ -134,10 +134,11 @@ def get_handler(id_or_link, project=None):
             return cls(id_or_link)
         else:
             slash_pos = id_or_link.find('/')
+            dash_pos = id_or_link.find('-')
             if slash_pos == -1:
-                return cls(name=id_or_link[4:])
+                return cls(name=id_or_link[dash_pos+1:])
             else:
-                return cls(name=id_or_link[4:slash_pos],
+                return cls(name=id_or_link[dash_pos+1:slash_pos],
                            alias=id_or_link[slash_pos + 1:])
     elif project is None or cls in [dxpy.DXJob, dxpy.DXAnalysis, dxpy.DXProject, dxpy.DXContainer]:
         # This case is important for the handlers which do not
