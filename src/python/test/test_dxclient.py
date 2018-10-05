@@ -2115,8 +2115,8 @@ class TestDXClientDescribe(DXTestCaseBuildWorkflows):
         ## Verify `billTo` from "dx describe user-xxxx".
         bill_to_label = "Default bill to"
         cli_user_desc = run("dx describe " + user_id).strip().split("\n")
-        parsed_desc = filter(lambda line: line.startswith(bill_to_label),
-                             cli_user_desc)
+        parsed_desc = list(filter(lambda line: line.startswith(bill_to_label),
+                                  cli_user_desc))
         self.assertEqual(len(parsed_desc), 1)
         key_and_value = parsed_desc[0].split(bill_to_label)
         self.assertEqual(key_and_value[0], "")
