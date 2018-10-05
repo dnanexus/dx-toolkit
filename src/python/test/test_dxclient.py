@@ -378,10 +378,10 @@ class TestDXClient(DXTestCase):
             details = dxrecord.get_details()
             self.assertEqual({"foo": "bar"}, details, msg="dx set_details -f - with valid JSON input failed.")
 
-#    @pytest.mark.TRACEABILITY_MATRIX
-#    @testutil.update_traceability_matrix(["DNA_CLI_HELP_EXIT_OUT_INTERACTIVE_SHELL", "DNA_CLI_HELP_DX_SHELL_INTERPRETER"])
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_HELP_EXIT_OUT_INTERACTIVE_SHELL", "DNA_CLI_HELP_DX_SHELL_INTERPRETER"])
     def test_dx_shell(self):
-        shell = pexpect.spawnu("bash")
+        shell = pexpect.spawn("bash", timeout=3, encoding='utf-8')
         shell.logfile = sys.stdout
         shell.sendline("dx sh")
         shell.expect(">")
@@ -395,6 +395,7 @@ class TestDXClient(DXTestCase):
         shell.sendline("exit")
         shell.sendline("echo find projects | dx sh")
         shell.expect("project-")
+        shell.close()
 
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test user')
@@ -693,8 +694,8 @@ class TestDXClient(DXTestCase):
         for var in 'DX_PROJECT_CONTEXT_ID', 'DX_PROJECT_CONTEXT_NAME', 'DX_CLI_WD':
             if var in os.environ:
                 del os.environ[var]
-        shell1 = pexpect.spawn("bash")
-        shell2 = pexpect.spawn("bash")
+        shell1 = pexpect.spawn("bash", encoding="utf-8")
+        shell2 = pexpect.spawn("bash", encoding="utf-8")
         shell1.logfile = shell2.logfile = sys.stdout
         shell1.setwinsize(20, 90)
         shell2.setwinsize(20, 90)
@@ -736,11 +737,13 @@ class TestDXClient(DXTestCase):
         os.mkdir(os.path.join(wd, ".dnanexus_config"))
 
         def revoke_ssh_public_key(args=["ssh_config", "--revoke"]):
-            dx_ssh_config_revoke = pexpect.spawn("dx", args=args)
+            dx_ssh_config_revoke = pexpect.spawn("dx", args=args, encoding="utf-8")
             dx_ssh_config_revoke.expect("revoked")
 
         def set_ssh_public_key():
-            dx_ssh_config = pexpect.spawn("dx ssh_config", env=override_environment(HOME=wd))
+            dx_ssh_config = pexpect.spawn("dx ssh_config",
+                                          env=override_environment(HOME=wd),
+                                          encoding="utf-8")
             dx_ssh_config.logfile = sys.stdout
             dx_ssh_config.expect("Select an SSH key pair")
             dx_ssh_config.sendline("0")
@@ -787,7 +790,9 @@ class TestDXClient(DXTestCase):
             wd = tempfile.mkdtemp()
 
             def get_dx_ssh_config():
-                dx_ssh_config = pexpect.spawn("dx ssh_config", env=override_environment(HOME=wd))
+                dx_ssh_config = pexpect.spawn("dx ssh_config",
+                                              env=override_environment(HOME=wd),
+                                              encoding="utf-8")
                 dx_ssh_config.logfile = sys.stdout
                 dx_ssh_config.setwinsize(20, 90)
                 return dx_ssh_config
@@ -863,7 +868,9 @@ class TestDXClient(DXTestCase):
             if use_alternate_config_dir:
                 os.environ["DX_USER_CONF_DIR"] = config_dir
 
-            dx_ssh_config = pexpect.spawn("dx ssh_config", env=override_environment(HOME=wd))
+            dx_ssh_config = pexpect.spawn("dx ssh_config",
+                                          env=override_environment(HOME=wd),
+                                          encoding="utf-8")
             dx_ssh_config.logfile = sys.stdout
             dx_ssh_config.setwinsize(20, 90)
             dx_ssh_config.expect("Select an SSH key pair")
@@ -893,7 +900,8 @@ class TestDXClient(DXTestCase):
                                                         project=project))["id"]
 
                 dx = pexpect.spawn("dx run {} --yes --ssh".format(sleep_applet),
-                                   env=override_environment(HOME=wd))
+                                   env=override_environment(HOME=wd),
+                                   encoding="utf-8")
                 dx.logfile = sys.stdout
                 dx.setwinsize(20, 90)
                 dx.expect("Waiting for job")
@@ -920,7 +928,8 @@ class TestDXClient(DXTestCase):
                 self.assertTrue(os.path.isfile(expected_history_filename))
 
                 # Make sure the job can be connected to using 'dx ssh <job id>'
-                dx2 = pexpect.spawn("dx ssh " + job_id, env=override_environment(HOME=wd))
+                dx2 = pexpect.spawn("dx ssh " + job_id, env=override_environment(HOME=wd),
+                                    encoding="utf-8")
                 dx2.logfile = sys.stdout
                 dx2.setwinsize(20, 90)
                 dx2.expect("Waiting for job")
@@ -1007,7 +1016,8 @@ class TestDXClient(DXTestCase):
                                format(a=sleep_applet,
                                       h=proxy_host,
                                       p=proxy_port),
-                               env=override_environment(HOME=wd))
+                               env=override_environment(HOME=wd),
+                               encoding="utf-8")
             dx.logfile = sys.stdout
             dx.setwinsize(20, 90)
             dx.expect("The job is running in terminal 1.", timeout=1200)
@@ -1020,7 +1030,9 @@ class TestDXClient(DXTestCase):
                                                                          p=proxy_port,
                                                                          id=job_id)
             # Make sure the job can be connected to using 'dx ssh <job id>'
-            dx2 = pexpect.spawn(ssh_proxy_command, env=override_environment(HOME=wd))
+            dx2 = pexpect.spawn(ssh_proxy_command,
+                                env=override_environment(HOME=wd),
+                                encoding="utf-8")
             dx2.expect(("dnanexus@%s" % job_id), timeout=10)
             dx2.sendline("exit")
             dx2.expect("bash running", timeout=10)
@@ -1113,7 +1125,9 @@ class TestDXClient(DXTestCase):
                 if elapsed > 1200:
                     raise Exception("Timeout while waiting for job to enter debug hold")
 
-            dx = pexpect.spawn("dx ssh " + job_id, env=override_environment(HOME=wd))
+            dx = pexpect.spawn("dx ssh " + job_id,
+                               env=override_environment(HOME=wd),
+                               encoding="utf-8")
             dx.logfile = sys.stdout
             dx.setwinsize(20, 90)
             dx.expect("dnanexus@", timeout=1200)
@@ -1148,7 +1162,9 @@ class TestDXClient(DXTestCase):
         username = dxpy.user_info()['username']
 
         def get_dx_setenv(opts=""):
-            dx_setenv = pexpect.spawn("dx setenv" + opts, env=override_environment(HOME=wd))
+            dx_setenv = pexpect.spawn("dx setenv" + opts,
+                                      env=override_environment(HOME=wd),
+                                      encoding="utf-8")
             dx_setenv.logfile = sys.stdout
             dx_setenv.setwinsize(20, 90)
             return dx_setenv
@@ -1171,7 +1187,9 @@ class TestDXClient(DXTestCase):
         username = dxpy.user_info()['username']
 
         def get_dx_login(opts=""):
-            dx_login = pexpect.spawn("dx login" + opts, env=override_environment(HOME=wd))
+            dx_login = pexpect.spawn("dx login" + opts,
+                                     env=override_environment(HOME=wd),
+                                     encoding="utf-8")
             dx_login.logfile = sys.stdout
             dx_login.setwinsize(20, 90)
             return dx_login
@@ -3143,7 +3161,9 @@ def main():
 
         # Case: Execute "dx run --ssh" before configuring SSH.
         path = tempfile.mkdtemp()
-        shell = pexpect.spawn("dx run --ssh " + applet_id, env=dict(os.environ, DX_USER_CONF_DIR=path))
+        shell = pexpect.spawn("dx run --ssh " + applet_id,
+                              env=dict(os.environ, DX_USER_CONF_DIR=path),
+                              encoding="utf-8")
         shell.expect("Warning:")
         shell.sendline("N")
         shell.expect("IOError")
@@ -5455,7 +5475,7 @@ class TestDXClientOrg(DXTestCase):
     def test_create_new_org_prompt(self):
         # Prompt with only handle
         org_handle = TestDXClientOrg.get_unique_org_handle()
-        dx_new_org = pexpect.spawn('dx new org --handle {h}'.format(h=org_handle), logfile=sys.stderr)
+        dx_new_org = pexpect.spawn('dx new org --handle {h}'.format(h=org_handle), logfile=sys.stderr, encoding="utf-8")
         dx_new_org.expect('Enter descriptive name')
         dx_new_org.sendline("Test New Org Prompt")
         dx_new_org.expect('Created new org')
@@ -5469,7 +5489,9 @@ class TestDXClientOrg(DXTestCase):
         # Prompt with "--member-list-visibility" & "--handle"
         org_handle = TestDXClientOrg.get_unique_org_handle()
         dx_new_org = pexpect.spawn('dx new org --handle {h} --member-list-visibility {mlv}'.format(h=org_handle,
-                                   mlv="PUBLIC"), logfile=sys.stderr)
+                                                                                                   mlv="PUBLIC"),
+                                   logfile=sys.stderr,
+                                   encoding="utf-8")
         dx_new_org.expect('Enter descriptive name')
         dx_new_org.sendline("Test New Org Prompt")
         dx_new_org.expect('Created new org')
@@ -5482,7 +5504,9 @@ class TestDXClientOrg(DXTestCase):
 
         org_handle = TestDXClientOrg.get_unique_org_handle()
         dx_new_org = pexpect.spawn('dx new org --handle {h} --member-list-visibility {mlv}'.format(h=org_handle,
-                                   mlv="MEMBER"), logfile=sys.stderr)
+                                   mlv="MEMBER"),
+                                   logfile=sys.stderr,
+                                   encoding="utf-8")
         dx_new_org.expect('Enter descriptive name')
         dx_new_org.sendline("Test New Org Prompt")
         dx_new_org.expect('Created new org')
@@ -5495,7 +5519,9 @@ class TestDXClientOrg(DXTestCase):
 
         org_handle = TestDXClientOrg.get_unique_org_handle()
         dx_new_org = pexpect.spawn('dx new org --handle {h} --member-list-visibility {mlv}'.format(h=org_handle,
-                                   mlv="ADMIN"), logfile=sys.stderr)
+                                   mlv="ADMIN"),
+                                   logfile=sys.stderr,
+                                   encoding="utf-8")
         dx_new_org.expect('Enter descriptive name')
         dx_new_org.sendline("Test New Org Prompt")
         dx_new_org.expect('Created new org')
@@ -5509,7 +5535,9 @@ class TestDXClientOrg(DXTestCase):
         # Prompt with "--project-transfer-ability" & "handle"
         org_handle = TestDXClientOrg.get_unique_org_handle()
         dx_new_org = pexpect.spawn('dx new org --handle {h} --project-transfer-ability {pta}'.format(h=org_handle,
-                                   pta="MEMBER"), logfile=sys.stderr)
+                                   pta="MEMBER"),
+                                   logfile=sys.stderr,
+                                   encoding="utf-8")
         dx_new_org.expect('Enter descriptive name')
         dx_new_org.sendline("Test New Org Prompt")
         dx_new_org.expect('Created new org')
@@ -5522,7 +5550,9 @@ class TestDXClientOrg(DXTestCase):
 
         org_handle = TestDXClientOrg.get_unique_org_handle()
         dx_new_org = pexpect.spawn('dx new org --handle {h} --project-transfer-ability {pta}'.format(h=org_handle,
-                                   pta="ADMIN"), logfile=sys.stderr)
+                                   pta="ADMIN"),
+                                   logfile=sys.stderr,
+                                   encoding="utf-8")
         dx_new_org.expect('Enter descriptive name')
         dx_new_org.sendline("Test New Org Prompt")
         dx_new_org.expect('Created new org')
@@ -5536,7 +5566,9 @@ class TestDXClientOrg(DXTestCase):
         # Prompt with "--member-list-visibility", "--project-transfer-ability", & "--handle"
         org_handle = TestDXClientOrg.get_unique_org_handle()
         dx_new_org = pexpect.spawn('dx new org --handle {h} --member-list-visibility {p} --project-transfer-ability {p}'.format(
-                                   h=org_handle, p="MEMBER"), logfile=sys.stderr)
+                                   h=org_handle, p="MEMBER"),
+                                   logfile=sys.stderr,
+                                   encoding="utf-8")
         dx_new_org.expect('Enter descriptive name')
         dx_new_org.sendline("Test New Org Prompt")
         dx_new_org.expect('Created new org')
@@ -6090,8 +6122,9 @@ class TestDXClientMembership(DXTestCase):
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
-        dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(
-            o=self.org_id, u=self.username), logfile=sys.stderr)
+        dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(o=self.org_id, u=self.username),
+                                         logfile=sys.stderr,
+                                         encoding="utf-8")
         dx_rm_member_int.expect("Please confirm")
         dx_rm_member_int.sendline("")
         dx_rm_member_int.expect("Please confirm")
@@ -6099,16 +6132,18 @@ class TestDXClientMembership(DXTestCase):
         membership = self._org_find_members(self.user_id)
         self.assertDictContainsSubset(membership, exp_membership)
 
-        dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(
-            o=self.org_id, u=self.username), logfile=sys.stderr)
+        dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(o=self.org_id, u=self.username),
+                                         logfile=sys.stderr,
+                                         encoding="utf-8")
         dx_rm_member_int.expect("Please confirm")
         dx_rm_member_int.sendintr()
 
         membership = self._org_find_members(self.user_id)
         self.assertDictContainsSubset(membership, exp_membership)
 
-        dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(
-            o=self.org_id, u=self.username), logfile=sys.stderr)
+        dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(o=self.org_id, u=self.username),
+                                         logfile=sys.stderr,
+                                         encoding="utf-8")
         dx_rm_member_int.expect("Please confirm")
         dx_rm_member_int.sendline("n")
         dx_rm_member_int.expect("Aborting removal")
@@ -6116,8 +6151,8 @@ class TestDXClientMembership(DXTestCase):
         membership = self._org_find_members(self.user_id)
         self.assertDictContainsSubset(membership, exp_membership)
 
-        dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(
-            o=self.org_id, u=self.username))
+        dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(o=self.org_id, u=self.username),
+                                         encoding="utf-8")
         dx_rm_member_int.logfile = sys.stdout
         dx_rm_member_int.expect("Please confirm")
         dx_rm_member_int.sendline("y")
@@ -6147,8 +6182,8 @@ class TestDXClientMembership(DXTestCase):
         project_permissions = dxpy.api.project_describe(project_id_2, {"fields": {"permissions": True}})["permissions"]
         self.assertEqual(project_permissions[self.user_id], "ADMINISTER")
 
-        dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(
-            o=self.org_id, u=self.username))
+        dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(o=self.org_id, u=self.username),
+                                         encoding="utf-8")
         dx_rm_member_int.logfile = sys.stdout
         dx_rm_member_int.expect("Please confirm")
         dx_rm_member_int.sendline("y")
@@ -9750,7 +9785,8 @@ class TestTcshEnvironment(unittest.TestCase):
         run('cd $DNANEXUS_HOME && env - HOME=$HOME PATH=/usr/local/bin:/usr/bin:/bin tcsh -c "source /etc/csh.cshrc && source /etc/csh.login && source $DNANEXUS_HOME/environment.csh && dx --help"')
 
     def test_tcsh_source_environment(self):
-        tcsh = pexpect.spawn("env - HOME=$HOME PATH=/usr/local/bin:/usr/bin:/bin tcsh")
+        tcsh = pexpect.spawn("env - HOME=$HOME PATH=/usr/local/bin:/usr/bin:/bin tcsh",
+                             encoding="utf-8")
         tcsh.logfile = sys.stdout
         tcsh.setwinsize(20, 90)
         tcsh.sendline("source /etc/csh.cshrc")
