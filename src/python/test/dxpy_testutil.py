@@ -326,9 +326,9 @@ def without_auth():
 
 
 class DXTestCase(unittest.TestCase):
-    if USING_PYTHON2:
-        assertRegex = unittest.TestCase.assertRegexpMatches
-        assertNotRegex = unittest.TestCase.assertNotRegexpMatches
+    # mothod removed in python3
+    def assertItemsEqual(self, a, b):
+        self.assertEqual(sorted(a), sorted(b))
 
     def setUp(self):
         proj_name = u"dxclient_test_pröject"

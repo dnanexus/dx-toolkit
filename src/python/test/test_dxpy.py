@@ -2057,12 +2057,8 @@ class TestDXSearch(unittest.TestCase):
     def tearDown(self):
         tearDownTempProjects(self)
 
-    def assertListsEqual(self, a, b):
-        if USING_PYTHON2:
-            self.assertItemsEqual(self, a, b)
-        else:
-            #self.assertCountEqual(self, a, b)
-            self.assertEqual(sorted(a), sorted(b))
+    def assertItemsEqual(self, a, b):
+        self.assertEqual(sorted(a), sorted(b))
 
     def test_resolve_data_objects(self):
         # If the project is provided for an object, then it will be used instead of
@@ -2243,17 +2239,17 @@ class TestDXSearch(unittest.TestCase):
 
         created = dxproject.created
         matching_ids = (result["id"] for result in dxpy.org_find_projects(org_id, created_before=created + 1000))
-        self.assertListsEqual(matching_ids, org_projects)
+        self.assertItemsEqual(matching_ids, org_projects)
 
         matching_ids = (result["id"] for result in dxpy.org_find_projects(org_id, created_after=created - 1000))
-        self.assertListsEqual(matching_ids, [dxproject.get_id()])
+        self.assertItemsEqual(matching_ids, [dxproject.get_id()])
 
         matching_ids = (result["id"] for result in dxpy.org_find_projects(org_id, created_before=created + 1000,
                         created_after=created - 1000))
-        self.assertListsEqual(matching_ids, [dxproject.get_id()])
+        self.assertItemsEqual(matching_ids, [dxproject.get_id()])
 
         matching_ids = (result["id"] for result in dxpy.org_find_projects(org_id, created_before=created - 1000))
-        self.assertListsEqual(matching_ids, [project_ppb])
+        self.assertItemsEqual(matching_ids, [project_ppb])
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
     def test_find_executions(self):
@@ -2872,12 +2868,9 @@ class TestIdempotentRequests(unittest.TestCase):
     def tearDown(self):
         tearDownTempProjects(self)
 
-    def assertListsEqual(self, a, b):
-        if USING_PYTHON2:
-            self.assertItemsEqual(self, a, b)
-        else:
-            #self.assertCountEqual(self, a, b)
-            self.assertEqual(sorted(a), sorted(b))
+    # method removed in python3
+    def assertItemsEqual(self, a, b):
+        self.assertEqual(sorted(a), sorted(b))
 
     code = '''@dxpy.entry_point('main')\ndef main():\n    pass'''
     run_spec = {"code": code, "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04"}
@@ -2906,7 +2899,7 @@ class TestIdempotentRequests(unittest.TestCase):
         input_params = {"project": self.proj_id, "name": "Unique Record"}
 
         records = self.do_retry_http_request(dxpy.api.record_new, kwargs={"input_params": input_params})
-        self.assertListsEqual(records[0], records[1])
+        self.assertItemsEqual(records[0], records[1])
 
         dxrecord = dxpy.api.record_new(input_params=input_params)
         self.assertNotIn(dxrecord, records)
@@ -2929,7 +2922,7 @@ class TestIdempotentRequests(unittest.TestCase):
                         }
 
         applets = self.do_retry_http_request(dxpy.api.applet_new, kwargs={"input_params": input_params})
-        self.assertListsEqual(applets[0], applets[1])
+        self.assertItemsEqual(applets[0], applets[1])
 
         applet = dxpy.api.applet_new(input_params)
         self.assertNotIn(applet, applets)
@@ -2947,7 +2940,7 @@ class TestIdempotentRequests(unittest.TestCase):
         dxapplet = self.create_applet("test_applet")
         input_params = {"applet": dxapplet.get_id(), "version": "0.0.1", "bill_to": userid, "name": "new_app_name"}
         apps = self.do_retry_http_request(dxpy.api.app_new, kwargs={"input_params": input_params})
-        self.assertListsEqual(apps[0]['id'], apps[1]['id'])
+        self.assertItemsEqual(apps[0]['id'], apps[1]['id'])
 
         # A request with the same nonce, but different input, should fail
         input_params = {"applet": dxapplet.get_id(),
@@ -2966,7 +2959,7 @@ class TestIdempotentRequests(unittest.TestCase):
     def test_idempotent_file_creation(self):
         input_params = {"project": self.proj_id, "name": "myFile.txt"}
         files = self.do_retry_http_request(dxpy.api.file_new, kwargs={"input_params": input_params})
-        self.assertListsEqual(files[0], files[1])
+        self.assertItemsEqual(files[0], files[1])
 
         dxfile = dxpy.api.file_new(input_params=input_params)
         self.assertNotIn(dxfile, files)
@@ -2983,7 +2976,7 @@ class TestIdempotentRequests(unittest.TestCase):
     def test_idempotent_workflow_creation(self):
         input_params = {"project": self.proj_id, "name": "The workflow"}
         workflows = self.do_retry_http_request(dxpy.api.workflow_new, kwargs={"input_params": input_params})
-        self.assertListsEqual(workflows[0], workflows[1])
+        self.assertItemsEqual(workflows[0], workflows[1])
 
         dxworkflow = dxpy.api.workflow_new(input_params)
         self.assertNotIn(dxworkflow, workflows)
@@ -3006,7 +2999,7 @@ class TestIdempotentRequests(unittest.TestCase):
         jobs = self.do_retry_http_request(dxpy.api.applet_run,
                                           args=[applet.get_id()],
                                           kwargs={"input_params": input_params})
-        self.assertListsEqual(jobs[0], jobs[1])
+        self.assertItemsEqual(jobs[0], jobs[1])
 
         job = dxpy.api.applet_run(applet.get_id(), input_params=input_params)
         self.assertNotIn(job, jobs)
@@ -3046,7 +3039,7 @@ class TestIdempotentRequests(unittest.TestCase):
     def test_idempotent_org_creation(self):
         input_params = {"name": "test_org", "handle": "some_handle"}
         orgs = self.do_retry_http_request(dxpy.api.org_new, kwargs={"input_params": input_params})
-        self.assertListsEqual(orgs[0], orgs[1])
+        self.assertItemsEqual(orgs[0], orgs[1])
 
         input_params = {"name": "test_org2", "handle": "another_handle"}
         org = dxpy.api.org_new(input_params=input_params)

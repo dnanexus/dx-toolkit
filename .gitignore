@@ -90,3 +90,6 @@ test-job-workspaces
 
 # pyre tool for typechecking python --- artifacts
 pyre.stderr
+
+# artifacts from tracibility
+*.traceability.*.csv

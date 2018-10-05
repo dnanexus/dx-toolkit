@@ -44,7 +44,6 @@ from dxpy.exceptions import DXAPIError, DXSearchError, EXPECTED_ERR_EXIT_STATUS,
 from dxpy.compat import str, sys_encoding, open
 from dxpy.utils.resolver import ResolutionError, _check_resolution_needed as check_resolution
 
-
 def create_file_in_project(fname, trg_proj_id, folder=None):
     data = "foo"
     if folder is None:
@@ -655,7 +654,7 @@ class TestDXClient(DXTestCase):
 
             # Check that user is not already invited to project
             project_members = dxpy.api.project_describe(project_id, {'fields': {'permissions': True}})['permissions']
-            self.assertNotIn(user_id, project_members.keys())
+            self.assertNotIn(user_id, list(project_members.keys()))
 
             # Test --no-email flag
             res = run("dx invite {user} {project} VIEW --no-email".format(user=user_id, project=project_id)).strip()
@@ -6530,7 +6529,7 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         self.assertEqual(gwf_describe["name"], gwf_name)
         self.assertFalse("published" in gwf_describe)
         self.assertIn("regionalOptions", gwf_describe)
-        self.assertItemsEqual(gwf_describe["regionalOptions"].keys(), ["aws:us-east-1"])
+        self.assertItemsEqual(list(gwf_describe["regionalOptions"].keys()), ["aws:us-east-1"])
 
         # We can also create a regular workflow from this dxworkflow.json
         wf = json.loads(run("dx build --json " + workflow_dir))
@@ -6812,7 +6811,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         args = ['dx', 'build', app_dir]
         p = subprocess.Popen(args, stderr=subprocess.PIPE)
         out, err = p.communicate()
-        self.assertFalse(err.startswith("WARNING"))
+        self.assertFalse(err.decode("utf-8").startswith("WARNING"))
 
         # Case: Usage of period at end of summary.
         app_spec = dict(self.base_app_spec,
@@ -6825,7 +6824,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         args = ['dx', 'build', app_dir]
         p = subprocess.Popen(args, stderr=subprocess.PIPE)
         out, err = p.communicate()
-        self.assertFalse(err.startswith("WARNING"))
+        self.assertFalse(err.decode("utf-8").startswith("WARNING"))
 
         # Case: Usage of unknown categories.
         unknown_category = "asdf1234"
@@ -6839,7 +6838,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         args = ['dx', 'build', app_dir]
         p = subprocess.Popen(args, stderr=subprocess.PIPE)
         out, err = p.communicate()
-        self.assertFalse(err.startswith("WARNING"))
+        self.assertFalse(err.decode("utf-8").startswith("WARNING"))
 
     def test_build_applet_dry_run(self):
         app_spec = dict(self.base_app_spec, name="minimal_applet_dry_run")
@@ -7117,7 +7116,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEqual(app_describe["name"], app_name)
         self.assertFalse("published" in app_describe)
         self.assertIn("regionalOptions", app_describe)
-        self.assertItemsEqual(app_describe["regionalOptions"].keys(), ["aws:us-east-1"])
+        self.assertItemsEqual(list(app_describe["regionalOptions"].keys()), ["aws:us-east-1"])
 
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
@@ -7136,7 +7135,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEqual(app_describe["name"], app_name)
         self.assertFalse("published" in app_describe)
         self.assertIn("regionalOptions", app_describe)
-        self.assertItemsEqual(app_describe["regionalOptions"].keys(), app_spec["regionalOptions"].keys())
+        self.assertItemsEqual(list(app_describe["regionalOptions"].keys()), list(app_spec["regionalOptions"].keys()))
 
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
@@ -7283,7 +7282,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEqual(app_desc_res["name"], app_name)
         self.assertFalse("published" in app_desc_res)
         self.assertIn("regionalOptions", app_desc_res)
-        self.assertItemsEqual(app_desc_res["regionalOptions"].keys(), app_spec["regionalOptions"].keys())
+        self.assertItemsEqual(list(app_desc_res["regionalOptions"].keys()), list(app_spec["regionalOptions"].keys()))
 
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
@@ -7351,7 +7350,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
                 self.assertIn("regionalOptions", app_desc_res)
                 regional_options = app_desc_res["regionalOptions"]
-                self.assertItemsEqual(regional_options.keys(), app_spec["regionalOptions"].keys())
+                self.assertItemsEqual(list(regional_options.keys()), list(app_spec["regionalOptions"].keys()))
 
                 aws_applet = regional_options["aws:us-east-1"]["applet"]
                 self.assertEqual(dxpy.api.applet_describe(aws_applet)["runSpec"]["systemRequirements"],
@@ -7437,8 +7436,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEqual(app_desc_res["name"], app_name)
         self.assertFalse("published" in app_desc_res)
         self.assertIn("regionalOptions", app_desc_res)
-        self.assertItemsEqual(app_desc_res["regionalOptions"].keys(), ["aws:us-east-1", "azure:westus"])
-
+        self.assertItemsEqual(list(app_desc_res["regionalOptions"].keys()), ["aws:us-east-1", "azure:westus"])
         self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
         self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
 
@@ -7638,7 +7636,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEqual(app_desc_res["name"], app_name)
         self.assertFalse("published" in app_desc_res)
         self.assertIn("regionalOptions", app_desc_res)
-        self.assertItemsEqual(app_desc_res["regionalOptions"].keys(), app_spec["regionalOptions"].keys())
+        self.assertItemsEqual(list(app_desc_res["regionalOptions"].keys()), list(app_spec["regionalOptions"].keys()))
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
@@ -7725,7 +7723,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         app_describe = json.loads(run("dx describe --json " + new_app["id"]))
         self.assertEqual(app_describe["region"], "aws:us-east-1")
 
-        with self.assertRaisesRegexp(subprocess.CalledProcessError, "InvalidInput"):
+        with self.assertRaisesRegex(subprocess.CalledProcessError, "InvalidInput"):
             run("dx build --create-app --region aws:not-a-region --json " + app_dir)
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
@@ -7752,7 +7750,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                         name=app_name,
                         regionalOptions={"aws:us-east-1": {}, "azure:westus": {}})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
-        with self.assertRaisesRegexp(DXCalledProcessError, "PermissionDenied"):
+        with self.assertRaisesRegex(DXCalledProcessError, "PermissionDenied"):
             run("dx build --app --bill-to {} --json {}".format(org_id, app_dir))
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
@@ -8487,24 +8485,26 @@ def main(in1):
 
         id3 = self._build_check_resources(app_dir, extract_resources=False)
 
-        self.assertNotEquals(id1, id3)
+        self.assertNotEqual(id1, id3)
 
 
+    # This test uses an applet name that include unicode characters. Therefore,
+    # we need to encode to byte everytime we use os filesystem operations.
     def test_upload_resources_advanced(self):
         app_spec = dict(self.base_app_spec, name="upload_resources_advanced")
         app_dir = self.write_app_directory("upload_åpp_resources_advanced", json.dumps(app_spec), "code.py")
-        app_dir = app_dir.encode("utf-8") # convert from string to bytes
-        os.mkdir(os.path.join(app_dir, b'resources'))
+        os.mkdir(os.path.join(app_dir, 'resources').encode("utf-8"))
 
-        with open(os.path.join(app_dir, b'test_file1.txt'), 'w') as file1:
+        with open(os.path.join(app_dir, 'test_file1.txt').encode("utf-8"), 'w') as file1:
             file1.write('test_file1\n')  # Not in resources folder, so will not affect checksum
-        with open(os.path.join(app_dir, b'resources', b'test_file2.txt'), 'w') as resources_file2:
+        with open(os.path.join(app_dir, 'resources', 'test_file2.txt').encode("utf-8"), 'w') as resources_file2:
             resources_file2.write('test_file2\n')
 
         # Create symbolic link to test_file1.txt
-        if 'symbolic_link' in os.listdir(os.path.join(app_dir, b'resources')):
-            os.remove(os.path.join(app_dir, b'resources', b'symbolic_link'))
-        os.symlink(os.path.join(app_dir, b'test_file1.txt'), os.path.join(app_dir, b'resources', b'symbolic_link'))
+        if 'symbolic_link' in os.listdir(os.path.join(app_dir, 'resources').encode("utf-8")):
+            os.remove(os.path.join(app_dir, 'resources', 'symbolic_link').encode("utf-8"))
+        os.symlink(os.path.join(app_dir, 'test_file1.txt').encode("utf-8"),
+                   os.path.join(app_dir, 'resources', 'symbolic_link').encode("utf-8"))
 
         id1 = self._build_check_resources(app_dir, "--force-symlinks", False)
 
@@ -8516,9 +8516,9 @@ def main(in1):
         self.assertEqual(id1, id2)  # No upload happened
 
         # Make symbolic_link point to test_file2.txt, giving it a different modification time
-        os.remove(os.path.join(app_dir, b'resources', b'symbolic_link'))
-        os.symlink(os.path.join(app_dir, b'resources', b'test_file2.txt'),
-                   os.path.join(app_dir, b'resources', b'symbolic_link'))
+        os.remove(os.path.join(app_dir, 'resources', 'symbolic_link').encode("utf-8"))
+        os.symlink(os.path.join(app_dir, 'resources', 'test_file2.txt').encode("utf-8"),
+                   os.path.join(app_dir, 'resources', 'symbolic_link').encode("utf-8"))
 
         id3 = self._build_check_resources(app_dir, "--force-symlinks", False)
 
@@ -8541,29 +8541,31 @@ def main(in1):
         os.mkdir(os.path.join(app_dir, b'resources'))
 
         # create a couple files both inside and outside the directory
-        with open(os.path.join(app_dir, b'outside_file1.txt'), 'w') as fn:
+        with open(os.path.join(app_dir, 'outside_file1.txt').encode("utf-8"), 'w') as fn:
             fn.write('test_file1\n')
-        with open(os.path.join(app_dir, b'outside_file2.txt'), 'w') as fn:
+        with open(os.path.join(app_dir, 'outside_file2.txt').encode("utf-8"), 'w') as fn:
             fn.write('test_file2\n')
-        with open(os.path.join(app_dir, b'resources', b'inside_file1.txt'), 'w') as fn:
+        with open(os.path.join(app_dir, 'resources', 'inside_file1.txt').encode("utf-8"), 'w') as fn:
             fn.write('test_file1\n')
-        with open(os.path.join(app_dir, b'resources', b'inside_file2.txt'), 'w') as fn:
+        with open(os.path.join(app_dir, 'resources', 'inside_file2.txt').encode("utf-8"), 'w') as fn:
             fn.write('test_file2\n')
 
-        os.symlink(os.path.join(app_dir, b'outside_file1.txt'), os.path.join(app_dir, b'outside_link'))
+        os.symlink(os.path.join(app_dir, 'outside_file1.txt').encode("utf-8"),
+                   os.path.join(app_dir, 'outside_link').encode("utf-8"))
 
         # First, testing dereferencing of links
         # Create a link to be dereferenced
-        if 'symbolic_link' in os.listdir(os.path.join(app_dir, b'resources')):
-            os.remove(os.path.join(app_dir, b'resources', b'symbolic_link'))
+        if 'symbolic_link' in os.listdir(os.path.join(app_dir, 'resources').encode("utf-8"):
+            os.remove(os.path.join(app_dir, 'resources', 'symbolic_link').encode("utf-8"))
 
         # NOTE: we're going to have to use a link to a link in order to avoid modifying the directory mtime
-        os.symlink(os.path.join(app_dir, b'outside_link'), os.path.join(app_dir, b'resources', b'symbolic_link'))
+        os.symlink(os.path.join(app_dir, 'outside_link').encode("utf-8"),
+                   os.path.join(app_dir, 'resources', 'symbolic_link').encode("utf-8"))
 
         idr1 = self._build_check_resources(app_dir, "", False)
 
         # Update the link target; modify target mtime
-        with open(os.path.join(app_dir, b'outside_file1.txt'), 'w') as fn:
+        with open(os.path.join(app_dir, 'outside_file1.txt').encode("utf-8"), 'w') as fn:
             fn.write('test_file1 Update!\n')
 
         idr2 = self._build_check_resources(app_dir, "", False)
@@ -8571,8 +8573,9 @@ def main(in1):
         self.assertNotEqual(idr1, idr2) # Upload should happen
 
         # Change link destination; target mtime change
-        os.remove(os.path.join(app_dir, b'outside_link'))
-        os.symlink(os.path.join(app_dir, b'outside_file2.txt'), os.path.join(app_dir, b'outside_link'))
+        os.remove(os.path.join(app_dir, 'outside_link').encode("utf-8"))
+        os.symlink(os.path.join(app_dir, 'outside_file2.txt').encode("utf-8"),
+                   os.path.join(app_dir, 'outside_link').encode("utf-8"))
 
         idr3 = self._build_check_resources(app_dir, "", False)
 
@@ -8580,9 +8583,11 @@ def main(in1):
         self.assertNotEqual(idr2, idr3)
 
         # Add another link the the chain, but eventual destination doesn't change
-        os.remove(os.path.join(app_dir, b'outside_link'))
-        os.symlink(os.path.join(app_dir, b'outside_file2.txt'), os.path.join(app_dir, b'outside_link_1'))
-        os.symlink(os.path.join(app_dir, b'outside_link_1'), os.path.join(app_dir, b'outside_link'))
+        os.remove(os.path.join(app_dir, 'outside_link').encode("utf-8"))
+        os.symlink(os.path.join(app_dir, 'outside_file2.txt').encode("utf-8"),
+                   os.path.join(app_dir, 'outside_link_1').encode("utf-8"))
+        os.symlink(os.path.join(app_dir, 'outside_link_1').encode("utf-8"),
+                   os.path.join(app_dir, b'outside_link').encode("utf-8"))
 
         idr4 = self._build_check_resources(app_dir, "", False)
 
