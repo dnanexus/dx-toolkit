@@ -235,7 +235,7 @@ class DXContainer(DXObject):
                    always_retry=force,  # api call is idempotent under 'force' semantics
                    **kwargs)
 
-    def clone(self, container, destination="/", objects=[], folders=[], **kwargs):
+    def clone(self, container, destination="/", objects=[], folders=[], parents=False, **kwargs):
         """
         :param container: Destination container ID
         :type container: string
@@ -261,11 +261,12 @@ class DXContainer(DXObject):
         api_method = dxpy.api.container_clone
         if isinstance(self, DXProject):
             api_method = dxpy.api.project_clone
-
+        print(parents)
         return api_method(self._dxid,
                           {"objects": objects,
                            "folders": folders,
                            "project": container,
+                           "parents": parents,
                            "destination": destination},
                           **kwargs)
 
