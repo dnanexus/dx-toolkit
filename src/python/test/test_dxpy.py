@@ -2050,6 +2050,21 @@ class TestDXGlobalWorkflow(testutil.DXTestCaseBuildWorkflows):
         self.assertEqual(smaller_desc['name'], 'gwf_name')
         self.assertEqual(smaller_desc['version'], '0.0.1')
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create a global workflow')
+    def test_dx_find_global_workflows(self):
+        gw_spec = self.create_global_workflow_spec(self.proj_id, "gwf_search", "0.0.1")
+        dxgwf = dxpy.DXGlobalWorkflow()
+        dxgwf.new(**gw_spec)
+
+        results = list(dxpy.search.find_global_workflows(return_handler=True))
+        self.assertEqual(len(results), 1)
+        self.assertTrue(isinstance(results[0], dxpy.DXGlobalWorkflow))
+
+        results = list(dxpy.search.find_global_workflows(describe=True))
+        self.assertEqual("gwf_search", results[0]['describe']["name"])
+
+
 class TestDXSearch(unittest.TestCase):
     def setUp(self):
         setUpTempProjects(self)
@@ -2554,6 +2569,17 @@ class TestDataobjectFunctions(unittest.TestCase):
         handler = dxpy.get_handler(app_with_hyphen_in_name + "/1.0.0")
         self.assertIsNone(handler._dxid)
         self.assertEqual(handler._name, "swiss-army-knife")
+        self.assertEqual(handler._alias, "1.0.0")
+
+        gwf_id = "globalworkflow-123456789012345678901234"
+        handler = dxpy.get_handler(gwf_id)
+        self.assertEqual(handler._dxid, gwf_id)
+        self.assertIsNone(handler._name)
+        self.assertIsNone(handler._alias)
+
+        handler = dxpy.get_handler("globalworkflow-my-workflow/1.0.0")
+        self.assertIsNone(handler._dxid)
+        self.assertEqual(handler._name, "my-workflow")
         self.assertEqual(handler._alias, "1.0.0")
 
     @pytest.mark.TRACEABILITY_MATRIX
