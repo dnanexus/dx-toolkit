@@ -251,7 +251,8 @@ def _get_env_var_proxy(print_proxy=False):
     if env_proxy in os.environ:
       proxy = os.environ[env_proxy]
   if print_proxy:
-    print('Using env variable %s=%s as proxy' % (env_proxy,proxy))
+    print('Using env variable %s=%s as proxy' % (env_proxy,proxy),
+          file=sys.stderr)
   return proxy
 
 def _get_pool_manager(verify, cert_file, key_file):
@@ -616,7 +617,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     return i
 
                 _headers = {ensure_ascii(k): ensure_ascii(v) for k, v in _headers.items()}
-                if (sys.version_info >= (3, 0)): 
+                if (sys.version_info >= (3, 0)):
                     _headers.pop(b'host', None)
                     _headers.pop(b'content-length', None)
                 response = pool_manager.request(_method, _url, headers=_headers, body=body,
