@@ -3166,7 +3166,7 @@ def main():
                               encoding="utf-8")
         shell.expect("Warning:")
         shell.sendline("N")
-        shell.expect("IOError")
+        shell.expect("FileNotFoundError")
         shell.expect(pexpect.EOF)
         shell.wait()
         shell.close()
@@ -9277,8 +9277,8 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             "details": {"key1": "value1"},
             }
         # description and developerNotes should be un-inlined back to files
-        output_app_spec = dict((k, v) for (k, v) in app_spec.iteritems() if k not in ('description',
-                                                                                      'developerNotes'))
+        output_app_spec = dict((k, v) for (k, v) in list(app_spec.items()) if k not in ('description',
+                                                                                        'developerNotes'))
         output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
                                       "distribution": "Ubuntu", "release": "14.04"}
 
