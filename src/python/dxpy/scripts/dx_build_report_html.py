@@ -71,7 +71,7 @@ def _bake_css(link):
         else:
             css_data = _load_file(link["href"]).read()
         link.clear()
-        link.string = css_data
+        link.string = str(css_data)
         link.name = "style"
         del link["rel"]
         del link["href"]
@@ -87,7 +87,7 @@ def _bake_script(script):
         else:
             script_data = _load_file(script["src"]).read()
         script.clear()
-        script.string = "\n" + script_data + "\n"
+        script.string = "\n" + str(script_data) + "\n"
         del script["src"]
         del script["type"]
 
@@ -100,14 +100,14 @@ def _topify_link(link):
         link["target"] = "_top"
 
 
-def _load_file(path, mode="r"):
+def _load_file(path):
     """
     Loads a file from the local filesystem
     """
     if not os.path.exists(path):
         parser.error("{} was not found!".format(path))
     try:
-        f = open(path, mode)
+        f = open(path, "rb")
         return f
     except IOError as ex:
         parser.error("{path} could not be read due to an I/O error! ({ex})".format(path=path, ex=ex))
@@ -152,7 +152,7 @@ def bake(src):
     # Change to the file's directory so image files with relative paths can be loaded correctly
     cwd = os.getcwd()
     os.chdir(path)
-    bs_html = bs4.BeautifulSoup(html)
+    bs_html = bs4.BeautifulSoup(html, "html.parser")
     images = bs_html.find_all("img")
     for image in images:
         _image_to_data(image)
