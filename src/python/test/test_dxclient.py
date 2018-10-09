@@ -200,7 +200,7 @@ class TestApiDebugOutput(DXTestCase):
         (stdout, stderr) = run("_DX_DEBUG=1 dx new project --brief dx_debug_test", also_return_stderr=True)
         proj_id = stdout.strip()
         self.assertIn("/project/new", stderr)
-        self.assertIn("{u'name': u'dx_debug_test'}", stderr)
+        self.assertIn("{'name': 'dx_debug_test'}", stderr)
         self.assertIn(proj_id[-4:], stderr)  # repr can ellipsize the output
 
         (stdout, stderr) = run("_DX_DEBUG=2 dx new project --brief dx_debug_test", also_return_stderr=True)
