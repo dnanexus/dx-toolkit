@@ -10044,7 +10044,7 @@ class TestDXGenerateBatchInputs(DXTestCase):
         try:
             cornercase_test_stderr = run("dx generate_batch_inputs -ipair1='SRR1(.*)_1.gz' -ipair2='SRR2(.*)_2.gz' 2>&1")
             raise Exception("Expected test to return non-zero exit code, but it did not.")
-        except e:
+        except Exception as e:
             cornercase_test_stderr = str(e.output)
 
 

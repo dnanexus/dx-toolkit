@@ -26,7 +26,7 @@ import csv
 
 logging.basicConfig(level=logging.INFO)
 
-from ..compat import (USING_PYTHON2, str, str, input, wrap_stdio_in_codecs, decode_command_line_args,
+from ..compat import (USING_PYTHON2, input, wrap_stdio_in_codecs, decode_command_line_args,
                       unwrap_stream, sys_encoding)
 
 wrap_stdio_in_codecs()
@@ -3826,10 +3826,11 @@ def generate_batch_inputs(args):
             return [b['batchPattern']] + [ival['name'] for iname, ival in sorted(b['inputs'].items())] + [ival['ids'][0] for iname, ival in sorted(b['inputs'].items())]
 
         batch_fname = "{}.{:04d}.tsv".format(args.output_prefix, i)
-        with open(batch_fname, 'wb') as csvfile:
-            batchwriter = csv.writer(csvfile, delimiter='\t'.encode('ascii'))
+        with open(batch_fname, 'w') as csvfile:
+            batchwriter = csv.writer(csvfile, delimiter='\t')
             # Write headers of TSV
-            batchwriter.writerow(['batch ID'] + [iname for iname in sorted(input_names)] + [iname+" ID" for iname in sorted(input_names)]  )
+            headers = ['batch ID'] + [iname for iname in sorted(input_names)] + [iname+" ID" for iname in sorted(input_names)]
+            batchwriter.writerow(headers)
             for bi in batch:
                 batchwriter.writerow(flatten_batch(bi))
             eprint("Created batch file {}".format(batch_fname))
