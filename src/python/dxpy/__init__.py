@@ -248,7 +248,8 @@ def _get_env_var_proxy(print_proxy=False):
     if env_proxy in os.environ:
       proxy = os.environ[env_proxy]
   if print_proxy:
-    print('Using env variable %s=%s as proxy' % (env_proxy,proxy))
+    print('Using env variable %s=%s as proxy' % (env_proxy,proxy),
+          file=sys.stderr)
   return proxy
 
 def _get_pool_manager(verify, cert_file, key_file):
