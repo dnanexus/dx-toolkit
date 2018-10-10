@@ -8,7 +8,27 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
+* A convenience login script for a cloud workstation (#411)
+* Add parents param to clone (#412)
+* Allow batch IDs as output folders for batch run (#409)
+
+### Fixed
+
+* Fix setting a handler for a global workflow (#413)
+* Redirecting proxy printout to stderr (#414)
+* DEVEX-853 cat argument too long (#407)
+
+### Changed 
+
+* Let urllib3 set default CA bundle on Windows (#410)
+
+
+## [265.0] - 2018.10.04 beta
+
+### Added
+
 * Pass stages input from assetDepends to bundledDepends
+* Traceability ID for locked workflow test (#406)
 
 ### Fixed
 
@@ -16,13 +36,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Python 3 `dx upload`
 * `import dxpy` when `sys.stdin` is `None`
 
-## [264.0] - beta
+## [264.0] - 2018.09.06
 
 ### Fixed
 
 * `dxpy.describe()` used with a list of object IDs and an additional `fields` argument
 
-## [263.0] - 2018.08.30 stable
+## [263.0] - 2018.08.30
 
 ### Fixed
 
