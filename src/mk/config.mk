@@ -72,7 +72,7 @@ endif
 
 export DNANEXUS_HOME=$(CURDIR)/..
 export PATH := $(DNANEXUS_HOME)/build/bin:$(PATH)
-export DX_PY_ENV=$(DNANEXUS_HOME)/build/py_env
+export DX_PY_ENV=$(DNANEXUS_HOME)/build/py_env${PYTHON_VERSION}
 export DNANEXUS_LIBDIR := $(DNANEXUS_HOME)/share/dnanexus/lib
 
 # Short-circuit sudo when running as root. In a chrooted environment we are
