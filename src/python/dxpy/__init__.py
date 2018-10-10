@@ -138,6 +138,7 @@ import requests
 import socket
 import threading
 import subprocess
+import urllib.parse
 
 from collections import namedtuple
 
@@ -151,10 +152,6 @@ from requests.packages import urllib3
 from requests.packages.urllib3.packages.ssl_match_hostname import match_hostname
 from threading import Lock
 
-try:
-    from urllib.parse import urlsplit
-except ImportError:
-    from urlparse import urlsplit
 
 
 sequence_number_mutex = threading.Lock()
@@ -225,7 +222,7 @@ _pool_manager = None
 def _get_proxy_info(url):
     proxy_info = {}
 
-    url_info = urlsplit(url)
+    url_info = urllib.parse.urlsplit(url)
     # If the url contains a username, need to separate the username/password
     # from the url
     if url_info.username:
@@ -609,10 +606,16 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     return i
 
                 _headers = {ensure_ascii(k): ensure_ascii(v) for k, v in _headers.items()}
-                if (sys.version_info >= (3, 0)):
-                    _headers.pop(b'host', None)
-                    _headers.pop(b'content-length', None)
-                response = pool_manager.request(_method, _url, headers=_headers, body=body,
+
+                # This is needed for python 3 urllib
+                _headers.pop(b'host', None)
+                _headers.pop(b'content-length', None)
+
+                # Encode any non-ascii characters in the path
+                parts = list(urllib.parse.urlparse(_url))
+                parts[2] = urllib.parse.quote(parts[2])
+                encoded_url = urllib.parse.urlunparse(parts)
+                response = pool_manager.request(_method, encoded_url, headers=_headers, body=body,
                                                 timeout=timeout, retries=False, **kwargs)
             except urllib3.exceptions.ClosedPoolError:
                 # If another thread closed the pool before the request was

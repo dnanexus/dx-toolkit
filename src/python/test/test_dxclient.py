@@ -9292,7 +9292,8 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             run("dx get --omit-resources " + new_applet_id)
             self.assertFalse(os.path.exists(os.path.join("get_applet", "resources")))
 
-            output_json = json.load(open(os.path.join("get_applet", "dxapp.json")))
+            with open(os.path.join("get_applet", "dxapp.json")) as f2:
+                output_json = json.load(f2)
             self.assertIn("bundledDepends", output_json["runSpec"])
             seenResources = False
             for bd in output_json["runSpec"]["bundledDepends"]:
