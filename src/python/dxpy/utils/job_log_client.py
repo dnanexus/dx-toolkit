@@ -140,7 +140,7 @@ class DXJobLogStreamClient:
             err_exit(code=3)
 
     def received_message(self, message):
-        message_dict = json.loads(message.__unicode__())
+        message_dict = json.loads(message)
 
         if (
             self.print_job_info and
