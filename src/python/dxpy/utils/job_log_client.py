@@ -50,6 +50,8 @@ class DXJobLogStreamClient:
         self.msg_callback = msg_callback
         self.print_job_info = print_job_info
         self.seen_jobs = {}
+        self.error = False
+        self.exception = None
         self.closed_code = None
         self.closed_reason = None
         self.url = "{protocol}://{host}:{port}/{job_id}/getLog/websocket".format(
@@ -62,11 +64,17 @@ class DXJobLogStreamClient:
 
     def connect(self):
         while True:
+            self.error = False
+            self.exception = None
+            self.closed_code = None
+            self.closed_reason = None
+
             try:
                 self._app = WebSocketApp(
                     self.url,
                     on_open=self.opened,
                     on_close=self.closed,
+                    on_error=self.errored,
                     on_message=self.received_message
                 )
                 self._app.run_forever()
@@ -100,12 +108,20 @@ class DXJobLogStreamClient:
             args.update(self.input_params)
         self._app.send(json.dumps(args))
 
+    def errored(self, exception=None):
+        self.error = True
+        self.exception = exception
+
     def closed(self, code=None, reason=None):
-        if code is None:
-            code = 1006
-            reason = "Going away"
-        self.closed_code = code
-        self.closed_reason = reason
+        if code:
+            self.closed_code = code
+            self.closed_reason = reason
+        elif self.error:
+            self.closed_code = 1006
+            self.closed_reason = str(self.exception) if self.exception else "Abnormal"
+        else:
+            self.closed_code = 1000
+            self.closed_reason = "Normal"
 
         if self.closed_code != 1000:
             try:
