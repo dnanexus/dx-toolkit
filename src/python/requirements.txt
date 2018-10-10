@@ -1,4 +1,4 @@
-ws4py==0.3.2
+websocket-client==0.53.0
 python-dateutil>=2.5
 python-magic==0.4.6
 beautifulsoup4==4.4.1
