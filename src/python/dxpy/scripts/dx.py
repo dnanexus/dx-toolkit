@@ -3457,7 +3457,7 @@ def shell(orig_args):
     elif not INTERACTIVE_CLI:
         for line in sys.stdin.read().splitlines():
             if len(line) > 0:
-                args = [word.decode('utf-8') for word in shlex.split(line.encode('utf-8'))]
+                args = [word for word in shlex.split(line)]
                 parsed_args = parser.parse_args(args)
                 set_cli_colors(parsed_args)
                 parsed_args.func(parsed_args)
@@ -3503,7 +3503,7 @@ def shell(orig_args):
         if cmd == '':
             continue
         try:
-            sys.argv[1:] = [word.decode('utf-8') for word in shlex.split(cmd.encode('utf-8'))]
+            sys.argv[1:] = [word for word in shlex.split(cmd)]
             args = parser.parse_args(sys.argv[1:])
             set_cli_colors(args)
             set_delim(args)
