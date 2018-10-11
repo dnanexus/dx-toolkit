@@ -111,10 +111,6 @@ class DXJobLogStreamClient:
     def errored(self, exception=None):
         self.error = True
         self.exception = exception
-        if exception:
-            import sys
-            import traceback
-            traceback.print_exception(*sys.exc_info())
 
     def closed(self, code=None, reason=None):
         if code:
