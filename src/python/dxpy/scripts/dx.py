@@ -58,7 +58,7 @@ from ..utils.batch_utils import (batch_run, batch_launch_args)
 from ..app_categories import APP_CATEGORIES
 from ..utils.printing import (CYAN, BLUE, YELLOW, GREEN, RED, WHITE, UNDERLINE, BOLD, ENDC, DNANEXUS_LOGO,
                               DNANEXUS_X, set_colors, set_delimiter, get_delimiter, DELIMITER, fill,
-                              tty_rows, tty_cols, pager, format_find_results)
+                              tty_rows, tty_cols, pager, format_find_results, nostderr)
 from ..utils.pretty_print import format_tree, format_table
 from ..utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id,
                               is_analysis_id, get_last_pos_of_char, resolve_container_id_or_name, resolve_path,
@@ -846,9 +846,35 @@ def rmdir(args):
     if had_error:
         err_exit('', 3)
 
+
+
+    
 def rm(args):
     had_error = False
     projects = {}
+    
+    # Caution user when performing a recursive removal before any removal operation takes place
+    if args.recursive and not args.force:
+        for path in args.paths:
+            try:
+                with nostderr():
+                    project, folderpath, entity_results = resolve_existing_path(path, allow_mult=True, all_mult=args.all)
+                if folderpath == '/':
+                    print("")
+                    print("===========================================================================")
+                    print("*     {}: Recursive deletion will remove all files in project!     *".format(RED("RED ALERT")))
+                    print("*                                                                         *")
+                    print("*                  {}                       *".format(project))
+                    print("*                                                                         *")
+                    print("*   Please issue 'dx rm -r --force' if you are sure you want to do this.  *")
+                    print("===========================================================================")
+                    print("")
+
+                    err_exit('', 3)
+            except Exception as details:
+                continue
+
+
     for path in args.paths:
         # Resolve the path and add it to the list
         try:
@@ -4333,6 +4359,8 @@ parser_rm = subparsers.add_parser('rm', help='Remove data objects and folders',
 rm_paths_action = parser_rm.add_argument('paths', help='Paths to remove', metavar='path', nargs='+')
 rm_paths_action.completer = DXPathCompleter()
 parser_rm.add_argument('-r', '--recursive', help='Recurse into a directory', action='store_true')
+parser_rm.add_argument('-f', '--force', help='Force removal of files', action='store_true')
+
 parser_rm.set_defaults(func=rm)
 register_parser(parser_rm, categories='fs')
 

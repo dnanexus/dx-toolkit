@@ -175,6 +175,7 @@ class TestDXRemove(DXTestCase):
         # if no -r flag provided, should throw error since it's a folder
         with self.assertSubprocessFailure(exit_code=3):
             run("dx rm {f}".format(f=record_name))
+            
         # finally remove the folder
         run("dx rm -r {f}".format(f=record_name))
         self.assertNotIn(folder_name, list_folder(self.project, "/")['folders'])
@@ -187,6 +188,12 @@ class TestDXRemove(DXTestCase):
                                                     project=self.project)['describe']['name'])
         with self.assertSubprocessFailure(exit_code=3):
             run("dx rm {f} {f2}".format(f=record_name, f2=record_name2))
+
+        # Fail if trying to remove entire project recursively (requires a --force)
+        with self.assertSubprocessFailure(exit_code=3):
+            run("dx rm -r /")
+        with self.assertSubprocessFailure(exit_code=3):
+            run("dx rm -r :")
 
 
 class TestApiDebugOutput(DXTestCase):
