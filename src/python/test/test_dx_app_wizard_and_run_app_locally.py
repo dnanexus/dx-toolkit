@@ -46,7 +46,7 @@ def run_dx_app_wizard(instance_type=None):
     tempdir = tempfile.mkdtemp(prefix='Программа')
     os.chdir(tempdir)
     try:
-        wizard = pexpect.spawn("dx-app-wizard --template parallelized")
+        wizard = pexpect.spawn("dx-app-wizard --template parallelized", encoding="utf-8")
         wizard.logfile = sys.stdout
         wizard.setwinsize(20, 90)
         wizard.expect("App Name:")
