@@ -23,6 +23,8 @@ import json
 import platform
 from ..compat import USING_PYTHON2, sys_encoding
 from ..exceptions import DXCLIError
+import contextlib
+import io
 
 if sys.stdout.isatty():
     try:
@@ -38,6 +40,18 @@ else:
     color_state = False
 
 delimiter = None
+
+# Utility functions to silence output for a function call
+# https://stackoverflow.com/questions/2828953/silence-the-stdout-of-a-function-in-python-without-trashing-sys-stdout-and-resto
+class DummyFile(object):
+    def write(self, x): pass
+
+@contextlib.contextmanager
+def nostderr():
+    save_stderr = sys.stderr
+    sys.stderr = DummyFile()
+    yield
+    sys.stderr = save_stderr
 
 def CYAN(message=None):
     if message is None:

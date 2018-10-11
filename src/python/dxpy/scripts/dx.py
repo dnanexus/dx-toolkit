@@ -24,7 +24,6 @@ import shlex # respects quoted substrings when splitting
 
 import requests
 import csv
-import contextlib
 
 logging.basicConfig(level=logging.INFO)
 
@@ -60,7 +59,7 @@ from ..utils.batch_utils import (batch_run, batch_launch_args)
 from ..app_categories import APP_CATEGORIES
 from ..utils.printing import (CYAN, BLUE, YELLOW, GREEN, RED, WHITE, UNDERLINE, BOLD, ENDC, DNANEXUS_LOGO,
                               DNANEXUS_X, set_colors, set_delimiter, get_delimiter, DELIMITER, fill,
-                              tty_rows, tty_cols, pager, format_find_results)
+                              tty_rows, tty_cols, pager, format_find_results, nostderr)
 from ..utils.pretty_print import format_tree, format_table
 from ..utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id,
                               is_analysis_id, get_last_pos_of_char, resolve_container_id_or_name, resolve_path,
@@ -848,18 +847,7 @@ def rmdir(args):
         err_exit('', 3)
 
 
-# Utility functions to silence traceback when resolving path
-# https://stackoverflow.com/questions/2828953/silence-the-stdout-of-a-function-in-python-without-trashing-sys-stdout-and-resto
-# Useful printing error messages before recursively removing files
-class DummyFile(object):
-    def write(self, x): pass
 
-@contextlib.contextmanager
-def nostderr():
-    save_stderr = sys.stderr
-    sys.stderr = DummyFile()
-    yield
-    sys.stderr = save_stderr
     
 def rm(args):
     had_error = False
