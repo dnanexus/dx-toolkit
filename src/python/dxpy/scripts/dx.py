@@ -2721,7 +2721,7 @@ def compile(args):
 
     try:
         output = subprocess.check_output(cmdline)
-        print(output.strip())
+        print(output.strip().decode("utf-8"))
     except Exception as e:
         print("Error: %s" % (e.message,), file=sys.stderr)
         err_exit()
@@ -2759,7 +2759,7 @@ def compile_dxni(args):
 
     try:
         output = subprocess.check_output(cmdline)
-        print(output.strip())
+        print(output.strip().decode("utf-8"))
     except Exception as e:
         print("Error: %s" % (e.message,), file=sys.stderr)
         err_exit()
