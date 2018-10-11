@@ -391,6 +391,7 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
             appdir = create_app_dir_with_dxapp_json(dxapp_json, lang)
             # Test with bare-minimum of inputs
             output = subprocess.check_output(['dx-run-app-locally', appdir] + cmdline_args)
+            output : str = output.decode("utf-8")
             print(output)
             # Verify array is printed total 3 times once in each input, logs, and final output
             self.assertEquals(len(re.findall("required_array_boolean = \[ true, false ]", output)), 3)
