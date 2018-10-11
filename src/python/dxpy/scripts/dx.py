@@ -24,6 +24,7 @@ import shlex # respects quoted substrings when splitting
 
 import requests
 import csv
+import contextlib
 
 logging.basicConfig(level=logging.INFO)
 
@@ -846,9 +847,46 @@ def rmdir(args):
     if had_error:
         err_exit('', 3)
 
+
+# Utility functions to silence traceback when resolving path
+# https://stackoverflow.com/questions/2828953/silence-the-stdout-of-a-function-in-python-without-trashing-sys-stdout-and-resto
+# Useful printing error messages before recursively removing files
+class DummyFile(object):
+    def write(self, x): pass
+
+@contextlib.contextmanager
+def nostderr():
+    save_stderr = sys.stderr
+    sys.stderr = DummyFile()
+    yield
+    sys.stderr = save_stderr
+    
 def rm(args):
     had_error = False
     projects = {}
+    
+    # Caution user when performing a recursive removal before any removal operation takes place
+    if args.recursive and not args.force:
+        for path in args.paths:
+            try:
+                with nostderr():
+                    project, folderpath, entity_results = resolve_existing_path(path, allow_mult=True, all_mult=args.all)
+                if folderpath == '/':
+                    print("")
+                    print("===========================================================================")
+                    print("*     {}: Recursive deletion will remove all files in project!     *".format(RED("RED ALERT")))
+                    print("*                                                                         *")
+                    print("*                  {}                       *".format(project))
+                    print("*                                                                         *")
+                    print("*   Please issue 'dx rm -r --force' if you are sure you want to do this.  *")
+                    print("===========================================================================")
+                    print("")
+
+                    err_exit('', 3)
+            except Exception as details:
+                continue
+
+
     for path in args.paths:
         # Resolve the path and add it to the list
         try:
@@ -4332,6 +4370,8 @@ parser_rm = subparsers.add_parser('rm', help='Remove data objects and folders',
 rm_paths_action = parser_rm.add_argument('paths', help='Paths to remove', metavar='path', nargs='+')
 rm_paths_action.completer = DXPathCompleter()
 parser_rm.add_argument('-r', '--recursive', help='Recurse into a directory', action='store_true')
+parser_rm.add_argument('-f', '--force', help='Force removal of files', action='store_true')
+
 parser_rm.set_defaults(func=rm)
 register_parser(parser_rm, categories='fs')
 
