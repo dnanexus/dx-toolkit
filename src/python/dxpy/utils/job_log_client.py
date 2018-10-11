@@ -111,6 +111,10 @@ class DXJobLogStreamClient:
     def errored(self, exception=None):
         self.error = True
         self.exception = exception
+        if exception:
+            import sys
+            import traceback
+            traceback.print_exception(*sys.exc_info())
 
     def closed(self, code=None, reason=None):
         if code:
@@ -133,7 +137,7 @@ class DXJobLogStreamClient:
                 )
             except (KeyError, ValueError):
                 raise DXJobLogStreamingException(
-                    "Error while streaming job logs: {code} {reason}\n".format(
+                    "Error while streaming job logs: {code}: {reason}\n".format(
                         code=self.closed_code, reason=self.closed_reason
                     )
                 )
@@ -176,7 +180,7 @@ class DXJobLogStreamClient:
             message_dict.get('source') == 'SYSTEM' and
             message_dict.get('msg') == 'END_LOG'
         ):
-            self._app.close()
+            self._app.keep_running = False
         elif self.msg_callback:
             self.msg_callback(message_dict)
         else:
