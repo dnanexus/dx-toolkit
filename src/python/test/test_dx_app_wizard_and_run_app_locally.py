@@ -138,7 +138,7 @@ def create_app_dir_with_dxapp_json(dxapp_json, language):
         with open('dxapp.json', 'w') as fd:
             json.dump(dxapp_json, fd)
 
-        wizard = pexpect.spawn("dx-app-wizard --json-file dxapp.json --language " + language)
+        wizard = pexpect.spawn("dx-app-wizard --json-file dxapp.json --language " + language, encoding="utf-8")
         wizard.setwinsize(20, 90)
         wizard.logfile = sys.stdout
         wizard.expect("App Name")
@@ -185,7 +185,7 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
     @testutil.update_traceability_matrix(["DNA_CLI_HELP_CREATE_APP_WIZARD"])
     def test_dx_run_app_locally_interactively(self):
         appdir = create_app_dir()
-        local_run = pexpect.spawn("dx-run-app-locally {} -iin1=8".format(appdir))
+        local_run = pexpect.spawn("dx-run-app-locally {} -iin1=8".format(appdir), encoding="utf-8")
         local_run.expect("Confirm")
         local_run.sendline()
         local_run.expect("App finished successfully")
@@ -284,7 +284,7 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
             # Test with bare-minimum of inputs
             output = subprocess.check_output(['dx-run-app-locally', appdir, '-irequired_file=afile',
                                               '-irequired_file_array=afile'])
-            print(output)
+            output : str = output.decode("utf-8")
             self.assertIn("App finished successfully", output)
             self.assertIn("Local job workspaces can be found in:", output)
             local_workdir = output.split("Local job workspaces can be found in:")[1].strip()
@@ -302,6 +302,7 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
                                               '-idefault_file=otherfile',
                                               '-irequired_file_array=afile',
                                               '-ioptional_file_array=afile'])
+            output : str = output.decode("utf-8")
             print(output)
             self.assertIn("App finished successfully", output)
             self.assertIn("Local job workspaces can be found in:", output)

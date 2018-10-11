@@ -67,7 +67,7 @@ def postprocess(process_outputs, additional_input):
     # the "process") jobs are done.
 
     for item in process_outputs:
-        print item
+        print(item)
 
     return { "final_output": "postprocess placeholder output" }
 

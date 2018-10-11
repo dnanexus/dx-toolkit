@@ -196,7 +196,7 @@ def make_unix_filename(fname):
 
 ## filter from a dictionary a list of matching keys
 def filter_dict(dict_, excl_keys):
-    return {k: v for k, v in dict_.iteritems() if k not in excl_keys}
+    return {k: v for k, v in list(dict_.items()) if k not in excl_keys}
 
 
 def get_job_input_filenames(job_input_file):
@@ -259,7 +259,7 @@ def get_job_input_filenames(job_input_file):
             subdir = str(i).zfill(num_digits)
             add_file(input_name, subdir, link)
 
-    for input_name, value in job_input.iteritems():
+    for input_name, value in list(job_input.items()):
         if isinstance(value, list):
             # This is a file array
             add_file_array(input_name, value)
@@ -267,7 +267,7 @@ def get_job_input_filenames(job_input_file):
             add_file(input_name, None, value)
 
     ## create a dictionary of the all non-file elements
-    rest_hash = {key: val for key, val in job_input.iteritems() if key not in files}
+    rest_hash = {key: val for key, val in list(job_input.items()) if key not in files}
     return dirs, files, rest_hash
 
 
@@ -388,7 +388,7 @@ def analyze_bash_vars(job_input_file, job_homedir):
         return {'handler': [], 'basename': [],  'prefix': [], 'path': []}
     file_key_descs = collections.defaultdict(factory)
     rel_home_dir = get_input_dir(job_homedir)
-    for key, entries in file_entries.iteritems():
+    for key, entries in list(file_entries.items()):
         for entry in entries:
             filename = entry['trg_fname']
             basename = os.path.basename(filename)
@@ -453,9 +453,9 @@ def gen_bash_vars(job_input_file, job_homedir=None, check_name_collision=True):
 
     # Processing non-file variables before the file variables. This priorities them,
     # so that in case of name collisions, the file-variables will be dropped.
-    for key, desc in rest_hash.iteritems():
+    for key, desc in list(rest_hash.items()):
         gen_text_line_and_name_collision(key, string_of_value(desc))
-    for file_key, desc in file_key_descs.iteritems():
+    for file_key, desc in list(file_key_descs.items()):
         gen_text_line_and_name_collision(file_key, string_of_value(desc['handler']))
         gen_text_line_and_name_collision(file_key + "_name", string_of_value(desc['basename']))
         gen_text_line_and_name_collision(file_key + "_prefix", string_of_value(desc['prefix']))

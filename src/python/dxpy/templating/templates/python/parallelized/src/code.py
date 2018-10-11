@@ -35,7 +35,7 @@ def process(input1):
     # and upload files here as well if this stage receives file input
     # and/or makes file output.
 
-    print input1
+    print(input1)
 
     return { "output": "placeholder value" }
 

@@ -660,14 +660,14 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                              dx_toolkit_autodep="stable", do_check_syntax=True, dry_run=False,
                              return_object_dump=False, confirm=True, ensure_upload=False, force_symlinks=False,
                              region=None, **kwargs):
-
+    print("AAA")
     dxpy.app_builder.build(src_dir, parallel_build=do_parallel_build)
     app_json = _parse_app_spec(src_dir)
     _check_suggestions(app_json, publish=publish)
     _verify_app_source_dir(src_dir, mode, enforce=do_check_syntax)
     if mode == "app" and not dry_run:
         dxpy.executable_builder.verify_developer_rights('app-' + app_json['name'])
-
+    print("BBB")
     working_project = None
     using_temp_project = False
     override_folder = None
@@ -681,6 +681,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
 
     projects_by_region = None
 
+    print("CCC mode={}".format(mode))
     if mode == "applet" and destination_override:
         working_project, override_folder, override_applet_name = parse_destination(destination_override)
         region = dxpy.api.project_describe(working_project,
