@@ -259,7 +259,7 @@ def err_exit(message='', code=None, expected_exceptions=default_expected_excepti
 
     exc = exception if exception is not None else sys.exc_info()[1]
     if isinstance(exc, SystemExit):
-        raise
+        raise exc
     elif isinstance(exc, expected_exceptions):
         exit_with_exc_info(EXPECTED_ERR_EXIT_STATUS, message, print_tb=dxpy._DEBUG > 0, exception=exception)
     elif ignore_sigpipe and isinstance(exc, IOError) and getattr(exc, 'errno', None) == errno.EPIPE:
