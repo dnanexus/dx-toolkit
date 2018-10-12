@@ -53,7 +53,7 @@ def parse_asset_spec(src_dir):
         try:
             return json_load_raise_on_duplicates(asset_desc)
         except Exception as e:
-            raise AssetBuilderException("Could not parse dxasset.json file as JSON: " + e.message)
+            raise AssetBuilderException("Could not parse dxasset.json file as JSON: " + str(e.args))
 
 
 def validate_conf(asset_conf):

@@ -98,10 +98,8 @@ def check_output(*popenargs, **kwargs):
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, *popenargs, **kwargs)
     output, err = process.communicate()
     retcode = process.poll()
-    if not isinstance(output, str):
-        output = output.decode(sys.stdin.encoding)
-    if not isinstance(err, str):
-        err = err.decode(sys.stdin.encoding)
+    output = output.decode(sys.stdin.encoding)
+    err = err.decode(sys.stderr.encoding)
     if retcode:
         print(err)
         cmd = kwargs.get("args")

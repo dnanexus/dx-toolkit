@@ -75,6 +75,13 @@ def list_folder(proj_id, path):
     output['objects'] = sorted(output['objects'])
     return output
 
+# for some reason, python 3 insists that we run the command first,
+# and then load the result into json. Doing this in one line causes
+# an error.
+def run_and_parse_json(cmd: str):
+    output = run(cmd)
+    return json.loads(output)
+
 
 class TestDXPYImport(unittest.TestCase):
     @patch('sys.stdin', None)
@@ -6818,7 +6825,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
     def test_build_applet(self):
         app_spec = dict(self.base_app_spec, name="minimal_applet")
         app_dir = self.write_app_directory("minimal_åpplet", json.dumps(app_spec), "code.py")
-        new_applet = json.loads(run("dx build --json " + app_dir))
+        new_applet = run_and_parse_json("dx build --json " + app_dir)
         applet_describe = dxpy.get_handler(new_applet["id"]).describe()
         self.assertEqual(applet_describe["class"], "applet")
         self.assertEqual(applet_describe["id"], applet_describe["id"])
@@ -7438,7 +7445,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
         for region in ("aws:us-east-1", "azure:westus"):
             with temporary_project(region=region, select=True):
-                applet_id = json.loads(run("dx build --json " + app_dir))["id"]
+                applet_id = run_and_parse_json("dx build --json " + app_dir)["id"]
                 applet_desc = dxpy.api.applet_describe(applet_id)
                 bundled_depends_by_region = applet_desc["runSpec"]["bundledDependsByRegion"]
                 self.assertEqual(list(bundled_depends_by_region.keys()), [region])
@@ -7463,7 +7470,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
         cmd = "dx build --create-app --region aws:us-east-1 --region azure:westus --json {app_dir}".format(
                 app_dir=app_dir)
-        app_new_res = json.loads(run(cmd))
+        app_new_res = run_and_parse_json(cmd)
         app_desc_res = json.loads(run("dx describe --json " + app_new_res["id"]))
         self.assertEqual(app_desc_res["class"], "app")
         self.assertEqual(app_desc_res["id"], app_desc_res["id"])
@@ -7872,9 +7879,9 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
         # Create two applets in different directories, but with the same name
         run("dx mkdir subfolder1")
-        app_1_spec = json.loads(run("dx build --json --destination=subfolder1/applet_overwriting " + app_dir))
+        app_1_spec = run_and_parse_json("dx build --json --destination=subfolder1/applet_overwriting " + app_dir)
         run("dx mkdir subfolder2")
-        app_2_spec = json.loads(run("dx build --json --destination=subfolder2/applet_overwriting " + app_dir))
+        app_2_spec = run_and_parse_json("dx build --json --destination=subfolder2/applet_overwriting " + app_dir)
 
         # Move the applet in subfolder2 to subfolder1
         run("dx mv subfolder2/applet_overwriting subfolder1")
@@ -7890,7 +7897,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             run("dx build --destination=subfolder1/applet_overwriting " + app_dir)
 
         # Creating a new applet with the same name with overwrite should succeed
-        app_final_spec = json.loads(run("dx build -f --json --destination=subfolder1/applet_overwriting " + app_dir))
+        app_final_spec = run_and_parse_json("dx build -f --json --destination=subfolder1/applet_overwriting " + app_dir)
 
         # Verify that the original applets were deleted by dx build -f
         with self.assertSubprocessFailure(exit_code=3):
@@ -8137,7 +8144,7 @@ def main(in1):
             }
         app_dir = self.write_app_directory("åpplet_help", json.dumps(app_spec),
                                            code_filename="code.py", code_content="")
-        applet_id = json.loads(run("dx build --json " + app_dir))["id"]
+        applet_id = run_and_parse_json("dx build --json " + app_dir)["id"]
         applet_help = run("dx run " + applet_id + " -h")
         self.assertTrue("Reads: -ireads=(gtable, type LetterReads) [-ireads=... [...]]" in applet_help)
         self.assertTrue("Required: -irequired=(file)" in applet_help)
@@ -8152,7 +8159,7 @@ def main(in1):
         os.mkdir(os.path.join(app_dir, 'resources'))
         with open(os.path.join(app_dir, 'resources', 'test.txt'), 'w') as resources_file:
             resources_file.write('test\n')
-        new_applet = json.loads(run("dx build --json " + app_dir))
+        new_applet = run_and_parse_json("dx build --json " + app_dir)
         applet_describe = dxpy.get_handler(new_applet["id"]).describe()
         resources_file = applet_describe['runSpec']['bundledDepends'][0]['id']['$dnanexus_link']
         resources_file_describe = json.loads(run("dx describe --json " + resources_file))
@@ -8167,7 +8174,7 @@ def main(in1):
             - returns the ID of the resource bundle (when extract_resources is False)
         """
         # create applet and get the resource_file id
-        new_applet = json.loads(run("dx build -f --json " + args + " " + app_dir))
+        new_applet = run_and_parse_json("dx build -f --json " + args + " " + app_dir)
         applet_describe = dxpy.api.applet_describe(new_applet["id"])
         resources_file = applet_describe['runSpec']['bundledDepends'][0]['id']['$dnanexus_link']
         id1 = dxpy.api.file_describe(resources_file)['id']
@@ -8639,10 +8646,10 @@ def main(in1):
         app_dir = self.write_app_directory("archive_in_another_project", json.dumps(app_spec), "code.py")
 
         with temporary_project("Temporary working project", select=True) as temp_project:
-            orig_applet = json.loads(run("dx build --json -d {p}: {app_dir}".format(
-                p=self.project, app_dir=app_dir)))["id"]
-            new_applet = json.loads(run("dx build --json --archive -d {p}: {app_dir}".format(
-                p=self.project, app_dir=app_dir)))["id"]
+            orig_applet = run_and_parse_json("dx build --json -d {p}: {app_dir}".format(
+                p=self.project, app_dir=app_dir))["id"]
+            new_applet = run_and_parse_json("dx build --json --archive -d {p}: {app_dir}".format(
+                p=self.project, app_dir=app_dir))["id"]
             self.assertEqual(dxpy.DXApplet(orig_applet).describe(incl_properties=True)["properties"]["replacedWith"],
                              new_applet)
 
@@ -8666,10 +8673,10 @@ def main(in1):
         with open(os.path.join(app_dir, 'resources', 'foo.txt'), 'w') as file_in_resources:
             file_in_resources.write('foo\n')
 
-        first_applet = json.loads(run("dx build --json -d {p}:applet1 {app_dir}".format(
-            p=self.project, app_dir=app_dir)))["id"]
-        second_applet = json.loads(run("dx build --json -d {p}:applet2 {app_dir}".format(
-            p=self.project, app_dir=app_dir)))["id"]
+        first_applet = run_and_parse_json("dx build --json -d {p}:applet1 {app_dir}".format(
+            p=self.project, app_dir=app_dir))["id"]
+        second_applet = run_and_parse_json("dx build --json -d {p}:applet2 {app_dir}".format(
+            p=self.project, app_dir=app_dir))["id"]
 
         # The second applet should reuse the bundle from the first.
 
@@ -8794,7 +8801,7 @@ def main(in1):
                         runSpec={"assetDepends": [{"id": record.get_id()}],
                                  "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
         app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
-        asset_applet = json.loads(run("dx build --json {app_dir}".format(app_dir=app_dir)))["id"]
+        asset_applet = run_and_parse_json("dx build --json {app_dir}".format(app_dir=app_dir))["id"]
         self.assertEqual(
             dxpy.DXApplet(asset_applet).describe()['runSpec']['bundledDepends'][0],
             {'id': {'$dnanexus_link': asset_file.get_id()}, 'name': asset_name}
@@ -8909,7 +8916,7 @@ def main(in1):
                         runSpec={"assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project}],
                                   "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
         app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
-        asset_applet = json.loads(run("dx build --json {app_dir}".format(app_dir=app_dir)))["id"]
+        asset_applet = run_and_parse_json("dx build --json {app_dir}".format(app_dir=app_dir))["id"]
 
         # clone the applet to a different project and test that the hidden file is also cloned
         with temporary_project('test_select_project', select=True) as temp_project:
@@ -9159,7 +9166,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         os.mkdir(os.path.join(app_dir, "resources"))
         with open(os.path.join(app_dir, "resources", "resources_file"), 'w') as f:
             f.write('content\n')
-        new_applet_id = json.loads(run("dx build --json " + app_dir))["id"]
+        new_applet_id = run_and_parse_json("dx build --json " + app_dir)["id"]
         with chdir(tempfile.mkdtemp()):
             run("dx get " + new_applet_id)
             self.assertTrue(os.path.exists("get_applet"))
@@ -9287,7 +9294,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         os.mkdir(os.path.join(app_dir, "resources"))
         with open(os.path.join(app_dir, "resources", "resources_file"), 'w') as f:
             f.write('content\n')
-        new_applet_id = json.loads(run("dx build --json " + app_dir))["id"]
+        new_applet_id = run_and_parse_json("dx build --json " + app_dir)["id"]
         with chdir(tempfile.mkdtemp()):
             run("dx get --omit-resources " + new_applet_id)
             self.assertFalse(os.path.exists(os.path.join("get_applet", "resources")))
@@ -9320,7 +9327,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         os.mkdir(os.path.join(app_dir, "resources"))
         with open(os.path.join(app_dir, "resources", "resources_file"), 'w') as f:
             f.write('content\n')
-        new_applet_id = json.loads(run("dx build --json " + app_dir))["id"]
+        new_applet_id = run_and_parse_json("dx build --json " + app_dir)["id"]
         with chdir(tempfile.mkdtemp()):
             run("dx get " + new_applet_id)
             self.assertTrue(os.path.exists("get_applet_field_cleanup"))

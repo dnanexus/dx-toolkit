@@ -16,8 +16,6 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import print_function
-
 import logging
 logging.basicConfig(level=logging.WARN)
 
@@ -124,12 +122,12 @@ def _load_url(url):
         parser.error("{url} could not be loaded remotely! ({ex})".format(url=url, ex=ex))
 
 
-def _get_bs4_string(soup):
+def _get_bs4_string(soup) -> str:
     """
     Outputs a BeautifulSoup object as a string that should hopefully be minimally modified
     """
     if len(soup.find_all("script")) == 0:
-        soup_str = soup.prettify(formatter=None).encode("utf-8").strip()
+        soup_str = soup.prettify(formatter=None).strip()
     else:
         soup_str = str(soup.html)
         soup_str = re.sub("&amp;", "&", soup_str)
