@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/home/orodeh/dx-toolkit/build/py_env3.6/bin/python3
 
 # Copyright 2012-2013, Andrey Kislyuk and argcomplete contributors.
 # Licensed under the Apache License. See https://github.com/kislyuk/argcomplete for more info.
@@ -29,7 +29,7 @@ with open(sys.argv[1]) as fh:
             if line.startswith("# EASY-INSTALL-SCRIPT"):
                 import pkg_resources
                 dist, script = re.match("# EASY-INSTALL-SCRIPT: '(.+)','(.+)'", line).groups()
-                if "PYTHON_ARGCOMPLETE_OK" in pkg_resources.get_distribution(dist).get_metadata('scripts/'+script):
+                if "PYTHON_ARGCOMPLETE_OK" in pkg_resources.get_distribution(dist).get_metadata('scripts/' + script):
                     exit(0)
             elif line.startswith("# EASY-INSTALL-ENTRY-SCRIPT"):
                 dist, group, name = re.match("# EASY-INSTALL-ENTRY-SCRIPT: '(.+)','(.+)','(.+)'", line).groups()

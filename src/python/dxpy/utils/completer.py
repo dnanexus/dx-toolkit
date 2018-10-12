@@ -19,11 +19,9 @@ This file contains utility functions for interactive scripts such as
 dx for tab-completion, resolving naming conflicts, etc.
 '''
 
-from __future__ import print_function, unicode_literals, division, absolute_import
-
 import sys
 
-from ..packages.argcomplete import warn
+from argcomplete import warn
 from collections import namedtuple, OrderedDict
 import dxpy
 from .resolver import (get_first_pos_of_char, get_last_pos_of_char, clean_folder_path, resolve_path,
@@ -335,7 +333,7 @@ class LocalCompleter():
         self.matches = []
 
     def _populate_matches(self, prefix):
-        from ..packages.argcomplete.completers import FilesCompleter
+        from argcomplete.completers import FilesCompleter
         completer = FilesCompleter()
         self.matches = completer(prefix)
 

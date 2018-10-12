@@ -5794,7 +5794,7 @@ parser_categories['all']['cmds'].sort()
 def main():
     # Bash argument completer hook
     if '_ARGCOMPLETE' in os.environ:
-        from ..packages import argcomplete
+        import argcomplete
         argcomplete.autocomplete(parser,
                                  always_complete_options=False,
                                  exclude=['gtable', 'export'],

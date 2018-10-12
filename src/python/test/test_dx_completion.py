@@ -27,55 +27,6 @@ from dxpy.exceptions import DXError
 
 IFS = '\013'
 
-def split_line_like_bash(line, point):
-    '''
-    :returns: comp_words, comp_cword
-
-    Split the line like bash would, and then put it back together with
-    IFS, and calculate cword while you're at it.
-
-    Use os.environ['COMP_POINT'] to figure out which word we're in
-    '''
-    point = int(point)
-    cwords = []
-    current_word = ''
-    append_to_current_word = False
-    for pos in range(len(line)):
-        if pos == point:
-            cword = len(cwords)
-
-        if append_to_current_word:
-            append_to_current_word = False
-            current_word += line[pos]
-        elif line[pos] == '\\':
-            append_to_current_word = True
-            current_word += line[pos]
-        elif line[pos].isspace():
-            if len(current_word) > 0:
-                cwords.append(current_word)
-                current_word = ''
-        else:
-            # non-whitespace in COMP_WORDBREAKS that get their own words: ><=:
-            if line[pos] in '[<>=:]':
-                if len(current_word) > 0:
-                    cwords.append(current_word)
-                    current_word = ''
-                cwords.append(line[pos])
-                if pos == point:
-                    cword += 1
-            else:
-                current_word += line[pos]
-
-    if len(current_word) > 0:
-        cwords.append(current_word)
-    elif line[-1].isspace():
-        cwords.append('')
-
-    if point == len(line):
-        cword = len(cwords) - 1
-
-    return IFS.join(cwords), str(cword)
-
 class TestDXTabCompletion(unittest.TestCase):
     project_id = None
     ids_to_destroy = []
@@ -118,9 +69,8 @@ class TestDXTabCompletion(unittest.TestCase):
         p = subprocess.Popen('dx', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.communicate()
 
-        # out,err are of type bytes, convert them to strings.
-        out = out.decode(sys.stdin.encoding)
-        err = err.decode(sys.stderr.encoding)
+        out : str = out.decode(sys.stdin.encoding)
+        err : str = err.decode(sys.stderr.encoding)
         self.assertIn(stderr_contains, err)
         print("out={}".format(out))
         return out.split(IFS)
