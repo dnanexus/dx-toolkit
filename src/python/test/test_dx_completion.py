@@ -67,16 +67,12 @@ class TestDXTabCompletion(unittest.TestCase):
 
         p = subprocess.Popen('dx', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.communicate()
-        if isinstance(out, bytes):
-            out = out.decode(sys.stdin.encoding)
-        if isinstance(err, bytes):
-            err = err.decode(sys.stderr.encoding)
+        out : str = out.decode("utf-8")
+        err : str = err.decode("utf-8")
         self.assertIn(stderr_contains, err)
         if stderr_contains == "":
             self.assertEqual(err, "")
-        words = out.split(IFS)
-        print("out={}".format(words))
-        return words
+        return out.split(IFS)
 
     def assert_completion(self, line, completion):
         self.assertIn(completion, self.get_bash_completions(line))

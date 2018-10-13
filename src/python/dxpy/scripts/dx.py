@@ -5798,7 +5798,7 @@ def main():
         argcomplete.autocomplete(parser,
                                  always_complete_options=False,
                                  exclude=['gtable', 'export'],
-                                 output_stream=sys.stdout if '_DX_ARC_DEBUG' in os.environ else None)
+                                 output_stream=sys.stdout.buffer if '_DX_ARC_DEBUG' in os.environ else None)
 
     if len(args_list) > 0:
         args = parser.parse_args(args_list)
