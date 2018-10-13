@@ -62,18 +62,21 @@ class TestDXTabCompletion(unittest.TestCase):
                 del os.environ[var]
 
     def get_bash_completions(self, line, point=None, stderr_contains=""):
-        print("get_bash_completions {}".format(line))
         os.environ['COMP_LINE'] = line
         os.environ['COMP_POINT'] = point if point else str(len(line))
 
         p = subprocess.Popen('dx', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.communicate()
-
-        out : str = out.decode(sys.stdin.encoding)
-        err : str = err.decode(sys.stderr.encoding)
+        if isinstance(out, bytes):
+            out = out.decode(sys.stdin.encoding)
+        if isinstance(err, bytes):
+            err = err.decode(sys.stderr.encoding)
         self.assertIn(stderr_contains, err)
-        print("out={}".format(out))
-        return out.split(IFS)
+        if stderr_contains == "":
+            self.assertEqual(err, "")
+        words = out.split(IFS)
+        print("out={}".format(words))
+        return words
 
     def assert_completion(self, line, completion):
         self.assertIn(completion, self.get_bash_completions(line))
