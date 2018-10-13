@@ -8,19 +8,22 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* A convenience login script for a cloud workstation (#411)
-* Add parents param to clone (#412)
-* Allow batch IDs as output folders for batch run (#409)
+* A convenience login script for a cloud workstation
+* Add `parents` param to `clone()`
+* Allow batch IDs as output folders for batch run
 
 ### Fixed
 
-* Fix setting a handler for a global workflow (#413)
-* Redirecting proxy printout to stderr (#414)
-* DEVEX-853 cat argument too long (#407)
+* Setting a handler for a global workflow
+* Redirecting proxy printout to stderr
+* `cat` argument too long in a bash script
 
 ### Changed 
 
-* Let urllib3 set default CA bundle on Windows (#410)
+* Warn user before `dx rm -r` on root of a project
+* Let `urllib3` set default CA bundle on Windows
+* Updgrade `pyopenssl` for test suite to 17.5.0
+* Replace `ws4py` with websocket-client library in `job_log_client`
 
 
 ## [265.0] - 2018.10.04 beta
