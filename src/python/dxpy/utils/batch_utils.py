@@ -133,7 +133,7 @@ def _search_column_id(col_name, header_line):
 def batch_launch_args(executable, input_json, batch_tsv_file):
     header_line = []
     lines = []
-    with open(batch_tsv_file, "rb") as f:
+    with open(batch_tsv_file, "r") as f:
         reader = csv.reader(f, delimiter=str(u'\t'))
         header_line = next(reader)
         lines = list(reader)
