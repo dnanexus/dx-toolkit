@@ -43,7 +43,7 @@ def _recursive_cleanup(foo):
     Aggressively cleans up things that look empty.
     """
     if isinstance(foo, dict):
-        for (key, val) in foo.items():
+        for (key, val) in list(foo.items()):
             if isinstance(val, dict):
                 _recursive_cleanup(val)
             if val == "" or val == [] or val == {}:
