@@ -1,3 +1,19 @@
+dx-toolkit (0.266.0) precise; urgency=low
+
+  * Added: A convenience login script for a cloud workstation
+  * Added: Add parents param to clone()
+  * Added: Allow batch IDs as output folders for batch run
+  * Fixed: Setting a handler for a global workflow
+  * Fixed: Redirecting proxy printout to stderr
+  * Fixed: cat argument too long in a bash script
+  * Fixed: (python3) Ensure we can pop items from the main dictionary
+  * Changed: Warn user before dx rm -r on root of a project
+  * Changed: Let urllib3 set default CA bundle on Windows
+  * Changed: Updgrade pyopenssl for test suite to 17.5.0
+  * Changed: Replace ws4py with websocket-client library in job_log_client
+
+ -- Aleksandra Zalcman <azalcman@dnanexus.com>  Mon, 15 Oct 2018 16:52:45 +0000
+
 dx-toolkit (0.265.0) precise; urgency=low
 
   * Fixed: Python 3 incompatibilites
