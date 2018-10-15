@@ -6,6 +6,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added 
+
+* Add release/distro to example app dxapp.json files (#421)
+
+## [266.0] - 2018.10.15 beta
+
 ### Added
 
 * A convenience login script for a cloud workstation
@@ -17,6 +23,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Setting a handler for a global workflow
 * Redirecting proxy printout to stderr
 * `cat` argument too long in a bash script
+* Ensure we can pop items from the main dictionary (python3)
 
 ### Changed 
 
@@ -26,7 +33,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Replace `ws4py` with websocket-client library in `job_log_client`
 
 
-## [265.0] - 2018.10.04 beta
+## [265.0] - 2018.10.15
 
 ### Added
 
