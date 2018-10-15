@@ -21,6 +21,8 @@
   ],
   "runSpec": {
     "interpreter": "bash",
+    "release": "14.04",
+    "distribution": "Ubuntu",
     "file": "src/cross_platform_debugging_example.sh"
   }
 }

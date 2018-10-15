@@ -13,6 +13,8 @@
   "runSpec": {
     "code": "export CLASSPATH=${DX_FS_ROOT}/:$CLASSPATH; java DXHelloWorld",
     "interpreter": "bash",
+    "release": "14.04",
+    "distribution": "Ubuntu",
     "execDepends": [
       {"name": "dx-java-bindings"},
       {"name": "openjdk-7-jre-headless"}

@@ -4,6 +4,8 @@
   "outputSpec": [],
   "runSpec": {
     "interpreter": "bash",
+    "release": "14.04",
+    "distribution": "Ubuntu",
     "file": "src/external_apt_repo_example.sh"
   },
   "summary": "Demonstrates how to load dependencies from an external APT repo",
