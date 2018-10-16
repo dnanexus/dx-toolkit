@@ -80,6 +80,7 @@ dxR.Rcheck
 /bin/chardetect
 /bin/proot
 /bin/pbr
+/bin/wsdump.py
 /src/python/test/*.traceability.*.csv
 /src/ua/dist/ua
 /src/ua/dnanexus-upload-agent-*-linux.tar.gz

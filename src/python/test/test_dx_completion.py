@@ -74,12 +74,19 @@ class TestDXTabCompletion(unittest.TestCase):
             self.assertEqual(err, "")
         return out.split(IFS)
 
+    # remove all occurences of double slashes, they just sow confusion
     def assert_completion(self, line, completion):
-        self.assertIn(completion, self.get_bash_completions(line))
+        completion = completion.replace("\\", "")
+        actual_completions = self.get_bash_completions(line)
+        actual_completions = [s.replace("\\", "") for s in actual_completions]
+        self.assertIn(completion, actual_completions)
 
+
+    # remove all occurences of double slashes, they just sow confusion
     def assert_completions(self, line, completions):
         actual_completions = self.get_bash_completions(line)
-
+        actual_completions = [s.replace("\\", "") for s in actual_completions]
+        completions = [s.replace("\\", "") for s in completions]
         for completion in completions:
             self.assertIn(completion, actual_completions)
 
@@ -144,7 +151,6 @@ class TestDXTabCompletion(unittest.TestCase):
     def test_project_completion(self):
         self.ids_to_destroy.append(dxpy.api.project_new({"name": "to select"})['id'])
         self.assert_completion("dx select to", "to select\\:")
-        self.assert_completion("dx select \"to", "\"to select:")
         self.assert_completion("dx select to\ select:", " ")
 
     def test_completion_with_bad_current_project(self):
