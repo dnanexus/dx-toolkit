@@ -158,7 +158,7 @@ class TestDXRemove(DXTestCase):
 
         # Throw error on non-existent folder
         with self.assertSubprocessFailure(exit_code=3):
-            run("dx rm -r {f}".format(f=folder_name))
+            run("dx rm -rf {f}".format(f=folder_name))
 
         # make folder and file of the same name, confirm that file is deleted with regular rm call
         create_folder_in_project(self.project, folder_name)
@@ -175,7 +175,7 @@ class TestDXRemove(DXTestCase):
         # if no -r flag provided, should throw error since it's a folder
         with self.assertSubprocessFailure(exit_code=3):
             run("dx rm {f}".format(f=record_name))
-            
+
         # finally remove the folder
         run("dx rm -r {f}".format(f=record_name))
         self.assertNotIn(folder_name, list_folder(self.project, "/")['folders'])
