@@ -1,3 +1,10 @@
+dx-toolkit (0.266.1) precise; urgency=low
+
+  * Fixed: dx-docker build with updated docker2aci download links
+  * Fixed: No root certificates error with websocket-client
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 18 Oct 2018 20:52:58 +0000
+
 dx-toolkit (0.266.0) precise; urgency=low
 
   * Added: A convenience login script for a cloud workstation
