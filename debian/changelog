@@ -1,3 +1,9 @@
+dx-toolkit (0.267.0) precise; urgency=low
+
+  * Added: Add release/distro to example app dxapp.json files (#421)
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 18 Oct 2018 20:50:19 +0000
+
 dx-toolkit (0.266.0) precise; urgency=low
 
   * Added: A convenience login script for a cloud workstation
