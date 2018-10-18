@@ -97,3 +97,14 @@ ifeq ($(PLATFORM), windows)
 else
         ACTIVATE=bin/activate
 endif
+
+
+# Docker2aci download URL
+ifeq ($(PLATFORM), osx)
+	DOCKER_ACI_URL=https://dl.dnanex.us/F/D/40XJf2gqYqYqzYbGzyqB4g9PxGX9ZY9Bqvgv0Pz5/docker2aci-osx
+else ifeq ($(PLATFORM), windows)
+	echo "WARNING: dx-docker add-to-applet, upload not currently supported on Windows."
+	DOCKER_ACI_URL=
+else
+	DOCKER_ACI_URL=https://dl.dnanex.us/F/D/B9ZFXqk6q9g0Z3FygYq61y82vpKQ2gj191vkP9jz/docker2aci
+endif

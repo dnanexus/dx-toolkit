@@ -95,12 +95,8 @@ bin/proot:
 	curl -k -sL https://github.com/proot-me/proot-static-build/raw/5bcf1a3341beeefde7305ce196031de837ca173c/static/proot-x86_64 > $(DNANEXUS_HOME)/bin/proot && chmod 777 $(DNANEXUS_HOME)/bin/proot
 
 bin/docker2aci:
-ifeq ($(PLATFORM), osx)
-	curl -k -sL https://dl.dnanex.us/F/D/q03gPbfx8kFq97BxPZz39k2XKq9Bv5Y1G1pggP67/docker2aci-osx > $(DNANEXUS_HOME)/bin/docker2aci && chmod 777 $(DNANEXUS_HOME)/bin/docker2aci
-else ifeq ($(PLATFORM), windows)
-    echo "WARNING: dx-docker add-to-applet, upload not currently supported on Windows."
-else
-	curl -k -sL https://dl.dnanex.us/F/D/gzXf3VbVf052FXkKB7yq9PPxGqBKfpbPZPq6V7jx/docker2aci > $(DNANEXUS_HOME)/bin/docker2aci && chmod 777 $(DNANEXUS_HOME)/bin/docker2aci
+ifneq (DOCKER_ACI_URL, "")
+	curl -k -sL ${DOCKER_ACI_URL} > $(DNANEXUS_HOME)/bin/docker2aci && chmod 777 $(DNANEXUS_HOME)/bin/docker2aci
 endif
 
 # Support for portable workflows, using the dxWDL compiler
