@@ -239,11 +239,11 @@ bin/proot:
 
 bin/docker2aci:
 ifeq ($(UNAME), Darwin)
-	curl -k -sL https://dl.dnanex.us/F/D/q03gPbfx8kFq97BxPZz39k2XKq9Bv5Y1G1pggP67/docker2aci-osx > $(DNANEXUS_HOME)/bin/docker2aci && chmod 777 $(DNANEXUS_HOME)/bin/docker2aci
+	curl -k -sL https://dl.dnanex.us/F/D/40XJf2gqYqYqzYbGzyqB4g9PxGX9ZY9Bqvgv0Pz5/docker2aci-osx > $(DNANEXUS_HOME)/bin/docker2aci && chmod 777 $(DNANEXUS_HOME)/bin/docker2aci
 else ifeq ($(OS), Windows_NT)
     echo "WARNING: dx-docker add-to-applet, upload not currently supported on Windows."
 else
-	curl -k -sL https://dl.dnanex.us/F/D/gzXf3VbVf052FXkKB7yq9PPxGqBKfpbPZPq6V7jx/docker2aci > $(DNANEXUS_HOME)/bin/docker2aci && chmod 777 $(DNANEXUS_HOME)/bin/docker2aci
+	curl -k -sL https://dl.dnanex.us/F/D/B9ZFXqk6q9g0Z3FygYq61y82vpKQ2gj191vkP9jz/docker2aci > $(DNANEXUS_HOME)/bin/docker2aci && chmod 777 $(DNANEXUS_HOME)/bin/docker2aci
 endif
 
 # Support for portable workflows, using the dxWDL compiler
