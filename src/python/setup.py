@@ -19,8 +19,8 @@
 import os, sys, glob, platform
 from setuptools import setup, find_packages
 
-if sys.version_info < (2, 7):
-    raise Exception("dxpy requires Python >= 2.7")
+if sys.version_info < (3, 6):
+    raise Exception("dxpy3 requires Python >= 3.6")
 
 # Don't import, but use exec.
 # Importing would trigger interpretation of the dxpy entry point, which can fail if deps are not installed.
@@ -41,7 +41,6 @@ for module in os.listdir(os.path.join(os.path.dirname(__file__), 'dxpy', 'script
 dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements.txt"))]
 test_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_test.txt"))]
 readline_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_readline.txt"))]
-backports_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_backports.txt"))]
 
 # If on Windows, also depend on colorama, which translates ANSI terminal color control sequences into whatever cmd.exe uses.
 if platform.system() == 'Windows':
@@ -59,8 +58,6 @@ if platform.system() == 'Darwin':
     except ImportError:
         dependencies.extend(readline_dependencies)
 
-if sys.version_info[0] < 3:
-    dependencies.extend(backports_dependencies)
 
 if 'DNANEXUS_INSTALL_PYTHON_TEST_DEPS' in os.environ:
     dependencies.extend(test_dependencies)
@@ -72,10 +69,10 @@ for directory, subdirectories, files in os.walk("dxpy/templating/templates"):
     template_files.extend([os.path.join(directory, _file) for _file in files])
 
 setup(
-    name='dxpy',
+    name='dxpy3',
     version=version,
-    description='DNAnexus Platform API bindings for Python',
-    author='Katherine Lai, Phil Sung, Andrey Kislyuk, Anurag Biyani',
+    description='DNAnexus Platform API bindings for Python3',
+    author='Aleksandra Zalcman, Andrey Kislyuk, Anurag Biyani, Geet Duggal, Katherine Lai, Kurt Jensen, Ohad Rodeh, Phil Sung',
     author_email='expert-dev@dnanexus.com',
     url='https://github.com/dnanexus/dx-toolkit',
     zip_safe=False,
@@ -95,8 +92,7 @@ setup(
         'License :: OSI Approved :: Apache Software License',
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: POSIX',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.6',
         'Programming Language :: Unix Shell',
         'Topic :: Software Development :: Libraries :: Python Modules'
     ]
