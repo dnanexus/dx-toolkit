@@ -16,16 +16,42 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import os, sys, glob, platform
+import glob
+import os
+import platform
+import re
 from setuptools import setup, find_packages
+import sys
 
 if sys.version_info < (3, 6):
     raise Exception("dxpy3 requires Python >= 3.6")
 
+# Pypi is the repository for python packages.
+# It requires that version numbers look like this: X.Y.Z,
+# where X, Y, and Z are numbers. It is more complicated than that, but that's
+# the main idea.
+#
+# Clean up the version number. It starts like this:
+#    '0.265.0-77-g059d243f'
+# and we need 0.265.0
+def make_valid_pypi_version(raw):
+    m = re.match(r'(\d+)\.(\d+)\.(\d+)', raw)
+    return m.group(0)
+
+
 # Don't import, but use exec.
 # Importing would trigger interpretation of the dxpy entry point, which can fail if deps are not installed.
+#
+# The result of this trickery is a variable called "version", initialized
+# to the current version of dxpy.
 with open(os.path.join(os.path.dirname(__file__), 'dxpy', 'toolkit_version.py')) as fh:
     exec(compile(fh.read(), 'toolkit_version.py', 'exec'))
+version = make_valid_pypi_version(version)
+
+# The readme file is used as the long-description of the package.
+# It will show up in the pypi site.
+with open("Readme.md", "r") as fh:
+    readme_content = fh.read()
 
 # Grab all the scripts from dxpy/scripts and install them without their .py extension.
 # Replace underscores with dashes.
@@ -72,6 +98,8 @@ setup(
     name='dxpy3',
     version=version,
     description='DNAnexus Platform API bindings for Python3',
+    long_description=readme_content,
+    long_description_content_type="text/markdown",
     author='Aleksandra Zalcman, Andrey Kislyuk, Anurag Biyani, Geet Duggal, Katherine Lai, Kurt Jensen, Ohad Rodeh, Phil Sung',
     author_email='expert-dev@dnanexus.com',
     url='https://github.com/dnanexus/dx-toolkit',
