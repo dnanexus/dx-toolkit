@@ -23,7 +23,9 @@ MAKE:=$(MAKE) $(MAKEOPTS)
 
 UNAME := $(shell uname)
 
-# Figure out which os we are on
+# Figure out which os we are on, and store that
+# information in one succient variable called PLATFORM.
+# The possible values are: {windows, osx, linux}.
 ifeq ($(OS), Windows_NT)
 	PLATFORM=windows
 else ifeq ($(UNAME), Darwin)
@@ -41,8 +43,8 @@ endif
 
 # Extract the two most significant digits the python distribution
 #
-PYTHON_VERSION = $(shell python --version |& cut -f 2 -d ' ' | cut -b 1-3)
-PYTHON_MAJOR_VERSION = $(shell python --version |& cut -f 2 -d ' ' | cut -b 1-1 )
+PYTHON_VERSION_NUMBER:=$(shell python -c 'import sys; print("{}.{}".format(sys.version_info[0], sys.version_info[1]))')
+PYTHON_MAJOR_VERSION:=$(shell python -c 'import sys; print(sys.version_info[0])')
 
 ifeq (${PYTHON_MAJOR_VERSION}, 2)
 	PIP=pip
@@ -70,9 +72,9 @@ ifndef PREFIX
 	export PREFIX=/
 endif
 
-export DNANEXUS_HOME=$(CURDIR)/..
+export DNANEXUS_HOME := $(CURDIR)/..
 export PATH := $(DNANEXUS_HOME)/build/bin:$(PATH)
-export DX_PY_ENV=$(DNANEXUS_HOME)/build/py_env${PYTHON_VERSION}
+export DX_PY_ENV := $(DNANEXUS_HOME)/build/py_env${PYTHON_VERSION_NUMBER}
 export DNANEXUS_LIBDIR := $(DNANEXUS_HOME)/share/dnanexus/lib
 
 # Short-circuit sudo when running as root. In a chrooted environment we are
@@ -84,8 +86,8 @@ else
 	MAYBE_SUDO='sudo'
 endif
 
-PYTHON_LIBDIR := $(DNANEXUS_LIBDIR)/python${PYTHON_VERSION}/site-packages
-JAVA_LIBDIR := $(DNANEXUS_LIBDIR)/java
+PYTHON_LIBDIR = $(DNANEXUS_LIBDIR)/python${PYTHON_VERSION_NUMBER}/site-packages
+JAVA_LIBDIR = $(DNANEXUS_LIBDIR)/java
 
 
 ifeq ($(PLATFORM), windows)

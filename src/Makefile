@@ -61,9 +61,6 @@ src_libs: api_wrappers
 	mkdir -p "$(DNANEXUS_LIBDIR)"
 	cp -R -v bash "$(DNANEXUS_LIBDIR)"
 
-PYTHON_LIBDIR := $(DNANEXUS_LIBDIR)/python${PYTHON_VERSION}/site-packages
-JAVA_LIBDIR := $(DNANEXUS_LIBDIR)/java
-
 python: api_wrappers toolkit_version $(DNANEXUS_HOME)/bin/dx
 
 

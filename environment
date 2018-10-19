@@ -45,7 +45,7 @@ fi
 
 export DNANEXUS_HOME="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-PYTHON_VERSION_NUMBER=`python --version |& cut -f 2 -d ' ' | cut -b 1-3`
+PYTHON_VERSION_NUMBER="$(python -c 'import sys; print("{}.{}".format(sys.version_info[0], sys.version_info[1]))')"
 PYTHON_VERSION="python${PYTHON_VERSION_NUMBER}"
 
 # Detect system installation of dx-toolkit
@@ -57,7 +57,6 @@ if [ "$DNANEXUS_HOME" = "/etc/profile.d" ]; then
   export CLASSPATH="/usr/share/java/dnanexus-api-0.1.0.jar:${CLASSPATH}"
 
 else
-
   export PATH="${DNANEXUS_HOME}/bin:$PATH"
   export CLASSPATH="${DNANEXUS_HOME}/lib/java/*:${CLASSPATH}"
 
@@ -73,7 +72,7 @@ fi
 # encoding. We reset it here to avoid having to set it for every I/O operation explicitly.
 export PYTHONIOENCODING=UTF-8
 
-eval "$(register-python-argcomplete dx|sed 's/-o default//')"
+eval "$(bin/register-python-argcomplete dx|sed 's/-o default//')"
 
 # Clean up old session files
 (
