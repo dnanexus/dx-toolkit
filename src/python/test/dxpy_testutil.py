@@ -33,21 +33,21 @@ from dxpy.compat import str, basestring, USING_PYTHON2
 _run_all_tests = 'DXTEST_FULL' in os.environ
 TEST_AZURE = ((os.environ.get('DXTEST_AZURE', '').startswith('azure:') and os.environ['DXTEST_AZURE']) or
               (os.environ.get('DXTEST_AZURE') and 'azure:westus'))
-TEST_ISOLATED_ENV = _run_all_tests or 'DXTEST_ISOLATED_ENV' in os.environ
+TEST_BENCHMARKS = 'DXTEST_BENCHMARKS' in os.environ   ## Used to exclude benchmarks from normal runs
+TEST_DX_LOGIN = 'DXTEST_LOGIN' in os.environ
 TEST_ENV = _run_all_tests or 'DXTEST_ENV' in os.environ
 TEST_DX_DOCKER = 'DXTEST_DOCKER' in os.environ
 TEST_FUSE = _run_all_tests or 'DXTEST_FUSE' in os.environ
 TEST_HTTP_PROXY = _run_all_tests or 'DXTEST_HTTP_PROXY' in os.environ
+TEST_ISOLATED_ENV = _run_all_tests or 'DXTEST_ISOLATED_ENV' in os.environ
+TEST_MULTIPLE_USERS = _run_all_tests or 'DXTEST_SECOND_USER' in os.environ
 TEST_NO_RATE_LIMITS = _run_all_tests or 'DXTEST_NO_RATE_LIMITS' in os.environ
+TEST_ONLY_MASTER = 'DX_RUN_NEXT_TESTS' in os.environ
 TEST_RUN_JOBS = _run_all_tests or 'DXTEST_RUN_JOBS' in os.environ
 TEST_TCSH = _run_all_tests or 'DXTEST_TCSH' in os.environ
 TEST_WITH_AUTHSERVER = _run_all_tests or 'DXTEST_WITH_AUTHSERVER' in os.environ
 TEST_WITH_SMOKETEST_APP = _run_all_tests or 'DXTEST_WITH_SMOKETEST_APP' in os.environ
-TEST_ONLY_MASTER = 'DX_RUN_NEXT_TESTS' in os.environ
-TEST_MULTIPLE_USERS = _run_all_tests or 'DXTEST_SECOND_USER' in os.environ
 
-TEST_DX_LOGIN = 'DXTEST_LOGIN' in os.environ
-TEST_BENCHMARKS = 'DXTEST_BENCHMARKS' in os.environ   ## Used to exclude benchmarks from normal runs
 
 def _transform_words_to_regexp(s):
     return r"\s+".join(re.escape(word) for word in s.split())
