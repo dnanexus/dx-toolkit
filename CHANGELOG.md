@@ -6,11 +6,22 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* `jackson-databind` and `jackson-core` upgrade
+
+## [266.1] - 2018.10.18 stable
+
 ### Added 
 
-* Add release/distro to example app dxapp.json files (#421)
+* Add release/distro to example app `dxapp.json` files
 
-## [266.0] - 2018.10.15 beta
+### Fixed
+
+* Download links for `docker2aci`
+* The test error: No root certificates specified for verification of other-side certificates
+
+## [266.0] - 2018.10.18
 
 ### Added
 
