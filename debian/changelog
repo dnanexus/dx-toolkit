@@ -1,3 +1,9 @@
+dx-toolkit (0.268.0) precise; urgency=low
+
+  * Changed: jackson-databind and jackson-core upgrade
+
+ -- Aleksandra Zalcman <azalcman@dnanexus.com>  Thu, 25 Oct 2018 17:29:27 +0000
+
 dx-toolkit (0.267.0) precise; urgency=low
 
   * Added: Add release/distro to example app dxapp.json files (#421)
