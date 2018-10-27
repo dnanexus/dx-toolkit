@@ -226,6 +226,9 @@ def publish_assets(src_record, record_ids):
         if region not in public_asset_projects_by_region:
             print('Did not find public asset project for region {region}.'.format(region=region))
             continue
+        if record_id is None:
+            print('Clone to region {region} failed - nothing to publish.'.format(region=region))
+            continue
         dx_record = dxpy.DXRecord(record_id, project=dxpy.describe(record_id)['project'])
         dx_record.clone(public_asset_projects_by_region[region])
         print('Published asset for region {region} in project {project}.'.format(region=region, 
