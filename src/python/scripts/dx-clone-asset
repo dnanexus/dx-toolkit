@@ -17,6 +17,7 @@ URL_DURATION = 60 * 60 * 24
 SLEEP_TIME = 5
 CLONE_ASSET_APP_NAME = '_clone_asset'
 CLONE_ASSET_APP = dxpy.find_one_app(zero_ok=False, more_ok=False, name=CLONE_ASSET_APP_NAME, return_handler=True)
+GLOBAL_ASSET_PROJECT_PREFIX = 'App and Applet Assets'
 
 # Get the set of supported regions
 SUPPORTED_REGIONS = set()
@@ -25,6 +26,18 @@ if user_description['billTo'].startswith('user-'):
     SUPPORTED_REGIONS = set(user_description['permittedRegions'])
 elif user_description['billTo'].startswith('org-'):
     SUPPORTED_REGIONS = set(dxpy.api.org_describe(user_description['billTo'])['permittedRegions'])
+
+
+def _get_public_asset_projects():
+    projects = dxpy.find_projects(name='^'+GLOBAL_ASSET_PROJECT_PREFIX, name_mode='regexp', public=True, return_handler=True, level='UPLOAD')
+    project_by_region = {}
+    for project in projects:
+        # Note: if there is more than one project that matches the GLOBAL_ASSET_PROJECT_PREFIX in a given region
+        # we will be taking the last one here and ignoring the others.  We could consider raising a warning or
+        # error out, but my current feeling is that this is just too verbose and not to worry about it. (Famous last words).
+        project_by_region[project.region] = project.id
+
+    return project_by_region
 
 
 def _parse_args():
@@ -50,8 +63,13 @@ def _parse_args():
                     type=int,
                     required=False)
     ap.add_argument('--priority',
-                    help='Priority with which to run the clone_asset app',
+                    help='Priority with which to run the clone_asset app.',
                     choices=['normal', 'high'],
+                    required=False)
+    ap.add_argument('--publish',
+                    #help='Move the assets to the public assets project upon completion.',
+                    help=argparse.SUPPRESS,
+                    action='store_true',
                     required=False)
 
     return ap.parse_args()
@@ -195,14 +213,38 @@ def clone_asset(record_id, regions, num_retries=0, priority=None):
     return record_ids
 
 
-def main(record, regions, num_retries=0, priority=None):
+def publish_assets(src_record, record_ids):
+    public_asset_projects_by_region = _get_public_asset_projects()
+
+    # Add src_record to list of records to publish
+    dx_record = dxpy.DXRecord(src_record, project=dxpy.describe(src_record)['project'])
+    region = dxpy.describe(dx_record.project)['region']
+    record_ids[region] = dx_record.id
+
+
+    for region, record_id in record_ids.iteritems():
+        if region not in public_asset_projects_by_region:
+            print('Did not find public asset project for region {region}.'.format(region=region))
+            continue
+        dx_record = dxpy.DXRecord(record_id, project=dxpy.describe(record_id)['project'])
+        dx_record.clone(public_asset_projects_by_region[region])
+        print('Published asset for region {region} in project {project}.'.format(region=region, 
+            project=public_asset_projects_by_region[region]))
+        dx_record.remove()
+
+
+def main(record, regions, num_retries=0, priority=None, publish=False):
     record_ids = clone_asset(record, regions, num_retries, priority)
 
     for region in record_ids:
         record_id = 'Failed' if record_ids[region] is None else record_ids[region]
         print('{region}:\t{record_id}'.format(region=region, record_id=record_id))
 
+    all_record_ids = record_ids.copy()
+    if publish:
+        publish_assets(record, record_ids)
+
 
 if __name__ == '__main__':
     args = _parse_args()
-    main(args.record, args.regions, args.num_retries, args.priority)
+    main(args.record, args.regions, args.num_retries, args.priority, args.publish)
