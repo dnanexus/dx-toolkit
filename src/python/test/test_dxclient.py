@@ -169,7 +169,7 @@ class TestDXRemove(DXTestCase):
         # if no -r flag provided, should throw error since it's a folder
         with self.assertSubprocessFailure(exit_code=3):
             run("dx rm {f}".format(f=record_name))
-            
+
         # finally remove the folder
         run("dx rm -r {f}".format(f=record_name))
         self.assertNotIn(folder_name, list_folder(self.project, "/")['folders'])
@@ -2699,17 +2699,6 @@ dx-jobutil-add-output record_array $second_record --array
         self.assertIn(jbor_array_ref + '1', second_remote_job_desc)
         self.assertIn(remote_job_output[1]["$dnanexus_link"], second_remote_job_desc)
         self.assertNotIn(remote_job_output[0]["$dnanexus_link"], second_remote_job_desc)
-
-        # use dx get to hydrate a directory and test dx-run-app-locally
-        def create_app_dir_from_applet(applet_id):
-            tempdir = tempfile.mkdtemp()
-            with chdir(tempdir):
-                run('dx get ' + applet_id)
-                return os.path.join(tempdir, dxpy.describe(applet_id)['name'])
-        appdir = create_app_dir_from_applet(applet_id)
-        local_output = check_output(['dx-run-app-locally', appdir, '-irecord=' + jbor_array_ref + '1'])
-        self.assertIn(remote_job_output[1]["$dnanexus_link"], local_output)
-        self.assertNotIn(remote_job_output[0]["$dnanexus_link"], local_output)
 
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_EXE_WATCH_LOGS", "DNA_CLI_EXE_TERMINATE"])
