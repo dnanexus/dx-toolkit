@@ -36,7 +36,7 @@ def run_dx_app_wizard(instance_type=None):
     tempdir = tempfile.mkdtemp(prefix='Программа')
     os.chdir(tempdir)
     try:
-        wizard = pexpect.spawn("dx-app-wizard --template parallelized")
+        wizard = pexpect.spawn("dx-app-wizard --template parallelized", encoding="utf-8")
         wizard.logfile = sys.stdout
         wizard.setwinsize(20, 90)
         wizard.expect("App Name:")
@@ -109,7 +109,8 @@ def create_app_dir_with_dxapp_json(dxapp_json, language):
         with open('dxapp.json', 'w') as fd:
             json.dump(dxapp_json, fd)
 
-        wizard = pexpect.spawn("dx-app-wizard --json-file dxapp.json --language " + language)
+        wizard = pexpect.spawn("dx-app-wizard --json-file dxapp.json --language " + language,
+                               encoding="utf-8")
         wizard.setwinsize(20, 90)
         wizard.logfile = sys.stdout
         wizard.expect("App Name")
