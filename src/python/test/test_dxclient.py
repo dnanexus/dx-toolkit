@@ -169,7 +169,7 @@ class TestDXRemove(DXTestCase):
         # if no -r flag provided, should throw error since it's a folder
         with self.assertSubprocessFailure(exit_code=3):
             run("dx rm {f}".format(f=record_name))
-            
+
         # finally remove the folder
         run("dx rm -r {f}".format(f=record_name))
         self.assertNotIn(folder_name, list_folder(self.project, "/")['folders'])
@@ -385,24 +385,6 @@ class TestDXClient(DXTestCase):
             dxrecord = dxpy.DXRecord(record_id)
             details = dxrecord.get_details()
             self.assertEqual({"foo": "bar"}, details, msg="dx set_details -f - with valid JSON input failed.")
-
-    @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_HELP_EXIT_OUT_INTERACTIVE_SHELL", "DNA_CLI_HELP_DX_SHELL_INTERPRETER"])
-    def test_dx_shell(self):
-        shell = pexpect.spawn("bash")
-        shell.logfile = sys.stdout
-        shell.sendline("dx sh")
-        shell.expect(">")
-        shell.sendline("Ψ 'Ψ Ψ'")
-        shell.expect("invalid choice: Ψ".encode(sys_encoding))
-        shell.expect(">")
-        shell.sendline("env")
-        shell.expect("Current user")
-        shell.sendline("help all")
-        shell.expect("Commands:")
-        shell.sendline("exit")
-        shell.sendline("echo find projects | dx sh")
-        shell.expect("project-")
 
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test user')
@@ -10188,48 +10170,6 @@ class TestDXRunBatch(DXTestCase):
         self.assertEquals(job_desc["executableName"], 'copy_file')
         self.assertEquals(job_desc["input"], { "plant": {"$dnanexus_link": dxfile.get_id() }})
 
-
-class TestDXCompile(DXTestCase):
-    @unittest.skipIf(testutil.TEST_ISOLATED_ENV, "dxWDL is not installed")
-    @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_COMPILE_PORTABLE_WORKFLOW"])
-    def test_compile(self):
-        path = os.path.join(os.path.dirname(__file__), "wdl", "trivial.wdl")
-        wfid = run("dx compile {} --quiet".format(path)).strip()
-        wf_desc = dxpy.describe(wfid)
-        self.assertEqual(wf_desc['name'], 'trivial')
-
-class TestDXCompileDxni(DXTestCase):
-    @unittest.skipIf(testutil.TEST_ISOLATED_ENV, "dxWDL is not installed")
-    @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_COMPILE_PORTABLE_WORKFLOW_DXNI"])
-    def test_compile_dxni(self):
-        tmp_path = tempfile.mkdtemp()
-        headers_path = os.path.join(tmp_path, 'headers.wdl')
-
-        # There shouldn't be any applets in the project
-        run("dx compile_dxni --destination {}:/ {}".format(self.project,
-                                                           headers_path))
-        self.assertFalse(os.path.exists(headers_path))
-
-        # Create one applet, check that we can find it
-        applet = dxpy.api.applet_new({
-            "name": "identity",
-            "project": self.project,
-            "dxapi": "1.0.0",
-            "inputSpec": [ { "name": "plant", "class": "file" } ],
-            "outputSpec": [ { "name": "animal", "class": "file" } ],
-            "runSpec": { "interpreter": "python2.7",
-                         "code": "",
-                         "distribution": "Ubuntu",
-                         "release": "14.04" }
-        })
-        run("dx compile_dxni --verbose --destination {}:/ {}".format(self.project,
-                                                           headers_path))
-        self.assertTrue(os.path.exists(headers_path))
-        with open(headers_path, 'r', encoding="utf-8") as fd:
-            headers=fd.read()
-        self.assertTrue("task identity" in headers)
 
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
