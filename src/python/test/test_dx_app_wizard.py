@@ -137,6 +137,8 @@ class TestDXAppWizard(DXTestCase):
         with self.assertRaises(testutil.DXCalledProcessError):
             check_output(['dx-app-wizard', '--template=par'])
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_HELP_CREATE_APP_WIZARD"])
     def test_dx_app_wizard(self):
         appdir = run_dx_app_wizard()
         dxapp_json = json.load(open(os.path.join(appdir, 'dxapp.json')))
