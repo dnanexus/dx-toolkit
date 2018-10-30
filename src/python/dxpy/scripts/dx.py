@@ -185,7 +185,7 @@ class DXCLICompleter():
     silent_commands = set(['export'])
 
     def __init__(self):
-        self.commands = [subcmd + ' ' for subcmd in list(subparsers.choices.keys()) if subcmd not in self.silent_commands]
+        self.commands = [subcmd + ' ' for subcmd in subparsers.choices.keys() if subcmd not in self.silent_commands]
         self.matches = []
         self.text = None
 
@@ -218,13 +218,7 @@ class DXCLICompleter():
             elif words[0] in ['cd', 'rmdir', 'mkdir', 'tree']:
                 path_matches = path_completer(words[-1],
                                               expected='folder')
-            elif words[0] in ['export']:
-                path_matches = path_completer(words[-1],
-                                              classes=['gtable'])
-            elif words[0] in ['head']:
-                path_matches = path_completer(words[-1],
-                                              classes=['gtable', 'file'])
-            elif words[0] in ['cat', 'download']:
+            elif words[0] in ['head', 'cat', 'download']:
                 path_matches = path_completer(words[-1],
                                               classes=['file'])
             elif words[0] in ['ls', 'rm', 'mv', 'cp']:
@@ -415,9 +409,6 @@ def logout(args):
         print("Deleting credentials from {}...".format(authserver))
         token = dxpy.AUTH_HELPER.security_context["auth_token"]
         try:
-            if not USING_PYTHON2:
-                # python 3 requires conversion to bytes before hashing
-                token = token.encode(sys_encoding)
             token_sig = hashlib.sha256(token).hexdigest()
             response = dxpy.DXHTTPRequest(authserver + "/system/destroyAuthToken",
                                           dict(tokenSignature=token_sig),
@@ -1442,52 +1433,7 @@ def new_record(args):
             print(dxrecord.get_id())
         else:
             print_desc(dxrecord.describe(incl_properties=True, incl_details=True), args.verbose)
-    except:
-        err_exit()
-
-def new_gtable(args):
-    try_call(process_dataobject_args, args)
-    try_call(process_single_dataobject_output_args, args)
-
-    if args.output is None:
-        project = dxpy.WORKSPACE_ID
-        folder = dxpy.config.get('DX_CLI_WD', '/')
-        name = None
-    else:
-        project, folder, name = try_call(resolve_path, args.output)
-
-    args.columns = split_unescaped(',', args.columns)
-    for i in range(len(args.columns)):
-        if ':' in args.columns[i]:
-            try:
-                col_name, col_type = args.columns[i].split(':')
-            except ValueError:
-                err_exit('Too many colons found in column spec ' + args.columns[i], 3)
-            if col_type.startswith('bool'):
-                col_type = 'boolean'
-        else:
-            col_name = args.columns[i]
-            col_type = 'string'
-        args.columns[i] = {'name': col_name, 'type': col_type}
-    args.indices = [] if args.indices is None else json.loads(args.indices)
-    if args.gri is not None:
-        args.indices.append(dxpy.DXGTable.genomic_range_index(args.gri[0], args.gri[1], args.gri[2]))
-        args.types = ['gri'] if args.types is None else args.types + ['gri']
-
-    try:
-        dxgtable = dxpy.new_dxgtable(project=project, name=name,
-                                     tags=args.tags, types=args.types,
-                                     hidden=args.hidden, properties=args.properties,
-                                     details=args.details,
-                                     folder=folder,
-                                     parents=args.parents,
-                                     columns=args.columns,
-                                     indices=args.indices)
-        if args.brief:
-            print(dxgtable.get_id())
-        else:
-            print_desc(dxgtable.describe(incl_properties=True, incl_details=True))
-    except:
+     except:
         err_exit()
 
 def set_visibility(args):
@@ -1957,9 +1903,9 @@ def head(args):
                                                    args.path, expected='entity')
     if entity_result is None:
         err_exit('Could not resolve ' + args.path + ' to a data object', 3)
-    if not entity_result['describe']['class'] in ['gtable', 'file']:
+    if not entity_result['describe']['class'] in ['file']:
         err_exit('Error: The given object is of class ' + entity_result['describe']['class'] +
-                 ' but an object of class gtable or file was expected', 3)
+                 ' but an object of class file was expected', 3)
 
     handler = dxpy.get_handler(entity_result['id'], project=project)
 
@@ -2069,7 +2015,7 @@ def upload_one(args):
                 sub_args = copy.copy(args)
                 sub_args.mute = True
                 sub_args.filename = os.path.join(args.filename, f)
-                sub_args.path = "{p}:{f}/{sf}/".format(p=project, f=folder, sf=os.path.basename(args.filename))
+                sub_args.path = u"{p}:{f}/{sf}/".format(p=project, f=folder, sf=os.path.basename(args.filename))
                 sub_args.parents = True
                 upload_one(sub_args)
     else:
@@ -2097,32 +2043,6 @@ def upload_one(args):
                 print_desc(dxfile.describe(incl_properties=True, incl_details=True))
         except:
             err_exit()
-
-def export_fastq(args):
-    sys.argv = [sys.argv[0] + ' export fastq'] + args.exporter_args
-    from dxpy.scripts import dx_reads_to_fastq
-    dx_reads_to_fastq.main()
-
-def export_sam(args):
-    sys.argv = [sys.argv[0] + ' export sam'] + args.exporter_args
-    from dxpy.scripts import dx_mappings_to_sam
-    dx_mappings_to_sam.main()
-
-def export_vcf(args):
-    sys.argv = [sys.argv[0] + ' export vcf'] + args.exporter_args
-    from dxpy.scripts import dx_variants_to_vcf
-    dx_variants_to_vcf.main()
-
-exporters = {
-    "fastq": export_fastq,
-    "sam": export_sam,
-    "vcf": export_vcf,
-}
-
-def export(args):
-    if args.format.lower() not in exporters:
-        err_exit('Unsupported format: "' + args.format + '".  For a list of supported formats, run "dx help export"', 3)
-    exporters[args.format.lower()](args)
 
 def find_executions(args):
     try_call(process_find_by_property_args, args)
@@ -4433,7 +4353,6 @@ parser_build_asset.add_argument("--no-watch", help=fill("Don't watch the real-ti
 parser_build_asset.add_argument("--priority", choices=['normal', 'high'], help=argparse.SUPPRESS)
 parser_build_asset.set_defaults(func=build_asset)
 register_parser(parser_build_asset)
-
 
 #####################################
 # add

@@ -108,9 +108,6 @@ class DXPartLengthMismatchError(DXFileError):
 class DXChecksumMismatchError(DXFileError):
     '''Exception raised by :class:`dxpy.bindings.dxfile.DXFile` on checksum mismatch.'''
 
-class DXGTableError(DXError):
-    '''Exception for :class:`dxpy.bindings.dxgtable.DXGTable`.'''
-
 class DXSearchError(DXError):
     '''Exception for :mod:`dxpy.bindings.search` methods.'''
 

@@ -53,8 +53,6 @@ dxR.Rcheck
 /bin/dx-get-job-streams
 /bin/dx-jobutil-*
 /bin/dx-log-stream
-/bin/dx-mappings-to-fastq
-/bin/dx-mappings-to-sam
 /bin/dx-mount
 /bin/dx-notebook-reconnect
 /bin/dx-reads-to-fastq

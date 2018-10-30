@@ -339,54 +339,6 @@ namespace dx {
   JSON globalWorkflowNew(const std::string &input_params="{}", const bool safe_to_retry=false);
   JSON globalWorkflowNew(const dx::JSON &input_params, const bool safe_to_retry=false);
 
-  JSON gtableAddRows(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON gtableAddRows(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON gtableAddTags(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON gtableAddTags(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON gtableAddTypes(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON gtableAddTypes(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON gtableClose(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON gtableClose(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON gtableDescribe(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON gtableDescribe(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON gtableGet(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON gtableGet(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON gtableGetDetails(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON gtableGetDetails(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON gtableListProjects(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON gtableListProjects(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON gtableNextPart(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON gtableNextPart(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON gtableRemoveTags(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON gtableRemoveTags(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON gtableRemoveTypes(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON gtableRemoveTypes(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON gtableRename(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON gtableRename(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON gtableSetDetails(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON gtableSetDetails(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON gtableSetProperties(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON gtableSetProperties(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON gtableSetVisibility(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON gtableSetVisibility(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
-  JSON gtableNew(const std::string &input_params="{}", const bool safe_to_retry=false);
-  JSON gtableNew(const dx::JSON &input_params, const bool safe_to_retry=false);
-
   JSON jobAddTags(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON jobAddTags(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 

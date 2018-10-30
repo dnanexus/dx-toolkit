@@ -119,7 +119,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
     """
     :param classname:
         Class with which to restrict the search, i.e. one of "record",
-        "file", "gtable", "applet", "workflow"
+        "file", "applet", "workflow"
     :type classname: string
     :param state: State of the object ("open", "closing", "closed", "any")
     :type state: string
@@ -191,11 +191,11 @@ def find_data_objects(classname=None, state=None, visibility=None,
            items1 = list(find_data_objects(created_before="-1w"))
            items2 = list(find_data_objects(created_before=-7*24*60*60*1000))
 
-    This example iterates through all GenomicTables with property
-    "project" set to "cancer project" and prints their object IDs::
+    This example iterates through all files with property
+    "project" set to "cancer project" and prints their object IDs:
 
-      for result in find_data_objects(classname="gtable", properties={"project": "cancer project"}):
-          print "Found gtable with object id " + result["id"]
+      for result in find_data_objects(classname="file", properties={"project": "cancer project"}):
+          print "Found a file with object id " + result["id"]
 
     """
 
