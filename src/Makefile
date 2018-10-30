@@ -61,8 +61,6 @@ src_libs: api_wrappers
 	mkdir -p "$(DNANEXUS_LIBDIR)"
 	cp -R -v bash "$(DNANEXUS_LIBDIR)"
 
-python: api_wrappers toolkit_version $(DNANEXUS_HOME)/bin/dx
-
 
 # If running in fakeroot, override some maven settings so that maven can still
 # find a localRepository to write to.
@@ -95,14 +93,6 @@ bin/docker2aci:
 ifneq (DOCKER_ACI_URL, "")
 	curl -k -sL ${DOCKER_ACI_URL} > $(DNANEXUS_HOME)/bin/docker2aci && chmod 777 $(DNANEXUS_HOME)/bin/docker2aci
 endif
-
-# Support for portable workflows, using the dxWDL compiler
-portablewf: $(DNANEXUS_HOME)/bin/dxWDL-$(DXWDL_VERSION).jar
-	ln -s -f $(DNANEXUS_HOME)/bin/dxWDL-$(DXWDL_VERSION).jar $(DNANEXUS_HOME)/bin/dxWDL.jar
-
-# Download the correct dxWDL version from github, and install it
-$(DNANEXUS_HOME)/bin/dxWDL-$(DXWDL_VERSION).jar:
-	curl -L "https://github.com/dnanexus/dxWDL/releases/download/$(DXWDL_VERSION)/dxWDL-$(DXWDL_VERSION).jar" -o $(DNANEXUS_HOME)/bin/dxWDL-$(DXWDL_VERSION).jar
 
 
 # Tests
@@ -356,7 +346,7 @@ clean:
 	$(MAKE) -C dx-verify-file clean
 	$(MAKE) -C ua clean
 	-find ../bin -type f \( -name jq -or -name dx -or -name 'dx-*' \) -not -name 'dx-unpack*' -delete
-	-rm -f ../bin/docker2aci ../bin/proot ../bin/dxWDL*.jar
+	-rm -f ../bin/docker2aci ../bin/proot
 	-rm -rf python/{build,*.{egg,egg-info}}
 	-rm -rf java/target
 	-rm -rf ../lib

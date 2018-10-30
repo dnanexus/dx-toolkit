@@ -848,11 +848,11 @@ def rmdir(args):
 
 
 
-    
+
 def rm(args):
     had_error = False
     projects = {}
-    
+
     # Caution user when performing a recursive removal before any removal operation takes place
     if args.recursive and not args.force:
         for path in args.paths:
@@ -2650,6 +2650,7 @@ def build(args):
         err_exit()
 
 
+<<<<<<< HEAD
 # Find out the project and folder where to place compilation outputs.
 def compile_destination(args):
     if args.destination is None:
@@ -2790,6 +2791,8 @@ def compile_dxni(args):
         print("Error: %s" % (e.message,), file=sys.stderr)
         err_exit()
 
+=======
+>>>>>>> a02d7e4f... Removing rare subcommands (#428)
 def process_list_of_usernames(thing):
     return ['user-' + name.lower() if name != 'PUBLIC' and
             not name.startswith('org-') and
@@ -3468,6 +3471,7 @@ def terminate(args):
         except:
             err_exit()
 
+<<<<<<< HEAD
 def shell(orig_args):
     if orig_args.filename is not None:
         try:
@@ -3542,6 +3546,8 @@ def shell(orig_args):
             if not isinstance(details, SystemExit):
                 print(str(details) + '\n')
 
+=======
+>>>>>>> a02d7e4f... Removing rare subcommands (#428)
 def watch(args):
     level_colors = {level: RED() for level in ("EMERG", "ALERT", "CRITICAL", "ERROR")}
     level_colors.update({level: YELLOW() for level in ("WARNING", "STDERR")})
@@ -4115,17 +4121,6 @@ parser_logout.set_defaults(func=logout)
 register_parser(parser_logout, categories='session')
 
 #####################################
-# sh
-#####################################
-parser_shell = subparsers.add_parser('sh', help='dx shell interpreter',
-                                     description='When run with no arguments, this command launches an interactive shell.  Otherwise, it will load the filename provided and interpret each nonempty line as a command to execute.  In both cases, the "dx" is expected to be omitted from the command or line.',
-                                     prog='dx sh',
-                                     parents=[env_args])
-parser_shell.add_argument('filename', help='File of dx commands to execute', nargs='?', default=None)
-parser_shell.set_defaults(func=shell)
-register_parser(parser_shell, categories='session')
-
-#####################################
 # exit
 #####################################
 parser_exit = subparsers.add_parser('exit', help='Exit out of the interactive shell',
@@ -4641,97 +4636,6 @@ parser_build_asset.add_argument("--priority", choices=['normal', 'high'], help=a
 parser_build_asset.set_defaults(func=build_asset)
 register_parser(parser_build_asset)
 
-
-#####################################
-# compile
-#####################################
-
-parser_compile = subparsers.add_parser('compile', help='Compile a WDL workflow or task',
-                                         description='Build a workflow and auxiliary applets from a WDL source file',
-                                         prog='dx compile')
-
-# positional argument -- a file to compile
-parser_compile.add_argument('sourceFile', help='File to compile')
-
-# optionals
-parser_compile.add_argument("--archive",
-                              help=fill("Archive older versions of applets and workflows"),
-                              action="store_true")
-parser_compile.add_argument("--defaults",
-                              help=fill("File with Cromwell formatted default values (JSON)"))
-parser_compile.add_argument("-d", "--destination",
-                                help=fill("Specifies the destination project and destination folder,"
-                                          "in the form [PROJECT_NAME_OR_ID:][/FOLDER_NAME]"),
-                                default='.')
-parser_compile.add_argument("--extras",
-                              help=fill("JSON formatted file with extra options, for example, default runtime options for tasks."))
-parser_compile.add_argument("-f", "--force",
-                              help=fill("Delete existing applets/workflows"),
-                              action="store_true")
-parser_compile.add_argument("--inputs",
-                              help=fill("File with Cromwell formatted inputs (JSON)"))
-parser_compile.add_argument("--locked",
-                              help=fill("Create a locked-down workflow"),
-                              action="store_true")
-parser_compile.add_argument("-p", "--imports",
-                              help=fill("Directory to search for imported WDL files"),
-                              action='append')
-parser_compile.add_argument("--quiet",
-                              help=fill("Do not print warnings or informational output"),
-                              action="store_true")
-parser_compile.add_argument("--reorg",
-                              help=fill("Reorganize workflow output files"),
-                              action="store_true")
-parser_compile.add_argument("--runtimeDebugLevel",
-                              help=fill("How much debug information to write to the job log at runtime. Zero means write the minimum, one is the default, and two is for internal debugging."),
-                              choices=['0', '1', '2'],
-                              default='1')
-parser_compile.add_argument("--verbose",
-                            help=fill("Print detailed progress reports. Ignored if --quiet is used."),
-                            action="store_true")
-parser_compile.set_defaults(func=compile)
-register_parser(parser_compile)
-
-
-#####################################
-# compile_dxni : Dx Native call Interface.
-# generate (WDL) wrappers for apps and applets
-#####################################
-parser_compile_dxni = subparsers.add_parser(
-    'compile_dxni',
-    help='Dx Native Call Interface',
-    description= fill('Dx native call interface (DxNI). Create stubs for calling dx '
-                      'executables (apps/applets/workflows), and store them as WDL '
-                      'tasks in a local file. Allows calling existing platform executables '
-                      'without modification. Default is to look for applets.'),
-    prog= 'dx compile_dxni')
-
-# positional argument: output file
-parser_compile_dxni.add_argument("output_file",
-                                 help= "Destination file for WDL task definitions")
-
-# optionals
-parser_compile_dxni.add_argument("-apps",
-                                 help= "Search only for apps",
-                                 action="store_true")
-parser_compile_dxni.add_argument("-d", "--destination",
-                                 help=fill("Specifies the destination project and destination folder,"
-                                           "in the form [PROJECT_NAME_OR_ID:][/FOLDER_NAME]"),
-                                 default='.')
-parser_compile_dxni.add_argument("-f", "--force",
-                                 help=fill("Delete output file"),
-                                 action="store_true")
-parser_compile_dxni.add_argument("--quiet",
-                                 help=fill("Do not print warnings or informational output"),
-                                 action="store_true")
-parser_compile_dxni.add_argument("-r", "--recursive",
-                                 help= "Recursive search",
-                                 action="store_true")
-parser_compile_dxni.add_argument("--verbose",
-                                 help=fill("Print detailed progress reports. Ignored if --quiet is used."),
-                                 action="store_true")
-parser_compile_dxni.set_defaults(func=compile_dxni)
-register_parser(parser_compile_dxni)
 
 #####################################
 # add

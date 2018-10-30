@@ -54,11 +54,6 @@ else
 	VIRTUAL_ENV=python3 -m venv
 endif
 
-# Set the dxWDL version to download from git
-ifndef DXWDL_VERSION
-	DXWDL_VERSION = 0.74
-endif
-
 ifndef CCACHE_DISABLE
 	export PATH := /usr/lib/ccache:$(PATH)
 endif
@@ -87,7 +82,6 @@ else
 endif
 
 PYTHON_LIBDIR = $(DNANEXUS_LIBDIR)/python${PYTHON_VERSION_NUMBER}/site-packages
-JAVA_LIBDIR = $(DNANEXUS_LIBDIR)/java
 
 
 ifeq ($(PLATFORM), windows)
