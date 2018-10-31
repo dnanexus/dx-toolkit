@@ -628,6 +628,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     _headers.pop(b'content-length', None)
 
                     # Encode any non-ascii characters in the path
+                    import urllib.parse
                     parts = list(urllib.parse.urlparse(_url))
                     parts[2] = urllib.parse.quote(parts[2])
                     encoded_url = urllib.parse.urlunparse(parts)
