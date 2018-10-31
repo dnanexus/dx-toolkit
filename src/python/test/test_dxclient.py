@@ -875,7 +875,7 @@ class TestDXClient(DXTestCase):
                 sleep_applet = dxpy.api.applet_new(dict(name="sleep",
                                                         runSpec={"code": "sleep 1200",
                                                                  "interpreter": "bash",
-                                                                 "distribution": "Ubuntu", "release": "14.04",
+                                                                 "distribution": "Ubuntu", "release": "12.04",
                                                                  "execDepends": [{"name": "dx-toolkit"}],
                                                                  "systemRequirements": {"*": {"instanceType": instance_type}}},
                                                         inputSpec=[], outputSpec=[],
@@ -898,9 +898,10 @@ class TestDXClient(DXTestCase):
                 # Check for terminal prompt and verify we're in the container
                 job_id = dxpy.find_jobs(name="sleep", project=project).next()['id']
                 # Expect the shell prompt - for example: dnanexus@job-xxxx:~⟫
-                dx.expect((job_id), timeout=10)
                 # NOTE: \u27EB is ⟫
-                dx.expect(u'\u27EB'.encode(sys_encoding), timeout=10, searchwindowsize=7000)
+                #dx.expect((job_id), timeout=10)
+                #dx.expect(u'\u27EB'.encode(sys_encoding), timeout=10, searchwindowsize=7000)
+                dx.expect(("dnanexus@%s" % job_id), timeout=10)
 
                 expected_history_filename = os.path.join(
                         os.environ.get("DX_USER_CONF_DIR", os.path.join(wd, ".dnanexus_config")), ".dx_history")
