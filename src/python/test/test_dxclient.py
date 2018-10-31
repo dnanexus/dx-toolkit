@@ -875,7 +875,7 @@ class TestDXClient(DXTestCase):
                 sleep_applet = dxpy.api.applet_new(dict(name="sleep",
                                                         runSpec={"code": "sleep 1200",
                                                                  "interpreter": "bash",
-                                                                 "distribution": "Ubuntu", "release": "12.04",
+                                                                 "distribution": "Ubuntu", "release": "14.04",
                                                                  "execDepends": [{"name": "dx-toolkit"}],
                                                                  "systemRequirements": {"*": {"instanceType": instance_type}}},
                                                         inputSpec=[], outputSpec=[],
@@ -889,12 +889,6 @@ class TestDXClient(DXTestCase):
                 dx.expect("Waiting for job")
                 dx.expect("Resolving job hostname and SSH host key", timeout=1200)
 
-                # Wait for the line displayed between the first and second MOTDs,
-                # since we only care about checking the second set of MOTD lines.
-                # Example of the dividing line:
-                # dnanexus@job-BP90K3Q0X2v81PXXPZj005Zj.dnanex.us (10.0.0.200) - byobu
-                dx.expect(["dnanexus.io \(10.0.0.200\) - byobu",
-                           "dnanex.us \(10.0.0.200\) - byobu"], timeout=120)
                 dx.expect("This is the DNAnexus Execution Environment", timeout=600)
                 # Check for job name (e.g. "Job: sleep")
                 dx.expect("Job: \x1b\[1msleep", timeout=5)
@@ -903,7 +897,10 @@ class TestDXClient(DXTestCase):
                 dx.expect("The job is running in terminal 1.", timeout=5)
                 # Check for terminal prompt and verify we're in the container
                 job_id = dxpy.find_jobs(name="sleep", project=project).next()['id']
-                dx.expect(("dnanexus@%s" % job_id), timeout=10)
+                # Expect the shell prompt - for example: dnanexus@job-xxxx:~⟫
+                dx.expect((job_id), timeout=10)
+                # NOTE: \u27EB is ⟫
+                dx.expect(u'\u27EB'.encode(sys_encoding), timeout=10, searchwindowsize=7000)
 
                 expected_history_filename = os.path.join(
                         os.environ.get("DX_USER_CONF_DIR", os.path.join(wd, ".dnanexus_config")), ".dx_history")
