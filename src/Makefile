@@ -340,7 +340,8 @@ distclean: clean
 clean:
 	$(MAKE) -C dx-verify-file clean
 	$(MAKE) -C ua clean
-	-find ../bin -type f \( -name jq -or -name dx -or -name 'dx-*' \) -not -name 'dx-unpack*' -delete
+	-rm -f ../bin/jq
+	-find ../bin -type f \( -name dx -or -name 'dx-*' \) -not -name 'dx-unpack*' -not -name 'dx-su-*' -delete
 	-rm -f ../bin/docker2aci ../bin/proot
 	-rm -rf python/{build,*.{egg,egg-info}}
 	-rm -rf java/target

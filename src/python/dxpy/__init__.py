@@ -138,7 +138,6 @@ import requests
 import socket
 import threading
 import subprocess
-import urllib.parse
 
 from collections import namedtuple
 
@@ -152,6 +151,12 @@ from requests.packages import urllib3
 from requests.packages.urllib3.packages.ssl_match_hostname import match_hostname
 from threading import Lock
 
+try:
+    # python-3
+    from urllib.parse import urlsplit
+except ImportError:
+    # python-2
+    from urlparse import urlsplit
 
 
 sequence_number_mutex = threading.Lock()
@@ -222,7 +227,7 @@ _pool_manager = None
 def _get_proxy_info(url):
     proxy_info = {}
 
-    url_info = urllib.parse.urlsplit(url)
+    url_info = urlsplit(url)
     # If the url contains a username, need to separate the username/password
     # from the url
     if url_info.username:
