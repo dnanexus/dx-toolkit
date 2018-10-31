@@ -16,6 +16,8 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+from __future__ import print_function
+
 import logging
 logging.basicConfig(level=logging.WARN)
 
@@ -24,7 +26,7 @@ import base64
 import bs4
 import cgi
 import dxpy
-from dxpy.compat import BytesIO
+from dxpy.compat import (USING_PYTHON2, BytesIO)
 from .dx_build_app import parse_destination
 import imghdr
 import json
@@ -69,7 +71,10 @@ def _bake_css(link):
         else:
             css_data = _load_file(link["href"]).read()
         link.clear()
-        link.string = str(css_data)
+        if USING_PYTHON2:
+            link.string = css_data
+        else:
+            link.string = str(css_data)
         link.name = "style"
         del link["rel"]
         del link["href"]
@@ -85,7 +90,10 @@ def _bake_script(script):
         else:
             script_data = _load_file(script["src"]).read()
         script.clear()
-        script.string = "\n" + str(script_data) + "\n"
+        if USING_PYTHON2:
+            script.string = "\n" + script_data + "\n"
+        else:
+            script.string = "\n" + str(script_data) + "\n"
         del script["src"]
         del script["type"]
 
@@ -104,8 +112,12 @@ def _load_file(path):
     """
     if not os.path.exists(path):
         parser.error("{} was not found!".format(path))
+    if USING_PYTHON2:
+        mode = "r"
+    else:
+        mode = "rb"
     try:
-        f = open(path, "rb")
+        f = open(path, mode)
         return f
     except IOError as ex:
         parser.error("{path} could not be read due to an I/O error! ({ex})".format(path=path, ex=ex))
@@ -122,7 +134,8 @@ def _load_url(url):
         parser.error("{url} could not be loaded remotely! ({ex})".format(url=url, ex=ex))
 
 
-def _get_bs4_string(soup) -> str:
+# returns a string
+def _get_bs4_string(soup):
     """
     Outputs a BeautifulSoup object as a string that should hopefully be minimally modified
     """

@@ -23,6 +23,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import json
 import logging
+import ssl
 import time
 
 from websocket import WebSocketApp
@@ -77,7 +78,7 @@ class DXJobLogStreamClient:
                     on_error=self.errored,
                     on_message=self.received_message
                 )
-                self._app.run_forever()
+                self._app.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
             except:
                 if not self.server_restarted():
                     raise

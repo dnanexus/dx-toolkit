@@ -23,8 +23,8 @@ import re
 from setuptools import setup, find_packages
 import sys
 
-if sys.version_info < (3, 6):
-    raise Exception("dxpy3 requires Python >= 3.6")
+if sys.version_info < (2, 7):
+    raise Exception("dxpy3 requires Python >= 2.7")
 
 # Pypi is the repository for python packages.
 # It requires that version numbers look like this: X.Y.Z,
@@ -95,7 +95,7 @@ for directory, subdirectories, files in os.walk("dxpy/templating/templates"):
     template_files.extend([os.path.join(directory, _file) for _file in files])
 
 setup(
-    name='dxpy3',
+    name='dxpy',
     version=version,
     description='DNAnexus Platform API bindings for Python3',
     long_description=readme_content,
@@ -120,6 +120,7 @@ setup(
         'License :: OSI Approved :: Apache Software License',
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: POSIX',
+        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Unix Shell',
         'Topic :: Software Development :: Libraries :: Python Modules'

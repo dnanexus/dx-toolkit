@@ -19,6 +19,8 @@ include mk/Makefile.${PLATFORM}
 
 all: api_wrappers cpp src_libs python dx-verify-file jq dx-docker
 
+python: api_wrappers toolkit_version $(DNANEXUS_HOME)/bin/dx
+
 # Client bindings and wrappers
 # ============================
 
@@ -329,13 +331,6 @@ git_submodules:
 
 jq: git_submodules ../bin/jq
 
-
-# Typecheck python with pyre
-# =====
-py_typecheck:
-	pyre \
-		--typeshed $(HOME)/.local/lib/pyre_check/typeshed \
-		--show-parse-errors check
 
 # Clean
 # =====

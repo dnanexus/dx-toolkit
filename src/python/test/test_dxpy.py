@@ -381,7 +381,11 @@ class TestDXFile(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.foo_file = tempfile.NamedTemporaryFile(delete=False)
-        bt = cls.foo_str.encode("utf-8") # convert from string to bytes
+        if USING_PYTHON2:
+            bt = foo_str
+        else:
+            # python-3 requires converting from string to bytes
+            bt = cls.foo_str.encode("utf-8")
         cls.foo_file.write(bt)
         cls.foo_file.close()
 

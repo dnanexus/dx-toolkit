@@ -17,6 +17,7 @@
 #   under the License.
 
 
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import logging
 logging.basicConfig(level=logging.WARNING)
@@ -42,7 +43,7 @@ from ..utils.completer import LocalCompleter
 from ..app_categories import APP_CATEGORIES
 from ..exceptions import err_exit
 from ..utils.printing import BOLD
-from ..compat import open, USING_PYTHON2, decode_command_line_args
+from ..compat import open, USING_PYTHON2, decode_command_line_args, basestring
 
 decode_command_line_args()
 
@@ -128,7 +129,7 @@ def _check_suggestions(app_json, publish=False):
                                 if e.code == 404:
                                     logger.warn('Suggested project {name} does not exist, or not accessible by user'.format(
                                                  name=suggestion['value']['$dnanexus_link']['project']))
-                    elif isinstance(suggestion['value']['$dnanexus_link'], str):
+                    elif isinstance(suggestion['value']['$dnanexus_link'], basestring):
                         if suggestion['value']['$dnanexus_link'].startswith(('file-', 'record-', 'gtable-')):
                             try:
                                 dnanexus_link = dxpy.describe(suggestion['value']['$dnanexus_link'])
@@ -368,10 +369,10 @@ def _verify_app_source_dir_impl(src_dir, temp_dir, mode, enforce=True):
                     raise dxpy.app_builder.AppBuilderException(msg)
 
     if 'authorizedUsers' in manifest:
-        if not isinstance(manifest['authorizedUsers'], list) or isinstance(manifest['authorizedUsers'], str):
+        if not isinstance(manifest['authorizedUsers'], list) or isinstance(manifest['authorizedUsers'], basestring):
             raise dxpy.app_builder.AppBuilderException('Expected authorizedUsers to be a list of strings')
         for thing in manifest['authorizedUsers']:
-            if thing != 'PUBLIC' and (not isinstance(thing, str) or not re.match("^(org-|user-)", thing)):
+            if thing != 'PUBLIC' and (not isinstance(thing, basestring) or not re.match("^(org-|user-)", thing)):
                 raise dxpy.app_builder.AppBuilderException('authorizedUsers field contains an entry which is not either the string "PUBLIC" or a user or org ID')
 
     if "pricingPolicy" in manifest:

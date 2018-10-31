@@ -17,6 +17,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, io, time, subprocess, glob, logging, functools
 import shlex # respects quoted substrings when splitting
@@ -26,7 +27,7 @@ import csv
 
 logging.basicConfig(level=logging.INFO)
 
-from ..compat import (USING_PYTHON2, input, wrap_stdio_in_codecs, decode_command_line_args,
+from ..compat import (USING_PYTHON2, basestring, str, input, wrap_stdio_in_codecs, decode_command_line_args,
                       unwrap_stream, sys_encoding)
 
 wrap_stdio_in_codecs()
@@ -2650,149 +2651,6 @@ def build(args):
         err_exit()
 
 
-<<<<<<< HEAD
-# Find out the project and folder where to place compilation outputs.
-def compile_destination(args):
-    if args.destination is None:
-        return get_pwd()
-    project_id, folder, _none = try_call(resolve_existing_path,
-                                         args.destination)
-    if folder is not None:
-        return project_id + ":" + folder
-    return project_id
-
-
-# Convert each unicode character to four hexadecimal digits.
-#
-# Note: we have a python unicode string with the destination path. It
-# needs to go through to subprocess, Unix execv, and then the JVM.
-# Many things can go wrong along the way, so we hex encode the
-# destination string. The execv system call doesn't take unicode, so
-# some kind of encoding is required.
-def _unicodeToHex(buf):
-    l = []
-    for ch in buf:
-        codepoint = ord(ch)
-        digits = format(codepoint, '04x')
-        l.append(digits)
-    return "".join(l)
-
-# Make sure java is version 8
-_java_version = None
-_JAVA_VERSION_REQUIRED = "1.8"
-def check_java_version():
-    global _java_version
-    if _java_version is None:
-        try:
-            output = subprocess.check_output(["java", "-version"],
-                                             stderr=subprocess.STDOUT,
-                                             universal_newlines=True)
-        except Exception as e:
-            msg = "Could not call the java executable. " + \
-                  "This is probably because java (jdk8) is not installed."
-            raise DXError(fill(msg))
-
-        try:
-            first_line = output.split('\n')[0]
-            words = first_line.split()
-            _java_version = words[-1].replace('"', '')
-        except Exception as e:
-            raise DXError('Could not parse java -version output {}'.format(output))
-
-    return _java_version.startswith(_JAVA_VERSION_REQUIRED)
-
-def compile(args):
-    if dxpy.AUTH_HELPER is None:
-        build_parser.error('Authentication required to compile a workflow on the platform; please run "dx login" first')
-    # The absolute path of the installation directory
-    install_dir = os.path.dirname(os.path.abspath(__file__))
-    dxWDL_jar = os.path.join(install_dir, "dxWDL.jar")
-    if not os.path.exists(dxWDL_jar):
-        raise DXError('Jar file {} does not exist'.format(dxWDL_jar))
-    cmdline = ["java", "-jar", dxWDL_jar, "compile", args.sourceFile]
-
-    check_java_version()
-
-    # The execv call, used by the subprocess python module, does not
-    # accept unicode. Therefore, we encode unicode destinations as
-    # hexadecimal strings.
-    destination = compile_destination(args)
-    if type(destination) is str:
-        cmdline += ["--destination_unicode", _unicodeToHex(destination)]
-    else:
-        cmdline += ["--destination", destination]
-
-    if args.archive:
-        cmdline.append("--archive")
-    if args.defaults is not None:
-        cmdline += ["--defaults", args.defaults]
-    if args.extras is not None:
-        cmdline += ["--extras", args.extras]
-    if args.force:
-        cmdline.append("--force")
-    if args.inputs is not None:
-        cmdline += ["--inputs", args.inputs]
-    if args.locked:
-        cmdline.append("--locked")
-    if args.imports is not None:
-        cmdline += ["--imports", args.imports]
-    if args.quiet:
-        args.verbose = False
-        cmdline.append("--quiet")
-    if args.reorg:
-        cmdline.append("--reorg")
-    if args.runtimeDebugLevel is not None:
-        cmdline += ["--runtimeDebugLevel", args.runtimeDebugLevel]
-    if args.verbose:
-        cmdline.append("--verbose")
-
-    try:
-        output = subprocess.check_output(cmdline)
-        print(output.strip().decode("utf-8"))
-    except Exception as e:
-        print("Error: %s" % (e.message,), file=sys.stderr)
-        err_exit()
-
-def compile_dxni(args):
-    if dxpy.AUTH_HELPER is None:
-        build_parser.error('Authentication required to for dxni; please run "dx login" first')
-    # The absolute path of the installation directory
-    install_dir = os.path.dirname(os.path.abspath(__file__))
-    dxWDL_jar = os.path.join(install_dir, "dxWDL.jar")
-    if not os.path.exists(dxWDL_jar):
-        raise DXError('Jar file {} does not exist'.format(dxWDL_jar))
-    cmdline = ["java", "-jar", dxWDL_jar, "dxni", "-o", args.output_file]
-
-    check_java_version()
-
-    # The execv call, used by the subprocess python module, does not
-    # accept unicode. Therefore, we encode unicode destinations as
-    # hexadecimal strings.
-    destination = compile_destination(args)
-    if type(destination) is str:
-        cmdline += ["--destination_unicode", _unicodeToHex(destination)]
-    else:
-        cmdline += ["--destination", destination]
-
-    if args.force:
-        cmdline.append("--force")
-    if args.quiet:
-        args.verbose = False
-        cmdline.append("--quiet")
-    if args.recursive:
-        cmdline.append("--recursive")
-    if args.verbose:
-        cmdline.append("--verbose")
-
-    try:
-        output = subprocess.check_output(cmdline)
-        print(output.strip().decode("utf-8"))
-    except Exception as e:
-        print("Error: %s" % (e.message,), file=sys.stderr)
-        err_exit()
-
-=======
->>>>>>> a02d7e4f... Removing rare subcommands (#428)
 def process_list_of_usernames(thing):
     return ['user-' + name.lower() if name != 'PUBLIC' and
             not name.startswith('org-') and
@@ -3471,83 +3329,6 @@ def terminate(args):
         except:
             err_exit()
 
-<<<<<<< HEAD
-def shell(orig_args):
-    if orig_args.filename is not None:
-        try:
-            with io.open(orig_args.filename, 'rb') as script:
-                for line in script:
-                    args = [word.decode(sys_encoding) for word in shlex.split(line)]
-                    parsed_args = parser.parse_args(args)
-                    set_cli_colors(parsed_args)
-                    args.func(parsed_args)
-            exit(0)
-        except:
-            err_exit()
-    elif not INTERACTIVE_CLI:
-        for line in sys.stdin.read().splitlines():
-            if len(line) > 0:
-                args = [word for word in shlex.split(line)]
-                parsed_args = parser.parse_args(args)
-                set_cli_colors(parsed_args)
-                parsed_args.func(parsed_args)
-        exit(0)
-
-    if state['interactive']:
-        return
-    state['interactive'] = True
-
-    # WARNING: Following two lines may not be platform-independent and
-    # should be made so.
-    try:
-        import rlcompleter
-        readline.parse_and_bind("tab: complete")
-
-        readline.set_completer_delims("")
-
-        readline.set_completer(DXCLICompleter().complete)
-    except:
-        pass
-
-    while True:
-        # Reset the completer once we're done grabbing input
-        try:
-            if readline.get_completer() is None:
-                readline.set_completer(DXCLICompleter().complete)
-                readline.clear_history()
-                readline.read_history_file(os.path.join(dxpy.config.get_user_conf_dir(), '.dx_history'))
-        except:
-            pass
-        try:
-            prompt = '> '
-            pwd_str = get_pwd()
-            if pwd_str is not None:
-                prompt = pwd_str + prompt
-            cmd = input(prompt)
-        except EOFError:
-            print("")
-            exit(0)
-        except KeyboardInterrupt:
-            print("")
-            continue
-        if cmd == '':
-            continue
-        try:
-            sys.argv[1:] = [word for word in shlex.split(cmd)]
-            args = parser.parse_args(sys.argv[1:])
-            set_cli_colors(args)
-            set_delim(args)
-            if args.func == clearenv:
-                args.interactive = True
-            args.func(args)
-        except StopIteration:
-            exit(0)
-        except BaseException as details:
-            if not isinstance(details, SystemExit):
-                print(str(details) + '\n')
-
-=======
->>>>>>> a02d7e4f... Removing rare subcommands (#428)
 def watch(args):
     level_colors = {level: RED() for level in ("EMERG", "ALERT", "CRITICAL", "ERROR")}
     level_colors.update({level: YELLOW() for level in ("WARNING", "STDERR")})
@@ -3858,14 +3639,21 @@ def generate_batch_inputs(args):
             return [b['batchPattern']] + [ival['name'] for iname, ival in sorted(b['inputs'].items())] + [ival['ids'][0] for iname, ival in sorted(b['inputs'].items())]
 
         batch_fname = "{}.{:04d}.tsv".format(args.output_prefix, i)
-        with open(batch_fname, 'w') as csvfile:
-            batchwriter = csv.writer(csvfile, delimiter='\t')
-            # Write headers of TSV
-            headers = ['batch ID'] + [iname for iname in sorted(input_names)] + [iname+" ID" for iname in sorted(input_names)]
-            batchwriter.writerow(headers)
-            for bi in batch:
-                batchwriter.writerow(flatten_batch(bi))
-            eprint("Created batch file {}".format(batch_fname))
+
+        # In python-3 we need to open the file in textual mode.
+        if USING_PYTHON2:
+            with open(batch_fname, 'wb') as csvfile:
+                batchwriter = csv.writer(csvfile, delimiter='\t'.encode('ascii'))
+        else:
+            with open(batch_fname, 'w') as csvfile:
+                batchwriter = csv.writer(csvfile, delimiter='\t')
+
+        # Write headers of TSV
+        headers = ['batch ID'] + [iname for iname in sorted(input_names)] + [iname+" ID" for iname in sorted(input_names)]
+        batchwriter.writerow(headers)
+        for bi in batch:
+            batchwriter.writerow(flatten_batch(bi))
+        eprint("Created batch file {}".format(batch_fname))
 
 
     eprint("")
@@ -4039,7 +3827,7 @@ class DXArgumentParser(argparse.ArgumentParser):
             raise err
 
     def exit(self, status=0, message=None):
-        if isinstance(status, str):
+        if isinstance(status, basestring):
             message = message + status if message else status
             status = 1
         if message:
@@ -4066,7 +3854,7 @@ def register_parser(parser, subparsers_action=None, categories=('other', ), add_
     name = re.sub('^dx ', '', parser.prog)
     if subparsers_action is None:
         subparsers_action = subparsers
-    if isinstance(categories, str):
+    if isinstance(categories, basestring):
         categories = (categories, )
 
     parser_map[name] = parser
@@ -5727,10 +5515,16 @@ def main():
     # Bash argument completer hook
     if '_ARGCOMPLETE' in os.environ:
         import argcomplete
+
+        # In python-3 we need to use a binary output stream
+        if USING_PYTHON2:
+            output_stream = sys.stdout
+        else:
+            output_stream = sys.stdout.buffer
         argcomplete.autocomplete(parser,
                                  always_complete_options=False,
                                  exclude=['gtable', 'export'],
-                                 output_stream=sys.stdout.buffer if '_DX_ARC_DEBUG' in os.environ else None)
+                                 output_stream=output_stream if '_DX_ARC_DEBUG' in os.environ else None)
 
     if len(args_list) > 0:
         args = parser.parse_args(args_list)

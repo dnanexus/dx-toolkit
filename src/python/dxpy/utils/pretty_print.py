@@ -17,6 +17,7 @@
 #   under the License.
 
 
+from __future__ import print_function, unicode_literals, division, absolute_import
 
 import re, collections
 from .printing import (GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC)

@@ -615,16 +615,21 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
                 _headers = {ensure_ascii(k): ensure_ascii(v) for k, v in _headers.items()}
 
-                # This is needed for python 3 urllib
-                _headers.pop(b'host', None)
-                _headers.pop(b'content-length', None)
+                if USING_PYTHON2:
+                    encoded_url = _url
+                else:
+                    # This is needed for python 3 urllib
+                    _headers.pop(b'host', None)
+                    _headers.pop(b'content-length', None)
 
-                # Encode any non-ascii characters in the path
-                parts = list(urllib.parse.urlparse(_url))
-                parts[2] = urllib.parse.quote(parts[2])
-                encoded_url = urllib.parse.urlunparse(parts)
+                    # Encode any non-ascii characters in the path
+                    parts = list(urllib.parse.urlparse(_url))
+                    parts[2] = urllib.parse.quote(parts[2])
+                    encoded_url = urllib.parse.urlunparse(parts)
+
                 response = pool_manager.request(_method, encoded_url, headers=_headers, body=body,
                                                 timeout=timeout, retries=False, **kwargs)
+
             except urllib3.exceptions.ClosedPoolError:
                 # If another thread closed the pool before the request was
                 # started, will throw ClosedPoolError

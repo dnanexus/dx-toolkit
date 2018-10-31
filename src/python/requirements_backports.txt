@@ -1,0 +1,2 @@
+futures==3.0.4
+backports.ssl_match_hostname==3.5.0.1

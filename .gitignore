@@ -39,6 +39,7 @@ dxR.Rcheck
 *.o
 .DS_Store
 /bin/dx
+/bin/dx-run-app-locally
 /bin/dx-app-wizard
 /bin/dx-build-app
 /bin/dx-build-applet
@@ -77,13 +78,10 @@ dxR.Rcheck
 /bin/easy_install*
 /bin/chardetect
 /bin/proot
-<<<<<<< HEAD
+/bin/python-argcomplete-check-easy-install-script
+/bin/register-python-argcomplete
 /bin/pbr
 /bin/wsdump.py
-=======
-/bin/wsdump.py
-/bin/dx-su-contrib
->>>>>>> a02d7e4f... Removing rare subcommands (#428)
 /src/python/test/*.traceability.*.csv
 /src/ua/dist/ua
 /src/ua/dnanexus-upload-agent-*-linux.tar.gz
@@ -91,9 +89,6 @@ dxR.Rcheck
 /src/ua/ua
 test-job-workspaces
 .idea/
-
-# pyre tool for typechecking python --- artifacts
-pyre.stderr
 
 # artifacts from tracibility
 *.traceability.*.csv
