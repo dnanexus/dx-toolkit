@@ -392,29 +392,6 @@ class TestDXClient(DXTestCase):
             details = dxrecord.get_details()
             self.assertEqual({"foo": "bar"}, details, msg="dx set_details -f - with valid JSON input failed.")
 
-<<<<<<< HEAD
-    @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_HELP_EXIT_OUT_INTERACTIVE_SHELL", "DNA_CLI_HELP_DX_SHELL_INTERPRETER"])
-    def test_dx_shell(self):
-        shell = pexpect.spawn("bash", encoding='utf-8')
-        shell.logfile = sys.stdout
-        shell.sendline("dx sh")
-        shell.expect(">")
-        shell.sendline("Ψ 'Ψ Ψ'")
-        shell.expect("invalid choice: Ψ")
-        shell.expect(">")
-        shell.sendline("env")
-        shell.expect("Current user")
-        shell.sendline("help all")
-        shell.expect("Commands:")
-        shell.sendline("exit")
-        shell.sendline("echo find projects | dx sh")
-        shell.expect("project-")
-        shell.close()
-
-=======
->>>>>>> a02d7e4f... Removing rare subcommands (#428)
-
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test user')
     def test_dx_watch_invalid_auth(self):
         with without_auth():

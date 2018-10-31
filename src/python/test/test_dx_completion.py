@@ -22,7 +22,7 @@ from tempfile import NamedTemporaryFile, mkdtemp
 import dxpy
 import dxpy_testutil as testutil
 from dxpy.exceptions import DXError
-from ..compat import USING_PYTHON2
+from dxpy.compat import USING_PYTHON2
 
 # TODO: unit tests for dxpy.utils.completer
 

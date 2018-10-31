@@ -24,7 +24,7 @@ from setuptools import setup, find_packages
 import sys
 
 if sys.version_info < (2, 7):
-    raise Exception("dxpy3 requires Python >= 2.7")
+    raise Exception("dxpy requires Python >= 2.7")
 
 # Pypi is the repository for python packages.
 # It requires that version numbers look like this: X.Y.Z,
