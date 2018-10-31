@@ -1,3 +1,9 @@
+dx-toolkit (0.267.1) precise; urgency=low
+
+  * Fixed: CRAN repository
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 31 Oct 2018 18:04:49 +0000
+
 dx-toolkit (0.267.0) precise; urgency=low
 
   * Added: Add release/distro to example app dxapp.json files (#421)
