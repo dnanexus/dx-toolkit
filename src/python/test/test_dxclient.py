@@ -891,7 +891,7 @@ class TestDXClient(DXTestCase):
 
                 dx.expect("This is the DNAnexus Execution Environment", timeout=600)
                 # Check for job name (e.g. "Job: sleep")
-                dx.expect("Job: \x1b\[1msleep", timeout=5)
+                #dx.expect("Job: \x1b\[1msleep", timeout=5)
                 # \xf6 is ö
                 dx.expect("Project: dxclient_test_pr\xf6ject".encode(sys_encoding))
                 dx.expect("The job is running in terminal 1.", timeout=5)
