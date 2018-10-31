@@ -120,7 +120,7 @@ DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
     # add rows of data.
     map_input = {
         "array_of_scattered_input": scatter_job.get_output_ref("array_of_scattered_input"),
-        "process_input": { "additional_input": "gtable ID, for example" }
+        "process_input": { "additional_input": "file ID, for example" }
         }
     map_job = dxpy.new_dxjob(fn_input=map_input, fn_name="map")
 
@@ -130,7 +130,7 @@ DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
     # marked "done".
     postprocess_input = {
         "process_outputs": map_job.get_output_ref("process_outputs"),
-        "additional_input": "gtable ID, for example"
+        "additional_input": "file ID, for example"
         }
     postprocess_job = dxpy.new_dxjob(fn_input=postprocess_input,
                                      fn_name="postprocess",
@@ -143,7 +143,7 @@ DX_APP_WIZARD_UPLOAD_ANY_FILES
     # return { "app_output_field": postprocess_job.get_output_ref("final_output"), ...}
     #
     # Tip: you can include in your output at this point any open
-    # objects (such as gtables) which will be closed by a job that
+    # objects (such as files) which will be closed by a job that
     # finishes later.  The system will check to make sure that the
     # output object is closed and will attempt to clone it out as
     # output into the parent container only after all subjobs have

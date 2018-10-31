@@ -7159,7 +7159,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                        format(path=app_spec["inputSpec"][0]["suggestions"][0]["path"]), res[1])
 
         # check for $dnanexus_link
-        app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "$dnanexus_link": "gtable-0000000000000000000000NA"}]
+        app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "$dnanexus_link": "file-0000000000000000000000NA"}]
         app_dir = self.write_app_directory("test_build_app_suggestions", json.dumps(app_spec), "code.py")
         try:
             run("dx build --app " + app_dir)
@@ -7183,7 +7183,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                     "dxapi": "1.0.0",
                     "runSpec": {"file": "code.py", "interpreter": "python2.7",
                                 "distribution": "Ubuntu", "release": "14.04"},
-                    "inputSpec": [{"name": "testname", "class": "gtable", "suggestions": []}],
+                    "inputSpec": [{"name": "testname", "class": "file", "suggestions": []}],
                     "outputSpec": [], "version": "0.0.1"}
 
         # check when project not public and we publish app, also check app build with a valid suggestion
@@ -8195,14 +8195,14 @@ def main(in1):
             "dxapi": "1.0.0",
             "runSpec": {"file": "code.py", "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04"},
             "inputSpec": [
-                {"name": "reads", "class": "array:gtable", "type": "LetterReads", "label": "Reads",
+                {"name": "reads", "class": "array:file", "type": "LetterReads", "label": "Reads",
                  "help": "One or more Reads table objects."},
                 {"name": "required", "class": "file", "label": "Required", "help": "Another parameter"},
                 {"name": "optional", "class": "file", "label": "Optional",
                  "help": "Optional parameter", "optional": True}
             ],
             "outputSpec": [
-                {"name": "mappings", "class": "gtable", "type": "LetterMappings", "label": "Mappings",
+                {"name": "mappings", "class": "file", "type": "LetterMappings", "label": "Mappings",
                  "help": "The mapped reads."}
             ],
             "version": "1.0.0"
@@ -8211,10 +8211,10 @@ def main(in1):
                                            code_filename="code.py", code_content="")
         applet_id = run_and_parse_json("dx build --json " + app_dir)["id"]
         applet_help = run("dx run " + applet_id + " -h")
-        self.assertTrue("Reads: -ireads=(gtable, type LetterReads) [-ireads=... [...]]" in applet_help)
+        self.assertTrue("Reads: -ireads=(file, type LetterReads) [-ireads=... [...]]" in applet_help)
         self.assertTrue("Required: -irequired=(file)" in applet_help)
         self.assertTrue("Optional: [-ioptional=(file)]" in applet_help)
-        self.assertTrue("Mappings: mappings (gtable, type LetterMappings)" in applet_help)
+        self.assertTrue("Mappings: mappings (file, type LetterMappings)" in applet_help)
 
     def test_upload_resources(self):
         run("dx mkdir /subfolder")
@@ -9884,7 +9884,6 @@ class TestDXScripts(DXTestCase):
         run('dx-variants-to-vcf -h')
         run('dx-genes-to-gff -h')
         run('dx-genes-to-gtf -h')
-        run('dx-mappings-to-fastq -h')
         run('dx-build-applet -h')
 
 

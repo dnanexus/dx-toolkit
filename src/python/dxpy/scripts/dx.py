@@ -4173,40 +4173,10 @@ parser_head = subparsers.add_parser('head',
                                     prog='dx head')
 parser_head.add_argument('-n', '--lines', type=int, metavar='N', help='Print the first N lines (default 10)',
                          default=10)
-head_gtable_args = parser_head.add_argument_group(title='GTable-specific options')
-head_gtable_args.add_argument('-w', '--max-col-width', type=int, help=argparse.SUPPRESS,
-                              #help='Maximum width of each column to display',
-                              default=32)
-head_gtable_args.add_argument('--starting', type=int, help=argparse.SUPPRESS,
-                              #help='Specify starting row ID',
-                              default=0)
-head_gtable_args.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help=argparse.SUPPRESS)
-                              #help='Specify chromosome name, low coordinate, and high coordinate for Genomic Range Index')
-head_gtable_args.add_argument('--gri-mode', help=argparse.SUPPRESS,
-                              #help='Specify the mode of the GRI query (\'overlap\' or \'enclose\'; default \'overlap\')',
-                              default="overlap")
-head_gtable_args.add_argument('--gri-name', help=argparse.SUPPRESS,
-                              #help='Override the default name of the Genomic Range Index (default: "gri"))',
-                              default="gri")
 head_path_action = parser_head.add_argument('path', help='File ID or name to access')
 head_path_action.completer = DXPathCompleter(classes=['file'])
 parser_head.set_defaults(func=head)
 register_parser(parser_head, categories='data')
-
-#####################################
-# export
-#####################################
-parser_export = subparsers.add_parser('export',
-                                      help='Export (download and convert) a gtable into a local file',
-                                      description=fill('Export a GenomicTable into a local file with a particular file format.') + '\n\n' + fill('For more details on how to convert into a particular format, run ') + '\n  $ dx help export <format>' + '\n\nSupported formats:\n\n  ' + '\n  '.join(sorted(exporters)),
-                                      formatter_class=argparse.RawTextHelpFormatter,
-                                      prog='dx export',
-                                      parents=[env_args])
-parser_export.add_argument('format', help='Format to export to')
-parser_export.add_argument('exporter_args', help=fill('Arguments passed to the exporter', width_adjustment=-24),
-                           nargs=argparse.REMAINDER)
-parser_export.set_defaults(func=export)
-register_parser(parser_export, categories='data')
 
 #####################################
 # build
@@ -4880,23 +4850,6 @@ init_action.completer = DXPathCompleter(classes=['workflow'])
 parser_new_workflow.set_defaults(func=workflow_cli.new_workflow)
 register_parser(parser_new_workflow, subparsers_action=subparsers_new, categories='workflow')
 
-parser_new_gtable = subparsers_new.add_parser('gtable', add_help=False, #help='Create a new gtable',
-                                              description='Create a new gtable from scratch.',
-                                              parents=[parser_dataobject_args, parser_single_dataobject_output_args,
-                                                       stdout_args, env_args],
-                                              formatter_class=argparse.RawTextHelpFormatter,
-                                              prog='dx new gtable')
-parser_new_gtable.add_argument('--columns',
-                               help=fill('Comma-separated list of column names to use, e.g. "col1,col2,col3"; columns with non-string types can be specified using "name:type" syntax, e.g. "col1:int,col2:boolean".  If not given, the first line of the file will be used to infer column names.', width_adjustment=-24),
-                               required=True)
-new_gtable_indices_args = parser_new_gtable.add_mutually_exclusive_group()
-new_gtable_indices_args.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'),
-                                     help=fill('Specify column names to be used as chromosome, lo, and hi columns for a genomic range index (name will be set to "gri"); will also add the type "gri"', width_adjustment=-24))
-new_gtable_indices_args.add_argument('--indices', help='JSON for specifying any other indices')
-parser_new_gtable.set_defaults(func=new_gtable)
-#parser_new_gtable.completer = DXPathCompleter(classes=['gtable'])
-register_parser(parser_new_gtable, subparsers_action=subparsers_new, categories='fs', add_help=False)
-
 #####################################
 # get_details
 #####################################
@@ -5177,7 +5130,7 @@ parser_find_data = subparsers_find.add_parser(
     parents=[stdout_args, json_arg, no_color_arg, delim_arg, env_args, find_by_properties_and_tags_args],
     prog='dx find data'
 )
-parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'gtable', 'applet', 'workflow'], help='Data object class', metavar='{record,file,applet,workflow}')
+parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'applet', 'workflow'], help='Data object class', metavar='{record,file,applet,workflow}')
 parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
 parser_find_data.add_argument('--visibility', choices=['hidden', 'visible', 'either'], default='visible', help='Whether the object is hidden or not')
 parser_find_data.add_argument('--name', help='Name of the object')
