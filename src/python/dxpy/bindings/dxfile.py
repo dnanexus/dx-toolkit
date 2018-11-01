@@ -494,10 +494,7 @@ class DXFile(DXDataObject):
             does not affect where the next :meth:`write` will occur.
 
         '''
-        if USING_PYTHON2:
-            assert(isinstance(data, str))
-        else:
-            # In python3, the underlying system methods use the 'bytes' type, not 'string'
+        if not USING_PYTHON2:
             assert(isinstance(data, bytes))
 
         self._ensure_write_bufsize(**kwargs)
@@ -654,9 +651,7 @@ class DXFile(DXDataObject):
         defaults to 1. This probably only makes sense if this is the
         only part to be uploaded.
         """
-        if USING_PYTHON2:
-            assert(isinstance(data, str))
-        else:
+        if not USING_PYTHON2:
             # In python3, the underlying system methods use the 'bytes' type, not 'string'
             assert(isinstance(data, bytes))
 

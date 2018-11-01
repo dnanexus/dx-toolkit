@@ -78,7 +78,7 @@ def list_folder(proj_id, path):
 # for some reason, python 3 insists that we run the command first,
 # and then load the result into json. Doing this in one line causes
 # an error.
-def run_and_parse_json(cmd: str):
+def run_and_parse_json(cmd):
     output = run(cmd)
     return json.loads(output)
 

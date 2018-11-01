@@ -376,13 +376,12 @@ class TestDXFile(unittest.TestCase):
     created and are destroyed after the test, no matter if it fails.
     '''
 
-    foo_str = "foo\n"
-
     @classmethod
     def setUpClass(cls):
+        cls.foo_str = "foo\n"
         cls.foo_file = tempfile.NamedTemporaryFile(delete=False)
         if USING_PYTHON2:
-            bt = foo_str
+            bt = cls.foo_str
         else:
             # python-3 requires converting from string to bytes
             bt = cls.foo_str.encode("utf-8")
