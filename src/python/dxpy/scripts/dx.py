@@ -1391,6 +1391,8 @@ def new_project(args):
         inputs["billTo"] = args.bill_to
     if args.region:
         inputs["region"] = args.region
+    if args.egress_bill_to:
+        inputs["egressBillTo"] = args.egress_bill_to+"BillTo"
 
     try:
         resp = dxpy.api.project_new(inputs)
@@ -4645,6 +4647,7 @@ parser_update_project.add_argument('--download-restricted', choices=["true", "fa
 parser_update_project.add_argument('--containsPHI', choices=["true"],
                                    help="Flag to tell if project contains PHI")
 parser_update_project.add_argument('--bill-to', help="Update the user or org ID of the billing account", type=str)
+parser_update_project.add_argument('--egress-bill-to', help="Bill egress charges either to the downloader's billTo or the billTo of the project", choices=["downloader", "project"])
 parser_update_project.set_defaults(func=update_project)
 register_parser(parser_update_project, subparsers_action=subparsers_update, categories="metadata")
 
@@ -4910,6 +4913,7 @@ parser_new_project.add_argument('--region', help='Region affinity of the new pro
 parser_new_project.add_argument('-s', '--select', help='Select the new project as current after creating',
                                 action='store_true')
 parser_new_project.add_argument('--bill-to', help='ID of the user or org to which the project will be billed. The default value is the billTo of the requesting user.')
+parser_new_project.add_argument('--egress-bill-to', help="Bill egress charges either to the downloader's billTo or the billTo of the project", choices=["downloader", "project"])
 parser_new_project.set_defaults(func=new_project)
 register_parser(parser_new_project, subparsers_action=subparsers_new, categories='fs')
 
