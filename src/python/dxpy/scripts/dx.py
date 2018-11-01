@@ -3642,17 +3642,19 @@ def generate_batch_inputs(args):
 
         # In python-3 we need to open the file in textual mode.
         if USING_PYTHON2:
-            with open(batch_fname, 'wb') as csvfile:
-                batchwriter = csv.writer(csvfile, delimiter='\t'.encode('ascii'))
+            write_mode = 'wb'
+            delimiter = '\t'.encode('ascii')
         else:
-            with open(batch_fname, 'w') as csvfile:
-                batchwriter = csv.writer(csvfile, delimiter='\t')
+            write_mode = 'w'
+            delimiter = '\t'
 
-        # Write headers of TSV
-        headers = ['batch ID'] + [iname for iname in sorted(input_names)] + [iname+" ID" for iname in sorted(input_names)]
-        batchwriter.writerow(headers)
-        for bi in batch:
-            batchwriter.writerow(flatten_batch(bi))
+        with open(batch_fname, write_mode) as csvfile:
+            batchwriter = csv.writer(csvfile, delimiter=delimiter)
+            # Write headers of TSV
+            headers = ['batch ID'] + [iname for iname in sorted(input_names)] + [iname+" ID" for iname in sorted(input_names)]
+            batchwriter.writerow(headers)
+            for bi in batch:
+                batchwriter.writerow(flatten_batch(bi))
         eprint("Created batch file {}".format(batch_fname))
 
 
