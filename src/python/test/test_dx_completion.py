@@ -65,7 +65,6 @@ class TestDXTabCompletion(unittest.TestCase):
     def get_bash_completions(self, line, point=None, stderr_contains=""):
         os.environ['COMP_LINE'] = line
         os.environ['COMP_POINT'] = point if point else str(len(line))
-
         p = subprocess.Popen('dx', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.communicate()
         if not USING_PYTHON2:
@@ -75,16 +74,13 @@ class TestDXTabCompletion(unittest.TestCase):
         self.assertIn(stderr_contains, err)
         return out.split(IFS)
 
-    # remove all occurences of double slashes, they just sow confusion
+
     def assert_completion(self, line, completion):
         actual_completions = self.get_bash_completions(line)
-        if not USING_PYTHON2:
-            # python-3 has issues where slashes get multiplied
-            completion = completion.replace("\\", "")
-            actual_completions = [s.replace("\\", "") for s in actual_completions]
+        completion = completion.replace("\\", "")
+        actual_completions = [s.replace("\\", "") for s in actual_completions]
         self.assertIn(completion, actual_completions)
 
-    # remove all occurences of double slashes, they just sow confusion
     def assert_completions(self, line, completions):
         actual_completions = self.get_bash_completions(line)
         actual_completions = [s.replace("\\", "") for s in actual_completions]
