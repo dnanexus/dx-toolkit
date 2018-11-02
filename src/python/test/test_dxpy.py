@@ -892,7 +892,7 @@ class TestFolder(unittest.TestCase):
             dxpy.download_folder(self.proj_id, os.path.join(self.temp_dir, "foobar"), folder="a/b")
 
 
-class TestDXRecord(unittest.TestCase):
+class TestDXRecord(testutil.DXTestCaseCompat):
     """
     Most of these tests really are testing DXDataObject methods
     while using DXRecords as the most basic data object.
