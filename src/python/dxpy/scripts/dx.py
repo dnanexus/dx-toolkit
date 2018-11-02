@@ -415,6 +415,9 @@ def logout(args):
         print("Deleting credentials from {}...".format(authserver))
         token = dxpy.AUTH_HELPER.security_context["auth_token"]
         try:
+            if not USING_PYTHON2:
+                # python 3 requires conversion to bytes before hashing
+                token = token.encode(sys_encoding)
             token_sig = hashlib.sha256(token).hexdigest()
             response = dxpy.DXHTTPRequest(authserver + "/system/destroyAuthToken",
                                           dict(tokenSignature=token_sig),
