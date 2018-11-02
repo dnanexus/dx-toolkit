@@ -281,7 +281,8 @@ class DXProject(DXContainer):
 
     _class = "project"
 
-    def new(self, name, summary=None, description=None, protected=None,
+    @classmethod
+    def new(cls, name, summary=None, description=None, protected=None,
             restricted=None, download_restricted=None, contains_phi=None, tags=None,
             properties=None, bill_to=None, **kwargs):
         """
@@ -334,9 +335,7 @@ class DXProject(DXContainer):
         if properties is not None:
             input_hash["properties"] = properties
 
-        self.set_id(dxpy.api.project_new(input_hash, **kwargs)["id"])
-        self._desc = {}
-        return self._dxid
+        return dxpy.api.project_new(input_hash, **kwargs)["id"]
 
     def update(self, name=None, summary=None, description=None, protected=None,
                restricted=None, download_restricted=None, version=None, **kwargs):
