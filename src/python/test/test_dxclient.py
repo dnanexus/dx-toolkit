@@ -41,7 +41,7 @@ from dxpy_testutil import (DXTestCase, DXTestCaseBuildApps, DXTestCaseBuildWorkf
                            without_project_context, without_auth, as_second_user, chdir, run, DXCalledProcessError)
 import dxpy_testutil as testutil
 from dxpy.exceptions import DXAPIError, DXSearchError, EXPECTED_ERR_EXIT_STATUS, HTTPError
-from dxpy.compat import str, sys_encoding, open
+from dxpy.compat import USING_PYTHON2, str, sys_encoding, open
 from dxpy.utils.resolver import ResolutionError, _check_resolution_needed as check_resolution
 
 def create_file_in_project(fname, trg_proj_id, folder=None):
@@ -3144,12 +3144,19 @@ def main():
 
         # Case: Execute "dx run --ssh" before configuring SSH.
         path = tempfile.mkdtemp()
-        shell = pexpect.spawn("dx run --ssh " + applet_id,
-                              env=dict(os.environ, DX_USER_CONF_DIR=path),
-                              encoding="utf-8")
+        if USING_PYTHON2:
+            shell = pexpect.spawn("dx run --ssh " + applet_id,
+                                  env=dict(os.environ, DX_USER_CONF_DIR=path))
+        else:
+            shell = pexpect.spawn("dx run --ssh " + applet_id,
+                                  env=dict(os.environ, DX_USER_CONF_DIR=path),
+                                  encoding="utf-8")
         shell.expect("Warning:")
         shell.sendline("N")
-        shell.expect("FileNotFoundError")
+        if USING_PYTHON2:
+            shell.expect("IOError")
+        else:
+            shell.expect("FileNotFoundError")
         shell.expect(pexpect.EOF)
         shell.wait()
         shell.close()

@@ -324,15 +324,18 @@ class DXTestCaseCompat(unittest.TestCase):
     def assertItemsEqual(self, a, b):
         self.assertEqual(sorted(a), sorted(b))
 
-    # method with two different names between python 2 and 3
+    # methods with different names in python 2 and 3
+    # For example:
     # v2  assertRaisesRegexp
     # v3  assertRaisesRegex
-    def assertRaisesRegexCompat(self, *args, **kwargs):
-        if USING_PYTHON2:
-            self.assertRaisesRegexp(*args, **kwargs)
-        else:
-            self.assertRaisesRegex(*args, **kwargs)
-
+    if USING_PYTHON2:
+        assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
+        assertRegex = unittest.TestCase.assertRegexpMatches
+        assertNotRegex = unittest.TestCase.assertNotRegexpMatches
+    else:
+        assertRaisesRegex = unittest.TestCase.assertRaisesRegex
+        assertRegex = unittest.TestCase.assertRegex
+        assertNotRegex = unittest.TestCase.assertNotRegex
 
 class DXTestCase(DXTestCaseCompat):
     def setUp(self):
