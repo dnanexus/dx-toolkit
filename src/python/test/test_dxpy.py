@@ -1293,7 +1293,7 @@ def main():
 
         dxjob.terminate()
 
-class TestDXWorkflow(unittest.TestCase):
+class TestDXWorkflow(testutil.DXTestCaseCompat):
     default_inst_type = "mem2_hdd2_x2"
     codeSpec = '''
 @dxpy.entry_point('main')
@@ -1394,7 +1394,7 @@ def main(number):
         # run closed workflow (the workflow has inputs so input values
         # can only be passed via workflow-level input (can't be passed to stage-level inputs))
         dxworkflow.close()
-        self.assertRaisesRegex(DXError, 'is private and cannot be overridden',
+        self.assertRaisesRegexCompat(DXError, 'is private and cannot be overridden',
                                 dxworkflow.run, {'stage_0.number': 1})
         dxanalysis = dxworkflow.run({'foo': 202})
         dxanalysis.terminate()
@@ -1530,10 +1530,10 @@ def main(number):
 
         # Can't specify the same input more than once (with a
         # stage-specific syntax)
-        self.assertRaisesRegex(DXError, 'more than once',
+        self.assertRaisesRegexCompat(DXError, 'more than once',
                                 dxworkflow.run, {"0.number": 32, "stagename.number": 42})
         # Bad stage name
-        self.assertRaisesRegex(DXError, 'could not be found as a stage ID nor as a stage name',
+        self.assertRaisesRegexCompat(DXError, 'could not be found as a stage ID nor as a stage name',
                                 dxworkflow.run, {"nonexistentstage.number": 32})
 
     def test_new_dxworkflow(self):
@@ -1669,8 +1669,8 @@ def main(number):
 
         # Removing stage by name doesn't work when there's more than
         # one of that name
-        self.assertRaisesRegex(DXError, 'more than one workflow stage was found',
-                                dxworkflow.remove_stage, "stagename")
+        self.assertRaisesRegexCompat(DXError, 'more than one workflow stage was found',
+                                     dxworkflow.remove_stage, "stagename")
 
         removed_stage = dxworkflow.remove_stage(0)
         self.assertEqual(removed_stage, first_stage)
@@ -2458,9 +2458,9 @@ class TestHTTPResponses(unittest.TestCase):
         with self.assertRaises(TypeError):
             dxpy.DXHTTPRequest("/system/whoami", {}, cert="nonexistent")
         if dxpy.APISERVER_PROTOCOL == "https":
-            with self.assertRaisesRegex((TypeError,SSLError, OpenSSL.SSL.Error), "file|string"):
+            with self.assertRaisesRegexCompat((TypeError,SSLError, OpenSSL.SSL.Error), "file|string"):
                 dxpy.DXHTTPRequest("/system/whoami", {}, verify="nonexistent")
-            with self.assertRaisesRegex((SSLError, IOError, OpenSSL.SSL.Error), "file"):
+            with self.assertRaisesRegexCompat((SSLError, IOError, OpenSSL.SSL.Error), "file"):
                 dxpy.DXHTTPRequest("/system/whoami", {}, cert_file="nonexistent")
 
     def test_fake_errors(self):
@@ -2655,7 +2655,7 @@ class TestResolver(testutil.DXTestCase):
         with testutil.temporary_project(name=temp_proj_name) as p:
             self.assertEqual(resolve_path(""),
                              (self.project, "/a", None))
-            with self.assertRaisesRegex(ResolutionError, "expected the path to be a non-empty string"):
+            with self.assertRaisesRegexCompat(ResolutionError, "expected the path to be a non-empty string"):
                 resolve_path("", allow_empty_string=False)
             self.assertEqual(resolve_path(":"),
                              (self.project, "/", None))
@@ -2670,7 +2670,7 @@ class TestResolver(testutil.DXTestCase):
             self.assertEqual(resolve_path("job-111111111111111111111111"),
                              (self.project, None, "job-111111111111111111111111"))
 
-            with self.assertRaisesRegex(ResolutionError, 'foo'):
+            with self.assertRaisesRegexCompat(ResolutionError, 'foo'):
                 resolve_path("project-012301230123012301230123:foo:bar")
             with self.assertRaises(ResolutionError):
                 resolve_path(not_a_project_name + ":")
@@ -2739,23 +2739,23 @@ class TestResolver(testutil.DXTestCase):
 
             # --- test some behavior when workspace is not set ---
             dxpy.WORKSPACE_ID = None
-            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegexCompat(ResolutionError, need_project_context_to_resolve):
                 resolve_path("")
-            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegexCompat(ResolutionError, need_project_context_to_resolve):
                 resolve_path(":")
-            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegexCompat(ResolutionError, need_project_context_to_resolve):
                 resolve_path(":foo")
-            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegexCompat(ResolutionError, need_project_context_to_resolve):
                 resolve_path("foo", expected="folder")
             self.assertEqual(resolve_path(temp_proj_name + ":"),
                              (p.get_id(), "/", None))
-            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegexCompat(ResolutionError, need_project_context_to_resolve):
                 resolve_path("foo")
-            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegexCompat(ResolutionError, need_project_context_to_resolve):
                 resolve_path("../foo")
-            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegexCompat(ResolutionError, need_project_context_to_resolve):
                 resolve_path("../../foo")
-            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegexCompat(ResolutionError, need_project_context_to_resolve):
                 resolve_path("/foo/bar")
 
             self.assertEqual(resolve_path("file-111111111111111111111111"),

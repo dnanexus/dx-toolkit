@@ -319,11 +319,22 @@ def without_auth():
             os.environ['DX_SECURITY_CONTEXT'] = prev_security_context
 
 
-class DXTestCase(unittest.TestCase):
+class DXTestCaseCompat(unittest.TestCase):
     # mothod removed in python3
     def assertItemsEqual(self, a, b):
         self.assertEqual(sorted(a), sorted(b))
 
+    # method with two different names between python 2 and 3
+    # v2  assertRaisesRegexp
+    # v3  assertRaisesRegex
+    def assertRaisesRegexCompat(self, *args, **kwargs):
+        if USING_PYTHON2:
+            self.assertRaisesRegexp(*args, **kwargs)
+        else:
+            self.assertRaisesRegex(*args, **kwargs)
+
+
+class DXTestCase(DXTestCaseCompat):
     def setUp(self):
         proj_name = u"dxclient_test_pröject"
         self.project = dxpy.api.project_new({"name": proj_name})['id']

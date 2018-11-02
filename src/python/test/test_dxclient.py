@@ -842,7 +842,7 @@ class TestDXClient(DXTestCase):
 
             # Ensure that private key upload is rejected
             with open(os.path.join(wd, ".dnanexus_config", "ssh_id")) as private_key:
-                with self.assertRaisesRegexp(DXAPIError,
+                with self.assertRaisesRegexCompat(DXAPIError,
                                              'Tried to put a private key in the sshPublicKey field'):
                     dxpy.api.user_update(user_id, {"sshPublicKey": private_key.read()})
         finally:
@@ -2173,7 +2173,7 @@ class TestDXClientRun(DXTestCase):
         super(TestDXClientRun, self).tearDown()
 
     def test_dx_run_disallow_project_and_folder(self):
-        with self.assertRaisesRegexp(subprocess.CalledProcessError, "Options --project and --folder/--destination cannot be specified together.\nIf specifying both a project and a folder, please include them in the --folder option."):
+        with self.assertRaisesRegexCompat(subprocess.CalledProcessError, "Options --project and --folder/--destination cannot be specified together.\nIf specifying both a project and a folder, please include them in the --folder option."):
             run("dx run bogusapplet --project project-bogus --folder bogusfolder")
 
 
@@ -2554,7 +2554,7 @@ dx-jobutil-add-output outrecord $record_id
 
         # If describing an entity ID fails, then a ResolutionError should be
         # raised
-        with self.assertRaisesRegexp(ResolutionError, "The entity record-\d+ could not be found"):
+        with self.assertRaisesRegexCompat(ResolutionError, "The entity record-\d+ could not be found"):
             check_resolution("some_path", self.project, "/", "record-123456789012345678901234")
 
     def test_dx_run_depends_on_success(self):
@@ -5385,22 +5385,22 @@ class TestDXClientOrg(DXTestCase):
 
     def test_create_new_org_negative(self):
         # No handle supplied
-        with self.assertRaisesRegexp(subprocess.CalledProcessError, "error: argument --handle is required"):
+        with self.assertRaisesRegexCompat(subprocess.CalledProcessError, "error: argument --handle is required"):
             run('dx new org')
 
-        with self.assertRaisesRegexp(subprocess.CalledProcessError, "error: argument --handle is required"):
+        with self.assertRaisesRegexCompat(subprocess.CalledProcessError, "error: argument --handle is required"):
             run('dx new org "Test Org"')
 
-        with self.assertRaisesRegexp(subprocess.CalledProcessError, "error: argument --handle is required"):
+        with self.assertRaisesRegexCompat(subprocess.CalledProcessError, "error: argument --handle is required"):
             run('dx new org --member-list-visibility MEMBER')
 
-        with self.assertRaisesRegexp(subprocess.CalledProcessError, "error: argument --handle is required"):
+        with self.assertRaisesRegexCompat(subprocess.CalledProcessError, "error: argument --handle is required"):
             run('dx new org --project-transfer-ability MEMBER')
 
-        with self.assertRaisesRegexp(subprocess.CalledProcessError, "error: argument --handle is required"):
+        with self.assertRaisesRegexCompat(subprocess.CalledProcessError, "error: argument --handle is required"):
             run('dx new org --member-list-visibility ADMIN --project-transfer-ability MEMBER')
 
-        with self.assertRaisesRegexp(subprocess.CalledProcessError,
+        with self.assertRaisesRegexCompat(subprocess.CalledProcessError,
                                      "error: argument --member-list-visibility: invalid choice"):
             run('dx new org --member-list-visibility NONE')
 
@@ -5668,7 +5668,7 @@ class TestDXClientNewProject(DXTestCase):
         self.assertEqual(dxpy.api.project_describe(project_id, {})['region'], "aws:us-east-1")
         dxpy.api.project_destroy(project_id, {})
 
-        with self.assertRaisesRegexp(subprocess.CalledProcessError, "InvalidInput"):
+        with self.assertRaisesRegexCompat(subprocess.CalledProcessError, "InvalidInput"):
             run("dx new project --brief --region aws:not-a-region InvalidRegionProject")
 
     @pytest.mark.TRACEABILITY_MATRIX
@@ -5771,7 +5771,7 @@ class TestDXClientNewUser(DXTestCase):
                 u=username, e=email, f=first),
         ]
         for invalid_opts in dx_api_error_opts:
-            with self.assertRaisesRegexp(subprocess.CalledProcessError,
+            with self.assertRaisesRegexCompat(subprocess.CalledProcessError,
                                          "DXAPIError"):
                 run(" ".join([cmd, invalid_opts]))
 
@@ -5780,7 +5780,7 @@ class TestDXClientNewUser(DXTestCase):
                 u=username, e=email, f=first),
         ]
         for invalid_opts in resource_not_found_opts:
-            with self.assertRaisesRegexp(subprocess.CalledProcessError,
+            with self.assertRaisesRegexCompat(subprocess.CalledProcessError,
                                          "ResourceNotFound"):
                 run(" ".join([cmd, invalid_opts]))
 
@@ -5799,7 +5799,7 @@ class TestDXClientNewUser(DXTestCase):
                 u=username, e=email, f=first),
         ]
         for invalid_opts in dx_cli_error_opts:
-            with self.assertRaisesRegexp(subprocess.CalledProcessError,
+            with self.assertRaisesRegexCompat(subprocess.CalledProcessError,
                                          "DXCLIError"):
                 run(" ".join([cmd, invalid_opts]))
 
@@ -5962,7 +5962,7 @@ class TestDXClientNewUser(DXTestCase):
 
         # test invalid inputs for token duration
         for invalid_token_duration in invalid_token_durations:
-            with self.assertRaisesRegexp(subprocess.CalledProcessError, "ValueError"):
+            with self.assertRaisesRegexCompat(subprocess.CalledProcessError, "ValueError"):
                 run(cmd.format(u=username.lower(), e=email, f=first, td=invalid_token_duration))
 
     def test_create_user_account_and_set_token_duration(self):
@@ -6073,7 +6073,7 @@ class TestDXClientMembership(DXTestCase):
         self._add_user(self.user_id)
 
         # Cannot add a user who is already a member of the org.
-        with self.assertRaisesRegexp(subprocess.CalledProcessError, "DXCLIError"):
+        with self.assertRaisesRegexCompat(subprocess.CalledProcessError, "DXCLIError"):
             run(" ".join([cmd, self.org_id, self.username, "--level ADMIN"]))
 
     @pytest.mark.TRACEABILITY_MATRIX
@@ -6186,7 +6186,7 @@ class TestDXClientMembership(DXTestCase):
         cmd = "dx remove member"
 
         # Cannot remove a user who is not currently a member of the org.
-        with self.assertRaisesRegexp(subprocess.CalledProcessError,
+        with self.assertRaisesRegexCompat(subprocess.CalledProcessError,
                                      "DXCLIError"):
             run(" ".join([cmd, self.org_id, self.username]))
 
@@ -6276,7 +6276,7 @@ class TestDXClientMembership(DXTestCase):
 
         # Cannot update the membership of a user who is not currently a member
         # of the org.
-        with self.assertRaisesRegexp(subprocess.CalledProcessError,
+        with self.assertRaisesRegexCompat(subprocess.CalledProcessError,
                                      "DXCLIError"):
             run(" ".join([cmd, self.org_id, self.username, "--level ADMIN"]))
 
@@ -6301,7 +6301,7 @@ class TestDXClientMembership(DXTestCase):
         ]
 
         for invalid_opt in api_error_opts:
-            with self.assertRaisesRegexp(subprocess.CalledProcessError,
+            with self.assertRaisesRegexCompat(subprocess.CalledProcessError,
                                          "InvalidInput"):
                 run(' '.join([cmd, invalid_opt]))
 
@@ -7436,7 +7436,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
         with temporary_project(region="azure:westus", select=True):
-            with self.assertRaisesRegexp(DXCalledProcessError, "do not contain this region"):
+            with self.assertRaisesRegexCompat(DXCalledProcessError, "do not contain this region"):
                 run("dx build --json " + app_dir)
 
     def test_build_multi_region_app_without_regional_options(self):
@@ -7473,7 +7473,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
             cmd = "dx build --create-app --json --region {} --region {} {}".format(
                    region_0, region_1, app_dir)
-            with self.assertRaisesRegexp(DXCalledProcessError, error_message):
+            with self.assertRaisesRegexCompat(DXCalledProcessError, error_message):
                 run(cmd)
 
             # Build an app where both top-level "resources" and "regionalOptions" are set
@@ -7484,7 +7484,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             app_dir = self.write_app_directory(app_name,
                                                json.dumps(app_spec_resources_regionalOpts),
                                                "code.py")
-            with self.assertRaisesRegexp(DXCalledProcessError, error_message):
+            with self.assertRaisesRegexCompat(DXCalledProcessError, error_message):
                 run("dx build --create-app --json " + app_dir)
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
