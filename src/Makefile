@@ -102,10 +102,6 @@ endif
 
 test: test_python
 
-coverage_python:
-	(cd python; export PYTHONPATH="$$PYTHONPATH:$$(echo $$(pwd)/coverage-*.egg)"; \
-	 test/coveragereport.py --strip-prefix="$$(readlink -f $$(pwd))/build/lib.linux-x86_64-${PYTHON_VERSION}" --cover dxpy. --cover scripts --exclude dxpy.packages --exclude EGG-INFO.scripts --exclude test. --exclude setuptools --path-alias "$$(readlink -f $$(pwd)/../../share/dnanexus/lib/python${PYTHON_VERSION}/site-packages/dxpy*.egg)"="$$(readlink -f $$(pwd))" --path-alias "$$(readlink -f $$(pwd)/build/lib.linux-x86_64-${PYTHON_VERSION})"="$$(readlink -f $$(pwd))")
-
 test_python:
 	../build/run_python_integration_tests.py
 
