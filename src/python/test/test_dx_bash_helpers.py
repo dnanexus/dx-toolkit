@@ -74,7 +74,7 @@ def build_app_with_bash_helpers(app_dir, project_id):
         shutil.copytree(app_dir, updated_app_dir)
         # Copy the current verion of dx-toolkit. We will build it on the worker
         # and source this version which will overload the stock version of dx-toolkit.
-        # This we we can test all bash helpers as they would appear locally with all
+        # This way we can test all bash helpers as they would appear locally with all
         # necessary dependencies
         #dxtoolkit_dir = os.path.abspath(os.path.join(updated_app_dir, 'resources', 'dxtoolkit'))
         #local_dxtoolkit = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -88,7 +88,7 @@ def build_app_with_bash_helpers(app_dir, project_id):
         preamble.append('sudo pip install --upgrade virtualenv\n')
         #preamble.append('make -C {toolkitdir} python\n'.format(toolkitdir=dxtoolkit_dir))
         #preamble.append('source {toolkitdir}/environment\n'.format(toolkitdir=dxtoolkit_dir))
-        preamble.append('make -C /dxtoolkit python\n')
+        preamble.append('make -C /dxtoolkit clean python\n')
         preamble.append('source /dxtoolkit/environment\n')
         # Now find the applet entry point file and prepend the
         # operations above, overwriting it in place.
