@@ -67,6 +67,7 @@ for module in os.listdir(os.path.join(os.path.dirname(__file__), 'dxpy', 'script
 dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements.txt"))]
 test_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_test.txt"))]
 readline_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_readline.txt"))]
+backports_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_backports.txt"))]
 
 # If on Windows, also depend on colorama, which translates ANSI terminal color control sequences into whatever cmd.exe uses.
 if platform.system() == 'Windows':
@@ -84,6 +85,8 @@ if platform.system() == 'Darwin':
     except ImportError:
         dependencies.extend(readline_dependencies)
 
+if sys.version_info[0] < 3:
+    dependencies.extend(backports_dependencies)
 
 if 'DNANEXUS_INSTALL_PYTHON_TEST_DEPS' in os.environ:
     dependencies.extend(test_dependencies)
