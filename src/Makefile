@@ -14,6 +14,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+
 include mk/config.mk
 include mk/Makefile.${PLATFORM}
 
@@ -94,6 +95,8 @@ bin/proot:
 bin/docker2aci:
 ifneq (DOCKER_ACI_URL, "")
 	curl -k -sL ${DOCKER_ACI_URL} > $(DNANEXUS_HOME)/bin/docker2aci && chmod 777 $(DNANEXUS_HOME)/bin/docker2aci
+else
+	echo "WARNING: dx-docker not supported on this platform"
 endif
 
 

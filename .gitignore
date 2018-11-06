@@ -43,7 +43,6 @@ dxR.Rcheck
 /bin/dx-app-wizard
 /bin/dx-build-app
 /bin/dx-build-applet
-/bin/dx-build-asset
 /bin/dx-build-report-html
 /bin/dx-clone-asset
 /bin/dx-docker
@@ -82,6 +81,7 @@ dxR.Rcheck
 /bin/register-python-argcomplete
 /bin/pbr
 /bin/wsdump.py
+/bin/dx-su-contrib
 /src/python/test/*.traceability.*.csv
 /src/ua/dist/ua
 /src/ua/dnanexus-upload-agent-*-linux.tar.gz

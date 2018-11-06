@@ -375,7 +375,7 @@ class DXExecDependencyInstaller(object):
         elif dep_type == "cpan":
             return "cpanm --notest " + make_pm_atoms(packages, version_separator="~")
         elif dep_type == "cran":
-            repo = "http://cran.us.r-project.org"
+            repo = "http://cloud.r-project.org"
             r_preamble = "die <- function() { q(status=1) }; options(error=die); options(warn=2);"
             r_preamble += 'r <- getOption("repos"); r["CRAN"] = "{repo}"; options(repos=r)'.format(repo=repo)
             r_cmd_template = "R -e '{preamble}; {cmd}'"

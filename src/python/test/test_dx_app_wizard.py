@@ -31,15 +31,19 @@ import pytest
 
 supported_languages = ['Python', 'bash']
 
+if USING_PYTHON2:
+    spawn_extra_args = {}
+else:
+    # Python 3 requires specifying the encoding
+    spawn_extra_args = {"encoding" : "utf-8" }
+
 def run_dx_app_wizard(instance_type=None):
     old_cwd = os.getcwd()
     tempdir = tempfile.mkdtemp(prefix='Программа')
     os.chdir(tempdir)
     try:
-        if USING_PYTHON2:
-            wizard = pexpect.spawn("dx-app-wizard --template parallelized")
-        else:
-            wizard = pexpect.spawn("dx-app-wizard --template parallelized", encoding="utf-8")
+        wizard = pexpect.spawn("dx-app-wizard --template parallelized",
+                               **spawn_extra_args)
         wizard.logfile = sys.stdout
         wizard.setwinsize(20, 90)
         wizard.expect("App Name:")
@@ -112,11 +116,8 @@ def create_app_dir_with_dxapp_json(dxapp_json, language):
         with open('dxapp.json', 'w') as fd:
             json.dump(dxapp_json, fd)
 
-        if USING_PYTHON2:
-            wizard = pexpect.spawn("dx-app-wizard --json-file dxapp.json --language " + language)
-        else:
-            wizard = pexpect.spawn("dx-app-wizard --json-file dxapp.json --language " + language,
-                                   encoding="utf-8")
+        wizard = pexpect.spawn("dx-app-wizard --json-file dxapp.json --language " + language,
+                               **spawn_extra_args)
         wizard.setwinsize(20, 90)
         wizard.logfile = sys.stdout
         wizard.expect("App Name")

@@ -10173,7 +10173,6 @@ class TestDXRunBatch(DXTestCase):
         self.assertEqual(job_desc["executableName"], 'copy_file')
         self.assertEqual(job_desc["input"], { "plant": {"$dnanexus_link": dxfile.get_id() }})
 
-
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
         sys.stderr.write('WARNING: env var DXTEST_FULL is not set; tests that create apps or run jobs will not be run\n')

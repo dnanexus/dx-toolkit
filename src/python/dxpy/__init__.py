@@ -619,7 +619,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     return i
 
                 _headers = {ensure_ascii(k): ensure_ascii(v) for k, v in _headers.items()}
-
                 if USING_PYTHON2:
                     encoded_url = _url
                 else:
