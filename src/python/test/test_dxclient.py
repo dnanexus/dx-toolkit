@@ -904,7 +904,7 @@ class TestDXClient(DXTestCase):
                                                         project=project))["id"]
                 dx = pexpect.spawn("dx run {} --yes --ssh".format(sleep_applet),
                                    env=override_environment(HOME=wd),
-                                   **spawn_args)
+                                   **spawn_extra_args)
                 dx.logfile = sys.stdout
                 dx.setwinsize(20, 90)
                 dx.expect("Waiting for job")
