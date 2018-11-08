@@ -79,7 +79,7 @@ $(DNANEXUS_HOME)/bin/dx: $(shell find python/{dxpy,scripts,requirements*,setup*}
 jq: git_submodules ../bin/jq
 
 ../bin/jq: jq/
-	(cd jq; autoreconf --install)
+	(cd jq; autoreconf --install; ./configure)
 	$(MAKE) -C jq -j 1
 	cp -f jq/jq ../bin/
 
