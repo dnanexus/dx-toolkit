@@ -45,8 +45,8 @@ debian_install: base_install
 	mkdir -p $(DESTDIR)/etc/profile.d                                        # Install environment file into etc
 	install -v -m0644 $(DNANEXUS_HOME)/build/environment.redirector $(DESTDIR)/etc/profile.d/dnanexus.environment
 	install -v -m0644 $(DNANEXUS_HOME)/environment $(DESTDIR)/etc/profile.d/dnanexus.environment.sh
-	cp -a $(DNANEXUS_HOME)/share/dnanexus/lib/python${PYTHON_VERSION}/site-packages/* $(DESTDIR)/$(PREFIX)/share/dnanexus/lib/python${PYTHON_VERSION}/site-packages/
-	ls $(DNANEXUS_HOME)/share/dnanexus/lib/python${PYTHON_VERSION}/site-packages | grep dxpy > $(DESTDIR)/$(PREFIX)/share/dnanexus/lib/python${PYTHON_VERSION}/site-packages/dxpy.pth
+	cp -a $(DNANEXUS_HOME)/share/dnanexus/lib/python${PYTHON_VERSION_NUMBER}/site-packages/* $(DESTDIR)/$(PREFIX)/share/dnanexus/lib/python${PYTHON_VERSION_NUMBER}/site-packages/
+	ls $(DNANEXUS_HOME)/share/dnanexus/lib/python${PYTHON_VERSION_NUMBER}/site-packages | grep dxpy > $(DESTDIR)/$(PREFIX)/share/dnanexus/lib/python${PYTHON_VERSION_NUMBER}/site-packages/dxpy.pth
 
 debian_java_install: java
 	mkdir -p $(DESTDIR)/$(PREFIX)/share/java
