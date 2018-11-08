@@ -100,7 +100,7 @@ for directory, subdirectories, files in os.walk("dxpy/templating/templates"):
 setup(
     name='dxpy',
     version=version,
-    description='DNAnexus Platform API bindings for Python3',
+    description='DNAnexus Platform API bindings for Python',
     long_description=readme_content,
     long_description_content_type="text/markdown",
     author='Aleksandra Zalcman, Andrey Kislyuk, Anurag Biyani, Geet Duggal, Katherine Lai, Kurt Jensen, Ohad Rodeh, Phil Sung',
@@ -123,8 +123,7 @@ setup(
         'License :: OSI Approved :: Apache Software License',
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: POSIX',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python',
         'Programming Language :: Unix Shell',
         'Topic :: Software Development :: Libraries :: Python Modules'
     ]
