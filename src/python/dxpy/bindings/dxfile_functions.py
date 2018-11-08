@@ -647,8 +647,18 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
 
     # Downloading files
     describe_input = dict(fields=dict(folder=True, name=True, id=True))
-    for remote_file in list(dxpy.search.find_data_objects(classname='file', state='closed', project=project,
-                                                          folder=normalized_folder, recurse=True, describe=describe_input)):
+
+    # A generator that returns the files one by one. We don't want to materialize it, because
+    # there could be many files here.
+    files_gen = dxpy.search.find_data_objects(classname='file', state='closed', project=project,
+                                              folder=normalized_folder, recurse=True, describe=describe_input)
+    if files_gen is None:
+        # In python 3, the generator can be None, and iterating on it
+        # will cause an error.
+        return
+
+    # Now it is safe, in both python 2 and 3, to iterate on the generator
+    for remote_file in files_gen:
         local_filename = os.path.join(compose_local_dir(normalized_dest_dir,
                                                         normalized_folder,
                                                         remote_file['describe']['folder']),

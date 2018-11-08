@@ -61,10 +61,7 @@ dxR.Rcheck
 /bin/dx-variants-to-vcf
 /bin/dx-verify-file
 /bin/dx-print-bash-vars
-/bin/activate-global-python-argcomplete
 /bin/coverage*
-/bin/python-argcomplete-check-easy-install-script
-/bin/register-python-argcomplete
 /bin/jq
 /bin/py.test
 /bin/pytest
@@ -77,8 +74,6 @@ dxR.Rcheck
 /bin/easy_install*
 /bin/chardetect
 /bin/proot
-/bin/python-argcomplete-check-easy-install-script
-/bin/register-python-argcomplete
 /bin/pbr
 /bin/wsdump.py
 /bin/dx-su-contrib
@@ -89,6 +84,11 @@ dxR.Rcheck
 /src/ua/ua
 test-job-workspaces
 .idea/
+
+# Scripts that are installed as part of the argcomplete package
+/bin/activate-global-python-argcomplete
+/bin/python-argcomplete-check-easy-install-script
+/bin/register-python-argcomplete
 
 # artifacts from tracibility
 *.traceability.*.csv

@@ -27,11 +27,6 @@ def run():
     if sys.platform != "darwin":
         subprocess.check_call(["make", "python", "src_libs"], cwd=TOOLKIT_ROOT_DIR)
 
-    #cmd = ['python', '-m', 'unittest']
-    #if args.tests:
-    #    cmd += ['-v'] + args.tests
-    #else:
-    #    cmd += ['discover', '--start-directory', '.', '--verbose']
     cmd = ['py.test', '-vv', '-s', '-m', 'TRACEABILITY_MATRIX', 'src/python/test/']
 
     subproc_env = dict(os.environ)

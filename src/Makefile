@@ -336,7 +336,7 @@ jq: git_submodules ../bin/jq
 
 distclean: clean
 
-clean:
+clean: clean_jq
 	$(MAKE) -C dx-verify-file clean
 	$(MAKE) -C ua clean
 	-rm -f ../bin/jq
@@ -346,9 +346,16 @@ clean:
 	-rm -rf java/target
 	-rm -rf ../lib
 	-rm -rf ../share
-	-rm ../build/info/version
+	-rm -f ../build/info/version
 	-rm -rf "$(DX_PY_ENV)"
 	-rm -rf boost c-ares curl file openssl
-	-$(MAKE) -C jq clean
+
+# Check that the 'jq' makefile exists, before trying to clean up.
+# We checkout and build the 'jq' package, it is an external
+# package.
+clean_jq:
+	(if [ -e jq/Makefile ]; then \
+		$(MAKE) -C jq clean; \
+	fi)
 
 .PHONY: all toolkit_version api_wrappers src_libs python pynsist_installer java ua test test_python install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R boost boost_build install_sysdeps
