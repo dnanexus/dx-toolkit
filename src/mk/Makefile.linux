@@ -27,7 +27,6 @@ $(DNANEXUS_HOME)/bin/dx: $(shell find python/{dxpy,scripts,requirements*,setup*}
 	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; cd python; python setup.py bdist_wheel
 	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; ${PIP} install --ignore-installed --prefix="$(DNANEXUS_HOME)" python/dist/*.whl
 	mv "$(DNANEXUS_HOME)"/lib/python?.?/site-packages "$(PYTHON_LIBDIR)"
-#	rm -f "$(DNANEXUS_HOME)/bin/xattr"
 
 
 # Installation
@@ -64,8 +63,8 @@ debian_r_install: R
 # =================
 
 ../bin/jq: jq/
-	(cd jq; autoreconf --install)
-	$(MAKE) -C jq -j PATH=$$(brew --prefix bison || echo .)/bin:$$PATH
+	(cd jq; autoreconf --install; ./configure)
+	$(MAKE) -C jq -j PATH=./bin:$$PATH
 	cp -f jq/jq ../bin/
 
 # System dependencies
