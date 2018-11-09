@@ -320,7 +320,7 @@ def without_auth():
 
 
 class DXTestCaseCompat(unittest.TestCase):
-    # mothod removed in python3
+    # method removed in python3
     def assertItemsEqual(self, a, b):
         self.assertEqual(sorted(a), sorted(b))
 
