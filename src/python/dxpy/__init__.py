@@ -152,8 +152,10 @@ from requests.packages.urllib3.packages.ssl_match_hostname import match_hostname
 from threading import Lock
 
 try:
+    # python-3
     from urllib.parse import urlsplit
 except ImportError:
+    # python-2
     from urlparse import urlsplit
 
 
@@ -617,11 +619,22 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     return i
 
                 _headers = {ensure_ascii(k): ensure_ascii(v) for k, v in _headers.items()}
-                if (sys.version_info >= (3, 0)):
+                if USING_PYTHON2:
+                    encoded_url = _url
+                else:
+                    # This is needed for python 3 urllib
                     _headers.pop(b'host', None)
                     _headers.pop(b'content-length', None)
-                response = pool_manager.request(_method, _url, headers=_headers, body=body,
+
+                    # Encode any non-ascii characters in the path
+                    import urllib.parse
+                    parts = list(urllib.parse.urlparse(_url))
+                    parts[2] = urllib.parse.quote(parts[2])
+                    encoded_url = urllib.parse.urlunparse(parts)
+
+                response = pool_manager.request(_method, encoded_url, headers=_headers, body=body,
                                                 timeout=timeout, retries=False, **kwargs)
+
             except urllib3.exceptions.ClosedPoolError:
                 # If another thread closed the pool before the request was
                 # started, will throw ClosedPoolError
@@ -768,8 +781,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                         waiting_msg = 'Waiting %d seconds before retry %d of %d...' % (
                             delay, try_index + 1, max_retries)
 
-                    logger.warn("[%s] %s %s: %s. %s %s",
-                                time.ctime(), method, _url, exception_msg, waiting_msg, range_str)
+                    logger.warning("[%s] %s %s: %s. %s %s",
+                                   time.ctime(), method, _url, exception_msg, waiting_msg, range_str)
                     time.sleep(delay)
                     try_index_including_503 += 1
                     if response is None or response.status != 503:

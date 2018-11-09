@@ -63,7 +63,7 @@ def _parallel_file_download(to_download, idir, max_num_parallel_downloads):
                 max_workers=max_num_parallel_downloads) as executor:
             future_files = {executor.submit(_download_one_file, file_rec, idir): file_rec
                             for file_rec in to_download}
-            for future in concurrent.futures.as_completed(future_files, timeout=sys.maxint):
+            for future in concurrent.futures.as_completed(future_files):
                 file_rec = future_files[future]
                 try:
                     future.result()

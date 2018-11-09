@@ -45,23 +45,25 @@ fi
 
 export DNANEXUS_HOME="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
+PYTHON_VERSION_NUMBER="$(python -c 'import sys; print("{}.{}".format(sys.version_info[0], sys.version_info[1]))')"
+PYTHON_VERSION="python${PYTHON_VERSION_NUMBER}"
+
 # Detect system installation of dx-toolkit
 if [ "$DNANEXUS_HOME" = "/etc/profile.d" ]; then
 
   export DNANEXUS_HOME="/usr/share/dnanexus"
   # Private Python packages. We really ought not pollute PYTHONPATH with these though.
-  export PYTHONPATH="/usr/share/dnanexus/lib/python2.7/site-packages:$PYTHONPATH"
+  export PYTHONPATH="/usr/share/dnanexus/lib/${PYTHON_VERSION}/site-packages:$PYTHONPATH"
   export CLASSPATH="/usr/share/java/dnanexus-api-0.1.0.jar:${CLASSPATH}"
 
 else
-
   export PATH="${DNANEXUS_HOME}/bin:$PATH"
   export CLASSPATH="${DNANEXUS_HOME}/lib/java/*:${CLASSPATH}"
 
   if [ "$RHEL_MAJOR_VERSION" = "7" ]; then
-    export PYTHONPATH="${DNANEXUS_HOME}/share/dnanexus/lib/python2.7/site-packages:${DNANEXUS_HOME}/lib64/python2.7/site-packages:$PYTHONPATH"
+    export PYTHONPATH="${DNANEXUS_HOME}/share/dnanexus/lib64/${PYTHON_VERSION}/site-packages:$PYTHONPATH"
   else
-    export PYTHONPATH="${DNANEXUS_HOME}/share/dnanexus/lib/python2.7/site-packages:${DNANEXUS_HOME}/lib/python:$PYTHONPATH"
+    export PYTHONPATH="${DNANEXUS_HOME}/share/dnanexus/lib/${PYTHON_VERSION}/site-packages:$PYTHONPATH"
   fi
 
 fi
@@ -70,7 +72,7 @@ fi
 # encoding. We reset it here to avoid having to set it for every I/O operation explicitly.
 export PYTHONIOENCODING=UTF-8
 
-eval "$(register-python-argcomplete dx|sed 's/-o default//')"
+eval "$(bin/register-python-argcomplete dx|sed 's/-o default//')"
 
 # Clean up old session files
 (

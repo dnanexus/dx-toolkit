@@ -158,9 +158,15 @@ def run(function_name=None, function_input=None):
     if result is not None:
         # TODO: protect against client removing its original working directory
         os.chdir(dx_working_dir)
-        with open("job_output.json", "wb") as fh:
-            json.dump(result, fh, indent=2, cls=DXJSONEncoder)
-            fh.write(b"\n")
+        if USING_PYTHON2:
+            # On python-2 we need to use binary mode
+            with open("job_output.json", "wb") as fh:
+                json.dump(result, fh, indent=2, cls=DXJSONEncoder)
+                fh.write(b"\n")
+        else:
+            with open("job_output.json", "w") as fh:
+                json.dump(result, fh, indent=2, cls=DXJSONEncoder)
+                fh.write("\n")
 
     return result
 
@@ -171,9 +177,15 @@ def save_error(e, working_dir, error_type="AppInternalError"):
             os.unlink("job_error_reserved_space")
         except:
             pass
-        with open("job_error.json", "wb") as fh:
-            json.dump({"error": {"type": error_type, "message": _format_exception_message(e)}}, fh)
-            fh.write(b"\n")
+        if USING_PYTHON2:
+            # We need to use binary mode on python2
+            with open("job_error.json", "wb") as fh:
+                json.dump({"error": {"type": error_type, "message": _format_exception_message(e)}}, fh)
+                fh.write(b"\n")
+        else:
+            with open("job_error.json", "w") as fh:
+                json.dump({"error": {"type": error_type, "message": _format_exception_message(e)}}, fh)
+                fh.write("\n")
 
 # TODO: make this less naive with respect to cycles and any other things json.dumps() can handle
 def convert_handlers_to_dxlinks(x):
@@ -308,13 +320,13 @@ class DXExecDependencyInstaller(object):
             # Ignore dx-toolkit and jq from execDepends. They do not play nice
             if dep["name"] in ("dx-toolkit", "jq", "python-argcomplete") and dep_type == "apt":
                 continue
-                
+
             if "stages" in dep and self.stage not in dep["stages"]:
                 self.log("Skipping dependency {} because it is inactive in stage (function) {}".format(dep["name"],
                                                                                                        self.stage))
                 continue
 
-            
+
             if len(self.dep_groups) == 0 or self.dep_groups[-1]["type"] != dep_type or dep_type not in self.group_pms:
                 self.dep_groups.append({"type": dep_type, "deps": [], "index": len(self.dep_groups)})
             self.dep_groups[-1]["deps"].append(dep)

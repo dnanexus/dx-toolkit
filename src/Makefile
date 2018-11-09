@@ -14,66 +14,13 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-SHELL=/bin/bash -e
 
-ifndef MAKEOPTS
-	ifneq ($(OS), Windows_NT)
-		MAKEOPTS=-j -l 2.0
-	endif
-endif
-MAKE:=$(MAKE) $(MAKEOPTS)
-
-# Set the minimum Windows version (required by the ua and libcurl.la targets).
-ifndef CPPFLAGS
-	ifeq ($(OS), Windows_NT)
-		export CPPFLAGS=-DWINVER=0x0501
-	endif
-endif
-
-UNAME := $(shell uname)
-
-CENTOS_MAJOR_VERSION := $(shell test -e /etc/issue && (grep -o "CentOS release [0-9]\+" /etc/issue | sed -e "s/CentOS release //"))
-FEDORA_MAJOR_VERSION := $(shell test -e /etc/issue && (grep -o "Fedora release [0-9]\+" /etc/issue | sed -e "s/Fedora release //"))
-UBUNTU_VERSION := $(shell test -e /etc/issue && (grep -o "Ubuntu [0-9]\+\.[0-9]\+" /etc/issue | sed -e "s/Ubuntu //"))
-RHEL_MAJOR_VERSION := $(shell test -e /etc/redhat-release && (grep -o "Red Hat Enterprise Linux .* release [0-9]\+" /etc/redhat-release | sed -e "s/Red Hat Enterprise Linux .* release //"))
-
-ifndef CCACHE_DISABLE
-	export PATH := /usr/lib/ccache:$(PATH)
-endif
-
-# If installing into the system directories you probably want to set
-#   DESTDIR=/ PREFIX=/usr
-ifndef DESTDIR
-	export DESTDIR=/opt/dnanexus
-endif
-ifndef PREFIX
-	export PREFIX=/
-endif
-
-export DNANEXUS_HOME=$(CURDIR)/..
-export PATH := $(DNANEXUS_HOME)/build/bin:$(PATH)
-export DX_PY_ENV=$(DNANEXUS_HOME)/build/py_env
-export DNANEXUS_LIBDIR := $(DNANEXUS_HOME)/share/dnanexus/lib
-
-# Short-circuit sudo when running as root. In a chrooted environment we are
-# likely to be running as root already, and sudo may not be present on minimal
-# installations.
-ifeq (${USER}, root)
-	MAYBE_SUDO=
-else
-	MAYBE_SUDO='sudo'
-endif
+include mk/config.mk
+include mk/Makefile.${PLATFORM}
 
 all: api_wrappers cpp src_libs python dx-verify-file jq dx-docker
 
-# Don't try to initialize the submodule in source distributions, it should
-# already be there and ready to build.
-git_submodules:
-	(if [ -d "$(DNANEXUS_HOME)/.git" ]; then \
-	    cd ..; \
-	    git submodule init; \
-	    "`which git-retry || which git`" submodule update; \
-	fi)
+python: api_wrappers toolkit_version $(DNANEXUS_HOME)/bin/dx
 
 # Client bindings and wrappers
 # ============================
@@ -117,90 +64,6 @@ src_libs: api_wrappers
 	mkdir -p "$(DNANEXUS_LIBDIR)"
 	cp -R -v bash "$(DNANEXUS_LIBDIR)"
 
-PYTHON_LIBDIR := $(DNANEXUS_LIBDIR)/python2.7/site-packages
-
-python: api_wrappers toolkit_version $(DNANEXUS_HOME)/bin/dx
-
-ifeq ($(OS), Windows_NT)
-        ACTIVATE=Scripts/activate
-	# On Windows using DNANEXUS_HOME as the pip install --prefix results in
-	# an oddly nested dir, so make a new var to hold the staging dir name in
-	# which we'll be installing packages:
-	WHEEL_TEMPDIR=wheel_tempdir
-else
-        ACTIVATE=bin/activate
-endif
-
-# Get the short toolkit version string, resembling v0.195.0
-GIT_TOOLKIT_VERSION_SHORT := $(shell git describe --abbrev=0)
-# IF upload agent is built, dlls will be placed here, can be overriden with argument
-# e.g. `make DLL_DEPS_FOLDER=C:\\toolkit-deps\\ pynsist_installer`
-DLL_DEPS_FOLDER = '../../src/ua/dist/'
-
-pynsist_installer: toolkit_version $(DNANEXUS_HOME)/bin/dx dx-verify-file jq
-
-	# Create installer.cfg and insert the toolkit version string
-	export GIT_TOOLKIT_VERSION_SHORT=$(GIT_TOOLKIT_VERSION_SHORT) ; \
-	    sed s/TEMPLATE_STRING_TOOLKIT_VERSION/$${GIT_TOOLKIT_VERSION_SHORT}/ "$(DNANEXUS_HOME)"/build/pynsist_files/installer.cfg.template > "$(DNANEXUS_HOME)"/build/pynsist_files/installer.cfg
-	# Insert dll foldername
-	export DLL_DEPS_FOLDER=$(DLL_DEPS_FOLDER) ; \
-		sed --in-place "s~DLL_DEPS_FOLDER~$${DLL_DEPS_FOLDER}~" "$(DNANEXUS_HOME)"/build/pynsist_files/installer.cfg
-
-	# Copy wheel file into place without changing its filename
-	export DXPY_WHEEL_FILENAME=$$(basename $(DNANEXUS_HOME)/src/python/dist/dxpy-*.whl) ; \
-	    cp "$(DNANEXUS_HOME)"/src/python/dist/$${DXPY_WHEEL_FILENAME} "$(DNANEXUS_HOME)"/build/pynsist_files/
-
-	# Download the .whl files for each of dxpy's Python dependencies, to bundle with NSIS installer
-	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; mkdir -p "$(DNANEXUS_HOME)"/build/pynsist_files/wheelfile_depends; python -m pip install --download "$(DNANEXUS_HOME)"/build/pynsist_files/wheelfile_depends -r python/requirements.txt -r python/requirements_windows.txt
-
-	# Insert the wheel filename into installer.cfg
-	export DXPY_WHEEL_FILENAME=$$(basename $(DNANEXUS_HOME)/src/python/dist/dxpy-*.whl) ; \
-	    sed --in-place s/TEMPLATE_STRING_DXPY_WHEEL_FILENAME/$${DXPY_WHEEL_FILENAME}/ "$(DNANEXUS_HOME)"/build/pynsist_files/installer.cfg
-
-	# Create pyapp_dnanexus.nsi and insert the wheel filename into it
-	export DXPY_WHEEL_FILENAME=$$(basename $(DNANEXUS_HOME)/src/python/dist/dxpy-*.whl) ; \
-	    sed s/TEMPLATE_STRING_DXPY_WHEEL_FILENAME/$${DXPY_WHEEL_FILENAME}/ "$(DNANEXUS_HOME)"/build/pynsist_files/pyapp_dnanexus.nsi.template > "$(DNANEXUS_HOME)"/build/pynsist_files/pyapp_dnanexus.nsi
-
-	# Install the pynsist package and use it to build a Windows installer
-	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; python -m pip install pynsist==1.12
-	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; pynsist "$(DNANEXUS_HOME)"/build/pynsist_files/installer.cfg
-	# Copy .exe installer to dx-toolkit root once it's ready
-	cp "$(DNANEXUS_HOME)"/build/pynsist_files/build/nsis/DNAnexus_CLI_"$(GIT_TOOLKIT_VERSION_SHORT)".exe "$(DNANEXUS_HOME)"/dx-toolkit-"$(GIT_TOOLKIT_VERSION_SHORT)".exe
-
-$(DNANEXUS_HOME)/bin/dx: $(shell find python/{dxpy,scripts,requirements*,setup*} -not -name toolkit_version*)
-	python -c 'import sys; exit("dx-toolkit is not compatible with Python < 2.7" if sys.version_info < (2, 7) else 0)'
-	rm -rf "$(PYTHON_LIBDIR)" "$(DX_PY_ENV)" python/dist
-	mkdir -p "$$(dirname '$(PYTHON_LIBDIR)')"
-	virtualenv --python=python "$(DX_PY_ENV)"
-
-	# Install setuptools and other fundamental packages
-ifeq ($(OS), Windows_NT)
-	# Install setuptools and build the dxpy wheel
-	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; python -m pip install --upgrade -r python/requirements_setuptools.txt
-else
-	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; pip install --upgrade -r python/requirements_setuptools.txt
-endif
-
-	# On OS X, install the gnureadline package and download other osx specific packages
-ifeq ($(UNAME), Darwin)
-	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; pip install --no-cache-dir --prefix="$(DNANEXUS_HOME)" -r python/requirements_readline.txt
-endif
-
-	# Build the dxpy wheel and move it into place
-	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; cd python; python setup.py bdist_wheel
-ifeq ($(OS), Windows_NT)
-	# Install the dxpy .whl and wheel itself to the temp dir. Note wheel is only
-	# needed because we need to bundle it with the pynsist installer.
-	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; python -m pip install --ignore-installed --prefix="$(WHEEL_TEMPDIR)" python/dist/*.whl
-	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; python -m pip install --ignore-installed --prefix="$(WHEEL_TEMPDIR)" wheel
-	# Move the staging dir artifacts into their final homes
-	mv "$(DNANEXUS_HOME)"/src/$(WHEEL_TEMPDIR)/Lib/site-packages "$(PYTHON_LIBDIR)"
-	mv "$(DNANEXUS_HOME)"/src/$(WHEEL_TEMPDIR)/Scripts/* "$(DNANEXUS_HOME)"/bin
-else
-	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; pip install --ignore-installed --prefix="$(DNANEXUS_HOME)" python/dist/*.whl
-	mv "$(DNANEXUS_HOME)"/lib/python?.?/site-packages "$(PYTHON_LIBDIR)" || mv "$(DNANEXUS_HOME)"/site-packages "$(PYTHON_LIBDIR)"
-endif
-	rm -f "$(DNANEXUS_HOME)/bin/xattr"
 
 # If running in fakeroot, override some maven settings so that maven can still
 # find a localRepository to write to.
@@ -212,6 +75,7 @@ java: api_wrappers toolkit_version
 R: api_wrappers toolkit_version
 	mkdir -p "$(DNANEXUS_HOME)/lib/R"
 	(cd R; export R_LIBS_SITE="$(DNANEXUS_HOME)/lib/R"; R -q --no-restore --no-save < install_dxR_build_deps.R; R -q --no-restore --no-save -e "library(roxygen2); roxygenize(\"dxR\")"; R CMD INSTALL --build dxR --library="$(DNANEXUS_HOME)/lib/R"; )
+
 
 
 # Tools
@@ -229,12 +93,10 @@ bin/proot:
 	curl -k -sL https://github.com/proot-me/proot-static-build/raw/5bcf1a3341beeefde7305ce196031de837ca173c/static/proot-x86_64 > $(DNANEXUS_HOME)/bin/proot && chmod 777 $(DNANEXUS_HOME)/bin/proot
 
 bin/docker2aci:
-ifeq ($(UNAME), Darwin)
-	curl -k -sL https://dl.dnanex.us/F/D/40XJf2gqYqYqzYbGzyqB4g9PxGX9ZY9Bqvgv0Pz5/docker2aci-osx > $(DNANEXUS_HOME)/bin/docker2aci && chmod 777 $(DNANEXUS_HOME)/bin/docker2aci
-else ifeq ($(OS), Windows_NT)
-    echo "WARNING: dx-docker add-to-applet, upload not currently supported on Windows."
+ifneq (DOCKER_ACI_URL, "")
+	curl -k -sL ${DOCKER_ACI_URL} > $(DNANEXUS_HOME)/bin/docker2aci && chmod 777 $(DNANEXUS_HOME)/bin/docker2aci
 else
-	curl -k -sL https://dl.dnanex.us/F/D/B9ZFXqk6q9g0Z3FygYq61y82vpKQ2gj191vkP9jz/docker2aci > $(DNANEXUS_HOME)/bin/docker2aci && chmod 777 $(DNANEXUS_HOME)/bin/docker2aci
+	echo "WARNING: dx-docker not supported on this platform"
 endif
 
 
@@ -243,22 +105,19 @@ endif
 
 test: test_python
 
-coverage_python:
-	(cd python; export PYTHONPATH="$$PYTHONPATH:$$(echo $$(pwd)/coverage-*.egg)"; \
-	 test/coveragereport.py --strip-prefix="$$(readlink -f $$(pwd))/build/lib.linux-x86_64-2.7" --cover dxpy. --cover scripts --exclude dxpy.packages --exclude EGG-INFO.scripts --exclude test. --exclude setuptools --path-alias "$$(readlink -f $$(pwd)/../../share/dnanexus/lib/python2.7/site-packages/dxpy*.egg)"="$$(readlink -f $$(pwd))" --path-alias "$$(readlink -f $$(pwd)/build/lib.linux-x86_64-2.7)"="$$(readlink -f $$(pwd))")
-
 test_python:
 	../build/run_python_integration_tests.py
 
 test_java:
 	../build/run_java_integration_tests.py
 
+
 # Installation
 # ============
 
 base_install: all
 	mkdir -p $(DESTDIR)/$(PREFIX)/bin
-	rm -rf $(DESTDIR)/$(PREFIX)/lib/python2.7/site-packages/dxpy*              # Prevent file-overwriting-dir (or the opposite) problem
+	rm -rf $(DESTDIR)/$(PREFIX)/lib/python${PYTHON_VERSION}/site-packages/dxpy*              # Prevent file-overwriting-dir (or the opposite) problem
 
 	cp -a $(DNANEXUS_HOME)/bin/* $(DESTDIR)/$(PREFIX)/bin/                     # binaries
 
@@ -271,30 +130,6 @@ install: base_install
 	cp -a $(DNANEXUS_HOME)/doc $(DESTDIR)/$(PREFIX)/share/dnanexus             # docs
 	(if [ "$(DESTDIR)" == "/" ]; then install -v -m0644 $(DNANEXUS_HOME)/environment $(PREFIX); else install -v -m0644 $(DNANEXUS_HOME)/environment $(DESTDIR); fi)
 
-debian_install: base_install
-	cp -a $(DNANEXUS_HOME)/share $(DESTDIR)/$(PREFIX)                          # core libraries
-	mkdir -p $(DESTDIR)/$(PREFIX)/share/dnanexus/build
-	cp -a $(DNANEXUS_HOME)/build/info $(DESTDIR)/$(PREFIX)/share/dnanexus/build/
-	rm -f $(DESTDIR)/$(PREFIX)/share/dnanexus/src/cpp/*/.gitignore
-	cp -a $(DNANEXUS_HOME)/doc $(DESTDIR)/$(PREFIX)/share/dnanexus             # docs
-
-	../build/fix_shebang_lines.sh $(DESTDIR)/$(PREFIX)/bin --debian-system-install
-
-	mkdir -p $(DESTDIR)/etc/profile.d                                        # Install environment file into etc
-	install -v -m0644 $(DNANEXUS_HOME)/build/environment.redirector $(DESTDIR)/etc/profile.d/dnanexus.environment
-	install -v -m0644 $(DNANEXUS_HOME)/environment $(DESTDIR)/etc/profile.d/dnanexus.environment.sh
-	cp -a $(DNANEXUS_HOME)/share/dnanexus/lib/python2.7/site-packages/* $(DESTDIR)/$(PREFIX)/share/dnanexus/lib/python2.7/site-packages/
-	ls $(DNANEXUS_HOME)/share/dnanexus/lib/python2.7/site-packages | grep dxpy > $(DESTDIR)/$(PREFIX)/share/dnanexus/lib/python2.7/site-packages/dxpy.pth
-
-debian_java_install: java
-	mkdir -p $(DESTDIR)/$(PREFIX)/share/java
-	$(eval CLEANED_JAR_NAME := `cd "$(DNANEXUS_HOME)"/lib/java; ls *.jar | sed "s/dnanexus-api-\([0-9]\+\.[0-9]\+\.[0-9]\+\)-.*/dnanexus-api-\1.jar/g"`)
-	(cd "$(DNANEXUS_HOME)"/lib/java; cp -a *.jar $(DESTDIR)/$(PREFIX)/share/java/"$(CLEANED_JAR_NAME)")
-
-debian_r_install: R
-	mkdir -p $(DESTDIR)/$(PREFIX)/lib/R/site-library
-	cp -a $(DNANEXUS_HOME)/lib/R/{RCurl,RJSONIO} $(DESTDIR)/$(PREFIX)/lib/R/site-library/
-	cp -a $(DNANEXUS_HOME)/lib/R/dxR $(DESTDIR)/$(PREFIX)/lib/R/site-library/
 
 # Documentation
 # =============
@@ -306,8 +141,8 @@ setup_doc_virtualenv: .setup_doc_virtualenv
 .setup_doc_virtualenv: ../build/doc_build_requirements.txt
 	@if ! which pip > /dev/null; then echo "pip not found, please run apt-get install python-pip"; exit 1; fi
 	@if ! which virtualenv > /dev/null; then echo "virtualenv not found, please run apt-get install python-virtualenv"; exit 1; fi
-	(unset PYTHONPATH; virtualenv ../build/doc_env; source ../build/doc_env/$(ACTIVATE); pip install --find-links=http://dnanexus-pypi2.s3.amazonaws.com/index.html --requirement=../build/doc_build_requirements.txt)
-	virtualenv --relocatable ../build/doc_env
+	(unset PYTHONPATH; $(VIRTUAL_ENV) ../build/doc_env; source ../build/doc_env/$(ACTIVATE); pip install --find-links=http://dnanexus-pypi2.s3.amazonaws.com/index.html --requirement=../build/doc_build_requirements.txt)
+	$(VIRTUAL_ENV) --relocatable ../build/doc_env
 	touch .setup_doc_virtualenv
 
 doc_python: python setup_doc_virtualenv
@@ -444,6 +279,7 @@ else
 	CURL_WITH_SSL=--with-ssl
 	CURL_SHARED_LIBS=--enable-shared=no
 endif
+
 curl/stage/lib/libcurl.la: shasum openssl
 	mkdir -p curl
 	curl -L $(CURL_URL) > curl-$(CURL_PV).tar.gz
@@ -478,57 +314,48 @@ file/stage/lib/libmagic.la: shasum
 	cd file; ./configure --enable-static=yes --prefix=/
 	$(MAKE) -C file install DESTDIR="$(DNANEXUS_HOME)/src/file/stage"
 
+
 # Bundled utilities
 # =================
 
+# Don't try to initialize the submodule in source distributions, it should
+# already be there and ready to build.
+git_submodules:
+	(if [ -d "$(DNANEXUS_HOME)/.git" ]; then \
+	    cd ..; \
+	    git submodule init; \
+	    "`which git-retry || which git`" submodule update; \
+	fi)
+
+
 jq: git_submodules ../bin/jq
 
-../bin/jq: jq/
-	(cd jq; autoreconf --install)
-	(if [[ "$(UNAME)" == Darwin ]] && [[ ! "$(CC)" == clang ]] && ! (gcc --version | grep -q LLVM); then export LDFLAGS="$$LDFLAGS -lgcc_eh"; fi; \
-	 cd jq; ./configure --disable-docs)
-ifeq ($(OS), Windows_NT)
-	$(MAKE) -C jq -j 1
-else
-	$(MAKE) -C jq -j PATH=$$(brew --prefix bison || echo .)/bin:$$PATH
-endif
-	cp -f jq/jq ../bin/
-
-# System dependencies
-# ===================
-
-install_sysdeps:
-ifeq ($(CENTOS_MAJOR_VERSION), 5)
-	${MAYBE_SUDO} yum groupinstall -y "Development tools"
-	${MAYBE_SUDO} yum install -y cmake gcc44-c++ zlib-devel bzip2-devel curl-devel
-else ifeq ($(FEDORA_MAJOR_VERSION), 20)
-	${MAYBE_SUDO} yum groupinstall -y "Development tools"
-	${MAYBE_SUDO} yum install -y gcc gcc-c++ automake bison flex python python-pip python-virtualenv boost-devel boost-static cmake openssl-devel libcurl-devel bzip2-devel curl
-else ifeq ($(UBUNTU_VERSION), 12.04)
-	${MAYBE_SUDO} apt-get install make python-setuptools python-pip python-virtualenv python-dev \
-		g++ cmake libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison autoconf curl
-else ifeq ($(UBUNTU_VERSION), 14.04)
-	${MAYBE_SUDO} apt-get install make python-setuptools python-pip python-virtualenv python-dev \
-		g++ cmake libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison autoconf curl
-endif
 
 # Clean
 # =====
 
 distclean: clean
 
-clean:
+clean: clean_jq
 	$(MAKE) -C dx-verify-file clean
 	$(MAKE) -C ua clean
-	-find ../bin -type f \( -name jq -or -name dx -or -name 'dx-*' \) -not -name 'dx-unpack*' -delete
+	-rm -f ../bin/jq
+	-find ../bin -type f \( -name dx -or -name 'dx-*' \) -not -name 'dx-unpack*' -not -name 'dx-su-*' -delete
 	-rm -f ../bin/docker2aci ../bin/proot
 	-rm -rf python/{build,*.{egg,egg-info}}
 	-rm -rf java/target
 	-rm -rf ../lib
 	-rm -rf ../share
-	-rm ../build/info/version
+	-rm -f ../build/info/version
 	-rm -rf "$(DX_PY_ENV)"
 	-rm -rf boost c-ares curl file openssl
-	-$(MAKE) -C jq clean
+
+# Check that the 'jq' makefile exists, before trying to clean up.
+# We checkout and build the 'jq' package, it is an external
+# package.
+clean_jq:
+	(if [ -e jq/Makefile ]; then \
+		$(MAKE) -C jq clean; \
+	fi)
 
 .PHONY: all toolkit_version api_wrappers src_libs python pynsist_installer java ua test test_python install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R boost boost_build install_sysdeps

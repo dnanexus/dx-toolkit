@@ -20,10 +20,9 @@ dx for tab-completion, resolving naming conflicts, etc.
 '''
 
 from __future__ import print_function, unicode_literals, division, absolute_import
-
 import sys
 
-from ..packages.argcomplete import warn
+from argcomplete import warn
 from collections import namedtuple, OrderedDict
 import dxpy
 from .resolver import (get_first_pos_of_char, get_last_pos_of_char, clean_folder_path, resolve_path,
@@ -102,10 +101,8 @@ def get_folder_matches(text, delim_pos, dxproj, folderpath):
     and be in escaped form for consumption by the command-line.
     '''
     try:
-        folder_names = map(lambda folder_name:
-                               folder_name[folder_name.rfind('/') + 1:],
-                           dxproj.list_folder(folder=folderpath,
-                                              only='folders')['folders'])
+        folders = dxproj.list_folder(folder=folderpath, only='folders')['folders']
+        folder_names = [name[name.rfind('/') + 1:] for name in folders]
         if text != '' and delim_pos != len(text) - 1:
             folder_names += ['.', '..']
         prefix = text[:delim_pos + 1]
@@ -134,7 +131,6 @@ def get_data_matches(text, delim_pos, dxproj, folderpath, classname=None,
     Members of the returned list are guaranteed to start with *text*
     and be in escaped form for consumption by the command-line.
     '''
-
     #unescaped_text = unescape_completion_name_str(text[delim_pos + 1:])
     unescaped_text = text[delim_pos + 1:]
 
@@ -178,7 +174,6 @@ def path_completer(text, expected=None, classes=None, perm_level=None,
     Returns a list of matches to the text and restricted by the
     requested parameters.
     '''
-
     colon_pos = get_last_pos_of_char(':', text)
     slash_pos = get_last_pos_of_char('/', text)
     delim_pos = max(colon_pos, slash_pos)
@@ -335,7 +330,7 @@ class LocalCompleter():
         self.matches = []
 
     def _populate_matches(self, prefix):
-        from ..packages.argcomplete.completers import FilesCompleter
+        from argcomplete.completers import FilesCompleter
         completer = FilesCompleter()
         self.matches = completer(prefix)
 

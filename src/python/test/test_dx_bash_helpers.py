@@ -53,6 +53,7 @@ def run(command, **kwargs):
 TEST_APPS = os.path.join(os.path.dirname(__file__), 'file_load')
 LOCAL_SCRIPTS = os.path.join(os.path.dirname(__file__), '..', 'scripts')
 LOCAL_UTILS = os.path.join(os.path.dirname(__file__), '..', 'dxpy', 'utils')
+DUMMY_HASH = "123456789012345678901234"
 
 
 def ignore_folders(directory, contents):
@@ -73,7 +74,7 @@ def build_app_with_bash_helpers(app_dir, project_id):
         shutil.copytree(app_dir, updated_app_dir)
         # Copy the current verion of dx-toolkit. We will build it on the worker
         # and source this version which will overload the stock version of dx-toolkit.
-        # This we we can test all bash helpers as they would appear locally with all
+        # This way we can test all bash helpers as they would appear locally with all
         # necessary dependencies
         #dxtoolkit_dir = os.path.abspath(os.path.join(updated_app_dir, 'resources', 'dxtoolkit'))
         #local_dxtoolkit = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -87,7 +88,7 @@ def build_app_with_bash_helpers(app_dir, project_id):
         preamble.append('sudo pip install --upgrade virtualenv\n')
         #preamble.append('make -C {toolkitdir} python\n'.format(toolkitdir=dxtoolkit_dir))
         #preamble.append('source {toolkitdir}/environment\n'.format(toolkitdir=dxtoolkit_dir))
-        preamble.append('make -C /dxtoolkit python\n')
+        preamble.append('make -C /dxtoolkit clean python\n')
         preamble.append('source /dxtoolkit/environment\n')
         # Now find the applet entry point file and prepend the
         # operations above, overwriting it in place.
@@ -418,12 +419,10 @@ class TestDXBashHelpersBenchmark(DXTestCase):
     def test_par_1g(self):
         self.run_applet_with_flags(["-iparallel=true"], 10, 1024 * 1024 * 1024)
 
-
 class TestDXJobutilAddOutput(DXTestCase):
-    dummy_hash = "123456789012345678901234"
     data_obj_classes = ['file', 'record', 'applet', 'workflow']
-    dummy_ids = [obj_class + '-' + dummy_hash for obj_class in data_obj_classes]
-    dummy_job_id = "job-" + dummy_hash
+    dummy_ids = [ (obj_class + '-' + DUMMY_HASH) for obj_class in data_obj_classes]
+    dummy_job_id = "job-" + DUMMY_HASH
     dummy_analysis_id = "analysis-123456789012345678901234"
     test_cases = ([["32", 32],
                    ["3.4", 3.4],
@@ -440,7 +439,7 @@ class TestDXJobutilAddOutput(DXTestCase):
                     {"$dnanexus_link": dummy_id}] for dummy_id in dummy_ids])
 
     def test_auto(self):
-        with tempfile.NamedTemporaryFile() as f:
+        with tempfile.NamedTemporaryFile(mode='w+') as f:
             # initialize the file with valid JSON
             f.write('{}')
             f.flush()
@@ -454,7 +453,7 @@ class TestDXJobutilAddOutput(DXTestCase):
                 self.assertEqual(result[str(i)], tc[1])
 
     def test_auto_array(self):
-        with tempfile.NamedTemporaryFile() as f:
+        with tempfile.NamedTemporaryFile(mode='w+') as f:
             # initialize the file with valid JSON
             f.write('{}')
             f.flush()
@@ -469,7 +468,7 @@ class TestDXJobutilAddOutput(DXTestCase):
                 self.assertEqual(result[str(i)], [tc[1], tc[1]])
 
     def test_class_specific(self):
-        with tempfile.NamedTemporaryFile() as f:
+        with tempfile.NamedTemporaryFile(mode='w+') as f:
             # initialize the file with valid JSON
             f.write('{}')
             f.flush()
@@ -486,7 +485,7 @@ class TestDXJobutilAddOutput(DXTestCase):
                 self.assertEqual(result[str(i)], tc[2])
 
     def test_class_parsing_errors(self):
-        with tempfile.NamedTemporaryFile() as f:
+        with tempfile.NamedTemporaryFile(mode='w+') as f:
             # initialize the file with valid JSON
             f.write('{}')
             f.flush()
@@ -501,7 +500,7 @@ class TestDXJobutilAddOutput(DXTestCase):
                                  ["analysisref", "thing"]] +
                                 [[classname,
                                   "'" +
-                                  json.dumps({"dnanexus_link": classname + "-" + self.dummy_hash}) +
+                                  json.dumps({"dnanexus_link": classname + "-" + DUMMY_HASH}) +
                                   "'"] for classname in self.data_obj_classes])
             for i, tc in enumerate(error_test_cases):
                 with self.assertSubprocessFailure(stderr_regexp='Value could not be parsed',

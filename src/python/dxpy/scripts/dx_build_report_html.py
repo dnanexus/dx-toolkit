@@ -26,7 +26,7 @@ import base64
 import bs4
 import cgi
 import dxpy
-from dxpy.compat import BytesIO
+from dxpy.compat import (USING_PYTHON2, BytesIO)
 from .dx_build_app import parse_destination
 import imghdr
 import json
@@ -71,7 +71,10 @@ def _bake_css(link):
         else:
             css_data = _load_file(link["href"]).read()
         link.clear()
-        link.string = css_data
+        if USING_PYTHON2:
+            link.string = css_data
+        else:
+            link.string = str(css_data)
         link.name = "style"
         del link["rel"]
         del link["href"]
@@ -87,7 +90,10 @@ def _bake_script(script):
         else:
             script_data = _load_file(script["src"]).read()
         script.clear()
-        script.string = "\n" + script_data + "\n"
+        if USING_PYTHON2:
+            script.string = "\n" + script_data + "\n"
+        else:
+            script.string = "\n" + str(script_data) + "\n"
         del script["src"]
         del script["type"]
 
@@ -100,12 +106,16 @@ def _topify_link(link):
         link["target"] = "_top"
 
 
-def _load_file(path, mode="r"):
+def _load_file(path):
     """
     Loads a file from the local filesystem
     """
     if not os.path.exists(path):
         parser.error("{} was not found!".format(path))
+    if USING_PYTHON2:
+        mode = "r"
+    else:
+        mode = "rb"
     try:
         f = open(path, mode)
         return f
@@ -124,12 +134,13 @@ def _load_url(url):
         parser.error("{url} could not be loaded remotely! ({ex})".format(url=url, ex=ex))
 
 
+# returns a string
 def _get_bs4_string(soup):
     """
     Outputs a BeautifulSoup object as a string that should hopefully be minimally modified
     """
     if len(soup.find_all("script")) == 0:
-        soup_str = soup.prettify(formatter=None).encode("utf-8").strip()
+        soup_str = soup.prettify(formatter=None).strip()
     else:
         soup_str = str(soup.html)
         soup_str = re.sub("&amp;", "&", soup_str)
@@ -152,7 +163,7 @@ def bake(src):
     # Change to the file's directory so image files with relative paths can be loaded correctly
     cwd = os.getcwd()
     os.chdir(path)
-    bs_html = bs4.BeautifulSoup(html)
+    bs_html = bs4.BeautifulSoup(html, "html.parser")
     images = bs_html.find_all("img")
     for image in images:
         _image_to_data(image)

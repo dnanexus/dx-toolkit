@@ -27,6 +27,15 @@ from .resolver import is_localjob_id
 from ..compat import open, str, environ, USING_PYTHON2, basestring
 from . import file_load_utils
 
+if USING_PYTHON2:
+    # Using binary mode on python-2
+    write_mode = 'wb'
+    eol = b'\n'
+else:
+    # Using textual mode on python-2
+    write_mode = 'w'
+    eol = '\n'
+
 def exit_with_error(msg):
     '''
     :param msg: string message to print before exiting
@@ -241,10 +250,10 @@ def queue_entry_point(function, input_hash, depends_on=[], name=None):
         all_job_outputs = json.load(fd, object_pairs_hook=collections.OrderedDict)
         job_id = 'localjob-' + str(len(all_job_outputs))
 
-    with open(all_job_outputs_path, 'wb') as fd:
+    with open(all_job_outputs_path, write_mode) as fd:
         all_job_outputs[job_id] = None
         json.dump(all_job_outputs, fd, indent=4)
-        fd.write(b'\n')
+        fd.write(eol)
 
     job_homedir = os.path.join(environ['DX_TEST_JOB_HOMEDIRS'], job_id)
     os.mkdir(job_homedir)
@@ -259,9 +268,9 @@ def queue_entry_point(function, input_hash, depends_on=[], name=None):
     if name is not None:
         job_entry['name'] = name
     job_queue.append(job_entry)
-    with open(job_queue_path, 'wb') as fd:
+    with open(job_queue_path, write_mode) as fd:
         json.dump(job_queue, fd, indent=4)
-        fd.write(b'\n')
+        fd.write(eol)
 
     return job_id
 
@@ -316,9 +325,9 @@ def run_one_entry_point(job_id, function, input_hash, run_spec, depends_on, name
         exit_with_error(job_name + ' ' + JOB_STATES('failed') + ' when processing depends_on:\n' + fill(str(e)))
 
     # Save job input to job_input.json
-    with open(os.path.join(job_homedir, 'job_input.json'), 'wb') as fd:
+    with open(os.path.join(job_homedir, 'job_input.json'), 'w') as fd:
         json.dump(input_hash, fd, indent=4)
-        fd.write(b'\n')
+        fd.write('\n')
 
     print(job_output_to_str(input_hash, title=(BOLD() + 'Input: ' + ENDC()),
                             title_len=len("Input: ")).lstrip())
@@ -329,7 +338,7 @@ def run_one_entry_point(job_id, function, input_hash, run_spec, depends_on, name
         with open(env_path, 'w') as fd:
             job_input_file = os.path.join(job_homedir, 'job_input.json')
             var_defs_hash = file_load_utils.gen_bash_vars(job_input_file, job_homedir=job_homedir)
-            for key, val in var_defs_hash.iteritems():
+            for key, val in list(var_defs_hash.items()):
                 fd.write("{}={}\n".format(key, val))
 
     print(BOLD() + 'Logs:' + ENDC())
@@ -403,9 +412,9 @@ if dxpy.utils.exec_utils.RUN_COUNT == 0:
             continue
         resolve_job_references(all_job_outputs[other_job_id], all_job_outputs, should_resolve=False)
 
-    with open(os.path.join(environ['DX_TEST_JOB_HOMEDIRS'], 'job_outputs.json'), 'wb') as fd:
+    with open(os.path.join(environ['DX_TEST_JOB_HOMEDIRS'], 'job_outputs.json'), write_mode) as fd:
         json.dump(all_job_outputs, fd, indent=4)
-        fd.write(b'\n')
+        fd.write(eol)
 
 def run_entry_points(run_spec):
     '''
@@ -447,11 +456,11 @@ def run_entry_points(run_spec):
             # the appropriate error
             entry_point_to_run = job_queue.pop(0)
 
-        with open(job_queue_path, 'wb') as fd:
+        with open(job_queue_path, write_mode) as fd:
             # Update job queue with updated inputs and after having
             # popped the entry point to be run
             json.dump(job_queue, fd)
-            fd.write(b'\n')
+            fd.write(eol)
 
         run_one_entry_point(job_id=entry_point_to_run['id'],
                             function=entry_point_to_run['function'],

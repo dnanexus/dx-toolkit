@@ -24,6 +24,6 @@ args = parser.parse_args()
 
 if ':' in args.object:
     proj_id, obj_id = args.object.split(":")
-    print json.dumps({"$dnanexus_link": {"project": proj_id, "id": obj_id}})
+    print(json.dumps({"$dnanexus_link": {"project": proj_id, "id": obj_id}}))
 else:
-    print json.dumps({"$dnanexus_link": args.object})
+    print(json.dumps({"$dnanexus_link": args.object}))

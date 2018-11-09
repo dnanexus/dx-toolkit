@@ -28,26 +28,26 @@ import datetime
 from contextlib import contextmanager
 
 import dxpy
-from dxpy.compat import str, USING_PYTHON2
+from dxpy.compat import str, basestring, USING_PYTHON2
 
 _run_all_tests = 'DXTEST_FULL' in os.environ
 TEST_AZURE = ((os.environ.get('DXTEST_AZURE', '').startswith('azure:') and os.environ['DXTEST_AZURE']) or
               (os.environ.get('DXTEST_AZURE') and 'azure:westus'))
-TEST_ISOLATED_ENV = _run_all_tests or 'DXTEST_ISOLATED_ENV' in os.environ
+TEST_BENCHMARKS = 'DXTEST_BENCHMARKS' in os.environ   ## Used to exclude benchmarks from normal runs
+TEST_DX_LOGIN = 'DXTEST_LOGIN' in os.environ
 TEST_ENV = _run_all_tests or 'DXTEST_ENV' in os.environ
 TEST_DX_DOCKER = 'DXTEST_DOCKER' in os.environ
 TEST_FUSE = _run_all_tests or 'DXTEST_FUSE' in os.environ
 TEST_HTTP_PROXY = _run_all_tests or 'DXTEST_HTTP_PROXY' in os.environ
+TEST_ISOLATED_ENV = _run_all_tests or 'DXTEST_ISOLATED_ENV' in os.environ
+TEST_MULTIPLE_USERS = _run_all_tests or 'DXTEST_SECOND_USER' in os.environ
 TEST_NO_RATE_LIMITS = _run_all_tests or 'DXTEST_NO_RATE_LIMITS' in os.environ
+TEST_ONLY_MASTER = 'DX_RUN_NEXT_TESTS' in os.environ
 TEST_RUN_JOBS = _run_all_tests or 'DXTEST_RUN_JOBS' in os.environ
 TEST_TCSH = _run_all_tests or 'DXTEST_TCSH' in os.environ
 TEST_WITH_AUTHSERVER = _run_all_tests or 'DXTEST_WITH_AUTHSERVER' in os.environ
 TEST_WITH_SMOKETEST_APP = _run_all_tests or 'DXTEST_WITH_SMOKETEST_APP' in os.environ
-TEST_ONLY_MASTER = 'DX_RUN_NEXT_TESTS' in os.environ
-TEST_MULTIPLE_USERS = _run_all_tests or 'DXTEST_SECOND_USER' in os.environ
 
-TEST_DX_LOGIN = 'DXTEST_LOGIN' in os.environ
-TEST_BENCHMARKS = 'DXTEST_BENCHMARKS' in os.environ   ## Used to exclude benchmarks from normal runs
 
 def _transform_words_to_regexp(s):
     return r"\s+".join(re.escape(word) for word in s.split())
@@ -98,10 +98,8 @@ def check_output(*popenargs, **kwargs):
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, *popenargs, **kwargs)
     output, err = process.communicate()
     retcode = process.poll()
-    if not isinstance(output, str):
-        output = output.decode(sys.stdin.encoding)
-    if not isinstance(err, str):
-        err = err.decode(sys.stdin.encoding)
+    output = output.decode(sys.stdin.encoding)
+    err = err.decode(sys.stderr.encoding)
     if retcode:
         print(err)
         cmd = kwargs.get("args")
@@ -140,7 +138,6 @@ def run(command, **kwargs):
         output = check_output(command, shell=True, **kwargs)
     print(output)
     return output
-
 
 @contextmanager
 def temporary_project(name='dx client tests temporary project', cleanup=True, reclaim_permissions=False, select=False,
@@ -322,11 +319,25 @@ def without_auth():
             os.environ['DX_SECURITY_CONTEXT'] = prev_security_context
 
 
-class DXTestCase(unittest.TestCase):
+class DXTestCaseCompat(unittest.TestCase):
+    # method removed in python3
+    def assertItemsEqual(self, a, b):
+        self.assertEqual(sorted(a), sorted(b))
+
+    # methods with different names in python 2 and 3
+    # For example:
+    # v2  assertRaisesRegexp
+    # v3  assertRaisesRegex
     if USING_PYTHON2:
+        assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
         assertRegex = unittest.TestCase.assertRegexpMatches
         assertNotRegex = unittest.TestCase.assertNotRegexpMatches
+    else:
+        assertRaisesRegex = unittest.TestCase.assertRaisesRegex
+        assertRegex = unittest.TestCase.assertRegex
+        assertNotRegex = unittest.TestCase.assertNotRegex
 
+class DXTestCase(DXTestCaseCompat):
     def setUp(self):
         proj_name = u"dxclient_test_pröject"
         self.project = dxpy.api.project_new({"name": proj_name})['id']
@@ -404,7 +415,7 @@ class DXTestCase(unittest.TestCase):
     def assertDictSubsetOf(self, subset_dict, containing_dict):
         mm_items = []
         mm_missing = []
-        for (key, value) in subset_dict.items():
+        for (key, value) in list(subset_dict.items()):
             if key in containing_dict:
                 if value != containing_dict[key]:
                     mm_items.append(key)
@@ -421,11 +432,11 @@ class DXTestCase(unittest.TestCase):
             error_string += "{}\n\nto be a subset of\n\n{}\n\n".format(subset_json,
                                                                        containing_json)
             if err_items:
-                m = ", ".join(map(lambda x: str(x), mm_items))
+                m = ", ".join([str(x) for x in mm_items])
                 error_string += "Field value mismatch at keys: {}\n".format(m)
 
             if err_missing:
-                m = ", ".join(map(lambda x: str(x), mm_missing))
+                m = ", ".join([str(x) for x in mm_missing])
                 error_string += "Keys missing from superset: {}\n".format(m)
 
             self.assertFalse(True, error_string)
@@ -597,18 +608,20 @@ class DXTestCaseBuildApps(DXTestCase):
         # Note: if called twice with the same app_name, will overwrite
         # the dxapp.json and code file (if specified) but will not
         # remove any other files that happened to be present
+        p = os.path.join(self.temp_file_path, app_name)
+        pb = p.encode("utf-8")
         try:
-            os.mkdir(os.path.join(self.temp_file_path, app_name))
+            os.mkdir(pb)
         except OSError as e:
             if e.errno != 17:  # directory already exists
                 raise e
         if dxapp_str is not None:
-            with open(os.path.join(self.temp_file_path, app_name, 'dxapp.json'), 'wb') as manifest:
+            with open(os.path.join(pb, b'dxapp.json'), 'wb') as manifest:
                 manifest.write(dxapp_str.encode())
         if code_filename:
-            with open(os.path.join(self.temp_file_path, app_name, code_filename), 'w') as code_file:
+            with open(os.path.join(pb, code_filename.encode("utf-8")), 'w') as code_file:
                 code_file.write(code_content)
-        return os.path.join(self.temp_file_path, app_name)
+        return p
 
 
 class TemporaryFile:
@@ -617,8 +630,11 @@ class TemporaryFile:
         in Windows, where the OS does not allow multiple handles to a single file. The parameter
         'close' determines if the file is returned closed or open.
     '''
-    def __init__(self, mode='w+b', bufsize=-1, suffix='', prefix='tmp', dir=None, delete=True, close=False):
-        self.temp_file = tempfile.NamedTemporaryFile(mode, bufsize, suffix, prefix, dir, delete=False)
+    def __init__(self, mode='w+', bufsize=-1, suffix='', prefix='tmp', dir=None, delete=True, close=False):
+        if USING_PYTHON2:
+            self.temp_file = tempfile.NamedTemporaryFile(mode, bufsize, suffix, prefix, dir, delete=False)
+        else:
+            self.temp_file = tempfile.NamedTemporaryFile(mode, bufsize, "utf-8", None, suffix, prefix, dir, delete=False)
         self.name = self.temp_file.name
         self.delete = delete
         if (close):

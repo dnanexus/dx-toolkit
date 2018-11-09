@@ -28,6 +28,7 @@ from dxpy.utils import (exec_utils, genomic_utils, response_iterator, get_future
 from dxpy.utils.exec_utils import DXExecDependencyInstaller
 from dxpy.utils.pretty_print import flatten_json_array
 from dxpy.compat import USING_PYTHON2
+import dxpy_testutil as testutil
 
 # TODO: unit tests for dxpy.utils.get_field_from_jbor, get_job_from_jbor, is_job_ref
 
@@ -129,11 +130,7 @@ class TestEDI(DXExecDependencyInstaller):
     def log(self, message, **kwargs):
         self.message_log.append(message)
 
-class TestDXExecDependsUtils(unittest.TestCase):
-    if USING_PYTHON2:
-        assertRegex = unittest.TestCase.assertRegexpMatches
-        assertNotRegex = unittest.TestCase.assertNotRegexpMatches
-
+class TestDXExecDependsUtils(testutil.DXTestCaseCompat):
     def get_edi(self, run_spec, job_desc=None):
         return TestEDI(executable_desc={"runSpec": run_spec}, job_desc=job_desc if job_desc else {})
 
@@ -149,14 +146,14 @@ class TestDXExecDependsUtils(unittest.TestCase):
         }
         edi = self.get_edi({"bundledDependsByRegion": bundled_depends_by_region},
                            job_desc={"region": "aws:us-east-1"})
-        with self.assertRaisesRegexp(DXError, 'file-asseteast'):
+        with self.assertRaisesRegex(DXError, 'file-asseteast'):
             # Asserts that we attempted to download the correct file.
             edi.install()
         edi = self.get_edi({"bundledDependsByRegion": bundled_depends_by_region},
                            job_desc={"region": "azure:westus"})
-        with self.assertRaisesRegexp(DXError, 'file-assetwest'):
+        with self.assertRaisesRegex(DXError, 'file-assetwest'):
             edi.install()
-        with self.assertRaisesRegexp(KeyError, 'aws:cn-north-1'):
+        with self.assertRaisesRegex(KeyError, 'aws:cn-north-1'):
             self.get_edi({"bundledDependsByRegion": bundled_depends_by_region},
                          job_desc={"region": "aws:cn-north-1"})
 
@@ -167,17 +164,17 @@ class TestDXExecDependsUtils(unittest.TestCase):
         def assert_log_contains(edi, regexp):
             self.assertRegex("\n".join(edi.message_log), regexp)
 
-        with self.assertRaisesRegexp(AppInternalError, 'Expected field "runSpec" to be present'):
+        with self.assertRaisesRegex(AppInternalError, 'Expected field "runSpec" to be present'):
             DXExecDependencyInstaller({}, {})
 
-        with self.assertRaisesRegexp(AppInternalError, 'Expected field "name" to be present'):
+        with self.assertRaisesRegex(AppInternalError, 'Expected field "name" to be present'):
             self.get_edi({"dependencies": [{"foo": "bar"}]})
 
         edi = self.get_edi({"dependencies": [{"name": "foo", "package_manager": "cran", "version": "1.2.3"}]})
         edi.install()
         assert_cmd_ran(edi, "R -e .+ install.packages.+devtools.+install_version.+foo.+version.+1.2.3")
 
-        with self.assertRaisesRegexp(AppInternalError, 'does not have a "url" field'):
+        with self.assertRaisesRegex(AppInternalError, 'does not have a "url" field'):
             self.get_edi({"dependencies": [{"name": "foo", "package_manager": "git"}]})
 
         edi = self.get_edi({"execDepends": [{"name": "git"}], "dependencies": [{"name": "tmux"}]})
@@ -239,13 +236,13 @@ class TestDXExecDependsUtils(unittest.TestCase):
                 {"name": "asset.east", "id": {"$dnanexus_link": "file-asseteast"}}
             ]
         }
-        with self.assertRaisesRegexp(DXError, 'region.*job description'):
+        with self.assertRaisesRegex(DXError, 'region.*job description'):
             self.get_edi({"bundledDependsByRegion": bundled_depends_by_region})
 
         bundled_depends_by_region = {
             "aws:us-east-1": []
         }
-        with self.assertRaisesRegexp(DXError, 'region.*job description'):
+        with self.assertRaisesRegex(DXError, 'region.*job description'):
             self.get_edi({"bundledDependsByRegion": bundled_depends_by_region})
 
         # Job describe dict may specify or omit "region" if

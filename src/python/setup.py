@@ -16,16 +16,42 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import os, sys, glob, platform
+import glob
+import os
+import platform
+import re
 from setuptools import setup, find_packages
+import sys
 
 if sys.version_info < (2, 7):
     raise Exception("dxpy requires Python >= 2.7")
 
+# Pypi is the repository for python packages.
+# It requires that version numbers look like this: X.Y.Z,
+# where X, Y, and Z are numbers. It is more complicated than that, but that's
+# the main idea.
+#
+# Clean up the version number. It starts like this:
+#    '0.265.0-77-g059d243f'
+# and we need 0.265.0
+def make_valid_pypi_version(raw):
+    m = re.match(r'(\d+)\.(\d+)\.(\d+)', raw)
+    return m.group(0)
+
+
 # Don't import, but use exec.
 # Importing would trigger interpretation of the dxpy entry point, which can fail if deps are not installed.
+#
+# The result of this trickery is a variable called "version", initialized
+# to the current version of dxpy.
 with open(os.path.join(os.path.dirname(__file__), 'dxpy', 'toolkit_version.py')) as fh:
     exec(compile(fh.read(), 'toolkit_version.py', 'exec'))
+version = make_valid_pypi_version(version)
+
+# The readme file is used as the long-description of the package.
+# It will show up in the pypi site.
+with open("Readme.md", "r") as fh:
+    readme_content = fh.read()
 
 # Grab all the scripts from dxpy/scripts and install them without their .py extension.
 # Replace underscores with dashes.
@@ -40,7 +66,6 @@ for module in os.listdir(os.path.join(os.path.dirname(__file__), 'dxpy', 'script
 
 dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements.txt"))]
 test_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_test.txt"))]
-dxfs_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_dxfs.txt"))]
 readline_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_readline.txt"))]
 backports_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_backports.txt"))]
 
@@ -62,9 +87,6 @@ if platform.system() == 'Darwin':
 
 if sys.version_info[0] < 3:
     dependencies.extend(backports_dependencies)
-    # dxfs is not compatible with Windows, and is currently disabled on Python 3
-    if platform.system() != 'Windows':
-        dependencies.extend(dxfs_dependencies)
 
 if 'DNANEXUS_INSTALL_PYTHON_TEST_DEPS' in os.environ:
     dependencies.extend(test_dependencies)
@@ -79,7 +101,9 @@ setup(
     name='dxpy',
     version=version,
     description='DNAnexus Platform API bindings for Python',
-    author='Katherine Lai, Phil Sung, Andrey Kislyuk, Anurag Biyani',
+    long_description=readme_content,
+    long_description_content_type="text/markdown",
+    author='Aleksandra Zalcman, Andrey Kislyuk, Anurag Biyani, Geet Duggal, Katherine Lai, Kurt Jensen, Ohad Rodeh, Phil Sung',
     author_email='expert-dev@dnanexus.com',
     url='https://github.com/dnanexus/dx-toolkit',
     zip_safe=False,
@@ -100,7 +124,6 @@ setup(
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: POSIX',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Unix Shell',
         'Topic :: Software Development :: Libraries :: Python Modules'
     ]

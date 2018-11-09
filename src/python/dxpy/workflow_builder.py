@@ -67,7 +67,7 @@ def _parse_executable_spec(src_dir, json_file_name, parser):
         try:
             return json_load_raise_on_duplicates(desc)
         except Exception as e:
-            raise WorkflowBuilderException("Could not parse {} file as JSON: {}".format(json_file_name, e.message))
+            raise WorkflowBuilderException("Could not parse {} file as JSON: {}".format(json_file_name, e.args))
 
 
 def _get_destination_project(json_spec, args, build_project_id=None):
@@ -290,7 +290,7 @@ def _get_validated_json(json_spec, args):
 
 def _get_validated_json_for_build_or_update(json_spec, args):
     """
-    Validates those fields that can be used when either building 
+    Validates those fields that can be used when either building
     a new version (of a local, project-based workflow) or updating
     an existing version (of a global workflow).
     """
@@ -512,5 +512,5 @@ def build(args, parser):
         workflow_id = _build_or_update_workflow(json_spec, args)
         _print_output(workflow_id, args)
     except WorkflowBuilderException as e:
-        print("Error: %s" % (e.message,), file=sys.stderr)
+        print("Error: %s" % (e.args,), file=sys.stderr)
         sys.exit(3)

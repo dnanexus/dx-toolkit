@@ -159,11 +159,11 @@ def main(**kwargs):
     else:
         export_generic_bed(spans, kwargs['output'])
 
-    
+
 # genes type objects are a special case
 def export_genes(spans, out_name):
     global bed_col
-    # setup default 
+    # setup default
 
     span_cols = spans.get_col_names()
 
@@ -180,10 +180,7 @@ def export_genes(spans, out_name):
         while(True):
 
             # loop through table, buffering incomplete lines
-            try:
-                entry = generator.next()
-            except StopIteration:
-                entry = None
+            entry = next(generator, None)
 
             if entry != None:
                 # take founding members (those with no parents) place in gene model
@@ -225,7 +222,7 @@ def export_genes(spans, out_name):
             for g in gene_model:
                 if not g.check_and_write_data(current_lo, bed_file):
                     to_keep_genes.append(g)
-                    
+
             gene_model = to_keep_genes[:]
 
             if entry == None:
@@ -263,5 +260,3 @@ def export_generic_bed(spans, out_name):
 
 if __name__ == '__main__':
     main()
-
-

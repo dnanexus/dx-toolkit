@@ -174,7 +174,7 @@ def clone_asset(record_id, regions, num_retries=0, priority=None):
             break
         else:
             if q.qsize() > 0:
-                for i in xrange(q.qsize()):
+                for i in range(q.qsize()):
                     received = set([q.get()])
                     remaining_regions = remaining_regions - received
                 print('\nWaiting on region(s): {regions} '.format(regions=' '.join(remaining_regions)))

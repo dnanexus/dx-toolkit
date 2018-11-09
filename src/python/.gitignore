@@ -1,5 +1,6 @@
 build/
 dist/
 dxpy.egg-info/
+dxpy3.egg-info/
 .coverage
 .coverage.*

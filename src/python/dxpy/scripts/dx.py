@@ -185,7 +185,7 @@ class DXCLICompleter():
     silent_commands = set(['export'])
 
     def __init__(self):
-        self.commands = [subcmd + ' ' for subcmd in subparsers.choices.keys() if subcmd not in self.silent_commands]
+        self.commands = [subcmd + ' ' for subcmd in list(subparsers.choices.keys()) if subcmd not in self.silent_commands]
         self.matches = []
         self.text = None
 
@@ -415,6 +415,9 @@ def logout(args):
         print("Deleting credentials from {}...".format(authserver))
         token = dxpy.AUTH_HELPER.security_context["auth_token"]
         try:
+            if not USING_PYTHON2:
+                # python 3 requires conversion to bytes before hashing
+                token = token.encode(sys_encoding)
             token_sig = hashlib.sha256(token).hexdigest()
             response = dxpy.DXHTTPRequest(authserver + "/system/destroyAuthToken",
                                           dict(tokenSignature=token_sig),
@@ -485,19 +488,20 @@ def pick_and_set_project(args):
         results = []
         for _ in range(10):
             try:
-                results.append(next(result_generator))
-                any_results = True
-            except StopIteration:
-                break
+                retval = next(result_generator, None)
             except:
                 err_exit('Error while listing available projects')
+            if retval is None:
+                break
+            results.append(retval)
+            any_results = True
         if not any_results:
             parser.exit(0, '\n' + fill("No projects to choose from.  You can create one with the command " +
                                        BOLD("dx new project") + ".  To pick from projects for which you only have " +
                                        " VIEW permissions, use " + BOLD("dx select --level VIEW") + " or " +
                                        BOLD("dx select --public") + ".") + '\n')
         elif len(results) == 0:
-            err_exit('No projects left to choose from.', 3, expected_exceptions=StopIteration)
+            err_exit('No projects left to choose from.', 3)
 
         if first_pass:
             if not args.public and args.level == "CONTRIBUTE":
@@ -603,7 +607,7 @@ def env(args):
         print("API server port\t\t" + dxpy.APISERVER_PORT)
         print("Current workspace\t" + str(dxpy.WORKSPACE_ID))
         if "DX_PROJECT_CONTEXT_NAME" in os.environ:
-            print(u'Current workspace name\t"{n}"'.format(n=dxpy.config.get("DX_PROJECT_CONTEXT_NAME")))
+            print('Current workspace name\t"{n}"'.format(n=dxpy.config.get("DX_PROJECT_CONTEXT_NAME")))
         print("Current folder\t\t" + dxpy.config.get("DX_CLI_WD", "None"))
         print("Current user\t\t" + str(os.environ.get("DX_USERNAME")))
 
@@ -617,7 +621,7 @@ def get_pwd():
             except:
                 pass
     if state['currentproj'] is not None:
-        pwd_str = state['currentproj'] + ':' + dxpy.config.get('DX_CLI_WD', u'/')
+        pwd_str = state['currentproj'] + ':' + dxpy.config.get('DX_CLI_WD', '/')
     return pwd_str
 
 def pwd(args):
@@ -892,7 +896,7 @@ def rm(args):
         if entity_results is None:
             if folderpath is not None:
                 if not args.recursive:
-                    print(fill(u'Did not find "' + path + '" as a data object; if it is a folder, cannot remove it without setting the "-r" flag'))
+                    print(fill('Did not find "' + path + '" as a data object; if it is a folder, cannot remove it without setting the "-r" flag'))
                     had_error = True
                     continue
                 else:
@@ -1418,7 +1422,7 @@ def new_record(args):
 
     if args.output is None:
         project = dxpy.WORKSPACE_ID
-        folder = dxpy.config.get('DX_CLI_WD', u'/')
+        folder = dxpy.config.get('DX_CLI_WD', '/')
         name = None
     else:
         project, folder, name = try_call(resolve_path, args.output)
@@ -1445,7 +1449,7 @@ def new_gtable(args):
 
     if args.output is None:
         project = dxpy.WORKSPACE_ID
-        folder = dxpy.config.get('DX_CLI_WD', u'/')
+        folder = dxpy.config.get('DX_CLI_WD', '/')
         name = None
     else:
         project, folder, name = try_call(resolve_path, args.output)
@@ -1930,7 +1934,7 @@ def cat(args):
                 chunk = dxfile.read(1024*1024, project=project or dxpy.DXFile.NO_PROJECT_HINT)
                 if len(chunk) == 0:
                     break
-                sys.stdout.buffer.write(chunk)
+                sys.stdout.write(chunk)
         except:
             err_exit()
 
@@ -2034,7 +2038,7 @@ def upload_one(args):
 
     if args.path is None:
         project = dxpy.WORKSPACE_ID
-        folder = dxpy.config.get('DX_CLI_WD', u'/')
+        folder = dxpy.config.get('DX_CLI_WD', '/')
         name = None if args.filename == '-' else os.path.basename(args.filename)
     else:
         project, folder, name = try_call(resolve_path, args.path)
@@ -2060,7 +2064,7 @@ def upload_one(args):
                 sub_args = copy.copy(args)
                 sub_args.mute = True
                 sub_args.filename = os.path.join(args.filename, f)
-                sub_args.path = u"{p}:{f}/{sf}/".format(p=project, f=folder, sf=os.path.basename(args.filename))
+                sub_args.path = "{p}:{f}/{sf}/".format(p=project, f=folder, sf=os.path.basename(args.filename))
                 sub_args.parents = True
                 upload_one(sub_args)
     else:
@@ -2271,7 +2275,7 @@ def find_executions(args):
             # Short-circuit the find_execution API call(s) if there are
             # no root executions (and therefore we would have gotten 0
             # results anyway)
-            if len(roots.keys()) > 0:
+            if len(list(roots.keys())) > 0:
                 for execution_result in dxpy.find_executions(**query):
                     process_execution_result(execution_result)
 
@@ -2617,7 +2621,7 @@ def build(args):
                 #'--[no]update': args.update,
                 '--region': args.region,
                 '--extra-args': args.extra_args}
-            used_unsupported_options = {k: v for k, v in unsupported_options.items() if v}
+            used_unsupported_options = {k: v for k, v in list(unsupported_options.items()) if v}
             if used_unsupported_options:
                 build_parser.error("Options {} are not supported with workflows"
                                    .format(", ".join(used_unsupported_options)))
@@ -2870,8 +2874,8 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
 def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None):
     input_json = _get_input_for_run(args, executable, preset_inputs)
 
-    if args.sys_reqs_from_clone and not isinstance(args.instance_type, basestring):
-        args.instance_type = dict({stage: reqs['instanceType'] for stage, reqs in args.sys_reqs_from_clone.items()},
+    if args.sys_reqs_from_clone and not isinstance(args.instance_type, str):
+        args.instance_type = dict({stage: reqs['instanceType'] for stage, reqs in list(args.sys_reqs_from_clone.items())},
                                   **(args.instance_type or {}))
 
     if args.debug_on:
@@ -2984,7 +2988,7 @@ def print_run_help(executable="", alias=None):
                     'The global workflow is not enabled in the current region. ' +
                     'Please run "dx select" to set the working project from one of the regions ' +
                     'the workflow is enabled in: {}'.format(
-                       ",".join(exec_desc['regionalOptions'].keys()))
+                       ",".join(list(exec_desc['regionalOptions'].keys())))
                 ))
             exec_desc = handler.append_underlying_workflow_desc(exec_desc, current_region)
 
@@ -3031,7 +3035,7 @@ def print_run_help(executable="", alias=None):
             if len(input_spec) == 0:
                 exec_help += " <none>\n"
             else:
-                for group, params in group_array_by_field(input_spec).items():
+                for group, params in list(group_array_by_field(input_spec).items()):
                     if group is not None:
                         exec_help += "\n " + BOLD(group)
                     for param in params:
@@ -3316,7 +3320,7 @@ def run(args):
         if is_workflow:
             dest_path = getattr(handler, 'outputFolder', None)
         if dest_path is None:
-            dest_path = dxpy.config.get('DX_CLI_WD', u'/')
+            dest_path = dxpy.config.get('DX_CLI_WD', '/')
 
     process_instance_type_arg(args, is_workflow)
     run_body(args, handler, dest_proj, dest_path)
@@ -3352,7 +3356,7 @@ def watch(args):
         else:
             args.format = BLUE("{job_name}") + " {level_color}{level}" + ENDC() + " {msg}"
         if args.timestamps:
-            args.format = u"{timestamp} " + args.format
+            args.format = "{timestamp} " + args.format
 
         def msg_callback(message):
             message['timestamp'] = str(datetime.datetime.fromtimestamp(message.get('timestamp', 0)//1000))
@@ -3630,7 +3634,7 @@ def generate_batch_inputs(args):
 
     eprint("Found {num_success} valid batch IDs matching desired pattern.".format(num_success=len(successful)))
 
-    input_names = input_dict.keys()
+    input_names = list(input_dict.keys())
 
     # Output TSV Batch.  This procedure generates a TSV file with file names and IDs grouped by pattern
     for i,batch in enumerate(batches):
@@ -3638,13 +3642,23 @@ def generate_batch_inputs(args):
             return [b['batchPattern']] + [ival['name'] for iname, ival in sorted(b['inputs'].items())] + [ival['ids'][0] for iname, ival in sorted(b['inputs'].items())]
 
         batch_fname = "{}.{:04d}.tsv".format(args.output_prefix, i)
-        with open(batch_fname, 'wb') as csvfile:
-            batchwriter = csv.writer(csvfile, delimiter='\t'.encode('ascii'))
+
+        # In python-3 we need to open the file in textual mode.
+        if USING_PYTHON2:
+            write_mode = 'wb'
+            delimiter = '\t'.encode('ascii')
+        else:
+            write_mode = 'w'
+            delimiter = '\t'
+
+        with open(batch_fname, write_mode) as csvfile:
+            batchwriter = csv.writer(csvfile, delimiter=delimiter)
             # Write headers of TSV
-            batchwriter.writerow(['batch ID'] + [iname for iname in sorted(input_names)] + [iname+" ID" for iname in sorted(input_names)]  )
+            headers = ['batch ID'] + [iname for iname in sorted(input_names)] + [iname+" ID" for iname in sorted(input_names)]
+            batchwriter.writerow(headers)
             for bi in batch:
                 batchwriter.writerow(flatten_batch(bi))
-            eprint("Created batch file {}".format(batch_fname))
+        eprint("Created batch file {}".format(batch_fname))
 
 
     eprint("")
@@ -3655,7 +3669,7 @@ def generate_batch_inputs(args):
             eprint("    Mismatched set of input names.")
             eprint("        Required input names: {required}".format(required=", ".join(input_names)))
             eprint("        Matched input names: {matched}".format(matched=", ".join(input_names_i)))
-        for input_name, matches in bi['inputs'].items():
+        for input_name, matches in list(bi['inputs'].items()):
             if len(matches['ids']) > 1:
                 eprint("Input {iname} is associated with a file name that matches multiple IDs:".format(iname=input_name))
                 eprint("    {fname} => {ids}".format(fname=matches['name'], ids=", ".join(matches['ids'])))
@@ -5505,11 +5519,17 @@ parser_categories['all']['cmds'].sort()
 def main():
     # Bash argument completer hook
     if '_ARGCOMPLETE' in os.environ:
-        from ..packages import argcomplete
+        import argcomplete
+
+        # In python-3 we need to use a binary output stream
+        if USING_PYTHON2:
+            output_stream = sys.stdout
+        else:
+            output_stream = sys.stdout.buffer
         argcomplete.autocomplete(parser,
                                  always_complete_options=False,
                                  exclude=['gtable', 'export'],
-                                 output_stream=sys.stdout if '_DX_ARC_DEBUG' in os.environ else None)
+                                 output_stream=output_stream if '_DX_ARC_DEBUG' in os.environ else None)
 
     if len(args_list) > 0:
         args = parser.parse_args(args_list)

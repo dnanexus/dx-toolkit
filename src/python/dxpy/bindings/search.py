@@ -96,7 +96,7 @@ def _find(api_method, query, limit, return_handler, first_page_size, **kwargs):
 
         for i in resp["results"]:
             if num_results == limit:
-                raise StopIteration()
+                return
             num_results += 1
             yield format_result(i)
 
@@ -105,7 +105,7 @@ def _find(api_method, query, limit, return_handler, first_page_size, **kwargs):
             query["starting"] = resp["next"]
             query["limit"] = min(query["limit"]*2, 1000)
         else:
-            raise StopIteration()
+            return
 
 def find_data_objects(classname=None, state=None, visibility=None,
                       name=None, name_mode='exact', properties=None,
@@ -663,19 +663,16 @@ def find_global_workflows(name=None, name_mode='exact', category=None,
 def _find_one(method, zero_ok=False, more_ok=True, **kwargs):
     kwargs["limit"] = 1 if more_ok else 2
     response = method(**kwargs)
-    try:
-        result = next(response)
-        if not more_ok:
-            try:
-                next(response)
-                raise DXSearchError("Expected one result, but found more: "+str(kwargs))
-            except StopIteration:
-                pass
-    except StopIteration:
+    result = next(response, None)
+    if result is None:
         if zero_ok:
             return None
         else:
             raise DXSearchError("Expected one result, but found none: "+str(kwargs))
+    if not more_ok:
+        result2 = next(response, None)
+        if result2 is not None:
+            raise DXSearchError("Expected one result, but found more: "+str(kwargs))
     return result
 
 

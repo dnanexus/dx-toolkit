@@ -14,7 +14,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [267.0] - 2018.10.18 stable
 
-### Added 
+### Added
 
 * Add release/distro to example app `dxapp.json` files
 
@@ -40,7 +40,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `cat` argument too long in a bash script
 * Ensure we can pop items from the main dictionary (python3)
 
-### Changed 
+### Changed
 
 * Warn user before `dx rm -r` on root of a project
 * Let `urllib3` set default CA bundle on Windows
@@ -73,7 +73,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Sort inputs in `dx generate_batch_inputs`
 
-## [262.0] - 2018.08.30 
+## [262.0] - 2018.08.30
 
 ### Removed
 
@@ -89,7 +89,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Windows installation
 
-## [261.0] 
+## [261.0]
 
 ### Added
 
@@ -102,7 +102,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * dxWDL version 0.74
 
-## [259.0] - 2018.08.09 
+## [259.0] - 2018.08.09
 
 ### Added
 
@@ -114,7 +114,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx wait` where a file with object IDs is provided in path
 * `dx compile` for debian install dxWDL.jar filepath
 
-## [258.1] - 2018.08.06 
+## [258.1] - 2018.08.06
 
 ### Added
 
@@ -191,7 +191,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* "Deleted" field to `dx describe globalworkflow-xxxx` 
+* "Deleted" field to `dx describe globalworkflow-xxxx`
 * a note to `dx describe` that the workflow is locked
 
 ## [252.0] - 2018.04.26
@@ -226,11 +226,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [250.0]
 
-### Added 
+### Added
 
 *  Support for `dx describe` for global workflows
 
-## [249.0] -2018.04.05 
+## [249.0] -2018.04.05
 
 ### Added
 
@@ -308,7 +308,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Recursive search for asset in a path is disabled, and we strictly enforce only one matching asset name
 
-## [242.0] - 2018.01.25 
+## [242.0] - 2018.01.25
 
 ### Changed
 
@@ -376,7 +376,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * dx-clone-asset script
-* `dx-docker`: ignore user argument if given 
+* `dx-docker`: ignore user argument if given
 * TLS documentation
 
 ### Changed
@@ -403,7 +403,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* Azure instance types to the list of available types in `dx-app-wizard` 
+* Azure instance types to the list of available types in `dx-app-wizard`
 * ua -- test now displays system messages coming from the apiserver.
 
 ### Changed
@@ -427,7 +427,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Execution of old workflows built without explicit IO
 
-## [231.0] - 2017.08.24 
+## [231.0] - 2017.08.24
 
 ### Added
 
@@ -435,7 +435,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Removed
 
-* Deprecated `dx-mount` 
+* Deprecated `dx-mount`
 
 ## [230.0] - 2017.08.17
 
@@ -542,7 +542,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Changed
 
-* `dx ls -l` and friends now request only needed describe fields 
+* `dx ls -l` and friends now request only needed describe fields
 
 ## [219.0] - 2017-04-28
 
@@ -564,9 +564,9 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * `dx get workflow-xxxx` creates a local representation of a workflow
 
-## [217.0] - 2017-04-13 
+## [217.0] - 2017-04-13
 
-No significant changes. 
+No significant changes.
 
 ## [216.1] - 2017-04-06
 
@@ -590,7 +590,7 @@ No significant changes.
 
 ### Fixed
 
-* missing pyasn1 module for OSX list of install dependencies; gets rid of import warning messages 
+* missing pyasn1 module for OSX list of install dependencies; gets rid of import warning messages
 
 ## [214.0]
 
@@ -638,14 +638,14 @@ No significant changes.
 
 No significant changes.
 
-## [210.0] - 2017-02-16 
+## [210.0] - 2017-02-16
 
 ### Fixed
 
 * Fix `dx get` untar issue with leading /
 * Missing `dx-verify-file` and `jq` dependencies on Windows
 
-## [209.0] - 2017-02-09 
+## [209.0] - 2017-02-09
 
 ### Added
 
@@ -654,7 +654,7 @@ No significant changes.
 
 ### Fixed
 
-* Environment file so that `source environment` works properly on RHEL7 
+* Environment file so that `source environment` works properly on RHEL7
 * Modified `dx-docker` so that `--rm` passes through gracefully
 * Modified `dx-docker` so that the `HOME` environment variable defaults to `/root`
 

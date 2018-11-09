@@ -38,6 +38,8 @@ from dxpy.utils import pretty_print, warn, Nonce
 from dxpy.utils.resolver import resolve_path, resolve_existing_path, ResolutionError, is_project_explicit
 import dxpy.app_builder as app_builder
 
+from dxpy.compat import USING_PYTHON2
+
 def get_objects_from_listf(listf):
     objects = []
     for result in listf["objects"]:
@@ -113,7 +115,7 @@ class TestDXProject(unittest.TestCase):
 
         dxproject.invite(user_id, 'VIEW', send_email=False)
         res = dxpy.api.project_describe(dxproject.get_id(), {'fields': {'permissions': True}})['permissions']
-        self.assertEquals(res[user_id], 'VIEW')
+        self.assertEqual(res[user_id], 'VIEW')
 
     def test_new(self):
         dxproject = dxpy.DXProject()
@@ -342,11 +344,11 @@ class TestDXFileFunctions(unittest.TestCase):
         else:
             env = dict(os.environ, DX_JOB_ID=b'job-00000000000000000000')
         buffer_size = subprocess.check_output(
-            'python -c "import dxpy; print dxpy.bindings.dxfile.DEFAULT_BUFFER_SIZE"', shell=True, env=env)
+            'python -c "import dxpy; print(dxpy.bindings.dxfile.DEFAULT_BUFFER_SIZE)"', shell=True, env=env)
         self.assertEqual(int(buffer_size), 96 * 1024 * 1024)
         del env['DX_JOB_ID']
         buffer_size = subprocess.check_output(
-            'python -c "import dxpy; print dxpy.bindings.dxfile.DEFAULT_BUFFER_SIZE"', shell=True, env=env)
+            'python -c "import dxpy; print(dxpy.bindings.dxfile.DEFAULT_BUFFER_SIZE)"', shell=True, env=env)
         self.assertEqual(int(buffer_size), 16 * 1024 * 1024)
 
     def test_generate_read_requests(self):
@@ -374,12 +376,16 @@ class TestDXFile(unittest.TestCase):
     created and are destroyed after the test, no matter if it fails.
     '''
 
-    foo_str = "foo\n"
-
     @classmethod
     def setUpClass(cls):
+        cls.foo_str = "foo\n"
         cls.foo_file = tempfile.NamedTemporaryFile(delete=False)
-        cls.foo_file.write(cls.foo_str)
+        if USING_PYTHON2:
+            bt = cls.foo_str
+        else:
+            # python-3 requires converting from string to bytes
+            bt = cls.foo_str.encode("utf-8")
+        cls.foo_file.write(bt)
         cls.foo_file.close()
 
     @classmethod
@@ -537,7 +543,10 @@ class TestDXFile(unittest.TestCase):
 
             same_dxfile.seek(0, 2)
             buf = same_dxfile.read()
-            self.assertEqual(b"", buf)
+            if USING_PYTHON2:
+                self.assertEqual(b"", buf)
+            else:
+                self.assertEqual("", buf)
 
             same_dxfile.seek(-1, 2)
             buf = same_dxfile.read()
@@ -632,7 +641,10 @@ class TestDXFile(unittest.TestCase):
                 fh.seek(cptr)
                 read_after_seek = fh.read(2 ** 16)
                 self.assertEqual(next_read, read_after_seek)
-                self.assertEqual(next_read, data[first_read_length:first_read_length + 2 ** 16].encode('utf-8'))
+                if USING_PYTHON2:
+                    self.assertEqual(next_read, data[first_read_length:first_read_length + 2 ** 16].encode('utf-8'))
+                else:
+                    self.assertEqual(next_read, data[first_read_length:first_read_length + 2 ** 16])
         finally:
             dxpy.set_job_id(previous_job_id)
 
@@ -730,8 +742,8 @@ class TestDXFile(unittest.TestCase):
 
         # Check file was split up into parts appropriately
         parts = myfile.describe(fields={"parts": True})['parts']
-        self.assertEquals(parts['1']['size'], 5242880)
-        self.assertEquals(parts['2']['size'], 2952504)
+        self.assertEqual(parts['1']['size'], 5242880)
+        self.assertEqual(parts['2']['size'], 2952504)
 
     def test_download_in_job_env(self):
         os.environ['DX_JOB_ID'] = "fake_job_id"
@@ -783,6 +795,10 @@ class TestFolder(unittest.TestCase):
         os.remove(self.temp_file_path)
         tearDownTempProjects(self)
 
+    def read_entire_file(self, filename):
+        with open(filename, "r") as fd:
+            return fd.read()
+
     def test_download_folder(self):
         dxproject = dxpy.DXProject(self.proj_id)
 
@@ -805,7 +821,7 @@ class TestFolder(unittest.TestCase):
             path.append(f)
             filename = os.path.join(os.path.join(*path), "file_{}.txt".format(i + 1))
             self.assertTrue(os.path.isfile(filename))
-            self.assertEquals("{}-th\n file\n content\n".format(i + 1), open(filename, "r").read())
+            self.assertEqual("{}-th\n file\n content\n".format(i + 1), self.read_entire_file(filename))
         self.assertTrue(os.path.isdir(os.path.join(root_dest_dir, "a", "e", "f", "g")))
         self.assertTrue(os.path.isdir(os.path.join(root_dest_dir, "h", "i", "j", "k")))
 
@@ -817,7 +833,7 @@ class TestFolder(unittest.TestCase):
             path.append(f)
             filename = os.path.join(os.path.join(*path), "file_{}.txt".format(i + 2))
             self.assertTrue(os.path.isfile(filename))
-            self.assertEquals("{}-th\n file\n content\n".format(i + 2), open(filename, "r").read())
+            self.assertEqual("{}-th\n file\n content\n".format(i + 2), self.read_entire_file(filename))
 
         # Checking 2-nd level subdirectory download
         ag = os.path.join(self.temp_dir, "b")
@@ -827,7 +843,7 @@ class TestFolder(unittest.TestCase):
             path.append(f)
             filename = os.path.join(os.path.join(*path), "file_{}.txt".format(i + 3))
             self.assertTrue(os.path.isfile(filename))
-            self.assertEquals("{}-th\n file\n content\n".format(i + 3), open(filename, "r").read())
+            self.assertEqual("{}-th\n file\n content\n".format(i + 3), self.read_entire_file(filename))
 
         # Checking download to existing structure
         dxpy.download_folder(self.proj_id, a_dest_dir, folder="/a", overwrite=True)
@@ -836,7 +852,7 @@ class TestFolder(unittest.TestCase):
             path.append(f)
             filename = os.path.join(os.path.join(*path), "file_{}.txt".format(i + 2))
             self.assertTrue(os.path.isfile(filename))
-            self.assertEquals("{}-th\n file\n content\n".format(i + 2), open(filename, "r").read())
+            self.assertEqual("{}-th\n file\n content\n".format(i + 2), self.read_entire_file(filename))
 
         # Checking download to existing structure fails w/o overwrite flag
         with self.assertRaises(DXFileError):
@@ -876,7 +892,7 @@ class TestFolder(unittest.TestCase):
             dxpy.download_folder(self.proj_id, os.path.join(self.temp_dir, "foobar"), folder="a/b")
 
 
-class TestDXRecord(unittest.TestCase):
+class TestDXRecord(testutil.DXTestCaseCompat):
     """
     Most of these tests really are testing DXDataObject methods
     while using DXRecords as the most basic data object.
@@ -905,9 +921,9 @@ class TestDXRecord(unittest.TestCase):
         firstID = firstDXRecord.get_id()
         # test if firstDXRecord._dxid has been set to a valid ID
         try:
-            self.assertRegexpMatches(firstDXRecord.get_id(), "^record-[0-9A-Za-z]{24}",
-                                     'Object ID not of expected form: ' + \
-                                         firstDXRecord.get_id())
+            self.assertRegex(firstDXRecord.get_id(), "^record-[0-9A-Za-z]{24}",
+                             'Object ID not of expected form: ' + \
+                             firstDXRecord.get_id())
         except AttributeError:
             self.fail("dxID was not stored in DXRecord creation")
         # test if firstDXRecord._proj has been set to proj_id
@@ -929,9 +945,9 @@ class TestDXRecord(unittest.TestCase):
         self.assertNotEqual(firstDXRecord.get_id(), secondDXRecord.get_id())
         # test if secondDXRecord._dxid has been set to a valid ID
         try:
-            self.assertRegexpMatches(secondDXRecord.get_id(), "^record-[0-9A-Za-z]{24}",
-                                     'Object ID not of expected form: ' + \
-                                         secondDXRecord.get_id())
+            self.assertRegex(secondDXRecord.get_id(), "^record-[0-9A-Za-z]{24}",
+                             'Object ID not of expected form: ' + \
+                             secondDXRecord.get_id())
         except AttributeError:
             self.fail("dxID was not stored in DXRecord creation")
         # test if secondDXRecord._proj has been set to second_proj_id
@@ -1277,7 +1293,7 @@ def main():
 
         dxjob.terminate()
 
-class TestDXWorkflow(unittest.TestCase):
+class TestDXWorkflow(testutil.DXTestCaseCompat):
     default_inst_type = "mem2_hdd2_x2"
     codeSpec = '''
 @dxpy.entry_point('main')
@@ -1378,7 +1394,7 @@ def main(number):
         # run closed workflow (the workflow has inputs so input values
         # can only be passed via workflow-level input (can't be passed to stage-level inputs))
         dxworkflow.close()
-        self.assertRaisesRegexp(DXError, 'is private and cannot be overridden',
+        self.assertRaisesRegex(DXError, 'is private and cannot be overridden',
                                 dxworkflow.run, {'stage_0.number': 1})
         dxanalysis = dxworkflow.run({'foo': 202})
         dxanalysis.terminate()
@@ -1514,10 +1530,10 @@ def main(number):
 
         # Can't specify the same input more than once (with a
         # stage-specific syntax)
-        self.assertRaisesRegexp(DXError, 'more than once',
+        self.assertRaisesRegex(DXError, 'more than once',
                                 dxworkflow.run, {"0.number": 32, "stagename.number": 42})
         # Bad stage name
-        self.assertRaisesRegexp(DXError, 'could not be found as a stage ID nor as a stage name',
+        self.assertRaisesRegex(DXError, 'could not be found as a stage ID nor as a stage name',
                                 dxworkflow.run, {"nonexistentstage.number": 32})
 
     def test_new_dxworkflow(self):
@@ -1653,8 +1669,8 @@ def main(number):
 
         # Removing stage by name doesn't work when there's more than
         # one of that name
-        self.assertRaisesRegexp(DXError, 'more than one workflow stage was found',
-                                dxworkflow.remove_stage, "stagename")
+        self.assertRaisesRegex(DXError, 'more than one workflow stage was found',
+                                     dxworkflow.remove_stage, "stagename")
 
         removed_stage = dxworkflow.remove_stage(0)
         self.assertEqual(removed_stage, first_stage)
@@ -2053,12 +2069,15 @@ class TestDXGlobalWorkflow(testutil.DXTestCaseBuildWorkflows):
         self.assertEqual(gwf_name, results[0]['describe']["name"])
 
 
-class TestDXSearch(unittest.TestCase):
+class TestDXSearch(testutil.DXTestCaseCompat):
     def setUp(self):
         setUpTempProjects(self)
 
     def tearDown(self):
         tearDownTempProjects(self)
+
+    def assertItemsEqual(self, a, b):
+        self.assertEqual(sorted(a), sorted(b))
 
     def test_resolve_data_objects(self):
         # If the project is provided for an object, then it will be used instead of
@@ -2358,7 +2377,7 @@ class TestWarn(unittest.TestCase):
         warn("testing, one two three...")
 
 
-class TestHTTPResponses(unittest.TestCase):
+class TestHTTPResponses(testutil.DXTestCaseCompat):
     def test_content_type_no_sniff(self):
         resp = dxpy.api.system_find_projects({'limit': 1}, want_full_response=True)
         self.assertEqual(resp.headers['x-content-type-options'], 'nosniff')
@@ -2439,9 +2458,9 @@ class TestHTTPResponses(unittest.TestCase):
         with self.assertRaises(TypeError):
             dxpy.DXHTTPRequest("/system/whoami", {}, cert="nonexistent")
         if dxpy.APISERVER_PROTOCOL == "https":
-            with self.assertRaisesRegexp((TypeError,SSLError, OpenSSL.SSL.Error), "file|string"):
+            with self.assertRaisesRegex((TypeError,SSLError, OpenSSL.SSL.Error), "file|string"):
                 dxpy.DXHTTPRequest("/system/whoami", {}, verify="nonexistent")
-            with self.assertRaisesRegexp((SSLError, IOError, OpenSSL.SSL.Error), "file"):
+            with self.assertRaisesRegex((SSLError, IOError, OpenSSL.SSL.Error), "file"):
                 dxpy.DXHTTPRequest("/system/whoami", {}, cert_file="nonexistent")
 
     def test_fake_errors(self):
@@ -2589,7 +2608,7 @@ class TestDataobjectFunctions(unittest.TestCase):
         desc = dxpy.describe(ids)
 
         self.assertEqual(len(ids), len(desc))
-        for i in xrange(len(desc)):
+        for i in list(range(len(desc))):
             self.assertEqual(desc[i]["project"], self.proj_id)
             self.assertEqual(desc[i]["id"], ids[i])
             self.assertEqual(desc[i]["class"], types[i])
@@ -2606,7 +2625,7 @@ class TestDataobjectFunctions(unittest.TestCase):
 
         desc_with_fields = dxpy.describe(ids, fields={'properties', 'class', 'details'})
         self.assertEqual(len(ids), len(desc_with_fields))
-        for i in xrange(len(desc_with_fields)):
+        for i in list(range(len(desc_with_fields))):
             self.assertEqual(desc_with_fields[i]["id"], ids[i])
             self.assertEqual(desc_with_fields[i]["class"], types[i])
             self.assertIn("properties", desc_with_fields[i])
@@ -2636,7 +2655,7 @@ class TestResolver(testutil.DXTestCase):
         with testutil.temporary_project(name=temp_proj_name) as p:
             self.assertEqual(resolve_path(""),
                              (self.project, "/a", None))
-            with self.assertRaisesRegexp(ResolutionError, "expected the path to be a non-empty string"):
+            with self.assertRaisesRegex(ResolutionError, "expected the path to be a non-empty string"):
                 resolve_path("", allow_empty_string=False)
             self.assertEqual(resolve_path(":"),
                              (self.project, "/", None))
@@ -2651,7 +2670,7 @@ class TestResolver(testutil.DXTestCase):
             self.assertEqual(resolve_path("job-111111111111111111111111"),
                              (self.project, None, "job-111111111111111111111111"))
 
-            with self.assertRaisesRegexp(ResolutionError, 'foo'):
+            with self.assertRaisesRegex(ResolutionError, 'foo'):
                 resolve_path("project-012301230123012301230123:foo:bar")
             with self.assertRaises(ResolutionError):
                 resolve_path(not_a_project_name + ":")
@@ -2720,23 +2739,23 @@ class TestResolver(testutil.DXTestCase):
 
             # --- test some behavior when workspace is not set ---
             dxpy.WORKSPACE_ID = None
-            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
                 resolve_path("")
-            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
                 resolve_path(":")
-            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
                 resolve_path(":foo")
-            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
                 resolve_path("foo", expected="folder")
             self.assertEqual(resolve_path(temp_proj_name + ":"),
                              (p.get_id(), "/", None))
-            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
                 resolve_path("foo")
-            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
                 resolve_path("../foo")
-            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
                 resolve_path("../../foo")
-            with self.assertRaisesRegexp(ResolutionError, need_project_context_to_resolve):
+            with self.assertRaisesRegex(ResolutionError, need_project_context_to_resolve):
                 resolve_path("/foo/bar")
 
             self.assertEqual(resolve_path("file-111111111111111111111111"),
@@ -2782,11 +2801,11 @@ class TestResolver(testutil.DXTestCase):
             # prompt
 
     def test_resolve_existing_path(self):
-        self.assertEquals(resolve_existing_path(''),
-                          (dxpy.WORKSPACE_ID, "/", None))
+        self.assertEqual(resolve_existing_path(''),
+                         (dxpy.WORKSPACE_ID, "/", None))
         with self.assertRaises(ResolutionError):
             resolve_existing_path('', allow_empty_string=False)
-        self.assertEquals(resolve_existing_path(':'),
+        self.assertEqual(resolve_existing_path(':'),
                           (dxpy.WORKSPACE_ID, "/", None))
 
         dxpy.WORKSPACE_ID = None
@@ -2878,6 +2897,10 @@ class TestIdempotentRequests(unittest.TestCase):
 
     def tearDown(self):
         tearDownTempProjects(self)
+
+    # method removed in python3
+    def assertItemsEqual(self, a, b):
+        self.assertEqual(sorted(a), sorted(b))
 
     code = '''@dxpy.entry_point('main')\ndef main():\n    pass'''
     run_spec = {"code": code, "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04"}

@@ -116,9 +116,13 @@ def response_iterator(request_iterator, thread_pool, max_active_tasks=None, do_f
 
     # The following two functions facilitate GC by not adding extra variables to the enclosing scope.
     def submit_task(task_iterator, executor, futures_queue):
-        task_callable, task_args, task_kwargs = next(task_iterator)
+        retval  = next(task_iterator, None)
+        if retval is None:
+            return False
+        task_callable, task_args, task_kwargs = retval
         task_future = executor.submit(task_callable, *task_args, **task_kwargs)
         futures_queue.append(task_future)
+        return True
 
     def next_result(tasks_in_progress):
         future = tasks_in_progress.popleft()
@@ -134,19 +138,13 @@ def response_iterator(request_iterator, thread_pool, max_active_tasks=None, do_f
         yield task_callable(*task_args, **task_kwargs)
 
     for _i in range(max_active_tasks):
-        try:
-            submit_task(request_iterator, thread_pool, tasks_in_progress)
-        except StopIteration:
+        retval = submit_task(request_iterator, thread_pool, tasks_in_progress)
+        if not retval:
             break
 
     while len(tasks_in_progress) > 0:
         result = next_result(tasks_in_progress)
-
-        try:
-            submit_task(request_iterator, thread_pool, tasks_in_progress)
-        except StopIteration:
-            pass
-
+        submit_task(request_iterator, thread_pool, tasks_in_progress)
         yield result
         del result
 
