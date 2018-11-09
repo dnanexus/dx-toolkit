@@ -896,7 +896,7 @@ class TestDXClient(DXTestCase):
                 sleep_applet = dxpy.api.applet_new(dict(name="sleep",
                                                         runSpec={"code": "sleep 1200",
                                                                  "interpreter": "bash",
-                                                                 "distribution": "Ubuntu", "release": "12.04",
+                                                                 "distribution": "Ubuntu", "release": "14.04",
                                                                  "execDepends": [{"name": "dx-toolkit"}],
                                                                  "systemRequirements": {"*": {"instanceType": instance_type}}},
                                                         inputSpec=[], outputSpec=[],
