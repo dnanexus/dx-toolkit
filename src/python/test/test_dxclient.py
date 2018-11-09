@@ -913,7 +913,13 @@ class TestDXClient(DXTestCase):
                 dx.expect("This is the DNAnexus Execution Environment", timeout=600)
                 # Check for job name (e.g. "Job: sleep")
                 #dx.expect("Job: \x1b\[1msleep", timeout=5)
-                dx.expect("Project: dxclient_test_pröject")
+                if USING_PYTHON2:
+                    # \xf6 is ö
+                    project_line = "Project: dxclient_test_pr\xf6ject".encode(sys_encoding)
+                else:
+                    project_line = "Project: dxclient_test_pröject"
+                dx.expect(project_line)
+
                 dx.expect("The job is running in terminal 1.", timeout=5)
                 # Check for terminal prompt and verify we're in the container
                 job = next(dxpy.find_jobs(name="sleep", project=project), None)
