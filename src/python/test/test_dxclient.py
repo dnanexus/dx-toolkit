@@ -913,16 +913,18 @@ class TestDXClient(DXTestCase):
                 dx.expect("This is the DNAnexus Execution Environment", timeout=600)
                 # Check for job name (e.g. "Job: sleep")
                 #dx.expect("Job: \x1b\[1msleep", timeout=5)
-                # \xf6 is ö
-                dx.expect("Project: dxclient_test_pr\xf6ject".encode(sys_encoding))
+                dx.expect("Project: dxclient_test_pröject")
                 dx.expect("The job is running in terminal 1.", timeout=5)
                 # Check for terminal prompt and verify we're in the container
-                job_id = dxpy.find_jobs(name="sleep", project=project).next()['id']
+                job = next(dxpy.find_jobs(name="sleep", project=project), None)
+                job_id = job['id']
+                dx.expect("OS version: Ubuntu 14.04", timeout=5)
+
+                # This doesn't work, because the shell color codes the text, and that
+                # results in characters that are NOT plain ascii.
+                #
                 # Expect the shell prompt - for example: dnanexus@job-xxxx:~⟫
-                # NOTE: \u27EB is ⟫
-                #dx.expect((job_id), timeout=10)
-                #dx.expect(u'\u27EB'.encode(sys_encoding), timeout=10, searchwindowsize=7000)
-                dx.expect(("dnanexus@%s" % job_id), timeout=10)
+                #dx.expect(("dnanexus@%s" % job_id), timeout=30)
 
                 expected_history_filename = os.path.join(
                         os.environ.get("DX_USER_CONF_DIR", os.path.join(wd, ".dnanexus_config")), ".dx_history")
