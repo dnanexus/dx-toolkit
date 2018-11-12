@@ -436,12 +436,21 @@
         }
     ],
     [
+        "/database-xxxx/close",
+        "databaseClose(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Data-Object-Lifecycle#API-method%3A-%2Fclass-xxxx%2Fclose"
+        }
+    ],
+    [
         "/database-xxxx/describe",
         "databaseDescribe(req, objectId)",
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": ""
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Fdescribe"
         }
     ],
     [
@@ -468,7 +477,7 @@
         {
             "objectMethod": true,
             "retryable": false,
-            "wikiLink": ""
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Frelocate"
         }
     ],
     [
@@ -1509,7 +1518,7 @@
         {
             "objectMethod": false,
             "retryable": true,
-            "wikiLink": ""
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindDatabases"
         }
     ],
     [
