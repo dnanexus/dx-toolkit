@@ -11,10 +11,21 @@
 !define ARCH_TAG "[[arch_tag]]"
 !define INSTALLER_NAME "[[ib.installer_name]]"
 !define PRODUCT_ICON "[[icon]]"
+
+; Marker file to tell the uninstaller that it's a user installation
+!define USER_INSTALL_MARKER _user_install_marker
  
 SetCompressor lzma
 
-RequestExecutionLevel admin
+!define MULTIUSER_EXECUTIONLEVEL Highest
+!define MULTIUSER_INSTALLMODE_DEFAULT_CURRENTUSER
+!define MULTIUSER_MUI
+!define MULTIUSER_INSTALLMODE_COMMANDLINE
+!define MULTIUSER_INSTALLMODE_INSTDIR "[[ib.appname]]"
+[% if ib.py_bitness == 64 %]
+!define MULTIUSER_INSTALLMODE_FUNCTION correct_prog_files
+[% endif %]
+!include MultiUser.nsh
 
 [% block modernui %]
 ; Modern UI installer stuff 
@@ -22,10 +33,12 @@ RequestExecutionLevel admin
 !define MUI_ABORTWARNING
 ;!define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\modern-install.ico"
 !define MUI_ICON "[[icon]]"
+!define MUI_UNICON "[[icon]]"
 
 ; UI pages
 [% block ui_pages %]
 !insertmacro MUI_PAGE_WELCOME
+!insertmacro MULTIUSER_PAGE_INSTALLMODE
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
@@ -35,7 +48,7 @@ RequestExecutionLevel admin
 
 Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 OutFile "${INSTALLER_NAME}"
-InstallDir "$PROGRAMFILES${BITNESS}\${PRODUCT_NAME}"
+;InstallDir "$PROGRAMFILES${BITNESS}\${PRODUCT_NAME}"
 ShowInstDetails show
 
 Section -SETTINGS
@@ -87,10 +100,6 @@ Section "!${PRODUCT_NAME}" sec_app
   [% endif %]
   SetOutPath "$INSTDIR"
   [% endblock install_shortcuts %]
-  
-  ; Byte-compile Python files.
-  DetailPrint "Byte-compiling Python modules..."
-  nsExec::ExecToLog '[[ python ]] -m compileall -q "$INSTDIR\pkgs"'
 
   ; Set PYTHONPATH to the dir containing the installed dxpy wheel.
   ;MessageBox MB_OK 'PYTHONPATH is "$INSTDIR\share\dnanexus\lib\python2.7\site-packages"'
@@ -121,6 +130,13 @@ Section "!${PRODUCT_NAME}" sec_app
     MessageBox MB_OK 'ExecWait returned "$0"'
   done:
 
+  ; Byte-compile Python files.
+  DetailPrint "Byte-compiling Python modules..."
+  nsExec::ExecToLog '[[ python ]] -m compileall -q "$INSTDIR\pkgs"'
+
+  ; Byte-compile Python files.
+  DetailPrint "Byte-compiling Python modules..."
+  nsExec::ExecToLog '[[ python ]] -m compileall -q "$INSTDIR\pkgs"'
   WriteUninstaller $INSTDIR\uninstall.exe
   ; Add ourselves to Add/remove programs
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" \
@@ -131,8 +147,12 @@ Section "!${PRODUCT_NAME}" sec_app
                    "InstallLocation" "$INSTDIR"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" \
                    "DisplayIcon" "$INSTDIR\${PRODUCT_ICON}"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" \
-                   "Publisher" "${COMPANYNAME}"
+  [% if ib.publisher is not none %]
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" \
+                     "Publisher" "${COMPANYNAME}"
+  [% endif %]
+  WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" \
+                   "DisplayVersion" "${PRODUCT_VERSION}"
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" \
                    "NoModify" 1
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" \
@@ -152,11 +172,24 @@ Section "Uninstall"
   DetailPrint "Uninstalling bin dir..."
   RMDir /r "$INSTDIR\bin"
 
+  SetRegView [[ib.py_bitness]]
   SetShellVarContext all
+  IfFileExists "$INSTDIR\${USER_INSTALL_MARKER}" 0 +3
+    SetShellVarContext current
+    Delete "$INSTDIR\${USER_INSTALL_MARKER}"
+
+  ; Remove ourselves from %PATH%
+  [% block uninstall_commands %]
+  [% if has_commands %]
+    nsExec::ExecToLog '[[ python ]] -Es "$INSTDIR\_system_path.py" remove "$INSTDIR\bin"'
+  [% endif %]
+  [% endblock uninstall_commands %]
+
   Delete $INSTDIR\uninstall.exe
   Delete "$INSTDIR\${PRODUCT_ICON}"
   RMDir /r "$INSTDIR\pkgs"
   RMDir /r "$INSTDIR\wheelfiles"
+  [% block uninstall_files %]
   ; Uninstall files
   [% for file, destination in ib.install_files %]
     Delete "[[pjoin(destination, file)]]"
@@ -165,6 +198,8 @@ Section "Uninstall"
   [% for dir, destination in ib.install_dirs %]
     RMDir /r "[[pjoin(destination, dir)]]"
   [% endfor %]
+  [% endblock uninstall_files %]
+
   [% block uninstall_shortcuts %]
   ; Uninstall shortcuts
   [% if single_shortcut %]
@@ -194,3 +229,20 @@ Function .onMouseOverSection
     
     [% endblock mouseover_messages %]
 FunctionEnd
+
+Function .onInit
+  !insertmacro MULTIUSER_INIT
+FunctionEnd
+
+Function un.onInit
+  !insertmacro MULTIUSER_UNINIT
+FunctionEnd
+
+[% if ib.py_bitness == 64 %]
+Function correct_prog_files
+  ; The multiuser machinery doesn't know about the different Program files
+  ; folder for 64-bit applications. Override the install dir it set.
+  StrCmp $MultiUser.InstallMode AllUsers 0 +2
+    StrCpy $INSTDIR "$PROGRAMFILES64\${MULTIUSER_INSTALLMODE_INSTDIR}"
+FunctionEnd
+[% endif %]
