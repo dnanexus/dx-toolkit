@@ -28,7 +28,7 @@ icon=dnanexus.ico
 [Python]
 version=3.7.1
 bitness=64
-format=installer
+#format=installer
 
 [Build]
 nsi_template=pyapp_installpy_dnanexus.nsi
