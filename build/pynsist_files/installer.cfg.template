@@ -32,6 +32,7 @@ bitness=64
 
 ;[Build]
 ;nsi_template=pyapp_installpy_dnanexus.nsi
+nsi_template=pyapp_dnanexus.nsi
 
 [Include]
 # Importable packages that your application requires, one per line
