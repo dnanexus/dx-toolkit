@@ -53,8 +53,6 @@ nsi_template=pyapp_dnanexus.nsi
 # and requirements_windows.txt:
 files = dnanexus-shell.ps1
     cli-quickstart.url
-    TEMPLATE_STRING_DXPY_WHEEL_FILENAME > $INSTDIR\\wheelfiles
-    wheelfile_depends
     ../../bin/dx-verify-file.exe > $INSTDIR\\bin
     ../../bin/jq.exe > $INSTDIR\\bin
     DLL_DEPS_FOLDERlibboost_atomic-mt.dll > $INSTDIR\\bin
@@ -77,3 +75,7 @@ files = dnanexus-shell.ps1
     DLL_DEPS_FOLDERmagic.mgc > $INSTDIR\\bin
     DLL_DEPS_FOLDERssleay32.dll > $INSTDIR\\bin
     DLL_DEPS_FOLDERzlib1.dll > $INSTDIR\\bin
+#    TEMPLATE_STRING_DXPY_WHEEL_FILENAME > $INSTDIR\\wheelfiles
+#    wheelfile_depends
+
+local_wheels = wheelfile_depends/*.whl
