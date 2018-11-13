@@ -30,9 +30,9 @@ version=3.7.1
 bitness=64
 #format=installer
 
-;[Build]
-;nsi_template=pyapp_installpy_dnanexus.nsi
-nsi_template=pyapp_dnanexus.nsi
+[Build]
+#nsi_template=pyapp_installpy_dnanexus.nsi
+#nsi_template=pyapp_dnanexus.nsi
 
 [Include]
 # Importable packages that your application requires, one per line
