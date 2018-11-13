@@ -555,6 +555,14 @@ namespace dx {
     return databaseAddTypes(object_id, input_params.toString(), safe_to_retry);
   }
 
+  JSON databaseClose(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/close"), input_params, safe_to_retry);
+  }
+
+  JSON databaseClose(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return databaseClose(object_id, input_params.toString(), safe_to_retry);
+  }
+
   JSON databaseDescribe(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params, safe_to_retry);
   }

@@ -416,9 +416,19 @@ def database_add_types(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/addTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
 
+def database_close(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /database-xxxx/close API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Data-Object-Lifecycle#API-method%3A-%2Fclass-xxxx%2Fclose
+    """
+    return DXHTTPRequest('/%s/close' % object_id, input_params, always_retry=always_retry, **kwargs)
+
 def database_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /database-xxxx/describe API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Fdescribe
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -441,6 +451,8 @@ def database_list_projects(object_id, input_params={}, always_retry=True, **kwar
 def database_relocate(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /database-xxxx/relocate API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Frelocate
     """
     return DXHTTPRequest('/%s/relocate' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1373,6 +1385,8 @@ def system_find_analyses(input_params={}, always_retry=True, **kwargs):
 def system_find_databases(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/findDatabases API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindDatabases
     """
     return DXHTTPRequest('/system/findDatabases', input_params, always_retry=always_retry, **kwargs)
 
