@@ -78,4 +78,5 @@ files = dnanexus-shell.ps1
 #    TEMPLATE_STRING_DXPY_WHEEL_FILENAME > $INSTDIR\\wheelfiles
 #    wheelfile_depends
 
-local_wheels = wheelfile_depends/*.whl
+local_wheels = dxpy*.whl
+  wheelfile_depends/*.whl
