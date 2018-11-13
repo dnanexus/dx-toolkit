@@ -2,7 +2,7 @@
 name=DNAnexus CLI
 target=powershell.exe
 parameters=-ExecutionPolicy Bypass -NoLogo -NoExit -File "$INSTDIR\dnanexus-shell.ps1"
-#console=true
+console=true
 version=TEMPLATE_STRING_TOOLKIT_VERSION
 icon=dnanexus.ico
 # To point shortcut at dx instead:
