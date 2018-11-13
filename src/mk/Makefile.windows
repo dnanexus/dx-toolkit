@@ -55,7 +55,7 @@ $(DNANEXUS_HOME)/bin/dx: $(shell find python/{dxpy,scripts,requirements*,setup*}
 	python -c 'import sys; exit("dx-toolkit is not compatible with Python < 2.7" if sys.version_info < (2, 7) else 0)'
 	rm -rf "$(PYTHON_LIBDIR)" "$(DX_PY_ENV)" python/dist
 	mkdir -p "$$(dirname '$(PYTHON_LIBDIR)')"
-	virtualenv --python=python "$(DX_PY_ENV)"
+	virtualenv --python="$(LOCALAPPDATA)/Programs/Python/Python37/python.exe" "$(DX_PY_ENV)"
 
 	# Install setuptools and build the dxpy wheel
 	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; python -m pip install --upgrade -r python/requirements_setuptools.txt
