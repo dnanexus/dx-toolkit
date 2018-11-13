@@ -46,7 +46,7 @@ SectionEnd
 [% block sections %]
 
 Section "!${PRODUCT_NAME}" sec_app
-  ;LogSet on
+  LogSet on
   SectionIn RO
   SetShellVarContext all
   File ${PRODUCT_ICON}
