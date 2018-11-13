@@ -26,7 +26,7 @@ icon=dnanexus.ico
 #icon=foo.ico
 
 [Python]
-version=2.7.15
+version=3.7.1
 format=installer
 
 [Build]
