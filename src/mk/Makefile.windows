@@ -46,7 +46,7 @@ pynsist_installer: toolkit_version $(DNANEXUS_HOME)/bin/dx dx-verify-file jq
 	    sed s/TEMPLATE_STRING_DXPY_WHEEL_FILENAME/$${DXPY_WHEEL_FILENAME}/ "$(DNANEXUS_HOME)"/build/pynsist_files/pyapp_dnanexus.nsi.template > "$(DNANEXUS_HOME)"/build/pynsist_files/pyapp_dnanexus.nsi
 
 	# Install the pynsist package and use it to build a Windows installer
-	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; python -m pip install pynsist
+	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; python -m pip install pynsist==1.12
 	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; pynsist "$(DNANEXUS_HOME)"/build/pynsist_files/installer.cfg
 	# Copy .exe installer to dx-toolkit root once it's ready
 	cp "$(DNANEXUS_HOME)"/build/pynsist_files/build/nsis/DNAnexus_CLI_"$(GIT_TOOLKIT_VERSION_SHORT)".exe "$(DNANEXUS_HOME)"/dx-toolkit-"$(GIT_TOOLKIT_VERSION_SHORT)".exe
