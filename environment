@@ -72,7 +72,7 @@ fi
 # encoding. We reset it here to avoid having to set it for every I/O operation explicitly.
 export PYTHONIOENCODING=UTF-8
 
-eval "$(bin/register-python-argcomplete dx|sed 's/-o default//')"
+eval "$(${DNANEXUS_HOME}/bin/register-python-argcomplete dx|sed 's/-o default//')"
 
 # Clean up old session files
 (
