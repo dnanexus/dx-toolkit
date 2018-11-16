@@ -461,6 +461,28 @@ class TestDXFile(unittest.TestCase):
         dxpy.download_dxfile(self.dxfile, filename=self.new_file.name)
         self.assertTrue(filecmp.cmp(self.foo_file.name, self.new_file.name))
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_DATA_OBJ_CANNOT_UPLOAD_TO_CLOSED_FILE"])
+    def test_attempt_to_upload_to_closed_file(self):
+        # Create and close a file containing some data
+        self.dxfile = dxpy.upload_local_file(self.foo_file.name)
+        self.dxfile.wait_on_close()
+        self.assertTrue(self.dxfile.closed())
+        contents_original = self.dxfile.read()
+
+        # Try to initiate an upload of a new part to the file, and check
+        # that an exception is raised
+        with self.assertRaisesRegex(DXAPIError, "is not in the open state"):
+            dxpy.api.file_upload(
+                    self.dxfile.id,
+                    input_params={"size": 3, "md5": "c157a79031e1c40f85931829bc5fc552"},
+                    always_retry=False)
+
+        # Check that the file contents still equal the original contents
+        with dxpy.open_dxfile(self.dxfile.id) as same_dxfile:
+            contents_after_failed_upload = same_dxfile.read()
+            self.assertEqual(contents_original, contents_after_failed_upload)
+
     @unittest.skipUnless(testutil.TEST_MULTIPLE_USERS, 'skipping test that would require multiple users')
     def test_upload_file_with_custom_auth(self):
         tempdir = tempfile.mkdtemp()
