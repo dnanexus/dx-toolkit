@@ -366,7 +366,7 @@ class TestDXFileFunctions(unittest.TestCase):
             self.assertTrue(type(l) == list and len(l) > 0)
 
 
-class TestDXFile(unittest.TestCase):
+class TestDXFile(testutil.DXTestCaseCompat):
 
     '''
     Creates a temporary file containing "foo\n" once for all tests.
