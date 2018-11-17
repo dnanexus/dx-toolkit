@@ -472,11 +472,11 @@ class TestDXFile(unittest.TestCase):
 
         # Try to initiate an upload of a new part to the file, and check
         # that an exception is raised
-        with self.assertRaisesRegex(DXAPIError, "is not in the open state"):
-            dxpy.api.file_upload(
-                    self.dxfile.id,
-                    input_params={"size": 3, "md5": "c157a79031e1c40f85931829bc5fc552"},
-                    always_retry=False)
+        self.assertRaisesRegex(
+                dxpy.exceptions.InvalidState,
+                "is not in the open state",
+                dxpy.api.file_upload,
+                self.dxfile.id, {"size": 3, "md5": "c157a79031e1c40f85931829bc5fc552"})
 
         # Check that the file contents still equal the original contents
         with dxpy.open_dxfile(self.dxfile.id) as same_dxfile:
