@@ -117,12 +117,15 @@ class DXJobLogStreamClient:
         if code:
             self.closed_code = code
             self.closed_reason = reason
-        elif self.error:
-            self.closed_code = 1006
-            self.closed_reason = str(self.exception) if self.exception else "Abnormal"
-        else:
+        elif not self.error:
             self.closed_code = 1000
             self.closed_reason = "Normal"
+        elif self.exception and type(self.exception) in {KeyboardInterrupt, SystemExit}:
+            self.closed_code = 1000
+            self.closed_reason = "Connection terminated by client"
+        else:
+            self.closed_code = 1006
+            self.closed_reason = str(self.exception) if self.exception else "Abnormal"
 
         if self.closed_code != 1000:
             try:
