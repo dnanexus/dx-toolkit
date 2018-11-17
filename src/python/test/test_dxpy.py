@@ -467,7 +467,7 @@ class TestDXFile(unittest.TestCase):
         # Create and close a file containing some data
         dxfile = dxpy.upload_local_file(self.foo_file.name)
         dxfile.wait_on_close()
-        assertTrue(dxfile.closed())
+        self.assertTrue(dxfile.closed())
         contents_original = dxfile.read()
 
         # Try to initiate an upload of a new part to the file, and check
