@@ -118,7 +118,7 @@ def _check_suggestions(app_json, publish=False):
                                     name=suggestion['$dnanexus_link']))
                     except Exception as e:
                         raise dxpy.app_builder.AppBuilderException(str(e))
-            if 'value' in suggestion:
+            if 'value' in suggestion and isinstance(suggestion["value"], dict):
                 if '$dnanexus_link' in suggestion['value']:
                     # Check if we have JSON or string
                     if isinstance(suggestion['value']['$dnanexus_link'], dict):
