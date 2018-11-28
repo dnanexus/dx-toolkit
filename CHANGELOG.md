@@ -6,13 +6,49 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [268.0] - 2018.10.25 beta
+### Fixed
+
+* Failing `build app` when suggestion is not a dxlink
+* Handle keyboard interrupt and system exit gracefully
+* Use absolute path to set argcomplete
+* If a bash variable is long, print a warning, do not omit it
+* Issue with backports deps on Windows
+
+### Changed
+
+* Make `dx-toolkit` python 2 and 3 compatible
+* Update macOS gnureadline version
+* Allow Windows to use certifi CA bundle
+* Update bindings for Apollo API routes
+* Update urllib import in `dx-docker`
+* Update requests in `make doc` target
+
+### Added
+
+* Test that attempts to upload to a closed file
+* First draft of an environment file for fish shell
+* If available, use `aria2` rather than `wget` as it's much faster 
+
+### Removed
+
+* Use of ubuntu 12.04 in `test_dxclient.py`
+* Old asset building script
+* Rare subcommands (`compile`, `compile_dxni`, `sh`)
+* The `dx-run-app-locally` script
+
+## [268.1] - 2018.10.25 beta
 
 ### Changed
 
 * `jackson-databind` and `jackson-core` upgrade
 
-## [267.0] - 2018.10.18 stable
+## [267.1] - 2018.10.31 stable
+
+### Changes
+
+* Update cran repository
+
+## [267.0] - 2018.10.18
 
 ### Added
 
