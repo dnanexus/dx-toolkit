@@ -1,3 +1,26 @@
+dx-toolkit (0.269.0) precise; urgency=low
+
+  * Fixed: Failing build app when suggestion is not a dxlink
+  * Fixed: Handle keyboard interrupt and system exit gracefully
+  * Fixed: Use absolute path to set argcomplete
+  * Fixed: If a bash variable is long, print a warning, do not omit it
+  * Fixed: Issue with backports deps on Windows
+  * Changed: Make dx-toolkit python 2 and 3 compatible
+  * Changed: Update macOS gnureadline version
+  * Changed: Allow Windows to use certifi CA bundle
+  * Changed: Update bindings for Apollo API routes
+  * Changed: Update urllib import in dx-docker
+  * Changed: Update requests in make doc target
+  * Added: Test that attempts to upload to a closed file
+  * Added: First draft of an environment file for fish shell
+  * Added: If available, use aria2 rather than wget as it's much faster
+  * Removed: Use of ubuntu 12.04 in test_dxclient.py
+  * Removed: Old asset building script
+  * Removed: Rare subcommands (compile, compile_dxni, sh)
+  * Removed: The dx-run-app-locally script
+
+ -- Aleksandra Zalcman <azalcman@dnanexus.com>  Thu, 29 Nov 2018 18:03:41 +0000
+
 dx-toolkit (0.268.0) precise; urgency=low
 
   * Changed: jackson-databind and jackson-core upgrade
