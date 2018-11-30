@@ -10,7 +10,7 @@ export DX_USER_CONF_DIR="${TOOLKIT_ROOT_DIR}/dnanexus_config_relocated"
 cd $TOOLKIT_ROOT_DIR
 make python
 
-source build/py_env/bin/activate
+source build/py_env2.7/bin/activate
 source environment
 
 export PYTHONPATH="${TOOLKIT_ROOT_DIR}/src/python/test:${TOOLKIT_ROOT_DIR}/share/dnanexus/lib/python2.7/site-packages"
