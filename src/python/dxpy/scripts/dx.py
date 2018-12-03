@@ -1934,7 +1934,7 @@ def cat(args):
                 chunk = dxfile.read(1024*1024, project=project or dxpy.DXFile.NO_PROJECT_HINT)
                 if len(chunk) == 0:
                     break
-                sys.stdout.write(chunk)
+                sys.stdout.buffer.write(chunk)
         except:
             err_exit()
 
