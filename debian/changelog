@@ -1,3 +1,9 @@
+dx-toolkit (0.269.1) precise; urgency=low
+
+  * Fixed: Writing to stdout for py2 in `dx cat`
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 04 Dec 2018 19:56:05 +0000
+
 dx-toolkit (0.269.0) precise; urgency=low
 
   * Fixed: Failing build app when suggestion is not a dxlink
