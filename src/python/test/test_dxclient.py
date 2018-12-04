@@ -31,6 +31,8 @@ import pexpect
 import requests
 import textwrap
 import pytest
+import gzip
+import tarfile
 from mock import patch
 
 import dxpy
@@ -1748,13 +1750,51 @@ dxpy.run()
             dxfile = dxpy.upload_string(data, name=fname, project=proj_id, wait_on_close=True)
             return dxfile
 
+        def gen_file_gzip(fname, proj_id):
+            with gzip.open(fname, 'wb') as f:
+                f.write(data)
+
+            dxfile = dxpy.upload_local_file(fname, name=fname, project=proj_id,
+                                            media_type="application/gzip", wait_on_close=True)
+            # remove local file
+            os.remove(fname)
+            return dxfile
+
+        def gen_file_tar(fname, tarballname, proj_id):
+            with open(fname, 'w') as f:
+                f.write(data)
+
+            with tarfile.open(tarballname, 'w:gz') as f:
+                f.add(fname)
+
+            dxfile = dxpy.upload_local_file(tarballname, name=tarballname, project=proj_id,
+                                            media_type="application/gzip", wait_on_close=True)
+            # remove local file
+            os.remove(tarballname)
+            os.remove(fname)
+            return dxfile
+
         with temporary_project('test_proj', select=True) as temp_project:
             proj_id = temp_project.get_id()
+
+            # txt file
             gen_file("X.txt", proj_id)
             buf = run("dx download -o - X.txt")
             self.assertEqual(buf, data)
             buf = run("dx cat X.txt")
             self.assertEqual(buf, data)
+
+            # gz file
+            gen_file_gzip("test_gz.txt.gz", proj_id)
+            buf = run("dx download -o - test_gz.txt.gz | gunzip")
+            self.assertEqual(buf, data)
+            buf = run("dx cat test_gz.txt.gz | gunzip")
+            self.assertEqual(buf, data)
+
+            # download tar.gz file
+            gen_file_tar("test-file", "test.tar.gz", proj_id)
+            buf = run("dx cat test.tar.gz | tar zvxf -")
+            self.assertEqual(buf.strip(), 'test-file')
 
     def test_dx_download_resume_and_checksum(self):
         def assert_md5_checksum(filename, hasher):
