@@ -942,10 +942,9 @@ class DXFile(DXDataObject):
 
     def read(self, length=None, use_compression=None, project=None, **kwargs):
         data = self._read2(length=length, use_compression=use_compression, project=project, **kwargs)
-        # if USING_PYTHON2:
-        #     return data
-        # else:
-        #     # In python3, the underlying system methods use the 'bytes' type, not 'string'
-        #     #
-        #     return data.decode("utf-8")
-        return data
+        if USING_PYTHON2:
+            return data
+        else:
+            # In python3, the underlying system methods use the 'bytes' type, not 'string'
+            #
+            return data.decode("utf-8")
