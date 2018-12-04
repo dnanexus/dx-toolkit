@@ -1794,7 +1794,7 @@ dxpy.run()
             # download tar.gz file
             gen_file_tar("test-file", "test.tar.gz", proj_id)
             buf = run("dx cat test.tar.gz | tar zvxf -")
-            self.assertEqual(buf.strip(), 'test-file')
+            self.assertTrue(os.path.exists('test-file'))
 
     def test_dx_download_resume_and_checksum(self):
         def assert_md5_checksum(filename, hasher):
