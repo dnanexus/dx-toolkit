@@ -65,7 +65,7 @@ toolkit that doesn't require them.
       g++ cmake libboost1.55-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison \
       autoconf curl
 
-### Ubuntu 12.04
+### Ubuntu 12.04 (deprecated)
 
     sudo apt-get install make python-setuptools python-pip python-dev \
       g++ cmake libboost1.48-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison \
