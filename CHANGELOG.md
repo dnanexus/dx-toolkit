@@ -6,6 +6,15 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [269.1] - 2018.12.04 beta
+
+### Fixed
+
+* Writing to stdout for py2 in `dx cat`
+* Python virtualenv path in traceability runner
+
+## [269.0] - 2018.11.29 beta
+
 ### Fixed
 
 * Failing `build app` when suggestion is not a dxlink
@@ -36,7 +45,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Rare subcommands (`compile`, `compile_dxni`, `sh`)
 * The `dx-run-app-locally` script
 
-## [268.1] - 2018.10.25 beta
+## [268.1] - 2018.10.31 beta
 
 ### Changed
 
