@@ -1,3 +1,9 @@
+dx-toolkit (0.270.0) precise; urgency=low
+
+  * No significant changes
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 06 Dec 2018 19:20:25 +0000
+
 dx-toolkit (0.269.0) precise; urgency=low
 
   * Fixed: Failing build app when suggestion is not a dxlink
