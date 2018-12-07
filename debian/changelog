@@ -1,3 +1,9 @@
+dx-toolkit (0.270.1) precise; urgency=low
+
+  * Fixed: pip installation
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 07 Dec 2018 21:01:10 +0000
+
 dx-toolkit (0.270.0) precise; urgency=low
 
   * No significant changes
