@@ -1,3 +1,9 @@
+dx-toolkit (0.269.2) precise; urgency=low
+
+  * Fixed: pip installation
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 07 Dec 2018 21:01:32 +0000
+
 dx-toolkit (0.269.1) precise; urgency=low
 
   * Fixed: Writing to stdout for py2 in `dx cat`
