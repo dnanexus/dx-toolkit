@@ -6,14 +6,25 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [269.1] - 2018.12.04 beta
+* DEVEX-720 Add support for dx building a global workflow with apps in multiple regions
+* Mark Ubuntu 12.04 as deprecated in `Readme`
+
+## [270.1] - 2018.12.07 beta
+
+## [269.2] - 2018.12.07 stable
+
+### Fixed
+
+* Update MANIFEST.in to include python `Readme`
+
+## [269.1] - 2018.12.07
 
 ### Fixed
 
 * Writing to stdout for py2 in `dx cat`
 * Python virtualenv path in traceability runner
 
-## [269.0] - 2018.11.29 beta
+## [269.0] - 2018.12.07
 
 ### Fixed
 
@@ -45,13 +56,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Rare subcommands (`compile`, `compile_dxni`, `sh`)
 * The `dx-run-app-locally` script
 
-## [268.1] - 2018.10.31 beta
+## [268.1] - 2018.11.29
 
 ### Changed
 
 * `jackson-databind` and `jackson-core` upgrade
 
-## [267.1] - 2018.10.31 stable
+## [267.1] - 2018.10.31
 
 ### Changes
 
