@@ -37,6 +37,7 @@ from dxpy.exceptions import (DXAPIError, DXFileError, DXError, DXJobFailureError
 from dxpy.utils import pretty_print, warn, Nonce
 from dxpy.utils.resolver import resolve_path, resolve_existing_path, ResolutionError, is_project_explicit
 import dxpy.app_builder as app_builder
+import dxpy.executable_builder as executable_builder
 
 from dxpy.compat import USING_PYTHON2
 
@@ -3108,18 +3109,18 @@ class TestIdempotentRequests(unittest.TestCase):
 
 class TestAppBuilderUtils(unittest.TestCase):
     def test_assert_consistent_regions(self):
-        assert_consistent_regions = app_builder.assert_consistent_regions
+        assert_consistent_regions = executable_builder.assert_consistent_regions
 
         # These calls should not raise exceptions.
 
-        assert_consistent_regions(None, None)
-        assert_consistent_regions(None, ["aws:us-east-1"])
-        assert_consistent_regions({"aws:us-east-1": None}, None)
+        assert_consistent_regions(None, None, app_builder.AppBuilderException)
+        assert_consistent_regions(None, ["aws:us-east-1"], app_builder.AppBuilderException)
+        assert_consistent_regions({"aws:us-east-1": None}, None, app_builder.AppBuilderException)
         # The actual key-value pairs are irrelevant.
-        assert_consistent_regions({"aws:us-east-1": None}, ["aws:us-east-1"])
+        assert_consistent_regions({"aws:us-east-1": None}, ["aws:us-east-1"], app_builder.AppBuilderException)
 
         with self.assertRaises(app_builder.AppBuilderException):
-            assert_consistent_regions({"aws:us-east-1": None}, ["azure:westus"])
+            assert_consistent_regions({"aws:us-east-1": None}, ["azure:westus"], app_builder.AppBuilderException)
 
 
 class TestApiWrappers(unittest.TestCase):
