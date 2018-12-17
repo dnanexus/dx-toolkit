@@ -29,6 +29,7 @@ import hashlib
 import traceback
 import warnings
 from collections import defaultdict
+import multiprocessing
 
 import dxpy
 from .. import logger
@@ -183,9 +184,8 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
         cmd += ["-O", dest_filename, url]
     else:
         print("aria2c found in path so using that instead of wget \n")
-        cmd = ["aria2c", "--check-certificate=false", "-s 16", "-x 16"]
-        aria2_dest = sys.argv[4]
-        cmd += ["-o", aria2_dest, url]
+        cmd = ["aria2c", "--check-certificate=false", "-s", multiprocessing.cpu_count() "-x", multiprocessing.cpu_count()]
+        cmd += ["-o", dest_filename, url]
 
     try:
         if aria2c_exe is not None:
