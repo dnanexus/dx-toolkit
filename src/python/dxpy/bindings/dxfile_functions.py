@@ -185,7 +185,7 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
     else:
         print("aria2c found in path so using that instead of wget \n")
         cmd = ["aria2c", "--check-certificate=false", "-s", str(multiprocessing.cpu_count()), "-x", str(multiprocessing.cpu_count())]
-        cmd += ["-o", dest_filename, url]
+        cmd += ["-o", dest_filename, "-d", "/", url]
 
     try:
         if aria2c_exe is not None:
