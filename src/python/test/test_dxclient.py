@@ -4232,13 +4232,12 @@ class TestDXClientGlobalWorkflow(DXTestCaseBuildWorkflows):
             # Check the warning about the fact that the app is enabled in more
             # regions that the workflow
             self.assertEqual(err.returncode, 28)
-            self.assertIn("please enable the app", err.stderr)
+            self.assertIn("The workflow will not be able to run in", err.stderr)
 
             # Check the workflow was still enabled in both regions
             gwf_describe = json.loads(run("dx describe --json globalworkflow-" + gwf_name + "/0.0.1"))
             self.assertIn("regionalOptions", gwf_describe)
             self.assertItemsEqual(sorted(gwf_describe["regionalOptions"].keys()), ["aws:us-east-1", "azure:westus"])
-            # gwf = json.loads(run("dx build --globalworkflow --json " + workflow_dir))
 
 
 class TestDXClientFind(DXTestCase):

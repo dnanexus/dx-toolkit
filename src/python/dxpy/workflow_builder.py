@@ -333,11 +333,12 @@ def _assert_executable_regions_match(workflow_enabled_regions, workflow_spec):
             app_regional_options = dxpy.api.app_describe(exect, input_params={"fields": {"regionalOptions": True}})
             app_regions = set(app_regional_options['regionalOptions'].keys())
             if not workflow_enabled_regions.issubset(app_regions):
-                mesg = "The app {} is enabled in regions {} while the global workflow - in {}.".format(
-                    exect, app_regions, workflow_enabled_regions)
-                mesg += " Please, enable the workflow in the app's region(s)."
-                mesg += " If you are a developer of the app, you can also enable the app in {} to run the workflow in that region(s).".format(
-                    workflow_enabled_regions - app_regions)
+                additional_workflow_regions = workflow_enabled_regions - app_regions
+                mesg = "The app {} is enabled in regions {} while the global workflow in {}.".format(
+                    exect, ", ".join(app_regions), ", ".join(workflow_enabled_regions))
+                mesg += " The workflow will not be able to run in {}.".format(", ".join(additional_workflow_regions))
+                mesg += " If you are a developer of the app, you can enable the app in {} to run the workflow in that region(s).".format(
+                    ", ".join(additional_workflow_regions))
                 logger.warn(mesg)
 
         elif exect.startswith("workflow-"):
