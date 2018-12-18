@@ -7264,13 +7264,13 @@ class TestDXBuildApp(DXTestCaseBuildApps):
     def test_build_and_get_cluster_app_bootstrap_script_inlined(self):
         app_name = "cluster_app"
         cluster_spec_with_bootstrap_aws = {"type": "spark",
-                                           "version": "2.2.0",
+                                           "version": "2.4.0",
                                            "initialInstanceCount": 5,
                                            "bootstrapScript": "clusterBootstrapAws.py"}
         cluster_spec_with_bootstrap_azure = cluster_spec_with_bootstrap_aws.copy()
         cluster_spec_with_bootstrap_azure['bootstrapScript'] = "clusterBootstrapAzure.py"
         cluster_spec_no_bootstrap = {"type": "spark",
-                                     "version": "2.2.0",
+                                     "version": "2.4.0",
                                      "initialInstanceCount": 10}
         bootstrap_code_aws = "def improper():\nprint 'oops'" # syntax error
         bootstrap_code_azure = "import os\n"
