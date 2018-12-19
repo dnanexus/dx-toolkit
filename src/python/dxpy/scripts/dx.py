@@ -3325,7 +3325,7 @@ def run(args):
         if dest_path is None:
             dest_path = dxpy.config.get('DX_CLI_WD', '/')
 
-    process_instance_type_arg(args, is_workflow)
+    process_instance_type_arg(args, is_workflow or is_global_workflow)
     run_body(args, handler, dest_proj, dest_path)
 
 def terminate(args):
