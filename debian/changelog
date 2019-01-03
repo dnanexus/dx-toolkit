@@ -1,3 +1,12 @@
+dx-toolkit (0.271.0) precise; urgency=low
+
+  * Added: Support for dx building a global workflow with apps in multiple regions
+  * Changed: Mark Ubuntu 12.04 as deprecated in Readme
+  * Fixed: Setting instance types on global workflow stages
+  * Fixed: Test code for Spark 2.4.0 upgrade
+
+ -- Aleksandra Zalcman <azalcman@dnanexus.com>  Thu, 03 Jan 2019 21:01:20 +0000
+
 dx-toolkit (0.270.0) precise; urgency=low
 
   * No significant changes
