@@ -1,3 +1,9 @@
+dx-toolkit (0.270.2) precise; urgency=low
+
+  * Fixed: aria2c symlink download
+
+ -- Aleksandra Zalcman <azalcman@dnanexus.com>  Thu, 03 Jan 2019 21:03:46 +0000
+
 dx-toolkit (0.270.1) precise; urgency=low
 
   * Fixed: pip installation
