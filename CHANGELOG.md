@@ -6,8 +6,18 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
 * DEVEX-720 Add support for dx building a global workflow with apps in multiple regions
+
+### Changed
+
 * Mark Ubuntu 12.04 as deprecated in `Readme`
+
+### Fixed
+
+* setting instance types on global workflow stages
+* fix test code for Spark 2.4.0 upgrade
+
 
 ## [270.1] - 2018.12.07 beta
 
