@@ -1,0 +1,41 @@
+#!/usr/bin/env python2.7
+
+from __future__ import print_function
+import argparse
+import sys
+import dxpy
+import dxpy.ssh_tunnel_app_support
+
+def _parse_args():
+    """
+    Parse the input arguments.
+    """
+    ap = argparse.ArgumentParser(description='Reconnect to a notebook job')
+
+    ap.add_argument('job_id',
+                    help='Job-id of the notebook job to reconnect to.')
+
+    ap.add_argument('--port',
+                    help='Local port to use for connecting.',
+                    default=2001,
+                    required=False)
+
+    return ap.parse_args()
+
+
+def main(job_id, local_port):
+    job_desc = dxpy.describe(job_id)
+
+    if job_desc['state'] != 'running':
+        print('The job does not appear to be running.  Please double check that your job-id is for a running notebook.')
+        sys.exit(1)
+
+    dxpy.ssh_tunnel_app_support.setup_ssh_tunnel(job_id, local_port, 8888)
+    dxpy.ssh_tunnel_app_support.multi_platform_open('http://localhost:{0}'.format(local_port))
+    print('A web browser should have opened to connect you to your notebook.')
+    print('If no browser appears, or if you need to reopen a browser at any point, you should be able to point your browser to http://localhost:{0}'.format(local_port))
+
+
+if __name__ == '__main__':
+    args = _parse_args()
+    main(args.job_id, args.port)
