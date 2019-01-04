@@ -6,8 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [271.0] - 2019.01.03 beta
+
 ### Added
-* DEVEX-720 Add support for dx building a global workflow with apps in multiple regions
+* support for dx building a global workflow with apps in multiple regions
 
 ### Changed
 
@@ -18,10 +20,17 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * setting instance types on global workflow stages
 * fix test code for Spark 2.4.0 upgrade
 
+## [271.2] - 2019.01.03 stable
 
-## [270.1] - 2018.12.07 beta
+### Fixed
 
-## [269.2] - 2018.12.07 stable
+* symlink download with `aria2`
+
+## [270.1] - 2018.12.07
+
+No significant changes
+
+## [269.2] - 2018.12.07
 
 ### Fixed
 
