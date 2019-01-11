@@ -1,3 +1,9 @@
+dx-toolkit (0.272.0) precise; urgency=low
+
+  * Added: dx-notebook-reconnect script
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 11 Jan 2019 17:27:24 +0000
+
 dx-toolkit (0.271.0) precise; urgency=low
 
   * Added: Support for dx building a global workflow with apps in multiple regions
