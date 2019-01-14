@@ -130,7 +130,7 @@ import logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-import os, sys, json, time, platform, ssl, traceback
+import os, sys, json, time, platform, ssl, traceback, re
 import errno
 import math
 import mmap
@@ -159,10 +159,13 @@ except ImportError:
     # python-2
     from urlparse import urlsplit
 
-
 sequence_number_mutex = threading.Lock()
 counter = 0
 
+privateRoutePrefix = '/F/U2'
+API_PROXY_UPLOAD_URL_RE = "^" + privateRoutePrefix + "/([A-Za-z0-9_+=]+)/([0-9]+)/([^/:]+(:[0-9]+)?)(/.*)$"
+#                                                      ------hmac------- --time-- --host--:--port-  path?query
+API_PROXY_UPLOAD_URL_RE_COMPILED = re.compile(API_PROXY_UPLOAD_URL_RE)
 
 def _get_sequence_number():
     global counter
@@ -625,11 +628,18 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     _headers.pop(b'host', None)
                     _headers.pop(b'content-length', None)
 
-                    # Encode any non-ascii characters in the path
+                    # Encode any non-ascii characters in the path. Note: The URL for 
+                    # file upload should *not* be quoted since it includes HMAC (obtained
+                    # from S3 in the first file_upload API call) and the one sent in
+                    # this request has to match it (see API_PROXY_UPLOAD_URL_RE).
                     import urllib.parse
                     parts = list(urllib.parse.urlparse(_url))
-                    parts[2] = urllib.parse.quote(parts[2])
-                    encoded_url = urllib.parse.urlunparse(parts)
+                    is_api_proxy_upload = API_PROXY_UPLOAD_URL_RE_COMPILED.match(parts[2])
+                    if not is_api_proxy_upload:
+                        parts[2] = urllib.parse.quote(parts[2])
+                        encoded_url = urllib.parse.urlunparse(parts)
+                    else:
+                        encoded_url = _url
 
                 response = pool_manager.request(_method, encoded_url, headers=_headers, body=body,
                                                 timeout=timeout, retries=False, **kwargs)
