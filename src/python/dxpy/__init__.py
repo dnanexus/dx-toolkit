@@ -159,10 +159,8 @@ except ImportError:
     # python-2
     from urlparse import urlsplit
 
-
 sequence_number_mutex = threading.Lock()
 counter = 0
-
 
 def _get_sequence_number():
     global counter
@@ -625,11 +623,20 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     _headers.pop(b'host', None)
                     _headers.pop(b'content-length', None)
 
-                    # Encode any non-ascii characters in the path
-                    import urllib.parse
-                    parts = list(urllib.parse.urlparse(_url))
-                    parts[2] = urllib.parse.quote(parts[2])
-                    encoded_url = urllib.parse.urlunparse(parts)
+                    # The libraries downstream (http client) require elimination of non-ascii
+                    # chars from URL.
+                    # We check if the URL contains non-ascii characters to see if we need to
+                    # quote it. It is important not to always quote the path (here: parts[2])
+                    # since it might contain elements (e.g. HMAC for api proxy) containing
+                    # special characters that should not be quoted.
+                    try:
+                        ensure_ascii(_url)
+                        encoded_url = _url
+                    except UnicodeEncodeError:
+                        import urllib.parse
+                        parts = list(urllib.parse.urlparse(_url))
+                        parts[2] = urllib.parse.quote(parts[2])
+                        encoded_url = urllib.parse.urlunparse(parts)
 
                 response = pool_manager.request(_method, encoded_url, headers=_headers, body=body,
                                                 timeout=timeout, retries=False, **kwargs)
