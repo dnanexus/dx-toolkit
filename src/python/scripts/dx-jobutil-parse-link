@@ -31,6 +31,9 @@ except ValueError:
     parser.exit("Unable to parse link as JSON")
 
 if isinstance(link, dict):
-    print("{proj}:{obj}".format(proj=link['project'], obj=link['id']))
+    if args.no_project:
+        print(link['id'])
+    else:
+        print("{proj}:{obj}".format(proj=link['project'], obj=link['id']))
 else:
     print(link)
