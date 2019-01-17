@@ -6,7 +6,18 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [271.0] - 2019.01.03 beta
+## [273.0] - 2019.01.17 beta
+
+### Fixed
+  * upload issue using api proxy in Python 3
+  * `--no-project` option in `dx-jobutil-parse-link`
+
+## [272.0] - 2019.01.17 stable
+
+### Added
+* A script for reconnecting to a jupyter notebook session
+
+## [271.0] - 2019.01.10
 
 ### Added
 * support for dx building a global workflow with apps in multiple regions
@@ -20,7 +31,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * setting instance types on global workflow stages
 * fix test code for Spark 2.4.0 upgrade
 
-## [271.2] - 2019.01.03 stable
+## [271.2] - 2019.01.03
 
 ### Fixed
 
