@@ -57,7 +57,7 @@ from ..compat import basestring
 #########
 
 _app_required_keys = ['name', 'title', 'summary', 'dxapi', 'openSource',
-                      'version', 'inputSpec', 'outputSpec', 'runSpec',
+                      'httpsApp', 'version', 'inputSpec', 'outputSpec', 'runSpec',
                       'developers', 'authorizedUsers', 'regionalOptions']
 
 # These are optional keys for apps, not sure what to do with them
@@ -367,6 +367,7 @@ class DXApp(DXObject, DXExecutable):
         return DXExecutable._get_run_input_fields_for_applet(executable_input, **kwargs)
 
     def _get_required_keys(self):
+        print("Calling _get_required_keys")
         return _app_required_keys
 
     def _get_optional_keys(self):
