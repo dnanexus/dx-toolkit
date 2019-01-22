@@ -57,7 +57,7 @@ from ..compat import basestring
 #########
 
 _app_required_keys = ['name', 'title', 'summary', 'dxapi', 'openSource',
-                      'version', 'inputSpec', 'outputSpec', 'runSpec',
+                      'httpsApp', 'version', 'inputSpec', 'outputSpec', 'runSpec',
                       'developers', 'authorizedUsers', 'regionalOptions']
 
 # These are optional keys for apps, not sure what to do with them

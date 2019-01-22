@@ -223,7 +223,7 @@ class DXExecutable:
 # DXApplet #
 ############
 _applet_required_keys = ['name', 'title', 'summary', 'types', 'tags',
-                         'properties', 'dxapi', 'inputSpec', 'outputSpec',
+                         'httpsApp', 'properties', 'dxapi', 'inputSpec', 'outputSpec',
                          'runSpec', 'access', 'details']
 _applet_optional_keys = ['ignoreReuse']
 _applet_describe_output_keys = ['properties', 'details']
