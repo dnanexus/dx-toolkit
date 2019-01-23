@@ -167,9 +167,11 @@ def download_all_inputs(exclude=None, parallel=False, max_threads=8):
         raise
 
     # Exclude directories
+    # dirs contain all folders (e.g. $HOME/in/FOO) and their sub folders (e.g. $HOME/in/FOO/1, $HOME/in/FOO/2, etc.)
+    # If the main folder is excluded, its sub-folder would also be excluded from dirs_to_create
     dirs_to_create = []
     for d in dirs:
-        if (exclude is None) or (d not in exclude):
+        if (exclude is None) or (d.split('/')[0] not in exclude):
             dirs_to_create.append(d)
 
     # Create the directory structure, in preparation for download.
