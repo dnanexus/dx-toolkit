@@ -6,11 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+* Preserve `httpsApp` field in dxapp.json when calling `dx get`
+
 ## [273.0] - 2019.01.17 beta
 
 ### Fixed
-  * upload issue using api proxy in Python 3
-  * `--no-project` option in `dx-jobutil-parse-link`
+* upload issue using api proxy in Python 3
+* `--no-project` option in `dx-jobutil-parse-link`
 
 ## [272.0] - 2019.01.17 stable
 
