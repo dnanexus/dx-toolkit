@@ -9333,7 +9333,6 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         app_spec = {
             "name": "get_applet",
             "dxapi": "1.0.0",
-            "httpsApp": {"ports": [443]},
             "runSpec": {"file": "code.py", "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04"},
             "inputSpec": [{"name": "in1", "class": "file"}],
             "outputSpec": [{"name": "out1", "class": "file"}],
@@ -9369,11 +9368,6 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
                     seenResources = True
                     break
             self.assertTrue(seenResources)
-
-            # we made this applet an https applet, so check if
-            # the httpsApp field was preserved while getting the applet
-            self.assertEqual(output_json.get('httpsApp'), {"ports": [443]})
-
 
     def test_get_applet_field_cleanup(self):
         # TODO: not sure why self.assertEqual doesn't consider
