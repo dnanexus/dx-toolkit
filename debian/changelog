@@ -1,3 +1,9 @@
+dx-toolkit (0.274.0) precise; urgency=low
+
+  * Preserve httpsApp field in dxapp.json when calling dx get
+
+ -- Geet Duggal <gduggal@dnanexus.com>  Thu, 24 Jan 2019 18:18:02 +0000
+
 dx-toolkit (0.273.0) precise; urgency=low
 
   * Fixed: upload issue using api proxy in Python 3
