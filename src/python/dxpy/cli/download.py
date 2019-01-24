@@ -169,7 +169,7 @@ def download(args):
 
         matching_folders = []
         # project may be none if path is an ID and there is no project context
-        if project is not None:
+        if project is not None and folderpath is not None:
             colon_pos = get_first_pos_of_char(":", path)
             if colon_pos >= 0:
                 path = path[colon_pos + 1:]
