@@ -56,6 +56,7 @@ dxR.Rcheck
 /bin/dx-mappings-to-fastq
 /bin/dx-mappings-to-sam
 /bin/dx-mount
+/bin/dx-notebook-reconnect
 /bin/dx-reads-to-fastq
 /bin/dx-spans-to-bed
 /bin/dx-variants-to-vcf
