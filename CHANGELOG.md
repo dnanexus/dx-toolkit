@@ -6,15 +6,21 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed 
+
+* argcomplete eval in the worker when sourcing `environment`
+
+## [274.0] - 2019.01.24 beta
+
 * Preserve `httpsApp` field in dxapp.json when calling `dx get`
 
-## [273.0] - 2019.01.17 beta
+## [273.0] - 2019.01.24 stable
 
 ### Fixed
 * upload issue using api proxy in Python 3
 * `--no-project` option in `dx-jobutil-parse-link`
 
-## [272.0] - 2019.01.17 stable
+## [272.0] - 2019.01.17
 
 ### Added
 * A script for reconnecting to a jupyter notebook session
