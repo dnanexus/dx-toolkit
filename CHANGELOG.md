@@ -12,7 +12,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [274.0] - 2019.01.24 beta
 
+### Fixed
+
 * Preserve `httpsApp` field in dxapp.json when calling `dx get`
+* The `--except [array:file variable]` option for `dx-download-all-inputs`
 
 ## [273.0] - 2019.01.24 stable
 
