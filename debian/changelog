@@ -1,3 +1,9 @@
+dx-toolkit (0.275.0) precise; urgency=low
+
+  * Fixed: argcomplete eval in the worker when sourcing environment
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 01 Feb 2019 16:12:13 +0000
+
 dx-toolkit (0.274.0) precise; urgency=low
 
   * Preserve httpsApp field in dxapp.json when calling dx get
