@@ -5807,6 +5807,10 @@ class TestDXClientNewProject(DXTestCase):
         # reset original user settings
         dxpy.api.user_update(dxpy.whoami(), {'billTo': curr_bill_to})
 
+    def test_dx_create_new_project_with_phi(self):
+        with self.assertSubprocessFailure(stderr_regexp='PermissionDenied: PHI features must be enabled for',
+                                          exit_code=3):
+            project_id = run('dx new project --phi test_dx_create_project_with_phi')
 
 @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_WITH_AUTHSERVER,
                      'skipping tests that require presence of test org and running authserver')

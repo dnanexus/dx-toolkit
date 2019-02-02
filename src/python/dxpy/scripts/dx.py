@@ -4929,7 +4929,7 @@ parser_new_project.add_argument('--region', help='Region affinity of the new pro
 parser_new_project.add_argument('-s', '--select', help='Select the new project as current after creating',
                                 action='store_true')
 parser_new_project.add_argument('--bill-to', help='ID of the user or org to which the project will be billed. The default value is the billTo of the requesting user.')
-parser_new_project.add_argument('--phi', help='add PHI protection to project', default=False,
+parser_new_project.add_argument('--phi', help='Add PHI protection to project', default=False,
                                 action='store_true')
 parser_new_project.set_defaults(func=new_project)
 register_parser(parser_new_project, subparsers_action=subparsers_new, categories='fs')
