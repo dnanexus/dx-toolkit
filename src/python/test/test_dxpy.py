@@ -3133,22 +3133,6 @@ class TestApiWrappers(unittest.TestCase):
         assert 'messages' in greeting
 
 
-class TestCLI:
-    def test_new_project_phi(self, monkeypatch):
-        from dxpy.scripts import dx
-        monkeypatch.setattr(sys, 'argv', ['dx', 'new', 'project', '--phi', 'myproject'])
-        calls = {}
-
-        def recorder(*args, **kwargs):
-            calls.append((args, kwargs))
-
-        monkeypatch.setattr(dxpy.api, 'project_new', recorder)
-
-        dx.main()
-
-        assert calls == [((), {'name': 'myproject', 'containsPHI': True})]
-
-
 if __name__ == '__main__':
     if dxpy.AUTH_HELPER is None:
         sys.exit(1, 'Error: Need to be logged in to run these tests')
