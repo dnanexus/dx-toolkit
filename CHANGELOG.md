@@ -6,9 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-### Fixed 
+### Fixed
 
 * argcomplete eval in the worker when sourcing `environment`
+* Bug in downloading symlinks when using aria2c
 
 ## [274.0] - 2019.01.24 beta
 
@@ -88,7 +89,7 @@ No significant changes
 
 * Test that attempts to upload to a closed file
 * First draft of an environment file for fish shell
-* If available, use `aria2` rather than `wget` as it's much faster 
+* If available, use `aria2` rather than `wget` as it's much faster
 
 ### Removed
 
