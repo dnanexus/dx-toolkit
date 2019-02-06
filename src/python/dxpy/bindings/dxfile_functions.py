@@ -184,7 +184,9 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
         cmd += ["-O", dest_filename, url]
     else:
         print("aria2c found in path so using that instead of wget \n")
-        cmd = ["aria2c", "--check-certificate=false", "-s", str(multiprocessing.cpu_count()), "-x", str(multiprocessing.cpu_count())]
+        # aria2c does not allow more than 16 connections per server
+        max_connections = 16 if multiprocessing.cpu_count() > 16 else multiprocessing.cpu_count()
+        cmd = ["aria2c", "--check-certificate=false", "-s", str(max_connections), "-x", str(max_connections)]
         cmd += ["-o", dest_filename, url]
 
     try:
