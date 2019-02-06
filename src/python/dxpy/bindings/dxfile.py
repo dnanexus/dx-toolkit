@@ -135,7 +135,9 @@ class DXFile(DXDataObject):
     :type dxid: string
     :param project: Project ID
     :type project: string
-    :param mode: One of "r", "w", or "a" for read, write, and append modes, respectively
+    :param mode: One of "r", "w", or "a" for read, write, and append modes, respectively.
+                 Use "b" for binary mode. For example, "rb" means open a file for reading
+                 in binary mode.
     :type mode: string
 
     .. note:: The attribute values below are current as of the last time
@@ -190,7 +192,7 @@ class DXFile(DXDataObject):
         :param project: Project ID
         :type project: string
         :param mode: One of "r", "w", or "a" for read, write, and append
-            modes, respectively
+            modes, respectively. Add "b" for binary mode.
         :type mode: string
         :param read_buffer_size: size of read buffer in bytes
         :type read_buffer_size: int
@@ -207,11 +209,20 @@ class DXFile(DXDataObject):
         :type file_is_mmapd: bool
         """
         DXDataObject.__init__(self, dxid=dxid, project=project)
+
+        # By default, a file is create in text mode. This makes a difference
+        # in python 3.
+        self._binary_mode = False
         if mode is None:
             self._close_on_exit = True
+            self._mode = None
         else:
+            if 'b' in mode:
+                self._binary_mode = True
+                mode = mode.replace("b", "")
             if mode not in ['r', 'w', 'a']:
-                raise ValueError("mode must be one of 'r', 'w', or 'a'")
+                raise ValueError("mode must be one of 'r', 'w', or 'a'. Character 'b' may be used in combination (e.g. 'wb').")
+            self._mode = mode
             self._close_on_exit = (mode == 'w')
         self._read_buf = BytesIO()
         self._write_buf = BytesIO()
@@ -320,6 +331,8 @@ class DXFile(DXDataObject):
                     else:
                         _buffer = _buffer + more
         else:
+            if self._binary_mode:
+                raise DXFileError("Cannot read lines when file opened in binary mode")
             # python3 is much stricter about distinguishing
             # 'bytes' from 'str'.
             while not done:
@@ -562,6 +575,9 @@ class DXFile(DXDataObject):
             #    another buffer of similar size
             # 2) The types are wrong. The "bytes" type should be visible to the caller
             #    of the write method, instead of being hidden.
+
+            # Should we throw an exception if the file is opened in binary mode,
+            # and the data is unicode/text?
             if isinstance(data, str):
                 bt = data.encode("utf-8")
             elif isinstance(data, bytearray):
@@ -944,7 +960,7 @@ class DXFile(DXDataObject):
         data = self._read2(length=length, use_compression=use_compression, project=project, **kwargs)
         if USING_PYTHON2:
             return data
-        else:
-            # In python3, the underlying system methods use the 'bytes' type, not 'string'
-            #
-            return data.decode("utf-8")
+        # In python3, the underlying system methods use the 'bytes' type, not 'string'
+        if self._binary_mode is True:
+            return data
+        return data.decode("utf-8")

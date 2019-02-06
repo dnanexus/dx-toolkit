@@ -575,6 +575,32 @@ class TestDXFile(testutil.DXTestCaseCompat):
             buf = same_dxfile.read()
             self.assertEqual(self.foo_str[-1:], buf)
 
+    def test_write_read_binary_dxfile(self):
+        dxid = ""
+        data = "ไนความจริงสิ่งคาด"  # unicode characters
+
+        # Writing Unicode text
+        with dxpy.new_dxfile(mode = "w") as self.dxfile:
+            dxid = self.dxfile.get_id()
+            self.dxfile.write(data)
+        with dxpy.open_dxfile(dxid, mode="r") as same_dxfile:
+            same_dxfile.wait_on_close()
+            self.assertTrue(same_dxfile.closed())
+            buf = same_dxfile.read()
+            self.assertEqual(data, buf)
+
+        # Writing binary data
+        binary = data.encode("utf-8")
+        with dxpy.new_dxfile(mode = "wb") as self.dxfile:
+            dxid = self.dxfile.get_id()
+            self.dxfile.write(binary)
+        with dxpy.open_dxfile(dxid, mode="rb") as same_dxfile:
+            same_dxfile.wait_on_close()
+            self.assertTrue(same_dxfile.closed())
+            buf = same_dxfile.read()
+            self.assertEqual(binary, buf)
+
+
     def test_download_project_selection(self):
         with testutil.temporary_project() as p, testutil.temporary_project() as p2:
             # Same file is available in both projects

@@ -1928,15 +1928,19 @@ def cat(args):
            not object_exists_in_project(entity_result['describe']['id'], project):
             err_exit('Error: project does not contain specified file object', 3)
 
+        # We assume the file is binary, unless specified otherwise
+        mode = "rb"
+        if args.textual is True:
+            mode = "r"
         try:
-            dxfile = dxpy.DXFile(entity_result['id'])
+            dxfile = dxpy.DXFile(entity_result['id'], mode=mode)
             while True:
                 # If we decided the project specification was not explicit, do
                 # not allow the workspace setting to bleed through
                 chunk = dxfile.read(1024*1024, project=project or dxpy.DXFile.NO_PROJECT_HINT)
                 if len(chunk) == 0:
                     break
-                if USING_PYTHON2:
+                if mode == 'rb':
                     sys.stdout.buffer.write(chunk)
                 else:
                     sys.stdout.write(chunk)
@@ -1946,7 +1950,9 @@ def cat(args):
 
 def download_or_cat(args):
     if args.output == '-':
-        cat(parser.parse_args(['cat'] + args.paths))
+        cat_args = parser.parse_args(['cat'] + args.paths)
+        cat_args.textual = args.textual
+        cat(cat_args)
         return
     download(args)
 
@@ -1967,12 +1973,15 @@ def head(args):
     if args.lines > 0:
         try:
             if handler._class == 'file':
-                handler._read_bufsize = 1024*32
-                for line in handler:
-                    print(line)
-                    counter += 1
-                    if counter == args.lines:
-                        break
+                try:
+                    handler._read_bufsize = 1024*32
+                    for line in handler:
+                        print(line)
+                        counter += 1
+                        if counter == args.lines:
+                            break
+                except UnicodeDecodeError:
+                    sys.stdout.write("File contains binary data")
             else:
                 if args.gri is not None:
                     try:
@@ -4217,6 +4226,8 @@ parser_download.add_argument('-a', '--all', help='If multiple objects match the 
                              action='store_true')
 parser_download.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress',
                              action='store_false', default=sys.stderr.isatty())
+parser_download.add_argument('--textual', help='Display the characters as text/unicode when writing to stdout',
+                             action='store_true')
 parser_download.set_defaults(func=download_or_cat)
 register_parser(parser_download, categories='data')
 
@@ -4240,6 +4251,8 @@ parser_cat = subparsers.add_parser('cat', help='Print file(s) to stdout', prog='
                                    parents=[env_args])
 cat_path_action = parser_cat.add_argument('path', help='File ID or name(s) to print to stdout', nargs='+')
 cat_path_action.completer = DXPathCompleter(classes=['file'])
+parser_cat.add_argument('--textual', help='Display the characters as text/unicode when writing to stdout',
+                        action='store_true')
 parser_cat.set_defaults(func=cat)
 register_parser(parser_cat, categories='data')
 
