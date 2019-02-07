@@ -20,6 +20,4 @@ Collate:
     'dxR-package.R'
     'AllClasses.R'
     'AllGenerics.R'
-    'DXGTable-methods.R'
     'show-methods.R'
-    'DXGTable-generic-methods.R'
