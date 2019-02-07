@@ -192,7 +192,7 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
         cwd = os.getcwd()
         directory, filename = os.path.split(dest_filename)
         directory = cwd if directory in ["", cwd] else directory
-        cmd += ["-o", filename, "-d", directory, url]
+        cmd += ["-o", filename, "-d", os.path.abspath(directory), url]
 
     try:
         if aria2c_exe is not None:
