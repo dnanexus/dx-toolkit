@@ -185,7 +185,7 @@ class DXCLICompleter():
     silent_commands = set(['export'])
 
     def __init__(self):
-        self.commands = [subcmd + ' ' for subcmd in subparsers.choices.keys() if subcmd not in self.silent_commands]
+        self.commands = [subcmd + ' ' for subcmd in list(subparsers.choices.keys()) if subcmd not in self.silent_commands]
         self.matches = []
         self.text = None
 
@@ -409,6 +409,9 @@ def logout(args):
         print("Deleting credentials from {}...".format(authserver))
         token = dxpy.AUTH_HELPER.security_context["auth_token"]
         try:
+            if not USING_PYTHON2:	
+                # python 3 requires conversion to bytes before hashing	
+                token = token.encode(sys_encoding)
             token_sig = hashlib.sha256(token).hexdigest()
             response = dxpy.DXHTTPRequest(authserver + "/system/destroyAuthToken",
                                           dict(tokenSignature=token_sig),
@@ -2015,7 +2018,7 @@ def upload_one(args):
                 sub_args = copy.copy(args)
                 sub_args.mute = True
                 sub_args.filename = os.path.join(args.filename, f)
-                sub_args.path = u"{p}:{f}/{sf}/".format(p=project, f=folder, sf=os.path.basename(args.filename))
+                sub_args.path = "{p}:{f}/{sf}/".format(p=project, f=folder, sf=os.path.basename(args.filename))
                 sub_args.parents = True
                 upload_one(sub_args)
     else:
