@@ -29,7 +29,6 @@ import com.google.common.collect.Maps;
 public enum IOClass {
     RECORD("record"),
     FILE("file"),
-    GTABLE("gtable"),
     APPLET("applet"),
     WORKFLOW("workflow"),
 
@@ -41,7 +40,6 @@ public enum IOClass {
 
     ARRAY_OF_RECORDS("array:record"),
     ARRAY_OF_FILES("array:file"),
-    ARRAY_OF_GTABLES("array:gtable"),
     ARRAY_OF_APPLETS("array:applet"),
     ARRAY_OF_WORKFLOWS("array:workflow"),
 
