@@ -191,7 +191,7 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
         # If '-d' arg not provided, aria2c uses current working directory
         cwd = os.getcwd()
         directory, filename = os.path.split(dest_filename)
-        directory = cwd if dirname in ["", cwd] else directory
+        directory = cwd if directory in ["", cwd] else directory
         cmd += ["-o", filename, "-d", directory, url]
 
     try:
