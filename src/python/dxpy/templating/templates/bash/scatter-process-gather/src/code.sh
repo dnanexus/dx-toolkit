@@ -82,7 +82,7 @@ DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
     # We will want to call "process" on each output of "scatter", so
     # we call the "map" entry point to do so.  We can also provide
     # here additional input that we want each "process" entry point to
-    # receive, e.g. a GTable ID (given as a STRING) to which the
+    # receive, e.g. a file ID (given as a STRING) to which the
     # "process" function should add rows of data and a number to use
     # as a parameter.  We will use the "-i" syntax so that it can just
     # be slotted into the bash command to run the "process" job.
@@ -93,7 +93,7 @@ DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
     # wait until the object is CLOSED before starting to run the job.
     # If your intention is for the subjob to run on an OPEN object,
     # then the input ID MUST be given as a string.
-    process_inputs='-iadditional_input:string="gtable ID, for example" -ianother_input=32'
+    process_inputs='-iadditional_input:string="file ID, for example" -ianother_input=32'
     map_job=$(dx-jobutil-new-job map \
         -iarray_of_scattered_input="$scatter_job":array_of_scattered_input \
         -iprocess_inputs="$process_inputs")
@@ -102,7 +102,7 @@ DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
     # done calling "process" on each of its inputs.  Note that a job
     # is marked as "done" only after all of its child jobs are also
     # marked "done".
-    postprocess_additional_input='gtable ID, for example'
+    postprocess_additional_input='file ID, for example'
     postprocess_job=$(dx-jobutil-new-job postprocess \
         -iprocess_outputs="$map_job":process_outputs \
         -iadditional_input:string="$postprocess_additional_input" \
@@ -115,7 +115,7 @@ DX_APP_WIZARD_UPLOAD_ANY_FILES
     #   dx-jobutil-add-output app_output_field "$postprocess":final_output --class=jobref
     #
     # Tip: you can include in your output at this point any open
-    # objects (such as gtables) which are closed by another entry
+    # objects (such as files) which are closed by another entry
     # point that finishes later.  The system will check to make sure
     # that the output object is closed and will attempt to clone it
     # out as output into the parent container only after all subjobs
@@ -166,7 +166,7 @@ process() {
 
     # As always, you can choose not to return output if the
     # "postprocess" stage does not require any input, e.g. rows have
-    # been added to a GTable that has been created in advance.  Just
+    # been added to a file that has been created in advance.  Just
     # make sure that the "postprocess" job does not run until all
     # "process" jobs have finished by making it wait for "map" to
     # finish using the depends_on argument (this is already done for
