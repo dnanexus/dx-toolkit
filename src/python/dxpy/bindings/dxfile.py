@@ -210,19 +210,17 @@ class DXFile(DXDataObject):
         """
         DXDataObject.__init__(self, dxid=dxid, project=project)
 
-        # By default, a file is create in text mode. This makes a difference
+        # By default, a file is created in text mode. This makes a difference
         # in python 3.
         self._binary_mode = False
         if mode is None:
             self._close_on_exit = True
-            self._mode = None
         else:
             if 'b' in mode:
                 self._binary_mode = True
                 mode = mode.replace("b", "")
             if mode not in ['r', 'w', 'a']:
                 raise ValueError("mode must be one of 'r', 'w', or 'a'. Character 'b' may be used in combination (e.g. 'wb').")
-            self._mode = mode
             self._close_on_exit = (mode == 'w')
         self._read_buf = BytesIO()
         self._write_buf = BytesIO()
@@ -961,6 +959,6 @@ class DXFile(DXDataObject):
         if USING_PYTHON2:
             return data
         # In python3, the underlying system methods use the 'bytes' type, not 'string'
-        if self._binary_mode is True:
+        if self._binary_mode:
             return data
         return data.decode("utf-8")

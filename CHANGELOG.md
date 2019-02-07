@@ -10,6 +10,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * argcomplete eval in the worker when sourcing `environment`
 * Bug in downloading symlinks when using aria2c
+- Uploading binary data, such at compressed files, works in python3.
+
+### Added
+- Binary mode for opening dx:files.
+- A `--textual` flag for command line tools that need to handle unicode text files.
+  For example: `dx cat --textual file-xxxx`. This was added for `cat`, and `download`.
+
 
 ## [274.0] - 2019.01.24 beta
 
