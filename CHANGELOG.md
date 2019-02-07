@@ -6,19 +6,29 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* `--phi` flag for `dx new project`
+
+### Fixed
+
+* Bug in downloading symlinks when using aria2c
+* Max number of aria2c connections <= 16
+
+## [275.0] - 2019.02.01 beta
+
 ### Fixed
 
 * argcomplete eval in the worker when sourcing `environment`
-* Bug in downloading symlinks when using aria2c
 
-## [274.0] - 2019.01.24 beta
+## [274.0] - 2019.02.01 stable
 
 ### Fixed
 
 * Preserve `httpsApp` field in dxapp.json when calling `dx get`
 * The `--except [array:file variable]` option for `dx-download-all-inputs`
 
-## [273.0] - 2019.01.24 stable
+## [273.0] - 2019.01.24 
 
 ### Fixed
 * upload issue using api proxy in Python 3
