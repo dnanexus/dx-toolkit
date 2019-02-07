@@ -34,12 +34,14 @@ from . import __dict__ as all_bindings
 from ..exceptions import DXError
 from ..compat import basestring
 
-def dxlink(object_id, project_id=None):
+def dxlink(object_id, project_id=None, field=None):
     '''
     :param object_id: Object ID or the object handler itself
     :type object_id: string or :class:`~dxpy.bindings.DXDataObject`
     :param project_id: A project ID, if creating a cross-project DXLink
     :type project_id: string
+    :param field: A field name, if creating a job-based object reference
+    :type field: string
 
     Creates a DXLink (a dict formatted as a symbolic DNAnexus object
     reference) to the specified object.  Returns *object_id* if it
@@ -47,13 +49,13 @@ def dxlink(object_id, project_id=None):
     '''
     if isinstance(object_id, DXDataObject):
         object_id = object_id.get_id()
-    if isinstance(object_id, dict):
-        if '$dnanexus_link' in object_id:
-            # In this case, dxlink was called on something that
-            # already looks like a link
-            return object_id
-    if project_id is None:
+    if is_dxlink(object_id):
+        return object_id
+    if not any((project_id, field)):
         return {'$dnanexus_link': object_id}
+    elif field:
+        dxpy.verify_string_dxid(object_id, "job")
+        return {'$dnanexus_link': {'job': object_id, 'field': field}}
     else:
         return {'$dnanexus_link': {'project': project_id, 'id': object_id}}
 
@@ -80,28 +82,34 @@ def get_dxlink_ids(link):
     '''
     :param link: A DNAnexus link
     :type link: dict
-    :returns: Object ID, Project ID (or :const:`None` if no project specified in the link)
+    :returns: (Object ID, Project ID) if the link is to a data object (or :const:`None`
+        if no project specified in the link), or (Job ID, Field) if the link is
+        a job-based object reference.
     :rtype: tuple
 
     Returns the object and project IDs stored in the given DNAnexus
     link.
     '''
-    if isinstance(link['$dnanexus_link'], dict):
+    if not is_dxlink(link):
+        raise DXError('Invalid link: %r' % link)
+    if isinstance(link['$dnanexus_link'], basestring):
+        return link['$dnanexus_link'], None
+    elif 'id' in link['$dnanexus_link']:
         return link['$dnanexus_link']['id'], link['$dnanexus_link'].get('project')
     else:
-        return link['$dnanexus_link'], None
+        return link['$dnanexus_link']['job'], link['$dnanexus_link']['field']
 
 def _guess_link_target_type(link):
     if is_dxlink(link):
-        # Guaranteed by is_dxlink that one of the following will work
-        if isinstance(link['$dnanexus_link'], basestring):
-            link = link['$dnanexus_link']
-        else:
-            link = link['$dnanexus_link']['id']
-    class_name, _id = link.split("-", 1)
-    class_name = 'DX'+class_name.capitalize()
-    if class_name == 'DXGlobalworkflow':
-        class_name = 'DXGlobalWorkflow'
+        link = get_dxlink_ids(link)[0]
+    class_name = 'DX' + link.split("-", 1)[0].capitalize()
+    if class_name not in all_bindings:
+        class_name = {
+            'DXGtable': 'DXGTable',
+            'DXGlobalworkflow': 'DXGlobalWorkflow'
+        }.get(class_name)
+    if class_name not in all_bindings:
+        raise DXError("Invalid class name: %s", class_name)
     cls = all_bindings[class_name]
     return cls
 
