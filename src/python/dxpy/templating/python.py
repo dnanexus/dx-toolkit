@@ -29,7 +29,6 @@ def get_path():
 
 class_to_dxclass = {
     "file": "dxpy.DXFile",
-    "gtable": "dxpy.DXGTable",
     "record": "dxpy.DXRecord",
     "applet": "dxpy.DXApplet"
     }

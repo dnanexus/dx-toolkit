@@ -1923,40 +1923,7 @@ def head(args):
                     if counter == args.lines:
                         break
             else:
-                if args.gri is not None:
-                    try:
-                        lo = int(args.gri[1])
-                        hi = int(args.gri[2])
-                    except:
-                        err_exit('Error: the LO and HI arguments to --gri must be integers', 3)
-                    gri_query = dxpy.DXGTable.genomic_range_query(args.gri[0],
-                                                                  lo,
-                                                                  hi,
-                                                                  args.gri_mode,
-                                                                  args.gri_name)
-                    table_text, table_rows, table_cols = format_table(list(handler.iterate_query_rows(query=gri_query, limit=args.lines)),
-                                                                  column_specs = entity_result['describe']['columns'],
-                                                                  report_dimensions=True,
-                                                                  max_col_width=args.max_col_width)
-                else:
-                    table_text, table_rows, table_cols = format_table(list(handler.iterate_rows(start=args.starting,
-                                                                                                end=args.starting + args.lines)),
-                                                                      column_specs = entity_result['describe']['columns'],
-                                                                      report_dimensions=True,
-                                                                      max_col_width=args.max_col_width)
-                    more_rows = entity_result['describe']['length'] - args.starting - args.lines
-                    if more_rows > 0:
-                        table_text += "\n{nrows} more rows".format(nrows=more_rows)
-                if sys.stdout.isatty():
-                    if tty_rows <= table_rows or tty_cols <= table_cols:
-                        try:
-                            pipe = os.popen('less -RS', 'w')
-                            pipe.write(table_text.encode(sys_encoding) if USING_PYTHON2 else table_text)
-                            pipe.close()
-                            return
-                        except:
-                            pass
-                sys.stdout.write(table_text + '\n')
+                err_exit("Class type " + handler._class + " not supported for dx head")
         except StopIteration:
             pass
         except:
