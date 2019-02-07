@@ -1436,7 +1436,7 @@ def new_record(args):
             print(dxrecord.get_id())
         else:
             print_desc(dxrecord.describe(incl_properties=True, incl_details=True), args.verbose)
-     except:
+    except:
         err_exit()
 
 def set_visibility(args):
