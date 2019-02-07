@@ -1804,6 +1804,24 @@ dxpy.run()
             buf = run("dx head test.tar.gz")
             self.assertEqual("File contains binary data", buf)
 
+    def test_download_unicode_to_stdout(self):
+        # example unicode text in Thai.
+        sentence = "ผบช.สตม.แจง ปมไทยกักตัว ให้ทางเอกอัครราชทูตออสเตรเลียรับทราบแล้ว"
+
+        with temporary_project('test_proj', select=True) as temp_project:
+            proj_id = temp_project.get_id()
+
+            # create a file with 'dx upload'
+            cmd = "echo {} | dx upload - --path Thai.txt --brief --wait".format(sentence)
+            file_id = run(cmd.strip())
+            self.assertTrue(file_id.startswith('file-'))
+
+            # download the file with 'dx cat'
+            buf = run("dx cat Thai.txt").strip()
+
+            # check that the content is the same
+            self.assertEqual(buf, sentence)
+
     def test_dx_download_resume_and_checksum(self):
         def assert_md5_checksum(filename, hasher):
             with open(filename, "rb") as fh:

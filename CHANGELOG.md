@@ -11,8 +11,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 - Binary mode for opening dx:files.
-- A `--textual` flag for command line tools that need to handle unicode text files.
-  For example: `dx cat --textual file-xxxx`. This was added for `cat`, and `download`.
+- A `--unicode` flag for command line tools that need to handle unicode text files.
+  For example: `dx cat --unicode file-xxxx`. This was added for `cat`, and `download`.
 
 ## [275.0] - 2019.02.01 beta
 

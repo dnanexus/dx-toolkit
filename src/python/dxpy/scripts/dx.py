@@ -1930,7 +1930,7 @@ def cat(args):
 
         # We assume the file is binary, unless specified otherwise
         mode = "rb"
-        if args.textual is True:
+        if args.unicode_text is True:
             mode = "r"
         try:
             dxfile = dxpy.DXFile(entity_result['id'], mode=mode)
@@ -1951,7 +1951,7 @@ def cat(args):
 def download_or_cat(args):
     if args.output == '-':
         cat_args = parser.parse_args(['cat'] + args.paths)
-        cat_args.textual = args.textual
+        cat_args.unicode_text = args.unicode_text
         cat(cat_args)
         return
     download(args)
@@ -4226,8 +4226,8 @@ parser_download.add_argument('-a', '--all', help='If multiple objects match the 
                              action='store_true')
 parser_download.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress',
                              action='store_false', default=sys.stderr.isatty())
-parser_download.add_argument('--textual', help='Display the characters as text/unicode when writing to stdout',
-                             action='store_true')
+parser_download.add_argument('--unicode', help='Display the characters as text/unicode when writing to stdout',
+                             dest="unicode_text", action='store_true')
 parser_download.set_defaults(func=download_or_cat)
 register_parser(parser_download, categories='data')
 
@@ -4251,8 +4251,8 @@ parser_cat = subparsers.add_parser('cat', help='Print file(s) to stdout', prog='
                                    parents=[env_args])
 cat_path_action = parser_cat.add_argument('path', help='File ID or name(s) to print to stdout', nargs='+')
 cat_path_action.completer = DXPathCompleter(classes=['file'])
-parser_cat.add_argument('--textual', help='Display the characters as text/unicode when writing to stdout',
-                        action='store_true')
+parser_cat.add_argument('--unicode', help='Display the characters as text/unicode when writing to stdout',
+                        dest="unicode_text", action='store_true')
 parser_cat.set_defaults(func=cat)
 register_parser(parser_cat, categories='data')
 
