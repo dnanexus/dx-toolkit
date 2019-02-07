@@ -7,9 +7,6 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ## Unreleased
 
 ### Fixed
-
-* argcomplete eval in the worker when sourcing `environment`
-* Bug in downloading symlinks when using aria2c
 - Uploading binary data, such at compressed files, works in python3.
 
 ### Added
@@ -17,15 +14,21 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 - A `--textual` flag for command line tools that need to handle unicode text files.
   For example: `dx cat --textual file-xxxx`. This was added for `cat`, and `download`.
 
+## [275.0] - 2019.02.01 beta
 
-## [274.0] - 2019.01.24 beta
+### Fixed
+
+* argcomplete eval in the worker when sourcing `environment`
+* Bug in downloading symlinks when using aria2c
+
+## [274.0] - 2019.02.01 stable
 
 ### Fixed
 
 * Preserve `httpsApp` field in dxapp.json when calling `dx get`
 * The `--except [array:file variable]` option for `dx-download-all-inputs`
 
-## [273.0] - 2019.01.24 stable
+## [273.0] - 2019.01.24
 
 ### Fixed
 * upload issue using api proxy in Python 3
