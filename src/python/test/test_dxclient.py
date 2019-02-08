@@ -341,6 +341,11 @@ class TestDXClient(DXTestCase):
             with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
                 run(("dx uninvite "+query).format(p=self.project))
 
+    def test_dx_add_missing_arguments(self):
+        with self.assertSubprocessFailure(stderr_text = "missing argument",
+                                          exit_code=3):
+            run("dx add")
+
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_ADD_TYPES", "DNA_CLI_DATA_OBJ_REMOVE_TYPES"])
     def test_dx_add_rm_types(self):
