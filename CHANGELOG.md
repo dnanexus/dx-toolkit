@@ -6,6 +6,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* python3 parsing subcommand help output
+
+## [276.0] - 2019.02.08 beta
+
 ### Added
 
 * `--phi` flag for `dx new project`
@@ -15,13 +21,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Bug in downloading symlinks when using aria2c
 * Max number of aria2c connections <= 16
 
-## [275.0] - 2019.02.01 beta
+## [275.0] - 2019.02.01 stable
 
 ### Fixed
 
 * argcomplete eval in the worker when sourcing `environment`
 
-## [274.0] - 2019.02.01 stable
+## [274.0] - 2019.02.01 
 
 ### Fixed
 
