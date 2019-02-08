@@ -1758,7 +1758,10 @@ dxpy.run()
 
         def gen_file_gzip(fname, proj_id):
             with gzip.open(fname, 'wb') as f:
-                f.write(data)
+                if USING_PYTHON2:
+                    f.write(data)
+                else:
+                    f.write(data.encode('utf-8'))
 
             dxfile = dxpy.upload_local_file(fname, name=fname, project=proj_id,
                                             media_type="application/gzip", wait_on_close=True)
@@ -1801,6 +1804,28 @@ dxpy.run()
             gen_file_tar("test-file", "test.tar.gz", proj_id)
             buf = run("dx cat test.tar.gz | tar zvxf -")
             self.assertTrue(os.path.exists('test-file'))
+
+            # test head on a binary file
+            buf = run("dx head test.tar.gz")
+            self.assertEqual("File contains binary data", buf)
+
+    def test_download_unicode_to_stdout(self):
+        # example unicode text in Thai.
+        sentence = "ผบช.สตม.แจง ปมไทยกักตัว ให้ทางเอกอัครราชทูตออสเตรเลียรับทราบแล้ว"
+
+        with temporary_project('test_proj', select=True) as temp_project:
+            proj_id = temp_project.get_id()
+
+            # create a file with 'dx upload'
+            cmd = "echo {} | dx upload - --path Thai.txt --brief --wait".format(sentence)
+            file_id = run(cmd.strip())
+            self.assertTrue(file_id.startswith('file-'))
+
+            # download the file with 'dx cat'
+            buf = run("dx cat Thai.txt").strip()
+
+            # check that the content is the same
+            self.assertEqual(buf, sentence)
 
     def test_dx_download_resume_and_checksum(self):
         def assert_md5_checksum(filename, hasher):

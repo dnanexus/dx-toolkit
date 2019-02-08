@@ -40,7 +40,7 @@ from ..exceptions import DXFileError, DXPartLengthMismatchError, DXChecksumMisma
 from ..utils import response_iterator
 import subprocess
 
-def open_dxfile(dxid, project=None, read_buffer_size=dxfile.DEFAULT_BUFFER_SIZE):
+def open_dxfile(dxid, project=None, mode=None, read_buffer_size=dxfile.DEFAULT_BUFFER_SIZE):
     '''
     :param dxid: file ID
     :type dxid: string
@@ -60,7 +60,7 @@ def open_dxfile(dxid, project=None, read_buffer_size=dxfile.DEFAULT_BUFFER_SIZE)
       DXFile(dxid)
 
     '''
-    return DXFile(dxid, project=project, read_buffer_size=read_buffer_size)
+    return DXFile(dxid, project=project, mode=mode, read_buffer_size=read_buffer_size)
 
 
 def new_dxfile(mode=None, write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE, expected_file_size=None, file_is_mmapd=False,

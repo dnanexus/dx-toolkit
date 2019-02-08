@@ -7,6 +7,16 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ## Unreleased
 
 ### Fixed
+- Uploading binary data, such at compressed files, works in python3.
+
+### Added
+- Binary mode for opening dx:files.
+- A `--unicode` flag for command line tools that need to handle unicode text files.
+  For example: `dx cat --unicode file-xxxx`. This was added for `cat`, and `download`.
+
+## [275.0] - 2019.02.01 beta
+
+### Fixed
 
 * python3 parsing subcommand help output
 
@@ -31,14 +41,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * argcomplete eval in the worker when sourcing `environment`
 
-## [274.0] - 2019.02.01 
+## [274.0] - 2019.02.01 stable
 
 ### Fixed
 
 * Preserve `httpsApp` field in dxapp.json when calling `dx get`
 * The `--except [array:file variable]` option for `dx-download-all-inputs`
 
-## [273.0] - 2019.01.24 
+## [273.0] - 2019.01.24
 
 ### Fixed
 * upload issue using api proxy in Python 3

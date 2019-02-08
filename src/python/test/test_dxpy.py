@@ -575,6 +575,52 @@ class TestDXFile(testutil.DXTestCaseCompat):
             buf = same_dxfile.read()
             self.assertEqual(self.foo_str[-1:], buf)
 
+    def test_write_read_binary_dxfile(self):
+        # This test is run ONLY for python-3.
+        # It fails on python-2.
+        if USING_PYTHON2:
+            return
+        dxid = ""
+        data = "ไนความจริงสิ่งคาด"  # unicode characters
+
+        # Writing Unicode text
+        with dxpy.new_dxfile(mode = "w") as self.dxfile:
+            dxid = self.dxfile.get_id()
+            self.dxfile.write(data)
+        with dxpy.open_dxfile(dxid, mode="r") as same_dxfile:
+            same_dxfile.wait_on_close()
+            self.assertTrue(same_dxfile.closed())
+            buf = same_dxfile.read()
+            self.assertEqual(data, buf)
+
+        # Writing binary data
+        binary = data.encode("utf-8")
+        with dxpy.new_dxfile(mode = "wb") as self.dxfile:
+            dxid = self.dxfile.get_id()
+            self.dxfile.write(binary)
+        with dxpy.open_dxfile(dxid, mode="rb") as same_dxfile:
+            same_dxfile.wait_on_close()
+            self.assertTrue(same_dxfile.closed())
+            buf = same_dxfile.read()
+            self.assertEqual(binary, buf)
+
+    def test_write_read_unicode_dxfile(self):
+        # Not expected to work for python-2
+        if USING_PYTHON2:
+            return
+        data = "ไนความจริงสิ่งคาด"  # unicode characters
+
+        # using upload_string to upload unicode
+        self.dxfile = dxpy.upload_string(data)
+        self.dxfile.wait_on_close()
+        self.assertTrue(self.dxfile.closed())
+
+        # download and check the data remained the same
+        dxpy.download_dxfile(self.dxfile.get_id(), self.new_file.name)
+        with open(self.new_file.name, 'r') as fd:
+            data2 = fd.read().strip()
+        self.assertEqual(data2, data)
+
     def test_download_project_selection(self):
         with testutil.temporary_project() as p, testutil.temporary_project() as p2:
             # Same file is available in both projects
