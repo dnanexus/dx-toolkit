@@ -22,12 +22,53 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import re
 import unittest
 
+import dxpy
 from dxpy.utils import describe
 
-class TestSymlink(unittest.TestCase):
-    def create_symlink(url):
+def setUpTempProject(thing):
+    thing.old_workspace_id = dxpy.WORKSPACE_ID
+    thing.proj_id = dxpy.api.project_new({'name': 'symlink test project'})['id']
+    dxpy.set_workspace_id(thing.proj_id)
 
+def tearDownTempProject(thing):
+    dxpy.api.project_destroy(thing.proj_id, {'terminateJobs': True})
+    dxpy.set_workspace_id(thing.old_workspace_id)
+
+def create_symlink(filename, proj_id, url):
+    input_params = {
+        'name' : filename,
+        'project': proj_id,
+        'drive': "drive-PUBLISHED",
+        'md5sum': "00000000000000000000000000000000",
+        'symlinkPath': {
+            'object': url
+        }
+    }
+    result = dxpy.api.file_new(input_params=input_params)
+    return dxpy.DXFile(dxid = result["id"],
+                       project = proj_id)
+
+
+
+class TestSymlink(unittest.TestCase):
+#    def setUp(self):
+#        setUpTempProject(self)
+
+#    def tearDown(self):
+#        tearDownTempProject(self)
 
     # create a symbolic link
-
     # download it, see that it works
+    def test_symlink(self):
+        print("test_symlink")
+        dxfile = create_symlink(
+            "sym1",
+            "project-FGpfqjQ0ffPF1Q106JYP2j3v",
+            "https://s3.amazonaws.com/1000genomes/CHANGELOG")
+        print(dxfile)
+        desc = dxfile.describe()
+        print(desc)
+
+
+if __name__ == '__main__':
+    unittest.main()
