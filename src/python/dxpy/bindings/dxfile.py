@@ -959,6 +959,6 @@ class DXFile(DXDataObject):
         if USING_PYTHON2:
             return data
         # In python3, the underlying system methods use the 'bytes' type, not 'string'
-        if self._binary_mode:
+        if self._binary_mode is True:
             return data
         return data.decode("utf-8")
