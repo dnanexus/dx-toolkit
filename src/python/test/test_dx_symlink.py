@@ -34,12 +34,12 @@ def tearDownTempProject(thing):
     dxpy.api.project_destroy(thing.proj_id, {'terminateJobs': True})
     dxpy.set_workspace_id(thing.old_workspace_id)
 
-def create_symlink(filename, proj_id, url):
+def create_symlink(filename, proj_id, url, checksum):
     input_params = {
         'name' : filename,
         'project': proj_id,
         'drive': "drive-PUBLISHED",
-        'md5sum': "00000000000000000000000000000000",
+        'md5sum': checksum,
         'symlinkPath': {
             'object': url
         }
@@ -51,11 +51,11 @@ def create_symlink(filename, proj_id, url):
 
 
 class TestSymlink(unittest.TestCase):
-#    def setUp(self):
-#        setUpTempProject(self)
+    def setUp(self):
+        setUpTempProject(self)
 
-#    def tearDown(self):
-#        tearDownTempProject(self)
+    def tearDown(self):
+        tearDownTempProject(self)
 
     # create a symbolic link
     # download it, see that it works
@@ -63,8 +63,9 @@ class TestSymlink(unittest.TestCase):
         print("test_symlink")
         dxfile = create_symlink(
             "sym1",
-            "project-FGpfqjQ0ffPF1Q106JYP2j3v",
-            "https://s3.amazonaws.com/1000genomes/CHANGELOG")
+            self.proj_id,
+            "https://s3.amazonaws.com/1000genomes/CHANGELOG",
+            "6d1792d429159aabb630926c37254766")
         print(dxfile)
         desc = dxfile.describe()
         print(desc)
