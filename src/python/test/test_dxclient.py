@@ -4036,6 +4036,61 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                               exit_code=3):
                 new_workflow = run("dx build --json {src_dir}".format(src_dir=workflow_dir))
 
+    def test_dx_build_workflow_with_ignore_reuse(self):
+        workflow_name = "wf_ignoreReuse"
+        dxworkflow_json = dict(self.dxworkflow_spec, name=workflow_name, version="1.0.0")
+
+        # fail - no such stage ID
+        dxworkflow_json['ignoreReuse'] = ["no_such_stage_id"]
+        dir_fail = self.write_workflow_directory(workflow_name,
+                                                     json.dumps(dxworkflow_json),
+                                                     readme_content="Workflow Readme")
+        with self.assertSubprocessFailure(stderr_regexp='Stage with ID no_such_stage_id not found', exit_code=3):
+            run("dx build " + dir_fail)
+
+        # success
+        dxworkflow_json['ignoreReuse'] = ["stage_0"]
+        dir_ok = self.write_workflow_directory(workflow_name,
+                                                     json.dumps(dxworkflow_json),
+                                                     readme_content="Workflow Readme")
+        workflow_id = json.loads(run('dx build --workflow ' + dir_ok))['id']
+        workflow_desc = dxpy.get_handler(workflow_id).describe()
+        self.assertEqual(workflow_desc['ignoreReuse'], ["stage_0"])
+
+    def test_run_workflow_with_ignore_reuse(self):
+        # Build the workflow (ignoreReuse is set on applet document)
+        workflow_name = 'workflow_run_ignore_reuse'
+        applet_spec = self.create_applet_spec(self.project)
+        applet_spec['ignoreReuse'] = True
+        applet_id = dxpy.api.applet_new(applet_spec)['id']
+        dxworkflow_json = dict(self.dxworkflow_spec, name=workflow_name)
+        dxworkflow_json['stages'][0]['executable'] = applet_id
+        dir_wf = self.write_workflow_directory(workflow_name,
+                                               json.dumps(dxworkflow_json),
+                                               readme_content="Workflow Readme")
+        workflow_id = json.loads(run('dx build --workflow ' + dir_wf))['id']
+
+        # Run the workflow without ignore-reuse-stage
+        analysis_id = run("dx run " + workflow_id + " -y --brief").strip()
+        analysis_desc = json.loads(run("dx describe --json " + analysis_id))
+        self.assertIsNone(analysis_desc.get('ignoreReuse'))
+
+        analysis_desc = json.loads(run("dx describe " + analysis_id + " --json"))
+        time.sleep(2) # May need to wait for job to be created in the system
+        job_desc = json.loads(run("dx describe --json " + analysis_desc["stages"][0]["execution"]["id"]))
+        self.assertEqual(job_desc.get('ignoreReuse'), True)
+        job_desc = json.loads(run("dx describe --json " + analysis_desc["stages"][1]["execution"]["id"]))
+        self.assertEqual(job_desc.get('ignoreReuse'), False)
+
+        # Run the workflow with ignore-reuse-stage
+        analysis_id = run('dx run ' + workflow_id + ' --ignore-reuse-stage stage_0 --ignore-reuse-stage stage_1 -y --brief').strip()
+        analysis_desc = json.loads(run("dx describe --json " + analysis_id))
+        self.assertEqual(analysis_desc.get('ignoreReuse'), ["stage_0", "stage_1"])
+        # analysis_desc = json.loads(run("dx describe " + analysis_id + " --json"))
+        # time.sleep(2) # May need to wait for job to be created in the system
+        # job_desc = json.loads(run("dx describe --json " + analysis_desc["stages"][0]["execution"]["id"]))
+        # self.assertEqual(job_desc.get('ignoreReuse'), True)
+
     def test_dx_build_get_build_workflow(self):
         # When building and getting a workflow multiple times we should
         # obtain functionally identical workflows, ie. identical dxworkflow.json specs.

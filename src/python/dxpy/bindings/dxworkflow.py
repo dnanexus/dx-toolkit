@@ -189,7 +189,7 @@ class DXWorkflow(DXDataObject, DXExecutable):
         # A stage with the provided ID can't be found in the workflow, so look for it as a name
         stage_ids_matching_name = [stg['id'] for stg in self.stages if stg.get('name') == stage]
         if len(stage_ids_matching_name) == 0:
-            raise DXError('DXWorkflow: the given stage identifier could not be found as a stage ID nor as a stage name')
+            raise DXError('DXWorkflow: the given stage identifier ' + stage + ' could not be found as a stage ID nor as a stage name ' + str(self.stages))
         elif len(stage_ids_matching_name) > 1:
             raise DXError('DXWorkflow: more than one workflow stage was found to have the name "' + stage + '"')
         else:
@@ -486,6 +486,12 @@ class DXWorkflow(DXDataObject, DXExecutable):
                 for _stage in kwargs['rerun_stages']
             ]
 
+        if kwargs.get('ignore_reuse_stages') is not None:
+            run_input['ignoreReuse'] = [
+                _stage if _stage == '*' else self._get_stage_id(_stage)
+                for _stage in kwargs['ignore_reuse_stages']
+            ]
+
         return run_input
 
     def _run_impl(self, run_input, **kwargs):
@@ -503,6 +509,8 @@ class DXWorkflow(DXDataObject, DXExecutable):
         :type stage_folders: dict
         :param rerun_stages: A list of stage IDs, names, indices, and/or the string "*" to indicate which stages should be run even if there are cached executions available
         :type rerun_stages: list of strings
+        :param ignore_reuse_stages: Stages of a workflow (IDs, names, or indices) or "*" for which job reuse should be disabled
+        :type ignore_reuse_stages: list
         :returns: Object handler of the newly created analysis
         :rtype: :class:`~dxpy.bindings.dxanalysis.DXAnalysis`
 

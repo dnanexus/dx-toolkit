@@ -500,8 +500,8 @@ class DXTestCaseBuildWorkflows(DXTestCase):
             readme_file.write(readme_content)
         return os.path.join(self.temp_file_path, workflow_name)
 
-    def create_applet(self, project_id):
-        return dxpy.api.applet_new({"name": "my_first_applet",
+    def create_applet_spec(self, project_id):
+        return {"name": "my_first_applet",
                                     "project": project_id,
                                     "dxapi": "1.0.0",
                                     "inputSpec": [{"name": "number", "class": "int"}],
@@ -510,7 +510,10 @@ class DXTestCaseBuildWorkflows(DXTestCase):
                                                 "distribution": "Ubuntu",
                                                 "release": "14.04",
                                                 "code": "exit 0"}
-                                   })['id']
+                                   }
+
+    def create_applet(self, project_id):
+        return dxpy.api.applet_new(self.create_applet_spec(project_id))['id']
 
     def create_workflow_spec(self, project_id):
         workflow_spec = {"name": "my_workflow",

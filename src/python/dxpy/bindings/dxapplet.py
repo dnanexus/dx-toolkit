@@ -46,7 +46,7 @@ class DXExecutable:
         '''
         Takes the same arguments as the run method. Creates an input hash for the /executable-xxxx/run method,
         translating ONLY the fields that can be handled uniformly across all executables: project, folder, name, tags,
-        properties, details, depends_on, allow_ssh, debug, delay_workspace_destruction, ignore_reuse, and extra_args.
+        properties, details, depends_on, allow_ssh, debug, delay_workspace_destruction, and extra_args.
         '''
         project = kwargs.get('project') or dxpy.WORKSPACE_ID
 
@@ -85,9 +85,6 @@ class DXExecutable:
         if kwargs.get('priority') is not None:
             run_input["priority"] = kwargs['priority']
 
-        if kwargs.get('ignore_reuse') is not None:
-            run_input["ignoreReuse"] = kwargs['ignore_reuse']
-
         if dxpy.JOB_ID is None:
             run_input["project"] = project
 
@@ -104,10 +101,17 @@ class DXExecutable:
         '''
         # Although it says "for_applet", this is factored out of
         # DXApplet because apps currently use the same mechanism
-        for unsupported_arg in ['stage_instance_types', 'stage_folders', 'rerun_stages']:
+        for unsupported_arg in ['stage_instance_types', 'stage_folders', 'rerun_stages', 'ignore_reuse_stages']:
             if kwargs.get(unsupported_arg):
                 raise DXError(unsupported_arg + ' is not supported for applets (only workflows)')
-        return DXExecutable._get_run_input_common_fields(executable_input, **kwargs)
+
+        applet_input_hash = DXExecutable._get_run_input_common_fields(executable_input, **kwargs)
+
+        # Add arguments which are specific to app(let)s but not to workflows
+        # so they are not included in DXExecutable._get_run_input_common_fields()
+        if kwargs.get('ignore_reuse') is not None:
+            applet_input_hash["ignoreReuse"] = kwargs['ignore_reuse']
+        return applet_input_hash
 
     def _run_impl(self, run_input, **kwargs):
         """
@@ -154,7 +158,7 @@ class DXExecutable:
     def run(self, executable_input, project=None, folder=None, name=None, tags=None, properties=None, details=None,
             instance_type=None, stage_instance_types=None, stage_folders=None, rerun_stages=None,
             depends_on=None, allow_ssh=None, debug=None, delay_workspace_destruction=None, priority=None,
-            ignore_reuse=None, extra_args=None, **kwargs):
+            ignore_reuse=None, ignore_reuse_stages=None, extra_args=None, **kwargs):
         '''
         :param executable_input: Hash of the executable's input arguments
         :type executable_input: dict
@@ -184,6 +188,8 @@ class DXExecutable:
         :type priority: string
         :param ignore_reuse: Disable job reuse for this execution
         :type ignore_reuse: boolean
+        :param ignore_reuse_stages: Stages of a workflow (IDs, names, or indices) or "*" for which job reuse should be disabled
+        :type ignore_reuse_stages: list
         :param extra_args: If provided, a hash of options that will be merged into the underlying JSON given for the API call
         :type extra_args: dict
         :returns: Object handler of the newly created job
@@ -211,6 +217,7 @@ class DXExecutable:
                                         depends_on=depends_on,
                                         allow_ssh=allow_ssh,
                                         ignore_reuse=ignore_reuse,
+                                        ignore_reuse_stages=ignore_reuse_stages,
                                         debug=debug,
                                         delay_workspace_destruction=delay_workspace_destruction,
                                         priority=priority,
