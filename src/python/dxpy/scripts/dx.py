@@ -5561,6 +5561,11 @@ def main():
         set_cli_colors(args)
         set_delim(args)
         set_env_from_args(args)
+        if not hasattr(args, 'func'):
+            # Something was wrong in the command line. Print the help message for
+            # this particular combination of command line words.
+            parser.parse_args(args_list + ["--help"])
+            sys.exit(1)
         try:
             args.func(args)
             # Flush buffered data in stdout before interpreter shutdown to ignore broken pipes

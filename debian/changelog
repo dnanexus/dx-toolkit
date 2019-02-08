@@ -1,3 +1,11 @@
+dx-toolkit (0.276.0) precise; urgency=low
+
+  * Added: `--phi` flag for `dx new project`
+  * Fixed: Bug in downloading symlinks when using aria2c
+  * Fixed: Max number of aria2c connections <= 16
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 07 Feb 2019 23:35:37 +0000
+
 dx-toolkit (0.275.0) precise; urgency=low
 
   * Fixed: argcomplete eval in the worker when sourcing environment

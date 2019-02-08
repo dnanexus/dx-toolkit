@@ -18,8 +18,28 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Fixed
 
-* argcomplete eval in the worker when sourcing `environment`
+* python3 parsing subcommand help output
+
+### Removed
+
+* 32-bit build target for Ubuntu 14.04
+
+## [276.0] - 2019.02.08 beta
+
+### Added
+
+* `--phi` flag for `dx new project`
+
+### Fixed
+
 * Bug in downloading symlinks when using aria2c
+* Max number of aria2c connections <= 16
+
+## [275.0] - 2019.02.01 stable
+
+### Fixed
+
+* argcomplete eval in the worker when sourcing `environment`
 
 ## [274.0] - 2019.02.01 stable
 
