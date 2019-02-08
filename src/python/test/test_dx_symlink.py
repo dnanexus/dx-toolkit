@@ -19,6 +19,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
+import os
 import re
 import unittest
 
@@ -66,10 +67,10 @@ class TestSymlink(unittest.TestCase):
             self.proj_id,
             "https://s3.amazonaws.com/1000genomes/CHANGELOG",
             "6d1792d429159aabb630926c37254766")
-        print(dxfile)
-        desc = dxfile.describe()
-        print(desc)
 
+        print("downloading locally")
+        dxpy.download_dxfile(dxfile.get_id(), "CHANGELOG")
+        os.remove("CHANGELOG")
 
 if __name__ == '__main__':
     unittest.main()
