@@ -10,6 +10,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * python3 parsing subcommand help output
 
+### Removed
+
+* 32-bit build target for Ubuntu 14.04
+
 ## [276.0] - 2019.02.08 beta
 
 ### Added
