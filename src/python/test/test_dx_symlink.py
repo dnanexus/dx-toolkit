@@ -21,6 +21,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -74,27 +75,22 @@ def md5_checksum(filename):
     result = result.decode("ascii")
     return result
 
-# create a symbolic link on the platform
-def create_symlink(filename, proj_id, url, checksum):
-    input_params = {
-        'name' : filename,
-        'project': proj_id,
-        'drive': "drive-PUBLISHED",
-        'md5sum': checksum,
-        'symlinkPath': {
-            'object': url
-        }
-    }
-    result = dxpy.api.file_new(input_params=input_params)
-    return dxpy.DXFile(dxid = result["id"],
-                       project = proj_id)
 
+class TestSymlink(unittest.TestCase):
+    def setUp(self):
+        self.wd = tempfile.mkdtemp()
+        chdir(self.wd)
+        setUpTempProject(self)
 
-# create a symbolic link
-# download it, see that it works
-def download_url_create_symlink(url, proj_id):
-    print("url = {}".format(url))
-    with chdir(tempfile.mkdtemp()):
+    def tearDown(self):
+        shutil.rmtree(self.wd)
+        tearDownTempProject(self)
+
+    # create a symbolic link
+    # download it, see that it works
+    def download_url_create_symlink(self, url, sym_name):
+        print("url = {}".format(url))
+
         tmp_file = "localfile"
         # download [url]
         cmd = ["wget", "--tries=5", "--quiet", "-O", tmp_file, url]
@@ -109,37 +105,37 @@ def download_url_create_symlink(url, proj_id):
             err_exit("Failed to download with wget: {cmd}\n{msg}\n".format(cmd=str(cmd), msg=msg))
 
         # calculate its md5 checksum
-        chksum = md5_checksum(tmp_file)
+        digest = md5_checksum(tmp_file)
+        os.remove(tmp_file)
 
         # create a symlink on the platform, with the correct checksum
-        dxfile = create_symlink(
-            "sym1",
-            proj_id,
-            url,
-            chksum)
-
-        # download it (this will verify the checksum)
-        print("downloading locally")
-        dxpy.download_dxfile(dxfile.get_id(), tmp_file)
-
-
-class TestSymlink(unittest.TestCase):
-    def setUp(self):
-        setUpTempProject(self)
-
-    def tearDown(self):
-        tearDownTempProject(self)
+        input_params = {
+            'name' : sym_name,
+            'project': self.proj_id,
+            'drive': "drive-PUBLISHED",
+            'md5sum': digest,
+            'symlinkPath': {
+                'object': url
+            }
+        }
+        result = dxpy.api.file_new(input_params=input_params)
+        return dxpy.DXFile(dxid = result["id"],
+                           project = self.proj_id)
 
     def test_symlinks(self):
-        download_url_create_symlink("https://s3.amazonaws.com/1000genomes/CHANGELOG",
-                                    self.proj_id)
-        download_url_create_symlink("https://wiki.dnanexus.com/Home",
-                                    self.proj_id)
-        download_url_create_symlink("https://www.gutenberg.org",
-                                    self.proj_id)
+        dxfile1 = self.download_url_create_symlink("https://s3.amazonaws.com/1000genomes/CHANGELOG",
+                                                   "sym1")
+        dxfile2 = self.download_url_create_symlink("https://wiki.dnanexus.com/Home",
+                                                   "sym2")
 
-    def test_downloads():
-        run("dx download {} -o {}".format(symlink, localfile))
+        # download to PWD
+        run("dx download {}:/{} -o {}".format(self.proj_id, "sym1", "localfile"))
+
+        # absolute path
+        run("dx download {}:/{} -o {}".format(self.proj_id, "sym1", "/tmp/localfile"))
+
+        # relative path
+        run("dx download {}:/{} -o {}".format(self.proj_id, "sym2", "../localfile"))
 
 if __name__ == '__main__':
     unittest.main()
