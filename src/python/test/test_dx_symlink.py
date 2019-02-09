@@ -138,5 +138,8 @@ class TestSymlink(unittest.TestCase):
         download_url_create_symlink("https://www.gutenberg.org",
                                     self.proj_id)
 
+    def test_downloads():
+        run("dx download {} -o {}".format(symlink, localfile))
+
 if __name__ == '__main__':
     unittest.main()
