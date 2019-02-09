@@ -132,10 +132,10 @@ class TestSymlink(unittest.TestCase):
         run("dx download {}:/{} -o {}".format(self.proj_id, "sym1", "localfile"))
 
         # absolute path
-        run("dx download {}:/{} -o {}".format(self.proj_id, "sym1", "/tmp/localfile"))
+        run("dx download {}:/{} -f -o {}".format(self.proj_id, "sym1", "/tmp/localfile"))
 
         # relative path
-        run("dx download {}:/{} -o {}".format(self.proj_id, "sym2", "../localfile"))
+        run("dx download {}:/{} -f -o {}".format(self.proj_id, "sym2", "../localfile"))
 
 if __name__ == '__main__':
     unittest.main()
