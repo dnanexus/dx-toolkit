@@ -61,7 +61,7 @@ def parse_obj(string, klass):
         return {'$dnanexus_link': {"project": entity_result['describe']['project'],
                                    "id": entity_result['id']}}
 
-dx_data_classes = ['record', 'gtable', 'file', 'applet', 'workflow']
+dx_data_classes = ['record', 'file', 'applet', 'workflow']
 
 parse_input = {'boolean': parse_bool,
                'string': (lambda string: string),
@@ -69,7 +69,6 @@ parse_input = {'boolean': parse_bool,
                'int': (lambda string: int(string)),
                'hash': (lambda string: json.loads(string)),
                'record': (lambda string: parse_obj(string, 'record')),
-               'gtable': (lambda string: parse_obj(string, 'gtable')),
                'file': (lambda string: parse_obj(string, 'file')),
                'applet': (lambda string: parse_obj(string, 'applet')),
                'workflow': (lambda string: parse_obj(string, 'workflow')),

@@ -55,7 +55,7 @@ DX_APP_WIZARD_UPLOAD_ANY_FILES
     #   dx-jobutil-add-output app_output_field "$postprocess":answer --class=jobref
     #
     # Tip: you can include in your output at this point any open
-    # objects (such as gtables) which are closed by another entry
+    # objects (such as files) which are closed by another entry
     # point that finishes later.  The system will check to make sure
     # that the output object is closed and will attempt to clone it
     # out as output into the parent container only after all subjobs

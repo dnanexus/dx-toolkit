@@ -108,7 +108,7 @@ def _check_suggestions(app_json, publish=False):
                         logger.warn('Folder {path} could not be found in project {project}'.format(
                                      path=suggestion['path'], project=suggestion['project']))
             if '$dnanexus_link' in suggestion:
-                if suggestion['$dnanexus_link'].startswith(('file-', 'record-', 'gtable-')):
+                if suggestion['$dnanexus_link'].startswith(('file-', 'record-')):
                     try:
                         dnanexus_link = dxpy.describe(suggestion['$dnanexus_link'])
                     except dxpy.exceptions.DXAPIError as e:
@@ -130,7 +130,7 @@ def _check_suggestions(app_json, publish=False):
                                     logger.warn('Suggested project {name} does not exist, or not accessible by user'.format(
                                                  name=suggestion['value']['$dnanexus_link']['project']))
                     elif isinstance(suggestion['value']['$dnanexus_link'], basestring):
-                        if suggestion['value']['$dnanexus_link'].startswith(('file-', 'record-', 'gtable-')):
+                        if suggestion['value']['$dnanexus_link'].startswith(('file-', 'record-')):
                             try:
                                 dnanexus_link = dxpy.describe(suggestion['value']['$dnanexus_link'])
                             except dxpy.exceptions.DXAPIError as e:

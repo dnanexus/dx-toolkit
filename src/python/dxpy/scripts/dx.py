@@ -218,13 +218,7 @@ class DXCLICompleter():
             elif words[0] in ['cd', 'rmdir', 'mkdir', 'tree']:
                 path_matches = path_completer(words[-1],
                                               expected='folder')
-            elif words[0] in ['export']:
-                path_matches = path_completer(words[-1],
-                                              classes=['gtable'])
-            elif words[0] in ['head']:
-                path_matches = path_completer(words[-1],
-                                              classes=['gtable', 'file'])
-            elif words[0] in ['cat', 'download']:
+            elif words[0] in ['head', 'cat', 'download']:
                 path_matches = path_completer(words[-1],
                                               classes=['file'])
             elif words[0] in ['ls', 'rm', 'mv', 'cp']:
@@ -415,8 +409,8 @@ def logout(args):
         print("Deleting credentials from {}...".format(authserver))
         token = dxpy.AUTH_HELPER.security_context["auth_token"]
         try:
-            if not USING_PYTHON2:
-                # python 3 requires conversion to bytes before hashing
+            if not USING_PYTHON2:	
+                # python 3 requires conversion to bytes before hashing	
                 token = token.encode(sys_encoding)
             token_sig = hashlib.sha256(token).hexdigest()
             response = dxpy.DXHTTPRequest(authserver + "/system/destroyAuthToken",
@@ -1445,51 +1439,6 @@ def new_record(args):
     except:
         err_exit()
 
-def new_gtable(args):
-    try_call(process_dataobject_args, args)
-    try_call(process_single_dataobject_output_args, args)
-
-    if args.output is None:
-        project = dxpy.WORKSPACE_ID
-        folder = dxpy.config.get('DX_CLI_WD', '/')
-        name = None
-    else:
-        project, folder, name = try_call(resolve_path, args.output)
-
-    args.columns = split_unescaped(',', args.columns)
-    for i in range(len(args.columns)):
-        if ':' in args.columns[i]:
-            try:
-                col_name, col_type = args.columns[i].split(':')
-            except ValueError:
-                err_exit('Too many colons found in column spec ' + args.columns[i], 3)
-            if col_type.startswith('bool'):
-                col_type = 'boolean'
-        else:
-            col_name = args.columns[i]
-            col_type = 'string'
-        args.columns[i] = {'name': col_name, 'type': col_type}
-    args.indices = [] if args.indices is None else json.loads(args.indices)
-    if args.gri is not None:
-        args.indices.append(dxpy.DXGTable.genomic_range_index(args.gri[0], args.gri[1], args.gri[2]))
-        args.types = ['gri'] if args.types is None else args.types + ['gri']
-
-    try:
-        dxgtable = dxpy.new_dxgtable(project=project, name=name,
-                                     tags=args.tags, types=args.types,
-                                     hidden=args.hidden, properties=args.properties,
-                                     details=args.details,
-                                     folder=folder,
-                                     parents=args.parents,
-                                     columns=args.columns,
-                                     indices=args.indices)
-        if args.brief:
-            print(dxgtable.get_id())
-        else:
-            print_desc(dxgtable.describe(incl_properties=True, incl_details=True))
-    except:
-        err_exit()
-
 def set_visibility(args):
     had_error = False
     # Attempt to resolve name
@@ -1963,9 +1912,9 @@ def head(args):
                                                    args.path, expected='entity')
     if entity_result is None:
         err_exit('Could not resolve ' + args.path + ' to a data object', 3)
-    if not entity_result['describe']['class'] in ['gtable', 'file']:
+    if not entity_result['describe']['class'] in ['file']:
         err_exit('Error: The given object is of class ' + entity_result['describe']['class'] +
-                 ' but an object of class gtable or file was expected', 3)
+                 ' but an object of class file was expected', 3)
 
     handler = dxpy.get_handler(entity_result['id'], project=project)
 
@@ -1983,40 +1932,7 @@ def head(args):
                 except UnicodeDecodeError:
                     sys.stdout.write("File contains binary data")
             else:
-                if args.gri is not None:
-                    try:
-                        lo = int(args.gri[1])
-                        hi = int(args.gri[2])
-                    except:
-                        err_exit('Error: the LO and HI arguments to --gri must be integers', 3)
-                    gri_query = dxpy.DXGTable.genomic_range_query(args.gri[0],
-                                                                  lo,
-                                                                  hi,
-                                                                  args.gri_mode,
-                                                                  args.gri_name)
-                    table_text, table_rows, table_cols = format_table(list(handler.iterate_query_rows(query=gri_query, limit=args.lines)),
-                                                                  column_specs = entity_result['describe']['columns'],
-                                                                  report_dimensions=True,
-                                                                  max_col_width=args.max_col_width)
-                else:
-                    table_text, table_rows, table_cols = format_table(list(handler.iterate_rows(start=args.starting,
-                                                                                                end=args.starting + args.lines)),
-                                                                      column_specs = entity_result['describe']['columns'],
-                                                                      report_dimensions=True,
-                                                                      max_col_width=args.max_col_width)
-                    more_rows = entity_result['describe']['length'] - args.starting - args.lines
-                    if more_rows > 0:
-                        table_text += "\n{nrows} more rows".format(nrows=more_rows)
-                if sys.stdout.isatty():
-                    if tty_rows <= table_rows or tty_cols <= table_cols:
-                        try:
-                            pipe = os.popen('less -RS', 'w')
-                            pipe.write(table_text.encode(sys_encoding) if USING_PYTHON2 else table_text)
-                            pipe.close()
-                            return
-                        except:
-                            pass
-                sys.stdout.write(table_text + '\n')
+                err_exit("Class type " + handler._class + " not supported for dx head")
         except StopIteration:
             pass
         except:
@@ -2106,32 +2022,6 @@ def upload_one(args):
                 print_desc(dxfile.describe(incl_properties=True, incl_details=True))
         except:
             err_exit()
-
-def export_fastq(args):
-    sys.argv = [sys.argv[0] + ' export fastq'] + args.exporter_args
-    from dxpy.scripts import dx_reads_to_fastq
-    dx_reads_to_fastq.main()
-
-def export_sam(args):
-    sys.argv = [sys.argv[0] + ' export sam'] + args.exporter_args
-    from dxpy.scripts import dx_mappings_to_sam
-    dx_mappings_to_sam.main()
-
-def export_vcf(args):
-    sys.argv = [sys.argv[0] + ' export vcf'] + args.exporter_args
-    from dxpy.scripts import dx_variants_to_vcf
-    dx_variants_to_vcf.main()
-
-exporters = {
-    "fastq": export_fastq,
-    "sam": export_sam,
-    "vcf": export_vcf,
-}
-
-def export(args):
-    if args.format.lower() not in exporters:
-        err_exit('Unsupported format: "' + args.format + '".  For a list of supported formats, run "dx help export"', 3)
-    exporters[args.format.lower()](args)
 
 def find_executions(args):
     try_call(process_find_by_property_args, args)
@@ -4266,40 +4156,10 @@ parser_head = subparsers.add_parser('head',
                                     prog='dx head')
 parser_head.add_argument('-n', '--lines', type=int, metavar='N', help='Print the first N lines (default 10)',
                          default=10)
-head_gtable_args = parser_head.add_argument_group(title='GTable-specific options')
-head_gtable_args.add_argument('-w', '--max-col-width', type=int, help=argparse.SUPPRESS,
-                              #help='Maximum width of each column to display',
-                              default=32)
-head_gtable_args.add_argument('--starting', type=int, help=argparse.SUPPRESS,
-                              #help='Specify starting row ID',
-                              default=0)
-head_gtable_args.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help=argparse.SUPPRESS)
-                              #help='Specify chromosome name, low coordinate, and high coordinate for Genomic Range Index')
-head_gtable_args.add_argument('--gri-mode', help=argparse.SUPPRESS,
-                              #help='Specify the mode of the GRI query (\'overlap\' or \'enclose\'; default \'overlap\')',
-                              default="overlap")
-head_gtable_args.add_argument('--gri-name', help=argparse.SUPPRESS,
-                              #help='Override the default name of the Genomic Range Index (default: "gri"))',
-                              default="gri")
 head_path_action = parser_head.add_argument('path', help='File ID or name to access')
 head_path_action.completer = DXPathCompleter(classes=['file'])
 parser_head.set_defaults(func=head)
 register_parser(parser_head, categories='data')
-
-#####################################
-# export
-#####################################
-parser_export = subparsers.add_parser('export',
-                                      help='Export (download and convert) a gtable into a local file',
-                                      description=fill('Export a GenomicTable into a local file with a particular file format.') + '\n\n' + fill('For more details on how to convert into a particular format, run ') + '\n  $ dx help export <format>' + '\n\nSupported formats:\n\n  ' + '\n  '.join(sorted(exporters)),
-                                      formatter_class=argparse.RawTextHelpFormatter,
-                                      prog='dx export',
-                                      parents=[env_args])
-parser_export.add_argument('format', help='Format to export to')
-parser_export.add_argument('exporter_args', help=fill('Arguments passed to the exporter', width_adjustment=-24),
-                           nargs=argparse.REMAINDER)
-parser_export.set_defaults(func=export)
-register_parser(parser_export, categories='data')
 
 #####################################
 # build
@@ -4446,7 +4306,6 @@ parser_build_asset.add_argument("--no-watch", help=fill("Don't watch the real-ti
 parser_build_asset.add_argument("--priority", choices=['normal', 'high'], help=argparse.SUPPRESS)
 parser_build_asset.set_defaults(func=build_asset)
 register_parser(parser_build_asset)
-
 
 #####################################
 # add
@@ -4974,23 +4833,6 @@ init_action.completer = DXPathCompleter(classes=['workflow'])
 parser_new_workflow.set_defaults(func=workflow_cli.new_workflow)
 register_parser(parser_new_workflow, subparsers_action=subparsers_new, categories='workflow')
 
-parser_new_gtable = subparsers_new.add_parser('gtable', add_help=False, #help='Create a new gtable',
-                                              description='Create a new gtable from scratch.',
-                                              parents=[parser_dataobject_args, parser_single_dataobject_output_args,
-                                                       stdout_args, env_args],
-                                              formatter_class=argparse.RawTextHelpFormatter,
-                                              prog='dx new gtable')
-parser_new_gtable.add_argument('--columns',
-                               help=fill('Comma-separated list of column names to use, e.g. "col1,col2,col3"; columns with non-string types can be specified using "name:type" syntax, e.g. "col1:int,col2:boolean".  If not given, the first line of the file will be used to infer column names.', width_adjustment=-24),
-                               required=True)
-new_gtable_indices_args = parser_new_gtable.add_mutually_exclusive_group()
-new_gtable_indices_args.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'),
-                                     help=fill('Specify column names to be used as chromosome, lo, and hi columns for a genomic range index (name will be set to "gri"); will also add the type "gri"', width_adjustment=-24))
-new_gtable_indices_args.add_argument('--indices', help='JSON for specifying any other indices')
-parser_new_gtable.set_defaults(func=new_gtable)
-#parser_new_gtable.completer = DXPathCompleter(classes=['gtable'])
-register_parser(parser_new_gtable, subparsers_action=subparsers_new, categories='fs', add_help=False)
-
 #####################################
 # get_details
 #####################################
@@ -5271,7 +5113,7 @@ parser_find_data = subparsers_find.add_parser(
     parents=[stdout_args, json_arg, no_color_arg, delim_arg, env_args, find_by_properties_and_tags_args],
     prog='dx find data'
 )
-parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'gtable', 'applet', 'workflow'], help='Data object class', metavar='{record,file,applet,workflow}')
+parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'applet', 'workflow'], help='Data object class', metavar='{record,file,applet,workflow}')
 parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
 parser_find_data.add_argument('--visibility', choices=['hidden', 'visible', 'either'], default='visible', help='Whether the object is hidden or not')
 parser_find_data.add_argument('--name', help='Name of the object')

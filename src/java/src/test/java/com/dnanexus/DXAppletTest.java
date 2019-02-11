@@ -490,11 +490,10 @@ public class DXAppletTest {
 
         Assert.assertEquals(
                 // Note: order of objects subject to change
-                DXJSON.parseJson("{\"dependsOn\": [\"job-111111111111111111111111\", \"gtable-222222222222222222222222\"]}"),
+                DXJSON.parseJson("{\"dependsOn\": [\"job-111111111111111111111111\"]}"),
                 ExecutableRunner
                         .getAppletRunnerWithEnvironment("applet-1234", DXEnvironment.create())
                         .dependsOn(DXJob.getInstance("job-111111111111111111111111"))
-                        .dependsOn(DXGTable.getInstance("gtable-222222222222222222222222"))
                         .buildRequestHash());
     }
 

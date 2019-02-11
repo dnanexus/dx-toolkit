@@ -25,7 +25,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import time, copy, re
 
 import dxpy.api
-from ..exceptions import (DXError, DXAPIError, DXFileError, DXGTableError, DXSearchError, DXAppletError,
+from ..exceptions import (DXError, DXAPIError, DXFileError, DXSearchError, DXAppletError,
                           DXJobFailureError, AppError, AppInternalError, DXCLIError)
 from ..compat import basestring
 
@@ -655,8 +655,6 @@ class DXDataObject(DXObject):
 from .dxfile import DXFile, DXFILE_HTTP_THREADS, DEFAULT_BUFFER_SIZE
 from .download_all_inputs import download_all_inputs
 from .dxfile_functions import open_dxfile, new_dxfile, download_dxfile, upload_local_file, upload_string, list_subfolders, download_folder
-from .dxgtable import DXGTable, NULL, DXGTABLE_HTTP_THREADS
-from .dxgtable_functions import open_dxgtable, new_dxgtable
 from .dxrecord import DXRecord, new_dxrecord
 from .dxproject import DXContainer, DXProject
 from .dxjob import DXJob, new_dxjob

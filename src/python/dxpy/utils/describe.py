@@ -730,7 +730,7 @@ def print_data_obj_desc(desc, verbose=False):
             if field == "media":
                 print_field("Media type", desc['media'])
             elif field == "size":
-                if desc["class"] == "file" or desc["class"] == "gtable":
+                if desc["class"] == "file":
                     sponsored_str = ""
                     if 'sponsored' in desc and desc['sponsored']:
                         sponsored_str = DELIMITER(", ") + "sponsored by DNAnexus"
@@ -738,10 +738,7 @@ def print_data_obj_desc(desc, verbose=False):
                 else:
                     print_field("Size", str(desc['size']))
             elif field == "length":
-                if desc["class"] == "gtable":
-                    print_field("Size (rows)", str(desc['length']))
-                else:
-                    print_field("Length", str(desc['length']))
+                print_field("Length", str(desc['length']))
             elif field == "columns":
                 if len(desc['columns']) > 0:
                     coldescs = "Columns" + DELIMITER(" " *(16-len("Columns"))) + get_col_str(desc["columns"][0])

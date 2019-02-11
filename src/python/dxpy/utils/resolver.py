@@ -141,8 +141,8 @@ class ResolutionError(DXError):
     def __str__(self):
         return self.msg
 
-data_obj_pattern = re.compile('^(record|gtable|applet|file|workflow|database)-[0-9A-Za-z]{24}$')
-hash_pattern = re.compile('^(record|gtable|app|applet|workflow|globalworkflow|job|analysis|project|container|file|database)-[0-9A-Za-z]{24}$')
+data_obj_pattern = re.compile('^(record|applet|file|workflow|database)-[0-9A-Za-z]{24}$')
+hash_pattern = re.compile('^(record|app|applet|workflow|globalworkflow|job|analysis|project|container|file|database)-[0-9A-Za-z]{24}$')
 nohash_pattern = re.compile('^(user|org|app|globalworkflow|team)-')
 jbor_pattern = re.compile('^(job|analysis)-[0-9A-Za-z]{24}:[a-zA-Z_][0-9a-zA-Z_]*$')
 
