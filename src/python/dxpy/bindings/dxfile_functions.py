@@ -154,8 +154,11 @@ def _verify(filename, md5digest):
     if len(line) != 2:
         err_exit("md5sum returned weird results: " + str(line))
     actual_md5 = line[0]
+    md5digest = md5digest.encode("ascii")
+
+    # python-3 : both digests have to be in bytes
     if actual_md5 != md5digest:
-        err_exit("Checksum doesn't match " + actual_md5 + "  expected:" + md5digest)
+        err_exit("Checksum doesn't match " + str(actual_md5) + "  expected:" + str(md5digest))
     print("Checksum correct")
 
 # [dxid] is a symbolic link. Create a preauthenticated URL,
