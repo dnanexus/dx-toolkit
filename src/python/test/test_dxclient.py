@@ -700,8 +700,36 @@ class TestDXClient(DXTestCase):
         run("dx mkdir -p mkdirtest/b/c")
         run("dx rm -r mkdirtest")
 
-    @unittest.skip('PTFM-16383 Disable flaky test')
+
     def test_dxpy_session_isolation(self):
+        print("test_dxpy_session_isolation  project={}".format(self.project))
+
+        def create_shell():
+            child = pexpect.spawn("bash", **spawn_extra_args)
+            child.setwinsize(20, 90)
+            child.logfile = sys.stdout
+            return child
+
+        def expect_dx_wd(shell, wd):
+            shell.sendline("dx pwd")
+            shell.expect(self.project + ":/" + wd)
+
+        shell1 = create_shell()
+        shell1.sendline("dx select " + self.project)
+        shell1.sendline("dx mkdir /A")
+        shell1.sendline("dx cd /A")
+        expect_dx_wd(shell1, "A")
+
+        shell2 = create_shell()
+
+        shell1.sendline("dx mkdir /B")
+        shell1.sendline("dx cd /B")
+
+        expect_dx_wd(shell1, "B")
+        expect_dx_wd(shell2, "A")
+
+    @unittest.skip('PTFM-16383 Disable flaky test')
+    def test_dxpy_session_isolation_grandchildren(self):
         for var in 'DX_PROJECT_CONTEXT_ID', 'DX_PROJECT_CONTEXT_NAME', 'DX_CLI_WD':
             if var in os.environ:
                 del os.environ[var]

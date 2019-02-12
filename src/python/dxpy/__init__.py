@@ -1036,7 +1036,7 @@ config = _DXConfig()
 # variables. Otherwise, the variables are shared with the parent process.
 #
 # While you are at it, cleanup any old sessions, belonging to dead processes.
-config.save(True)
+config.save()
 
 from .bindings import *
 from .dxlog import DXLogHandler
