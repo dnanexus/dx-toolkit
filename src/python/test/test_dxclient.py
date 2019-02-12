@@ -342,8 +342,7 @@ class TestDXClient(DXTestCase):
                 run(("dx uninvite "+query).format(p=self.project))
 
     def test_dx_add_missing_arguments(self):
-        with self.assertSubprocessFailure(stderr_text = "missing argument",
-                                          exit_code=3):
+        with self.assertSubprocessFailure():
             run("dx add")
 
     @pytest.mark.TRACEABILITY_MATRIX
