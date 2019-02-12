@@ -271,9 +271,9 @@ class DXConfig(MutableMapping):
         self[item] = value
         self.save()
 
-    def save(self):
+    def save(self, cleanup=False):
         self._write_conf_dir(self._user_conf_dir)
-        self._write_conf_dir(self.get_session_conf_dir())
+        self._write_conf_dir(self.get_session_conf_dir(cleanup))
         self._write_unsetenv(self._user_conf_dir)
 
     def _write_unsetenv(self, conf_dir):
