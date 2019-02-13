@@ -138,7 +138,7 @@ class DXConfig(MutableMapping):
         # create a fresh directory to store session state
         self._session_dir = self._get_ppid_session_conf_dir()
         self._sync_dxpy_state()
-        self.save()
+        self._write_conf_dir(self._session_dir)
 
     def _sync_dxpy_state(self):
         dxpy.set_api_server_info(host=environ.get("DX_APISERVER_HOST", None),
