@@ -701,32 +701,32 @@ class TestDXClient(DXTestCase):
         run("dx rm -r mkdirtest")
 
 
+    @unittest.skip('Does not work yet')
     def test_dxpy_session_isolation(self):
-        def create_shell():
-            child = pexpect.spawn("bash", **spawn_extra_args)
-            child.setwinsize(20, 90)
-            child.logfile = sys.stdout
-            return child
+        for var in 'DX_PROJECT_CONTEXT_ID', 'DX_PROJECT_CONTEXT_NAME', 'DX_CLI_WD':
+            if var in os.environ:
+                del os.environ[var]
+        shell1 = pexpect.spawn("bash", **spawn_extra_args)
+        shell2 = pexpect.spawn("bash", **spawn_extra_args)
+        shell1.logfile = shell2.logfile = sys.stdout
+        shell1.setwinsize(20, 90)
+        shell2.setwinsize(20, 90)
 
         def expect_dx_wd(shell, proj_name, wd):
             shell.sendline("dx pwd")
-            shell.expect(proj_name + ":/" + wd, timeout=5.0)
+            shell.expect(proj_name + ":/" + wd, timeout=2.0)
 
         proj_name = 'test_proj1'
         with temporary_project(proj_name, select=True) as proj:
-            shell1 = create_shell()
             shell1.sendline("dx select " + proj_name)
-            shell1.sendline("dx mkdir /A")
+            shell1.sendline("dx mkdir -p /A")
             shell1.sendline("dx cd /A")
+
+            shell2.sendline("dx mkdir -p /B")
+            shell2.sendline("dx cd /B")
+
             expect_dx_wd(shell1, proj_name, "A")
-
-            shell2 = create_shell()
-
-            shell1.sendline("dx mkdir /B")
-            shell1.sendline("dx cd /B")
-
-            expect_dx_wd(shell1, proj_name, "B")
-            expect_dx_wd(shell2, proj_name, "A")
+            expect_dx_wd(shell2, proj_name, "B")
 
     @unittest.skip('PTFM-16383 Disable flaky test')
     def test_dxpy_session_isolation_grandchildren(self):

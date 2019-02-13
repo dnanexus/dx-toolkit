@@ -1030,14 +1030,6 @@ def append_underlying_workflow_describe(globalworkflow_desc):
 from .utils.config import DXConfig as _DXConfig
 config = _DXConfig()
 
-# This has the side effect of creating a new session directory in:
-#   ~/.dnanexus_config/sessions/<PID>
-# This ensures this session has a separate and distinct set of environment
-# variables. Otherwise, the variables are shared with the parent process.
-#
-# While you are at it, cleanup any old sessions, belonging to dead processes.
-config.save()
-
 from .bindings import *
 from .dxlog import DXLogHandler
 from .utils.exec_utils import run, entry_point
