@@ -7,18 +7,15 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ## Unreleased
 
 ### Fixed
-- Uploading binary data, such at compressed files, works in python3.
+
+* Uploading binary data, such at compressed files, works in python3.
+* python3 parsing subcommand help output
 
 ### Added
-- Binary mode for opening dx:files.
-- A `--unicode` flag for command line tools that need to handle unicode text files.
+
+* Binary mode for opening dx:files.
+* A `--unicode` flag for command line tools that need to handle unicode text files.
   For example: `dx cat --unicode file-xxxx`. This was added for `cat`, and `download`.
-
-## [275.0] - 2019.02.01 beta
-
-### Fixed
-
-* python3 parsing subcommand help output
 
 ### Removed
 
