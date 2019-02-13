@@ -702,31 +702,31 @@ class TestDXClient(DXTestCase):
 
 
     def test_dxpy_session_isolation(self):
-        print("test_dxpy_session_isolation  project={}".format(self.project))
-
         def create_shell():
             child = pexpect.spawn("bash", **spawn_extra_args)
             child.setwinsize(20, 90)
             child.logfile = sys.stdout
             return child
 
-        def expect_dx_wd(shell, wd):
+        def expect_dx_wd(shell, proj_name, wd):
             shell.sendline("dx pwd")
-            shell.expect(self.project + ":/" + wd)
+            shell.expect(proj_name + ":/" + wd, timeout=5.0)
 
-        shell1 = create_shell()
-        shell1.sendline("dx select " + self.project)
-        shell1.sendline("dx mkdir /A")
-        shell1.sendline("dx cd /A")
-        expect_dx_wd(shell1, "A")
+        proj_name = 'test_proj1'
+        with temporary_project(proj_name, select=True) as proj:
+            shell1 = create_shell()
+            shell1.sendline("dx select " + proj_name)
+            shell1.sendline("dx mkdir /A")
+            shell1.sendline("dx cd /A")
+            expect_dx_wd(shell1, proj_name, "A")
 
-        shell2 = create_shell()
+            shell2 = create_shell()
 
-        shell1.sendline("dx mkdir /B")
-        shell1.sendline("dx cd /B")
+            shell1.sendline("dx mkdir /B")
+            shell1.sendline("dx cd /B")
 
-        expect_dx_wd(shell1, "B")
-        expect_dx_wd(shell2, "A")
+            expect_dx_wd(shell1, proj_name, "B")
+            expect_dx_wd(shell2, proj_name, "A")
 
     @unittest.skip('PTFM-16383 Disable flaky test')
     def test_dxpy_session_isolation_grandchildren(self):
