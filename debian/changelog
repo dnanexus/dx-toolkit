@@ -1,3 +1,13 @@
+dx-toolkit (0.277.0) precise; urgency=low
+
+  * Fixed: Uploading binary data, such as compressed files, works in python3
+  * Fixed: python3 parsing subcommand help output
+  * Added: Binary mode for opening dx:files
+  * Added: `--unicode` flag for command line tools that need to handle unicode text files. For example: `dx cat --unicode file-xxxx`
+  * Removed: 32-bit build target for Ubuntu 14.04
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 14 Feb 2019 19:42:00 +0000
+
 dx-toolkit (0.276.0) precise; urgency=low
 
   * Added: `--phi` flag for `dx new project`
