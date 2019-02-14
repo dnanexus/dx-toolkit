@@ -121,7 +121,8 @@ class TestSymlink(unittest.TestCase):
         result = dxpy.api.file_new(input_params=input_params)
         return dxpy.DXFile(dxid = result["id"],
                            project = self.proj_id)
-
+    
+    @unittest.skipIf(sys.platform == "darwin"), "wget not installed on mac")
     def test_symlinks(self):
         dxfile1 = self.download_url_create_symlink("https://s3.amazonaws.com/1000genomes/CHANGELOG",
                                                    "sym1")
