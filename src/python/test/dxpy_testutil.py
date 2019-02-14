@@ -290,7 +290,8 @@ def without_project_context():
         del os.environ['DX_WORKSPACE_ID']
     if prev_proj_context_id is not None:
         del os.environ['DX_PROJECT_CONTEXT_ID']
-    subprocess.check_call("dx clearenv", shell=True)
+    #subprocess.check_call("dx clearenv", shell=True)
+    dxpy.config.clear()
     try:
         yield
     finally:
