@@ -111,13 +111,10 @@ class DXConfig(MutableMapping):
             dxpy._UPGRADE_NOTIFY = False
 
         env_vars = self._read_conf_dir(self.get_global_conf_dir())
-        print(env_vars)
         env_vars.update(self._read_conf_dir(self.get_user_conf_dir()))
-        print(env_vars)
         ancestor_dir = self._get_ancestor_session_conf_dir(cleanup=True)
         if ancestor_dir is not None:
             env_vars.update(self._read_conf_dir(ancestor_dir))
-        print(env_vars)
         env_overrides = []
         for var in self.VAR_NAMES:
             if var in environ:
@@ -141,7 +138,7 @@ class DXConfig(MutableMapping):
         # create a fresh directory to store session state
         self._session_dir = self._get_ppid_session_conf_dir()
         self._sync_dxpy_state()
-#        self._write_conf_dir(self._session_dir)
+        self._write_conf_dir(self._session_dir)
 
     def _sync_dxpy_state(self):
         dxpy.set_api_server_info(host=environ.get("DX_APISERVER_HOST", None),
