@@ -122,6 +122,7 @@ class TestSymlink(unittest.TestCase):
         return dxpy.DXFile(dxid = result["id"],
                            project = self.proj_id)
 
+    @unittest.skipIf(testutil.TEST_ISOLATED_ENV, 'skipping test that fails inside local environment')
     def test_symlinks(self):
         dxfile1 = self.download_url_create_symlink("https://s3.amazonaws.com/1000genomes/CHANGELOG",
                                                    "sym1")
