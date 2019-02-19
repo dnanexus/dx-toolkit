@@ -72,6 +72,18 @@ public class DXSearchTest {
         Assert.assertEquals(expectedSet, actualSet);
     }
 
+    /**
+     * Asserts that the contents of the Iterable are the given values (in the given order).
+     *
+     * @param actualIterable Iterable of actual results
+     * @param expected Expected results
+     */
+    public static <T> void assertEqualsOrdered(Iterable<T> actualIterable, T... expected) {
+        List<T> expectedList = Lists.newArrayList(Arrays.asList(expected));
+        List<T> actualList = Lists.newArrayList(actualIterable);
+        Assert.assertEquals(expectedList, actualList);
+    }
+
     private DXProject testProject;
 
     /**
@@ -173,6 +185,15 @@ public class DXSearchTest {
                 .asList(), moo, foo, open);
         assertEqualsAnyOrder(DXSearch.findDataObjects().inFolderOrSubfolders(testProject, "/")
                 .execute().asList(), moo, foo, food, open);
+
+        // sortBy
+
+        assertEqualsOrdered(DXSearch.findDataObjects().inFolder(testProject, "/")
+                .withSortBy("created", DXSearch.Ordering.ASCENDING)
+                .execute().asList(), moo, foo, open);
+        assertEqualsAnyOrder(DXSearch.findDataObjects().inFolderOrSubfolders(testProject, "/")
+                .withSortBy("created", DXSearch.Ordering.DESCENDING)
+                .execute().asList(), open, foo, food, moo);
 
         // withProperty
 

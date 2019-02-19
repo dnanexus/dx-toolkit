@@ -30,3 +30,12 @@ Ensure you have logged in to the platform with a valid token (for example,
 using `dx login`). Then:
 
     cd src/java; mvn test
+
+In order to run a particular test class or method, use the `test` option, for example:
+
+    mvn test -Dtest=DXSearchTest
+
+or
+
+    mvn test -Dtest=DXSearchTest#testFindDataObjects
+
