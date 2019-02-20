@@ -2666,8 +2666,8 @@ public final class DXSearch {
     }
 
     /**
-     * Query for a time (e.g. creation or modification time) falling in some interval (either
-     * bounded on both sides, or bounded on one side only).
+     * Query for the outputs to be sorted by a specific field in the ascending
+     * or descending order.
      */
     @JsonInclude(Include.NON_NULL)
     private static class SortByQuery {
