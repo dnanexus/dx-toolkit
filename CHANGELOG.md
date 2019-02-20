@@ -20,6 +20,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Removed
 
 * 32-bit build target for Ubuntu 14.04
+* `gtable` code
 
 ## [276.0] - 2019.02.08 beta
 
