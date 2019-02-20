@@ -778,6 +778,43 @@ public final class DXSearch {
         }
 
         /**
+         * Only returns data objects where the specified property either exists or not.
+         *
+         * <p>
+         * To specify a complex query on the properties, use
+         * {@link #withProperties(DXSearch.PropertiesQuery)}.
+         * </p>
+         *
+         * @param propertyKey property key
+         * @param propertyExists boolean indicating whether the property is set on the data object (true) or not (false)
+         *
+         * @return the same builder object
+         */
+        public FindDataObjectsRequestBuilder<T> withProperty(String propertyKey,
+                Boolean propertyExists) {
+            return withProperties(PropertiesQuery.withKeyAndBoolean(propertyKey, propertyExists));
+        }
+
+        /**
+         * Only returns data objects where the property key is not equal to the given value
+         *
+         * <p>
+         * To specify a complex query on the properties, use
+         * {@link #withProperties(DXSearch.PropertiesQuery)}.
+         * </p>
+         *
+         * @param propertyKey property key
+         * @param mapValue hash map property value; the accepted key is "$ne"; it indicates the key
+         * specified in propertyKey must not equal the string value in mapValue
+         *
+         * @return the same builder object
+         */
+        public FindDataObjectsRequestBuilder<T> withProperty(String propertyKey,
+                Map<String, String> mapValue) {
+            return withProperties(PropertiesQuery.withKeyAndMapValue(propertyKey, mapValue));
+        }
+
+        /**
          * Only returns data objects with the specified state.
          *
          * @param state data object state
@@ -2140,19 +2177,45 @@ public final class DXSearch {
         private static class SimplePropertiesQuery extends PropertiesQuery {
             private final String propertyKey;
             private final String propertyValue;
+            private final Boolean propertyExists;
+            private final Map<String, String> mapValue;
 
             public SimplePropertiesQuery(String key) {
                 this.propertyKey = Preconditions.checkNotNull(key);
                 this.propertyValue = null;
+                this.propertyExists = null;
+                this.mapValue = null;
             }
 
             public SimplePropertiesQuery(String key, String value) {
                 this.propertyKey = Preconditions.checkNotNull(key);
                 this.propertyValue = Preconditions.checkNotNull(value);
+                this.propertyExists = null;
+                this.mapValue = null;
+            }
+
+            public SimplePropertiesQuery(String key, Boolean exists) {
+                this.propertyKey = Preconditions.checkNotNull(key);
+                this.propertyValue = null;
+                this.propertyExists = Preconditions.checkNotNull(exists);
+                this.mapValue = null;
+            }
+
+            public SimplePropertiesQuery(String key, Map<String, String> mapValue) {
+                this.propertyKey = Preconditions.checkNotNull(key);
+                this.propertyValue = null;
+                this.propertyExists = null;
+                this.mapValue = Preconditions.checkNotNull(mapValue);
             }
 
             @JsonValue
             protected Object getValue() {
+                if (mapValue != null) {
+                    return DXJSON.getObjectBuilder().put(propertyKey, MAPPER.valueToTree(mapValue)).build();
+                }
+                if (propertyExists != null) {
+                    return DXJSON.getObjectBuilder().put(propertyKey, propertyExists).build();
+                }
                 if (propertyValue == null) {
                     return DXJSON.getObjectBuilder().put(propertyKey, true).build();
                 }
@@ -2218,6 +2281,7 @@ public final class DXSearch {
             return new SimplePropertiesQuery(propertyKey);
         }
 
+
         /**
          * A query that the specified property key has the specified property value.
          *
@@ -2232,6 +2296,32 @@ public final class DXSearch {
             // PropertiesQuery.allOf(PropertiesQuery.withKeyAndValue("a", "a1"),
             // PropertiesQuery.withKey("b", "b1"))
             return new SimplePropertiesQuery(propertyKey, propertyValue);
+        }
+
+        /**
+         * A query that the specified property key is present of not on the data object
+         *
+         * @param propertyKey property key
+         * @param propertyExists boolean value - true if the property is present on a data object,
+         * false, if it is not
+         *
+         * @return query
+         */
+        public static PropertiesQuery withKeyAndBoolean(String propertyKey, Boolean propertyExists) {
+            return new SimplePropertiesQuery(propertyKey, propertyExists);
+        }
+
+        /**
+         * A query that the specified property is defined by the mapping
+         *
+         * @param propertyKey property key
+         * @param mapValue a hash map with the key defining the relation (e.g. $ne indication "not equal")
+         * and the value being a string value of the property
+         *
+         * @return query
+         */
+        public static PropertiesQuery withKeyAndMapValue(String propertyKey, Map<String, String> mapValue) {
+            return new SimplePropertiesQuery(propertyKey, mapValue);
         }
 
         private PropertiesQuery() {

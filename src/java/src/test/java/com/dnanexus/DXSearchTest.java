@@ -22,6 +22,8 @@ import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.TimeZone;
 
 import org.junit.After;
@@ -217,6 +219,49 @@ public class DXSearchTest {
                                 PropertiesQuery.anyOf(PropertiesQuery.withKey("sampleId"),
                                         PropertiesQuery.withKeyAndValue("process", "a"))).execute()
                         .asList(), moo, foo, food);
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects().inProject(testProject)
+                        .withProperty("sampleId", false)
+                        .execute().asList(), open, food);
+
+        Map<String, String> notEqualMap = new HashMap<String, String>() {{ put("$ne", "1"); }};
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects().inProject(testProject)
+                        .withProperty("sampleId", notEqualMap)
+                        .execute().asList(), foo);
+
+        Map<String, String> notEqual1 = new HashMap<String, String>() {{ put("$ne", "1"); }};
+        Map<String, String> notEqual2 = new HashMap<String, String>() {{ put("$ne", "2"); }};
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects().inProject(testProject)
+                        .withProperties(
+                                PropertiesQuery.allOf(PropertiesQuery.withKeyAndMapValue("sampleId", notEqual1),
+                                                      PropertiesQuery.withKeyAndMapValue("sampleId", notEqual2))
+                        )
+                        .execute().asList());
+
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects().inProject(testProject)
+                        .withProperties(
+                                PropertiesQuery.anyOf(PropertiesQuery.withKeyAndBoolean("sampleId", true),
+                                                      PropertiesQuery.withKeyAndBoolean("process", false))
+                        )
+                        .execute().asList(), moo, foo, open);
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects().inProject(testProject)
+                        .withProperties(
+                                PropertiesQuery.allOf(PropertiesQuery.withKeyAndBoolean("sampleId", true),
+                                                      PropertiesQuery.withKeyAndBoolean("sampleId", false))
+                        )
+                        .execute().asList());
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects().inProject(testProject)
+                        .withProperty("xyzxyzxyz", false)
+                        .execute().asList(), moo, foo, food, open);
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects().inFolderOrSubfolders(testProject, "/subfolder")
+                        .withProperty("process", true)
+                        .execute().asList(), food);
 
         // withState
 
