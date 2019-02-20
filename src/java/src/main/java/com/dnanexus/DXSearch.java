@@ -118,6 +118,8 @@ public final class DXSearch {
         @JsonProperty
         private final ScopeQuery scope;
         @JsonProperty
+        private final SortByQuery sortBy;
+        @JsonProperty
         private final AccessLevel level;
         @JsonProperty
         private final TimeIntervalQuery modified;
@@ -153,6 +155,7 @@ public final class DXSearch {
             this.properties = previousQuery.properties;
             this.link = previousQuery.link;
             this.scope = previousQuery.scope;
+            this.sortBy = previousQuery.sortBy;
             this.level = previousQuery.level;
             this.modified = previousQuery.modified;
             this.created = previousQuery.created;
@@ -192,6 +195,7 @@ public final class DXSearch {
             }
             this.link = builder.link;
             this.scope = builder.scopeQuery;
+            this.sortBy = builder.sortByQuery;
             this.level = builder.level;
 
             if (builder.modifiedBefore != null || builder.modifiedAfter != null) {
@@ -232,6 +236,7 @@ public final class DXSearch {
         private List<PropertiesQuery> properties = Lists.newArrayList(); // Implicit $and
         private String link;
         private FindDataObjectsRequest.ScopeQuery scopeQuery;
+        private SortByQuery sortByQuery;
         private AccessLevel level;
         private Date modifiedBefore;
         private Date modifiedAfter;
@@ -429,6 +434,27 @@ public final class DXSearch {
             this.scopeQuery =
                     new FindDataObjectsRequest.ScopeQuery(Preconditions.checkNotNull(project,
                             "project may not be null").getId());
+            return this;
+        }
+
+        /**
+         * Requests that the returned data objects are sorted by the specified field.
+         * If not specified, the default is to return data sorted by the "modified" field.
+         * It can only be used when scope is provided.
+         *
+         * @param field field name by which the data objects should be ordered
+         * @param ordering value specifying in what order the data objects should be sorted
+         *
+         * @return the same builder object
+         */
+        public FindDataObjectsRequestBuilder<T> withSortBy(String field, Ordering ordering) {
+            Preconditions.checkState(this.sortByQuery == null,
+                    "Cannot call sortByQuery more than once");
+            this.sortByQuery =
+                    new SortByQuery(
+                        Preconditions.checkNotNull(field, "field may not be null"),
+                        Preconditions.checkNotNull(ordering, "ordering may not be null")
+                        );
             return this;
         }
 
@@ -752,6 +778,43 @@ public final class DXSearch {
         }
 
         /**
+         * Only returns data objects where the specified property either exists or not.
+         *
+         * <p>
+         * To specify a complex query on the properties, use
+         * {@link #withProperties(DXSearch.PropertiesQuery)}.
+         * </p>
+         *
+         * @param propertyKey property key
+         * @param propertyExists boolean indicating whether the property is set on the data object (true) or not (false)
+         *
+         * @return the same builder object
+         */
+        public FindDataObjectsRequestBuilder<T> withProperty(String propertyKey,
+                Boolean propertyExists) {
+            return withProperties(PropertiesQuery.withKeyAndBoolean(propertyKey, propertyExists));
+        }
+
+        /**
+         * Only returns data objects where the property key is not equal to the given value
+         *
+         * <p>
+         * To specify a complex query on the properties, use
+         * {@link #withProperties(DXSearch.PropertiesQuery)}.
+         * </p>
+         *
+         * @param propertyKey property key
+         * @param mapValue hash map property value; the accepted key is "$ne"; it indicates the key
+         * specified in propertyKey must not equal the string value in mapValue
+         *
+         * @return the same builder object
+         */
+        public FindDataObjectsRequestBuilder<T> withProperty(String propertyKey,
+                Map<String, String> mapValue) {
+            return withProperties(PropertiesQuery.withKeyAndMapValue(propertyKey, mapValue));
+        }
+
+        /**
          * Only returns data objects with the specified state.
          *
          * @param state data object state
@@ -835,6 +898,7 @@ public final class DXSearch {
                     Preconditions.checkNotNull(visibilityQuery, "visibilityQuery may not be null");
             return this;
         }
+
     }
 
     /**
@@ -2113,19 +2177,45 @@ public final class DXSearch {
         private static class SimplePropertiesQuery extends PropertiesQuery {
             private final String propertyKey;
             private final String propertyValue;
+            private final Boolean propertyExists;
+            private final Map<String, String> mapValue;
 
             public SimplePropertiesQuery(String key) {
                 this.propertyKey = Preconditions.checkNotNull(key);
                 this.propertyValue = null;
+                this.propertyExists = null;
+                this.mapValue = null;
             }
 
             public SimplePropertiesQuery(String key, String value) {
                 this.propertyKey = Preconditions.checkNotNull(key);
                 this.propertyValue = Preconditions.checkNotNull(value);
+                this.propertyExists = null;
+                this.mapValue = null;
+            }
+
+            public SimplePropertiesQuery(String key, Boolean exists) {
+                this.propertyKey = Preconditions.checkNotNull(key);
+                this.propertyValue = null;
+                this.propertyExists = Preconditions.checkNotNull(exists);
+                this.mapValue = null;
+            }
+
+            public SimplePropertiesQuery(String key, Map<String, String> mapValue) {
+                this.propertyKey = Preconditions.checkNotNull(key);
+                this.propertyValue = null;
+                this.propertyExists = null;
+                this.mapValue = Preconditions.checkNotNull(mapValue);
             }
 
             @JsonValue
             protected Object getValue() {
+                if (mapValue != null) {
+                    return DXJSON.getObjectBuilder().put(propertyKey, MAPPER.valueToTree(mapValue)).build();
+                }
+                if (propertyExists != null) {
+                    return DXJSON.getObjectBuilder().put(propertyKey, propertyExists).build();
+                }
                 if (propertyValue == null) {
                     return DXJSON.getObjectBuilder().put(propertyKey, true).build();
                 }
@@ -2191,6 +2281,7 @@ public final class DXSearch {
             return new SimplePropertiesQuery(propertyKey);
         }
 
+
         /**
          * A query that the specified property key has the specified property value.
          *
@@ -2205,6 +2296,32 @@ public final class DXSearch {
             // PropertiesQuery.allOf(PropertiesQuery.withKeyAndValue("a", "a1"),
             // PropertiesQuery.withKey("b", "b1"))
             return new SimplePropertiesQuery(propertyKey, propertyValue);
+        }
+
+        /**
+         * A query that the specified property key is present of not on the data object
+         *
+         * @param propertyKey property key
+         * @param propertyExists boolean value - true if the property is present on a data object,
+         * false, if it is not
+         *
+         * @return query
+         */
+        public static PropertiesQuery withKeyAndBoolean(String propertyKey, Boolean propertyExists) {
+            return new SimplePropertiesQuery(propertyKey, propertyExists);
+        }
+
+        /**
+         * A query that the specified property is defined by the mapping
+         *
+         * @param propertyKey property key
+         * @param mapValue a hash map with the key defining the relation (e.g. $ne indication "not equal")
+         * and the value being a string value of the property
+         *
+         * @return query
+         */
+        public static PropertiesQuery withKeyAndMapValue(String propertyKey, Map<String, String> mapValue) {
+            return new SimplePropertiesQuery(propertyKey, mapValue);
         }
 
         private PropertiesQuery() {
@@ -2520,6 +2637,56 @@ public final class DXSearch {
         @JsonValue
         private String getValue() {
             return this.value;
+        }
+    }
+
+    /**
+     * Specifies in a query whether to return visible items, hidden items, or both.
+     */
+    public enum Ordering {
+        /**
+         * Search for only visible items.
+         */
+        ASCENDING("ascending"),
+        /**
+         * Search for only hidden items.
+         */
+        DESCENDING("descending");
+
+        private String value;
+
+        private Ordering(String value) {
+            this.value = value;
+        }
+
+        @JsonValue
+        private String getValue() {
+            return this.value;
+        }
+    }
+
+    /**
+     * Query for the outputs to be sorted by a specific field in the ascending
+     * or descending order.
+     */
+    @JsonInclude(Include.NON_NULL)
+    private static class SortByQuery {
+        private final String field;
+        private final Ordering ordering;
+
+        private SortByQuery(String field, Ordering ordering) {
+            this.field = field;
+            this.ordering = ordering;
+        }
+
+        @JsonProperty("field")
+        private String getField() {
+            return this.field;
+        }
+
+        @JsonProperty("ordering")
+        private Ordering getOrdering() {
+            return this.ordering;
         }
     }
 
