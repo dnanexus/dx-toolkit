@@ -2775,12 +2775,17 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
 
 # Shared code for running an executable ("dx run executable"). At the end of this method,
 # there is a fork between the case of a single executable, and a batch run.
-def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None):
+def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None, executable_desc=None):
     input_json = _get_input_for_run(args, executable, preset_inputs)
 
     if args.sys_reqs_from_clone and not isinstance(args.instance_type, str):
         args.instance_type = dict({stage: reqs['instanceType'] for stage, reqs in list(args.sys_reqs_from_clone.items())},
                                   **(args.instance_type or {}))
+
+    if args.sys_reqs_from_clone and not isinstance(args.instance_count, str):
+        args.instance_count = dict({fn: reqs['clusterSpec'] for fn, reqs in list(args.sys_reqs_from_clone.items())},
+                                  **(args.instance_count or {}))
+
 
     if args.debug_on:
         if 'All' in args.debug_on:

@@ -7068,10 +7068,9 @@ class TestSparkClusterApps(DXTestCaseBuildApps):
             # now rebuild with the result of `dx get` and verify that we get the same result
             build_and_verify_bootstrap_script_inlined("cluster_app")
 
-    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
-                         'skipping test that would create apps')
-    def test_run_cluster_app_with_instance_count(self):
-        app_name = "cluster_app_instance_count"
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create apps and run jobs')
+    def test_run_cluster_app_with_instance_count_and_specified_entrypoints(self):
         bootstrap_code = "import sys\n"
         cluster_spec_with_bootstrap = {"type": "spark",
                                             "version": "2.4.0",
@@ -7107,12 +7106,11 @@ class TestSparkClusterApps(DXTestCaseBuildApps):
             self.assertFalse("bootstrapScript" in sys_reqs["cluster_2"]["clusterSpec"])
             return app_doc
 
-        app_doc = build_spark_app(app_name, cluster_spec_with_bootstrap, cluster_spec_no_bootstrap, bootstrap_code)
+        app_doc = build_spark_app("cluster_app_instance_count", cluster_spec_with_bootstrap, cluster_spec_no_bootstrap, bootstrap_code)
         app_id = app_doc["id"]
-        app_system_req = app_doc["runSpec"]["systemRequirements"]["main"]
 
         # pass --instance-count with specific entry point
-        job_id = run("dx run " + app_id + " --brief -y --instance-count '{\"main\": \"4\"}'").strip()
+        job_id = run("dx run " + app_id + " --brief -y --instance-count '{\"main\": 4}'").strip()
         job_desc = dxpy.describe(job_id)
         self.assertEqual(job_desc["clusterSpec"]["initialInstanceCount"], 4)
         self.assertEqual(job_desc["clusterSpec"]["bootstrapScript"], bootstrap_code)
@@ -7124,11 +7122,63 @@ class TestSparkClusterApps(DXTestCaseBuildApps):
         self.assertEqual(job_desc["clusterSpec"]["bootstrapScript"], bootstrap_code)
 
         # pass --instance-count for all entry points
-        job_id = run("dx run " + app_id + " --brief -y --instance-count 5 --instance-type mem1_ssd1_x2").strip()
+        job_id = run("dx run " + app_id + " --brief -y --instance-count 5").strip()
         job_desc = dxpy.describe(job_id)
         self.assertEqual(job_desc["clusterSpec"]["initialInstanceCount"], 5)
         self.assertEqual(job_desc["clusterSpec"]["bootstrapScript"], bootstrap_code)
+
+        # pass instance-count together with other system requirements
+        job_id = run("dx run " + app_id + " --brief -y --instance-count 6 --instance-type mem1_ssd1_x2").strip()
+        job_desc = dxpy.describe(job_id)
+        self.assertEqual(job_desc["clusterSpec"]["initialInstanceCount"], 6)
+        self.assertEqual(job_desc["clusterSpec"]["bootstrapScript"], bootstrap_code)
         self.assertEqual(job_desc["instanceType"], "mem1_ssd1_x2")
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create apps and run jobs')
+    def test_run_cluster_app_with_instance_count_and_wildcard_entrypoint(self):
+        bootstrap_code = "import sys\n"
+        cluster_spec_with_bootstrap = {"type": "spark",
+                                            "version": "2.4.0",
+                                            "initialInstanceCount": 2,
+                                            "bootstrapScript": "clusterBootstrapAws.py"}
+
+        def build_spark_app(app_name, cluster_spec_with_bootstrap, bootstrap_code):
+            app_spec = dict(self.base_app_spec, name=app_name,
+                            regionalOptions = {
+                                "aws:us-east-1": {
+                                    "systemRequirements": {
+                                        "*": {
+                                            "instanceType": "mem2_hdd2_x1",
+                                            "clusterSpec": cluster_spec_with_bootstrap
+                                        }
+                                    }
+                                }})
+            app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+            self.write_app_directory(app_name, json.dumps(app_spec), "clusterBootstrapAws.py", code_content=bootstrap_code)
+
+            app_doc = json.loads(run("dx build --json --app " + app_dir))
+            sys_reqs = app_doc["runSpec"]["systemRequirementsByRegion"]["aws:us-east-1"]
+            self.assertEqual(sys_reqs["*"]["clusterSpec"]["bootstrapScript"], bootstrap_code)
+            self.assertEqual(sys_reqs["*"]["clusterSpec"]["initialInstanceCount"], 2)
+            return app_doc
+
+        app_doc = build_spark_app("cluster_app_instance_count_wildcard_sysreq", cluster_spec_with_bootstrap, bootstrap_code)
+        app_id = app_doc["id"]
+
+        # pass --instance-count with specific entry point
+        job_id = run("dx run " + app_id + " --brief -y --instance-count '{\"main\": 7}'").strip()
+        job_desc = dxpy.describe(job_id)
+        self.assertEqual(job_desc["clusterSpec"]["initialInstanceCount"], 7)
+        self.assertEqual(job_desc["clusterSpec"]["bootstrapScript"], bootstrap_code)
+        self.assertEqual(job_desc["instanceType"], "mem2_hdd2_x1")
+
+        # pass --instance-count with "*" entry point
+        job_id = run("dx run " + app_id + " --brief -y --instance-count 8").strip()
+        job_desc = dxpy.describe(job_id)
+        self.assertEqual(job_desc["clusterSpec"]["initialInstanceCount"], 8)
+        self.assertEqual(job_desc["clusterSpec"]["bootstrapScript"], bootstrap_code)
+        self.assertEqual(job_desc["instanceType"], "mem2_hdd2_x1")
 
     def test_instance_count_not_supported_for_regular_apps(self):
         applet_spec = dict(self.base_applet_spec, project=self.project)
