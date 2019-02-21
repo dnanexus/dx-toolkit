@@ -53,7 +53,7 @@ from ..cli.org import (get_org_invite_args, add_membership, remove_membership, u
                        find_orgs, org_find_members, org_find_projects, org_find_apps)
 from ..exceptions import (err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions,
                           format_exception)
-from ..utils import warn, group_array_by_field, normalize_timedelta, normalize_time_input
+from ..utils import warn, group_array_by_field, normalize_timedelta, normalize_time_input, instance_count_to_sys_reqs
 from ..utils.batch_utils import (batch_run, batch_launch_args)
 
 from ..app_categories import APP_CATEGORIES
@@ -3195,8 +3195,10 @@ def run(args):
 
     handler = try_call(get_exec_handler, args.executable, args.alias)
 
-    if args.depends_on and \
-            (isinstance(handler, dxpy.DXWorkflow) or isinstance(handler, dxpy.DXGlobalWorkflow)):
+    is_workflow = isinstance(handler, dxpy.DXWorkflow)
+    is_global_workflow = isinstance(handler, dxpy.DXGlobalWorkflow)
+
+    if args.depends_on and (is_workflow or is_global_workflow):
         err_exit(exception=DXParserError("-d/--depends-on cannot be supplied when running workflows."),
                  expected_exceptions=(DXParserError,))
 
@@ -3209,9 +3211,6 @@ def run(args):
                 'Unable to find project to run the app in. ' +
                 'Please run "dx select" to set the working project, or use --folder=project:path'
             ))
-
-    is_workflow = isinstance(handler, dxpy.DXWorkflow)
-    is_global_workflow = isinstance(handler, dxpy.DXGlobalWorkflow)
 
     # Get region from the project context
     args.region = None
@@ -4621,6 +4620,11 @@ parser_run.add_argument('--stage-relative-output-folder', metavar=('STAGE_ID', '
                         nargs=2,
                         action='append',
                         default=[])
+parser_run.add_argument('--rerun-stage', metavar='STAGE_ID', dest='rerun_stages',
+                        help=fill('A stage (using its ID, name, or index) to rerun, or "*" to ' +
+                                  'indicate all stages should be rerun; repeat as necessary',
+                                  width_adjustment=-24),
+                        action='append')
 parser_run.add_argument('--name', help=fill('Name for the job (default is the app or applet name)', width_adjustment=-24))
 parser_run.add_argument('--delay-workspace-destruction',
                         help=fill('Whether to keep the job\'s temporary workspace around for debugging purposes for 3 days after it succeeds or fails', width_adjustment=-24),
@@ -4647,24 +4651,10 @@ parser_run.add_argument('--ssh-proxy', metavar=('<address>:<port>'),
 parser_run.add_argument('--debug-on', action='append', choices=['AppError', 'AppInternalError', 'ExecutionError', 'All'],
                         help=fill("Configure the job to hold for debugging when any of the listed errors occur",
                                   width_adjustment=-24))
-
-ignore_reuse = parser_run.add_mutually_exclusive_group()
-ignore_reuse.add_argument('--ignore-reuse',
+parser_run.add_argument('--ignore-reuse',
                         help=fill("Disable job reuse for execution",
                                   width_adjustment=-24),
                         action='store_true')
-ignore_reuse.add_argument('--ignore-reuse-stage', metavar='STAGE_ID', dest='ignore_reuse_stages',
-                        help=fill('A stage (using its ID, name, or index) for which job reuse should be disabled, ' +
-                                  'if a stage points to another (nested) workflow the ignore reuse option will be applied to the whole subworkflow. ' +
-                                  'This option overwrites any ignoreReuse fields set on app(let)s or the workflow during build time; ' +
-                                  'repeat as necessary',
-                                  width_adjustment=-24),
-                        action='append')
-parser_run.add_argument('--rerun-stage', metavar='STAGE_ID', dest='rerun_stages',
-                        help=fill('A stage (using its ID, name, or index) to rerun, or "*" to ' +
-                                  'indicate all stages should be rerun; repeat as necessary',
-                                  width_adjustment=-24),
-                        action='append')
 parser_run.add_argument('--batch-tsv', dest='batch_tsv', metavar="FILE",
                         help=fill('A file in tab separated value (tsv) format, with a subset ' +
                                   'of the executable input arguments. A job will be launched ' +
