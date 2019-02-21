@@ -58,14 +58,6 @@ class DXExecutable:
         if kwargs.get('instance_type') is not None:
             run_input["systemRequirements"] = instance_type_to_sys_reqs(kwargs['instance_type'])
 
-        # print("-----------------------")
-        # print("kwargs.get('merged_cluster_spec')")
-        # print(kwargs.get('merged_cluster_spec'))
-        # print("\n")
-        # from pprint import pprint
-        # pprint(kwargs)
-        # print("-----------------------")
-
         if kwargs.get('merged_cluster_spec'):
             if 'systemRequirements' not in run_input:
                 run_input['systemRequirements'] = kwargs.get('merged_cluster_spec')
