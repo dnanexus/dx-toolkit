@@ -301,6 +301,22 @@ def instance_type_to_sys_reqs(instance_type, entrypoint="*"):
     else:
         raise DXError('Expected instance_type field to be either a string or a dict')
 
+def instance_count_to_sys_reqs(instance_type, entrypoint="*"):
+    """
+    Returns a dictionary that can be passed as a "systemRequirements" input
+    to job/new or run/ API calls. The instance_type should be either a:
+    * string, eg. mem1_ssd1_x2
+    * dictionary, eg. {"main": "mem2_hdd2_x2", "other_function": "mem2_hdd2_x1"}
+    """
+    if isinstance(instance_type, basestring):
+        # By default, all entry points ("*") should use this instance type
+        return {entrypoint: instance_type}
+    elif isinstance(instance_type, dict):
+        # instance_type is a map of entry point to instance type
+        return {fn: fn_inst for fn, fn_inst in instance_type.items()}
+    else:
+        raise DXError('Expected instance_count field to be either a string or a dict')
+
 class Nonce:
     '''
     Generates a nonce by using the system's random number generator. If it fails

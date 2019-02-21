@@ -6958,6 +6958,186 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         with self.assertSubprocessFailure(stderr_regexp="already published", exit_code=3):
             run("dx publish {name}/{version}".format(name=gwf_name, version="2.0.0"))
 
+class TestSparkClusterApps(DXTestCaseBuildApps):
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create apps')
+    def test_build_and_get_cluster_app_bootstrap_script_inlined(self):
+        app_name = "cluster_app"
+        cluster_spec_with_bootstrap_aws = {"type": "spark",
+                                           "version": "2.4.0",
+                                           "initialInstanceCount": 5,
+                                           "bootstrapScript": "clusterBootstrapAws.py"}
+        cluster_spec_with_bootstrap_azure = cluster_spec_with_bootstrap_aws.copy()
+        cluster_spec_with_bootstrap_azure['bootstrapScript'] = "clusterBootstrapAzure.py"
+        cluster_spec_no_bootstrap = {"type": "spark",
+                                     "version": "2.4.0",
+                                     "initialInstanceCount": 10}
+        bootstrap_code_aws = "def improper():\nprint 'oops'" # syntax error
+        bootstrap_code_azure = "import os\n"
+
+        # cluster spec must be specified under "regionalOptions"
+        non_regional_app_spec = dict(self.base_app_spec, name=app_name)
+        non_regional_app_spec["runSpec"]["systemRequirements"] = dict(
+            main=dict(instanceType="mem2_hdd2_x1", clusterSpec=cluster_spec_with_bootstrap_aws)
+        )
+        app_dir = self.write_app_directory(app_name, json.dumps(non_regional_app_spec), "code.py")
+        with self.assertSubprocessFailure(stderr_regexp="clusterSpec.*must be specified.*under the \"regionalOptions\" field"):
+            run("dx build " + app_dir)
+
+        app_spec = dict(self.base_app_spec, name=app_name,
+                        regionalOptions = {
+                            "aws:us-east-1": {
+                                "systemRequirements": {
+                                    "main": {
+                                        "instanceType": "mem2_hdd2_x1",
+                                        "clusterSpec": cluster_spec_with_bootstrap_aws
+                                    },
+                                    "cluster_2": {
+                                        "instanceType": "mem2_hdd2_x4",
+                                        "clusterSpec": cluster_spec_no_bootstrap
+                                    },
+                                    "cluster_3": {
+                                        "instanceType": "mem2_hdd2_x1",
+                                        "clusterSpec": cluster_spec_with_bootstrap_aws
+                                    }
+                                }
+                            },
+                            "azure:westus": {
+                                "systemRequirements": {
+                                    "main": {
+                                        "instanceType": "azure:mem1_ssd1_x2",
+                                        "clusterSpec": cluster_spec_with_bootstrap_azure
+                                    }
+                                }
+                            }})
+        del app_spec["runSpec"]["systemRequirements"]
+        app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+        self.write_app_directory(app_name, json.dumps(app_spec), "clusterBootstrapAws.py", code_content=bootstrap_code_aws)
+        self.write_app_directory(app_name, json.dumps(app_spec), "clusterBootstrapAzure.py", code_content=bootstrap_code_azure)
+
+        # confirm syntax checking
+        with self.assertSubprocessFailure(stderr_regexp="Code in cluster bootstrapScript \\S+ has syntax errors"):
+            run("dx build " + app_dir)
+        # get rid of syntax error
+        bootstrap_code_aws = "import sys\n"
+        self.write_app_directory(app_name, json.dumps(app_spec), "clusterBootstrapAws.py", code_content=bootstrap_code_aws)
+
+        def build_and_verify_bootstrap_script_inlined(app_dir):
+            # build cluster app with multiple bootstrap scripts and regions
+            # expect bootstrap scripts to be inlined in the app doc
+            app_doc = json.loads(run("dx build --create-app --json " + app_dir))
+            sys_reqs = app_doc["runSpec"]["systemRequirements"]
+            self.assertEqual(sys_reqs["main"]["clusterSpec"]["bootstrapScript"], bootstrap_code_aws)
+            self.assertEqual(sys_reqs["cluster_3"]["clusterSpec"]["bootstrapScript"], bootstrap_code_aws)
+            self.assertFalse("bootstrapScript" in sys_reqs["cluster_2"]["clusterSpec"])
+            self.assertEqual(app_doc["runSpec"]['systemRequirementsByRegion']["azure:westus"]["main"]["clusterSpec"]["bootstrapScript"], bootstrap_code_azure)
+            return app_doc["id"]
+
+        app_id = build_and_verify_bootstrap_script_inlined(app_dir)
+
+        # get same cluster app
+        # expect each bootstrap script to be in its own file referenced by the corresponding entry point
+        with chdir(tempfile.mkdtemp()):
+            run("dx get " + app_id)
+            self.assertTrue(os.path.exists("cluster_app"))
+            self.assertTrue(os.path.exists(os.path.join("cluster_app", "dxapp.json")))
+            dxapp_json = json.loads(open(os.path.join("cluster_app", "dxapp.json")).read())
+            aws_sys_reqs = dxapp_json["regionalOptions"]["aws:us-east-1"]["systemRequirements"]
+            azure_sys_reqs = dxapp_json["regionalOptions"]["azure:westus"]["systemRequirements"]
+
+            # bootstrap script names should now be: <region>_<entry-point>_clusterBootstrap.<lang>
+            self.assertEqual(aws_sys_reqs["main"]["clusterSpec"]["bootstrapScript"],
+                             "src/aws:us-east-1_main_clusterBootstrap.py")
+            with open("cluster_app/src/aws:us-east-1_main_clusterBootstrap.py") as f:
+                self.assertEqual(f.read(), bootstrap_code_aws)
+
+            # this clusterSpec had no bootstrapScript
+            self.assertFalse("bootstrapScript" in aws_sys_reqs["cluster_2"]["clusterSpec"])
+
+            self.assertEqual(aws_sys_reqs["cluster_3"]["clusterSpec"]["bootstrapScript"],
+                             "src/aws:us-east-1_cluster_3_clusterBootstrap.py")
+            with open("cluster_app/src/aws:us-east-1_cluster_3_clusterBootstrap.py") as f:
+                self.assertEqual(f.read(), bootstrap_code_aws)
+
+            self.assertEqual(azure_sys_reqs["main"]["clusterSpec"]["bootstrapScript"],
+                             "src/azure:westus_main_clusterBootstrap.py")
+            with open("cluster_app/src/azure:westus_main_clusterBootstrap.py") as f:
+                self.assertEqual(f.read(), bootstrap_code_azure)
+
+            # now rebuild with the result of `dx get` and verify that we get the same result
+            build_and_verify_bootstrap_script_inlined("cluster_app")
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create apps')
+    def test_run_cluster_app_with_instance_count(self):
+        app_name = "cluster_app_instance_count"
+        bootstrap_code = "import sys\n"
+        cluster_spec_with_bootstrap = {"type": "spark",
+                                            "version": "2.4.0",
+                                            "initialInstanceCount": 2,
+                                            "bootstrapScript": "clusterBootstrapAws.py"}
+        cluster_spec_no_bootstrap = {"type": "spark",
+                                     "version": "2.4.0",
+                                     "initialInstanceCount": 3}
+
+        def build_spark_app(app_name, cluster_spec_with_bootstrap, cluster_spec_no_bootstrap, bootstrap_code):
+            app_spec = dict(self.base_app_spec, name=app_name,
+                            regionalOptions = {
+                                "aws:us-east-1": {
+                                    "systemRequirements": {
+                                        "main": {
+                                            "instanceType": "mem2_hdd2_x1",
+                                            "clusterSpec": cluster_spec_with_bootstrap
+                                        },
+                                        "cluster_2": {
+                                            "instanceType": "mem2_hdd2_x4",
+                                            "clusterSpec": cluster_spec_no_bootstrap
+                                        }
+                                    }
+                                }})
+            app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+            self.write_app_directory(app_name, json.dumps(app_spec), "clusterBootstrapAws.py", code_content=bootstrap_code)
+
+            app_doc = json.loads(run("dx build --json --app " + app_dir))
+            sys_reqs = app_doc["runSpec"]["systemRequirementsByRegion"]["aws:us-east-1"]
+            self.assertEqual(sys_reqs["main"]["clusterSpec"]["bootstrapScript"], bootstrap_code)
+            self.assertEqual(sys_reqs["main"]["clusterSpec"]["initialInstanceCount"], 2)
+            self.assertEqual(sys_reqs["cluster_2"]["clusterSpec"]["initialInstanceCount"], 3)
+            self.assertFalse("bootstrapScript" in sys_reqs["cluster_2"]["clusterSpec"])
+            return app_doc
+
+        app_doc = build_spark_app(app_name, cluster_spec_with_bootstrap, cluster_spec_no_bootstrap, bootstrap_code)
+        app_id = app_doc["id"]
+        app_system_req = app_doc["runSpec"]["systemRequirements"]["main"]
+
+        # pass --instance-count with specific entry point
+        job_id = run("dx run " + app_id + " --brief -y --instance-count '{\"main\": \"4\"}'").strip()
+        job_desc = dxpy.describe(job_id)
+        self.assertEqual(job_desc["clusterSpec"]["initialInstanceCount"], 4)
+        self.assertEqual(job_desc["clusterSpec"]["bootstrapScript"], bootstrap_code)
+        self.assertEqual(job_desc["instanceType"], "mem2_hdd2_x1")
+
+        job_id = run("dx run " + app_id + " --brief -y --instance-count '{\"cluster_2\": \"6\"}'").strip()
+        job_desc = dxpy.describe(job_id)
+        self.assertEqual(job_desc["clusterSpec"]["initialInstanceCount"], 2)
+        self.assertEqual(job_desc["clusterSpec"]["bootstrapScript"], bootstrap_code)
+
+        # pass --instance-count for all entry points
+        job_id = run("dx run " + app_id + " --brief -y --instance-count 5 --instance-type mem1_ssd1_x2").strip()
+        job_desc = dxpy.describe(job_id)
+        self.assertEqual(job_desc["clusterSpec"]["initialInstanceCount"], 5)
+        self.assertEqual(job_desc["clusterSpec"]["bootstrapScript"], bootstrap_code)
+        self.assertEqual(job_desc["instanceType"], "mem1_ssd1_x2")
+
+    def test_instance_count_not_supported_for_regular_apps(self):
+        applet_spec = dict(self.base_applet_spec, project=self.project)
+        applet_spec["runSpec"]["code"] = "import os"
+        applet_id = dxpy.api.applet_new(applet_spec)["id"]
+        with self.assertRaisesRegex(subprocess.CalledProcessError,
+                                    "--instance-count is not supported"):
+            run("dx run " + applet_id + " --instance-count 5 -y")
+
 
 class TestDXBuildApp(DXTestCaseBuildApps):
     def run_and_assert_stderr_matches(self, cmd, stderr_regexp):
@@ -7364,114 +7544,6 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             app_container = new_app["regionalOptions"][region]["resources"]
             container_content = dxpy.api.container_list_folder(app_container, {"folder": "/"})
             self.assertIn(file_id, [item["id"] for item in container_content["objects"]])
-
-    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
-                         'skipping test that would create apps')
-    def test_build_and_get_cluster_app_bootstrap_script_inlined(self):
-        app_name = "cluster_app"
-        cluster_spec_with_bootstrap_aws = {"type": "spark",
-                                           "version": "2.4.0",
-                                           "initialInstanceCount": 5,
-                                           "bootstrapScript": "clusterBootstrapAws.py"}
-        cluster_spec_with_bootstrap_azure = cluster_spec_with_bootstrap_aws.copy()
-        cluster_spec_with_bootstrap_azure['bootstrapScript'] = "clusterBootstrapAzure.py"
-        cluster_spec_no_bootstrap = {"type": "spark",
-                                     "version": "2.4.0",
-                                     "initialInstanceCount": 10}
-        bootstrap_code_aws = "def improper():\nprint 'oops'" # syntax error
-        bootstrap_code_azure = "import os\n"
-
-        # cluster spec must be specified under "regionalOptions"
-        non_regional_app_spec = dict(self.base_app_spec, name=app_name)
-        non_regional_app_spec["runSpec"]["systemRequirements"] = dict(
-            main=dict(instanceType="mem2_hdd2_x1", clusterSpec=cluster_spec_with_bootstrap_aws)
-        )
-        app_dir = self.write_app_directory(app_name, json.dumps(non_regional_app_spec), "code.py")
-        with self.assertSubprocessFailure(stderr_regexp="clusterSpec.*must be specified.*under the \"regionalOptions\" field"):
-            run("dx build " + app_dir)
-
-        app_spec = dict(self.base_app_spec, name=app_name,
-                        regionalOptions = {
-                            "aws:us-east-1": {
-                                "systemRequirements": {
-                                    "main": {
-                                        "instanceType": "mem2_hdd2_x1",
-                                        "clusterSpec": cluster_spec_with_bootstrap_aws
-                                    },
-                                    "cluster_2": {
-                                        "instanceType": "mem2_hdd2_x4",
-                                        "clusterSpec": cluster_spec_no_bootstrap
-                                    },
-                                    "cluster_3": {
-                                        "instanceType": "mem2_hdd2_x1",
-                                        "clusterSpec": cluster_spec_with_bootstrap_aws
-                                    }
-                                }
-                            },
-                            "azure:westus": {
-                                "systemRequirements": {
-                                    "main": {
-                                        "instanceType": "azure:mem1_ssd1_x2",
-                                        "clusterSpec": cluster_spec_with_bootstrap_azure
-                                    }
-                                }
-                            }})
-        del app_spec["runSpec"]["systemRequirements"]
-        app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
-        self.write_app_directory(app_name, json.dumps(app_spec), "clusterBootstrapAws.py", code_content=bootstrap_code_aws)
-        self.write_app_directory(app_name, json.dumps(app_spec), "clusterBootstrapAzure.py", code_content=bootstrap_code_azure)
-
-        # confirm syntax checking
-        with self.assertSubprocessFailure(stderr_regexp="Code in cluster bootstrapScript \\S+ has syntax errors"):
-            run("dx build " + app_dir)
-        # get rid of syntax error
-        bootstrap_code_aws = "import sys\n"
-        self.write_app_directory(app_name, json.dumps(app_spec), "clusterBootstrapAws.py", code_content=bootstrap_code_aws)
-
-        def build_and_verify_bootstrap_script_inlined(app_dir):
-            # build cluster app with multiple bootstrap scripts and regions
-            # expect bootstrap scripts to be inlined in the app doc
-            app_doc = json.loads(run("dx build --create-app --json " + app_dir))
-            sys_reqs = app_doc["runSpec"]["systemRequirements"]
-            self.assertEqual(sys_reqs["main"]["clusterSpec"]["bootstrapScript"], bootstrap_code_aws)
-            self.assertEqual(sys_reqs["cluster_3"]["clusterSpec"]["bootstrapScript"], bootstrap_code_aws)
-            self.assertFalse("bootstrapScript" in sys_reqs["cluster_2"]["clusterSpec"])
-            self.assertEqual(app_doc["runSpec"]['systemRequirementsByRegion']["azure:westus"]["main"]["clusterSpec"]["bootstrapScript"], bootstrap_code_azure)
-            return app_doc["id"]
-
-        app_id = build_and_verify_bootstrap_script_inlined(app_dir)
-
-        # get same cluster app
-        # expect each bootstrap script to be in its own file referenced by the corresponding entry point
-        with chdir(tempfile.mkdtemp()):
-            run("dx get " + app_id)
-            self.assertTrue(os.path.exists("cluster_app"))
-            self.assertTrue(os.path.exists(os.path.join("cluster_app", "dxapp.json")))
-            dxapp_json = json.loads(open(os.path.join("cluster_app", "dxapp.json")).read())
-            aws_sys_reqs = dxapp_json["regionalOptions"]["aws:us-east-1"]["systemRequirements"]
-            azure_sys_reqs = dxapp_json["regionalOptions"]["azure:westus"]["systemRequirements"]
-
-            # bootstrap script names should now be: <region>_<entry-point>_clusterBootstrap.<lang>
-            self.assertEqual(aws_sys_reqs["main"]["clusterSpec"]["bootstrapScript"],
-                             "src/aws:us-east-1_main_clusterBootstrap.py")
-            with open("cluster_app/src/aws:us-east-1_main_clusterBootstrap.py") as f:
-                self.assertEqual(f.read(), bootstrap_code_aws)
-
-            # this clusterSpec had no bootstrapScript
-            self.assertFalse("bootstrapScript" in aws_sys_reqs["cluster_2"]["clusterSpec"])
-
-            self.assertEqual(aws_sys_reqs["cluster_3"]["clusterSpec"]["bootstrapScript"],
-                             "src/aws:us-east-1_cluster_3_clusterBootstrap.py")
-            with open("cluster_app/src/aws:us-east-1_cluster_3_clusterBootstrap.py") as f:
-                self.assertEqual(f.read(), bootstrap_code_aws)
-
-            self.assertEqual(azure_sys_reqs["main"]["clusterSpec"]["bootstrapScript"],
-                             "src/azure:westus_main_clusterBootstrap.py")
-            with open("cluster_app/src/azure:westus_main_clusterBootstrap.py") as f:
-                self.assertEqual(f.read(), bootstrap_code_azure)
-
-            # now rebuild with the result of `dx get` and verify that we get the same result
-            build_and_verify_bootstrap_script_inlined("cluster_app")
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')

@@ -46,7 +46,7 @@ from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_a
                            find_by_properties_and_tags_args, process_find_by_property_args, process_dataobject_args,
                            process_single_dataobject_output_args, find_executions_args, add_find_executions_search_gp,
                            set_env_from_args, extra_args, process_extra_args, DXParserError, exec_input_args,
-                           instance_type_arg, process_instance_type_arg, get_update_project_args,
+                           instance_type_arg, process_instance_type_arg, process_instance_count_arg, get_update_project_args,
                            property_args, tag_args, contains_phi, process_phi_param)
 from ..cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
 from ..cli.org import (get_org_invite_args, add_membership, remove_membership, update_membership, new_org, update_org,
@@ -2453,7 +2453,7 @@ def wait(args):
                 print(fill('Could not resolve ' + path + ' to a data object'))
                 had_error = True
             else:
-                handler = dxpy.get_handler(entity_result['id'], project=entity_result['describe']['project'])
+                handler = dxpy.get_handler(entity_result['id'], project=project)
                 print("Waiting for " + path + " to close...")
                 try_call(handler._wait_on_close)
                 print("Done")
@@ -2619,27 +2619,6 @@ def list_developers(args):
 
         for d in developers:
             print(d)
-    except:
-        err_exit()
-
-def render_timestamp(epochSeconds):
-    # This is the format used by 'aws s3 ls'
-    return datetime.datetime.fromtimestamp(epochSeconds//1000).strftime('%Y-%m-%d %H:%M:%S')
-
-
-def list_database_files(args):
-    try:
-        results = dxpy.api.database_list_folder(
-            args.database,
-            input_params={"folder": args.folder, "recurse": args.recurse, "timeout": args.timeout})
-        for r in results["results"]:
-            date_str = render_timestamp(r["modified"]) if r["modified"] != 0 else ''
-            if (args.csv == True):
-                print("{}{}{}{}{}".format(
-                    date_str, DELIMITER(","), r["size"], DELIMITER(","), r["path"]))
-            else:
-                print("{}{}{}{}{}".format(
-                    date_str.rjust(19), DELIMITER(" "), str(r["size"]).rjust(12), DELIMITER(" "), r["path"]))
     except:
         err_exit()
 
@@ -2825,12 +2804,13 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "stage_instance_types": args.stage_instance_types,
         "stage_folders": args.stage_folders,
         "rerun_stages": args.rerun_stages,
+        "merged_cluster_spec": merged_cluster_spec,
         "extra_args": args.extra_args
     }
 
     if args.priority == "normal" and not args.brief:
         special_access = set()
-        executable_desc = executable.describe()
+        executable_desc = executable_desc or executable.describe()
         write_perms = ['UPLOAD', 'CONTRIBUTE', 'ADMINISTER']
         def check_for_special_access(access_spec):
             if not access_spec:
@@ -3104,7 +3084,7 @@ def run(args):
             err_exit(exception=DXCLIError(
                 "Options --project and --folder/--destination cannot be specified together.\nIf specifying both a project and a folder, please include them in the --folder option."
             ))
-        dest_proj = resolve_container_id_or_name(args.project, is_error=True, multi=False)
+        dest_proj = args.project
 
     if args.folder is not None:
         dest_proj, dest_path, _none = try_call(resolve_existing_path,
@@ -3249,6 +3229,14 @@ def run(args):
             dest_path = dxpy.config.get('DX_CLI_WD', '/')
 
     process_instance_type_arg(args, is_workflow or is_global_workflow)
+
+    # Validate and process instance_count argument
+    if args.instance_count:
+        if is_workflow or is_global_workflow:
+            err_exit(exception=DXCLIError(
+                '--instance-count is not supported for workflows'
+            ))
+        process_instance_count_arg(args)
 
     run_body(args, handler, dest_proj, dest_path)
 
@@ -4420,35 +4408,6 @@ parser_list_stages.add_argument('workflow', help='Name or ID of a workflow').com
 parser_list_stages.set_defaults(func=workflow_cli.list_stages)
 register_parser(parser_list_stages, subparsers_action=subparsers_list, categories='workflow')
 
-parser_list_database = subparsers_list.add_parser(
-    "database",
-    help=fill("List entities associated with a specific database. For example,") + "\n\n\t" +
-         fill('"dx list database files" lists database files associated with a specific database.') + "\n\n\t" +
-         fill('Please execute "dx list database -h" for more information.'),
-    description=fill("List entities associated with a specific database."),
-    prog="dx list database"
-)
-register_parser(parser_list_database, subparsers_action=subparsers_list)
-
-subparsers_list_database = parser_list_database.add_subparsers(parser_class=DXArgumentParser)
-subparsers_list_database.metavar = "entities"
-
-parser_list_database_files = subparsers_list_database.add_parser(
-    'files',
-    help='List files associated with a specific database',
-    description=fill('List files associated with a specific database'),
-    parents=[env_args],
-    prog='dx list database files'
-)
-parser_list_database_files.add_argument('database', help='ID of the database.')
-parser_list_database_files.add_argument('--folder', default='/', help='Name of folder (directory) in which to start searching for database files. This will typically match the name of the table whose files are of interest. The default value is "/" which will start the search at the root folder of the database.')
-parser_list_database_files.add_argument("--recurse", default=False, help='Look for files recursively down the directory structure. Otherwise, by default, only look on one level.', action='store_true')
-parser_list_database_files.add_argument("--csv", default=False, help='Write output as comma delimited fields, suitable as CSV format.', action='store_true')
-parser_list_database_files.add_argument("--timeout", default=120, help='Number of seconds to wait before aborting the request. If omitted, default timeout is 120 seconds.', type=int)
-parser_list_database_files.set_defaults(func=list_database_files)
-register_parser(parser_list_database_files, subparsers_action=subparsers_list_database, categories='data')
-
-
 #####################################
 # remove
 #####################################
@@ -4518,10 +4477,6 @@ parser_update_org.add_argument('org_id', help='ID of the org')
 parser_update_org.add_argument('--name', help='New name of the org')
 parser_update_org.add_argument('--member-list-visibility', help='New org membership level that is required to be able to view the membership level and/or permissions of any other member in the specified org (corresponds to the memberListVisibility org policy)', choices=['ADMIN', 'MEMBER', 'PUBLIC'])
 parser_update_org.add_argument('--project-transfer-ability', help='New org membership level that is required to be able to change the billing account of a project that is billed to the specified org, to some other entity (corresponds to the restrictProjectTransfer org policy)', choices=['ADMIN', 'MEMBER'])
-parser_update_org.add_argument('--saml-idp', help='New SAML identity provider')
-update_job_reuse_args = parser_update_org.add_mutually_exclusive_group(required=False)
-update_job_reuse_args.add_argument('--enable-job-reuse', action='store_true',  help='Enable job reuse for projects where the org is the billTo')
-update_job_reuse_args.add_argument('--disable-job-reuse', action='store_true', help='Disable job reuse for projects where the org is the billTo')
 parser_update_org.set_defaults(func=update_org)
 register_parser(parser_update_org, subparsers_action=subparsers_update, categories='org')
 
@@ -4715,6 +4670,10 @@ parser_run.add_argument('--batch-tsv', dest='batch_tsv', metavar="FILE",
                                   'of the executable input arguments. A job will be launched ' +
                                   'for each table row.',
                                   width_adjustment=-24))
+parser_run.add_argument('--instance-count',
+                               metavar='INSTANCE_COUNT_OR_MAPPING',
+                               help=fill('Specify instance count(s) for jobs this executable will run', width_adjustment=-24),
+                               action='append')
 parser_run.add_argument('--input-help',
                         help=fill('Print help and examples for how to specify inputs',
                                   width_adjustment=-24),

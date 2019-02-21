@@ -281,16 +281,22 @@ contains_phi.add_argument('--phi', dest='containsPHI', choices=["true", "false"]
                           help='If set to true, only projects that contain PHI data will be retrieved. ' +
                           'If set to false, only projects that do not contain PHI data will be retrieved.')
 
-def _parse_inst_type(thing):
+def _parse_dictionary_or_string_input(thing, arg_name):
     if thing.strip().startswith('{'):
-        # expects a map of entry point to instance type
+        # expects a map, e.g of entry point to instance type or instance count
         try:
             return json.loads(thing)
         except ValueError:
-            raise DXCLIError("Error while parsing JSON value for --instance-type")
+            raise DXCLIError("Error while parsing JSON value for " + arg_name)
     else:
         return thing
 
+def _parse_inst_type(thing):
+    return _parse_dictionary_or_string_input(thing, "--instance-type")
+
+def _parse_inst_count(thing):
+    x = _parse_dictionary_or_string_input(thing, "--instance-count")
+    return x
 
 def process_instance_type_arg(args, for_workflow=False):
     if args.instance_type:
@@ -312,6 +318,13 @@ def process_instance_type_arg(args, for_workflow=False):
             # is a string
             args.instance_type = _parse_inst_type(args.instance_type)
 
+def process_instance_count_arg(args):
+    if args.instance_count:
+        if not isinstance(args.instance_count, basestring):
+            args.instance_count = _parse_inst_count(args.instance_count[-1])
+        else:
+            # is a string
+            args.instance_count = _parse_inst_count(args.instance_count)
 
 def get_update_project_args(args):
     input_params = {}
