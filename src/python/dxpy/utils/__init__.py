@@ -301,19 +301,19 @@ def instance_type_to_sys_reqs(instance_type, entrypoint="*"):
     else:
         raise DXError('Expected instance_type field to be either a string or a dict')
 
-def instance_count_to_sys_reqs(instance_type, entrypoint="*"):
+def instance_count_to_sys_reqs(instance_count, entrypoint="*"):
     """
-    Returns a dictionary that can be passed as a "systemRequirements" input
-    to job/new or run/ API calls. The instance_type should be either a:
-    * string, eg. mem1_ssd1_x2
-    * dictionary, eg. {"main": "mem2_hdd2_x2", "other_function": "mem2_hdd2_x1"}
+    Returns a dictionary {entrypoint: instance_count}. The instance_count should
+    be either a:
+    * string, eg. 6
+    * dictionary, eg. {"main": 4, "other_function": 2}
     """
-    if isinstance(instance_type, basestring):
+    if isinstance(instance_count, basestring):
         # By default, all entry points ("*") should use this instance type
-        return {entrypoint: instance_type}
-    elif isinstance(instance_type, dict):
-        # instance_type is a map of entry point to instance type
-        return {fn: fn_inst for fn, fn_inst in instance_type.items()}
+        return {entrypoint: instance_count}
+    elif isinstance(instance_count, dict):
+        # instance_type is a map of entry point to instance count
+        return instance_count
     else:
         raise DXError('Expected instance_count field to be either a string or a dict')
 

@@ -295,8 +295,7 @@ def _parse_inst_type(thing):
     return _parse_dictionary_or_string_input(thing, "--instance-type")
 
 def _parse_inst_count(thing):
-    x = _parse_dictionary_or_string_input(thing, "--instance-count")
-    return x
+    return _parse_dictionary_or_string_input(thing, "--instance-count")
 
 def process_instance_type_arg(args, for_workflow=False):
     if args.instance_type:
