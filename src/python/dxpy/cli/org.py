@@ -239,13 +239,17 @@ def _get_org_update_args(args):
 
     if args.name is not None:
         org_update_inputs["name"] = args.name
+    if args.saml_idp is not None:
+        org_update_inputs["samlIdP"] = args.saml_idp
 
-    if args.member_list_visibility is not None or args.project_transfer_ability is not None:
+    if any(policy is not None for policy in (args.member_list_visibility, args.project_transfer_ability, args.job_reuse)):
         org_update_inputs["policies"] = {}
     if args.member_list_visibility is not None:
         org_update_inputs["policies"]["memberListVisibility"] = args.member_list_visibility
     if args.project_transfer_ability is not None:
-        org_update_inputs["policies"]["restrictProjectTransfer"] = args.project_transfer_ability
+        org_update_inputs["policies"]["restrictProjectTransfer"] = args.project_transfer_ability        
+    if args.job_reuse is not None:
+        org_update_inputs["policies"]["jobReuse"] = args.job_reuse
 
     return org_update_inputs
 
