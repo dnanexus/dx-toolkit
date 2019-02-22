@@ -7134,6 +7134,11 @@ class TestSparkClusterApps(DXTestCaseBuildApps):
         self.assertEqual(job_desc["clusterSpec"]["bootstrapScript"], bootstrap_code)
         self.assertEqual(job_desc["instanceType"], "mem1_ssd1_x2")
 
+        # pass --instance-count with specific entry point that is not defined in app sys reqs
+        with self.assertRaisesRegex(subprocess.CalledProcessError,
+                                    "--instance-count is not supported for entrypoint other"):
+            run("dx run " + app_id + " --brief -y --instance-count '{\"other\": 7}'").strip()
+
     @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps and run jobs')
     def test_run_cluster_app_with_instance_count_and_wildcard_entrypoint(self):
@@ -7166,17 +7171,17 @@ class TestSparkClusterApps(DXTestCaseBuildApps):
         app_doc = build_spark_app("cluster_app_instance_count_wildcard_sysreq", cluster_spec_with_bootstrap, bootstrap_code)
         app_id = app_doc["id"]
 
-        # pass --instance-count with specific entry point
-        job_id = run("dx run " + app_id + " --brief -y --instance-count '{\"main\": 7}'").strip()
-        job_desc = dxpy.describe(job_id)
-        self.assertEqual(job_desc["clusterSpec"]["initialInstanceCount"], 7)
-        self.assertEqual(job_desc["clusterSpec"]["bootstrapScript"], bootstrap_code)
-        self.assertEqual(job_desc["instanceType"], "mem2_hdd2_x1")
-
         # pass --instance-count with "*" entry point
         job_id = run("dx run " + app_id + " --brief -y --instance-count 8").strip()
         job_desc = dxpy.describe(job_id)
         self.assertEqual(job_desc["clusterSpec"]["initialInstanceCount"], 8)
+        self.assertEqual(job_desc["clusterSpec"]["bootstrapScript"], bootstrap_code)
+        self.assertEqual(job_desc["instanceType"], "mem2_hdd2_x1")
+
+        # pass --instance-count with specific entry point
+        job_id = run("dx run " + app_id + " --brief -y --instance-count '{\"main\": 7}'").strip()
+        job_desc = dxpy.describe(job_id)
+        self.assertEqual(job_desc["clusterSpec"]["initialInstanceCount"], 7)
         self.assertEqual(job_desc["clusterSpec"]["bootstrapScript"], bootstrap_code)
         self.assertEqual(job_desc["instanceType"], "mem2_hdd2_x1")
 

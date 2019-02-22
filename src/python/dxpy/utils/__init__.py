@@ -310,10 +310,10 @@ def instance_count_to_sys_reqs(instance_count, entrypoint="*"):
     """
     if isinstance(instance_count, basestring):
         # By default, all entry points ("*") should use this instance type
-        return {entrypoint: instance_count}
+        return {entrypoint: int(instance_count)}
     elif isinstance(instance_count, dict):
         # instance_type is a map of entry point to instance count
-        return instance_count
+        return {k: int(v) for k, v in instance_count.items()}
     else:
         raise DXError('Expected instance_count field to be either a string or a dict')
 

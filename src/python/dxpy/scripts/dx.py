@@ -2786,6 +2786,11 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         args.instance_count = dict({fn: reqs['clusterSpec'] for fn, reqs in list(args.sys_reqs_from_clone.items())},
                                   **(args.instance_count or {}))
 
+    merged_cluster_spec = {}
+    if args.instance_count:
+        executable_describe = executable.describe()
+        app_sys_reqs = executable_describe['runSpec'].get('systemRequirements', {})
+        merged_cluster_spec = get_merged_cluster_spec(app_sys_reqs, args.instance_count)
 
     if args.debug_on:
         if 'All' in args.debug_on:

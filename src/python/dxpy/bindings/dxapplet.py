@@ -62,7 +62,8 @@ class DXExecutable:
             if 'systemRequirements' not in run_input:
                 run_input['systemRequirements'] = kwargs.get('merged_cluster_spec')
             else:
-                # We don't want to overwrite the requested systemRequirements
+                # If the entrypoint exists in the run_input['systemRequirements']
+                # do not overwrite it but add the 'clusterSpec' to it
                 for entrypoint, req in kwargs['merged_cluster_spec'].items():
                     if entrypoint not in run_input['systemRequirements']:
                         run_input['systemRequirements'][entrypoint] = {}
