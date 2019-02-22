@@ -3327,6 +3327,22 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
             run("dx run " + workflow_id + " -istage_0.number=32")
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
+    def test_dx_run_specific_project(self):
+        dxpy.api.applet_new({
+            "project": self.project,
+            "name": "myapplet",
+            "dxapi": "1.0.0",
+            "inputSpec": [{"name": "number", "class": "int"}],
+            "outputSpec": [{"name": "number", "class": "int"}],
+            "runSpec": {"interpreter": "bash",
+                        "distribution": "Ubuntu",
+                        "release": "14.04",
+                        "code": "dx-jobutil-add-output number 32"}
+        })
+        project_name = dxpy.DXProject(self.project).name
+        run("dx run myapplet -inumber=5 --project %s" % project_name)
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
     def test_dx_run_clone_analysis(self):
         dxpy.api.applet_new({
             "project": self.project,

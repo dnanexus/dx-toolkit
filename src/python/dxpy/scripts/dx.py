@@ -3082,7 +3082,7 @@ def run(args):
             err_exit(exception=DXCLIError(
                 "Options --project and --folder/--destination cannot be specified together.\nIf specifying both a project and a folder, please include them in the --folder option."
             ))
-        dest_proj = args.project
+        dest_proj = resolve_container_id_or_name(args.project, is_error=True, multi=False)
 
     if args.folder is not None:
         dest_proj, dest_path, _none = try_call(resolve_existing_path,
