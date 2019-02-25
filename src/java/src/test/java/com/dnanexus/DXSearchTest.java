@@ -107,6 +107,17 @@ public class DXSearchTest {
         return applet;
     }
 
+    /**
+      * Delayes execution by i milliseconds.
+      */
+    private void sleep(int i) {
+        try {
+            Thread.sleep(i);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Before
     public void setUp() {
         testProject = DXProject.newProject().setName("DXSearchTest").build();
@@ -127,12 +138,15 @@ public class DXSearchTest {
         DXRecord moo = DXRecord.newRecord().setProject(testProject).setName("Moo")
                 .putProperty("sampleId", "1").putProperty("process", "a")
                 .addTypes(ImmutableList.of("genome", "report")).build().close();
+        sleep(1500); // sleep to break "created" timestamp ties
         DXRecord foo = DXRecord.newRecord().setProject(testProject).setName("foo")
                 .putProperty("sampleId", "2").addTags(ImmutableList.of("mytag"))
                 .addTypes(ImmutableList.of("genome")).build().close();
+        sleep(1500);
         DXRecord food = DXRecord.newRecord().setProject(testProject).setName("food")
                 .putProperty("process", "a").setFolder("/subfolder", true)
                 .addTypes(ImmutableList.of("report")).build().close();
+        sleep(1500);
         DXRecord open = DXRecord.newRecord().setProject(testProject).setName("open")
                 .addTypes(ImmutableList.of("type")).build();
         DXRecord invisible =
