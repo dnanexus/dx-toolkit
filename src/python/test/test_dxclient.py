@@ -5756,7 +5756,7 @@ class TestDXClientOrg(DXTestCase):
         res = run('dx update org {o} --saml-idp {p} --brief'.format(o=self.org_id,
                                                                     p=proposed_idp)).strip()
         self.assertEqual(res, self.org_id)
-        new_idp = dxpy.api.org_describe(org_id)["samlIdP"]
+        new_idp = dxpy.api.org_describe(self.org_id)["samlIdP"]
         self.assertEqual(new_idp, proposed_idp)
 
         # All args.
