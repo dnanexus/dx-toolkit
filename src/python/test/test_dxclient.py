@@ -5752,7 +5752,6 @@ class TestDXClientOrg(DXTestCase):
 
         # --saml-idp
         proposed_idp = "samlprovider"
-        exp_org_policies = dict(cur_org_policies, restrictProjectTransfer=proposed_idp)
         res = run('dx update org {o} --saml-idp {p} --brief'.format(o=self.org_id,
                                                                     p=proposed_idp)).strip()
         self.assertEqual(res, self.org_id)
