@@ -5766,6 +5766,14 @@ class TestDXClientOrg(DXTestCase):
         self.assertEqual(new_org_name, cur_org_name)
         self.assertEqual(new_org_policies, exp_org_policies)
 
+        # --saml-idp
+        proposed_idp = "samlprovider"
+        res = run('dx update org {o} --saml-idp {p} --brief'.format(o=self.org_id,
+                                                                    p=proposed_idp)).strip()
+        self.assertEqual(res, self.org_id)
+        new_idp = dxpy.api.org_describe(self.org_id)["samlIdP"]
+        self.assertEqual(new_idp, proposed_idp)
+
         # All args.
         cur_org_name, cur_org_policies = new_org_name, new_org_policies
         proposed_org_name = "bar"
