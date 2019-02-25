@@ -13,4 +13,15 @@
 #   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #   License for the specific language governing permissions and limitations
 #   under the License.
+from __future__ import unicode_literals
+import logging
 
+
+logger = logging.getLogger()
+
+
+def info(s, *args, **kwargs):
+    """Print a log message - make sure it always goes to stderr."""
+    if args or kwargs:
+        s = s.format(*args, **kwargs)
+    logger.info(s)
