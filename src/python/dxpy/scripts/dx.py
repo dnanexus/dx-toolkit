@@ -3332,11 +3332,11 @@ def run(args):
 
     if args.ignore_reuse and (is_workflow or is_global_workflow):
         err_exit(exception=DXCLIError(
-            "Option --ignore-reuse cannot be used when running workflows. Please, use ignore-reuse-stage"
+            "Option --ignore-reuse cannot be used when running workflows. Use ignore-reuse-stage instead"
         ))
     if args.ignore_reuse_stages and args.rerun_stages:
         err_exit(exception=DXCLIError(
-            "Options --ignore-reuse-stage and --rerun-stage cannot be specified together.\n--ignore-reuse-stages is preferred"
+            "Options --ignore-reuse-stage and --rerun-stage cannot be specified together. --ignore-reuse-stage is preferred"
         ))
 
     run_body(args, handler, dest_proj, dest_path)
@@ -4787,7 +4787,8 @@ parser_run.add_argument('--ignore-reuse',
 parser_run.add_argument('--ignore-reuse-stage', metavar='STAGE_ID', dest='ignore_reuse_stages',
                         help=fill('A stage (using its ID, name, or index) for which job reuse should be ignored, ' +
                                   'or "*" to indicate the job reuse for all stages should be ignored; if a stage points ' +
-                                  'to another workflow the ignore reuse option will be applied to the whole subworkflow; ' +
+                                  'to another (nested) workflow the ignore reuse option will be applied to the whole subworkflow. ' +
+                                  'This option overwrites any ignoreReuse fields set on app(let)s or the workflow during build time; ' +
                                   'repeat as necessary',
                                   width_adjustment=-24),
                         action='append')
