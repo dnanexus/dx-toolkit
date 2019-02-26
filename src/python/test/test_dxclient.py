@@ -4072,24 +4072,18 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
 
         # Run the workflow without ignore-reuse-stage
         analysis_id = run("dx run " + workflow_id + " -y --brief").strip()
-        analysis_desc = json.loads(run("dx describe --json " + analysis_id))
+        analysis_desc = dxpy.describe(analysis_id)
         self.assertIsNone(analysis_desc.get('ignoreReuse'))
 
-        analysis_desc = json.loads(run("dx describe " + analysis_id + " --json"))
-        time.sleep(2) # May need to wait for job to be created in the system
-        job_desc = json.loads(run("dx describe --json " + analysis_desc["stages"][0]["execution"]["id"]))
-        self.assertEqual(job_desc.get('ignoreReuse'), True)
-        job_desc = json.loads(run("dx describe --json " + analysis_desc["stages"][1]["execution"]["id"]))
-        self.assertEqual(job_desc.get('ignoreReuse'), False)
-
         # Run the workflow with ignore-reuse-stage
-        analysis_id = run('dx run ' + workflow_id + ' --ignore-reuse-stage stage_0 --ignore-reuse-stage stage_1 -y --brief').strip()
-        analysis_desc = json.loads(run("dx describe --json " + analysis_id))
-        self.assertEqual(analysis_desc.get('ignoreReuse'), ["stage_0", "stage_1"])
-        # analysis_desc = json.loads(run("dx describe " + analysis_id + " --json"))
-        # time.sleep(2) # May need to wait for job to be created in the system
-        # job_desc = json.loads(run("dx describe --json " + analysis_desc["stages"][0]["execution"]["id"]))
-        # self.assertEqual(job_desc.get('ignoreReuse'), True)
+        analysis_id = run('dx run ' + workflow_id + ' --ignore-reuse-stage stage_1 -y --brief').strip()
+        analysis_desc = dxpy.describe(analysis_id)
+        self.assertEqual(analysis_desc.get('ignoreReuse'), ["stage_1"])
+
+        # Run the workflow with ignore-reuse-stage wildcard
+        analysis_id = run('dx run ' + workflow_id + ' --ignore-reuse-stage "*" -y --brief').strip()
+        analysis_desc = dxpy.describe(analysis_id)
+        self.assertEqual(analysis_desc.get('ignoreReuse'), ["*"])
 
     def test_dx_build_get_build_workflow(self):
         # When building and getting a workflow multiple times we should
