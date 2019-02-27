@@ -3334,10 +3334,12 @@ def run(args):
         err_exit(exception=DXCLIError(
             "Option --ignore-reuse cannot be used when running workflows. Use ignore-reuse-stage instead"
         ))
-    if args.ignore_reuse_stages and args.rerun_stages:
-        err_exit(exception=DXCLIError(
-            "Options --ignore-reuse-stage and --rerun-stage cannot be specified together. --ignore-reuse-stage is preferred"
-        ))
+    # if rerun-stages is not used, the cached executions on the
+    # server side will be used and the reuse will not be ignored
+    # if args.ignore_reuse_stages and args.rerun_stages:
+    #     err_exit(exception=DXCLIError(
+    #         "Options --ignore-reuse-stage and --rerun-stage cannot be specified together. --ignore-reuse-stage is preferred"
+    #     ))
 
     run_body(args, handler, dest_proj, dest_path)
 
