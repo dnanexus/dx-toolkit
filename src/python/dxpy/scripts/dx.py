@@ -4468,8 +4468,8 @@ parser_update_org.add_argument('--member-list-visibility', help='New org members
 parser_update_org.add_argument('--project-transfer-ability', help='New org membership level that is required to be able to change the billing account of a project that is billed to the specified org, to some other entity (corresponds to the restrictProjectTransfer org policy)', choices=['ADMIN', 'MEMBER'])
 parser_update_org.add_argument('--saml-idp', help='New SAML identity provider')
 update_job_reuse_args = parser_update_org.add_mutually_exclusive_group(required=False)
-update_job_reuse_args.add_argument('--enable-job-reuse', dest='job_reuse', action='store_true',  help='Enable job reuse for projects where the org is the billTo')
-update_job_reuse_args.add_argument('--disable-job-reuse', dest='job_reuse', action='store_false', help='Disable job reuse for projects where the org is the billTo')
+update_job_reuse_args.add_argument('--enable-job-reuse', action='store_true',  help='Enable job reuse for projects where the org is the billTo')
+update_job_reuse_args.add_argument('--disable-job-reuse', action='store_true', help='Disable job reuse for projects where the org is the billTo')
 parser_update_org.set_defaults(func=update_org)
 register_parser(parser_update_org, subparsers_action=subparsers_update, categories='org')
 

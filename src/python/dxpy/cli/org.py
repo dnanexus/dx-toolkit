@@ -248,8 +248,11 @@ def _get_org_update_args(args):
         org_update_inputs["policies"]["memberListVisibility"] = args.member_list_visibility
     if args.project_transfer_ability is not None:
         org_update_inputs["policies"]["restrictProjectTransfer"] = args.project_transfer_ability        
-    if args.job_reuse is not None:
-        org_update_inputs["policies"]["jobReuse"] = args.job_reuse
+    if args.enable_job_reuse == True:
+        org_update_inputs["policies"]["jobReuse"] = True
+    elif args.disable_job_reuse == True:
+        org_update_inputs["policies"]["jobReuse"] = False
+    
 
     return org_update_inputs
 
