@@ -2775,7 +2775,7 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
 
 # Shared code for running an executable ("dx run executable"). At the end of this method,
 # there is a fork between the case of a single executable, and a batch run.
-def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None, executable_desc=None):
+def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None):
     input_json = _get_input_for_run(args, executable, preset_inputs)
 
     if args.sys_reqs_from_clone and not isinstance(args.instance_type, str):
@@ -2806,7 +2806,6 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "depends_on": args.depends_on or None,
         "allow_ssh": args.allow_ssh,
         "ignore_reuse": args.ignore_reuse or None,
-        "ignore_reuse_stages": args.ignore_reuse_stages or None,
         "debug": {"debugOn": args.debug_on} if args.debug_on else None,
         "delay_workspace_destruction": args.delay_workspace_destruction,
         "priority": ("high" if args.watch else args.priority),
@@ -2880,6 +2879,80 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         run_one(args, executable, dest_proj, dest_path, input_json, run_kwargs)
     else:
         run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_kwargs)
+
+def get_merged_cluster_spec(app_reqs, instance_count):
+    '''
+    Returns a dictionary that can be passed as a "systemRequirements" input to app-xxx/run, e.g.
+    {'fn': {'clusterSpec': {initialInstanceCount: 3, version: "2.4.0", ...}}}
+
+    Since full clusterSpec must be passed to the API server, we need to retrieve the cluster
+    spec defined in app doc's systemRequirements and overwrite the field initialInstanceCount
+    with the value the user passed to dx run for each entrypoint.
+
+    Instance count is currently the only clusterSpec's field the user is allowed to change
+    at runtime.
+
+    A few scenarios when requesting instance count for different entrypoints with dx run 
+    and the resulting merged systemRequirements (merged_cluster_spec):
+
+    Requested: {"*": 5}
+    App doc: {"main": "clusterSpec": {"initialInstanceCount": 7, bootstrapScript: "x.sh"},
+              "other": "clusterSpec": {"initialInstanceCount": 9, bootstrapScript: "y.sh"}}
+    Merged: {"main": "clusterSpec": {"initialInstanceCount": 5, bootstrapScript: "x.sh"},
+             "other": "clusterSpec": {"initialInstanceCount": 5, bootstrapScript: "y.sh"}}
+
+    Requested: {"main": 12}
+    App doc: {"main": "clusterSpec": {"initialInstanceCount": 7, bootstrapScript: "x.sh"},
+              "other": "clusterSpec": {"initialInstanceCount": 9, bootstrapScript: "y.sh"}}
+    Merged: {"main": "clusterSpec": {"initialInstanceCount": 12, bootstrapScript: "x.sh"},
+             "other": "clusterSpec": {"initialInstanceCount": 9, bootstrapScript: "y.sh"}}
+
+    Requested: {"main": 33}
+    App doc: {"*": "clusterSpec": {"initialInstanceCount": 2, bootstrapScript: "z.sh"}}
+    Merged: {"main": "clusterSpec": {"initialInstanceCount": 33, bootstrapScript: "z.sh"},
+             "*": "clusterSpec": {"initialInstanceCount": 2, bootstrapScript: "z.sh"}}
+
+    Requested: {"main": 22, "*": 11}
+    App doc: {"*": "clusterSpec": {"initialInstanceCount": 2, bootstrapScript: "t.sh"}}
+    Merged: {"main": "clusterSpec": {"initialInstanceCount": 22, bootstrapScript: "t.sh"},
+             "*": "clusterSpec": {"initialInstanceCount": 11, bootstrapScript: "t.sh"}}
+    '''
+
+    def replace_count_in_app_cluster_spec(merged_cluster_spec, app_sys_reqs, requested_count):
+        '''
+        Iterates over and updates all the app's entrypoints with the new, requested instance count.
+        Does nothing for entrypoints without clusterSpec.
+        '''
+
+        for app_entrypoint, reqs in app_sys_reqs.items():
+            if "clusterSpec" in reqs:
+                merged_cluster_spec[app_entrypoint] = {"clusterSpec": copy.deepcopy(reqs["clusterSpec"])}
+                merged_cluster_spec[app_entrypoint]["clusterSpec"]["initialInstanceCount"] = requested_count
+
+    merged_cluster_spec = {}
+    entrypoint_to_instance_count = instance_count_to_sys_reqs(instance_count)
+
+    for entrypoint, requested_count in entrypoint_to_instance_count.items():
+        if entrypoint == "*":
+            replace_count_in_app_cluster_spec(merged_cluster_spec, app_reqs, requested_count)
+        else:
+            # Find the same entrypoint in the app. If not found we will check if "*" (default)
+            # is defined on the app and use its clusterSpec.
+            found_reqs = app_reqs.get(entrypoint, app_reqs.get("*"))
+            if found_reqs and "clusterSpec" in found_reqs:
+                merged_cluster_spec[entrypoint] = {"clusterSpec": copy.deepcopy(found_reqs["clusterSpec"])}
+                merged_cluster_spec[entrypoint]["clusterSpec"]["initialInstanceCount"] = requested_count
+            else:
+                err_exit(exception=DXCLIError(
+                '--instance-count is not supported for entrypoint ' + entrypoint + ' since the app' \
+                ' does not have "clusterSpec" defined for this entrypoint in its systemRequirements'))
+
+    # no matching entrypoint not default "*" was found in the app sys requirements
+    if not merged_cluster_spec:
+        err_exit(exception=DXCLIError(
+                 '--instance-count is not supported for entrypoints without clusterSpec'))
+
+    return merged_cluster_spec
 
 def print_run_help(executable="", alias=None):
     if executable == "":
