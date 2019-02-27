@@ -1,0 +1,16 @@
+usage: dx add [-h] list_type ...
+
+Use this command with one of the availabile subcommands to perform various
+actions such as adding other users or orgs to the list of developers or
+authorized users of an app
+
+positional arguments:
+  list_type
+    users     Add authorized users for an app
+    developers
+              Add developers for an app
+    stage     Add a stage to a workflow
+    member    Grant a user membership to an org
+
+optional arguments:
+  -h, --help  show this help message and exit
