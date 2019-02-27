@@ -6,6 +6,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* new `findDataObjects` inputs to DXJava
+* project name resolution to `--project` flag for `dx run`
+* smart reuse and SAML identity provider
+
+## [277.0] - 2019.02.14 beta
+
 ### Fixed
 
 * Uploading binary data, such at compressed files, works in python3.
@@ -22,7 +30,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * 32-bit build target for Ubuntu 14.04
 * `gtable` code
 
-## [276.0] - 2019.02.08 beta
+## [276.0] - 2019.02.08 stable
 
 ### Added
 
