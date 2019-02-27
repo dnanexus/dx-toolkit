@@ -342,8 +342,12 @@ class TestDXClient(DXTestCase):
                 run(("dx uninvite "+query).format(p=self.project))
 
     def test_dx_add_missing_arguments(self):
-        with self.assertSubprocessFailure(exit_code=2):
-            run("dx add")
+        if USING_PYTHON2:
+            with self.assertSubprocessFailure(exit_code=2):
+                run("dx add")
+        else:
+            output = run("dx add")
+            self.assertIn("usage: dx add [-h]", output)
 
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_ADD_TYPES", "DNA_CLI_DATA_OBJ_REMOVE_TYPES"])
