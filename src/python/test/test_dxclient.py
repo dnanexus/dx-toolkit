@@ -4086,11 +4086,6 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertIn("stage_0", analysis_desc.get('ignoreReuse'))
         self.assertIn("stage_1", analysis_desc.get('ignoreReuse'))
 
-        # Run the workflow with ignore-reuse-stage wildcard
-        analysis_id = run('dx run ' + workflow_id + ' --ignore-reuse-stage "*" -y --brief').strip()
-        analysis_desc = dxpy.describe(analysis_id)
-        self.assertEqual(analysis_desc.get('ignoreReuse'), ["*"])
-
         # Run the workflow with ignore-reuse
         analysis_id = run('dx run ' + workflow_id + ' --ignore-reuse -y --brief').strip()
         analysis_desc = dxpy.describe(analysis_id)

@@ -46,7 +46,7 @@ class DXExecutable:
         '''
         Takes the same arguments as the run method. Creates an input hash for the /executable-xxxx/run method,
         translating ONLY the fields that can be handled uniformly across all executables: project, folder, name, tags,
-        properties, details, depends_on, allow_ssh, debug, delay_workspace_destruction, and extra_args.
+        properties, details, depends_on, allow_ssh, debug, delay_workspace_destruction, ignore_reuse, and extra_args.
         '''
         project = kwargs.get('project') or dxpy.WORKSPACE_ID
 
@@ -82,11 +82,11 @@ class DXExecutable:
         if kwargs.get('debug') is not None:
             run_input["debug"] = kwargs['debug']
 
-        if kwargs.get('ignore_reuse') is not None:
-            run_input["ignoreReuse"] = kwargs['ignore_reuse']
-
         if kwargs.get('priority') is not None:
             run_input["priority"] = kwargs['priority']
+
+        if kwargs.get('ignore_reuse') is not None:
+            run_input["ignoreReuse"] = kwargs['ignore_reuse']
 
         if dxpy.JOB_ID is None:
             run_input["project"] = project

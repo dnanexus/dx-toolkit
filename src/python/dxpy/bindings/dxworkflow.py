@@ -189,7 +189,7 @@ class DXWorkflow(DXDataObject, DXExecutable):
         # A stage with the provided ID can't be found in the workflow, so look for it as a name
         stage_ids_matching_name = [stg['id'] for stg in self.stages if stg.get('name') == stage]
         if len(stage_ids_matching_name) == 0:
-            raise DXError('DXWorkflow: the given stage identifier ' + stage + ' could not be found as a stage ID nor as a stage name ' + str(self.stages))
+            raise DXError('DXWorkflow: the given stage identifier ' + stage + ' could not be found as a stage ID nor as a stage name')
         elif len(stage_ids_matching_name) > 1:
             raise DXError('DXWorkflow: more than one workflow stage was found to have the name "' + stage + '"')
         else:
@@ -488,8 +488,6 @@ class DXWorkflow(DXDataObject, DXExecutable):
 
         if kwargs.get('ignore_reuse', False):
             run_input['ignoreReuse'] = ['*']
-            #TODO: this needs to be temporarily added to prevent using caching on the server side
-            run_input['rerunStages'] = ['*']
 
         if kwargs.get('ignore_reuse_stages') is not None:
             run_input['ignoreReuse'] = [

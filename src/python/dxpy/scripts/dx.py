@@ -4740,11 +4740,6 @@ parser_run.add_argument('--stage-relative-output-folder', metavar=('STAGE_ID', '
                         nargs=2,
                         action='append',
                         default=[])
-parser_run.add_argument('--rerun-stage', metavar='STAGE_ID', dest='rerun_stages',
-                        help=fill('A stage (using its ID, name, or index) to rerun, or "*" to ' +
-                                  'indicate all stages should be rerun; repeat as necessary',
-                                  width_adjustment=-24),
-                        action='append')
 parser_run.add_argument('--name', help=fill('Name for the job (default is the app or applet name)', width_adjustment=-24))
 parser_run.add_argument('--delay-workspace-destruction',
                         help=fill('Whether to keep the job\'s temporary workspace around for debugging purposes for 3 days after it succeeds or fails', width_adjustment=-24),
@@ -4778,11 +4773,15 @@ ignore_reuse.add_argument('--ignore-reuse',
                                   width_adjustment=-24),
                         action='store_true')
 ignore_reuse.add_argument('--ignore-reuse-stage', metavar='STAGE_ID', dest='ignore_reuse_stages',
-                        help=fill('A stage (using its ID, name, or index) for which job reuse should be ignored, ' +
-                                  'or "*" to indicate the job reuse for all stages should be ignored; if a stage points ' +
-                                  'to another (nested) workflow the ignore reuse option will be applied to the whole subworkflow. ' +
+                        help=fill('A stage (using its ID, name, or index) for which job reuse should be disabled, ' +
+                                  'if a stage points to another (nested) workflow the ignore reuse option will be applied to the whole subworkflow. ' +
                                   'This option overwrites any ignoreReuse fields set on app(let)s or the workflow during build time; ' +
                                   'repeat as necessary',
+                                  width_adjustment=-24),
+                        action='append')
+ignore_reuse.add_argument('--rerun-stage', metavar='STAGE_ID', dest='rerun_stages',
+                        help=fill('A stage (using its ID, name, or index) to rerun, or "*" to ' +
+                                  'indicate all stages should be rerun; repeat as necessary',
                                   width_adjustment=-24),
                         action='append')
 parser_run.add_argument('--batch-tsv', dest='batch_tsv', metavar="FILE",
