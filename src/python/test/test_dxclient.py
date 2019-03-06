@@ -4091,6 +4091,14 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         analysis_desc = dxpy.describe(analysis_id)
         self.assertEqual(analysis_desc.get('ignoreReuse'), ["*"])
 
+        # Run the workflow with ignore-reuse
+        analysis_id = run('dx run ' + workflow_id + ' --ignore-reuse -y --brief').strip()
+        analysis_desc = dxpy.describe(analysis_id)
+        self.assertEqual(analysis_desc.get('ignoreReuse'), ["*"])
+
+        with self.assertSubprocessFailure(stderr_regexp='not allowed with argument', exit_code=2):
+            run('dx run ' + workflow_id + ' --ignore-reuse --ignore-reuse-stage "*" -y --brief').strip()
+
     def test_dx_build_get_build_workflow(self):
         # When building and getting a workflow multiple times we should
         # obtain functionally identical workflows, ie. identical dxworkflow.json specs.

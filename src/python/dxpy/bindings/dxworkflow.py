@@ -486,6 +486,11 @@ class DXWorkflow(DXDataObject, DXExecutable):
                 for _stage in kwargs['rerun_stages']
             ]
 
+        if kwargs.get('ignore_reuse', False):
+            run_input['ignoreReuse'] = ['*']
+            #TODO: this needs to be temporarily added to prevent using caching on the server side
+            run_input['rerunStages'] = ['*']
+
         if kwargs.get('ignore_reuse_stages') is not None:
             run_input['ignoreReuse'] = [
                 _stage if _stage == '*' else self._get_stage_id(_stage)

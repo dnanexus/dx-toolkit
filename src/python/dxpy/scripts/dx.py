@@ -3330,17 +3330,6 @@ def run(args):
 
     process_instance_type_arg(args, is_workflow or is_global_workflow)
 
-    if args.ignore_reuse and (is_workflow or is_global_workflow):
-        err_exit(exception=DXCLIError(
-            "Option --ignore-reuse cannot be used when running workflows. Use ignore-reuse-stage instead"
-        ))
-    # if rerun-stages "*" is not used, the cached executions on the
-    # server side will be used and the reuse will not be ignored
-    # if args.ignore_reuse_stages and args.rerun_stages:
-    #     err_exit(exception=DXCLIError(
-    #         "Options --ignore-reuse-stage and --rerun-stage cannot be specified together. --ignore-reuse-stage is preferred"
-    #     ))
-
     run_body(args, handler, dest_proj, dest_path)
 
 def terminate(args):
@@ -4782,11 +4771,13 @@ parser_run.add_argument('--ssh-proxy', metavar=('<address>:<port>'),
 parser_run.add_argument('--debug-on', action='append', choices=['AppError', 'AppInternalError', 'ExecutionError', 'All'],
                         help=fill("Configure the job to hold for debugging when any of the listed errors occur",
                                   width_adjustment=-24))
-parser_run.add_argument('--ignore-reuse',
+
+ignore_reuse = parser_run.add_mutually_exclusive_group()
+ignore_reuse.add_argument('--ignore-reuse',
                         help=fill("Disable job reuse for execution",
                                   width_adjustment=-24),
                         action='store_true')
-parser_run.add_argument('--ignore-reuse-stage', metavar='STAGE_ID', dest='ignore_reuse_stages',
+ignore_reuse.add_argument('--ignore-reuse-stage', metavar='STAGE_ID', dest='ignore_reuse_stages',
                         help=fill('A stage (using its ID, name, or index) for which job reuse should be ignored, ' +
                                   'or "*" to indicate the job reuse for all stages should be ignored; if a stage points ' +
                                   'to another (nested) workflow the ignore reuse option will be applied to the whole subworkflow. ' +

@@ -82,6 +82,9 @@ class DXExecutable:
         if kwargs.get('debug') is not None:
             run_input["debug"] = kwargs['debug']
 
+        if kwargs.get('ignore_reuse') is not None:
+            run_input["ignoreReuse"] = kwargs['ignore_reuse']
+
         if kwargs.get('priority') is not None:
             run_input["priority"] = kwargs['priority']
 
@@ -105,13 +108,7 @@ class DXExecutable:
             if kwargs.get(unsupported_arg):
                 raise DXError(unsupported_arg + ' is not supported for applets (only workflows)')
 
-        applet_input_hash = DXExecutable._get_run_input_common_fields(executable_input, **kwargs)
-
-        # Add arguments which are specific to app(let)s but not to workflows
-        # so they are not included in DXExecutable._get_run_input_common_fields()
-        if kwargs.get('ignore_reuse') is not None:
-            applet_input_hash["ignoreReuse"] = kwargs['ignore_reuse']
-        return applet_input_hash
+        return DXExecutable._get_run_input_common_fields(executable_input, **kwargs)
 
     def _run_impl(self, run_input, **kwargs):
         """
