@@ -340,8 +340,8 @@ class DXTestCaseCompat(unittest.TestCase):
 
 class DXTestCase(DXTestCaseCompat):
     def setUp(self):
-        proj_name = u"dxclient_test_pröject"
-        self.project = dxpy.api.project_new({"name": proj_name})['id']
+        self.proj_name = u"dxclient_test_pröject"
+        self.project = dxpy.api.project_new({"name": self.proj_name})['id']
         dxpy.config["DX_PROJECT_CONTEXT_ID"] = self.project
         cd(self.project + ":/")
         dxpy.config.__init__(suppress_warning=True)
