@@ -39,7 +39,7 @@ UPDATABLE_GLOBALWF_FIELDS = {'title', 'summary', 'description', 'developerNotes'
 GLOBALWF_SUPPORTED_KEYS = UPDATABLE_GLOBALWF_FIELDS.union({"name", "version", "regionalOptions",
                                                            "categories", "billTo", "dxapi"})
 SUPPORTED_KEYS = GLOBALWF_SUPPORTED_KEYS.union({"project", "folder", "outputFolder", "stages",
-                                                "inputs", "outputs"})
+                                                "inputs", "outputs", "ignoreReuse"})
 
 class WorkflowBuilderException(Exception):
     """
@@ -180,6 +180,26 @@ def _get_validated_stage(stage, stage_index):
     return stage
 
 
+def validate_ignore_reuse(stages, ignore_reuse_stages):
+    """
+    Checks if each stage ID specified in ignore_reuse_stages exists in
+    the workflow definition. If ignore_reuse_stages contains
+    only '*', the field is valid.
+    """
+    if not isinstance(ignore_reuse_stages, list):
+         raise WorkflowBuilderException('"IgnoreReuse must be a list of strings - stage IDs or "*"')
+
+    ignore_reuse_set = set(ignore_reuse_stages)
+    if '*' in ignore_reuse_set and ignore_reuse_set == 1:
+        return
+
+    stage_ids = set([stage.get('id') for stage in stages])
+    for ignored in ignore_reuse_set:
+        if ignored not in stage_ids:
+            raise WorkflowBuilderException(
+                'Stage with ID {} not found. Add a matching "id" for the stage you wish to set ignoreReuse for'.format(ignored))
+
+
 def _get_validated_stages(stages):
     """
     Validates stages of the workflow as a list of dictionaries.
@@ -278,6 +298,9 @@ def _get_validated_json(json_spec, args):
         if args.src_dir != validated_spec['name']:
             logger.warn(
                 'workflow name "%s" does not match containing directory "%s"' % (validated_spec['name'], args.src_dir))
+
+    if 'ignoreReuse' in validated_spec:
+        validate_ignore_reuse(validated_spec['stages'], validated_spec['ignoreReuse'])
 
     validated_documentation_fields = _get_validated_json_for_build_or_update(validated_spec, args)
     validated_spec.update(validated_documentation_fields)

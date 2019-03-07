@@ -2796,6 +2796,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "depends_on": args.depends_on or None,
         "allow_ssh": args.allow_ssh,
         "ignore_reuse": args.ignore_reuse or None,
+        "ignore_reuse_stages": args.ignore_reuse_stages or None,
         "debug": {"debugOn": args.debug_on} if args.debug_on else None,
         "delay_workspace_destruction": args.delay_workspace_destruction,
         "priority": ("high" if args.watch else args.priority),
@@ -3227,6 +3228,7 @@ def run(args):
             dest_path = dxpy.config.get('DX_CLI_WD', '/')
 
     process_instance_type_arg(args, is_workflow or is_global_workflow)
+
     run_body(args, handler, dest_proj, dest_path)
 
 def terminate(args):
@@ -4614,11 +4616,6 @@ parser_run.add_argument('--stage-relative-output-folder', metavar=('STAGE_ID', '
                         nargs=2,
                         action='append',
                         default=[])
-parser_run.add_argument('--rerun-stage', metavar='STAGE_ID', dest='rerun_stages',
-                        help=fill('A stage (using its ID, name, or index) to rerun, or "*" to ' +
-                                  'indicate all stages should be rerun; repeat as necessary',
-                                  width_adjustment=-24),
-                        action='append')
 parser_run.add_argument('--name', help=fill('Name for the job (default is the app or applet name)', width_adjustment=-24))
 parser_run.add_argument('--delay-workspace-destruction',
                         help=fill('Whether to keep the job\'s temporary workspace around for debugging purposes for 3 days after it succeeds or fails', width_adjustment=-24),
@@ -4645,10 +4642,24 @@ parser_run.add_argument('--ssh-proxy', metavar=('<address>:<port>'),
 parser_run.add_argument('--debug-on', action='append', choices=['AppError', 'AppInternalError', 'ExecutionError', 'All'],
                         help=fill("Configure the job to hold for debugging when any of the listed errors occur",
                                   width_adjustment=-24))
-parser_run.add_argument('--ignore-reuse',
+
+ignore_reuse = parser_run.add_mutually_exclusive_group()
+ignore_reuse.add_argument('--ignore-reuse',
                         help=fill("Disable job reuse for execution",
                                   width_adjustment=-24),
                         action='store_true')
+ignore_reuse.add_argument('--ignore-reuse-stage', metavar='STAGE_ID', dest='ignore_reuse_stages',
+                        help=fill('A stage (using its ID, name, or index) for which job reuse should be disabled, ' +
+                                  'if a stage points to another (nested) workflow the ignore reuse option will be applied to the whole subworkflow. ' +
+                                  'This option overwrites any ignoreReuse fields set on app(let)s or the workflow during build time; ' +
+                                  'repeat as necessary',
+                                  width_adjustment=-24),
+                        action='append')
+parser_run.add_argument('--rerun-stage', metavar='STAGE_ID', dest='rerun_stages',
+                        help=fill('A stage (using its ID, name, or index) to rerun, or "*" to ' +
+                                  'indicate all stages should be rerun; repeat as necessary',
+                                  width_adjustment=-24),
+                        action='append')
 parser_run.add_argument('--batch-tsv', dest='batch_tsv', metavar="FILE",
                         help=fill('A file in tab separated value (tsv) format, with a subset ' +
                                   'of the executable input arguments. A job will be launched ' +
