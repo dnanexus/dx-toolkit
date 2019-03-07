@@ -2622,6 +2622,18 @@ def list_developers(args):
     except:
         err_exit()
 
+def list_files(args):
+    try:
+        results = dxpy.api.database_show_files(
+            args.database,
+            input_params={"filename": args.filename, "recursive": args.recursive, "timeout": args.timeout})
+
+        for r in results["FileStatusList"]:
+            print("{}{}{}{}{}".format(
+                r["LastModified"], DELIMITER(","), r["ContentLength"], DELIMITER(","), r["Path"]))
+    except:
+        err_exit()
+
 def remove_developers(args):
     desc = try_call(resolve_global_executable, args.app)
     args.developers = process_list_of_usernames(args.developers)
@@ -4396,6 +4408,17 @@ parser_list_stages = subparsers_list.add_parser('stages', help='List the stages 
 parser_list_stages.add_argument('workflow', help='Name or ID of a workflow').completer = DXPathCompleter(classes=['workflow'])
 parser_list_stages.set_defaults(func=workflow_cli.list_stages)
 register_parser(parser_list_stages, subparsers_action=subparsers_list, categories='workflow')
+
+parser_list_files = subparsers_list.add_parser('files', help='List the data files associated with a database',
+                                                description='List the data files associated with a database',
+                                                parents=[env_args],
+                                                prog='dx list files')
+parser_list_files.add_argument('database', help='ID of the database.')
+parser_list_files.add_argument('--filename', help='Directory from which to start search. This will typically match the name of the table whose files are of interest. If omitted, the search starts at the root location for the database.')
+parser_list_files.add_argument("--recursive", default=False, help='Look for files recursively down the directory structure. Otherwise, by default, only look on one level.', action='store_true')
+parser_list_files.add_argument("--timeout", default=120, help='Number of seconds to wait before aborting the request. If omitted, default timeout is 120 seconds.', type=int)
+parser_list_files.set_defaults(func=list_files)
+register_parser(parser_list_files, subparsers_action=subparsers_list, categories='data')
 
 #####################################
 # remove
