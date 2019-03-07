@@ -4779,7 +4779,7 @@ ignore_reuse.add_argument('--ignore-reuse-stage', metavar='STAGE_ID', dest='igno
                                   'repeat as necessary',
                                   width_adjustment=-24),
                         action='append')
-ignore_reuse.add_argument('--rerun-stage', metavar='STAGE_ID', dest='rerun_stages',
+parser_run.add_argument('--rerun-stage', metavar='STAGE_ID', dest='rerun_stages',
                         help=fill('A stage (using its ID, name, or index) to rerun, or "*" to ' +
                                   'indicate all stages should be rerun; repeat as necessary',
                                   width_adjustment=-24),

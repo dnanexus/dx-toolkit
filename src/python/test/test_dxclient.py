@@ -4057,6 +4057,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         workflow_desc = dxpy.get_handler(workflow_id).describe()
         self.assertEqual(workflow_desc['ignoreReuse'], ["stage_0"])
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         "skipping test that would run jobs")
     def test_run_workflow_with_ignore_reuse(self):
         # Build the workflow (ignoreReuse is set on applet document)
         workflow_name = 'workflow_run_ignore_reuse'
