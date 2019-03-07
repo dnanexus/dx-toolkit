@@ -700,6 +700,28 @@ class TestDXClient(DXTestCase):
         run("dx mkdir -p mkdirtest/b/c")
         run("dx rm -r mkdirtest")
 
+    def test_dxpy_session_collisions(self):
+        # Testing SCI-1334 bug where changes in one session affect others
+        def expect_dx_wd(shell, proj_name, wd):
+            shell.sendline("dx pwd")
+            shell.expect(proj_name + ":/" + wd + "\r\n")  # default timeout from shell used
+
+        # Spawn a new shell, select a project, make a directory
+        shell1 = pexpect.spawn("bash", **spawn_extra_args)
+        shell1.sendline("dx select " + self.project)
+        shell1.sendline("dx mkdir test_dir")
+        expect_dx_wd(shell=shell1, proj_name=self.proj_name, wd="")
+
+        # Spawn a second shell, the working directory should be the same as the first shell
+        shell2 = pexpect.spawn("bash", **spawn_extra_args)
+        expect_dx_wd(shell=shell2, proj_name=self.proj_name, wd="")
+
+        # Change directories in shell 1
+        shell1.sendline("dx cd test_dir/")
+        expect_dx_wd(shell=shell1, proj_name=self.proj_name, wd="test_dir")
+
+        # Shell2 should not be affected by the change in directory
+        expect_dx_wd(shell=shell2, proj_name=self.proj_name, wd="")
 
     @unittest.skip('Does not work yet')
     def test_dxpy_session_isolation(self):
