@@ -2624,7 +2624,7 @@ def list_developers(args):
 
 def list_database_files(args):
     try:
-        results = dxpy.api.database_show_files(
+        results = dxpy.api.database_list_folder(
             args.database,
             input_params={"folder": args.folder, "recurse": args.recurse, "timeout": args.timeout})
 
@@ -4409,16 +4409,33 @@ parser_list_stages.add_argument('workflow', help='Name or ID of a workflow').com
 parser_list_stages.set_defaults(func=workflow_cli.list_stages)
 register_parser(parser_list_stages, subparsers_action=subparsers_list, categories='workflow')
 
-parser_list_database_files = subparsers_list.add_parser('database files', help='List the data files associated with a database',
-                                                description='List the files associated with a database',
-                                                parents=[env_args],
-                                                prog='dx list database files')
+parser_list_database = subparsers_list.add_parser(
+    "database",
+    help=fill("List entities associated with a specific database. For example,") + "\n\n\t" +
+         fill('"dx list database files" lists database files associated with a specific database.') + "\n\n\t" +
+         fill('Please execute "dx list database -h" for more information.'),
+    description=fill("List entities associated with a specific database."),
+    prog="dx list database"
+)
+register_parser(parser_list_database, subparsers_action=subparsers_list)
+
+subparsers_list_database = parser_list_database.add_subparsers(parser_class=DXArgumentParser)
+subparsers_list_database.metavar = "entities"
+
+parser_list_database_files = subparsers_list_database.add_parser(
+    'files',
+    help='List files associated with a specific database',
+    description=fill('List files associated with a specific database'),
+    parents=[env_args],
+    prog='dx list database files'
+)
 parser_list_database_files.add_argument('database', help='ID of the database.')
-parser_list_database_files.add_argument('--folder', help='Name of folder (directory) in which to start searching for database files. This will typically match the name of the table whose files are of interest. If omitted, the search starts at the root location for the database.')
+parser_list_database_files.add_argument('--folder', default='/', help='Name of folder (directory) in which to start searching for database files. This will typically match the name of the table whose files are of interest. The default value is "/" which will start the search at the root folder of the database.')
 parser_list_database_files.add_argument("--recurse", default=False, help='Look for files recursively down the directory structure. Otherwise, by default, only look on one level.', action='store_true')
 parser_list_database_files.add_argument("--timeout", default=120, help='Number of seconds to wait before aborting the request. If omitted, default timeout is 120 seconds.', type=int)
 parser_list_database_files.set_defaults(func=list_database_files)
-register_parser(parser_list_database_files, subparsers_action=subparsers_list, categories='data')
+register_parser(parser_list_database_files, subparsers_action=subparsers_list_database, categories='data')
+
 
 #####################################
 # remove
