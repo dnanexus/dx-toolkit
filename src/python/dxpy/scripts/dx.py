@@ -2628,7 +2628,7 @@ def list_database_files(args):
             args.database,
             input_params={"folder": args.folder, "recurse": args.recurse, "timeout": args.timeout})
 
-        for r in results["FileStatusList"]:
+        for r in results["results"]:
             print("{}{}{}{}{}".format(
                 r["LastModified"], DELIMITER(","), r["ContentLength"], DELIMITER(","), r["Path"]))
     except:
