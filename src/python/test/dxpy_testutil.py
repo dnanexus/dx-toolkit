@@ -292,6 +292,9 @@ def without_project_context():
         del os.environ['DX_PROJECT_CONTEXT_ID']
     #subprocess.check_call("dx clearenv", shell=True)
     dxpy.config.clear()
+
+    # Remove session dir
+    shutil.rmtree(dxpy.config._user_conf_dir, ignore_errors=True)
     try:
         yield
     finally:
@@ -299,6 +302,8 @@ def without_project_context():
             os.environ['DX_WORKSPACE_ID'] = prev_workspace_id
         if prev_proj_context_id:
             os.environ['DX_PROJECT_CONTEXT_ID'] = prev_proj_context_id
+        # rewrite configs
+        dxpy.config.save()
 
 
 # Note: clobbers the local environment! All tests that use this should
