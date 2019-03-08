@@ -2630,7 +2630,7 @@ def list_database_files(args):
 
         for r in results["results"]:
             print("{}{}{}{}{}".format(
-                r["LastModified"], DELIMITER(","), r["ContentLength"], DELIMITER(","), r["Path"]))
+                r["modified"], DELIMITER(","), r["size"], DELIMITER(","), r["path"]))
     except:
         err_exit()
 
