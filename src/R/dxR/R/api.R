@@ -2097,9 +2097,9 @@ databaseSetVisibility <- function(objectID,
                 alwaysRetry=alwaysRetry)
 }
 
-##' databaseShowFiles API wrapper
+##' databaseListFolder API wrapper
 ##'
-##' This function makes an API call to the \code{/database-xxxx/showFiles} API
+##' This function makes an API call to the \code{/database-xxxx/listFolder} API
 ##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
 ##' function which makes POST HTTP requests to the API server.
 ##'
@@ -2118,12 +2118,12 @@ databaseSetVisibility <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method\%3A-\%2Fclass-xxxx\%2FshowFiles}
-databaseShowFiles <- function(objectID,
-                              inputParams=emptyNamedList,
-                              jsonifyData=TRUE,
-                              alwaysRetry=TRUE) {
-  resource <- paste('/', objectID, '/', 'showFiles', sep='')
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method\%3A-\%2Fclass-xxxx\%2FlistFolder}
+databaseListFolder <- function(objectID,
+                               inputParams=emptyNamedList,
+                               jsonifyData=TRUE,
+                               alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'listFolder', sep='')
   dxHTTPRequest(resource,
                 inputParams,
                 jsonifyData=jsonifyData,

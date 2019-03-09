@@ -643,12 +643,12 @@ namespace dx {
     return databaseSetVisibility(object_id, input_params.toString(), safe_to_retry);
   }
 
-  JSON databaseShowFiles(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
-    return DXHTTPRequest(std::string("/") + object_id + std::string("/showFiles"), input_params, safe_to_retry);
+  JSON databaseListFolder(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/listFolder"), input_params, safe_to_retry);
   }
 
-  JSON databaseShowFiles(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
-    return databaseShowFiles(object_id, input_params.toString(), safe_to_retry);
+  JSON databaseListFolder(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return databaseListFolder(object_id, input_params.toString(), safe_to_retry);
   }
 
   JSON fileAddTags(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {

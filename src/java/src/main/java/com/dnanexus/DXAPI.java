@@ -10961,9 +10961,9 @@ public final class DXAPI {
     }
 
     /**
-     * Invokes the databaseShowFiles method with an empty input, deserializing to an object of the specified class.
+     * Invokes the databaseListFolder method with an empty input, deserializing to an object of the specified class.
      *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FshowFiles">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FlistFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
@@ -10977,13 +10977,13 @@ public final class DXAPI {
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      */
-    public static <T> T databaseShowFiles(String objectId, Class<T> outputClass) {
-        return databaseShowFiles(objectId, mapper.createObjectNode(), outputClass);
+    public static <T> T databaseListFolder(String objectId, Class<T> outputClass) {
+        return databaseListFolder(objectId, mapper.createObjectNode(), outputClass);
     }
     /**
-     * Invokes the databaseShowFiles method with the given input, deserializing to an object of the specified class.
+     * Invokes the databaseListFolder method with the given input, deserializing to an object of the specified class.
      *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FshowFiles">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FlistFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -10998,16 +10998,16 @@ public final class DXAPI {
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      */
-    public static <T> T databaseShowFiles(String objectId, Object inputObject, Class<T> outputClass) {
+    public static <T> T databaseListFolder(String objectId, Object inputObject, Class<T> outputClass) {
         JsonNode input = mapper.valueToTree(inputObject);
         return DXJSON.safeTreeToValue(
-                new DXHTTPRequest().request("/" + objectId + "/" + "showFiles",
+                new DXHTTPRequest().request("/" + objectId + "/" + "listFolder",
                         input, RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
     /**
-     * Invokes the databaseShowFiles method with an empty input using the given environment, deserializing to an object of the specified class.
+     * Invokes the databaseListFolder method with an empty input using the given environment, deserializing to an object of the specified class.
      *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FshowFiles">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FlistFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
@@ -11022,13 +11022,13 @@ public final class DXAPI {
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      */
-    public static <T> T databaseShowFiles(String objectId, Class<T> outputClass, DXEnvironment env) {
-        return databaseShowFiles(objectId, mapper.createObjectNode(), outputClass, env);
+    public static <T> T databaseListFolder(String objectId, Class<T> outputClass, DXEnvironment env) {
+        return databaseListFolder(objectId, mapper.createObjectNode(), outputClass, env);
     }
     /**
-     * Invokes the databaseShowFiles method with the given input using the given environment, deserializing to an object of the specified class.
+     * Invokes the databaseListFolder method with the given input using the given environment, deserializing to an object of the specified class.
      *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FshowFiles">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FlistFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -11044,17 +11044,17 @@ public final class DXAPI {
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      */
-    public static <T> T databaseShowFiles(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
+    public static <T> T databaseListFolder(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
         JsonNode input = mapper.valueToTree(inputObject);
         return DXJSON.safeTreeToValue(
-            new DXHTTPRequest(env).request("/" + objectId + "/" + "showFiles",
+            new DXHTTPRequest(env).request("/" + objectId + "/" + "listFolder",
                     input, RetryStrategy.SAFE_TO_RETRY), outputClass);
     }
 
     /**
-     * Invokes the databaseShowFiles method.
+     * Invokes the databaseListFolder method.
      *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FshowFiles">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FlistFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      *
@@ -11067,16 +11067,16 @@ public final class DXAPI {
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      *
-     * @deprecated Use {@link #databaseShowFiles(String, Class)} instead and supply your own class to deserialize to.
+     * @deprecated Use {@link #databaseListFolder(String, Class)} instead and supply your own class to deserialize to.
      */
     @Deprecated
-    public static JsonNode databaseShowFiles(String objectId) {
-        return databaseShowFiles(objectId, mapper.createObjectNode());
+    public static JsonNode databaseListFolder(String objectId) {
+        return databaseListFolder(objectId, mapper.createObjectNode());
     }
     /**
-     * Invokes the databaseShowFiles method with the specified parameters.
+     * Invokes the databaseListFolder method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FshowFiles">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FlistFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -11090,17 +11090,17 @@ public final class DXAPI {
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      *
-     * @deprecated Use {@link #databaseShowFiles(String, Object, Class)} instead and supply your own class to deserialize to.
+     * @deprecated Use {@link #databaseListFolder(String, Object, Class)} instead and supply your own class to deserialize to.
      */
     @Deprecated
-    public static JsonNode databaseShowFiles(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "showFiles", inputParams,
+    public static JsonNode databaseListFolder(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "listFolder", inputParams,
                 RetryStrategy.SAFE_TO_RETRY);
     }
     /**
-     * Invokes the databaseShowFiles method with the specified environment.
+     * Invokes the databaseListFolder method with the specified environment.
      *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FshowFiles">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FlistFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
@@ -11114,16 +11114,16 @@ public final class DXAPI {
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      *
-     * @deprecated Use {@link #databaseShowFiles(String, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     * @deprecated Use {@link #databaseListFolder(String, Class, DXEnvironment)} instead and supply your own class to deserialize to.
      */
     @Deprecated
-    public static JsonNode databaseShowFiles(String objectId, DXEnvironment env) {
-        return databaseShowFiles(objectId, mapper.createObjectNode(), env);
+    public static JsonNode databaseListFolder(String objectId, DXEnvironment env) {
+        return databaseListFolder(objectId, mapper.createObjectNode(), env);
     }
     /**
-     * Invokes the databaseShowFiles method with the specified environment and parameters.
+     * Invokes the databaseListFolder method with the specified environment and parameters.
      *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FshowFiles">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FlistFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -11138,11 +11138,11 @@ public final class DXAPI {
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      *
-     * @deprecated Use {@link #databaseShowFiles(String, Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     * @deprecated Use {@link #databaseListFolder(String, Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
      */
     @Deprecated
-    public static JsonNode databaseShowFiles(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "showFiles", inputParams,
+    public static JsonNode databaseListFolder(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "listFolder", inputParams,
                 RetryStrategy.SAFE_TO_RETRY);
     }
 
