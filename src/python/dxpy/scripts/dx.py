@@ -2626,7 +2626,7 @@ def list_database_files(args):
     try:
         results = dxpy.api.database_show_files(
             args.database,
-            input_params={"filename": args.filename, "recurse": args.recurse, "timeout": args.timeout})
+            input_params={"folder": args.folder, "recurse": args.recurse, "timeout": args.timeout})
 
         for r in results["FileStatusList"]:
             print("{}{}{}{}{}".format(
@@ -4414,7 +4414,7 @@ parser_list_database_files = subparsers_list.add_parser('database files', help='
                                                 parents=[env_args],
                                                 prog='dx list database files')
 parser_list_database_files.add_argument('database', help='ID of the database.')
-parser_list_database_files.add_argument('--filename', help='Directory from which to start search. This will typically match the name of the table whose files are of interest. If omitted, the search starts at the root location for the database.')
+parser_list_database_files.add_argument('--folder', help='Name of folder (directory) in which to start searching for database files. This will typically match the name of the table whose files are of interest. If omitted, the search starts at the root location for the database.')
 parser_list_database_files.add_argument("--recurse", default=False, help='Look for files recursively down the directory structure. Otherwise, by default, only look on one level.', action='store_true')
 parser_list_database_files.add_argument("--timeout", default=120, help='Number of seconds to wait before aborting the request. If omitted, default timeout is 120 seconds.', type=int)
 parser_list_database_files.set_defaults(func=list_database_files)
