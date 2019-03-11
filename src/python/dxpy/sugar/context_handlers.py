@@ -4,6 +4,7 @@ import sys
 import tempfile
 import subprocess
 import contextlib
+import shutil
 
 
 @contextlib.contextmanager
@@ -50,59 +51,91 @@ def set_env(**environ):
         os.environ.clear()
         os.environ.update(old_environ)
 
-
-class cd:
-    """
-    Context manager for changing the current working directory
-
+@contextlib.contextmanager
+def cd(new_path=None, temp_dir=None):
+    """Context manager that changes the current working directory to `new_path`,
+    yields, and then changes the working directory back to what it was prior to
+    calling this function.
     Args:
         new_path (string): Optional, specify path to cd to
         temp_dir (string): Optional, specify temporary directory to create and
             cd to
-
     Note:
         If no args specified, cd() will create an arbitary temp dir and cd to it
         If arg is specified without a keyword, it will be assumed as 'new_path'.
-
     Yields:
         Upon entry, context will be set to the specified directory.
         Upon exit, directory specified in temp_dir or directory created when no
         args are specified is deleted. If new_path is specified, it is not deleted.
-
     Source: http://stackoverflow.com/questions/431684/how-do-i-cd-in-python
-
     Examples:
        with cd():
            do_the_thing
            # this will create a temp directory with a randomly
            # generated name, doe the thing, then delete the temp dir
-
        with cd(my_file_dir):
            do_the_thing
            # this will do the thing in my_file_dir and not delete the directory
-
        with cd(temp_dir=my_temp_dir):
            do_the_thing
            # this will create a temp dir with path my_temp_dir, do the thing,
            # then delete the temp dir
     """
+    remove_folder = False
+    if new_path is None:
+        new_path = tempfile.mkdtemp(dir=temp_dir)
+        remove_folder = True
 
-    def __init__(self, new_path=None, temp_dir=None):
-        if new_path is not None:
-            self.newPath = new_path
-            self.removeFolder = False
-        else:
-            self.newPath = tempfile.mkdtemp(dir=temp_dir)
-            self.removeFolder = True
+    saved_path = os.getcwd()
+    os.chdir(new_path)
 
-    def __enter__(self):
-        self.savedPath = os.getcwd()
-        os.chdir(self.newPath)
+    try:
+        yield
+    finally:
+        os.chdir(saved_path)
+        if remove_folder:
+            shutil.rmtree(new_path)
 
-    def __exit__(self, etype, value, traceback):
-        os.chdir(self.savedPath)
-        if self.removeFolder:
-            subprocess.check_call(['rm', '-rf', self.newPath], shell=False)
+
+@contextlib.contextmanager
+def temp(*args, **kwargs):
+    """Context manager that yields a temp file name and deletes the file
+    before exiting.
+    Args:
+        *args: positional arguments passed to mkstemp
+        **kwargs: keyword arguments passed to mkstemp
+    Examples:
+        >>> with temp() as fn:
+        >>>     with open(fn, "wt") as out:
+        >>>         out.write("foo")
+    """
+    _, fname = tempfile.mkstemp(*args, **kwargs)
+    try:
+        yield fname
+    finally:
+        if os.path.exists(fname):
+            os.remove(fname)
+
+
+@contextlib.contextmanager
+def fifo(name=None):
+    """
+    Create a FIFO, yield it, and delete it before exiting.
+    Args:
+        name: The name of the FIFO, or None to use a temp name.
+    Yields:
+        The name of the FIFO
+    """
+    if name:
+        os.mkfifo(name)
+        yield name
+    else:
+        with temp() as name:
+            os.mkfifo(name)
+            yield name
+
+    if os.path.exists(name):
+        os.remove(name)
 
 
 if __name__ == "__main__":
