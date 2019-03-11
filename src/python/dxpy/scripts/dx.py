@@ -2626,7 +2626,6 @@ def render_timestamp(epochSeconds):
     # This is the format used by 'aws s3 ls'
     return datetime.datetime.fromtimestamp(epochSeconds//1000).strftime('%Y-%m-%d %H:%M:%S')
 
-
 def list_database_files(args):
     try:
         results = dxpy.api.database_list_folder(
