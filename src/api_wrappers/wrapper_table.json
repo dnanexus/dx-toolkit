@@ -535,6 +535,15 @@
         }
     ],
     [
+        "/database-xxxx/listFolder",
+        "databaseListFolder(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FlistFolder"
+        }
+    ],
+    [
         "/file-xxxx/addTags",
         "fileAddTags(req, objectId)",
         {

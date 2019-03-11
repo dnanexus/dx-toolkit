@@ -504,6 +504,14 @@ def database_set_visibility(object_id, input_params={}, always_retry=True, **kwa
     """
     return DXHTTPRequest('/%s/setVisibility' % object_id, input_params, always_retry=always_retry, **kwargs)
 
+def database_list_folder(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /database-xxxx/listFolder API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FlistFolder
+    """
+    return DXHTTPRequest('/%s/listFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
+
 def file_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/addTags API method.
