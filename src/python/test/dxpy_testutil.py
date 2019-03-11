@@ -262,6 +262,24 @@ def override_environment(**kwargs):
     return env
 
 
+def remove_sessions():
+    """Removes current users sessions directory.
+
+    Test that rely on cleared configuration and launching new `dx` processes are
+    unable to pass due to the config resolution order. Which is currently:
+        1. Parent of current process is checks for ~/.dnanexus_config/sessions/{pid}
+        2. If no config found above continously search parent pids
+        3. If no config found look in ~/.dnanexus_config directly for environment.json
+
+    For test this will clear all sessions in the ~/.dnanexus_config/sessions directory.
+    Allowing all configuration searches to use the current (potentially cleared) config on disk.
+    """
+    sessions_dir = os.path.join(dxpy.config._user_conf_dir, "sessions")
+    if os.path.exists(sessions_dir):
+        shutil.rmtree(sessions_dir)
+    os.mkdir(sessions_dir)
+
+
 def as_second_user():
     second = json.loads(os.environ['DXTEST_SECOND_USER'])
     context = {"auth_token": second['auth'], "auth_token_type": "Bearer"}
@@ -290,11 +308,8 @@ def without_project_context():
         del os.environ['DX_WORKSPACE_ID']
     if prev_proj_context_id is not None:
         del os.environ['DX_PROJECT_CONTEXT_ID']
-    #subprocess.check_call("dx clearenv", shell=True)
     dxpy.config.clear()
-
-    # Remove session dir
-    shutil.rmtree(dxpy.config._user_conf_dir, ignore_errors=True)
+    remove_sessions()
     try:
         yield
     finally:
@@ -314,16 +329,17 @@ def without_auth():
     possibly other variables) are unset.
 
     """
-    prev_security_context = os.environ.get('DX_SECURITY_CONTEXT', None)
+    prev_security_context = dxpy.config.get('DX_SECURITY_CONTEXT')
     if prev_security_context is not None:
-        del os.environ['DX_SECURITY_CONTEXT']
-    subprocess.check_call("dx clearenv", shell=True)
+        del dxpy.config['DX_SECURITY_CONTEXT']
+    dxpy.config.clear()
+    remove_sessions()
     try:
         yield
     finally:
         if prev_security_context:
             os.environ['DX_SECURITY_CONTEXT'] = prev_security_context
-
+        dxpy.config.save()
 
 class DXTestCaseCompat(unittest.TestCase):
     # method removed in python3
