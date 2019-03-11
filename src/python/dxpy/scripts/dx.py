@@ -2626,20 +2626,20 @@ def render_timestamp(epochSeconds):
     # This is the format used by 'aws s3 ls'
     return datetime.datetime.fromtimestamp(epochSeconds//1000).strftime('%Y-%m-%d %H:%M:%S')
 
+
 def list_database_files(args):
     try:
         results = dxpy.api.database_list_folder(
             args.database,
             input_params={"folder": args.folder, "recurse": args.recurse, "timeout": args.timeout})
         for r in results["results"]:
+            date_str = render_timestamp(r["modified"]) if r["modified"] != 0 else ''
             if (args.csv == True):
-                dateStr = render_timestamp(r["modified"]) if r["modified"] != 0 else ''
-                print("{}{}{}{}{}".format(
-                    dateStr, DELIMITER(","), r["size"], DELIMITER(","), r["path"]))
+		print("{}{}{}{}{}".format(
+                    date_str, DELIMITER(","), r["size"], DELIMITER(","), r["path"]))
             else:
-                dateStr = render_timestamp(r["modified"]) if r["modified"] != 0 else '                   '
                 print("{}{}{}{}{}".format(
-                    dateStr, DELIMITER(" "), str(r["size"]).rjust(12), DELIMITER(" "), r["path"]))
+                    date_str.rjust(19), DELIMITER(" "), str(r["size"]).rjust(12), DELIMITER(" "), r["path"]))
     except:
         err_exit()
 
