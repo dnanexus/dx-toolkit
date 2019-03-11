@@ -2629,8 +2629,12 @@ def list_database_files(args):
             input_params={"folder": args.folder, "recurse": args.recurse, "timeout": args.timeout})
 
         for r in results["results"]:
-            print("{}{}{}{}{}".format(
-                r["modified"], DELIMITER(","), r["size"], DELIMITER(","), r["path"]))
+            if (args.csv == True):
+                print("{}{}{}{}{}".format(
+                    r["modified"], DELIMITER(","), r["size"], DELIMITER(","), r["path"]))
+            else:
+                print("{}{}{}{}{}".format(
+                    r["modified"], DELIMITER(" "), str(r["size"]).rjust(12), DELIMITER(" "), r["path"]))
     except:
         err_exit()
 
@@ -4432,6 +4436,7 @@ parser_list_database_files = subparsers_list_database.add_parser(
 parser_list_database_files.add_argument('database', help='ID of the database.')
 parser_list_database_files.add_argument('--folder', default='/', help='Name of folder (directory) in which to start searching for database files. This will typically match the name of the table whose files are of interest. The default value is "/" which will start the search at the root folder of the database.')
 parser_list_database_files.add_argument("--recurse", default=False, help='Look for files recursively down the directory structure. Otherwise, by default, only look on one level.', action='store_true')
+parser_list_database_files.add_argument("--csv", default=False, help='Write output as comma delimited fields, suitable as CSV format.', action='store_true')
 parser_list_database_files.add_argument("--timeout", default=120, help='Number of seconds to wait before aborting the request. If omitted, default timeout is 120 seconds.', type=int)
 parser_list_database_files.set_defaults(func=list_database_files)
 register_parser(parser_list_database_files, subparsers_action=subparsers_list_database, categories='data')
