@@ -2118,7 +2118,7 @@ databaseSetVisibility <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method\%3A-\%2Fclass-xxxx\%2FlistFolder}
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method\%3A-\%2Fdatabase-xxxx\%2FlistFolder}
 databaseListFolder <- function(objectID,
                                inputParams=emptyNamedList,
                                jsonifyData=TRUE,
