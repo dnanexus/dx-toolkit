@@ -708,12 +708,16 @@ class TestDXClient(DXTestCase):
 
         # Spawn a new shell, select a project, make a directory
         shell1 = pexpect.spawn("bash", **spawn_extra_args)
+        shell1.logfile = sys.stdout
+        shell1.setwinsize(20, 90)
         shell1.sendline("dx select " + self.project)
         shell1.sendline("dx mkdir test_dir")
         expect_dx_wd(shell=shell1, proj_name=self.proj_name, wd="")
 
         # Spawn a second shell, the working directory should be the same as the first shell
         shell2 = pexpect.spawn("bash", **spawn_extra_args)
+        shell2.logfile = sys.stdout
+        shell2.setwinsize(20, 90)
         expect_dx_wd(shell=shell2, proj_name=self.proj_name, wd="")
 
         # Change directories in shell 1
