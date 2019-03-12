@@ -47,11 +47,8 @@ from dxpy.exceptions import DXAPIError, DXSearchError, EXPECTED_ERR_EXIT_STATUS,
 from dxpy.compat import USING_PYTHON2, str, sys_encoding, open
 from dxpy.utils.resolver import ResolutionError, _check_resolution_needed as check_resolution
 
-if USING_PYTHON2:
-    spawn_extra_args = {}
-else:
-    # Python 3 requires specifying the encoding
-    spawn_extra_args = {"encoding" : "utf-8" }
+
+spawn_extra_args = {"encoding" : "utf-8" }
 
 def create_file_in_project(fname, trg_proj_id, folder=None):
     data = "foo"
@@ -707,13 +704,13 @@ class TestDXClient(DXTestCase):
             shell.expect(proj_name + ":/" + wd + "\r\n")  # default timeout from shell used
 
         # Spawn a new shell, select a project, make a directory
-        shell1 = pexpect.spawn("bash", encoding="utf-8")
+        shell1 = pexpect.spawn("bash", **spawn_extra_args)
         shell1.sendline("dx select " + self.project)
         shell1.sendline("dx mkdir test_dir")
         expect_dx_wd(shell=shell1, proj_name=self.proj_name, wd="")
 
         # Spawn a second shell, the working directory should be the same as the first shell
-        shell2 = pexpect.spawn("bash", encoding="utf-8")
+        shell2 = pexpect.spawn("bash", **spawn_extra_args)
         expect_dx_wd(shell=shell2, proj_name=self.proj_name, wd="")
 
         # Change directories in shell 1
