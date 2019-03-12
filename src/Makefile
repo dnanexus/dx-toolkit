@@ -90,7 +90,7 @@ ua: toolkit_version ua_deps
 dx-docker: bin/proot bin/docker2aci
 
 bin/proot:
-	curl -k -sL https://dl.dnanex.us/F/D/KKB4QZzFg50QfX8QvkkqQ0jPj5BG8V88XyGQ774V/proot.static > $(DNANEXUS_HOME)/bin/proot && chmod 777 $(DNANEXUS_HOME)/bin/proot
+	curl -k -sL https://dl.dnanex.us/F/D/KbFY82vKV3Ppp4f95zYkYKKQx0GypBkF5bxzj4Q7/proot > $(DNANEXUS_HOME)/bin/proot && chmod 777 $(DNANEXUS_HOME)/bin/proot
 
 bin/docker2aci:
 ifneq (DOCKER_ACI_URL, "")
