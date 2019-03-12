@@ -851,12 +851,6 @@ class TestDXClient(DXTestCase):
                     self.assertEqual(fh.read(), dxpy.api.user_describe(user_id).get('sshPublicKey'))
 
             dx_ssh_config = get_dx_ssh_config()
-            dx_ssh_config.expect("The DNAnexus configuration directory")
-            dx_ssh_config.expect("does not exist")
-
-            os.mkdir(os.path.join(wd, ".dnanexus_config"))
-
-            dx_ssh_config = get_dx_ssh_config()
             dx_ssh_config.expect("Select an SSH key pair")
             dx_ssh_config.sendline("1")
             dx_ssh_config.expect("Enter the location of your SSH key")
