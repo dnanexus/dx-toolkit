@@ -2453,7 +2453,7 @@ def wait(args):
                 print(fill('Could not resolve ' + path + ' to a data object'))
                 had_error = True
             else:
-                handler = dxpy.get_handler(entity_result['id'], project=project)
+                handler = dxpy.get_handler(entity_result['id'], project=entity_result['describe']['project'])
                 print("Waiting for " + path + " to close...")
                 try_call(handler._wait_on_close)
                 print("Done")
