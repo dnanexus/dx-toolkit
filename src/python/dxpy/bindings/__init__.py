@@ -28,7 +28,6 @@ import dxpy.api
 from ..exceptions import (DXError, DXAPIError, DXFileError, DXSearchError, DXAppletError,
                           DXJobFailureError, AppError, AppInternalError, DXCLIError)
 from ..compat import basestring
-import math
 
 def verify_string_dxid(dxid, expected_classes):
     '''
@@ -651,7 +650,7 @@ class DXDataObject(DXObject):
             if elapsed >= timeout or elapsed < 0:
                 raise DXError("Reached timeout while waiting for the remote object to close")
 
-            wait = math.min(2**7, 2**i)
+            wait = min(2**7, 2**i)
             time.sleep(wait)
             i += 1
             elapsed += wait
