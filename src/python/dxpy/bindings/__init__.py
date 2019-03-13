@@ -639,6 +639,7 @@ class DXDataObject(DXObject):
 
     def _wait_on_close(self, timeout=3600*24*1, **kwargs):
         elapsed = 0
+        i = 0
         while True:
             state = self._get_state(**kwargs)
             if state == "closed":
@@ -649,8 +650,10 @@ class DXDataObject(DXObject):
             if elapsed >= timeout or elapsed < 0:
                 raise DXError("Reached timeout while waiting for the remote object to close")
 
-            time.sleep(2)
-            elapsed += 2
+            wait = math.min(2**7, 2**i)
+            time.sleep(wait)
+            i += 1
+            elapsed += wait
 
 from .dxfile import DXFile, DXFILE_HTTP_THREADS, DEFAULT_BUFFER_SIZE
 from .download_all_inputs import download_all_inputs
