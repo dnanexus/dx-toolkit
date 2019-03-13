@@ -28,6 +28,7 @@ import dxpy.api
 from ..exceptions import (DXError, DXAPIError, DXFileError, DXSearchError, DXAppletError,
                           DXJobFailureError, AppError, AppInternalError, DXCLIError)
 from ..compat import basestring
+import math
 
 def verify_string_dxid(dxid, expected_classes):
     '''
