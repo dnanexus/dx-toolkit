@@ -212,6 +212,31 @@ class DXConfig(MutableMapping):
             warn(fill("Unexpected error while retrieving session configuration: " + format_exception(e)))
         return None
 
+    def _ascend_configuration_tree(self):
+        """
+        First searches the current process then ascends parent processes yielding
+        existing session configuration directories.
+        """
+        sessions_dir = os.path.join(self._user_conf_dir, "sessions")
+        try:
+            from psutil import Process, pid_exists
+
+            current_process = Process(os.getpid())
+            while current_process is not None and current_process.pid != 0:
+                current_session_dir = os.path.join(sessions_dir, str(current_process.pid))
+                if os.path.exists(current_session_dir):
+                    yield current_session_dir
+                current_process = current_process.parent()
+
+        except (ImportError, IOError, AttributeError) as e:
+            # We don't bundle psutil with Windows, so failure to import
+            # psutil would be expected.
+            if platform.system() != 'Windows':
+                warn(fill("Error while retrieving session configuration: " + format_exception(e)))
+        except Exception as e:
+            warn(fill("Unexpected error while retrieving session configuration: " + format_exception(e)))
+
+
     def _get_ppid_session_conf_dir(self):
         sessions_dir = os.path.join(self._user_conf_dir, "sessions")
         try:
@@ -310,7 +335,9 @@ class DXConfig(MutableMapping):
                 fd.write(value.encode(sys_encoding) if USING_PYTHON2 else value)
 
     def clear(self, reset=False):
-        rmtree(self._session_dir, ignore_errors=True)
+        for session_dir in self._ascend_configuration_tree():
+            rmtree(session_dir, ignore_errors=True)
+
         _remove_ignore_errors(os.path.join(self._user_conf_dir, "environment"))
         _remove_ignore_errors(os.path.join(self._user_conf_dir, "environment.json"))
         for f in self.STANDALONE_VAR_NAMES:
