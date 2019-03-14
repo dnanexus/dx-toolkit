@@ -2635,7 +2635,7 @@ def list_database_files(args):
         for r in results["results"]:
             date_str = render_timestamp(r["modified"]) if r["modified"] != 0 else ''
             if (args.csv == True):
-		print("{}{}{}{}{}".format(
+                print("{}{}{}{}{}".format(
                     date_str, DELIMITER(","), r["size"], DELIMITER(","), r["path"]))
             else:
                 print("{}{}{}{}{}".format(
