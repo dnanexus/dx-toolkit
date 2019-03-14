@@ -48,7 +48,7 @@ from dxpy.compat import USING_PYTHON2, str, sys_encoding, open
 from dxpy.utils.resolver import ResolutionError, _check_resolution_needed as check_resolution
 
 
-spawn_extra_args = {"encoding" : "utf-8" }
+spawn_extra_args = {"encoding" : "utf-8", "logfile": sys.stdout }
 
 def create_file_in_project(fname, trg_proj_id, folder=None):
     data = "foo"
@@ -791,7 +791,6 @@ class TestDXClient(DXTestCase):
             dx_ssh_config = pexpect.spawn("dx ssh_config",
                                           env=override_environment(HOME=wd),
                                           **spawn_extra_args)
-            dx_ssh_config.logfile = sys.stdout
             dx_ssh_config.expect("Select an SSH key pair")
             dx_ssh_config.sendline("0")
             dx_ssh_config.expect("Enter passphrase")
@@ -840,7 +839,6 @@ class TestDXClient(DXTestCase):
                 dx_ssh_config = pexpect.spawn("dx ssh_config",
                                               env=override_environment(HOME=wd),
                                               **spawn_extra_args)
-                dx_ssh_config.logfile = sys.stdout
                 dx_ssh_config.setwinsize(20, 90)
                 return dx_ssh_config
 
@@ -912,7 +910,6 @@ class TestDXClient(DXTestCase):
             dx_ssh_config = pexpect.spawn("dx ssh_config",
                                           env=override_environment(HOME=wd),
                                           **spawn_extra_args)
-            dx_ssh_config.logfile = sys.stdout
             dx_ssh_config.setwinsize(20, 90)
             dx_ssh_config.expect("Select an SSH key pair")
             dx_ssh_config.sendline("0")
@@ -942,7 +939,6 @@ class TestDXClient(DXTestCase):
                 dx = pexpect.spawn("dx run {} --yes --ssh".format(sleep_applet),
                                    env=override_environment(HOME=wd),
                                    **spawn_extra_args)
-                dx.logfile = sys.stdout
                 dx.setwinsize(20, 90)
                 dx.expect("Waiting for job")
                 dx.expect("Resolving job hostname and SSH host key", timeout=1200)
@@ -972,7 +968,6 @@ class TestDXClient(DXTestCase):
                 # Make sure the job can be connected to using 'dx ssh <job id>'
                 dx2 = pexpect.spawn("dx ssh " + job_id, env=override_environment(HOME=wd),
                                     **spawn_extra_args)
-                dx2.logfile = sys.stdout
                 dx2.setwinsize(20, 90)
                 dx2.expect("Waiting for job")
                 dx2.expect("Resolving job hostname and SSH host key", timeout=1200)
@@ -1060,7 +1055,6 @@ class TestDXClient(DXTestCase):
                                       p=proxy_port),
                                env=override_environment(HOME=wd),
                                **spawn_extra_args)
-            dx.logfile = sys.stdout
             dx.setwinsize(20, 90)
             dx.expect("The job is running in terminal 1.", timeout=1200)
             # Check for terminal prompt and verify we're in the container
@@ -1170,7 +1164,6 @@ class TestDXClient(DXTestCase):
             dx = pexpect.spawn("dx ssh " + job_id,
                                env=override_environment(HOME=wd),
                                **spawn_extra_args)
-            dx.logfile = sys.stdout
             dx.setwinsize(20, 90)
             dx.expect("dnanexus@", timeout=1200)
 
@@ -1207,7 +1200,6 @@ class TestDXClient(DXTestCase):
             dx_setenv = pexpect.spawn("dx setenv" + opts,
                                       env=override_environment(HOME=wd),
                                       **spawn_extra_args)
-            dx_setenv.logfile = sys.stdout
             dx_setenv.setwinsize(20, 90)
             return dx_setenv
 
@@ -1232,7 +1224,6 @@ class TestDXClient(DXTestCase):
             dx_login = pexpect.spawn("dx login" + opts,
                                      env=override_environment(HOME=wd),
                                      **spawn_extra_args)
-            dx_login.logfile = sys.stdout
             dx_login.setwinsize(20, 90)
             return dx_login
 
@@ -6279,7 +6270,6 @@ class TestDXClientMembership(DXTestCase):
 
         dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(o=self.org_id, u=self.username),
                                          **spawn_extra_args)
-        dx_rm_member_int.logfile = sys.stdout
         dx_rm_member_int.expect("Please confirm")
         dx_rm_member_int.sendline("y")
         dx_rm_member_int.expect("Removed user-{u}".format(u=self.username))
@@ -6310,7 +6300,6 @@ class TestDXClientMembership(DXTestCase):
 
         dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(o=self.org_id, u=self.username),
                                          **spawn_extra_args)
-        dx_rm_member_int.logfile = sys.stdout
         dx_rm_member_int.expect("Please confirm")
         dx_rm_member_int.sendline("y")
         dx_rm_member_int.expect("Removed user-{u}".format(u=self.username))
@@ -9915,7 +9904,6 @@ class TestTcshEnvironment(unittest.TestCase):
     def test_tcsh_source_environment(self):
         tcsh = pexpect.spawn("env - HOME=$HOME PATH=/usr/local/bin:/usr/bin:/bin tcsh",
                              **spawn_extra_args)
-        tcsh.logfile = sys.stdout
         tcsh.setwinsize(20, 90)
         tcsh.sendline("source /etc/csh.cshrc")
         tcsh.sendline("source /etc/csh.login")
