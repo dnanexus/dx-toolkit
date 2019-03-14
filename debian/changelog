@@ -1,3 +1,15 @@
+dx-toolkit (0.278.0) precise; urgency=low
+
+  * Added: new findDataObjects inputs to DXJava
+  * Added: project name resolution to --project flag for dx run
+  * Added: job reuse and SAML identity provider args for `dx update org`
+  * Added: dx list database <entity> for DNAnexus Apollo
+  * Added: --ignore-reuse and --ignore-reuse-stage for `dx run workflow`
+  * Changed: Upgraded proot version for dx-docker for kernel >= 4.8
+  * Changed: Skip symlinks test in isolated environment
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 14 Mar 2019 21:07:13 +0000
+
 dx-toolkit (0.277.0) precise; urgency=low
 
   * Fixed: Uploading binary data, such as compressed files, works in python3
