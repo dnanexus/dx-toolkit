@@ -11,6 +11,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * new `findDataObjects` inputs to DXJava
 * project name resolution to `--project` flag for `dx run`
 * smart reuse and SAML identity provider
+* `dx list database <entity>` for DNAnexus Apollo
+* `--ignore-reuse` and `--ignore-reuse-stage` working for workflows
+
+### Changed
+
+* Upgrade `proot` to be compatible with kernel >= 4.8
+* Skip symlinks test in isolated environment
 
 ## [277.0] - 2019.02.14 beta
 
