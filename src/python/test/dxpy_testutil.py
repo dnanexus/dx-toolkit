@@ -262,24 +262,6 @@ def override_environment(**kwargs):
     return env
 
 
-def remove_sessions():
-    """Removes current users sessions directory.
-
-    Test that rely on cleared configuration and launching new `dx` processes are
-    unable to pass due to the config resolution order. Which is currently:
-        1. Parent of current process is checks for ~/.dnanexus_config/sessions/{pid}
-        2. If no config found above continously search parent pids
-        3. If no config found look in ~/.dnanexus_config directly for environment.json
-
-    For test this will clear all sessions in the ~/.dnanexus_config/sessions directory.
-    Allowing all configuration searches to use the current (potentially cleared) config on disk.
-    """
-    sessions_dir = os.path.join(dxpy.config._user_conf_dir, "sessions")
-    if os.path.exists(sessions_dir):
-        shutil.rmtree(sessions_dir)
-    os.mkdir(sessions_dir)
-
-
 def as_second_user():
     second = json.loads(os.environ['DXTEST_SECOND_USER'])
     context = {"auth_token": second['auth'], "auth_token_type": "Bearer"}
@@ -309,7 +291,6 @@ def without_project_context():
     if prev_proj_context_id is not None:
         del os.environ['DX_PROJECT_CONTEXT_ID']
     dxpy.config.clear()
-    remove_sessions()
     try:
         yield
     finally:
@@ -317,7 +298,6 @@ def without_project_context():
             os.environ['DX_WORKSPACE_ID'] = prev_workspace_id
         if prev_proj_context_id:
             os.environ['DX_PROJECT_CONTEXT_ID'] = prev_proj_context_id
-        # rewrite configs
         dxpy.config.save()
 
 
@@ -333,7 +313,6 @@ def without_auth():
     if prev_security_context is not None:
         del dxpy.config['DX_SECURITY_CONTEXT']
     dxpy.config.clear()
-    remove_sessions()
     try:
         yield
     finally:
