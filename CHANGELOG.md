@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [278.0] - 2019.03.14 beta
+
 ### Added
 
 * new `findDataObjects` inputs to DXJava
@@ -19,7 +21,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Upgrade `proot` to be compatible with kernel >= 4.8
 * Skip symlinks test in isolated environment
 
-## [277.0] - 2019.02.14 beta
+## [277.0] - 2019.03.14 stable
 
 ### Fixed
 
