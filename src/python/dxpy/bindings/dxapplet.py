@@ -28,7 +28,8 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import dxpy
 from . import DXDataObject, DXJob
-from ..utils import merge, instance_type_to_sys_reqs
+from ..utils import merge
+from ..system_requirements import SystemRequirementsDict
 from ..exceptions import DXError
 from ..compat import basestring
 
@@ -55,19 +56,8 @@ class DXExecutable:
             if kwargs.get(arg) is not None:
                 run_input[arg] = kwargs[arg]
 
-        if kwargs.get('instance_type') is not None:
-            run_input["systemRequirements"] = instance_type_to_sys_reqs(kwargs['instance_type'])
-
-        if kwargs.get('merged_cluster_spec'):
-            if 'systemRequirements' not in run_input:
-                run_input['systemRequirements'] = kwargs.get('merged_cluster_spec')
-            else:
-                # If the entrypoint exists in the run_input['systemRequirements']
-                # do not overwrite it but add the 'clusterSpec' to it
-                for entrypoint, req in kwargs['merged_cluster_spec'].items():
-                    if entrypoint not in run_input['systemRequirements']:
-                        run_input['systemRequirements'][entrypoint] = {}
-                    run_input['systemRequirements'][entrypoint]['clusterSpec'] =  req["clusterSpec"]
+        if kwargs.get('instance_type').instance_type is not None or kwargs.get('cluster_spec').cluster_spec is not None:
+            run_input["systemRequirements"] = (kwargs.get('instance_type') + kwargs.get('cluster_spec')).as_dict()
 
         if kwargs.get('depends_on') is not None:
             run_input["dependsOn"] = []
@@ -164,7 +154,7 @@ class DXExecutable:
         raise NotImplementedError('_get_cleanup_keys is not implemented')
 
     def run(self, executable_input, project=None, folder=None, name=None, tags=None, properties=None, details=None,
-            instance_type=None, stage_instance_types=None, stage_folders=None, rerun_stages=None, merged_cluster_spec=None,
+            instance_type=None, stage_instance_types=None, stage_folders=None, rerun_stages=None, cluster_spec=None,
             depends_on=None, allow_ssh=None, debug=None, delay_workspace_destruction=None, priority=None,
             ignore_reuse=None, ignore_reuse_stages=None, extra_args=None, **kwargs):
         '''
@@ -222,7 +212,7 @@ class DXExecutable:
                                         stage_instance_types=stage_instance_types,
                                         stage_folders=stage_folders,
                                         rerun_stages=rerun_stages,
-                                        merged_cluster_spec=merged_cluster_spec,
+                                        cluster_spec=cluster_spec,
                                         depends_on=depends_on,
                                         allow_ssh=allow_ssh,
                                         ignore_reuse=ignore_reuse,

@@ -6960,8 +6960,8 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
 
 class TestSparkClusterApps(DXTestCaseBuildApps):
 
-    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
-                         'skipping test that would create apps')
+    # @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+    #                      'skipping test that would create apps')
     def test_build_and_get_cluster_app_bootstrap_script_inlined(self):
         app_name = "cluster_app"
         cluster_spec_with_bootstrap_aws = {"type": "spark",
@@ -7068,8 +7068,8 @@ class TestSparkClusterApps(DXTestCaseBuildApps):
             # now rebuild with the result of `dx get` and verify that we get the same result
             build_and_verify_bootstrap_script_inlined("cluster_app")
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_ISOLATED_ENV,
-                         'skipping test that would create apps and run jobs')
+    # @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_ISOLATED_ENV,
+    #                      'skipping test that would create apps and run jobs')
     def test_run_cluster_app_with_instance_count_and_specified_entrypoints(self):
         bootstrap_code = "import sys\n"
         cluster_spec_with_bootstrap = {"type": "spark",
@@ -7139,8 +7139,8 @@ class TestSparkClusterApps(DXTestCaseBuildApps):
                                     "--instance-count is not supported for entrypoint other"):
             run("dx run " + app_id + " --brief -y --instance-count '{\"other\": 7}'").strip()
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_ISOLATED_ENV,
-                         'skipping test that would create apps and run jobs')
+    # @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_ISOLATED_ENV,
+    #                      'skipping test that would create apps and run jobs')
     def test_run_cluster_app_with_instance_count_and_wildcard_entrypoint(self):
         bootstrap_code = "import sys\n"
         cluster_spec_with_bootstrap = {"type": "spark",
@@ -7186,6 +7186,14 @@ class TestSparkClusterApps(DXTestCaseBuildApps):
         self.assertEqual(job_desc["instanceType"], "mem2_hdd2_x1")
 
     def test_instance_count_not_supported_for_regular_apps(self):
+        applet_spec = dict(self.base_applet_spec, project=self.project)
+        applet_spec["runSpec"]["code"] = "import os"
+        applet_id = dxpy.api.applet_new(applet_spec)["id"]
+        with self.assertRaisesRegex(subprocess.CalledProcessError,
+                                    "--instance-count is not supported"):
+            run("dx run " + applet_id + " --instance-count 5 -y")
+
+    def test_get_cluster_spec_from_instance_count(self):
         applet_spec = dict(self.base_applet_spec, project=self.project)
         applet_spec["runSpec"]["code"] = "import os"
         applet_id = dxpy.api.applet_new(applet_spec)["id"]
