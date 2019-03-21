@@ -6,7 +6,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [278.0] - 2019.03.14 beta
+## [279.0] - 2019.03.21 beta
+
+* no significant updates
+
+## [278.0] - 2019.03.21 stable
 
 ### Added
 
@@ -14,14 +18,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * project name resolution to `--project` flag for `dx run`
 * smart reuse and SAML identity provider
 * `dx list database <entity>` for DNAnexus Apollo
-* `--ignore-reuse` and `--ignore-reuse-stage` working for workflows
+* `--ignore-reuse` and `--ignore-reuse-stage` working for `dx run <workflow>`
 
 ### Changed
 
 * Upgrade `proot` to be compatible with kernel >= 4.8
 * Skip symlinks test in isolated environment
 
-## [277.0] - 2019.03.14 stable
+## [277.0] - 2019.03.14
 
 ### Fixed
 
@@ -39,7 +43,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * 32-bit build target for Ubuntu 14.04
 * `gtable` code
 
-## [276.0] - 2019.02.08 stable
+## [276.0] - 2019.02.08
 
 ### Added
 
@@ -50,13 +54,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Bug in downloading symlinks when using aria2c
 * Max number of aria2c connections <= 16
 
-## [275.0] - 2019.02.01 stable
+## [275.0] - 2019.02.01
 
 ### Fixed
 
 * argcomplete eval in the worker when sourcing `environment`
 
-## [274.0] - 2019.02.01 stable
+## [274.0] - 2019.02.01
 
 ### Fixed
 
