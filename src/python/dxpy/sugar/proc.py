@@ -38,10 +38,6 @@ def run(
 
     Examples:
         run_cmd(['echo', 'hello world'], output_file='test1.txt')
-
-    Todo:
-        It is generally a bad idea to use shell=True. Eventually, all callers of this
-        function should be changed to use shell=False or use chain.
     """
     executable = None
     if shell:
@@ -128,7 +124,7 @@ def chain(cmds, return_output=False, output_file=None, block=True, echo=True):
 
         Usage 3: Pipe a single command with output to file
             chain(['echo "hello world"'], output_file='test2.txt')
-            Note: This calls the run_cmd function instead of chain.
+            Note: This calls the run function instead of chain.
 
         Usage 4: A command failing mid-pipe should return CalledProcessedError
             chain([['echo', 'hi:bye'], ['grep', 'blah'], ['cut', '-d', ':', '-f', '1']])
@@ -244,8 +240,9 @@ def _list2cmdline(seq):
        backslash escapes the next double quotation mark as
        described in rule 3.
 
-    This function is copied from the subprocess module, as it is
-    not part of the public API.
+    Note:
+        This function is copied from the subprocess module, as it is
+        not part of the public API.
     """
 
     # See
