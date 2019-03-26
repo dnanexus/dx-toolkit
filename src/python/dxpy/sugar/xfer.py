@@ -94,6 +94,7 @@ def simple_upload_file(
     kwargs = {
         "wait_on_close": wait_on_close
     }
+
     if remote_filename:
         folder, name = os.path.split(remote_filename)
         kwargs["name"] = name
@@ -285,6 +286,7 @@ def _wrap_file_id(file_id, return_handler, project=None):
             raise ValueError("Invalid file ID: {}".format(file_id))
 
     dxlink = dxpy.dxlink(file_id, project_id=project)
+
     if return_handler:
         return dxpy.DXFile(dxlink)
     else:
