@@ -188,6 +188,7 @@ class TestDXProject(unittest.TestCase):
                          protected=True,
                          restricted=True,
                          download_restricted=True,
+                         allowed_executables=["applet-FGkbg180f5v2p1226jFqGJGy"],
                          description="new description")
         desc = dxproject.describe()
         self.assertEqual(desc["id"], self.proj_id)
@@ -197,6 +198,7 @@ class TestDXProject(unittest.TestCase):
         self.assertEqual(desc["restricted"], True)
         self.assertEqual(desc["downloadRestricted"], True)
         self.assertEqual(desc["description"], "new description")
+        self.assertEqual(desc["allowedExecutables"][0], "applet-FGkbg180f5v2p1226jFqGJGy")
         self.assertTrue("created" in desc)
 
         dxproject.update(restricted=False, download_restricted=False)
