@@ -6,4 +6,3 @@ beautifulsoup4==4.4.1
 psutil>=3.3.0
 requests>=2.8.0
 cryptography<=2.2.2
-delegator.py>=0.1.1

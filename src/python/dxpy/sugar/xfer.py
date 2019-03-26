@@ -1,17 +1,6 @@
 """
-This module contains utilities for file upload and download.
-
-This module has a set of functions for file uploads and file downloads. File
-downloads can be done in blocking or non-blocking mode. If non-blocking,
-a delegator.Command object is returned, which can be used for additional functionality
-such as piping the file contents to another command, e.g.
-
-```
-from dxpy.sugar import xfer
-cmd1 = xfer.simple_download_file("file-XXX", block=False)
-cmd2 = delegator.run(["bwa", "mem], block=False)
-xfer.chain(cmd1, cmd2, block=True)
-```
+This module contains utilities for file upload and download. File downloads can be
+done in blocking or non-blocking mode.
 
 This module also provides the Uploader and Downloader classes for managing multiple
 concurrent up/downloads. Individual files, lists of files, and dicts of files can
@@ -50,16 +39,19 @@ with Uploader() as uploader:
 #   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #   License for the specific language governing permissions and limitations
 #   under the License.
+from __future__ import print_function, unicode_literals, division, absolute_import
 import concurrent.futures
+import copy
 import os
 import re
 import sys
 
-import delegator
 import dxpy
-from dxpy.sugar import info
+from dxpy.sugar import STR_TYPES, info
+from dxpy.sugar.proc import run, chain
 
 
+FILE_ID_RE = re.compile(r"(file-\w{24})")
 SPECIAL_RE = re.compile(r"[^\w.]")
 
 
@@ -81,7 +73,10 @@ def upload_file(filename, skip_compress=False, **kwargs):
         return compress_and_upload_file(filename, **kwargs)
 
 
-def simple_upload_file(filename, remote_filename=None, return_handler=False, **kwargs):
+def simple_upload_file(
+    filename, remote_filename=None, return_handler=False, project=None,
+    wait_on_close=False
+):
     """
     Upload a file and return a link.
 
@@ -89,27 +84,34 @@ def simple_upload_file(filename, remote_filename=None, return_handler=False, **k
         filename: Local filename.
         remote_filename (str): Optional, output filename to upload fn to.
         return_handler: Whether to return a DXFile handler.
-        **kwargs: Additional arguments to dxpy.upload_local_file
+        project: The project to upload to, if not the currently selected project.
+        wait_on_close: Whether to block until the file has closed.
 
     Returns:
-        A dxlink
+        DNAnexus link or DXFile pointing to the uploaded file (depending on
+        the value of `return_handler`).
     """
+    kwargs = {
+        "wait_on_close": wait_on_close
+    }
     if remote_filename:
         folder, name = os.path.split(remote_filename)
         kwargs["name"] = name
         if folder:
             kwargs["folder"] = folder
+    if project:
+        kwargs["project"] = project
     info("Uploading file {} to {}", filename, remote_filename or filename)
-    file_id = dxpy.upload_local_file(filename, **kwargs)
-    dxlink = dxpy.dxlink(file_id)
+    handler = dxpy.upload_local_file(filename, **kwargs)
     if return_handler:
-        return dxpy.DXFile(dxlink)
+        return handler
     else:
-        return dxlink
+        return dxpy.dxlink(handler.get_id(), handler.describe()["project"])
 
 
 def compress_and_upload_file(
-    filename, remote_filename=None, compression_level=1, return_handler=False
+    filename, remote_filename=None, compression_level=1, return_handler=False,
+    project=None, wait_on_close=False
 ):
     """
     Gzip and upload a local file.
@@ -124,9 +126,12 @@ def compress_and_upload_file(
             file to. Specify 1 for gzip --fast and 9 for gzip --best. If not
             specified, --fast is assumed.
         return_handler: Whether to return a DXFile handler.
+        project: The project to upload to, if not the currently selected project.
+        wait_on_close: Whether to block until the file has closed.
 
     Returns:
-        dict: DNAnexus link pointing to the uploaded file
+        DNAnexus link or DXFile pointing to the uploaded file (depending on
+        the value of `return_handler`).
 
     Raises:
         ValueError: if compression_level not between 1 and 9
@@ -142,23 +147,29 @@ def compress_and_upload_file(
     if compression_level < 1 or compression_level > 9:
         raise ValueError("Compression level must be between 1 and 9")
 
+    if not os.path.isabs(remote_filename):
+        remote_filename = "/{}".format(remote_filename)
+
+    if project:
+        remote_filename = "{}:{}".format(project, remote_filename)
+
     if filename.endswith(".gz"):
         cmd = ["dx", "upload", "--brief", "--path", remote_filename, filename]
-        file_id = delegator.run(cmd).out
+        file_id = run(cmd, True)
     else:
         gzip_cmd = ["gzip", "-{0}".format(compression_level), "-c", filename]
-        upload_cmd = ["dx", "upload", "--brief", "--path", remote_filename, "-"]
-        file_id = delegator.chain(gzip_cmd, upload_cmd).out
+        upload_cmd = ["dx", "upload", "--brief", "--path", remote_filename]
+        if wait_on_close:
+            upload_cmd.append("--wait")
+        upload_cmd.append("-")
+        file_id = chain([gzip_cmd, upload_cmd], True)
 
-    dxlink = dxpy.dxlink(file_id)
-    if return_handler:
-        return dxpy.DXFile(dxlink)
-    else:
-        return dxlink
+    return _wrap_file_id(file_id, return_handler)
 
 
 def archive_and_upload_files(
-    filenames, prefix=None, compression_level=1, chdir=None, return_handler=False
+    filenames, prefix=None, compression_level=1, chdir=None, return_handler=False,
+    project=None, wait_on_close=False
 ):
     """
     Archive and upload one or more files.
@@ -168,7 +179,7 @@ def archive_and_upload_files(
 
     Args:
         filenames (str or list of str): = Local filenames or directories.
-        prefix (str) = name to give to output tar archive.
+        prefix (str) = name to give to output tar archive (including path).
         compression_level (int) = Level of compression between 1 and 9 to
             compress tar to. Specify 1 for gzip --fast and 9 for gzip --best.
             If not specified, --fast is assumed. If None, no compression is
@@ -178,35 +189,44 @@ def archive_and_upload_files(
             a directory, same behavior as None, otherwise an error is raised;
             if False, no cd. (tar -C option).
         return_handler: Whether to return a DXFile handler.
+        project: The project to upload to, if not the currently selected project.
+        wait_on_close: Whether to block until the file has closed.
 
     Returns:
-        dict: DNAnexus link or DXFile pointing to the uploaded tar archive
+        DNAnexus link or DXFile pointing to the uploaded tar archive (depending on
+        the value of `return_handler`).
 
     Raises:
         ValueError: if compression_level not between 1 and 9
         CalledProcessError: propogated from run_pipe if called command fails
     """
     is_dir = False
-    if isinstance(filenames, basestring):
+    if isinstance(filenames, STR_TYPES):
         is_dir = os.path.isdir(filenames)
         filenames = [filenames]
+
     if prefix is None:
         if len(filenames) == 1:
             prefix = os.path.basename(filenames[0])
         else:
             raise ValueError("'prefix' must be specified with multiple filenames")
 
+    if not os.path.isabs(prefix):
+        prefix = "/{}".format(prefix)
+
     if compression_level is not None and (
         compression_level < 1 or compression_level > 9
     ):
         raise ValueError("Compression level must be between 1 and 9")
 
+    ext = "tar.gz" if compression_level else "tar"
+    outfile = "{}.{}".format(prefix, ext)
+    if project:
+        outfile = "{}:{}".format(project, outfile)
+
     with temp() as names_file:
         with open(names_file, "wt") as out:
-            out.writelines(filenames)
-
-        ext = "tar.gz" if compression_level else "tar"
-        outfile = "{}.{}".format(prefix, ext)
+            out.write("\n".join(filenames))
 
         tar_cmd = ["tar"]
         if chdir is not False and not isinstance(chdir, str):
@@ -220,14 +240,51 @@ def archive_and_upload_files(
                 chdir = None
         if chdir:
             tar_cmd.extend(["-C", chdir])
-        tar_cmd.extend(["-cvf", "-", "--files-from", names_file])
+        tar_cmd.extend(["cvf", "-", "--files-from", names_file])
         cmds = [tar_cmd]
+
         if compression_level:
             cmds.append(["gzip", "-{0}".format(compression_level)])
-        cmds.append(["dx", "upload", "--brief", "--destination", outfile, "-"])
-        file_id = delegator.chain(*cmds).out
-        dxlink = dxpy.dxlink(file_id)
 
+        upload_cmd = ["dx", "upload", "--brief", "--path", outfile]
+        if wait_on_close:
+            upload_cmd.append("--wait")
+        upload_cmd.append("-")
+        cmds.append(upload_cmd)
+
+        file_id = chain(cmds, True)
+
+    return _wrap_file_id(file_id, return_handler)
+
+
+def _wrap_file_id(file_id, return_handler, project=None):
+    """
+    Given a file ID, create either a link or a `dxpy.DXFile` object, depending
+    on the value of `return_handler`.
+
+    Args:
+        file_id: The file ID to wrap.
+        return_handler: Whether to return a `dxpy.DXFile` object.
+        project: The project ID (defaults to currently selected project).
+
+    Returns:
+        A `dxpy.DXFile` object, depending on the value of `return_handler`.
+    """
+    if not isinstance(file_id, STR_TYPES):
+        file_id = file_id.decode("utf-8")
+
+    try:
+        dxpy.verify_string_dxid(file_id, "file")
+    except:
+        # dxpy prints warnings (e.g. about readline support) even when '--brief'
+        # is used, so we may need to parse out the file ID from stdout.
+        match = FILE_ID_RE.search(file_id)
+        if match:
+            file_id = match.group(1)
+        else:
+            raise ValueError("Invalid file ID: {}".format(file_id))
+
+    dxlink = dxpy.dxlink(file_id, project_id=project)
     if return_handler:
         return dxpy.DXFile(dxlink)
     else:
@@ -236,13 +293,13 @@ def archive_and_upload_files(
 
 def download_file(
     remote_file, skip_decompress=False, skip_unpack=False, remote_filename=None,
-    local_filename=None, output_dir=None, block=True
+    local_filename=None, output_dir=None, project=None, block=True
 ):
     """
     Download an unzip a gzip file.
 
     Shorthand for running dx download on a given input_file dx file link.
-    Additionally usse subprocess to decompress and/or untar the file
+    Additionally use subprocess to decompress and/or untar the file
     automatically based on the name suffix of the file provided.
 
     Args:
@@ -254,6 +311,8 @@ def download_file(
         local_filename: Local file where the data is to be saved.
         output_dir (str): Download file to a specific directory (default is the current
             directory).
+        project: The project that contains the file, if it is not the currently
+            selected project and is not specified in the remote file object/link.
         block: Wait for the download to complete before returning.
 
     Notes:
@@ -271,10 +330,10 @@ def download_file(
         str: filename or local named pipe which file was downloaded to. If `block`
         is False, also returns the Popen for the process running in the background.
     """
-    if not isinstance(remote_file, dxpy.DXFile):
-        remote_file = dxpy.DXFile(remote_file)
+    remote_file = _as_dxfile(remote_file, project)
+
     if remote_filename is None:
-        remote_filename = remote_file.name
+        remote_filename = remote_file.describe()["name"]
 
     if output_dir:
         mkdir_p(output_dir)
@@ -299,15 +358,18 @@ def download_file(
 
 
 def simple_download_file(
-    remote_file, local_filename=None, output_dir=None, block=True, **kwargs
+    remote_file, local_filename=None, output_dir=None, project=None, block=True,
+    **kwargs
 ):
     """
     Download a file.
 
     Args:
-        remote_file (dxpy.DXFile): The file object.
+        remote_file (dxpy.DXFile or dxlink): The file to download.
         local_filename: The local_filename, or None to use the input filename.
         output_dir: The output directory, or None to use the current directory.
+        project: The project that contains the file, if it is not the currently
+            selected project and is not specified in the remote file object/link.
         block: Wait for the download to complete before returning. Ignored if
             create_named_pipe=True.
 
@@ -315,6 +377,8 @@ def simple_download_file(
         The output filename. Also returns the running download process if
         `block=False`.
     """
+    remote_file = _as_dxfile(remote_file, project)
+
     if local_filename is None:
         local_filename = SPECIAL_RE.sub("", remote_file.name)
     if output_dir:
@@ -325,18 +389,19 @@ def simple_download_file(
     cmd = ["dx", "download", remote_file.get_id(), "-o", local_filename]
 
     if block:
-        delegator.run(cmd, block=True, **kwargs)
+        run(cmd, block=True, **kwargs)
         info(
             "Completed downloading file {} to {}", remote_file.get_id(), local_filename
         )
         return local_filename
     else:
-        proc = delegator.run(cmd, block=False, **kwargs)
+        proc = run(cmd, block=False, **kwargs)
         return local_filename, proc
 
 
 def download_and_unpack_archive(
-    remote_file, input_filename=None, local_filename=None, output_dir=None, block=True
+    remote_file, input_filename=None, local_filename=None, output_dir=None,
+    project=None, block=True
 ):
     """
     Download and unpack a tar file, which may optionally be gzip-compressed.
@@ -349,12 +414,16 @@ def download_and_unpack_archive(
             exist after unpacking the archive or an error is raised.
         output_dir (str): Download file to a specific directory (default is the current
             directory).
+        project: The project that contains the file, if it is not the currently
+            selected project and is not specified in the remote file object/link.
         block: Wait for the download to complete before returning.
 
     Returns:
         The path of the unpacked file/directory. Also returns the running process if
         `block=False`.
     """
+    remote_file = _as_dxfile(remote_file, project)
+
     if input_filename is None:
         input_filename = remote_file.name
 
@@ -369,7 +438,7 @@ def download_and_unpack_archive(
         endlen = 4
     else:
         raise ValueError("Unsupported file type: {}".format(input_filename))
-    tar_cmd.extend(["-xvf", "-"])
+    tar_cmd.extend(["-x", "-v", "-f", "-"])
 
     if local_filename:
         return_filename = local_filename
@@ -389,37 +458,42 @@ def download_and_unpack_archive(
     ))
     info("Saving command stdout to intermediate file {}".format(local_filename))
 
-    proc = delegator.chain(*cmds)
+    result = chain(cmds, block=block)
 
     if block:
-        proc.block()
         return return_filename
     else:
-        return return_filename, proc
+        return return_filename, result[-1]
 
 
 def download_and_decompress_file(
-    remote_file, input_filename=None, local_filename=None, output_dir=None, block=True
+    remote_file, input_filename=None, local_filename=None, output_dir=None,
+    project=None, block=True
 ):
     """
     Download and decompress a gzipped file.
 
     Args:
-        remote_file (dxpy.DXFile): DNAnexus link or file-id of file to download
+        remote_file (dxpy.DXFile or dxlink): DNAnexus link or file-id of file to
+            download.
         input_filename (str): Name to use for the input filename, if different than
             the name of the input_file. If not provided, platform filename is used.
         local_filename: Local filename/dirname. If not None, this file/directory must
             exist after unpacking the archive or an error is raised.
         output_dir (str): Download file to a specific directory (default is the current
             directory).
+        project: The project that contains the file, if it is not the currently
+            selected project and is not specified in the remote file object/link.
         block: Wait for the download to complete before returning.
 
     Returns:
         The path of the decompressed file. Also returns the running download process if
-        `use_fifo=True`.
+        `block is False`.
     """
+    remote_file = _as_dxfile(remote_file, project)
+
     if input_filename is None:
-        input_filename = remote_file.name
+        input_filename = remote_file.describe()["name"]
 
     if local_filename is None:
         local_filename = input_filename[:-3]
@@ -436,13 +510,28 @@ def download_and_decompress_file(
         remote_file.get_id(), local_filename, cmds
     )
 
-    proc = delegator.chain(*cmds)
+    result = chain(cmds, block=block)
 
     if block:
-        proc.block()
         return local_filename
     else:
-        return local_filename, proc
+        return local_filename, result[-1]
+
+
+def _as_dxfile(fileobj, project=None):
+    if dxpy.is_dxlink(fileobj):
+        project_id = None
+        if (
+            isinstance(fileobj["$dnanexus_link"], dict) and
+            "project" in fileobj["$dnanexus_link"]
+        ):
+            project_id = fileobj["$dnanexus_link"]["project"]
+        elif project:
+            project_id = project.get_id()
+        return dxpy.DXFile(fileobj, project=project_id)
+    if not isinstance(fileobj, dxpy.DXFile):
+        raise ValueError("Not a link or DXFile object: {}".format(fileobj))
+    return fileobj
 
 
 class DataTransferExecutor(concurrent.futures.ThreadPoolExecutor):
@@ -453,12 +542,14 @@ class DataTransferExecutor(concurrent.futures.ThreadPoolExecutor):
     Args:
         io_function: Function to call to perform the data transefer.
         max_num_parallel_transfers: Maximum number of parallel threads.
+        default_kwargs: Keyword arguments to pass to every enqueue call.
     """
-    def __init__(self, io_function, max_num_parallel_transfers=None):
+    def __init__(self, io_function, max_parallel=None, **default_kwargs):
         super(DataTransferExecutor, self).__init__(
-            max_workers=num_cores(max_num_parallel_transfers)
+            max_workers=num_cores(max_parallel)
         )
         self._io_function = io_function
+        self._default_kwargs = default_kwargs
         self._queue = None
 
     def enqueue_file(self, param_name, filespec, **kwargs):
@@ -502,7 +593,9 @@ class DataTransferExecutor(concurrent.futures.ThreadPoolExecutor):
             self._queue = {}
         if param_name in self._queue:
             futures = self._queue[param_name][0]
-            new_futures = self._submit(files, _start_index=len(futures), **kwargs)
+            new_futures, _ = self._submit(
+                files, _is_list, _start_index=len(futures), **kwargs
+            )
             if len(new_futures) != len(files):
                 raise RuntimeError(
                     "Number of futures returned differs from number of files "
@@ -511,23 +604,43 @@ class DataTransferExecutor(concurrent.futures.ThreadPoolExecutor):
             futures.update(new_futures)
             self._queue[param_name] = (futures, True)
         else:
-            self._queue[param_name] = (self._submit(files, **kwargs), _is_list)
+            self._queue[param_name] = self._submit(files, _is_list, **kwargs)
 
-    def _submit(self, files, _start_index=0, **kwargs):
+    def _submit(self, files, _is_list, _start_index=0, **kwargs):
         """
         Submit one or more files to be uploaded/downloaded.
 
         Args:
             files: List of files to download.
+            _is_list:
+            _start_index:
             **kwargs: Additional kwargs to pass to `download_file`.
 
         Returns:
-            A dict with Future keys and values of tuple (file index, file).
+            A tuple:
+            * dict with Future keys and values of tuple (file index, file).
+            * boolean, whether the result should be considered a list
         """
         return {
-            self.submit(self._io_function, _file, **kwargs): (i, _file)
+            self.submit(
+                self._io_function, _file, **self._get_submit_kwargs(kwargs)
+            ): (i, _file)
             for i, _file in enumerate(files, _start_index)
-        }
+        }, _is_list
+
+    def _get_submit_kwargs(self, kwargs):
+        """
+        Merge default and call-specific kwargs.
+
+        Args:
+            kwargs: Call-specific kwargs.
+
+        Returns:
+            dict that is the merger between default and call-specific kwargs.
+        """
+        submit_kwargs = copy.copy(self._default_kwargs)
+        submit_kwargs.update(kwargs)
+        return submit_kwargs
 
     def __call__(self, *files, **kwargs):
         """Convenience method to enqueue files and wait for results.
@@ -603,7 +716,8 @@ class Uploader(DataTransferExecutor):
         super(Uploader, self).__init__(upload_file, **kwargs)
 
     def _submit(
-        self, files, _start_index=0, skip_compress=False, archive=False, **kwargs
+        self, files, _is_list, _start_index=0, skip_compress=False, archive=False,
+        **kwargs
     ):
         if archive:
             compression_level = None if skip_compress else 1
@@ -611,12 +725,12 @@ class Uploader(DataTransferExecutor):
                 self.submit(
                     archive_and_upload_files, files,
                     compression_level=compression_level,
-                    **kwargs
+                    **self._get_submit_kwargs(kwargs)
                 ): (0, ",".join(files))
-            }
+            }, False
         else:
             return super(Uploader, self)._submit(
-                files, _start_index=_start_index, skip_compress=skip_compress,
+                files, _is_list, _start_index=_start_index, skip_compress=skip_compress,
                 **kwargs
             )
 
@@ -688,18 +802,3 @@ def mkdir_p(path):
             pass
         else:
             raise
-
-
-def chain(cmd1, cmd2, block=False):
-    """
-    Chain commands together.
-
-    Args:
-        cmd1: A delegator.Command - the left side of the pipe
-        cmd2: A delegator.Command - the right side of the pipe
-        block: Whether to wait for the last command to complete
-    """
-    cmd2.send(cmd1.out, end="")
-    cmd2.subprocess.sendeof()
-    if block:
-        cmd2.block()

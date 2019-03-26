@@ -17,11 +17,18 @@ from __future__ import unicode_literals
 import logging
 
 
+# Include `unicode` in STR_TYPES for Python 2.X
+try:
+    STR_TYPES = (str, unicode)
+except NameError:
+    STR_TYPES = (str,)
+
+
 logger = logging.getLogger()
 
 
 def info(s, *args, **kwargs):
-    """Print a log message - make sure it always goes to stderr."""
+    """Print a log message."""
     if args or kwargs:
         s = s.format(*args, **kwargs)
     logger.info(s)
