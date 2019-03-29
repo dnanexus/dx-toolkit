@@ -42,15 +42,31 @@ def dxlink(object_id, project_id=None, field=None):
     :type project_id: string
     :param field: A field name, if creating a job-based object reference
     :type field: string
+    :returns: A dict formatted as a symbolic DNAnexus object reference
+    :rtype: dict
 
-    Creates a DXLink (a dict formatted as a symbolic DNAnexus object
-    reference) to the specified object.  Returns *object_id* if it
-    appears to be a DXLink already.
+    Creates a DXLink to the specified object.
+
+    If `object_id` is already a link, it is returned without modification.
+
+    If `object_id is a `~dxpy.bindings.DXDataObject`, the object ID is
+    retrieved via its `get_id()` method.
+
+    If `field` is not `None`, `object_id` is expected to be of class 'job'
+    and the link created is a Job Based Object Reference (JBOR), which is
+    of the form::
+
+        {'$dnanexus_link': {'job': object_id, 'field': field}}
+
+    If `field` is `None` and `project_id` is not `None`, the link created
+    is a project-specific link of the form::
+
+        {'$dnanexus_link': {'project': project_id, 'id': object_id}}
     '''
-    if isinstance(object_id, DXDataObject):
-        object_id = object_id.get_id()
     if is_dxlink(object_id):
         return object_id
+    if isinstance(object_id, DXDataObject):
+        object_id = object_id.get_id()
     if not any((project_id, field)):
         return {'$dnanexus_link': object_id}
     elif field:
@@ -74,9 +90,8 @@ def is_dxlink(x):
     if isinstance(link, basestring):
         return True
     elif isinstance(link, dict):
-        return ('id' in link or 'job' in link)
-    else:
-        return False
+        return any(key in link for key in ('id', 'job'))
+    return False
 
 def get_dxlink_ids(link):
     '''
@@ -84,11 +99,17 @@ def get_dxlink_ids(link):
     :type link: dict
     :returns: (Object ID, Project ID) if the link is to a data object (or :const:`None`
         if no project specified in the link), or (Job ID, Field) if the link is
-        a job-based object reference.
+        a job-based object reference (JBOR).
     :rtype: tuple
 
-    Returns the object and project IDs stored in the given DNAnexus
-    link.
+    Get the object ID and detail from a link. There are three types of links:
+
+    * Simple link of the form ``{"$dnanexus_link": "file-XXXX"}`` returns
+      ``("file-XXXX", None)``.
+    * Data object link of the form ``{"$dnanexus_link': {"id": "file-XXXX",
+      "project": "project-XXXX"}}`` returns ``("file-XXXX", "project-XXXX")``.
+    * Job-based object reference (JBOR) of the form ``{"$dnanexus_link":
+      {"job": "job-XXXX", "field": "foo"}}`` returns ``("job-XXXX", "foo")``.
     '''
     if not is_dxlink(link):
         raise DXError('Invalid link: %r' % link)
@@ -99,13 +120,12 @@ def get_dxlink_ids(link):
     else:
         return link['$dnanexus_link']['job'], link['$dnanexus_link']['field']
 
-def _guess_link_target_type(link):
-    if is_dxlink(link):
-        link = get_dxlink_ids(link)[0]
-    class_name = 'DX' + link.split("-", 1)[0].capitalize()
+def _guess_link_target_type(id_or_link):
+    # Get the object ID if the input is a link
+    object_id = get_dxlink_ids(id_or_link)[0] if is_dxlink(id_or_link) else id_or_link
+    class_name = 'DX' + object_id.split("-", 1)[0].capitalize()
     if class_name not in all_bindings:
         class_name = {
-            'DXGtable': 'DXGTable',
             'DXGlobalworkflow': 'DXGlobalWorkflow'
         }.get(class_name)
     if class_name not in all_bindings:
