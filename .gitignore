@@ -56,6 +56,13 @@ dxR.Rcheck
 /bin/dx-notebook-reconnect
 /bin/dx-verify-file
 /bin/dx-print-bash-vars
+/bin/dx-genes-to-gff
+/bin/dx-genes-to-gtf
+/bin/dx-mappings-to-fastq
+/bin/dx-mappings-to-sam
+/bin/dx-reads-to-fastq
+/bin/dx-spans-to-bed
+/bin/dx-variants-to-vcf
 /bin/coverage*
 /bin/jq
 /bin/py.test
