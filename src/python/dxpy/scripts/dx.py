@@ -2454,7 +2454,7 @@ def wait(args):
                 print(fill('Could not resolve ' + path + ' to a data object'))
                 had_error = True
             else:
-                handler = dxpy.get_handler(entity_result['id'], project=project)
+                handler = dxpy.get_handler(entity_result['id'], project=entity_result['describe']['project'])
                 print("Waiting for " + path + " to close...")
                 try_call(handler._wait_on_close)
                 print("Done")
@@ -2620,6 +2620,27 @@ def list_developers(args):
 
         for d in developers:
             print(d)
+    except:
+        err_exit()
+
+def render_timestamp(epochSeconds):
+    # This is the format used by 'aws s3 ls'
+    return datetime.datetime.fromtimestamp(epochSeconds//1000).strftime('%Y-%m-%d %H:%M:%S')
+
+
+def list_database_files(args):
+    try:
+        results = dxpy.api.database_list_folder(
+            args.database,
+            input_params={"folder": args.folder, "recurse": args.recurse, "timeout": args.timeout})
+        for r in results["results"]:
+            date_str = render_timestamp(r["modified"]) if r["modified"] != 0 else ''
+            if (args.csv == True):
+                print("{}{}{}{}{}".format(
+                    date_str, DELIMITER(","), r["size"], DELIMITER(","), r["path"]))
+            else:
+                print("{}{}{}{}{}".format(
+                    date_str.rjust(19), DELIMITER(" "), str(r["size"]).rjust(12), DELIMITER(" "), r["path"]))
     except:
         err_exit()
 
@@ -2809,6 +2830,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "depends_on": args.depends_on or None,
         "allow_ssh": args.allow_ssh,
         "ignore_reuse": args.ignore_reuse or None,
+        "ignore_reuse_stages": args.ignore_reuse_stages or None,
         "debug": {"debugOn": args.debug_on} if args.debug_on else None,
         "delay_workspace_destruction": args.delay_workspace_destruction,
         "priority": ("high" if args.watch else args.priority),
@@ -3096,7 +3118,7 @@ def run(args):
             err_exit(exception=DXCLIError(
                 "Options --project and --folder/--destination cannot be specified together.\nIf specifying both a project and a folder, please include them in the --folder option."
             ))
-        dest_proj = args.project
+        dest_proj = resolve_container_id_or_name(args.project, is_error=True, multi=False)
 
     if args.folder is not None:
         dest_proj, dest_path, _none = try_call(resolve_existing_path,
@@ -3211,6 +3233,7 @@ def run(args):
     is_global_workflow = isinstance(handler, dxpy.DXGlobalWorkflow)
 
     if args.depends_on and (is_workflow or is_global_workflow):
+
         err_exit(exception=DXParserError("-d/--depends-on cannot be supplied when running workflows."),
                  expected_exceptions=(DXParserError,))
 
@@ -3223,6 +3246,9 @@ def run(args):
                 'Unable to find project to run the app in. ' +
                 'Please run "dx select" to set the working project, or use --folder=project:path'
             ))
+
+    is_workflow = isinstance(handler, dxpy.DXWorkflow)
+    is_global_workflow = isinstance(handler, dxpy.DXGlobalWorkflow)
 
     # Get region from the project context
     args.region = None
@@ -4419,6 +4445,35 @@ parser_list_stages.add_argument('workflow', help='Name or ID of a workflow').com
 parser_list_stages.set_defaults(func=workflow_cli.list_stages)
 register_parser(parser_list_stages, subparsers_action=subparsers_list, categories='workflow')
 
+parser_list_database = subparsers_list.add_parser(
+    "database",
+    help=fill("List entities associated with a specific database. For example,") + "\n\n\t" +
+         fill('"dx list database files" lists database files associated with a specific database.') + "\n\n\t" +
+         fill('Please execute "dx list database -h" for more information.'),
+    description=fill("List entities associated with a specific database."),
+    prog="dx list database"
+)
+register_parser(parser_list_database, subparsers_action=subparsers_list)
+
+subparsers_list_database = parser_list_database.add_subparsers(parser_class=DXArgumentParser)
+subparsers_list_database.metavar = "entities"
+
+parser_list_database_files = subparsers_list_database.add_parser(
+    'files',
+    help='List files associated with a specific database',
+    description=fill('List files associated with a specific database'),
+    parents=[env_args],
+    prog='dx list database files'
+)
+parser_list_database_files.add_argument('database', help='ID of the database.')
+parser_list_database_files.add_argument('--folder', default='/', help='Name of folder (directory) in which to start searching for database files. This will typically match the name of the table whose files are of interest. The default value is "/" which will start the search at the root folder of the database.')
+parser_list_database_files.add_argument("--recurse", default=False, help='Look for files recursively down the directory structure. Otherwise, by default, only look on one level.', action='store_true')
+parser_list_database_files.add_argument("--csv", default=False, help='Write output as comma delimited fields, suitable as CSV format.', action='store_true')
+parser_list_database_files.add_argument("--timeout", default=120, help='Number of seconds to wait before aborting the request. If omitted, default timeout is 120 seconds.', type=int)
+parser_list_database_files.set_defaults(func=list_database_files)
+register_parser(parser_list_database_files, subparsers_action=subparsers_list_database, categories='data')
+
+
 #####################################
 # remove
 #####################################
@@ -4488,6 +4543,10 @@ parser_update_org.add_argument('org_id', help='ID of the org')
 parser_update_org.add_argument('--name', help='New name of the org')
 parser_update_org.add_argument('--member-list-visibility', help='New org membership level that is required to be able to view the membership level and/or permissions of any other member in the specified org (corresponds to the memberListVisibility org policy)', choices=['ADMIN', 'MEMBER', 'PUBLIC'])
 parser_update_org.add_argument('--project-transfer-ability', help='New org membership level that is required to be able to change the billing account of a project that is billed to the specified org, to some other entity (corresponds to the restrictProjectTransfer org policy)', choices=['ADMIN', 'MEMBER'])
+parser_update_org.add_argument('--saml-idp', help='New SAML identity provider')
+update_job_reuse_args = parser_update_org.add_mutually_exclusive_group(required=False)
+update_job_reuse_args.add_argument('--enable-job-reuse', action='store_true',  help='Enable job reuse for projects where the org is the billTo')
+update_job_reuse_args.add_argument('--disable-job-reuse', action='store_true', help='Disable job reuse for projects where the org is the billTo')
 parser_update_org.set_defaults(func=update_org)
 register_parser(parser_update_org, subparsers_action=subparsers_update, categories='org')
 
@@ -4632,11 +4691,6 @@ parser_run.add_argument('--stage-relative-output-folder', metavar=('STAGE_ID', '
                         nargs=2,
                         action='append',
                         default=[])
-parser_run.add_argument('--rerun-stage', metavar='STAGE_ID', dest='rerun_stages',
-                        help=fill('A stage (using its ID, name, or index) to rerun, or "*" to ' +
-                                  'indicate all stages should be rerun; repeat as necessary',
-                                  width_adjustment=-24),
-                        action='append')
 parser_run.add_argument('--name', help=fill('Name for the job (default is the app or applet name)', width_adjustment=-24))
 parser_run.add_argument('--delay-workspace-destruction',
                         help=fill('Whether to keep the job\'s temporary workspace around for debugging purposes for 3 days after it succeeds or fails', width_adjustment=-24),
@@ -4663,10 +4717,24 @@ parser_run.add_argument('--ssh-proxy', metavar=('<address>:<port>'),
 parser_run.add_argument('--debug-on', action='append', choices=['AppError', 'AppInternalError', 'ExecutionError', 'All'],
                         help=fill("Configure the job to hold for debugging when any of the listed errors occur",
                                   width_adjustment=-24))
-parser_run.add_argument('--ignore-reuse',
+
+ignore_reuse = parser_run.add_mutually_exclusive_group()
+ignore_reuse.add_argument('--ignore-reuse',
                         help=fill("Disable job reuse for execution",
                                   width_adjustment=-24),
                         action='store_true')
+ignore_reuse.add_argument('--ignore-reuse-stage', metavar='STAGE_ID', dest='ignore_reuse_stages',
+                        help=fill('A stage (using its ID, name, or index) for which job reuse should be disabled, ' +
+                                  'if a stage points to another (nested) workflow the ignore reuse option will be applied to the whole subworkflow. ' +
+                                  'This option overwrites any ignoreReuse fields set on app(let)s or the workflow during build time; ' +
+                                  'repeat as necessary',
+                                  width_adjustment=-24),
+                        action='append')
+parser_run.add_argument('--rerun-stage', metavar='STAGE_ID', dest='rerun_stages',
+                        help=fill('A stage (using its ID, name, or index) to rerun, or "*" to ' +
+                                  'indicate all stages should be rerun; repeat as necessary',
+                                  width_adjustment=-24),
+                        action='append')
 parser_run.add_argument('--batch-tsv', dest='batch_tsv', metavar="FILE",
                         help=fill('A file in tab separated value (tsv) format, with a subset ' +
                                   'of the executable input arguments. A job will be launched ' +
