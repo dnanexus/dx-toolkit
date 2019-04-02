@@ -45,8 +45,7 @@ fi
 
 export DNANEXUS_HOME="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-PYTHON_VERSION_NUMBER="$(python -c 'import sys; print("{}.{}".format(sys.version_info[0], sys.version_info[1]))')"
-PYTHON_VERSION="python${PYTHON_VERSION_NUMBER}"
+PYTHON_VERSION="python2.7"
 
 # Detect system installation of dx-toolkit
 if [ "$DNANEXUS_HOME" = "/etc/profile.d" ]; then
