@@ -1,7 +1,6 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
 import copy
 import logging
-import os
 import shlex
 import subprocess
 import tempfile
@@ -507,24 +506,3 @@ def command_lists_to_strings(cmds):
         quote_args(cmd) if not isinstance(cmd, compat.basestring) else cmd
         for cmd in cmds
     ]
-
-
-def read_stream(stream, default=""):
-    """
-    Read from a stream and handle any errors.
-
-    Args:
-        stream: Stream to read from.
-        default: Default value to return if there is an error reading from the stream.
-
-    Returns:
-        String output of the stream, or `default` if there was an error.
-    """
-    try:
-        s = stream.read()
-        if s:
-            s = s.strip()
-        return s
-    except:
-        LOG.exception("Error reading from stream")
-        return default
