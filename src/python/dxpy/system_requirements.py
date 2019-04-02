@@ -98,96 +98,49 @@ class SystemRequirementsDict(object):
         Requested: {"main": 22, "*": 11}
         App doc: {"*": "clusterSpec": {"initialInstanceCount": 2, bootstrapScript: "t.sh"}}
         Merged: {"main": "clusterSpec": {"initialInstanceCount": 22, bootstrapScript: "t.sh"},
-                "*": "clusterSpec": {"initialInstanceCount": 11, bootstrapScript: "t.sh"}}
+                 "*": "clusterSpec": {"initialInstanceCount": 11, bootstrapScript: "t.sh"}}
         """
-
-        # def replace_count_in_app_cluster_spec(merged_cluster_spec, app_sys_reqs, requested_count):
-        #     '''
-        #     Iterates over and updates all the app's entrypoints with the new, requested instance count.
-        #     Does nothing for entrypoints without clusterSpec.
-        #     '''
-        #     for app_entrypoint, reqs in app_sys_reqs.items():
-        #         if "clusterSpec" in reqs:
-        #             merged_cluster_spec[app_entrypoint] = {"clusterSpec": copy.deepcopy(reqs["clusterSpec"])}
-        #             merged_cluster_spec[app_entrypoint]["clusterSpec"]["initialInstanceCount"] = requested_count
-        
-        # merged_cluster_spec = {}
-        # entrypoint_to_instance_count = cls.entrypoint2instcount(instance_count_arg)
-        # # First process "*" so that it later does not overwrite other (named) entrypoints
-        # if "*" in entrypoint_to_instance_count:
-        #     replace_count_in_app_cluster_spec(merged_cluster_spec, app_reqs, entrypoint_to_instance_count["*"])
-        #     del entrypoint_to_instance_count["*"]
-        # for entrypoint, requested_count in entrypoint_to_instance_count.items():
-        #     # Find the same entrypoint in the app. If not found we will check if "*"
-        #     # is defined on the app and use its clusterSpec.
-        #     matching_app_reqs = app_reqs.get(entrypoint, app_reqs.get("*"))
-        #     if matching_app_reqs and "clusterSpec" in matching_app_reqs:
-        #         merged_cluster_spec[entrypoint] = {"clusterSpec": copy.deepcopy(matching_app_reqs["clusterSpec"])}
-        #         merged_cluster_spec[entrypoint]["clusterSpec"]["initialInstanceCount"] = requested_count
-        #     else:
-        #         err_exit(exception=DXCLIError(
-        #         '--instance-count is not supported for entrypoint ' + entrypoint + ' since the app' \
-        #         ' does not have "clusterSpec" defined for this entrypoint in its systemRequirements'))
-        # # no matching entrypoint nor default "*" was found in the app sys requirements
-        # if not merged_cluster_spec:
-        #     err_exit(exception=DXCLIError(
-        #             '--instance-count is not supported for entrypoints without clusterSpec'))
-        # return cls(cluster_spec=merged_cluster_spec)
-
-
-        def replace_count_in_app_cluster_spec(merged_cluster_spec, app_sys_reqs, requested_count):
-            '''
-            Iterates over and updates all the app's entrypoints with the new, requested instance count.
-            Does nothing for entrypoints without clusterSpec.
-            '''
-            for app_entrypoint, reqs in app_sys_reqs.items():
-                if "clusterSpec" in reqs:
-                    merged_cluster_spec[app_entrypoint] = {"clusterSpec": copy.deepcopy(reqs["clusterSpec"])}
-                    merged_cluster_spec[app_entrypoint]["clusterSpec"]["initialInstanceCount"] = requested_count
 
         requested_counts = cls.entrypoint2instcount(instance_count_arg)
         merged_cluster_spec = copy.deepcopy(app_sys_reqs)
-
         print("requested_counts", requested_counts)
-        # First process "*" so that it later does not overwrite other (named) entrypoints
-        if "*" in requested_counts:
-            print("REPLACING")
-            replace_count_in_app_cluster_spec(merged_cluster_spec, app_sys_reqs, requested_counts["*"])
-            print("After replacoing", merged_cluster_spec)
 
         # Merge known entry points
         for entry_pt, req in app_sys_reqs.items():
-            # If count was not requested in run arguments, do not include it
-            if entry_pt not in requested_counts and "*" not in requested_counts:
-                del merged_cluster_spec[entry_pt]
-            elif "clusterSpec" not in req:
-                err_exit(exception=DXCLIError(
+            print("entry_pt", entry_pt)
+            if "clusterSpec" not in req and entry_pt in requested_counts and entry_pt != "*":
+                    raise DXCLIError(
                          '--instance-count is not supported for entrypoint ' + entry_pt + ' since the app' \
-                         ' does not have "clusterSpec" defined for this entrypoint in its systemRequirements'))
+                         ' does not have "clusterSpec" defined for this entrypoint in its systemRequirements')
+
+            if entry_pt not in requested_counts and "*" not in requested_counts or "clusterSpec" not in req:
+                print("DELETING entrypoint", entry_pt)
+                del merged_cluster_spec[entry_pt]
             else:
                 # overwrite initialInstanceCount with the requested count
-                merged_cluster_spec[entry_pt]["clusterSpec"]["initialInstanceCount"] = requested_counts[entry_pt]
+                # named entrypoint used in requested_counts takes precedense over the wildcard
+                merged_cluster_spec[entry_pt]["clusterSpec"]["initialInstanceCount"] = requested_counts.get(entry_pt, requested_counts.get("*"))
 
         print("AAA", merged_cluster_spec)
         # Check if all elements in requested_counts were passed to merged_cluster_spec
         # (if a named entry_point was used in requested instance count and such an entrypoint
-        # doesn't exist in app sys req, we need to take the spec from the app's "*", if it exists)
+        # doesn't exist in app sys req, we need to take the cluster spec from the app's "*", if it exists)
         for entry_pt, inst_count in requested_counts.items():
             if entry_pt not in merged_cluster_spec and "*" in app_sys_reqs and "clusterSpec" in app_sys_reqs["*"]:
                 merged_cluster_spec[entry_pt] = {"clusterSpec": copy.deepcopy(app_sys_reqs["*"]["clusterSpec"])}
                 merged_cluster_spec[entry_pt]["clusterSpec"]["initialInstanceCount"] = inst_count
-            else:
-                # Error out when user requested instance count for entrypoints
-                # that don't exist in app systemRequirements
-                if not merged_cluster_spec and requested_counts:
-                    err_exit(exception=DXCLIError(
-                            '123 --instance-count is not supported for entrypoints without clusterSpec: ' + ",".join(requested_counts.keys())))
-
+            # else:
+            #     # Error out when user requested instance count for entrypoints
+            #     # that don't exist in app systemRequirements
+            #     if not merged_cluster_spec and requested_counts:
+            #         requested_entry_pts = ",".join(requested_counts.keys())
+            #         mesg = '--instance-count is not supported for entrypoints that are not' \
+            #                ' specified in the app system requirements or entrypoints without clusterSpec: ' + requested_entry_pts
+            #         raise DXCLIError(mesg)
         return cls(cluster_spec=merged_cluster_spec)
 
     def _add_dictionaries(self, one_dict, other_dict):
         if one_dict is None and other_dict is None:
-            print("NONEEEE")
             return None
 
         one_dict = one_dict or {}
@@ -220,14 +173,10 @@ class SystemRequirementsDict(object):
         }
         """
         entrypoints = defaultdict(dict)
-        print("::::::::::::")
-        print(self.instance_type)
-        print(self.cluster_spec)
-        print("::::::::::::")
         if self.instance_type is not None:
             for entrypoint, req in self.instance_type.items():
                 entrypoints[entrypoint]['instanceType'] =  req["instanceType"]
         if self.cluster_spec is not None:
             for entrypoint, req in self.cluster_spec.items():
                 entrypoints[entrypoint]['clusterSpec'] =  req["clusterSpec"]
-        return entrypoints
+        return dict(entrypoints)
