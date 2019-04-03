@@ -491,7 +491,8 @@ void uploadProgressHelper(vector<File> &files) {
     }
   }
   queueLock.unlock();
-  DXLOG(logUSERINFO) << "Transfer speed: Average  = " << setw(6) << setprecision(2) << std::fixed << mbps << " MB/sec " << "; Instantaneous = " << setw(6) << setprecision(2) << std::fixed << mbps2 << " MB/sec";
+    
+  DXLOG(logUSERINFO) << (unsigned long)time(NULL) << "; PID " << ::getpid() <<  "; Xfer speed: AVG  = " << setw(6) << setprecision(2) << std::fixed << mbps << " MB/sec " << "; INS = " << setw(6) << setprecision(2) << std::fixed << mbps2 << " MB/sec";
 
   if (opt.throttle >= 0) {
     DXLOG(logUSERINFO) << " (throttled to " << opt.throttle << " bytes/sec)";
