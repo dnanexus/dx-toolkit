@@ -279,7 +279,7 @@ namespace dx {
       std::cout << "METHOD USED: " << method << " \n";
       std::cout << "CURLOPT_URL USED: " << url.c_str() << " \n";
 
-      // Set timeout to 30 minutes. It can be overriden for each method separately
+      // Set timeout to 15 minutes. It can be overriden for each method separately
       assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_TIMEOUT, 900l));
 
       switch (method) {
