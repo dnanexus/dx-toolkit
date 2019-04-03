@@ -269,7 +269,7 @@ namespace dx {
       assert(countTries < NUM_MAX_RETRIES);
 
       if (!reqCompleted) {
-        DXLOG(logWARNING) << "Unable to complete request: POST '" << url << "' (in retry #" << (countTries + 1) << "). Details: '" << hre.what() << "'";
+        DXLOG(logWARNING) << (unsigned long)time(NULL) << "; PID " << ::getpid() << "; Unable to complete request: POST '" << url << "' (in retry #" << (countTries + 1) << "). Details: '" << hre.what() << "'";
       }
       DXLOG(logWARNING) << "Waiting ... " << sec_to_wait << " seconds before retry " << (countTries + 1) << " of " << NUM_MAX_RETRIES << " ...";
       boost::this_thread::interruption_point();
@@ -295,7 +295,8 @@ namespace dx {
                        respJSON["error"]["type"].get<string>(),
                        req.responseCode);
     } else {
-      DXLOG(logERROR) << "Unable to complete request: POST '" << url << "' in '" << countTries << "' attempts." << endl;
+	
+      DXLOG(logERROR) << (unsigned long)time(NULL) << "; PID " << ::getpid() << "; Unable to complete request: POST '" << url << "' in '" << countTries << "' attempts." << endl;
       throw DXConnectionError("Was unable to make the request: POST '" + url + "' . Details: '" + hre.err + "'.", hre.errorCode);
     }
     // Unreachable line
