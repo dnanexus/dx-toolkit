@@ -276,8 +276,8 @@ namespace dx {
       // Make a copy of reqData, because read_callback (see HTTP_PUT case below) will modify it
       reqData_struct reqData_temp;
 
-      // Set timeout to 15 minutes. It can be overriden for each method separately
-      assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_TIMEOUT, 900l));
+      // Set max time the request is allowed to take. It can be overriden for each method separately
+      assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_TIMEOUT, 600l));
 
       switch (method) {
         case HTTP_POST:
@@ -302,7 +302,7 @@ namespace dx {
             /** set data object to pass to callback function */
             assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_READDATA, &reqData_temp));
           }
-          assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_TIMEOUT, 1800l));
+          assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_TIMEOUT, 900l));
           break;
         case HTTP_GET:
           assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_HTTPGET, 1l));
