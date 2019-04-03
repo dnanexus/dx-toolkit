@@ -57,20 +57,6 @@ class UserContext(object):
         dxpy.set_workspace_id(self.job_workspace_id)
 
 @contextlib.contextmanager
-def user_context(api_token):
-    """
-    Context manager to temporarily set a user DNAnexus context instead of a job context.
-    WARNING: This function should only be run on a DNAnexus worker.
-
-    Args:
-        api_token: User's API token, recommended to be limited in scope
-
-    Yields:
-        An environment that temporarily mimicks a user security context instead of a job security context
-
-    """
-
-@contextlib.contextmanager
 def set_env(**environ):
     """
     Context manager generator to temporarily set the subprocess environment variables.
