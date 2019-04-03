@@ -1,10 +1,74 @@
+# Copyright (C) 2013-2019 DNAnexus, Inc.
+#
+# This file is part of dx-toolkit (DNAnexus platform client libraries).
+#
+#   Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#   use this file except in compliance with the License. You may obtain a copy
+#   of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#   License for the specific language governing permissions and limitations
+#   under the License.
+
 from __future__ import print_function
 import os
 import sys
 import tempfile
 import subprocess
 import contextlib
+import dxpy
+import json
 
+class UserContext(object):
+    @dxpy.sugar.requires_worker_context
+    def __init__(self, api_token):
+        api_token = api_token.strip("\n")  # Python adds \n when reading from a file
+        self.user_secure_token = {"auth_token": api_token,
+                                 "auth_token_type": "Bearer"}
+        self.job_id = os.environ["DX_JOB_ID"]
+        self.job_security_context = json.loads(os.environ["DX_SECURITY_CONTEXT"])
+        self.job_workspace_id = os.environ["DX_WORKSPACE_ID"]
+
+    @dxpy.sugar.requires_worker_context
+    def __enter__(self):
+        proj = os.environ["DX_PROJECT_CONTEXT_ID"]
+        dxpy.set_job_id(None)
+        dxpy.set_security_context(self.user_secure_token)
+        dxpy.set_workspace_id(proj)
+        try:
+            dna_config_file = os.path.join(
+                os.environ["HOME"], ".dnanexus_config")
+            os.remove(dna_config_file)
+        except OSError:
+            print "As expected, .dnanexus_config not present."
+        else:
+            print "Could not remove .dnanexus_config file."
+        return self
+
+    @dxpy.sugar.requires_worker_context
+    def __exit__(self, type, value, traceback):
+        print "\nRestoring original Job context"
+        dxpy.set_job_id(self.job_id)
+        dxpy.set_security_context(self.job_security_context)
+        dxpy.set_workspace_id(self.job_workspace_id)
+
+@contextlib.contextmanager
+def user_context(api_token):
+    """
+    Context manager to temporarily set a user DNAnexus context instead of a job context.
+    WARNING: This function should only be run on a DNAnexus worker.
+
+    Args:
+        api_token: User's API token, recommended to be limited in scope
+
+    Yields:
+        An environment that temporarily mimicks a user security context instead of a job security context
+
+    """
 
 @contextlib.contextmanager
 def set_env(**environ):
