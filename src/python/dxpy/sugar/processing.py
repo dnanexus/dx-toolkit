@@ -72,9 +72,21 @@ class Processes:
         if not self.was_run:
             raise RuntimeError("Must call run() before returncode can be requested")
         if self._returncode is None:
-            # Set `self._returncode` to the returncode of the last process,
-            # to mimic behavior of `set -o pipefail`.
-            self._returncode = self._processes[-1].poll()
+            for proc in reversed(self._processes):
+                rc = proc.poll()
+                if rc is None:
+                    # The pipeline has not finished running
+                    break
+                if rc > 0:
+                    # A command finished with an error
+                    # Set `self._returncode` to the returncode of the last process
+                    # to finish with an error, to mimic behavior of `set -o pipefail`.
+                    self._returncode = rc
+                    break
+            else:
+                # None of the process return codes were None or non-zero, thus
+                # all must have been zero.
+                self._returncode = 0
         return self._returncode
 
     def _init_stdout(self):
