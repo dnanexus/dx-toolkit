@@ -492,8 +492,7 @@ void uploadProgressHelper(vector<File> &files) {
   }
   queueLock.unlock();
     
-  DXLOG(logUSERINFO) << (unsigned long)time(NULL) << " PID " << ::getpid() <<  " Xfer speed: AVG  = " << setw(6) << setprecision(2) << std::fixed << mbps << " MB/sec " << " INS = " << setw(6) << setprecision(2) << std::fixed << mbps2 << " MB/sec";
-
+  DXLOG(logUSERINFO) << (unsigned long)time(NULL) << " PID " << ::getpid() <<  " Transfer speed: average = " << setw(6) << setprecision(2) << std::fixed << mbps << " MB/sec " << " instantaneous = " << setw(6) << setprecision(2) << std::fixed << mbps2 << " MB/sec";
   if (opt.throttle >= 0) {
     DXLOG(logUSERINFO) << " (throttled to " << opt.throttle << " bytes/sec)";
   }
@@ -503,7 +502,7 @@ void uploadProgress(vector<File> &files) {
   try {
     do {
       uploadProgressHelper(files);
-      boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+      boost::this_thread::sleep(boost::posix_time::milliseconds(10000));
     } while (keepShowingUploadProgress);
     uploadProgressHelper(files);
     return;
@@ -964,7 +963,7 @@ int main(int argc, char * argv[]) {
       if (files[i].failed) {
         DXLOG(logUSERINFO) << "File \""<< files[i].localFile << "\" could not be uploaded." << endl;
       } else {
-        DXLOG(logUSERINFO) << "File \"" << files[i].localFile << "\" was uploaded successfully. Closing..." << endl;
+        DXLOG(logUSERINFO) << (unsigned long)time(NULL) << " PID " << ::getpid() << " File \"" << files[i].localFile << "\" was uploaded successfully. Closing...";
         if (files[i].isRemoteFileOpen) {
           files[i].close();
         }
@@ -978,6 +977,7 @@ int main(int argc, char * argv[]) {
     DXLOG(logINFO) << "Joining wait-on-close thread...";
     waitOnCloseThread.join();
     DXLOG(logINFO) << "Wait-on-close thread finished.";
+    DXLOG(logUSERINFO) << (unsigned long)time(NULL) << " PID " << ::getpid() << " ... all files closed.";
     if (anyImportAppToBeCalled) {
       runImportApps(opt, files);
     }
