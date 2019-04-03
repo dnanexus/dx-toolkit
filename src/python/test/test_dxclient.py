@@ -7087,7 +7087,7 @@ class TestSparkClusterApps(DXTestCaseBuildApps):
                        }
 
         # pass instance count with specific entry point
-        sysReqs = SystemRequirementsDict.from_cluster_spec(app_sys_reqs, {"cluster_2": "4"})
+        sysReqs = SystemRequirementsDict.from_cluster_spec(app_sys_reqs, {"cluster_2": "4.5"})
         self.assertEqual(sysReqs.cluster_spec['cluster_2']["clusterSpec"]["initialInstanceCount"], 4)
         self.assertEqual(sysReqs.cluster_spec['cluster_2']["clusterSpec"]["version"], "2.4.0")
         self.assertEqual(sysReqs.instance_type, None)
@@ -7110,11 +7110,6 @@ class TestSparkClusterApps(DXTestCaseBuildApps):
         self.assertTrue("*" not in added)
         self.assertTrue("cluster_2" not in added)
 
-        # pass instance count with entry point that is not defined in app sys reqs
-        # with self.assertRaises(DXCLIError):
-        # with self.assertRaisesRegex(subprocess.CalledProcessError, "DXCLIError"):
-        #     SystemRequirementsDict.from_cluster_spec(app_sys_reqs, instance_count_arg={"blabla": "32"})
-
     def test_get_cluster_spec_for_app_with_wildcard_entrypoint(self):
         bootstrap_code = "import sys\n"
         app_sys_reqs = {"*": {
@@ -7132,7 +7127,7 @@ class TestSparkClusterApps(DXTestCaseBuildApps):
                         }}
 
         # # pass instance count with "*" entry point
-        sysReqs = SystemRequirementsDict.from_cluster_spec(app_sys_reqs, "8")
+        sysReqs = SystemRequirementsDict.from_cluster_spec(app_sys_reqs, 8)
         self.assertEqual(sysReqs.cluster_spec['*']["clusterSpec"]["initialInstanceCount"], 8)
         self.assertEqual(sysReqs.cluster_spec['*']["clusterSpec"]["bootstrapScript"], bootstrap_code)
         self.assertEqual(sysReqs.cluster_spec['other']["clusterSpec"]["initialInstanceCount"], 8)
@@ -7182,7 +7177,9 @@ class TestSparkClusterApps(DXTestCaseBuildApps):
 
         # pass instance count and instance type
         sysReqsIcount = SystemRequirementsDict.from_cluster_spec(app_sys_reqs, {"spark_entry": "422", "*": "522"})
-        sysReqsItype = SystemRequirementsDict.from_instance_type({"*": "mem1_ssd1_x2", "spark_entry": "mem1_ssd1_x4"})
+        sysReqsItype = SystemRequirementsDict.from_instance_type({"*": "mem1_ssd1_x2",
+                                                                  "spark_entry": "mem1_ssd1_x4",
+                                                                  "no_spark_entry": "mem1_ssd1_x8"})
         added = (sysReqsIcount + sysReqsItype).as_dict()
         expected = {
                     'spark_entry': { 
@@ -7190,11 +7187,12 @@ class TestSparkClusterApps(DXTestCaseBuildApps):
                                     'bootstrapScript': 'import sys\n',
                                     'version': '2.4.0',
                                     'type': 'spark',
-                                    'initialInstanceCount': 422
-                            },
-                            'instanceType': 'mem1_ssd1_x4'
-                    }, '*': { 
-                            'instanceType': 'mem1_ssd1_x2'
+                                    'initialInstanceCount': 422},
+                            'instanceType': 'mem1_ssd1_x4'},
+                    '*': {
+                            'instanceType': 'mem1_ssd1_x2'},
+                    'no_spark_entry': { 
+                            'instanceType': 'mem1_ssd1_x8'
                     }}
         self.assertEqual(added, expected)
 
