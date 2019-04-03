@@ -7121,7 +7121,13 @@ class TestSparkClusterApps(DXTestCaseBuildApps):
                             "instanceType": "mem2_hdd2_x1",
                             "clusterSpec": {"type": "spark",
                                             "version": "2.4.0",
-                                            "initialInstanceCount": 2,
+                                            "initialInstanceCount": 22,
+                                            "bootstrapScript": bootstrap_code}},
+                        "other": {
+                            "instanceType": "mem2_hdd2_x2",
+                            "clusterSpec": {"type": "spark",
+                                            "version": "2.4.0",
+                                            "initialInstanceCount": 33,
                                             "bootstrapScript": bootstrap_code}
                         }}
 
@@ -7129,6 +7135,8 @@ class TestSparkClusterApps(DXTestCaseBuildApps):
         sysReqs = SystemRequirementsDict.from_cluster_spec(app_sys_reqs, "8")
         self.assertEqual(sysReqs.cluster_spec['*']["clusterSpec"]["initialInstanceCount"], 8)
         self.assertEqual(sysReqs.cluster_spec['*']["clusterSpec"]["bootstrapScript"], bootstrap_code)
+        self.assertEqual(sysReqs.cluster_spec['other']["clusterSpec"]["initialInstanceCount"], 8)
+        self.assertEqual(sysReqs.cluster_spec['other']["clusterSpec"]["bootstrapScript"], bootstrap_code)
         self.assertEqual(sysReqs.instance_type, None)
 
         # pass instance count with a named entry point

@@ -72,13 +72,13 @@ class SystemRequirementsDict(object):
         field here is only one of many (version, ports, etc) that should be copied from app
         spec to merged_cluster_spec:
 
-        Requested: {"*": 5}
+        Requested: {"*": 5} done
         App doc: {"main": "clusterSpec": {"initialInstanceCount": 7, bootstrapScript: "x.sh"},
                 "other": "clusterSpec": {"initialInstanceCount": 9, bootstrapScript: "y.sh"}}
         Merged: {"main": "clusterSpec": {"initialInstanceCount": 5, bootstrapScript: "x.sh"},
                 "other": "clusterSpec": {"initialInstanceCount": 5, bootstrapScript: "y.sh"}}
         
-        Requested: {"*": 15}
+        Requested: {"*": 15} done
         App doc: {"main": "clusterSpec": {"initialInstanceCount": 7, bootstrapScript: "x.sh"},
                   "other": "clusterSpec": {"initialInstanceCount": 9, bootstrapScript: "y.sh"},
                   "*": "clusterSpec": {"initialInstanceCount": 11, bootstrapScript: "y.sh"}}
@@ -129,14 +129,14 @@ class SystemRequirementsDict(object):
             if entry_pt not in merged_cluster_spec and "*" in app_sys_reqs and "clusterSpec" in app_sys_reqs["*"]:
                 merged_cluster_spec[entry_pt] = {"clusterSpec": copy.deepcopy(app_sys_reqs["*"]["clusterSpec"])}
                 merged_cluster_spec[entry_pt]["clusterSpec"]["initialInstanceCount"] = inst_count
-            # else:
-            #     # Error out when user requested instance count for entrypoints
-            #     # that don't exist in app systemRequirements
-            #     if not merged_cluster_spec and requested_counts:
-            #         requested_entry_pts = ",".join(requested_counts.keys())
-            #         mesg = '--instance-count is not supported for entrypoints that are not' \
-            #                ' specified in the app system requirements or entrypoints without clusterSpec: ' + requested_entry_pts
-            #         raise DXCLIError(mesg)
+            else:
+                # Error out when user requested instance count for entrypoints
+                # that don't exist in app systemRequirements
+                if not merged_cluster_spec and requested_counts:
+                    requested_entry_pts = ",".join(requested_counts.keys())
+                    mesg = '--instance-count is not supported for entrypoints that are not' \
+                           ' specified in the app system requirements or entrypoints without clusterSpec: ' + requested_entry_pts
+                    raise DXCLIError(mesg)
         return cls(cluster_spec=merged_cluster_spec)
 
     def _add_dictionaries(self, one_dict, other_dict):
