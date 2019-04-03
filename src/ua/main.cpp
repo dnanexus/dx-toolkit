@@ -397,7 +397,7 @@ void uploadChunks(vector<File> &files) {
 
 void monitor() {
   while (true) {
-    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+    boost::this_thread::sleep(boost::posix_time::milliseconds(10000));
     {
       DXLOG(logINFO) << "[monitor]"
           << "  to read: " << chunksToRead.size()
@@ -442,7 +442,7 @@ void updateFileState(vector<File> &files) {
 
 void waitOnClose(vector<File> &files) {
   do {
-    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+    boost::this_thread::sleep(boost::posix_time::milliseconds(10000));
     updateFileState(files);
   } while (!allFilesDone(files));
 }
