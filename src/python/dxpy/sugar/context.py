@@ -4,7 +4,6 @@ import sys
 import tempfile
 import subprocess
 import contextlib
-import shutil
 
 
 @contextlib.contextmanager
