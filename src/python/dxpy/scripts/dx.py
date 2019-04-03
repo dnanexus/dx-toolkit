@@ -2812,7 +2812,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
     if args.instance_count is not None:
         executable_describe = executable.describe()
         app_sys_reqs = executable_describe['runSpec'].get('systemRequirements', {})
-        cluster_spec = SystemRequirementsDict.from_cluster_spec(app_sys_reqs, args.instance_count)
+        cluster_spec = SystemRequirementsDict.from_instance_count(app_sys_reqs, args.instance_count)
 
     instance_type = SystemRequirementsDict.from_instance_type(args.instance_type)
 

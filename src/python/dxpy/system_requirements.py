@@ -15,7 +15,25 @@ system requirements.
 '''
 
 class SystemRequirementsDict(object):
+    """
+    A class representing system requirements that can be passed as
+    "systemRequirements" to the class-xxxx/run API call (after converting
+    it to a dictionary with as_dict()).
+    """
+
     def __init__(self, instance_type=None, cluster_spec=None):
+        """
+        Example of the instance_type input:
+        {"main":
+            {"instanceType": "mem2_hdd2_x2"},
+         "other_function":
+            {"instanceType": "mem2_hdd2_x1"}}
+        Example of the cluster_spec input:
+        {"main":
+            {"clusterSpec": {"type": "spark",
+                             "version": "2.4.0",
+                             "initialInstanceCount": 2}}}
+        """
         self.instance_type = instance_type
         self.cluster_spec = cluster_spec
 
@@ -27,18 +45,15 @@ class SystemRequirementsDict(object):
         * string or int eg. "6" or 8
         * dictionary, eg. {"main": 4, "other_function": 2}
         """
-        if isinstance(instance_count, basestring) or isinstance(instance_count, int):
-            # By default, all entry points ("*") should use this instance type
-            print("instance_count", instance_count)
-            return {entrypoint: int(instance_count)}
-        elif isinstance(instance_count, dict):
-            # instance_type is a map of entry point to instance count
-            try:
+        try:
+            if isinstance(instance_count, basestring) or isinstance(instance_count, int):
+                # By default, all entry points ("*") should use this instance type
+                return {entrypoint: int(instance_count)}
+            elif isinstance(instance_count, dict):
                 return {k: int(v) for k, v in instance_count.items()}
-            except ValueError:
-                raise DXCLIError('Expected value of the instance_count field to be an int')
-        else:
-            raise DXError('Expected instance_count field to be either a string or a dict')
+            raise ValueError
+        except ValueError:
+            DXError('Expected instance_count field to be either an int, string or a dict')
 
     @classmethod
     def from_instance_type(cls, instance_type_arg, entrypoint="*"):
@@ -61,14 +76,14 @@ class SystemRequirementsDict(object):
             raise DXError('Expected instance_type field to be either a string or a dict')
 
     @classmethod
-    def from_cluster_spec(cls, app_sys_reqs, instance_count_arg):
+    def from_instance_count(cls, app_sys_reqs, instance_count_arg):
         """
         Returns SystemRequirementsDict with cluster_spec that can be passed in a "systemRequirements"
         input to app-xxx/run, e.g. {'fn': {'clusterSpec': {initialInstanceCount: 3, version: "2.4.0", ..}}}
         Since full clusterSpec must be passed to the API server, we need to retrieve the cluster
         spec defined in app doc's systemRequirements and overwrite the field initialInstanceCount
         with the value the user passed to dx run for each entrypoint.
-        Instance count is currently the only clusterSpec's field the user is allowed to change
+        initialInstanceCount is currently the only clusterSpec's field the user is allowed to change
         at runtime.
         A few scenarios when requesting instance count for different entrypoints with dx run 
         and the resulting merged systemRequirements (merged_cluster_spec). The bootstapScript
@@ -129,7 +144,7 @@ class SystemRequirementsDict(object):
                 merged_cluster_spec[entry_pt]["clusterSpec"]["initialInstanceCount"] = inst_count
 
         if not merged_cluster_spec and requested_counts:
-                    requested_entry_pts = ",".join(requested_counts.keys())
+                    requested_entry_pts = ", ".join(requested_counts.keys())
                     mesg = '--instance-count is not supported for entrypoints that are not' \
                            ' specified in the app system requirements or entrypoints without clusterSpec: ' + requested_entry_pts
                     raise DXCLIError(mesg)
