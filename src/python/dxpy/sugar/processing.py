@@ -69,13 +69,12 @@ class Processes:
         """
         The max return code of all the commands in the chain.
         """
+        if not self.was_run:
+            raise RuntimeError("Must call run() before returncode can be requested")
         if self._returncode is None:
-            returncodes = [
-                proc.returncode for proc in self._processes if proc.poll() is not None
-            ]
-            if returncodes:
-                # TODO: Is setting to max the right behavior?
-                self._returncode = max(returncodes)
+            # Set `self._returncode` to the returncode of the last process,
+            # to mimic behavior of `set -o pipefail`.
+            self._returncode = self._processes[-1].poll()
         return self._returncode
 
     def _init_stdout(self):
