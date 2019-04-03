@@ -467,8 +467,7 @@ void uploadProgressHelper(vector<File> &files) {
   int64_t timediff  = std::time(0) - startTime;
   double mbps = (timediff > 0) ? (double(bytesUploadedSinceStart) / (1024.0 * 1024.0)) / timediff : 0.0;
   boLock.unlock();
-  DXLOG(logUSERINFO) << " ... Average transfer speed = " << setw(6) << setprecision(2) << std::fixed << mbps << " MB/sec";
-
+ 
   // Print instantaneous transfer rate
   boost::mutex::scoped_lock queueLock(instantaneousBytesMutex);
   double mbps2 = 0.0;
@@ -492,7 +491,7 @@ void uploadProgressHelper(vector<File> &files) {
     }
   }
   queueLock.unlock();
-  DXLOG(logUSERINFO) << " ... Instantaneous transfer speed = " << setw(6) << setprecision(2) << std::fixed << mbps2 << " MB/sec";
+  DXLOG(logUSERINFO) << "Transfer speed: Average  = " << setw(6) << setprecision(2) << std::fixed << mbps << " MB/sec " << "; Instantaneous = " << setw(6) << setprecision(2) << std::fixed << mbps2 << " MB/sec";
 
   if (opt.throttle >= 0) {
     DXLOG(logUSERINFO) << " (throttled to " << opt.throttle << " bytes/sec)";
