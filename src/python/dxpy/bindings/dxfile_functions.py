@@ -39,6 +39,7 @@ from ..compat import open, USING_PYTHON2
 from ..exceptions import DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, DXIncompleteReadsError, err_exit
 from ..utils import response_iterator
 import subprocess
+from . import timeout
 
 def open_dxfile(dxid, project=None, mode=None, read_buffer_size=dxfile.DEFAULT_BUFFER_SIZE):
     '''
@@ -527,10 +528,26 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
         if len(buf) == 0:
             break
 
-        handler.write(buf,
-                      report_progress_fn=report_progress if show_progress else None,
-                      multithread=multithread,
-                      **remaining_kwargs)
+        MAX_RETRIES_PART_UPLOAD = 5
+        # Set a 5 minute timeout on uploading a part
+        @timeout.timeout(60*5)
+        def upload_part():
+            handler.write(buf,
+                        report_progress_fn=report_progress if show_progress else None,
+                        multithread=multithread,
+                        **remaining_kwargs)
+
+        for i in xrange(MAX_RETRIES_PART_UPLOAD):
+            try:
+                upload_part()
+                break
+            except Exception as e:
+                if i == MAX_RETRIES_PART_UPLOAD - 1:
+                    raise Exception("Tried too many times to upload file part.  There may be some issue with the network connectivity.")
+                else:
+                    print("Timeout exceeded uploading file part. Retrying upload.")
+                    continue    
+
 
     if filename is not None:
         fd.close()
