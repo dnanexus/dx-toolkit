@@ -22,6 +22,9 @@ import subprocess
 import contextlib
 import dxpy
 import json
+import logging
+
+LOG = logging.getLogger()
 
 class UserContext(object):
     @dxpy.sugar.requires_worker_context
@@ -44,14 +47,14 @@ class UserContext(object):
                 os.environ["HOME"], ".dnanexus_config")
             os.remove(dna_config_file)
         except OSError:
-            print "As expected, .dnanexus_config not present."
+            LOG.info("As expected, .dnanexus_config not present.")
         else:
-            print "Could not remove .dnanexus_config file."
+            LOG.error("Could not remove .dnanexus_config file.")
         return self
 
     @dxpy.sugar.requires_worker_context
     def __exit__(self, type, value, traceback):
-        print "\nRestoring original Job context"
+        LOG.info("Restoring original Job context")
         dxpy.set_job_id(self.job_id)
         dxpy.set_security_context(self.job_security_context)
         dxpy.set_workspace_id(self.job_workspace_id)
