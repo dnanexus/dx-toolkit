@@ -302,7 +302,6 @@ namespace dx {
             /** set data object to pass to callback function */
             assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_READDATA, &reqData_temp));
           }
-          assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_TIMEOUT, 900l));
           break;
         case HTTP_GET:
           assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_HTTPGET, 1l));
