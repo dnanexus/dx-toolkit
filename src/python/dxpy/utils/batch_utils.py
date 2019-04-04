@@ -153,8 +153,7 @@ def batch_launch_args(executable, input_json, batch_tsv_file):
             batch_index = i
         if col_name not in input_classes:
             continue
-        if (input_classes[col_name] == 'file' or
-            input_classes[col_name] == 'array:file'):
+        if input_classes[col_name] in ['file', 'array:file']:
             idx = _search_column_id(col_name, header_line)
             index_2_column[idx] = col_name
         else:
