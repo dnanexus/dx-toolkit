@@ -2805,9 +2805,12 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
                                   **(args.instance_type or {}))
 
     if args.sys_reqs_from_clone and not isinstance(args.instance_count, str):
-        args.instance_count = dict({fn: reqs['clusterSpec'] for fn, reqs in list(args.sys_reqs_from_clone.items())},
-                                  **(args.instance_count or {}))
+        # extract instance counts from cloned sys reqs and override them with args provided with "dx run"
+        args.instance_count = dict({fn: reqs['clusterSpec']['initialInstanceCount']
+                                        for fn, reqs in list(args.sys_reqs_from_clone.items()) if 'clusterSpec' in reqs},
+                                   **(args.instance_count or {}))
 
+    executable_describe = None
     srd_cluster_spec = SystemRequirementsDict(None)
     if args.instance_count is not None:
         executable_describe = executable.describe()
@@ -2815,8 +2818,6 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
             executable_describe['runSpec'].get('systemRequirements', {}), _type='clusterSpec')
         srd_requested = SystemRequirementsDict.from_instance_count(args.instance_count)
         srd_cluster_spec = srd_default.override_cluster_spec(srd_requested)
-
-    srd_instance_type = SystemRequirementsDict.from_instance_type(args.instance_type)
 
     if args.debug_on:
         if 'All' in args.debug_on:
@@ -2836,7 +2837,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "debug": {"debugOn": args.debug_on} if args.debug_on else None,
         "delay_workspace_destruction": args.delay_workspace_destruction,
         "priority": ("high" if args.watch else args.priority),
-        "instance_type": srd_instance_type.as_dict(),
+        "instance_type": args.instance_type,
         "stage_instance_types": args.stage_instance_types,
         "stage_folders": args.stage_folders,
         "rerun_stages": args.rerun_stages,

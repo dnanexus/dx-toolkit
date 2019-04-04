@@ -32,6 +32,8 @@ class SystemRequirementsDict(object):
                              "version": "2.4.0",
                              "initialInstanceCount": 2}}}
         """
+        if entrypoints is not None and not isinstance(entrypoints, dict):
+            raise DXError("Expected entrypoints to be a dict or None")
         self.entrypoints = copy.deepcopy(entrypoints)
 
     @classmethod
@@ -44,6 +46,8 @@ class SystemRequirementsDict(object):
         * dictionary, eg. {"main": 4, "other_function": 2}
         """
         try:
+            if instance_count_arg is None:
+                return cls(None)
             if isinstance(instance_count_arg, basestring) or isinstance(instance_count_arg, int):
                 return cls({entrypoint: {"clusterSpec": {"initialInstanceCount": int(instance_count_arg)}}})
             elif isinstance(instance_count_arg, dict):
@@ -74,6 +78,11 @@ class SystemRequirementsDict(object):
 
     @classmethod
     def from_sys_requirements(cls, system_requirements, _type='all'):
+        """
+        Returns SystemRequirementsDict encapsulating system requirements.
+        It can extract only entrypoints with specific fields ('clusterSpec',
+        'instanceType', etc), depending on the value of _type.
+        """
         if _type not in ('all', 'clusterSpec', 'instanceType'):
             raise DXError("Expected '_type' to be either 'all', 'clusterSpec', or 'instanceType'")
 
@@ -152,12 +161,6 @@ class SystemRequirementsDict(object):
                 merged_cluster_spec[entry_pt] = {"clusterSpec": copy.deepcopy(self.entrypoints["*"]["clusterSpec"])}
                 merged_cluster_spec[entry_pt]["clusterSpec"].update(req["clusterSpec"])
 
-        if not merged_cluster_spec and srd.entrypoints:
-                    requested_entry_pts = ",".join(srd.entrypoints.keys())
-                    mesg = '--instance-count is not supported for entrypoints that are not' \
-                           ' specified in the app system requirements or entrypoints without clusterSpec: ' + requested_entry_pts
-                    raise DXCLIError(mesg)
-
         return SystemRequirementsDict(merged_cluster_spec)
 
     def _add_dict_values(self, d1, d2):
@@ -168,6 +171,7 @@ class SystemRequirementsDict(object):
         will return: {'a': {'x': pqr, 'y': lmn}, 'b': {'y': rst}}.
         Collisions of the keys of the sub-dictionaries are not checked.
         """
+
         if d1 is None and d2 is None:
             return None
 

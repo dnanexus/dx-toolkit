@@ -319,6 +319,8 @@ def process_instance_type_arg(args, for_workflow=False):
 
 def process_instance_count_arg(args):
     if args.instance_count:
+        # If --instance-count was used multiple times, the last one
+        # from the list will override the previous ones
         if not isinstance(args.instance_count, basestring):
             args.instance_count = _parse_inst_count(args.instance_count[-1])
         else:
