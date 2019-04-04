@@ -26,7 +26,7 @@ import csv
 import dxpy
 import json
 
-from ..compat import open
+from ..compat import USING_PYTHON2, open
 from ..exceptions import err_exit, DXError
 
 
@@ -133,7 +133,10 @@ def _search_column_id(col_name, header_line):
 def batch_launch_args(executable, input_json, batch_tsv_file):
     header_line = []
     lines = []
-    with open(batch_tsv_file, "rb") as f:
+    read_mode = "r"
+    if USING_PYTHON2:
+        read_mode = "rb"
+    with open(batch_tsv_file, read_mode) as f:
         reader = csv.reader(f, delimiter=str(u'\t'))
         header_line = next(reader)
         lines = list(reader)
@@ -148,13 +151,13 @@ def batch_launch_args(executable, input_json, batch_tsv_file):
     for i, col_name in enumerate(header_line):
         if col_name == BATCH_ID:
             batch_index = i
-        elif (col_name in input_classes and
-              input_classes[col_name] != 'file'):
-            index_2_column[i] = col_name
-        elif (col_name in input_classes and
-              input_classes[col_name] == 'file'):
+        if col_name not in input_classes:
+            continue
+        if input_classes[col_name] in ['file', 'array:file']:
             idx = _search_column_id(col_name, header_line)
             index_2_column[idx] = col_name
+        else:
+            index_2_column[i] = col_name
     if batch_index is None:
         raise Exception("Could not find column {}".format(BATCH_ID))
 
@@ -206,7 +209,7 @@ def batch_launch_args(executable, input_json, batch_tsv_file):
 #     invoke the executable.
 # set_batch_folders: boolean, if True, the results from each batch
 #     run will be placed in a separate output folder named after batch ID.
-#     The folders will be created/used relative to the output folder set with 
+#     The folders will be created/used relative to the output folder set with
 #     the --destination arg
 def batch_run(executable, b_args, run_kwargs, set_batch_folders=False):
     run_args = run_kwargs.copy()
