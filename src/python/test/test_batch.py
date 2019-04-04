@@ -146,6 +146,56 @@ class TestDXRunBatch(DXTestCase):
         self.assertEqual(job_desc["executableName"], 'copy_file')
         self.assertEqual(job_desc["input"], { "plant": {"$dnanexus_link": dxfile.get_id() }})
 
+    def test_file_arrays(self):
+        # Create file with junk content
+        dxfile = dxpy.upload_string("xxyyzz", project=self.project,
+                                    wait_on_close=True, name="bubbles")
+
+        # write python code into code.py file
+        tmp_path = tempfile.mkdtemp()
+        code_path = os.path.join(tmp_path, 'code.py')
+        with open(code_path, write_mode) as f:
+            f.write("@dxpy.entry_point('main')\n")
+            f.write("def main(**job_inputs):\n")
+            f.write("\toutput = {}\n")
+            f.write("\toutput['plant'] = job_inputs['plant']\n")
+            f.write("\treturn output\n")
+            f.write("\n")
+            f.write("dxpy.run()\n")
+        with open(code_path, 'r') as f:
+            code = f.read()
+
+        # write arguments table. These ara arrays with a single element.
+        arg_table = os.path.join(tmp_path, 'table.csv')
+        with open(arg_table, write_mode) as csvfile:
+            writer = csv.writer(csvfile, delimiter='\t')
+            header = ["batch ID", "plant", "plant ID"]
+            writer.writerow(header)
+            writer.writerow(["SRR_1",
+                             "[bubbles]",
+                             "[" + dxfile.get_id() + "]"
+            ])
+
+        applet = dxpy.api.applet_new({
+            "name": "ident_file_array",
+            "project": self.project,
+            "dxapi": "1.0.0",
+            "inputSpec": [ { "name": "plant", "class": "array:file" } ],
+            "outputSpec": [ { "name": "plant", "class": "array:file" } ],
+            "runSpec": { "interpreter": "python2.7",
+                         "code": code,
+                         "distribution": "Ubuntu",
+                         "release": "14.04" }
+        })
+        job_id = run("dx run {} --batch-tsv={} --yes --brief"
+                     .format(applet["id"], arg_table)).strip()
+        job_desc = dxpy.api.job_describe(job_id)
+        self.assertEqual(job_desc["executableName"], 'ident_file_array')
+        self.assertEqual(job_desc["input"],
+                         { "plant":
+                           [{ "$dnanexus_link": dxfile.get_id() }]
+                         })
+
 
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
