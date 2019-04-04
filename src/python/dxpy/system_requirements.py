@@ -152,6 +152,12 @@ class SystemRequirementsDict(object):
                 merged_cluster_spec[entry_pt] = {"clusterSpec": copy.deepcopy(self.entrypoints["*"]["clusterSpec"])}
                 merged_cluster_spec[entry_pt]["clusterSpec"].update(req["clusterSpec"])
 
+        if not merged_cluster_spec and srd.entrypoints:
+                    requested_entry_pts = ",".join(srd.entrypoints.keys())
+                    mesg = '--instance-count is not supported for entrypoints that are not' \
+                           ' specified in the app system requirements or entrypoints without clusterSpec: ' + requested_entry_pts
+                    raise DXCLIError(mesg)
+
         return SystemRequirementsDict(merged_cluster_spec)
 
     def _add_dict_values(self, d1, d2):

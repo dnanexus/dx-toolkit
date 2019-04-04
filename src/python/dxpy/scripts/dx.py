@@ -4742,7 +4742,7 @@ parser_run.add_argument('--batch-tsv', dest='batch_tsv', metavar="FILE",
                                   'of the executable input arguments. A job will be launched ' +
                                   'for each table row.',
                                   width_adjustment=-24))
-ic_format = '{"entrypoint": <number of instances>}'
+ic_format = '\'{"entrypoint": <number of instances>}\''
 parser_run.add_argument('--instance-count',
                                metavar='INSTANCE_COUNT_OR_MAPPING',
                                help=fill('Specify spark cluster instance count(s). It can be an int or a mapping of the format {ic}'.format(ic=ic_format), width_adjustment=-24),
