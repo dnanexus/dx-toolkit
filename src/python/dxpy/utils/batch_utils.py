@@ -151,13 +151,14 @@ def batch_launch_args(executable, input_json, batch_tsv_file):
     for i, col_name in enumerate(header_line):
         if col_name == BATCH_ID:
             batch_index = i
-        elif (col_name in input_classes and
-              input_classes[col_name] != 'file'):
-            index_2_column[i] = col_name
-        elif (col_name in input_classes and
-              input_classes[col_name] == 'file'):
+        if col_name not in input_classes:
+            continue
+        if (input_classes[col_name] == 'file' or
+            input_classes[col_name] == 'array:file'):
             idx = _search_column_id(col_name, header_line)
             index_2_column[idx] = col_name
+        else:
+            index_2_column[i] = col_name
     if batch_index is None:
         raise Exception("Could not find column {}".format(BATCH_ID))
 
