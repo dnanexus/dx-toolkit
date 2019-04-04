@@ -7066,6 +7066,14 @@ class TestSparkClusterApps(DXTestCaseBuildApps):
             # now rebuild with the result of `dx get` and verify that we get the same result
             build_and_verify_bootstrap_script_inlined("cluster_app")
 
+    def test_instance_count_not_supported_for_non_spark_apps(self):
+        applet_spec = dict(self.base_applet_spec, project=self.project)
+        applet_spec["runSpec"]["code"] = "import os"
+        applet_id = dxpy.api.applet_new(applet_spec)["id"]
+        with self.assertRaisesRegex(subprocess.CalledProcessError,
+                                    "--instance-count is not supported"):
+            run("dx run " + applet_id + " --instance-count 5 -y")
+
 class TestDXBuildApp(DXTestCaseBuildApps):
     def run_and_assert_stderr_matches(self, cmd, stderr_regexp):
         with self.assertSubprocessFailure(stderr_regexp=stderr_regexp, exit_code=28):
