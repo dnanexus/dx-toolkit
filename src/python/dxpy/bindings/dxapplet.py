@@ -56,8 +56,10 @@ class DXExecutable:
             if kwargs.get(arg) is not None:
                 run_input[arg] = kwargs[arg]
 
-        if kwargs.get('instance_type').instance_type is not None or kwargs.get('cluster_spec').cluster_spec is not None:
-            run_input["systemRequirements"] = (kwargs.get('instance_type') + kwargs.get('cluster_spec')).as_dict()
+        if kwargs.get('instance_type').entrypoints is not None or kwargs.get('cluster_spec').entrypoints is not None:
+            instance_types_srd = kwargs.get('instance_type')
+            cluster_spec_srd = kwargs.get('cluster_spec')
+            run_input["systemRequirements"] =  (instance_types_srd + cluster_spec_srd).as_dict()
 
         if kwargs.get('depends_on') is not None:
             run_input["dependsOn"] = []

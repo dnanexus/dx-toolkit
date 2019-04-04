@@ -21,36 +21,33 @@ class SystemRequirementsDict(object):
     it to a dictionary with as_dict()).
     """
 
-    def __init__(self, instance_type=None, cluster_spec=None):
+    def __init__(self, entrypoints):
         """
-        Example of the instance_type input:
+        Example of the entrypoints input:
         {"main":
             {"instanceType": "mem2_hdd2_x2"},
          "other_function":
-            {"instanceType": "mem2_hdd2_x1"}}
-        Example of the cluster_spec input:
-        {"main":
-            {"clusterSpec": {"type": "spark",
+            {"instanceType": "mem2_hdd2_x1",
+             "clusterSpec": {"type": "spark",
                              "version": "2.4.0",
                              "initialInstanceCount": 2}}}
         """
-        self.instance_type = instance_type
-        self.cluster_spec = cluster_spec
+        self.entrypoints = copy.deepcopy(entrypoints)
 
     @classmethod
-    def entrypoint2instcount(cls, instance_count, entrypoint="*"):
+    def from_instance_count(cls, instance_count_arg, entrypoint="*"):
         """
-        Returns a dictionary {entrypoint: instance_count}. The instance_count should
-        be either a:
+        Returns a SystemRequirementsDict that can be passed as a
+        "systemRequirements" input to job/new or run/ API calls.
+        The instance_count_arg should be either a:
         * string or int eg. "6" or 8
         * dictionary, eg. {"main": 4, "other_function": 2}
         """
         try:
-            if isinstance(instance_count, basestring) or isinstance(instance_count, int):
-                # By default, all entry points ("*") should use this instance type
-                return {entrypoint: int(instance_count)}
-            elif isinstance(instance_count, dict):
-                return {k: int(v) for k, v in instance_count.items()}
+            if isinstance(instance_count_arg, basestring) or isinstance(instance_count_arg, int):
+                return cls({entrypoint: {"clusterSpec": {"initialInstanceCount": int(instance_count_arg)}}})
+            elif isinstance(instance_count_arg, dict):
+                return cls({k: {"clusterSpec": {"initialInstanceCount": int(v)}} for k, v in instance_count_arg.items()})
             raise ValueError
         except ValueError:
             DXError('Expected instance_count field to be either an int, string or a dict')
@@ -58,27 +55,40 @@ class SystemRequirementsDict(object):
     @classmethod
     def from_instance_type(cls, instance_type_arg, entrypoint="*"):
         """
-        Returns SystemRequirementsDict with instance_type that can be passed as a
-        "systemRequirements" input to job/new or run/ API calls. The instance_type_arg
-        should be either a:
+        Returns SystemRequirementsDict that can be passed as a
+        "systemRequirements" input to job/new or run/ API calls.
+        The instance_type_arg should be either a:
         * string, eg. mem1_ssd1_x2
         * dictionary, eg. {"main": "mem2_hdd2_x2", "other_function": "mem2_hdd2_x1"}
         """
         if instance_type_arg is None:
-            return cls(instance_type=None)
+            return cls(None)
         elif isinstance(instance_type_arg, basestring):
             # By default, all entry points ("*") should use this instance type
-            return cls(instance_type={entrypoint: {"instanceType": instance_type_arg}})
+            return cls({entrypoint: {"instanceType": instance_type_arg}})
         elif isinstance(instance_type_arg, dict):
             # instance_type is a map of entry point to instance type
-            return cls(instance_type={fn: {"instanceType": fn_inst} for fn, fn_inst in instance_type_arg.items()})
+            return cls({fn: {"instanceType": fn_inst} for fn, fn_inst in instance_type_arg.items()})
         else:
             raise DXError('Expected instance_type field to be either a string or a dict')
 
     @classmethod
-    def from_instance_count(cls, app_sys_reqs, instance_count_arg):
+    def from_sys_requirements(cls, system_requirements, _type='all'):
+        if _type not in ('all', 'clusterSpec', 'instanceType'):
+            raise DXError("Expected '_type' to be either 'all', clusterSpec', or 'instanceType'")
+
+        if _type == 'all':
+            return cls(system_requirements)
+
+        extracted = defaultdict(dict)
+        for entrypoint, req in system_requirements.items():
+            if _type in req:
+                extracted[entrypoint][_type] = req[_type]
+        return cls(dict(extracted))
+
+    def override_cluster_spec(self, srd):
         """
-        Returns SystemRequirementsDict with cluster_spec that can be passed in a "systemRequirements"
+        Returns SystemRequirementsDict can be passed in a "systemRequirements"
         input to app-xxx/run, e.g. {'fn': {'clusterSpec': {initialInstanceCount: 3, version: "2.4.0", ..}}}
         Since full clusterSpec must be passed to the API server, we need to retrieve the cluster
         spec defined in app doc's systemRequirements and overwrite the field initialInstanceCount
@@ -119,76 +129,55 @@ class SystemRequirementsDict(object):
                  "*": "clusterSpec": {"initialInstanceCount": 11, bootstrapScript: "t.sh"}}
         """
 
-        requested_counts = cls.entrypoint2instcount(instance_count_arg)
-        merged_cluster_spec = copy.deepcopy(app_sys_reqs)
+        merged_cluster_spec = copy.deepcopy(self.entrypoints)
 
         # Remove entrypoints without "clusterSpec"
         merged_cluster_spec = dict([(k, v) for k, v in merged_cluster_spec.items() if v.get("clusterSpec") is not None])
-        
+
         # Remove entrypoints not provided in requested instance counts
         merged_cluster_spec = dict([(k, v) for k, v in merged_cluster_spec.items() if \
-            k in requested_counts or "*" in requested_counts])
+            k in srd.entrypoints or "*" in srd.entrypoints])
 
-        # Overwrite initialInstanceCount with the requested count.
-        # Named entrypoint used in requested_counts takes precedence over the wildcard
+        # Overwrite values of self.entrypoints.clusterSpec with the ones from srd
+        # Named entrypoint takes precedence over the wildcard
         for entry_pt, req in merged_cluster_spec.items():
-            merged_cluster_spec[entry_pt]["clusterSpec"]["initialInstanceCount"] = \
-                requested_counts.get(entry_pt, requested_counts.get("*"))
+            merged_cluster_spec[entry_pt]["clusterSpec"].update(
+                srd.entrypoints.get(entry_pt, srd.entrypoints.get("*"))["clusterSpec"])
 
-        # Check if all elements in requested_counts are included in merged_cluster_spec
-        # (if a named entrypoint was used in requested instance count and such an entrypoint
-        # doesn't exist in app sys req, we need to take the cluster spec from the app's "*", if it exists)
-        for entry_pt, inst_count in requested_counts.items():
-            if entry_pt not in merged_cluster_spec and "*" in app_sys_reqs and "clusterSpec" in app_sys_reqs["*"]:
-                merged_cluster_spec[entry_pt] = {"clusterSpec": copy.deepcopy(app_sys_reqs["*"]["clusterSpec"])}
-                merged_cluster_spec[entry_pt]["clusterSpec"]["initialInstanceCount"] = inst_count
+        # Check if all entrypoints in srd are included in merged_cluster_spec
+        # (if a named entrypoint was used in srd and such an entrypoint doesn't exist
+        #  in app sys req, we need to take the cluster spec from the app's "*", if it exists)
+        for entry_pt, req in srd.entrypoints.items():
+            if entry_pt not in merged_cluster_spec and "*" in self.entrypoints and "clusterSpec" in self.entrypoints["*"]:
+                merged_cluster_spec[entry_pt] = {"clusterSpec": copy.deepcopy(self.entrypoints["*"]["clusterSpec"])}
+                merged_cluster_spec[entry_pt]["clusterSpec"].update(req["clusterSpec"])
 
-        if not merged_cluster_spec and requested_counts:
-                    requested_entry_pts = ", ".join(requested_counts.keys())
-                    mesg = '--instance-count is not supported for entrypoints that are not' \
-                           ' specified in the app system requirements or entrypoints without clusterSpec: ' + requested_entry_pts
-                    raise DXCLIError(mesg)
+        return SystemRequirementsDict(merged_cluster_spec)
 
-        return cls(cluster_spec=merged_cluster_spec)
-
-    def _add_dictionaries(self, one_dict, other_dict):
-        if one_dict is None and other_dict is None:
+    def _add_dict_values(self, d1, d2):
+        """
+        Merges the values of two dictionaries, which are expected to be dictionaries, e.g
+        d1 = {'a': {'x': pqr}}
+        d2 = {'a': {'y': lmn}, 'b': {'y': rst}}
+        will return: {'a': {'x': pqr, 'y': lmn}, 'b': {'y': rst}}.
+        Collisions of the keys of the sub-dictionaries are not checked.
+        """
+        if d1 is None and d2 is None:
             return None
 
-        one_dict = one_dict or {}
-        other_dict = other_dict or {}
+        d1 = d1 or {}
+        d2 = d2 or {}
 
-        if len(set(one_dict.keys()).intersection(set(other_dict.keys()))) > 0:
-            raise ValueError("Entrypoint collisions are not accepted when adding system requirements dictionaries")
-
-        one_dict.update(other_dict)
-        return one_dict
+        added = {}
+        for key in set(d1.keys() + d2.keys()):
+            added[key] = dict(d1.get(key, {}), **(d2.get(key, {})))
+        return added
 
     def __add__(self, other):
-        """Add only, raise on collisions"""
         if not isinstance(other, SystemRequirementsDict):
             raise DXError("Developer error: SystemRequirementsDict expected")
-
-        added_instance_types = self._add_dictionaries(self.instance_type, other.instance_type)
-        added_cluster_specs = self._add_dictionaries(self.cluster_spec, other.cluster_spec)
-
-        return SystemRequirementsDict(instance_type=added_instance_types,
-                                      cluster_spec=added_cluster_specs)
+        added_entrypoints = self._add_dict_values(self.entrypoints, other.entrypoints)
+        return SystemRequirementsDict(added_entrypoints)
 
     def as_dict(self):
-        """
-        Returns a dictionary that can be passed as a "systemRequirements"
-        input to app-xxx/run, e.g. 
-        {'fn': {"clusterSpec": {initialInstanceCount: 3, version: "2.4.0", ..},
-                "instanceType": "ssd1_mem1_x4"
-               }
-        }
-        """
-        entrypoints = defaultdict(dict)
-        if self.instance_type is not None:
-            for entrypoint, req in self.instance_type.items():
-                entrypoints[entrypoint]['instanceType'] =  req["instanceType"]
-        if self.cluster_spec is not None:
-            for entrypoint, req in self.cluster_spec.items():
-                entrypoints[entrypoint]['clusterSpec'] =  req["clusterSpec"]
-        return dict(entrypoints)
+        return self.entrypoints

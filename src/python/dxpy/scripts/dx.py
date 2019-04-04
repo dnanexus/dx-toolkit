@@ -2808,13 +2808,15 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         args.instance_count = dict({fn: reqs['clusterSpec'] for fn, reqs in list(args.sys_reqs_from_clone.items())},
                                   **(args.instance_count or {}))
 
-    cluster_spec = SystemRequirementsDict(cluster_spec=None)
+    srd_cluster_spec = SystemRequirementsDict(None)
     if args.instance_count is not None:
         executable_describe = executable.describe()
-        app_sys_reqs = executable_describe['runSpec'].get('systemRequirements', {})
-        cluster_spec = SystemRequirementsDict.from_instance_count(app_sys_reqs, args.instance_count)
+        srd_default = SystemRequirementsDict.from_sys_requirements(
+            executable_describe['runSpec'].get('systemRequirements', {}), _type='clusterSpec')
+        srd_requested = SystemRequirementsDict.from_instance_count(args.instance_count)
+        srd_cluster_spec = srd_default.override_cluster_spec(srd_requested)
 
-    instance_type = SystemRequirementsDict.from_instance_type(args.instance_type)
+    srd_instance_type = SystemRequirementsDict.from_instance_type(args.instance_type)
 
     if args.debug_on:
         if 'All' in args.debug_on:
@@ -2834,11 +2836,11 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "debug": {"debugOn": args.debug_on} if args.debug_on else None,
         "delay_workspace_destruction": args.delay_workspace_destruction,
         "priority": ("high" if args.watch else args.priority),
-        "instance_type": instance_type,
+        "instance_type": srd_instance_type,
         "stage_instance_types": args.stage_instance_types,
         "stage_folders": args.stage_folders,
         "rerun_stages": args.rerun_stages,
-        "cluster_spec": cluster_spec,
+        "cluster_spec": srd_cluster_spec,
         "extra_args": args.extra_args
     }
 
