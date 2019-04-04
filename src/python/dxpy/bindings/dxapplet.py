@@ -59,7 +59,7 @@ class DXExecutable:
         if kwargs.get('instance_type') is not None or kwargs.get('cluster_spec') is not None:
             instance_type_srd = SystemRequirementsDict.from_instance_type(kwargs.get('instance_type'))
             cluster_spec_srd = SystemRequirementsDict(kwargs.get('cluster_spec'))
-            run_input["systemRequirements"] =  (instance_type_srd + cluster_spec_srd).as_dict()
+            run_input["systemRequirements"] = (instance_type_srd + cluster_spec_srd).as_dict()
 
         if kwargs.get('depends_on') is not None:
             run_input["dependsOn"] = []

@@ -50,7 +50,7 @@ class SystemRequirementsDict(object):
                 return cls(None)
             if isinstance(instance_count_arg, basestring) or isinstance(instance_count_arg, int):
                 return cls({entrypoint: {"clusterSpec": {"initialInstanceCount": int(instance_count_arg)}}})
-            elif isinstance(instance_count_arg, dict):
+            if isinstance(instance_count_arg, dict):
                 return cls({k: {"clusterSpec": {"initialInstanceCount": int(v)}} for k, v in instance_count_arg.items()})
             raise ValueError
         except ValueError:
@@ -67,14 +67,13 @@ class SystemRequirementsDict(object):
         """
         if instance_type_arg is None:
             return cls(None)
-        elif isinstance(instance_type_arg, basestring):
+        if isinstance(instance_type_arg, basestring):
             # By default, all entry points ("*") should use this instance type
             return cls({entrypoint: {"instanceType": instance_type_arg}})
-        elif isinstance(instance_type_arg, dict):
+        if isinstance(instance_type_arg, dict):
             # instance_type is a map of entry point to instance type
             return cls({fn: {"instanceType": fn_inst} for fn, fn_inst in instance_type_arg.items()})
-        else:
-            raise DXError('Expected instance_type field to be either a string or a dict')
+        raise DXError('Expected instance_type field to be either a string or a dict')
 
     @classmethod
     def from_sys_requirements(cls, system_requirements, _type='all'):
@@ -179,7 +178,7 @@ class SystemRequirementsDict(object):
         d2 = d2 or {}
 
         added = {}
-        for key in set(d1.keys() + d2.keys()):
+        for key in set(list(d1.keys()) + list(d2.keys())):
             added[key] = dict(d1.get(key, {}), **(d2.get(key, {})))
         return added
 
