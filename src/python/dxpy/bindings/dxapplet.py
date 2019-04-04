@@ -56,7 +56,8 @@ class DXExecutable:
             if kwargs.get(arg) is not None:
                 run_input[arg] = kwargs[arg]
 
-        if kwargs.get('instance_type').entrypoints is not None or kwargs.get('cluster_spec').entrypoints is not None:
+        if kwargs.get('instance_type', SystemRequirementsDict()).entrypoints is not None \
+                or kwargs.get('cluster_spec', SystemRequirementsDict()).entrypoints is not None:
             instance_types_srd = kwargs.get('instance_type')
             cluster_spec_srd = kwargs.get('cluster_spec')
             run_input["systemRequirements"] =  (instance_types_srd + cluster_spec_srd).as_dict()
