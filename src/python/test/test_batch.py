@@ -31,11 +31,11 @@ from dxpy.compat import USING_PYTHON2, str, sys_encoding, open
 # from dxpy.utils.resolver import ResolutionError, _check_resolution_needed as check_resolution
 
 if USING_PYTHON2:
-#    read_mode = 'rb'
+    delimiter = '\t'.encode("utf-8")
     write_mode = 'wb'
 else:
-#    read_mode = 'r'
     write_mode = 'w'
+    delimiter = '\t'
 
 @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                      'skipping test that would run jobs')
@@ -60,7 +60,7 @@ class TestDXRunBatch(DXTestCase):
         # write arguments table
         arg_table = os.path.join(tmp_path, 'table.csv')
         with open(arg_table, write_mode) as csvfile:
-            writer = csv.writer(csvfile, delimiter='\t')
+            writer = csv.writer(csvfile, delimiter=delimiter)
             header = ["batch ID", "thresholds", "pie", "misc"]
             writer.writerow(header)
             writer.writerow(["SRR_1", "[10,81]", "3.12", "{}"])
@@ -124,7 +124,7 @@ class TestDXRunBatch(DXTestCase):
         # write arguments table
         arg_table = os.path.join(tmp_path, 'table.csv')
         with open(arg_table, write_mode) as csvfile:
-            writer = csv.writer(csvfile, delimiter='\t')
+            writer = csv.writer(csvfile, delimiter=delimiter)
             header = ["batch ID", "plant", "plant ID"]
             writer.writerow(header)
             writer.writerow(["SRR_1", "bubbles", dxfile.get_id()])
@@ -168,7 +168,7 @@ class TestDXRunBatch(DXTestCase):
         # write arguments table. These ara arrays with a single element.
         arg_table = os.path.join(tmp_path, 'table.csv')
         with open(arg_table, write_mode) as csvfile:
-            writer = csv.writer(csvfile, delimiter='\t')
+            writer = csv.writer(csvfile, delimiter=delimiter)
             header = ["batch ID", "plant", "plant ID"]
             writer.writerow(header)
             writer.writerow(["SRR_1",
