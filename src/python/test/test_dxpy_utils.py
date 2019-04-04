@@ -397,7 +397,40 @@ class TestNonceGeneration(unittest.TestCase):
 
 class TestSystemRequirementsDict(unittest.TestCase):
 
-    def test_get_cluster_spec_for_app_with_named_entrypoint(self):
+    def test_add(self):
+        d1 = {'a': {'x': 'pqr'}}
+        d2 = {'a': {'y': 'lmn'}, 'b': {'y': 'rst'}}
+        srd1 = SystemRequirementsDict(d1)
+        srd2 = SystemRequirementsDict(d2)
+        added = srd1 + srd2
+        expected = SystemRequirementsDict({'a': {'x': 'pqr', 'y': 'lmn'}, 'b': {'y': 'rst'}})
+        self.assertDictEqual(expected.entrypoints, added.entrypoints)
+
+        d1 = {}
+        d2 = {'a': {'y': 'lmn'}, 'b': {'y': 'rst'}}
+        srd1 = SystemRequirementsDict(d1)
+        srd2 = SystemRequirementsDict(d2)
+        added = srd1 + srd2
+        expected = SystemRequirementsDict({'a': {'y': 'lmn'}, 'b': {'y': 'rst'}})
+        self.assertDictEqual(expected.entrypoints, added.entrypoints)
+
+        d1 = None
+        d2 = {'a': {'y': 'lmn'}, 'b': {'y': 'rst'}}
+        srd1 = SystemRequirementsDict(d1)
+        srd2 = SystemRequirementsDict(d2)
+        added = srd1 + srd2
+        expected = SystemRequirementsDict({'a': {'y': 'lmn'}, 'b': {'y': 'rst'}})
+        self.assertDictEqual(expected.entrypoints, added.entrypoints)
+
+        d1 = None
+        d2 = None
+        srd1 = SystemRequirementsDict(d1)
+        srd2 = SystemRequirementsDict(d2)
+        added = srd1 + srd2
+        expected = SystemRequirementsDict(None)
+        self.assertEqual(expected.entrypoints, added.entrypoints)
+
+    def test_override_cluster_spec_for_app_with_named_entrypoint(self):
         bootstrap_code = "import sys\n"
         cluster_spec_with_bootstrap = {"type": "spark",
                                             "version": "2.4.0",
@@ -442,7 +475,7 @@ class TestSystemRequirementsDict(unittest.TestCase):
         self.assertTrue("*" not in added)
         self.assertTrue("cluster_2" not in added)
 
-    def test_get_cluster_spec_for_app_with_wildcard_entrypoint(self):
+    def test_override_cluster_spec_for_app_with_wildcard_entrypoint(self):
         bootstrap_code = "import sys\n"
         app_sys_reqs = {"*": {
                             "instanceType": "mem2_hdd2_x1",
@@ -495,7 +528,7 @@ class TestSystemRequirementsDict(unittest.TestCase):
         self.assertEqual(added['*']["clusterSpec"]["initialInstanceCount"], 52)
         self.assertTrue("instanceType" not in added['*'])
 
-    def test_get_cluster_spec_for_app_with_non_spark_entrypoint(self):
+    def test_override_cluster_spec_for_app_with_non_spark_entrypoint(self):
         bootstrap_code = "import sys\n"
         app_sys_reqs = {"non_spark_entry": {
                             "instanceType": "mem2_hdd2_x1"},
@@ -536,6 +569,15 @@ class TestSystemRequirementsDict(unittest.TestCase):
                             'instanceType': 'mem1_ssd1_x8'
                     }}
         self.assertEqual(added, expected)
+
+    def test_from_instance_type(self):
+        d1 = None
+        d2 = None
+        srd1 = SystemRequirementsDict(d1)
+        srd2 = SystemRequirementsDict.from_instance_type(d2)
+        added = srd1 + srd2
+        expected = SystemRequirementsDict(None)
+        self.assertEqual(expected.entrypoints, added.entrypoints)
 
 if __name__ == '__main__':
     unittest.main()

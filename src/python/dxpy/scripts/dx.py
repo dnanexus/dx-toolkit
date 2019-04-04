@@ -2836,11 +2836,11 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "debug": {"debugOn": args.debug_on} if args.debug_on else None,
         "delay_workspace_destruction": args.delay_workspace_destruction,
         "priority": ("high" if args.watch else args.priority),
-        "instance_type": srd_instance_type,
+        "instance_type": srd_instance_type.as_dict(),
         "stage_instance_types": args.stage_instance_types,
         "stage_folders": args.stage_folders,
         "rerun_stages": args.rerun_stages,
-        "cluster_spec": srd_cluster_spec,
+        "cluster_spec": srd_cluster_spec.as_dict(),
         "extra_args": args.extra_args
     }
 
