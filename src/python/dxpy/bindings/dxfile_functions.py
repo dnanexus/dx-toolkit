@@ -541,7 +541,7 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
             try:
                 upload_part()
                 break
-            except Exception as e:
+            except timeout.TimeoutError as e:
                 if i == MAX_RETRIES_PART_UPLOAD - 1:
                     raise Exception("Tried too many times to upload file part.  There may be some issue with the network connectivity.")
                 else:
