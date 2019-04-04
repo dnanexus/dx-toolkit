@@ -160,7 +160,7 @@ class DXJob(DXObject):
             if properties is not None:
                 req_input["properties"] = properties
             if instance_type is not None:
-                req_input["systemRequirements"] = SystemRequirementsDict.from_instance_type(instance_type, fn_name).to_dict()
+                req_input["systemRequirements"] = SystemRequirementsDict.from_instance_type(instance_type, fn_name).as_dict()
             if depends_on is not None:
                 req_input["dependsOn"] = final_depends_on
             if details is not None:

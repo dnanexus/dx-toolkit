@@ -75,7 +75,7 @@ class SystemRequirementsDict(object):
     @classmethod
     def from_sys_requirements(cls, system_requirements, _type='all'):
         if _type not in ('all', 'clusterSpec', 'instanceType'):
-            raise DXError("Expected '_type' to be either 'all', clusterSpec', or 'instanceType'")
+            raise DXError("Expected '_type' to be either 'all', 'clusterSpec', or 'instanceType'")
 
         if _type == 'all':
             return cls(system_requirements)
