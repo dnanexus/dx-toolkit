@@ -28,7 +28,8 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import dxpy
 from . import DXDataObject, DXJob
-from ..utils import merge, instance_type_to_sys_reqs
+from ..utils import merge
+from ..system_requirements import SystemRequirementsDict
 from ..exceptions import DXError
 from ..compat import basestring
 
@@ -55,8 +56,10 @@ class DXExecutable:
             if kwargs.get(arg) is not None:
                 run_input[arg] = kwargs[arg]
 
-        if kwargs.get('instance_type') is not None:
-            run_input["systemRequirements"] = instance_type_to_sys_reqs(kwargs['instance_type'])
+        if kwargs.get('instance_type') is not None or kwargs.get('cluster_spec') is not None:
+            instance_type_srd = SystemRequirementsDict.from_instance_type(kwargs.get('instance_type'))
+            cluster_spec_srd = SystemRequirementsDict(kwargs.get('cluster_spec'))
+            run_input["systemRequirements"] = (instance_type_srd + cluster_spec_srd).as_dict()
 
         if kwargs.get('depends_on') is not None:
             run_input["dependsOn"] = []
@@ -153,7 +156,7 @@ class DXExecutable:
         raise NotImplementedError('_get_cleanup_keys is not implemented')
 
     def run(self, executable_input, project=None, folder=None, name=None, tags=None, properties=None, details=None,
-            instance_type=None, stage_instance_types=None, stage_folders=None, rerun_stages=None,
+            instance_type=None, stage_instance_types=None, stage_folders=None, rerun_stages=None, cluster_spec=None,
             depends_on=None, allow_ssh=None, debug=None, delay_workspace_destruction=None, priority=None,
             ignore_reuse=None, ignore_reuse_stages=None, extra_args=None, **kwargs):
         '''
@@ -211,6 +214,7 @@ class DXExecutable:
                                         stage_instance_types=stage_instance_types,
                                         stage_folders=stage_folders,
                                         rerun_stages=rerun_stages,
+                                        cluster_spec=cluster_spec,
                                         depends_on=depends_on,
                                         allow_ssh=allow_ssh,
                                         ignore_reuse=ignore_reuse,

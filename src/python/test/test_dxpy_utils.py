@@ -29,6 +29,7 @@ from dxpy.utils.exec_utils import DXExecDependencyInstaller
 from dxpy.utils.pretty_print import flatten_json_array
 from dxpy.compat import USING_PYTHON2
 import dxpy_testutil as testutil
+from dxpy.system_requirements import SystemRequirementsDict
 
 # TODO: unit tests for dxpy.utils.get_field_from_jbor, get_job_from_jbor, is_job_ref
 
@@ -394,6 +395,189 @@ class TestNonceGeneration(unittest.TestCase):
         self.assertIn("nonce", updated_input)
         self.assertEqual(nonce, updated_input["nonce"])
 
+class TestSystemRequirementsDict(unittest.TestCase):
+
+    def test_add(self):
+        d1 = {'a': {'x': 'pqr'}}
+        d2 = {'a': {'y': 'lmn'}, 'b': {'y': 'rst'}}
+        srd1 = SystemRequirementsDict(d1)
+        srd2 = SystemRequirementsDict(d2)
+        added = srd1 + srd2
+        expected = SystemRequirementsDict({'a': {'x': 'pqr', 'y': 'lmn'}, 'b': {'y': 'rst'}})
+        self.assertDictEqual(expected.entrypoints, added.entrypoints)
+
+        d1 = {}
+        d2 = {'a': {'y': 'lmn'}, 'b': {'y': 'rst'}}
+        srd1 = SystemRequirementsDict(d1)
+        srd2 = SystemRequirementsDict(d2)
+        added = srd1 + srd2
+        expected = SystemRequirementsDict({'a': {'y': 'lmn'}, 'b': {'y': 'rst'}})
+        self.assertDictEqual(expected.entrypoints, added.entrypoints)
+
+        d1 = None
+        d2 = {'a': {'y': 'lmn'}, 'b': {'y': 'rst'}}
+        srd1 = SystemRequirementsDict(d1)
+        srd2 = SystemRequirementsDict(d2)
+        added = srd1 + srd2
+        expected = SystemRequirementsDict({'a': {'y': 'lmn'}, 'b': {'y': 'rst'}})
+        self.assertDictEqual(expected.entrypoints, added.entrypoints)
+
+        d1 = None
+        d2 = None
+        srd1 = SystemRequirementsDict(d1)
+        srd2 = SystemRequirementsDict(d2)
+        added = srd1 + srd2
+        expected = SystemRequirementsDict(None)
+        self.assertEqual(expected.entrypoints, added.entrypoints)
+
+    def test_override_cluster_spec_for_app_with_named_entrypoint(self):
+        bootstrap_code = "import sys\n"
+        cluster_spec_with_bootstrap = {"type": "spark",
+                                            "version": "2.4.0",
+                                            "initialInstanceCount": 2,
+                                            "bootstrapScript": bootstrap_code}
+        cluster_spec_no_bootstrap = {"type": "spark",
+                                     "version": "2.4.0",
+                                     "initialInstanceCount": 3}
+        app_sys_reqs = {"main": {
+                         "instanceType": "mem2_hdd2_x1",
+                         "clusterSpec": cluster_spec_with_bootstrap},
+                        "cluster_2": {
+                         "instanceType": "mem2_hdd2_x4",
+                         "clusterSpec": cluster_spec_no_bootstrap}
+                       }
+        app_srd = SystemRequirementsDict.from_sys_requirements(app_sys_reqs, _type='clusterSpec')
+
+        # pass instance count with specific entry point
+        runtime_srd = SystemRequirementsDict.from_instance_count({"cluster_2": "4"})
+        cluster_spec_srd = app_srd.override_cluster_spec(runtime_srd)
+        self.assertEqual(cluster_spec_srd.entrypoints['cluster_2']["clusterSpec"]["initialInstanceCount"], 4)
+        self.assertEqual(cluster_spec_srd.entrypoints['cluster_2']["clusterSpec"]["version"], "2.4.0")
+        self.assertEqual(cluster_spec_srd.entrypoints['cluster_2'].get('instanceType'), None)
+
+        # pass instance count for all entry points ("*")
+        runtime_srd = SystemRequirementsDict.from_instance_count(5)
+        cluster_spec_srd = app_srd.override_cluster_spec(runtime_srd)
+        self.assertEqual(cluster_spec_srd.entrypoints['cluster_2']["clusterSpec"]["initialInstanceCount"], 5)
+        self.assertEqual(cluster_spec_srd.entrypoints['main']["clusterSpec"]["initialInstanceCount"], 5)
+        self.assertEqual(cluster_spec_srd.entrypoints['main']["clusterSpec"]["bootstrapScript"], bootstrap_code)
+        self.assertEqual(cluster_spec_srd.entrypoints['main'].get('instanceType'), None)
+        self.assertEqual(cluster_spec_srd.entrypoints.get('*'), None)
+
+        # pass instance count together with instance type
+        runtime_srd = SystemRequirementsDict.from_instance_count({"main": "6"})
+        cluster_spec_srd = app_srd.override_cluster_spec(runtime_srd)
+        instance_type_srd = SystemRequirementsDict.from_instance_type({"main": "mem1_ssd1_x2"})
+        added = (cluster_spec_srd + instance_type_srd).as_dict()
+        self.assertEqual(added['main']["clusterSpec"]["initialInstanceCount"], 6)
+        self.assertEqual(added['main']["clusterSpec"]["version"], "2.4.0")
+        self.assertEqual(added['main']["instanceType"], "mem1_ssd1_x2")
+        self.assertTrue("*" not in added)
+        self.assertTrue("cluster_2" not in added)
+
+    def test_override_cluster_spec_for_app_with_wildcard_entrypoint(self):
+        bootstrap_code = "import sys\n"
+        app_sys_reqs = {"*": {
+                            "instanceType": "mem2_hdd2_x1",
+                            "clusterSpec": {"type": "spark",
+                                            "version": "2.4.0",
+                                            "initialInstanceCount": 22,
+                                            "bootstrapScript": bootstrap_code}},
+                        "other": {
+                            "instanceType": "mem2_hdd2_x2",
+                            "clusterSpec": {"type": "spark",
+                                            "version": "2.4.0",
+                                            "initialInstanceCount": 33,
+                                            "bootstrapScript": bootstrap_code}
+                        }}
+        app_srd = SystemRequirementsDict.from_sys_requirements(app_sys_reqs, _type='clusterSpec')
+
+        # pass instance count with "*" entry point
+        runtime_srd = SystemRequirementsDict.from_instance_count(8)
+        cluster_spec_srd = app_srd.override_cluster_spec(runtime_srd)
+        self.assertEqual(cluster_spec_srd.entrypoints['*']["clusterSpec"]["initialInstanceCount"], 8)
+        self.assertEqual(cluster_spec_srd.entrypoints['*']["clusterSpec"]["bootstrapScript"], bootstrap_code)
+        self.assertEqual(cluster_spec_srd.entrypoints['other']["clusterSpec"]["initialInstanceCount"], 8)
+        self.assertEqual(cluster_spec_srd.entrypoints['other']["clusterSpec"]["bootstrapScript"], bootstrap_code)
+        self.assertEqual(cluster_spec_srd.entrypoints['*'].get('instanceType'), None)
+
+        # pass instance count with a named entry point
+        runtime_srd = SystemRequirementsDict.from_instance_count({"main": 77})
+        cluster_spec_srd = app_srd.override_cluster_spec(runtime_srd)
+        self.assertEqual(cluster_spec_srd.entrypoints['main']["clusterSpec"]["initialInstanceCount"], 77)
+        self.assertEqual(cluster_spec_srd.entrypoints['main']["clusterSpec"]["bootstrapScript"], bootstrap_code)
+        self.assertEqual(cluster_spec_srd.entrypoints['main'].get('instanceType'), None)
+
+        # pass instance count with a named entry point and instance type
+        runtime_srd = SystemRequirementsDict.from_instance_count({"main": "42"})
+        cluster_spec_srd = app_srd.override_cluster_spec(runtime_srd)
+        instance_type_srd = SystemRequirementsDict.from_instance_type({"main": "mem1_ssd1_x2"})
+        added = (cluster_spec_srd + instance_type_srd).as_dict()
+        self.assertEqual(added['main']["clusterSpec"]["initialInstanceCount"], 42)
+        self.assertEqual(added['main']["clusterSpec"]["bootstrapScript"], bootstrap_code)
+        self.assertEqual(added['main']["instanceType"], "mem1_ssd1_x2")
+
+        # pass instance count with a named and wildcard entry point and instance type
+        runtime_srd = SystemRequirementsDict.from_instance_count({"main": "42", "*": "52"})
+        cluster_spec_srd = app_srd.override_cluster_spec(runtime_srd)
+        instance_type_srd = SystemRequirementsDict.from_instance_type({"main": "mem1_ssd1_x2"})
+        added = (cluster_spec_srd + instance_type_srd).as_dict()
+        self.assertEqual(added['main']["clusterSpec"]["initialInstanceCount"], 42)
+        self.assertEqual(added['main']["clusterSpec"]["bootstrapScript"], bootstrap_code)
+        self.assertEqual(added['main']["instanceType"], "mem1_ssd1_x2")
+        self.assertEqual(added['*']["clusterSpec"]["initialInstanceCount"], 52)
+        self.assertTrue("instanceType" not in added['*'])
+
+    def test_override_cluster_spec_for_app_with_non_spark_entrypoint(self):
+        bootstrap_code = "import sys\n"
+        app_sys_reqs = {"non_spark_entry": {
+                            "instanceType": "mem2_hdd2_x1"},
+                        "spark_entry": {
+                            "clusterSpec": {"type": "spark",
+                                            "version": "2.4.0",
+                                            "initialInstanceCount": 2,
+                                            "bootstrapScript": bootstrap_code}}}
+        app_srd = SystemRequirementsDict.from_sys_requirements(app_sys_reqs, _type='clusterSpec')
+
+        # pass instance count with "*" entry point
+        runtime_srd = SystemRequirementsDict.from_instance_count(8)
+        cluster_spec_srd = app_srd.override_cluster_spec(runtime_srd)
+        self.assertEqual(cluster_spec_srd.entrypoints['spark_entry']["clusterSpec"]["initialInstanceCount"], 8)
+        self.assertEqual(cluster_spec_srd.entrypoints['spark_entry']["clusterSpec"]["bootstrapScript"], bootstrap_code)
+        self.assertEqual(cluster_spec_srd.entrypoints['spark_entry'].get('instanceType'), None)
+        self.assertTrue("*" not in cluster_spec_srd.entrypoints)
+        self.assertTrue("non_spark_entry" not in cluster_spec_srd.entrypoints)
+
+        # pass instance count and instance type
+        runtime_srd = SystemRequirementsDict.from_instance_count({"spark_entry": "422", "*": "522"})
+        cluster_spec_srd = app_srd.override_cluster_spec(runtime_srd)
+        instance_type_srd = SystemRequirementsDict.from_instance_type({"*": "mem1_ssd1_x2",
+                                                                  "spark_entry": "mem1_ssd1_x4",
+                                                                  "no_spark_entry": "mem1_ssd1_x8"})
+        added = (cluster_spec_srd + instance_type_srd).as_dict()
+        expected = {
+                    'spark_entry': {
+                            'clusterSpec': {
+                                    'bootstrapScript': 'import sys\n',
+                                    'version': '2.4.0',
+                                    'type': 'spark',
+                                    'initialInstanceCount': 422},
+                            'instanceType': 'mem1_ssd1_x4'},
+                    '*': {
+                            'instanceType': 'mem1_ssd1_x2'},
+                    'no_spark_entry': {
+                            'instanceType': 'mem1_ssd1_x8'
+                    }}
+        self.assertEqual(added, expected)
+
+    def test_from_instance_type(self):
+        d1 = None
+        d2 = None
+        srd1 = SystemRequirementsDict(d1)
+        srd2 = SystemRequirementsDict.from_instance_type(d2)
+        added = srd1 + srd2
+        expected = SystemRequirementsDict(None)
+        self.assertEqual(expected.entrypoints, added.entrypoints)
 
 if __name__ == '__main__':
     unittest.main()

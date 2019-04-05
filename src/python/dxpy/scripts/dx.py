@@ -46,7 +46,7 @@ from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_a
                            find_by_properties_and_tags_args, process_find_by_property_args, process_dataobject_args,
                            process_single_dataobject_output_args, find_executions_args, add_find_executions_search_gp,
                            set_env_from_args, extra_args, process_extra_args, DXParserError, exec_input_args,
-                           instance_type_arg, process_instance_type_arg, get_update_project_args,
+                           instance_type_arg, process_instance_type_arg, process_instance_count_arg, get_update_project_args,
                            property_args, tag_args, contains_phi, process_phi_param)
 from ..cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
 from ..cli.org import (get_org_invite_args, add_membership, remove_membership, update_membership, new_org, update_org,
@@ -70,6 +70,7 @@ from ..utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, 
                                ListCompleter, MultiCompleter)
 from ..utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_header,
                               print_ls_l_desc, get_ls_l_desc_fields, get_io_desc, get_find_executions_string)
+from ..system_requirements import SystemRequirementsDict
 
 try:
     import colorama
@@ -2803,6 +2804,21 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         args.instance_type = dict({stage: reqs['instanceType'] for stage, reqs in list(args.sys_reqs_from_clone.items())},
                                   **(args.instance_type or {}))
 
+    if args.sys_reqs_from_clone and not isinstance(args.instance_count, str):
+        # extract instance counts from cloned sys reqs and override them with args provided with "dx run"
+        args.instance_count = dict({fn: reqs['clusterSpec']['initialInstanceCount']
+                                        for fn, reqs in list(args.sys_reqs_from_clone.items()) if 'clusterSpec' in reqs},
+                                   **(args.instance_count or {}))
+
+    executable_describe = None
+    srd_cluster_spec = SystemRequirementsDict(None)
+    if args.instance_count is not None:
+        executable_describe = executable.describe()
+        srd_default = SystemRequirementsDict.from_sys_requirements(
+            executable_describe['runSpec'].get('systemRequirements', {}), _type='clusterSpec')
+        srd_requested = SystemRequirementsDict.from_instance_count(args.instance_count)
+        srd_cluster_spec = srd_default.override_cluster_spec(srd_requested)
+
     if args.debug_on:
         if 'All' in args.debug_on:
             args.debug_on = ['AppError', 'AppInternalError', 'ExecutionError']
@@ -2825,12 +2841,13 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "stage_instance_types": args.stage_instance_types,
         "stage_folders": args.stage_folders,
         "rerun_stages": args.rerun_stages,
+        "cluster_spec": srd_cluster_spec.as_dict(),
         "extra_args": args.extra_args
     }
 
     if args.priority == "normal" and not args.brief:
         special_access = set()
-        executable_desc = executable.describe()
+        executable_desc = executable_describe or executable.describe()
         write_perms = ['UPLOAD', 'CONTRIBUTE', 'ADMINISTER']
         def check_for_special_access(access_spec):
             if not access_spec:
@@ -3215,8 +3232,11 @@ def run(args):
 
     handler = try_call(get_exec_handler, args.executable, args.alias)
 
-    if args.depends_on and \
-            (isinstance(handler, dxpy.DXWorkflow) or isinstance(handler, dxpy.DXGlobalWorkflow)):
+    is_workflow = isinstance(handler, dxpy.DXWorkflow)
+    is_global_workflow = isinstance(handler, dxpy.DXGlobalWorkflow)
+
+    if args.depends_on and (is_workflow or is_global_workflow):
+
         err_exit(exception=DXParserError("-d/--depends-on cannot be supplied when running workflows."),
                  expected_exceptions=(DXParserError,))
 
@@ -3249,6 +3269,14 @@ def run(args):
             dest_path = dxpy.config.get('DX_CLI_WD', '/')
 
     process_instance_type_arg(args, is_workflow or is_global_workflow)
+
+    # Validate and process instance_count argument
+    if args.instance_count:
+        if is_workflow or is_global_workflow:
+            err_exit(exception=DXCLIError(
+                '--instance-count is not supported for workflows'
+            ))
+        process_instance_count_arg(args)
 
     run_body(args, handler, dest_proj, dest_path)
 
@@ -4715,6 +4743,11 @@ parser_run.add_argument('--batch-tsv', dest='batch_tsv', metavar="FILE",
                                   'of the executable input arguments. A job will be launched ' +
                                   'for each table row.',
                                   width_adjustment=-24))
+ic_format = '\'{"entrypoint": <number of instances>}\''
+parser_run.add_argument('--instance-count',
+                               metavar='INSTANCE_COUNT_OR_MAPPING',
+                               help=fill('Specify spark cluster instance count(s). It can be an int or a mapping of the format {ic}'.format(ic=ic_format), width_adjustment=-24),
+                               action='append')
 parser_run.add_argument('--input-help',
                         help=fill('Print help and examples for how to specify inputs',
                                   width_adjustment=-24),
