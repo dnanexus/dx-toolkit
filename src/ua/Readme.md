@@ -12,7 +12,7 @@ for installing system build dependencies.
 
 ## Building
 
-To build the UA, simply run `make` in this directory. This will build the
+To build the UA, simply run `make ua` in the `dx-toolkit/src` directory. This will build the
 `ua` executable in this directory. The following methods can be used to
 deploy the Upload Agent:
 
