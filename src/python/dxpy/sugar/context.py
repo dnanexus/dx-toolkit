@@ -110,16 +110,16 @@ class cd:
 
     Args:
         target_path (string): Optional, specify path to cd to
-        delete_on_exit (boolean): Optional, specify if directory should be deleted after exiting context. If target_path
-        is None, directory is always deleted.
+        cleanup (boolean): Optional, specify if directory should be deleted after exiting context. Default is true if
+        the directory is newly created. Existing directories are never deleted.
 
     Note:
         If no args specified, cd() will create an arbitary temp dir and cd to it
 
     Yields:
         Upon entry, context will be set to the specified directory.
-        Upon exit, directory specified with delete_on_exit=True or directory created when no
-        args are specified is deleted. If delete_on_exit=False and directory is specified, it is not deleted.
+        Upon exit, directory newly created with cleanup=True or directory created when no
+        args are specified is deleted.
 
     Source: http://stackoverflow.com/questions/431684/how-do-i-cd-in-python
 
@@ -133,22 +133,23 @@ class cd:
            do_the_thing
            # this will do the thing in my_file_dir and not delete the directory
 
-       with cd(target_path=my_temp_dir, delete_on_exit=True):
+       with cd(target_path=my_temp_dir, cleanup=True):
            do_the_thing
            # this will create a temp dir with path my_temp_dir, do the thing,
            # then delete the temp dir
     """
 
-    def __init__(self, target_path=None, delete_on_exit=False):
+    def __init__(self, target_path=None, cleanup=True):
         if target_path is not None:
             if os.path.exists(target_path):
                 self.newPath = target_path
+                self.removeFolder = False
             else:
                 self.newPath = tempfile.mkdtemp(dir=target_path)
-            self.removeFolder = delete_on_exit
+                self.removeFolder = cleanup
         else:
             self.newPath = tempfile.mkdtemp()
-            self.removeFolder = True
+            self.removeFolder = cleanup
 
     def __enter__(self):
         self.savedPath = os.getcwd()
