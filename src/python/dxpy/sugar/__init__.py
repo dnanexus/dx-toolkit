@@ -13,6 +13,9 @@
 #   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #   License for the specific language governing permissions and limitations
 #   under the License.
+import dxpy
+from functools import wraps
+
 from processing import run_cmd, chain_cmds
 from transfers import (
     Uploader,
@@ -21,3 +24,14 @@ from transfers import (
     tar_and_upload_files,
     download_file,
 )
+
+def requires_worker_context(func):
+    """This decorator checks that a given function is running within a DNAnexus job context"""
+    @wraps(func)
+    def check_job_id(*args, **kwargs):
+        if dxpy.JOB_ID is None:
+            raise dxpy.DXError("Illegal function call, must be called from within DNAnexus job context.")
+        else:
+            return func(*args, **kwargs)
+
+    return check_job_id
