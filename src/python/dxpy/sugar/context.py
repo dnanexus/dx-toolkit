@@ -161,26 +161,6 @@ class cd:
             subprocess.check_call(['rm', '-rf', self.newPath], shell=False)
 
 @contextlib.contextmanager
-def temp(*args, **kwargs):
-    """Context manager that yields a temp file name and deletes the file
-    before exiting.
-    Args:
-        *args: positional arguments passed to mkstemp
-        **kwargs: keyword arguments passed to mkstemp
-    Examples:
-        >>> with temp() as fn:
-        >>>     with open(fn, "wt") as out:
-        >>>         out.write("foo")
-    """
-    _, fname = tempfile.mkstemp(*args, **kwargs)
-    try:
-        yield fname
-    finally:
-        if os.path.exists(fname):
-            os.remove(fname)
-
-
-@contextlib.contextmanager
 def fifo(name=None):
     """
     Create a FIFO, yield it, and delete it before exiting.
@@ -193,9 +173,9 @@ def fifo(name=None):
         os.mkfifo(name)
         yield name
     else:
-        with temp() as name:
-            os.mkfifo(name)
-            yield name
+        temp = tempfile.NamedTemporaryFile(delete=False)
+        os.mkfifo(temp.name)
+        yield temp.name
 
     if os.path.exists(name):
         os.remove(name)
