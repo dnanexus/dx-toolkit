@@ -43,7 +43,7 @@ class TestProc(unittest.TestCase):
             self.assertTrue(os.path.exists("foo.txt"))
             self.assertEqual(
                 "foo",
-                proc.run_cmd("cat foo.txt", block=True).out
+                proc.run_cmd("cat foo.txt", block=True).output
             )
 
     def test_chain(self):
@@ -54,5 +54,5 @@ class TestProc(unittest.TestCase):
             self.assertEqual(
                 "foo", proc.chain_cmds(
                     ["gunzip -c foo.txt.gz", "cat"], block=True
-                ).out
+                ).output
             )

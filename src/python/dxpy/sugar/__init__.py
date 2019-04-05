@@ -18,6 +18,6 @@ from transfers import (
     Uploader,
     Downloader,
     upload_file,
-    archive_and_upload_files,
+    tar_and_upload_files,
     download_file,
 )

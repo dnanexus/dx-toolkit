@@ -54,6 +54,8 @@ import os
 import re
 import sys
 
+import psutil
+
 import dxpy
 from dxpy.compat import basestring, makedirs
 from dxpy.utils.resolver import data_obj_pattern
@@ -116,42 +118,53 @@ def upload_file(filename, skip_compress=False, **kwargs):
 
 
 def simple_upload_file(
-    filename,
-    remote_filename=None,
-    remote_folder="/",
+    local_path,
+    name=None,
+    folder="/",
     return_handler=False,
     project=None,
     wait_on_close=False,
+    max_part_size=None,
+    max_parallel=1
 ):
     """
     Upload a file and return a link.
 
     Args:
-        filename (str): Local filename.
-        remote_filename (str): Optional, remote filename to upload file to.
-        remote_folder (str): Optional, remote folder to upload file to.
+        local_path (str): Local filename.
+        name (str): Optional, remote filename to upload file to.
+        folder (str): Optional, remote folder to upload file to.
         return_handler (bool): Whether to return a DXFile handler.
         project (str): The project ID to upload to, if not the currently selected
             project.
         wait_on_close (bool): Whether to block until the file has closed.
+        max_part_size (int): Optional, maximum file part size, defaults to project
+            value. Maybe limited by the amount of available memory.
+        max_parallel (int): Max number of parallel download threads; this is used
+            to limit memory usage, and thus may cause max_part_size to be reduced.
 
     Returns:
         DNAnexus link or DXFile pointing to the uploaded file (depending on
         the value of `return_handler`).
     """
-    kwargs = {"wait_on_close": wait_on_close}
+    kwargs = {
+        "wait_on_close": wait_on_close,
+        "write_buffer_size": _get_max_part_size(
+            max_part_size, max_parallel, project
+        )
+    }
 
-    if remote_filename:
-        kwargs["name"] = remote_filename
-    if not remote_folder:
-        remote_folder = "/"
-    elif not remote_folder.startswith("/"):
-        remote_folder = "/{}".format(remote_folder)
-    kwargs["folder"] = remote_folder
+    if name:
+        kwargs["name"] = name
+    if not folder:
+        folder = "/"
+    elif not folder.startswith("/"):
+        folder = "/{}".format(folder)
+    kwargs["folder"] = folder
     if project:
         kwargs["project"] = project
-    LOG.info("Uploading file %s to %s", filename, remote_filename or filename)
-    handler = dxpy.upload_local_file(filename, **kwargs)
+    LOG.info("Uploading file %s to %s", local_path, name or local_path)
+    handler = dxpy.upload_local_file(local_path, **kwargs)
     if return_handler:
         return handler
     else:
@@ -159,15 +172,16 @@ def simple_upload_file(
 
 
 def compress_and_upload_file(
-    filename,
-    remote_filename=None,
-    remote_folder="/",
+    local_path,
+    name=None,
+    folder="/",
     compression_level=1,
     return_handler=False,
     project=None,
     wait_on_close=False,
-    method="gz",
-    max_part_size=None
+    compression_type="gz",
+    max_part_size=None,
+    max_parallel=1
 ):
     """
     Gzip and upload a local file.
@@ -176,9 +190,9 @@ def compress_and_upload_file(
     local file.
 
     Args:
-        filename (str): Local filename.
-        remote_filename (str): Optional, remote filename to upload file to.
-        remote_folder (str): Optional, remote folder to upload file to.
+        local_path (str): Local filename.
+        name (str): Optional, remote filename to upload file to.
+        folder (str): Optional, remote folder to upload file to.
         compression_level (int): Level of compression between 1 and 9 to compress
             file to. Specify 1 for gzip --fast and 9 for gzip --best. If not
             specified, --fast is assumed.
@@ -186,9 +200,11 @@ def compress_and_upload_file(
         project (str): The project ID to upload to, if not the currently selected
             project.
         wait_on_close (bool): Whether to block until the file has closed.
-        method (str): Compression method; one of 'gz', 'bz2'.
+        compression_type (str): Compression method; one of 'gz', 'bz2'.
         max_part_size (int): Optional, maximum file part size, defaults to project
-            value.
+            value. Maybe limited by the amount of available memory.
+        max_parallel (int): Max number of parallel download threads; this is used
+            to limit memory usage, and thus may cause max_part_size to be reduced.
 
     Returns:
         DNAnexus link or DXFile pointing to the uploaded file (depending on
@@ -198,18 +214,18 @@ def compress_and_upload_file(
         ValueError: if compression_level not between 1 and 9
         CalledProcessError: propogated from run_pipe if called command fails
     """
-    ext = ".{}".format(method)
-    if remote_filename is None:
-        remote_filename = os.path.basename(filename)
-    if not remote_filename.endswith(ext):
-        remote_filename += ext
+    ext = ".{}".format(compression_type)
+    if name is None:
+        name = os.path.basename(local_path)
+    if not name.endswith(ext):
+        name += ext
 
-    if not remote_folder:
-        remote_folder = "/"
-    elif not remote_folder.startswith("/"):
-        remote_folder = "/{}".format(remote_folder)
+    if not folder:
+        folder = "/"
+    elif not folder.startswith("/"):
+        folder = "/{}".format(folder)
 
-    remote_path = "{}/{}".format(remote_folder, remote_filename)
+    remote_path = "{}/{}".format(folder, name)
     if project:
         remote_path = "{}:{}".format(project, remote_path)
 
@@ -217,18 +233,17 @@ def compress_and_upload_file(
     if compression_level < 1 or compression_level > 9:
         raise ValueError("Compression level must be between 1 and 9")
 
-    if not max_part_size or max_part_size <= 0:
-        max_part_size = _get_max_part_size(project)
+    max_part_size = _get_max_part_size(max_part_size, max_parallel, project)
 
-    if filename.endswith(ext):
+    if local_path.endswith(ext):
         cmd = [
             "dx", "upload", "--brief", "--buffer-size", str(max_part_size),
-            "--path", remote_filename, filename
+            "--path", name, local_path
         ]
-        file_id = proc.run_cmd(cmd).out
+        file_id = proc.run_cmd(cmd).output
     else:
-        exe = "bzip2" if method == "bz2" else "gzip"
-        zip_cmd = [exe, "-{0}".format(compression_level), "-c", filename]
+        exe = "bzip2" if compression_type == "bz2" else "gzip"
+        zip_cmd = [exe, "-{0}".format(compression_level), "-c", local_path]
         upload_cmd = [
             "dx", "upload", "--brief", "--buffer-size", str(max_part_size),
             "--path", remote_path
@@ -236,22 +251,23 @@ def compress_and_upload_file(
         if wait_on_close:
             upload_cmd.append("--wait")
         upload_cmd.append("-")
-        file_id = proc.chain_cmds([zip_cmd, upload_cmd], shell=True).out
+        file_id = proc.chain_cmds([zip_cmd, upload_cmd], shell=True).output
 
     return _wrap_file_id(file_id, return_handler)
 
 
-def archive_and_upload_files(
-    filenames,
-    remote_prefix=None,
-    remote_folder="/",
+def tar_and_upload_files(
+    local_paths,
+    prefix=None,
+    folder="/",
     compression_level=1,
     chdir=None,
     return_handler=False,
     project=None,
     wait_on_close=False,
     method="gz",
-    max_part_size=None
+    max_part_size=None,
+    max_parallel=1
 ):
     """
     Archive and upload one or more files.
@@ -260,14 +276,14 @@ def archive_and_upload_files(
     list of local files/directories.
 
     Args:
-        filenames (str or list of str): = Local filenames or directories.
-        remote_prefix (str) = Name to give to output tar archive. Must be provided
+        local_paths (str or list of str): = Local filenames or directories.
+        prefix (str) = Name to give to output tar archive. Must be provided
             unless `filenames` is of length 1, in which case the prefix will be
             the same as that of the single filename.
-        remote_folder (str): Optional, remote folder to upload file to.
+        folder (str): Optional, remote folder to upload file to.
         compression_level (int) = Level of compression between 1 and 9 to
             compress tar to. Specify 1 for gzip --fast and 9 for gzip --best.
-            If not specified, --fast is assumed. If None, no compression is
+            If not specified, --fast is assumed. If None or 0, no compression is
             performed, i.e. the output is a .tar file.
         chdir (bool): If a path, change to this directory; if None and filenames is
             a directory, will cd to that directory; if True and filenames is
@@ -279,7 +295,9 @@ def archive_and_upload_files(
         wait_on_close (bool): Whether to block until the file has closed.
         method (str): Compression method; one of 'gz', 'bz2'.
         max_part_size (int): Optional, maximum file part size, defaults to project
-            value.
+            value. Maybe limited by the amount of available memory.
+        max_parallel (int): Max number of parallel download threads; this is used
+            to limit memory usage, and thus may cause max_part_size to be reduced.
 
     Returns:
         DNAnexus link or DXFile pointing to the uploaded tar archive (depending on
@@ -290,22 +308,24 @@ def archive_and_upload_files(
         CalledProcessError: propogated from run_pipe if called command fails
     """
     is_dir = False
-    if isinstance(filenames, basestring):
-        is_dir = os.path.isdir(filenames)
-        filenames = [filenames]
+    if isinstance(local_paths, basestring):
+        is_dir = os.path.isdir(local_paths)
+        local_paths = [local_paths]
 
-    if remote_prefix is None:
-        if len(filenames) == 1:
-            remote_prefix = os.path.basename(filenames[0])
+    if prefix is None:
+        if len(local_paths) == 1:
+            prefix = os.path.basename(local_paths[0])
         else:
             raise ValueError("'prefix' must be specified with multiple filenames")
 
-    if not remote_folder:
-        remote_folder = "/"
-    elif not remote_folder.startswith("/"):
-        remote_folder = "/{}".format(remote_folder)
+    if not folder:
+        folder = "/"
+    elif not folder.startswith("/"):
+        folder = "/{}".format(folder)
 
-    if compression_level is not None and (
+    if compression_level == 0:
+        compression_level = None
+    elif compression_level is not None and (
         compression_level < 1 or compression_level > 9
     ):
         raise ValueError("Compression level must be between 1 and 9")
@@ -316,24 +336,23 @@ def archive_and_upload_files(
     else:
         ext = "tar"
 
-    remote_path = "{}/{}.{}".format(remote_folder, remote_prefix, ext)
+    remote_path = "{}/{}.{}".format(folder, prefix, ext)
     if project:
         remote_path = "{}:{}".format(project, remote_path)
 
-    if not max_part_size or max_part_size <= 0:
-        max_part_size = _get_max_part_size(project)
+    max_part_size = _get_max_part_size(max_part_size, max_parallel, project)
 
     with tmpfile() as names_file:
         with open(names_file, "wt") as out:
-            out.write("\n".join(filenames))
+            out.write("\n".join(local_paths))
 
         tar_cmd = ["tar"]
         if chdir is not False and not isinstance(chdir, str):
             if is_dir:
-                chdir = filenames[0]
+                chdir = local_paths[0]
             elif chdir is True:
                 raise ValueError(
-                    "chdir is True but {} is not a directory".format(filenames[0])
+                    "chdir is True but {} is not a directory".format(local_paths[0])
                 )
             else:
                 chdir = None
@@ -355,20 +374,39 @@ def archive_and_upload_files(
         upload_cmd.append("-")
         cmds.append(upload_cmd)
 
-        file_id = proc.chain_cmds(cmds, shell=True).out
+        file_id = proc.chain_cmds(cmds, shell=True).output
 
     return _wrap_file_id(file_id, return_handler)
 
 
-def _get_max_part_size(project_id=None):
+def _get_max_part_size(max_part_size=None, max_threads=1, project_id=None):
     if not project_id:
         project_id = dxpy.PROJECT_CONTEXT_ID
+
+    # Determine the absolute maximum value we can use
+    # TODO: cache value by project ID
     project = dxpy.DXProject(project_id)
     desc = project.describe(input_params={"fields": {"fileUploadParameters": True}})
-    return min(
+    abs_max_part_size = min(
         desc["fileUploadParameters"]["maximumPartSize"],
         MAX_READ_SIZE
     )
+
+    # Set to min of desired value and abs max value
+    if not max_part_size or max_part_size < 0:
+        max_part_size = abs_max_part_size
+    else:
+        max_part_size = min(max_part_size, abs_max_part_size)
+
+    # Further limit max part size by available memory
+    available_mem = psutil.virtual_memory().available
+    available_mem_per_thread = available_mem // max_threads
+    max_part_size = min(max_part_size, available_mem_per_thread)
+
+    # Use the dxpy default part size (100 MB) as the minimum
+    max_part_size = max(max_part_size, dxpy.DEFAULT_BUFFER_SIZE)
+
+    return max_part_size
 
 
 def _wrap_file_id(file_id, return_handler, project=None):
@@ -474,8 +512,8 @@ def download_file(
 
 
 def simple_download_file(
-    remote_file,
-    local_filename=None,
+    dx_file_or_link,
+    local_path=None,
     output_dir=None,
     project=None,
     block=True,
@@ -485,8 +523,8 @@ def simple_download_file(
     Download a file.
 
     Args:
-        remote_file (dxpy.DXFile or dxlink): The file to download.
-        local_filename (str): The local_filename, or None to use the input filename.
+        dx_file_or_link (dxpy.DXFile or dxlink): The file to download.
+        local_path (str): The local_filename, or None to use the input filename.
         output_dir (str): The output directory, or None to use the current directory.
         project (str): The ID of the project that contains the file, if it is not the
             currently selected project and is not specified in the remote file
@@ -499,30 +537,28 @@ def simple_download_file(
         The output filename, if `block is True`, otherwise a
         :class:`dxpy.sugar.processing.Processes` object.
     """
-    remote_file = _as_dxfile(remote_file, project)
+    dxfile = _as_dxfile(dx_file_or_link, project)
 
-    if local_filename is None:
-        local_filename = SPECIAL_RE.sub("", remote_file.name)
+    if local_path is None:
+        local_path = SPECIAL_RE.sub("", dxfile.name)
     if output_dir:
-        local_filename = os.path.join(output_dir, local_filename)
+        local_path = os.path.join(output_dir, local_path)
 
-    LOG.info("Downloading file %s to %s", remote_file.get_id(), local_filename)
-
-    cmd = ["dx", "download", remote_file.get_id(), "-o", local_filename]
-
-    result = proc.run_cmd(cmd, block=block, **kwargs)
+    LOG.info("Downloading file %s to %s", dxfile.get_id(), local_path)
 
     if block:
+        dxpy.download_dxfile(dxfile, local_path)
         LOG.info(
-            "Completed downloading file %s to %s", remote_file.get_id(), local_filename
+            "Completed downloading file %s to %s", dxfile.get_id(), local_path
         )
-        return local_filename
+        return local_path
     else:
-        return result
+        cmd = ["dx", "download", dxfile.get_id(), "-o", local_path]
+        return proc.run_cmd(cmd, block=block, **kwargs)
 
 
 def download_and_unpack_archive(
-    remote_file,
+    dx_file_or_link,
     input_filename=None,
     local_filename=None,
     output_dir=None,
@@ -533,7 +569,7 @@ def download_and_unpack_archive(
     Download and unpack a tar file, which may optionally be gzip-compressed.
 
     Args:
-        remote_file (dxpy.DXFile): DNAnexus link or file-id of file to download
+        dx_file_or_link (dxpy.DXFile): DNAnexus link or file-id of file to download
         input_filename (str): Name to use for the input filename, if different than
             the name of the input_file. If not provided, platform filename is used.
         local_filename (str): Local filename/dirname. If not None, this file/directory
@@ -553,10 +589,10 @@ def download_and_unpack_archive(
         filenames has a single element, which is the `local_filename`, converted to
         an absolute path if necessary.
     """
-    remote_file = _as_dxfile(remote_file, project)
+    dxfile = _as_dxfile(dx_file_or_link, project)
 
     if input_filename is None:
-        input_filename = remote_file.describe()["name"]
+        input_filename = dxfile.describe()["name"]
     if not output_dir:
         output_dir = os.getcwd()
     elif not os.path.isabs(output_dir):
@@ -587,11 +623,11 @@ def download_and_unpack_archive(
         suffix = SPECIAL_RE.sub("", input_filename[:-ext_len])
     file_list_filename = "tar_output_{}".format(suffix)
 
-    cmds = [["dx", "download", remote_file.get_id(), "-o", "-"], tar_cmd]
+    cmds = [["dx", "download", dxfile.get_id(), "-o", "-"], tar_cmd]
 
     LOG.info(
         "Downloading file %s using command %s and saving command stdout to "
-        "intermediate file %s", remote_file.get_id(), cmds, file_list_filename
+        "intermediate file %s", dxfile.get_id(), cmds, file_list_filename
     )
 
     result = proc.chain_cmds(cmds, stdout=file_list_filename, block=block)
@@ -599,7 +635,7 @@ def download_and_unpack_archive(
     if not block:
         return result
 
-    LOG.info("Completed downloading file %s", remote_file.get_id())
+    LOG.info("Completed downloading file %s", dxfile.get_id())
 
     if local_filename:
         # If a local_filename was provided, make sure it exists
@@ -608,7 +644,7 @@ def download_and_unpack_archive(
         if not os.path.exists(local_filename):
             raise ValueError(
                 "Expected file {} does not exist after untarring file {}",
-                local_filename, remote_file.get_id()
+                local_filename, dxfile.get_id()
             )
         return [local_filename]
     else:
@@ -618,7 +654,7 @@ def download_and_unpack_archive(
 
 
 def download_and_decompress_file(
-    remote_file,
+    dx_file_or_link,
     input_filename=None,
     local_filename=None,
     output_dir=None,
@@ -629,7 +665,7 @@ def download_and_decompress_file(
     Download and decompress a gzipped file.
 
     Args:
-        remote_file (dxpy.DXFile or dxlink): DNAnexus link or file-id of file to
+        dx_file_or_link (dxpy.DXFile or dxlink): DNAnexus link or file-id of file to
             download.
         input_filename (str): Name to use for the input filename, if different than
             the name of the input_file. If not provided, platform filename is used.
@@ -646,10 +682,10 @@ def download_and_decompress_file(
         The path of the decompressed file, if `block is True`, otherwise
         a :class:`dxpy.sugar.processing.Processes` object.
     """
-    remote_file = _as_dxfile(remote_file, project)
+    dxfile = _as_dxfile(dx_file_or_link, project)
 
     if input_filename is None:
-        input_filename = remote_file.describe()["name"]
+        input_filename = dxfile.describe()["name"]
 
     if input_filename.endswith(".gz"):
         exe = "gunzip"
@@ -668,13 +704,13 @@ def download_and_decompress_file(
         local_filename = os.path.join(output_dir, local_filename)
 
     cmds = [
-        ["dx", "download", remote_file.get_id(), "-o", "-"],
+        ["dx", "download", dxfile.get_id(), "-o", "-"],
         [exe],
     ]
 
     LOG.info(
         "Downloading file %s to %s using command %s",
-        remote_file.get_id(),
+        dxfile.get_id(),
         local_filename,
         cmds,
     )
@@ -683,7 +719,7 @@ def download_and_decompress_file(
 
     if block:
         LOG.info(
-            "Completed downloading file %s to %s", remote_file.get_id(), local_filename
+            "Completed downloading file %s to %s", dxfile.get_id(), local_filename
         )
         return local_filename
     else:
@@ -702,19 +738,10 @@ def _as_dxfile(fileobj, project=None):
     Returns:
         A `dxpy.DXFile` object.
     """
-    if dxpy.is_dxlink(fileobj):
-        project_id = None
-        if (
-            isinstance(fileobj["$dnanexus_link"], dict)
-            and "project" in fileobj["$dnanexus_link"]
-        ):
-            project_id = fileobj["$dnanexus_link"]["project"]
-        elif project:
-            project_id = project
-        return dxpy.DXFile(fileobj, project=project_id)
-    if not isinstance(fileobj, dxpy.DXFile):
-        raise ValueError("Not a link or DXFile object: {}".format(fileobj))
-    return fileobj
+    if isinstance(fileobj, dxpy.DXFile):
+        return fileobj
+    else:
+        return dxpy.get_handler(fileobj, project)
 
 
 class DataTransferExecutor(concurrent.futures.ThreadPoolExecutor):
@@ -916,12 +943,14 @@ class Uploader(DataTransferExecutor):
         archive=False,
         **kwargs
     ):
+        if "max_parallel" not in kwargs:
+            kwargs["max_parallel"] = self._max_workers
         if archive:
             compression_level = None if skip_compress else 1
             return (
                 {
                     self.submit(
-                        archive_and_upload_files,
+                        tar_and_upload_files,
                         files,
                         compression_level=compression_level,
                         **self._get_submit_kwargs(kwargs)

@@ -114,8 +114,8 @@ class TestUpload(unittest.TestCase):
 
             handler = xfer.simple_upload_file(
                 filename,
-                remote_filename=remote_filename,
-                remote_folder=self.folder,
+                name=remote_filename,
+                folder=self.folder,
                 project=self.project.get_id(),
                 return_handler=True,
                 wait_on_close=True
@@ -133,8 +133,8 @@ class TestUpload(unittest.TestCase):
             try:
                 handler = xfer.compress_and_upload_file(
                     filename,
-                    remote_filename=remote_filename,
-                    remote_folder=self.folder,
+                    name=remote_filename,
+                    folder=self.folder,
                     project=self.project.get_id(),
                     return_handler=True,
                     wait_on_close=True
@@ -154,10 +154,10 @@ class TestUpload(unittest.TestCase):
             remote_prefix = random_name()
             remote_filename = "{}.tar.gz".format(remote_prefix)
 
-            handler = xfer.archive_and_upload_files(
+            handler = xfer.tar_and_upload_files(
                 filenames,
-                remote_prefix=remote_prefix,
-                remote_folder=self.folder,
+                prefix=remote_prefix,
+                folder=self.folder,
                 return_handler=True,
                 project=self.project.get_id(),
                 wait_on_close=True
@@ -188,7 +188,7 @@ class TestUpload(unittest.TestCase):
                 up.enqueue_file("plain_file", plain_file, skip_compress=True)
                 up.enqueue_file("zip_file", to_zip_file)
                 up.enqueue_list(
-                    "tar_file", to_tar_filenames, archive=True, remote_prefix="test"
+                    "tar_file", to_tar_filenames, archive=True, prefix="test"
                 )
                 up.enqueue_dict(dict_files, skip_compress=True)
                 result = up.wait()

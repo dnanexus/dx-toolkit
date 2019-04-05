@@ -1,5 +1,6 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
 import copy
+import errno
 import logging
 import shlex
 import subprocess
@@ -60,33 +61,31 @@ class Processes:
         self._processes = None
         self._output_handle = None
         self._returncode = None
-        # These will hold
-        self.out = None
-        self.err = None
+        self._out = None
+        self._err = None
 
     @property
     def returncode(self):
         """
-        The max return code of all the commands in the chain.
+        The return code of the last process to finish with an error, or 0. Is None
+        if the last process hasn't finished running.
         """
         if not self.was_run:
             raise RuntimeError("Must call run() before returncode can be requested")
         if self._returncode is None:
-            for proc in reversed(self._processes):
-                rc = proc.poll()
-                if rc is None:
-                    # The pipeline has not finished running
-                    break
-                if rc > 0:
-                    # A command finished with an error
-                    # Set `self._returncode` to the returncode of the last process
-                    # to finish with an error, to mimic behavior of `set -o pipefail`.
-                    self._returncode = rc
-                    break
-            else:
-                # None of the process return codes were None or non-zero, thus
-                # all must have been zero.
-                self._returncode = 0
+            # Set `self._returncode` to the returncode of the last process
+            # to finish with an error, to mimic behavior of `set -o pipefail`.
+            # Note that if any process other than the last has a return code of
+            # None, we ignore it.
+            self._returncode = self._processes[-1].poll()
+            if self._returncode == 0 and len(self._processes) > 1:
+                # The last process finished running without error, but check all
+                # the other processes for an error.
+                for proc in reversed(self._processes[-2::-1]):
+                    rc = proc.poll()
+                    if rc:
+                        self._returncode = rc
+                        break
         return self._returncode
 
     def _init_stdout(self):
@@ -133,7 +132,35 @@ class Processes:
         return open(tempfile.mkstemp()[1], "w")
 
     @property
-    def stdout(self):
+    def output(self):
+        """
+        The contents of the `stdout` stream of the last process in the chain.
+        Only available if `self.closed is True` and `self._stdout_type in
+        {_PIPE, _BUFFER}`.
+        """
+        if not (self.closed and self._stdout_type in {_PIPE, _BUFFER}):
+            raise RuntimeError(
+                "'output' is only available for closed processes using a pipe or "
+                "buffer for stdout."
+            )
+        return self._out
+
+    @property
+    def error(self):
+        """
+        The contents of the `stderr` stream of the last process in the chain.
+        Only available if `self.closed is True` and `self._stderr_type in
+        {_PIPE, _BUFFER}`.
+        """
+        if not (self.closed and self._stderr_type in {_PIPE, _BUFFER}):
+            raise RuntimeError(
+                "'error' is only available for closed processes using a pipe or "
+                "buffer for stderr."
+            )
+        return self._err
+
+    @property
+    def stdout_stream(self):
         """
         The `stdout` stream of the last process in the chain.
         """
@@ -142,7 +169,7 @@ class Processes:
         return self._stdout or self._processes[-1].stdout
 
     @property
-    def stderr(self):
+    def stderr_stream(self):
         """
         The `stderr` stream of the last process in the chain.
         """
@@ -170,7 +197,7 @@ class Processes:
         if self.capture_stderr:
             stderr.extend(self._stderr_buffers)
         if self._stderr_type in (_BUFFER, _PIPE):
-            stderr.append(self.err)
+            stderr.append(self.error)
         return stderr
 
     @property
@@ -249,6 +276,11 @@ class Processes:
             raise_on_error: Whether to raise a :class:`subprocess.CalledProcessError`
                 if the returncode was not 0.
         """
+        if not self.was_run:
+            raise RuntimeError("Cannot call block() until after calling run()")
+        if self.closed:
+            raise RuntimeError("Cannot call block() after calling close()")
+
         last_proc = self._processes[-1]
         try:
             out, err = (
@@ -256,15 +288,15 @@ class Processes:
                 for std in last_proc.communicate()
             )
             if self._stdout_type == _PIPE:
-                self.out = out
+                self._out = out
             if self._stderr_type == _PIPE:
-                self.err = err
+                self._err = err
         except ValueError:
             LOG.error("Error reading from stdout/stderr")
             pass
 
         if close:
-            self.close()
+            self._close_and_set_std()
 
         if raise_on_error:
             self.raise_if_error()
@@ -277,16 +309,18 @@ class Processes:
         Returns:
             True if processes were killed, else False.
         """
-        if self.was_run:
-            if not self.done:
-                for i, proc in enumerate(self._processes):
-                    try:
-                        proc.kill()
-                    except:
-                        LOG.exception(
-                            "Error killing running process command %s", self.cmds[i]
-                        )
-                return True
+        if self.was_run and not self.done:
+            for i, proc in enumerate(self._processes):
+                try:
+                    proc.kill()
+                except OSError as oserr:
+                    if oserr.errno == errno.ESRCH:
+                        # Ignore - process has already died
+                        pass
+                    LOG.exception(
+                        "Error killing running process command %s", self.cmds[i]
+                    )
+            return True
 
         return False
 
@@ -299,33 +333,40 @@ class Processes:
             raise RuntimeError("Can only call close() after 'done' is True.")
 
         if not self._closed:
-            def close_file(handle):
-                try:
-                    handle.close()
-                except IOError:
-                    LOG.exception("Error closing output file %s", handle.name)
+            self._close_and_set_std()
 
-            def close_buffer(handle):
-                close_file(handle)
-                with open(handle.name, "rt") as inp:
-                    return inp.read()
+    def _close_and_set_std(self):
+        """
+        Close any open files and set the values of `self._out` and `self._err`
+        if they are of type _BUFFER.
+        """
+        def close_file(handle):
+            try:
+                handle.close()
+            except IOError:
+                LOG.exception("Error closing output file %s", handle.name)
 
-            if self._stdout_type == _FILE:
-                close_file(self._stdout)
-            elif self._stdout_type == _BUFFER:
-                self.out = close_buffer(self._stdout)
+        def close_buffer(handle):
+            close_file(handle)
+            with open(handle.name, "rt") as inp:
+                return inp.read()
 
-            if self._stderr_type == _FILE:
-                close_file(self._stderr)
-            elif self._stderr_type == _BUFFER:
-                self.err = close_buffer(self._stderr)
+        if self._stdout == _FILE:
+            close_file(self._stdout)
+        elif self._stdout_type == _BUFFER:
+            close_buffer(self._stdout)
 
-            if self.capture_stderr:
-                self._stderr_buffers = [
-                    close_buffer(buf) for buf in self._stderr_buffers
-                ]
+        if self._stderr == _FILE:
+            close_file(self._stderr)
+        elif self._stderr_type == _BUFFER:
+            close_buffer(self._stderr)
 
-            self._closed = True
+        if self.capture_stderr:
+            self._stderr_buffers = [
+                close_buffer(buf) for buf in self._stderr_buffers
+            ]
+
+        self._closed = True
 
     def raise_if_error(self):
         """
@@ -336,7 +377,7 @@ class Processes:
             CalledProcessError
         """
         if self.done and not self.ok:
-            msg = "stderr from executed commands: {}".format(
+            msg = "stderr from executed commands:\n{}".format(
                 "\n".join(self.get_all_stderr())
             )
             raise subprocess.CalledProcessError(
@@ -420,7 +461,7 @@ def chain_cmds(cmds, stdout=None, shell=False, block=True, **kwargs):
         Usage 2: Pipe multiple commands together and return output
             example_cmd1 = ['gzip', 'file.txt']
             example_cmd2 = ['dx', 'upload', '-', '--brief']
-            file_id = chain_cmd([example_cmd1, example_cmd2], block=True).out
+            file_id = chain_cmd([example_cmd1, example_cmd2], block=True).output
 
             This function will print and execute the following command:
             'gzip file.txt | dx upload - --brief '
