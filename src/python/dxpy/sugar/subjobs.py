@@ -16,6 +16,7 @@
 
 import dxpy
 
+
 def divide_dxfiles_into_chunks(dxfiles, target_size):
     '''
     This is a general function to divide input files into a set of chunks based on file size.
@@ -42,6 +43,7 @@ def divide_dxfiles_into_chunks(dxfiles, target_size):
 
     return groups
 
+
 def get_dxlink_filesizes(dx_links):
     """Run dx describe on a list of DNAnexus dxlink inputs to get the
     corresponding file sizes.
@@ -54,8 +56,8 @@ def get_dxlink_filesizes(dx_links):
         list: corresponding filesizes in bytes, output of 'dx describe'
         command
     """
-    input = {'objects': [file['$dnanexus_link'] for file in dx_links]}
-    descriptions = dxpy.api.system_describe_data_objects(input, always_retry=True)
+    describe = {'objects': [f['$dnanexus_link'] for f in dx_links]}
+    descriptions = dxpy.api.system_describe_data_objects(describe, always_retry=True)
 
     sizes = [d['describe']['size'] for d in descriptions['results']]
 
