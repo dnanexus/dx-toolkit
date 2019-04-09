@@ -169,13 +169,12 @@ def fifo(name=None):
     Yields:
         The name of the FIFO
     """
-    if name:
-        os.mkfifo(name)
-        yield name
-    else:
+    if name is None:
         temp = tempfile.NamedTemporaryFile(delete=False)
-        os.mkfifo(temp.name)
-        yield temp.name
+        name = temp.name
+
+    os.mkfifo(name)
+    yield name
 
     if os.path.exists(name):
         os.remove(name)
