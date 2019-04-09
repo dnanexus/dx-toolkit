@@ -16,6 +16,32 @@
 
 import dxpy
 
+def divide_dxfiles_into_chunks(dxfiles, target_size):
+    '''
+    This is a general function to divide input files into a set of chunks based on file size.
+
+    Args:
+        dxfiles: List of dx files to split
+        target_size: Target size (in bytes) of each bin
+
+    Returns:
+        Groups of files with each group having roughly target_size of data
+    '''
+
+    filesizes = get_dxlink_filesizes(dxfiles)
+    total_size = sum(filesizes)
+
+    # Now, get the splits.  We'll target each set of bam files to be a total
+    # of SIZE_PER_BIN bytes.
+    num_bins = total_size / (target_size * 1024 * 1024 * 1024) + 1
+    groups = schedule_lpt(zip(dxfiles, filesizes), num_bins)
+
+    # It's conceivable that some of the splits could be empty.  We'll remove
+    # those from our list.
+    groups = [split for split in groups if len(split) > 0]
+
+    return groups
+
 def get_dxlink_filesizes(dx_links):
     """Run dx describe on a list of DNAnexus dxlink inputs to get the
     corresponding file sizes.
