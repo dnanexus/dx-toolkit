@@ -53,7 +53,6 @@ import multiprocessing
 import os
 import re
 import sys
-import tempfile
 
 import psutil
 
@@ -63,9 +62,36 @@ from dxpy.utils.resolver import data_obj_pattern
 from dxpy.sugar import processing as proc
 
 
+# Helpers - these belong in other modules
+
+import tempfile
+
+
+@contextlib.contextmanager
+def tmpfile(*args, **kwargs):
+    """
+    Create a temporary file, yield it, and delete it before returning.
+
+    Yields:
+        A path to a temporary file.
+
+    Notes:
+        This method is needed distinct from :class:`tempfile.TemporaryFile` in the
+        case where python needs to write to the file and then a subprocess needs
+        to read from the file.
+    """
+    path = tempfile.mkstemp(*args, **kwargs)[1]
+    try:
+        yield path
+    finally:
+        if os.path.exists(path):
+            os.remove(path)
+
+# End helpers
+
+
 LOG = logging.getLogger()
-SPECIAL_RE = re.compile(r"[^\w-.]")
-"""Used based on recommendation here: https://superuser.com/a/748264/70028."""
+SPECIAL_RE = re.compile(r"[^\w.]")
 MAX_READ_SIZE = (1024 * 1024 * 1024 * 2) - 1
 """Maximum number of bytes that can be read from a file at once. The limit here is
 due to a known bug in some versions of python on macOS:
@@ -142,7 +168,7 @@ def simple_upload_file(
     if return_handler:
         return handler
     else:
-        return _file_handler_as_link(handler)
+        return dxpy.dxlink(handler.get_id(), handler.describe()["project"])
 
 
 def compress_and_upload_file(
@@ -278,7 +304,9 @@ def tar_and_upload_files(
         ValueError: if compression_level not between 1 and 9
         CalledProcessError: propogated from run_pipe if called command fails
     """
+    is_dir = False
     if isinstance(local_paths, basestring):
+        is_dir = os.path.isdir(local_paths)
         local_paths = [local_paths]
 
     if prefix is None:
@@ -311,7 +339,7 @@ def tar_and_upload_files(
 
     max_part_size = _get_max_part_size(max_part_size, max_parallel, project)
 
-    with _tmpfile() as names_file:
+    with tmpfile() as names_file:
         with open(names_file, "wt") as out:
             out.write("\n".join(local_paths))
 
@@ -393,21 +421,12 @@ def _wrap_file_id(file_id, return_handler, project=None):
         else:
             raise ValueError("Invalid file ID: {}".format(file_id))
 
-    handler = dxpy.DXFile(file_id, project=project)
+    dxlink = dxpy.dxlink(file_id, project_id=project)
 
     if return_handler:
-        return handler
+        return dxpy.DXFile(dxlink)
     else:
-        return _file_handler_as_link(handler)
-
-
-def _file_handler_as_link(dxfile):
-    file_id = dxfile.get_id()
-    project = dxfile.describe()["project"]
-    if project is None or not project.startswith("project-"):
-        return dxpy.dxlink(file_id)
-    else:
-        return dxpy.dxlink(file_id, project_id=project)
+        return dxlink
 
 
 def download_file(
@@ -948,25 +967,3 @@ class Downloader(DataTransferExecutor):
 
     def __init__(self, **kwargs):
         super(Downloader, self).__init__(download_file, **kwargs)
-
-
-@contextlib.contextmanager
-def _tmpfile(*args, **kwargs):
-    """
-    Create a temporary file, yield it, and delete it before returning.
-
-    Yields:
-        A path to a temporary file.
-
-    Notes:
-        This method is needed distinct from :class:`tempfile.TemporaryFile` in the
-        case where python needs to write to the file and then a subprocess needs
-        to read from the file. For now, keep this private to transfers module rather
-        than expose it via the context module.
-    """
-    path = tempfile.mkstemp(*args, **kwargs)[1]
-    try:
-        yield path
-    finally:
-        if os.path.exists(path):
-            os.remove(path)
