@@ -285,10 +285,7 @@ def tar_and_upload_files(
             compress tar to. Specify 1 for gzip --fast and 9 for gzip --best.
             If not specified, --fast is assumed. If None or 0, no compression is
             performed, i.e. the output is a .tar file.
-        chdir (bool): If a path, change to this directory; if None and filenames is
-            a directory, will cd to that directory; if True and filenames is
-            a directory, same behavior as None, otherwise an error is raised;
-            if False, no cd. (tar -C option).
+        chdir (str): Change to this directory before tarring files (tar -C option).
         return_handler (bool): Whether to return a DXFile handler.
         project (str): The project ID to upload to, if not the currently selected
             project.
@@ -347,15 +344,6 @@ def tar_and_upload_files(
             out.write("\n".join(local_paths))
 
         tar_cmd = ["tar"]
-        if chdir is not False and not isinstance(chdir, str):
-            if is_dir:
-                chdir = local_paths[0]
-            elif chdir is True:
-                raise ValueError(
-                    "chdir is True but {} is not a directory".format(local_paths[0])
-                )
-            else:
-                chdir = None
         if chdir:
             tar_cmd.extend(["-C", chdir])
         tar_cmd.extend(["cvf", "-", "--files-from", names_file])
