@@ -53,6 +53,7 @@ import multiprocessing
 import os
 import re
 import sys
+import tempfile
 
 import psutil
 
@@ -60,34 +61,6 @@ import dxpy
 from dxpy.compat import basestring, makedirs
 from dxpy.utils.resolver import data_obj_pattern
 from dxpy.sugar import processing as proc
-
-
-# Helpers - these belong in other modules
-
-import tempfile
-
-
-@contextlib.contextmanager
-def tmpfile(*args, **kwargs):
-    """
-    Create a temporary file, yield it, and delete it before returning.
-
-    Yields:
-        A path to a temporary file.
-
-    Notes:
-        This method is needed distinct from :class:`tempfile.TemporaryFile` in the
-        case where python needs to write to the file and then a subprocess needs
-        to read from the file.
-    """
-    path = tempfile.mkstemp(*args, **kwargs)[1]
-    try:
-        yield path
-    finally:
-        if os.path.exists(path):
-            os.remove(path)
-
-# End helpers
 
 
 LOG = logging.getLogger()
@@ -304,9 +277,7 @@ def tar_and_upload_files(
         ValueError: if compression_level not between 1 and 9
         CalledProcessError: propogated from run_pipe if called command fails
     """
-    is_dir = False
     if isinstance(local_paths, basestring):
-        is_dir = os.path.isdir(local_paths)
         local_paths = [local_paths]
 
     if prefix is None:
@@ -339,7 +310,7 @@ def tar_and_upload_files(
 
     max_part_size = _get_max_part_size(max_part_size, max_parallel, project)
 
-    with tmpfile() as names_file:
+    with _tmpfile() as names_file:
         with open(names_file, "wt") as out:
             out.write("\n".join(local_paths))
 
@@ -967,3 +938,25 @@ class Downloader(DataTransferExecutor):
 
     def __init__(self, **kwargs):
         super(Downloader, self).__init__(download_file, **kwargs)
+
+
+@contextlib.contextmanager
+def _tmpfile(*args, **kwargs):
+    """
+    Create a temporary file, yield it, and delete it before returning.
+
+    Yields:
+        A path to a temporary file.
+
+    Notes:
+        This method is needed distinct from :class:`tempfile.TemporaryFile` in the
+        case where python needs to write to the file and then a subprocess needs
+        to read from the file. For now, keep this private to transfers module rather
+        than expose it via the context module.
+    """
+    path = tempfile.mkstemp(*args, **kwargs)[1]
+    try:
+        yield path
+    finally:
+        if os.path.exists(path):
+            os.remove(path)
