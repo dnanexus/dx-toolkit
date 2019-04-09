@@ -140,15 +140,11 @@ class cd:
     """
 
     def __init__(self, target_path=None, cleanup=True):
-        if target_path is not None:
-            if os.path.exists(target_path):
-                self.newPath = target_path
-                self.removeFolder = False
-            else:
-                self.newPath = tempfile.mkdtemp(dir=target_path)
-                self.removeFolder = cleanup
+        if target_path is not None and os.path.exists(target_path):
+            self.newPath = target_path
+            self.removeFolder = False
         else:
-            self.newPath = tempfile.mkdtemp()
+            self.newPath = tempfile.mkdtemp(dir=target_path)
             self.removeFolder = cleanup
 
     def __enter__(self):
