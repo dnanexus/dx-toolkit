@@ -1,12 +1,17 @@
+dx-toolkit (0.280.0) precise; urgency=low
+
+  * Added: --instance-count to dx run so that Spark cluster size can be defined at app start
+  * Changed: dx wait behavior by adding exponential backoff and passing appropriate project
+  * Changed: Decreased libcurl timeout in C++ bindings from infinity to default 10 min
+  * Changed: Default Ubuntu release to 16.04 in dx-app-wizard
+  * Changed: Link handling to better support JBORs
+  * Fixed: Handling file arrays in batch job runner
+
+ -- Aleksandra Zalcman <azalcman@dnanexus.com>  Thu, 11 Apr 2019 16:57:23 +0000
+
 dx-toolkit (0.279.0) precise; urgency=low
 
-  * Added: new findDataObjects inputs to DXJava
-  * Added: project name resolution to --project flag for dx run
-  * Added: smart reuse and SAML identity provider
-  * Added: dx list database <entity> for DNAnexus Apollo
-  * Added: --ignore-reuse and --ignore-reuse-stage working for workflows
-  * Changed: Upgrade proot to be compatible with kernel >= 4.8
-  * Changed: Skip symlinks test in isolated environment
+  * no significant updates 
 
  -- Aleksandra Zalcman <azalcman@dnanexus.com>  Thu, 21 Mar 2019 17:10:59 +0000
 
