@@ -6,6 +6,21 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* `--instance-count` to `dx run` so that Spark cluster size can be defined at app start
+
+### Changed
+
+* `dx wait` behavior by adding exponential backoff and passing appropriate project
+* Decreased libcurl timeout in C++ bindings from infinity to default 10 min
+* Default Ubuntu release to 16.04 in `dx-app-wizard` 
+* Link handling to better support JBORs
+
+### Fixed
+
+* Handling file arrays in batch job runner
+
 ## [279.0] - 2019.03.21 beta
 
 * no significant updates
