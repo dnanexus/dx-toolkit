@@ -60,12 +60,14 @@ class UserContext(object):
         dxpy.set_workspace_id(self.job_workspace_id)
 
 @contextlib.contextmanager
-def set_env(**environ):
+def set_env(environ, override=False):
     """
     Context manager generator to temporarily set the subprocess environment variables.
 
     Args:
-        environ (dict): Environment variable to set
+        environ (dict): Environment variable(s) to set
+        override (boolean): Whether the environment should be updated or overwritten. If the environment is overwritten,
+        no env variables are set except for those explicitly specified.
 
     Yields:
         An environment with environment variables set as specified.
@@ -96,7 +98,10 @@ def set_env(**environ):
         some/python/path
     """
     old_environ = dict(os.environ)
-    os.environ.update(environ)
+    if override:
+        os.environ = environ
+    else:
+        os.environ.update(environ)
     try:
         yield
     finally:
