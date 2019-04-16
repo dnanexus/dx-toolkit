@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [280.0] - 2019.04.11 beta
+
 ### Added
 
 * `--instance-count` to `dx run` so that Spark cluster size can be defined at app start
@@ -21,11 +23,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Handling file arrays in batch job runner
 
-## [279.0] - 2019.03.21 beta
+## [279.0] - 2019.04.11 stable
 
 * no significant updates
 
-## [278.0] - 2019.03.21 stable
+## [278.0] - 2019.03.21 
 
 ### Added
 
