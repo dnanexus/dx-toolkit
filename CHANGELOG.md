@@ -6,11 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [281.0] - 2019.04.18 beta
+
 ### Added 
 
 * support for passing HTTPContext in `DXJava` to the `execute()` operation
 
-## [280.0] - 2019.04.11 beta
+## [280.0] - 2019.04.18 stable
 
 ### Added
 
@@ -27,7 +29,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Handling file arrays in batch job runner
 
-## [279.0] - 2019.04.11 stable
+## [279.0] - 2019.04.11
 
 * no significant updates
 
