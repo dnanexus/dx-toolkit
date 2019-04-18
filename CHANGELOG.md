@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added 
+
+* support for passing HTTPContext in `DXJava` to the `execute()` operation
+
 ## [280.0] - 2019.04.11 beta
 
 ### Added
