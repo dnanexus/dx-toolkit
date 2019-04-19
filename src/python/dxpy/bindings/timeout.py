@@ -15,7 +15,7 @@ def timeout(seconds=10, error_message=os.strerror(errno.ETIME)):
 
         def wrapper(*args, **kwargs):
             # Windows does not support SIGALRM
-            if not signal.SIGALRM:
+            if not hasattr(signal, "SIGALRM"):
                 result = func(*args, **kwargs)
             else:
                 signal.signal(signal.SIGALRM, _handle_timeout)
