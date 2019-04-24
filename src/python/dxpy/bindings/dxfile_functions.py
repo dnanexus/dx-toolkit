@@ -263,10 +263,10 @@ def _download_dxfile(dxid, filename, part_retry_counter,
         dxfile = DXFile(dxid, mode="r", project=(project if project != DXFile.NO_PROJECT_HINT else None))
 
     # 
-    if describe_output and describe_output.get('parts') is None:    
-        dxfile_desc = dxfile.describe(fields={"parts"}, default_fields=True, **kwargs)
-    else:
+    if describe_output and describe_output.get("parts") is not None:
         dxfile_desc = describe_output
+    else:
+        dxfile_desc = dxfile.describe(fields={"parts"}, default_fields=True, **kwargs)
 
     if 'drive' in dxfile_desc:
         # A symbolic link. Get the MD5 checksum, if we have it
