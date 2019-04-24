@@ -4167,6 +4167,8 @@ parser_download.add_argument('-a', '--all', help='If multiple objects match the 
                              action='store_true')
 parser_download.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress',
                              action='store_false', default=sys.stderr.isatty())
+parser_download.add_argument('--lightweight', help='Skip some validation steps to make fewer API calls',
+                             action='store_true')
 parser_download.add_argument('--unicode', help='Display the characters as text/unicode when writing to stdout',
                              dest="unicode_text", action='store_true')
 parser_download.set_defaults(func=download_or_cat)
