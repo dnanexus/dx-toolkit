@@ -69,7 +69,6 @@ def _verify(filename, md5digest):
 
 
 def download_one_file(project, file_desc, dest_filename, args):
-    "Calling download_one_file"
     if not args.overwrite:
         if os.path.exists(dest_filename):
             err_exit(fill('Error: path "' + dest_filename + '" already exists but -f/--overwrite was not set'))
