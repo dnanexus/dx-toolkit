@@ -95,7 +95,7 @@ def new_dxfile(mode=None, write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE, expected
 
 
 def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
-                    project=None, describe_output=None, **kwargs):
+                    project=None, **kwargs):
     '''
     :param dxid: DNAnexus file ID or DXFile (file handler) object
     :type dxid: string or DXFile
@@ -120,15 +120,9 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
     part_retry_counter = defaultdict(lambda: 3)
     success = False
     while not success:
-        success = _download_dxfile(dxid,
-                                   filename,
-                                   part_retry_counter,
-                                   chunksize=chunksize,
-                                   append=append,
-                                   show_progress=show_progress,
-                                   project=project,
-                                   describe_output=describe_output,
-                                   **kwargs)
+        success = _download_dxfile(dxid, filename, part_retry_counter,
+                                   chunksize=chunksize, append=append,
+                                   show_progress=show_progress, project=project, **kwargs)
 
 
 # Check if a program (wget, curl, etc.) is on the path, and
@@ -220,7 +214,7 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
 
 def _download_dxfile(dxid, filename, part_retry_counter,
                      chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
-                     project=None, describe_output=None, **kwargs):
+                     project=None, **kwargs):
     '''
     Core of download logic. Download file-id *dxid* and store it in
     a local file *filename*.
@@ -262,12 +256,9 @@ def _download_dxfile(dxid, filename, part_retry_counter,
     else:
         dxfile = DXFile(dxid, mode="r", project=(project if project != DXFile.NO_PROJECT_HINT else None))
 
-    # 
-    if describe_output and describe_output.get('parts') is None:    
-        dxfile_desc = dxfile.describe(fields={"parts"}, default_fields=True, **kwargs)
-    else:
-        dxfile_desc = describe_output
+    dxfile_desc = dxfile.describe(fields={"parts"}, default_fields=True, **kwargs)
 
+    from pprint import pprint
     if 'drive' in dxfile_desc:
         # A symbolic link. Get the MD5 checksum, if we have it
         if 'md5' in dxfile_desc:

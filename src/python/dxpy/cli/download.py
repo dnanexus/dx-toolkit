@@ -69,7 +69,6 @@ def _verify(filename, md5digest):
 
 
 def download_one_file(project, file_desc, dest_filename, args):
-    "Calling download_one_file"
     if not args.overwrite:
         if os.path.exists(dest_filename):
             err_exit(fill('Error: path "' + dest_filename + '" already exists but -f/--overwrite was not set'))
@@ -88,12 +87,7 @@ def download_one_file(project, file_desc, dest_filename, args):
         show_progress = False
 
     try:
-        dxpy.download_dxfile(
-                            file_desc['id'],
-                            dest_filename,
-                            show_progress=show_progress,
-                            project=project,
-                            describe_output=file_desc)
+        dxpy.download_dxfile(file_desc['id'], dest_filename, show_progress=show_progress, project=project)
         return
     except:
         err_exit()
@@ -160,9 +154,6 @@ def download(args):
             resolver_kwargs.update({'allow_mult': True, 'all_mult': True})
 
         project, folderpath, matching_files = try_call(resolve_existing_path, path, **resolver_kwargs)
-
-        from pprint import pprint
-        pprint(matching_files)
         if matching_files is None:
             matching_files = []
         elif not isinstance(matching_files, list):
@@ -175,6 +166,7 @@ def download(args):
         if is_jbor_str(path):
             assert len(matching_files) == 1
             project = matching_files[0]["describe"]["project"]
+
         matching_folders = []
         # project may be none if path is an ID and there is no project context
         if project is not None:
@@ -203,15 +195,14 @@ def download(args):
         #
         # If length of matching_files is 0 then we're only downloading folders
         # so skip this logic since the files will be verified in the API call.
-        if not args.lightweight \
-            and len(matching_files) > 0 \
-            and path_has_explicit_proj \
-            and not any(object_exists_in_project(f['describe']['id'], project) for f in matching_files):
-                err_exit(fill('Error: specified project does not contain specified file object'))
+        if len(matching_files) > 0 and path_has_explicit_proj and not \
+                any(object_exists_in_project(f['describe']['id'], project) for f in matching_files):
+            err_exit(fill('Error: specified project does not contain specified file object'))
 
         files_to_get[project].extend(matching_files)
         folders_to_get[project].extend(((f, strip_prefix) for f in matching_folders))
         count += len(matching_files) + len(matching_folders)
+
         filenames.extend(f["describe"]["name"] for f in matching_files)
         foldernames.extend(f[len(strip_prefix):].lstrip('/') for f in matching_folders)
 
