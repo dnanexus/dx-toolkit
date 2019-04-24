@@ -158,6 +158,10 @@ def download(args):
         if args.all or _is_glob(path):
             resolver_kwargs.update({'allow_mult': True, 'all_mult': True})
 
+        # include "parts" in the description so that we don't
+        # have to call a separate describe method downstream
+        resolver_kwargs.update({"describe": {"parts": True}})
+
         project, folderpath, matching_files = try_call(resolve_existing_path, path, **resolver_kwargs)
 
         from pprint import pprint
