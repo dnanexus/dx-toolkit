@@ -266,10 +266,8 @@ def _download_dxfile(dxid, filename, part_retry_counter,
         dxfile = DXFile(dxid, mode="r", project=(project if project != DXFile.NO_PROJECT_HINT else None))
 
     if describe_output and describe_output.get("parts") is not None:
-        print("\n>>>>>>>>> Reusing describe\n")
         dxfile_desc = describe_output
     else:
-        print("\n>>>>>>>>> NOT Reusing describe\n")
         dxfile_desc = dxfile.describe(fields={"parts"}, default_fields=True, **kwargs)
 
     if 'drive' in dxfile_desc:
@@ -670,9 +668,6 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
 
     # Downloading files
     describe_input = dict(fields=dict(folder=True, name=True, id=True, parts=True))
-    print("-----------------------")
-    print(describe_input)
-    print("-----------------------")
 
     # A generator that returns the files one by one. We don't want to materialize it, because
     # there could be many files here.
