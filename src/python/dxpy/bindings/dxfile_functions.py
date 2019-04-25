@@ -108,8 +108,9 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
             DXFile.NO_PROJECT_HINT, no project hint is supplied to the API server.
     :type project: str or None
     :param describe_output: output of the file-xxxx/describe API call, if available.
-            It will make it possible to skip another describe API call (though only
-            if it contains the "parts" field, not included in the output by default).
+            It will make it possible to skip one describe API call. It should
+            contain the default fields of the describe API call output and the
+            "parts" field, not included in the output by default.
     :type describe_output: dict or None
 
     Downloads the remote file referenced by *dxid* and saves it to *filename*.
