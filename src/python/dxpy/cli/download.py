@@ -164,8 +164,6 @@ def download(args):
 
         project, folderpath, matching_files = try_call(resolve_existing_path, path, **resolver_kwargs)
 
-        from pprint import pprint
-        pprint(matching_files)
         if matching_files is None:
             matching_files = []
         elif not isinstance(matching_files, list):

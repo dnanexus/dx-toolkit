@@ -692,5 +692,10 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
                      ("" if remote_file['describe']['folder'] == "/" else remote_file['describe']['folder']),
                      remote_file['describe']['name'],
                      local_filename)
-        download_dxfile(remote_file['describe']['id'], local_filename, chunksize=chunksize, project=project,
-                        show_progress=show_progress, describe_output=remote_file['describe'], **kwargs)
+        download_dxfile(remote_file['describe']['id'],
+                        local_filename,
+                        chunksize=chunksize,
+                        project=project,
+                        show_progress=show_progress,
+                        describe_output=remote_file['describe'],
+                        **kwargs)
