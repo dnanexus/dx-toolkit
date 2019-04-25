@@ -107,7 +107,10 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
             which billing account is billed for this download). If None or
             DXFile.NO_PROJECT_HINT, no project hint is supplied to the API server.
     :type project: str or None
-
+    :param describe_output: output of the file-xxxx/describe API call, if available.
+            It will make it possible to skip another describe API call (though only
+            if it contains the "parts" field, not included in the output by default).
+    :type describe_output: dict or None
 
     Downloads the remote file referenced by *dxid* and saves it to *filename*.
 
@@ -262,10 +265,11 @@ def _download_dxfile(dxid, filename, part_retry_counter,
     else:
         dxfile = DXFile(dxid, mode="r", project=(project if project != DXFile.NO_PROJECT_HINT else None))
 
-    # 
     if describe_output and describe_output.get("parts") is not None:
+        print("\n>>>>>>>>> Reusing describe\n")
         dxfile_desc = describe_output
     else:
+        print("\n>>>>>>>>> NOT Reusing describe\n")
         dxfile_desc = dxfile.describe(fields={"parts"}, default_fields=True, **kwargs)
 
     if 'drive' in dxfile_desc:
@@ -665,7 +669,10 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
         ensure_local_dir(compose_local_dir(normalized_dest_dir, normalized_folder, remote_subfolder))
 
     # Downloading files
-    describe_input = dict(fields=dict(folder=True, name=True, id=True))
+    describe_input = dict(fields=dict(folder=True, name=True, id=True, parts=True))
+    print("-----------------------")
+    print(describe_input)
+    print("-----------------------")
 
     # A generator that returns the files one by one. We don't want to materialize it, because
     # there could be many files here.
@@ -691,4 +698,4 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
                      remote_file['describe']['name'],
                      local_filename)
         download_dxfile(remote_file['describe']['id'], local_filename, chunksize=chunksize, project=project,
-                        show_progress=show_progress, **kwargs)
+                        show_progress=show_progress, describe_output=remote_file['describe'], **kwargs)

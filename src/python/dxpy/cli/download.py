@@ -203,6 +203,9 @@ def download(args):
 
         # If the user explicitly provided the project and it doesn't contain
         # the files, don't allow the download.
+
+        # For speed's sake, skip this check (i.e. one API call) if the user
+        # passed the lightweight argument
         #
         # If length of matching_files is 0 then we're only downloading folders
         # so skip this logic since the files will be verified in the API call.
