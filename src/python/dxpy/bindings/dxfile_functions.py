@@ -95,7 +95,7 @@ def new_dxfile(mode=None, write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE, expected
 
 
 def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
-                    project=None, **kwargs):
+                    project=None, describe_output=None, **kwargs):
     '''
     :param dxid: DNAnexus file ID or DXFile (file handler) object
     :type dxid: string or DXFile
@@ -107,7 +107,11 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
             which billing account is billed for this download). If None or
             DXFile.NO_PROJECT_HINT, no project hint is supplied to the API server.
     :type project: str or None
-
+    :param describe_output: (experimental) output of the file-xxxx/describe API call,
+            if available. It will make it possible to skip another describe API call.
+            It should contain the default fields of the describe API call output and
+            the "parts" field, not included in the output by default.
+    :type describe_output: dict or None
 
     Downloads the remote file referenced by *dxid* and saves it to *filename*.
 
@@ -120,9 +124,15 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
     part_retry_counter = defaultdict(lambda: 3)
     success = False
     while not success:
-        success = _download_dxfile(dxid, filename, part_retry_counter,
-                                   chunksize=chunksize, append=append,
-                                   show_progress=show_progress, project=project, **kwargs)
+        success = _download_dxfile(dxid,
+                                   filename,
+                                   part_retry_counter,
+                                   chunksize=chunksize,
+                                   append=append,
+                                   show_progress=show_progress,
+                                   project=project,
+                                   describe_output=describe_output,
+                                   **kwargs)
 
 
 # Check if a program (wget, curl, etc.) is on the path, and
@@ -214,7 +224,7 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
 
 def _download_dxfile(dxid, filename, part_retry_counter,
                      chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
-                     project=None, **kwargs):
+                     project=None, describe_output=None, **kwargs):
     '''
     Core of download logic. Download file-id *dxid* and store it in
     a local file *filename*.
@@ -256,9 +266,11 @@ def _download_dxfile(dxid, filename, part_retry_counter,
     else:
         dxfile = DXFile(dxid, mode="r", project=(project if project != DXFile.NO_PROJECT_HINT else None))
 
-    dxfile_desc = dxfile.describe(fields={"parts"}, default_fields=True, **kwargs)
+    if describe_output and describe_output.get("parts") is not None:
+        dxfile_desc = describe_output
+    else:
+        dxfile_desc = dxfile.describe(fields={"parts"}, default_fields=True, **kwargs)
 
-    from pprint import pprint
     if 'drive' in dxfile_desc:
         # A symbolic link. Get the MD5 checksum, if we have it
         if 'md5' in dxfile_desc:
@@ -656,7 +668,13 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
         ensure_local_dir(compose_local_dir(normalized_dest_dir, normalized_folder, remote_subfolder))
 
     # Downloading files
-    describe_input = dict(fields=dict(folder=True, name=True, id=True))
+    describe_input = dict(fields=dict(folder=True,
+                                      name=True,
+                                      id=True,
+                                      parts=True,
+                                      size=True,
+                                      drive=True,
+                                      md5=True))
 
     # A generator that returns the files one by one. We don't want to materialize it, because
     # there could be many files here.
@@ -681,5 +699,10 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
                      ("" if remote_file['describe']['folder'] == "/" else remote_file['describe']['folder']),
                      remote_file['describe']['name'],
                      local_filename)
-        download_dxfile(remote_file['describe']['id'], local_filename, chunksize=chunksize, project=project,
-                        show_progress=show_progress, **kwargs)
+        download_dxfile(remote_file['describe']['id'],
+                        local_filename,
+                        chunksize=chunksize,
+                        project=project,
+                        show_progress=show_progress,
+                        describe_output=remote_file['describe'],
+                        **kwargs)
