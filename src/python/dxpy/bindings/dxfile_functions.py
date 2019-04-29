@@ -668,7 +668,13 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
         ensure_local_dir(compose_local_dir(normalized_dest_dir, normalized_folder, remote_subfolder))
 
     # Downloading files
-    describe_input = dict(fields=dict(folder=True, name=True, id=True, parts=True))
+    describe_input = dict(fields=dict(folder=True,
+                                      name=True,
+                                      id=True,
+                                      parts=True,
+                                      size=True,
+                                      drive=True,
+                                      md5=True))
 
     # A generator that returns the files one by one. We don't want to materialize it, because
     # there could be many files here.
