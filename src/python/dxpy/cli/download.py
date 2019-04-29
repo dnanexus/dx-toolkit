@@ -87,7 +87,12 @@ def download_one_file(project, file_desc, dest_filename, args):
         show_progress = False
 
     try:
-        dxpy.download_dxfile(file_desc['id'], dest_filename, show_progress=show_progress, project=project)
+        dxpy.download_dxfile(
+                            file_desc['id'],
+                            dest_filename,
+                            show_progress=show_progress,
+                            project=project,
+                            describe_output=file_desc)
         return
     except:
         err_exit()
@@ -153,7 +158,15 @@ def download(args):
         if args.all or _is_glob(path):
             resolver_kwargs.update({'allow_mult': True, 'all_mult': True})
 
+        # include "parts" and a few additional fields in the description so that
+        # we don't have to call a separate describe method downstream
+        resolver_kwargs.update({"describe": {"parts": True,
+                                             "size": True,
+                                             "drive": True,
+                                             "md5": True}})
+
         project, folderpath, matching_files = try_call(resolve_existing_path, path, **resolver_kwargs)
+
         if matching_files is None:
             matching_files = []
         elif not isinstance(matching_files, list):
@@ -166,7 +179,6 @@ def download(args):
         if is_jbor_str(path):
             assert len(matching_files) == 1
             project = matching_files[0]["describe"]["project"]
-
         matching_folders = []
         # project may be none if path is an ID and there is no project context
         if project is not None:
@@ -192,17 +204,21 @@ def download(args):
 
         # If the user explicitly provided the project and it doesn't contain
         # the files, don't allow the download.
+
+        # For speed's sake, skip this check (i.e. one API call) if the user
+        # passed the lightweight argument
         #
         # If length of matching_files is 0 then we're only downloading folders
         # so skip this logic since the files will be verified in the API call.
-        if len(matching_files) > 0 and path_has_explicit_proj and not \
-                any(object_exists_in_project(f['describe']['id'], project) for f in matching_files):
-            err_exit(fill('Error: specified project does not contain specified file object'))
+        if not args.lightweight \
+            and len(matching_files) > 0 \
+            and path_has_explicit_proj \
+            and not any(object_exists_in_project(f['describe']['id'], project) for f in matching_files):
+                err_exit(fill('Error: specified project does not contain specified file object'))
 
         files_to_get[project].extend(matching_files)
         folders_to_get[project].extend(((f, strip_prefix) for f in matching_folders))
         count += len(matching_files) + len(matching_folders)
-
         filenames.extend(f["describe"]["name"] for f in matching_files)
         foldernames.extend(f[len(strip_prefix):].lstrip('/') for f in matching_folders)
 
