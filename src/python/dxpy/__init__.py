@@ -622,6 +622,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     # This is needed for python 3 urllib
                     _headers.pop(b'host', None)
                     _headers.pop(b'content-length', None)
+                    _headers.pop(b'Content-Length', None)
 
                     # The libraries downstream (http client) require elimination of non-ascii
                     # chars from URL.
