@@ -1,3 +1,10 @@
+dx-toolkit (0.282.0) precise; urgency=low
+
+  * Changed: Reduce the number of API calls in `dx download`
+  * Fixed: `dx upload` error via proxy in Azure
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 08 May 2019 17:31:38 +0000
+
 dx-toolkit (0.281.0) precise; urgency=low
 
   * Added: support for passing HTTPContext in DXJava to the execute() operation 
