@@ -337,7 +337,7 @@ def create_files_from_templates(template_dir, app_json, language,
 
 This is the source code for an app that runs on the DNAnexus Platform.
 For more information about how to run or modify it, see
-https://wiki.dnanexus.com/.
+https://docs.dnanexus.com/.
 <!-- /dx-header -->
 
 {description}
