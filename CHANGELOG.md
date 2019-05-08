@@ -6,6 +6,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Reduce the number of API calls for `dx download`
+
+### Fixed
+
+*  `dx upload` error via proxy in Azure
+
 ## [281.0] - 2019.04.18 beta
 
 ### Added 
