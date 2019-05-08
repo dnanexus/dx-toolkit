@@ -49,7 +49,7 @@ postscript = '''}
 
 class_method_template = '''
     /**
-     * Invokes the {method_name} method with an empty input, deserializing to an object of the specified class.{wiki_link}
+     * Invokes the {method_name} method with an empty input, deserializing to an object of the specified class.{docs_link}
      *
      * @param outputClass class to deserialize the server reponse to
      *
@@ -66,7 +66,7 @@ class_method_template = '''
         return {method_name}(mapper.createObjectNode(), outputClass);
     }}
     /**
-     * Invokes the {method_name} method with an empty input using the specified environment, deserializing to an object of the specified class.{wiki_link}
+     * Invokes the {method_name} method with an empty input using the specified environment, deserializing to an object of the specified class.{docs_link}
      *
      * @param outputClass class to deserialize the server reponse to
      * @param env environment object specifying the auth token and remote server and protocol
@@ -84,7 +84,7 @@ class_method_template = '''
         return {method_name}(mapper.createObjectNode(), outputClass, env);
     }}
     /**
-     * Invokes the {method_name} method with the specified input, deserializing to an object of the specified class.{wiki_link}
+     * Invokes the {method_name} method with the specified input, deserializing to an object of the specified class.{docs_link}
      *
      * @param inputObject input object (to be JSON serialized to an input hash)
      * @param outputClass class to deserialize the server reponse to
@@ -105,7 +105,7 @@ class_method_template = '''
                 outputClass);
     }}
     /**
-     * Invokes the {method_name} method with the specified input using the specified environment, deserializing to an object of the specified class.{wiki_link}
+     * Invokes the {method_name} method with the specified input using the specified environment, deserializing to an object of the specified class.{docs_link}
      *
      * @param inputObject input object (to be JSON serialized to an input hash)
      * @param outputClass class to deserialize the server reponse to
@@ -128,7 +128,7 @@ class_method_template = '''
     }}
 
     /**
-     * Invokes the {method_name} method.{wiki_link}
+     * Invokes the {method_name} method.{docs_link}
      *
      * @return Server response parsed from JSON
      *
@@ -146,7 +146,7 @@ class_method_template = '''
         return {method_name}(mapper.createObjectNode());
     }}
     /**
-     * Invokes the {method_name} method with the specified input parameters.{wiki_link}
+     * Invokes the {method_name} method with the specified input parameters.{docs_link}
      *
      * @param inputParams input parameters to the API call
      *
@@ -166,7 +166,7 @@ class_method_template = '''
         return new DXHTTPRequest().request("{route}", inputParams, {retry_strategy});
     }}
     /**
-     * Invokes the {method_name} method with the specified environment.{wiki_link}
+     * Invokes the {method_name} method with the specified environment.{docs_link}
      *
      * @param env environment object specifying the auth token and remote server and protocol
      *
@@ -186,7 +186,7 @@ class_method_template = '''
         return {method_name}(mapper.createObjectNode(), env);
     }}
     /**
-     * Invokes the {method_name} method with the specified environment and input parameters.{wiki_link}
+     * Invokes the {method_name} method with the specified environment and input parameters.{docs_link}
      *
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
@@ -209,7 +209,7 @@ class_method_template = '''
 
 object_method_template = '''
     /**
-     * Invokes the {method_name} method with an empty input, deserializing to an object of the specified class.{wiki_link}
+     * Invokes the {method_name} method with an empty input, deserializing to an object of the specified class.{docs_link}
      *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
@@ -227,7 +227,7 @@ object_method_template = '''
         return {method_name}(objectId, mapper.createObjectNode(), outputClass);
     }}
     /**
-     * Invokes the {method_name} method with the given input, deserializing to an object of the specified class.{wiki_link}
+     * Invokes the {method_name} method with the given input, deserializing to an object of the specified class.{docs_link}
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -249,7 +249,7 @@ object_method_template = '''
                         input, {retry_strategy_with_nonce}), outputClass);
     }}
     /**
-     * Invokes the {method_name} method with an empty input using the given environment, deserializing to an object of the specified class.{wiki_link}
+     * Invokes the {method_name} method with an empty input using the given environment, deserializing to an object of the specified class.{docs_link}
      *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
@@ -268,7 +268,7 @@ object_method_template = '''
         return {method_name}(objectId, mapper.createObjectNode(), outputClass, env);
     }}
     /**
-     * Invokes the {method_name} method with the given input using the given environment, deserializing to an object of the specified class.{wiki_link}
+     * Invokes the {method_name} method with the given input using the given environment, deserializing to an object of the specified class.{docs_link}
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -292,7 +292,7 @@ object_method_template = '''
     }}
 
     /**
-     * Invokes the {method_name} method.{wiki_link}
+     * Invokes the {method_name} method.{docs_link}
      *
      * @param objectId ID of the object to operate on
      *
@@ -312,7 +312,7 @@ object_method_template = '''
         return {method_name}(objectId, mapper.createObjectNode());
     }}
     /**
-     * Invokes the {method_name} method with the specified parameters.{wiki_link}
+     * Invokes the {method_name} method with the specified parameters.{docs_link}
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -334,7 +334,7 @@ object_method_template = '''
                 {retry_strategy});
     }}
     /**
-     * Invokes the {method_name} method with the specified environment.{wiki_link}
+     * Invokes the {method_name} method with the specified environment.{docs_link}
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
@@ -355,7 +355,7 @@ object_method_template = '''
         return {method_name}(objectId, mapper.createObjectNode(), env);
     }}
     /**
-     * Invokes the {method_name} method with the specified environment and parameters.{wiki_link}
+     * Invokes the {method_name} method with the specified environment and parameters.{docs_link}
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -400,9 +400,9 @@ print preamble
 for method in json.loads(sys.stdin.read()):
     route, signature, opts = method
     method_name = signature.split("(")[0]
-    wiki_link = ''
-    if opts.get('wikiLink', None):
-        wiki_link = '\n     *\n     * <p>For more information about this method, see the <a href="%s">API specification</a>.' % (opts['wikiLink'],)
+    docs_link = ''
+    if opts.get('docsLink', None):
+        docs_link = '\n     *\n     * <p>For more information about this method, see the <a href="%s">API specification</a>.' % (opts['docsLink'],)
     retryable = opts['retryable']
     accept_nonce = opts.get('acceptNonce', False)
 
@@ -436,21 +436,21 @@ for method in json.loads(sys.stdin.read()):
         if oid_route == 'app-xxxx':
             print app_object_method_template.format(method_name=method_name,
                                                     method_route=method_route,
-                                                    wiki_link=wiki_link,
+                                                    docs_link=docs_link,
                                                     retry_strategy_with_nonce=make_retry_param(retryable or accept_nonce),
                                                     retry_strategy=make_retry_param(retryable),
                                                     input_code=make_input_code(accept_nonce))
         else:
             print object_method_template.format(method_name=method_name,
                                                 method_route=method_route,
-                                                wiki_link=wiki_link,
+                                                docs_link=docs_link,
                                                 retry_strategy_with_nonce=make_retry_param(retryable or accept_nonce),
                                                 retry_strategy=make_retry_param(retryable),
                                                 input_code=make_input_code(accept_nonce))
     else:
         print class_method_template.format(method_name=method_name,
                                            route=route,
-                                           wiki_link=wiki_link,
+                                           docs_link=docs_link,
                                            retry_strategy_with_nonce=make_retry_param(retryable or accept_nonce),
                                            retry_strategy=make_retry_param(retryable),
                                            input_code=make_input_code(accept_nonce))

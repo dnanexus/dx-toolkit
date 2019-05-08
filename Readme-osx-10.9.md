@@ -5,7 +5,7 @@ Building on OS X 10.9
 
 Instead of building from source, most users can install the prebuilt DNAnexus Platform SDK for OS X (a.k.a. dx-toolkit) release available for download at:
 
-https://wiki.dnanexus.com/Downloads
+https://docs.dnanexus.com/
 
 ### Setup steps
 ---------------

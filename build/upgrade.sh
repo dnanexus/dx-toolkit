@@ -12,7 +12,7 @@ build_dir=$(dirname "$0")
 
 function cleanup() {
     echo "$(basename $0): Unable to update to version ${new_version} $@"
-    echo "Please visit https://wiki.dnanexus.com/Downloads#DNAnexus-Platform-SDK and download an appropriate package for your system."
+    echo "Please visit https://docs.dnanexus.com/ and download an appropriate package for your system."
 }
 
 trap cleanup ERR

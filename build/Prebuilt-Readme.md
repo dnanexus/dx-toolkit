@@ -6,7 +6,7 @@ DNAnexus Platform SDK
 `dx-toolkit` contains the DNAnexus API language bindings and utilities
 for interacting with the DNAnexus platform.
 
-See https://wiki.dnanexus.com/ and http://autodoc.dnanexus.com/ for relevant
+See https://docs.dnanexus.com/ and http://autodoc.dnanexus.com/ for relevant
 documentation.
 
 Using the toolkit on your system
@@ -19,7 +19,7 @@ source dx-toolkit/environment
 ```
 
 You will then be able to use `dx` (the [DNAnexus Command Line
-Client](https://wiki.dnanexus.com/Command-Line-Client/Quickstart)) and other
+Client](https://docs.dnanexus.com/)) and other
 utilities, and you will be able to use DNAnexus API bindings in the supported
 languages.
 
