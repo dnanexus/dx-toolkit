@@ -8,19 +8,25 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Changed
 
+* `dx upgrade` now downloads the latest version from s3
+
+## [282.0] - 2019.05.08 beta
+
+### Changed
+
 * Reduce the number of API calls for `dx download`
 
 ### Fixed
 
 *  `dx upload` error via proxy in Azure
 
-## [281.0] - 2019.04.18 beta
+## [281.0] - 2019.04.18 stable
 
 ### Added 
 
 * support for passing HTTPContext in `DXJava` to the `execute()` operation
 
-## [280.0] - 2019.04.18 stable
+## [280.0] - 2019.04.18 
 
 ### Added
 
