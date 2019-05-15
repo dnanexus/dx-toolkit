@@ -27,6 +27,20 @@ import logging
 LOG = logging.getLogger()
 
 class UserContext(object):
+    """
+    Context manager for switching to a user context when inside of a job context. All functions of this class require
+    for the context to be a worker context and can only be run on a DNAnexus job.
+
+    Args:
+        api_token: DNAnexus user token
+
+    Yields:
+        Temporarily logs into a user context with the following usage:
+        with UserContext(api_token):
+            do_something
+
+        Upon exit, job context is restored.
+    """
     @dxpy.sugar.requires_worker_context
     def __init__(self, api_token):
         api_token = api_token.strip("\n")  # Python adds \n when reading from a file
@@ -179,14 +193,3 @@ def fifo(name=None):
 
     if os.path.exists(name):
         os.remove(name)
-
-
-if __name__ == "__main__":
-    import doctest
-
-    test_failures = doctest.testmod()[0]
-    if test_failures > 0:
-        print("Encountered {0} failures".format(test_failures))
-        sys.exit(1)
-    else:
-        print("All tests passed.")

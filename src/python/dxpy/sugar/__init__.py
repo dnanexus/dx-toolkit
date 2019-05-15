@@ -24,6 +24,12 @@ from transfers import (
     tar_and_upload_files,
     download_file,
 )
+from context import (
+    UserContext,
+    set_env,
+    cd,
+    fifo
+)
 
 def requires_worker_context(func):
     """This decorator checks that a given function is running within a DNAnexus job context"""
