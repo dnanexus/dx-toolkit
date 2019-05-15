@@ -144,7 +144,6 @@ from collections import namedtuple
 from . import exceptions
 from .compat import USING_PYTHON2, BadStatusLine, StringIO, bytes, Repr
 from .utils.printing import BOLD, BLUE, YELLOW, GREEN, RED, WHITE
-from .bindings import *
 
 from random import randint
 from requests.auth import AuthBase
@@ -153,8 +152,7 @@ from requests.packages.urllib3.packages.ssl_match_hostname import match_hostname
 from threading import Lock
 from . import ssh_tunnel_app_support
 
-import cryptography
-from cryptography import utils
+
 
 try:
     # python-3
@@ -187,12 +185,7 @@ def configure_urllib3():
 
     urllib3.connection.match_hostname = _match_hostname
 
-def configure_cryptography():
-    # Remove warnings from cryptography 2.3 on Python 2.7.6
-    warnings.simplefilter('ignore', cryptography.utils.DeprecatedIn23)
-
 configure_urllib3()
-configure_cryptography()
 
 from .toolkit_version import version as TOOLKIT_VERSION
 __version__ = TOOLKIT_VERSION
@@ -1039,5 +1032,12 @@ def append_underlying_workflow_describe(globalworkflow_desc):
 from .utils.config import DXConfig as _DXConfig
 config = _DXConfig()
 
+from .bindings import *
+import cryptography
+from cryptography import utils
+def configure_cryptography():
+    # Remove warnings from cryptography 2.3 on Python 2.7.6
+    warnings.simplefilter('ignore', cryptography.utils.DeprecatedIn23)
+configure_cryptography()
 from .dxlog import DXLogHandler
 from .utils.exec_utils import run, entry_point
