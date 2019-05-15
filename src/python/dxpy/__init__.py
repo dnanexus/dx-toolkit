@@ -144,6 +144,7 @@ from collections import namedtuple
 from . import exceptions
 from .compat import USING_PYTHON2, BadStatusLine, StringIO, bytes, Repr
 from .utils.printing import BOLD, BLUE, YELLOW, GREEN, RED, WHITE
+from .bindings import *
 
 from random import randint
 from requests.auth import AuthBase
@@ -152,7 +153,6 @@ from requests.packages.urllib3.packages.ssl_match_hostname import match_hostname
 from threading import Lock
 from . import ssh_tunnel_app_support
 
-import warnings
 import cryptography
 from cryptography import utils
 
@@ -1039,6 +1039,5 @@ def append_underlying_workflow_describe(globalworkflow_desc):
 from .utils.config import DXConfig as _DXConfig
 config = _DXConfig()
 
-from .bindings import *
 from .dxlog import DXLogHandler
 from .utils.exec_utils import run, entry_point
