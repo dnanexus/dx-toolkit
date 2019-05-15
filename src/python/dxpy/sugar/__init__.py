@@ -25,6 +25,11 @@ from transfers import (
     download_file,
 )
 
+from chunking import (
+    divide_dxfiles_into_chunks,
+    get_dxlink_filesizes,
+    schedule_lpt
+)
 def requires_worker_context(func):
     """This decorator checks that a given function is running within a DNAnexus job context"""
     @wraps(func)
