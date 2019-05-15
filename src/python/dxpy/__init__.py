@@ -187,6 +187,15 @@ def configure_urllib3():
 
 configure_urllib3()
 
+def configure_cryptography():
+    # Import inside of function since 'warnings' is imported globally in downloads.py and dxfile_functions.py
+    import cryptography
+    import warnings
+    from cryptography import utils
+    # Remove warnings from cryptography 2.3 on Python 2.7.6
+    warnings.simplefilter('ignore', cryptography.utils.DeprecatedIn23)
+configure_cryptography()
+
 from .toolkit_version import version as TOOLKIT_VERSION
 __version__ = TOOLKIT_VERSION
 
@@ -1033,12 +1042,5 @@ from .utils.config import DXConfig as _DXConfig
 config = _DXConfig()
 
 from .bindings import *
-def configure_cryptography():
-    import cryptography
-    import warnings
-    from cryptography import utils
-    # Remove warnings from cryptography 2.3 on Python 2.7.6
-    warnings.simplefilter('ignore', cryptography.utils.DeprecatedIn23)
-configure_cryptography()
 from .dxlog import DXLogHandler
 from .utils.exec_utils import run, entry_point
