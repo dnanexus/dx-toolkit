@@ -1033,9 +1033,10 @@ from .utils.config import DXConfig as _DXConfig
 config = _DXConfig()
 
 from .bindings import *
-import cryptography
-from cryptography import utils
 def configure_cryptography():
+    import cryptography
+    import warnings
+    from cryptography import utils
     # Remove warnings from cryptography 2.3 on Python 2.7.6
     warnings.simplefilter('ignore', cryptography.utils.DeprecatedIn23)
 configure_cryptography()
