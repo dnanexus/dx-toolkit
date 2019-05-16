@@ -190,9 +190,10 @@ def configure_cryptography():
     import cryptography
     import warnings
     from cryptography import utils
-    # Remove warnings from cryptography 2.3 on Python 2.7.6
     warnings.simplefilter('ignore', cryptography.utils.DeprecatedIn23)
-configure_cryptography()
+# Filter cryptography >= 2.3 warnings
+if sys.version_info < (2, 7, 7):
+    configure_cryptography()
 
 from .toolkit_version import version as TOOLKIT_VERSION
 __version__ = TOOLKIT_VERSION
