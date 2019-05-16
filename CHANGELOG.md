@@ -8,9 +8,16 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Changed
 
+* Upgrade python cryptography version from 2.2 to 2.3
+* Upgrade jackson-databind and jackson-core to version 2.9.8
+
+## [283.0] - 2019.05.13 beta
+
+### Changed
+
 * `dx upgrade` now downloads the latest version from s3
 
-## [282.0] - 2019.05.08 beta
+## [282.0] - 2019.05.08 stable
 
 ### Changed
 
@@ -20,7 +27,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 *  `dx upload` error via proxy in Azure
 
-## [281.0] - 2019.04.18 stable
+## [281.0] - 2019.04.18 
 
 ### Added 
 
