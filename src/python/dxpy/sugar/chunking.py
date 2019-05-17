@@ -23,7 +23,7 @@ def divide_dxfiles_into_chunks(dxfiles, target_size):
 
     Args:
         dxfiles: List of dx files to split
-        target_size: Target size (in bytes) of each bin
+        target_size: Target size (in gigabytes) of each bin
 
     Returns:
         Groups of files with each group having roughly target_size of data
