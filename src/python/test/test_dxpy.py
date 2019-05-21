@@ -205,7 +205,7 @@ class TestDXProject(unittest.TestCase):
         desc = dxproject.describe()
         self.assertEqual(desc["restricted"], False)
         self.assertEqual(desc["downloadRestricted"], False)
-        self.assertTrue("unset_allowed_executables" not in desc)
+        self.assertTrue("allowedExecutables" not in desc)
 
     def test_new_list_remove_folders(self):
         dxproject = dxpy.DXProject()
