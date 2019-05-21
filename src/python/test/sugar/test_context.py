@@ -4,17 +4,23 @@ import dxpy
 import unittest
 
 from dxpy.sugar import context
+from .. import dxpy_testutil as testutil
+
 
 import logging
 logging.basicConfig(level="INFO")
 
 class TestContext(unittest.TestCase):
+    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
     def test_user_context(self):
         # mimic worker context
-        dxpy.JOB_ID = "job-12345"
-        os.environ["DX_JOB_ID"] = "job-12345"
-        os.environ["DX_SECURITY_CONTEXT"] = "mysecuritycontext"
-        os.environ["DX_WORKSPACE_ID"] = "myworkspaceid"
+        worker_env = {
+            "DX_JOB_ID": "job-12345",
+            "DX_SECURITY_CONTEXT": "mysecuritycontext",
+            "DX_WORKSPACE_ID": "myworkspaceid"
+        }
+        os.environ = testutil.override_environment(**worker_env)
+        dxpy.JOB_ID = worker_env["DX_JOB_ID"]
 
         # switch to user context
         with context.UserContext("myapitoken"):
@@ -27,14 +33,10 @@ class TestContext(unittest.TestCase):
         """
             make sure error is properly raised when UserContext is called without job context
         """
-        error_raised = False
-        try:
-            with context.UserContext("myapitoken"):
-                error_raised = False
-        except dxpy.DXError:
-            error_raised = True
 
-        self.assertTrue(error_raised, "dxpy.DXError should have been raised when trying to use user context outside of a job context.")
+        with self.assertRaises(dxpy.DXError):
+            with context.UserContext("myapitoken"):
+                pass
 
     def test_set_env(self):
         with context.set_env({"PLUGINS_DIR": u"test/plugins"}):
@@ -42,7 +44,7 @@ class TestContext(unittest.TestCase):
 
         self.assertNotIn("PLUGINS_DIR", os.environ, "PLUGINS_DIR should not be present in os.environ outside of set_env")
 
-
+    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
     def test_set_env_override(self):
         os.environ["SOME_FIELD"] = "somevalue"
         with context.set_env({"PLUGINS_DIR": u"test/plugins"}, override=True):
@@ -67,3 +69,6 @@ class TestContext(unittest.TestCase):
             self.assertNotEqual(prev_dir, curr_dir, "Failed to change dirs")
 
         self.assertTrue(os.path.exists("/tmp/some_path"), "Temp path should still exist")
+
+        # clean up
+        os.remove("/tmp/some_path")
