@@ -781,7 +781,7 @@ public class DXFile extends DXDataObject {
     }
 
     @Override
-    public Describe describe(DescribeOptions options) {
+    public Describe describe(DXDataObject.DescribeOptions options) {
         return DXJSON.safeTreeToValue(
                 apiCallOnObject("describe", MAPPER.valueToTree(options), RetryStrategy.SAFE_TO_RETRY), Describe.class);
     }
