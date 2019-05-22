@@ -604,7 +604,7 @@ public class DXEnvironment {
      *    https://localhost:3128
      *    https://dnanexus:welcome@localhost:3128
      */
-    public ProxyDesc parseProxyDefinition(String proxyDfn, String proxyMethod, String proxyDomain) {
+    private ProxyDesc parseProxyDefinition(String proxyDfn, String proxyMethod, String proxyDomain) {
         if (proxyDfn == null)
             return null;
 
