@@ -159,9 +159,10 @@ public class DXHTTPRequest {
         this.apiserver = env.getApiserverPath();
         this.disableRetry = env.isRetryDisabled();
 
-        //These timeouts prevent stuck of requests
-        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(env.getConnectionTimeout()).setSocketTimeout(env.getSocketTimeout()).build();
-        this.httpclient = HttpClientBuilder.create().setUserAgent(USER_AGENT).setDefaultRequestConfig(requestConfig).build();
+        // These timeouts prevent requests from getting stuck
+        RequestConfig.Builder reqBuilder = RequestConfig.custom()
+            .setConnectTimeout(env.getConnectionTimeout())
+            .setSocketTimeout(env.getSocketTimeout());
 
         DXEnvironment.ProxyDesc proxyDesc = env.getProxy();
         if (proxyDesc == null) {
@@ -170,7 +171,7 @@ public class DXHTTPRequest {
             return;
         }
 
-        // Configure a proxy
+          // Configure a proxy
         if (!proxyDesc.authRequired) {
             reqBuilder.setProxy(proxyDesc.host);
             RequestConfig requestConfig = reqBuilder.build();
