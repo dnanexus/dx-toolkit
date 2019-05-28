@@ -345,6 +345,10 @@ def get_update_project_args(args):
         input_params["containsPHI"] = True if args.containsPHI == 'true' else False
     if args.bill_to is not None:
         input_params["billTo"] = args.bill_to
+    if args.allowed_executables is not None:
+        input_params['allowedExecutables'] = args.allowed_executables
+    if args.unset_allowed_executables:
+        input_params['allowedExecutables'] = None
     return input_params
 
 
