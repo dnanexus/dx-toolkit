@@ -1713,6 +1713,8 @@ def make_download_url(args):
     # TODO: how to do data egress billing for make_download_url?
     try:
         dxfile = dxpy.DXFile(entity_result['id'], project=project)
+        # Only provide project ID, not job workspace container ID
+        project = project if re.match(r"^project-[a-zA-Z0-9]{24}$", project) else dxpy.DXFile.NO_PROJECT_HINT
         url, _headers = dxfile.get_download_url(preauthenticated=True,
                                                 duration=normalize_timedelta(args.duration)//1000 if args.duration else 24*3600,
                                                 filename=args.filename,
