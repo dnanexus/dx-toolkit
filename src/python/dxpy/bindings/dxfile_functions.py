@@ -549,7 +549,7 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
                         multithread=multithread,
                         **remaining_kwargs)
 
-        for i in xrange(MAX_RETRIES_PART_UPLOAD):
+        for i in range(MAX_RETRIES_PART_UPLOAD):
             try:
                 upload_part()
                 break
