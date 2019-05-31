@@ -6,9 +6,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* DXJava support for proxies 
+* Approved tools CLI for `dx update project`
+* Timeout and retry upload of file part
+
 ### Changed
 
-* Upgrade python cryptography version from 2.2 to 2.3
 * Upgrade jackson-databind and jackson-core to version 2.9.8
 
 ## [283.0] - 2019.05.13 beta
