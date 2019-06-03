@@ -9123,8 +9123,8 @@ def main(in1):
         published_desc = json.loads(run("dx describe {} --json".format(desc['id'])))
         self.assertTrue("published" in published_desc)
 
-        "with self.assertSubprocessFailure(stderr_regexp="InvalidState",
-                                          exit_code=3):"
+        with self.assertSubprocessFailure(stderr_regexp="InvalidState",
+                                          exit_code=3):
             run("dx publish {name}/{version}".format(name=app_name, version="2.0.0"))
 
 
