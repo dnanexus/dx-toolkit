@@ -1535,10 +1535,8 @@ class TestDXClientUploadDownload(DXTestCase):
 
 
     def test_dx_make_download_url_project_affinity(self):
-        # Ensure that URLs created with make_download_url never have project
-        # affinity. In particular, ensures that download URLs created in a job
-        # (when the workspace is set to a container) continue to work after the
-        # job has terminated
+        # Ensure that URLs created with make_download_url have project
+        # affinity unless created in a job workspace
         with temporary_project("make_download_url test 2") as temp_project_2:
             with temporary_project("make_download_url test 1", select=True) as temp_project_1:
                 fh = dxpy.upload_string("foo", project=temp_project_1.get_id(), wait_on_close=True)
@@ -1546,8 +1544,10 @@ class TestDXClientUploadDownload(DXTestCase):
                 temp_project_1.clone(temp_project_2.get_id(), objects=[fh.get_id()])
                 download_url = run("dx make_download_url " + fh.get_id()).strip()
                 run("wget -O /dev/null " + download_url)
-            # Even after project 1 is destroyed, the download URL should still work
-            run("wget -O /dev/null " + download_url)
+            # After project 1 is destroyed, the download URL should no longer work
+            with self.assertSubprocessFailure(stderr_regexp="Not Found",
+                                          exit_code=8):
+                run("wget -O /dev/null " + download_url)
 
     @unittest.skipUnless(testutil.TEST_ENV,
                          'skipping test that would clobber your local environment')
@@ -9123,8 +9123,8 @@ def main(in1):
         published_desc = json.loads(run("dx describe {} --json".format(desc['id'])))
         self.assertTrue("published" in published_desc)
 
-        with self.assertSubprocessFailure(stderr_regexp="InvalidState",
-                                          exit_code=3):
+        "with self.assertSubprocessFailure(stderr_regexp="InvalidState",
+                                          exit_code=3):"
             run("dx publish {name}/{version}".format(name=app_name, version="2.0.0"))
 
 
