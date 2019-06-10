@@ -1545,6 +1545,7 @@ class TestDXClientUploadDownload(DXTestCase):
                 download_url = run("dx make_download_url " + fh.get_id()).strip()
                 run("wget -O /dev/null " + download_url)
             # After project 1 is destroyed, the download URL should no longer work
+            time.sleep(5)
             with self.assertSubprocessFailure(stderr_regexp="Not Found",
                                           exit_code=8):
                 run("wget -O /dev/null " + download_url)
