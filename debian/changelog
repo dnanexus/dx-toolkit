@@ -1,3 +1,11 @@
+dx-toolkit (0.284.0) precise; urgency=low
+
+  * Added: DXJava support for proxies
+  * Added: Approved tools CLI for `dx update project`
+  * Changed: Upgrade jackson-databind and jackson-core to 2.9.8
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 12 Jun 2019 17:48:48 +0000
+
 dx-toolkit (0.283.0) precise; urgency=low
 
   * Chaned: `dx upgrade` now downloads the latest version from s3
