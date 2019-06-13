@@ -6,23 +6,24 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [284.0] - 2019.06.13 beta
+
 ### Added
 
 * DXJava support for proxies 
 * Approved tools CLI for `dx update project`
-* Timeout and retry upload of file part
 
 ### Changed
 
 * Upgrade jackson-databind and jackson-core to version 2.9.8
 
-## [283.0] - 2019.05.13 beta
+## [283.0] - 2019.05.13 stable
 
 ### Changed
 
-* `dx upgrade` now downloads the latest version from s3
+* `dx upgrade` downloads the latest version from s3
 
-## [282.0] - 2019.05.08 stable
+## [282.0] - 2019.05.08
 
 ### Changed
 
