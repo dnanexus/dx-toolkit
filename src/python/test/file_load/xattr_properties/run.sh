@@ -28,6 +28,7 @@ main() {
 
 function compare_xattr_to_properties()
 {
+    set -x
     files=$(find "out" -type f)
     for f in $files
     do
