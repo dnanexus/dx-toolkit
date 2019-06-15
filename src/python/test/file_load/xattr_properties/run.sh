@@ -37,6 +37,7 @@ function compare_xattr_to_properties()
         [[ "val0" == $(echo $properties | jq -r .key0) ]]
         [[ "val1" == $(echo $properties | jq -r .key1) ]]
     done
+}
 
 # download files uploaded from the "out" directory, and compare
 # against the originals
