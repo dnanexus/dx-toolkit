@@ -6,7 +6,7 @@
     "interpreter": "bash",
     "distribution": "Ubuntu",
     "release": "16.04",
-    "execDepends": [{"name": "attr", "package_manager": "apt"}]
+    "execDepends": [{"name": "attr", "package_manager": "apt"}, {"name": "libffi-dev", "package_manager": "apt"}]
   },
   "inputSpec": [
     {"name": "seq1", "class": "file"},
