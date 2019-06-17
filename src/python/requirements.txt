@@ -7,3 +7,4 @@ psutil>=3.3.0
 requests>=2.8.0
 cryptography<=2.2.2
 xattr==0.9.6
+cffi==1.12.3
