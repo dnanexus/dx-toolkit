@@ -291,7 +291,7 @@ def create_entry(subdir_desc, local_path, target_path, basename):
             'fname': basename,
             'dxlink': None}
 
-def return_xatrr_as_properties(file):
+def return_xattr_as_properties(file):
     properties = {}
     for attribute in xattr.listxattr(file):
         if attribute.startswith('user.'):
@@ -303,7 +303,7 @@ def upload_one_file(entry, wait_on_close, xattr_properties):
     uploaded object in the entry.
     '''
     local_path = os.path.join(entry['local_dir_path'], entry['fname'])
-    properties = return_xatrr_as_properties(local_path) if xattr_properties is not None else {}
+    properties = return_xattr_as_properties(local_path) if xattr_properties is not None else {}
     if entry['target_dir_path'] is None:
         trg_path = "/{}".format(entry['fname'])
         print("uploading file: {} -> {}".format(local_path, trg_path))
