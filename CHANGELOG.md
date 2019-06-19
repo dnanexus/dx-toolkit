@@ -6,6 +6,16 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* '--xattr-properties' argument for dx-upload-all-outputs to include fs metadata as k,v properties
+* xattr dependency for Linux builds
+
+### Changed
+
+* Only require futures package for python 2.7
+* Upgrade build dependencies for pip, setuptools, and wheel
+
 ## [284.0] - 2019.06.13 beta
 
 ### Added
@@ -16,6 +26,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Changed
 
 * Upgrade jackson-databind and jackson-core to version 2.9.8
+* Provide project ID for dx make_download_url unless in job workspace
+
+### Fixed
+
+* Enabling argcomplete for `dx` installed with debian package in worker environment
 
 ## [283.0] - 2019.05.13 stable
 
