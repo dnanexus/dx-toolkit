@@ -1658,14 +1658,6 @@ namespace dx {
     return workflowSetProperties(object_id, input_params.toString(), safe_to_retry);
   }
 
-  JSON workflowSetStageInputs(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
-    return DXHTTPRequest(std::string("/") + object_id + std::string("/setStageInputs"), input_params, safe_to_retry);
-  }
-
-  JSON workflowSetStageInputs(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
-    return workflowSetStageInputs(object_id, input_params.toString(), safe_to_retry);
-  }
-
   JSON workflowSetVisibility(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest(std::string("/") + object_id + std::string("/setVisibility"), input_params, safe_to_retry);
   }
