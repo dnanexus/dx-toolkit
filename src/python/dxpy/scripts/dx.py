@@ -3827,7 +3827,7 @@ def register_parser(parser, subparsers_action=None, categories=('other', ), add_
             parser_categories[category]['cmds'].append((name, _help))
 
 
-parser = DXArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v%s, client v%s' % (dxpy.API_VERSION, dxpy.TOOLKIT_VERSION) + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, navigate, upload, organize and share your data, launch analyses, and more.  For a quick tour of what the tool can do, see') + '\n\n  https://wiki.dnanexus.com/Command-Line-Client/Quickstart\n\n' + fill('For a breakdown of dx commands by category, run "dx help".') + '\n\n' + fill('dx exits with exit code 3 if invalid input is provided or an invalid operation is requested, and exit code 1 if an internal error is encountered.  The latter usually indicate bugs in dx; please report them at') + "\n\n  https://github.com/dnanexus/dx-toolkit/issues",
+parser = DXArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v%s, client v%s' % (dxpy.API_VERSION, dxpy.TOOLKIT_VERSION) + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, navigate, upload, organize and share your data, launch analyses, and more.  For a quick tour of what the tool can do, see') + '\n\n  https://documentation.dnanexus.com/getting-started/tutorials/cli-quickstart#quickstart-for-cli\n\n' + fill('For a breakdown of dx commands by category, run "dx help".') + '\n\n' + fill('dx exits with exit code 3 if invalid input is provided or an invalid operation is requested, and exit code 1 if an internal error is encountered.  The latter usually indicate bugs in dx; please report them at') + "\n\n  https://github.com/dnanexus/dx-toolkit/issues",
                           formatter_class=argparse.RawTextHelpFormatter,
                           parents=[env_args],
                           usage='%(prog)s [-h] [--version] command ...')
@@ -3894,7 +3894,7 @@ register_parser(parser_whoami, categories='session')
 # env
 #####################################
 parser_env = subparsers.add_parser('env', help='Print all environment variables in use',
-                                   description=fill('Prints all environment variables in use as they have been resolved from environment variables and configuration files.  For more details, see') + '\n\nhttps://wiki.dnanexus.com/Command-Line-Client/Environment-Variables',
+                                   description=fill('Prints all environment variables in use as they have been resolved from environment variables and configuration files.  For more details, see') + '\n\nhttps://documentation.dnanexus.com/user/helpstrings-of-sdk-command-line-utilities#overriding-environment-variables',
                                    formatter_class=argparse.RawTextHelpFormatter, prog='dx env',
                                    parents=[env_args])
 parser_env.add_argument('--bash', help=fill('Prints a list of bash commands to export the environment variables', width_adjustment=-14),
@@ -4347,7 +4347,7 @@ parser_build_asset = subparsers.add_parser(
     formatter_class=argparse.RawTextHelpFormatter,
     description=fill('Build an asset from a local source directory. The directory must have a file called '
          '"dxasset.json" containing valid JSON. For more details, see '
-         '\n\nhttps://wiki.dnanexus.com/Developer-Tutorials/Asset-Build-Process'),
+         '\n\nhttps://documentation.dnanexus.com/developer/apps/dependency-management/asset-build-process'),
     prog="dx build_asset")
 parser_build_asset.add_argument("src_dir", help="Asset source directory (default: current directory)", nargs='?')
 parser_build_asset.add_argument("-d", "--destination",
@@ -4977,7 +4977,7 @@ register_parser(parser_set_visibility, categories='metadata')
 # add_types
 #####################################
 parser_add_types = subparsers.add_parser('add_types', help='Add types to a data object',
-                                         description='Add types to a data object.  See https://wiki.dnanexus.com/pages/Types/ for a list of DNAnexus types.',
+                                         description='Add types to a data object.  See https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types for a list of DNAnexus types.',
                                          prog='dx add_types',
                                          parents=[env_args, all_arg])
 parser_add_types.add_argument('path', help='ID or path to data object to modify').completer = DXPathCompleter()
@@ -4989,7 +4989,7 @@ register_parser(parser_add_types, categories='metadata')
 # remove_types
 #####################################
 parser_remove_types = subparsers.add_parser('remove_types', help='Remove types from a data object',
-                                            description='Remove types from a data object.  See https://wiki.dnanexus.com/pages/Types/ for a list of DNAnexus types.',
+                                            description='Remove types from a data object.  See https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types for a list of DNAnexus types.',
                                             prog='dx remove_types',
                                             parents=[env_args, all_arg])
 parser_remove_types.add_argument('path', help='ID or path to data object to modify').completer = DXPathCompleter()
@@ -5398,7 +5398,7 @@ parser_api = subparsers.add_parser('api', help='Call an API method',
                                    formatter_class=argparse.RawTextHelpFormatter,
                                    description=fill('Call an API method directly.  The JSON response from the API server will be returned if successful.  No name resolution is performed; DNAnexus IDs must always be provided.  The API specification can be found at') + '''
 
-https://wiki.dnanexus.com/API-Specification-v1.0.0/Introduction
+https://documentation.dnanexus.com/developer/api
 
 EXAMPLE
 
