@@ -17,24 +17,32 @@
 import dxpy
 
 
-def divide_dxfiles_into_chunks(dxfiles, target_size):
-    '''
-    This is a general function to divide input files into a set of chunks based on file size.
+BYTES_PER_GB = 1024 * 1024 * 1024
+
+
+def divide_dxfiles_into_chunks(dxfiles, target_size_gb):
+    """
+    This is a general function to divide input files into a set of chunks based on
+    file size.
 
     Args:
         dxfiles: List of dx files to split
-        target_size: Target size (in gigabytes) of each bin
+        target_size_gb: Target size (in gigabytes) of each bin
 
     Returns:
         Groups of files with each group having roughly target_size of data
-    '''
+    """
+    if not dxfiles:
+        return []
+    if target_size_gb <= 0:
+        raise ValueError("Target size must be > 0")
 
     filesizes = get_dxlink_filesizes(dxfiles)
-    total_size = sum(filesizes)
+    total_size_bytes = sum(filesizes)
 
     # Now, get the splits.  We'll target each set of bam files to be a total
-    # of SIZE_PER_BIN bytes.
-    num_bins = total_size / (target_size * 1024 * 1024 * 1024) + 1
+    # of `target_size` bytes.
+    num_bins = (total_size_bytes / (target_size_gb * BYTES_PER_GB)) + 1
     groups = schedule_lpt(zip(dxfiles, filesizes), num_bins)
 
     # It's conceivable that some of the splits could be empty.  We'll remove
@@ -58,9 +66,7 @@ def get_dxlink_filesizes(dx_links):
     """
     describe = {'objects': [f['$dnanexus_link'] for f in dx_links]}
     descriptions = dxpy.api.system_describe_data_objects(describe, always_retry=True)
-
     sizes = [d['describe']['size'] for d in descriptions['results']]
-
     return sizes
 
 
@@ -90,25 +96,20 @@ def schedule_lpt(jobs, num_bins):
             job = dxpy.new_dxjob({'files': group}, 'subjob_name')
             output['output_files'].append(job.get_output_ref('output_files'))
     """
-
-    def _index_min(values):
-        # Efficient index of min from stackoverflow.com/questions/2474015
-        return min(xrange(len(values)), key=values.__getitem__)
-
     # We expect a list of tuples, with the first value the name of the
     # job and the second value the weight.  If we are given a dict
     # then convert keys to job names and values to weights.
-    if(type(jobs) == dict):
-        jobs = zip(jobs.keys(), jobs.values())
-
     num_bins = min(num_bins, len(jobs))
-    jobs.sort(key=lambda j: j[1], reverse=True)
-    partition = {'groups': [[] for i in xrange(num_bins)],
-                 'size': [0 for i in xrange(num_bins)]}
+    indexes = range(num_bins)
+    groups = [[] for _ in indexes]
+    sizes = [0] * num_bins
 
-    for job in jobs:
-        idx = _index_min(partition['size'])
-        partition['groups'][idx] += [job[0]]
-        partition['size'][idx] += job[1]
+    if isinstance(jobs, dict):
+        jobs = jobs.items()
 
-    return partition['groups']
+    for job in sorted(jobs, key=lambda j: j[1], reverse=True):
+        idx = min(indexes, key=sizes.__getitem__)
+        groups[idx].append(job[0])
+        sizes[idx] += job[1]
+
+    return groups
