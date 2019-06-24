@@ -101,7 +101,7 @@ class DXGlobalWorkflow(DXObject, DXExecutable):
         '''
 
         .. note:: It is highly recommended that `dx build --create-global-workflow
-           <https://wiki.dnanexus.com/Command-Line-Client/Index-of-dx-Commands#build>`_
+           <https://documentation.dnanexus.com/user/helpstrings-of-sdk-command-line-utilities#build>`_
            be used instead for global workflow creation.
 
         Creates a workflow in the global space with the given parameters by using

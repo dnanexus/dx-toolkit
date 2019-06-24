@@ -621,9 +621,6 @@ namespace dx {
   JSON workflowSetProperties(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON workflowSetProperties(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
-  JSON workflowSetStageInputs(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
-  JSON workflowSetStageInputs(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
-
   JSON workflowSetVisibility(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON workflowSetVisibility(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 

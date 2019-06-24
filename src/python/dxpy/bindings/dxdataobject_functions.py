@@ -19,7 +19,7 @@
 These functions provide shorthand functional interfaces for actions such
 as getting a :class:`~dxpy.bindings.DXDataObject` handler from an ID or
 `link
-<https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#Linking>`_,
+<https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#linking>`_,
 or creating a link from a handler. In addition, there are functions for
 performing simple actions with an ID or link as input without creating a
 full object handler.
@@ -194,7 +194,7 @@ def describe(id_or_link, **kwargs):
     fields will be returned in the response for each data object in addition to the
     fields included by default. Additionally, describe options can be provided for
     each data object class in the "classDescribeOptions" kwargs argument. See
-    https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/describeDataObjects
+    https://documentation.dnanexus.com/developer/api/system-methods#api-method-system-describedataobjects
     for input parameters used with the multiple object describe method.
     '''
     # If this is a list, extract the ids.

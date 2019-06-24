@@ -7,7 +7,7 @@
 # "postprocess" stage that will perform any additional computations as
 # necessary.
 #
-# See https://wiki.dnanexus.com/Developer-Portal for documentation and
+# See https://documentation.dnanexus.com/developer for documentation and
 # tutorials on how to modify this file.
 #
 # DNAnexus Python Bindings (dxpy) documentation:
