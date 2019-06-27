@@ -9,6 +9,10 @@ from dxpy.sugar import objects
 
 PROJECT_ID = "project-BzQf6k80V3bJk7x0yv6z82j7"
 PROJECT_NAME = "DNAnexus Regression Testing Project AWS US east"
+WORKFLOW_ID = "workflow-F417G8Q0V3bGVjG642Zjx1Gv"
+WORKFLOW_FOLDER = "/gatk3/2017_04_27_22_51_39"
+WORKFLOW_NAME = "GATK3 best practices"
+TAG = "sugar-test"
 
 
 def random_name(name_len, prefix=None):
@@ -144,3 +148,33 @@ class TestObjects(unittest.TestCase):
                     dxfile.remove()
                 except dxpy.exceptions.ResourceNotFound:
                     pass
+
+    def test_get_workflow(self):
+        # TODO: test global workflows
+        proj = objects.get_project(PROJECT_ID)
+        self.assertIsInstance(
+            objects.get_workflow(WORKFLOW_ID, proj),
+            dxpy.DXWorkflow
+        )
+        with self.assertRaises(dxpy.AppError):
+            # Should be multiple workflows with the same name
+            objects.get_workflow(WORKFLOW_NAME, proj)
+        self.assertEquals(
+            objects.get_workflow(WORKFLOW_NAME, proj, tag=TAG).get_id(),
+            WORKFLOW_ID
+        )
+        self.assertEquals(
+            objects.get_workflow(WORKFLOW_NAME, proj, folder=WORKFLOW_FOLDER).get_id(),
+            WORKFLOW_ID
+        )
+        workflow_path = "{}/{}".format(WORKFLOW_FOLDER, WORKFLOW_NAME)
+        self.assertEquals(
+            objects.get_workflow(workflow_path, proj).get_id(),
+            WORKFLOW_ID
+        )
+
+    def test_get_app(self):
+        proj = objects.get_project(PROJECT_ID)
+
+    def test_get_applet(self):
+        proj = objects.get_project(PROJECT_ID)

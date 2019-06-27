@@ -92,7 +92,7 @@ def get_project(
         project_id = dxpy.api.project_new(create_args)["id"]
         return dxpy.DXProject(project_id)
 
-    return _create_one(found, "project", id_or_name, exists=exists)
+    return _create_one_handler(found, "project", id_or_name, exists=exists)
 
 
 def ensure_folder(folder, project=None, exists=None, create=False):
@@ -188,12 +188,12 @@ def get_file(
             return dxfile
 
     # Next search by name within the current project
-    folder, name, recurse = _parse_name(id_or_name)
+    folder, name, recurse = _parse_object_name(id_or_name)
     if "folder" not in kwargs:
         kwargs["folder"] = folder
     if "recurse" not in kwargs:
         kwargs["recurse"] = recurse
-    return _create_one(
+    return _create_one_handler(
         dxpy.find_data_objects(name=name, classname=classname, **kwargs),
         classname,
         id_or_name,
@@ -235,7 +235,7 @@ def get_workflow(id_or_name, project=None, **kwargs):
 
     # The argument must be a name - first search for it in the project
     classname = "workflow"
-    workflow_folder, workflow_name, recurse = _parse_name(id_or_name)
+    workflow_folder, workflow_name, recurse = _parse_object_name(id_or_name)
     if "folder" not in kwargs:
         kwargs["folder"] = workflow_folder
     if "recurse" not in kwargs:
@@ -255,7 +255,7 @@ def get_workflow(id_or_name, project=None, **kwargs):
         )
         classname = "globalworkflow"
 
-    return _create_one(candidates, classname, id_or_name, project=project)
+    return _create_one_handler(candidates, classname, id_or_name, project=project)
 
 
 def get_app_or_applet(id_or_name, project=None, **kwargs):
@@ -309,7 +309,9 @@ def get_app(id_or_name, **kwargs):
         executable.describe()
         return executable
     except dxpy.exceptions.ResourceNotFound:
-        return _create_one(dxpy.find_apps(id_or_name, **kwargs), "app", id_or_name)
+        return _create_one_handler(
+            dxpy.find_apps(id_or_name, **kwargs), "app", id_or_name
+        )
 
 
 def get_applet(id_or_name, project=None, **kwargs):
@@ -339,12 +341,12 @@ def get_applet(id_or_name, project=None, **kwargs):
     except:
         pass
 
-    applet_folder, applet_name, recurse = _parse_name(id_or_name)
+    applet_folder, applet_name, recurse = _parse_object_name(id_or_name)
     if "folder" not in kwargs:
         kwargs["folder"] = applet_folder
     if "recurse" not in kwargs:
         kwargs["recurse"] = recurse
-    return _create_one(
+    return _create_one_handler(
         dxpy.find_data_objects(
             "applet",
             name=applet_name,
@@ -357,7 +359,7 @@ def get_applet(id_or_name, project=None, **kwargs):
     )
 
 
-def _create_one(candidates, classname, id_or_name, project=None, exists=None):
+def _create_one_handler(candidates, classname, id_or_name, project=None, exists=None):
     """Create handler from list containing exactly one search result.
 
     Args:
@@ -399,14 +401,15 @@ def _create_one(candidates, classname, id_or_name, project=None, exists=None):
             )
 
 
-def _parse_name(name):
+def _parse_object_name(name):
     """Parse a name that might include a path component.
 
     Args:
         name: The name to parse.
 
     Returns:
-        Tuple (folder, filename, recurse)
+        Tuple (folder, filename, recurse), where `recurse` is whether a search should
+        by default be recursive.
     """
     if name.startswith("/"):
         return os.path.split(name) + (False,)
