@@ -9,32 +9,39 @@ from dxpy.sugar import get_log
 LOG = get_log(__name__)
 
 
-def get_project(id_or_name, level="VIEW", create=False, region=None, **kwargs):
+def get_project(
+    id_or_name, level="VIEW", exists=None, create=False, region=None, **kwargs
+):
     """Gets a project by name or ID. Creates a new project if there is no existing
     project with the given name and `create is True`.
 
     Args:
         id_or_name: Project ID (project-XXX) or name. If this is a DXProject object,
-            it is validated and returned.
+            it is validated and returned. Defaults to the PROJECT_CONTEXT_ID.
         level: Minimum access level to search.
+        exists: Assert whether the project exists (True) or does not exist (False).
         create: Whether to create the project if it does not exist.
         region: Region in which to create the project.
         **kwargs: Additional keyword arguments to pass to both
             `find_projects()` and `project_new()`.
 
     Returns:
-        A DXProject object.
+        A DXProject object, or None if the project does not exist and
+        `create is False`.
 
     Raises:
         * dxpy.AppError if project does not exist or is not in specified region.
         * dxpy.exceptions.PermissionDenied if user does not have proper permissions
             to access the project.
     """
-    id_or_name = id_or_name.strip()
-
     if isinstance(id_or_name, dxpy.DXProject):
         project = id_or_name
     else:
+        if id_or_name is None:
+            id_or_name = dxpy.PROJECT_CONTEXT_ID
+        else:
+            id_or_name = id_or_name.strip()
+
         # First check if id_or_name is an ID
         try:
             project = dxpy.get_handler(id_or_name)
@@ -42,46 +49,50 @@ def get_project(id_or_name, level="VIEW", create=False, region=None, **kwargs):
             project = None
 
     if project:
-        LOG.info("Checking that project with ID %s exists", id_or_name)
+        LOG.info("Checking if project with ID %s exists", id_or_name)
         try:
             project_region = project.describe()["region"]
-        except dxpy.exceptions.ResourceNotFound:
-            LOG.exception("Project with ID %s not found", id_or_name)
-            raise dxpy.AppError(
-                "Project with ID {} does not exist".format(id_or_name)
-            )
-        if region and project_region != region:
-            raise dxpy.AppError(
-                "Project {} region {} does not match expected region {}".format(
-                    project.name, project_region, region
+            if region and project_region != region:
+                raise dxpy.AppError(
+                    "Project {} region {} does not match expected region {}".format(
+                        project.name, project_region, region
+                    )
                 )
+            else:
+                LOG.info("Project %s exists in region %s", project.name, project_region)
+        except dxpy.exceptions.ResourceNotFound:
+            LOG.info("Project with ID %s not found", id_or_name)
+            project = None
+
+    if project:
+        if exists is False:
+            raise dxpy.AppError(
+                "Project {} exists but was expected not to exist".format(id_or_name)
             )
         else:
-            LOG.info("Project %s exists in region %s", project.name, project_region)
-    else:
-        LOG.info("Searching for project with name %s", id_or_name)
-        find_args = dict(kwargs)
+            return project
+
+    LOG.info("Searching for project with name %s", id_or_name)
+    find_args = dict(kwargs)
+    if region:
+        find_args["region"] = region
+    if level:
+        find_args["level"] = level
+    found = list(dxpy.find_projects(id_or_name, **find_args))
+
+    if len(found) == 0 and exists is not True and create:
+        LOG.info(
+            "Creating project %s in %s region",
+            id_or_name, region or "<default>"
+        )
+        create_args = dict(kwargs)
+        create_args["name"] = id_or_name
         if region:
-            find_args["region"] = region
-        if level:
-            find_args["level"] = level
-        found = list(dxpy.find_projects(id_or_name, **find_args))
+            create_args["region"] = region
+        project_id = dxpy.api.project_new(create_args)["id"]
+        return dxpy.DXProject(project_id)
 
-        if len(found) == 0 and create:
-            LOG.info(
-                "Creating project %s in %s region",
-                id_or_name, region if region else "default"
-            )
-            create_args = dict(kwargs)
-            create_args["name"] = id_or_name
-            if region:
-                create_args["region"] = region
-            project_id = dxpy.api.project_new(create_args)["id"]
-            return dxpy.DXProject(project_id)
-        else:
-            return _create_one(found, "project", id_or_name)
-
-    return project
+    return _create_one(found, "project", id_or_name, exists=exists)
 
 
 def ensure_folder(folder, project=None, exists=None, create=False):
@@ -140,7 +151,9 @@ def ensure_folder(folder, project=None, exists=None, create=False):
         return ls
 
 
-def get_file(id_or_name, project=None, classname="file", **kwargs):
+def get_file(
+    id_or_name, project=None, classname="file", exists=True, **kwargs
+):
     """Gets a file by name or ID.
 
     Args:
@@ -148,6 +161,7 @@ def get_file(id_or_name, project=None, classname="file", **kwargs):
         project: The project in which to get the file. Defaults to the current project.
         classname: Classname of the data object; defaults to "file" but can also be
             "record" or "database".
+        exists: Assert whether the file exists (True) or does not exist (False).
         **kwargs: Additional keyword arguments to use when searching for file.
 
     Returns:
@@ -160,9 +174,18 @@ def get_file(id_or_name, project=None, classname="file", **kwargs):
     id_or_name = id_or_name.strip()
     project = get_project(project)
     try:
-        return dxpy.get_handler(id_or_name, project)
-    except:
-        pass
+        dxfile = dxpy.get_handler(id_or_name, project)
+        dxfile.describe()
+    except dxpy.DXError:
+        dxfile = None
+
+    if dxfile:
+        if exists is False:
+            raise dxpy.AppError(
+                "File {} exists but was expected not to exist", id_or_name
+            )
+        else:
+            return dxfile
 
     # Next search by name within the current project
     folder, name, recurse = _parse_name(id_or_name)
@@ -171,10 +194,11 @@ def get_file(id_or_name, project=None, classname="file", **kwargs):
     if "recurse" not in kwargs:
         kwargs["recurse"] = recurse
     return _create_one(
-        dxpy.find_data_objects(name=name, classname="file", **kwargs),
+        dxpy.find_data_objects(name=name, classname=classname, **kwargs),
         classname,
         id_or_name,
-        project
+        project,
+        exists=exists
     )
 
 
@@ -225,10 +249,10 @@ def get_workflow(id_or_name, project=None, **kwargs):
 
     if not candidates:
         # Finally search for a global workflow
-        candidates = list(dxpy.find_global_workflows(
+        candidates = dxpy.find_global_workflows(
             name=id_or_name,
             **kwargs
-        ))
+        )
         classname = "globalworkflow"
 
     return _create_one(candidates, classname, id_or_name, project=project)
@@ -333,7 +357,7 @@ def get_applet(id_or_name, project=None, **kwargs):
     )
 
 
-def _create_one(candidates, classname, id_or_name, project=None):
+def _create_one(candidates, classname, id_or_name, project=None, exists=None):
     """Create handler from list containing exactly one search result.
 
     Args:
@@ -341,6 +365,7 @@ def _create_one(candidates, classname, id_or_name, project=None):
         classname: Classname of search results.
         id_or_name: ID or name of object being searched.
         project: Optional project containing the object being searched.
+        exists: Assert whether the object exists (True) or does not exist (False).
 
     Returns:
         A subclass of DXObject.
@@ -348,17 +373,30 @@ def _create_one(candidates, classname, id_or_name, project=None):
     Raises:
         dxpy.AppError when `candidates` is not of length 1.
     """
-    if not candidates:
+    if candidates is not None:
+        candidates = list(candidates)
+
+    if not candidates and exists is True:
         raise dxpy.AppError(
-            "No {} found with ID or name {}".format(classname, id_or_name)
+            "{} {} does not exist".format(classname, id_or_name)
         )
-    elif len(candidates) > 1:
-        raise dxpy.AppError(
-            "More than one {} found with name {}".format(classname, id_or_name)
-        )
-    else:
-        LOG.info("Found existing %s with name %s", classname, id_or_name)
-        return dxpy.get_handler(candidates[0]["id"], project=project)
+
+    if candidates:
+        if exists is False:
+            raise dxpy.AppError(
+                "{} {} exists but was expected not to exist".format(
+                    classname, id_or_name
+                )
+            )
+        elif len(candidates) > 1:
+            raise dxpy.AppError(
+                "More than one {} found with name {}".format(classname, id_or_name)
+            )
+        else:
+            LOG.info("Found existing %s with name %s", classname, id_or_name)
+            return dxpy.get_handler(
+                candidates[0]["id"], project=get_project(project).get_id()
+            )
 
 
 def _parse_name(name):
