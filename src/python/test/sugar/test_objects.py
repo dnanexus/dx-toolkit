@@ -12,7 +12,12 @@ PROJECT_NAME = "DNAnexus Regression Testing Project AWS US east"
 WORKFLOW_ID = "workflow-F417G8Q0V3bGVjG642Zjx1Gv"
 WORKFLOW_FOLDER = "/gatk3/2017_04_27_22_51_39"
 WORKFLOW_NAME = "GATK3 best practices"
+APPLET_ID = "applet-F417G0j0V3b6bxQG68KF3j2q"
+APPLET_NAME = "gatk3_bqsr_parallel"
+APPLET_FOLDER = "/gatk3/2017_04_27_22_51_39/Applets"
 TAG = "sugar-test"
+APP_ID = "app-FYzxFq09ZZYPKkfp05027F5g"
+APP_NAME = "bwa_mem_fastq_read_mapper"
 
 
 def random_name(name_len, prefix=None):
@@ -174,7 +179,34 @@ class TestObjects(unittest.TestCase):
         )
 
     def test_get_app(self):
-        proj = objects.get_project(PROJECT_ID)
+        self.assertIsInstance(
+            objects.get_app(APP_ID),
+            dxpy.DXApp
+        )
+        self.assertEquals(
+            objects.get_app(APP_NAME).get_id(),
+            APP_ID
+        )
 
     def test_get_applet(self):
         proj = objects.get_project(PROJECT_ID)
+        self.assertIsInstance(
+            objects.get_applet(APPLET_ID, proj),
+            dxpy.DXApplet
+        )
+        with self.assertRaises(dxpy.AppError):
+            # Should be multiple workflows with the same name
+            objects.get_applet(APPLET_NAME, proj)
+        self.assertEquals(
+            objects.get_applet(APPLET_NAME, proj, tag=TAG).get_id(),
+            APPLET_ID
+        )
+        self.assertEquals(
+            objects.get_applet(APPLET_NAME, proj, folder=APPLET_FOLDER).get_id(),
+            APPLET_ID
+        )
+        workflow_path = "{}/{}".format(APPLET_FOLDER, APPLET_NAME)
+        self.assertEquals(
+            objects.get_applet(workflow_path, proj).get_id(),
+            APPLET_ID
+        )

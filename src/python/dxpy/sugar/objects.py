@@ -305,10 +305,14 @@ def get_app(id_or_name, **kwargs):
     if isinstance(id_or_name, dxpy.DXApp):
         return id_or_name
     try:
+        LOG.info("Checking if app with ID %s exists", id_or_name)
         executable = dxpy.DXApp(id_or_name)
         executable.describe()
         return executable
-    except dxpy.exceptions.ResourceNotFound:
+    except dxpy.DXError:
+        LOG.info("Searching for app by name %s", id_or_name)
+        if id_or_name.startswith("app-"):
+            id_or_name = id_or_name[4:]
         return _create_one_handler(
             dxpy.find_apps(id_or_name, **kwargs), "app", id_or_name
         )
@@ -335,6 +339,7 @@ def get_applet(id_or_name, project=None, **kwargs):
         return id_or_name
     project = get_project(project)
     try:
+        LOG.info("Checking if applet with ID %s exists", id_or_name)
         executable = dxpy.DXApplet(id_or_name, project=project.get_id())
         executable.describe()
         return executable
