@@ -36,18 +36,18 @@ class TestObjects(unittest.TestCase):
     def test_get_project(self):
         proj = objects.get_project(PROJECT_ID)
         self.assertIsInstance(proj, dxpy.DXProject)
-        self.assertEquals(proj.get_id(), PROJECT_ID)
+        self.assertEqual(proj.get_id(), PROJECT_ID)
 
         proj = objects.get_project(PROJECT_NAME)
         self.assertIsInstance(proj, dxpy.DXProject)
-        self.assertEquals(proj.get_id(), PROJECT_ID)
+        self.assertEqual(proj.get_id(), PROJECT_ID)
 
-        with self.assertRaises(dxpy.AppError):
+        with self.assertRaises(dxpy.DXSearchError):
             objects.get_project(PROJECT_NAME, exists=True, region="azure:westus")
 
         newproj_name_len = 20
         newproj_name = random_name(newproj_name_len)
-        with self.assertRaises(dxpy.AppError):
+        with self.assertRaises(dxpy.DXSearchError):
             objects.get_project(newproj_name, exists=True)
 
         newproj = None
@@ -55,7 +55,7 @@ class TestObjects(unittest.TestCase):
         try:
             newproj = objects.get_project(newproj_name, exists=False, create=True)
             self.assertIsInstance(newproj, dxpy.DXProject)
-            self.assertEquals(newproj.describe()["name"], newproj_name)
+            self.assertEqual(newproj.describe()["name"], newproj_name)
         except dxpy.AppError as err:
             # There is a small chance a project will already exist -
             # if so, don't delete it.
@@ -71,13 +71,13 @@ class TestObjects(unittest.TestCase):
                 newproj_name, create=True, region="azure:westus"
             )
             self.assertIsInstance(proj, dxpy.DXProject)
-            self.assertEquals(newproj.describe()["name"], newproj_name)
-            self.assertEquals(newproj.describe()["region"], "azure:westus")
-            self.assertEquals(
+            self.assertEqual(newproj.describe()["name"], newproj_name)
+            self.assertEqual(newproj.describe()["region"], "azure:westus")
+            self.assertEqual(
                 newproj.describe()["name"],
                 objects.get_project(newproj.get_id()).describe()["name"]
             )
-            self.assertEquals(
+            self.assertEqual(
                 newproj.get_id(),
                 objects.get_project(
                     newproj.describe()["name"], region="azure:westus"
@@ -91,7 +91,7 @@ class TestObjects(unittest.TestCase):
         proj = objects.get_project(PROJECT_ID)
         folder_name_len = 20
         folder_name = random_name(folder_name_len, prefix="/")
-        with self.assertRaises(dxpy.AppError):
+        with self.assertRaises(dxpy.DXSearchError):
             objects.ensure_folder(folder_name, proj, exists=True)
 
         cleanup = True
@@ -99,8 +99,8 @@ class TestObjects(unittest.TestCase):
             objects.ensure_folder(folder_name, proj, exists=False, create=True)
             ls = objects.ensure_folder(folder_name, proj, exists=True)
             self.assertIsNotNone(ls)
-            self.assertEquals(len(ls["folders"]), 0)
-            self.assertEquals(len(ls["objects"]), 0)
+            self.assertEqual(len(ls["folders"]), 0)
+            self.assertEqual(len(ls["objects"]), 0)
         except dxpy.AppError as err:
             # There is a small chance a folder will already exist -
             # if so, don't delete it.
@@ -123,7 +123,7 @@ class TestObjects(unittest.TestCase):
             objects.ensure_folder(folder_name, proj, exists=False, create=True)
             cleanup_folder = True
 
-            with self.assertRaises(dxpy.AppError):
+            with self.assertRaises(dxpy.DXSearchError):
                 objects.get_data_object(file_name, proj)
             dxfile = dxpy.upload_string(
                 "test",
@@ -133,12 +133,12 @@ class TestObjects(unittest.TestCase):
                 wait_on_close=True
             )
 
-            self.assertEquals(
+            self.assertEqual(
                 dxfile.get_id(), objects.get_data_object(file_name, proj).get_id()
             )
-            with self.assertRaises(dxpy.AppError):
+            with self.assertRaises(dxpy.DXSearchError):
                 objects.get_data_object(file_name, proj, classname="record")
-            with self.assertRaises(dxpy.AppError):
+            with self.assertRaises(dxpy.DXSearchError):
                 objects.get_data_object(file_name, proj, exists=False)
         except dxpy.AppError as err:
             # There is a small chance a folder will already exist -
@@ -161,19 +161,18 @@ class TestObjects(unittest.TestCase):
             objects.get_workflow(WORKFLOW_ID, proj),
             dxpy.DXWorkflow
         )
-        with self.assertRaises(dxpy.AppError):
+        with self.assertRaises(dxpy.DXSearchError):
             # Should be multiple workflows with the same name
             objects.get_workflow(WORKFLOW_NAME, proj)
-        self.assertEquals(
-            objects.get_workflow(WORKFLOW_NAME, proj, tag=TAG).get_id(),
-            WORKFLOW_ID
-        )
-        self.assertEquals(
+        workflow = objects.get_workflow(WORKFLOW_NAME, proj, tag=TAG)
+        self.assertIsNotNone(workflow)
+        self.assertEqual(workflow.get_id(), WORKFLOW_ID)
+        self.assertEqual(
             objects.get_workflow(WORKFLOW_NAME, proj, folder=WORKFLOW_FOLDER).get_id(),
             WORKFLOW_ID
         )
         workflow_path = "{}/{}".format(WORKFLOW_FOLDER, WORKFLOW_NAME)
-        self.assertEquals(
+        self.assertEqual(
             objects.get_workflow(workflow_path, proj).get_id(),
             WORKFLOW_ID
         )
@@ -183,7 +182,7 @@ class TestObjects(unittest.TestCase):
             objects.get_app(APP_ID),
             dxpy.DXApp
         )
-        self.assertEquals(
+        self.assertEqual(
             objects.get_app(APP_NAME).get_id(),
             APP_ID
         )
@@ -194,19 +193,19 @@ class TestObjects(unittest.TestCase):
             objects.get_applet(APPLET_ID, proj),
             dxpy.DXApplet
         )
-        with self.assertRaises(dxpy.AppError):
+        with self.assertRaises(dxpy.DXSearchError):
             # Should be multiple workflows with the same name
             objects.get_applet(APPLET_NAME, proj)
-        self.assertEquals(
+        self.assertEqual(
             objects.get_applet(APPLET_NAME, proj, tag=TAG).get_id(),
             APPLET_ID
         )
-        self.assertEquals(
+        self.assertEqual(
             objects.get_applet(APPLET_NAME, proj, folder=APPLET_FOLDER).get_id(),
             APPLET_ID
         )
         workflow_path = "{}/{}".format(APPLET_FOLDER, APPLET_NAME)
-        self.assertEquals(
+        self.assertEqual(
             objects.get_applet(workflow_path, proj).get_id(),
             APPLET_ID
         )

@@ -18,20 +18,20 @@ from functools import wraps
 import logging
 import sys
 
-from processing import run_cmd, chain_cmds
-from transfers import (
-    Uploader,
-    Downloader,
-    upload_file,
-    tar_and_upload_files,
-    download_file,
-)
-
-from chunking import (
-    divide_dxfiles_into_chunks,
-    get_dxlink_filesizes,
-    schedule_lpt
-)
+# from processing import run_cmd, chain_cmds
+# from transfers import (
+#     Uploader,
+#     Downloader,
+#     upload_file,
+#     tar_and_upload_files,
+#     download_file,
+# )
+#
+# from chunking import (
+#     divide_dxfiles_into_chunks,
+#     get_dxlink_filesizes,
+#     schedule_lpt
+# )
 
 
 def requires_worker_context(func):

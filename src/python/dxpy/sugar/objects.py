@@ -208,6 +208,7 @@ def get_data_object(
 
     if data_obj is None and search:
         folder, name, recurse = _parse_object_name(data_obj_desc)
+        kwargs["return_handler"] = True
         if "folder" not in kwargs:
             kwargs["folder"] = folder
         if "recurse" not in kwargs:
@@ -265,25 +266,25 @@ def get_workflow(workflow_desc, project=None, **kwargs):
             pass
 
     workflow_folder, workflow_name, recurse = _parse_object_name(workflow_desc)
-    if "folder" not in kwargs:
-        kwargs["folder"] = workflow_folder
-    if "recurse" not in kwargs:
-        kwargs["recurse"] = recurse
+    if "folder" in kwargs:
+        workflow_folder = kwargs.pop("folder")
+    if "recurse" in kwargs:
+        recurse = kwargs.pop("recurse")
+    kwargs["name"] = workflow_name
+    kwargs["return_handler"] = True
     workflow = dxpy.find_one_data_object(
         zero_ok=True,
         more_ok=False,
         classname="workflow",
-        name=workflow_name,
         project=project.get_id(),
+        folder=workflow_folder,
+        recurse=recurse,
         **kwargs
     )
 
     if not workflow:
         kwargs["limit"] = 2
-        candidates = dxpy.find_global_workflows(
-            name=workflow_desc,
-            **kwargs
-        )
+        candidates = dxpy.find_global_workflows(**kwargs)
         result = next(candidates, None)
         if result is None:
             raise dxpy.DXSearchError(
@@ -293,6 +294,8 @@ def get_workflow(workflow_desc, project=None, **kwargs):
             raise dxpy.DXSearchError(
                 "Expected one result, but found more: {}".format(str(kwargs))
             )
+
+    return workflow
 
 
 def get_app_or_applet(app_or_applet_desc, project=None, **kwargs):
@@ -368,6 +371,7 @@ def get_app(app_desc, **kwargs):
         zero_ok=False,
         more_ok=False,
         name=app_desc,
+        return_handler=True,
         **kwargs
     )
 
@@ -414,6 +418,7 @@ def get_applet(applet_desc, project=None, **kwargs):
         classname="applet",
         name=applet_name,
         project=project.get_id(),
+        return_handler=True,
         **kwargs
     )
 
