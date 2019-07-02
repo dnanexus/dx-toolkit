@@ -124,7 +124,7 @@ class TestObjects(unittest.TestCase):
             cleanup_folder = True
 
             with self.assertRaises(dxpy.AppError):
-                objects.get_file(file_name, proj)
+                objects.get_data_object(file_name, proj)
             dxfile = dxpy.upload_string(
                 "test",
                 project=proj.get_id(),
@@ -134,12 +134,12 @@ class TestObjects(unittest.TestCase):
             )
 
             self.assertEquals(
-                dxfile.get_id(), objects.get_file(file_name, proj).get_id()
+                dxfile.get_id(), objects.get_data_object(file_name, proj).get_id()
             )
             with self.assertRaises(dxpy.AppError):
-                objects.get_file(file_name, proj, classname="record")
+                objects.get_data_object(file_name, proj, classname="record")
             with self.assertRaises(dxpy.AppError):
-                objects.get_file(file_name, proj, exists=False)
+                objects.get_data_object(file_name, proj, exists=False)
         except dxpy.AppError as err:
             # There is a small chance a folder will already exist -
             # if so, don't delete it.
