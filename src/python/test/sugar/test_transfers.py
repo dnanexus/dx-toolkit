@@ -4,7 +4,8 @@ import os
 import subprocess
 import unittest
 
-from . import isolated_dir, make_random_files, random_name, run
+from . import isolated_dir, make_random_files, random_name
+from ..dxpy_testutil import run
 
 import dxpy
 from dxpy.sugar import transfers as xfer

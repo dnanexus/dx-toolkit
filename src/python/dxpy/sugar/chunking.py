@@ -17,6 +17,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import math
 
 import dxpy
+import dxpy.api
 
 
 BYTES_PER_GB = 1024 * 1024 * 1024
@@ -39,32 +40,29 @@ def divide_dxfiles_into_chunks(dxfiles, target_size_gb):
     if target_size_gb <= 0:
         raise ValueError("Target size must be > 0")
 
-    filesizes = get_dxlink_filesizes(dxfiles)
+    filesizes = get_filesizes(dxfiles)
     total_size_bytes = sum(filesizes)
-
-    # Now, get the splits.  We'll target each set of bam files to be a total
-    # of `target_size` bytes.
     num_bins = max(
         1, int(math.ceil(total_size_bytes / (target_size_gb * BYTES_PER_GB)))
     )
 
     # It's conceivable that some of the splits could be empty.  We'll remove
     # those from our list.
-    return list(filter(None, schedule_lpt(list(zip(dxfiles, filesizes)), num_bins)))
+    return list(filter(None, _schedule_lpt(list(zip(dxfiles, filesizes)), num_bins)))
 
 
-def get_dxlink_filesizes(dxfiles):
-    """Run dx describe on a list of DNAnexus dxlink inputs to get the
+def get_filesizes(file_descriptors):
+    """Run dx describe on a list of files (DXFile objects, links, or IDs) to get the
     corresponding file sizes.
 
     Args:
-        dxfiles (list): DXFile objects, dxlinks, or file IDs
+        file_descriptors (list): DXFile objects, dxlinks, or file IDs
 
     Returns:
         list: corresponding filesizes in bytes, output of 'dx describe'
         command
     """
-    ids = [as_dxfile_id(f) for f in dxfiles]
+    ids = [as_dxfile_id(f) for f in file_descriptors]
     descriptions = dxpy.api.system_describe_data_objects(
         {"objects": ids}, always_retry=True
     )
@@ -75,18 +73,16 @@ def get_dxlink_filesizes(dxfiles):
     return [sizes[i] for i in ids]
 
 
-def as_dxfile_id(dxfile):
-    if isinstance(dxfile, dxpy.DXFile):
-        return dxfile.get_id()
-    elif dxpy.is_dxlink(dxfile):
-        return dxpy.get_dxlink_ids(dxfile)
+def as_dxfile_id(file_descriptor):
+    if isinstance(file_descriptor, dxpy.DXFile):
+        return file_descriptor.get_id()
+    elif dxpy.is_dxlink(file_descriptor):
+        return dxpy.get_dxlink_ids(file_descriptor)
     else:
-        return dxfile
+        return file_descriptor
 
 
-import pysnooper
-@pysnooper.snoop()
-def schedule_lpt(jobs, num_bins):
+def _schedule_lpt(jobs, num_bins):
     """This function implements the Longest Processing Time algorithm to get
     a good division of labor for the multiprocessor scheduling problem.
 
