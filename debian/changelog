@@ -1,3 +1,74 @@
+dx-toolkit (0.286.0) precise; urgency=low
+
+  * Changed: Documentation links to https://documentation.dnanexus.com
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 27 Jun 2019 14:14:19 +0000
+
+dx-toolkit (0.285.0) precise; urgency=low
+
+  * Added: '--xattr-properties' argument for dx-upload-all-outputs to include fs metadata as k,v properties
+  * Added: xattr dependency for Linux builds
+  * Changed: Only require futures package for python 2.7
+  * Changed: Upgrade build dependencies for pip, setuptools, and wheel
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 20 Jun 2019 00:14:01 +0000
+
+dx-toolkit (0.284.0) precise; urgency=low
+
+  * Added: DXJava support for proxies
+  * Added: Approved tools CLI for `dx update project`
+  * Changed: Upgrade jackson-databind and jackson-core to 2.9.8
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 12 Jun 2019 17:48:48 +0000
+
+dx-toolkit (0.283.0) precise; urgency=low
+
+  * Chaned: `dx upgrade` now downloads the latest version from s3
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 15 May 2019 03:49:59 +0000
+
+dx-toolkit (0.282.0) precise; urgency=low
+
+  * Changed: Reduce the number of API calls in `dx download`
+  * Fixed: `dx upload` error via proxy in Azure
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 08 May 2019 17:31:38 +0000
+
+dx-toolkit (0.281.0) precise; urgency=low
+
+  * Added: support for passing HTTPContext in DXJava to the execute() operation 
+
+ -- Aleksandra Zalcman <azalcman@dnanexus.com>  Thu, 18 Apr 2019 17:37:52 +0000
+
+dx-toolkit (0.280.0) precise; urgency=low
+
+  * Added: --instance-count to dx run so that Spark cluster size can be defined at app start
+  * Changed: dx wait behavior by adding exponential backoff and passing appropriate project
+  * Changed: Decreased libcurl timeout in C++ bindings from infinity to default 10 min
+  * Changed: Default Ubuntu release to 16.04 in dx-app-wizard
+  * Changed: Link handling to better support JBORs
+  * Fixed: Handling file arrays in batch job runner
+
+ -- Aleksandra Zalcman <azalcman@dnanexus.com>  Thu, 11 Apr 2019 16:57:23 +0000
+
+dx-toolkit (0.279.0) precise; urgency=low
+
+  * no significant updates 
+
+ -- Aleksandra Zalcman <azalcman@dnanexus.com>  Thu, 21 Mar 2019 17:10:59 +0000
+
+dx-toolkit (0.278.0) precise; urgency=low
+
+  * Added: new findDataObjects inputs to DXJava
+  * Added: project name resolution to --project flag for dx run
+  * Added: job reuse and SAML identity provider args for `dx update org`
+  * Added: dx list database <entity> for DNAnexus Apollo
+  * Added: --ignore-reuse and --ignore-reuse-stage for `dx run workflow`
+  * Changed: Upgraded proot version for dx-docker for kernel >= 4.8
+  * Changed: Skip symlinks test in isolated environment
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 14 Mar 2019 21:07:13 +0000
+
 dx-toolkit (0.277.0) precise; urgency=low
 
   * Fixed: Uploading binary data, such as compressed files, works in python3

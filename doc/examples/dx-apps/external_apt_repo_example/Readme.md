@@ -23,5 +23,5 @@ we've added blanket (`*`) network access. For additional safety, you can
 also whitelist only the specific hosts you want to connect to (don't
 forget to whitelist your keyserver, if applicable, in addition to the
 APT server). See [Access
-Requirements](https://wiki.dnanexus.com/API-Specification-v1.0.0/IO-and-Run-Specifications#Access-Requirements)
+Requirements](https://documentation.dnanexus.com/developer/api/running-analyses/io-and-run-specifications#access-requirements)
 for more information about how to do this.

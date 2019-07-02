@@ -1,0 +1,1 @@
+This test checks that dx-upload-all-outputs works correctly with filesystem xattr. 

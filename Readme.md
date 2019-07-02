@@ -1,14 +1,14 @@
 DNAnexus Platform SDK
 =====================
 
-* **To download pre-built packages for your platform, see https://wiki.dnanexus.com/Downloads.**
+* **To download pre-built packages for your platform, see https://documentation.dnanexus.com/downloads.**
 
 * **Found a bug? See [Reporting Bugs](#reporting-bugs) below.**
 
 Welcome to the `dx-toolkit` repository! This repository contains the DNAnexus
 API language bindings and utilities for interacting with the DNAnexus platform.
 
-See https://wiki.dnanexus.com/ and http://autodoc.dnanexus.com/ for relevant
+See https://documentation.dnanexus.com/ and http://autodoc.dnanexus.com/ for relevant
 documentation.
 
 Installing the toolkit from source
@@ -26,7 +26,7 @@ source dx-toolkit/environment
 ```
 
 You will then be able to use `dx` (the [DNAnexus Command Line
-Client](https://wiki.dnanexus.com/Command-Line-Client/Quickstart)) and other
+Client](https://documentation.dnanexus.com/getting-started/tutorials/cli-quickstart#quickstart-for-cli)) and other
 utilities, and you will be able to use DNAnexus API bindings in the supported
 languages.
 
@@ -48,7 +48,7 @@ Build dependencies
 
 The following packages are required to build the toolkit. You can avoid having
 to install them by either downloading a compiled release from
-https://wiki.dnanexus.com/Downloads, or by building only a portion of the
+https://documentation.dnanexus.com/downloads, or by building only a portion of the
 toolkit that doesn't require them.
 
 **Note:** There is a known incompatibility (in compiling dxcpp) when using GCC 4.7 with Boost 1.49. Please either use the GCC 4.6 series, or Boost 1.50+.

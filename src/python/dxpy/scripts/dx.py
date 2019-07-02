@@ -46,7 +46,7 @@ from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_a
                            find_by_properties_and_tags_args, process_find_by_property_args, process_dataobject_args,
                            process_single_dataobject_output_args, find_executions_args, add_find_executions_search_gp,
                            set_env_from_args, extra_args, process_extra_args, DXParserError, exec_input_args,
-                           instance_type_arg, process_instance_type_arg, get_update_project_args,
+                           instance_type_arg, process_instance_type_arg, process_instance_count_arg, get_update_project_args,
                            property_args, tag_args, contains_phi, process_phi_param)
 from ..cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
 from ..cli.org import (get_org_invite_args, add_membership, remove_membership, update_membership, new_org, update_org,
@@ -70,6 +70,7 @@ from ..utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, 
                                ListCompleter, MultiCompleter)
 from ..utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_header,
                               print_ls_l_desc, get_ls_l_desc_fields, get_io_desc, get_find_executions_string)
+from ..system_requirements import SystemRequirementsDict
 
 try:
     import colorama
@@ -1712,10 +1713,12 @@ def make_download_url(args):
     # TODO: how to do data egress billing for make_download_url?
     try:
         dxfile = dxpy.DXFile(entity_result['id'], project=project)
+        # Only provide project ID, not job workspace container ID
+        project = dxfile.project if re.match(r"^project-[a-zA-Z0-9]{24}$", dxfile.project) else dxpy.DXFile.NO_PROJECT_HINT
         url, _headers = dxfile.get_download_url(preauthenticated=True,
                                                 duration=normalize_timedelta(args.duration)//1000 if args.duration else 24*3600,
                                                 filename=args.filename,
-                                                project=dxpy.DXFile.NO_PROJECT_HINT)
+                                                project=project)
         print(url)
     except:
         err_exit()
@@ -2453,7 +2456,7 @@ def wait(args):
                 print(fill('Could not resolve ' + path + ' to a data object'))
                 had_error = True
             else:
-                handler = dxpy.get_handler(entity_result['id'], project=project)
+                handler = dxpy.get_handler(entity_result['id'], project=entity_result['describe']['project'])
                 print("Waiting for " + path + " to close...")
                 try_call(handler._wait_on_close)
                 print("Done")
@@ -2622,19 +2625,24 @@ def list_developers(args):
     except:
         err_exit()
 
+def render_timestamp(epochSeconds):
+    # This is the format used by 'aws s3 ls'
+    return datetime.datetime.fromtimestamp(epochSeconds//1000).strftime('%Y-%m-%d %H:%M:%S')
+
+
 def list_database_files(args):
     try:
         results = dxpy.api.database_list_folder(
             args.database,
             input_params={"folder": args.folder, "recurse": args.recurse, "timeout": args.timeout})
-
         for r in results["results"]:
+            date_str = render_timestamp(r["modified"]) if r["modified"] != 0 else ''
             if (args.csv == True):
                 print("{}{}{}{}{}".format(
-                    r["modified"], DELIMITER(","), r["size"], DELIMITER(","), r["path"]))
+                    date_str, DELIMITER(","), r["size"], DELIMITER(","), r["path"]))
             else:
                 print("{}{}{}{}{}".format(
-                    r["modified"], DELIMITER(" "), str(r["size"]).rjust(12), DELIMITER(" "), r["path"]))
+                    date_str.rjust(19), DELIMITER(" "), str(r["size"]).rjust(12), DELIMITER(" "), r["path"]))
     except:
         err_exit()
 
@@ -2798,6 +2806,21 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         args.instance_type = dict({stage: reqs['instanceType'] for stage, reqs in list(args.sys_reqs_from_clone.items())},
                                   **(args.instance_type or {}))
 
+    if args.sys_reqs_from_clone and not isinstance(args.instance_count, str):
+        # extract instance counts from cloned sys reqs and override them with args provided with "dx run"
+        args.instance_count = dict({fn: reqs['clusterSpec']['initialInstanceCount']
+                                        for fn, reqs in list(args.sys_reqs_from_clone.items()) if 'clusterSpec' in reqs},
+                                   **(args.instance_count or {}))
+
+    executable_describe = None
+    srd_cluster_spec = SystemRequirementsDict(None)
+    if args.instance_count is not None:
+        executable_describe = executable.describe()
+        srd_default = SystemRequirementsDict.from_sys_requirements(
+            executable_describe['runSpec'].get('systemRequirements', {}), _type='clusterSpec')
+        srd_requested = SystemRequirementsDict.from_instance_count(args.instance_count)
+        srd_cluster_spec = srd_default.override_cluster_spec(srd_requested)
+
     if args.debug_on:
         if 'All' in args.debug_on:
             args.debug_on = ['AppError', 'AppInternalError', 'ExecutionError']
@@ -2820,12 +2843,13 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "stage_instance_types": args.stage_instance_types,
         "stage_folders": args.stage_folders,
         "rerun_stages": args.rerun_stages,
+        "cluster_spec": srd_cluster_spec.as_dict(),
         "extra_args": args.extra_args
     }
 
     if args.priority == "normal" and not args.brief:
         special_access = set()
-        executable_desc = executable.describe()
+        executable_desc = executable_describe or executable.describe()
         write_perms = ['UPLOAD', 'CONTRIBUTE', 'ADMINISTER']
         def check_for_special_access(access_spec):
             if not access_spec:
@@ -3210,8 +3234,11 @@ def run(args):
 
     handler = try_call(get_exec_handler, args.executable, args.alias)
 
-    if args.depends_on and \
-            (isinstance(handler, dxpy.DXWorkflow) or isinstance(handler, dxpy.DXGlobalWorkflow)):
+    is_workflow = isinstance(handler, dxpy.DXWorkflow)
+    is_global_workflow = isinstance(handler, dxpy.DXGlobalWorkflow)
+
+    if args.depends_on and (is_workflow or is_global_workflow):
+
         err_exit(exception=DXParserError("-d/--depends-on cannot be supplied when running workflows."),
                  expected_exceptions=(DXParserError,))
 
@@ -3244,6 +3271,14 @@ def run(args):
             dest_path = dxpy.config.get('DX_CLI_WD', '/')
 
     process_instance_type_arg(args, is_workflow or is_global_workflow)
+
+    # Validate and process instance_count argument
+    if args.instance_count:
+        if is_workflow or is_global_workflow:
+            err_exit(exception=DXCLIError(
+                '--instance-count is not supported for workflows'
+            ))
+        process_instance_count_arg(args)
 
     run_body(args, handler, dest_proj, dest_path)
 
@@ -3792,7 +3827,7 @@ def register_parser(parser, subparsers_action=None, categories=('other', ), add_
             parser_categories[category]['cmds'].append((name, _help))
 
 
-parser = DXArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v%s, client v%s' % (dxpy.API_VERSION, dxpy.TOOLKIT_VERSION) + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, navigate, upload, organize and share your data, launch analyses, and more.  For a quick tour of what the tool can do, see') + '\n\n  https://wiki.dnanexus.com/Command-Line-Client/Quickstart\n\n' + fill('For a breakdown of dx commands by category, run "dx help".') + '\n\n' + fill('dx exits with exit code 3 if invalid input is provided or an invalid operation is requested, and exit code 1 if an internal error is encountered.  The latter usually indicate bugs in dx; please report them at') + "\n\n  https://github.com/dnanexus/dx-toolkit/issues",
+parser = DXArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v%s, client v%s' % (dxpy.API_VERSION, dxpy.TOOLKIT_VERSION) + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, navigate, upload, organize and share your data, launch analyses, and more.  For a quick tour of what the tool can do, see') + '\n\n  https://documentation.dnanexus.com/getting-started/tutorials/cli-quickstart#quickstart-for-cli\n\n' + fill('For a breakdown of dx commands by category, run "dx help".') + '\n\n' + fill('dx exits with exit code 3 if invalid input is provided or an invalid operation is requested, and exit code 1 if an internal error is encountered.  The latter usually indicate bugs in dx; please report them at') + "\n\n  https://github.com/dnanexus/dx-toolkit/issues",
                           formatter_class=argparse.RawTextHelpFormatter,
                           parents=[env_args],
                           usage='%(prog)s [-h] [--version] command ...')
@@ -3859,7 +3894,7 @@ register_parser(parser_whoami, categories='session')
 # env
 #####################################
 parser_env = subparsers.add_parser('env', help='Print all environment variables in use',
-                                   description=fill('Prints all environment variables in use as they have been resolved from environment variables and configuration files.  For more details, see') + '\n\nhttps://wiki.dnanexus.com/Command-Line-Client/Environment-Variables',
+                                   description=fill('Prints all environment variables in use as they have been resolved from environment variables and configuration files.  For more details, see') + '\n\nhttps://documentation.dnanexus.com/user/helpstrings-of-sdk-command-line-utilities#overriding-environment-variables',
                                    formatter_class=argparse.RawTextHelpFormatter, prog='dx env',
                                    parents=[env_args])
 parser_env.add_argument('--bash', help=fill('Prints a list of bash commands to export the environment variables', width_adjustment=-14),
@@ -4134,6 +4169,8 @@ parser_download.add_argument('-a', '--all', help='If multiple objects match the 
                              action='store_true')
 parser_download.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress',
                              action='store_false', default=sys.stderr.isatty())
+parser_download.add_argument('--lightweight', help='Skip some validation steps to make fewer API calls',
+                             action='store_true')
 parser_download.add_argument('--unicode', help='Display the characters as text/unicode when writing to stdout',
                              dest="unicode_text", action='store_true')
 parser_download.set_defaults(func=download_or_cat)
@@ -4310,7 +4347,7 @@ parser_build_asset = subparsers.add_parser(
     formatter_class=argparse.RawTextHelpFormatter,
     description=fill('Build an asset from a local source directory. The directory must have a file called '
          '"dxasset.json" containing valid JSON. For more details, see '
-         '\n\nhttps://wiki.dnanexus.com/Developer-Tutorials/Asset-Build-Process'),
+         '\n\nhttps://documentation.dnanexus.com/developer/apps/dependency-management/asset-build-process'),
     prog="dx build_asset")
 parser_build_asset.add_argument("src_dir", help="Asset source directory (default: current directory)", nargs='?')
 parser_build_asset.add_argument("-d", "--destination",
@@ -4587,6 +4624,10 @@ parser_update_project.add_argument('--download-restricted', choices=["true", "fa
 parser_update_project.add_argument('--containsPHI', choices=["true"],
                                    help="Flag to tell if project contains PHI")
 parser_update_project.add_argument('--bill-to', help="Update the user or org ID of the billing account", type=str)
+allowed_executables_group = parser_update_project.add_mutually_exclusive_group()
+allowed_executables_group.add_argument('--allowed-executables', help='Executable ID(s) this project is allowed to run.  This operation overrides any existing list of executables.', type=str, nargs="+")
+allowed_executables_group.add_argument('--unset-allowed-executables', help='Removes any restriction to run executables as set by --allowed-executables', action='store_true')
+
 parser_update_project.set_defaults(func=update_project)
 register_parser(parser_update_project, subparsers_action=subparsers_update, categories="metadata")
 
@@ -4710,6 +4751,11 @@ parser_run.add_argument('--batch-tsv', dest='batch_tsv', metavar="FILE",
                                   'of the executable input arguments. A job will be launched ' +
                                   'for each table row.',
                                   width_adjustment=-24))
+ic_format = '\'{"entrypoint": <number of instances>}\''
+parser_run.add_argument('--instance-count',
+                               metavar='INSTANCE_COUNT_OR_MAPPING',
+                               help=fill('Specify spark cluster instance count(s). It can be an int or a mapping of the format {ic}'.format(ic=ic_format), width_adjustment=-24),
+                               action='append')
 parser_run.add_argument('--input-help',
                         help=fill('Print help and examples for how to specify inputs',
                                   width_adjustment=-24),
@@ -4931,7 +4977,7 @@ register_parser(parser_set_visibility, categories='metadata')
 # add_types
 #####################################
 parser_add_types = subparsers.add_parser('add_types', help='Add types to a data object',
-                                         description='Add types to a data object.  See https://wiki.dnanexus.com/pages/Types/ for a list of DNAnexus types.',
+                                         description='Add types to a data object.  See https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types for a list of DNAnexus types.',
                                          prog='dx add_types',
                                          parents=[env_args, all_arg])
 parser_add_types.add_argument('path', help='ID or path to data object to modify').completer = DXPathCompleter()
@@ -4943,7 +4989,7 @@ register_parser(parser_add_types, categories='metadata')
 # remove_types
 #####################################
 parser_remove_types = subparsers.add_parser('remove_types', help='Remove types from a data object',
-                                            description='Remove types from a data object.  See https://wiki.dnanexus.com/pages/Types/ for a list of DNAnexus types.',
+                                            description='Remove types from a data object.  See https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types for a list of DNAnexus types.',
                                             prog='dx remove_types',
                                             parents=[env_args, all_arg])
 parser_remove_types.add_argument('path', help='ID or path to data object to modify').completer = DXPathCompleter()
@@ -5352,7 +5398,7 @@ parser_api = subparsers.add_parser('api', help='Call an API method',
                                    formatter_class=argparse.RawTextHelpFormatter,
                                    description=fill('Call an API method directly.  The JSON response from the API server will be returned if successful.  No name resolution is performed; DNAnexus IDs must always be provided.  The API specification can be found at') + '''
 
-https://wiki.dnanexus.com/API-Specification-v1.0.0/Introduction
+https://documentation.dnanexus.com/developer/api
 
 EXAMPLE
 

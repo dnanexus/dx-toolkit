@@ -12,9 +12,9 @@ for installing system build dependencies.
 
 ## Building
 
-To build the UA, simply run `make` in this directory. This will build the
-`ua` executable in this directory. The following methods can be used to
-deploy the Upload Agent:
+To build the UA, simply run `make ua` in the `dx-toolkit/src` directory. This will build the
+`ua` executable in the `dx-toolkit/src/ua` directory. The following methods can then be used
+from `dx-toolkit/src/ua` to deploy the Upload Agent:
 
 * `make install` will deposit `ua` in the `$DNANEXUS_HOME/bin` directory
 * `make dist` will build a complete UA distribution for the current

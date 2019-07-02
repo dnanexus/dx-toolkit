@@ -62,7 +62,7 @@ class DXContainer(DXObject):
 
         Returns a hash with key-value pairs as specified by the API
         specification for the `/project-xxxx/describe
-        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fdescribe>`_
+        <https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-describe>`_
         method. This will usually include keys such as "id", "name",
         "class", "billTo", "created", "modified", and "dataUsage".
 
@@ -309,7 +309,7 @@ class DXProject(DXContainer):
         Creates a new project. Initially only the user performing this action
         will be in the permissions/member list, with ADMINISTER access.
         See the API documentation for the `/project/new
-        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject%2Fnew>`_
+        <https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-new>`_
         method for more info.
 
         """
@@ -339,7 +339,8 @@ class DXProject(DXContainer):
         return self._dxid
 
     def update(self, name=None, summary=None, description=None, protected=None,
-               restricted=None, download_restricted=None, version=None, **kwargs):
+               restricted=None, download_restricted=None, version=None, 
+               allowed_executables=None, unset_allowed_executables=None, **kwargs):
         """
         :param name: If provided, the new project name
         :type name: string
@@ -353,13 +354,15 @@ class DXProject(DXContainer):
         :type restricted: boolean
         :param download_restricted: If provided, whether external downloads should be restricted
         :type download_restricted: boolean
+        :param allowed_executables: If provided, these are the only executable ID(s) allowed to run as root executions in this project
+        :type allowed_executables: list
         :param version: If provided, the update will only occur if the value matches the current project's version number
         :type version: int
 
         Updates the project with the new fields. All fields are
         optional. Fields that are not provided are not changed.
         See the API documentation for the `/project-xxxx/update
-        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fupdate>`_
+        <https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-update>`_
         method for more info.
 
         """
@@ -378,6 +381,10 @@ class DXProject(DXContainer):
             update_hash["downloadRestricted"] = download_restricted
         if version is not None:
             update_hash["version"] = version
+        if allowed_executables is not None:
+            update_hash["allowedExecutables"] = allowed_executables
+        if unset_allowed_executables is not None:
+            update_hash["allowedExecutables"] = None
         dxpy.api.project_update(self._dxid, update_hash, **kwargs)
 
     def invite(self, invitee, level, send_email=True, **kwargs):

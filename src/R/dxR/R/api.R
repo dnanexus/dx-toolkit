@@ -24,7 +24,7 @@
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method\%3A-\%2Fanalysis-xxxx\%2FaddTags}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-analysis-xxxx-addtags}
 analysisAddTags <- function(objectID,
                             inputParams=emptyNamedList,
                             jsonifyData=TRUE,
@@ -57,7 +57,7 @@ analysisAddTags <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method\%3A-\%2Fanalysis-xxxx\%2Fdescribe}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-analysis-xxxx-describe}
 analysisDescribe <- function(objectID,
                              inputParams=emptyNamedList,
                              jsonifyData=TRUE,
@@ -90,7 +90,7 @@ analysisDescribe <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method\%3A-\%2Fanalysis-xxxx\%2FremoveTags}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-analysis-xxxx-removetags}
 analysisRemoveTags <- function(objectID,
                                inputParams=emptyNamedList,
                                jsonifyData=TRUE,
@@ -123,7 +123,7 @@ analysisRemoveTags <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method\%3A-\%2Fanalysis-xxxx\%2FsetProperties}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-analysis-xxxx-setproperties}
 analysisSetProperties <- function(objectID,
                                   inputParams=emptyNamedList,
                                   jsonifyData=TRUE,
@@ -156,7 +156,7 @@ analysisSetProperties <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method\%3A-\%2Fanalysis-xxxx\%2Fterminate}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-analysis-xxxx-terminate}
 analysisTerminate <- function(objectID,
                               inputParams=emptyNamedList,
                               jsonifyData=TRUE,
@@ -193,7 +193,7 @@ analysisTerminate <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/addAuthorizedUsers}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-addauthorizedusers}
 appAddAuthorizedUsers <- function(appNameOrID, alias=NULL,
                                   inputParams=emptyNamedList, jsonifyData=TRUE,
                                   alwaysRetry=TRUE) {
@@ -234,7 +234,7 @@ appAddAuthorizedUsers <- function(appNameOrID, alias=NULL,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/addCategories}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-addcategories}
 appAddCategories <- function(appNameOrID, alias=NULL,
                              inputParams=emptyNamedList, jsonifyData=TRUE,
                              alwaysRetry=TRUE) {
@@ -275,7 +275,7 @@ appAddCategories <- function(appNameOrID, alias=NULL,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/addDevelopers}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-adddevelopers}
 appAddDevelopers <- function(appNameOrID, alias=NULL,
                              inputParams=emptyNamedList, jsonifyData=TRUE,
                              alwaysRetry=TRUE) {
@@ -316,7 +316,7 @@ appAddDevelopers <- function(appNameOrID, alias=NULL,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/addTags}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-addtags}
 appAddTags <- function(appNameOrID, alias=NULL,
                        inputParams=emptyNamedList, jsonifyData=TRUE,
                        alwaysRetry=TRUE) {
@@ -357,7 +357,7 @@ appAddTags <- function(appNameOrID, alias=NULL,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/delete}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-delete}
 appDelete <- function(appNameOrID, alias=NULL,
                       inputParams=emptyNamedList, jsonifyData=TRUE,
                       alwaysRetry=TRUE) {
@@ -398,7 +398,7 @@ appDelete <- function(appNameOrID, alias=NULL,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/describe}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-describe}
 appDescribe <- function(appNameOrID, alias=NULL,
                         inputParams=emptyNamedList, jsonifyData=TRUE,
                         alwaysRetry=TRUE) {
@@ -439,7 +439,7 @@ appDescribe <- function(appNameOrID, alias=NULL,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/get}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-get}
 appGet <- function(appNameOrID, alias=NULL,
                    inputParams=emptyNamedList, jsonifyData=TRUE,
                    alwaysRetry=TRUE) {
@@ -480,7 +480,7 @@ appGet <- function(appNameOrID, alias=NULL,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/install}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-install}
 appInstall <- function(appNameOrID, alias=NULL,
                        inputParams=emptyNamedList, jsonifyData=TRUE,
                        alwaysRetry=TRUE) {
@@ -521,7 +521,7 @@ appInstall <- function(appNameOrID, alias=NULL,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/listAuthorizedUsers}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-listauthorizedusers}
 appListAuthorizedUsers <- function(appNameOrID, alias=NULL,
                                    inputParams=emptyNamedList, jsonifyData=TRUE,
                                    alwaysRetry=TRUE) {
@@ -562,7 +562,7 @@ appListAuthorizedUsers <- function(appNameOrID, alias=NULL,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/listCategories}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-listcategories}
 appListCategories <- function(appNameOrID, alias=NULL,
                               inputParams=emptyNamedList, jsonifyData=TRUE,
                               alwaysRetry=TRUE) {
@@ -603,7 +603,7 @@ appListCategories <- function(appNameOrID, alias=NULL,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/listDevelopers}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-listdevelopers}
 appListDevelopers <- function(appNameOrID, alias=NULL,
                               inputParams=emptyNamedList, jsonifyData=TRUE,
                               alwaysRetry=TRUE) {
@@ -644,7 +644,7 @@ appListDevelopers <- function(appNameOrID, alias=NULL,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/publish}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-publish}
 appPublish <- function(appNameOrID, alias=NULL,
                        inputParams=emptyNamedList, jsonifyData=TRUE,
                        alwaysRetry=TRUE) {
@@ -685,7 +685,7 @@ appPublish <- function(appNameOrID, alias=NULL,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/removeAuthorizedUsers}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-removeauthorizedusers}
 appRemoveAuthorizedUsers <- function(appNameOrID, alias=NULL,
                                      inputParams=emptyNamedList, jsonifyData=TRUE,
                                      alwaysRetry=TRUE) {
@@ -726,7 +726,7 @@ appRemoveAuthorizedUsers <- function(appNameOrID, alias=NULL,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/removeCategories}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-removecategories}
 appRemoveCategories <- function(appNameOrID, alias=NULL,
                                 inputParams=emptyNamedList, jsonifyData=TRUE,
                                 alwaysRetry=TRUE) {
@@ -767,7 +767,7 @@ appRemoveCategories <- function(appNameOrID, alias=NULL,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/removeDevelopers}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-removedevelopers}
 appRemoveDevelopers <- function(appNameOrID, alias=NULL,
                                 inputParams=emptyNamedList, jsonifyData=TRUE,
                                 alwaysRetry=TRUE) {
@@ -808,7 +808,7 @@ appRemoveDevelopers <- function(appNameOrID, alias=NULL,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/removeTags}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-removetags}
 appRemoveTags <- function(appNameOrID, alias=NULL,
                           inputParams=emptyNamedList, jsonifyData=TRUE,
                           alwaysRetry=TRUE) {
@@ -849,7 +849,7 @@ appRemoveTags <- function(appNameOrID, alias=NULL,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/run}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-run}
 appRun <- function(appNameOrID, alias=NULL,
                    inputParams=emptyNamedList, jsonifyData=TRUE,
                    alwaysRetry=FALSE) {
@@ -890,7 +890,7 @@ appRun <- function(appNameOrID, alias=NULL,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/validateBatch}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-validatebatch}
 appValidateBatch <- function(appNameOrID, alias=NULL,
                              inputParams=emptyNamedList, jsonifyData=TRUE,
                              alwaysRetry=TRUE) {
@@ -931,7 +931,7 @@ appValidateBatch <- function(appNameOrID, alias=NULL,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/uninstall}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-uninstall}
 appUninstall <- function(appNameOrID, alias=NULL,
                          inputParams=emptyNamedList, jsonifyData=TRUE,
                          alwaysRetry=TRUE) {
@@ -972,7 +972,7 @@ appUninstall <- function(appNameOrID, alias=NULL,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/update}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-update}
 appUpdate <- function(appNameOrID, alias=NULL,
                       inputParams=emptyNamedList, jsonifyData=TRUE,
                       alwaysRetry=TRUE) {
@@ -1008,7 +1008,7 @@ appUpdate <- function(appNameOrID, alias=NULL,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app/new}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-new}
 appNew <- function(inputParams=emptyNamedList,
                    jsonifyData=TRUE,
                    alwaysRetry=FALSE) {
@@ -1036,7 +1036,7 @@ appNew <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method\%3A-\%2Fclass-xxxx\%2FaddTags}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-addtags}
 appletAddTags <- function(objectID,
                           inputParams=emptyNamedList,
                           jsonifyData=TRUE,
@@ -1069,7 +1069,7 @@ appletAddTags <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method\%3A-\%2Fapplet-xxxx\%2Fdescribe}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-applet-xxxx-describe}
 appletDescribe <- function(objectID,
                            inputParams=emptyNamedList,
                            jsonifyData=TRUE,
@@ -1102,7 +1102,7 @@ appletDescribe <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method\%3A-\%2Fapplet-xxxx\%2Fget}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-applet-xxxx-get}
 appletGet <- function(objectID,
                       inputParams=emptyNamedList,
                       jsonifyData=TRUE,
@@ -1135,7 +1135,7 @@ appletGet <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method\%3A-\%2Fclass-xxxx\%2FgetDetails}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-getdetails}
 appletGetDetails <- function(objectID,
                              inputParams=emptyNamedList,
                              jsonifyData=TRUE,
@@ -1168,7 +1168,7 @@ appletGetDetails <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method\%3A-\%2Fclass-xxxx\%2FlistProjects}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/cloning#api-method-class-xxxx-listprojects}
 appletListProjects <- function(objectID,
                                inputParams=emptyNamedList,
                                jsonifyData=TRUE,
@@ -1201,7 +1201,7 @@ appletListProjects <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method\%3A-\%2Fclass-xxxx\%2FremoveTags}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-removetags}
 appletRemoveTags <- function(objectID,
                              inputParams=emptyNamedList,
                              jsonifyData=TRUE,
@@ -1234,7 +1234,7 @@ appletRemoveTags <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method\%3A-\%2Fclass-xxxx\%2Frename}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/name#api-method-class-xxxx-rename}
 appletRename <- function(objectID,
                          inputParams=emptyNamedList,
                          jsonifyData=TRUE,
@@ -1267,7 +1267,7 @@ appletRename <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method\%3A-\%2Fapplet-xxxx\%2FvalidateBatch}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-applet-xxxx-validatebatch}
 appletValidateBatch <- function(objectID,
                                 inputParams=emptyNamedList,
                                 jsonifyData=TRUE,
@@ -1300,7 +1300,7 @@ appletValidateBatch <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method\%3A-\%2Fapplet-xxxx\%2Frun}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-applet-xxxx-run}
 appletRun <- function(objectID,
                       inputParams=emptyNamedList,
                       jsonifyData=TRUE,
@@ -1333,7 +1333,7 @@ appletRun <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method\%3A-\%2Fclass-xxxx\%2FsetProperties}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/properties#api-method-class-xxxx-setproperties}
 appletSetProperties <- function(objectID,
                                 inputParams=emptyNamedList,
                                 jsonifyData=TRUE,
@@ -1365,7 +1365,7 @@ appletSetProperties <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method\%3A-\%2Fapplet\%2Fnew}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-applet-new}
 appletNew <- function(inputParams=emptyNamedList,
                       jsonifyData=TRUE,
                       alwaysRetry=FALSE) {
@@ -1393,7 +1393,7 @@ appletNew <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method\%3A-\%2Fclass-xxxx\%2Fclone}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/cloning#api-method-class-xxxx-clone}
 containerClone <- function(objectID,
                            inputParams=emptyNamedList,
                            jsonifyData=TRUE,
@@ -1426,7 +1426,7 @@ containerClone <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Containers-for-Execution#API-method\%3A-\%2Fcontainer-xxxx\%2Fdescribe}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/containers-for-execution#api-method-container-xxxx-describe}
 containerDescribe <- function(objectID,
                               inputParams=emptyNamedList,
                               jsonifyData=TRUE,
@@ -1491,7 +1491,7 @@ containerDestroy <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method\%3A-\%2Fclass-xxxx\%2FlistFolder}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-listfolder}
 containerListFolder <- function(objectID,
                                 inputParams=emptyNamedList,
                                 jsonifyData=TRUE,
@@ -1524,7 +1524,7 @@ containerListFolder <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method\%3A-\%2Fclass-xxxx\%2Fmove}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-move}
 containerMove <- function(objectID,
                           inputParams=emptyNamedList,
                           jsonifyData=TRUE,
@@ -1557,7 +1557,7 @@ containerMove <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method\%3A-\%2Fclass-xxxx\%2FnewFolder}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-newfolder}
 containerNewFolder <- function(objectID,
                                inputParams=emptyNamedList,
                                jsonifyData=TRUE,
@@ -1590,7 +1590,7 @@ containerNewFolder <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method\%3A-\%2Fclass-xxxx\%2FremoveFolder}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-removefolder}
 containerRemoveFolder <- function(objectID,
                                   inputParams=emptyNamedList,
                                   jsonifyData=TRUE,
@@ -1623,7 +1623,7 @@ containerRemoveFolder <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method\%3A-\%2Fclass-xxxx\%2FremoveObjects}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-removeobjects}
 containerRemoveObjects <- function(objectID,
                                    inputParams=emptyNamedList,
                                    jsonifyData=TRUE,
@@ -1656,7 +1656,7 @@ containerRemoveObjects <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method\%3A-\%2Fclass-xxxx\%2FrenameFolder}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-renamefolder}
 containerRenameFolder <- function(objectID,
                                   inputParams=emptyNamedList,
                                   jsonifyData=TRUE,
@@ -1689,7 +1689,7 @@ containerRenameFolder <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method\%3A-\%2Fclass-xxxx\%2FaddTags}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-addtags}
 databaseAddTags <- function(objectID,
                             inputParams=emptyNamedList,
                             jsonifyData=TRUE,
@@ -1722,7 +1722,7 @@ databaseAddTags <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method\%3A-\%2Fclass-xxxx\%2FaddTypes}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types#api-method-class-xxxx-addtypes}
 databaseAddTypes <- function(objectID,
                              inputParams=emptyNamedList,
                              jsonifyData=TRUE,
@@ -1755,7 +1755,7 @@ databaseAddTypes <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Data-Object-Lifecycle#API-method\%3A-\%2Fclass-xxxx\%2Fclose}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle#api-method-class-xxxx-close}
 databaseClose <- function(objectID,
                           inputParams=emptyNamedList,
                           jsonifyData=TRUE,
@@ -1788,7 +1788,7 @@ databaseClose <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method\%3A-\%2Fdatabase-xxxx\%2Fdescribe}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/databases#api-method-database-xxxx-describe}
 databaseDescribe <- function(objectID,
                              inputParams=emptyNamedList,
                              jsonifyData=TRUE,
@@ -1821,7 +1821,7 @@ databaseDescribe <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method\%3A-\%2Fclass-xxxx\%2FgetDetails}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-getdetails}
 databaseGetDetails <- function(objectID,
                                inputParams=emptyNamedList,
                                jsonifyData=TRUE,
@@ -1854,7 +1854,7 @@ databaseGetDetails <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method\%3A-\%2Fclass-xxxx\%2FlistProjects}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/cloning#api-method-class-xxxx-listprojects}
 databaseListProjects <- function(objectID,
                                  inputParams=emptyNamedList,
                                  jsonifyData=TRUE,
@@ -1887,7 +1887,7 @@ databaseListProjects <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method\%3A-\%2Fdatabase-xxxx\%2Frelocate}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/databases#api-method-database-xxxx-relocate}
 databaseRelocate <- function(objectID,
                              inputParams=emptyNamedList,
                              jsonifyData=TRUE,
@@ -1920,7 +1920,7 @@ databaseRelocate <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method\%3A-\%2Fclass-xxxx\%2FremoveTags}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-removetags}
 databaseRemoveTags <- function(objectID,
                                inputParams=emptyNamedList,
                                jsonifyData=TRUE,
@@ -1953,7 +1953,7 @@ databaseRemoveTags <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method\%3A-\%2Fclass-xxxx\%2FremoveTypes}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types#api-method-class-xxxx-removetypes}
 databaseRemoveTypes <- function(objectID,
                                 inputParams=emptyNamedList,
                                 jsonifyData=TRUE,
@@ -1986,7 +1986,7 @@ databaseRemoveTypes <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method\%3A-\%2Fclass-xxxx\%2Frename}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/name#api-method-class-xxxx-rename}
 databaseRename <- function(objectID,
                            inputParams=emptyNamedList,
                            jsonifyData=TRUE,
@@ -2019,7 +2019,7 @@ databaseRename <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method\%3A-\%2Fclass-xxxx\%2FsetDetails}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-setdetails}
 databaseSetDetails <- function(objectID,
                                inputParams=emptyNamedList,
                                jsonifyData=TRUE,
@@ -2052,7 +2052,7 @@ databaseSetDetails <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method\%3A-\%2Fclass-xxxx\%2FsetProperties}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/properties#api-method-class-xxxx-setproperties}
 databaseSetProperties <- function(objectID,
                                   inputParams=emptyNamedList,
                                   jsonifyData=TRUE,
@@ -2085,7 +2085,7 @@ databaseSetProperties <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method\%3A-\%2Fclass-xxxx\%2FsetVisibility}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle/visibility#api-method-class-xxxx-setvisibility}
 databaseSetVisibility <- function(objectID,
                                   inputParams=emptyNamedList,
                                   jsonifyData=TRUE,
@@ -2118,7 +2118,7 @@ databaseSetVisibility <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method\%3A-\%2Fclass-xxxx\%2FlistFolder}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-listfolder}
 databaseListFolder <- function(objectID,
                                inputParams=emptyNamedList,
                                jsonifyData=TRUE,
@@ -2151,7 +2151,7 @@ databaseListFolder <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method\%3A-\%2Fclass-xxxx\%2FaddTags}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-addtags}
 fileAddTags <- function(objectID,
                         inputParams=emptyNamedList,
                         jsonifyData=TRUE,
@@ -2184,7 +2184,7 @@ fileAddTags <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method\%3A-\%2Fclass-xxxx\%2FaddTypes}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types#api-method-class-xxxx-addtypes}
 fileAddTypes <- function(objectID,
                          inputParams=emptyNamedList,
                          jsonifyData=TRUE,
@@ -2217,7 +2217,7 @@ fileAddTypes <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method\%3A-\%2Ffile-xxxx\%2Fclose}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/files#api-method-file-xxxx-close}
 fileClose <- function(objectID,
                       inputParams=emptyNamedList,
                       jsonifyData=TRUE,
@@ -2250,7 +2250,7 @@ fileClose <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method\%3A-\%2Ffile-xxxx\%2Fdescribe}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/files#api-method-file-xxxx-describe}
 fileDescribe <- function(objectID,
                          inputParams=emptyNamedList,
                          jsonifyData=TRUE,
@@ -2283,7 +2283,7 @@ fileDescribe <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method\%3A-\%2Ffile-xxxx\%2Fdownload}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/files#api-method-file-xxxx-download}
 fileDownload <- function(objectID,
                          inputParams=emptyNamedList,
                          jsonifyData=TRUE,
@@ -2316,7 +2316,7 @@ fileDownload <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method\%3A-\%2Fclass-xxxx\%2FgetDetails}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-getdetails}
 fileGetDetails <- function(objectID,
                            inputParams=emptyNamedList,
                            jsonifyData=TRUE,
@@ -2349,7 +2349,7 @@ fileGetDetails <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method\%3A-\%2Fclass-xxxx\%2FlistProjects}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/cloning#api-method-class-xxxx-listprojects}
 fileListProjects <- function(objectID,
                              inputParams=emptyNamedList,
                              jsonifyData=TRUE,
@@ -2382,7 +2382,7 @@ fileListProjects <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method\%3A-\%2Fclass-xxxx\%2FremoveTags}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-removetags}
 fileRemoveTags <- function(objectID,
                            inputParams=emptyNamedList,
                            jsonifyData=TRUE,
@@ -2415,7 +2415,7 @@ fileRemoveTags <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method\%3A-\%2Fclass-xxxx\%2FremoveTypes}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types#api-method-class-xxxx-removetypes}
 fileRemoveTypes <- function(objectID,
                             inputParams=emptyNamedList,
                             jsonifyData=TRUE,
@@ -2448,7 +2448,7 @@ fileRemoveTypes <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method\%3A-\%2Fclass-xxxx\%2Frename}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/name#api-method-class-xxxx-rename}
 fileRename <- function(objectID,
                        inputParams=emptyNamedList,
                        jsonifyData=TRUE,
@@ -2481,7 +2481,7 @@ fileRename <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method\%3A-\%2Fclass-xxxx\%2FsetDetails}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-setdetails}
 fileSetDetails <- function(objectID,
                            inputParams=emptyNamedList,
                            jsonifyData=TRUE,
@@ -2514,7 +2514,7 @@ fileSetDetails <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method\%3A-\%2Fclass-xxxx\%2FsetProperties}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/properties#api-method-class-xxxx-setproperties}
 fileSetProperties <- function(objectID,
                               inputParams=emptyNamedList,
                               jsonifyData=TRUE,
@@ -2547,7 +2547,7 @@ fileSetProperties <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method\%3A-\%2Fclass-xxxx\%2FsetVisibility}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle/visibility#api-method-class-xxxx-setvisibility}
 fileSetVisibility <- function(objectID,
                               inputParams=emptyNamedList,
                               jsonifyData=TRUE,
@@ -2580,7 +2580,7 @@ fileSetVisibility <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method\%3A-\%2Ffile-xxxx\%2Fupload}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/files#api-method-file-xxxx-upload}
 fileUpload <- function(objectID,
                        inputParams=emptyNamedList,
                        jsonifyData=TRUE,
@@ -2612,7 +2612,7 @@ fileUpload <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method\%3A-\%2Ffile\%2Fnew}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/files#api-method-file-new}
 fileNew <- function(inputParams=emptyNamedList,
                     jsonifyData=TRUE,
                     alwaysRetry=FALSE) {
@@ -2640,7 +2640,7 @@ fileNew <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/addAuthorizedUsers}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-addauthorizedusers}
 globalWorkflowAddAuthorizedUsers <- function(objectID,
                                              inputParams=emptyNamedList,
                                              jsonifyData=TRUE,
@@ -2673,7 +2673,7 @@ globalWorkflowAddAuthorizedUsers <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/addCategories}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-addcategories}
 globalWorkflowAddCategories <- function(objectID,
                                         inputParams=emptyNamedList,
                                         jsonifyData=TRUE,
@@ -2706,7 +2706,7 @@ globalWorkflowAddCategories <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/addDevelopers}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-adddevelopers}
 globalWorkflowAddDevelopers <- function(objectID,
                                         inputParams=emptyNamedList,
                                         jsonifyData=TRUE,
@@ -2739,7 +2739,7 @@ globalWorkflowAddDevelopers <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/addTags}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-addtags}
 globalWorkflowAddTags <- function(objectID,
                                   inputParams=emptyNamedList,
                                   jsonifyData=TRUE,
@@ -2772,7 +2772,7 @@ globalWorkflowAddTags <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/delete}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-delete}
 globalWorkflowDelete <- function(objectID,
                                  inputParams=emptyNamedList,
                                  jsonifyData=TRUE,
@@ -2805,7 +2805,7 @@ globalWorkflowDelete <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/describe}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-describe}
 globalWorkflowDescribe <- function(objectID,
                                    inputParams=emptyNamedList,
                                    jsonifyData=TRUE,
@@ -2838,7 +2838,7 @@ globalWorkflowDescribe <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/listAuthorizedUsers}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-listauthorizedusers}
 globalWorkflowListAuthorizedUsers <- function(objectID,
                                               inputParams=emptyNamedList,
                                               jsonifyData=TRUE,
@@ -2871,7 +2871,7 @@ globalWorkflowListAuthorizedUsers <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/listCategories}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-listcategories}
 globalWorkflowListCategories <- function(objectID,
                                          inputParams=emptyNamedList,
                                          jsonifyData=TRUE,
@@ -2904,7 +2904,7 @@ globalWorkflowListCategories <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/listDevelopers}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-listdevelopers}
 globalWorkflowListDevelopers <- function(objectID,
                                          inputParams=emptyNamedList,
                                          jsonifyData=TRUE,
@@ -2937,7 +2937,7 @@ globalWorkflowListDevelopers <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/publish}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-publish}
 globalWorkflowPublish <- function(objectID,
                                   inputParams=emptyNamedList,
                                   jsonifyData=TRUE,
@@ -2970,7 +2970,7 @@ globalWorkflowPublish <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/removeAuthorizedUsers}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-removeauthorizedusers}
 globalWorkflowRemoveAuthorizedUsers <- function(objectID,
                                                 inputParams=emptyNamedList,
                                                 jsonifyData=TRUE,
@@ -3003,7 +3003,7 @@ globalWorkflowRemoveAuthorizedUsers <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/removeCategories}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-removecategories}
 globalWorkflowRemoveCategories <- function(objectID,
                                            inputParams=emptyNamedList,
                                            jsonifyData=TRUE,
@@ -3036,7 +3036,7 @@ globalWorkflowRemoveCategories <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/removeDevelopers}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-removedevelopers}
 globalWorkflowRemoveDevelopers <- function(objectID,
                                            inputParams=emptyNamedList,
                                            jsonifyData=TRUE,
@@ -3069,7 +3069,7 @@ globalWorkflowRemoveDevelopers <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/removeTags}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-removetags}
 globalWorkflowRemoveTags <- function(objectID,
                                      inputParams=emptyNamedList,
                                      jsonifyData=TRUE,
@@ -3102,7 +3102,7 @@ globalWorkflowRemoveTags <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/run}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-run}
 globalWorkflowRun <- function(objectID,
                               inputParams=emptyNamedList,
                               jsonifyData=TRUE,
@@ -3135,7 +3135,7 @@ globalWorkflowRun <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx\%5B/yyyy\%5D/update}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-update}
 globalWorkflowUpdate <- function(objectID,
                                  inputParams=emptyNamedList,
                                  jsonifyData=TRUE,
@@ -3167,7 +3167,7 @@ globalWorkflowUpdate <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow/new}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-new}
 globalWorkflowNew <- function(inputParams=emptyNamedList,
                               jsonifyData=TRUE,
                               alwaysRetry=FALSE) {
@@ -3195,7 +3195,7 @@ globalWorkflowNew <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method\%3A-\%2Fjob-xxxx\%2FaddTags}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-addtags}
 jobAddTags <- function(objectID,
                        inputParams=emptyNamedList,
                        jsonifyData=TRUE,
@@ -3228,7 +3228,7 @@ jobAddTags <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method\%3A-\%2Fjob-xxxx\%2Fdescribe}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-describe}
 jobDescribe <- function(objectID,
                         inputParams=emptyNamedList,
                         jsonifyData=TRUE,
@@ -3261,7 +3261,7 @@ jobDescribe <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method\%3A-\%2Fjob-xxxx\%2FgetLog}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-getlog}
 jobGetLog <- function(objectID,
                       inputParams=emptyNamedList,
                       jsonifyData=TRUE,
@@ -3294,7 +3294,7 @@ jobGetLog <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method\%3A-\%2Fjob-xxxx\%2FremoveTags}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-removetags}
 jobRemoveTags <- function(objectID,
                           inputParams=emptyNamedList,
                           jsonifyData=TRUE,
@@ -3327,7 +3327,7 @@ jobRemoveTags <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method\%3A-\%2Fjob-xxxx\%2FsetProperties}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-setproperties}
 jobSetProperties <- function(objectID,
                              inputParams=emptyNamedList,
                              jsonifyData=TRUE,
@@ -3360,7 +3360,7 @@ jobSetProperties <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method\%3A-\%2Fjob-xxxx\%2Fterminate}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-terminate}
 jobTerminate <- function(objectID,
                          inputParams=emptyNamedList,
                          jsonifyData=TRUE,
@@ -3392,7 +3392,7 @@ jobTerminate <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method\%3A-\%2Fjob\%2Fnew}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-new}
 jobNew <- function(inputParams=emptyNamedList,
                    jsonifyData=TRUE,
                    alwaysRetry=FALSE) {
@@ -3472,7 +3472,7 @@ notificationsMarkRead <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method\%3A-\%2Forg-xxxx\%2Fdescribe}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/organizations#api-method-org-xxxx-describe}
 orgDescribe <- function(objectID,
                         inputParams=emptyNamedList,
                         jsonifyData=TRUE,
@@ -3505,7 +3505,7 @@ orgDescribe <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method\%3A-\%2Forg-xxxx\%2FfindMembers}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/organizations#api-method-org-xxxx-findmembers}
 orgFindMembers <- function(objectID,
                            inputParams=emptyNamedList,
                            jsonifyData=TRUE,
@@ -3538,7 +3538,7 @@ orgFindMembers <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method\%3A-\%2Forg-xxxx\%2FfindProjects}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/organizations#api-method-org-xxxx-findprojects}
 orgFindProjects <- function(objectID,
                             inputParams=emptyNamedList,
                             jsonifyData=TRUE,
@@ -3571,7 +3571,7 @@ orgFindProjects <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method\%3A-\%2Forg-xxxx\%2FfindApps}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/organizations#api-method-org-xxxx-findapps}
 orgFindApps <- function(objectID,
                         inputParams=emptyNamedList,
                         jsonifyData=TRUE,
@@ -3604,7 +3604,7 @@ orgFindApps <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method\%3A-\%2Forg-xxxx\%2Finvite}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/organizations#api-method-org-xxxx-invite}
 orgInvite <- function(objectID,
                       inputParams=emptyNamedList,
                       jsonifyData=TRUE,
@@ -3637,7 +3637,7 @@ orgInvite <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method\%3A-\%2Forg-xxxx\%2FremoveMember}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/organizations#api-method-org-xxxx-removemember}
 orgRemoveMember <- function(objectID,
                             inputParams=emptyNamedList,
                             jsonifyData=TRUE,
@@ -3670,7 +3670,7 @@ orgRemoveMember <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method\%3A-\%2Forg-xxxx\%2FsetMemberAccess}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/organizations#api-method-org-xxxx-setmemberaccess}
 orgSetMemberAccess <- function(objectID,
                                inputParams=emptyNamedList,
                                jsonifyData=TRUE,
@@ -3703,7 +3703,7 @@ orgSetMemberAccess <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method\%3A-\%2Forg-xxxx\%2Fupdate}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/organizations#api-method-org-xxxx-update}
 orgUpdate <- function(objectID,
                       inputParams=emptyNamedList,
                       jsonifyData=TRUE,
@@ -3735,7 +3735,7 @@ orgUpdate <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method\%3A-\%2Forg\%2Fnew}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/organizations#api-method-org-new}
 orgNew <- function(inputParams=emptyNamedList,
                    jsonifyData=TRUE,
                    alwaysRetry=FALSE) {
@@ -3763,7 +3763,7 @@ orgNew <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method\%3A-\%2Fproject-xxxx\%2FaddTags}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-addtags}
 projectAddTags <- function(objectID,
                            inputParams=emptyNamedList,
                            jsonifyData=TRUE,
@@ -3796,7 +3796,7 @@ projectAddTags <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method\%3A-\%2Fclass-xxxx\%2Fclone}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/cloning#api-method-class-xxxx-clone}
 projectClone <- function(objectID,
                          inputParams=emptyNamedList,
                          jsonifyData=TRUE,
@@ -3829,7 +3829,7 @@ projectClone <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method\%3A-\%2Fproject-xxxx\%2FdecreasePermissions}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/project-permissions-and-sharing#api-method-project-xxxx-decreasepermissions}
 projectDecreasePermissions <- function(objectID,
                                        inputParams=emptyNamedList,
                                        jsonifyData=TRUE,
@@ -3862,7 +3862,7 @@ projectDecreasePermissions <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method\%3A-\%2Fproject-xxxx\%2Fdescribe}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-describe}
 projectDescribe <- function(objectID,
                             inputParams=emptyNamedList,
                             jsonifyData=TRUE,
@@ -3895,7 +3895,7 @@ projectDescribe <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method\%3A-\%2Fproject-xxxx\%2Fdestroy}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-destroy}
 projectDestroy <- function(objectID,
                            inputParams=emptyNamedList,
                            jsonifyData=TRUE,
@@ -3928,7 +3928,7 @@ projectDestroy <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method\%3A-\%2Fproject-xxxx\%2Finvite}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/project-permissions-and-sharing#api-method-project-xxxx-invite}
 projectInvite <- function(objectID,
                           inputParams=emptyNamedList,
                           jsonifyData=TRUE,
@@ -3961,7 +3961,7 @@ projectInvite <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method\%3A-\%2Fproject-xxxx\%2Fleave}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/project-permissions-and-sharing#api-method-project-xxxx-leave}
 projectLeave <- function(objectID,
                          inputParams=emptyNamedList,
                          jsonifyData=TRUE,
@@ -3994,7 +3994,7 @@ projectLeave <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method\%3A-\%2Fclass-xxxx\%2FlistFolder}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-listfolder}
 projectListFolder <- function(objectID,
                               inputParams=emptyNamedList,
                               jsonifyData=TRUE,
@@ -4027,7 +4027,7 @@ projectListFolder <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method\%3A-\%2Fclass-xxxx\%2Fmove}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-move}
 projectMove <- function(objectID,
                         inputParams=emptyNamedList,
                         jsonifyData=TRUE,
@@ -4060,7 +4060,7 @@ projectMove <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method\%3A-\%2Fclass-xxxx\%2FnewFolder}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-newfolder}
 projectNewFolder <- function(objectID,
                              inputParams=emptyNamedList,
                              jsonifyData=TRUE,
@@ -4093,7 +4093,7 @@ projectNewFolder <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method\%3A-\%2Fclass-xxxx\%2FremoveFolder}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-removefolder}
 projectRemoveFolder <- function(objectID,
                                 inputParams=emptyNamedList,
                                 jsonifyData=TRUE,
@@ -4126,7 +4126,7 @@ projectRemoveFolder <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method\%3A-\%2Fclass-xxxx\%2FremoveObjects}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-removeobjects}
 projectRemoveObjects <- function(objectID,
                                  inputParams=emptyNamedList,
                                  jsonifyData=TRUE,
@@ -4159,7 +4159,7 @@ projectRemoveObjects <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method\%3A-\%2Fproject-xxxx\%2FremoveTags}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-removetags}
 projectRemoveTags <- function(objectID,
                               inputParams=emptyNamedList,
                               jsonifyData=TRUE,
@@ -4192,7 +4192,7 @@ projectRemoveTags <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method\%3A-\%2Fclass-xxxx\%2FrenameFolder}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-renamefolder}
 projectRenameFolder <- function(objectID,
                                 inputParams=emptyNamedList,
                                 jsonifyData=TRUE,
@@ -4225,7 +4225,7 @@ projectRenameFolder <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method\%3A-\%2Fproject-xxxx\%2FsetProperties}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-setproperties}
 projectSetProperties <- function(objectID,
                                  inputParams=emptyNamedList,
                                  jsonifyData=TRUE,
@@ -4258,7 +4258,7 @@ projectSetProperties <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method\%3A-\%2Fproject-xxxx\%2Ftransfer}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/project-permissions-and-sharing#api-method-project-xxxx-transfer}
 projectTransfer <- function(objectID,
                             inputParams=emptyNamedList,
                             jsonifyData=TRUE,
@@ -4291,7 +4291,7 @@ projectTransfer <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method\%3A-\%2Fproject-xxxx\%2Fupdate}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-update}
 projectUpdate <- function(objectID,
                           inputParams=emptyNamedList,
                           jsonifyData=TRUE,
@@ -4324,7 +4324,7 @@ projectUpdate <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method\%3A-\%2Fproject-xxxx\%2FupdateSponsorship}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-updatesponsorship}
 projectUpdateSponsorship <- function(objectID,
                                      inputParams=emptyNamedList,
                                      jsonifyData=TRUE,
@@ -4356,7 +4356,7 @@ projectUpdateSponsorship <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method\%3A-\%2Fproject\%2Fnew}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-new}
 projectNew <- function(inputParams=emptyNamedList,
                        jsonifyData=TRUE,
                        alwaysRetry=FALSE) {
@@ -4384,7 +4384,7 @@ projectNew <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method\%3A-\%2Fclass-xxxx\%2FaddTags}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-addtags}
 recordAddTags <- function(objectID,
                           inputParams=emptyNamedList,
                           jsonifyData=TRUE,
@@ -4417,7 +4417,7 @@ recordAddTags <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method\%3A-\%2Fclass-xxxx\%2FaddTypes}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types#api-method-class-xxxx-addtypes}
 recordAddTypes <- function(objectID,
                            inputParams=emptyNamedList,
                            jsonifyData=TRUE,
@@ -4450,7 +4450,7 @@ recordAddTypes <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Data-Object-Lifecycle#API-method\%3A-\%2Fclass-xxxx\%2Fclose}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle#api-method-class-xxxx-close}
 recordClose <- function(objectID,
                         inputParams=emptyNamedList,
                         jsonifyData=TRUE,
@@ -4483,7 +4483,7 @@ recordClose <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method\%3A-\%2Frecord-xxxx\%2Fdescribe}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/records#api-method-record-xxxx-describe}
 recordDescribe <- function(objectID,
                            inputParams=emptyNamedList,
                            jsonifyData=TRUE,
@@ -4516,7 +4516,7 @@ recordDescribe <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method\%3A-\%2Fclass-xxxx\%2FgetDetails}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-getdetails}
 recordGetDetails <- function(objectID,
                              inputParams=emptyNamedList,
                              jsonifyData=TRUE,
@@ -4549,7 +4549,7 @@ recordGetDetails <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method\%3A-\%2Fclass-xxxx\%2FlistProjects}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/cloning#api-method-class-xxxx-listprojects}
 recordListProjects <- function(objectID,
                                inputParams=emptyNamedList,
                                jsonifyData=TRUE,
@@ -4582,7 +4582,7 @@ recordListProjects <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method\%3A-\%2Fclass-xxxx\%2FremoveTags}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-removetags}
 recordRemoveTags <- function(objectID,
                              inputParams=emptyNamedList,
                              jsonifyData=TRUE,
@@ -4615,7 +4615,7 @@ recordRemoveTags <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method\%3A-\%2Fclass-xxxx\%2FremoveTypes}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types#api-method-class-xxxx-removetypes}
 recordRemoveTypes <- function(objectID,
                               inputParams=emptyNamedList,
                               jsonifyData=TRUE,
@@ -4648,7 +4648,7 @@ recordRemoveTypes <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method\%3A-\%2Fclass-xxxx\%2Frename}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/name#api-method-class-xxxx-rename}
 recordRename <- function(objectID,
                          inputParams=emptyNamedList,
                          jsonifyData=TRUE,
@@ -4681,7 +4681,7 @@ recordRename <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method\%3A-\%2Fclass-xxxx\%2FsetDetails}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-setdetails}
 recordSetDetails <- function(objectID,
                              inputParams=emptyNamedList,
                              jsonifyData=TRUE,
@@ -4714,7 +4714,7 @@ recordSetDetails <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method\%3A-\%2Fclass-xxxx\%2FsetProperties}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/properties#api-method-class-xxxx-setproperties}
 recordSetProperties <- function(objectID,
                                 inputParams=emptyNamedList,
                                 jsonifyData=TRUE,
@@ -4747,7 +4747,7 @@ recordSetProperties <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method\%3A-\%2Fclass-xxxx\%2FsetVisibility}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle/visibility#api-method-class-xxxx-setvisibility}
 recordSetVisibility <- function(objectID,
                                 inputParams=emptyNamedList,
                                 jsonifyData=TRUE,
@@ -4779,7 +4779,7 @@ recordSetVisibility <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method\%3A-\%2Frecord\%2Fnew}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/records#api-method-record-new}
 recordNew <- function(inputParams=emptyNamedList,
                       jsonifyData=TRUE,
                       alwaysRetry=FALSE) {
@@ -4806,7 +4806,7 @@ recordNew <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/describeDataObjects}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/system-methods#api-method-system-describedataobjects}
 systemDescribeDataObjects <- function(inputParams=emptyNamedList,
                                       jsonifyData=TRUE,
                                       alwaysRetry=TRUE) {
@@ -4833,7 +4833,7 @@ systemDescribeDataObjects <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/describeExecutions}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/system-methods#api-method-system-describeexecutions}
 systemDescribeExecutions <- function(inputParams=emptyNamedList,
                                      jsonifyData=TRUE,
                                      alwaysRetry=TRUE) {
@@ -4860,7 +4860,7 @@ systemDescribeExecutions <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/describeProjects}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/system-methods#api-method-system-describeprojects}
 systemDescribeProjects <- function(inputParams=emptyNamedList,
                                    jsonifyData=TRUE,
                                    alwaysRetry=TRUE) {
@@ -4913,7 +4913,7 @@ systemFindAffiliates <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method\%3A-\%2Fsystem\%2FfindApps}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/search#api-method-system-findapps}
 systemFindApps <- function(inputParams=emptyNamedList,
                            jsonifyData=TRUE,
                            alwaysRetry=TRUE) {
@@ -4940,7 +4940,7 @@ systemFindApps <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method\%3A-\%2Fsystem\%2FfindDataObjects}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/search#api-method-system-finddataobjects}
 systemFindDataObjects <- function(inputParams=emptyNamedList,
                                   jsonifyData=TRUE,
                                   alwaysRetry=TRUE) {
@@ -4993,7 +4993,7 @@ systemFindGlobalWorkflows <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/resolveDataObjects}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/system-methods#api-method-system-resolvedataobjects}
 systemResolveDataObjects <- function(inputParams=emptyNamedList,
                                      jsonifyData=TRUE,
                                      alwaysRetry=TRUE) {
@@ -5020,7 +5020,7 @@ systemResolveDataObjects <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method\%3A-\%2Fsystem\%2FfindExecutions}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/search#api-method-system-findexecutions}
 systemFindExecutions <- function(inputParams=emptyNamedList,
                                  jsonifyData=TRUE,
                                  alwaysRetry=TRUE) {
@@ -5047,7 +5047,7 @@ systemFindExecutions <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method\%3A-\%2Fsystem\%2FfindAnalyses}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/search#api-method-system-findanalyses}
 systemFindAnalyses <- function(inputParams=emptyNamedList,
                                jsonifyData=TRUE,
                                alwaysRetry=TRUE) {
@@ -5074,7 +5074,7 @@ systemFindAnalyses <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method\%3A-\%2Fsystem\%2FfindDatabases}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/search#api-method-system-finddatabases}
 systemFindDatabases <- function(inputParams=emptyNamedList,
                                 jsonifyData=TRUE,
                                 alwaysRetry=TRUE) {
@@ -5101,7 +5101,7 @@ systemFindDatabases <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method\%3A-\%2Fsystem\%2FfindJobs}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/search#api-method-system-findjobs}
 systemFindJobs <- function(inputParams=emptyNamedList,
                            jsonifyData=TRUE,
                            alwaysRetry=TRUE) {
@@ -5128,7 +5128,7 @@ systemFindJobs <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method\%3A-\%2Fsystem\%2FfindProjects}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/search#api-method-system-findprojects}
 systemFindProjects <- function(inputParams=emptyNamedList,
                                jsonifyData=TRUE,
                                alwaysRetry=TRUE) {
@@ -5155,7 +5155,6 @@ systemFindProjects <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method\%3A-\%2Fsystem\%2FfindUsers}
 systemFindUsers <- function(inputParams=emptyNamedList,
                             jsonifyData=TRUE,
                             alwaysRetry=TRUE) {
@@ -5182,7 +5181,7 @@ systemFindUsers <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/findProjectMembers}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/search#api-method-system-findprojectmembers}
 systemFindProjectMembers <- function(inputParams=emptyNamedList,
                                      jsonifyData=TRUE,
                                      alwaysRetry=TRUE) {
@@ -5209,7 +5208,7 @@ systemFindProjectMembers <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/findOrgs}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/search#api-method-system-findorgs}
 systemFindOrgs <- function(inputParams=emptyNamedList,
                            jsonifyData=TRUE,
                            alwaysRetry=TRUE) {
@@ -5236,7 +5235,7 @@ systemFindOrgs <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/generateBatchInputs}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/system-methods#api-method-system-generatebatchinputs}
 systemGenerateBatchInputs <- function(inputParams=emptyNamedList,
                                       jsonifyData=TRUE,
                                       alwaysRetry=TRUE) {
@@ -5263,7 +5262,6 @@ systemGenerateBatchInputs <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/globalSearch}
 systemGlobalSearch <- function(inputParams=emptyNamedList,
                                jsonifyData=TRUE,
                                alwaysRetry=TRUE) {
@@ -5368,6 +5366,7 @@ systemShortenURL <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/system-methods#api-method-system-whoamiwiki.}
 systemWhoami <- function(inputParams=emptyNamedList,
                          jsonifyData=TRUE,
                          alwaysRetry=TRUE) {
@@ -5395,7 +5394,7 @@ systemWhoami <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Users#API-method\%3A-\%2Fuser-xxxx\%2Fdescribe}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/users#api-method-user-xxxx-describe}
 userDescribe <- function(objectID,
                          inputParams=emptyNamedList,
                          jsonifyData=TRUE,
@@ -5428,7 +5427,7 @@ userDescribe <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Users#API-method\%3A-\%2Fuser-xxxx\%2Fupdate}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/users#api-method-user-xxxx-update}
 userUpdate <- function(objectID,
                        inputParams=emptyNamedList,
                        jsonifyData=TRUE,
@@ -5461,7 +5460,7 @@ userUpdate <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method\%3A-\%2Fworkflow-xxxx\%2FaddStage}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-xxxx-addstage}
 workflowAddStage <- function(objectID,
                              inputParams=emptyNamedList,
                              jsonifyData=TRUE,
@@ -5494,7 +5493,7 @@ workflowAddStage <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method\%3A-\%2Fclass-xxxx\%2FaddTags}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-addtags}
 workflowAddTags <- function(objectID,
                             inputParams=emptyNamedList,
                             jsonifyData=TRUE,
@@ -5527,7 +5526,7 @@ workflowAddTags <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method\%3A-\%2Fclass-xxxx\%2FaddTypes}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types#api-method-class-xxxx-addtypes}
 workflowAddTypes <- function(objectID,
                              inputParams=emptyNamedList,
                              jsonifyData=TRUE,
@@ -5560,7 +5559,7 @@ workflowAddTypes <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Data-Object-Lifecycle#API-method\%3A-\%2Fclass-xxxx\%2Fclose}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle#api-method-class-xxxx-close}
 workflowClose <- function(objectID,
                           inputParams=emptyNamedList,
                           jsonifyData=TRUE,
@@ -5593,7 +5592,7 @@ workflowClose <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method\%3A-\%2Fworkflow-xxxx\%2Fdescribe}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-xxxx-describe}
 workflowDescribe <- function(objectID,
                              inputParams=emptyNamedList,
                              jsonifyData=TRUE,
@@ -5626,7 +5625,7 @@ workflowDescribe <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method\%3A-\%2Fworkflow-xxxx\%2FdryRun}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-xxxx-dryrun}
 workflowDryRun <- function(objectID,
                            inputParams=emptyNamedList,
                            jsonifyData=TRUE,
@@ -5659,7 +5658,7 @@ workflowDryRun <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method\%3A-\%2Fclass-xxxx\%2FgetDetails}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-getdetails}
 workflowGetDetails <- function(objectID,
                                inputParams=emptyNamedList,
                                jsonifyData=TRUE,
@@ -5692,7 +5691,7 @@ workflowGetDetails <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method\%3A-\%2Fworkflow-xxxx\%2FisStageCompatible}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-xxxx-isstagecompatible}
 workflowIsStageCompatible <- function(objectID,
                                       inputParams=emptyNamedList,
                                       jsonifyData=TRUE,
@@ -5725,7 +5724,7 @@ workflowIsStageCompatible <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method\%3A-\%2Fclass-xxxx\%2FlistProjects}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/cloning#api-method-class-xxxx-listprojects}
 workflowListProjects <- function(objectID,
                                  inputParams=emptyNamedList,
                                  jsonifyData=TRUE,
@@ -5758,7 +5757,7 @@ workflowListProjects <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method\%3A-\%2Fworkflow-xxxx\%2FmoveStage}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-xxxx-movestage}
 workflowMoveStage <- function(objectID,
                               inputParams=emptyNamedList,
                               jsonifyData=TRUE,
@@ -5791,7 +5790,7 @@ workflowMoveStage <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method\%3A-\%2Fworkflow-xxxx\%2Foverwrite}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-xxxx-overwrite}
 workflowOverwrite <- function(objectID,
                               inputParams=emptyNamedList,
                               jsonifyData=TRUE,
@@ -5824,7 +5823,7 @@ workflowOverwrite <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method\%3A-\%2Fworkflow-xxxx\%2FremoveStage}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-xxxx-removestage}
 workflowRemoveStage <- function(objectID,
                                 inputParams=emptyNamedList,
                                 jsonifyData=TRUE,
@@ -5857,7 +5856,7 @@ workflowRemoveStage <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method\%3A-\%2Fclass-xxxx\%2FremoveTags}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-removetags}
 workflowRemoveTags <- function(objectID,
                                inputParams=emptyNamedList,
                                jsonifyData=TRUE,
@@ -5890,7 +5889,7 @@ workflowRemoveTags <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method\%3A-\%2Fclass-xxxx\%2FremoveTypes}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types#api-method-class-xxxx-removetypes}
 workflowRemoveTypes <- function(objectID,
                                 inputParams=emptyNamedList,
                                 jsonifyData=TRUE,
@@ -5923,7 +5922,7 @@ workflowRemoveTypes <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method\%3A-\%2Fclass-xxxx\%2Frename}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/name#api-method-class-xxxx-rename}
 workflowRename <- function(objectID,
                            inputParams=emptyNamedList,
                            jsonifyData=TRUE,
@@ -5956,7 +5955,7 @@ workflowRename <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method\%3A-\%2Fworkflow-xxxx\%2Frun}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-xxxx-run}
 workflowRun <- function(objectID,
                         inputParams=emptyNamedList,
                         jsonifyData=TRUE,
@@ -5989,7 +5988,7 @@ workflowRun <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method\%3A-\%2Fworkflow-xxxx\%2FvalidateBatch}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-xxxx-validatebatch}
 workflowValidateBatch <- function(objectID,
                                   inputParams=emptyNamedList,
                                   jsonifyData=TRUE,
@@ -6022,7 +6021,7 @@ workflowValidateBatch <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method\%3A-\%2Fclass-xxxx\%2FsetDetails}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-setdetails}
 workflowSetDetails <- function(objectID,
                                inputParams=emptyNamedList,
                                jsonifyData=TRUE,
@@ -6055,45 +6054,12 @@ workflowSetDetails <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method\%3A-\%2Fclass-xxxx\%2FsetProperties}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/properties#api-method-class-xxxx-setproperties}
 workflowSetProperties <- function(objectID,
                                   inputParams=emptyNamedList,
                                   jsonifyData=TRUE,
                                   alwaysRetry=TRUE) {
   resource <- paste('/', objectID, '/', 'setProperties', sep='')
-  dxHTTPRequest(resource,
-                inputParams,
-                jsonifyData=jsonifyData,
-                alwaysRetry=alwaysRetry)
-}
-
-##' workflowSetStageInputs API wrapper
-##'
-##' This function makes an API call to the \code{/workflow-xxxx/setStageInputs} API
-##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
-##' function which makes POST HTTP requests to the API server.
-##'
-##' 
-##' @param objectID DNAnexus object ID
-##' @param inputParams Either an R object that will be converted into JSON
-##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
-##' providing the JSON string directly, you must set \code{jsonifyData} to
-##' \code{FALSE}.
-##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
-##' \code{inputParams} to create the JSON string or pass through the value of
-##' \code{inputParams} directly.  (Default is \code{TRUE}.)
-##' @param alwaysRetry Whether to always retry even when no response is
-##' received from the API server
-##' @return If the API call is successful, the parsed JSON of the API server
-##' response is returned (using \code{RJSONIO::fromJSON}).
-##' @export
-##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method\%3A-\%2Fworkflow-xxxx\%2FsetStageInputs}
-workflowSetStageInputs <- function(objectID,
-                                   inputParams=emptyNamedList,
-                                   jsonifyData=TRUE,
-                                   alwaysRetry=TRUE) {
-  resource <- paste('/', objectID, '/', 'setStageInputs', sep='')
   dxHTTPRequest(resource,
                 inputParams,
                 jsonifyData=jsonifyData,
@@ -6121,7 +6087,7 @@ workflowSetStageInputs <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method\%3A-\%2Fclass-xxxx\%2FsetVisibility}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-object-lifecycle/visibility#api-method-class-xxxx-setvisibility}
 workflowSetVisibility <- function(objectID,
                                   inputParams=emptyNamedList,
                                   jsonifyData=TRUE,
@@ -6154,7 +6120,7 @@ workflowSetVisibility <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method\%3A-\%2Fworkflow-xxxx\%2Fupdate}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-xxxx-update}
 workflowUpdate <- function(objectID,
                            inputParams=emptyNamedList,
                            jsonifyData=TRUE,
@@ -6187,7 +6153,7 @@ workflowUpdate <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method\%3A-\%2Fworkflow-xxxx\%2FupdateStageExecutable}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-xxxx-updatestageexecutable}
 workflowUpdateStageExecutable <- function(objectID,
                                           inputParams=emptyNamedList,
                                           jsonifyData=TRUE,
@@ -6219,7 +6185,7 @@ workflowUpdateStageExecutable <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method\%3A-\%2Fworkflow\%2Fnew}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-new}
 workflowNew <- function(inputParams=emptyNamedList,
                         jsonifyData=TRUE,
                         alwaysRetry=FALSE) {

@@ -34,7 +34,7 @@ import os, time
 import dxpy
 from . import DXObject, DXDataObject, DXJobFailureError, verify_string_dxid
 from ..exceptions import DXError
-from ..utils import instance_type_to_sys_reqs
+from ..system_requirements import SystemRequirementsDict
 from ..utils.local_exec_utils import queue_entry_point
 from ..compat import basestring
 
@@ -160,7 +160,7 @@ class DXJob(DXObject):
             if properties is not None:
                 req_input["properties"] = properties
             if instance_type is not None:
-                req_input["systemRequirements"] = instance_type_to_sys_reqs(instance_type, fn_name)
+                req_input["systemRequirements"] = SystemRequirementsDict.from_instance_type(instance_type, fn_name).as_dict()
             if depends_on is not None:
                 req_input["dependsOn"] = final_depends_on
             if details is not None:
@@ -204,7 +204,7 @@ class DXJob(DXObject):
         the job, including its state and (optionally) its inputs and
         outputs, as described in the API documentation for the
         `/job-xxxx/describe
-        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method:-/job-xxxx/describe>`_
+        <https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-describe>`_
         method.
 
         """
