@@ -29,7 +29,7 @@ from dxpy.sugar.transfers import (
 )
 
 
-MEM_RE = re.compile(r"^MemTotal:[\s]*([0-9]*) kB")
+MEM_RE = re.compile(r"^MemAvailable:[\s]*([0-9]*) kB")
 MEM_CONVERSIONS = {
     "K": 1,
     "M": 1 << 10,
@@ -69,7 +69,7 @@ def available_memory(suffix="M", meminfo_path="/proc/meminfo"):
             output.
 
     Returns:
-        float: total_memory read from meminfo in MiB, KiB or GiB
+        float: total_memory read from meminfo in KiB, MiB, or GiB
             depending on specified suffix.
 
     Raises:
@@ -78,7 +78,7 @@ def available_memory(suffix="M", meminfo_path="/proc/meminfo"):
     """
     suffix = suffix.upper()
     if suffix not in MEM_CONVERSIONS:
-        raise dxpy.DXError(
+        raise ValueError(
             "Unknown memory suffix {0}. Please choose from K, M, or G.".format(suffix)
         )
 
