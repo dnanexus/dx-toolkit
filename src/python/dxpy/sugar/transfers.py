@@ -141,7 +141,7 @@ def simple_upload_file(
     if return_handler:
         return handler
     else:
-        return dxpy.dxlink(handler.get_id(), handler.describe()["project"])
+        return _file_handler_as_link(handler)
 
 
 def compress_and_upload_file(
@@ -392,12 +392,21 @@ def _wrap_file_id(file_id, return_handler, project=None):
         else:
             raise ValueError("Invalid file ID: {}".format(file_id))
 
-    dxlink = dxpy.dxlink(file_id, project_id=project)
+    handler = dxpy.DXFile(file_id, project=project)
 
     if return_handler:
-        return dxpy.DXFile(dxlink)
+        return handler
     else:
-        return dxlink
+        return _file_handler_as_link(handler)
+
+
+def _file_handler_as_link(dxfile):
+    file_id = dxfile.get_id()
+    project = dxfile.describe()["project"]
+    if project is None or not project.startswith("project-"):
+        return dxpy.dxlink(file_id)
+    else:
+        return dxpy.dxlink(file_id, project_id=project)
 
 
 def download_file(
