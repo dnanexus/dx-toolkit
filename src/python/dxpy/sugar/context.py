@@ -14,22 +14,25 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import print_function
-import os
-import sys
-import tempfile
-import subprocess
+from __future__ import print_function, unicode_literals, division, absolute_import
 import contextlib
-import dxpy
 import json
 import logging
+import os
+import subprocess
+import tempfile
+
+import dxpy.sugar
+
 
 LOG = logging.getLogger()
 
+
 class UserContext(object):
     """
-    Context manager for switching to a user context when inside of a job context. All functions of this class require
-    for the context to be a worker context and can only be run on a DNAnexus job.
+    Context manager for switching to a user context when inside of a job context. All
+    functions of this class require for the context to be a worker context and can
+    only be run on a DNAnexus job.
 
     Args:
         api_token: DNAnexus user token
@@ -41,11 +44,11 @@ class UserContext(object):
 
         Upon exit, job context is restored.
     """
+
     @dxpy.sugar.requires_worker_context
     def __init__(self, api_token):
         api_token = api_token.strip("\n")  # Python adds \n when reading from a file
-        self.user_secure_token = {"auth_token": api_token,
-                                 "auth_token_type": "Bearer"}
+        self.user_secure_token = {"auth_token": api_token, "auth_token_type": "Bearer"}
         self.job_id = os.environ["DX_JOB_ID"]
         self.job_security_context = json.loads(os.environ["DX_SECURITY_CONTEXT"])
         self.job_workspace_id = os.environ["DX_WORKSPACE_ID"]
@@ -57,8 +60,7 @@ class UserContext(object):
         dxpy.set_security_context(self.user_secure_token)
         dxpy.set_workspace_id(proj)
         try:
-            dna_config_file = os.path.join(
-                os.environ["HOME"], ".dnanexus_config")
+            dna_config_file = os.path.join(os.environ["HOME"], ".dnanexus_config")
             os.remove(dna_config_file)
         except OSError:
             LOG.info("As expected, .dnanexus_config not present.")
@@ -73,6 +75,7 @@ class UserContext(object):
         dxpy.set_security_context(self.job_security_context)
         dxpy.set_workspace_id(self.job_workspace_id)
 
+
 @contextlib.contextmanager
 def set_env(environ, override=False):
     """
@@ -80,8 +83,9 @@ def set_env(environ, override=False):
 
     Args:
         environ (dict): Environment variable(s) to set
-        override (boolean): Whether the environment should be updated or overwritten. If the environment is overwritten,
-        no env variables are set except for those explicitly specified.
+        override (boolean): Whether the environment should be updated or overwritten.
+        If the environment is overwritten, no env variables are set except for those
+        explicitly specified.
 
     Yields:
         An environment with environment variables set as specified.
@@ -129,16 +133,17 @@ class cd:
 
     Args:
         target_path (string): Optional, specify path to cd to
-        cleanup (boolean): Optional, specify if directory should be deleted after exiting context. Default is true if
-        the directory is newly created. Existing directories are never deleted.
+        cleanup (boolean): Optional, specify if directory should be deleted after
+        exiting context. Default is true if the directory is newly created. Existing
+        directories are never deleted.
 
     Note:
         If no args specified, cd() will create an arbitary temp dir and cd to it
 
     Yields:
         Upon entry, context will be set to the specified directory.
-        Upon exit, directory newly created with cleanup=True or directory created when no
-        args are specified is deleted.
+        Upon exit, directory newly created with cleanup=True or directory created when
+        no args are specified is deleted.
 
     Source: http://stackoverflow.com/questions/431684/how-do-i-cd-in-python
 
@@ -173,7 +178,8 @@ class cd:
     def __exit__(self, etype, value, traceback):
         os.chdir(self.savedPath)
         if self.removeFolder:
-            subprocess.check_call(['rm', '-rf', self.newPath], shell=False)
+            subprocess.check_call(["rm", "-rf", self.newPath], shell=False)
+
 
 @contextlib.contextmanager
 def fifo(name=None):

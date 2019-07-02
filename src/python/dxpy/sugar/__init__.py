@@ -16,27 +16,33 @@
 import dxpy
 from functools import wraps
 
-from processing import run_cmd, chain_cmds
-from transfers import (
-    Uploader,
-    Downloader,
-    upload_file,
-    tar_and_upload_files,
-    download_file,
-)
-from context import (
-    UserContext,
-    set_env,
-    cd,
-    fifo
-)
+# from processing import run_cmd, chain_cmds
+# from transfers import (
+#     Uploader,
+#     Downloader,
+#     upload_file,
+#     tar_and_upload_files,
+#     download_file,
+# )
+# from context import (
+#     UserContext,
+#     set_env,
+#     cd,
+#     fifo
+# )
+
 
 def requires_worker_context(func):
-    """This decorator checks that a given function is running within a DNAnexus job context"""
+    """This decorator checks that a given function is running within a DNAnexus job
+    context.
+    """
     @wraps(func)
     def check_job_id(*args, **kwargs):
         if dxpy.JOB_ID is None:
-            raise dxpy.DXError("Illegal function call, must be called from within DNAnexus job context.")
+            raise dxpy.DXError(
+                "Illegal function call, must be called from within DNAnexus job "
+                "context."
+            )
         else:
             return func(*args, **kwargs)
 
