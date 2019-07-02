@@ -29,7 +29,7 @@ import sys
 #
 # from chunking import (
 #     divide_dxfiles_into_chunks,
-#     get_dxlink_filesizes,
+#     get_filesizes,
 #     schedule_lpt
 # )
 

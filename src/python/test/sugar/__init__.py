@@ -2,13 +2,12 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import contextlib
 import os
 import shutil
-import subprocess
 import tempfile
 from uuid import uuid4
 
 
 import logging
-logging.basicConfig(level="INFO")
+logging.basicConfig(level=logging.INFO)
 
 
 def random_name(fmt_str=None):
@@ -47,7 +46,3 @@ def isolated_dir():
             yield d
         finally:
             os.chdir(curdir)
-
-
-def run(cmd):
-    subprocess.check_call(cmd, shell=True)
