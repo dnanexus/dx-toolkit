@@ -1,0 +1,25 @@
+{ "name": "xattr_properties",
+  "title": "xattr_properties",
+  "summary" : "Tests dx-upload-all-outputs uploading with filesystem metadata as properties",
+  "runSpec": {
+    "file": "run.sh",
+    "interpreter": "bash",
+    "distribution": "Ubuntu",
+    "release": "16.04",
+    "execDepends": [{"name": "attr", "package_manager": "apt"}, {"name": "libffi-dev", "package_manager": "apt"}]
+  },
+  "inputSpec": [
+    {"name": "seq1", "class": "file"},
+    {"name": "seq2", "class": "file"},
+    {"name": "ref",  "class": "array:file"}
+  ],
+  "outputSpec": [
+    {"name": "result1", "class": "file"},
+    {"name": "result2", "class": "file"},
+    {"name": "result3", "class": "file"},
+    {"name": "result4", "class": "file"}
+  ],
+  "access": {
+    "network": ["*"]
+  }
+}

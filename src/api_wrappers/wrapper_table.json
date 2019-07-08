@@ -540,7 +540,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FlistFolder"
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2FlistFolder"
         }
     ],
     [

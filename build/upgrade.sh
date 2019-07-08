@@ -12,7 +12,7 @@ build_dir=$(dirname "$0")
 
 function cleanup() {
     echo "$(basename $0): Unable to update to version ${new_version} $@"
-    echo "Please visit https://wiki.dnanexus.com/Downloads#DNAnexus-Platform-SDK and download an appropriate package for your system."
+    echo "Please visit https://documentation.dnanexus.com/downloads and download an appropriate package for your system."
 }
 
 trap cleanup ERR
@@ -50,7 +50,7 @@ fi
 
 echo "Downloading $pkg_name (using ${get_cmd})..."
 rm -f "${build_dir}/${pkg_name}"
-(cd "$build_dir"; ${get_cmd} "https://wiki.dnanexus.com/images/files/${pkg_name}")
+(cd "$build_dir"; ${get_cmd} "https://dnanexus-sdk.s3.amazonaws.com/${pkg_name}")
 
 echo "Unpacking $pkg_name..."
 tar -C "$build_dir" -xzf "${build_dir}/${pkg_name}"

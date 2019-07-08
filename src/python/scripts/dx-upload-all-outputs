@@ -38,6 +38,7 @@ import stat
 import sys
 import json
 import argparse
+import xattr
 import dxpy
 from dxpy.utils import file_load_utils
 from dxpy.utils.printing import fill, refill_paragraphs, BOLD, RED
@@ -92,6 +93,8 @@ parser.add_argument("--wait-on-close", help="Wait for files to close, default is
                     action="store_true",
                     default=False,
                     dest="wait_on_close")
+parser.add_argument("--xattr-properties", help="Get filesystem attributes and set them as properties on each file uploaded", 
+                    action="store_true")
 args = parser.parse_args()
 parser.parse_args()
 max_num_parallel_uploads = 8
@@ -288,35 +291,43 @@ def create_entry(subdir_desc, local_path, target_path, basename):
             'fname': basename,
             'dxlink': None}
 
-def upload_one_file(entry, wait_on_close):
+def return_xattr_as_properties(file):
+    properties = {}
+    for attribute in xattr.listxattr(file):
+        if attribute.startswith('user.'):
+            properties[attribute.lstrip('user.')] = xattr.getxattr(file, attribute)
+    return properties
+
+def upload_one_file(entry, wait_on_close, xattr_properties):
     '''Upload a file from the output directory. Record a reference to the
     uploaded object in the entry.
     '''
     local_path = os.path.join(entry['local_dir_path'], entry['fname'])
+    properties = return_xattr_as_properties(local_path) if xattr_properties is not None else {}
     if entry['target_dir_path'] is None:
         trg_path = "/{}".format(entry['fname'])
         print("uploading file: {} -> {}".format(local_path, trg_path))
         sys.stdout.flush()
-        f_obj = dxpy.upload_local_file(local_path, wait_on_close=wait_on_close)
+        f_obj = dxpy.upload_local_file(local_path, wait_on_close=wait_on_close, properties=properties)
     else:
         trg_path = "/{}/{}".format(entry['target_dir_path'], entry['fname'])
         print("uploading file: {} -> {}".format(local_path, trg_path))
         sys.stdout.flush()
         f_obj = dxpy.upload_local_file(local_path,
                                        folder=("/" + entry['target_dir_path']),
-                                       parents=True, wait_on_close=wait_on_close)
+                                       parents=True, wait_on_close=wait_on_close, properties=properties)
     entry['dxlink'] = dxpy.dxlink(f_obj)
 
-def sequential_file_upload(to_upload, wait_on_close):
+def sequential_file_upload(to_upload, wait_on_close, xattr_properties):
     '''Sequentially upload everything that is in the output directory.
     '''
     for entry in to_upload:
-        upload_one_file(entry, wait_on_close)
+        upload_one_file(entry, wait_on_close, xattr_properties)
 
-def parallel_file_upload(to_upload, wait_on_close):
+def parallel_file_upload(to_upload, wait_on_close, xattr_properties):
     ''' same as sequential_file_upload, but in parallel '''
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_num_parallel_uploads) as executor:
-        future_files = {executor.submit(upload_one_file, e, wait_on_close): e for e in to_upload}
+        future_files = {executor.submit(upload_one_file, e, wait_on_close, xattr_properties): e for e in to_upload}
         for future in concurrent.futures.as_completed(future_files):
             entry = future_files[future]
             try:
@@ -415,9 +426,9 @@ for key in subdir_recs:
 
 # upload concurrently
 if args.parallel:
-    parallel_file_upload(to_upload, args.wait_on_close)
+    parallel_file_upload(to_upload, args.wait_on_close, args.xattr_properties)
 else:
-    sequential_file_upload(to_upload, args.wait_on_close)
+    sequential_file_upload(to_upload, args.wait_on_close, args.xattr_properties)
 
 # Uploads are complete, we can collect all results. This avoids
 # data races in the parallel upload case.

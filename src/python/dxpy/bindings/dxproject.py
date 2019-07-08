@@ -339,7 +339,8 @@ class DXProject(DXContainer):
         return self._dxid
 
     def update(self, name=None, summary=None, description=None, protected=None,
-               restricted=None, download_restricted=None, version=None, **kwargs):
+               restricted=None, download_restricted=None, version=None, 
+               allowed_executables=None, unset_allowed_executables=None, **kwargs):
         """
         :param name: If provided, the new project name
         :type name: string
@@ -353,6 +354,8 @@ class DXProject(DXContainer):
         :type restricted: boolean
         :param download_restricted: If provided, whether external downloads should be restricted
         :type download_restricted: boolean
+        :param allowed_executables: If provided, these are the only executable ID(s) allowed to run as root executions in this project
+        :type allowed_executables: list
         :param version: If provided, the update will only occur if the value matches the current project's version number
         :type version: int
 
@@ -378,6 +381,10 @@ class DXProject(DXContainer):
             update_hash["downloadRestricted"] = download_restricted
         if version is not None:
             update_hash["version"] = version
+        if allowed_executables is not None:
+            update_hash["allowedExecutables"] = allowed_executables
+        if unset_allowed_executables is not None:
+            update_hash["allowedExecutables"] = None
         dxpy.api.project_update(self._dxid, update_hash, **kwargs)
 
     def invite(self, invitee, level, send_email=True, **kwargs):

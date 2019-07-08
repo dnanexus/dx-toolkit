@@ -447,7 +447,7 @@ public class DXApplet extends DXDataObject implements DXExecutable<DXJob> {
     }
 
     @Override
-    public Describe describe(DescribeOptions options) {
+    public Describe describe(DXDataObject.DescribeOptions options) {
         return DXJSON.safeTreeToValue(
                 apiCallOnObject("describe", MAPPER.valueToTree(options),
                         RetryStrategy.SAFE_TO_RETRY), Describe.class);
