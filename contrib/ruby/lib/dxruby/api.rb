@@ -499,7 +499,7 @@ module DX
 
     # Invokes the /database-xxxx/listFolder API method.
     #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FlistFolder
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2FlistFolder
     def self.database_list_folder(object_id, input_params={}, opts={})
       opts = { "always_retry" => true }.merge(opts)
       return DX::http_request("/#{object_id}/listFolder", input_params, opts)

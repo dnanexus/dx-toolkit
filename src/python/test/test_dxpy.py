@@ -188,6 +188,7 @@ class TestDXProject(unittest.TestCase):
                          protected=True,
                          restricted=True,
                          download_restricted=True,
+                         allowed_executables=["applet-abcdefghijklmnopqrstuzwx"],
                          description="new description")
         desc = dxproject.describe()
         self.assertEqual(desc["id"], self.proj_id)
@@ -197,12 +198,14 @@ class TestDXProject(unittest.TestCase):
         self.assertEqual(desc["restricted"], True)
         self.assertEqual(desc["downloadRestricted"], True)
         self.assertEqual(desc["description"], "new description")
+        self.assertEqual(desc["allowedExecutables"][0], "applet-abcdefghijklmnopqrstuzwx")
         self.assertTrue("created" in desc)
 
-        dxproject.update(restricted=False, download_restricted=False)
+        dxproject.update(restricted=False, download_restricted=False, unset_allowed_executables=True)
         desc = dxproject.describe()
         self.assertEqual(desc["restricted"], False)
         self.assertEqual(desc["downloadRestricted"], False)
+        self.assertTrue("allowedExecutables" not in desc)
 
     def test_new_list_remove_folders(self):
         dxproject = dxpy.DXProject()

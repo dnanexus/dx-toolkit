@@ -1,3 +1,8 @@
+DNAnexus Upload Agent 1.5.31 <support@dnanexus.com>, 2019-Apr-11
+----------------------------------------------------------------
+  * DEVEX-1005 Decreased libcurl timeout from infinity to default 10min
+  * Updated build instructions in documentation
+
 DNAnexus Upload Agent 1.5.30 <support@dnanexus.com>, 2018-Feb-15
 ----------------------------------------------------------------
   * Accept 302 as a success for ua --test

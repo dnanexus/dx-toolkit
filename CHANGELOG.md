@@ -8,11 +8,89 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
+* '--xattr-properties' argument for dx-upload-all-outputs to include fs metadata as k,v properties
+* xattr dependency for Linux builds
+
+### Changed
+
+* Only require futures package for python 2.7
+* Upgrade build dependencies for pip, setuptools, and wheel
+
+## [284.0] - 2019.06.13 beta
+
+### Added
+
+* DXJava support for proxies 
+* Approved tools CLI for `dx update project`
+
+### Changed
+
+* Upgrade jackson-databind and jackson-core to version 2.9.8
+* Provide project ID for dx make_download_url unless in job workspace
+
+### Fixed
+
+* Enabling argcomplete for `dx` installed with debian package in worker environment
+
+## [283.0] - 2019.05.13 stable
+
+### Changed
+
+* `dx upgrade` downloads the latest version from s3
+
+## [282.0] - 2019.05.08
+
+### Changed
+
+* Reduce the number of API calls for `dx download`
+
+### Fixed
+
+*  `dx upload` error via proxy in Azure
+
+## [281.0] - 2019.04.18 
+
+### Added 
+
+* support for passing HTTPContext in `DXJava` to the `execute()` operation
+
+## [280.0] - 2019.04.18 
+
+### Added
+
+* `--instance-count` to `dx run` so that Spark cluster size can be defined at app start
+
+### Changed
+
+* `dx wait` behavior by adding exponential backoff and passing appropriate project
+* Decreased libcurl timeout in C++ bindings from infinity to default 10 min
+* Default Ubuntu release to 16.04 in `dx-app-wizard` 
+* Link handling to better support JBORs
+
+### Fixed
+
+* Handling file arrays in batch job runner
+
+## [279.0] - 2019.04.11
+
+* no significant updates
+
+## [278.0] - 2019.03.21 
+
+### Added
+
 * new `findDataObjects` inputs to DXJava
 * project name resolution to `--project` flag for `dx run`
 * smart reuse and SAML identity provider
+* `dx list database <entity>` for DNAnexus Apollo
+* `--ignore-reuse` and `--ignore-reuse-stage` working for `dx run <workflow>`
 
-## [277.0] - 2019.02.14 beta
+### Changed
+
+* Upgrade `proot` to be compatible with kernel >= 4.8
+* Skip symlinks test in isolated environment
+
+## [277.0] - 2019.03.14
 
 ### Fixed
 
@@ -30,7 +108,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * 32-bit build target for Ubuntu 14.04
 * `gtable` code
 
-## [276.0] - 2019.02.08 stable
+## [276.0] - 2019.02.08
 
 ### Added
 
@@ -41,13 +119,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Bug in downloading symlinks when using aria2c
 * Max number of aria2c connections <= 16
 
-## [275.0] - 2019.02.01 stable
+## [275.0] - 2019.02.01
 
 ### Fixed
 
 * argcomplete eval in the worker when sourcing `environment`
 
-## [274.0] - 2019.02.01 stable
+## [274.0] - 2019.02.01
 
 ### Fixed
 
