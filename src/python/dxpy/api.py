@@ -508,7 +508,7 @@ def database_list_folder(object_id, input_params={}, always_retry=True, **kwargs
     """
     Invokes the /database-xxxx/listFolder API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FlistFolder
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2FlistFolder
     """
     return DXHTTPRequest('/%s/listFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
 

@@ -242,8 +242,6 @@ namespace dx {
         }
       }
       respData = "";
-      // Set time out to infinite
-      assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_TIMEOUT, 0l));
 
       /* Set the user agent - optional */
       assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_USERAGENT, config::USER_AGENT_STRING().c_str()));
@@ -277,6 +275,9 @@ namespace dx {
 
       // Make a copy of reqData, because read_callback (see HTTP_PUT case below) will modify it
       reqData_struct reqData_temp;
+
+      // Set max time the request is allowed to take. It can be overriden for each method separately
+      assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_TIMEOUT, 600l));
 
       switch (method) {
         case HTTP_POST:

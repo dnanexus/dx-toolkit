@@ -18,20 +18,9 @@ from functools import wraps
 import logging
 import sys
 
-# from processing import run_cmd, chain_cmds
-# from transfers import (
-#     Uploader,
-#     Downloader,
-#     upload_file,
-#     tar_and_upload_files,
-#     download_file,
-# )
-#
-# from chunking import (
-#     divide_dxfiles_into_chunks,
-#     get_filesizes,
-#     schedule_lpt
-# )
+
+def in_worker_context():
+    return dxpy.JOB_ID is not None
 
 
 def requires_worker_context(func):
@@ -39,13 +28,13 @@ def requires_worker_context(func):
     """
     @wraps(func)
     def check_job_id(*args, **kwargs):
-        if dxpy.JOB_ID:
+        if in_worker_context():
             return func(*args, **kwargs)
-
-        raise dxpy.DXError(
-            "Illegal function call, must be called from within DNAnexus job "
-            "context."
-        )
+        else:
+            raise dxpy.DXError(
+                "Illegal function call, must be called from within DNAnexus job "
+                "context."
+            )
 
     return check_job_id
 

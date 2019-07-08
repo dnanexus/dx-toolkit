@@ -395,7 +395,7 @@ array:boolean  array:int      boolean        hash           string''')
     ######################
 
     app_json['runSpec']['distribution'] = 'Ubuntu'
-    app_json['runSpec']['release'] = '14.04'
+    app_json['runSpec']['release'] = '16.04'
 
     #################
     # WRITING FILES #
