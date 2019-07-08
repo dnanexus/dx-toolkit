@@ -1,34 +1,10 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
-import contextlib
 import os
-import shutil
-import tempfile
 import unittest
 
+from . import isolated_dir
+
 from dxpy.sugar import processing as proc
-
-import logging
-logging.basicConfig(level="INFO")
-
-
-@contextlib.contextmanager
-def temp_dir(*args, **kwargs):
-    dname = tempfile.mkdtemp(*args, **kwargs)
-    try:
-        yield dname
-    finally:
-        shutil.rmtree(dname)
-
-
-@contextlib.contextmanager
-def isolated_dir():
-    with temp_dir() as d:
-        curdir = os.getcwd()
-        os.chdir(d)
-        try:
-            yield d
-        finally:
-            os.chdir(curdir)
 
 
 class TestProc(unittest.TestCase):
