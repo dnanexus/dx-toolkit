@@ -15,15 +15,6 @@
 #   under the License.
 import dxpy
 from functools import wraps
-#
-# from processing import run_cmd, chain_cmds
-# from transfers import (
-#     Uploader,
-#     Downloader,
-#     upload_file,
-#     tar_and_upload_files,
-#     download_file,
-# )
 
 
 def in_worker_context():
