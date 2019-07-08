@@ -1,3 +1,9 @@
+dx-toolkit (0.286.1) precise; urgency=low
+
+  * Fixed: Remove non-ascii char from readme
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Mon, 08 Jul 2019 16:44:27 +0000
+
 dx-toolkit (0.286.0) precise; urgency=low
 
   * Changed: Documentation links to https://documentation.dnanexus.com
