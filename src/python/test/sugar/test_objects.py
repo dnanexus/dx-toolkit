@@ -124,7 +124,7 @@ class TestObjects(unittest.TestCase):
             cleanup_folder = True
 
             with self.assertRaises(dxpy.DXSearchError):
-                objects.get_data_object(file_name, proj)
+                objects.get_data_object(file_name, proj, exists=True)
             dxfile = dxpy.upload_string(
                 "test",
                 project=proj.get_id(),
@@ -137,7 +137,8 @@ class TestObjects(unittest.TestCase):
                 dxfile.get_id(), objects.get_data_object(file_name, proj).get_id()
             )
             with self.assertRaises(dxpy.DXSearchError):
-                objects.get_data_object(file_name, proj, classname="record")
+                objects.get_data_object(
+                    file_name, proj, classname="record", exists=True)
             with self.assertRaises(dxpy.DXSearchError):
                 objects.get_data_object(file_name, proj, exists=False)
         except dxpy.AppError as err:
@@ -158,22 +159,28 @@ class TestObjects(unittest.TestCase):
         # TODO: test global workflows
         proj = objects.get_project(PROJECT_ID)
         self.assertIsInstance(
-            objects.get_workflow(WORKFLOW_ID, proj),
+            objects.get_data_object(WORKFLOW_ID, proj, classname="workflow"),
             dxpy.DXWorkflow
         )
         with self.assertRaises(dxpy.DXSearchError):
             # Should be multiple workflows with the same name
-            objects.get_workflow(WORKFLOW_NAME, proj)
-        workflow = objects.get_workflow(WORKFLOW_NAME, proj, tag=TAG)
+            objects.get_data_object(
+                WORKFLOW_NAME, proj, classname="workflow", exists=True
+            )
+        workflow = objects.get_data_object(
+            WORKFLOW_NAME, proj, classname="workflow", tag=TAG
+        )
         self.assertIsNotNone(workflow)
         self.assertEqual(workflow.get_id(), WORKFLOW_ID)
         self.assertEqual(
-            objects.get_workflow(WORKFLOW_NAME, proj, folder=WORKFLOW_FOLDER).get_id(),
+            objects.get_data_object(
+                WORKFLOW_NAME, proj, classname="workflow", folder=WORKFLOW_FOLDER
+            ).get_id(),
             WORKFLOW_ID
         )
         workflow_path = "{}/{}".format(WORKFLOW_FOLDER, WORKFLOW_NAME)
         self.assertEqual(
-            objects.get_workflow(workflow_path, proj).get_id(),
+            objects.get_data_object(workflow_path, proj, classname="workflow").get_id(),
             WORKFLOW_ID
         )
 
@@ -190,22 +197,28 @@ class TestObjects(unittest.TestCase):
     def test_get_applet(self):
         proj = objects.get_project(PROJECT_ID)
         self.assertIsInstance(
-            objects.get_applet(APPLET_ID, proj),
+            objects.get_data_object(APPLET_ID, proj, classname="applet"),
             dxpy.DXApplet
         )
         with self.assertRaises(dxpy.DXSearchError):
             # Should be multiple workflows with the same name
-            objects.get_applet(APPLET_NAME, proj)
+            objects.get_data_object(
+                APPLET_NAME, proj, classname="workflow", exists=True
+            )
         self.assertEqual(
-            objects.get_applet(APPLET_NAME, proj, tag=TAG).get_id(),
+            objects.get_data_object(
+                APPLET_NAME, proj, classname="applet", tag=TAG
+            ).get_id(),
             APPLET_ID
         )
         self.assertEqual(
-            objects.get_applet(APPLET_NAME, proj, folder=APPLET_FOLDER).get_id(),
+            objects.get_data_object(
+                APPLET_NAME, proj, classname="applet", folder=APPLET_FOLDER
+            ).get_id(),
             APPLET_ID
         )
         workflow_path = "{}/{}".format(APPLET_FOLDER, APPLET_NAME)
         self.assertEqual(
-            objects.get_applet(workflow_path, proj).get_id(),
+            objects.get_data_object(workflow_path, proj, classname="applet").get_id(),
             APPLET_ID
         )

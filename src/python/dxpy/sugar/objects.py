@@ -167,21 +167,28 @@ def ensure_folder(folder, project=None, exists=None, create=False):
 
 
 def get_data_object(
-    data_obj_desc, project=None, classname="file", exists=True, **kwargs
+    data_obj_desc, project=None, classname=None, exists=None, **kwargs
 ):
     """Gets a data object by name or ID.
 
     Args:
-        data_obj_desc: ID or name of the file, or an instance of DXDataObject.
-        project: The project in which to get the file. Defaults to the current project.
-        classname: Classname of the data object; defaults to "file" but can also be
-            "record" or "database".
-        exists: Assert whether the file exists (True) or does not exist (False). If
-            None, existance is not checked.
-        **kwargs: Additional keyword arguments to use when searching for file.
+        data_obj_desc: ID or name of the data object, or an instance of DXDataObject.
+        project: The project in which to get the data object. Defaults to the current
+            project.
+        classname: Classname of the data object; can be any data object class (e.g.
+            "file", "record", or "database"), "*", or `None`. If either "*" or `None`
+            is specified, the class of the data object is not validated when
+            `data_obj_desc` is an ID or a `dxpy.DXDataObject` instance; the
+            difference between the two is that when searching by name, "*" means
+            don't specify the `classname` parameter and `None` means specify "file"
+            as the `classname` parameter.
+        exists: Assert whether the data object exists (True) or does not exist (
+            False). If None, existance is not checked.
+        **kwargs: Additional keyword arguments to use when searching for the data
+            object.
 
     Returns:
-        A DXFile object.
+        A DXDataObject object.
 
     Raises:
         dxpy.DXSearchError if the data object does exist and `exists is False` or if
@@ -194,15 +201,17 @@ def get_data_object(
     data_obj = None
     search = True
 
-    if isinstance(data_obj_desc, dxpy.DXFile):
+    if isinstance(data_obj_desc, dxpy.DXDataObject):
         data_obj = data_obj_desc
         search = False
     elif resolver.is_data_obj_id(data_obj_desc):
-        data_obj = dxpy.get_handler(data_obj_desc, project)
+        data_obj = dxpy.get_handler(data_obj_desc, project.get_id())
 
     if data_obj:
         try:
             data_obj.describe()
+            if classname not in ("*", None):
+                dxpy.verify_string_dxid(data_obj.get_id(), classname)
         except dxpy.DXError:
             data_obj = None
 
@@ -213,35 +222,38 @@ def get_data_object(
             kwargs["folder"] = folder
         if "recurse" not in kwargs:
             kwargs["recurse"] = recurse
+        if classname is None:
+            kwargs["classname"] = "file"
+        elif classname != "*":
+            kwargs["classname"] = classname
         data_obj = dxpy.find_one_data_object(
             zero_ok=True,
             more_ok=False,
             name=name,
-            classname=classname,
             **kwargs
         )
 
     if not data_obj and exists is True:
-        raise dxpy.DXSearchError("File {} does not to exist", data_obj_desc)
+        raise dxpy.DXSearchError("Data object {} does not to exist", data_obj_desc)
     if data_obj and exists is False:
         raise dxpy.DXSearchError(
-            "File {} exists but was expected not to exist", data_obj_desc
+            "Data object {} exists but was expected not to exist", data_obj_desc
         )
 
     return data_obj
 
 
-def get_workflow(workflow_desc, project=None, **kwargs):
+def get_workflow(workflow_desc, project=None):
     """
-    Search for a project workflow or global workflow with the given ID or name.
+    Search for a project workflow or global workflow with the given ID or name. This
+    is a convenience method for resolving a workflow when, for example, a user can
+    provide either a project workflow or a global workflow as a paramter to an app.
 
     Args:
         workflow_desc: A workflow ID (either 'workflow-xxx' or
             'globalworkflow-xxx'), name, or DXWorkflow or DXGlobalWorkflow object.
         project: Project ID or DXProject object. The project to search for the
             workflow; if not found here it is expected to be a global workflow.
-        kwargs: Additional keyword arguments to use when searching for a workflow
-            or globalworkflow by name.
 
     Returns:
         A DXWorkflow or DXGlobalWorkflow object.
@@ -254,58 +266,69 @@ def get_workflow(workflow_desc, project=None, **kwargs):
     if workflow_desc is None:
         raise ValueError("'workflow_desc' cannot be None.")
 
-    if isinstance(workflow_desc, (dxpy.DXWorkflow, dxpy.DXGlobalWorkflow)):
-        return workflow_desc
-
-    project = get_project(project)
-
-    if resolver.is_hashid(workflow_desc):
-        try:
-            return dxpy.get_handler(workflow_desc, project.get_id())
-        except dxpy.DXError:
-            pass
-
-    workflow_folder, workflow_name, recurse = _parse_object_name(workflow_desc)
-    if "folder" in kwargs:
-        workflow_folder = kwargs.pop("folder")
-    if "recurse" in kwargs:
-        recurse = kwargs.pop("recurse")
-    kwargs["name"] = workflow_name
-    kwargs["return_handler"] = True
-    workflow = dxpy.find_one_data_object(
-        zero_ok=True,
-        more_ok=False,
-        classname="workflow",
-        project=project.get_id(),
-        folder=workflow_folder,
-        recurse=recurse,
-        **kwargs
-    )
+    workflow = get_data_object(workflow_desc, project, classname="workflow")
 
     if not workflow:
-        kwargs["limit"] = 2
-        candidates = dxpy.find_global_workflows(**kwargs)
-        result = next(candidates, None)
-        if result is None:
-            raise dxpy.DXSearchError(
-                "Expected one result, but found none: {}".format(str(kwargs))
-            )
-        if next(candidates, None) is not None:
-            raise dxpy.DXSearchError(
-                "Expected one result, but found more: {}".format(str(kwargs))
-            )
+        workflow = get_globalworkflow(workflow_desc)
 
     return workflow
 
 
-def get_app_or_applet(app_or_applet_desc, project=None, **kwargs):
-    """Gets an app(let) by its ID or name.
+def get_globalworkflow(workflow_desc, **kwargs):
+    """Gets the app with the given ID or name.
+
+    Args:
+        workflow_desc: The globalworkflow ID or name, or a `dxpy.DXGlobalWorkflow`
+            instance.
+        kwargs: Additional kwargs to use when looking up the globalworkflow by name.
+
+    Returns:
+        A DXGlobalWorkflow object.
+
+    Raises:
+        * dxpy.DXSearchError if the globalworkflow does not exist.
+        * dxpy.exceptions.PermissionDenied if user does not have proper permissions
+            to access the globalworkflow.
+    """
+    if workflow_desc is None:
+        raise ValueError("'workflow_desc' cannot be None.")
+
+    if isinstance(workflow_desc, dxpy.DXGlobalWorkflow):
+        return workflow_desc
+
+    if resolver.is_hashid(workflow_desc):
+        try:
+            LOG.info("Checking if globalworkflow with ID %s exists", workflow_desc)
+            workflow = dxpy.DXGlobalWorkflow(workflow_desc)
+            workflow.describe()
+            return workflow
+        except dxpy.DXError:
+            pass
+
+    kwargs["limit"] = 2
+    candidates = dxpy.find_global_workflows(**kwargs)
+    workflow = next(candidates, None)
+    if workflow is None:
+        raise dxpy.DXSearchError(
+            "Expected one result, but found none: {}".format(str(kwargs))
+        )
+    if next(candidates, None) is not None:
+        raise dxpy.DXSearchError(
+            "Expected one result, but found more: {}".format(str(kwargs))
+        )
+
+    return workflow
+
+
+def get_app_or_applet(app_or_applet_desc, project=None):
+    """Gets an app(let) by its ID or name. This is a convenience method for resolving
+    an a app(let) when, for example, a user can provide either an applet or an app
+    ID/name as a paramter to an app.
 
     Args:
         app_or_applet_desc: ID or name of the app/applet, or an instance of
             DXApp or DXApplet.
         project: name, ID, or DXProject object of project containing applet.
-        kwargs: Additional kwargs to use when looking up the app(let) by name.
 
     Returns:
         DXApp or DXApplet object.
@@ -319,19 +342,21 @@ def get_app_or_applet(app_or_applet_desc, project=None, **kwargs):
         return app_or_applet_desc
 
     if app_or_applet_desc.startswith("applet-"):
-        try:
-            app = get_applet(app_or_applet_desc, project, **kwargs)
-        except:
-            app = get_app(app_or_applet_desc, **kwargs)
+        app = get_data_object(
+            app_or_applet_desc, project, classname="applet"
+        )
+        if app is None:
+            app = get_app(app_or_applet_desc)
     else:
-        try:
-            app = get_app(app_or_applet_desc, **kwargs)
-        except:
-            app = get_applet(app_or_applet_desc, project, **kwargs)
+        app = get_app(app_or_applet_desc)
+        if app is None:
+            app = get_data_object(
+                app_or_applet_desc, project, classname="applet"
+            )
 
     if app is None:
         raise dxpy.DXSearchError(
-            "Did not find exactly one app(let): {}".format(str(kwargs))
+            "Did not find exactly one app(let): {}".format(str(app_or_applet_desc))
         )
 
     return app
@@ -371,53 +396,6 @@ def get_app(app_desc, **kwargs):
         zero_ok=False,
         more_ok=False,
         name=app_desc,
-        return_handler=True,
-        **kwargs
-    )
-
-
-def get_applet(applet_desc, project=None, **kwargs):
-    """Gets the applet with the given ID or name in the given project.
-
-    Args:
-        applet_desc: The applet ID or name, or a dxpy.DXApplet object.
-        project: Project ID or DXProject object. The project in which to look for the
-            applet. Defaults to the current project.
-        kwargs: Additional kwargs to use when looking up the applet by name.
-
-    Returns:
-        A DXApplet object.
-
-    Raises:
-        * dxpy.AppError if the applet does not exist.
-        * dxpy.exceptions.PermissionDenied if user does not have proper permissions
-            to access the applet.
-    """
-    if isinstance(applet_desc, dxpy.DXApplet):
-        return applet_desc
-
-    project = get_project(project)
-
-    if resolver.is_data_obj_id(applet_desc):
-        try:
-            LOG.info("Checking if applet with ID %s exists", applet_desc)
-            executable = dxpy.DXApplet(applet_desc, project=project.get_id())
-            executable.describe()
-            return executable
-        except dxpy.DXError:
-            pass
-
-    applet_folder, applet_name, recurse = _parse_object_name(applet_desc)
-    if "folder" not in kwargs:
-        kwargs["folder"] = applet_folder
-    if "recurse" not in kwargs:
-        kwargs["recurse"] = recurse
-    return dxpy.find_one_data_object(
-        zero_ok=False,
-        more_ok=False,
-        classname="applet",
-        name=applet_name,
-        project=project.get_id(),
         return_handler=True,
         **kwargs
     )
