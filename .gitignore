@@ -87,3 +87,5 @@ test-job-workspaces
 
 # artifacts from tracibility
 *.traceability.*.csv
+
+.vscode/

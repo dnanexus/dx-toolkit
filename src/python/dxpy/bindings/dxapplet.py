@@ -251,7 +251,7 @@ class DXApplet(DXDataObject, DXExecutable):
 
        The applet's run specification (a dict indicating, among other things, how the code of the
        applet is to be interpreted). See `the API docs for Run Specification
-       <https://wiki.dnanexus.com/API-Specification-v1.0.0/IO-and-Run-Specifications#Run-Specification>`_
+       <https://documentation.dnanexus.com/developer/api/running-analyses/io-and-run-specifications#run-specification>`_
        for more information.
 
     .. py:attribute:: dxapi
@@ -263,7 +263,7 @@ class DXApplet(DXDataObject, DXExecutable):
        The applet's access requirements hash (a dict indicating any nonstandard permissions, such
        as requiring access to the internet, that are needed by the applet). See `the API docs for
        Access Requirements
-       <https://wiki.dnanexus.com/API-Specification-v1.0.0/IO-and-Run-Specifications#Access-Requirements>`_
+       <https://documentation.dnanexus.com/developer/api/running-analyses/io-and-run-specifications#access-requirements>`_
        for more information.
 
     .. py:attribute:: title
@@ -327,12 +327,12 @@ class DXApplet(DXDataObject, DXExecutable):
 
         .. note:: It is highly recommended that the higher-level module
            :mod:`dxpy.app_builder` or (preferably) its frontend `dx build
-           <https://wiki.dnanexus.com/Command-Line-Client/Index-of-dx-Commands#build>`_
+           <https://documentation.dnanexus.com/user/helpstrings-of-sdk-command-line-utilities#build>`_
            be used instead for applet creation.
 
         Creates an applet with the given parameters. See the API
         documentation for the `/applet/new
-        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method:-/applet/new>`_
+        <https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-applet-new>`_
         method for more info. The applet is not run until :meth:`run()`
         is called.
 
@@ -358,7 +358,7 @@ class DXApplet(DXDataObject, DXExecutable):
         Returns the contents of the applet. The result includes the
         key-value pairs as specified in the API documentation for the
         `/applet-xxxx/get
-        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method:-/applet-xxxx/get>`_
+        <https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-applet-xxxx-get>`_
         method.
         """
         return dxpy.api.applet_get(self._dxid, **kwargs)

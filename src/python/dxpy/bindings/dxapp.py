@@ -156,13 +156,13 @@ class DXApp(DXObject, DXExecutable):
 
         .. note:: It is highly recommended that the higher-level module
            :mod:`dxpy.app_builder` or (preferably) its frontend `dx build --create-app
-           <https://wiki.dnanexus.com/Command-Line-Client/Index-of-dx-Commands#build>`_
+           <https://documentation.dnanexus.com/user/helpstrings-of-sdk-command-line-utilities#build>`_
            be used instead for app creation.
 
         Creates an app with the given parameters by using the specified
         applet or app as a base and overriding its attributes. See the
         API documentation for the `/app/new
-        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp%2Fnew>`_
+        <https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-new>`_
         method for more info.
 
         Exactly one of *initializeFrom* and *applet* must be provided.
@@ -205,7 +205,7 @@ class DXApp(DXObject, DXExecutable):
         Returns a dict with a description of the app. The result
         includes the key-value pairs as specified in the API
         documentation for the `/app-xxxx/describe
-        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%253A-%252Fapp-xxxx%255B%252Fyyyy%255D%252Fdescribe>`_
+        <https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-describe>`_
         method.
 
         '''
@@ -233,7 +233,7 @@ class DXApp(DXObject, DXExecutable):
 
         Updates the parameters of an existing app. See the API
         documentation for the `/app/update
-        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%253A-%252Fapp-xxxx%255B%252Fyyyy%255D%252Fupdate>`_
+        <https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-update>`_
         method for more info.
 
         The current user must be a developer of the app.
@@ -324,7 +324,7 @@ class DXApp(DXObject, DXExecutable):
         Returns the contents of the app. The result includes the
         key-value pairs as specified in the API documentation for the
         `/app-xxxx/get
-        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%253A-%252Fapp-xxxx%255B%252Fyyyy%255D%252Fget>`_
+        <https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-get>`_
         method.
         """
         if self._dxid is not None:

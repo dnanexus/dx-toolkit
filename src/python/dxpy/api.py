@@ -14,7 +14,7 @@ def analysis_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /analysis-xxxx/addTags API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FaddTags
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-analysis-xxxx-addtags
     """
     return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -22,7 +22,7 @@ def analysis_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /analysis-xxxx/describe API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2Fdescribe
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-analysis-xxxx-describe
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -30,7 +30,7 @@ def analysis_remove_tags(object_id, input_params={}, always_retry=True, **kwargs
     """
     Invokes the /analysis-xxxx/removeTags API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FremoveTags
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-analysis-xxxx-removetags
     """
     return DXHTTPRequest('/%s/removeTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -38,7 +38,7 @@ def analysis_set_properties(object_id, input_params={}, always_retry=True, **kwa
     """
     Invokes the /analysis-xxxx/setProperties API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FsetProperties
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-analysis-xxxx-setproperties
     """
     return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -46,7 +46,7 @@ def analysis_terminate(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /analysis-xxxx/terminate API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2Fterminate
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-analysis-xxxx-terminate
     """
     return DXHTTPRequest('/%s/terminate' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -54,7 +54,7 @@ def app_add_authorized_users(app_name_or_id, alias=None, input_params={}, always
     """
     Invokes the /app-xxxx/addAuthorizedUsers API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addAuthorizedUsers
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-addauthorizedusers
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/addAuthorizedUsers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -63,7 +63,7 @@ def app_add_categories(app_name_or_id, alias=None, input_params={}, always_retry
     """
     Invokes the /app-xxxx/addCategories API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addCategories
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-addcategories
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/addCategories' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -72,7 +72,7 @@ def app_add_developers(app_name_or_id, alias=None, input_params={}, always_retry
     """
     Invokes the /app-xxxx/addDevelopers API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addDevelopers
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-adddevelopers
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/addDevelopers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -81,7 +81,7 @@ def app_add_tags(app_name_or_id, alias=None, input_params={}, always_retry=True,
     """
     Invokes the /app-xxxx/addTags API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addTags
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-addtags
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/addTags' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -90,7 +90,7 @@ def app_delete(app_name_or_id, alias=None, input_params={}, always_retry=True, *
     """
     Invokes the /app-xxxx/delete API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/delete
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-delete
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/delete' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -99,7 +99,7 @@ def app_describe(app_name_or_id, alias=None, input_params={}, always_retry=True,
     """
     Invokes the /app-xxxx/describe API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/describe
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-describe
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/describe' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -108,7 +108,7 @@ def app_get(app_name_or_id, alias=None, input_params={}, always_retry=True, **kw
     """
     Invokes the /app-xxxx/get API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/get
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-get
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/get' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -117,7 +117,7 @@ def app_install(app_name_or_id, alias=None, input_params={}, always_retry=True, 
     """
     Invokes the /app-xxxx/install API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/install
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-install
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/install' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -126,7 +126,7 @@ def app_list_authorized_users(app_name_or_id, alias=None, input_params={}, alway
     """
     Invokes the /app-xxxx/listAuthorizedUsers API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listAuthorizedUsers
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-listauthorizedusers
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/listAuthorizedUsers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -135,7 +135,7 @@ def app_list_categories(app_name_or_id, alias=None, input_params={}, always_retr
     """
     Invokes the /app-xxxx/listCategories API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listCategories
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-listcategories
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/listCategories' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -144,7 +144,7 @@ def app_list_developers(app_name_or_id, alias=None, input_params={}, always_retr
     """
     Invokes the /app-xxxx/listDevelopers API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listDevelopers
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-listdevelopers
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/listDevelopers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -153,7 +153,7 @@ def app_publish(app_name_or_id, alias=None, input_params={}, always_retry=True, 
     """
     Invokes the /app-xxxx/publish API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/publish
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-publish
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/publish' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -162,7 +162,7 @@ def app_remove_authorized_users(app_name_or_id, alias=None, input_params={}, alw
     """
     Invokes the /app-xxxx/removeAuthorizedUsers API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeAuthorizedUsers
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-removeauthorizedusers
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/removeAuthorizedUsers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -171,7 +171,7 @@ def app_remove_categories(app_name_or_id, alias=None, input_params={}, always_re
     """
     Invokes the /app-xxxx/removeCategories API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeCategories
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-removecategories
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/removeCategories' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -180,7 +180,7 @@ def app_remove_developers(app_name_or_id, alias=None, input_params={}, always_re
     """
     Invokes the /app-xxxx/removeDevelopers API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeDevelopers
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-removedevelopers
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/removeDevelopers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -189,7 +189,7 @@ def app_remove_tags(app_name_or_id, alias=None, input_params={}, always_retry=Tr
     """
     Invokes the /app-xxxx/removeTags API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeTags
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-removetags
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/removeTags' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -198,7 +198,7 @@ def app_run(app_name_or_id, alias=None, input_params={}, always_retry=True, **kw
     """
     Invokes the /app-xxxx/run API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/run
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-run
     """
     input_params_cp = Nonce.update_nonce(input_params)
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
@@ -208,7 +208,7 @@ def app_validate_batch(app_name_or_id, alias=None, input_params={}, always_retry
     """
     Invokes the /app-xxxx/validateBatch API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/validateBatch
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-validatebatch
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/validateBatch' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -217,7 +217,7 @@ def app_uninstall(app_name_or_id, alias=None, input_params={}, always_retry=True
     """
     Invokes the /app-xxxx/uninstall API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/uninstall
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-uninstall
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/uninstall' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -226,7 +226,7 @@ def app_update(app_name_or_id, alias=None, input_params={}, always_retry=True, *
     """
     Invokes the /app-xxxx/update API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/update
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-update
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/update' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -235,7 +235,7 @@ def app_new(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /app/new API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app/new
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-new
     """
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/app/new', input_params_cp, always_retry=always_retry, **kwargs)
@@ -244,7 +244,7 @@ def applet_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /applet-xxxx/addTags API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-addtags
     """
     return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -252,7 +252,7 @@ def applet_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /applet-xxxx/describe API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fapplet-xxxx%2Fdescribe
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-applet-xxxx-describe
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -260,7 +260,7 @@ def applet_get(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /applet-xxxx/get API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fapplet-xxxx%2Fget
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-applet-xxxx-get
     """
     return DXHTTPRequest('/%s/get' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -268,7 +268,7 @@ def applet_get_details(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /applet-xxxx/getDetails API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-getdetails
     """
     return DXHTTPRequest('/%s/getDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -276,7 +276,7 @@ def applet_list_projects(object_id, input_params={}, always_retry=True, **kwargs
     """
     Invokes the /applet-xxxx/listProjects API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/cloning#api-method-class-xxxx-listprojects
     """
     return DXHTTPRequest('/%s/listProjects' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -284,7 +284,7 @@ def applet_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /applet-xxxx/removeTags API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-removetags
     """
     return DXHTTPRequest('/%s/removeTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -292,7 +292,7 @@ def applet_rename(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /applet-xxxx/rename API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/name#api-method-class-xxxx-rename
     """
     return DXHTTPRequest('/%s/rename' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -300,7 +300,7 @@ def applet_validate_batch(object_id, input_params={}, always_retry=True, **kwarg
     """
     Invokes the /applet-xxxx/validateBatch API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fapplet-xxxx%2FvalidateBatch
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-applet-xxxx-validatebatch
     """
     return DXHTTPRequest('/%s/validateBatch' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -308,7 +308,7 @@ def applet_run(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /applet-xxxx/run API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fapplet-xxxx%2Frun
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-applet-xxxx-run
     """
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/%s/run' % object_id, input_params_cp, always_retry=always_retry, **kwargs)
@@ -317,7 +317,7 @@ def applet_set_properties(object_id, input_params={}, always_retry=True, **kwarg
     """
     Invokes the /applet-xxxx/setProperties API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/properties#api-method-class-xxxx-setproperties
     """
     return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -325,7 +325,7 @@ def applet_new(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /applet/new API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fapplet%2Fnew
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-applet-new
     """
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/applet/new', input_params_cp, always_retry=always_retry, **kwargs)
@@ -334,7 +334,7 @@ def container_clone(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /container-xxxx/clone API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/cloning#api-method-class-xxxx-clone
     """
     return DXHTTPRequest('/%s/clone' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -342,7 +342,7 @@ def container_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /container-xxxx/describe API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Containers-for-Execution#API-method%3A-%2Fcontainer-xxxx%2Fdescribe
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/containers-for-execution#api-method-container-xxxx-describe
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -356,7 +356,7 @@ def container_list_folder(object_id, input_params={}, always_retry=True, **kwarg
     """
     Invokes the /container-xxxx/listFolder API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FlistFolder
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-listfolder
     """
     return DXHTTPRequest('/%s/listFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -364,7 +364,7 @@ def container_move(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /container-xxxx/move API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2Fmove
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-move
     """
     return DXHTTPRequest('/%s/move' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -372,7 +372,7 @@ def container_new_folder(object_id, input_params={}, always_retry=True, **kwargs
     """
     Invokes the /container-xxxx/newFolder API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FnewFolder
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-newfolder
     """
     return DXHTTPRequest('/%s/newFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -380,7 +380,7 @@ def container_remove_folder(object_id, input_params={}, always_retry=False, **kw
     """
     Invokes the /container-xxxx/removeFolder API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveFolder
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-removefolder
     """
     return DXHTTPRequest('/%s/removeFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -388,7 +388,7 @@ def container_remove_objects(object_id, input_params={}, always_retry=False, **k
     """
     Invokes the /container-xxxx/removeObjects API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveObjects
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-removeobjects
     """
     return DXHTTPRequest('/%s/removeObjects' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -396,7 +396,7 @@ def container_rename_folder(object_id, input_params={}, always_retry=False, **kw
     """
     Invokes the /container-xxxx/renameFolder API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FrenameFolder
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-renamefolder
     """
     return DXHTTPRequest('/%s/renameFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -404,7 +404,7 @@ def database_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /database-xxxx/addTags API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-addtags
     """
     return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -412,7 +412,7 @@ def database_add_types(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /database-xxxx/addTypes API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types#api-method-class-xxxx-addtypes
     """
     return DXHTTPRequest('/%s/addTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -420,7 +420,7 @@ def database_close(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /database-xxxx/close API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Data-Object-Lifecycle#API-method%3A-%2Fclass-xxxx%2Fclose
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle#api-method-class-xxxx-close
     """
     return DXHTTPRequest('/%s/close' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -428,7 +428,7 @@ def database_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /database-xxxx/describe API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Fdescribe
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/databases#api-method-database-xxxx-describe
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -436,7 +436,7 @@ def database_get_details(object_id, input_params={}, always_retry=True, **kwargs
     """
     Invokes the /database-xxxx/getDetails API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-getdetails
     """
     return DXHTTPRequest('/%s/getDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -444,7 +444,7 @@ def database_list_projects(object_id, input_params={}, always_retry=True, **kwar
     """
     Invokes the /database-xxxx/listProjects API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/cloning#api-method-class-xxxx-listprojects
     """
     return DXHTTPRequest('/%s/listProjects' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -452,7 +452,7 @@ def database_relocate(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /database-xxxx/relocate API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2Frelocate
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/databases#api-method-database-xxxx-relocate
     """
     return DXHTTPRequest('/%s/relocate' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -460,7 +460,7 @@ def database_remove_tags(object_id, input_params={}, always_retry=True, **kwargs
     """
     Invokes the /database-xxxx/removeTags API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-removetags
     """
     return DXHTTPRequest('/%s/removeTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -468,7 +468,7 @@ def database_remove_types(object_id, input_params={}, always_retry=True, **kwarg
     """
     Invokes the /database-xxxx/removeTypes API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types#api-method-class-xxxx-removetypes
     """
     return DXHTTPRequest('/%s/removeTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -476,7 +476,7 @@ def database_rename(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /database-xxxx/rename API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/name#api-method-class-xxxx-rename
     """
     return DXHTTPRequest('/%s/rename' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -484,7 +484,7 @@ def database_set_details(object_id, input_params={}, always_retry=True, **kwargs
     """
     Invokes the /database-xxxx/setDetails API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-setdetails
     """
     return DXHTTPRequest('/%s/setDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -492,7 +492,7 @@ def database_set_properties(object_id, input_params={}, always_retry=True, **kwa
     """
     Invokes the /database-xxxx/setProperties API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/properties#api-method-class-xxxx-setproperties
     """
     return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -500,7 +500,7 @@ def database_set_visibility(object_id, input_params={}, always_retry=True, **kwa
     """
     Invokes the /database-xxxx/setVisibility API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/visibility#api-method-class-xxxx-setvisibility
     """
     return DXHTTPRequest('/%s/setVisibility' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -508,7 +508,7 @@ def database_list_folder(object_id, input_params={}, always_retry=True, **kwargs
     """
     Invokes the /database-xxxx/listFolder API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Databases#API-method%3A-%2Fdatabase-xxxx%2FlistFolder
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-listfolder
     """
     return DXHTTPRequest('/%s/listFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -516,7 +516,7 @@ def file_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/addTags API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-addtags
     """
     return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -524,7 +524,7 @@ def file_add_types(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/addTypes API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types#api-method-class-xxxx-addtypes
     """
     return DXHTTPRequest('/%s/addTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -532,7 +532,7 @@ def file_close(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/close API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fclose
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/files#api-method-file-xxxx-close
     """
     return DXHTTPRequest('/%s/close' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -540,7 +540,7 @@ def file_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/describe API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fdescribe
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/files#api-method-file-xxxx-describe
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -548,7 +548,7 @@ def file_download(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/download API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fdownload
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/files#api-method-file-xxxx-download
     """
     return DXHTTPRequest('/%s/download' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -556,7 +556,7 @@ def file_get_details(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/getDetails API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-getdetails
     """
     return DXHTTPRequest('/%s/getDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -564,7 +564,7 @@ def file_list_projects(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/listProjects API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/cloning#api-method-class-xxxx-listprojects
     """
     return DXHTTPRequest('/%s/listProjects' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -572,7 +572,7 @@ def file_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/removeTags API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-removetags
     """
     return DXHTTPRequest('/%s/removeTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -580,7 +580,7 @@ def file_remove_types(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/removeTypes API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types#api-method-class-xxxx-removetypes
     """
     return DXHTTPRequest('/%s/removeTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -588,7 +588,7 @@ def file_rename(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/rename API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/name#api-method-class-xxxx-rename
     """
     return DXHTTPRequest('/%s/rename' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -596,7 +596,7 @@ def file_set_details(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/setDetails API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-setdetails
     """
     return DXHTTPRequest('/%s/setDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -604,7 +604,7 @@ def file_set_properties(object_id, input_params={}, always_retry=True, **kwargs)
     """
     Invokes the /file-xxxx/setProperties API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/properties#api-method-class-xxxx-setproperties
     """
     return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -612,7 +612,7 @@ def file_set_visibility(object_id, input_params={}, always_retry=True, **kwargs)
     """
     Invokes the /file-xxxx/setVisibility API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/visibility#api-method-class-xxxx-setvisibility
     """
     return DXHTTPRequest('/%s/setVisibility' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -620,7 +620,7 @@ def file_upload(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/upload API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fupload
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/files#api-method-file-xxxx-upload
     """
     return DXHTTPRequest('/%s/upload' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -628,7 +628,7 @@ def file_new(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file/new API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/files#api-method-file-new
     """
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/file/new', input_params_cp, always_retry=always_retry, **kwargs)
@@ -637,7 +637,7 @@ def global_workflow_add_authorized_users(name_or_id, alias=None, input_params={}
     """
     Invokes the /globalworkflow-xxxx/addAuthorizedUsers API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addAuthorizedUsers
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-addauthorizedusers
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/addAuthorizedUsers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -646,7 +646,7 @@ def global_workflow_add_categories(name_or_id, alias=None, input_params={}, alwa
     """
     Invokes the /globalworkflow-xxxx/addCategories API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addCategories
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-addcategories
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/addCategories' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -655,7 +655,7 @@ def global_workflow_add_developers(name_or_id, alias=None, input_params={}, alwa
     """
     Invokes the /globalworkflow-xxxx/addDevelopers API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addDevelopers
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-adddevelopers
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/addDevelopers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -664,7 +664,7 @@ def global_workflow_add_tags(name_or_id, alias=None, input_params={}, always_ret
     """
     Invokes the /globalworkflow-xxxx/addTags API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/addTags
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-addtags
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/addTags' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -673,7 +673,7 @@ def global_workflow_delete(name_or_id, alias=None, input_params={}, always_retry
     """
     Invokes the /globalworkflow-xxxx/delete API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/delete
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-delete
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/delete' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -682,7 +682,7 @@ def global_workflow_describe(name_or_id, alias=None, input_params={}, always_ret
     """
     Invokes the /globalworkflow-xxxx/describe API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/describe
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-describe
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/describe' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -691,7 +691,7 @@ def global_workflow_list_authorized_users(name_or_id, alias=None, input_params={
     """
     Invokes the /globalworkflow-xxxx/listAuthorizedUsers API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listAuthorizedUsers
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-listauthorizedusers
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/listAuthorizedUsers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -700,7 +700,7 @@ def global_workflow_list_categories(name_or_id, alias=None, input_params={}, alw
     """
     Invokes the /globalworkflow-xxxx/listCategories API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listCategories
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-listcategories
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/listCategories' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -709,7 +709,7 @@ def global_workflow_list_developers(name_or_id, alias=None, input_params={}, alw
     """
     Invokes the /globalworkflow-xxxx/listDevelopers API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/listDevelopers
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-listdevelopers
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/listDevelopers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -718,7 +718,7 @@ def global_workflow_publish(name_or_id, alias=None, input_params={}, always_retr
     """
     Invokes the /globalworkflow-xxxx/publish API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/publish
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-publish
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/publish' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -727,7 +727,7 @@ def global_workflow_remove_authorized_users(name_or_id, alias=None, input_params
     """
     Invokes the /globalworkflow-xxxx/removeAuthorizedUsers API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeAuthorizedUsers
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-removeauthorizedusers
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/removeAuthorizedUsers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -736,7 +736,7 @@ def global_workflow_remove_categories(name_or_id, alias=None, input_params={}, a
     """
     Invokes the /globalworkflow-xxxx/removeCategories API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeCategories
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-removecategories
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/removeCategories' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -745,7 +745,7 @@ def global_workflow_remove_developers(name_or_id, alias=None, input_params={}, a
     """
     Invokes the /globalworkflow-xxxx/removeDevelopers API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeDevelopers
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-removedevelopers
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/removeDevelopers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -754,7 +754,7 @@ def global_workflow_remove_tags(name_or_id, alias=None, input_params={}, always_
     """
     Invokes the /globalworkflow-xxxx/removeTags API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/removeTags
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-removetags
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/removeTags' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -763,7 +763,7 @@ def global_workflow_run(name_or_id, alias=None, input_params={}, always_retry=Tr
     """
     Invokes the /globalworkflow-xxxx/run API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/run
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-run
     """
     input_params_cp = Nonce.update_nonce(input_params)
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
@@ -773,7 +773,7 @@ def global_workflow_update(name_or_id, alias=None, input_params={}, always_retry
     """
     Invokes the /globalworkflow-xxxx/update API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow-xxxx%5B/yyyy%5D/update
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-update
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/update' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
@@ -782,7 +782,7 @@ def global_workflow_new(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /globalworkflow/new API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Global-Workflows#API-method:-/globalworkflow/new
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-new
     """
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/globalworkflow/new', input_params_cp, always_retry=always_retry, **kwargs)
@@ -791,7 +791,7 @@ def job_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /job-xxxx/addTags API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fjob-xxxx%2FaddTags
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-addtags
     """
     return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -799,7 +799,7 @@ def job_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /job-xxxx/describe API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fjob-xxxx%2Fdescribe
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-describe
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -807,7 +807,7 @@ def job_get_log(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /job-xxxx/getLog API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fjob-xxxx%2FgetLog
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-getlog
     """
     return DXHTTPRequest('/%s/getLog' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -815,7 +815,7 @@ def job_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /job-xxxx/removeTags API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fjob-xxxx%2FremoveTags
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-removetags
     """
     return DXHTTPRequest('/%s/removeTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -823,7 +823,7 @@ def job_set_properties(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /job-xxxx/setProperties API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fjob-xxxx%2FsetProperties
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-setproperties
     """
     return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -831,7 +831,7 @@ def job_terminate(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /job-xxxx/terminate API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fjob-xxxx%2Fterminate
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-terminate
     """
     return DXHTTPRequest('/%s/terminate' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -839,7 +839,7 @@ def job_new(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /job/new API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method%3A-%2Fjob%2Fnew
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-new
     """
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/job/new', input_params_cp, always_retry=always_retry, **kwargs)
@@ -860,7 +860,7 @@ def org_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /org-xxxx/describe API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2Fdescribe
+    For more info, see: https://documentation.dnanexus.com/developer/api/organizations#api-method-org-xxxx-describe
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -868,7 +868,7 @@ def org_find_members(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /org-xxxx/findMembers API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FfindMembers
+    For more info, see: https://documentation.dnanexus.com/developer/api/organizations#api-method-org-xxxx-findmembers
     """
     return DXHTTPRequest('/%s/findMembers' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -876,7 +876,7 @@ def org_find_projects(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /org-xxxx/findProjects API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FfindProjects
+    For more info, see: https://documentation.dnanexus.com/developer/api/organizations#api-method-org-xxxx-findprojects
     """
     return DXHTTPRequest('/%s/findProjects' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -884,7 +884,7 @@ def org_find_apps(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /org-xxxx/findApps API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FfindApps
+    For more info, see: https://documentation.dnanexus.com/developer/api/organizations#api-method-org-xxxx-findapps
     """
     return DXHTTPRequest('/%s/findApps' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -892,7 +892,7 @@ def org_invite(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /org-xxxx/invite API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2Finvite
+    For more info, see: https://documentation.dnanexus.com/developer/api/organizations#api-method-org-xxxx-invite
     """
     return DXHTTPRequest('/%s/invite' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -900,7 +900,7 @@ def org_remove_member(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /org-xxxx/removeMember API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FremoveMember
+    For more info, see: https://documentation.dnanexus.com/developer/api/organizations#api-method-org-xxxx-removemember
     """
     return DXHTTPRequest('/%s/removeMember' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -908,7 +908,7 @@ def org_set_member_access(object_id, input_params={}, always_retry=True, **kwarg
     """
     Invokes the /org-xxxx/setMemberAccess API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2FsetMemberAccess
+    For more info, see: https://documentation.dnanexus.com/developer/api/organizations#api-method-org-xxxx-setmemberaccess
     """
     return DXHTTPRequest('/%s/setMemberAccess' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -916,7 +916,7 @@ def org_update(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /org-xxxx/update API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg-xxxx%2Fupdate
+    For more info, see: https://documentation.dnanexus.com/developer/api/organizations#api-method-org-xxxx-update
     """
     return DXHTTPRequest('/%s/update' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -924,7 +924,7 @@ def org_new(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /org/new API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Organizations#API-method%3A-%2Forg%2Fnew
+    For more info, see: https://documentation.dnanexus.com/developer/api/organizations#api-method-org-new
     """
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/org/new', input_params_cp, always_retry=always_retry, **kwargs)
@@ -933,7 +933,7 @@ def project_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /project-xxxx/addTags API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FaddTags
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-addtags
     """
     return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -941,7 +941,7 @@ def project_clone(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /project-xxxx/clone API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/cloning#api-method-class-xxxx-clone
     """
     return DXHTTPRequest('/%s/clone' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -949,7 +949,7 @@ def project_decrease_permissions(object_id, input_params={}, always_retry=True, 
     """
     Invokes the /project-xxxx/decreasePermissions API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method%3A-%2Fproject-xxxx%2FdecreasePermissions
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/project-permissions-and-sharing#api-method-project-xxxx-decreasepermissions
     """
     return DXHTTPRequest('/%s/decreasePermissions' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -957,7 +957,7 @@ def project_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /project-xxxx/describe API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fdescribe
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-describe
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -965,7 +965,7 @@ def project_destroy(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /project-xxxx/destroy API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fdestroy
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-destroy
     """
     return DXHTTPRequest('/%s/destroy' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -973,7 +973,7 @@ def project_invite(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /project-xxxx/invite API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method%3A-%2Fproject-xxxx%2Finvite
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/project-permissions-and-sharing#api-method-project-xxxx-invite
     """
     return DXHTTPRequest('/%s/invite' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -981,7 +981,7 @@ def project_leave(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /project-xxxx/leave API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method%3A-%2Fproject-xxxx%2Fleave
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/project-permissions-and-sharing#api-method-project-xxxx-leave
     """
     return DXHTTPRequest('/%s/leave' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -989,7 +989,7 @@ def project_list_folder(object_id, input_params={}, always_retry=True, **kwargs)
     """
     Invokes the /project-xxxx/listFolder API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FlistFolder
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-listfolder
     """
     return DXHTTPRequest('/%s/listFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -997,7 +997,7 @@ def project_move(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /project-xxxx/move API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2Fmove
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-move
     """
     return DXHTTPRequest('/%s/move' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1005,7 +1005,7 @@ def project_new_folder(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /project-xxxx/newFolder API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FnewFolder
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-newfolder
     """
     return DXHTTPRequest('/%s/newFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1013,7 +1013,7 @@ def project_remove_folder(object_id, input_params={}, always_retry=False, **kwar
     """
     Invokes the /project-xxxx/removeFolder API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveFolder
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-removefolder
     """
     return DXHTTPRequest('/%s/removeFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1021,7 +1021,7 @@ def project_remove_objects(object_id, input_params={}, always_retry=False, **kwa
     """
     Invokes the /project-xxxx/removeObjects API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveObjects
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-removeobjects
     """
     return DXHTTPRequest('/%s/removeObjects' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1029,7 +1029,7 @@ def project_remove_tags(object_id, input_params={}, always_retry=True, **kwargs)
     """
     Invokes the /project-xxxx/removeTags API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FremoveTags
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-removetags
     """
     return DXHTTPRequest('/%s/removeTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1037,7 +1037,7 @@ def project_rename_folder(object_id, input_params={}, always_retry=False, **kwar
     """
     Invokes the /project-xxxx/renameFolder API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FrenameFolder
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-renamefolder
     """
     return DXHTTPRequest('/%s/renameFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1045,7 +1045,7 @@ def project_set_properties(object_id, input_params={}, always_retry=True, **kwar
     """
     Invokes the /project-xxxx/setProperties API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FsetProperties
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-setproperties
     """
     return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1053,7 +1053,7 @@ def project_transfer(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /project-xxxx/transfer API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Project-Permissions-and-Sharing#API-method%3A-%2Fproject-xxxx%2Ftransfer
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/project-permissions-and-sharing#api-method-project-xxxx-transfer
     """
     return DXHTTPRequest('/%s/transfer' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1061,7 +1061,7 @@ def project_update(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /project-xxxx/update API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fupdate
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-update
     """
     return DXHTTPRequest('/%s/update' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1069,7 +1069,7 @@ def project_update_sponsorship(object_id, input_params={}, always_retry=True, **
     """
     Invokes the /project-xxxx/updateSponsorship API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FupdateSponsorship
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-updatesponsorship
     """
     return DXHTTPRequest('/%s/updateSponsorship' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1077,7 +1077,7 @@ def project_new(input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /project/new API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject%2Fnew
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-new
     """
     return DXHTTPRequest('/project/new', input_params, always_retry=always_retry, **kwargs)
 
@@ -1085,7 +1085,7 @@ def record_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /record-xxxx/addTags API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-addtags
     """
     return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1093,7 +1093,7 @@ def record_add_types(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /record-xxxx/addTypes API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types#api-method-class-xxxx-addtypes
     """
     return DXHTTPRequest('/%s/addTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1101,7 +1101,7 @@ def record_close(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /record-xxxx/close API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Data-Object-Lifecycle#API-method%3A-%2Fclass-xxxx%2Fclose
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle#api-method-class-xxxx-close
     """
     return DXHTTPRequest('/%s/close' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1109,7 +1109,7 @@ def record_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /record-xxxx/describe API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord-xxxx%2Fdescribe
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/records#api-method-record-xxxx-describe
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1117,7 +1117,7 @@ def record_get_details(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /record-xxxx/getDetails API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-getdetails
     """
     return DXHTTPRequest('/%s/getDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1125,7 +1125,7 @@ def record_list_projects(object_id, input_params={}, always_retry=True, **kwargs
     """
     Invokes the /record-xxxx/listProjects API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/cloning#api-method-class-xxxx-listprojects
     """
     return DXHTTPRequest('/%s/listProjects' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1133,7 +1133,7 @@ def record_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /record-xxxx/removeTags API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-removetags
     """
     return DXHTTPRequest('/%s/removeTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1141,7 +1141,7 @@ def record_remove_types(object_id, input_params={}, always_retry=True, **kwargs)
     """
     Invokes the /record-xxxx/removeTypes API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types#api-method-class-xxxx-removetypes
     """
     return DXHTTPRequest('/%s/removeTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1149,7 +1149,7 @@ def record_rename(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /record-xxxx/rename API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/name#api-method-class-xxxx-rename
     """
     return DXHTTPRequest('/%s/rename' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1157,7 +1157,7 @@ def record_set_details(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /record-xxxx/setDetails API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-setdetails
     """
     return DXHTTPRequest('/%s/setDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1165,7 +1165,7 @@ def record_set_properties(object_id, input_params={}, always_retry=True, **kwarg
     """
     Invokes the /record-xxxx/setProperties API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/properties#api-method-class-xxxx-setproperties
     """
     return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1173,7 +1173,7 @@ def record_set_visibility(object_id, input_params={}, always_retry=True, **kwarg
     """
     Invokes the /record-xxxx/setVisibility API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/visibility#api-method-class-xxxx-setvisibility
     """
     return DXHTTPRequest('/%s/setVisibility' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1181,7 +1181,7 @@ def record_new(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /record/new API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord%2Fnew
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/records#api-method-record-new
     """
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/record/new', input_params_cp, always_retry=always_retry, **kwargs)
@@ -1190,7 +1190,7 @@ def system_describe_data_objects(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/describeDataObjects API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/describeDataObjects
+    For more info, see: https://documentation.dnanexus.com/developer/api/system-methods#api-method-system-describedataobjects
     """
     return DXHTTPRequest('/system/describeDataObjects', input_params, always_retry=always_retry, **kwargs)
 
@@ -1198,7 +1198,7 @@ def system_describe_executions(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/describeExecutions API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/describeExecutions
+    For more info, see: https://documentation.dnanexus.com/developer/api/system-methods#api-method-system-describeexecutions
     """
     return DXHTTPRequest('/system/describeExecutions', input_params, always_retry=always_retry, **kwargs)
 
@@ -1206,7 +1206,7 @@ def system_describe_projects(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/describeProjects API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/describeProjects
+    For more info, see: https://documentation.dnanexus.com/developer/api/system-methods#api-method-system-describeprojects
     """
     return DXHTTPRequest('/system/describeProjects', input_params, always_retry=always_retry, **kwargs)
 
@@ -1220,7 +1220,7 @@ def system_find_apps(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/findApps API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindApps
+    For more info, see: https://documentation.dnanexus.com/developer/api/search#api-method-system-findapps
     """
     return DXHTTPRequest('/system/findApps', input_params, always_retry=always_retry, **kwargs)
 
@@ -1228,7 +1228,7 @@ def system_find_data_objects(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/findDataObjects API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindDataObjects
+    For more info, see: https://documentation.dnanexus.com/developer/api/search#api-method-system-finddataobjects
     """
     return DXHTTPRequest('/system/findDataObjects', input_params, always_retry=always_retry, **kwargs)
 
@@ -1242,7 +1242,7 @@ def system_resolve_data_objects(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/resolveDataObjects API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/System-Methods#API-method:-/system/resolveDataObjects
+    For more info, see: https://documentation.dnanexus.com/developer/api/system-methods#api-method-system-resolvedataobjects
     """
     return DXHTTPRequest('/system/resolveDataObjects', input_params, always_retry=always_retry, **kwargs)
 
@@ -1250,7 +1250,7 @@ def system_find_executions(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/findExecutions API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindExecutions
+    For more info, see: https://documentation.dnanexus.com/developer/api/search#api-method-system-findexecutions
     """
     return DXHTTPRequest('/system/findExecutions', input_params, always_retry=always_retry, **kwargs)
 
@@ -1258,7 +1258,7 @@ def system_find_analyses(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/findAnalyses API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindAnalyses
+    For more info, see: https://documentation.dnanexus.com/developer/api/search#api-method-system-findanalyses
     """
     return DXHTTPRequest('/system/findAnalyses', input_params, always_retry=always_retry, **kwargs)
 
@@ -1266,7 +1266,7 @@ def system_find_databases(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/findDatabases API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindDatabases
+    For more info, see: https://documentation.dnanexus.com/developer/api/search#api-method-system-finddatabases
     """
     return DXHTTPRequest('/system/findDatabases', input_params, always_retry=always_retry, **kwargs)
 
@@ -1274,7 +1274,7 @@ def system_find_jobs(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/findJobs API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindJobs
+    For more info, see: https://documentation.dnanexus.com/developer/api/search#api-method-system-findjobs
     """
     return DXHTTPRequest('/system/findJobs', input_params, always_retry=always_retry, **kwargs)
 
@@ -1282,15 +1282,13 @@ def system_find_projects(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/findProjects API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindProjects
+    For more info, see: https://documentation.dnanexus.com/developer/api/search#api-method-system-findprojects
     """
     return DXHTTPRequest('/system/findProjects', input_params, always_retry=always_retry, **kwargs)
 
 def system_find_users(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/findUsers API method.
-
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindUsers
     """
     return DXHTTPRequest('/system/findUsers', input_params, always_retry=always_retry, **kwargs)
 
@@ -1298,7 +1296,7 @@ def system_find_project_members(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/findProjectMembers API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/findProjectMembers
+    For more info, see: https://documentation.dnanexus.com/developer/api/search#api-method-system-findprojectmembers
     """
     return DXHTTPRequest('/system/findProjectMembers', input_params, always_retry=always_retry, **kwargs)
 
@@ -1306,7 +1304,7 @@ def system_find_orgs(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/findOrgs API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/findOrgs
+    For more info, see: https://documentation.dnanexus.com/developer/api/search#api-method-system-findorgs
     """
     return DXHTTPRequest('/system/findOrgs', input_params, always_retry=always_retry, **kwargs)
 
@@ -1314,15 +1312,13 @@ def system_generate_batch_inputs(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/generateBatchInputs API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/generateBatchInputs
+    For more info, see: https://documentation.dnanexus.com/developer/api/system-methods#api-method-system-generatebatchinputs
     """
     return DXHTTPRequest('/system/generateBatchInputs', input_params, always_retry=always_retry, **kwargs)
 
 def system_global_search(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/globalSearch API method.
-
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/globalSearch
     """
     return DXHTTPRequest('/system/globalSearch', input_params, always_retry=always_retry, **kwargs)
 
@@ -1347,6 +1343,8 @@ def system_shorten_url(input_params={}, always_retry=True, **kwargs):
 def system_whoami(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/whoami API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/system-methods#api-method-system-whoamiwiki.
     """
     return DXHTTPRequest('/system/whoami', input_params, always_retry=always_retry, **kwargs)
 
@@ -1354,7 +1352,7 @@ def user_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /user-xxxx/describe API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Users#API-method%3A-%2Fuser-xxxx%2Fdescribe
+    For more info, see: https://documentation.dnanexus.com/developer/api/users#api-method-user-xxxx-describe
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1362,7 +1360,7 @@ def user_update(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /user-xxxx/update API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Users#API-method%3A-%2Fuser-xxxx%2Fupdate
+    For more info, see: https://documentation.dnanexus.com/developer/api/users#api-method-user-xxxx-update
     """
     return DXHTTPRequest('/%s/update' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1370,7 +1368,7 @@ def workflow_add_stage(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/addStage API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FaddStage
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-xxxx-addstage
     """
     return DXHTTPRequest('/%s/addStage' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1378,7 +1376,7 @@ def workflow_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/addTags API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-addtags
     """
     return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1386,7 +1384,7 @@ def workflow_add_types(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/addTypes API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types#api-method-class-xxxx-addtypes
     """
     return DXHTTPRequest('/%s/addTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1394,7 +1392,7 @@ def workflow_close(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/close API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Data-Object-Lifecycle#API-method%3A-%2Fclass-xxxx%2Fclose
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle#api-method-class-xxxx-close
     """
     return DXHTTPRequest('/%s/close' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1402,7 +1400,7 @@ def workflow_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/describe API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Fdescribe
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-xxxx-describe
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1410,7 +1408,7 @@ def workflow_dry_run(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/dryRun API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FdryRun
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-xxxx-dryrun
     """
     return DXHTTPRequest('/%s/dryRun' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1418,7 +1416,7 @@ def workflow_get_details(object_id, input_params={}, always_retry=True, **kwargs
     """
     Invokes the /workflow-xxxx/getDetails API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-getdetails
     """
     return DXHTTPRequest('/%s/getDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1426,7 +1424,7 @@ def workflow_is_stage_compatible(object_id, input_params={}, always_retry=True, 
     """
     Invokes the /workflow-xxxx/isStageCompatible API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FisStageCompatible
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-xxxx-isstagecompatible
     """
     return DXHTTPRequest('/%s/isStageCompatible' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1434,7 +1432,7 @@ def workflow_list_projects(object_id, input_params={}, always_retry=True, **kwar
     """
     Invokes the /workflow-xxxx/listProjects API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/cloning#api-method-class-xxxx-listprojects
     """
     return DXHTTPRequest('/%s/listProjects' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1442,7 +1440,7 @@ def workflow_move_stage(object_id, input_params={}, always_retry=True, **kwargs)
     """
     Invokes the /workflow-xxxx/moveStage API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FmoveStage
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-xxxx-movestage
     """
     return DXHTTPRequest('/%s/moveStage' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1450,7 +1448,7 @@ def workflow_overwrite(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/overwrite API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Foverwrite
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-xxxx-overwrite
     """
     return DXHTTPRequest('/%s/overwrite' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1458,7 +1456,7 @@ def workflow_remove_stage(object_id, input_params={}, always_retry=True, **kwarg
     """
     Invokes the /workflow-xxxx/removeStage API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FremoveStage
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-xxxx-removestage
     """
     return DXHTTPRequest('/%s/removeStage' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1466,7 +1464,7 @@ def workflow_remove_tags(object_id, input_params={}, always_retry=True, **kwargs
     """
     Invokes the /workflow-xxxx/removeTags API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-removetags
     """
     return DXHTTPRequest('/%s/removeTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1474,7 +1472,7 @@ def workflow_remove_types(object_id, input_params={}, always_retry=True, **kwarg
     """
     Invokes the /workflow-xxxx/removeTypes API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types#api-method-class-xxxx-removetypes
     """
     return DXHTTPRequest('/%s/removeTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1482,7 +1480,7 @@ def workflow_rename(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/rename API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/name#api-method-class-xxxx-rename
     """
     return DXHTTPRequest('/%s/rename' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1490,7 +1488,7 @@ def workflow_run(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/run API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Frun
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-xxxx-run
     """
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/%s/run' % object_id, input_params_cp, always_retry=always_retry, **kwargs)
@@ -1499,7 +1497,7 @@ def workflow_validate_batch(object_id, input_params={}, always_retry=True, **kwa
     """
     Invokes the /workflow-xxxx/validateBatch API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FvalidateBatch
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-xxxx-validatebatch
     """
     return DXHTTPRequest('/%s/validateBatch' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1507,7 +1505,7 @@ def workflow_set_details(object_id, input_params={}, always_retry=True, **kwargs
     """
     Invokes the /workflow-xxxx/setDetails API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-setdetails
     """
     return DXHTTPRequest('/%s/setDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1515,23 +1513,15 @@ def workflow_set_properties(object_id, input_params={}, always_retry=True, **kwa
     """
     Invokes the /workflow-xxxx/setProperties API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/properties#api-method-class-xxxx-setproperties
     """
     return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-def workflow_set_stage_inputs(object_id, input_params={}, always_retry=True, **kwargs):
-    """
-    Invokes the /workflow-xxxx/setStageInputs API method.
-
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FsetStageInputs
-    """
-    return DXHTTPRequest('/%s/setStageInputs' % object_id, input_params, always_retry=always_retry, **kwargs)
 
 def workflow_set_visibility(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/setVisibility API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/visibility#api-method-class-xxxx-setvisibility
     """
     return DXHTTPRequest('/%s/setVisibility' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1539,7 +1529,7 @@ def workflow_update(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/update API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Fupdate
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-xxxx-update
     """
     return DXHTTPRequest('/%s/update' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1547,7 +1537,7 @@ def workflow_update_stage_executable(object_id, input_params={}, always_retry=Tr
     """
     Invokes the /workflow-xxxx/updateStageExecutable API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FupdateStageExecutable
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-xxxx-updatestageexecutable
     """
     return DXHTTPRequest('/%s/updateStageExecutable' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -1555,7 +1545,7 @@ def workflow_new(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow/new API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow%2Fnew
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-new
     """
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/workflow/new', input_params_cp, always_retry=always_retry, **kwargs)

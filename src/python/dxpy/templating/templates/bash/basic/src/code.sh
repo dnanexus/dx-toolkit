@@ -12,7 +12,7 @@
 # Any code outside of main() (or any entry point you may add) is
 # ALWAYS executed, followed by running the entry point itself.
 #
-# See https://wiki.dnanexus.com/Developer-Portal for tutorials on how
+# See https://documentation.dnanexus.com/developer for tutorials on how
 # to modify this file.
 
 main() {

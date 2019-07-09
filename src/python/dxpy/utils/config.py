@@ -17,7 +17,7 @@
 """
 Logic for managing environment variable values and corresponding dxpy
 configuration values.  See external documentation
-https://wiki.dnanexus.com/Command-Line-Client/Environment%20Variables
+https://documentation.dnanexus.com/user/helpstrings-of-sdk-command-line-utilities#overriding-environment-variables
 for more details.
 """
 

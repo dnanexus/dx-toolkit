@@ -339,7 +339,7 @@ array:boolean  array:int      boolean        hash           string''')
     print('')
     print(BOLD('Access Permissions'))
     print(fill('''If you request these extra permissions for your app, users will see this fact when launching your app, and certain other restrictions will apply. For more information, see ''' +
-    BOLD('https://wiki.dnanexus.com/App-Permissions') + '.'))
+    BOLD('https://documentation.dnanexus.com/developer/apps/app-permissions') + '.'))
 
     print('')
     print(fill(UNDERLINE('Access to the Internet') + ' (other than accessing the DNAnexus API).'))
@@ -374,7 +374,7 @@ array:boolean  array:int      boolean        hash           string''')
                        column_names=list(InstanceTypesCompleter.instance_types.values())[0]._fields))
     print(fill(BOLD('Default instance type:') + ' The instance type you select here will apply to all entry points in ' +
                'your app unless you override it. See ' +
-               BOLD('https://wiki.dnanexus.com/API-Specification-v1.0.0/Instance-Types') + ' for more information.'))
+               BOLD('https://documentation.dnanexus.com/developer/api/running-analyses/instance-types') + ' for more information.'))
     use_completer(InstanceTypesCompleter())
     instance_type = prompt_for_var('Choose an instance type for your app',
                                    default=InstanceTypesCompleter.default_instance_type.Name,
@@ -411,7 +411,7 @@ array:boolean  array:int      boolean        hash           string''')
     print('')
     print(fill('''Your app specification has been written to the
 dxapp.json file. You can specify more app options by editing this file
-directly (see https://wiki.dnanexus.com/Developer-Portal for complete
+directly (see https://documentation.dnanexus.com/developer for complete
 documentation).''' + ('''  Note that without an input and output specification,
 your app can only be built as an APPLET on the system.  To publish it to
 the DNAnexus community, you must first specify your inputs and outputs.
@@ -444,7 +444,7 @@ the DNAnexus community, you must first specify your inputs and outputs.
     for filename in sorted(manifest):
         print("\t", filename)
     print("\n" + fill('''App directory created!  See
-https://wiki.dnanexus.com/Developer-Portal for tutorials on how to modify these files,
+https://documentation.dnanexus.com/developer for tutorials on how to modify these files,
 or run "dx build {n}" or "dx build --create-app {n}" while logged in with dx.'''.format(n=name)) + "\n")
     print(fill('''Running the DNAnexus build utility will create an executable on the DNAnexus platform.  Any files found in the ''' +
             BOLD() + 'resources' + ENDC() +

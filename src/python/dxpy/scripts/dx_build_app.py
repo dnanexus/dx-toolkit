@@ -364,7 +364,7 @@ def _verify_app_source_dir_impl(src_dir, temp_dir, mode, enforce=True):
                 if not isinstance(manifest.get('access'), dict) or 'network' not in manifest['access']:
                     msg = '\n'.join(['runSpec.execDepends specifies non-APT dependencies, but no network access spec is given.',
                     'Add {"access": {"network": ["*"]}} to allow dependencies to install.',
-                    'See https://wiki.dnanexus.com/Developer-Tutorials/Request-Additional-App-Resources#Network-Access.',
+                    'See https://documentation.dnanexus.com/developer/apps/execution-environment#network-access.',
                     'Rerun with --no-check-syntax to proceed anyway.'])
                     raise dxpy.app_builder.AppBuilderException(msg)
 
