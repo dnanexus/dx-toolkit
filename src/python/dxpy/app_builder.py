@@ -712,7 +712,7 @@ def create_app_multi_region(regional_options, app_name, src_dir, publish=False, 
     Creates a new app object from the specified applet(s).
 
     :param regional_options: Region-specific options for the app. See
-        https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app/new
+        https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-new
         for details; this should contain keys for each region the app is
         to be enabled in, and for the values, a dict containing (at
         minimum) a key "applet" whose value is an applet ID for that

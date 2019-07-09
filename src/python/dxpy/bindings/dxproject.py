@@ -62,7 +62,7 @@ class DXContainer(DXObject):
 
         Returns a hash with key-value pairs as specified by the API
         specification for the `/project-xxxx/describe
-        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fdescribe>`_
+        <https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-describe>`_
         method. This will usually include keys such as "id", "name",
         "class", "billTo", "created", "modified", and "dataUsage".
 
@@ -309,7 +309,7 @@ class DXProject(DXContainer):
         Creates a new project. Initially only the user performing this action
         will be in the permissions/member list, with ADMINISTER access.
         See the API documentation for the `/project/new
-        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject%2Fnew>`_
+        <https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-new>`_
         method for more info.
 
         """
@@ -362,7 +362,7 @@ class DXProject(DXContainer):
         Updates the project with the new fields. All fields are
         optional. Fields that are not provided are not changed.
         See the API documentation for the `/project-xxxx/update
-        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fupdate>`_
+        <https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-update>`_
         method for more info.
 
         """

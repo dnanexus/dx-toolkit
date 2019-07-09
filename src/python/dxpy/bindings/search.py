@@ -445,6 +445,7 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
     :param tags: Tags that each result must have
     :type tags: list of strings
     :param level: One of "VIEW", "UPLOAD", "CONTRIBUTE", or "ADMINSTER". If specified, only returns projects where the current user has at least the specified permission level.
+        If not specified the default value is "CONTRIBUTE" for the API method /system/findProjects
     :type level: string
     :param describe: Controls whether to also return the output of
         calling describe() on each project. Supply False to omit

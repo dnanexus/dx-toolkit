@@ -104,7 +104,7 @@ namespace dx {
      * Clones the specified objects and/or folders from the associated data container to another data
      * container.
      *
-     * See the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">/class-xxx/clone</a> API method for more info.
+     * See the <a href="https://documentation.dnanexus.com/developer/api/data-containers/cloning#api-method-class-xxxx-clone">/class-xxx/clone</a> API method for more info.
      *
      * @param objects A JSON array of strings containing the object ID(s) to be cloned.
      * @param folders A JSON array of strings containing the folder route(s) to be cloned.
@@ -186,7 +186,7 @@ namespace dx {
      * Any hidden objects contained in a folder to be cloned are only cloned if a visible ancestor is
      * also cloned.
      *
-     * See the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">/class-xxx/clone</a> API method for more info.
+     * See the <a href="https://documentation.dnanexus.com/developer/api/data-containers/cloning#api-method-class-xxxx-clone">/class-xxx/clone</a> API method for more info.
      *
      * @param folder The full path of the folder to be cloned.
      * @param dest_container ID of the container into which the folder should be cloned.
@@ -201,7 +201,7 @@ namespace dx {
     /**
      * Clones the specified object(s) from the associated data container to another data container.
      *
-     * See the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">/class-xxx/clone</a> API method for more info.
+     * See the <a href="https://documentation.dnanexus.com/developer/api/data-containers/cloning#api-method-class-xxxx-clone">/class-xxx/clone</a> API method for more info.
      *
      * @param objects A JSON array of strings containing the object ID(s) to be cloned.
      * @param dest_container ID of the container into which the selected objects should be cloned.

@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [285.0] - 2019.06.19 beta
+
 ### Added
 
 * '--xattr-properties' argument for dx-upload-all-outputs to include fs metadata as k,v properties
@@ -16,7 +18,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Only require futures package for python 2.7
 * Upgrade build dependencies for pip, setuptools, and wheel
 
-## [284.0] - 2019.06.13 beta
+## [284.0] - 2019.06.13 stable
 
 ### Added
 
@@ -32,7 +34,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Enabling argcomplete for `dx` installed with debian package in worker environment
 
-## [283.0] - 2019.05.13 stable
+## [283.0] - 2019.05.13 
 
 ### Changed
 

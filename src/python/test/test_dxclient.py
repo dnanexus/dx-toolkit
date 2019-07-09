@@ -1542,7 +1542,7 @@ class TestDXClientUploadDownload(DXTestCase):
                 fh = dxpy.upload_string("foo", project=temp_project_1.get_id(), wait_on_close=True)
                 # file now appears in both projects
                 temp_project_1.clone(temp_project_2.get_id(), objects=[fh.get_id()])
-                download_url = run("dx make_download_url " + fh.get_id()).strip()
+                download_url = run("dx make_download_url " + temp_project_1.get_id().strip() + ":" + fh.get_id()).strip()
                 run("wget -O /dev/null " + download_url)
             # After project 1 is destroyed, the download URL should no longer work
             time.sleep(35)

@@ -204,7 +204,7 @@ class DXJob(DXObject):
         the job, including its state and (optionally) its inputs and
         outputs, as described in the API documentation for the
         `/job-xxxx/describe
-        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method:-/job-xxxx/describe>`_
+        <https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-describe>`_
         method.
 
         """
