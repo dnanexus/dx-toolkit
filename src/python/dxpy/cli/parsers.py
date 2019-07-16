@@ -247,7 +247,7 @@ class PrintInstanceTypeHelp(argparse.Action):
         print('Available instance types:')
         print()
         print(format_table(InstanceTypesCompleter.instance_types.values(),
-                           column_names=InstanceTypesCompleter.instance_types.values()[0]._fields))
+                           column_names=list(InstanceTypesCompleter.instance_types.values())[0]._fields))
         parser.exit(0)
 
 instance_type_arg = argparse.ArgumentParser(add_help=False)
