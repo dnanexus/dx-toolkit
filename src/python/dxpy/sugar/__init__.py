@@ -19,11 +19,12 @@ import re
 
 
 MEM_RE = re.compile(r"^MemAvailable:[\s]*([0-9]*) kB")
-MEM_CONVERSIONS = {
+MEM_KiB_CONVERSIONS = {
     "K": 1,
     "M": 1 << 10,
     "G": 1 << 20
 }
+"""Conversions between KiB and other units."""
 
 
 def in_worker_context():
@@ -66,11 +67,12 @@ def available_memory(suffix="M", meminfo_path="/proc/meminfo"):
             depending on specified suffix.
 
     Raises:
+        ValueError if `suffix` is not a valid suffix.
         dxpy.DXError is raised if suffix is not recognized or system memory
-        cannot be read.
+            cannot be read.
     """
     suffix = suffix.upper()
-    if suffix not in MEM_CONVERSIONS:
+    if suffix not in MEM_KiB_CONVERSIONS:
         raise ValueError(
             "Unknown memory suffix {0}. Please choose from K, M, or G.".format(suffix)
         )
@@ -79,4 +81,4 @@ def available_memory(suffix="M", meminfo_path="/proc/meminfo"):
     if len(total_mem) != 1:
         raise dxpy.DXError("Problem reading system memory from {}".format(meminfo_path))
 
-    return float(total_mem[0]) / MEM_CONVERSIONS[suffix]
+    return float(total_mem[0]) / MEM_KiB_CONVERSIONS[suffix]
