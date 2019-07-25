@@ -1533,23 +1533,6 @@ class TestDXClientUploadDownload(DXTestCase):
             run("wget -P " + output_testdir + " " + download_url)
             run('cmp ' + os.path.join(output_testdir, "foo") + ' ' + fd.name)
 
-
-    def test_dx_make_download_url_project_affinity(self):
-        # Ensure that URLs created with make_download_url have project
-        # affinity unless created in a job workspace
-        with temporary_project("make_download_url test 2") as temp_project_2:
-            with temporary_project("make_download_url test 1", select=True) as temp_project_1:
-                fh = dxpy.upload_string("foo", project=temp_project_1.get_id(), wait_on_close=True)
-                # file now appears in both projects
-                temp_project_1.clone(temp_project_2.get_id(), objects=[fh.get_id()])
-                download_url = run("dx make_download_url " + temp_project_1.get_id().strip() + ":" + fh.get_id()).strip()
-                run("wget -O /dev/null " + download_url)
-            # After project 1 is destroyed, the download URL should no longer work
-            time.sleep(35)
-            with self.assertSubprocessFailure(stderr_regexp="Not Found",
-                                          exit_code=8):
-                run("wget -O /dev/null " + download_url)
-
     @unittest.skipUnless(testutil.TEST_ENV,
                          'skipping test that would clobber your local environment')
     def test_dx_download_when_current_project_inaccessible(self):
