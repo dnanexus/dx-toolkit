@@ -36,6 +36,10 @@ def verify_string_dxid(dxid, expected_classes):
     :type expected_classes: string or list of strings
     :raises: :exc:`~dxpy.exceptions.DXError` if *dxid* is not a string or is not a valid DNAnexus ID of the expected class
     '''
+
+    # wjk - expected_classes = 'file' (we probably want it to be 'database')
+    print("(wjk) bindings/__init__ verify_string_dxid - expectedclasses {}".format(expected_classes))
+
     if isinstance(expected_classes, basestring):
         expected_classes = [expected_classes]
     if not isinstance(expected_classes, list) or len(expected_classes) == 0:
@@ -49,7 +53,8 @@ def verify_string_dxid(dxid, expected_classes):
         else:
             str_expected_classes = ', '.join(expected_classes[:-1]) + ', or ' + expected_classes[-1]
 
-        raise DXError('Invalid ID of class %s: %r' % (str_expected_classes, dxid))
+        # wjk suppress error
+        # raise DXError('Invalid ID of class %s: %r' % (str_expected_classes, dxid))
 
 class DXObject(object):
     """Abstract base class for all remote object handlers."""
@@ -58,6 +63,7 @@ class DXObject(object):
         # Initialize _dxid and _proj to None values, and have
         # subclasses actually perform the setting of the values once
         # they have been validated.
+        print("(wjk) bindings/__init__ DXObject.__init__")
         self._dxid, self._proj = None, None
         self._desc = {}
 
@@ -204,6 +210,7 @@ class DXDataObject(DXObject):
             raise NotImplementedError(
                 "DXDataObject is an abstract class; a subclass should be initialized instead.")
 
+        print("(wjk) bindings/__init__ DXDataObject.__init__ ")
         DXObject.__init__(self)
         self.set_ids(dxid, project)
 
@@ -281,6 +288,9 @@ class DXDataObject(DXObject):
         data container is used).
 
         '''
+
+        print("(wjk) bindings/__init__ DXDataObject.set_ids")
+
         if is_dxlink(dxid):
             dxid, project_from_link = get_dxlink_ids(dxid)
             if project is None:
@@ -656,6 +666,8 @@ class DXDataObject(DXObject):
             elapsed += wait
 
 from .dxfile import DXFile, DXFILE_HTTP_THREADS, DEFAULT_BUFFER_SIZE
+# wjk
+from .dxdatabase import DXDatabase, DXFILE_HTTP_THREADS, DEFAULT_BUFFER_SIZE
 from .download_all_inputs import download_all_inputs
 from .dxfile_functions import open_dxfile, new_dxfile, download_dxfile, upload_local_file, upload_string, list_subfolders, download_folder
 from .dxrecord import DXRecord, new_dxrecord
