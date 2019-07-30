@@ -69,17 +69,12 @@ def _verify(filename, md5digest):
 
 
 def download_one_file(project, file_desc, dest_filename, args):
+    print("(wjk) download.py download_one_file - file_desc = ");
+    print(file_desc)
+
     if not args.overwrite:
         if os.path.exists(dest_filename):
             err_exit(fill('Error: path "' + dest_filename + '" already exists but -f/--overwrite was not set'))
-
-    if file_desc['class'] != 'file':
-        print("Skipping non-file data object {name} ({id})".format(**file_desc), file=sys.stderr)
-        return
-
-    if file_desc['state'] != 'closed':
-        print("Skipping file {name} ({id}) because it is not closed".format(**file_desc), file=sys.stderr)
-        return
 
     try:
         show_progress = args.show_progress
@@ -87,16 +82,28 @@ def download_one_file(project, file_desc, dest_filename, args):
         show_progress = False
 
     try:
-        dxpy.download_dxfile(
-                            file_desc['id'],
-                            dest_filename,
-                            show_progress=show_progress,
-                            project=project,
-                            describe_output=file_desc)
+        if file_desc['class'] == 'file':
+            if file_desc['state'] != 'closed':
+                print("Skipping file {name} ({id}) because it is not closed".format(**file_desc), file=sys.stderr)
+                return
+            dxpy.download_dxfile(
+                                file_desc['id'],
+                                dest_filename,
+                                show_progress=show_progress,
+                                project=project,
+                                describe_output=file_desc)
+        elif file_desc['class'] == 'database':
+            dxpy.download_dxdatabasefile(
+                                file_desc['id'],
+                                dest_filename,
+                                show_progress=show_progress,
+                                project=project,
+                                describe_output=file_desc)
+        else:
+            print("Skipping data object {name} ({id}), which is neither a file nor a database.".format(**file_desc), file=sys.stderr)
         return
     except:
         err_exit()
-
 
 
 def _ensure_local_dir(d):
@@ -122,6 +129,10 @@ def _rel2abs(path, project):
 
 
 def _download_files(files, destdir, args, dest_filename=None):
+
+    print("(wjk) download.py _download_files - files = {}".format(files))
+    print("(wjk) download.py _download_files - args = {}".format(args))
+
     for project in files:
         for f in files[project]:
             file_desc = f['describe']
@@ -130,6 +141,8 @@ def _download_files(files, destdir, args, dest_filename=None):
 
 
 def _download_folders(folders, destdir, args):
+    print("(wjk) download.py _download_folders - folders = ")
+    print(folders)
     try:
         show_progress = args.show_progress
     except AttributeError:
@@ -149,6 +162,9 @@ def _download_folders(folders, destdir, args):
 
 # Main entry point.
 def download(args):
+    print("(wjk) download.py download - args = ")
+    print(args)
+
     folders_to_get, files_to_get, count = collections.defaultdict(list), collections.defaultdict(list), 0
     foldernames, filenames = [], []
     for path in args.paths:
