@@ -410,8 +410,8 @@ def logout(args):
         print("Deleting credentials from {}...".format(authserver))
         token = dxpy.AUTH_HELPER.security_context["auth_token"]
         try:
-            if not USING_PYTHON2:	
-                # python 3 requires conversion to bytes before hashing	
+            if not USING_PYTHON2:
+                # python 3 requires conversion to bytes before hashing
                 token = token.encode(sys_encoding)
             token_sig = hashlib.sha256(token).hexdigest()
             response = dxpy.DXHTTPRequest(authserver + "/system/destroyAuthToken",
@@ -1821,7 +1821,6 @@ def get_workflow(entity_result, args):
     describe_output = entity_result['describe']
     dump_executable(dx_obj, output_path, omit_resources=True, describe_output=describe_output)
 
-
 def get(args):
     # Decide what to do based on entity's class
     if not is_hashid(args.path) and ':' not in args.path and args.path.startswith('app-'):
@@ -1898,7 +1897,6 @@ def cat(args):
                     sys.stdout.write(chunk)
         except:
             err_exit()
-
 
 def download_or_cat(args):
     if args.output == '-':
@@ -4163,6 +4161,7 @@ parser_download_paths_arg = parser_download.add_argument('paths', help='Data obj
                                                          nargs='+', metavar='path')
 parser_download_paths_arg.completer = DXPathCompleter(classes=['file'])
 parser_download.add_argument('-o', '--output', help='Local filename or directory to be used ("-" indicates stdout output); if not supplied or a directory is given, the object\'s name on the platform will be used, along with any applicable extensions')
+parser_download.add_argument('--filename', help='Name of database file or folder to be downloaded.')
 parser_download.add_argument('-f', '--overwrite', help='Resume an interupted download if the local and remote file signatures match.  If the signatures do not match the local file will be overwritten.', action='store_true')
 parser_download.add_argument('-r', '--recursive', help='Download folders recursively', action='store_true')
 parser_download.add_argument('-a', '--all', help='If multiple objects match the input, download all of them',

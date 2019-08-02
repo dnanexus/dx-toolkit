@@ -68,9 +68,13 @@ def _verify(filename, md5digest):
     print("Checksum correct")
 
 
-def download_one_file(project, file_desc, dest_filename, args):
-    print("(wjk) download.py download_one_file - file_desc = ");
-    print(file_desc)
+def do_debug(msg):
+    print("(debug) " + msg)
+
+# src_filename = parquert file bring downloaded
+# filename = local destation file for download
+def download_one_file(project, file_desc, dest_filename, src_filename, args):
+    do_debug("download.py download_one_file - file_desc = {}".format(file_desc));
 
     if not args.overwrite:
         if os.path.exists(dest_filename):
@@ -93,9 +97,11 @@ def download_one_file(project, file_desc, dest_filename, args):
                                 project=project,
                                 describe_output=file_desc)
         elif file_desc['class'] == 'database':
+            project = file_desc['project']
             dxpy.download_dxdatabasefile(
                                 file_desc['id'],
                                 dest_filename,
+                                src_filename,
                                 show_progress=show_progress,
                                 project=project,
                                 describe_output=file_desc)
@@ -130,19 +136,38 @@ def _rel2abs(path, project):
 
 def _download_files(files, destdir, args, dest_filename=None):
 
-    print("(wjk) download.py _download_files - files = {}".format(files))
-    print("(wjk) download.py _download_files - args = {}".format(args))
+    # 'files' is multiple platform file ids entered on command line,
+    # or one database id.
+
+    do_debug("download.py _download_files - files = {}".format(files))
+    do_debug("download.py _download_files - args = {}".format(args))
+    do_debug("download.py _download_files - dest_filename = {}".format(dest_filename))
 
     for project in files:
         for f in files[project]:
             file_desc = f['describe']
-            dest = dest_filename or os.path.join(destdir, file_desc['name'].replace('/', '%2F'))
-            download_one_file(project, file_desc, dest, args)
+            # TODO: use 'name' for platform file but 'id' for parquet file
+            # dest = dest_filename or os.path.join(destdir, file_desc['name'].replace('/', '%2F'))
+            dest = dest_filename or os.path.join(destdir, file_desc['id'].replace('/', '%2F'))
+
+            # Call /database-xxx/listFolder to fetch parquet file metadata
+            dxid = file_desc["id"]
+            list_folder_args = {"folder": args.filename}
+            list_folder_args["recurse"] = True
+            list_folder_resp = dxpy.api.database_list_folder(dxid, list_folder_args)
+            do_debug("download.py _download_files - list_folder_resp = {}".format(list_folder_resp))
+            results = list_folder_resp["results"]
+            for dbfile in results:
+                src_filename = dbfile["path"]
+                do_debug("download.py _download_files - file path = {}".format(src_filename))
+                download_one_file(project, file_desc, dest, src_filename, args)
+
+            # TODO: THIS IS BROKEN NOW FOR PLATFORM FILES - FIX
+            # download_one_file(project, file_desc, dest, src_filename, args)
 
 
 def _download_folders(folders, destdir, args):
-    print("(wjk) download.py _download_folders - folders = ")
-    print(folders)
+    do_debug("download.py _download_folders - folders = {}".format(folders))
     try:
         show_progress = args.show_progress
     except AttributeError:
@@ -162,11 +187,12 @@ def _download_folders(folders, destdir, args):
 
 # Main entry point.
 def download(args):
-    print("(wjk) download.py download - args = ")
-    print(args)
+    do_debug("download.py download - args = {}".format(args))
 
     folders_to_get, files_to_get, count = collections.defaultdict(list), collections.defaultdict(list), 0
     foldernames, filenames = [], []
+
+    # 'paths' = list of multiple file ids, or a single database id
     for path in args.paths:
         # Attempt to resolve name. If --all is given or the path looks like a glob, download all matches.
         # Otherwise, the resolver will display a picker (or error out if there is no tty to display to).
@@ -187,6 +213,9 @@ def download(args):
             matching_files = []
         elif not isinstance(matching_files, list):
             matching_files = [matching_files]
+
+        do_debug("download.py download - matching_files = {}".format(matching_files))
+        do_debug("download.py download - folderpath = {}".format(folderpath))
 
         # TODO: this could also be returned as metadata by resolve_path since
         # resolve_path knows these things in some circumstances
@@ -259,5 +288,7 @@ def download(args):
     else:
         destdir, dest_filename = os.getcwd(), args.output
 
+
+    do_debug("download - destdir = {}, dest_filename = {}".format(destdir, dest_filename))
     _download_folders(folders_to_get, destdir, args)
     _download_files(files_to_get, destdir, args, dest_filename=dest_filename)

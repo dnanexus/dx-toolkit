@@ -34,7 +34,6 @@ import multiprocessing
 import dxpy
 from .. import logger
 from . import dxfile, DXFile
-# wjk
 from . import dxdatabase, DXDatabase
 from .dxfile import FILE_REQUEST_TIMEOUT
 from ..compat import open, USING_PYTHON2
@@ -42,13 +41,15 @@ from ..exceptions import DXFileError, DXPartLengthMismatchError, DXChecksumMisma
 from ..utils import response_iterator
 import subprocess
 
-def download_dxdatabasefile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
+def download_dxdatabasefile(dxid, filename, src_filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
                     project=None, describe_output=None, **kwargs):
     '''
     :param dxid: DNAnexus file ID or DXFile (file handler) object
     :type dxid: string or DXFile
     :param filename: Local filename
     :type filename: string
+    :param src_filename: Name of database file or folder being downloaded
+    :type src_filename: string
     :param append: If True, appends to the local file (default is to truncate local file if it exists)
     :type append: boolean
     :param project: project to use as context for this download (may affect
@@ -70,13 +71,12 @@ def download_dxdatabasefile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE
     '''
     # retry the inner loop while there are retriable errors
 
-    print("(wjk) dxdatabase_functions.py download_dxdatabasefile")
-
     part_retry_counter = defaultdict(lambda: 3)
     success = False
     while not success:
         success = _download_dxdatabasefile(dxid,
                                    filename,
+                                   src_filename,
                                    part_retry_counter,
                                    chunksize=chunksize,
                                    append=append,
@@ -122,8 +122,10 @@ def _verify(filename, md5digest):
         err_exit("Checksum doesn't match " + str(actual_md5) + "  expected:" + str(md5digest))
     print("Checksum correct")
 
+def do_debug(msg):
+    print("(debug) " + msg)
 
-def _download_dxdatabasefile(dxid, filename, part_retry_counter,
+def _download_dxdatabasefile(dxid, filename, src_filename, part_retry_counter,
                      chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
                      project=None, describe_output=None, **kwargs):
     '''
@@ -160,35 +162,32 @@ def _download_dxdatabasefile(dxid, filename, part_retry_counter,
         sys.stderr.write("\r")
         sys.stderr.flush()
 
-    print("(wjk) dxdatabase_functions.py _download_dxdatabasefile - filename {}".format(filename)) 
+    do_debug("dxdatabase_functions.py _download_dxdatabasefile - filename {}".format(filename)) 
 
     _bytes = 0
 
-# wjk - change to DXDatabase
     if isinstance(dxid, DXDatabase):
-        print("(wjk) dxdatabase_functions.py _download_dxdatabasefile - COOL THIS IS A DXDatabase; id = {}".format(dxid)) 
+        do_debug("dxdatabase_functions.py _download_dxdatabasefile - already a database - id = {}".format(dxid)) 
         dxdatabase = dxid
     else:
-        print("(wjk) dxdatabase_functions.py _download_dxdatabasefile - BUMMER NOT A DXDatabase; id = {}".format(dxid)) 
+        do_debug("dxdatabase_functions.py _download_dxdatabasefile - created database handler - id = {}".format(dxid)) 
         dxdatabase = DXDatabase(dxid, mode="r", project=(project if project != DXFile.NO_PROJECT_HINT else None))
 
-    print("(wjk) dxdatabase_functions.py _download_dxdatabasefile - dxfile is a dxdatabase: {}".format(dxfile)) 
+    do_debug("dxdatabase_functions.py _download_dxdatabasefile - dxfile is a dxdatabase: {}".format(dxdatabase)) 
 
     if describe_output and describe_output.get("parts") is not None:
         dxdatabase_desc = describe_output
     else:
         dxdatabase_desc = dxdatabase.describe(fields={"parts"}, default_fields=True, **kwargs)
 
-    print("(wjk) dxdatabase_functions.py _download_dxdatabasefile - dxdatabase_desc {}".format(dxdatabase_desc)) 
+    do_debug("dxdatabase_functions.py _download_dxdatabasefile - dxdatabase_desc {}".format(dxdatabase_desc)) 
 
-    # wjk - need to reuse the parts-related code such that a part means one parquet file.
-    # wjk - otherwise, need to implement logic to properly chop parquet files into parts
-    # like apparently File objects are.
-    parts = {u'1': {u'state': u'complete', u'md5': u'85c149c110a91df15ffd6a2c9da45cdb', u'size': 369}}
+    # TODO: clean up usage of 'parts'
+    # TODO: use file status metadata for size. don't need md5.
     # parts = dxdatabase_desc["parts"]
-    print("(wjk) dxdatabase_functions.py _download_dxdatabasefile - parts = {}".format(parts)) 
+    parts = {u'1': {u'state': u'complete', u'md5': u'85c149c110a91df15ffd6a2c9da45cdb', u'size': 369}}
     parts_to_get = sorted(parts, key=int)
-    #file_size = dxdatabase_desc.get("size")
+    # file_size = dxdatabase_desc.get("size")
     file_size = 1369
 
     offset = 0
@@ -196,35 +195,45 @@ def _download_dxdatabasefile(dxid, filename, part_retry_counter,
         parts[part_id]["start"] = offset
         offset += parts[part_id]["size"]
 
+    do_debug("dxdatabase_functions.py _download_dxdatabasefile - filename = {}, src_filename = {}".format(filename, src_filename)) 
+    
+    # Create proper destination path, including any subdirectories needed within path.
+    ensure_local_dir(filename);
+    dest_path = os.path.join(filename, src_filename)
+    dest_dir_idx = dest_path.rfind("/");
+    if dest_dir_idx != -1:
+        dest_dir = dest_path[:dest_dir_idx]
+        ensure_local_dir(dest_dir)      
+
+    # Use dest_path not filename
     if append:
-        fh = open(filename, "ab")
+        fh = open(dest_path, "ab")
     else:
         try:
-            fh = open(filename, "rb+")
+            fh = open(dest_path, "rb+")
         except IOError:
-            fh = open(filename, "wb")
+            fh = open(dest_path, "wb")
 
-# wjk
     if show_progress:
         print_progress(0, None)
 
     def get_chunk(part_id_to_get, start, end):
-        print("(wjk) dxdatabase_functions.py get_chunk - start {}, end {}, part id {}".format(start, end, part_id_to_get))
-        url, headers = dxdatabase.get_download_url(project=project, **kwargs)
+        do_debug("dxdatabase_functions.py get_chunk - start {}, end {}, part id {}".format(start, end, part_id_to_get))
+        url, headers = dxdatabase.get_download_url(src_filename=src_filename, project=project, **kwargs)
 
-        print("(wjk) dxdatabase_functions.py get_chunk - url = {}".format(url))
+        do_debug("dxdatabase_functions.py get_chunk - url = {}".format(url))
  
         # If we're fetching the whole object in one shot, avoid setting the Range header to take advantage of gzip
         # transfer compression
         sub_range = False
         if len(parts) > 1 or (start > 0) or (end - start + 1 < parts[part_id_to_get]["size"]):
             sub_range = True
-        data = dxpy._dxhttp_read_range(url, headers, start, end, FILE_REQUEST_TIMEOUT, sub_range)
-        print("(wjk) dxdatabase_functions.py get_chunk - data = {}".format(data))
-        # wjk - data is the s3 URL, so read again, just like in DNAxFileSystem
-        mydata = dxpy._dxhttp_read_range(data, headers, start, end, FILE_REQUEST_TIMEOUT, sub_range)
-        # return part_id_to_get, data
-        return part_id_to_get, mydata
+        # TODO: read the whole range here since it's a URL
+        data_url = dxpy._dxhttp_read_range(url, headers, start, end, FILE_REQUEST_TIMEOUT, sub_range)
+        do_debug("dxdatabase_functions.py get_chunk - data_url = {}".format(data_url))
+        # 'data_url' is the s3 URL, so read again, just like in DNAxFileSystem
+        data = dxpy._dxhttp_read_range(data_url, headers, start, end, FILE_REQUEST_TIMEOUT, sub_range)
+        return part_id_to_get, data
 
     def chunk_requests():
         for part_id_to_chunk in parts_to_get:
@@ -255,8 +264,9 @@ def _download_dxdatabasefile(dxid, filename, part_retry_counter,
             try:
                 for part_id in parts_to_get:
                     part_info = parts[part_id]
-                    if "md5" not in part_info:
-                        raise DXFileError("File {} does not contain part md5 checksums".format(dxdatabase.get_id()))
+
+                    # if "md5" not in part_info:
+                    #     raise DXFileError("File {} does not contain part md5 checksums".format(dxdatabase.get_id()))
                     bytes_to_read = part_info["size"]
                     hasher = hashlib.md5()
                     while bytes_to_read > 0:
@@ -291,7 +301,8 @@ def _download_dxdatabasefile(dxid, filename, part_retry_counter,
                                                             dxdatabase._http_threadpool,
                                                             do_first_task_sequentially=get_first_chunk_sequentially):
                 if chunk_part != cur_part:
-                    verify_part(cur_part, got_bytes, hasher)
+                    # TODO: remove permanently if we don't find sue for this
+                    # verify_part(cur_part, got_bytes, hasher)
                     cur_part, got_bytes, hasher = chunk_part, 0, hashlib.md5()
                 got_bytes += len(chunk_data)
                 hasher.update(chunk_data)
@@ -299,7 +310,7 @@ def _download_dxdatabasefile(dxid, filename, part_retry_counter,
                 if show_progress:
                     _bytes += len(chunk_data)
                     print_progress(_bytes, file_size)
-            # wjk - comment out until it works
+            # TODO: same as above
             # verify_part(cur_part, got_bytes, hasher)
             if show_progress:
                 print_progress(_bytes, file_size, action="Completed")
@@ -316,8 +327,6 @@ def _download_dxdatabasefile(dxid, filename, part_retry_counter,
             sys.stderr.write("\n")
 
         return True
-
-# wjk - end of _download_dxdatabasefile
 
 
 def list_subfolders(project, path, recurse=True):
@@ -344,7 +353,15 @@ def list_subfolders(project, path, recurse=True):
     else:
         return (f for f in project_folders if f.startswith(path) and '/' not in f[len(path)+1:])
 
-# wjk - needed?
+def ensure_local_dir(d):
+    do_debug("dxdatabase_functions.py ensure_local_dir - d = {}".format(d)) 
+    if not os.path.isdir(d):
+        if os.path.exists(d):
+            raise DXFileError("Destination location '{}' already exists and is not a directory".format(d))
+        logger.debug("Creating destination directory: '%s'", d)
+        os.makedirs(d)
+
+# TODO: purge if not needed
 def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxfile.DEFAULT_BUFFER_SIZE,
                     show_progress=False, **kwargs):
     '''
@@ -364,13 +381,6 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
         download_folder("project-xxxx", "/home/jsmith/input", folder="/input")
 
     '''
-
-    def ensure_local_dir(d):
-        if not os.path.isdir(d):
-            if os.path.exists(d):
-                raise DXFileError("Destination location '{}' already exists and is not a directory".format(d))
-            logger.debug("Creating destination directory: '%s'", d)
-            os.makedirs(d)
 
     def compose_local_dir(d, remote_folder, remote_subfolder):
         suffix = remote_subfolder[1:] if remote_folder == "/" else remote_subfolder[len(remote_folder) + 1:]

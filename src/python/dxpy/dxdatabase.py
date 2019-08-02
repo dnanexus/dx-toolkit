@@ -78,6 +78,9 @@ def _readable_part_size(num_bytes):
     elif TB <= B:
         return '{0:.2f} TiB'.format(B/TB)
 
+def do_debug(msg):
+    print("(debug) " + msg)
+
 class DXDatabase(DXDataObject):
     '''Remote file object handler.
 
@@ -105,7 +108,7 @@ class DXDatabase(DXDataObject):
 
     '''
 
-    _class = "file"
+    _class = "database"
 
     _describe = staticmethod(dxpy.api.file_describe)
     _add_types = staticmethod(dxpy.api.file_add_types)
@@ -159,7 +162,7 @@ class DXDatabase(DXDataObject):
         :type file_is_mmapd: bool
         """
 
-        print("(wjk) dxdatabase.py __init__")
+        do_debug("dxdatabase.py __init__")
 
         DXDataObject.__init__(self, dxid=dxid, project=project)
 
@@ -205,24 +208,7 @@ class DXDatabase(DXDataObject):
         self._file_length = None
         self._cur_part = 1
         self._num_uploaded_parts = 0
-        print("(wjk) dxdatabase.py __init__ - done initializing")
-
-    def _new(self, dx_hash, media_type=None, **kwargs):
-        """
-        :param dx_hash: Standard hash populated in :func:`dxpy.bindings.DXDataObject.new()` containing attributes common to all data object classes.
-        :type dx_hash: dict
-        :param media_type: Internet Media Type
-        :type media_type: string
-
-        Creates a new remote file with media type *media_type*, if given.
-
-        """
-
-        if media_type is not None:
-            dx_hash["media"] = media_type
-
-        resp = dxpy.api.file_new(dx_hash, **kwargs)
-        self.set_ids(resp["id"], dx_hash["project"])
+        do_debug("dxdatabase.py __init__ - done initializing")
 
     def __enter__(self):
         return self
@@ -326,65 +312,6 @@ class DXDatabase(DXDataObject):
         self._cur_part = 1
         self._num_uploaded_parts = 0
 
-    def seek(self, offset, from_what=os.SEEK_SET):
-        '''
-        :param offset: Position in the file to seek to
-        :type offset: integer
-
-        Seeks to *offset* bytes from the beginning of the file.  This is a no-op if the file is open for writing.
-
-        The position is computed from adding *offset* to a reference point; the reference point is selected by the
-        *from_what* argument. A *from_what* value of 0 measures from the beginning of the file, 1 uses the current file
-        position, and 2 uses the end of the file as the reference point. *from_what* can be omitted and defaults to 0,
-        using the beginning of the file as the reference point.
-        '''
-        if from_what == os.SEEK_SET:
-            reference_pos = 0
-        elif from_what == os.SEEK_CUR:
-            reference_pos = self._pos
-        elif from_what == os.SEEK_END:
-            if self._file_length == None:
-                desc = self.describe()
-                self._file_length = int(desc["size"])
-            reference_pos = self._file_length
-        else:
-            raise DXFileError("Invalid value supplied for from_what")
-
-        orig_pos = self._pos
-        self._pos = reference_pos + offset
-
-        in_buf = False
-        orig_buf_pos = self._read_buf.tell()
-        if offset < orig_pos:
-            if orig_buf_pos > orig_pos - offset:
-                # offset is less than original position but within the buffer
-                in_buf = True
-        else:
-            buf_len = dxpy.utils.string_buffer_length(self._read_buf)
-            if buf_len - orig_buf_pos > offset - orig_pos:
-                # offset is greater than original position but within the buffer
-                in_buf = True
-
-        if in_buf:
-            # offset is within the buffer (at least one byte following
-            # the offset can be read directly out of the buffer)
-            self._read_buf.seek(orig_buf_pos - orig_pos + offset)
-        elif offset == orig_pos:
-            # This seek is a no-op (the cursor is just past the end of
-            # the read buffer and coincides with the desired seek
-            # position). We don't have the data ready, but the request
-            # for the data starting here is already in flight.
-            #
-            # Detecting this case helps to optimize for sequential read
-            # access patterns.
-            pass
-        else:
-            # offset is outside the buffer-- reset buffer and queues.
-            # This is the failsafe behavior
-            self._read_buf = BytesIO()
-            # TODO: if the offset is within the next response(s), don't throw out the queues
-            self._request_iterator, self._response_iterator = None, None
-
     def tell(self):
         '''
         Returns the current position of the file read cursor.
@@ -431,7 +358,7 @@ class DXDatabase(DXDataObject):
 
         return self.describe(fields={'state'}, **kwargs)["state"] == "closed"
 
-    def get_download_url(self, duration=None, preauthenticated=False, filename=None, project=None, **kwargs):
+    def get_download_url(self, duration=None, preauthenticated=False, filename=None, src_filename=None, project=None, **kwargs):
         """
         :param duration: number of seconds for which the generated URL will be
             valid, should only be specified when preauthenticated is True
@@ -465,14 +392,18 @@ class DXDatabase(DXDataObject):
 
         """
 
-        print("(wjk) dxdatabase get_download_url - project = {}".format(project))
+        do_debug("dxdatabase get_download_url - project = {}".format(project))
 
         args = {"preauthenticated": preauthenticated}
 
         if duration is not None:
             args["duration"] = duration
-        if filename is not None:
-            args["filename"] = filename
+
+        # 'src_filename' is file being downloaded so use that rather than 'filename'
+        if src_filename is not None:
+            idx = src_filename.index('database-')
+            shortname = src_filename[idx + 34:]
+            args["filename"] = shortname
 
         # If project=None, we fall back to the project attached to this handler
         # (if any). If this is supplied, it's treated as a hint: if it's a
@@ -489,7 +420,8 @@ class DXDatabase(DXDataObject):
                 project = project_from_handler
 
         if project is not None and project is not DXDatabase.NO_PROJECT_HINT:
-            args["project"] = project
+            # args["project"] = project
+            args["projectContext"] = project
 
         # Test hook to write 'project' argument passed to API call to a
         # local file
@@ -499,8 +431,6 @@ class DXDatabase(DXDataObject):
                     fd.write(project)
 
         with self._url_download_mutex:
-
-            # wjk - _download_url is in a python library!
 
             if self._download_url is None or self._download_url_expires < time.time():
                 # The idea here is to cache a download URL for the entire file, that will
@@ -513,13 +443,9 @@ class DXDatabase(DXDataObject):
                 # logging.debug("Download URL unset or expired, requesting a new one")
                 if "timeout" not in kwargs:
                     kwargs["timeout"] = FILE_REQUEST_TIMEOUT
-                # wjk
-                # resp = dxpy.api.file_download(self._dxid, args, **kwargs)
-                args["filename"] = 'sample67/part-00000-1017bc41-19b6-4cf6-b348-0e9a92983a64-c000.snappy.parquet'
-                args["projectContext"] = 'project-FF3zZq0044fyQzYbPG580BGq'
-                print("(wjk) dxdatabase get_download_url - args = {}".format(args))
+                do_debug("dxdatabase get_download_url - args = {}".format(args))
                 resp = dxpy.api.database_read_file(self._dxid, args, **kwargs)
-                print("(wjk) dxdatabase get_download_url - resp = {}".format(resp));
+                do_debug("dxdatabase get_download_url - resp = {}".format(resp));
                 self._download_url = resp["url"]
                 self._download_url_headers = _validate_headers(resp.get("headers", {}))
                 if preauthenticated:
@@ -672,7 +598,6 @@ class DXDatabase(DXDataObject):
         # return response.read()
 
     def read(self, length=None, use_compression=None, project=None, **kwargs):
-        print("(wjk) dxdatabase read - got here {}".format(1))
         data = self._read2(length=length, use_compression=use_compression, project=project, **kwargs)
         if USING_PYTHON2:
             return data
