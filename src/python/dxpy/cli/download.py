@@ -71,10 +71,12 @@ def _verify(filename, md5digest):
 def do_debug(msg):
     print("(debug) " + msg)
 
-# src_filename = parquert file bring downloaded
-# filename = local destation file for download
-def download_one_file(project, file_desc, dest_filename, src_filename, args):
-    do_debug("download.py download_one_file - file_desc = {}".format(file_desc));
+# dest_filename = local file where downloaded file will go
+# src_filename = parquert file bring downloaded (empty for 'file' objects)
+def download_one_file(project, file_desc, dest_filename, src_filename, file_status, args):
+    do_debug("download.py download_one_file - file_desc: {}".format(file_desc));
+    if file_status is not None:
+        do_debug("download.py download_one_file - file_status = {}".format(file_status));
 
     if not args.overwrite:
         if os.path.exists(dest_filename):
@@ -102,6 +104,7 @@ def download_one_file(project, file_desc, dest_filename, src_filename, args):
                                 file_desc['id'],
                                 dest_filename,
                                 src_filename,
+                                file_status,
                                 show_progress=show_progress,
                                 project=project,
                                 describe_output=file_desc)
@@ -146,25 +149,25 @@ def _download_files(files, destdir, args, dest_filename=None):
     for project in files:
         for f in files[project]:
             file_desc = f['describe']
-            # TODO: use 'name' for platform file but 'id' for parquet file
-            # dest = dest_filename or os.path.join(destdir, file_desc['name'].replace('/', '%2F'))
-            dest = dest_filename or os.path.join(destdir, file_desc['id'].replace('/', '%2F'))
-
-            # Call /database-xxx/listFolder to fetch parquet file metadata
-            dxid = file_desc["id"]
-            list_folder_args = {"folder": args.filename}
-            list_folder_args["recurse"] = True
-            list_folder_resp = dxpy.api.database_list_folder(dxid, list_folder_args)
-            do_debug("download.py _download_files - list_folder_resp = {}".format(list_folder_resp))
-            results = list_folder_resp["results"]
-            for dbfile in results:
-                src_filename = dbfile["path"]
-                do_debug("download.py _download_files - file path = {}".format(src_filename))
-                download_one_file(project, file_desc, dest, src_filename, args)
-
-            # TODO: THIS IS BROKEN NOW FOR PLATFORM FILES - FIX
-            # download_one_file(project, file_desc, dest, src_filename, args)
-
+            if file_desc['class'] == 'database':
+                dest = dest_filename or os.path.join(destdir, file_desc['id'].replace('/', '%2F'))
+                # Call /database-xxx/listFolder to fetch parquet file metadata
+                dxid = file_desc["id"]
+                list_folder_args = {"folder": args.filename}
+                list_folder_args["recurse"] = True
+                list_folder_resp = dxpy.api.database_list_folder(dxid, list_folder_args)
+                do_debug("download.py _download_files - list_folder_resp = {}".format(list_folder_resp))
+                results = list_folder_resp["results"]
+                for dbfile in results:
+                    src_filename = dbfile["path"]
+                    idx = src_filename.rfind("database-")
+                    if idx != -1:
+                        src_filename = src_filename[idx + 34:]
+                    do_debug("download.py _download_files - file path = {}".format(src_filename))
+                    download_one_file(project, file_desc, dest, src_filename, dbfile, args)
+            elif file_desc['class'] == 'file':
+                dest = dest_filename or os.path.join(destdir, file_desc['id'].replace('/', '%2F'))
+                download_one_file(project, file_desc, dest, '', None, args)
 
 def _download_folders(folders, destdir, args):
     do_debug("download.py _download_folders - folders = {}".format(folders))

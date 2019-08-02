@@ -401,9 +401,7 @@ class DXDatabase(DXDataObject):
 
         # 'src_filename' is file being downloaded so use that rather than 'filename'
         if src_filename is not None:
-            idx = src_filename.index('database-')
-            shortname = src_filename[idx + 34:]
-            args["filename"] = shortname
+            args["filename"] = src_filename
 
         # If project=None, we fall back to the project attached to this handler
         # (if any). If this is supplied, it's treated as a hint: if it's a
