@@ -535,6 +535,15 @@
         }
     ],
     [
+        "/database-xxxx/readFile",
+        "databaseReadFile(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-listFolder"
+        }
+    ],
+    [
         "/database-xxxx/listFolder",
         "databaseListFolder(req, objectId)",
         {

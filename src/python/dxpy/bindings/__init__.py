@@ -36,6 +36,7 @@ def verify_string_dxid(dxid, expected_classes):
     :type expected_classes: string or list of strings
     :raises: :exc:`~dxpy.exceptions.DXError` if *dxid* is not a string or is not a valid DNAnexus ID of the expected class
     '''
+
     if isinstance(expected_classes, basestring):
         expected_classes = [expected_classes]
     if not isinstance(expected_classes, list) or len(expected_classes) == 0:
@@ -51,6 +52,9 @@ def verify_string_dxid(dxid, expected_classes):
 
         raise DXError('Invalid ID of class %s: %r' % (str_expected_classes, dxid))
 
+def do_debug(msg):
+    print("(debug) " + msg)
+
 class DXObject(object):
     """Abstract base class for all remote object handlers."""
 
@@ -58,6 +62,7 @@ class DXObject(object):
         # Initialize _dxid and _proj to None values, and have
         # subclasses actually perform the setting of the values once
         # they have been validated.
+        do_debug("bindings/__init__ DXObject.__init__")
         self._dxid, self._proj = None, None
         self._desc = {}
 
@@ -281,6 +286,9 @@ class DXDataObject(DXObject):
         data container is used).
 
         '''
+
+        do_debug("bindings/__init__ DXDataObject.set_ids")
+
         if is_dxlink(dxid):
             dxid, project_from_link = get_dxlink_ids(dxid)
             if project is None:
@@ -656,8 +664,10 @@ class DXDataObject(DXObject):
             elapsed += wait
 
 from .dxfile import DXFile, DXFILE_HTTP_THREADS, DEFAULT_BUFFER_SIZE
+from .dxdatabase import DXDatabase, DXFILE_HTTP_THREADS, DEFAULT_BUFFER_SIZE
 from .download_all_inputs import download_all_inputs
 from .dxfile_functions import open_dxfile, new_dxfile, download_dxfile, upload_local_file, upload_string, list_subfolders, download_folder
+from .dxdatabase_functions import download_dxdatabasefile
 from .dxrecord import DXRecord, new_dxrecord
 from .dxproject import DXContainer, DXProject
 from .dxjob import DXJob, new_dxjob
