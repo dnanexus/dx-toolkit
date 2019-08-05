@@ -15,6 +15,10 @@
 # See https://documentation.dnanexus.com/developer for tutorials on how
 # to modify this file.
 
+
+set -e -o pipefail
+
+
 main() {
 DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
     # Fill in your application code here.
