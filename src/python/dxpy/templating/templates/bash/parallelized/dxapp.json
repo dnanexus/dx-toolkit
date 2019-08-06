@@ -2,6 +2,6 @@
   "runSpec": {
     "file": "src/DX_APP_WIZARD_NAME.sh",
     "distribution": "Ubuntu",
-    "release": "16.04"
+    "release": "14.04"
   }
 }
