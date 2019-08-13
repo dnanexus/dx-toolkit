@@ -25,6 +25,7 @@ import subprocess
 import sys
 import tempfile
 import warnings
+import logging
 
 import dxpy
 from ..utils.resolver import (resolve_existing_path, get_first_pos_of_char, is_project_explicit,
@@ -69,7 +70,7 @@ def _verify(filename, md5digest):
 
 
 def do_debug(msg):
-    print("(debug) " + msg)
+    logging.info(msg)
 
 # dest_filename = local file where downloaded file will go
 # src_filename = parquert file bring downloaded (empty for 'file' objects)
@@ -93,21 +94,21 @@ def download_one_file(project, file_desc, dest_filename, src_filename, file_stat
                 print("Skipping file {name} ({id}) because it is not closed".format(**file_desc), file=sys.stderr)
                 return
             dxpy.download_dxfile(
-                                file_desc['id'],
-                                dest_filename,
-                                show_progress=show_progress,
-                                project=project,
-                                describe_output=file_desc)
+                file_desc['id'],
+                dest_filename,
+                show_progress=show_progress,
+                project=project,
+                describe_output=file_desc)
         elif file_desc['class'] == 'database':
             project = file_desc['project']
             dxpy.download_dxdatabasefile(
-                                file_desc['id'],
-                                dest_filename,
-                                src_filename,
-                                file_status,
-                                show_progress=show_progress,
-                                project=project,
-                                describe_output=file_desc)
+                file_desc['id'],
+                dest_filename,
+                src_filename,
+                file_status,
+                show_progress=show_progress,
+                project=project,
+                describe_output=file_desc)
         else:
             print("Skipping data object {name} ({id}), which is neither a file nor a database.".format(**file_desc), file=sys.stderr)
         return
@@ -259,10 +260,10 @@ def download(args):
         # If length of matching_files is 0 then we're only downloading folders
         # so skip this logic since the files will be verified in the API call.
         if not args.lightweight \
-            and len(matching_files) > 0 \
-            and path_has_explicit_proj \
-            and not any(object_exists_in_project(f['describe']['id'], project) for f in matching_files):
-                err_exit(fill('Error: specified project does not contain specified file object'))
+                and len(matching_files) > 0 \
+                and path_has_explicit_proj \
+                and not any(object_exists_in_project(f['describe']['id'], project) for f in matching_files):
+            err_exit(fill('Error: specified project does not contain specified file object'))
 
         files_to_get[project].extend(matching_files)
         folders_to_get[project].extend(((f, strip_prefix) for f in matching_folders))

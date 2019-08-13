@@ -15,7 +15,7 @@
 #   under the License.
 
 '''
-DXDatbase Handler
+DXDatabase Handler
 **************
 
 This remote database handler is a Python database-like object.
@@ -35,6 +35,7 @@ from ..exceptions import DXFileError, DXIncompleteReadsError
 from ..utils import warn
 from ..utils.resolver import object_exists_in_project
 from ..compat import BytesIO, basestring, USING_PYTHON2
+from .. import logger
 
 
 DXFILE_HTTP_THREADS = min(cpu_count(), 8)
@@ -79,10 +80,10 @@ def _readable_part_size(num_bytes):
         return '{0:.2f} TiB'.format(B/TB)
 
 def do_debug(msg):
-    print("(debug) " + msg)
+    logger.info(msg)
 
 class DXDatabase(DXDataObject):
-    '''Remote file object handler.
+    '''Remote database object handler.
 
     :param dxid: Object ID
     :type dxid: string
@@ -186,7 +187,7 @@ class DXDatabase(DXDataObject):
         # Computed lazily later since this depends on the project, and
         # we want to allow the project to be set as late as possible.
         # Call _ensure_write_bufsize to ensure that this is set before
-        # trying to read it.
+        # trying to rexoad it.
         self._write_bufsize = None
 
         self._write_buffer_size_hint = write_buffer_size
@@ -207,7 +208,7 @@ class DXDatabase(DXDataObject):
         self._pos = 0
         self._file_length = None
         self._cur_part = 1
-        self._num_uploaded_parts = 0
+        # self._num_uploaded_parts = 0
         do_debug("dxdatabase.py __init__ - done initializing")
 
     def __enter__(self):
@@ -215,40 +216,6 @@ class DXDatabase(DXDataObject):
 
     def __exit__(self, type, value, traceback):
         return
-
-    def __del__(self):
-        '''
-        Exceptions raised here in the destructor are IGNORED by Python! We will try and flush data
-        here just as a safety measure, but you should not rely on this to flush your data! We will
-        be really grumpy and complain if we detect unflushed data here.
-
-        Use a context manager or flush the object explicitly to avoid this.
-
-        In addition, when this is triggered by interpreter shutdown, the thread pool is not
-        available, and we will wait for the request queue forever. In this case, we must revert to
-        synchronous, in-thread flushing. We don't know how to detect this condition, so we'll use
-        that for all destructor events.
-
-        Neither this nor context managers are compatible with kwargs pass-through (so e.g. no
-        custom auth).
-        '''
-        if not hasattr(self, '_write_buf'):
-            # This occurs when there is an exception initializing the
-            # DXDatabase object
-            return
-
-        if self._write_buf.tell() > 0 or len(self._http_threadpool_futures) > 0:
-            warn("=== WARNING! ===")
-            warn("There is still unflushed data in the destructor of a DXDatabase object!")
-            warn("We will attempt to flush it now, but if an error were to occur, we could not report it back to you.")
-            warn("Your program could fail to flush the data but appear to succeed.")
-            warn("Instead, please call flush() or close(), or use the context managed version (e.g., with open_dxfile(ID, mode='w') as f:)")
-        try:
-            self.flush(multithread=False)
-        except Exception as e:
-            warn("=== Exception occurred while flushing accumulated file data for %r" % (self._dxid,))
-            traceback.print_exception(*sys.exc_info())
-            raise
 
     def __iter__(self):
         _buffer = self.read(self._read_bufsize)
@@ -301,16 +268,15 @@ class DXDatabase(DXDataObject):
         *dxid*. As a side effect, it also flushes the buffer for the
         previous file object if the buffer is nonempty.
         '''
-        if self._dxid is not None:
-            self.flush()
     
         DXDataObject.set_ids(self, dxid, project)
 
         # Reset state
+        # TODO: some of these not needed for dxdatabase
         self._pos = 0
         self._file_length = None
         self._cur_part = 1
-        self._num_uploaded_parts = 0
+        # self._num_uploaded_parts = 0
 
     def tell(self):
         '''
@@ -320,31 +286,6 @@ class DXDatabase(DXDataObject):
         (`for line in file`).
         '''
         return self._pos
-
-    def flush(self, multithread=True, **kwargs):
-        '''
-        Flushes the internal write buffer.
-        '''
-
-        if self._write_buf.tell() > 0:
-            data = self._write_buf.getvalue()
-            self._write_buf = BytesIO()
-
-            if multithread:
-                self._async_upload_part_request(data, index=self._cur_part, **kwargs)
-            else:
-                self.upload_part(data, self._cur_part, **kwargs)
-
-            self._cur_part += 1
-
-        if len(self._http_threadpool_futures) > 0:
-            dxpy.utils.wait_for_all_futures(self._http_threadpool_futures)
-            try:
-                for future in self._http_threadpool_futures:
-                    if future.exception() != None:
-                        raise future.exception()
-            finally:
-                self._http_threadpool_futures = set()
 
     def closed(self, **kwargs):
         '''
@@ -595,6 +536,7 @@ class DXDatabase(DXDataObject):
         # response = urllib2.urlopen(req)
         # return response.read()
 
+    # TODO: remove if not needed
     def read(self, length=None, use_compression=None, project=None, **kwargs):
         data = self._read2(length=length, use_compression=use_compression, project=project, **kwargs)
         if USING_PYTHON2:

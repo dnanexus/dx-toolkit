@@ -34,8 +34,6 @@ import multiprocessing
 import dxpy
 from .. import logger
 from . import dxfile, DXFile
-# wjk
-from . import dxdatabase, DXDatabase
 from .dxfile import FILE_REQUEST_TIMEOUT
 from ..compat import open, USING_PYTHON2
 from ..exceptions import DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, DXIncompleteReadsError, err_exit
@@ -123,15 +121,10 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
 
     '''
     # retry the inner loop while there are retriable errors
-
-    print("(wjk) dxfile_functions.py download_dxfile")
-
     part_retry_counter = defaultdict(lambda: 3)
     success = False
     while not success:
-        # wjk - changefrom _dxfile to _dxdatabasefile
-        success = _download_dxdatabasefile(dxid,
-#        success = _download_dxfile(dxid,
+        success = _download_dxfile(dxid,
                                    filename,
                                    part_retry_counter,
                                    chunksize=chunksize,
@@ -229,9 +222,6 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
     if md5digest is not None:
         _verify(dest_filename, md5digest)
 
-# wjk - intention: don't get here (or into dxfile_functions.py at all) for database.
-# wjk - we need to have forked already, e..g into dxdatabase_functions.
-# wjk - This means no changes should be made in this function for the db download feature.
 def _download_dxfile(dxid, filename, part_retry_counter,
                      chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
                      project=None, describe_output=None, **kwargs):
@@ -409,230 +399,6 @@ def _download_dxfile(dxid, filename, part_retry_counter,
             sys.stderr.write("\n")
 
         return True
-
-# wjk - end of _download_dxfile
-
-
-
-
-
-
-
-
-
-
-# wjk - copied/pasted from _download_dxfile above
-def _download_dxdatabasefile(dxid, filename, part_retry_counter,
-                     chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
-                     project=None, describe_output=None, **kwargs):
-    '''
-    Core of download logic. Download file-id *dxid* and store it in
-    a local file *filename*.
-
-    The return value is as follows:
-    - True means the download was successfully completed
-    - False means the download was stopped because of a retryable error
-    - Exception raised for other errors
-    '''
-    def print_progress(bytes_downloaded, file_size, action="Downloaded"):
-        num_ticks = 60
-
-        effective_file_size = file_size or 1
-        if bytes_downloaded > effective_file_size:
-            effective_file_size = bytes_downloaded
-
-        ticks = int(round((bytes_downloaded / float(effective_file_size)) * num_ticks))
-        percent = int(math.floor((bytes_downloaded / float(effective_file_size)) * 100))
-
-        fmt = "[{done}{pending}] {action} {done_bytes:,}{remaining} bytes ({percent}%) {name}"
-        # Erase the line and return the cursor to the start of the line.
-        # The following VT100 escape sequence will erase the current line.
-        sys.stderr.write("\33[2K")
-        sys.stderr.write(fmt.format(action=action,
-                                    done=("=" * (ticks - 1) + ">") if ticks > 0 else "",
-                                    pending=" " * (num_ticks - ticks),
-                                    done_bytes=bytes_downloaded,
-                                    remaining=" of {size:,}".format(size=file_size) if file_size else "",
-                                    percent=percent,
-                                    name=filename))
-        sys.stderr.flush()
-        sys.stderr.write("\r")
-        sys.stderr.flush()
-
-    print("(wjk) dxfile_functions.py _download_dxdatabasefile - filename {}".format(filename)) 
-
-    _bytes = 0
-
-# wjk - change to DXDatabase
-    if isinstance(dxid, DXDatabase):
-        print("(wjk) dxfile_functions.py _download_dxdatabasefile - COOL THIS IS A DXDatabase; id = {}".format(dxid)) 
-        dxdatabase = dxid
-    else:
-        print("(wjk) dxfile_functions.py _download_dxdatabasefile - BUMMER NOT A DXDatabase; id = {}".format(dxid)) 
-        dxdatabase = DXDatabase(dxid, mode="r", project=(project if project != DXFile.NO_PROJECT_HINT else None))
-
-    print("(wjk) dxfile_functions.py _download_dxdatabasefile - dxfile is a dxdatabase: {}".format(dxfile)) 
-
-    if describe_output and describe_output.get("parts") is not None:
-        dxdatabase_desc = describe_output
-    else:
-        dxdatabase_desc = dxdatabase.describe(fields={"parts"}, default_fields=True, **kwargs)
-
-    print("(wjk) dxfile_functions.py _download_dxdatabasefile - dxdatabase_desc {}".format(dxdatabase_desc)) 
-
-    # wjk - need to reuse the parts-related code such that a part means one parquet file.
-    # wjk - otherwise, need to implement logic to properly chop parquet files into parts
-    # like apparently File objects are.
-    parts = {u'1': {u'state': u'complete', u'md5': u'85c149c110a91df15ffd6a2c9da45cdb', u'size': 369}}
-    # parts = dxdatabase_desc["parts"]
-    print("(wjk) dxfile_functions.py _download_dxdatabasefile - parts = {}".format(parts)) 
-    parts_to_get = sorted(parts, key=int)
-    #file_size = dxdatabase_desc.get("size")
-    file_size = 1369
-
-    offset = 0
-    for part_id in parts_to_get:
-        parts[part_id]["start"] = offset
-        offset += parts[part_id]["size"]
-
-    if append:
-        fh = open(filename, "ab")
-    else:
-        try:
-            fh = open(filename, "rb+")
-        except IOError:
-            fh = open(filename, "wb")
-
-# wjk
-    #if show_progress:
-    #    print_progress(0, None)
-
-    def get_chunk(part_id_to_get, start, end):
-        print("(wjk) dxfile_functions.py get_chunk - start {}, end {}, part id {}".format(start, end, part_id_to_get))
-        url, headers = dxdatabase.get_download_url(project=project, **kwargs)
-
-        print("(wjk) dxfile_functions.py get_chunk - url = {}".format(url))
- 
-        # If we're fetching the whole object in one shot, avoid setting the Range header to take advantage of gzip
-        # transfer compression
-        sub_range = False
-        if len(parts) > 1 or (start > 0) or (end - start + 1 < parts[part_id_to_get]["size"]):
-            sub_range = True
-        data = dxpy._dxhttp_read_range(url, headers, start, end, FILE_REQUEST_TIMEOUT, sub_range)
-        print("(wjk) dxfile_functions.py get_chunk - data = {}".format(data))
-        # wjk - data is the s3 URL, so read again, just like in DNAxFileSystem
-        mydata = dxpy._dxhttp_read_range(data, headers, start, end, FILE_REQUEST_TIMEOUT, sub_range)
-        # return part_id_to_get, data
-        return part_id_to_get, mydata
-
-    def chunk_requests():
-        for part_id_to_chunk in parts_to_get:
-            part_info = parts[part_id_to_chunk]
-            for chunk_start in range(part_info["start"], part_info["start"] + part_info["size"], chunksize):
-                chunk_end = min(chunk_start + chunksize, part_info["start"] + part_info["size"]) - 1
-                yield get_chunk, [part_id_to_chunk, chunk_start, chunk_end], {}
-
-    def verify_part(_part_id, got_bytes, hasher):
-        if got_bytes is not None and got_bytes != parts[_part_id]["size"]:
-            msg = "Unexpected part data size in {} part {} (expected {}, got {})"
-            msg = msg.format(dxdatabase.get_id(), _part_id, parts[_part_id]["size"], got_bytes)
-            raise DXPartLengthMismatchError(msg)
-        if hasher is not None and "md5" not in parts[_part_id]:
-            warnings.warn("Download of file {} is not being checked for integrity".format(dxdatabase.get_id()))
-        elif hasher is not None and hasher.hexdigest() != parts[_part_id]["md5"]:
-            msg = "Checksum mismatch in {} part {} (expected {}, got {})"
-            msg = msg.format(dxdatabase.get_id(), _part_id, parts[_part_id]["md5"], hasher.hexdigest())
-            raise DXChecksumMismatchError(msg)
-
-    with fh:
-        last_verified_pos = 0
-
-        if fh.mode == "rb+":
-            # We already downloaded the beginning of the file, verify that the
-            # chunk checksums match the metadata.
-            last_verified_part, max_verify_chunk_size = None, 1024*1024
-            try:
-                for part_id in parts_to_get:
-                    part_info = parts[part_id]
-                    if "md5" not in part_info:
-                        raise DXFileError("File {} does not contain part md5 checksums".format(dxdatabase.get_id()))
-                    bytes_to_read = part_info["size"]
-                    hasher = hashlib.md5()
-                    while bytes_to_read > 0:
-                        chunk = fh.read(min(max_verify_chunk_size, bytes_to_read))
-                        if len(chunk) < min(max_verify_chunk_size, bytes_to_read):
-                            raise DXFileError("Local data for part {} is truncated".format(part_id))
-                        hasher.update(chunk)
-                        bytes_to_read -= max_verify_chunk_size
-                    if hasher.hexdigest() != part_info["md5"]:
-                        raise DXFileError("Checksum mismatch when verifying downloaded part {}".format(part_id))
-                    else:
-                        last_verified_part = part_id
-                        last_verified_pos = fh.tell()
-                        if show_progress:
-                            _bytes += part_info["size"]
-                            print_progress(_bytes, file_size, action="Verified")
-            except (IOError, DXFileError) as e:
-                logger.debug(e)
-            fh.seek(last_verified_pos)
-            fh.truncate()
-            if last_verified_part is not None:
-                del parts_to_get[:parts_to_get.index(last_verified_part)+1]
-            if show_progress and len(parts_to_get) < len(parts):
-                print_progress(last_verified_pos, file_size, action="Resuming at")
-            logger.debug("Verified %s/%d downloaded parts", last_verified_part, len(parts_to_get))
-
-        try:
-            # Main loop. In parallel: download chunks, verify them, and write them to disk.
-            get_first_chunk_sequentially = (file_size > 128 * 1024 and last_verified_pos == 0 and dxpy.JOB_ID)
-            cur_part, got_bytes, hasher = None, None, None
-            for chunk_part, chunk_data in response_iterator(chunk_requests(),
-                                                            dxdatabase._http_threadpool,
-                                                            do_first_task_sequentially=get_first_chunk_sequentially):
-                if chunk_part != cur_part:
-                    verify_part(cur_part, got_bytes, hasher)
-                    cur_part, got_bytes, hasher = chunk_part, 0, hashlib.md5()
-                got_bytes += len(chunk_data)
-                hasher.update(chunk_data)
-                fh.write(chunk_data)
-                if show_progress:
-                    _bytes += len(chunk_data)
-                    print_progress(_bytes, file_size)
-            # wjk
-            # verify_part(cur_part, got_bytes, hasher)
-            if show_progress:
-                print_progress(_bytes, file_size, action="Completed")
-        except DXFileError:
-            print(traceback.format_exc(), file=sys.stderr)
-            part_retry_counter[cur_part] -= 1
-            if part_retry_counter[cur_part] > 0:
-                print("Retrying {} ({} tries remain for part {})".format(dxdatabase.get_id(), part_retry_counter[cur_part], cur_part),
-                      file=sys.stderr)
-                return False
-            raise
-
-        if show_progress:
-            sys.stderr.write("\n")
-
-        return True
-
-# wjk - end of _download_dxdatabasefile
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 def upload_local_file(filename=None, file=None, media_type=None, keep_open=False,
                       wait_on_close=False, use_existing_dxfile=None, show_progress=False,

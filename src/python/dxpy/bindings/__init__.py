@@ -52,9 +52,6 @@ def verify_string_dxid(dxid, expected_classes):
 
         raise DXError('Invalid ID of class %s: %r' % (str_expected_classes, dxid))
 
-def do_debug(msg):
-    print("(debug) " + msg)
-
 class DXObject(object):
     """Abstract base class for all remote object handlers."""
 
@@ -62,7 +59,6 @@ class DXObject(object):
         # Initialize _dxid and _proj to None values, and have
         # subclasses actually perform the setting of the values once
         # they have been validated.
-        do_debug("bindings/__init__ DXObject.__init__")
         self._dxid, self._proj = None, None
         self._desc = {}
 
@@ -286,8 +282,6 @@ class DXDataObject(DXObject):
         data container is used).
 
         '''
-
-        do_debug("bindings/__init__ DXDataObject.set_ids")
 
         if is_dxlink(dxid):
             dxid, project_from_link = get_dxlink_ids(dxid)

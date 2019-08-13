@@ -39,13 +39,14 @@ from .dxfile import FILE_REQUEST_TIMEOUT
 from ..compat import open, USING_PYTHON2
 from ..exceptions import DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, DXIncompleteReadsError, err_exit
 from ..utils import response_iterator
+from .dxdatabase import do_debug
 import subprocess
 
 def download_dxdatabasefile(dxid, filename, src_filename, file_status, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
                     project=None, describe_output=None, **kwargs):
     '''
-    :param dxid: DNAnexus file ID or DXFile (file handler) object
-    :type dxid: string or DXFile
+    :param dxid: DNAnexus database ID or DXDatabase (database handler) object
+    :type dxid: string or DXDatabase
     :param filename: Local filename
     :type filename: string
     :param src_filename: Name of database file or folder being downloaded
@@ -126,9 +127,6 @@ def _verify(filename, md5digest):
         err_exit("Checksum doesn't match " + str(actual_md5) + "  expected:" + str(md5digest))
     print("Checksum correct")
 
-def do_debug(msg):
-    print("(debug) " + msg)
-
 def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_retry_counter,
                      chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
                      project=None, describe_output=None, **kwargs):
@@ -171,13 +169,11 @@ def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_ret
     _bytes = 0
 
     if isinstance(dxid, DXDatabase):
-        do_debug("dxdatabase_functions.py _download_dxdatabasefile - already a database - id = {}".format(dxid)) 
         dxdatabase = dxid
     else:
-        do_debug("dxdatabase_functions.py _download_dxdatabasefile - created database handler - id = {}".format(dxid)) 
         dxdatabase = DXDatabase(dxid, mode="r", project=(project if project != DXFile.NO_PROJECT_HINT else None))
 
-    do_debug("dxdatabase_functions.py _download_dxdatabasefile - dxfile is a dxdatabase: {}".format(dxdatabase)) 
+    do_debug("dxdatabase_functions.py _download_dxdatabasefile - dxdatabase: {}".format(dxdatabase)) 
 
     if describe_output and describe_output.get("parts") is not None:
         dxdatabase_desc = describe_output
@@ -332,31 +328,6 @@ def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_ret
 
         return True
 
-
-def list_subfolders(project, path, recurse=True):
-    '''
-    :param project: Project ID to use as context for the listing
-    :type project: string
-    :param path: Subtree root path
-    :type path: string
-    :param recurse: Return a complete subfolders tree
-    :type recurse: boolean
-
-    Returns a list of subfolders for the remote *path* (included to the result) of the *project*.
-
-    Example::
-
-        list_subfolders("project-xxxx", folder="/input")
-
-    '''
-    project_folders = dxpy.get_handler(project).describe(input_params={'folders': True})['folders']
-    # TODO: support shell-style path globbing (i.e. /a*/c matches /ab/c but not /a/b/c)
-    # return pathmatch.filter(project_folders, os.path.join(path, '*'))
-    if recurse:
-        return (f for f in project_folders if f.startswith(path))
-    else:
-        return (f for f in project_folders if f.startswith(path) and '/' not in f[len(path)+1:])
-
 def ensure_local_dir(d):
     do_debug("dxdatabase_functions.py ensure_local_dir - d = {}".format(d)) 
     if not os.path.isdir(d):
@@ -364,86 +335,3 @@ def ensure_local_dir(d):
             raise DXFileError("Destination location '{}' already exists and is not a directory".format(d))
         logger.debug("Creating destination directory: '%s'", d)
         os.makedirs(d)
-
-# TODO: purge if not needed
-def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxfile.DEFAULT_BUFFER_SIZE,
-                    show_progress=False, **kwargs):
-    '''
-    :param project: Project ID to use as context for this download.
-    :type project: string
-    :param destdir: Local destination location
-    :type destdir: string
-    :param folder: Path to the remote folder to download
-    :type folder: string
-    :param overwrite: Overwrite existing files
-    :type overwrite: boolean
-
-    Downloads the contents of the remote *folder* of the *project* into the local directory specified by *destdir*.
-
-    Example::
-
-        download_folder("project-xxxx", "/home/jsmith/input", folder="/input")
-
-    '''
-
-    def compose_local_dir(d, remote_folder, remote_subfolder):
-        suffix = remote_subfolder[1:] if remote_folder == "/" else remote_subfolder[len(remote_folder) + 1:]
-        if os.sep != '/':
-            suffix = suffix.replace('/', os.sep)
-        return os.path.join(d, suffix) if suffix != "" else d
-
-    normalized_folder = folder.strip()
-    if normalized_folder != "/" and normalized_folder.endswith("/"):
-        normalized_folder = normalized_folder[:-1]
-    if normalized_folder == "":
-        raise DXFileError("Invalid remote folder name: '{}'".format(folder))
-    normalized_dest_dir = os.path.normpath(destdir).strip()
-    if normalized_dest_dir == "":
-        raise DXFileError("Invalid destination directory name: '{}'".format(destdir))
-    # Creating target directory tree
-    remote_folders = list(list_subfolders(project, normalized_folder, recurse=True))
-    if len(remote_folders) <= 0:
-        raise DXFileError("Remote folder '{}' not found".format(normalized_folder))
-    remote_folders.sort()
-    for remote_subfolder in remote_folders:
-        ensure_local_dir(compose_local_dir(normalized_dest_dir, normalized_folder, remote_subfolder))
-
-    # Downloading files
-    describe_input = dict(fields=dict(folder=True,
-                                      name=True,
-                                      id=True,
-                                      parts=True,
-                                      size=True,
-                                      drive=True,
-                                      md5=True))
-
-    # A generator that returns the files one by one. We don't want to materialize it, because
-    # there could be many files here.
-    files_gen = dxpy.search.find_data_objects(classname='file', state='closed', project=project,
-                                              folder=normalized_folder, recurse=True, describe=describe_input)
-    if files_gen is None:
-        # In python 3, the generator can be None, and iterating on it
-        # will cause an error.
-        return
-
-    # Now it is safe, in both python 2 and 3, to iterate on the generator
-    for remote_file in files_gen:
-        local_filename = os.path.join(compose_local_dir(normalized_dest_dir,
-                                                        normalized_folder,
-                                                        remote_file['describe']['folder']),
-                                      remote_file['describe']['name'])
-        if os.path.exists(local_filename) and not overwrite:
-            raise DXFileError(
-                "Destination file '{}' already exists but no overwrite option is provided".format(local_filename)
-            )
-        logger.debug("Downloading '%s/%s' remote file to '%s' location",
-                     ("" if remote_file['describe']['folder'] == "/" else remote_file['describe']['folder']),
-                     remote_file['describe']['name'],
-                     local_filename)
-        download_dxdatabasefile(remote_file['describe']['id'],
-                        local_filename,
-                        chunksize=chunksize,
-                        project=project,
-                        show_progress=show_progress,
-                        describe_output=remote_file['describe'],
-                        **kwargs)
