@@ -160,12 +160,19 @@ def _download_files(files, destdir, args, dest_filename=None):
                 do_debug("download.py _download_files - list_folder_resp = {}".format(list_folder_resp))
                 results = list_folder_resp["results"]
                 for dbfile in results:
-                    src_filename = dbfile["path"]
-                    idx = src_filename.rfind("database-")
-                    if idx != -1:
-                        src_filename = src_filename[idx + 34:]
-                    do_debug("download.py _download_files - file path = {}".format(src_filename))
-                    download_one_file(project, file_desc, dest, src_filename, dbfile, args)
+                    # Skip the entries that represent directories, because the local directory structure
+                    # will be created automatically as real files are downloaded.
+                    try:
+                        is_dir = dbfile["isDirectory"]
+                    except:
+                        is_dir = True
+                    if is_dir == False:
+                        src_filename = dbfile["path"]
+                        idx = src_filename.rfind("database-")
+                        if idx != -1:
+                            src_filename = src_filename[idx + 34:]
+                        do_debug("download.py _download_files - file path = {}".format(src_filename))
+                        download_one_file(project, file_desc, dest, src_filename, dbfile, args)
             elif file_desc['class'] == 'file':
                 dest = dest_filename or os.path.join(destdir, file_desc['id'].replace('/', '%2F'))
                 download_one_file(project, file_desc, dest, '', None, args)
