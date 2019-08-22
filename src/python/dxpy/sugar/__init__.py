@@ -15,7 +15,9 @@
 #   under the License.
 import dxpy
 from functools import wraps
+import logging
 import re
+import sys
 
 
 MEM_RE = re.compile(r"^MemAvailable:[\s]*([0-9]*) kB")
@@ -32,8 +34,7 @@ def in_worker_context():
 
 
 def requires_worker_context(func):
-    """This decorator checks that a given function is running within a DNAnexus job
-    context.
+    """Decorator that checks a given function is running within a DNAnexus job context.
     """
     @wraps(func)
     def check_job_id(*args, **kwargs):
@@ -46,6 +47,30 @@ def requires_worker_context(func):
             )
 
     return check_job_id
+
+
+def get_log(name, level=logging.INFO):
+    """Gets a logger with the given name and level. Uses a different handler
+    depending on whether this function is called from within a job context.
+
+    Args:
+        name: Log name
+        level: Log level
+
+    Returns:
+        Configured logger
+    """
+    log = logging.getLogger(name)
+    log.propagate = False
+    log.setLevel(level)
+    if not log.handlers:
+        # Use DXLogHandler if we're running within a job, otherwise log to stderr
+        # if os.path.exists("/opt/dnanexus/log/priority"):
+        if dxpy.JOB_ID:
+            log.addHandler(dxpy.DXLogHandler())
+        else:
+            log.addHandler(logging.StreamHandler(sys.stderr))
+    return log
 
 
 @requires_worker_context
