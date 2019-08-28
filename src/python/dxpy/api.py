@@ -504,6 +504,14 @@ def database_set_visibility(object_id, input_params={}, always_retry=True, **kwa
     """
     return DXHTTPRequest('/%s/setVisibility' % object_id, input_params, always_retry=always_retry, **kwargs)
 
+def database_download_file(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /database-xxxx/downloadFile API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-listFolder
+    """
+    return DXHTTPRequest('/%s/downloadFile' % object_id, input_params, always_retry=always_retry, **kwargs)
+
 def database_list_folder(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /database-xxxx/listFolder API method.
